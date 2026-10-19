@@ -38,7 +38,9 @@ namespace island
                   const Microsoft::Xna::Framework::Vector3& cameraPosition,
                   float timeSeconds, float playerX, float playerZ,
                   float playerRippleIntensity, float playerRipplePhase,
-                  float playerSplashIntensity, float playerSplashPhase);
+                  float playerSplashIntensity, float playerSplashPhase,
+                  float birdSplashX = 0.0f, float birdSplashZ = 0.0f,
+                  float birdSplashPhase = -1.0f);
 
         [[nodiscard]] bool UsesCustomShader() const noexcept { return customShaderReady_; }
         [[nodiscard]] const std::string& FallbackReason() const noexcept { return fallbackReason_; }

@@ -46,6 +46,20 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 7 (2026-10-20) — seabird plunge dives
+
+A seabird circling low over a school now strikes: once settled (`huntAmount` above 0.95) it
+plunges every nine seconds for 1.6 s, a half-sine fold from its circling height to 0.35 m
+above the water (the one time a bird may drop below its clearance; the vertical rate opens to
+11 m/s for the plunge and the climb out), and at the bottom of the fold the flock records a
+`BirdDiveSplash` (strike point and age, valid for 2.6 s). The ocean shader takes it as
+`uBirdSplash` and draws a white plume at the strike that becomes a broken ring 1.8 times a
+swimmer's splash radius, through the existing splash band. The startup log adds "circling
+seabirds plunge-dive every nine seconds and each strike raises a foam ring on the water",
+pinned by the native capture tool. The core seabird check now also requires a strike within a
+minute of the low circling, within 24 m of the school. Native `birds` and `water` pass. A
+splash sound is a candidate for a later pass.
+
 ## Loop pass 6 (2026-10-20) — boars wallow at the stream bank
 
 The boars live on the vegetated banks of the western drainage corridor yet never entered it:

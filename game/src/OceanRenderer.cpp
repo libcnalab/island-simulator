@@ -122,6 +122,7 @@ uniform float uPlayerRippleIntensity;
 uniform float uPlayerRipplePhase;
 uniform float uPlayerSplashIntensity;
 uniform float uPlayerSplashPhase;
+uniform vec3 uBirdSplash;   // strike point x, z and ring phase 0..1 (negative: none)
 uniform vec4 uCoastalOptics;
 uniform vec4 uSurfaceAppearance;
 
@@ -346,6 +347,15 @@ void main()
             * mix(0.72, 1.0, clamp(vShallow, 0.0, 1.0));
         foam = max(foam, splash * 0.58);
     }
+    if (uBirdSplash.z >= 0.0 && uBirdSplash.z <= 1.0) {
+        // A seabird's plunge: a white plume at the strike that becomes a wider ring than a
+        // swimmer's, drawn with the same broken-crest band at 1.8 times its radius.
+        vec2 strikeOffset = vWorld.xz - uBirdSplash.xy;
+        float plume = (1.0 - smoothstep(0.0, 0.9, length(strikeOffset)))
+            * (1.0 - smoothstep(0.0, 0.35, uBirdSplash.z));
+        float ring = playerSplashBand(strikeOffset * 0.55, uBirdSplash.z);
+        foam = max(foam, max(plume * 0.9, ring * 0.7));
+    }
     foam = clamp(foam, 0.0, 0.86);
     water = mix(water, vec3(0.82, 0.94, 0.91), foam);
 
@@ -556,7 +566,9 @@ void main()
                              const float playerRippleIntensity,
                              const float playerRipplePhase,
                              const float playerSplashIntensity,
-                             const float playerSplashPhase)
+                             const float playerSplashPhase,
+                             const float birdSplashX, const float birdSplashZ,
+                             const float birdSplashPhase)
     {
         device_.setRasterizerStateProperty(RasterizerState::CullNone);
         device_.setBlendStateProperty(BlendState::AlphaBlend);
@@ -580,6 +592,10 @@ void main()
                 CoastalSurfaceAppearance::FoamFullDepth, CoastalSurfaceAppearance::FoamEndDepth,
                 CoastalSurfaceAppearance::FoamShoreDecayMetres);
             customEffect_->SetUniformVec2("uPlayerWaterPosition", playerX, playerZ);
+            customEffect_->SetUniformVec3("uBirdSplash",
+                std::isfinite(birdSplashX) ? birdSplashX : 0.0f,
+                std::isfinite(birdSplashZ) ? birdSplashZ : 0.0f,
+                std::isfinite(birdSplashPhase) ? birdSplashPhase : -1.0f);
             customEffect_->SetUniformFloat(
                 "uPlayerRippleIntensity",
                 std::isfinite(playerRippleIntensity)

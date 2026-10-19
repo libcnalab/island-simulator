@@ -64,6 +64,7 @@ Loop log (propose → implement, continues until the operator stops the session)
   pass 5").
 - Pass 6: boars wallow at the stream bank and carry the mud on legs and belly (PLAN "Loop
   pass 6").
+- Pass 7: circling seabirds plunge-dive and each strike raises a foam ring (PLAN "Loop pass 7").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

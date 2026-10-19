@@ -7413,6 +7413,14 @@ int main()
             }
         }
         Check(circledLow, "a seabird circles low over the fish school within four minutes");
+        bool struck = false;
+        for (int step = 0; step < 1200 && !struck; ++step) {
+            flock.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
+            const auto& splash = flock.DiveSplash();
+            struck = splash.valid && splash.ageSeconds < 0.2f
+                && std::hypot(splash.x - forageX, splash.z - forageZ) < 24.0f;
+        }
+        Check(struck && flock.DiveCount() >= 1U, "a circling seabird plunges and strikes the water near the school within a minute");
         flock.SetSeaForage(0.0f, 0.0f, false);
         for (int step = 0; step < 1200; ++step)
             flock.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);

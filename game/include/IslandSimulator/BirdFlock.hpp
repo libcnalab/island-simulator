@@ -91,6 +91,15 @@ namespace island
         BirdPathFamily family = BirdPathFamily::Shore;
     };
 
+    /** @brief The most recent plunge-dive strike point and its age, for the water's foam ring. */
+    struct BirdDiveSplash
+    {
+        float x = 0.0f;
+        float z = 0.0f;
+        float ageSeconds = 1.0e9f;
+        bool valid = false;
+    };
+
     /** @brief Deterministic, bounded and distance-throttled flying-bird simulation. */
     class BirdFlock final
     {
@@ -110,6 +119,11 @@ namespace island
         /** @brief The fish school the seabirds may work this moment; invalid clears it. */
         void SetSeaForage(float x, float z, bool valid) noexcept;
         [[nodiscard]] std::size_t HuntingCount() const noexcept;
+        [[nodiscard]] const BirdDiveSplash& DiveSplash() const noexcept { return diveSplash_; }
+        [[nodiscard]] std::uint32_t DiveCount() const noexcept { return diveCount_; }
+        static constexpr float DiveIntervalSeconds = 9.0f;
+        static constexpr float DiveSeconds = 1.6f;
+        static constexpr float SplashSeconds = 2.6f;
         static constexpr float HuntOrbitRadius = 11.0f;
         static constexpr float HuntAltitude = 7.5f;
         static constexpr float HuntSeconds = 42.0f;
@@ -159,6 +173,9 @@ namespace island
             float groundTargetZ = 0.0f;
             float huntSeconds = 0.0f;       // remaining low circling; 0 when on the high route
             float nextHuntSeconds = 0.0f;
+            float nextDiveSeconds = 0.0f;   // countdown to the next plunge while circling low
+            float diveSeconds = 0.0f;       // remaining plunge; 0 when not diving
+            bool struck = false;            // this plunge has already touched the water
             std::size_t index = 0U;
         };
 
@@ -179,6 +196,8 @@ namespace island
         std::uint64_t frameIndex_ = 0U;
         float forageX_ = 0.0f, forageZ_ = 0.0f;
         bool forageValid_ = false;
+        BirdDiveSplash diveSplash_;
+        std::uint32_t diveCount_ = 0U;
         int fullSimulationCount_ = 0;
         int reducedSimulationCount_ = 0;
         int dormantSimulationCount_ = 0;

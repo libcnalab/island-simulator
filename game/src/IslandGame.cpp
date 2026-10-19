@@ -2172,6 +2172,7 @@ namespace island
                   << "island-simulator: bird flight uses slow radial drift, banking, and "
                      "intermittent glide\n"
                   << "island-simulator: seabirds break from their high orbits to circle low over the fish school of the moment\n"
+                  << "island-simulator: circling seabirds plunge-dive every nine seconds and each strike raises a foam ring on the water\n"
                   << "island-simulator: gust fronts sweep the grass, crowns and fronds downwind together every twenty-two seconds within their authored sway\n"
                   << "island-simulator: four fruit doves alternate canopy perches with bounded dry-ground walking and foraging\n"
                   << "island-simulator: fruit doves coo in low slow phrases and thrust their heads as they walk; parrots keep their squawk and a pigeon-grey dove joins the green ones\n"
@@ -4294,11 +4295,14 @@ namespace island
         const PlayerPosition& oceanPlayer = playerMotion_.Position();
         {
             GpuDiagnosticScope gpuPass("ocean");
+            const BirdDiveSplash& diveSplash = birdFlock_.DiveSplash();
             oceanRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
                                  timeSeconds, oceanPlayer.x, oceanPlayer.z,
                                  waterRippleModel_.Intensity(), waterRippleModel_.Phase(),
                                  waterRippleModel_.SplashIntensity(),
-                                 waterRippleModel_.SplashPhase());
+                                 waterRippleModel_.SplashPhase(),
+                                 diveSplash.x, diveSplash.z,
+                                 diveSplash.valid ? diveSplash.ageSeconds / BirdFlock::SplashSeconds : -1.0f);
         }
         {
             GpuDiagnosticScope gpuPass("shoreline");
