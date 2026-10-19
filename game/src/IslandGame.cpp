@@ -2242,7 +2242,7 @@ namespace island
                   << "island-simulator: beetles " << BeetlePopulation::Count
                   << " agents resting, foraging, and hiding in three inland leaf-litter colonies\n"
                   << "island-simulator: beach crabs " << crabColony_.Crabs().size()
-                  << " agents in deterministic sand-and-debris-constrained colonies\n"
+                  << " agents in deterministic sand-and-debris-constrained colonies; every other bout works the wrack line and feeds among the strandings\n"
                   << "island-simulator: hermit crabs " << hermitCrabGroup_.Crabs().size()
                   << " agents in deterministic sheltered-beach habitats\n"
                   << "island-simulator: coconut crabs " << coconutCrabGroup_.Crabs().size()

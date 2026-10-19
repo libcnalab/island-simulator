@@ -40,6 +40,8 @@
 #include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/LookoutLayout.hpp"
 #include "IslandSimulator/FallingFruitField.hpp"
+#include "IslandSimulator/CrabColony.hpp"
+#include "IslandSimulator/WrackLine.hpp"
 #include "IslandSimulator/BridgeLayout.hpp"
 #include "IslandSimulator/ButterflyMeadow.hpp"
 #include "IslandSimulator/DolphinPod.hpp"
@@ -7453,6 +7455,26 @@ int main()
             }
         }
         Check(visitedBush, "a butterfly hovers at blossom height over the flowering bush");
+    }
+
+    {
+        // The wrack line is one function for the shader and the crabs, and the crabs reach it:
+        // over four minutes a fair share of crab time is spent within a metre of the line.
+        const island::IslandTerrain terrain;
+        Check(std::abs(island::WrackLine::Centre(100.0f,0.0f)-island::WrackLine::BaseInland)<3.2f
+              &&island::WrackLine::Centre(100.0f,0.0f)!=island::WrackLine::Centre(0.0f,100.0f),
+              "the wrack line wanders a bounded distance about its base inland distance");
+        island::CrabColony colony(terrain);
+        std::size_t onLine=0,samples=0;
+        for(int step=0;step<4800;++step) {
+            colony.Update(0.05f,std::numeric_limits<float>::quiet_NaN(),0.0f,0.0f);
+            if(step%20!=0) continue;
+            for(const auto& crab:colony.Crabs()) {
+                ++samples;
+                if(std::abs(terrain.SignedShoreDistance(crab.x,crab.z)-island::WrackLine::Centre(crab.x,crab.z))<1.0f) ++onLine;
+            }
+        }
+        Check(samples>0&&onLine*8>samples,"beach crabs spend part of their time working the wrack line");
     }
 
     {

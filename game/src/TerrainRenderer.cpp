@@ -2,6 +2,7 @@
 #include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
 #include "IslandSimulator/StreamBedPatch.hpp"
+#include "IslandSimulator/WrackLine.hpp"
 #include "IslandSimulator/WreckScourPatch.hpp"
 #include "IslandSimulator/CaveGroundPatch.hpp"
 #include "IslandSimulator/CampfireLighting.hpp"
@@ -442,7 +443,7 @@ void main()
         // The wrack line: the last high tide's strandings along the upper beach, a band a
         // few metres inland that the broad fields break into drifts and gaps. Dark weed
         // strands lie shore-parallel, with pale shell grit and a few twigs among them.
-        float wrackCentre = 5.4 + broad * 2.6 + medium * 0.6;
+        float wrackCentre = wrackLineCentre(p) + medium * 0.6;
         float wrackBand = 1.0 - smoothstep(0.70, 1.60, abs(signedShoreDistance - wrackCentre)
             + medium * 0.35);
         float wrackDrift = smoothstep(-0.02, 0.18, valueNoise(p * 0.21 + vec2(31.3, -17.9)) + broad * 0.4);
@@ -1113,6 +1114,7 @@ void main()
             if (embedded) {
                 return std::string("#version 300 es\nprecision highp float;\nprecision highp int;\n")
                     + environment::FogShaderDefinition
+                    + WrackLine::Shader
                     + (canopy ? CanopyLighting::Shader : "")
                     + (canopy ? IslandEnvironmentField::InlandShader : "")
                     + (canopy ? GroundCover::Shader() : std::string())
@@ -1121,6 +1123,7 @@ void main()
                     + (canopy ? std::string(CampfireLighting::Shader) + SunShadowMap::ReceiverShader : std::string()) + body;
             }
             return std::string("#version 330 core\n") + environment::FogShaderDefinition
+                + WrackLine::Shader
                 + (canopy ? CanopyLighting::Shader : "")
                 + (canopy ? IslandEnvironmentField::InlandShader : "")
                 + (canopy ? GroundCover::Shader() : std::string())

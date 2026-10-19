@@ -1,4 +1,5 @@
 #include "IslandSimulator/CrabColony.hpp"
+#include "IslandSimulator/WrackLine.hpp"
 
 #include "IslandSimulator/IslandTerrain.hpp"
 
@@ -296,6 +297,10 @@ namespace island
                     agent.behaviorSeconds = 1.2f
                         + static_cast<float>((agent.transitionCount * 3U
                                              + agent.state.colorVariant) % 6U) * 0.48f;
+                    // Among the strandings there is food: the pause there is a feed.
+                    if (std::abs(terrain_.SignedShoreDistance(agent.state.x, agent.state.z)
+                                 - WrackLine::Centre(agent.state.x, agent.state.z)) < 0.9f)
+                        agent.behaviorSeconds *= 1.8f;
                 }
             }
         }
@@ -307,11 +312,21 @@ namespace island
             const float tangentHeading = homeAngle
                 + static_cast<float>(agent.preferredDirection)
                     * std::numbers::pi_v<float> * 0.5f;
+            float desiredHeading = tangentHeading
+                + std::sin(agent.movementPhase + agent.transitionCount * 0.7f) * 0.42f;
+            // Every other bout works the wrack line: the heading bends up or down the beach
+            // toward the strandings until the crab is on them, then runs along them.
+            if ((agent.transitionCount / 2U) % 2U == 1U) {
+                const float inland = terrain_.SignedShoreDistance(agent.state.x, agent.state.z);
+                const float pull = std::clamp((WrackLine::Centre(agent.state.x, agent.state.z) - inland) * 0.6f,
+                                              -0.9f, 0.9f);
+                // Inland is toward the island centre: the opposite of the home's radial.
+                const float tx = std::cos(tangentHeading), tz = std::sin(tangentHeading);
+                const float nx = -std::cos(homeAngle), nz = -std::sin(homeAngle);
+                desiredHeading = std::atan2(tz + nz * pull, tx + nx * pull);
+            }
             agent.state.travelHeadingRadians = MoveAngle(
-                agent.state.travelHeadingRadians,
-                tangentHeading + std::sin(agent.movementPhase + agent.transitionCount * 0.7f)
-                    * 0.42f,
-                deltaSeconds * 1.2f);
+                agent.state.travelHeadingRadians, desiredHeading, deltaSeconds * 1.2f);
         } else if (agent.state.behavior == CrabBehavior::Scuttle) {
             targetSpeed = 1.85f + agent.state.scale * 0.35f;
         }

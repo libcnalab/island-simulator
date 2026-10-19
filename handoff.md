@@ -76,6 +76,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 13: the resident's bare footprints along the beach from the jetty (PLAN "Loop pass 13").
 - Pass 14: gust fronts shake coconuts from the nearer palms (PLAN "Loop pass 14").
 - Pass 15: a positional thud when a coconut lands (PLAN "Loop pass 15").
+- Pass 16: one shared wrack line that the beach crabs work and feed along (PLAN "Loop pass 16").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

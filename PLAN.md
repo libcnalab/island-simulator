@@ -46,6 +46,20 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 16 (2026-10-20) — the crabs work the wrack line
+
+The wrack line of pass 4 was a shader-only band wandered by the terrain's noise fields, so
+nothing on the CPU could find it. `WrackLine` is now one function in both forms (inland 5.4 m
+plus two sines of the coast angle, ±3.1 m) used by the terrain material for the band's centre
+(the medium field still frays its edges and the drifts and gaps stay shader-only) and by the
+beach crabs: every other forage bout bends the crab's heading up or down the beach toward the
+strandings (a pull proportional to its distance from the line, along the inland normal) until
+it is on them, then along them, and a pause within 0.9 m of the line lasts 1.8 times longer, a
+feed. The crab diagnostic gains "every other bout works the wrack line and feeds among the
+strandings", pinned by the native capture tool. New core checks: the line wanders a bounded
+distance about its base and differs around the coast, and over four simulated minutes more than
+an eighth of crab-time is spent within a metre of it. Native `crabs` and `wet-sand` pass.
+
 ## Loop pass 15 (2026-10-20) — the coconut's thud
 
 A coconut's first strike on the ground (`FallingFruitField::LastCoconutLanding`, counted so each
