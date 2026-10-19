@@ -98,6 +98,8 @@ namespace island
             "island-simulator: inland ridge outcrops follow measured steepness with broken medium-scale exposure";
         constexpr std::string_view CoastalCliffFillDiagnostic =
             "island-simulator: low coastal cliffs retain salt-worn mineral colour, distance-stable macro strata, drainage streaks, and cool open-sky fill";
+        constexpr std::string_view RippleTrainDiagnostic =
+            "island-simulator: seabed ripples stay below the waterline in short near trains and beach flecks fade with the ground footprint";
         constexpr std::string_view HillsideGrainDiagnostic =
             "island-simulator: open inland ground keeps footprint-filtered metre-scale tussock grain through the mid distance";
 
@@ -364,8 +366,12 @@ void main()
 
         // Millimetre-scale dry relief: wind-normal ripple crests, with warped phase
         // rather than ruler-straight stripes. Fade the highest harmonic before Nyquist.
+        // The relief lighting ends by 24 m: beyond that a low camera sees the crests as
+        // long converging light/dark streaks over the whole foreground, which real
+        // ripples never form because their trains end every metre or two.
         float dryRelief = closeSand * smoothstep(2.0, 6.0, signedShoreDistance)
-            * smoothstep(0.18, 0.65, vWorld.y);
+            * smoothstep(0.18, 0.65, vWorld.y)
+            * (1.0 - smoothstep(9.0, 24.0, distanceToCamera));
         float rippleVisibility = 1.0 - smoothstep(0.18, 0.50, groundPixelWidth * 9.0);
         float grainVisibility = 1.0 - smoothstep(0.18, 0.50, groundPixelWidth * 85.0);
         if (dryRelief * max(rippleVisibility, grainVisibility) > 0.0) {
@@ -374,10 +380,14 @@ void main()
             vec2 phaseGradient = uSandWind * 28.0 + bend.yz * 1.80;
             float rippleDerivative = cos(phase) + 0.36 * cos(phase * 2.0 + 0.7);
             float rippleHeight = sin(phase) + 0.18 * sin(phase * 2.0 + 0.7);
-            float rippleEnvelope = 0.60 + bend.x * 0.80;
+            // Ripple trains: crests run only through patches of a 2 m field and die out
+            // between them, so no crest line survives across the frame.
+            float rippleTrain = smoothstep(-0.20, 0.14,
+                valueNoise(p * 0.55 + vec2(9.1, 3.7)) + bend.x * 0.25);
+            float rippleEnvelope = (0.60 + bend.x * 0.80) * rippleTrain;
             vec3 grains = soilNoiseGradient(p * 85.0 + vec2(-14.2, 9.6));
             vec2 sandSlope = (phaseGradient * rippleDerivative * rippleEnvelope
-                + rippleHeight * bend.yz * 0.36) * (0.0022 * rippleVisibility)
+                + rippleHeight * bend.yz * 0.36 * rippleTrain) * (0.0017 * rippleVisibility)
                 + grains.yz * (85.0 * 0.00015 * grainVisibility);
             vec3 sandNormal = terrainSurfaceNormal(cross(worldDx, worldDy));
             vec3 reliefNormal = sandNormal - vec3(sandSlope.x, 0.0, sandSlope.y) * sandNormal.y;
@@ -402,15 +412,25 @@ void main()
                       1.0 + brokenCrest * rippleMask * 0.021,
                       1.0 + brokenCrest * rippleMask * 0.014);
 
-        float seabedMask = closeSand * (1.0 - smoothstep(-0.18, 0.02, vWorld.y))
-            * (1.0 - smoothstep(0.045, 0.14, groundPixelWidth));
+        // Seabed ripples: shore-parallel crests at 0.66 m. They stay clearly below the
+        // waterline, run in short trains and fade by 16 m; the former mask reached the
+        // exposed flat at the tide line, where a low camera looking along the beach saw
+        // the straight crests as light/dark streaks converging over the whole foreground.
+        float bedTrain = smoothstep(-0.16, 0.12, valueNoise(p * 0.62 + vec2(-5.3, 12.8)));
+        float seabedMask = closeSand * (1.0 - smoothstep(-0.45, -0.12, vWorld.y))
+            * (1.0 - smoothstep(0.045, 0.14, groundPixelWidth))
+            * (1.0 - smoothstep(5.0, 16.0, distanceToCamera)) * bedTrain;
         float bedPhase = signedShoreDistance * 9.5 + broad * 2.1 + medium * 1.2;
         float bedRipple = sin(bedPhase) * (0.65 + medium * 0.4);
         color *= 1.0 + bedRipple * seabedMask * 0.055;
 
+        // The fleck lattice has no mip chain: once a pixel's ground footprint approaches
+        // a fleck, a low camera looking along the beach resampled the hashed cells into
+        // broad light/dark bands converging on the horizon. Fade by footprint, not distance.
+        float fleckVisibility = 1.0 - smoothstep(0.018, 0.060, groundPixelWidth);
         float drySubstrate = sand
             * (1.0 - smoothstep(18.0, 58.0, distanceToCamera))
-            * smoothstep(1.4, 4.8, signedShoreDistance);
+            * smoothstep(1.4, 4.8, signedShoreDistance) * fleckVisibility;
         if (drySubstrate > 0.0) {
             float darkPebble = groundFleck(p, 0.90, vec2(8.2, -15.7), 0.60);
             float paleShell = groundFleck(p, 1.15, vec2(-11.4, 6.9), 0.79);
@@ -487,6 +507,7 @@ void main()
         float shallowSandDetail = submergedHabitat
             * (1.0 - smoothstep(3.0, 4.6, bedDepth))
             * (1.0 - smoothstep(30.0, 62.0, distanceToCamera))
+            * (1.0 - smoothstep(0.018, 0.060, groundPixelWidth))
             * smoothstep(0.34, 0.72, sandChannel)
             * (1.0 - meadow * 0.78) * (1.0 - reefCover * 0.88);
         if (shallowSandDetail > 0.0) {
@@ -1186,6 +1207,8 @@ void main()
                     MirrorRuntimeDiagnosticToPlatformLog(CoastalCliffFillDiagnostic);
                     std::cout << HillsideGrainDiagnostic << '\n';
                     MirrorRuntimeDiagnosticToPlatformLog(HillsideGrainDiagnostic);
+                    std::cout << RippleTrainDiagnostic << '\n';
+                    MirrorRuntimeDiagnosticToPlatformLog(RippleTrainDiagnostic);
                 } else {
                     std::cerr << "island-simulator: terrain material fallback: "
                               << materialEffect_->GetCompileErrorEXT() << '\n';

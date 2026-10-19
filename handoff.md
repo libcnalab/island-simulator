@@ -33,7 +33,7 @@ here as done with their `PLAN.md` evidence reference.
    map"); animals/structures/water as receivers remain a later pass.
 2. [x] Mid-distance hillside grain (PLAN "Latest hillside pass — mid-distance tussock grain").
 3. [x] Wreck scour bar (PLAN "Latest wreck-grounding pass — sand scour bar against the hull").
-4. [ ] Audit the vertical light/dark sand streaks at grazing angles (wide wreck frame foreground).
+4. [x] Sand streak audit (PLAN "Latest beach-streak audit — seabed ripples confined below the waterline").
 5. [ ] Cumulus: layered edges and cloud shadows on the sea instead of smooth blobs.
 6. [ ] Stream: a small cascade with foam and a pool (sound and a destination).
 7. [ ] Parrots and pigeons as recognisable bird species (colour, calls, ground doves).

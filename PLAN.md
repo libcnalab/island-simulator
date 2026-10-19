@@ -46,6 +46,24 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Latest beach-streak audit — seabed ripples confined below the waterline
+
+Backlog item 4. The light/dark streaks converging over the whole foreground of the wide wreck
+frame were bisected with frame-column shader probes (vertex colour only; then each procedural
+block in turn): the per-vertex base is clean, the wind-ripple relief and the sun shadow map are
+not the cause, and the one term that produced them is the seabed ripple, `sin(shoreDistance *
+9.5)` under `seabedMask`. Its height mask `1 - smoothstep(-0.18, 0.02, y)` reached the exposed
+flat at the tide line, so from a low camera looking along the beach its straight shore-parallel
+crests (0.66 m) read as streaks for twenty metres. The mask now ends at -0.12 m (full below
+-0.45 m), fades between 5 and 16 m, and runs in short trains through a 1.6 m field; the dry-sand
+wind ripples likewise run in 2 m trains with a smaller slope (0.0017) and drop their relief
+lighting by 24 m, and the pebble/shell fleck lattice, which has no mip chain, fades with the
+ground footprint (0.018–0.060 m) instead of distance alone, on the beach and in the shallows.
+The startup log adds "seabed ripples stay below the waterline in short near trains and beach
+flecks fade with the ground footprint", pinned by the native capture tool. Inspected native
+`20261019T204535Z-shipwreck-wide` keeps only the broad authored sand relief in the foreground;
+`wet-sand`, `tide-pools` and `reef` pass their gates unchanged in character.
+
 ## Latest wreck-grounding pass — sand scour bar against the hull
 
 Backlog item 3. The grounded ship sat on the untouched four-metre seabed grid, so its hull met
