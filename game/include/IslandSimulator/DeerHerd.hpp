@@ -33,6 +33,12 @@ namespace island
         static constexpr std::size_t Count = 4U;
         // Within this range a deer stands alert facing the player; closer than 9 m it bounds off obliquely.
         static constexpr float AlertDistance = 18.0f;
+        // The antlered sentinel watches further out; its clearing partner lifts its head within
+        // the wider range once the sentinel has stood alert for the reaction delay.
+        static constexpr float SentinelAlertDistance = 24.0f;
+        static constexpr float HerdReactionSeconds = .7f;
+        // A clearing pair drifting further apart than this walks back together.
+        static constexpr float CohesionDistance = 9.0f;
         static constexpr float FullSimulationDistance = 90.0f;
         static constexpr float ReducedSimulationDistance = 190.0f;
 
@@ -46,6 +52,8 @@ namespace island
         /** @brief Deer whose home reaches a stream bank; they walk there to drink. */
         [[nodiscard]] std::size_t DrinkerCount() const noexcept;
         [[nodiscard]] bool DrinkPoint(std::size_t index, float& x, float& z) const noexcept;
+        [[nodiscard]] bool SentinelAlert() const noexcept { return sentinelAlertSeconds_ > 0.0f; }
+        [[nodiscard]] float SentinelAlertSeconds() const noexcept { return sentinelAlertSeconds_; }
 
     private:
         struct Agent
@@ -71,5 +79,6 @@ namespace island
         std::array<DeerState, Count> states_{};
         std::array<DeerHome, Count> homes_{};
         std::uint64_t frameIndex_ = 0U;
+        float sentinelAlertSeconds_ = 0.0f;
     };
 }

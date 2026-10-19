@@ -150,6 +150,10 @@ namespace island
         const bool observerValid = std::isfinite(observerX) && std::isfinite(observerY)
             && std::isfinite(observerZ);
         ++frameIndex_;
+        const DeerState& sentinel = agents_[0].state;
+        const bool sentinelSees = observerValid && std::hypot(sentinel.x - observerX,
+            sentinel.z - observerZ) < SentinelAlertDistance;
+        sentinelAlertSeconds_ = sentinelSees ? sentinelAlertSeconds_ + safeDelta : 0.0f;
         for (std::size_t index = 0; index < Count; ++index) {
             Agent& agent = agents_[index];
             const float distance = observerValid
@@ -188,8 +192,11 @@ namespace island
             agent.targetHeadingRadians = Wrap(std::atan2(
                 agent.state.z - observerZ, agent.state.x - observerX)
                 + (index % 2U == 0U ? 1.22f : -1.22f));
-        } else if (observerDistance < AlertDistance) {
+        } else if (observerDistance < (index == 0U ? SentinelAlertDistance
+            : index == 1U && sentinelAlertSeconds_ >= HerdReactionSeconds
+                ? SentinelAlertDistance : AlertDistance)) {
             // Stand alert and face the approaching player; grazing resumes once they leave.
+            // The antlered sentinel lifts its head first; its partner follows after the delay.
             agent.state.behavior = DeerBehavior::Rest;
             agent.behaviorSeconds = std::max(agent.behaviorSeconds, 0.5f);
             agent.targetHeadingRadians = std::atan2(
@@ -205,6 +212,13 @@ namespace island
             const float turn = -.85f + static_cast<float>((agent.transitions * 37U
                 + static_cast<std::uint32_t>(index) * 19U) % 171U) * .01f;
             agent.targetHeadingRadians = Wrap(agent.state.headingRadians + turn);
+            // The East pair keeps together: a straggler's next walk heads toward its partner.
+            if (index < 2U && agent.state.behavior == DeerBehavior::Walk) {
+                const DeerState& partner = agents_[1U - index].state;
+                if (std::hypot(partner.x - agent.state.x, partner.z - agent.state.z) > CohesionDistance)
+                    agent.targetHeadingRadians = std::atan2(partner.z - agent.state.z,
+                                                            partner.x - agent.state.x);
+            }
             // Every other rest of a deer with a reachable bank becomes a walk to the water.
             if (agent.hasDrink && phase == 5U && (agent.transitions / 7U) % 2U == 0U) {
                 agent.state.behavior = DeerBehavior::Drink;

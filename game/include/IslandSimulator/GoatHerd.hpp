@@ -17,6 +17,12 @@ public:
     static constexpr float HomeRadius=14,MaximumSpeed=1.2f;
     // Within this range a goat stops and faces the player; closer than 7 m it sidesteps away.
     static constexpr float AlertDistance=14.0f;
+    // The sentinel (the first goat) watches further out; once it has stood alert for the
+    // reaction delay the rest of the herd lifts their heads within the wider range too.
+    static constexpr float SentinelAlertDistance=20.0f;
+    static constexpr float HerdReactionSeconds=.7f;
+    // A goat drifting further than this from the herd centroid walks back toward it.
+    static constexpr float CohesionDistance=9.0f;
     GoatHerd(const IslandTerrain& terrain,const JungleLayout& jungle,
         std::span<const CircularObstacle> obstacles);
     void Update(float dt,GoatPoint observer);
@@ -24,6 +30,8 @@ public:
     [[nodiscard]] bool IsValidPosition(std::size_t index,float x,float z) const;
     // Goats whose range reaches a stream bank; they walk there to drink.
     [[nodiscard]] std::size_t DrinkerCount() const noexcept;
+    [[nodiscard]] bool SentinelAlert() const noexcept {return sentinelAlertSeconds_>0;}
+    [[nodiscard]] float SentinelAlertSeconds() const noexcept {return sentinelAlertSeconds_;}
 private:
     void FindDrinkingPoint(std::size_t index) noexcept;
     void Step(std::size_t index,float dt,GoatPoint observer,bool observerValid);
@@ -43,5 +51,6 @@ private:
         float drinkX=0,drinkZ=0,faceX=0,faceZ=0; bool hasDrink=false;
     };
     std::array<Intent,GoatHabitat::Count> intents_{};
+    float sentinelAlertSeconds_=0,centroidX_=0,centroidZ_=0;
 };
 }

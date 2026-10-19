@@ -46,6 +46,23 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Latest herd pass — cohesion and sentinels
+
+Backlog item 9. Goats: each update computes the herd centroid; a goat choosing its next walk
+while further than 9 m from the centroid heads back toward it (inside its own range rule). The
+first goat is the sentinel: it stands alert at 20 m instead of 14 m, and once it has watched
+for 0.7 s the rest of the herd lifts their heads within the same 20 m, so the sentinel's head
+visibly comes up first. Deer: the antlered first deer is the East clearing's sentinel (24 m
+instead of 18 m, same 0.7 s delay for its partner), and the East pair's next walk heads toward
+the partner whenever they drift more than 9 m apart; the lone West deer and the stream-side
+deer keep their own ranges. `SentinelAlert()` / `SentinelAlertSeconds()` expose the state on
+both herds. The startup log adds "herd behaviour: goats keep within nine metres of their
+centroid and the East deer pair walks back together; a sentinel lifts its head first and the
+others follow after 0.7 s", pinned by the native capture tool. New core checks: with an
+observer 21 m beyond the deer sentinel the sentinel stands alert at once while its partner does
+not bolt, the reaction delay elapses while the sentinel keeps watching, and the sentinel
+relaxes when the observer is gone. Native `goats` and `deer` captures pass.
+
 ## Latest ecology pass — drinking deer, rooting boars, fruit-picking monkeys
 
 Backlog item 8. Deer and goats gain a `Drink` behaviour: at construction each animal searches

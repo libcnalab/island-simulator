@@ -180,8 +180,10 @@ void GoatHerd::Step(std::size_t index,float dt,GoatPoint observer,bool observerV
         // player in view over its shoulder instead of turning its rump squarely to them.
         if(intent.avoidance==0&&std::hypot(dx,dz)>.01f)
             intent.targetHeading=Wrap(std::atan2(dz,dx)+(index%2==0?1.22f:-1.22f));
-    } else if(observerRange<AlertDistance) {
+    } else if(observerRange<(index==0?SentinelAlertDistance
+        :sentinelAlertSeconds_>=HerdReactionSeconds?SentinelAlertDistance:AlertDistance)) {
         // Stand and watch the approaching player; ordinary wandering resumes once they leave.
+        // The sentinel lifts its head first; the others follow after the reaction delay.
         state.behavior=GoatBehavior::Rest;intent.remaining=std::max(intent.remaining,.5f);
         if(intent.avoidance==0)
             intent.targetHeading=std::atan2(observer.z-state.z,observer.x-state.x);
@@ -192,6 +194,10 @@ void GoatHerd::Step(std::size_t index,float dt,GoatPoint observer,bool observerV
         intent.targetHeading=static_cast<float>((bits>>16)%4096)/4096*Tau-Pi;
         if(std::hypot(state.x-homes_[index].x,state.z-homes_[index].z)>HomeRadius-3)
             intent.targetHeading=std::atan2(homes_[index].z-state.z,homes_[index].x-state.x);
+        // A straggler's next walk heads back toward the herd, within its own range.
+        else if(state.behavior==GoatBehavior::Walk
+            &&std::hypot(state.x-centroidX_,state.z-centroidZ_)>CohesionDistance)
+            intent.targetHeading=std::atan2(centroidZ_-state.z,centroidX_-state.x);
         // Every third rest of a goat with a reachable bank becomes a walk to the water.
         if(intent.hasDrink&&bits%5==4&&intent.decisions%3==0) {
             state.behavior=GoatBehavior::Drink;intent.remaining=20;
@@ -240,6 +246,13 @@ void GoatHerd::Update(float dt,GoatPoint observer) {
     dt=std::min(dt,.1f);
     const int steps=std::min(5,static_cast<int>(std::ceil(dt/.02f)));
     const bool observerValid=std::isfinite(observer.x)&&std::isfinite(observer.y)&&std::isfinite(observer.z);
+    centroidX_=0;centroidZ_=0;
+    for(const auto& state:states_) {centroidX_+=state.x;centroidZ_+=state.z;}
+    centroidX_/=static_cast<float>(states_.size());centroidZ_/=static_cast<float>(states_.size());
+    const auto& sentinel=states_[0];
+    const bool sentinelSees=observerValid&&std::hypot(sentinel.x-observer.x,
+        sentinel.y+.8f-observer.y,sentinel.z-observer.z)<SentinelAlertDistance;
+    sentinelAlertSeconds_=sentinelSees?sentinelAlertSeconds_+dt:0;
     for(int step=0;step<steps;++step) for(std::size_t i=0;i<states_.size();++i) {
         Step(i,dt/static_cast<float>(steps),observer,observerValid);
         AdvanceFeet(i,dt/static_cast<float>(steps));

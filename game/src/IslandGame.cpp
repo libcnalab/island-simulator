@@ -2012,6 +2012,8 @@ namespace island
         std::cout << "island-simulator: ecological links: " << deer_->DrinkerCount() << " deer and "
                   << goats_->DrinkerCount() << " goats walk to the stream bank to drink; "
                   << "boars root at the nearest trunk base, monkeys favour fruiting crowns and linger to pick\n";
+        std::cout << "island-simulator: herd behaviour: goats keep within nine metres of their centroid and the "
+                     "East deer pair walks back together; a sentinel lifts its head first and the others follow after 0.7 s\n";
         std::cout << "island-simulator: snakes " << snakes_->Snakes().size()
                   << " ground agents with separated dense-understory-margin homes; "
                   << snakes_->TreeSnakes().size()<<" arboreal agents on sampled broadleaf trunks\n";

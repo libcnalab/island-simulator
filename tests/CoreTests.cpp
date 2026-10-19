@@ -33,6 +33,7 @@
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/WreckScourPatch.hpp"
 #include "IslandSimulator/StreamCourse.hpp"
+#include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/JungleLayout.hpp"
 #include "IslandSimulator/LocomotionPaceToggle.hpp"
 #include "IslandSimulator/MonkeyTroop.hpp"
@@ -7335,6 +7336,33 @@ int main()
               "player capsule cannot tunnel through an authored land-rock proxy");
         Check(rockObstacleRejections > 0 && rockTerrainRejections == 0,
               "authored land-rock traversal is rejected by collision rather than terrain");
+    }
+
+    {
+        // Deer herd: the antlered sentinel stands alert before its clearing partner, and the
+        // partner's wider alert range opens only after the reaction delay.
+        const island::IslandTerrain terrain;
+        island::DeerHerd herd(terrain, {});
+        const auto sentinel = herd.Deer()[0];
+        const auto partner = herd.Deer()[1];
+        // Approach from the far side of the sentinel, 21 m out: inside its range, outside the
+        // partner's ordinary 18 m range.
+        const float dx = sentinel.x - partner.x, dz = sentinel.z - partner.z;
+        const float apart = std::max(std::hypot(dx, dz), 0.01f);
+        const float observerX = sentinel.x + dx / apart * 21.0f;
+        const float observerZ = sentinel.z + dz / apart * 21.0f;
+        herd.Update(0.05f, observerX, sentinel.y + 1.6f, observerZ);
+        Check(herd.SentinelAlert() && herd.SentinelAlertSeconds() < island::DeerHerd::HerdReactionSeconds,
+              "deer sentinel notices the observer at once");
+        Check(herd.Deer()[0].behavior == island::DeerBehavior::Rest,
+              "deer sentinel stands alert before its partner");
+        Check(herd.Deer()[1].behavior != island::DeerBehavior::Retreat,
+              "deer partner does not bolt at a distant observer");
+        for (int step = 0; step < 40; ++step) herd.Update(0.05f, observerX, sentinel.y + 1.6f, observerZ);
+        Check(herd.SentinelAlertSeconds() >= island::DeerHerd::HerdReactionSeconds,
+              "deer herd reaction delay elapses while the sentinel keeps watching");
+        herd.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
+        Check(!herd.SentinelAlert(), "deer sentinel relaxes once the observer is gone");
     }
 
     {
