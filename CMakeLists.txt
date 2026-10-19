@@ -698,6 +698,7 @@ if(ISLAND_BUILD_GAME)
         game/src/HutRenderer.cpp
         game/src/JettyRenderer.cpp
         game/src/BridgeRenderer.cpp
+        game/src/UnderwaterEffectRenderer.cpp
         game/src/HelicopterRenderer.cpp
         game/src/ShorelineRenderer.cpp
         game/src/SkyRenderer.cpp

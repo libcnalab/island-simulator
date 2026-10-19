@@ -2095,6 +2095,7 @@ namespace island
         debugOverlay_ = std::make_unique<DebugOverlay>(device);
         touchOverlay_ = std::make_unique<TouchOverlay>(device);
         waterViewOverlay_ = std::make_unique<WaterViewOverlay>(device);
+        underwaterEffect_ = std::make_unique<UnderwaterEffectRenderer>(device);
         worldDebugRenderer_ = std::make_unique<WorldDebugRenderer>(device, terrain_);
         if (viewpoint_ == FixedViewpoint::GroundContactDetail) {
             constexpr float contactZ = 45.0f;
@@ -2472,6 +2473,13 @@ namespace island
             waterViewAllowed && !flightMotion_.IsActive() && playerMotion_.Mode() == LocomotionMode::Swimming,
             playerMotion_.GroundHeight(), playerMotion_.OceanCurrentStrength(terrain_),
             deltaSeconds);
+        {
+            // A descent breathes out a burst of bubbles that thins over the next two seconds.
+            const float submerged = flightMotion_.IsActive() ? 0.0f : playerMotion_.SubmergedDepth();
+            const float descent = std::max(0.0f, submerged - lastSubmergedDepth_);
+            lastSubmergedDepth_ = submerged;
+            bubbleBurst_ = std::clamp(std::max(bubbleBurst_ - deltaSeconds * 0.5f, descent * 4.0f), 0.0f, 1.0f);
+        }
         const float rippleSpeed = viewpoint_ == FixedViewpoint::WaterlineDetail
             ? 1.35f
             : (viewpoint_ == FixedViewpoint::BenchmarkTraversal
@@ -4295,6 +4303,16 @@ namespace island
             waterViewOverlay_->Draw(waterViewModel_.Intensity(),
                                     playerMotion_.OceanCurrentStrength(terrain_),
                                     viewport.getWidthProperty(), viewport.getHeightProperty());
+        }
+        {
+            // Whatever is below the sea surface sees the shafts; only a swimmer breathes bubbles.
+            GpuDiagnosticScope gpuPass("underwater-effect");
+            const Vector3& eye = renderCameraPosition_;
+            const bool overSea = std::isfinite(eye.X) && std::isfinite(eye.Z)
+                && terrain_.Height(eye.X, eye.Z) < 0.0f && terrain_.SignedShoreDistance(eye.X, eye.Z) < 0.0f;
+            const float cameraDepth = overSea && eye.Y < 0.0f ? -eye.Y : 0.0f;
+            underwaterEffect_->Draw(cameraDepth, waterViewModel_.Intensity(), bubbleBurst_, timeSeconds,
+                                    cameraView_, viewport.getWidthProperty(), viewport.getHeightProperty());
         }
 
         if (locomotionModeNoticeSeconds_ > 0.0f) {

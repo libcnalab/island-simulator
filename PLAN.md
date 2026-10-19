@@ -46,6 +46,27 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Latest diving pass — light shafts, bubbles and seabed caustics
+
+Backlog item 20. `UnderwaterEffectRenderer` is a full-screen clip-space triangle drawn after
+the water-view veil whenever the render camera is below the sea surface over seabed (camera
+depth drives it, so the submerged QA cameras see it as a swimmer would): light shafts lean
+toward the sun's side of the frame (the sun direction transformed into view space gives the
+tilt, the facing and the height), brighten toward the top of the frame, fade with depth
+(`exp(-0.16 d)`) and flicker through two slow carriers; while the player is actually swimming
+(the veil intensity gates them) three lanes of ring-and-glint bubbles rise past the camera, and
+a descent breathes out a burst that thins over two seconds (`bubbleBurst_` from the change in
+`SubmergedDepth`). The pass adds light with zero coverage (premultiplied) so nothing darkens.
+The terrain material gains `uSeaSeconds` and seabed caustics: two wavy line families
+(`abs(sin)` warped by slow sines) cross into a bright net on ground 0.12–7.5 m below the surface,
+footprint-filtered, strongest a metre down, lit by the ground light; it is visible from a diver
+and through the surface from the beach. Diagnostics "underwater view adds sun-tilted light
+shafts, the diver's rising bubbles and moving seabed caustics" and "shallow seabed carries
+moving refracted-sun caustics that fade with depth and footprint", both pinned by the native
+capture tool. Inspected native `20261019T215158Z-reef-habitat` shows the shafts from above,
+bubbles and the caustic net around the coral; `reef` (from the surface), `tide-pools` and
+`fish` pass their gates.
+
 ## Latest crossing pass — a rope bridge over the stream and plank footsteps
 
 Backlog item 14 (the walkable member; the tree lookout stays open). `BridgeLayout::FindInWorld`

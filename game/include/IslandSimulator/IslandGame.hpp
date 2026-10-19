@@ -95,6 +95,7 @@
 #include "IslandSimulator/HutRenderer.hpp"
 #include "IslandSimulator/BridgeRenderer.hpp"
 #include "IslandSimulator/JettyRenderer.hpp"
+#include "IslandSimulator/UnderwaterEffectRenderer.hpp"
 #include "IslandSimulator/HelicopterLayout.hpp"
 #include "IslandSimulator/HelicopterRenderer.hpp"
 #include "IslandSimulator/ShorelineRenderer.hpp"
@@ -443,6 +444,8 @@ namespace island
         std::unique_ptr<HutRenderer> hutRenderer_;
         std::unique_ptr<JettyRenderer> jettyRenderer_;
         std::unique_ptr<BridgeRenderer> bridgeRenderer_;
+        std::unique_ptr<UnderwaterEffectRenderer> underwaterEffect_;
+        float lastSubmergedDepth_ = 0.0f, bubbleBurst_ = 0.0f;
         std::unique_ptr<HelicopterRenderer> helicopterRenderer_;
         std::unique_ptr<ShorelineRenderer> shorelineRenderer_;
         std::unique_ptr<SkyRenderer> skyRenderer_;

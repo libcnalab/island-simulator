@@ -49,7 +49,7 @@ here as done with their `PLAN.md` evidence reference.
 17. [x] Fruit in crowns and fallen coconuts (PLAN "Latest harvest pass", `fruit` viewpoint).
 18. [x] Fungi on logs and moss on rocks (PLAN "Latest decay pass", `log` viewpoint).
 19. [x] Player shadow and surface-dependent footsteps (PLAN "Latest player-presence pass").
-20. [ ] Diving details: light shafts, bubbles, caustics on the seabed.
+20. [x] Diving details (PLAN "Latest diving pass — light shafts, bubbles and seabed caustics").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

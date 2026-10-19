@@ -943,6 +943,10 @@ def main():
                 raise RuntimeError("current jetty is missing; check for a stale executable")
             if "rope bridge crosses the stream's lower reach on a sagging plank walkway with hand ropes; the walker crosses dry" not in diagnostics:
                 raise RuntimeError("current rope bridge is missing; check for a stale executable")
+            if "shallow seabed carries moving refracted-sun caustics that fade with depth and footprint" not in diagnostics:
+                raise RuntimeError("current seabed caustics are missing; check for a stale executable")
+            if "underwater view adds sun-tilted light shafts, the diver's rising bubbles and moving seabed caustics" not in diagnostics:
+                raise RuntimeError("current underwater effect pass is missing; check for a stale executable")
             if "seabed ripples stay below the waterline in short near trains and beach flecks fade with the ground footprint" not in diagnostics:
                 raise RuntimeError("current seabed ripple confinement is missing; check for a stale executable")
             if "canopy per-tree frustum boxes contain both LODs and wind" not in diagnostics:

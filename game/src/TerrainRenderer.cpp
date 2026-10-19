@@ -100,6 +100,8 @@ namespace island
             "island-simulator: low coastal cliffs retain salt-worn mineral colour, distance-stable macro strata, drainage streaks, and cool open-sky fill";
         constexpr std::string_view RippleTrainDiagnostic =
             "island-simulator: seabed ripples stay below the waterline in short near trains and beach flecks fade with the ground footprint";
+        constexpr std::string_view SeabedCausticDiagnostic =
+            "island-simulator: shallow seabed carries moving refracted-sun caustics that fade with depth and footprint";
         constexpr std::string_view HillsideGrainDiagnostic =
             "island-simulator: open inland ground keeps footprint-filtered metre-scale tussock grain through the mid distance";
 
@@ -151,6 +153,7 @@ uniform vec4 uBunkerFrame;
 uniform vec3 uCameraPosition;
 uniform vec3 uToSun;
 uniform vec2 uSandWind;
+uniform float uSeaSeconds;
 uniform vec4 uPrimaryPathShape;
 uniform vec2 uPrimaryPathZRange;
 uniform vec3 uEastClearing;
@@ -518,6 +521,23 @@ void main()
             color = mix(color, vec3(0.66, 0.49, 0.40) * vGroundLight,
                         roseShell * shallowSandDetail * 0.25);
         }
+    }
+
+    // Refracted sunlight on the shallow seabed: a slowly warping bright network, strongest a
+    // metre down, gone by seven metres, and footprint-filtered like every other fine field.
+    float causticVisibility = smoothstep(0.12, 0.55, bedDepth)
+        * (1.0 - smoothstep(4.5, 7.5, bedDepth))
+        * (1.0 - smoothstep(0.035, 0.12, groundPixelWidth));
+    if (causticVisibility > 0.0) {
+        vec2 q = p * 0.85;
+        float ts = uSeaSeconds;
+        float webA = abs(sin(q.x * 2.4 + 0.9 * sin(q.y * 1.3 + ts * 0.70) + ts * 0.40));
+        float webB = abs(sin(q.y * 2.1 + 0.9 * sin(q.x * 1.1 - ts * 0.60) - ts * 0.30));
+        // Two wavy line families cross into the familiar net; each line is thin and bright.
+        float lineA = pow(max(0.0, 1.0 - webA * 1.7), 3.0);
+        float lineB = pow(max(0.0, 1.0 - webB * 1.7), 3.0);
+        float web = min(1.0, lineA + lineB);
+        color += vec3(0.17, 0.21, 0.19) * web * causticVisibility * vGroundLight;
     }
 
     float groundVariation = (broad * 0.160 + landMiddle * 0.075
@@ -1207,6 +1227,8 @@ void main()
                     MirrorRuntimeDiagnosticToPlatformLog(CoastalCliffFillDiagnostic);
                     std::cout << HillsideGrainDiagnostic << '\n';
                     MirrorRuntimeDiagnosticToPlatformLog(HillsideGrainDiagnostic);
+                    std::cout << SeabedCausticDiagnostic << '\n';
+                    MirrorRuntimeDiagnosticToPlatformLog(SeabedCausticDiagnostic);
                     std::cout << RippleTrainDiagnostic << '\n';
                     MirrorRuntimeDiagnosticToPlatformLog(RippleTrainDiagnostic);
                 } else {
@@ -1450,6 +1472,7 @@ void main()
             (view * projection).ToColumnMajor(viewProjection);
             materialEffect_->Apply();
             CampfireLighting::Bind(*materialEffect_,seconds);
+            materialEffect_->SetUniformFloat("uSeaSeconds",std::isfinite(seconds)?std::remainder(seconds,628.31853f):0.0f);
             canopyLighting_.Bind(*materialEffect_);
             forestFloor_->Bind(*materialEffect_);
             if (sunShadow_) sunShadow_->Bind(*materialEffect_);
