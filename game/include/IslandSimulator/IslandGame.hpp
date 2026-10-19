@@ -183,6 +183,7 @@ namespace island
         MonkeyTreeDetail,
         MonkeyClimbDetail,
         ShipwreckDetail,
+        ShipwreckWide,
         HutDetail,
         HutMaterialDetail,
         HelicopterDetail,

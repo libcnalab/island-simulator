@@ -200,7 +200,9 @@ void main()
     vWorld = world.xyz;
     vLocal = aPosition;
     vGroundHeight = groundHeight;
-    // Placements use uniform positive scale and yaw. No inverse-transpose is needed here.
+    // Placements use positive scale and yaw; ground plants add a mild (+/-16%) squat-or-tall
+    // proportion, whose normal skew is far below the leaf lighting's tolerance, so no
+    // inverse-transpose is needed here.
     vLeafNormal = mat3(instanceTransform) * aNormal;
     vLeaf = aLeaf;
     // All vertices of a tagged wood primitive share the same exact integer seed. Reuse the
@@ -2204,13 +2206,23 @@ void main()
         for (const GroundPlantPlacement& source : layout.GroundPlants()) {
             const auto plant = GroundJunglePlacement(source, *surface);
             JungleCell& cell = cells_[CellIndex(plant.x, plant.z)];
-            cell.groundPlants.push_back({Matrix::CreateScale(plant.scale)
+            // Three mesh variants at uniform scale read as one repeated stamp across the
+            // forest floor.  A deterministic squat-to-tall proportion per placement (spread
+            // against height, within +/-16%) varies every silhouette without a new mesh,
+            // buffer or draw; near and far LODs share the same instance so they agree.
+            const float proportionSeed = std::fmod(std::abs(source.x * 12.9898f
+                + source.z * 78.233f + static_cast<float>(source.variant) * 3.7f), 1.0f);
+            const float heightFactor = 0.84f + 0.32f * proportionSeed;
+            const float spreadFactor = 1.16f - 0.32f * proportionSeed;
+            cell.groundPlants.push_back({Matrix::CreateScale(plant.scale * spreadFactor,
+                                                             plant.scale * heightFactor,
+                                                             plant.scale * spreadFactor)
                                              * Matrix::CreateRotationY(plant.yawRadians)
                                              * Matrix::CreateTranslation(
                                                  plant.x, plant.y, plant.z),
                                          plant.variant, plant.x, plant.z,
                                          GroundPlantNearDistance * GroundPlantNearDistance});
-            extendMeshBounds(cell, plant.x, plant.y, plant.z, plant.scale,
+            extendMeshBounds(cell, plant.x, plant.y, plant.z, plant.scale * 1.16f,
                              groundPlantNearMeshes_[plant.variant], groundPlantFarMeshes_[plant.variant]);
             if (customShaderReady_ && plant.variant == 0) {
                 const float radius = GroundLitterRadius * plant.scale;

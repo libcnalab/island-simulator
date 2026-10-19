@@ -8,11 +8,18 @@ Done 2026-10-19 (evidence in the matching `PLAN.md` items): cave overhead mantle
 hashed 401 tufts, `cave-top` in the Web cave scope); spider discoverability on ordinary jungle
 views plus current Chrome evidence; permanent eye-height `helicopter-approach` viewpoint with
 native/Chrome/Android evidence; `IslandCloseObserverTurningTests` multi-species turning audit,
-which fixed double per-frame turns in `DeerHerd` and `CrocodileGroup`.
+which fixed double per-frame turns in `DeerHerd` and `CrocodileGroup`; `shipwreck-wide` matched
+landmark comparison and debris integration review (sand scour/drift mound against the hull
+deferred as terrain-replacement polish); ground-plant per-placement proportion variation for the
+jungle-floor repetition critique.
 
-1. Whole-island critique: one inspected jungle-floor/canopy repetition improvement and a
-   moving-edge aliasing review.
-2. Shipwreck: wide matched comparison and debris sand/water integration review.
+Also done: moving-edge review (Chrome `grass-motion` rerun passes after the F7 east-clearing
+teleport was moved 6 m west of the campfire pit); final Web/Android rebuilds and the full native
+suite pass on the committed sources.
+
+The agent-actionable backlog is empty. Next whole-island critique target, observed in the moving
+frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted
+green surface with soft dark blotches where the forest-material classification fades.
 
 Not agent-actionable (stay open in `PLAN.md`; need the operator or physical hardware): human
 speaker/headphone listening (goat, boar, fly, snake hiss, audio-focus lifecycle), the physical-GPU

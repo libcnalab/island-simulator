@@ -460,6 +460,19 @@ GL0, live context and kernel `[]`. Android ARM64 assemble/lint pass without an e
 `fa86221e28c9d739812a31d8c509cde4700446faf8683bac1645f66f9a3d8e88` and contains a
 19,723,048-byte `libmain.so`. Physical Android and hardware-GPU runtime remain unqualified.
 
+2026-10-19 wide matched comparison and integration review: a permanent `shipwreck-wide`
+viewpoint now frames the wreck from fifty metres along the beach at eye height on the same
+bearing as the close QA camera. Inspected native `20261019T172757.218915Z-shipwreck-wide` passes
+(320 bins, luminance deviation 23.62, spatial contrast 133.50, kernel `[]`): at landmark distance
+the two settled hull sections, deckhouse, masts and rigging read as one coherent beached ship
+against the palms and surf, with no detached or floating silhouette. The matched close frame
+`20261019T172506.506864Z-shipwreck` shows the twelve debris planks lying on and partly buried in
+the dry sand with contact shadows and no intersections; the remaining integration defect is that
+the land-side hull half shows its bilge curvature above a visible shadow band instead of a sand
+scour/drift mound against the planking, because the beach surface is not deformed around the
+wreck. That sand-drift pass is deferred polish; it needs a bounded terrain replacement like the
+cave mantle rather than a renderer tweak.
+
 ## Latest landmark visual-audit implementation — articulated bunker access and generator cage
 
 The current landmark matrix selected the underground bunker ahead of the already rounded helicopter,
@@ -854,6 +867,37 @@ remaining material work is:
 
 - continue whole-island visual critique, especially jungle-floor/canopy repetition and any
   moving-edge aliasing that is visible in ordinary first-person play;
+  2026-10-19 jungle-floor pass: a fresh ordinary `jungle` frame (`20261019T170503.742767Z`)
+  showed the three ground-plant mesh variants as one repeated stamp, every copy at the same
+  proportion. Each placement now carries a deterministic squat-to-tall proportion (height
+  +/-16% against spread, seeded from its position and variant) inside the existing instance
+  transform, so silhouettes differ with no new mesh, buffer, draw or population change and the
+  near/far LODs stay in agreement. Inspected native `20261019T173207.937648Z-jungle` passes
+  (291 bins, luminance deviation 46.29, spatial contrast 212.96) and the matched
+  `173223.475933Z-ground` close frame shows visibly unequal neighbouring plants; that `ground`
+  view's generic luminance gate (17.02 against 18.0) was already failing before this change
+  (`20261016T211513.767492Z-ground`, 16.78) and is a profile question for the shaded floor
+  camera, not a regression. Jungle, canopy and core suites pass. Chrome 155/SwiftShader
+  `20261019T173924.567715Z-chrome-ground-broadleaf` passes with 60 positive intervals, GL error
+  zero, a live context and no kernel faults on the rebuilt Web package. Android ARM64
+  assemble/lint of the final 2026-10-19 sources pass (pinned Sharp Runtime, no emulator): the
+  24,841,507-byte APK has SHA-256
+  `614ca305708c7b5192377a026d13b5f898016482e6a55600a68ce9ba974f965a` and contains a
+  19,798,936-byte `libmain.so`. All 73 active native tests and 48 harness tests pass.
+  2026-10-19 moving-edge review: the Chrome 155/SwiftShader `grass-motion` scope was rerun on
+  the current build. Its first attempt (`20261019T172716.389022Z-chrome-grass-motion`, retained)
+  failed before any motion because the F7 east-clearing debug teleport landed on the clearing
+  centre, which the campfire pit has occupied since 2026-10-17, and collision displaced the
+  player off the expected start. The teleport now lands six metres west of the pit (`x 37
+  z -18`; harness pattern and start check updated), and the rerun
+  `20261019T173153.801310Z-chrome-grass-motion` passes: 83 distinct rendered frames, 91 telemetry
+  samples, 42 grass LOD states, 20 canopy transitions across 10 trees and 40 bush transitions
+  across 20 plants, return error 0, GL error zero, live context and no kernel faults. The
+  inspected step frames show no whole-crown disappearance, grass wall or bush pop at a tier
+  boundary. The most visible remaining defect in those moving frames is not an edge: the open
+  mid-distance hillside (about 20--40 m) reads as a smooth painted green surface with soft dark
+  blotches where the forest-material classification fades, which is the next whole-island
+  critique target.
 - complete subjective headphone/speaker listening and real audio-focus/lifecycle checks; the
   recorded traversal, material/lighting and wildlife/motion plus automated long-session sound
   passes are complete;

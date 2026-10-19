@@ -170,6 +170,7 @@ namespace island
             case FixedViewpoint::MonkeyTreeDetail: return "monkey-tree";
             case FixedViewpoint::MonkeyClimbDetail: return "monkey-climb";
             case FixedViewpoint::ShipwreckDetail: return "shipwreck";
+            case FixedViewpoint::ShipwreckWide: return "shipwreck-wide";
             case FixedViewpoint::HutDetail: return "hut";
             case FixedViewpoint::HutMaterialDetail: return "hut-material";
             case FixedViewpoint::HelicopterDetail: return "helicopter";
@@ -1312,23 +1313,31 @@ namespace island
             const Vector3 toMonkey = monkeyTarget-cameraPosition_;
             yaw_ = std::atan2(toMonkey.X, toMonkey.Z);
             pitch_ = std::atan2(toMonkey.Y, std::hypot(toMonkey.X, toMonkey.Z));
-        } else if (viewpoint_ == FixedViewpoint::ShipwreckDetail) {
+        } else if (viewpoint_ == FixedViewpoint::ShipwreckDetail
+                   || viewpoint_ == FixedViewpoint::ShipwreckWide) {
             const ShipwreckPlacement& ship = shipwreckLayout_.Ship();
             const float radius = std::hypot(ship.x, ship.z);
             const float outwardX = ship.x / radius;
             const float outwardZ = ship.z / radius;
             const float tangentX = -outwardZ;
             const float tangentZ = outwardX;
-            const float cameraX = ship.x - outwardX * 17.5f + tangentX * 4.8f;
-            const float cameraZ = ship.z - outwardZ * 17.5f + tangentZ * 4.8f;
+            // The wide stance is the matched landmark-distance comparison: the same bearing
+            // from the beach, but fifty metres along the shore at ordinary eye height.
+            const bool wide = viewpoint_ == FixedViewpoint::ShipwreckWide;
+            const float cameraX = ship.x - outwardX * (wide ? 14.0f : 17.5f)
+                + tangentX * (wide ? 50.0f : 4.8f);
+            const float cameraZ = ship.z - outwardZ * (wide ? 14.0f : 17.5f)
+                + tangentZ * (wide ? 50.0f : 4.8f);
             cameraPosition_ = Vector3(cameraX, terrain_.Height(cameraX, cameraZ)
                                                    + PlayerMotion::EyeHeight,
                                       cameraZ);
             const Vector3 toShip = Vector3(ship.x, 1.2f, ship.z) - cameraPosition_;
             yaw_ = std::atan2(toShip.X, toShip.Z);
             pitch_ = std::atan2(toShip.Y, std::hypot(toShip.X, toShip.Z));
-            std::cout << "island-simulator: shipwreck QA camera views the 20m wreck "
-                         "from the beach\n";
+            std::cout << (wide ? "island-simulator: shipwreck QA camera views the 20m wreck "
+                                 "from fifty metres along the beach\n"
+                               : "island-simulator: shipwreck QA camera views the 20m wreck "
+                                 "from the beach\n");
         } else if (viewpoint_ == FixedViewpoint::HutDetail || viewpoint_ == FixedViewpoint::HutMaterialDetail) {
             if(!hutPlacement_) throw std::runtime_error("Hut QA requires a valid site");
             const auto& h=*hutPlacement_;
@@ -3101,7 +3110,9 @@ namespace island
                     yaw_ = std::numbers::pi_v<float> * 0.5f;
                     pitch_ = -0.065f;
                 } else if (index == 2U) {
-                    x = VegetationLayout::EastClearing.x;
+                    // The campfire pit now occupies the clearing centre; land six metres
+                    // west of it so collision does not displace the teleported player.
+                    x = VegetationLayout::EastClearing.x - 6.0f;
                     z = VegetationLayout::EastClearing.z;
                     yaw_ = -std::numbers::pi_v<float> * 0.5f;
                 } else if (index == 3U) {

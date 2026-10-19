@@ -475,7 +475,8 @@ try {
       });
       startCount = initial.all.length;
       const start = initial.latest;
-      if (Math.hypot(start.x - 43, start.z + 18) > 0.1) {
+      // Six metres west of the clearing centre, clear of the campfire pit collision.
+      if (Math.hypot(start.x - 37, start.z + 18) > 0.1) {
         throw new Error("Grass motion did not start at the east clearing");
       }
       await snapshot(0, start);
@@ -713,7 +714,7 @@ try {
             // Fixed 650 ms F7 pulses fell between frame-polled updates on heavily loaded
             // SwiftShader frames (two retained 2026-10-10 failures with only a focus event).
             // Hold one actual key-down until the game acknowledges the teleport, as F1 does.
-            const teleportPattern = "island-simulator: debug teleport east clearing x 43 z -18";
+            const teleportPattern = "island-simulator: debug teleport east clearing x 37 z -18";
             const teleportEvidence = {};
             const teleportInspect = async () => (await call("Runtime.evaluate", {
               expression: `({ focused: document.hasFocus(), visibility: document.visibilityState,
