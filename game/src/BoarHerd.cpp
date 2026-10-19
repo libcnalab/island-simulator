@@ -141,12 +141,23 @@ namespace island
             ? std::hypot(state.x - observerX, state.z - observerZ)
             : std::numeric_limits<float>::infinity();
         agent.remainingSeconds -= dt;
+        const bool oddAgent = (static_cast<std::size_t>(&agent - agents_.data()) % 2U) == 1U;
+        bool alertFacing = false;
         if (observerDistance < 6.0f) {
             state.behavior = BoarBehavior::Retreat;
             agent.remainingSeconds = 2.0f;
+            // Trot off about seventy degrees from the direct line of escape so the boar
+            // presents its flank, keeping the player in view, rather than its rump.
             if (observerDistance > 0.001f) {
-                agent.targetHeading = std::atan2(state.z - observerZ, state.x - observerX);
+                agent.targetHeading = Wrap(std::atan2(state.z - observerZ, state.x - observerX)
+                    + (oddAgent ? -1.22f : 1.22f));
             }
+        } else if (observerDistance < AlertDistance) {
+            // Stand and face the approaching player; foraging resumes once they leave.
+            state.behavior = BoarBehavior::Rest;
+            agent.remainingSeconds = std::max(agent.remainingSeconds, 0.5f);
+            agent.targetHeading = std::atan2(observerZ - state.z, observerX - state.x);
+            alertFacing = true;
         } else if (agent.remainingSeconds <= 0.0f) {
             const float choice = Sequence(++agent.decisions);
             state.behavior = state.behavior == BoarBehavior::Wander
@@ -155,7 +166,8 @@ namespace island
             agent.remainingSeconds = 3.0f + choice * 6.0f;
             agent.targetHeading = Wrap(state.headingRadians + (choice - 0.5f) * 3.4f);
         }
-        if (std::hypot(state.x - state.homeX, state.z - state.homeZ) > HomeRadius * 0.72f) {
+        if (!alertFacing
+            && std::hypot(state.x - state.homeX, state.z - state.homeZ) > HomeRadius * 0.72f) {
             agent.targetHeading = std::atan2(state.homeZ - state.z, state.homeX - state.x);
         }
         state.headingRadians = Wrap(state.headingRadians + std::clamp(

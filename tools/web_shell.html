@@ -60,7 +60,11 @@
     canvas.addEventListener("mousedown", event => {
       canvas.focus();
       if (event.button === 0 && document.pointerLockElement !== canvas) {
-        canvas.requestPointerLock();
+        // Raw, unaccelerated motion where the browser offers it; the plain lock is the fallback.
+        const lock = canvas.requestPointerLock({ unadjustedMovement: true });
+        if (lock && typeof lock.catch === "function") {
+          lock.catch(() => canvas.requestPointerLock());
+        }
       }
     });
     document.addEventListener("pointerlockchange", () => {

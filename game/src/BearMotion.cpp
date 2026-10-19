@@ -178,10 +178,17 @@ void BearMotion::Step(float seconds,BearPoint observer,bool observerValid) {
     remaining_-=seconds;avoidance_=std::max(0.0f,avoidance_-seconds);
     const float observerDistance=observerValid?std::hypot(state_.x-observer.x,state_.y+.8f-observer.y,state_.z-observer.z)
         :std::numeric_limits<float>::infinity();
+    bool alertFacing=false;
     if(observerDistance<12) {
         state_.behavior=BearBehavior::Withdraw;remaining_=1.8f;
         const float dx=state_.x-observer.x,dz=state_.z-observer.z;
-        if(std::hypot(dx,dz)>.01f)targetHeading_=std::atan2(dx,dz);
+        // Withdraw about seventy degrees off the direct line away, keeping the player in
+        // view along its flank rather than turning its back on them.
+        if(std::hypot(dx,dz)>.01f)targetHeading_=Wrap(std::atan2(dx,dz)+(decisions_%2?1.22f:-1.22f));
+    } else if(observerDistance<AlertDistance) {
+        // Stop and face the approaching player; roaming resumes once they leave.
+        state_.behavior=BearBehavior::Idle;remaining_=std::max(remaining_,.5f);
+        targetHeading_=std::atan2(observer.x-state_.x,observer.z-state_.z);alertFacing=true;
     } else if(remaining_<=0) {
         const float choice=UnitRandom(++decisions_*92821U+0x4b1dU);
         state_.behavior=choice<.18f?BearBehavior::Rest:choice<.40f?BearBehavior::Forage:
@@ -189,7 +196,7 @@ void BearMotion::Step(float seconds,BearPoint observer,bool observerValid) {
         remaining_=state_.behavior==BearBehavior::Rest?7+choice*7:3+choice*6;
         targetHeading_=Wrap(state_.heading+(choice-.5f)*3.5f);
     }
-    if(std::hypot(state_.x-state_.homeX,state_.z-state_.homeZ)>HomeRadius-5)
+    if(!alertFacing&&std::hypot(state_.x-state_.homeX,state_.z-state_.homeZ)>HomeRadius-5)
         targetHeading_=std::atan2(state_.homeX-state_.x,state_.homeZ-state_.z);
     const float targetSpeed=state_.behavior==BearBehavior::Trot?MaximumSpeed:
         state_.behavior==BearBehavior::Withdraw?1.25f:state_.behavior==BearBehavior::Walk?.68f:0;

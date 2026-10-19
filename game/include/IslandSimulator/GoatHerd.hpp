@@ -15,6 +15,8 @@ struct GoatState {
 class GoatHerd final {
 public:
     static constexpr float HomeRadius=14,MaximumSpeed=1.2f;
+    // Within this range a goat stops and faces the player; closer than 7 m it sidesteps away.
+    static constexpr float AlertDistance=14.0f;
     GoatHerd(const IslandTerrain& terrain,const JungleLayout& jungle,
         std::span<const CircularObstacle> obstacles);
     void Update(float dt,GoatPoint observer);

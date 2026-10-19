@@ -1,6 +1,7 @@
 #include "IslandSimulator/GoatHerd.hpp"
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <numbers>
 #include <stdexcept>
 #include <vector>
@@ -143,11 +144,22 @@ void GoatHerd::Step(std::size_t index,float dt,GoatPoint observer,bool observerV
     auto& state=states_[index];auto& intent=intents_[index];
     intent.remaining-=dt;
     intent.avoidance=std::max(0.0f,intent.avoidance-dt);
-    const bool retreat=observerValid&&std::hypot(state.x-observer.x,state.y+.8f-observer.y,state.z-observer.z)<7;
+    const float observerRange=observerValid
+        ?std::hypot(state.x-observer.x,state.y+.8f-observer.y,state.z-observer.z)
+        :std::numeric_limits<float>::infinity();
+    const bool retreat=observerRange<7;
     if(retreat) {
         state.behavior=GoatBehavior::Retreat;intent.remaining=.75f;
         const float dx=state.x-observer.x,dz=state.z-observer.z;
-        if(intent.avoidance==0&&std::hypot(dx,dz)>.01f) intent.targetHeading=std::atan2(dz,dx);
+        // Sidestep about seventy degrees off the direct line of escape.  The goat keeps the
+        // player in view over its shoulder instead of turning its rump squarely to them.
+        if(intent.avoidance==0&&std::hypot(dx,dz)>.01f)
+            intent.targetHeading=Wrap(std::atan2(dz,dx)+(index%2==0?1.22f:-1.22f));
+    } else if(observerRange<AlertDistance) {
+        // Stand and watch the approaching player; ordinary wandering resumes once they leave.
+        state.behavior=GoatBehavior::Rest;intent.remaining=std::max(intent.remaining,.5f);
+        if(intent.avoidance==0)
+            intent.targetHeading=std::atan2(observer.z-state.z,observer.x-state.x);
     } else if(intent.remaining<=0) {
         const auto bits=Mix(GoatHabitat::Seed+static_cast<std::uint32_t>(index)*7919U+(++intent.decisions)*104729U);
         state.behavior=bits%5<3?GoatBehavior::Walk:(bits%5==3?GoatBehavior::Graze:GoatBehavior::Rest);
@@ -156,8 +168,12 @@ void GoatHerd::Step(std::size_t index,float dt,GoatPoint observer,bool observerV
         if(std::hypot(state.x-homes_[index].x,state.z-homes_[index].z)>HomeRadius-3)
             intent.targetHeading=std::atan2(homes_[index].z-state.z,homes_[index].x-state.x);
     }
+    // An alert goat shuffles slowly through its ordinary stepping until it faces the
+    // player, rather than pivoting on planted hooves, then stands and watches.
+    const bool alertTurning=observerRange<AlertDistance&&!retreat
+        &&std::abs(Wrap(intent.targetHeading-state.heading))>.18f;
     const float desired=state.behavior==GoatBehavior::Retreat?MaximumSpeed:
-        (state.behavior==GoatBehavior::Walk?.65f:0);
+        (state.behavior==GoatBehavior::Walk?.65f:alertTurning?.25f:0);
     state.speed+=std::clamp(desired-state.speed,-1.5f*dt,.8f*dt);
     const float graze=state.behavior==GoatBehavior::Graze&&state.speed<.05f?1.0f:0.0f;
     state.grazingPose+=std::clamp(graze-state.grazingPose,-2*dt,dt);

@@ -31,6 +31,8 @@ namespace island
     {
     public:
         static constexpr std::size_t Count = 4U;
+        // Within this range a deer stands alert facing the player; closer than 9 m it bounds off obliquely.
+        static constexpr float AlertDistance = 18.0f;
         static constexpr float FullSimulationDistance = 90.0f;
         static constexpr float ReducedSimulationDistance = 190.0f;
 

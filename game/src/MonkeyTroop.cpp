@@ -391,8 +391,12 @@ namespace island
             awayX = std::cos(angle);
             awayZ = std::sin(angle);
         }
+        // Prefer an escape line about sixty-five degrees off the direct line away, so the
+        // monkey keeps the player in view along its flank; widen around it only if blocked.
+        const float side = (agent.decisionCounter % 2U) == 0U ? 1.15f : -1.15f;
         for (int attempt = 0; attempt < 18; ++attempt) {
-            const float turn = (static_cast<float>(attempt) - 8.5f) * 0.10f;
+            const float turn = side + (attempt % 2 == 0 ? 1.0f : -1.0f)
+                * static_cast<float>((attempt + 1) / 2) * 0.12f;
             const float candidateX = awayX * std::cos(turn) - awayZ * std::sin(turn);
             const float candidateZ = awayX * std::sin(turn) + awayZ * std::cos(turn);
             const float distance = 16.0f + static_cast<float>(attempt % 4) * 2.5f;

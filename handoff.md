@@ -17,6 +17,12 @@ Also done: moving-edge review (Chrome `grass-motion` rerun passes after the F7 e
 teleport was moved 6 m west of the campfire pit); final Web/Android rebuilds and the full native
 suite pass on the committed sources.
 
+Operator follow-ups 2026-10-19 (in `PLAN.md` under the 2026-10-12 priorities): animals now stop
+and face an approaching player and retreat obliquely instead of turning their backs (gated by
+`IslandCloseObserverTurningTests`; goat/boar gait capture clocks ignore the QA camera); the Web
+build scales mouse look 2.5x and requests unadjusted pointer-lock motion. Both need the operator's
+in-play confirmation (desktop facing feel, browser mouse travel) before `[x]`.
+
 The agent-actionable backlog is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted
 green surface with soft dark blotches where the forest-material classification fades.

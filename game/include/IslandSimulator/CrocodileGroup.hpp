@@ -39,6 +39,8 @@ struct CrocodileHome {
 class CrocodileGroup final {
 public:
     static constexpr std::size_t CrocodileCount=3;
+    // Within this range a crocodile lies facing the player; closer than 14 m it slides off obliquely.
+    static constexpr float AlertDistance=24.0f;
     static constexpr float FullSimulationDistance=150;
     static constexpr float ReducedSimulationDistance=360;
 

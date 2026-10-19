@@ -49,6 +49,11 @@ struct Species {
     // tiers, which integrate several frames at once by design; only full-tier agents, the
     // ones a player can actually watch, are held to the per-frame ceiling.
     float fullSimulationDistance;
+    // Between its flight and alert distances a species stands and faces the watcher; zero
+    // skips the facing check for species that only track with the head (monkeys) or have
+    // no facing stance (snakes).  zForward marks the bear's atan2(x, z) heading convention.
+    float facingDistance;
+    bool zForward;
     std::size_t count;
     std::function<Point(std::size_t)> position;
     std::function<float(std::size_t)> heading;
@@ -129,6 +134,29 @@ void Audit(const Species& species) {
     // guard for the slower turns, not a gait gate (those live in the per-species suites).
     Check(maximumDisplacement<=6.0f*Step,
           std::string(species.name)+": body teleported during the close approach");
+    if(species.facingDistance<=0)return;
+    // Now stand at the alert distance for eight seconds: the lead agent must settle facing
+    // the watcher, standing still, instead of grazing on or showing its rump.
+    const Point settled=species.position(0);
+    const float settledHeading=species.heading(0);
+    observer={settled.x+std::sin(settledHeading)*species.facingDistance,settled.y+1.7f,
+              settled.z+std::cos(settledHeading)*species.facingDistance};
+    Point before=settled;
+    for(int frame=0;frame<480;++frame) {
+        species.update(observer.x,observer.y,observer.z);
+        if(frame==360)before=species.position(0);
+    }
+    const Point after=species.position(0);
+    const float toward=species.zForward
+        ?std::atan2(observer.x-after.x,observer.z-after.z)
+        :std::atan2(observer.z-after.z,observer.x-after.x);
+    const float facingError=std::abs(std::remainder(species.heading(0)-toward,Tau));
+    const float drift=std::hypot(after.x-before.x,after.z-before.z);
+    std::cout<<species.name<<": facing error "<<facingError<<" rad at "
+             <<std::hypot(after.x-observer.x,after.z-observer.z)<<" m, final two-second drift "
+             <<drift<<" m\n";
+    Check(facingError<=.45f,std::string(species.name)+": does not face a watcher at alert distance");
+    Check(drift<=.35f,std::string(species.name)+": keeps wandering while watched at alert distance");
 }
 }
 
@@ -149,31 +177,31 @@ int main() {
         occupied.push_back({hut->x,hut->z,HutLayout::CollisionRadius});
 
         GoatHerd goats(terrain,jungle,occupied);
-        Audit({"goats",1.8f,std::numeric_limits<float>::infinity(),goats.Goats().size(),
+        Audit({"goats",1.8f,std::numeric_limits<float>::infinity(),10.5f,false,goats.Goats().size(),
             [&](std::size_t i){const auto& s=goats.Goats()[i];return Point{s.x,s.y,s.z};},
             [&](std::size_t i){return goats.Goats()[i].heading;},
             [&](float x,float y,float z){goats.Update(Step,GoatPoint{x,y,z});}});
 
         BoarHerd boars(terrain,occupied);
-        Audit({"boars",2.1f,BoarHerd::FullSimulationDistance,boars.Boars().size(),
+        Audit({"boars",2.1f,BoarHerd::FullSimulationDistance,9.0f,false,boars.Boars().size(),
             [&](std::size_t i){const auto& s=boars.Boars()[i];return Point{s.x,s.y,s.z};},
             [&](std::size_t i){return boars.Boars()[i].headingRadians;},
             [&](float x,float y,float z){boars.Update(Step,x,y,z);}});
 
         DeerHerd deer(terrain,occupied);
-        Audit({"deer",1.45f,DeerHerd::FullSimulationDistance,deer.Deer().size(),
+        Audit({"deer",1.45f,DeerHerd::FullSimulationDistance,13.5f,false,deer.Deer().size(),
             [&](std::size_t i){const auto& s=deer.Deer()[i];return Point{s.x,s.y,s.z};},
             [&](std::size_t i){return deer.Deer()[i].headingRadians;},
             [&](float x,float y,float z){deer.Update(Step,x,y,z);}});
 
         BearMotion bear(terrain,occupied);
-        Audit({"bear",.78f,std::numeric_limits<float>::infinity(),1,
+        Audit({"bear",.78f,std::numeric_limits<float>::infinity(),16.0f,true,1,
             [&](std::size_t){const auto& s=bear.State();return Point{s.x,s.y,s.z};},
             [&](std::size_t){return bear.State().heading;},
             [&](float x,float y,float z){bear.Update(Step,BearPoint{x,y,z});}});
 
         CrocodileGroup crocodiles(terrain);
-        Audit({"crocodiles",1.15f,CrocodileGroup::FullSimulationDistance,crocodiles.Crocodiles().size(),
+        Audit({"crocodiles",1.15f,CrocodileGroup::FullSimulationDistance,19.0f,false,crocodiles.Crocodiles().size(),
             [&](std::size_t i){const auto& s=crocodiles.Crocodiles()[i];return Point{s.x,s.y,s.z};},
             [&](std::size_t i){return crocodiles.Crocodiles()[i].headingRadians;},
             [&](float x,float y,float z){crocodiles.Update(Step,x,y,z);}});
@@ -181,7 +209,7 @@ int main() {
         MonkeyTroop monkeys(terrain);
         monkeys.SetObstacles(occupied);
         Audit({"monkeys",std::max(MonkeyTroop::MaximumGroundTurnRate,MonkeyTroop::MaximumRetreatTurnRate),
-            MonkeyTroop::FullSimulationDistance,monkeys.Monkeys().size(),
+            MonkeyTroop::FullSimulationDistance,0.0f,false,monkeys.Monkeys().size(),
             [&](std::size_t i){const auto& s=monkeys.Monkeys()[i];return Point{s.x,s.y,s.z};},
             [&](std::size_t i){return monkeys.Monkeys()[i].headingRadians;},
             [&](float x,float y,float z){monkeys.Update(Step,x,y,z);}});
@@ -192,7 +220,7 @@ int main() {
         // displaces the head laterally by half the advance per sub-step, so the measured
         // forebody axis legitimately turns faster while still changing rate smoothly; the
         // ceiling below is the observed envelope of that mechanism, not a snap allowance.
-        Audit({"snakes",3.5f,65.0f,snakes.Snakes().size(),
+        Audit({"snakes",3.5f,65.0f,0.0f,false,snakes.Snakes().size(),
             [&](std::size_t i){const auto& h=snakes.Snakes()[i].body.front();return Point{h.x,h.y,h.z};},
             // The visible read is the forebody axis.  Averaging two station runs filters
             // the lateral-undulation sway (a motion feature audited by the snake suite)

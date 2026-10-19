@@ -43,6 +43,8 @@ namespace island
         static constexpr float MinimumHabitatMoisture = 0.16f;
         static constexpr float MaximumHabitatDrainage = 0.74f;
         static constexpr float MaximumHabitatSaltExposure = 0.12f;
+        // Within this range a boar stops and faces the player; closer than 6 m it trots off obliquely.
+        static constexpr float AlertDistance = 12.0f;
         static constexpr float FullSimulationDistance = 95.0f;
         static constexpr float ReducedSimulationDistance = 220.0f;
 

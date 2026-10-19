@@ -675,6 +675,37 @@ existing two-worker limit remains suitable.
   ceilings for every species (snakes 3.25 of 3.5), with no teleporting body and the lead
   agents retreating to 1.2--7.5 m clearance. All 73 active native tests pass. Physical
   Android-device observation remains.
+- [~] 2026-10-19 operator clarification: the real complaint behind the turning item is that
+  animals turn their backs to the player when approached. Goats, boars, deer, the bear and the
+  crocodiles now have an alert band (14/12/18/20/24 m) in which they stop and face the player
+  (reusing their standing behaviours; the goat shuffles through its ordinary stepping to turn,
+  since pivoting on planted hooves pierced the terrain by a millimetre), and inside their flight
+  distance (7/6/9/12/14 m) they move off about seventy degrees from the direct line away so the
+  flank, not the rump, faces the player; the alert facing takes priority over the home pull while
+  standing. Monkeys already track a watcher with the head at 7.5--30 m; their escape line now
+  prefers the same oblique angle. Snakes keep their head-first articulated retreat.
+  `IslandCloseObserverTurningTests` now also parks the observer in each alert band for eight
+  seconds and requires the lead animal to face it within 0.45 rad without drifting; measured
+  facing errors are 0.00--0.09 rad with zero drift, and the oblique retreats still clear the
+  observer (1.2--7.5 m). Because the game passes the camera position as the observer, the goat and
+  boar eight-stage gait capture clocks now treat the QA camera as absent so their walking and
+  foraging evidence remains valid; native `20261019T180350.203666Z-goats` and
+  `180401.745482Z-boars` pass again, and the bear QA frame `180011.532377Z-bear` shows the bear
+  squarely facing the camera. All 73 active native tests and 48 harness tests pass. Chrome
+  155/SwiftShader `20261019T180651.850539Z-chrome-goats` passes four pose frames, 60 positive
+  intervals, GL error zero, a live context and no kernel faults on the rebuilt Web package; Android
+  ARM64 assemble/lint pass with the pinned Sharp Runtime (24,843,267-byte APK, SHA-256
+  `cbb20de05e60bcd7eede5b246b7920feadd01c020563b8aea1eefff4bfa10cc1`, 19,800,696-byte
+  `libmain.so`). The operator's in-play confirmation on desktop and physical Android remain.
+- [~] 2026-10-19 operator report: mouse look on the Web build needs far more mouse travel than
+  the desktop. The game applies one `MouseSensitivity` (0.0021 rad per unit) to SDL relative
+  motion; on the desktop SDL delivers raw relative counts, while the browser pointer lock delivers
+  OS-accelerated CSS pixels divided by the device pixel ratio, so one physical sweep yields far
+  fewer units. The Web build now multiplies mouse look by `MouseLookScale = 2.5`, and the release
+  shell requests `unadjustedMovement` pointer lock (raw motion where Chrome offers it, with the
+  plain lock as fallback). The exact ratio depends on the operator's mouse DPI and display
+  scaling, so the factor must be confirmed in the real browser; automated SwiftShader runs cannot
+  measure physical mouse travel.
 - [~] Relocate the campfire and its stored firewood from the beach to a plausible inland clearing.
   This 2026-10-17 instruction supersedes the earlier corrected request that explicitly placed it on
   the beach. Preserve the fire, woodpile, collision, audio/light behavior and safe player access;

@@ -143,9 +143,15 @@ void CrocodileGroup::UpdateAgent(Agent& agent,float dt,float observerX,float obs
     const float observerDistance=observerValid
         ?std::hypot(agent.state.x-observerX,agent.state.z-observerZ)
         :std::numeric_limits<float>::infinity();
+    bool alertFacing=false;
     if(observerDistance<14.0f) {
         agent.state.behavior=CrocodileBehavior::Retreat;
         agent.behaviorSeconds=7.0f;
+    } else if(observerDistance<AlertDistance) {
+        // Lie still and face the approaching player; the basking cycle resumes once they leave.
+        agent.state.behavior=CrocodileBehavior::Bask;
+        agent.behaviorSeconds=std::max(agent.behaviorSeconds,.5f);
+        alertFacing=true;
     } else {
         agent.behaviorSeconds-=dt;
         if(agent.behaviorSeconds<=0) {
@@ -171,10 +177,16 @@ void CrocodileGroup::UpdateAgent(Agent& agent,float dt,float observerX,float obs
         targetX+=std::cos(orbit)*3.4f;targetZ+=std::sin(orbit)*3.4f;
     }
     if(agent.state.behavior==CrocodileBehavior::Retreat&&observerValid) {
+        // Slide toward the water about seventy degrees off the direct line away, so the
+        // crocodile keeps the player in view along its flank instead of showing its tail.
         const float dx=agent.state.x-observerX,dz=agent.state.z-observerZ;
         const float length=std::max(.01f,std::hypot(dx,dz));
-        targetX+=dx/length*8.0f;targetZ+=dz/length*8.0f;
+        const float side=(static_cast<std::size_t>(&agent-agents_.data())%2U)?-1.22f:1.22f;
+        const float away=std::atan2(dz,dx)+side;
+        targetX+=std::cos(away)*8.0f;targetZ+=std::sin(away)*8.0f;
+        (void)length;
     }
+    if(alertFacing&&observerValid) {targetX=observerX;targetZ=observerZ;}
     float desired=std::atan2(targetZ-agent.state.z,targetX-agent.state.x);
     desired+=std::sin(elapsedSeconds_*.17f+agent.phaseOffset)*.10f;
     // One bounded turn per update.  A blocked move below re-aims from this same starting

@@ -37,6 +37,8 @@ struct BearState {
 class BearMotion final {
 public:
     static constexpr float HomeRadius=34.0f,BodyClearance=1.55f,MaximumSpeed=1.65f;
+    // Within this range the bear stops and faces the player; closer than 12 m it withdraws obliquely.
+    static constexpr float AlertDistance=20.0f;
     BearMotion(const IslandTerrain& terrain,std::span<const CircularObstacle> obstacles);
     void Update(float seconds,BearPoint observer);
     [[nodiscard]] const BearState& State()const noexcept{return state_;}

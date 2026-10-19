@@ -97,6 +97,15 @@ namespace island
 #endif
 
         constexpr float MouseSensitivity = 0.0021f;
+#if defined(__EMSCRIPTEN__)
+        // Browser pointer-lock motion arrives as OS-accelerated CSS pixels (further divided
+        // by the device pixel ratio), far fewer units per centimetre of mouse travel than
+        // the raw relative counts SDL delivers on the desktop. Scale the Web look so one
+        // physical mouse sweep turns a comparable angle on both.
+        constexpr float MouseLookScale = 2.5f;
+#else
+        constexpr float MouseLookScale = 1.0f;
+#endif
         constexpr float TouchLookSensitivity = 0.0032f;
         constexpr std::uint32_t SmokeTestFrames = 4U;
         constexpr std::uint32_t MonkeyCaptureFrames = 24U;
@@ -2519,7 +2528,10 @@ namespace island
                                      subject.y-previousCrocodile.y,
                                      subject.z-previousCrocodile.z);
         }
-        boarHerd_.Update(deltaSeconds, cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
+        if (UsesBoarCaptureClock())
+            boarHerd_.Update(deltaSeconds, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
+        else
+            boarHerd_.Update(deltaSeconds, cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
         if(viewpoint_==FixedViewpoint::BoarDetail) {
             const auto& current=boarHerd_.Boars().front();
             // Follow both translation and heading. The old camera translated with
@@ -2559,9 +2571,14 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
         }
-        measureWildlife(1, [&] {
-            goats_->Update(deltaSeconds,{cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z});
-        });
+        // The goat and boar eight-stage capture clocks exist to evidence gait and foraging
+        // from a close QA camera.  Since animals now stand and face a nearby watcher, those
+        // sequences treat the QA camera as absent; ordinary play keeps the camera as observer
+        // and the facing/oblique-retreat behaviour is gated by IslandCloseObserverTurningTests.
+        const GoatPoint goatObserver=UsesGoatCaptureClock()
+            ?GoatPoint{std::numeric_limits<float>::quiet_NaN(),0,0}
+            :GoatPoint{cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z};
+        measureWildlife(1, [&] { goats_->Update(deltaSeconds,goatObserver); });
         if(viewpoint_==FixedViewpoint::GoatDetail) {
             const auto& current=goats_->Goats().front();
             cameraPosition_+=Vector3(current.x-previousGoat.x,current.y-previousGoat.y,current.z-previousGoat.z);
@@ -3244,8 +3261,8 @@ namespace island
             MirrorRuntimeDiagnosticToPlatformLog(diagnostic);
         }
         if (mouseCaptured_ && !acquiredMouseThisFrame) {
-            yaw_ -= static_cast<float>(mouse.getXProperty()) * MouseSensitivity;
-            pitch_ = std::clamp(pitch_ - static_cast<float>(mouse.getYProperty()) * MouseSensitivity,
+            yaw_ -= static_cast<float>(mouse.getXProperty()) * MouseSensitivity * MouseLookScale;
+            pitch_ = std::clamp(pitch_ - static_cast<float>(mouse.getYProperty()) * MouseSensitivity * MouseLookScale,
                                 -1.48f, 1.48f);
         }
         if (touchControlState_.lookActive) {

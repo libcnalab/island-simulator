@@ -122,11 +122,22 @@ namespace island
         const float observerDistance = observerValid
             ? std::hypot(agent.state.x - observerX, agent.state.z - observerZ)
             : std::numeric_limits<float>::infinity();
+        bool alertFacing = false;
         if (observerDistance < 9.0f) {
             agent.state.behavior = DeerBehavior::Retreat;
             agent.behaviorSeconds = 1.8f;
+            // Bound away about seventy degrees off the direct line of escape: the deer keeps
+            // the player in view over its shoulder instead of turning its rump to them.
+            agent.targetHeadingRadians = Wrap(std::atan2(
+                agent.state.z - observerZ, agent.state.x - observerX)
+                + (index % 2U == 0U ? 1.22f : -1.22f));
+        } else if (observerDistance < AlertDistance) {
+            // Stand alert and face the approaching player; grazing resumes once they leave.
+            agent.state.behavior = DeerBehavior::Rest;
+            agent.behaviorSeconds = std::max(agent.behaviorSeconds, 0.5f);
             agent.targetHeadingRadians = std::atan2(
-                agent.state.z - observerZ, agent.state.x - observerX);
+                observerZ - agent.state.z, observerX - agent.state.x);
+            alertFacing = true;
         } else if ((agent.behaviorSeconds -= deltaSeconds) <= 0.0f) {
             ++agent.transitions;
             const auto phase = (agent.transitions + static_cast<std::uint32_t>(index) * 3U) % 7U;
@@ -143,7 +154,8 @@ namespace island
         // heading change whenever a retreating or wandering deer was also heading home.
         const float homeDistance = std::hypot(agent.state.x - agent.home.x,
                                                agent.state.z - agent.home.z);
-        if (homeDistance > agent.home.radius * .68f) {
+        // A standing, watching deer is not travelling, so the home pull waits until it moves.
+        if (homeDistance > agent.home.radius * .68f && !alertFacing) {
             agent.targetHeadingRadians = std::atan2(
                 agent.home.z - agent.state.z, agent.home.x - agent.state.x);
         }
