@@ -46,6 +46,25 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 13 (2026-10-20) — the resident's footprints on the beach
+
+The animal track lines of backlog item 10 never showed a human. `JettyPlacement::FootprintLines`
+lays fourteen bare-foot prints along the beach from the ramp foot past the canoe: the ground
+straight up from this root rises onto rock within a few metres and the shoreline curves, so
+the prints follow the actual shore arc on the canoe's side (a stride every 0.62 m, 1.4 m
+inside the shoreline, feet alternating 0.11 m either side of the line and toed out 0.12 rad).
+Each print is its own `AnimalTrackPlacement` (new track variant 2: heel, arch, ball and five
+toes on a pressed rim) on the rendered terrain's height: a first draft placed three multi-stride
+lines on the analytic height and all but one print vanished under the drawn mesh, since the
+analytic field and the rendered surface differ by more than a print's thickness on a curved
+beach. `NaturalPropRenderer` takes extra tracks from later layouts and draws them in the same
+batches as the layout's own; the startup log adds "14 bare footprints lead along the sand from
+the jetty foot past the canoe", pinned by the native capture tool. The `jetty` QA camera now
+stands at the far end of the prints looking back along them past the canoe to the deck. New
+core check: the prints lie 0.4–4 m inside the shoreline above the water, each stride further
+from the root than the last. Inspected native `20261019T232710Z-jetty` shows the line of prints
+from the canoe along the beach; `tracks` passes.
+
 ## Loop pass 12 (2026-10-20) — the resident calls at the jetty
 
 The resident's closed tour (campfire, the path at z = 135, the west clearing, the path at

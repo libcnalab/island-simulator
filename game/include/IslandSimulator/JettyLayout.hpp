@@ -1,5 +1,6 @@
 #pragma once
 #include "IslandSimulator/BirdPerchLayout.hpp"
+#include "IslandSimulator/NaturalPropLayout.hpp"
 #include "IslandSimulator/WorldCollision.hpp"
 #include <array>
 #include <cstddef>
@@ -7,6 +8,7 @@
 
 namespace island {
 class IslandTerrain;
+class RenderedTerrainSurface;
 struct HutPlacement;
 
 struct JettyPost { float x=0,z=0,bottomY=0,topY=0; };
@@ -34,6 +36,12 @@ struct JettyPlacement {
     [[nodiscard]] float SupportHeight(float x,float z,float terrainHeight) const noexcept;
     [[nodiscard]] std::array<CircularObstacle,2> CanoeObstacles() const noexcept;
     [[nodiscard]] BirdPerchSite MooringPerch() const noexcept;
+    // The resident's bare footprints: a walk along the beach past the canoe from the ramp
+    // foot, each print its own placement on the rendered ground's own height (the analytic
+    // field can differ from the drawn mesh by more than a print's thickness).
+    static constexpr std::size_t FootprintCount=14;
+    [[nodiscard]] std::array<AnimalTrackPlacement,FootprintCount> FootprintLines(
+        const IslandTerrain& terrain,const RenderedTerrainSurface& ground) const noexcept;
 };
 
 class JettyLayout final {

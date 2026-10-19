@@ -7561,6 +7561,18 @@ int main()
             Check(jetty->canoeY>=island::JettyLayout::MinimumCanoeHeight,"the dugout canoe rests on dry sand");
             const auto perch=jetty->MooringPerch();
             Check(perch.y>jetty->deckY+0.5f,"the mooring post offers a perch above the deck");
+            const island::RenderedTerrainSurface rendered(terrain);
+            const auto prints=jetty->FootprintLines(terrain,rendered);
+            bool onBeach=true,leadingAway=true;
+            float previousAway=0.0f;
+            for(std::size_t i=0;i<prints.size();++i) {
+                const auto& print=prints[i];
+                const float away=std::hypot(print.x-jetty->rootX,print.z-jetty->rootZ);
+                const float inland=terrain.SignedShoreDistance(print.x,print.z);
+                onBeach=onBeach&&print.variant==2U&&print.y>0.02f&&inland>0.4f&&inland<4.0f;
+                if(i%2U==0U) { leadingAway=leadingAway&&away>previousAway; previousAway=away; }
+            }
+            Check(onBeach&&leadingAway,"the resident's footprints follow the beach away from the jetty foot");
         }
     }
 

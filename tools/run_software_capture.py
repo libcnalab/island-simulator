@@ -967,6 +967,8 @@ def main():
                 raise RuntimeError("current falling fruit is missing; check for a stale executable")
             if "resident tour visits 1 landmark(s): the jetty foot joins the campfire, path and clearing calls" not in diagnostics:
                 raise RuntimeError("current resident jetty call is missing; check for a stale executable")
+            if "bare footprints lead along the sand from the jetty foot past the canoe" not in diagnostics:
+                raise RuntimeError("current resident footprints are missing; check for a stale executable")
             if "seabed ripples stay below the waterline in short near trains and beach flecks fade with the ground footprint" not in diagnostics:
                 raise RuntimeError("current seabed ripple confinement is missing; check for a stale executable")
             if "canopy per-tree frustum boxes contain both LODs and wind" not in diagnostics:

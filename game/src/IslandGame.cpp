@@ -1405,13 +1405,17 @@ namespace island
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: bridge QA camera looks across the rope bridge from the bank\n";
         } else if (viewpoint_ == FixedViewpoint::JettyDetail) {
-            // Stand on the sand beside the canoe and look down the deck to the mooring post.
+            // Stand on the sand at the far end of the resident's footprints and look back along
+            // them past the canoe to the deck and the mooring post.
             if(!jettyPlacement_) throw std::runtime_error("Jetty QA requires a valid site");
             const auto& j=*jettyPlacement_;
-            const float cameraX=j.rootX-j.dirX*4.0f+j.AcrossX()*5.5f;
-            const float cameraZ=j.rootZ-j.dirZ*4.0f+j.AcrossZ()*5.5f;
+            const auto prints=j.FootprintLines(terrain_,RenderedTerrainSurface(terrain_));
+            const auto& last=prints.back();
+            const float backX=last.x-(last.x-j.rootX)*0.25f, backZ=last.z-(last.z-j.rootZ)*0.25f;
+            const float cameraX=last.x+(last.x-backX)*1.2f-j.dirX*1.5f;
+            const float cameraZ=last.z+(last.z-backZ)*1.2f-j.dirZ*1.5f;
             cameraPosition_=Vector3(cameraX,terrain_.Height(cameraX,cameraZ)+PlayerMotion::EyeHeight,cameraZ);
-            const Vector3 target(j.rootX+j.dirX*7.0f,j.deckY+0.3f,j.rootZ+j.dirZ*7.0f);
+            const Vector3 target(j.rootX+j.dirX*6.0f,j.deckY+0.2f,j.rootZ+j.dirZ*6.0f);
             const Vector3 direction=target-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
@@ -2087,7 +2091,11 @@ namespace island
         bearRenderer_=std::move(bearRenderer);
         canopyLighting_ = std::move(canopyLighting);
         terrainHeightMap_ = std::move(terrainHeightMap);
-        naturalPropRenderer_ = std::make_unique<NaturalPropRenderer>(device, naturalPropLayout_);
+        std::vector<AnimalTrackPlacement> residentFootprints;
+        if (jettyPlacement_)
+            for (const auto& line : jettyPlacement_->FootprintLines(terrain_, RenderedTerrainSurface(terrain_)))
+                residentFootprints.push_back(line);
+        naturalPropRenderer_ = std::make_unique<NaturalPropRenderer>(device, naturalPropLayout_, residentFootprints);
         shipwreckRenderer_ = std::make_unique<ShipwreckRenderer>(device, shipwreckLayout_);
         if(hutPlacement_) hutRenderer_=std::make_unique<HutRenderer>(device,*hutPlacement_);
         if(jettyPlacement_) jettyRenderer_=std::make_unique<JettyRenderer>(device,*jettyPlacement_);

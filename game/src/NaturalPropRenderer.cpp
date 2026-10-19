@@ -1237,6 +1237,20 @@ void main()
                 }
                 return geometry;
             }
+            if (variant == 2) {
+                // One bare human foot: heel, arch, ball and five toes. Each print is its own
+                // placement on its own ground height, so a line of them follows a sloping beach.
+                appendFlatQuad(0.0f, 0.0f, 0.058f, 0.150f, 0.0f, pressedGround);
+                appendFlatQuad(0.0f, -0.095f, 0.032f, 0.042f, 0.0f, printFloor);      // heel
+                appendFlatQuad(0.012f, -0.015f, 0.024f, 0.048f, 0.0f, printFloor);    // arch, outer edge
+                appendFlatQuad(0.0f, 0.055f, 0.042f, 0.040f, 0.0f, printFloor);       // ball
+                for (int toe = 0; toe < 5; ++toe) {
+                    const float t = static_cast<float>(toe);
+                    appendFlatQuad(-0.036f + t * 0.018f, 0.114f - t * 0.007f,
+                                   toe == 0 ? 0.014f : 0.009f, toe == 0 ? 0.017f : 0.012f, 0.0f, printFloor);
+                }
+                return geometry;
+            }
             for (int stride = 0; stride < 5; ++stride) {
                 const float z = -1.00f + static_cast<float>(stride) * 0.50f;
                 const float lateral = stride % 2 == 0 ? -0.11f : 0.11f;
@@ -1548,7 +1562,8 @@ void main()
     }
 
     NaturalPropRenderer::NaturalPropRenderer(GraphicsDevice& device,
-                                             const NaturalPropLayout& layout)
+                                             const NaturalPropLayout& layout,
+                                             const std::span<const AnimalTrackPlacement> extraTracks)
         : device_(device)
     {
         instancingSupported_ = device_.SupportsCapability(CNA::GraphicsCapability::Instancing);
@@ -1582,7 +1597,7 @@ void main()
         }
 
         CreateMeshes();
-        CreateCells(layout);
+        CreateCells(layout, extraTracks);
         const int clearingRockCount = static_cast<int>(std::count_if(
             layout.Rocks().begin(), layout.Rocks().end(),
             [](const RockPlacement& rock) { return rock.clearingLandmark; }));
@@ -1624,6 +1639,9 @@ void main()
                 (track.variant == 0U ? deerTracks : boarTracks) += 1;
             std::cout << "island-simulator: " << deerTracks << " deer and " << boarTracks
                       << " boar track lines press into stream-bank mud and wet sand\n";
+            if (!extraTracks.empty())
+                std::cout << "island-simulator: " << extraTracks.size()
+                          << " bare footprints lead along the sand from the jetty foot past the canoe\n";
         }
         std::cout << "island-simulator: " << totalFallenCoconutCount_
                   << " fallen coconuts rest under the bearing palms\n";
@@ -1773,7 +1791,8 @@ void main()
                   << " vertex bytes\n";
     }
 
-    void NaturalPropRenderer::CreateCells(const NaturalPropLayout& layout)
+    void NaturalPropRenderer::CreateCells(const NaturalPropLayout& layout,
+                                          const std::span<const AnimalTrackPlacement> extraTracks)
     {
         const auto extendBounds = [](PropCell& cell, const Vector3& minimum,
                                      const Vector3& maximum) {
@@ -1837,7 +1856,10 @@ void main()
                                  detail.z + radius));
             ++totalBeachDetailCount_;
         }
-        for (const AnimalTrackPlacement& track : layout.AnimalTracks()) {
+        std::vector<AnimalTrackPlacement> tracks(layout.AnimalTracks().begin(), layout.AnimalTracks().end());
+        tracks.insert(tracks.end(), extraTracks.begin(), extraTracks.end());
+        for (const AnimalTrackPlacement& track : tracks) {
+            if (track.variant >= NaturalPropLayout::AnimalTrackVariantCount) continue;
             PropCell& cell = cells_[CellIndex(track.x, track.z)];
             cell.animalTracks.push_back({
                 Matrix::CreateScale(track.scale)

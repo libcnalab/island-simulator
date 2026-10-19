@@ -9,6 +9,7 @@
 #include <array>
 #include <cstdint>
 #include <memory>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -29,8 +30,11 @@ namespace island
     class NaturalPropRenderer final
     {
     public:
+        // extraTracks: track lines placed by later layouts (the resident's footprints from the
+        // jetty), drawn with the same batches as the layout's own.
         NaturalPropRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                            const NaturalPropLayout& layout);
+                            const NaturalPropLayout& layout,
+                            std::span<const AnimalTrackPlacement> extraTracks = {});
         ~NaturalPropRenderer();
 
         NaturalPropRenderer(const NaturalPropRenderer&) = delete;
@@ -128,7 +132,7 @@ namespace island
         [[nodiscard]] static const Microsoft::Xna::Framework::Graphics::VertexDeclaration&
             InstanceDeclaration();
         void CreateMeshes();
-        void CreateCells(const NaturalPropLayout& layout);
+        void CreateCells(const NaturalPropLayout& layout, std::span<const AnimalTrackPlacement> extraTracks);
         void DrawInstances(PropMesh& mesh,
                            const std::vector<Microsoft::Xna::Framework::Matrix>& transforms);
 

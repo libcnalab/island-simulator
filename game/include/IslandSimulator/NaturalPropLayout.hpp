@@ -86,7 +86,7 @@ namespace island
         float z = 0.0f;
         float yawRadians = 0.0f;
         float scale = 1.0f;
-        std::uint8_t variant = 0U; // 0 deer cloven hooves, 1 boar trotters
+        std::uint8_t variant = 0U; // 0 deer cloven hooves, 1 boar trotters, 2 bare human feet
         bool streamBank = false;
     };
 
@@ -133,7 +133,7 @@ namespace island
         static constexpr int LogCollisionSamples = 7;
         static constexpr int DriftwoodVariantCount = 3;
         static constexpr int BeachDetailVariantCount = 6;
-        static constexpr int AnimalTrackVariantCount = 2;
+        static constexpr int AnimalTrackVariantCount = 3;   // 2: the resident's bare feet
         static constexpr int FallenFrondVariantCount = 3;
         static constexpr int FallenCoconutVariantCount = 2;
         static constexpr int ReefHabitatVariantCount = 4;

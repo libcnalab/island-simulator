@@ -1,6 +1,7 @@
 #include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
+#include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -28,6 +29,34 @@ std::array<CircularObstacle,2> JettyPlacement::CanoeObstacles() const noexcept {
     const float ax=std::sin(canoeYaw),az=std::cos(canoeYaw);
     const float offset=CanoeLength*0.24f,radius=CanoeBeam*0.5f+0.42f;
     return {{{canoeX+ax*offset,canoeZ+az*offset,radius},{canoeX-ax*offset,canoeZ-az*offset,radius}}};
+}
+
+std::array<AnimalTrackPlacement,JettyPlacement::FootprintCount> JettyPlacement::FootprintLines(
+        const IslandTerrain& terrain,const RenderedTerrainSurface& ground) const noexcept {
+    std::array<AnimalTrackPlacement,FootprintCount> prints{};
+    // The ground behind this root rises onto rock within a few metres and the shoreline
+    // curves, so the walk home follows the actual beach: a stride every 0.62 m along the
+    // shore arc on the canoe's side, 1.4 m inside the shoreline, feet alternating either
+    // side of the line and slightly toed out.
+    const float rootAngle=std::atan2(rootZ,rootX);
+    const float canoeAngle=std::atan2(canoeZ,canoeX);
+    const float turn=std::remainder(canoeAngle-rootAngle,6.2831853f)<0.0f?-1.0f:1.0f;
+    const float radius=std::max(std::hypot(rootX,rootZ),1.0f);
+    for(std::size_t i=0;i<FootprintCount;++i) {
+        const float arc=1.6f+0.62f*static_cast<float>(i);
+        const float angle=rootAngle+turn*arc/radius;
+        const float side=(i%2U==0U)?-1.0f:1.0f;
+        const float shore=terrain.ShoreRadius(angle)-1.4f+side*0.11f;
+        AnimalTrackPlacement& print=prints[i];
+        print.x=std::cos(angle)*shore;
+        print.z=std::sin(angle)*shore;
+        print.y=ground.Sample(print.x,print.z).height;
+        print.yawRadians=std::atan2(-std::sin(angle)*turn,std::cos(angle)*turn)+side*0.12f;
+        print.scale=1.0f;
+        print.variant=2U;
+        print.streamBank=false;
+    }
+    return prints;
 }
 
 BirdPerchSite JettyPlacement::MooringPerch() const noexcept {
