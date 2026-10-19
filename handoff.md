@@ -42,7 +42,7 @@ here as done with their `PLAN.md` evidence reference.
 9. [ ] Herd behaviour: goats/deer keep as a group, a sentinel raises its head first.
 10. [x] Tracks (PLAN "Latest ground-sign pass — deer and boar track lines", `tracks` viewpoint).
 11. [ ] Sea from within: dolphin leaps, shark fin at the surface, fish school parts around the diver.
-12. [ ] Signs of the resident at the hut: fish-drying rack, coconut pile, dugout canoe, net rack.
+12. [x] Signs of the resident at the hut (PLAN "Latest occupation pass"); the canoe moves to item 13.
 13. [ ] A jetty or stone breakwater near the hut as a shore landmark where birds perch.
 14. [ ] Rope bridge over the stream and/or a tree lookout platform (walkable).
 15. [x] Lianas and aerial roots (PLAN "Latest canopy-interior pass").

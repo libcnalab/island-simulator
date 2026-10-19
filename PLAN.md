@@ -46,6 +46,21 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Latest occupation pass — the resident's yard
+
+Backlog item 12. `HutPlacement` now carries four yard ground samples (`HutLayout::YardSites`,
+hut-local across/along inside the decorative clearing) so the hut batch can stand props on the
+real terrain: a fish-drying rack (two posts, a bar and four split fish, pale and dark, hung to
+cure) to the right of the veranda, a heap of seven husked coconuts beside the steps, a net frame
+(posts, two rails and a hung net of eight cords and four rows) at the right rear, and an open
+eight-sided woven basket with a darker rim at the left rear. Everything rides the existing
+one-draw hut buffer and material tags (the vertex ceiling rose from 33,000 to 36,000 for the
+roughly thousand new vertices); collision, the resident route and the seven contact patches are
+unchanged. The startup log adds "hut yard shows the resident's fish-drying rack, coconut pile, net
+frame and woven basket". Inspected native `20261019T200747Z-hut` shows the rack with its fish and
+the net frame beside the hut; the coconut pile and basket sit on the far side of this frame. All
+73 active native tests and 48 harness tests pass. A dugout canoe belongs with the jetty (item 13).
+
 ## Latest understory-colour pass — flowering shrubs and banana stools
 
 Backlog item 16. Bush forms 1 and 2 now flower on their near mesh: a five-petal red hibiscus with
@@ -61,7 +76,11 @@ now selects a hibiscus bush beside the path. Inspected native `20261019T200131Z-
 blossoms on the framed bush (with lianas hanging through the crowns behind), and the cropped
 `20261019T195858Z-stream` frame shows a banana stool with arching paddle leaves on the bank. The
 core test exempts banana stools from the 2.8 m interior-ground rule and checks their own moist,
-low bank conditions instead. All 73 active native tests and 48 harness tests pass.
+low bank conditions instead. All 73 active native tests and 48 harness tests pass. Chrome
+155/SwiftShader `20261019T200716.647524Z-chrome-stream` passes on the rebuilt Web package with the
+ten banana stools and 1,747 understory plants reported, GL error zero and no kernel faults; the
+Android identity is recorded with the occupation pass below, whose first assemble exposed a
+missing `<numbers>` include that GCC had tolerated transitively.
 
 ## Latest canopy-interior pass — lianas and aerial roots
 

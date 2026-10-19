@@ -14,6 +14,8 @@ struct HutFooting { float x, groundY, z; };
 struct HutPlacement {
     float x, z, yawRadians, floorY;
     std::array<HutFooting,6> footings;
+    // Ground under the resident's yard props: drying rack, coconut pile, net frame, basket.
+    std::array<HutFooting,4> yard;
 };
 
 // Placement only. No invisible runtime collision is installed before the hut is rendered.
@@ -31,6 +33,8 @@ public:
     // non-colliding foliage reserves this footprint while trees and rocks remain natural.
     static constexpr float PreferredClearingX=-137.765f,PreferredClearingZ=-81.2322f;
     static constexpr float DecorativeClearingRadius=SiteClearance;
+    // Hut-local (across, along) sites of the four yard props, inside the decorative clearing.
+    static constexpr std::array<std::array<float,2>,4> YardSites{{{3.3f,0.9f},{-2.9f,1.6f},{3.1f,-1.2f},{-3.0f,-0.9f}}};
     static constexpr int CandidateCount=144*12;
     [[nodiscard]] static bool ReservesDecorativeClearing(float x,float z,float radius=0) noexcept;
     [[nodiscard]] static std::optional<HutPlacement> Find(

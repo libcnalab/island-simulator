@@ -27,6 +27,7 @@
 #include "Microsoft/Xna/Framework/Graphics/PrimitiveType.hpp"
 #include <algorithm>
 #include <cmath>
+#include <numbers>
 #include <limits>
 #include <iostream>
 #include <stdexcept>
@@ -274,7 +275,94 @@ HutRenderer::HutRenderer(GraphicsDevice& device,const HutPlacement& hut)
         quad({0,crown,z-halfSpan},{.48f,shoulder,z-halfSpan},
              {.48f,shoulder,z+halfSpan},{0,crown,z+halfSpan},pigment);
     }
-    if(mesh.empty()||mesh.size()>33000) throw std::runtime_error("Hut mesh exceeds budget");
+    // The resident's yard: signs of occupation on the real ground around the hut, all in the
+    // same batch. Material tag 64 keeps the plain board treatment for non-timber pigments.
+    const auto tri=[&](Vector3 a,Vector3 b,Vector3 d,Vector3 pigment) {
+        const std::array<Vector3,3> local{a,b,d};
+        a=world(a); b=world(b); d=world(d);
+        Vector3 normal=Vector3::Cross(b-a,d-a); normal.Normalize();
+        const float light=0.48f+0.52f*std::max(0.0f,Vector3::Dot(normal,
+            Vector3(environment::SunDirectionX,environment::SunDirectionY,environment::SunDirectionZ)));
+        const Color color(static_cast<int>(pigment.X*light),static_cast<int>(pigment.Y*light),static_cast<int>(pigment.Z*light),materialTag);
+        for(const auto p:local)
+            mesh.emplace_back(world(p),color,Vector2(Vector3::Dot(p-grainOrigin,grainAcross),Vector3::Dot(p-grainOrigin,grainAlong)));
+    };
+    const auto yardLocal=[&](std::size_t site) {
+        return Vector3(HutLayout::YardSites[site][0],hut.yard[site].groundY-hut.floorY,HutLayout::YardSites[site][1]);
+    };
+    const Vector3 pole(112,86,56),fishSkin(184,188,180),fishDark(112,118,116),coconutBrown(158,122,72),
+        coconutGreen(138,150,74),basketTan(206,172,112),cord(196,180,140);
+    {
+        // Fish-drying rack: two posts, a bar and four split fish hung to cure.
+        const Vector3 g=yardLocal(0);
+        beam(g+Vector3(0,-0.05f,-0.7f),g+Vector3(0,1.55f,-0.7f),0.07f,0.07f,pole);
+        beam(g+Vector3(0,-0.05f,0.7f),g+Vector3(0,1.55f,0.7f),0.07f,0.07f,pole);
+        beam(g+Vector3(0,1.5f,-0.78f),g+Vector3(0,1.5f,0.78f),0.05f,0.05f,pole);
+        materialTag=64; grainAcross={1,0,0}; grainAlong={0,1,0};
+        for(int fish=0;fish<4;++fish) {
+            const float z=-0.5f+static_cast<float>(fish)*0.33f;
+            const float lean=(fish%2==0?0.02f:-0.02f);
+            grainOrigin=g+Vector3(0,1.1f,z);
+            const Vector3 a=g+Vector3(-0.045f,1.47f,z),b=g+Vector3(0.045f,1.47f,z);
+            const Vector3 d=g+Vector3(0.04f+lean,1.14f,z+0.012f),e=g+Vector3(-0.04f+lean,1.14f,z+0.012f);
+            quad(a,b,d,e,fish%2==0?fishSkin:fishDark); quad(a,e,d,b,fish%2==0?fishDark:fishSkin);
+            tri(e,d,g+Vector3(lean*1.5f,1.02f,z+0.018f),fishDark); tri(d,e,g+Vector3(lean*1.5f,1.02f,z+0.018f),fishDark);
+        }
+    }
+    {
+        // Coconut pile: a small heap of husked nuts beside the steps.
+        const Vector3 g=yardLocal(1);
+        materialTag=64; grainAcross={1,0,0}; grainAlong={0,0,1};
+        constexpr std::array<std::array<float,3>,7> nuts{{{0,0.09f,0},{0.2f,0.09f,0.05f},{-0.19f,0.09f,0.08f},
+            {0.03f,0.09f,-0.2f},{0.08f,0.27f,-0.06f},{-0.11f,0.27f,0.03f},{-0.02f,0.44f,-0.04f}}};
+        for(std::size_t nut=0;nut<nuts.size();++nut) {
+            const Vector3 centre=g+Vector3(nuts[nut][0],nuts[nut][1],nuts[nut][2]);
+            grainOrigin=centre;
+            const float r=0.12f+0.014f*static_cast<float>(nut%3),h=0.13f;
+            const Vector3 pigment=nut%3==1?coconutGreen:coconutBrown;
+            const Vector3 top=centre+Vector3(0,h,0),bottom=centre-Vector3(0,h,0);
+            const std::array<Vector3,4> ring{centre+Vector3(r,0,0),centre+Vector3(0,0,r),centre-Vector3(r,0,0),centre-Vector3(0,0,r)};
+            for(int side=0;side<4;++side) {
+                tri(top,ring[static_cast<std::size_t>(side)],ring[static_cast<std::size_t>((side+1)%4)],pigment);
+                tri(bottom,ring[static_cast<std::size_t>((side+1)%4)],ring[static_cast<std::size_t>(side)],pigment);
+            }
+        }
+    }
+    {
+        // Net frame: two posts, two rails and a hung fishing net of cords.
+        const Vector3 g=yardLocal(2);
+        beam(g+Vector3(0,-0.05f,-0.95f),g+Vector3(0,1.35f,-0.95f),0.07f,0.07f,pole);
+        beam(g+Vector3(0,-0.05f,0.95f),g+Vector3(0,1.35f,0.95f),0.07f,0.07f,pole);
+        beam(g+Vector3(0,1.28f,-1.0f),g+Vector3(0,1.28f,1.0f),0.05f,0.05f,pole);
+        beam(g+Vector3(0,0.36f,-1.0f),g+Vector3(0,0.36f,1.0f),0.04f,0.04f,pole);
+        for(int strand=0;strand<8;++strand) {
+            const float z=-0.84f+static_cast<float>(strand)*0.24f;
+            beam(g+Vector3(0.02f,1.27f,z),g+Vector3(0.02f+0.03f*std::sin(static_cast<float>(strand)*1.7f),0.38f,z+0.03f),0.014f,0.014f,cord);
+        }
+        for(int row=0;row<4;++row) {
+            const float y=0.52f+static_cast<float>(row)*0.22f;
+            beam(g+Vector3(0.025f,y,-0.9f),g+Vector3(0.025f,y-0.03f,0.9f),0.012f,0.012f,cord);
+        }
+    }
+    {
+        // Woven basket: an open eight-sided tub with a darker rim band.
+        const Vector3 g=yardLocal(3);
+        materialTag=64; grainAcross={1,0,0}; grainAlong={0,1,0}; grainOrigin=g;
+        constexpr int sides=8;
+        for(int side=0;side<sides;++side) {
+            const float a0=2.0f*std::numbers::pi_v<float>*static_cast<float>(side)/sides;
+            const float a1=2.0f*std::numbers::pi_v<float>*static_cast<float>(side+1)/sides;
+            const Vector3 b0=g+Vector3(std::cos(a0)*0.26f,0.0f,std::sin(a0)*0.26f);
+            const Vector3 b1=g+Vector3(std::cos(a1)*0.26f,0.0f,std::sin(a1)*0.26f);
+            const Vector3 t0=g+Vector3(std::cos(a0)*0.32f,0.55f,std::sin(a0)*0.32f);
+            const Vector3 t1=g+Vector3(std::cos(a1)*0.32f,0.55f,std::sin(a1)*0.32f);
+            quad(b0,b1,t1,t0,basketTan); quad(b1,b0,t0,t1,basketTan*0.86f);
+            quad(t0,t1,t1+Vector3(0,0.04f,0),t0+Vector3(0,0.04f,0),pole);
+        }
+        tri(g+Vector3(0.2f,0.005f,0),g+Vector3(-0.1f,0.005f,0.17f),g+Vector3(-0.1f,0.005f,-0.17f),basketTan*0.8f);
+    }
+    // The yard props add roughly a thousand vertices to the former 33,000 ceiling.
+    if(mesh.empty()||mesh.size()>36000) throw std::runtime_error("Hut mesh exceeds budget");
     Vector3 low(std::numeric_limits<float>::max()),high(std::numeric_limits<float>::lowest());
     for(const auto& vertex:mesh) {
         if(!std::isfinite(vertex.TextureCoordinate.X)||!std::isfinite(vertex.TextureCoordinate.Y))
@@ -327,6 +415,11 @@ HutRenderer::HutRenderer(GraphicsDevice& device,const HutPlacement& hut)
         std::cout<<timberMessage<<'\n'; MirrorRuntimeDiagnosticToPlatformLog(timberMessage);
         const char* facadeMessage="island-simulator: hut four-pane muted glazing and braced plank door";
         std::cout<<facadeMessage<<'\n'; MirrorRuntimeDiagnosticToPlatformLog(facadeMessage);
+        const char* yardMessage="island-simulator: hut yard shows the resident's fish-drying rack, coconut pile, net frame and woven basket";
+        std::cout<<yardMessage<<'\n'; MirrorRuntimeDiagnosticToPlatformLog(yardMessage);
+        std::cout<<"island-simulator: hut yard ground offsets";
+        for(const auto& site:hut.yard) std::cout<<' '<<(site.groundY-hut.floorY);
+        std::cout<<'\n';
         const char* verandaMessage="island-simulator: hut raised veranda uses full-height outer posts, split rails, fascia, and three steps";
         std::cout<<verandaMessage<<'\n'; MirrorRuntimeDiagnosticToPlatformLog(verandaMessage);
         const char* structureMessage="island-simulator: hut enclosed slatted gable, framed attic light, and four knee-braced veranda supports";

@@ -68,11 +68,16 @@ std::optional<HutPlacement> HutLayout::Find(const IslandTerrain& terrain,
         const float score=(heights[1]-heights[0])*10+std::abs(inland-60)*.02f
             +std::abs(streamDistance-23)*.04f;
         if(score>=bestScore) continue;
-        HutPlacement candidate{x,z,yaw,heights[1]+FloorClearance,{}};
+        HutPlacement candidate{x,z,yaw,heights[1]+FloorClearance,{},{}};
         std::size_t index=0;
         for(float u:{-Width/2,Width/2}) for(float v:{-Depth/2,0.0f,Depth/2}) {
             const float px=x+c*u+s*v,pz=z-s*u+c*v;
             candidate.footings[index++]={px,surface.Sample(px,pz).height,pz};
+        }
+        for(std::size_t site=0;site<YardSites.size();++site) {
+            const float u=YardSites[site][0],v=YardSites[site][1];
+            const float px=x+c*u+s*v,pz=z-s*u+c*v;
+            candidate.yard[site]={px,surface.Sample(px,pz).height,pz};
         }
         best=candidate;
         bestScore=score;
