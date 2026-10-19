@@ -12,6 +12,7 @@
 namespace island
 {
     class IslandTerrain;
+    struct FallingFruit;
 
     enum class BoarBehavior : std::uint8_t { Rest, Forage, Wander, Retreat, Wallow };
 
@@ -62,6 +63,11 @@ namespace island
         [[nodiscard]] bool IsValidGround(float x, float z, bool allowDrainage = false) const noexcept;
         /** @brief Boars whose range reaches a stream bank; they walk there to wallow. */
         [[nodiscard]] std::size_t WallowerCount() const noexcept;
+        /** @brief Fruit and coconuts lying on the ground this frame; a forage may go to one. */
+        void SetLyingFruit(std::span<const FallingFruit> fruit) noexcept { lyingFruit_ = fruit; }
+        /** @brief Indices into that span the boars ate during the last update. */
+        [[nodiscard]] std::span<const std::size_t> EatenFruit() const noexcept { return eatenFruit_; }
+        [[nodiscard]] std::uint32_t EatCount() const noexcept { return eatCount_; }
         static constexpr float WallowSeconds = 14.0f;
         static constexpr float MudDrySeconds = 150.0f;
 
@@ -76,12 +82,14 @@ namespace island
             // Standing point beside the trunk base the boar forages toward; valid when hasRoot.
             float rootX = 0.0f, rootZ = 0.0f, trunkX = 0.0f, trunkZ = 0.0f;
             bool hasRoot = false;
+            int fruitTarget = -1;           // the lying fruit this forage goes to; -1 for a trunk
             // The nearest reachable stream bank and the water it faces; valid when hasWallow.
             float wallowX = 0.0f, wallowZ = 0.0f, faceX = 0.0f, faceZ = 0.0f;
             bool hasWallow = false;
             bool inCorridor = false;        // still on drainage ground after the wallow ended
         };
         void ChooseRootingSite(Agent& agent) noexcept;
+        bool ChooseFruitTarget(Agent& agent) noexcept;
         void FindWallow(Agent& agent) noexcept;
         void Initialize(std::size_t index);
         void Step(Agent& agent, float dt, float observerX, float observerZ,
@@ -92,5 +100,8 @@ namespace island
         std::array<Agent, BoarCount> agents_{};
         std::array<BoarState, BoarCount> states_{};
         std::uint64_t frame_ = 0;
+        std::span<const FallingFruit> lyingFruit_;
+        std::vector<std::size_t> eatenFruit_;
+        std::uint32_t eatCount_ = 0;
     };
 }

@@ -2287,6 +2287,7 @@ namespace island
                   << "island-simulator: monkeys use a horizontal lofted trunk and distance-driven quadrupedal gait\n"
                   << "island-simulator: monkey tree routes reject isolated canopy and mangroves\n"
                   << "island-simulator: monkeys walk to fruit lying under the crowns and eat it, idling over the spot\n"
+                  << "island-simulator: boars forage for the fallen fruit and coconuts before the trunk bases and eat them where they lie\n"
                   << "island-simulator: near monkeys use bone-following finger and toe silhouettes\n"
                   << "island-simulator: near monkeys use an arched shoulder-rump trunk, broad blunt face, robust limbs, and compact tail\n"
                   << "island-simulator: near monkeys use a lower tapered trunk, separated crown, and restrained furry tail root\n"
@@ -2730,10 +2731,12 @@ namespace island
                                      subject.y-previousCrocodile.y,
                                      subject.z-previousCrocodile.z);
         }
+        boarHerd_.SetLyingFruit(fallingFruit_.Fruit());
         if (UsesBoarCaptureClock())
             boarHerd_.Update(deltaSeconds, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
         else
             boarHerd_.Update(deltaSeconds, cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
+        for (const std::size_t eaten : boarHerd_.EatenFruit()) fallingFruit_.Consume(eaten);
         if(viewpoint_==FixedViewpoint::BoarDetail) {
             const auto& current=boarHerd_.Boars().front();
             // Follow both translation and heading. The old camera translated with

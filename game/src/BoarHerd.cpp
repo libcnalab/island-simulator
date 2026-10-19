@@ -3,6 +3,7 @@
 #include "IslandSimulator/IslandEnvironmentField.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/CaveSite.hpp"
+#include "IslandSimulator/FallingFruitField.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -142,6 +143,29 @@ namespace island
 
     // The nearest trunk (a static obstacle) inside the range, approached from the boar's side
     // to a standing point just outside the collision envelope on valid ground.
+    // The nearest fruit or coconut lying within the boar's range on ground it can stand on;
+    // the boar roots at the fruit itself, nose toward it along its approach.
+    bool BoarHerd::ChooseFruitTarget(Agent& agent) noexcept
+    {
+        const BoarState& state = agent.state;
+        agent.fruitTarget = -1;
+        float best = std::numeric_limits<float>::max();
+        for (std::size_t index = 0; index < lyingFruit_.size(); ++index) {
+            const FallingFruit& fruit = lyingFruit_[index];
+            if (!fruit.active || fruit.restSeconds < 0.0f) continue;
+            if (std::hypot(fruit.x - state.homeX, fruit.z - state.homeZ) > HomeRadius * 0.9f) continue;
+            const float distance = std::hypot(fruit.x - state.x, fruit.z - state.z);
+            if (distance < 0.01f || distance >= best || !IsValidGround(fruit.x, fruit.z)) continue;
+            best = distance;
+            agent.fruitTarget = static_cast<int>(index);
+            agent.rootX = fruit.x; agent.rootZ = fruit.z;
+            agent.trunkX = fruit.x + (fruit.x - state.x) / distance;
+            agent.trunkZ = fruit.z + (fruit.z - state.z) / distance;
+            agent.hasRoot = true;
+        }
+        return agent.fruitTarget >= 0;
+    }
+
     void BoarHerd::ChooseRootingSite(Agent& agent) noexcept
     {
         const BoarState& state = agent.state;
@@ -168,6 +192,7 @@ namespace island
         const bool valid = std::isfinite(observerX) && std::isfinite(observerY)
             && std::isfinite(observerZ);
         ++frame_;
+        eatenFruit_.clear();
         for (std::size_t index = 0; index < BoarCount; ++index) {
             auto& agent = agents_[index];
             const auto& state = agent.state;
@@ -223,8 +248,10 @@ namespace island
             agent.remainingSeconds = 3.0f + choice * 6.0f;
             agent.targetHeading = Wrap(state.headingRadians + (choice - 0.5f) * 3.4f);
             agent.hasRoot = false;
+            agent.fruitTarget = -1;
             if (state.behavior == BoarBehavior::Forage) {
-                ChooseRootingSite(agent);
+                // Fallen fruit and coconuts outrank the trunk bases while any lie in range.
+                if (!ChooseFruitTarget(agent)) ChooseRootingSite(agent);
                 if (agent.hasRoot) agent.remainingSeconds += 6.0f;
             }
             // Every third rest of a boar with a reachable bank becomes a walk to the water
@@ -248,6 +275,13 @@ namespace island
             // Walk to the trunk's root flare, then stand with the snout among the roots.
             const float siteDistance = std::hypot(state.x - agent.rootX, state.z - agent.rootZ);
             rooting = siteDistance < 0.4f;
+            if (rooting && agent.fruitTarget >= 0) {
+                // Nose on the fruit: it is eaten, and the rooting pose carries on over the spot.
+                if (static_cast<std::size_t>(agent.fruitTarget) < lyingFruit_.size())
+                    eatenFruit_.push_back(static_cast<std::size_t>(agent.fruitTarget));
+                ++eatCount_;
+                agent.fruitTarget = -1;
+            }
             agent.targetHeading = rooting
                 ? std::atan2(agent.trunkZ - state.z, agent.trunkX - state.x)
                 : std::atan2(agent.rootZ - state.z, agent.rootX - state.x);

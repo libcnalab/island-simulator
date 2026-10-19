@@ -46,6 +46,20 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 18 (2026-10-20) — the boars take the fallen fruit and coconuts
+
+The boars rooted at trunk bases while fruit and coconuts lay about them. The herd now reads the
+same fruit span the monkeys do (`BoarHerd::SetLyingFruit`) and a forage decision first looks for
+the nearest resting fruit of any kind, coconuts included, within 0.9 of the home radius on valid
+ground (`ChooseFruitTarget`); the fruit itself becomes the rooting site with the "trunk" one
+metre beyond it along the approach, so the boar walks up and drops its nose on the fruit. The
+first rooting frame there eats it: the index goes to `EatenFruit()`, the game consumes it from
+the field, and the rooting pose carries on over the spot for the rest of the forage. Only when
+nothing lies in range does the boar root at a trunk as before. Diagnostic "boars forage for the
+fallen fruit and coconuts before the trunk bases and eat them where they lie" is pinned by the
+native capture tool. Core check: fruit shaken down beside the first boar's home is eaten within
+twenty simulated minutes with the observer 40 m off. Native `boars` passes.
+
 ## Loop pass 17 (2026-10-20) — the monkeys eat the fallen fruit
 
 Pass 12's fruit lay under the crowns until its field slot expired; nothing in the forest cared

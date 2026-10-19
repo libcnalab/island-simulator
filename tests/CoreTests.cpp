@@ -7542,6 +7542,28 @@ int main()
             eaten=eaters.EatCount();
         }
         Check(eaten>=1U&&larder.ConsumedCount()>=1U,"a monkey walks to a lying fruit within twenty minutes and eats it");
+        // Boars forage for the fallen fruit too, coconuts included: fruit shaken down beside a
+        // boar's home is its next rooting site, and nosing it eats it.
+        island::BoarHerd rooters(terrain);
+        const island::BoarState& sow=rooters.Boars().front();
+        island::FallingFruitField mast(terrain);
+        island::MonkeyState shaker=monkey;
+        shaker.selectedTree={sow.homeX+2.5f,terrain.Height(sow.homeX+2.5f,sow.homeZ),sow.homeZ,0.4f,1.0f,2U};
+        std::vector<island::MonkeyState> shakers{shaker};
+        for(int step=0;step<600;++step) mast.Update(0.05f,shakers);
+        std::size_t lyingNearSow=0;
+        for(const auto& f:mast.Fruit()) if(f.active&&f.restSeconds>=0.0f) ++lyingNearSow;
+        Check(lyingNearSow>=3U,"fruit lies on the ground beside the boar's home");
+        std::uint32_t rooted=0;
+        for(int step=0;step<36000&&rooted==0U;++step) {
+            const island::BoarState& watched=rooters.Boars().front();
+            rooters.SetLyingFruit(mast.Fruit());
+            rooters.Update(1.0f/30.0f,watched.homeX+40.0f,watched.y+1.5f,watched.homeZ);
+            for(const std::size_t index:rooters.EatenFruit()) mast.Consume(index);
+            mast.Update(1.0f/30.0f,{});
+            rooted=rooters.EatCount();
+        }
+        Check(rooted>=1U&&mast.ConsumedCount()>=1U,"a boar roots its way to a lying fruit within twenty minutes and eats it");
     }
 
     {
