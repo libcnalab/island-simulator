@@ -81,7 +81,7 @@ int main() {
     }
     if(patch.Indices().size()/3>=71680/2||patch.Vertices().size()>=36273/2)return 14;
     if(deepestCut<.25f||deepestCut>1)return 8;
-    island::PlayerMotion walker;walker.SetGroundPatch(&patch);
+    island::PlayerMotion walker;walker.SetGroundPatches(&patch,nullptr);
     for(std::size_t i=5;i+8<course.Count();++i) {
         const auto p=course.Station(i);
         walker.SetPosition(terrain,p.x,p.z);

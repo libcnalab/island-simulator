@@ -2,7 +2,7 @@
 
 #include "IslandSimulator/WorldCollisionGrid.hpp"
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
-#include "IslandSimulator/StreamBedPatch.hpp"
+#include "IslandSimulator/LocalTerrainPatch.hpp"
 #include "IslandSimulator/CaveGroundPatch.hpp"
 #include "IslandSimulator/HelicopterLayout.hpp"
 #include "IslandSimulator/BunkerLayout.hpp"
@@ -74,10 +74,11 @@ namespace island
         for (const PlayerGroundOffset& offset : GroundContactOffsets) {
             const float px=x+offset.x*CapsuleRadius,pz=z+offset.z*CapsuleRadius;
             auto sample=terrain.Sample(px,pz);
-            if(groundPatch_&&groundPatch_->Contains(px,pz)) {
-                sample.height=groundPatch_->SampleHeight(px,pz);
-                const auto height=[&](float sx,float sz){return groundPatch_->Contains(sx,sz)
-                    ?groundPatch_->SampleHeight(sx,sz):terrain.Height(sx,sz);};
+            for(const LocalTerrainPatch* patch:groundPatches_) {
+                if(!patch||!patch->Contains(px,pz)) continue;
+                sample.height=patch->SampleHeight(px,pz);
+                const auto height=[&](float sx,float sz){return patch->Contains(sx,sz)
+                    ?patch->SampleHeight(sx,sz):terrain.Height(sx,sz);};
                 sample.slopeRadians=std::atan(std::hypot(height(px+.1f,pz)-height(px-.1f,pz),
                     height(px,pz+.1f)-height(px,pz-.1f))/.2f);
             }

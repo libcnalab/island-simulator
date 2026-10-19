@@ -1,4 +1,5 @@
 #include "IslandSimulator/IslandGame.hpp"
+#include "IslandSimulator/WreckScourPatch.hpp"
 #include "IslandSimulator/CanopyLighting.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
 #include "IslandSimulator/CoastalWindResponse.hpp"
@@ -1965,7 +1966,7 @@ namespace island
             }
         }
         terrainRenderer_ = std::move(terrainRenderer);
-        playerMotion_.SetGroundPatch(&terrainRenderer_->StreamBed());
+        playerMotion_.SetGroundPatches(&terrainRenderer_->StreamBed(),&terrainRenderer_->WreckScour());
         playerMotion_.SetCave(&terrainRenderer_->Cave(),&terrainRenderer_->CaveGround());
         playerMotion_.SetBunker(&bunkerLayout_);
         flightMotion_.SetCave(&terrainRenderer_->Cave(),&terrainRenderer_->CaveGround());

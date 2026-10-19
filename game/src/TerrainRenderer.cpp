@@ -2,6 +2,7 @@
 #include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
 #include "IslandSimulator/StreamBedPatch.hpp"
+#include "IslandSimulator/WreckScourPatch.hpp"
 #include "IslandSimulator/CaveGroundPatch.hpp"
 #include "IslandSimulator/CampfireLighting.hpp"
 #include "IslandSimulator/BunkerLayout.hpp"
@@ -1209,6 +1210,7 @@ void main()
     {
         const auto original=std::make_unique<RenderedTerrainSurface>(terrain);
         streamBed_=std::make_unique<StreamBedPatch>(StreamCourse(terrain),*original);
+        wreckScour_=std::make_unique<WreckScourPatch>(ShipwreckLayout(terrain),*original);
         cave_=std::make_unique<CaveLayout>(terrain);
         caveGround_=std::make_unique<CaveGroundPatch>(*cave_,*original);
         cells_.clear();
@@ -1261,6 +1263,7 @@ void main()
                         +TerrainMeshLayout::Coordinate(layout.firstGridRow+row+1))*.5f;
                     const float midY=terrain.Height(midX,midZ);
                     if(streamBed_->Contains(midX,midZ)||caveGround_->Contains(midX,midZ)
+                        ||wreckScour_->Contains(midX,midZ)
                         ||(!materialReady_&&bunker_.HidesTerrain(midX,midY,midZ)))continue;
                     const auto topLeft = static_cast<std::uint16_t>(
                         (layout.firstGridRow + row) * TerrainMeshLayout::Resolution
@@ -1321,6 +1324,33 @@ void main()
         streamIndices_->SetData(streamIndices.data(),static_cast<int>(streamIndices.size()));
         std::cout << "island-simulator: stream bed replacement " << streamVertexCount_ << " vertices, "
             << streamPrimitiveCount_ << " triangles; original covered terrain removed\n";
+        vertices.clear();minimum=Vector3(1000,1000,1000);maximum=Vector3(-1000,-1000,-1000);
+        for(const auto p:wreckScour_->Vertices()) {
+            auto sample=terrain.Sample(p.x,p.z);sample.height=p.y;
+            const auto height=[&](float x,float z){return wreckScour_->Contains(x,z)
+                ?wreckScour_->SampleHeight(x,z):original->Sample(x,z).height;};
+            sample.normal=TerrainSurfaceFrame::Normalize({height(p.x-.1f,p.z)-height(p.x+.1f,p.z),
+                .2f,height(p.x,p.z-.1f)-height(p.x,p.z+.1f)});
+            sample.slopeRadians=std::acos(std::clamp(sample.normal.y,-1.0f,1.0f));
+            const float light=TerrainDaylight(sample.normal);const auto color=TerrainColor(sample,light);
+            vertices.push_back({{p.x,p.y,p.z},{color.getRProperty(),color.getGProperty(),color.getBProperty(),255},
+                {sample.signedShoreDistance,sample.slopeRadians,light}});
+            minimum=Vector3::Min(minimum,Vector3(p.x,p.y,p.z));
+            maximum=Vector3::Max(maximum,Vector3(p.x,p.y,p.z));
+        }
+        const auto& scourIndices=wreckScour_->Indices();
+        ValidateProceduralTriangleMeshOrThrow(vertices.size(),scourIndices,"wreck scour");
+        scourVertexCount_=static_cast<int>(vertices.size());scourPrimitiveCount_=static_cast<int>(scourIndices.size()/3);
+        scourBounds_=BoundingBox(minimum-Vector3(.1f,.1f,.1f),maximum+Vector3(.1f,.1f,.1f));
+        scourVertices_=std::make_unique<VertexBuffer>(device_,TerrainDeclaration(),scourVertexCount_,BufferUsage::WriteOnly);
+        scourVertices_->SetData(vertices.data(),scourVertexCount_);
+        scourIndices_=std::make_unique<IndexBuffer>(device_,IndexElementSize::SixteenBits,
+            static_cast<int>(scourIndices.size()),BufferUsage::WriteOnly);
+        scourIndices_->SetData(scourIndices.data(),static_cast<int>(scourIndices.size()));
+        std::cout << "island-simulator: wreck scour replacement " << scourVertexCount_ << " vertices, "
+            << scourPrimitiveCount_ << " triangles; sand bar drifts against the grounded hull\n";
+        const char* scourMessage="island-simulator: wreck scour bar rises on the lee side of the hull and stays submerged to seaward";
+        std::cout<<scourMessage<<'\n';MirrorRuntimeDiagnosticToPlatformLog(scourMessage);
         vertices.clear();minimum=Vector3(1000,1000,1000);maximum=Vector3(-1000,-1000,-1000);
         for(const auto p:caveGround_->Vertices()) {
             auto sample=terrain.Sample(p.x,p.z);sample.height=p.y;
@@ -1471,6 +1501,11 @@ void main()
             if(frustum.Intersects(caveBounds_)) {
                 device_.SetVertexBuffer(caveVertices_.get());device_.setIndicesProperty(caveIndices_.get());
                 device_.DrawIndexedPrimitives(PrimitiveType::TriangleList,0,0,caveVertexCount_,0,cavePrimitiveCount_);
+                ++drawCallCount_;
+            }
+            if(frustum.Intersects(scourBounds_)) {
+                device_.SetVertexBuffer(scourVertices_.get());device_.setIndicesProperty(scourIndices_.get());
+                device_.DrawIndexedPrimitives(PrimitiveType::TriangleList,0,0,scourVertexCount_,0,scourPrimitiveCount_);
                 ++drawCallCount_;
             }
         };

@@ -46,6 +46,28 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Latest wreck-grounding pass — sand scour bar against the hull
+
+Backlog item 3. The grounded ship sat on the untouched four-metre seabed grid, so its hull met
+the shallows with no sign of the sand a grounded hull gathers. The dense-grid replacement that
+carved the stream bed is now a shared base, `LocalTerrainPatch` (coarse range, subdivision and a
+per-vertex height rule; untouched coarse cells stay fans in their original planes, changed cells
+subdivide, boundary vertices keep their original height), with `StreamBedPatch` rebuilt on it
+unchanged. `WreckScourPatch` is a second patch on that base: a one-metre grid within 16 m of the
+ship whose rule raises an elliptical bar around the hull outline, a long drift tongue on the lee
+(shoreward) side (crest 0.62 m, 5.2 m decay, capped at +0.22 m so it just breaks the surface) and a
+short scour lip to seaward (0.30 m, 2.4 m decay, capped below the waterline), with a fixed-seed
+ripple on the bar edge and a world-axis fade that reaches zero before the patch boundary. The
+terrain renderer removes the covered coarse quads and draws the bar as a third replacement buffer
+with the terrain material (1,482 vertices, 2,905 triangles), and `PlayerMotion` now consults both
+patches for ground contact, so wading beside the hull stands on the bar. The height-based wet
+band already shades the emerged tongue as wet sand. The startup log adds "wreck scour bar rises
+on the lee side of the hull and stays submerged to seaward", pinned by the native capture tool.
+New core checks: the patch covers the hull, boundary vertices keep the original height, the bar
+never lowers the seabed, never exceeds the lee cap, breaks the surface beside the hull, stays
+submerged to seaward and rises above the buried keel. Inspected native `20261019T203308Z-shipwreck-wide`
+and `20261019T203317Z-shipwreck` show the hull in a pale bar with the drift tongue toward the beach.
+
 ## Latest hillside pass — mid-distance tussock grain
 
 Backlog item 2. The terrain fragment shader's close detail (clods, turf clumps, litter) fades

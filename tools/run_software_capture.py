@@ -929,6 +929,8 @@ def main():
                 raise RuntimeError("current coastal cliff fill is missing; check for a stale executable")
             if "open inland ground keeps footprint-filtered metre-scale tussock grain through the mid distance" not in diagnostics:
                 raise RuntimeError("current mid-distance hillside grain is missing; check for a stale executable")
+            if "wreck scour bar rises on the lee side of the hull and stays submerged to seaward" not in diagnostics:
+                raise RuntimeError("current wreck scour bar is missing; check for a stale executable")
             if "canopy per-tree frustum boxes contain both LODs and wind" not in diagnostics:
                 raise RuntimeError("current canopy visibility path is missing; check for a stale executable")
             if "clearing-edge colonies respect full route footprints; bushes=" not in diagnostics:

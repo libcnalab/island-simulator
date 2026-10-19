@@ -11,7 +11,7 @@ namespace island
 {
     class WorldCollisionGrid;
     class RenderedTerrainSurface;
-    class StreamBedPatch;
+    class LocalTerrainPatch;
     class CaveLayout;
     class CaveGroundPatch;
     class BunkerLayout;
@@ -108,7 +108,11 @@ namespace island
         // Surface must outlive this controller. Null disables diving. The caller
         // refreshes input every frame; teleports clear depth and held input.
         void SetSwimInput(const RenderedTerrainSurface* surface, bool ascend, bool descend) noexcept;
-        void SetGroundPatch(const StreamBedPatch* patch) noexcept {groundPatch_=patch;}
+        // Dense terrain replacements (stream bed, wreck scour bar) that override the analytic
+        // field for ground contact; both must outlive the controller, null disables one.
+        void SetGroundPatches(const LocalTerrainPatch* stream,const LocalTerrainPatch* scour) noexcept {
+            groundPatches_={stream,scour};
+        }
         // Both immutable objects must outlive the controller; null disables the cave.
         void SetCave(const CaveLayout* cave,const CaveGroundPatch* ground) noexcept
         {cave_=cave;caveGround_=ground;}
@@ -209,7 +213,7 @@ namespace island
 
         PlayerPosition position_;
         const RenderedTerrainSurface* swimSurface_ = nullptr;
-        const StreamBedPatch* groundPatch_ = nullptr;
+        std::array<const LocalTerrainPatch*,2> groundPatches_{};
         const CaveLayout* cave_ = nullptr;
         const CaveGroundPatch* caveGround_ = nullptr;
         const BunkerLayout* bunker_ = nullptr;

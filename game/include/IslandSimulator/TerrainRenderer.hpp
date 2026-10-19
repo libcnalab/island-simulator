@@ -22,6 +22,7 @@ namespace island
     class CanopyLighting;
     class ForestFloorMaterial;
     class StreamBedPatch;
+    class WreckScourPatch;
     class CaveLayout;
     class CaveGroundPatch;
     class BunkerLayout;
@@ -51,9 +52,10 @@ namespace island
         {
             return static_cast<int>(cells_.size());
         }
-        [[nodiscard]] int VertexCount() const noexcept { return vertexCount_+streamVertexCount_+caveVertexCount_; }
-        [[nodiscard]] int PrimitiveCount() const noexcept { return primitiveCount_+streamPrimitiveCount_+cavePrimitiveCount_; }
+        [[nodiscard]] int VertexCount() const noexcept { return vertexCount_+streamVertexCount_+caveVertexCount_+scourVertexCount_; }
+        [[nodiscard]] int PrimitiveCount() const noexcept { return primitiveCount_+streamPrimitiveCount_+cavePrimitiveCount_+scourPrimitiveCount_; }
         [[nodiscard]] const StreamBedPatch& StreamBed() const noexcept {return *streamBed_;}
+        [[nodiscard]] const WreckScourPatch& WreckScour() const noexcept {return *wreckScour_;}
         [[nodiscard]] const CaveLayout& Cave() const noexcept {return *cave_;}
         [[nodiscard]] const CaveGroundPatch& CaveGround() const noexcept {return *caveGround_;}
         /** Receives the fixed-sun shadow map; nullptr keeps only the baked canopy field. */
@@ -84,6 +86,11 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::IndexBuffer> streamIndices_;
         Microsoft::Xna::Framework::BoundingBox streamBounds_;
         int streamVertexCount_=0,streamPrimitiveCount_=0;
+        std::unique_ptr<WreckScourPatch> wreckScour_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> scourVertices_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::IndexBuffer> scourIndices_;
+        Microsoft::Xna::Framework::BoundingBox scourBounds_;
+        int scourVertexCount_=0,scourPrimitiveCount_=0;
         std::unique_ptr<CaveLayout> cave_;
         std::unique_ptr<CaveGroundPatch> caveGround_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> caveVertices_;

@@ -31,6 +31,7 @@
 #include "IslandSimulator/TrunkSurfaceMaterial.hpp"
 #include "IslandSimulator/GrassLod.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
+#include "IslandSimulator/WreckScourPatch.hpp"
 #include "IslandSimulator/JungleLayout.hpp"
 #include "IslandSimulator/LocomotionPaceToggle.hpp"
 #include "IslandSimulator/MonkeyTroop.hpp"
@@ -7333,6 +7334,38 @@ int main()
               "player capsule cannot tunnel through an authored land-rock proxy");
         Check(rockObstacleRejections > 0 && rockTerrainRejections == 0,
               "authored land-rock traversal is rejected by collision rather than terrain");
+    }
+
+    {
+        // The wreck scour bar: a bounded replacement that meets the coarse terrain at its
+        // edge, breaks the surface only on the lee side and never digs below the seabed.
+        const island::IslandTerrain terrain;
+        const island::RenderedTerrainSurface rendered(terrain);
+        const island::ShipwreckLayout wreck(terrain);
+        const island::WreckScourPatch scour(wreck,rendered);
+        const auto& ship=wreck.Ship();
+        Check(scour.Contains(ship.x,ship.z)&&!scour.Vertices().empty()&&scour.Indices().size()%3==0,
+              "wreck scour patch covers the hull with a triangle mesh");
+        bool boundaryFlat=true,neverLower=true,capped=true,seawardSubmerged=true;
+        float highest=-10.0f;
+        for(const auto& v:scour.Vertices()) {
+            const float base=rendered.Sample(v.x,v.z).height;
+            if(scour.IsBoundary(v)&&v.y!=base) boundaryFlat=false;
+            if(v.y<base) neverLower=false;
+            if(v.y>std::max(base,island::WreckScourPatch::LeeCap)+1e-4f) capped=false;
+            highest=std::max(highest,v.y);
+            const float dx=v.x-ship.x,dz=v.z-ship.z;
+            const float outward=dx*std::cos(island::ShipwreckLayout::AuthoredCoastAngle)
+                +dz*std::sin(island::ShipwreckLayout::AuthoredCoastAngle);
+            if(outward>3.0f&&v.y>base&&v.y>0.0f) seawardSubmerged=false;
+        }
+        Check(boundaryFlat,"wreck scour boundary vertices keep the original terrain height");
+        Check(neverLower,"wreck scour never lowers the seabed");
+        Check(capped,"wreck scour bar never rises above the lee cap");
+        Check(highest>0.05f,"wreck scour bar breaks the surface beside the hull");
+        Check(seawardSubmerged,"wreck scour stays submerged on the seaward side");
+        const float keel=ship.y-1.35f;
+        Check(scour.SampleHeight(ship.x,ship.z)>keel,"scour sand rises above the buried keel");
     }
 
     if (failures != 0) {
