@@ -20,6 +20,73 @@ Status markers:
 - `[~]` in progress
 - `[!]` blocked or degraded, with the reason written next to the item
 
+## Latest lighting pass — directional sun shadow map
+
+The operator's 2026-10-19 evening backlog opens with real directional shadows. `SunShadowMap`
+(`docs/large-object-shadows.md`) renders one orthographic fixed-sun depth map, 144 m square around
+the camera on an 8 m anchor grid, so it is rebuilt only when the camera leaves a cell; every
+caster is static. Canopy trees, snags, understory, bushes, living and broken palms, the hut, the
+wreck hull and the opaque helicopter airframe cast; terrain (with its cave and stream patches),
+grass, all jungle plant surfaces and palms receive, multiplying by the same `uCanopyAmbient` tone
+the baked field used, while the baked field keeps only 45% of its darkening as sky occlusion.
+Depth is packed into an RGBA8 target and read through a plain `sampler2D` with four bilinearly
+blended point taps, honouring EasyGL's `uRtFlipV` flag, so WebGL 2, GLES 3 and desktop GL share
+one path. The three projected footprint shadows are disabled while the map is active; contact
+patches and animal grounding remain. Resolution is 2048 px on desktop and 1024 px on Web/Android.
+
+Inspected native evidence: `20261019T185824Z-jungle` (snag and crown shadows lie on the slope in
+the sun's direction and attach at the trunk bases), `-hut` (tree shadows cross the clearing and the
+hut casts its own), `-helicopter`, `-shipwreck`, `-east`; the sweep overview, beach, grass, litter,
+west, palms, campfire, monkeys, goats, boars, bear and cave all pass their gates. The jungle frame
+reports 923 casters in one map render. The first 2x2 comparison showed stepped frond-shadow edges on
+the beach (`20261019T192548Z-movement`); receivers now blend a 4x4-texel weighted comparison, and
+the recaptured movement frame shows the same palm shadows with edges softening over about two
+texels. Chrome 155/SwiftShader `20261019T190321.794405Z-chrome-helicopter` passes all three views
+with the 1024 px map rendering 873--877 casters, no caster shader failures, GL error zero and live
+contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
+not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
+
+## Latest ground-sign pass — deer and boar track lines
+
+Backlog item 10. `NaturalPropLayout` now places short print lines as a separate deterministic
+family (`AnimalTrackPlacement`, 27 lines: 12 deer, 15 boar) so the pinned shell/pebble/wrack
+counts and the dry-sand-only beach-detail tests are untouched. Twenty-six stations along the
+stream put a line on one bank 0.85--1.75 m outside the channel edge (deer lines point straight at
+the water as a drinking approach, boar lines run along the bank), and up to six crossings sit on
+wet sand 2.4 m inside the shoreline; every line needs supported low-slope ground above the water,
+no reserved route and no trunk within 1.1 m, and keeps 3 m from its neighbours. The prop renderer
+draws them as flat ground decals in the near-field beach-detail cull: six deer strides of two
+toed-in cloven halves inside a pressed rim, or five boar strides of two toes with dewclaw marks,
+in darker wet-soil tones. A permanent `tracks` QA viewpoint stands beside the first bank deer
+line (close-natural-detail profile); inspected native `20261019T193522Z-tracks` passes and shows
+the alternating left/right cloven prints beside the stream. The first version's smaller, lighter
+prints read as paper scraps and were enlarged and darkened. `IslandCoreTests` gains budget,
+determinism, support and both-species/both-habitat checks; all 73 active native tests and 48
+harness tests pass. Android ARM64 assemble/lint of these sources pass with the pinned Sharp
+Runtime (24,899,267-byte APK, SHA-256
+`2fb33e0edd03f6a64fa8ea0effa84fec095ecdec3e7a0a276452016ee9fedef1`, 19,856,696-byte
+`libmain.so`); one earlier assemble attempt failed with clang reporting the NDK's own `<array>`
+header as invalid UTF-8 and passed unchanged on retry, so it is recorded as a transient toolchain
+glitch, not a source defect.
+
+## Latest player-presence pass — surface footsteps and the walker's shadow
+
+Backlog item 19. Footsteps now follow the ground under the player instead of only the shore
+distance: `IslandGame::FootstepGroundUnderPlayer()` resolves sand (beach and seabed surfaces),
+stone (steep or rocky ground, or coastal rockiness above 0.6), ankle-deep wading (terrain more than
+6 cm below sea level before the swim threshold), and living turf versus bare humus from the same
+`GroundCover::Density` that places grass clusters (threshold 0.30). `FootstepScheduler::Update`
+takes that hint (its former shore rule remains the default, so the existing tests and callers are
+unchanged), and the soundscape owns six new deterministic clips: a longer, softer turf swish with
+almost no thump, a short bright stone tap, and two wading splashes. Each surface has its own pitch
+band; the previews are listed by `island-audio-report` (`IslandAudioReport` passes) and the startup
+log adds "footsteps also vary over living turf, exposed stone and ankle-deep water" after the
+retained pinned line. The walking player also casts a soft contact ellipse projected along the
+fixed sun (0.8 x 0.3 m, offset 0.62 m) in the shared contact-shadow batch, counted as
+`VisiblePlayerShadowCount`, and suppressed while flying, swimming or in the free camera.
+Subjective listening to the new clips is the operator's; physical Android remains.
+
+
 ## Latest helicopter glazing pass — restrained frames and one-sided canopy surface
 
 The current README-gallery audit selected the canopy treatment rather than adding more aircraft

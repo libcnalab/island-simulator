@@ -89,6 +89,9 @@ namespace island
                                  std::span<const BirdState> birds,
                                  std::span<const MonkeyState> monkeys) noexcept;
 
+        /** @brief Names the ground under the player's feet for the next footsteps (None = shore rule). */
+        void SetFootstepGround(FootstepSurface ground) noexcept { footstepGround_ = ground; }
+
         /** @brief Supplies the immutable grounded-wreck emitter position. */
         void SetShipwreckSource(float x, float y, float z) noexcept;
 
@@ -158,6 +161,7 @@ namespace island
         ShipwreckCreakScheduler shipwreckCreakScheduler_;
         WaterTransitionScheduler waterTransitionScheduler_;
         FootstepScheduler footstepScheduler_;
+        FootstepSurface footstepGround_ = FootstepSurface::None;
         WildlifeCallScheduler wildlifeScheduler_;
         BoarCallScheduler boarScheduler_;
         GoatCallScheduler goatScheduler_;
@@ -224,6 +228,12 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> soilFootstepEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>
             soilFootstepAlternateEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> grassFootstepEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> grassFootstepAlternateEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> rockFootstepEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> rockFootstepAlternateEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> wadeFootstepEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> wadeFootstepAlternateEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance>
             footstepInstance_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> birdCallEffect_;

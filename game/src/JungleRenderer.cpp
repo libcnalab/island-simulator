@@ -1,4 +1,5 @@
 #include "IslandSimulator/JungleRenderer.hpp"
+#include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/CampfireLighting.hpp"
 #include "IslandSimulator/MonkeyTroop.hpp"
 #include "IslandSimulator/CanopyVisibility.hpp"
@@ -261,6 +262,8 @@ void main()
         vec2 woodReceiver=canopyGroundReceiver(vWorld,vGroundHeight,uToSun);
         float transmission=canopyTransmission(woodReceiver);
         transmission=canopyDappleTransmission(woodReceiver,transmission);
+        // With the sun shadow map active the baked field keeps only sky occlusion.
+        transmission=mix(transmission,1.0,uSunShadowParams.x*0.55);
         vec3 skyFill = mix(uCanopyAmbient, vec3(1.0), transmission);
         daylightColor = (woodDaylightTerms.x + woodDaylightTerms.z * max(faceNormal.y, 0.0)) * skyFill
             + woodDaylightTerms.y * max(signedSunFacing, 0.0) * transmission;
@@ -271,6 +274,8 @@ void main()
         daylightColor *= trunkContactOcclusion(aboveGround);
     }
     vec3 litColor = albedo * daylightColor;
+    // Directional sun shadow from neighbouring crowns, trunks and structures.
+    litColor *= mix(uCanopyAmbient, vec3(1.0), sunShadowVisibility(vWorld));
     // Derivatives must be evaluated outside the per-primitive material branch.
     vec2 leafUv = leafSurfaceUv(vLeaf.xyz);
     vec2 leafDx = dFdx(leafUv), leafDy = dFdy(leafUv);
@@ -353,13 +358,13 @@ void main()
             if (embedded) {
                 return std::string("#version 300 es\nprecision highp float;\nprecision highp int;\n")
                     + environment::FogShaderDefinition
-                    + (canopy ? CampfireLighting::Shader : "")
+                    + (canopy ? std::string(CampfireLighting::Shader) + SunShadowMap::ReceiverShader : std::string())
                     + (canopy ? std::string(CanopyLighting::Shader) + JungleMaterial::Shader() + BarkMaterial::Shader + TrunkSurface::Shader() + LeafSurfaceMaterial::Shader()
                               : JungleWind::ShaderConstants() + std::string(RenderedTerrainSurface::Shader)) + body;
             }
             return std::string("#version 330 core\n")
                 + environment::FogShaderDefinition
-                + (canopy ? CampfireLighting::Shader : "")
+                + (canopy ? std::string(CampfireLighting::Shader) + SunShadowMap::ReceiverShader : std::string())
                 + (canopy ? std::string(CanopyLighting::Shader) + JungleMaterial::Shader() + BarkMaterial::Shader + TrunkSurface::Shader() + LeafSurfaceMaterial::Shader()
                           : JungleWind::ShaderConstants() + std::string(RenderedTerrainSurface::Shader)) + body;
         }
@@ -2249,6 +2254,92 @@ void main()
             transforms.reserve(layout.GroundPlants().size());
     }
 
+    namespace
+    {
+        // Static casters: wind sway and the juvenile sweep are omitted, the map is rebuilt only
+        // when the camera moves a cell and a few centimetres of leaf motion cannot be read in it.
+        constexpr const char* JungleSunShadowVertex = R"(
+layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec4 aColor;
+layout(location = 2) in vec2 aWindData;
+layout(location = 3) in vec3 aNormal;
+layout(location = 4) in vec4 aLeaf;
+layout(location = 5) in vec4 aInstance0;
+layout(location = 6) in vec4 aInstance1;
+layout(location = 7) in vec4 aInstance2;
+layout(location = 8) in vec4 aInstance3;
+uniform mat4 uSunViewProjection;
+out float vSunDepth;
+void main()
+{
+    mat4 instanceTransform = mat4(aInstance0, aInstance1, aInstance2, aInstance3);
+    vec4 clip = uSunViewProjection * (instanceTransform * vec4(aPosition, 1.0));
+    vSunDepth = clip.z / clip.w;
+    gl_Position = clip;
+    gl_Position.z = 2.0 * gl_Position.z - gl_Position.w;
+}
+)";
+    }
+
+    void JungleRenderer::DrawSunShadow(SunShadowMap& map)
+    {
+        if (!customShaderReady_ || !instancingSupported_ || sunShadowUnavailable_) return;
+        if (!sunShadowEffect_) {
+            try {
+                sunShadowEffect_ = map.CreateCasterEffect(JungleSunShadowVertex, "jungle");
+            } catch (const std::exception& error) {
+                std::cout << "island-simulator: jungle sun shadow casters unavailable: "
+                          << error.what() << '\n';
+                sunShadowUnavailable_ = true;
+                return;
+            }
+        }
+        // The far-LOD lists are scratch here; Draw() rebuilds them for the camera every frame.
+        for (auto& list : visibleCanopyFar_) list.clear();
+        for (auto& list : visibleStandingSnagFar_) list.clear();
+        for (auto& list : visibleUnderstoryFar_) list.clear();
+        for (auto& list : visibleBushFar_) list.clear();
+        int casters = 0;
+        for (const JungleCell& cell : cells_) {
+            if (!cell.occupied) continue;
+            for (const CanopyInstance& tree : cell.canopy) {
+                if (!map.CastsInto(tree.draw.x, tree.draw.z)) continue;
+                visibleCanopyFar_[tree.draw.variant].push_back(tree.draw.transform);
+                ++casters;
+            }
+            for (const DrawInstance& instance : cell.standingSnags) {
+                if (!map.CastsInto(instance.x, instance.z)) continue;
+                visibleStandingSnagFar_[instance.variant].push_back(instance.transform);
+                ++casters;
+            }
+            for (const DrawInstance& instance : cell.understory) {
+                if (!map.CastsInto(instance.x, instance.z)) continue;
+                visibleUnderstoryFar_[instance.variant].push_back(instance.transform);
+                ++casters;
+            }
+            for (const DrawInstance& instance : cell.bushes) {
+                if (!map.CastsInto(instance.x, instance.z)) continue;
+                visibleBushFar_[instance.variant].push_back(instance.transform);
+                ++casters;
+            }
+        }
+        float matrix[16];
+        map.LightViewProjectionColumnMajor(matrix);
+        sunShadowEffect_->Apply();
+        sunShadowEffect_->SetUniformMat4("uSunViewProjection", matrix);
+        for (std::size_t variant = 0; variant < canopyFarMeshes_.size(); ++variant)
+            DrawInstances(canopyFarMeshes_[variant], visibleCanopyFar_[variant]);
+        for (std::size_t variant = 0; variant < standingSnagFarMeshes_.size(); ++variant)
+            DrawInstances(standingSnagFarMeshes_[variant], visibleStandingSnagFar_[variant]);
+        for (std::size_t variant = 0; variant < understoryFarMeshes_.size(); ++variant)
+            DrawInstances(understoryFarMeshes_[variant], visibleUnderstoryFar_[variant]);
+        for (std::size_t variant = 0; variant < bushFarMeshes_.size(); ++variant)
+            DrawInstances(bushFarMeshes_[variant], visibleBushFar_[variant]);
+        device_.SetVertexBuffers({});
+        device_.setIndicesProperty(nullptr);
+        map.CountCasters(casters);
+    }
+
     void JungleRenderer::DrawInstances(PlantMesh& mesh, const std::vector<Matrix>& transforms)
     {
         if (transforms.empty()) return;
@@ -2484,6 +2575,8 @@ void main()
                 environment::SunDirectionZ);
             customEffect_->SetUniformFloat("uTime", timeSeconds);
             CampfireLighting::Bind(*customEffect_,timeSeconds);
+            if (sunShadow_) sunShadow_->Bind(*customEffect_);
+            else SunShadowMap::BindDisabled(*customEffect_);
         } else {
             fallbackEffect_->setViewProperty(view);
             fallbackEffect_->setProjectionProperty(projection);

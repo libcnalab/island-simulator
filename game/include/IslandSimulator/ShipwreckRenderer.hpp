@@ -20,6 +20,8 @@ namespace island
     class ShipwreckLayout;
 
     /** @brief One portable static batch for the grounded 20 m wreck and its debris field. */
+    class SunShadowMap;
+
     class ShipwreckRenderer final
     {
     public:
@@ -39,6 +41,8 @@ namespace island
         [[nodiscard]] int VertexCount() const noexcept { return vertexCount_; }
         [[nodiscard]] int PrimitiveCount() const noexcept { return primitiveCount_; }
         [[nodiscard]] int DebrisCount() const noexcept { return debrisCount_; }
+        /** Renders the wreck into the bound fixed-sun shadow map. */
+        void DrawSunShadow(SunShadowMap& map);
         [[nodiscard]] int DrawCallCount() const noexcept { return drawCallCount_; }
         [[nodiscard]] bool IsVisible() const noexcept { return visible_; }
         [[nodiscard]] bool UsesAgedWoodShader() const noexcept
@@ -61,6 +65,8 @@ namespace island
         int primitiveCount_ = 0;
         int debrisCount_ = 0;
         int drawCallCount_ = 0;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> sunShadowEffect_;
+        bool sunShadowUnavailable_ = false;
         bool visible_ = false;
         bool agedWoodShaderReady_ = false;
     };

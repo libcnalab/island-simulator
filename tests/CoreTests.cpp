@@ -6230,6 +6230,24 @@ int main()
           "driftwood population stays inside its sparse beach-composition budget");
     Check(props.BeachDetails().size() >= 120U && props.BeachDetails().size() <= 600U,
           "shell/pebble/wrack clusters stay inside their near-field beach-detail budget");
+    Check(props.AnimalTracks().size() >= 8U && props.AnimalTracks().size() <= 40U
+              && props.AnimalTracks().size() == repeatedProps.AnimalTracks().size(),
+          "deer and boar track lines stay inside their bounded deterministic budget");
+    {
+        bool bankTracks = false, shoreTracks = false, deerTracks = false, boarTracks = false;
+        for (const auto& track : props.AnimalTracks()) {
+            const auto sample = terrain.Sample(track.x, track.z);
+            Check(sample.height >= 0.10f && sample.slopeRadians <= 0.40f
+                      && std::abs(track.y - sample.height - 0.008f) < 0.001f,
+                  "animal track lines rest on supported low-slope ground above the water");
+            bankTracks |= track.streamBank;
+            shoreTracks |= !track.streamBank;
+            deerTracks |= track.variant == 0U;
+            boarTracks |= track.variant == 1U;
+        }
+        Check(bankTracks && shoreTracks && deerTracks && boarTracks,
+              "both species leave prints on both stream banks and wet sand");
+    }
     Check(props.FallenFronds().size() >= 30U && props.FallenFronds().size() <= 180U,
           "fallen palm fronds stay inside their near-field composition budget");
     Check(props.ReefHabitat().size() >= 180U && props.ReefHabitat().size() <= 380U,

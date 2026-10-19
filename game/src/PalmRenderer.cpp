@@ -1,4 +1,5 @@
 #include "IslandSimulator/PalmRenderer.hpp"
+#include "IslandSimulator/SunShadowMap.hpp"
 
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/JungleMaterial.hpp"
@@ -226,6 +227,8 @@ void main()
         float upwardFill = abs(faceNormal.y);
         material *= 0.88 + twoSidedDiffuse * 0.16 + upwardFill * 0.04;
     }
+    // Directional sun shadow from neighbouring palms, crowns and structures.
+    material *= mix(vec3(0.56, 0.60, 0.66), vec3(1.0), sunShadowVisibility(vWorld));
     vec3 color = mix(material, islandAtmosphereFog, fog);
     fragColor = vec4(color, 1.0);
 }
@@ -237,6 +240,7 @@ void main()
             // Fragment stages share the jungle wood daylight and trunk contact constants.
             const std::string materials = fragment
                 ? JungleMaterial::Shader() + std::string(BarkMaterial::Shader) + TrunkSurface::Shader()
+                      + SunShadowMap::ReceiverShader
                 : std::string();
             if (embedded) {
                 return std::string("#version 300 es\nprecision highp float;\nprecision highp int;\n")
@@ -1096,6 +1100,69 @@ void main()
         }
     }
 
+    namespace
+    {
+        constexpr const char* PalmSunShadowVertex = R"(
+layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec4 aColor;
+layout(location = 2) in vec2 aWindData;
+layout(location = 3) in vec3 aNormal;
+layout(location = 4) in vec4 aInstance0;
+layout(location = 5) in vec4 aInstance1;
+layout(location = 6) in vec4 aInstance2;
+layout(location = 7) in vec4 aInstance3;
+uniform mat4 uSunViewProjection;
+out float vSunDepth;
+void main()
+{
+    mat4 instanceTransform = mat4(aInstance0, aInstance1, aInstance2, aInstance3);
+    vec4 clip = uSunViewProjection * (instanceTransform * vec4(aPosition, 1.0));
+    vSunDepth = clip.z / clip.w;
+    gl_Position = clip;
+    gl_Position.z = 2.0 * gl_Position.z - gl_Position.w;
+}
+)";
+    }
+
+    void PalmRenderer::DrawSunShadow(SunShadowMap& map)
+    {
+        if (!customShaderReady_ || !instancingSupported_ || sunShadowUnavailable_) return;
+        if (!sunShadowEffect_) {
+            try {
+                sunShadowEffect_ = map.CreateCasterEffect(PalmSunShadowVertex, "palms");
+            } catch (const std::exception& error) {
+                std::cout << "island-simulator: palm sun shadow casters unavailable: "
+                          << error.what() << '\n';
+                sunShadowUnavailable_ = true;
+                return;
+            }
+        }
+        for (auto& list : visibleFarTransforms_) list.clear();
+        for (auto& list : visibleBrokenFarTransforms_) list.clear();
+        int casters = 0;
+        for (const PalmCell& cell : cells_) {
+            if (!cell.occupied) continue;
+            for (const PalmDrawInstance& instance : cell.instances) {
+                if (!map.CastsInto(instance.x, instance.z)) continue;
+                (instance.condition == PalmCondition::Broken
+                     ? visibleBrokenFarTransforms_[instance.variant]
+                     : visibleFarTransforms_[instance.variant]).push_back(instance.transform);
+                ++casters;
+            }
+        }
+        float matrix[16];
+        map.LightViewProjectionColumnMajor(matrix);
+        sunShadowEffect_->Apply();
+        sunShadowEffect_->SetUniformMat4("uSunViewProjection", matrix);
+        for (std::size_t variant = 0; variant < farMeshes_.size(); ++variant) {
+            DrawVariant(farMeshes_[variant], visibleFarTransforms_[variant]);
+            DrawVariant(brokenFarMeshes_[variant], visibleBrokenFarTransforms_[variant]);
+        }
+        device_.SetVertexBuffers({});
+        device_.setIndicesProperty(nullptr);
+        map.CountCasters(casters);
+    }
+
     void PalmRenderer::DrawVariant(PalmMesh& mesh, const std::vector<Matrix>& transforms)
     {
         if (transforms.empty()) {
@@ -1204,6 +1271,8 @@ void main()
                 "uToSun", environment::SunDirectionX, environment::SunDirectionY,
                 environment::SunDirectionZ);
             customEffect_->SetUniformFloat("uTime", timeSeconds);
+            if (sunShadow_) sunShadow_->Bind(*customEffect_);
+            else SunShadowMap::BindDisabled(*customEffect_);
         } else {
             effect_->setViewProperty(view);
             effect_->setProjectionProperty(projection);

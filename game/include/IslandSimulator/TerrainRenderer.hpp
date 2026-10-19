@@ -26,6 +26,8 @@ namespace island
     class CaveGroundPatch;
     class BunkerLayout;
     /** @brief Frustum-culled island terrain with portable procedural material variation. */
+    class SunShadowMap;
+
     class TerrainRenderer final
     {
     public:
@@ -54,6 +56,8 @@ namespace island
         [[nodiscard]] const StreamBedPatch& StreamBed() const noexcept {return *streamBed_;}
         [[nodiscard]] const CaveLayout& Cave() const noexcept {return *cave_;}
         [[nodiscard]] const CaveGroundPatch& CaveGround() const noexcept {return *caveGround_;}
+        /** Receives the fixed-sun shadow map; nullptr keeps only the baked canopy field. */
+        void SetSunShadowMap(const SunShadowMap* map) noexcept { sunShadow_ = map; }
         [[nodiscard]] int DrawCallCount() const noexcept { return drawCallCount_; }
 
     private:
@@ -90,6 +94,7 @@ namespace island
         bool materialReady_ = false;
         int visibleCellCount_ = 0;
         int drawCallCount_ = 0;
+        const SunShadowMap* sunShadow_ = nullptr;
         int vertexCount_ = 0;
         int primitiveCount_ = 0;
     };

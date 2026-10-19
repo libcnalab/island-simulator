@@ -180,6 +180,7 @@ namespace island
             case FixedViewpoint::MonkeyClimbDetail: return "monkey-climb";
             case FixedViewpoint::ShipwreckDetail: return "shipwreck";
             case FixedViewpoint::ShipwreckWide: return "shipwreck-wide";
+            case FixedViewpoint::AnimalTrackDetail: return "tracks";
             case FixedViewpoint::HutDetail: return "hut";
             case FixedViewpoint::HutMaterialDetail: return "hut-material";
             case FixedViewpoint::HelicopterDetail: return "helicopter";
@@ -1322,6 +1323,20 @@ namespace island
             const Vector3 toMonkey = monkeyTarget-cameraPosition_;
             yaw_ = std::atan2(toMonkey.X, toMonkey.Z);
             pitch_ = std::atan2(toMonkey.Y, std::hypot(toMonkey.X, toMonkey.Z));
+        } else if (viewpoint_ == FixedViewpoint::AnimalTrackDetail) {
+            // Stand beside the first stream-bank deer print line and look down along it.
+            const auto& tracks = naturalPropLayout_.AnimalTracks();
+            const auto track = std::find_if(tracks.begin(), tracks.end(),
+                [](const AnimalTrackPlacement& candidate) {
+                    return candidate.streamBank && candidate.variant == 0U; });
+            if (track == tracks.end()) throw std::runtime_error("No stream-bank deer track line");
+            const float acrossX = std::cos(track->yawRadians), acrossZ = -std::sin(track->yawRadians);
+            cameraPosition_ = Vector3(track->x + acrossX * 1.25f, track->y + 1.15f,
+                                      track->z + acrossZ * 1.25f);
+            const Vector3 direction = Vector3(track->x, track->y, track->z) - cameraPosition_;
+            yaw_ = std::atan2(direction.X, direction.Z);
+            pitch_ = std::atan2(direction.Y, std::hypot(direction.X, direction.Z));
+            std::cout << "island-simulator: tracks QA camera looks down on a deer print line beside the stream\n";
         } else if (viewpoint_ == FixedViewpoint::ShipwreckDetail
                    || viewpoint_ == FixedViewpoint::ShipwreckWide) {
             const ShipwreckPlacement& ship = shipwreckLayout_.Ship();
@@ -1964,6 +1979,28 @@ namespace island
         helicopterRenderer_=std::make_unique<HelicopterRenderer>(device,*helicopterPlacement_);
         palmRenderer_ = std::make_unique<PalmRenderer>(
             device, vegetationLayout_, qualityProfile_.vegetationMaximumDistanceScale);
+        try {
+            if (!device.SupportsCapability(CNA::GraphicsCapability::CustomEffects)
+                || !device.SupportsCapability(CNA::GraphicsCapability::Instancing))
+                throw std::runtime_error("custom effects or instancing unavailable");
+#if defined(__EMSCRIPTEN__) || defined(__ANDROID__)
+            constexpr int sunShadowResolution = 1024;
+#else
+            constexpr int sunShadowResolution = 2048;
+#endif
+            sunShadowMap_ = std::make_unique<SunShadowMap>(device, sunShadowResolution);
+            contactShadowRenderer_->SetStructureShadowsEnabled(false);
+            std::cout << "island-simulator: sun shadow map " << sunShadowResolution
+                      << " px covers " << static_cast<int>(2.0f * SunShadowMap::Radius)
+                      << " m around the camera; trees, palms, snags, bushes, hut, wreck and "
+                         "helicopter cast directional shadows onto terrain, grass, plants and palms\n";
+            MirrorRuntimeDiagnosticToPlatformLog(
+                "island-simulator: sun shadow map casts directional tree and structure shadows");
+        } catch (const std::exception& error) {
+            sunShadowMap_ = nullptr;
+            std::cout << "island-simulator: sun shadow map unavailable: " << error.what()
+                      << "; projected footprint shadows retained\n";
+        }
         oceanRenderer_ = std::make_unique<OceanRenderer>(
             device, terrain_, qualityProfile_.oceanQuadsPerAxis);
         shorelineRenderer_ = std::make_unique<ShorelineRenderer>(device, terrain_);
@@ -3362,6 +3399,7 @@ namespace island
             IsDebugFreeCameraActive() || flightMotion_.IsActive()
                 ? 0.0f : playerMotion_.VelocityZ(),
         };
+        soundscape_->SetFootstepGround(FootstepGroundUnderPlayer());
         soundscape_->Update(
             shoreDistance,
             !flightMotion_.IsActive() && playerMotion_.Mode() == LocomotionMode::Swimming,
@@ -3374,6 +3412,44 @@ namespace island
             goats_->Goats(),snakes_->Snakes(),&bear_->State(),
             flightMotion_.IsActive()?0.0f:playerMotion_.SubmergedDepth(),
             frogPopulation_.Frogs(), cicadaColony_.Cicadas(), flySwarms_.Flies());
+    }
+
+    FootstepSurface IslandGame::FootstepGroundUnderPlayer() const noexcept
+    {
+        if (flightMotion_.IsActive() || IsDebugFreeCameraActive()) return FootstepSurface::None;
+        const PlayerPosition& position = playerMotion_.Position();
+        if (!std::isfinite(position.x) || !std::isfinite(position.z)) return FootstepSurface::None;
+        const TerrainSample sample = terrain_.Sample(position.x, position.z);
+        // Ankle-deep water before the swim threshold wades; the scheduler stays silent once
+        // the player is actually swimming.
+        if (sample.height < -0.06f) return FootstepSurface::Shallows;
+        switch (sample.surface) {
+        case TerrainSurface::DeepSeabed:
+        case TerrainSurface::ShallowSeabed:
+        case TerrainSurface::WetSand:
+        case TerrainSurface::DrySand:
+            return FootstepSurface::Sand;
+        case TerrainSurface::SteepGround:
+        case TerrainSurface::RockyGround:
+            return FootstepSurface::Rock;
+        case TerrainSurface::CoastalGround:
+        case TerrainSurface::InteriorGround:
+        default:
+            break;
+        }
+        if (sample.coastalRockiness >= 0.60f) return FootstepSurface::Rock;
+        // The same living-turf density that places grass clusters decides whether the step
+        // swishes through blades or lands on bare humus.
+        const auto environment = IslandEnvironmentField::SampleInland(
+            position.x, position.z, sample.signedShoreDistance);
+        const float turf = sample.signedShoreDistance >= 20.0f && sample.slopeRadians <= 0.4886922f
+            ? GroundCover::Density(std::clamp(canopyLightField_.Sample(position.x, position.z), 0.0f, 1.0f),
+                                   std::clamp(groundCoverField_.SamplePatch(position.x, position.z), 0.0f, 1.0f),
+                                   sample.signedShoreDistance, sample.slopeRadians,
+                                   sample.coastalRockiness, sample.beachSuitability,
+                                   environment.moisture, environment.drainage)
+            : 0.0f;
+        return turf >= 0.30f ? FootstepSurface::Grass : FootstepSurface::Soil;
     }
 
     bool IslandGame::IsDebugFreeCameraActive() const noexcept
@@ -3876,6 +3952,28 @@ namespace island
             device.Clear(Color(136, 202, 224, 255), 1.0f);
         }
         UpdateCameraMatrices();
+        if (sunShadowMap_) {
+            if (!sunShadowReceiversBound_) {
+                terrainRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                grassRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                jungleRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                palmRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                sunShadowReceiversBound_ = true;
+            }
+            if (sunShadowMap_->Prepare(renderCameraPosition_)) {
+                GpuDiagnosticScope gpuPass("sun-shadow");
+                sunShadowMap_->Begin();
+                device.setRasterizerStateProperty(RasterizerState::CullNone);
+                device.setBlendStateProperty(BlendState::Opaque);
+                device.setDepthStencilStateProperty(DepthStencilState::Default);
+                jungleRenderer_->DrawSunShadow(*sunShadowMap_);
+                palmRenderer_->DrawSunShadow(*sunShadowMap_);
+                if (hutRenderer_) hutRenderer_->DrawSunShadow(*sunShadowMap_);
+                shipwreckRenderer_->DrawSunShadow(*sunShadowMap_);
+                helicopterRenderer_->DrawSunShadow(*sunShadowMap_);
+                sunShadowMap_->End();
+            }
+        }
         {
             GpuDiagnosticScope gpuPass("sky");
             skyRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,timeSeconds);
@@ -3896,8 +3994,16 @@ namespace island
         }
         {
             GpuDiagnosticScope gpuPass("contact-shadows");
+            ContactShadowRenderer::PlayerShadow playerShadow;
+            if (!flightMotion_.IsActive() && !IsDebugFreeCameraActive()
+                && playerMotion_.Mode() == LocomotionMode::Walking
+                && playerMotion_.GroundHeight() > -0.06f) {
+                const PlayerPosition& walker = playerMotion_.Position();
+                playerShadow = {walker.x, walker.z, true};
+            }
             contactShadowRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
-                                         renderedMonkeys, boarHerd_.Boars(),*snakes_,goats_->Goats(),spiders_->Spiders());
+                                         renderedMonkeys, boarHerd_.Boars(),*snakes_,goats_->Goats(),spiders_->Spiders(),
+                                         playerShadow);
             residentRenderer_->DrawShadow(cameraView_,cameraProjection_,renderCameraPosition_,resident_->State());
             bearRenderer_->DrawShadow(cameraView_,cameraProjection_,renderCameraPosition_,bear_->State());
         }
@@ -4667,6 +4773,8 @@ namespace island
                       << contactShadowRenderer_->DrawCallCount()
                       << " draw, large-object sun shadows "
                       << contactShadowRenderer_->VisibleStructureShadowCount()
+                      << "; sun shadow map " << (sunShadowMap_ ? sunShadowMap_->RenderCount() : 0)
+                      << " renders, " << (sunShadowMap_ ? sunShadowMap_->LastCasterCount() : 0) << " casters"
                       << "; coastal contact shadows " << contactShadowRenderer_->VisibleCoastalShadowCount()
                       << "; water view " << waterViewModel_.Intensity()
                       << ", " << waterViewOverlay_->DrawCallCount()

@@ -952,6 +952,73 @@ namespace island
             throw std::runtime_error("Unable to place both turtle nesting traces on dry sand");
         }
 
+        // Deer and boar prints: short lines where the animals come down to drink along the
+        // stream's muddy banks, and a few crossings of the wet sand just above the water line.
+        animalTracks_.reserve(40U);
+        const auto placeTrack = [&](const float x, const float z, const float yaw,
+                                    const std::uint8_t variant, const bool streamBank,
+                                    const float minimumShore, const float maximumShore,
+                                    const bool sandOnly) {
+            const TerrainSample sample = terrain.Sample(x, z);
+            if (!std::isfinite(sample.height) || sample.height < 0.10f
+                || sample.slopeRadians > 0.40f
+                || sample.signedShoreDistance < minimumShore
+                || sample.signedShoreDistance > maximumShore
+                || (sandOnly && sample.surface != TerrainSurface::WetSand
+                    && sample.surface != TerrainSurface::DrySand)
+                || (!sandOnly && sample.surface != TerrainSurface::InteriorGround
+                    && sample.surface != TerrainSurface::CoastalGround)
+                || VegetationLayout::IsReservedRoute(x, z)
+                || NearTree(x, z, 1.1f, palms, jungle)
+                || std::ranges::any_of(animalTracks_, [x, z](const auto& track) {
+                       return DistanceSquared(x, z, track.x, track.z) < 9.0f;
+                   })) {
+                return false;
+            }
+            AnimalTrackPlacement track;
+            track.x = x;
+            track.y = sample.height + 0.008f;
+            track.z = z;
+            track.yawRadians = yaw;
+            track.scale = variant == 0U ? 1.0f : 0.92f;
+            track.variant = variant;
+            track.streamBank = streamBank;
+            animalTracks_.push_back(track);
+            return true;
+        };
+        for (int station = 0; station < 26; ++station) {
+            const float along = 12.0f + static_cast<float>(station) * 3.1f;
+            const float x = StreamRoute::SourceX - along;
+            const std::uint32_t trackHash = Hash(station, 7, seed ^ 0x9e3779b9U);
+            const float side = (trackHash & 1U) != 0U ? 1.0f : -1.0f;
+            const float bankOffset = StreamRoute::HalfWidth(x)
+                    * StreamRoute::BankWidthScale(along, side)
+                + 0.85f + 0.9f * UnitRandom(trackHash);
+            const float z = StreamRoute::CentreZ(x) + side * bankOffset;
+            const auto variant = static_cast<std::uint8_t>((trackHash >> 3U) & 1U);
+            // Deer walk straight down to the water; boars root along the bank.
+            const float tangentX = -1.0f;
+            const float tangentZ = StreamRoute::CentreZ(x - 1.0f) - StreamRoute::CentreZ(x);
+            const float yaw = variant == 0U ? std::atan2(0.0f, -side)
+                                            : std::atan2(tangentX, tangentZ);
+            placeTrack(x, z, yaw, variant, true, 20.0f, 400.0f, false);
+        }
+        int shoreCrossings = 0;
+        for (int crossing = 0; crossing < 14 && shoreCrossings < 6; ++crossing) {
+            const float angle = 0.35f + static_cast<float>(crossing) * 0.45f;
+            const float radius = terrain.ShoreRadius(angle) - 2.4f;
+            const float x = std::cos(angle) * radius;
+            const float z = std::sin(angle) * radius;
+            const float yaw = std::atan2(-std::sin(angle), std::cos(angle));
+            if (placeTrack(x, z, yaw, static_cast<std::uint8_t>(crossing & 1), false,
+                           0.8f, 5.0f, true)) {
+                ++shoreCrossings;
+            }
+        }
+        if (animalTracks_.size() < 8U) {
+            throw std::runtime_error("Unable to place enough deer and boar track lines");
+        }
+
         fallenFronds_.reserve(150U);
         for (const PalmPlacement& palm : palms.Palms()) {
             const auto palmX = static_cast<std::int32_t>(std::lround(palm.x * 8.0f));

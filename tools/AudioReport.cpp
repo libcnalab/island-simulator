@@ -198,6 +198,18 @@ namespace
                          island::GenerateSoilFootstep()});
         clips.push_back({"soil footstep B", "soil-footstep-b.wav", false, 6615U,
                          island::GenerateSoilFootstepAlternate()});
+        clips.push_back({"turf footstep A", "turf-footstep-a.wav", false, 6615U,
+                         island::GenerateGrassFootstep()});
+        clips.push_back({"turf footstep B", "turf-footstep-b.wav", false, 6615U,
+                         island::GenerateGrassFootstepAlternate()});
+        clips.push_back({"stone footstep A", "stone-footstep-a.wav", false, 6615U,
+                         island::GenerateRockFootstep()});
+        clips.push_back({"stone footstep B", "stone-footstep-b.wav", false, 6615U,
+                         island::GenerateRockFootstepAlternate()});
+        clips.push_back({"wading footstep A", "wading-footstep-a.wav", false, 9922U,
+                         island::GenerateWadeFootstep()});
+        clips.push_back({"wading footstep B", "wading-footstep-b.wav", false, 9922U,
+                         island::GenerateWadeFootstepAlternate()});
         clips.push_back({"bird call A", "bird-call-a.wav", false, 26460U,
                          island::GenerateBirdCall()});
         clips.push_back({"bird call B", "bird-call-b.wav", false, 29767U,

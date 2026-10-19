@@ -57,12 +57,21 @@ namespace island
         ContactShadowRenderer(ContactShadowRenderer&&) = delete;
         ContactShadowRenderer& operator=(ContactShadowRenderer&&) = delete;
 
+        /** The walking player's own grounding shadow, projected along the fixed sun. */
+        struct PlayerShadow
+        {
+            float x = 0.0f;
+            float z = 0.0f;
+            bool visible = false;
+        };
+
         void Draw(const Microsoft::Xna::Framework::Matrix& view,
                   const Microsoft::Xna::Framework::Matrix& projection,
                   const Microsoft::Xna::Framework::Vector3& cameraPosition,
                   std::span<const MonkeyState> monkeys,
                   std::span<const BoarState> boars, const SnakePopulation& snakes,
-                  std::span<const GoatState> goats,std::span<const SpiderState> spiders);
+                  std::span<const GoatState> goats,std::span<const SpiderState> spiders,
+                  const PlayerShadow& player);
 
         [[nodiscard]] int VisibleShadowCount() const noexcept { return visibleShadowCount_; }
         [[nodiscard]] int VisiblePalmShadowCount() const noexcept
@@ -88,6 +97,7 @@ namespace island
         [[nodiscard]] int PrimitiveCount() const noexcept { return primitiveCount_; }
         [[nodiscard]] int VisibleBoarShadowCount() const noexcept { return visibleBoarShadowCount_; }
         [[nodiscard]] int VisibleGoatShadowCount() const noexcept { return visibleGoatShadowCount_; }
+        [[nodiscard]] int VisiblePlayerShadowCount() const noexcept { return visiblePlayerShadowCount_; }
         [[nodiscard]] int VisibleSpiderShadowCount() const noexcept { return visibleSpiderShadowCount_; }
         [[nodiscard]] int VisibleSnakeShadowCount() const noexcept { return visibleSnakeShadowCount_; }
         [[nodiscard]] int DrawCallCount() const noexcept { return drawCallCount_; }
@@ -96,6 +106,8 @@ namespace island
         [[nodiscard]] int VisibleStructureShadowCount() const noexcept {
             return visibleStructureShadowCount_;
         }
+        /** The projected wreck/hut/helicopter footprints are redundant once a sun shadow map casts them. */
+        void SetStructureShadowsEnabled(bool enabled) noexcept { structureShadowsEnabled_ = enabled; }
 
     private:
         enum class StaticShadowKind : std::uint8_t
@@ -142,6 +154,8 @@ namespace island
         int visibleWoodShadowCount_ = 0;
         int visibleHutShadowCount_ = 0;
         int visibleStructureShadowCount_ = 0;
+        bool structureShadowsEnabled_ = true;
+        int visiblePlayerShadowCount_ = 0;
         int visibleMonkeyShadowCount_ = 0;
         int visibleBoarShadowCount_ = 0;
         int visibleGoatShadowCount_ = 0;

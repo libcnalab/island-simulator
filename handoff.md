@@ -23,7 +23,36 @@ and face an approaching player and retreat obliquely instead of turning their ba
 build scales mouse look 2.5x and requests unadjusted pointer-lock motion. Both need the operator's
 in-play confirmation (desktop facing feel, browser mouse travel) before `[x]`.
 
-The agent-actionable backlog is empty. Next whole-island critique target, observed in the moving
+## Operator backlog 2026-10-19 (evening) — work in this order, then loop
+
+Operator instruction: implement all twenty items below, then continue indefinitely in a loop of
+"propose an island improvement, implement it" until the operator stops the session. Mark items
+here as done with their `PLAN.md` evidence reference.
+
+1. [x] Directional sun shadows (`SunShadowMap`, PLAN "Latest lighting pass — directional sun shadow
+   map"); animals/structures/water as receivers remain a later pass.
+2. [ ] Mid-distance (20--40 m) open hillside reads as a smooth painted surface with dark blotches
+   where the material classification fades; add mid-distance detail.
+3. [ ] Sand scour/drift mound against the shipwreck hull (terrain replacement like the cave mantle).
+4. [ ] Audit the vertical light/dark sand streaks at grazing angles (wide wreck frame foreground).
+5. [ ] Cumulus: layered edges and cloud shadows on the sea instead of smooth blobs.
+6. [ ] Stream: a small cascade with foam and a pool (sound and a destination).
+7. [ ] Parrots and pigeons as recognisable bird species (colour, calls, ground doves).
+8. [ ] Ecological links: goats/deer drink at the stream, monkeys pick fruit, boars root at roots.
+9. [ ] Herd behaviour: goats/deer keep as a group, a sentinel raises its head first.
+10. [x] Tracks (PLAN "Latest ground-sign pass — deer and boar track lines", `tracks` viewpoint).
+11. [ ] Sea from within: dolphin leaps, shark fin at the surface, fish school parts around the diver.
+12. [ ] Signs of the resident at the hut: fish-drying rack, coconut pile, dugout canoe, net rack.
+13. [ ] A jetty or stone breakwater near the hut as a shore landmark where birds perch.
+14. [ ] Rope bridge over the stream and/or a tree lookout platform (walkable).
+15. [ ] Lianas and hanging roots between canopy crowns.
+16. [ ] Flowering shrubs (hibiscus, plumeria) and banana plants near the stream.
+17. [ ] Fruit in crowns and fallen coconuts under palms (link to item 8).
+18. [ ] Fungi on logs and moss on rocks near paths.
+19. [x] Player shadow and surface-dependent footsteps (PLAN "Latest player-presence pass").
+20. [ ] Diving details: light shafts, bubbles, caustics on the seabed.
+
+The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted
 green surface with soft dark blotches where the forest-material classification fades.
 

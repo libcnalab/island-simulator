@@ -1,4 +1,5 @@
 #include "IslandSimulator/ShipwreckRenderer.hpp"
+#include "IslandSimulator/SunShadowMap.hpp"
 
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/OpaqueImageLoader.hpp"
@@ -1169,6 +1170,29 @@ void main()
     }
 
     ShipwreckRenderer::~ShipwreckRenderer() = default;
+
+    void ShipwreckRenderer::DrawSunShadow(SunShadowMap& map)
+    {
+        if (sunShadowUnavailable_ || !map.CastsInto(centre_.X, centre_.Z)) return;
+        if (!sunShadowEffect_) {
+            try {
+                sunShadowEffect_ = map.CreateCasterEffect(SunShadowMap::StructureCasterVertex, "shipwreck");
+            } catch (const std::exception& error) {
+                std::cout << "island-simulator: shipwreck sun shadow caster unavailable: "
+                          << error.what() << '\n';
+                sunShadowUnavailable_ = true;
+                return;
+            }
+        }
+        float matrix[16];
+        map.LightViewProjectionColumnMajor(matrix);
+        device_.SetVertexBuffer(vertices_.get());
+        device_.setIndicesProperty(nullptr);
+        sunShadowEffect_->Apply();
+        sunShadowEffect_->SetUniformMat4("uSunViewProjection", matrix);
+        device_.DrawPrimitives(PrimitiveType::TriangleList, 0, primitiveCount_);
+        map.CountCasters(1);
+    }
 
     void ShipwreckRenderer::Draw(const Matrix& view, const Matrix& projection,
                                  const Vector3& cameraPosition)

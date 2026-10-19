@@ -1149,6 +1149,60 @@ void main()
             }
         }
 
+        // Ground-decal print lines sharing the beach-detail flat-quad approach: four deer
+        // strides of paired cloven halves, or three boar strides of two toes with dewclaws.
+        [[nodiscard]] PropGeometry CreateAnimalTrackGeometry(const int variant)
+        {
+            PropGeometry geometry;
+            geometry.vertices.reserve(160U);
+            geometry.indices.reserve(240U);
+            const auto appendFlatQuad = [&geometry](const float centreX, const float centreZ,
+                                                    const float halfWidth, const float halfLength,
+                                                    const float skew, const Color& color) {
+                const auto base = static_cast<std::uint16_t>(geometry.vertices.size());
+                geometry.vertices.emplace_back(
+                    Vector3(centreX - halfWidth - skew, 0.008f, centreZ - halfLength), color);
+                geometry.vertices.emplace_back(
+                    Vector3(centreX + halfWidth - skew, 0.008f, centreZ - halfLength), color);
+                geometry.vertices.emplace_back(
+                    Vector3(centreX - halfWidth + skew, 0.008f, centreZ + halfLength), color);
+                geometry.vertices.emplace_back(
+                    Vector3(centreX + halfWidth + skew, 0.008f, centreZ + halfLength), color);
+                geometry.indices.insert(geometry.indices.end(),
+                                        {base, static_cast<std::uint16_t>(base + 2U),
+                                         static_cast<std::uint16_t>(base + 1U),
+                                         static_cast<std::uint16_t>(base + 1U),
+                                         static_cast<std::uint16_t>(base + 2U),
+                                         static_cast<std::uint16_t>(base + 3U)});
+            };
+            // Wet, compressed soil is darker than the surface around it; the pressed rim is
+            // only slightly darker so the cloven halves read as the print.
+            const Color pressedGround(78, 62, 42, 255);
+            const Color printFloor(38, 30, 20, 255);
+            if (variant == 0) {
+                for (int stride = 0; stride < 6; ++stride) {
+                    const float z = -1.40f + static_cast<float>(stride) * 0.56f;
+                    const float lateral = stride % 2 == 0 ? -0.09f : 0.09f;
+                    appendFlatQuad(lateral, z - 0.004f, 0.062f, 0.070f, 0.0f, pressedGround);
+                    // Two toed-in halves with a narrow cleft between them.
+                    appendFlatQuad(lateral - 0.026f, z, 0.020f, 0.046f, -0.008f, printFloor);
+                    appendFlatQuad(lateral + 0.026f, z, 0.020f, 0.046f, 0.008f, printFloor);
+                }
+                return geometry;
+            }
+            for (int stride = 0; stride < 5; ++stride) {
+                const float z = -1.00f + static_cast<float>(stride) * 0.50f;
+                const float lateral = stride % 2 == 0 ? -0.11f : 0.11f;
+                appendFlatQuad(lateral, z - 0.012f, 0.066f, 0.074f, 0.0f, pressedGround);
+                appendFlatQuad(lateral - 0.024f, z + 0.014f, 0.019f, 0.036f, -0.005f, printFloor);
+                appendFlatQuad(lateral + 0.024f, z + 0.014f, 0.019f, 0.036f, 0.005f, printFloor);
+                // Dewclaws press in behind the toes on soft ground.
+                appendFlatQuad(lateral - 0.042f, z - 0.050f, 0.012f, 0.014f, 0.0f, printFloor);
+                appendFlatQuad(lateral + 0.042f, z - 0.050f, 0.012f, 0.014f, 0.0f, printFloor);
+            }
+            return geometry;
+        }
+
         [[nodiscard]] PropGeometry CreateBeachDetailGeometry(const int variant)
         {
             PropGeometry geometry;
@@ -1470,6 +1524,13 @@ void main()
         std::cout << "island-simulator: beach detail " << totalBeachDetailCount_
                   << " shell/pebble/wrack clusters, near-field culled\n";
         std::cout << "island-simulator: dry wrack keeps its dedicated beach-detail variant\n";
+        {
+            int deerTracks = 0, boarTracks = 0;
+            for (const auto& track : layout.AnimalTracks())
+                (track.variant == 0U ? deerTracks : boarTracks) += 1;
+            std::cout << "island-simulator: " << deerTracks << " deer and " << boarTracks
+                      << " boar track lines press into stream-bank mud and wet sand\n";
+        }
         std::cout << "island-simulator: two turtle nesting traces use paired flipper tracks "
                      "and disturbed dry-sand nests\n";
         std::cout << "island-simulator: prevailing-wind shelter adds "
@@ -1592,6 +1653,10 @@ void main()
             upload(CreateBeachDetailGeometry(static_cast<int>(variant)),
                    beachDetailMeshes_[variant], "beach-detail");
         }
+        for (std::size_t variant = 0; variant < animalTrackMeshes_.size(); ++variant) {
+            upload(CreateAnimalTrackGeometry(static_cast<int>(variant)),
+                   animalTrackMeshes_[variant], "animal-track");
+        }
         for (std::size_t variant = 0; variant < fallenFrondMeshes_.size(); ++variant) {
             upload(CreateFallenFrondGeometry(static_cast<int>(variant)),
                    fallenFrondMeshes_[variant], "fallen-frond");
@@ -1670,6 +1735,19 @@ void main()
                          Vector3(detail.x + radius, detail.y + detail.scale * 0.13f,
                                  detail.z + radius));
             ++totalBeachDetailCount_;
+        }
+        for (const AnimalTrackPlacement& track : layout.AnimalTracks()) {
+            PropCell& cell = cells_[CellIndex(track.x, track.z)];
+            cell.animalTracks.push_back({
+                Matrix::CreateScale(track.scale)
+                    * Matrix::CreateRotationY(track.yawRadians)
+                    * Matrix::CreateTranslation(track.x, track.y, track.z),
+                track.variant, track.x, track.z});
+            const float radius = track.scale * 1.6f;
+            extendBounds(cell,
+                         Vector3(track.x - radius, track.y - 0.02f, track.z - radius),
+                         Vector3(track.x + radius, track.y + 0.03f, track.z + radius));
+            ++totalAnimalTrackCount_;
         }
         for (const FallenFrondPlacement& frond : layout.FallenFronds()) {
             PropCell& cell = cells_[CellIndex(frond.x, frond.z)];
@@ -1772,6 +1850,7 @@ void main()
         for (auto& transforms : visibleDriftwoodNear_) transforms.clear();
         for (auto& transforms : visibleDriftwoodFar_) transforms.clear();
         for (auto& transforms : visibleBeachDetails_) transforms.clear();
+        for (auto& transforms : visibleAnimalTracks_) transforms.clear();
         for (auto& transforms : visibleFallenFronds_) transforms.clear();
         for (auto& transforms : visibleReefHabitatNear_) transforms.clear();
         for (auto& transforms : visibleReefHabitatFar_) transforms.clear();
@@ -1782,6 +1861,7 @@ void main()
         visibleDriftwoodNearCount_ = 0;
         visibleDriftwoodFarCount_ = 0;
         visibleBeachDetailCount_ = 0;
+        visibleAnimalTrackCount_ = 0;
         visibleFallenFrondCount_ = 0;
         visibleReefHabitatCount_ = 0;
         visibleCellCount_ = 0;
@@ -1867,6 +1947,17 @@ void main()
                 ++visibleBeachDetailCount_;
                 cellVisible = true;
             }
+            for (const DrawInstance& instance : cell.animalTracks) {
+                const float trackDeltaX = instance.x - cameraPosition.X;
+                const float trackDeltaZ = instance.z - cameraPosition.Z;
+                if (trackDeltaX * trackDeltaX + trackDeltaZ * trackDeltaZ
+                    > BeachDetailMaximumDistance * BeachDetailMaximumDistance) {
+                    continue;
+                }
+                visibleAnimalTracks_[instance.variant].push_back(instance.transform);
+                ++visibleAnimalTrackCount_;
+                cellVisible = true;
+            }
             for (const DrawInstance& instance : cell.fallenFronds) {
                 const float frondDeltaX = instance.x - cameraPosition.X;
                 const float frondDeltaZ = instance.z - cameraPosition.Z;
@@ -1929,6 +2020,9 @@ void main()
         }
         for (std::size_t variant = 0; variant < beachDetailMeshes_.size(); ++variant) {
             DrawInstances(beachDetailMeshes_[variant], visibleBeachDetails_[variant]);
+        }
+        for (std::size_t variant = 0; variant < animalTrackMeshes_.size(); ++variant) {
+            DrawInstances(animalTrackMeshes_[variant], visibleAnimalTracks_[variant]);
         }
         for (std::size_t variant = 0; variant < fallenFrondMeshes_.size(); ++variant) {
             DrawInstances(fallenFrondMeshes_[variant], visibleFallenFronds_[variant]);

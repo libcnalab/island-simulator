@@ -1,4 +1,5 @@
 #include "IslandSimulator/GrassRenderer.hpp"
+#include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/CampfireLighting.hpp"
 #include "IslandSimulator/GpuDiagnostics.hpp"
 
@@ -334,7 +335,12 @@ void main()
     vec3 color = vColor * (vec3(1.0) + grassBasalShift * basalWeight) * light * surface;
     // Map elevated blades back along the fixed sun ray to the ground transmission field.
     vec2 receiver = canopyGroundReceiver(vWorld, vGroundHeight, uToSun);
-    color = applyCanopyLight(color, receiver);
+    // Same blend as the terrain beneath: the shadow map supplies direct sun, the baked
+    // field keeps sky occlusion, so blades and ground darken together under one crown.
+    float grassTransmission = canopyDappleTransmission(receiver, canopyTransmission(receiver));
+    float grassSunVisibility = sunShadowVisibility(vWorld);
+    float grassSkyOcclusion = mix(grassTransmission, 1.0, uSunShadowParams.x * 0.55);
+    color *= mix(uCanopyAmbient, vec3(1.0), min(grassSkyOcclusion, grassSunVisibility));
     color = applyCampfireLight(color,vWorld);
     color = mix(color, islandAtmosphereFog, smoothstep(260.0, 720.0, distanceToCamera));
     fragColor = vec4(color, 1.0);
@@ -351,14 +357,14 @@ void main()
                     + GrassFootprintShaderConstants()
                     + GrassMaterialShaderConstants()
                     + (canopy ? CanopyLighting::Shader : RenderedTerrainSurface::Shader)
-                    + (canopy ? CampfireLighting::Shader : "") + body;
+                    + (canopy ? std::string(CampfireLighting::Shader) + SunShadowMap::ReceiverShader : std::string()) + body;
             }
             return std::string("#version 330 core\n") + environment::FogShaderDefinition
                 + GrassMotion::ShaderConstants()
                 + GrassFootprintShaderConstants()
                 + GrassMaterialShaderConstants()
                 + (canopy ? CanopyLighting::Shader : RenderedTerrainSurface::Shader)
-                + (canopy ? CampfireLighting::Shader : "") + body;
+                + (canopy ? std::string(CampfireLighting::Shader) + SunShadowMap::ReceiverShader : std::string()) + body;
         }
 
         [[nodiscard]] CNA::Graphics::ShaderPackageEXT CreateShaderPackage()
@@ -959,6 +965,8 @@ void main()
             GpuDiagnosticScope uploadScope("grass-uniform-upload");
             canopyLighting_.Bind(*customEffect_);
             terrainHeightMap_.Bind(*customEffect_);
+            if (sunShadow_) sunShadow_->Bind(*customEffect_);
+            else SunShadowMap::BindDisabled(*customEffect_);
             customEffect_->SetUniformMat4("uViewProjection", viewProjection);
             customEffect_->SetUniformVec3("uCameraPosition", cameraPosition.X,
                                           cameraPosition.Y, cameraPosition.Z);

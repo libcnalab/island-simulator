@@ -185,55 +185,113 @@ namespace island
             }
         }
 
+        enum class FootstepMaterial : std::uint8_t { Sand, Soil, Grass, Rock };
+
+        struct FootstepProfile
+        {
+            unsigned gritWindow, crunchWindow, bodyWindow;
+            float attackEnd, releaseStart;
+            float startFrequency, endFrequency, thumpDecay;
+            float noiseWeight, gritWeight, gritLooseWeight, crunchWeight, bodyWeight, thumpWeight;
+            float smoothing, gain;
+        };
+
+        [[nodiscard]] FootstepProfile ProfileFor(const FootstepMaterial material) noexcept
+        {
+            switch (material) {
+            case FootstepMaterial::Sand:
+                return {2U, 11U, 58U, 0.045f, 0.17f, 94.0f, 54.0f, 8.5f,
+                        0.34f, 0.48f, 0.22f, 0.42f, 0.24f, 0.17f, 0.22f, 0.58f};
+            case FootstepMaterial::Soil:
+                return {5U, 19U, 104U, 0.035f, 0.13f, 76.0f, 42.0f, 8.5f,
+                        0.20f, 0.34f, 0.25f, 0.52f, 0.61f, 0.34f, 0.34f, 0.62f};
+            case FootstepMaterial::Grass:
+                // A longer, softer swish of blades with almost no ground thump.
+                return {3U, 16U, 150U, 0.060f, 0.32f, 70.0f, 40.0f, 10.0f,
+                        0.16f, 0.24f, 0.30f, 0.30f, 0.74f, 0.08f, 0.42f, 0.56f};
+            case FootstepMaterial::Rock:
+            default:
+                // A short, hard tap: fast attack, early release and a bright thump.
+                return {1U, 6U, 36U, 0.012f, 0.075f, 150.0f, 92.0f, 14.0f,
+                        0.42f, 0.50f, 0.10f, 0.30f, 0.12f, 0.46f, 0.10f, 0.60f};
+            }
+        }
+
         [[nodiscard]] AmbientLoop GenerateFootstepClip(const std::uint32_t seed,
-                                                       const bool sand,
+                                                       const FootstepMaterial material,
                                                        const bool alternate)
         {
             constexpr std::size_t frameCount = static_cast<std::size_t>(
                 AmbientSampleRate * 3 / 10);
             constexpr float durationSeconds = 0.30f;
+            const FootstepProfile profile = ProfileFor(material);
             const std::vector<float> noise = Noise(seed, frameCount);
-            const std::vector<float> grit = CircularSmooth(noise, sand ? 2U : 5U);
-            const std::vector<float> crunch = CircularSmooth(noise, sand ? 11U : 19U);
-            const std::vector<float> body = CircularSmooth(noise, sand ? 58U : 104U);
+            const std::vector<float> grit = CircularSmooth(noise, profile.gritWindow);
+            const std::vector<float> crunch = CircularSmooth(noise, profile.crunchWindow);
+            const std::vector<float> body = CircularSmooth(noise, profile.bodyWindow);
             std::vector<float> samples(frameCount);
             for (std::size_t index = 0; index < samples.size(); ++index) {
                 const float unit = static_cast<float>(index)
                     / static_cast<float>(samples.size() - 1U);
                 const float seconds = static_cast<float>(index)
                     / static_cast<float>(AmbientSampleRate);
-                const float attack = SmoothStep(0.0f, sand ? 0.045f : 0.035f, unit);
-                const float release = 1.0f - SmoothStep(sand ? 0.17f : 0.13f, 1.0f, unit);
-                const float startFrequency = sand ? 94.0f : 76.0f;
-                const float endFrequency = sand ? 54.0f : 42.0f;
-                const float sweep = endFrequency - startFrequency;
+                const float attack = SmoothStep(0.0f, profile.attackEnd, unit);
+                const float release = 1.0f - SmoothStep(profile.releaseStart, 1.0f, unit);
+                const float sweep = profile.endFrequency - profile.startFrequency;
                 const float thumpPhase = 2.0f * std::numbers::pi_v<float>
-                    * (startFrequency * seconds
+                    * (profile.startFrequency * seconds
                        + 0.5f * sweep * seconds * seconds / durationSeconds);
-                const float thump = std::sin(thumpPhase) * std::exp(-unit * 8.5f);
+                const float thump = std::sin(thumpPhase) * std::exp(-unit * profile.thumpDecay);
                 const float firstCrunch = std::exp(
                     -std::pow((unit - (alternate ? 0.19f : 0.13f)) / 0.065f, 2.0f));
                 const float secondCrunch = std::exp(
                     -std::pow((unit - (alternate ? 0.43f : 0.36f)) / 0.095f, 2.0f));
                 const float looseTexture = firstCrunch + secondCrunch * 0.58f;
-                const float texture = sand
-                    ? (noise[index] - grit[index]) * 0.34f
-                        + grit[index] * (0.48f + looseTexture * 0.22f)
-                        + crunch[index] * 0.42f + body[index] * 0.24f
-                        + thump * 0.17f
-                    : (noise[index] - grit[index]) * (0.20f + looseTexture * 0.25f)
-                        + grit[index] * 0.34f + crunch[index] * 0.52f
-                        + body[index] * 0.61f + thump * 0.34f;
+                const float texture = (noise[index] - grit[index])
+                        * (profile.noiseWeight + (material == FootstepMaterial::Soil
+                                                      ? looseTexture * 0.25f : 0.0f))
+                    + grit[index] * (profile.gritWeight
+                                     + (material == FootstepMaterial::Sand
+                                            ? looseTexture * profile.gritLooseWeight : 0.0f))
+                    + crunch[index] * profile.crunchWeight
+                    + body[index] * (profile.bodyWeight
+                                     + (material == FootstepMaterial::Grass
+                                            ? looseTexture * profile.gritLooseWeight : 0.0f))
+                    + thump * profile.thumpWeight;
                 samples[index] = attack * release * texture;
             }
-            const float smoothing = sand ? 0.22f : 0.34f;
             for (std::size_t index = 1U; index < samples.size(); ++index) {
-                samples[index] = samples[index] * (1.0f - smoothing)
-                    + samples[index - 1U] * smoothing;
+                samples[index] = samples[index] * (1.0f - profile.smoothing)
+                    + samples[index - 1U] * profile.smoothing;
             }
             samples.front() = 0.0f;
             samples.back() = 0.0f;
-            return Quantize(samples, sand ? 0.58f : 0.62f);
+            return Quantize(samples, profile.gain);
+        }
+
+        [[nodiscard]] AmbientLoop GenerateWadeClip(const std::uint32_t seed, const bool alternate)
+        {
+            // Ankle-deep wading: a brief splash with a few droplets, shorter and lighter than
+            // the entry/exit water transition accents.
+            constexpr std::size_t frameCount = static_cast<std::size_t>(AmbientSampleRate * 9 / 20);
+            const std::vector<float> noise = Noise(seed, frameCount);
+            const std::vector<float> droplets = CircularSmooth(noise, 3U);
+            const std::vector<float> splash = CircularSmooth(noise, 21U);
+            const std::vector<float> body = CircularSmooth(noise, 170U);
+            std::vector<float> samples(frameCount);
+            for (std::size_t index = 0; index < samples.size(); ++index) {
+                const float phase = static_cast<float>(index)
+                    / static_cast<float>(samples.size() - 1U);
+                const float attack = SmoothStep(0.0f, alternate ? 0.040f : 0.028f, phase);
+                const float release = 1.0f - SmoothStep(alternate ? 0.30f : 0.24f, 1.0f, phase);
+                const float initialSplash = std::exp(-phase * (alternate ? 5.0f : 6.5f));
+                samples[index] = attack * release
+                    * (droplets[index] * (0.30f + initialSplash * 0.40f)
+                       + splash[index] * 0.70f + body[index] * 0.30f);
+            }
+            samples.front() = 0.0f;
+            samples.back() = 0.0f;
+            return Quantize(samples, 0.62f);
         }
     }
 
@@ -600,22 +658,52 @@ namespace island
 
     AmbientLoop GenerateSandFootstep()
     {
-        return GenerateFootstepClip(0x5a4d6c13U, true, false);
+        return GenerateFootstepClip(0x5a4d6c13U, FootstepMaterial::Sand, false);
     }
 
     AmbientLoop GenerateSandFootstepAlternate()
     {
-        return GenerateFootstepClip(0x1fd28b79U, true, true);
+        return GenerateFootstepClip(0x1fd28b79U, FootstepMaterial::Sand, true);
     }
 
     AmbientLoop GenerateSoilFootstep()
     {
-        return GenerateFootstepClip(0x70a15eedU, false, false);
+        return GenerateFootstepClip(0x70a15eedU, FootstepMaterial::Soil, false);
     }
 
     AmbientLoop GenerateSoilFootstepAlternate()
     {
-        return GenerateFootstepClip(0xc4419a37U, false, true);
+        return GenerateFootstepClip(0xc4419a37U, FootstepMaterial::Soil, true);
+    }
+
+    AmbientLoop GenerateGrassFootstep()
+    {
+        return GenerateFootstepClip(0x3b9e02d1U, FootstepMaterial::Grass, false);
+    }
+
+    AmbientLoop GenerateGrassFootstepAlternate()
+    {
+        return GenerateFootstepClip(0x8d47f5a6U, FootstepMaterial::Grass, true);
+    }
+
+    AmbientLoop GenerateRockFootstep()
+    {
+        return GenerateFootstepClip(0x62c1a9e4U, FootstepMaterial::Rock, false);
+    }
+
+    AmbientLoop GenerateRockFootstepAlternate()
+    {
+        return GenerateFootstepClip(0x15fb73c8U, FootstepMaterial::Rock, true);
+    }
+
+    AmbientLoop GenerateWadeFootstep()
+    {
+        return GenerateWadeClip(0x4ad9e17bU, false);
+    }
+
+    AmbientLoop GenerateWadeFootstepAlternate()
+    {
+        return GenerateWadeClip(0xa73c0e52U, true);
     }
 
     AmbientLoop GenerateBirdCall()
@@ -1007,7 +1095,8 @@ namespace island
 
     FootstepRequest FootstepScheduler::Update(
         const float deltaSeconds, const bool swimming, const float signedShoreDistance,
-        const float horizontalSpeed, const float listenerX, const float listenerZ) noexcept
+        const float horizontalSpeed, const float listenerX, const float listenerZ,
+        const FootstepSurface groundHint) noexcept
     {
         if (!std::isfinite(deltaSeconds) || deltaSeconds <= 0.0f
             || !std::isfinite(signedShoreDistance) || !std::isfinite(horizontalSpeed)
@@ -1060,13 +1149,29 @@ namespace island
         distanceSinceStep_ = std::fmod(distanceSinceStep_, strideDistance);
 
         FootstepRequest request;
-        request.surface = signedShoreDistance <= 18.0f
-            ? FootstepSurface::Sand : FootstepSurface::Soil;
+        request.surface = groundHint != FootstepSurface::None ? groundHint
+            : signedShoreDistance <= 18.0f ? FootstepSurface::Sand : FootstepSurface::Soil;
         request.variant = NextUnit() < 0.5f ? 0U : 1U;
         request.volume = 0.12f + runBlend * 0.065f + NextUnit() * 0.018f;
-        request.pitch = request.surface == FootstepSurface::Sand
-            ? -0.015f + NextUnit() * 0.09f + runBlend * 0.025f
-            : -0.060f + NextUnit() * 0.08f + runBlend * 0.030f;
+        if (request.surface == FootstepSurface::Shallows) request.volume += 0.03f;
+        switch (request.surface) {
+        case FootstepSurface::Sand:
+            request.pitch = -0.015f + NextUnit() * 0.09f + runBlend * 0.025f;
+            break;
+        case FootstepSurface::Grass:
+            request.pitch = -0.040f + NextUnit() * 0.09f + runBlend * 0.020f;
+            break;
+        case FootstepSurface::Rock:
+            request.pitch = 0.020f + NextUnit() * 0.08f + runBlend * 0.020f;
+            break;
+        case FootstepSurface::Shallows:
+            request.pitch = -0.030f + NextUnit() * 0.09f + runBlend * 0.015f;
+            break;
+        case FootstepSurface::Soil:
+        default:
+            request.pitch = -0.060f + NextUnit() * 0.08f + runBlend * 0.030f;
+            break;
+        }
         leftFoot_ = !leftFoot_;
         request.pan = (leftFoot_ ? -0.055f : 0.055f)
             + (NextUnit() - 0.5f) * 0.030f;

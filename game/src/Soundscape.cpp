@@ -310,6 +310,21 @@ namespace island
                 GenerateSoilFootstepAlternate());
             soilFootstepAlternateEffect_->setNameProperty(
                 "Procedural interior-soil footstep alternate");
+            grassFootstepEffect_ = CreateOneShotSoundEffect(GenerateGrassFootstep());
+            grassFootstepEffect_->setNameProperty("Procedural turf footstep");
+            grassFootstepAlternateEffect_ = CreateOneShotSoundEffect(
+                GenerateGrassFootstepAlternate());
+            grassFootstepAlternateEffect_->setNameProperty("Procedural turf footstep alternate");
+            rockFootstepEffect_ = CreateOneShotSoundEffect(GenerateRockFootstep());
+            rockFootstepEffect_->setNameProperty("Procedural stone footstep");
+            rockFootstepAlternateEffect_ = CreateOneShotSoundEffect(
+                GenerateRockFootstepAlternate());
+            rockFootstepAlternateEffect_->setNameProperty("Procedural stone footstep alternate");
+            wadeFootstepEffect_ = CreateOneShotSoundEffect(GenerateWadeFootstep());
+            wadeFootstepEffect_->setNameProperty("Procedural wading footstep");
+            wadeFootstepAlternateEffect_ = CreateOneShotSoundEffect(
+                GenerateWadeFootstepAlternate());
+            wadeFootstepAlternateEffect_->setNameProperty("Procedural wading footstep alternate");
 
             birdCallEffect_ = CreateOneShotSoundEffect(GenerateBirdCall());
             birdCallEffect_->setNameProperty("Procedural tropical bird call");
@@ -446,6 +461,7 @@ namespace island
             std::cout << "island-simulator: water-transition accents enabled\n";
             std::cout << "island-simulator: two water-transition variants enabled\n";
             std::cout << FootstepEnabledDiagnostic << '\n';
+            std::cout << "island-simulator: footsteps also vary over living turf, exposed stone and ankle-deep water\n";
             std::cout << "island-simulator: sparse stronger-wave accents enabled\n";
             std::cout << "island-simulator: two stronger-wave variants enabled\n";
             std::cout << ShipwreckCreakEnabledDiagnostic << '\n';
@@ -493,6 +509,12 @@ namespace island
             waterMovementInstance_.reset();
             waterTransitionInstance_.reset();
             footstepInstance_.reset();
+            wadeFootstepAlternateEffect_.reset();
+            wadeFootstepEffect_.reset();
+            rockFootstepAlternateEffect_.reset();
+            rockFootstepEffect_.reset();
+            grassFootstepAlternateEffect_.reset();
+            grassFootstepEffect_.reset();
             soilFootstepAlternateEffect_.reset();
             soilFootstepEffect_.reset();
             sandFootstepAlternateEffect_.reset();
@@ -885,14 +907,28 @@ namespace island
         const FootstepRequest footstep = footstepScheduler_.Update(
             safeDelta, swimming, signedShoreDistance,
             std::hypot(listenerState.velocityX, listenerState.velocityZ),
-            listenerState.x, listenerState.z);
+            listenerState.x, listenerState.z, footstepGround_);
         SoundEffect* footstepEffect = nullptr;
-        if (footstep.surface == FootstepSurface::Sand) {
-            footstepEffect = footstep.variant == 1U
-                ? sandFootstepAlternateEffect_.get() : sandFootstepEffect_.get();
-        } else if (footstep.surface == FootstepSurface::Soil) {
-            footstepEffect = footstep.variant == 1U
-                ? soilFootstepAlternateEffect_.get() : soilFootstepEffect_.get();
+        const bool alternateStep = footstep.variant == 1U;
+        switch (footstep.surface) {
+        case FootstepSurface::Sand:
+            footstepEffect = alternateStep ? sandFootstepAlternateEffect_.get() : sandFootstepEffect_.get();
+            break;
+        case FootstepSurface::Soil:
+            footstepEffect = alternateStep ? soilFootstepAlternateEffect_.get() : soilFootstepEffect_.get();
+            break;
+        case FootstepSurface::Grass:
+            footstepEffect = alternateStep ? grassFootstepAlternateEffect_.get() : grassFootstepEffect_.get();
+            break;
+        case FootstepSurface::Rock:
+            footstepEffect = alternateStep ? rockFootstepAlternateEffect_.get() : rockFootstepEffect_.get();
+            break;
+        case FootstepSurface::Shallows:
+            footstepEffect = alternateStep ? wadeFootstepAlternateEffect_.get() : wadeFootstepEffect_.get();
+            break;
+        case FootstepSurface::None:
+        default:
+            break;
         }
         if (available_ && !muted_ && footstepsEnabled_ && footstepEffect) {
             const int activeOtherTransientVoices =
@@ -1304,6 +1340,12 @@ namespace island
         waterTransitionInstance_.reset();
         footstepInstance_.reset();
         soilFootstepAlternateEffect_.reset();
+        wadeFootstepAlternateEffect_.reset();
+        wadeFootstepEffect_.reset();
+        rockFootstepAlternateEffect_.reset();
+        rockFootstepEffect_.reset();
+        grassFootstepAlternateEffect_.reset();
+        grassFootstepEffect_.reset();
         soilFootstepEffect_.reset();
         sandFootstepAlternateEffect_.reset();
         sandFootstepEffect_.reset();

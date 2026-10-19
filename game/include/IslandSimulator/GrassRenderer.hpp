@@ -30,6 +30,8 @@ namespace island
     class IslandTerrain;
 
     /** @brief Cell-batched three-tier mesh grass with portable wind and a static fallback. */
+    class SunShadowMap;
+
     class GrassRenderer final
     {
     public:
@@ -65,6 +67,8 @@ namespace island
         [[nodiscard]] int VisibleFarPatchCount() const noexcept { return visibleFarPatchCount_; }
         [[nodiscard]] int MixedLodCellCount() const noexcept { return mixedLodCellCount_; }
         [[nodiscard]] int VisibleCellCount() const noexcept { return visibleCellCount_; }
+        /** Receives the fixed-sun shadow map; nullptr keeps only the baked canopy field. */
+        void SetSunShadowMap(const SunShadowMap* map) noexcept { sunShadow_ = map; }
         [[nodiscard]] int DrawCallCount() const noexcept { return drawCallCount_; }
         [[nodiscard]] const std::string& FallbackReason() const noexcept { return fallbackReason_; }
 
@@ -114,6 +118,7 @@ namespace island
         int mixedLodCellCount_ = 0;
         int visibleCellCount_ = 0;
         int drawCallCount_ = 0;
+        const SunShadowMap* sunShadow_ = nullptr;
         float maximumDrawDistance_ = 135.0f;
         bool customShaderReady_ = false;
         float meshRadius_ = 0.0f;

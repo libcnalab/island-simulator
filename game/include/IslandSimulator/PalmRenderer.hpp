@@ -26,6 +26,8 @@ namespace Microsoft::Xna::Framework::Graphics
 namespace island
 {
     /** @brief Procedural instanced palm rendering with portable non-instanced fallback. */
+    class SunShadowMap;
+
     class PalmRenderer final
     {
     public:
@@ -51,6 +53,10 @@ namespace island
         [[nodiscard]] int VisibleNearPalmCount() const noexcept { return visibleNearPalmCount_; }
         [[nodiscard]] int VisibleFarPalmCount() const noexcept { return visibleFarPalmCount_; }
         [[nodiscard]] int VisibleCellCount() const noexcept { return visibleCellCount_; }
+        /** Receives the fixed-sun shadow map; nullptr leaves palms unshadowed. */
+        void SetSunShadowMap(const SunShadowMap* map) noexcept { sunShadow_ = map; }
+        /** Renders far-LOD living and broken palms into the bound map. */
+        void DrawSunShadow(SunShadowMap& map);
         [[nodiscard]] int DrawCallCount() const noexcept { return drawCallCount_; }
         [[nodiscard]] int FallenPalmCount() const noexcept { return fallenPalmCount_; }
         [[nodiscard]] int BrokenPalmCount() const noexcept { return brokenPalmCount_; }
@@ -118,5 +124,8 @@ namespace island
         int visibleFarPalmCount_ = 0;
         int visibleCellCount_ = 0;
         int drawCallCount_ = 0;
+        const SunShadowMap* sunShadow_ = nullptr;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> sunShadowEffect_;
+        bool sunShadowUnavailable_ = false;
     };
 }

@@ -1,0 +1,196 @@
+#include "IslandSimulator/SunShadowMap.hpp"
+#include "IslandSimulator/EnvironmentLighting.hpp"
+#include "CNA/Graphics/ShaderCodeEXT.hpp"
+#include "CNA/Graphics/ShaderPackageEXT.hpp"
+#include "CNA/ShaderLanguageEXT.hpp"
+#include "Microsoft/Xna/Framework/Color.hpp"
+#include "Microsoft/Xna/Framework/Graphics/ClearOptions.hpp"
+#include "Microsoft/Xna/Framework/Graphics/DepthFormat.hpp"
+#include "Microsoft/Xna/Framework/Graphics/RenderTargetUsage.hpp"
+#include "Microsoft/Xna/Framework/Graphics/SamplerState.hpp"
+#include "Microsoft/Xna/Framework/Graphics/SurfaceFormat.hpp"
+#include <cmath>
+#include <stdexcept>
+
+using namespace Microsoft::Xna::Framework;
+using namespace Microsoft::Xna::Framework::Graphics;
+
+namespace island {
+    // The light matrix keeps the XNA [0,1] clip depth, so p.z is the stored depth directly.
+    // EasyGL reports the sampled row order of a render target per unit through uRtFlipV;
+    // the map lives on unit 3, hence the .w component.
+    const char* const SunShadowMap::ReceiverShader = R"(
+uniform mat4 uSunShadowMatrix;
+uniform sampler2D uSunShadowMap;
+uniform vec4 uSunShadowParams;
+uniform vec4 uRtFlipV;
+float sunShadowUnpack(vec4 c) {
+    return dot(c, vec4(1.0, 1.0 / 255.0, 1.0 / 65025.0, 1.0 / 16581375.0));
+}
+float sunShadowVisibility(vec3 world) {
+    if (uSunShadowParams.x < 0.5) return 1.0;
+    vec4 p = uSunShadowMatrix * vec4(world, 1.0);
+    vec2 uv = p.xy * 0.5 + 0.5;
+    float depth = p.z - uSunShadowParams.y;
+    float edge = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
+    if (edge <= 0.0 || depth <= 0.0 || depth >= 1.0) return 1.0;
+    uv.y = mix(uv.y, 1.0 - uv.y, uRtFlipV.w);
+    float texel = uSunShadowParams.z;
+    vec2 st = uv * uSunShadowParams.w - 0.5;
+    vec2 f = fract(st);
+    vec2 base = (floor(st) + 0.5) * texel;
+    // 3x3 comparisons with bilinear corner weights: a 4x4 texel footprint whose edges
+    // soften over about two texels instead of stepping, cheap enough for every receiver.
+    float lit = 0.0;
+    float weightSum = 0.0;
+    for (int y = -1; y <= 2; ++y) {
+        float wy = (y == -1) ? (1.0 - f.y) : (y == 2) ? f.y : 1.0;
+        for (int x = -1; x <= 2; ++x) {
+            float wx = (x == -1) ? (1.0 - f.x) : (x == 2) ? f.x : 1.0;
+            float w = wx * wy;
+            vec2 tap = base + vec2(float(x), float(y)) * texel;
+            lit += w * step(depth, sunShadowUnpack(texture(uSunShadowMap, tap)));
+            weightSum += w;
+        }
+    }
+    lit /= max(weightSum, 0.0001);
+    return mix(1.0, lit, smoothstep(0.0, 0.06, edge));
+}
+)";
+
+    const char* const SunShadowMap::CasterFragment = R"(
+in float vSunDepth;
+out vec4 fragColor;
+void main() {
+    float depth = clamp(vSunDepth, 0.0, 0.9995);
+    vec4 encoded = fract(vec4(1.0, 255.0, 65025.0, 16581375.0) * depth);
+    encoded -= encoded.yzww * vec4(1.0 / 255.0, 1.0 / 255.0, 1.0 / 255.0, 0.0);
+    fragColor = encoded;
+}
+)";
+
+    const char* const SunShadowMap::StructureCasterVertex = R"(
+layout(location = 0) in vec3 aPosition;
+uniform mat4 uSunViewProjection;
+out float vSunDepth;
+void main() {
+    vec4 clip = uSunViewProjection * vec4(aPosition, 1.0);
+    vSunDepth = clip.z / clip.w;
+    gl_Position = clip;
+    gl_Position.z = 2.0 * gl_Position.z - gl_Position.w;
+}
+)";
+
+    SunShadowMap::SunShadowMap(GraphicsDevice& device, const int resolution)
+        : device_(device), resolution_(resolution),
+          lightViewProjection_(Matrix::getIdentityProperty()), savedViewport_(0, 0, 1, 1)
+    {
+        if (resolution < 256 || resolution > 4096)
+            throw std::invalid_argument("Sun shadow map resolution out of range");
+        target_ = std::make_unique<RenderTarget2D>(device, resolution, resolution, false,
+                                                   SurfaceFormat::Color, DepthFormat::Depth24, 0,
+                                                   RenderTargetUsage::PreserveContents);
+    }
+
+    SunShadowMap::~SunShadowMap() = default;
+
+    bool SunShadowMap::Prepare(const Vector3& camera)
+    {
+        if (!std::isfinite(camera.X) || !std::isfinite(camera.Z)) return false;
+        const Vector3 anchor(std::round(camera.X / AnchorStep) * AnchorStep, 0.0f,
+                             std::round(camera.Z / AnchorStep) * AnchorStep);
+        if (hasAnchor_ && anchor.X == anchor_.X && anchor.Z == anchor_.Z) return false;
+        anchor_ = anchor;
+        hasAnchor_ = true;
+        Vector3 toSun(environment::SunDirectionX, environment::SunDirectionY,
+                      environment::SunDirectionZ);
+        toSun.Normalize();
+        const Vector3 target(anchor.X, 12.0f, anchor.Z);
+        const Vector3 eye = target + toSun * EyeDistance;
+        const Matrix view = Matrix::CreateLookAt(eye, target, Vector3::Up);
+        const Matrix projection = Matrix::CreateOrthographic(2.0f * Radius, 2.0f * Radius,
+                                                             1.0f, DepthRange);
+        lightViewProjection_ = view * projection;
+        return true;
+    }
+
+    void SunShadowMap::Begin()
+    {
+        savedViewport_ = device_.getViewportProperty();
+        device_.SetRenderTarget(target_.get());
+        device_.setViewportProperty(Viewport(0, 0, resolution_, resolution_));
+        // White unpacks beyond every stored depth: an empty texel never shadows anything.
+        device_.Clear(static_cast<ClearOptions>(static_cast<int>(ClearOptions::Target)
+                                                | static_cast<int>(ClearOptions::DepthBuffer)),
+                      Color(255, 255, 255, 255), 1.0f, 0);
+        lastCasterCount_ = 0;
+        ++renderCount_;
+    }
+
+    void SunShadowMap::End()
+    {
+        device_.SetRenderTarget(nullptr);
+        device_.setViewportProperty(savedViewport_);
+    }
+
+    void SunShadowMap::LightViewProjectionColumnMajor(float out[16]) const
+    {
+        lightViewProjection_.ToColumnMajor(out);
+    }
+
+    bool SunShadowMap::CastsInto(const float x, const float z) const noexcept
+    {
+        if (!hasAnchor_) return false;
+        return std::abs(x - anchor_.X) <= Radius + CasterMargin
+            && std::abs(z - anchor_.Z) <= Radius + CasterMargin;
+    }
+
+    void SunShadowMap::Bind(ShaderEffect& effect) const
+    {
+        if (!Rendered()) {
+            BindDisabled(effect);
+            return;
+        }
+        float matrix[16];
+        LightViewProjectionColumnMajor(matrix);
+        effect.SetUniformMat4("uSunShadowMatrix", matrix);
+        device_.getSamplerStatesProperty()[TextureUnit] = SamplerState::PointClamp;
+        effect.SetTexture(TextureUnit, *target_);
+        effect.SetUniformInt("uSunShadowMap", TextureUnit);
+        effect.SetUniformVec4("uSunShadowParams", 1.0f, DepthBias,
+                              1.0f / static_cast<float>(resolution_),
+                              static_cast<float>(resolution_));
+    }
+
+    void SunShadowMap::BindDisabled(ShaderEffect& effect)
+    {
+        effect.SetUniformVec4("uSunShadowParams", 0.0f, 0.0f, 0.0f, 1.0f);
+    }
+
+    std::unique_ptr<ShaderEffect> SunShadowMap::CreateCasterEffect(const char* vertexBody,
+                                                                   const std::string& name) const
+    {
+        using CNA::Graphics::ShaderCodeEXT;
+        const auto es = [](const char* body) {
+            return std::string("#version 300 es\nprecision highp float;\n") + body;
+        };
+        const auto desktop = [](const char* body) {
+            return std::string("#version 330 core\n") + body;
+        };
+        const CNA::Graphics::ShaderPackageEXT package(
+            {ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslEs, CNA::ShaderStageEXT::Vertex, "main",
+                           name + "/sun-shadow.es.vert", es(vertexBody)),
+             ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslEs, CNA::ShaderStageEXT::Fragment, "main",
+                           name + "/sun-shadow.es.frag", es(CasterFragment)),
+             ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslDesktop, CNA::ShaderStageEXT::Vertex,
+                           "main", name + "/sun-shadow.gl.vert", desktop(vertexBody)),
+             ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslDesktop, CNA::ShaderStageEXT::Fragment,
+                           "main", name + "/sun-shadow.gl.frag", desktop(CasterFragment))},
+            {CNA::ShaderStageEXT::Vertex, CNA::ShaderStageEXT::Fragment});
+        auto effect = std::make_unique<ShaderEffect>(device_, package);
+        if (!effect->IsEffectValid())
+            throw std::runtime_error("Sun shadow caster shader failed for " + name + ": "
+                                     + effect->GetCompileErrorEXT());
+        return effect;
+    }
+}

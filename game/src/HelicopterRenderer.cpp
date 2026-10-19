@@ -1,4 +1,5 @@
 #include "IslandSimulator/HelicopterRenderer.hpp"
+#include "IslandSimulator/SunShadowMap.hpp"
 
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/GeneratedTextureBudget.hpp"
@@ -1023,6 +1024,21 @@ HelicopterRenderer::HelicopterRenderer(GraphicsDevice& device,const HelicopterPl
 
 HelicopterRenderer::~HelicopterRenderer()=default;
 
+void HelicopterRenderer::DrawSunShadow(SunShadowMap& map) {
+    if(sunShadowUnavailable_||!map.CastsInto(centre_.X,centre_.Z))return;
+    if(!sunShadowEffect_) {
+        try { sunShadowEffect_=map.CreateCasterEffect(SunShadowMap::StructureCasterVertex,"helicopter"); }
+        catch(const std::exception& error) {
+            std::cout<<"island-simulator: helicopter sun shadow caster unavailable: "<<error.what()<<'\n';
+            sunShadowUnavailable_=true;return;
+        }
+    }
+    float matrix[16];map.LightViewProjectionColumnMajor(matrix);
+    device_.SetVertexBuffer(vertices_.get());device_.setIndicesProperty(nullptr);
+    sunShadowEffect_->Apply();sunShadowEffect_->SetUniformMat4("uSunViewProjection",matrix);
+    device_.DrawPrimitives(PrimitiveType::TriangleList,0,triangles_-glassTriangles_);
+    map.CountCasters(1);
+}
 void HelicopterRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector3& camera) {
     drawCalls_=0;
     if((centre_-camera).LengthSquared()>360.0f*360.0f

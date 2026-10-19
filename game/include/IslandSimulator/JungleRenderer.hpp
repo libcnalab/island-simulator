@@ -34,6 +34,8 @@ namespace island
     class LeafSurfaceMaterial;
     class RenderedTerrainHeightMap;
     /** @brief Instanced canopy, understory, bushes, and forest-floor plants with portable LOD. */
+    class SunShadowMap;
+
     class JungleRenderer final
     {
     public:
@@ -102,6 +104,10 @@ namespace island
             return visibleGroundPlantFarCount_;
         }
         [[nodiscard]] int VisibleCellCount() const noexcept { return visibleCellCount_; }
+        /** Receives the fixed-sun shadow map; nullptr keeps only the baked canopy field. */
+        void SetSunShadowMap(const SunShadowMap* map) noexcept { sunShadow_ = map; }
+        /** Renders far-LOD canopy, snag, understory and bush casters into the bound map. */
+        void DrawSunShadow(SunShadowMap& map);
         [[nodiscard]] int DrawCallCount() const noexcept { return drawCallCount_; }
         // Opt-in QA: the previous draw's actual submitted identities/LODs; no GPU queries.
         void WriteVegetationLodDiagnostics(std::ostream& output) const;
@@ -217,5 +223,8 @@ namespace island
         int visibleGroundPlantFarCount_ = 0;
         int visibleCellCount_ = 0;
         int drawCallCount_ = 0;
+        const SunShadowMap* sunShadow_ = nullptr;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> sunShadowEffect_;
+        bool sunShadowUnavailable_ = false;
     };
 }

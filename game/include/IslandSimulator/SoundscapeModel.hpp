@@ -93,6 +93,15 @@ namespace island
 
     /** @brief Generates a second interior-soil footstep for repetition control. */
     [[nodiscard]] AmbientLoop GenerateSoilFootstepAlternate();
+    /** @brief Soft swishing step through living turf. */
+    [[nodiscard]] AmbientLoop GenerateGrassFootstep();
+    [[nodiscard]] AmbientLoop GenerateGrassFootstepAlternate();
+    /** @brief Short hard step on exposed stone. */
+    [[nodiscard]] AmbientLoop GenerateRockFootstep();
+    [[nodiscard]] AmbientLoop GenerateRockFootstepAlternate();
+    /** @brief Wading splash for ankle-deep water. */
+    [[nodiscard]] AmbientLoop GenerateWadeFootstep();
+    [[nodiscard]] AmbientLoop GenerateWadeFootstepAlternate();
 
     /** @brief Generates one short, non-looping tropical bird contact call. */
     [[nodiscard]] AmbientLoop GenerateBirdCall();
@@ -227,7 +236,10 @@ namespace island
     {
         None,
         Sand,
-        Soil
+        Soil,
+        Grass,
+        Rock,
+        Shallows
     };
 
     /** @brief One distance-scheduled land footstep with bounded playback variation. */
@@ -245,10 +257,15 @@ namespace island
     {
     public:
         void Reset() noexcept;
+        /**
+         * @brief Advances the stride clock; groundHint names the surface under the feet
+         * (None keeps the shore-distance sand/soil rule) so grass, rock and wading differ.
+         */
         [[nodiscard]] FootstepRequest Update(float deltaSeconds, bool swimming,
                                              float signedShoreDistance,
                                              float horizontalSpeed,
-                                             float listenerX, float listenerZ) noexcept;
+                                             float listenerX, float listenerZ,
+                                             FootstepSurface groundHint = FootstepSurface::None) noexcept;
 
     private:
         [[nodiscard]] float NextUnit() noexcept;

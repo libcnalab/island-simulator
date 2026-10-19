@@ -309,7 +309,8 @@ namespace island
                                      const Vector3& cameraPosition,
                                      const std::span<const MonkeyState> monkeys,
                                      const std::span<const BoarState> boars, const SnakePopulation& population,
-                                     const std::span<const GoatState> goats,const std::span<const SpiderState> spiders)
+                                     const std::span<const GoatState> goats,const std::span<const SpiderState> spiders,
+        const PlayerShadow& player)
     {
         const auto snakes=population.Snakes();
         drawCallCount_ = 0;
@@ -421,6 +422,7 @@ namespace island
             visibleMonkeyShadowCount_ = 0;
             visibleBoarShadowCount_ = 0;
             visibleGoatShadowCount_ = 0;
+            visiblePlayerShadowCount_ = 0;
             visibleSpiderShadowCount_ = 0;
             visibleSnakeShadowCount_ = 0;
             visibleCoastalShadowCount_ = 0;
@@ -433,6 +435,7 @@ namespace island
             const float shadowDirectionZ = -environment::SunDirectionZ / horizontalSunLength;
 
             for (const StaticShadow& shadow : staticShadows_) {
+                if (shadow.kind == StaticShadowKind::Structure && !structureShadowsEnabled_) continue;
                 float fade = 0.0f;
                 if (!IsVisible(frustum, cameraPosition,
                                shadow.centre.X, shadow.centre.Y, shadow.centre.Z,
@@ -510,6 +513,14 @@ namespace island
                     std::cos(goat.heading)*.08f*goat.scale,
                     std::sin(goat.heading)*.08f*goat.scale,FadedAlpha(70,fade));
                 ++visibleGoatShadowCount_;
+            }
+            if (player.visible) {
+                // A standing walker under the 55-degree fixed sun casts about 1.2 m of shadow
+                // in the shadow direction; this soft ellipse grounds the first-person body.
+                AppendTerrainEllipse(stagingVertices_, terrain_, player.x, player.z,
+                                     shadowDirectionX, shadowDirectionZ, 0.80f, 0.30f,
+                                     shadowDirectionX * 0.62f, shadowDirectionZ * 0.62f, 74);
+                ++visiblePlayerShadowCount_;
             }
             std::vector<std::pair<float,const SpiderState*>> visibleSpiders;
             visibleSpiders.reserve(spiders.size());

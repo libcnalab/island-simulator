@@ -78,6 +78,18 @@ namespace island
         bool turtleNest = false;
     };
 
+    /** @brief One short line of deer or boar prints pressed into stream-bank mud or wet sand. */
+    struct AnimalTrackPlacement
+    {
+        float x = 0.0f;
+        float y = 0.0f;
+        float z = 0.0f;
+        float yawRadians = 0.0f;
+        float scale = 1.0f;
+        std::uint8_t variant = 0U; // 0 deer cloven hooves, 1 boar trotters
+        bool streamBank = false;
+    };
+
     /** @brief One non-solid fallen palm frond resting near its source grove. */
     struct FallenFrondPlacement
     {
@@ -110,6 +122,7 @@ namespace island
         static constexpr int LogCollisionSamples = 7;
         static constexpr int DriftwoodVariantCount = 3;
         static constexpr int BeachDetailVariantCount = 6;
+        static constexpr int AnimalTrackVariantCount = 2;
         static constexpr int FallenFrondVariantCount = 3;
         static constexpr int ReefHabitatVariantCount = 4;
         static constexpr int ReefHabitatSiteCount = 640;
@@ -163,6 +176,10 @@ namespace island
         {
             return beachDetails_;
         }
+        [[nodiscard]] const std::vector<AnimalTrackPlacement>& AnimalTracks() const noexcept
+        {
+            return animalTracks_;
+        }
         [[nodiscard]] const std::vector<FallenFrondPlacement>& FallenFronds() const noexcept
         {
             return fallenFronds_;
@@ -187,6 +204,7 @@ namespace island
         std::vector<FallenLogPlacement> fallenLogs_;
         std::vector<DriftwoodPlacement> driftwood_;
         std::vector<BeachDetailPlacement> beachDetails_;
+        std::vector<AnimalTrackPlacement> animalTracks_;
         std::vector<FallenFrondPlacement> fallenFronds_;
         std::vector<ReefHabitatPlacement> reefHabitat_;
         std::vector<CircularObstacle> obstacles_;

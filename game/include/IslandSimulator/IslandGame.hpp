@@ -18,6 +18,7 @@
 #include "IslandSimulator/ButterflyMeadow.hpp"
 #include "IslandSimulator/ButterflyRenderer.hpp"
 #include "IslandSimulator/ContactShadowRenderer.hpp"
+#include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/CrabColony.hpp"
 #include "IslandSimulator/CrocodileGroup.hpp"
 #include "IslandSimulator/BoarHerd.hpp"
@@ -184,6 +185,7 @@ namespace island
         MonkeyClimbDetail,
         ShipwreckDetail,
         ShipwreckWide,
+        AnimalTrackDetail,
         HutDetail,
         HutMaterialDetail,
         HelicopterDetail,
@@ -268,6 +270,8 @@ namespace island
         void PersistUserSettings();
         void UpdateCameraMatrices();
         [[nodiscard]] int TrackedSceneDrawCount() const noexcept;
+        /** @brief Resolves the footstep surface under the walking player. */
+        [[nodiscard]] FootstepSurface FootstepGroundUnderPlayer() const noexcept;
         [[nodiscard]] bool IsDebugFreeCameraActive() const noexcept;
 
         struct BenchmarkSceneRanges
@@ -396,6 +400,8 @@ namespace island
         std::unique_ptr<FruitBatRenderer> fruitBatRenderer_;
         std::unique_ptr<ButterflyRenderer> butterflyRenderer_;
         std::unique_ptr<ContactShadowRenderer> contactShadowRenderer_;
+        std::unique_ptr<SunShadowMap> sunShadowMap_;
+        bool sunShadowReceiversBound_ = false;
         std::unique_ptr<CrabRenderer> crabRenderer_;
         std::unique_ptr<CrocodileRenderer> crocodileRenderer_;
         std::unique_ptr<BoarRenderer> boarRenderer_;

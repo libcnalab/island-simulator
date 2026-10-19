@@ -52,6 +52,8 @@ namespace island
         {
             return totalBeachDetailCount_;
         }
+        [[nodiscard]] int TotalAnimalTrackCount() const noexcept { return totalAnimalTrackCount_; }
+        [[nodiscard]] int VisibleAnimalTrackCount() const noexcept { return visibleAnimalTrackCount_; }
         [[nodiscard]] int TotalFallenFrondCount() const noexcept
         {
             return totalFallenFrondCount_;
@@ -114,6 +116,7 @@ namespace island
             std::vector<DrawInstance> logs;
             std::vector<DrawInstance> driftwood;
             std::vector<DrawInstance> beachDetails;
+            std::vector<DrawInstance> animalTracks;
             std::vector<DrawInstance> fallenFronds;
             std::vector<DrawInstance> reefHabitat;
             bool occupied = false;
@@ -136,6 +139,7 @@ namespace island
         std::array<PropMesh, NaturalPropLayout::DriftwoodVariantCount> driftwoodNearMeshes_;
         std::array<PropMesh, NaturalPropLayout::DriftwoodVariantCount> driftwoodFarMeshes_;
         std::array<PropMesh, NaturalPropLayout::BeachDetailVariantCount> beachDetailMeshes_;
+        std::array<PropMesh, NaturalPropLayout::AnimalTrackVariantCount> animalTrackMeshes_;
         std::array<PropMesh, NaturalPropLayout::FallenFrondVariantCount> fallenFrondMeshes_;
         std::array<PropMesh, NaturalPropLayout::ReefHabitatVariantCount> reefHabitatNearMeshes_;
         std::array<PropMesh, NaturalPropLayout::ReefHabitatVariantCount> reefHabitatFarMeshes_;
@@ -155,6 +159,8 @@ namespace island
         std::array<std::vector<Microsoft::Xna::Framework::Matrix>,
                    NaturalPropLayout::BeachDetailVariantCount> visibleBeachDetails_;
         std::array<std::vector<Microsoft::Xna::Framework::Matrix>,
+                   NaturalPropLayout::AnimalTrackVariantCount> visibleAnimalTracks_;
+        std::array<std::vector<Microsoft::Xna::Framework::Matrix>,
                    NaturalPropLayout::FallenFrondVariantCount> visibleFallenFronds_;
         std::array<std::vector<Microsoft::Xna::Framework::Matrix>,
                    NaturalPropLayout::ReefHabitatVariantCount> visibleReefHabitatNear_;
@@ -168,6 +174,7 @@ namespace island
         int totalLogCount_ = 0;
         int totalDriftwoodCount_ = 0;
         int totalBeachDetailCount_ = 0;
+        int totalAnimalTrackCount_ = 0;
         int totalFallenFrondCount_ = 0;
         int totalReefHabitatCount_ = 0;
         int visibleRockCount_ = 0;
@@ -177,6 +184,7 @@ namespace island
         int visibleDriftwoodNearCount_ = 0;
         int visibleDriftwoodFarCount_ = 0;
         int visibleBeachDetailCount_ = 0;
+        int visibleAnimalTrackCount_ = 0;
         int visibleFallenFrondCount_ = 0;
         int visibleReefHabitatCount_ = 0;
         int visibleCellCount_ = 0;

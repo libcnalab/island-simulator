@@ -1,4 +1,5 @@
 #include "IslandSimulator/TerrainRenderer.hpp"
+#include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
 #include "IslandSimulator/StreamBedPatch.hpp"
 #include "IslandSimulator/CaveGroundPatch.hpp"
@@ -904,7 +905,11 @@ void main()
 
     // Same texel as the cover sample above; retains cool skylight in canopy shade.
     float terrainTransmission=canopyDappleTransmission(vWorld.xz,groundField.x);
-    color *= mix(uCanopyAmbient, vec3(1.0), terrainTransmission);
+    // Direct sun now arrives through the shadow map: the baked field keeps only the sky
+    // occlusion under crowns, so shade is directional and crisp instead of a soft blob.
+    float sunVisibility=sunShadowVisibility(vWorld);
+    float skyOcclusion=mix(terrainTransmission,1.0,uSunShadowParams.x*0.55);
+    color *= mix(uCanopyAmbient, vec3(1.0), min(skyOcclusion,sunVisibility));
     // The replacement mesh is also the cave floor: no coplanar rock-floor overlay.
     vec2 caveOffset=vWorld.xz-uCaveEntrance.xz;
     float caveDepth=dot(caveOffset,uCaveForward);
@@ -993,7 +998,7 @@ void main()
                     + (canopy ? GroundCover::Shader() : std::string())
                     + (canopy ? TerrainSurfaceFrame::Shader : "")
                     + (canopy ? ForestFloorMaterial::Shader : "")
-                    + (canopy ? CampfireLighting::Shader : "") + body;
+                    + (canopy ? std::string(CampfireLighting::Shader) + SunShadowMap::ReceiverShader : std::string()) + body;
             }
             return std::string("#version 330 core\n") + environment::FogShaderDefinition
                 + (canopy ? CanopyLighting::Shader : "")
@@ -1001,7 +1006,7 @@ void main()
                 + (canopy ? GroundCover::Shader() : std::string())
                 + (canopy ? TerrainSurfaceFrame::Shader : "")
                 + (canopy ? ForestFloorMaterial::Shader : "")
-                + (canopy ? CampfireLighting::Shader : "") + body;
+                + (canopy ? std::string(CampfireLighting::Shader) + SunShadowMap::ReceiverShader : std::string()) + body;
         }
 
         [[nodiscard]] CNA::Graphics::ShaderPackageEXT CreateShaderPackage()
@@ -1358,6 +1363,8 @@ void main()
             CampfireLighting::Bind(*materialEffect_,seconds);
             canopyLighting_.Bind(*materialEffect_);
             forestFloor_->Bind(*materialEffect_);
+            if (sunShadow_) sunShadow_->Bind(*materialEffect_);
+            else SunShadowMap::BindDisabled(*materialEffect_);
             materialEffect_->SetUniformMat4("uViewProjection", viewProjection);
             const auto entrance=cave_->Entrance(),forward=cave_->World(0,0,1);
             materialEffect_->SetUniformVec3("uCaveEntrance",entrance.x,entrance.y,entrance.z);
