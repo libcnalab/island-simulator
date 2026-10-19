@@ -182,6 +182,7 @@ namespace island
             case FixedViewpoint::ShipwreckWide: return "shipwreck-wide";
             case FixedViewpoint::AnimalTrackDetail: return "tracks";
             case FixedViewpoint::FruitTreeDetail: return "fruit";
+            case FixedViewpoint::FallenLogDetail: return "log";
             case FixedViewpoint::HutDetail: return "hut";
             case FixedViewpoint::HutMaterialDetail: return "hut-material";
             case FixedViewpoint::HelicopterDetail: return "helicopter";
@@ -1324,6 +1325,17 @@ namespace island
             const Vector3 toMonkey = monkeyTarget-cameraPosition_;
             yaw_ = std::atan2(toMonkey.X, toMonkey.Z);
             pitch_ = std::atan2(toMonkey.Y, std::hypot(toMonkey.X, toMonkey.Z));
+        } else if (viewpoint_ == FixedViewpoint::FallenLogDetail) {
+            // Stand three metres off the flank of the first fallen log, looking at its side.
+            const auto& logs = naturalPropLayout_.FallenLogs();
+            if (logs.empty()) throw std::runtime_error("No fallen log to frame");
+            const auto& log = logs.front();
+            const float acrossX = -std::sin(log.yawRadians), acrossZ = std::cos(log.yawRadians);
+            cameraPosition_ = Vector3(log.x + acrossX * 3.1f, log.y + 1.35f, log.z + acrossZ * 3.1f);
+            const Vector3 direction = Vector3(log.x, log.y + 0.15f, log.z) - cameraPosition_;
+            yaw_ = std::atan2(direction.X, direction.Z);
+            pitch_ = std::atan2(direction.Y, std::hypot(direction.X, direction.Z));
+            std::cout << "island-simulator: log QA camera frames the flank of a fallen log\n";
         } else if (viewpoint_ == FixedViewpoint::FruitTreeDetail) {
             // Frame the crown of the first fruit-bearing canopy form from eleven metres.
             const auto& canopy = jungleLayout_.Canopy();

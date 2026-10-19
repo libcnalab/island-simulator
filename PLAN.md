@@ -46,6 +46,21 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Latest decay pass — bracket fungi and rock moss
+
+Backlog item 18. Near-LOD fallen logs now carry four bracket-fungus shelves on their flanks: pale
+cream half-fans (12--18 cm wide, about a third of a radius deep) that curve down toward the rim,
+emitted with both windings in the face-lit prop material so the cap reads from the ground as well
+as from above; the far LOD is untouched. Inland rocks grow moss in the shared prop shader: a
+filtered-noise patch weighted toward faces turned away from the fixed sun and toward the rock's
+lower half, fading in between 1.6 m and 4.5 m of elevation so beach and shoreline stone stay bare.
+A permanent `log` QA viewpoint stands three metres off the flank of the first fallen log; the
+first flat shelves read as edge-on slivers from eye height and were enlarged and curved.
+Inspected native `20261019T194735Z-log` shows two cream shelves on the facing flank, and the
+`ground` frame shows the green shaded face of its foreground rock. The new diagnostic "near logs
+carry bracket fungi shelves and inland rocks grow moss on their shaded faces" follows the pinned
+log line. All 73 active native tests and 48 harness tests pass.
+
 ## Latest harvest pass — fallen coconuts and fruiting crowns
 
 Backlog item 17. The two coconut-bearing palm forms (variants 1 and 3, which already carry crown

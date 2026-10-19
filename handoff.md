@@ -48,7 +48,7 @@ here as done with their `PLAN.md` evidence reference.
 15. [ ] Lianas and hanging roots between canopy crowns.
 16. [ ] Flowering shrubs (hibiscus, plumeria) and banana plants near the stream.
 17. [x] Fruit in crowns and fallen coconuts (PLAN "Latest harvest pass", `fruit` viewpoint).
-18. [ ] Fungi on logs and moss on rocks near paths.
+18. [x] Fungi on logs and moss on rocks (PLAN "Latest decay pass", `log` viewpoint).
 19. [x] Player shadow and surface-dependent footsteps (PLAN "Latest player-presence pass").
 20. [ ] Diving details: light shafts, bubbles, caustics on the seabed.
 

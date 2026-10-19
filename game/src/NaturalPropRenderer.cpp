@@ -72,6 +72,8 @@ namespace island
             "island-simulator: near fallen-log end grain uses restrained radial cracks";
         constexpr std::string_view FallenLogSilhouetteDiagnostic =
             "island-simulator: near fallen logs use tapered twelve-sided trunks, broken branch stubs, and separated moss islands";
+        constexpr std::string_view FungiMossDiagnostic =
+            "island-simulator: near logs carry bracket fungi shelves and inland rocks grow moss on their shaded faces";
         constexpr std::string_view DriftwoodBranchDiagnostic =
             "island-simulator: all near driftwood variants use tapered three-dimensional branches";
         constexpr std::string_view DriftwoodEndDiagnostic =
@@ -250,6 +252,13 @@ void main()
         float lichen = smoothstep(0.58,0.78,broad) * smoothstep(-0.1,0.6,normal.y)
             * smoothstep(0.25,1.0,vWorld.y);
         albedo = mix(albedo, albedo * vec3(0.81,1.02,0.78), lichen * 0.3);
+        // Inland rocks grow moss on the faces turned away from the fixed sun and near the
+        // ground, strongest in the damp interior; beach and shoreline stone stays bare.
+        float mossNoise = filteredStoneNoise(vWorld * 1.9 + vec3(3.1, 0.7, 5.3), worldFootprint * 1.9);
+        float shadeSide = smoothstep(0.25, -0.45, dot(normal, normalize(uToSun)));
+        float moss = smoothstep(0.40, 0.70, mossNoise) * (0.25 + 0.75 * shadeSide)
+            * smoothstep(1.6, 4.5, vWorld.y) * (1.0 - smoothstep(0.55, 1.0, vLocal.y));
+        albedo = mix(albedo, vec3(0.27, 0.40, 0.15) * (0.75 + 0.5 * mossNoise), moss * 0.78);
         float soilStain=1.0-smoothstep(0.055,0.29,vLocal.y);
         albedo=mix(albedo,albedo*vec3(0.67,0.76,0.64),soilStain*0.58);
         float wetBand = 1.0 - smoothstep(-0.10, 0.26 + 0.10*grain, vWorld.y);
@@ -831,6 +840,44 @@ void main()
                          static_cast<std::uint16_t>(mossBase + 2U),
                          static_cast<std::uint16_t>(mossBase + 1U),
                          static_cast<std::uint16_t>(mossBase + 3U)});
+                }
+                // Bracket fungi: small half-fan shelves growing from the shaded flank of the
+                // trunk. Local X is in log-length units and Y/Z in radius units, so a shelf
+                // is 0.03 x-units (12--18 cm) wide and reaches 0.36 radii outward, drooping
+                // slightly at the rim. Both windings are emitted so the pale cap and darker
+                // underside read from any side.
+                const Color capColor(206, 182, 134, FallenFrondMaterialDetail);
+                const Color rimColor(168, 134, 88, FallenFrondMaterialDetail);
+                const std::array<std::array<float, 3>, 4> shelves{{
+                    {-0.36f, 0.30f, 1.0f}, {-0.22f, 0.12f, -1.0f},
+                    {0.08f, 0.34f, -1.0f}, {0.27f, 0.20f, 1.0f}}};
+                for (std::size_t shelf = 0; shelf < shelves.size(); ++shelf) {
+                    const float x0 = shelves[shelf][0];
+                    const float y0 = shelves[shelf][1];
+                    const float side = shelves[shelf][2];
+                    const float z0 = side * std::sqrt(std::max(0.0f, 0.90f - y0 * y0));
+                    const Vector3 root(x0, y0, z0);
+                    const auto fanBase = static_cast<std::uint16_t>(geometry.vertices.size());
+                    geometry.vertices.emplace_back(root, ShadeColor(rimColor, 0.9f));
+                    constexpr int fanSegments = 5;
+                    const float reach = 0.40f + 0.04f * static_cast<float>(shelf % 3);
+                    for (int segment = 0; segment <= fanSegments; ++segment) {
+                        const float t = static_cast<float>(segment) / fanSegments;
+                        const float angle = (t - 0.5f) * 2.4f;
+                        const float lobe = 1.0f + 0.08f * std::sin(t * 9.0f + static_cast<float>(shelf));
+                        // The cap curves down toward its rim, so even a low viewpoint sees a
+                        // shelf rather than an edge-on sliver.
+                        geometry.vertices.emplace_back(
+                            root + Vector3(std::sin(angle) * 0.045f * lobe,
+                                           -0.16f * reach * (0.3f + 0.7f * std::abs(std::cos(angle))),
+                                           side * std::cos(angle) * reach * lobe),
+                            ShadeColor(segment % 2 == 0 ? capColor : rimColor, 1.0f));
+                    }
+                    for (int segment = 0; segment < fanSegments; ++segment) {
+                        const auto a = static_cast<std::uint16_t>(fanBase + 1U + segment);
+                        const auto b = static_cast<std::uint16_t>(fanBase + 2U + segment);
+                        geometry.indices.insert(geometry.indices.end(), {fanBase, a, b, fanBase, b, a});
+                    }
                 }
             }
 
@@ -1606,6 +1653,7 @@ void main()
             std::cout << FallenLogCrackDiagnostic << '\n';
             MirrorRuntimeDiagnosticToPlatformLog(FallenLogCrackDiagnostic);
             std::cout << FallenLogSilhouetteDiagnostic << '\n';
+            std::cout << FungiMossDiagnostic << '\n';
             MirrorRuntimeDiagnosticToPlatformLog(FallenLogSilhouetteDiagnostic);
             std::cout << "island-simulator: near driftwood uses faded sun-bleached longitudinal grain\n";
             std::cout << "island-simulator: near driftwood variant 2 uses three tapered fork limbs\n";
