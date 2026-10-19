@@ -2286,6 +2286,7 @@ namespace island
                   << MonkeyRenderer::SilhouetteCount << " silhouettes, 4 palettes\n"
                   << "island-simulator: monkeys use a horizontal lofted trunk and distance-driven quadrupedal gait\n"
                   << "island-simulator: monkey tree routes reject isolated canopy and mangroves\n"
+                  << "island-simulator: monkeys walk to fruit lying under the crowns and eat it, idling over the spot\n"
                   << "island-simulator: near monkeys use bone-following finger and toe silhouettes\n"
                   << "island-simulator: near monkeys use an arched shoulder-rump trunk, broad blunt face, robust limbs, and compact tail\n"
                   << "island-simulator: near monkeys use a lower tapered trunk, separated crown, and restrained furry tail root\n"
@@ -2907,9 +2908,11 @@ namespace island
         const MonkeyState previousMonkeySubject = monkeyTroop_.Monkeys()[monkeyQaSubjectIndex_];
         if (viewpoint_ != FixedViewpoint::MonkeyTreeDetail && viewpoint_ != FixedViewpoint::MonkeyClimbDetail) {
             measureWildlife(3, [&] {
+                monkeyTroop_.SetLyingFruit(fallingFruit_.Fruit());
                 monkeyTroop_.Update(deltaSeconds, monkeyObserver.X, monkeyObserver.Y, monkeyObserver.Z,
                     snakeCaptureClock ? static_cast<float>(snakeCaptureUpdates_)*0.1f
                         : static_cast<float>(gameTime.getTotalGameTimeProperty().getTotalSecondsProperty()));
+                for (const std::size_t eaten : monkeyTroop_.EatenFruit()) fallingFruit_.Consume(eaten);
             });
         }
         if (viewpoint_ == FixedViewpoint::MonkeyDetail) {

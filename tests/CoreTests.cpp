@@ -7517,6 +7517,31 @@ int main()
               "the coconut's landing is counted where it struck the ground");
         Check(highest>monkey.selectedTree.y+3.0f,"the fruit starts up in the crown");
         Check(landed,"the fruit lands on the ground under the tree and lies there");
+        std::size_t lying=0;
+        for(std::size_t i=0;i<field.Fruit().size();++i) if(field.Fruit()[i].active&&field.Fruit()[i].restSeconds>=0.0f) { field.Consume(i); ++lying; break; }
+        Check(lying==1U&&field.ConsumedCount()==1U&&field.ActiveCount()+1U>=lying,"a lying fruit can be eaten and is counted once");
+        // Monkeys eat the fruit lying under the crowns: fruit shaken down beside a troop
+        // member's home draws its next wander, and arriving at it removes the fruit.
+        island::MonkeyTroop eaters(terrain);
+        const island::MonkeyState& first=eaters.Monkeys().front();
+        island::FallingFruitField larder(terrain);
+        island::MonkeyState picker=monkey;
+        picker.selectedTree={first.homeX+3.0f,terrain.Height(first.homeX+3.0f,first.homeZ),first.homeZ,0.4f,1.0f,2U};
+        std::vector<island::MonkeyState> pickers{picker};
+        for(int step=0;step<600;++step) larder.Update(0.05f,pickers);
+        std::size_t lyingNearHome=0;
+        for(const auto& f:larder.Fruit()) if(f.active&&f.restSeconds>=0.0f) ++lyingNearHome;
+        Check(lyingNearHome>=3U,"fruit lies on the ground beside the monkey's home");
+        std::uint32_t eaten=0;
+        for(int step=0;step<36000&&eaten==0U;++step) {
+            const island::MonkeyState& watched=eaters.Monkeys().front();
+            eaters.SetLyingFruit(larder.Fruit());
+            eaters.Update(1.0f/30.0f,watched.homeX+16.0f,watched.y+1.5f,watched.homeZ);
+            for(const std::size_t index:eaters.EatenFruit()) larder.Consume(index);
+            larder.Update(1.0f/30.0f,{});
+            eaten=eaters.EatCount();
+        }
+        Check(eaten>=1U&&larder.ConsumedCount()>=1U,"a monkey walks to a lying fruit within twenty minutes and eats it");
     }
 
     {

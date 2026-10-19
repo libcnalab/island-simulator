@@ -46,6 +46,22 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 17 (2026-10-20) — the monkeys eat the fallen fruit
+
+Pass 12's fruit lay under the crowns until its field slot expired; nothing in the forest cared
+that it was there. The troop now reads the field's fruit each frame (`MonkeyTroop::SetLyingFruit`,
+a span, no copy) and on every other wander decision that does not go to a tree it looks for the
+nearest resting non-coconut fruit within the monkey's 34 m home range on valid ground and walks
+to it (`ChooseFruitTarget`, `Agent::fruitTarget`). Arriving within 0.85 m eats it: the index goes
+into `EatenFruit()`, the game calls `FallingFruitField::Consume`, which deactivates the fruit and
+counts it (`ConsumedCount`), and the monkey idles three seconds longer over the spot. A fruit
+target is dropped when the walk ends any other way. Diagnostic "monkeys walk to fruit lying
+under the crowns and eat it, idling over the spot" is pinned by the native capture tool. Core
+checks: consuming a lying fruit counts once; a troop with fruit shaken down beside its first
+member's home eats one within twenty simulated minutes (the fruit field advances alongside so
+the fruit's rest clock runs). Native `monkey-tree` passes. Coconuts are left alone; the next
+pass could let the boars take those.
+
 ## Loop pass 16 (2026-10-20) — the crabs work the wrack line
 
 The wrack line of pass 4 was a shader-only band wandered by the terrain's noise fields, so

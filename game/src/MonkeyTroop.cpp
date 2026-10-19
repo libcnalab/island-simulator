@@ -1,4 +1,5 @@
 #include "IslandSimulator/MonkeyTroop.hpp"
+#include "IslandSimulator/FallingFruitField.hpp"
 #include "IslandSimulator/MonkeyGroundGait.hpp"
 #include "IslandSimulator/MonkeyTreeReach.hpp"
 #include "IslandSimulator/MonkeyExcursionClearance.hpp"
@@ -363,6 +364,25 @@ namespace island
         }
     }
 
+    // The nearest fruit lying on the ground within the monkey's range that it can stand at.
+    bool MonkeyTroop::ChooseFruitTarget(Agent& agent) noexcept
+    {
+        agent.fruitTarget = -1;
+        float best = std::numeric_limits<float>::max();
+        for (std::size_t index = 0; index < lyingFruit_.size(); ++index) {
+            const FallingFruit& fruit = lyingFruit_[index];
+            if (!fruit.active || fruit.restSeconds < 0.0f || fruit.variant == FallingFruitField::CoconutVariant) continue;
+            if (std::hypot(fruit.x - agent.state.homeX, fruit.z - agent.state.homeZ) > MaximumHomeDistance) continue;
+            const float distance = std::hypot(fruit.x - agent.state.x, fruit.z - agent.state.z);
+            if (distance >= best || !IsValidGround(fruit.x, fruit.z)) continue;
+            best = distance;
+            agent.fruitTarget = static_cast<int>(index);
+            agent.state.targetX = fruit.x;
+            agent.state.targetZ = fruit.z;
+        }
+        return agent.fruitTarget >= 0;
+    }
+
     void MonkeyTroop::ChooseWanderTarget(Agent& agent) noexcept
     {
         for (int attempt = 0; attempt < 24; ++attempt) {
@@ -439,6 +459,7 @@ namespace island
     void MonkeyTroop::Update(const float deltaSeconds, const float observerX,
                              const float observerY, const float observerZ, const float windTime) noexcept
     {
+        eatenFruit_.clear();
         const float safeDelta = std::isfinite(deltaSeconds)
             ? std::clamp(deltaSeconds, 0.0f, 0.1f) : 0.0f;
         windTime_=std::isfinite(windTime)&&windTime>=0 ? windTime : windTime_+safeDelta;
@@ -588,7 +609,11 @@ namespace island
         if (agent.state.behavior == MonkeyBehavior::Wander) {
             if (agent.decisionCounter % 4U == 0U && ChooseTreeTarget(agent)) {
                 EnterState(agent, MonkeyBehavior::ApproachTree);
+            } else if (agent.decisionCounter % 2U == 1U && ChooseFruitTarget(agent)) {
+                // Fruit on the ground is worth the walk: the fallen fruit of its own picking.
+                EnterState(agent, MonkeyBehavior::Walk);
             } else {
+                agent.fruitTarget = -1;
                 ChooseWanderTarget(agent);
                 EnterState(agent, MonkeyBehavior::Walk);
             }
@@ -664,8 +689,18 @@ namespace island
             if (approaching && remaining < .04f) {
                 EnterState(agent, MonkeyBehavior::InspectTree);
             } else if ((!approaching && targetDistance < .85f) || agent.stateSecondsRemaining <= 0.0f) {
-                EnterState(agent, agent.state.behavior == MonkeyBehavior::RunAway
-                    ? MonkeyBehavior::Observe : MonkeyBehavior::Idle);
+                // Arriving at a fruit eats it: the walk ends in a longer idle over the spot.
+                if (agent.fruitTarget >= 0 && targetDistance < .85f
+                    && static_cast<std::size_t>(agent.fruitTarget) < lyingFruit_.size()) {
+                    eatenFruit_.push_back(static_cast<std::size_t>(agent.fruitTarget));
+                    ++eatCount_;
+                    EnterState(agent, MonkeyBehavior::Idle);
+                    agent.stateSecondsRemaining += 3.0f;
+                } else {
+                    EnterState(agent, agent.state.behavior == MonkeyBehavior::RunAway
+                        ? MonkeyBehavior::Observe : MonkeyBehavior::Idle);
+                }
+                agent.fruitTarget = -1;
             }
         } else if (agent.stateSecondsRemaining <= 0.0f) {
             if (agent.state.behavior == MonkeyBehavior::Idle) {

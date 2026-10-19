@@ -973,6 +973,8 @@ def main():
                 raise RuntimeError("current coconut thud is missing; check for a stale executable")
             if "every other bout works the wrack line and feeds among the strandings" not in diagnostics:
                 raise RuntimeError("current crab wrack foraging is missing; check for a stale executable")
+            if "monkeys walk to fruit lying under the crowns and eat it, idling over the spot" not in diagnostics:
+                raise RuntimeError("current monkey fruit eating is missing; check for a stale executable")
             if "seabed ripples stay below the waterline in short near trains and beach flecks fade with the ground footprint" not in diagnostics:
                 raise RuntimeError("current seabed ripple confinement is missing; check for a stale executable")
             if "canopy per-tree frustum boxes contain both LODs and wind" not in diagnostics:

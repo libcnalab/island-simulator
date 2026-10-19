@@ -14,6 +14,7 @@
 namespace island
 {
     class IslandTerrain;
+    struct FallingFruit;
 
     /** @brief Compact autonomous behaviour states used by the island monkeys. */
     enum class MonkeyBehavior : std::uint8_t
@@ -88,6 +89,11 @@ namespace island
         /** @brief Installs solid world proxies and relocates any newly obstructed agents. */
         void SetObstacles(std::span<const CircularObstacle> obstacles);
         void SetCanopy(std::span<const CanopyPlacement> trees);
+        /** @brief Fruit lying on the ground this frame; a monkey's next wander may go to one. */
+        void SetLyingFruit(std::span<const FallingFruit> fruit) noexcept { lyingFruit_ = fruit; }
+        /** @brief Indices into that span the monkeys ate during the last update. */
+        [[nodiscard]] std::span<const std::size_t> EatenFruit() const noexcept { return eatenFruit_; }
+        [[nodiscard]] std::uint32_t EatCount() const noexcept { return eatCount_; }
         void SetClimbingEnabled(bool enabled) noexcept { climbingEnabled_=enabled; }
         [[nodiscard]] static bool IsClosedCanopyTree(
             std::span<const CanopyPlacement> trees, std::size_t index) noexcept;
@@ -117,6 +123,7 @@ namespace island
             float accumulatedSeconds = 0.0f;
             float turnVelocityRadians = 0.0f;
             std::uint32_t decisionCounter = 0U;
+            int fruitTarget = -1;   // index of the lying fruit this walk goes to; -1 for none
             bool treeClimbAttempted = false;
             std::shared_ptr<const MonkeyTreeExcursion::Plan> pendingExcursion;
             int preflightStep = 0;
@@ -127,6 +134,10 @@ namespace island
                          float observerX, float observerZ) noexcept;
         void EnterState(Agent& agent, MonkeyBehavior behavior) noexcept;
         void ChooseWanderTarget(Agent& agent) noexcept;
+        bool ChooseFruitTarget(Agent& agent) noexcept;
+        std::span<const FallingFruit> lyingFruit_;
+        std::vector<std::size_t> eatenFruit_;
+        std::uint32_t eatCount_ = 0U;
         [[nodiscard]] bool ChooseTreeTarget(Agent& agent) noexcept;
         void ChooseEscapeTarget(Agent& agent, float observerX, float observerZ) noexcept;
         [[nodiscard]] bool TryMove(Agent& agent, float headingRadians,
