@@ -334,6 +334,7 @@ namespace island
             birdPerchLayout_.AddSite(jettyPlacement_->MooringPerch());
         }
         birdFlock_.SetPerchSites(birdPerchLayout_.Sites());
+        butterflyMeadow_.SetFlowerBushes(jungleLayout_.Bushes());
         bridgePlacement_=BridgeLayout::FindInWorld(terrain_,StreamCourse(terrain_));
         helicopterPlacement_=HelicopterLayout::FindInWorld(terrain_,jungleLayout_,worldObstacles);
         if(!helicopterPlacement_)throw std::runtime_error("No valid central helicopter site");
@@ -2175,7 +2176,9 @@ namespace island
                   << " agents use six inland canopy roosts with four hanging and two bounded daytime flights\n"
                   << "island-simulator: clearing butterflies "
                   << butterflyMeadow_.Butterflies().size()
-                  << " agents in deterministic low-altitude habitats\n"
+                  << " agents in deterministic low-altitude habitats; "
+                  << butterflyMeadow_.FlowerBushCount()
+                  << " flowering bushes within reach of the habitats draw alternate nectar excursions at blossom height\n"
                   << "island-simulator: geckos " << geckoPopulation_.Geckos().size()
                   << " agents in deterministic inland rest, flee, and hide habitats\n"
                   << "island-simulator: skinks " << skinkPopulation_.Skinks().size()

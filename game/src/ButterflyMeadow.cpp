@@ -1,6 +1,7 @@
 #include "IslandSimulator/ButterflyMeadow.hpp"
 
 #include "IslandSimulator/IslandTerrain.hpp"
+#include "IslandSimulator/JungleLayout.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
 
 #include <algorithm>
@@ -72,6 +73,39 @@ namespace island
         }
     }
 
+    void ButterflyMeadow::SetFlowerBushes(const std::span<const BushPlacement> bushes)
+    {
+        for (auto& sites : bushSites_) sites.clear();
+        for (const BushPlacement& bush : bushes) {
+            // Variants 1 and 2 carry hibiscus and plumeria blossoms; the others are plain.
+            if (bush.variant != 1U && bush.variant != 2U) continue;
+            if (!std::isfinite(bush.x) || !std::isfinite(bush.z) || !std::isfinite(bush.scale)) continue;
+            for (std::size_t habitat = 0; habitat < HabitatCount; ++habitat) {
+                const HabitatDefinition& definition = Habitats[habitat];
+                if (std::hypot(bush.x - definition.x, bush.z - definition.z)
+                    > definition.radius + BushExcursionReach) continue;
+                if (bushSites_[habitat].size() >= 6U) break;
+                // Blossoms sit on the crown: hover just above it, clear of the leaves.
+                bushSites_[habitat].push_back({bush.x, bush.z, std::clamp(0.62f * bush.scale + 0.30f, 0.5f, 1.6f)});
+                break;
+            }
+        }
+    }
+
+    std::size_t ButterflyMeadow::FlowerBushCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const auto& sites : bushSites_) count += sites.size();
+        return count;
+    }
+
+    bool ButterflyMeadow::NectarTarget(const std::size_t index, float& x, float& z, float& height) const noexcept
+    {
+        if (index >= agents_.size()) return false;
+        x = agents_[index].nectarX; z = agents_[index].nectarZ; height = agents_[index].nectarHeight;
+        return true;
+    }
+
     void ButterflyMeadow::InitializeAgent(const std::size_t index)
     {
         Agent& agent = agents_[index];
@@ -82,6 +116,9 @@ namespace island
         const float nectarRadius = 0.35f + static_cast<float>(index % 6U) * 0.22f;
         agent.nectarX = habitat.x + std::cos(angle) * nectarRadius;
         agent.nectarZ = habitat.z + std::sin(angle) * nectarRadius;
+        agent.patchX = agent.nectarX;
+        agent.patchZ = agent.nectarZ;
+        agent.nectarHeight = 0.34f;
         float placementRadius = 1.6f + static_cast<float>(index % 6U) * 0.72f;
         agent.state.x = agent.home.x + std::cos(angle) * placementRadius;
         agent.state.z = agent.home.z + std::sin(angle) * placementRadius;
@@ -121,14 +158,15 @@ namespace island
     }
 
     bool ButterflyMeadow::IsValidHabitat(
-        const float x, const float z, const ButterflyHomeRange& home) const noexcept
+        const float x, const float z, const ButterflyHomeRange& home,
+        const float reachRadius) const noexcept
     {
         const TerrainSample sample = terrain_.Sample(x, z);
         const float homeDistance = std::hypot(x - home.x, z - home.z);
         const bool vegetatedGround = sample.surface == TerrainSurface::CoastalGround
             || sample.surface == TerrainSurface::InteriorGround;
         return vegetatedGround && sample.signedShoreDistance >= MinimumInlandDistance
-            && sample.slopeRadians < 0.48f && homeDistance <= home.radius;
+            && sample.slopeRadians < 0.48f && homeDistance <= std::max(home.radius, reachRadius);
     }
 
     void ButterflyMeadow::Update(const float deltaSeconds, const float observerX,
@@ -217,6 +255,33 @@ namespace island
                     agent.behaviorSeconds = agent.state.behavior == ButterflyBehavior::Rest
                         ? 1.6f + static_cast<float>(agent.transitionCount % 5U) * 0.52f
                         : 1.3f + static_cast<float>(agent.transitionCount % 4U) * 0.46f;
+                    if (agent.state.behavior == ButterflyBehavior::NectarHover) {
+                        // Every other nectar visit goes to a flowering bush near the habitat
+                        // when it has one; the rest return to the ground patch. A bush beyond
+                        // a few metres is an excursion: keep fluttering toward it first.
+                        const std::size_t index = static_cast<std::size_t>(&agent - agents_.data());
+                        const auto& sites = bushSites_[index / 6U];
+                        if (!sites.empty() && agent.transitionCount % 2U == 1U) {
+                            const NectarSite& site = sites[(index + agent.transitionCount / 2U) % sites.size()];
+                            const float toward = std::atan2(agent.state.z - site.z, agent.state.x - site.x);
+                            agent.nectarX = site.x + std::cos(toward) * 0.45f;
+                            agent.nectarZ = site.z + std::sin(toward) * 0.45f;
+                            agent.nectarHeight = site.height;
+                            agent.reachRadius = std::hypot(site.x - agent.home.x, site.z - agent.home.z) + 2.5f;
+                            const float trip = std::hypot(agent.nectarX - agent.state.x, agent.nectarZ - agent.state.z);
+                            if (trip > 3.0f) {
+                                agent.state.behavior = ButterflyBehavior::Flutter;
+                                agent.travelling = true;
+                                agent.behaviorSeconds = trip / 0.40f + 4.0f;
+                            } else {
+                                agent.behaviorSeconds += 1.2f;
+                            }
+                        } else {
+                            agent.nectarX = agent.patchX;
+                            agent.nectarZ = agent.patchZ;
+                            agent.nectarHeight = 0.34f;
+                        }
+                    }
                     break;
                 case ButterflyBehavior::NectarHover:
                     agent.state.behavior = agent.transitionCount % 2U == 0U
@@ -241,7 +306,19 @@ namespace island
         if (agent.state.behavior != ButterflyBehavior::Rest) {
             const float homeDistance = std::hypot(
                 agent.state.x - agent.home.x, agent.state.z - agent.home.z);
-            if (agent.state.behavior == ButterflyBehavior::NectarHover) {
+            if (agent.travelling) {
+                // Out to the bush: once there, settle into the hover.
+                const float remaining = std::hypot(agent.nectarX - agent.state.x, agent.nectarZ - agent.state.z);
+                if (remaining < 1.0f || agent.behaviorSeconds <= 0.0f) {
+                    agent.travelling = false;
+                    agent.state.behavior = ButterflyBehavior::NectarHover;
+                    agent.behaviorSeconds = 4.0f + static_cast<float>(agent.transitionCount % 4U) * 0.8f;
+                }
+            }
+            // Back inside the home range, the excursion allowance lapses.
+            if (!agent.travelling && agent.state.behavior != ButterflyBehavior::NectarHover
+                && homeDistance <= agent.home.radius) agent.reachRadius = 0.0f;
+            if (agent.state.behavior == ButterflyBehavior::NectarHover || agent.travelling) {
                 const float nectarHeading = std::atan2(
                     agent.nectarZ - agent.state.z, agent.nectarX - agent.state.x);
                 agent.state.headingRadians = MoveAngle(
@@ -262,7 +339,7 @@ namespace island
                 + std::cos(agent.state.headingRadians) * agent.state.speed * deltaSeconds;
             const float candidateZ = agent.state.z
                 + std::sin(agent.state.headingRadians) * agent.state.speed * deltaSeconds;
-            if (IsValidHabitat(candidateX, candidateZ, agent.home)) {
+            if (IsValidHabitat(candidateX, candidateZ, agent.home, agent.reachRadius)) {
                 agent.state.x = candidateX;
                 agent.state.z = candidateZ;
             } else {
@@ -280,7 +357,7 @@ namespace island
             targetHeight = groundHeight
                 + std::clamp(agent.baseAltitude + irregularLift, 0.42f, 1.75f);
         } else if (agent.state.behavior == ButterflyBehavior::NectarHover) {
-            targetHeight = groundHeight + 0.34f
+            targetHeight = groundHeight + agent.nectarHeight
                 + std::sin(agent.verticalPhase * 1.4f) * 0.08f;
         }
         agent.state.y += std::clamp(

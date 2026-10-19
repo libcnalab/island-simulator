@@ -37,6 +37,7 @@
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/BridgeLayout.hpp"
+#include "IslandSimulator/ButterflyMeadow.hpp"
 #include "IslandSimulator/DolphinPod.hpp"
 #include "IslandSimulator/JungleLayout.hpp"
 #include "IslandSimulator/LocomotionPaceToggle.hpp"
@@ -7342,6 +7343,32 @@ int main()
               "player capsule cannot tunnel through an authored land-rock proxy");
         Check(rockObstacleRejections > 0 && rockTerrainRejections == 0,
               "authored land-rock traversal is rejected by collision rather than terrain");
+    }
+
+    {
+        // Butterflies alternate their nectar visits between the ground patch and a flowering
+        // bush inside the habitat, hovering at blossom height over the bush.
+        const island::IslandTerrain terrain;
+        island::ButterflyMeadow meadow(terrain);
+        const auto home = meadow.Homes()[0];
+        const std::vector<island::BushPlacement> bushes{
+            {home.x + 2.0f, 0.0f, home.z + 1.0f, 0.0f, 1.0f, 1U},
+            {home.x - 1.5f, 0.0f, home.z + 2.0f, 0.0f, 1.2f, 0U},
+            {home.x + 80.0f, 0.0f, home.z, 0.0f, 1.0f, 2U}};
+        meadow.SetFlowerBushes(bushes);
+        Check(meadow.FlowerBushCount() == 1U, "only flowering bushes within reach of a habitat become nectar sites");
+        bool visitedBush = false;
+        for (int step = 0; step < 2400 && !visitedBush; ++step) {
+            meadow.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
+            for (std::size_t index = 0; index < 6U; ++index) {
+                float x = 0.0f, z = 0.0f, height = 0.0f;
+                if (meadow.NectarTarget(index, x, z, height)
+                    && meadow.Butterflies()[index].behavior == island::ButterflyBehavior::NectarHover
+                    && std::hypot(x - (home.x + 2.0f), z - (home.z + 1.0f)) < 0.6f && height > 0.5f)
+                    visitedBush = true;
+            }
+        }
+        Check(visitedBush, "a butterfly hovers at blossom height over the flowering bush");
     }
 
     {

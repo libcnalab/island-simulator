@@ -46,6 +46,24 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 2 (2026-10-20) — butterflies work the flowering bushes
+
+The hibiscus and plumeria bushes added for backlog item 16 flower unvisited while the
+clearing butterflies only ever hover over their ground flower patches; the clearings
+themselves are bush-free (no bush lies within 12 m of any habitat centre; flowering ones sit
+20–30 m out at the jungle edge). `ButterflyMeadow::SetFlowerBushes` now takes the jungle's
+bushes and keeps up to six flowering ones (variants 1 and 2) within 24 m beyond each habitat's
+radius as nectar sites (14 on this island), with a hover height just above the blossoms
+(0.62 × scale + 0.30 m). Every other nectar bout of a butterfly whose habitat has sites goes to
+one: a site beyond 3 m becomes an excursion, the butterfly flutters straight to it on a widened
+range allowance (`reachRadius`, the site's distance from home plus 2.5 m), settles into the
+hover at blossom height within a metre of it, and the allowance lapses once it has drifted back
+inside its home range; nearer sites are hovered directly. The startup log reports "N flowering
+bushes within reach of the habitats draw alternate nectar excursions at blossom height", pinned
+by the native capture tool. New core check with synthetic bushes: only a flowering bush within
+reach becomes a site, and a butterfly hovers at blossom height over it within two minutes.
+Native `butterflies` passes.
+
 ## Loop pass 1 (2026-10-19/20) — dappled light on the shaded forest floor
 
 With the twenty-item operator backlog complete, the open-ended propose-and-implement loop

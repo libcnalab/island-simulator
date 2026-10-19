@@ -54,6 +54,8 @@ here as done with their `PLAN.md` evidence reference.
 Loop log (propose → implement, continues until the operator stops the session):
 - Pass 1: dappled leaf-gap sun flecks on the shaded forest floor; `ground` view reclassified
   (PLAN "Loop pass 1").
+- Pass 2: butterflies make nectar excursions to the flowering bushes near their habitats
+  (PLAN "Loop pass 2").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

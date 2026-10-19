@@ -11,6 +11,7 @@
 namespace island
 {
     class IslandTerrain;
+    struct BushPlacement;
 
     /** @brief Compact low-altitude activity states for clearing butterflies. */
     enum class ButterflyBehavior : std::uint8_t
@@ -76,6 +77,15 @@ namespace island
         {
             return flowerPatches_;
         }
+        /** @brief Flowering bushes may lie this far beyond a habitat's radius; a visit is an
+         *  excursion the butterfly flutters out to and back from. */
+        static constexpr float BushExcursionReach = 24.0f;
+        /** @brief Installs the flowering bushes (hibiscus, plumeria) near each habitat as
+         *  nectar sites the butterflies alternate with their ground patch. */
+        void SetFlowerBushes(std::span<const BushPlacement> bushes);
+        [[nodiscard]] std::size_t FlowerBushCount() const noexcept;
+        /** @brief The agent's current nectar target and its hover height above the ground. */
+        [[nodiscard]] bool NectarTarget(std::size_t index, float& x, float& z, float& height) const noexcept;
         [[nodiscard]] int FullSimulationCount() const noexcept { return fullSimulationCount_; }
         [[nodiscard]] int ReducedSimulationCount() const noexcept {
             return reducedSimulationCount_;
@@ -98,15 +108,26 @@ namespace island
             float accumulatedSeconds = 0.0f;
             float nectarX = 0.0f;
             float nectarZ = 0.0f;
+            // The ground flower patch point assigned at placement, and the hover height of
+            // whichever nectar target is current (0.34 m over the patch, blossom height at a bush).
+            float patchX = 0.0f;
+            float patchZ = 0.0f;
+            float nectarHeight = 0.34f;
+            // While out at a bush the range check allows this radius instead of the home's.
+            float reachRadius = 0.0f;
+            bool travelling = false;
             std::uint32_t transitionCount = 0U;
         };
+        struct NectarSite { float x = 0.0f, z = 0.0f, height = 0.34f; };
+        std::array<std::vector<NectarSite>, HabitatCount> bushSites_{};
 
         void InitializeAgent(std::size_t index);
         void UpdateAgent(Agent& agent, float deltaSeconds,
                          float observerX, float observerZ,
                          bool observerValid) noexcept;
         [[nodiscard]] bool IsValidHabitat(float x, float z,
-                                          const ButterflyHomeRange& home) const noexcept;
+                                          const ButterflyHomeRange& home,
+                                          float reachRadius = 0.0f) const noexcept;
 
         const IslandTerrain& terrain_;
         std::vector<Agent> agents_;
