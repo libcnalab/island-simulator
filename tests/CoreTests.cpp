@@ -7507,6 +7507,7 @@ int main()
             const float offX=lookout->x+lookout->AcrossX()*3.0f,offZ=lookout->z+lookout->AcrossZ()*3.0f;
             Check(!lookout->OnDeck(offX,offZ)&&lookout->SupportHeight(offX,offZ,2.0f)==2.0f,
                   "the lookout support leaves the ground beside it alone");
+            Check(lookout->RailPerch().y>lookout->platformY+1.0f,"the lookout rail offers a perch above the platform");
         }
     }
 

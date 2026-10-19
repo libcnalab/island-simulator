@@ -70,6 +70,8 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 9: a positional splash sound for the seabird strikes (PLAN "Loop pass 9").
 - Pass 10: fruit knocked loose by picking monkeys drops and lies under the tree (PLAN "Loop
   pass 10").
+- Pass 11: foam collars at the jetty posts and a bird perch on the lookout rail (PLAN "Loop
+  pass 11").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

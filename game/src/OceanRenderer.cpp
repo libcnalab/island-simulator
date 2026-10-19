@@ -123,6 +123,7 @@ uniform float uPlayerRipplePhase;
 uniform float uPlayerSplashIntensity;
 uniform float uPlayerSplashPhase;
 uniform vec3 uBirdSplash;   // strike point x, z and ring phase 0..1 (negative: none)
+uniform vec4 uJettyLine;    // deck root x, z and unit direction out to sea (zero: no jetty)
 uniform vec4 uCoastalOptics;
 uniform vec4 uSurfaceAppearance;
 
@@ -347,6 +348,27 @@ void main()
             * mix(0.72, 1.0, clamp(vShallow, 0.0, 1.0));
         foam = max(foam, splash * 0.58);
     }
+    if (dot(uJettyLine.zw, uJettyLine.zw) > 0.5) {
+        // The water works at the jetty posts: a foam collar that breathes with the swell and
+        // a short streak trailing downwind of each post. Posts stand in pairs every 2.8 m from
+        // 1.6 m along the deck, 0.72 m either side, plus the mooring post at 13.5 m.
+        vec2 jettyOffset = vWorld.xz - uJettyLine.xy;
+        float along = dot(jettyOffset, uJettyLine.zw);
+        float across = dot(jettyOffset, vec2(uJettyLine.w, -uJettyLine.z));
+        float pairAlong = clamp(1.6 + 2.8 * floor((along - 1.6) / 2.8 + 0.5), 1.6, 12.8);
+        float postAlong = abs(along - 13.5) < abs(along - pairAlong) ? 13.5 : pairAlong;
+        float postAcross = along > 13.0 ? 0.72 : sign(across) * 0.72;
+        vec2 toPost = vec2(along - postAlong, across - postAcross);
+        float postDistance = length(toPost);
+        float breathe = 0.5 + 0.5 * sin(uTime * 1.3 + along * 0.9);
+        float collar = (1.0 - smoothstep(0.13, 0.30 + 0.10 * breathe, postDistance))
+            * step(0.10, postDistance);
+        float lee = (1.0 - smoothstep(0.0, 0.9, toPost.x)) * step(0.0, toPost.x)
+            * (1.0 - smoothstep(0.08, 0.22, abs(toPost.y)))
+            * (0.5 + 0.5 * sin(uTime * 2.1 - toPost.x * 6.0));
+        float jettyFoam = (collar * 0.55 + lee * 0.30) * step(-0.3, along) * step(along, 14.3);
+        foam = max(foam, jettyFoam);
+    }
     if (uBirdSplash.z >= 0.0 && uBirdSplash.z <= 1.0) {
         // A seabird's plunge: a white plume at the strike that becomes a wider ring than a
         // swimmer's, drawn with the same broken-crest band at 1.8 times its radius.
@@ -568,7 +590,9 @@ void main()
                              const float playerSplashIntensity,
                              const float playerSplashPhase,
                              const float birdSplashX, const float birdSplashZ,
-                             const float birdSplashPhase)
+                             const float birdSplashPhase,
+                             const float jettyRootX, const float jettyRootZ,
+                             const float jettyDirX, const float jettyDirZ)
     {
         device_.setRasterizerStateProperty(RasterizerState::CullNone);
         device_.setBlendStateProperty(BlendState::AlphaBlend);
@@ -592,6 +616,9 @@ void main()
                 CoastalSurfaceAppearance::FoamFullDepth, CoastalSurfaceAppearance::FoamEndDepth,
                 CoastalSurfaceAppearance::FoamShoreDecayMetres);
             customEffect_->SetUniformVec2("uPlayerWaterPosition", playerX, playerZ);
+            customEffect_->SetUniformVec4("uJettyLine",
+                std::isfinite(jettyRootX) ? jettyRootX : 0.0f, std::isfinite(jettyRootZ) ? jettyRootZ : 0.0f,
+                std::isfinite(jettyDirX) ? jettyDirX : 0.0f, std::isfinite(jettyDirZ) ? jettyDirZ : 0.0f);
             customEffect_->SetUniformVec3("uBirdSplash",
                 std::isfinite(birdSplashX) ? birdSplashX : 0.0f,
                 std::isfinite(birdSplashZ) ? birdSplashZ : 0.0f,

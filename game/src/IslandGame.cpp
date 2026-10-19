@@ -336,8 +336,10 @@ namespace island
             birdPerchLayout_.AddSite(jettyPlacement_->MooringPerch());
         }
         if(hutPlacement_) lookoutPlacement_=LookoutLayout::FindInWorld(terrain_,*hutPlacement_,worldObstacles);
-        if(lookoutPlacement_)
+        if(lookoutPlacement_) {
             for(const auto& obstacle:lookoutPlacement_->PostObstacles()) worldObstacles.push_back(obstacle);
+            birdPerchLayout_.AddSite(lookoutPlacement_->RailPerch());
+        }
         birdFlock_.SetPerchSites(birdPerchLayout_.Sites());
         butterflyMeadow_.SetFlowerBushes(jungleLayout_.Bushes());
         bridgePlacement_=BridgeLayout::FindInWorld(terrain_,StreamCourse(terrain_));
@@ -4337,7 +4339,11 @@ namespace island
                                  waterRippleModel_.SplashIntensity(),
                                  waterRippleModel_.SplashPhase(),
                                  diveSplash.x, diveSplash.z,
-                                 diveSplash.valid ? diveSplash.ageSeconds / BirdFlock::SplashSeconds : -1.0f);
+                                 diveSplash.valid ? diveSplash.ageSeconds / BirdFlock::SplashSeconds : -1.0f,
+                                 jettyPlacement_ ? jettyPlacement_->rootX : 0.0f,
+                                 jettyPlacement_ ? jettyPlacement_->rootZ : 0.0f,
+                                 jettyPlacement_ ? jettyPlacement_->dirX : 0.0f,
+                                 jettyPlacement_ ? jettyPlacement_->dirZ : 0.0f);
         }
         {
             GpuDiagnosticScope gpuPass("shoreline");

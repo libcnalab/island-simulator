@@ -939,7 +939,7 @@ def main():
                 raise RuntimeError("current herd behaviour is missing; check for a stale executable")
             if "fish schools part around the swimmer within three metres" not in diagnostics:
                 raise RuntimeError("current sea-from-within behaviour is missing; check for a stale executable")
-            if "resident's jetty runs from the beach below the hut to a mooring-post perch, with a dugout canoe drawn up beside the root" not in diagnostics:
+            if "resident's jetty runs from the beach below the hut to a mooring-post perch, with a dugout canoe drawn up beside the root; the water collars its posts with foam" not in diagnostics:
                 raise RuntimeError("current jetty is missing; check for a stale executable")
             if "rope bridge crosses the stream's lower reach on a sagging plank walkway with hand ropes; the walker crosses dry" not in diagnostics:
                 raise RuntimeError("current rope bridge is missing; check for a stale executable")
@@ -961,7 +961,7 @@ def main():
                 raise RuntimeError("current boar wallow is missing; check for a stale executable")
             if "circling seabirds plunge-dive every nine seconds and each strike raises a foam ring on the water and a positional splash" not in diagnostics:
                 raise RuntimeError("current seabird plunge dive is missing; check for a stale executable")
-            if "resident's lookout tower beside the hut carries a railed platform the walker climbs by a cleated ramp" not in diagnostics:
+            if "resident's lookout tower beside the hut carries a railed platform the walker climbs by a cleated ramp and a rail-post perch for the birds" not in diagnostics:
                 raise RuntimeError("current lookout tower is missing; check for a stale executable")
             if "fruit knocked loose by picking monkeys drops from the crown and lies under the tree" not in diagnostics:
                 raise RuntimeError("current falling fruit is missing; check for a stale executable")

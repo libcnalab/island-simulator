@@ -40,7 +40,9 @@ namespace island
                   float playerRippleIntensity, float playerRipplePhase,
                   float playerSplashIntensity, float playerSplashPhase,
                   float birdSplashX = 0.0f, float birdSplashZ = 0.0f,
-                  float birdSplashPhase = -1.0f);
+                  float birdSplashPhase = -1.0f,
+                  float jettyRootX = 0.0f, float jettyRootZ = 0.0f,
+                  float jettyDirX = 0.0f, float jettyDirZ = 0.0f);
 
         [[nodiscard]] bool UsesCustomShader() const noexcept { return customShaderReady_; }
         [[nodiscard]] const std::string& FallbackReason() const noexcept { return fallbackReason_; }

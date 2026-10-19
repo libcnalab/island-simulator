@@ -46,6 +46,20 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 11 (2026-10-20) — the water at the jetty posts, and a perch on the lookout
+
+Two small truths the new structures lacked. The ocean shader now takes the jetty's root and
+direction (`uJettyLine`) and reconstructs the post positions in deck coordinates (pairs every
+2.8 m from 1.6 m, 0.72 m either side, the mooring post at 13.5 m): each post standing in water
+wears a foam collar that breathes with the swell and trails a short foam streak downwind of
+it, through the existing foam term. The lookout's back-left rail post top is a ninth
+structure perch (`LookoutPlacement::RailPerch`, added before the flock's perch list is set, so
+the birds use it). Both structure diagnostics gain their new clause ("the water collars its
+posts with foam"; "a rail-post perch for the birds"), re-pinned by the native capture tool, and
+the lookout core check also asserts the perch sits above the platform. Inspected native
+`20261019T230913Z-jetty` shows pale collars at the posts in the shallows; `lookout` and `birds`
+pass.
+
 ## Loop pass 10 (2026-10-20) — fruit knocked loose by picking monkeys
 
 The fruiting crowns, the monkeys' preference for them and the static fallen coconuts never met:

@@ -38,6 +38,11 @@ std::array<CircularObstacle,4> LookoutPlacement::PostObstacles() const noexcept 
     return posts;
 }
 
+BirdPerchSite LookoutPlacement::RailPerch() const noexcept {
+    const auto posts=PostObstacles();
+    return {posts[0].x,platformY+RailHeight+0.08f,posts[0].z,std::atan2(-dirZ,-dirX),BirdPerchKind::Wreck};
+}
+
 std::optional<LookoutPlacement> LookoutLayout::FindInWorld(const IslandTerrain& terrain,
         const HutPlacement& hut,const std::span<const CircularObstacle> obstacles) {
     if(!std::isfinite(hut.x)||!std::isfinite(hut.z)) return std::nullopt;

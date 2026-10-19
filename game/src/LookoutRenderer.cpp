@@ -83,7 +83,7 @@ LookoutRenderer::LookoutRenderer(GraphicsDevice& device,const LookoutPlacement& 
     effect_->setFogStartProperty(300.0f);effect_->setFogEndProperty(760.0f);
     std::cout<<"island-simulator: lookout tower stands "<<LookoutPlacement::PlatformRise<<" m beside the hut clearing with a "
         <<LookoutPlacement::RampLength<<" m cleated ramp; "<<triangles_<<" triangles in one draw\n";
-    const char* message="island-simulator: resident's lookout tower beside the hut carries a railed platform the walker climbs by a cleated ramp";
+    const char* message="island-simulator: resident's lookout tower beside the hut carries a railed platform the walker climbs by a cleated ramp and a rail-post perch for the birds";
     std::cout<<message<<'\n';MirrorRuntimeDiagnosticToPlatformLog(message);
 }
 

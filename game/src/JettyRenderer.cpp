@@ -113,7 +113,7 @@ JettyRenderer::JettyRenderer(GraphicsDevice& device,const JettyPlacement& jetty)
     std::cout<<"island-simulator: jetty "<<JettyPlacement::PostCount<<" posts carry a "
         <<JettyPlacement::Length<<" m plank deck from the beach over the shallows; "<<triangles_
         <<" triangles in one draw with the dugout canoe\n";
-    const char* message="island-simulator: resident's jetty runs from the beach below the hut to a mooring-post perch, with a dugout canoe drawn up beside the root";
+    const char* message="island-simulator: resident's jetty runs from the beach below the hut to a mooring-post perch, with a dugout canoe drawn up beside the root; the water collars its posts with foam";
     std::cout<<message<<'\n';MirrorRuntimeDiagnosticToPlatformLog(message);
 }
 

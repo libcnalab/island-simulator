@@ -1,4 +1,5 @@
 #pragma once
+#include "IslandSimulator/BirdPerchLayout.hpp"
 #include "IslandSimulator/WorldCollision.hpp"
 #include <array>
 #include <optional>
@@ -25,6 +26,8 @@ struct LookoutPlacement {
     [[nodiscard]] bool OnDeck(float x,float z) const noexcept {return OnPlatform(x,z)||OnRamp(x,z);}
     [[nodiscard]] float SupportHeight(float x,float z,float terrainHeight) const noexcept;
     [[nodiscard]] std::array<CircularObstacle,4> PostObstacles() const noexcept;
+    // The top of the back rail's left post: a bird's perch with a view over the clearing.
+    [[nodiscard]] BirdPerchSite RailPerch() const noexcept;
 };
 
 class LookoutLayout final {
