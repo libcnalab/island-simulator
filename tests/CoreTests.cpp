@@ -6122,6 +6122,15 @@ int main()
                   && plant.yawRadians == repeated.yawRadians && plant.scale == repeated.scale
                   && plant.variant == repeated.variant,
               "understory placement is bitwise deterministic for one seed");
+        if (plant.variant == island::JungleLayout::BananaUnderstoryVariant) {
+            // Banana stools are the stream-bank exception: lower, moister ground by the water.
+            const auto environment = island::IslandEnvironmentField::SampleInland(
+                plant.x, plant.z, sample.signedShoreDistance);
+            Check(sample.height >= 0.7f && sample.slopeRadians <= 0.5f
+                      && environment.moisture >= 0.38f && sample.signedShoreDistance >= 8.0f,
+                  "banana stools stand on moist low stream-bank ground");
+            continue;
+        }
         Check(sample.signedShoreDistance >= 31.0f
                   && sample.signedShoreDistance <= 242.0f,
               "understory remains inside its interior placement belt");

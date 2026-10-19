@@ -84,7 +84,9 @@ namespace island
         static constexpr std::uint32_t DefaultSeed = 0x43b0a7d1U;
         static constexpr int CanopyVariantCount = CanopyFormCount;
         static constexpr int StandingSnagVariantCount = 2;
-        static constexpr int UnderstoryVariantCount = 4;
+        static constexpr int UnderstoryVariantCount = 5;
+        /** @brief Banana stools: the fifth understory form, placed only along the stream banks. */
+        static constexpr int BananaUnderstoryVariant = 4;
         static constexpr int BushVariantCount = 3;
         static constexpr int GroundPlantVariantCount = 3;
         static constexpr int MangroveCandidateCount = 48;
@@ -158,6 +160,7 @@ namespace island
         [[nodiscard]] std::size_t ClearingBushCount() const noexcept { return clearingBushCount_; }
         [[nodiscard]] std::size_t ClearingGroundPlantCount() const noexcept { return clearingGroundPlantCount_; }
         [[nodiscard]] std::size_t ForestGroundPlantCount() const noexcept { return forestGroundPlantCount_; }
+        [[nodiscard]] std::size_t BananaPlantCount() const noexcept { return bananaPlantCount_; }
         [[nodiscard]] std::size_t StreamBankGroundPlantCount() const noexcept
         {
             return streamBankGroundPlantCount_;
@@ -191,6 +194,7 @@ namespace island
         std::size_t clearingGroundPlantCount_ = 0;
         std::size_t forestGroundPlantCount_ = 0;
         std::size_t streamBankGroundPlantCount_ = 0;
+        std::size_t bananaPlantCount_ = 0;
         std::size_t seasonalWetlandGroundPlantCount_ = 0;
         std::size_t mangroveCount_ = 0;
         std::size_t juvenileCanopyCount_ = 0;

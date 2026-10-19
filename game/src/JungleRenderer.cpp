@@ -1328,9 +1328,88 @@ void main()
             }
         }
 
+        // A banana stool: a short pale pseudostem and a whorl of long arching paddle leaves,
+        // each a curved lamina grid tagged as live leaf so it shares the leaf lighting path.
+        [[nodiscard]] PlantGeometry CreateBananaGeometry(const bool farMesh)
+        {
+            PlantGeometry geometry;
+            const int leafCount = farMesh ? 4 : 7;
+            const int segments = farMesh ? 3 : 7;
+            const int columns = farMesh ? 3 : 5;
+            constexpr int stemSides = 6;
+            constexpr float stemHeight = 1.55f;
+            const Color stemColor(128, 152, 74, 255);
+            const auto stemBase = static_cast<std::uint16_t>(geometry.vertices.size());
+            for (int ring = 0; ring <= 2; ++ring) {
+                const float t = static_cast<float>(ring) / 2.0f;
+                const float radius = 0.13f - t * 0.045f;
+                for (int side = 0; side < stemSides; ++side) {
+                    const float angle = 2.0f * std::numbers::pi_v<float>
+                        * static_cast<float>(side) / stemSides;
+                    geometry.vertices.emplace_back(
+                        Vector3(std::cos(angle) * radius, t * stemHeight, std::sin(angle) * radius),
+                        ShadeColor(stemColor, 0.78f + 0.22f * std::max(0.0f, std::cos(angle - 0.6f))),
+                        Vector2(0.08f * t, 0.31f));
+                }
+            }
+            for (int ring = 0; ring < 2; ++ring) {
+                for (int side = 0; side < stemSides; ++side) {
+                    const int next = (side + 1) % stemSides;
+                    const auto a = static_cast<std::uint16_t>(stemBase + ring * stemSides + side);
+                    const auto b = static_cast<std::uint16_t>(stemBase + ring * stemSides + next);
+                    const auto c = static_cast<std::uint16_t>(a + stemSides);
+                    const auto d = static_cast<std::uint16_t>(b + stemSides);
+                    geometry.indices.insert(geometry.indices.end(), {a, c, b, b, c, d});
+                }
+            }
+            geometry.leaves.resize(geometry.vertices.size());
+            const Color lamina(56, 138, 50, 255);
+            for (int leaf = 0; leaf < leafCount; ++leaf) {
+                const float fraction = static_cast<float>(leaf) / leafCount;
+                const float angle = fraction * 2.0f * std::numbers::pi_v<float> + 0.37f * (leaf % 2);
+                const float length = 2.1f + 0.35f * static_cast<float>((leaf * 5) % 3);
+                const float width = 0.46f + 0.05f * static_cast<float>(leaf % 2);
+                const float rise = 0.9f + 0.25f * static_cast<float>((leaf * 3) % 2);
+                const float phase = std::fmod(0.17f + 0.23f * static_cast<float>(leaf), 1.0f);
+                const Vector3 direction(std::cos(angle), 0.0f, std::sin(angle));
+                const Vector3 sideways(-direction.Z, 0.0f, direction.X);
+                const Vector3 root = Vector3::Up * (stemHeight - 0.12f) + direction * 0.08f;
+                const Color leafColor = ShadeColor(lamina, 0.86f + 0.16f * static_cast<float>(leaf % 3) * 0.5f);
+                const auto base = static_cast<std::uint16_t>(geometry.vertices.size());
+                for (int segment = 0; segment <= segments; ++segment) {
+                    const float t = static_cast<float>(segment) / segments;
+                    // The midrib rises steeply, then arches over and droops toward the tip.
+                    const Vector3 spine = root + direction * (length * (0.15f + 0.85f * t))
+                        + Vector3::Up * (rise * std::sin(t * 2.6f) - 0.55f * t * t * length * 0.5f);
+                    const float halfWidth = width * std::pow(std::sin(t * std::numbers::pi_v<float> * 0.92f + 0.12f), 0.55f);
+                    for (int column = 0; column < columns; ++column) {
+                        const float s = (static_cast<float>(column) / (columns - 1)) * 2.0f - 1.0f;
+                        const Vector3 position = spine + sideways * (halfWidth * s)
+                            - Vector3::Up * (std::abs(s) * 0.11f * (0.3f + t));
+                        geometry.vertices.emplace_back(position,
+                            ShadeColor(leafColor, 1.0f - 0.08f * std::abs(s) + 0.05f * t),
+                            Vector2(0.10f + 0.42f * t, phase));
+                        geometry.leaves.resize(geometry.vertices.size());
+                        geometry.leaves.back() = {Vector3::Up, Vector4(t, s, phase, 1)};
+                    }
+                }
+                for (int segment = 0; segment < segments; ++segment) {
+                    for (int column = 0; column < columns - 1; ++column) {
+                        const auto a = static_cast<std::uint16_t>(base + segment * columns + column);
+                        const auto b = static_cast<std::uint16_t>(a + 1U);
+                        const auto c = static_cast<std::uint16_t>(a + columns);
+                        const auto d = static_cast<std::uint16_t>(c + 1U);
+                        geometry.indices.insert(geometry.indices.end(), {a, c, b, b, c, d});
+                    }
+                }
+            }
+            return geometry;
+        }
+
         [[nodiscard]] PlantGeometry CreateUnderstoryGeometry(const int variant,
                                                              const bool farMesh)
         {
+            if (variant == JungleLayout::BananaUnderstoryVariant) return CreateBananaGeometry(farMesh);
             PlantGeometry geometry;
             const int leafCount = UnderstoryLeafCount(variant, farMesh);
             const int segments = farMesh ? 2 : 8;
@@ -1421,6 +1500,43 @@ void main()
                         geometry.leaves.back()={vector(n),Vector4(t,side,leaf.phase,1)};
                     }
                     for (auto index:leafIndices) geometry.indices.push_back(static_cast<std::uint16_t>(base+index));
+                }
+                // Two bush forms flower on the near mesh: five-petal hibiscus (form 1) and
+                // small pale plumeria whorls (form 2) at alternate shoot tips.  Petals are
+                // flat fans in the generic face-lit material, so they add no leaf-shader cost.
+                if (!farMesh && variant != 0 && shootIndex % 2 == 0) {
+                    const Vector3 tip = vector(SampleBushShoot(shoot, 0.96f));
+                    const Color petal = variant == 1 ? Color(226, 58, 84, 255) : Color(246, 238, 208, 255);
+                    const Color heart = variant == 1 ? Color(252, 214, 84, 255) : Color(250, 206, 92, 255);
+                    const int blossoms = variant == 1 ? 1 : 3;
+                    for (int blossom = 0; blossom < blossoms; ++blossom) {
+                        const float offsetAngle = shoot.angle + 2.1f * static_cast<float>(blossom);
+                        const Vector3 centre = tip + Vector3(std::cos(offsetAngle), 0.35f, std::sin(offsetAngle))
+                            * (blossom == 0 ? 0.02f : 0.07f);
+                        const float petalLength = variant == 1 ? 0.075f : 0.034f;
+                        const float petalWidth = variant == 1 ? 0.052f : 0.020f;
+                        const auto blossomBase = static_cast<std::uint16_t>(geometry.vertices.size());
+                        geometry.vertices.emplace_back(centre, heart, Vector2(0.55f, shoot.phase));
+                        for (int petalIndex = 0; petalIndex < 5; ++petalIndex) {
+                            const float petalAngle = static_cast<float>(petalIndex) * 1.2566371f
+                                + 0.3f * static_cast<float>(shootIndex);
+                            const Vector3 outward(std::cos(petalAngle), 0.28f, std::sin(petalAngle));
+                            const Vector3 across(-outward.Z, 0.0f, outward.X);
+                            geometry.vertices.emplace_back(centre + outward * (petalLength * 0.55f) - across * petalWidth,
+                                                           ShadeColor(petal, 0.9f), Vector2(0.6f, shoot.phase));
+                            geometry.vertices.emplace_back(centre + outward * petalLength,
+                                                           petal, Vector2(0.62f, shoot.phase));
+                            geometry.vertices.emplace_back(centre + outward * (petalLength * 0.55f) + across * petalWidth,
+                                                           ShadeColor(petal, 0.9f), Vector2(0.6f, shoot.phase));
+                            const auto p = static_cast<std::uint16_t>(blossomBase + 1U + petalIndex * 3);
+                            geometry.indices.insert(geometry.indices.end(),
+                                {blossomBase, p, static_cast<std::uint16_t>(p + 1U),
+                                 blossomBase, static_cast<std::uint16_t>(p + 1U), static_cast<std::uint16_t>(p + 2U),
+                                 blossomBase, static_cast<std::uint16_t>(p + 1U), p,
+                                 blossomBase, static_cast<std::uint16_t>(p + 2U), static_cast<std::uint16_t>(p + 1U)});
+                        }
+                        geometry.leaves.resize(geometry.vertices.size());
+                    }
                 }
             }
             return geometry;
@@ -1925,6 +2041,8 @@ void main()
         if (customShaderReady_) {
             std::cout << "island-simulator: jungle portable wind shader with canopy/understory/bush/ground LOD\n";
             std::cout << "island-simulator: canopy crowns hang lianas beneath alternate lobes and the fig form drops bare aerial roots\n";
+            std::cout << "island-simulator: " << layout.BananaPlantCount()
+                      << " banana stools line the stream banks; bush forms flower with hibiscus and plumeria\n";
             constexpr const char* leafMaterialDiagnostic =
                 "island-simulator: jungle leaves use smooth normals, filtered veins and restrained wax shading";
             std::cout << leafMaterialDiagnostic << '\n';

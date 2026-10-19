@@ -277,8 +277,9 @@ namespace island
                 plant.scale = UnderstoryMinimumScale
                     + (UnderstoryMaximumScale - UnderstoryMinimumScale)
                         * UnitRandom(Hash(gridX, gridZ, seed ^ 0x9fb21c65U));
+                // The grid keeps the four forest forms; bananas are placed by the stream only.
                 plant.variant = static_cast<std::uint8_t>(
-                    Hash(gridX, gridZ, seed ^ 0xb7e15162U) % UnderstoryVariantCount);
+                    Hash(gridX, gridZ, seed ^ 0xb7e15162U) % BananaUnderstoryVariant);
                 if (HutLayout::ReservesDecorativeClearing(
                         plant.x, plant.z, plant.scale * 1.8f)) continue;
                 understory_.push_back(plant);
@@ -455,6 +456,41 @@ namespace island
                         + static_cast<int>(colonyRandom(4) * 3.0f))
                         % GroundPlantVariantCount), true});
                 ++streamBankGroundPlantCount_;
+            }
+            // Banana stools stand a little back from the water on the moist bank; they are
+            // understory placements so they share that family's meshes, cells and culling.
+            if (colonyRandom(5) < .62f) {
+                for (int stool = 0; stool < 2; ++stool) {
+                    const auto stoolRandom = [&](std::uint32_t channel) {
+                        return UnitRandom(Hash(colony, 100 + stool,
+                            seed ^ (0x2b7e1516U + channel * 0x9e3779b9U)));
+                    };
+                    const float along = (stoolRandom(0) - .5f) * 4.2f;
+                    const float across = 1.2f + 1.8f * stoolRandom(1);
+                    const float x = colonyX + along * tangentX + across * normalX * side;
+                    const float z = colonyZ + along * tangentZUnit + across * normalZ * side;
+                    const auto sample = terrain.Sample(x, z);
+                    const auto environment = IslandEnvironmentField::SampleInland(
+                        x, z, sample.signedShoreDistance);
+                    const float scale = .92f + .30f * stoolRandom(2);
+                    if (sample.signedShoreDistance < 8 || sample.height < .7f
+                        || sample.slopeRadians > .50f || environment.moisture < .38f
+                        || environment.drainage > .72f
+                        || VegetationLayout::OverlapsReservedRoute(x, z, 1.1f * scale)
+                        || !clearOfCanopy(x, z, 1.1f * scale)
+                        || !clearOfRoots(x, z, understory_, 1.5f)
+                        || !clearOfRoots(x, z, bushes_, 1.0f)
+                        || HutLayout::ReservesDecorativeClearing(x, z, 1.1f * scale)) continue;
+                    UnderstoryPlacement banana;
+                    banana.x = x;
+                    banana.y = sample.height + .018f;
+                    banana.z = z;
+                    banana.yawRadians = stoolRandom(3) * 2.0f * std::numbers::pi_v<float>;
+                    banana.scale = scale;
+                    banana.variant = static_cast<std::uint8_t>(BananaUnderstoryVariant);
+                    understory_.push_back(banana);
+                    ++bananaPlantCount_;
+                }
             }
         }
 

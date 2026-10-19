@@ -46,6 +46,23 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Latest understory-colour pass — flowering shrubs and banana stools
+
+Backlog item 16. Bush forms 1 and 2 now flower on their near mesh: a five-petal red hibiscus with
+a yellow heart at every other shoot tip of form 1, and whorls of three small pale plumeria
+blossoms on form 2, as flat petal fans in the face-lit material. Banana stools are a fifth
+understory form (`BananaUnderstoryVariant`): a pale six-sided pseudostem with seven long arching
+paddle leaves (four on the far LOD) built as curved lamina grids tagged as live leaves, placed only
+by the stream-bank colony pass (62% of colonies, up to two stools 1.2--3 m behind the bank on
+moist, drained, unreserved ground clear of crowns, other understory and bushes). The forest grid
+keeps its four original forms, so 10 banana stools raise the understory population from 1,737 to
+1,747; the Web, Firefox and harness regexes carrying that count were updated. The bush QA frame
+now selects a hibiscus bush beside the path. Inspected native `20261019T200131Z-bush` shows two red
+blossoms on the framed bush (with lianas hanging through the crowns behind), and the cropped
+`20261019T195858Z-stream` frame shows a banana stool with arching paddle leaves on the bank. The
+core test exempts banana stools from the 2.8 m interior-ground rule and checks their own moist,
+low bank conditions instead. All 73 active native tests and 48 harness tests pass.
+
 ## Latest canopy-interior pass — lianas and aerial roots
 
 Backlog item 15. The near crown of every natural broadleaf form except the mango form now hangs a
@@ -113,6 +130,10 @@ Runtime (24,899,267-byte APK, SHA-256
 `libmain.so`); one earlier assemble attempt failed with clang reporting the NDK's own `<array>`
 header as invalid UTF-8 and passed unchanged on retry, so it is recorded as a transient toolchain
 glitch, not a source defect.
+Combined portable run for the harvest and decay passes (items 17 and 18): Chrome 155/SwiftShader
+`20261019T194504.481303Z-chrome-litter` passes (GL error zero, live context, no kernel faults) on
+the rebuilt Web package, and Android ARM64 assemble/lint pass (24,923,299-byte APK, SHA-256
+`341a6a97c65abdf7dcb37211236b8ff7edeca9e7925927b0584f658fe46c5d17`, 19,880,728-byte `libmain.so`).
 
 ## Latest player-presence pass — surface footsteps and the walker's shadow
 

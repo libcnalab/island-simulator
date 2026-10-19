@@ -662,8 +662,9 @@ namespace island
             const BushPlacement* selected = nullptr;
             float bestScore = std::numeric_limits<float>::max();
             float selectedCameraX=0,selectedCameraZ=0;
+            // The flowering hibiscus form now stands for the bush family in this QA frame.
             for (const auto& bush : jungleLayout_.Bushes()) {
-                if (bush.variant != 0) continue;
+                if (bush.variant != 1) continue;
                 const float pathDistance = std::abs(bush.x - VegetationLayout::PrimaryPathCenterX(bush.z));
                 for (int heading=0;heading<8;++heading) {
                     const float angle=heading*std::numbers::pi_v<float>/4;

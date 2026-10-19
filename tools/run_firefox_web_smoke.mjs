@@ -588,7 +588,7 @@ try {
   const junglePopulationPattern = new RegExp(
     "jungle [1-9][0-9]*/261 canopy \\(near [1-9][0-9]*, far [0-9]+\\), "
       + "[0-9]+/12 standing snags, "
-      + "[1-9][0-9]*/1737 understory \\(near [1-9][0-9]*, far [0-9]+\\), "
+      + "[1-9][0-9]*/1747 understory \\(near [1-9][0-9]*, far [0-9]+\\), "
       + "[1-9][0-9]*/569 bushes \\(near [1-9][0-9]*, far [0-9]+\\), "
       + "[1-9][0-9]*/3087 ground plants \\(near [1-9][0-9]*, far [0-9]+\\)");
   const waterStatePattern = new RegExp(

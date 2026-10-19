@@ -1404,7 +1404,7 @@ try {
       "island-simulator: selected palm near crowns include sparse hanging dry fronds")
     && result.output?.includes(
       "island-simulator: palm per-instance frond tint reuses existing transforms")
-    && result.output?.includes("island-simulator: jungle 261 canopy trees, 1737 understory plants, 569 low bushes, hardware instancing")
+    && result.output?.includes("island-simulator: jungle 261 canopy trees, 1747 understory plants, 569 low bushes, hardware instancing")
     && result.output?.includes("island-simulator: jungle ground layer 3087 small plants")
     && result.output?.includes(
       "island-simulator: jungle fixed-sun two-sided geometric facet lighting")
@@ -1786,7 +1786,7 @@ try {
     && visualResult.output?.includes("island-simulator: palms 327 in 64 cells, hardware instancing")
     && visualResult.output?.includes("palm portable wind shader with near/far mesh LOD")
     && visualResult.output?.includes(
-      "island-simulator: jungle 261 canopy trees, 1737 understory plants, 569 low bushes, hardware instancing")
+      "island-simulator: jungle 261 canopy trees, 1747 understory plants, 569 low bushes, hardware instancing")
     && visualResult.output?.includes("jungle portable wind shader with canopy/understory/bush/ground LOD")
     && visualResult.output?.includes("natural-prop portable shader with near/far LOD")
     && visualResult.output?.includes(
@@ -2104,7 +2104,7 @@ try {
       "forest-floor litter includes two terrain-draped curved twigs in the shared near rosette mesh")
     && jungleResult.output?.includes(
       "near standing snag limbs emerge through flared open branch collars")
-    && /jungle [1-9][0-9]*\/261 canopy \(near [1-9][0-9]*, far [0-9]+\), [0-9]+\/12 standing snags, [1-9][0-9]*\/1737 understory \(near [1-9][0-9]*, far [0-9]+\), [1-9][0-9]*\/569 bushes \(near [1-9][0-9]*, far [0-9]+\), [1-9][0-9]*\/3087 ground plants \(near [1-9][0-9]*, far [0-9]+\)/.test(
+    && /jungle [1-9][0-9]*\/261 canopy \(near [1-9][0-9]*, far [0-9]+\), [0-9]+\/12 standing snags, [1-9][0-9]*\/1747 understory \(near [1-9][0-9]*, far [0-9]+\), [1-9][0-9]*\/569 bushes \(near [1-9][0-9]*, far [0-9]+\), [1-9][0-9]*\/3087 ground plants \(near [1-9][0-9]*, far [0-9]+\)/.test(
       jungleResult.output ?? "")
     && !jungleResult.error;
 
