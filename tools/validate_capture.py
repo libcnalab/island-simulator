@@ -28,7 +28,7 @@ def profile_for_viewpoint(viewpoint: str) -> str:
         return "shaded-detail"
     if viewpoint == "cave-back":
         return "dark-cave-detail"
-    if viewpoint in ("cave-top", "tracks", "spiders", "spiders-bright", "snakes", "snake-head", "tree-snakes", "ants", "cicadas", "beetles"):
+    if viewpoint in ("cave-top", "tracks", "cascade", "spiders", "spiders-bright", "snakes", "snake-head", "tree-snakes", "ants", "cicadas", "beetles"):
         return "close-natural-detail"
     return "scene"
 

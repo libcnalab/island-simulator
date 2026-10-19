@@ -15,6 +15,16 @@ namespace island
         float z = 0.0f;
         float distance = 0.0f;
         float presence = 0.0f;
+        /** @brief Share of the audible stream that is the cascade's white water, 0..1. */
+        float turbulence = 0.0f;
+        bool valid = false;
+    };
+
+    /** @brief The cascade lip, which carries further and louder than the quiet reaches. */
+    struct StreamCascadePoint
+    {
+        float x = 0.0f;
+        float z = 0.0f;
         bool valid = false;
     };
 
@@ -25,9 +35,11 @@ namespace island
         static constexpr int SegmentCount = 32;
         static constexpr float FullPresenceDistance = 4.0f;
         static constexpr float SilentDistance = 34.0f;
+        static constexpr float CascadeFullDistance = 5.0f;
+        static constexpr float CascadeSilentDistance = 58.0f;
 
-        [[nodiscard]] static StreamSoundSample Sample(float listenerX,
-                                                       float listenerZ) noexcept
+        [[nodiscard]] static StreamSoundSample Sample(float listenerX, float listenerZ,
+                                                       const StreamCascadePoint& cascade = {}) noexcept
         {
             if (!std::isfinite(listenerX) || !std::isfinite(listenerZ)) {
                 return {};
@@ -71,7 +83,23 @@ namespace island
                     / (SilentDistance - FullPresenceDistance),
                 0.0f, 1.0f);
             const float smooth = unit * unit * (3.0f - 2.0f * unit);
-            return {bestX, bestZ, distance, 1.0f - smooth, true};
+            StreamSoundSample sample{bestX, bestZ, distance, 1.0f - smooth, 0.0f, true};
+            if (cascade.valid && std::isfinite(cascade.x) && std::isfinite(cascade.z)) {
+                const float cascadeDistance = std::hypot(listenerX - cascade.x, listenerZ - cascade.z);
+                const float cascadeUnit = std::clamp(
+                    (cascadeDistance - CascadeFullDistance)
+                        / (CascadeSilentDistance - CascadeFullDistance),
+                    0.0f, 1.0f);
+                const float cascadePresence = 1.0f - cascadeUnit * cascadeUnit * (3.0f - 2.0f * cascadeUnit);
+                sample.turbulence = cascadePresence;
+                if (cascadePresence > sample.presence) {
+                    sample.presence = cascadePresence;
+                    sample.x = cascade.x;
+                    sample.z = cascade.z;
+                    sample.distance = cascadeDistance;
+                }
+            }
+            return sample;
         }
 
         /** @brief Hysteretic arbitration for the stream/player-water shared voice. */

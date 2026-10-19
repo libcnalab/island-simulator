@@ -94,6 +94,8 @@ namespace island
 
         /** @brief Supplies the immutable grounded-wreck emitter position. */
         void SetShipwreckSource(float x, float y, float z) noexcept;
+        /** @brief The stream cascade lip; its white water carries further than the quiet reaches. */
+        void SetStreamCascade(float x, float z) noexcept;
 
         /** @brief Supplies the sampled portal elevation for underground acoustic zoning. */
         void SetBunkerSource(float entranceGroundY) noexcept;
@@ -197,6 +199,7 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> streamEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> streamInstance_;
         StreamSoundSample streamSound_;
+        StreamCascadePoint streamCascade_;
         bool streamPlaybackActive_ = false;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> campfireEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> campfireInstance_;

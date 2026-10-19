@@ -188,6 +188,7 @@ namespace island
         AnimalTrackDetail,
         FruitTreeDetail,
         FallenLogDetail,
+        StreamCascadeDetail,
         HutDetail,
         HutMaterialDetail,
         HelicopterDetail,

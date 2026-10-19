@@ -32,6 +32,7 @@
 #include "IslandSimulator/GrassLod.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/WreckScourPatch.hpp"
+#include "IslandSimulator/StreamCourse.hpp"
 #include "IslandSimulator/JungleLayout.hpp"
 #include "IslandSimulator/LocomotionPaceToggle.hpp"
 #include "IslandSimulator/MonkeyTroop.hpp"
@@ -7334,6 +7335,37 @@ int main()
               "player capsule cannot tunnel through an authored land-rock proxy");
         Check(rockObstacleRejections > 0 && rockTerrainRejections == 0,
               "authored land-rock traversal is rejected by collision rather than terrain");
+    }
+
+    {
+        // The stream cascade: one lip, one concentrated drop, a wider deeper plunge pool, and
+        // a water profile that still never rises downstream.
+        const island::IslandTerrain terrain;
+        const island::StreamCourse course(terrain);
+        const std::size_t lip=course.CascadeIndex();
+        Check(lip>=13&&lip+island::StreamCourse::PoolLength+6<course.Count(),
+              "stream cascade sits inside the authored course");
+        Check(course.CascadeDrop()>=0.12f,"stream cascade drops at least twelve centimetres in one metre");
+        Check(course.Station(lip).water==course.Station(lip-1).water
+              ||course.Station(lip).water==course.Station(lip).ground-island::StreamCourse::BankFreeboard,
+              "stream cascade lip holds level or sits at the bank freeboard");
+        bool monotone=true,incised=true;
+        for(std::size_t i=1;i<course.Count();++i) {
+            if(course.Station(i).water>course.Station(i-1).water+1e-5f) monotone=false;
+            if(course.Station(i).ground-course.Station(i).bed>island::StreamCourse::PoolIncisionLimit+1e-4f) incised=false;
+        }
+        Check(monotone,"stream water never rises downstream across the cascade");
+        Check(incised,"stream pool incision stays within its limit");
+        const auto& pool=course.PoolStation();
+        const auto& upstream=course.Station(lip-2);
+        Check(pool.water-pool.bed>upstream.water-upstream.bed+0.2f,"plunge pool is deeper than the reach above the lip");
+        Check(pool.halfWidth>island::StreamRoute::HalfWidth(pool.x)*1.3f,"plunge pool is wider than the authored channel");
+        const island::StreamCascadePoint cascade{course.CascadeX(),course.CascadeZ(),true};
+        const auto near=island::StreamSoundField::Sample(course.CascadeX()+3.0f,course.CascadeZ(),cascade);
+        const auto far=island::StreamSoundField::Sample(course.CascadeX()+45.0f,course.CascadeZ()+30.0f,cascade);
+        const auto farQuiet=island::StreamSoundField::Sample(course.CascadeX()+45.0f,course.CascadeZ()+30.0f);
+        Check(near.turbulence>0.9f&&far.presence>=farQuiet.presence,
+              "stream cascade is turbulent up close and audible further than the quiet reaches");
     }
 
     {

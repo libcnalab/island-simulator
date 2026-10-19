@@ -35,7 +35,7 @@ here as done with their `PLAN.md` evidence reference.
 3. [x] Wreck scour bar (PLAN "Latest wreck-grounding pass — sand scour bar against the hull").
 4. [x] Sand streak audit (PLAN "Latest beach-streak audit — seabed ripples confined below the waterline").
 5. [x] Cumulus layers and sea cloud shadows (PLAN "Latest sky pass — fringed cumulus layers and cloud shadows on the sea").
-6. [ ] Stream: a small cascade with foam and a pool (sound and a destination).
+6. [x] Stream cascade and plunge pool (PLAN "Latest stream pass — a small cascade and plunge pool", `cascade` viewpoint).
 7. [ ] Parrots and pigeons as recognisable bird species (colour, calls, ground doves).
 8. [ ] Ecological links: goats/deer drink at the stream, monkeys pick fruit, boars root at roots.
 9. [ ] Herd behaviour: goats/deer keep as a group, a sentinel raises its head first.

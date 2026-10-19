@@ -1,4 +1,5 @@
 #include "IslandSimulator/IslandGame.hpp"
+#include "IslandSimulator/StreamCourse.hpp"
 #include "IslandSimulator/WreckScourPatch.hpp"
 #include "IslandSimulator/CanopyLighting.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
@@ -183,6 +184,7 @@ namespace island
             case FixedViewpoint::ShipwreckWide: return "shipwreck-wide";
             case FixedViewpoint::AnimalTrackDetail: return "tracks";
             case FixedViewpoint::FruitTreeDetail: return "fruit";
+            case FixedViewpoint::StreamCascadeDetail: return "cascade";
             case FixedViewpoint::FallenLogDetail: return "log";
             case FixedViewpoint::HutDetail: return "hut";
             case FixedViewpoint::HutMaterialDetail: return "hut-material";
@@ -1350,6 +1352,21 @@ namespace island
             yaw_ = std::atan2(direction.X, direction.Z);
             pitch_ = std::atan2(direction.Y, std::hypot(direction.X, direction.Z));
             std::cout << "island-simulator: fruit QA camera frames a fruit-bearing canopy crown\n";
+        } else if (viewpoint_ == FixedViewpoint::StreamCascadeDetail) {
+            // Stand on the bank beside the plunge pool and look back up at the lip.
+            const StreamCourse course(terrain_);
+            const auto& lip = course.Station(course.CascadeIndex());
+            const auto& pool = course.PoolStation();
+            const float flowX = pool.x - lip.x, flowZ = pool.z - lip.z;
+            const float flowLength = std::max(std::hypot(flowX, flowZ), 0.001f);
+            const float sideX = flowZ / flowLength, sideZ = -flowX / flowLength;
+            const float cameraX = pool.x + flowX / flowLength * 3.0f - sideX * 2.6f;
+            const float cameraZ = pool.z + flowZ / flowLength * 3.0f - sideZ * 2.6f;
+            cameraPosition_ = Vector3(cameraX, terrain_.Height(cameraX, cameraZ) + 1.35f, cameraZ);
+            const Vector3 direction = Vector3(lip.x, lip.water, lip.z) - cameraPosition_;
+            yaw_ = std::atan2(direction.X, direction.Z);
+            pitch_ = std::atan2(direction.Y, std::hypot(direction.X, direction.Z));
+            std::cout << "island-simulator: cascade QA camera looks up the plunge pool at the stream lip\n";
         } else if (viewpoint_ == FixedViewpoint::AnimalTrackDetail) {
             // Stand beside the first stream-bank deer print line and look down along it.
             const auto& tracks = naturalPropLayout_.AnimalTracks();
@@ -2080,6 +2097,8 @@ namespace island
         soundscape_ = std::make_unique<Soundscape>();
         const ShipwreckPlacement& shipwreck = shipwreckLayout_.Ship();
         soundscape_->SetShipwreckSource(shipwreck.x, shipwreck.y + 0.35f, shipwreck.z);
+        const StreamCourse streamCourse(terrain_);
+        soundscape_->SetStreamCascade(streamCourse.CascadeX(), streamCourse.CascadeZ());
         soundscape_->SetBunkerSource(bunkerLayout_.EntranceGroundY());
         if (userSettings_.audioMuted) soundscape_->SetMuted(true);
         if (!smokeTest_ && !soundscapeNeedsGesture_) {

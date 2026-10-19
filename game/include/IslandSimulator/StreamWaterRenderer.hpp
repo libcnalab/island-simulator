@@ -22,5 +22,6 @@ private:
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::IndexBuffer> indices_;
     Microsoft::Xna::Framework::BoundingBox bounds_;
     int count_=0,triangles_=0,draws_=0;
+    float cascadeDistance_=0,cascadeDrop_=0;
 };
 }

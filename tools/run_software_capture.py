@@ -593,7 +593,7 @@ def run_monitored_capture(command, root, environment, evidence, journal, baselin
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("build", type=Path)
-    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "shipwreck-wide", "tracks", "fruit", "log", "hut", "hut-material", "helicopter", "helicopter-inside", "resident", "bear", "boars", "goats", "deer", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "ground-doves"}))
+    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "shipwreck-wide", "tracks", "fruit", "cascade", "log", "hut", "hut-material", "helicopter", "helicopter-inside", "resident", "bear", "boars", "goats", "deer", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "ground-doves"}))
     parser.add_argument("--canopy-lod-inspection", nargs=3, metavar=("X_MM", "Z_MM", "TIER"))
     parser.add_argument("--missing-leaf", action="store_true",
                         help="test only the leaf-image fallback using a read-only namespace overlay")
@@ -670,6 +670,8 @@ def main():
                     raise RuntimeError("current stream edge/riffle material is missing")
                 if "stream water uses depth-graded colour and braided moving current threads" not in diagnostics:
                     raise RuntimeError("current stream depth/current material is missing")
+                if "stream cascade gathers the steepest reach into one lip, a drop and a wider plunge pool" not in diagnostics:
+                    raise RuntimeError("current stream cascade is missing")
                 if "stream channel uses shared low-frequency pools and pinches" not in diagnostics:
                     raise RuntimeError("current irregular stream-width profile is missing")
                 if "stream route uses three broad valley-scale bends with fixed source and mouth" not in diagnostics:

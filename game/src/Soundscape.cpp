@@ -148,6 +148,11 @@ namespace island
 
     Soundscape::~Soundscape() = default;
 
+    void Soundscape::SetStreamCascade(const float x, const float z) noexcept
+    {
+        if (std::isfinite(x) && std::isfinite(z)) streamCascade_ = {x, z, true};
+    }
+
     void Soundscape::SetShipwreckSource(const float x, const float y, const float z) noexcept
     {
         if (std::isfinite(x) && std::isfinite(y) && std::isfinite(z)) {
@@ -224,7 +229,7 @@ namespace island
         }
         startAttempted_ = true;
         sharedLoopRecoveryReported_ = false;
-        streamSound_ = StreamSoundField::Sample(playerX, playerZ);
+        streamSound_ = StreamSoundField::Sample(playerX, playerZ, streamCascade_);
         campfirePresence_=CampfireSite::SoundPresence(playerX,CampfireLayout::GroundY()+PlayerMotion::EyeHeight,
             playerZ,CampfireLayout::GroundY());
         campfireVolume_=campfirePresence_*.26f;
@@ -646,7 +651,7 @@ namespace island
             }
         }
 
-        streamSound_ = StreamSoundField::Sample(listenerState.x, listenerState.z);
+        streamSound_ = StreamSoundField::Sample(listenerState.x, listenerState.z, streamCascade_);
         campfirePresence_=CampfireSite::SoundPresence(listenerState.x,listenerState.y,listenerState.z,CampfireLayout::GroundY());
         campfireVolume_+=(campfirePresence_*.26f-campfireVolume_)*(1-std::exp(-safeDelta*4));
         bunkerPresence_=hasBunkerSource_?BunkerSite::SoundPresence(
@@ -1309,6 +1314,7 @@ namespace island
             jungleInstance_->setVolumeProperty(model_.Mix().jungleVolume
                 *underwaterAudio_.airGain*enclosureAir*gain);
             streamInstance_->setVolumeProperty(model_.Mix().streamVolume
+                *(1.0f+0.6f*streamSound_.turbulence)
                 *underwaterAudio_.airGain*enclosureAir*gain);
             campfireInstance_->setVolumeProperty(campfireVolume_
                 *underwaterAudio_.airGain*gain);

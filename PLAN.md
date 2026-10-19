@@ -46,6 +46,29 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Latest stream pass — a small cascade and plunge pool
+
+Backlog item 6. `StreamCourse::ShapeCascade` finds the steepest three-metre run of the natural
+water profile (outside the source reach and the mouth) and gathers it into one level lip and a
+single drop between two stations (0.53 m at 47.4 m along the course), then deepens and widens
+the seven stations below it into a plunge pool (up to 0.34 m extra depth within a 1.45 m
+incision limit, up to 55 % wider), all through the existing station fields so the dense bed
+patch and the water ribbon follow without new geometry paths. The water shader takes
+`uCascade` (course distance, drop) and adds white water: a churning sheet over the lip, a plunge
+below it and a foam raft the pool carries and dissolves over five metres. The cascade is also a
+sound destination: `StreamSoundField::Sample` takes the lip as a second source that is heard to
+58 m (the quiet reaches fade by 34 m), reports `turbulence`, and the stream voice gains up to
+60 % and sits on the lip when the cascade dominates. A `cascade` QA viewpoint stands on the bank
+below the pool looking up at the lip (close-natural-detail profile). Diagnostics "stream drops
+N m over a small cascade at D m into a plunge pool with white water" and "stream cascade gathers
+the steepest reach into one lip, a drop and a wider plunge pool" (pinned in the native `stream`
+capture). New core checks: the cascade sits inside the course, drops at least 12 cm, the lip
+holds level or at freeboard, the water never rises downstream, the pool incision stays within
+its limit, the pool is deeper and wider than the reach above, and the cascade is turbulent up
+close and audible further than the quiet reaches. Inspected native
+`20261019T205523Z-cascade` shows the white sheet at the lip, the step and the wider pool with
+leaf rafts; the `stream` capture and its four animation stages still pass.
+
 ## Latest sky pass — fringed cumulus layers and cloud shadows on the sea
 
 Backlog item 5. The eleven fixed cumulus masses now carry a third, finer erosion octave that

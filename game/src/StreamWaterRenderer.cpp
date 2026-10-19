@@ -1,3 +1,4 @@
+#include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "IslandSimulator/StreamWaterRenderer.hpp"
 #include "CNA/Graphics/ShaderCodeEXT.hpp"
 #include "CNA/Graphics/ShaderPackageEXT.hpp"
@@ -52,7 +53,7 @@ void main(){
 )";
 constexpr const char* fragment=R"(
 in vec3 world;in vec2 flow;in float courseDistance;in float opacity;in float lateral;
-uniform float uTime;uniform vec3 uCamera;
+uniform float uTime;uniform vec3 uCamera;uniform vec2 uCascade;
 out vec4 fragColor;
 void main(){
     vec2 downstream=normalize(flow);
@@ -90,6 +91,17 @@ void main(){
     water+=vec3(.40,.68,.59)*braided*.29;
     float alpha=opacity*(.57+fresnel*.36+streak*.065+bankBand*.17+riffle*.11
         +centreDepth*.055+braided*.055);
+    // White water: the sheet over the lip, the plunge below it and a foam raft that the
+    // pool carries downstream and lets dissolve, all pulsing with the drop height.
+    float sinceDrop=courseDistance-uCascade.x;
+    float sheet=smoothstep(-1.1,-.2,sinceDrop)*(1.0-smoothstep(.1,.9,sinceDrop));
+    float plunge=smoothstep(-.1,.5,sinceDrop)*(1.0-smoothstep(1.4,5.6,sinceDrop));
+    float churn=.5+.5*sin(courseDistance*9.4-uTime*5.2+sin(across*7.3+uTime*1.1)*1.3);
+    float raftBreak=.5+.5*sin(across*6.1+courseDistance*2.7-uTime*.9);
+    float foam=clamp(sheet*(.55+.45*churn)+plunge*(.30+.45*churn*raftBreak)
+        *(1.0-smoothstep(.55,.95,abs(lateral))),0.0,1.0)*min(uCascade.y*3.0,1.0);
+    water=mix(water,vec3(.86,.93,.92),foam*.85);
+    alpha=mix(alpha,.94,foam*.8);
     fragColor=vec4(water*alpha,alpha);
 }
 )";
@@ -105,7 +117,9 @@ StreamWaterRenderer::StreamWaterRenderer(GraphicsDevice& device,const IslandTerr
         {CNA::ShaderStageEXT::Vertex,CNA::ShaderStageEXT::Fragment},{});
     effect_=std::make_unique<ShaderEffect>(device,package);
     if(!effect_->IsEffectValid())throw std::runtime_error("Stream water shader failed: "+effect_->GetCompileErrorEXT());
-    const StreamWaterMesh mesh(StreamCourse(terrain),bed);
+    const StreamCourse course(terrain);
+    cascadeDistance_=course.CascadeDistance();cascadeDrop_=course.CascadeDrop();
+    const StreamWaterMesh mesh(course,bed);
     std::vector<StreamGpuVertex> vertices;vertices.reserve(mesh.vertices.size());
     Vector3 low(1000,1000,1000),high(-1000,-1000,-1000);
     for(const auto p:mesh.vertices) {
@@ -126,6 +140,10 @@ StreamWaterRenderer::StreamWaterRenderer(GraphicsDevice& device,const IslandTerr
     std::cout<<"island-simulator: stream channel uses shared low-frequency pools and pinches\n";
     std::cout<<"island-simulator: stream route uses three broad valley-scale bends with fixed source and mouth\n";
     std::cout<<"island-simulator: stream banks use independent bounded left-right width rhythms\n";
+    std::cout<<"island-simulator: stream drops "<<cascadeDrop_<<" m over a small cascade at "<<cascadeDistance_
+        <<" m into a plunge pool with white water\n";
+    const char* cascadeMessage="island-simulator: stream cascade gathers the steepest reach into one lip, a drop and a wider plunge pool";
+    std::cout<<cascadeMessage<<'\n';MirrorRuntimeDiagnosticToPlatformLog(cascadeMessage);
 }
 StreamWaterRenderer::~StreamWaterRenderer()=default;
 void StreamWaterRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector3& camera,float seconds) {
@@ -136,6 +154,7 @@ void StreamWaterRenderer::Draw(const Matrix& view,const Matrix& projection,const
     effect_->Apply();effect_->SetUniformMat4("uViewProjection",matrix);
     effect_->SetUniformFloat("uTime",std::isfinite(seconds)?seconds:0);
     effect_->SetUniformVec3("uCamera",camera.X,camera.Y,camera.Z);
+    effect_->SetUniformVec2("uCascade",cascadeDistance_,cascadeDrop_);
     device_.setBlendStateProperty(BlendState::AlphaBlend);device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
     device_.setRasterizerStateProperty(RasterizerState::CullNone);
     device_.SetVertexBuffer(vertices_.get());device_.setIndicesProperty(indices_.get());
