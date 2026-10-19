@@ -39,6 +39,7 @@
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/LookoutLayout.hpp"
+#include "IslandSimulator/FallingFruitField.hpp"
 #include "IslandSimulator/BridgeLayout.hpp"
 #include "IslandSimulator/ButterflyMeadow.hpp"
 #include "IslandSimulator/DolphinPod.hpp"
@@ -7452,6 +7453,34 @@ int main()
             }
         }
         Check(visitedBush, "a butterfly hovers at blossom height over the flowering bush");
+    }
+
+    {
+        // Falling fruit: a picking monkey in a fruiting crown knocks fruit loose; it drops
+        // from the crown, lands on the ground below and lies there.
+        const island::IslandTerrain terrain;
+        island::FallingFruitField field(terrain);
+        island::MonkeyState monkey{};
+        monkey.behavior=island::MonkeyBehavior::InspectTree;
+        monkey.pickingFruit=true;
+        monkey.simulationTier=island::WildlifeSimulationTier::Full;
+        monkey.selectedTree={-60.0f,terrain.Height(-60.0f,-60.0f),-60.0f,0.4f,1.0f,2U};
+        monkey.treeIndex=0;
+        std::vector<island::MonkeyState> monkeys{monkey};
+        float highest=-1e9f;
+        bool landed=false;
+        for(int step=0;step<600;++step) {
+            field.Update(0.05f,monkeys);
+            for(const auto& f:field.Fruit()) {
+                if(!f.active) continue;
+                highest=std::max(highest,f.y);
+                if(f.restSeconds>=0.0f&&std::abs(f.y-(terrain.Height(f.x,f.z)+0.06f))<0.01f
+                    &&std::hypot(f.x+60.0f,f.z+60.0f)<4.0f) landed=true;
+            }
+        }
+        Check(field.DropCount()>=3U,"a picking monkey knocks several fruit loose within half a minute");
+        Check(highest>monkey.selectedTree.y+3.0f,"the fruit starts up in the crown");
+        Check(landed,"the fruit lands on the ground under the tree and lies there");
     }
 
     {

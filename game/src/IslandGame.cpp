@@ -2084,6 +2084,7 @@ namespace island
         if(jettyPlacement_) jettyRenderer_=std::make_unique<JettyRenderer>(device,*jettyPlacement_);
         if(bridgePlacement_) bridgeRenderer_=std::make_unique<BridgeRenderer>(device,*bridgePlacement_);
         if(lookoutPlacement_) lookoutRenderer_=std::make_unique<LookoutRenderer>(device,*lookoutPlacement_);
+        fallingFruitRenderer_=std::make_unique<FallingFruitRenderer>(device);
         helicopterRenderer_=std::make_unique<HelicopterRenderer>(device,*helicopterPlacement_);
         palmRenderer_ = std::make_unique<PalmRenderer>(
             device, vegetationLayout_, qualityProfile_.vegetationMaximumDistanceScale);
@@ -2543,6 +2544,7 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
         }
+        fallingFruit_.Update(deltaSeconds, monkeyTroop_.Monkeys());
         {
             // The seabirds' school of the moment: the schools take turns every ninety seconds
             // so the low circling moves around the coast instead of fixing on one bay.
@@ -4172,6 +4174,10 @@ namespace island
         if(lookoutRenderer_) {
             GpuDiagnosticScope gpuPass("lookout");
             lookoutRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
+        }
+        if(fallingFruitRenderer_) {
+            GpuDiagnosticScope gpuPass("falling-fruit");
+            fallingFruitRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,fallingFruit_.Fruit());
         }
         if(hutRenderer_) {
             GpuDiagnosticScope gpuPass("hut");

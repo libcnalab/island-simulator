@@ -46,6 +46,25 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 10 (2026-10-20) — fruit knocked loose by picking monkeys
+
+The fruiting crowns, the monkeys' preference for them and the static fallen coconuts never met:
+nothing ever fell. `FallingFruitField` watches the troop; while a monkey is `InspectTree` on a
+fruiting crown (`pickingFruit`) and not dormant, every 4.5 s (the first soon after picking
+starts) a fruit drops from one of that tree's four fruiting lobes, placed like the crown
+geometry (the lobe's outer underside, then the instance scale, yaw and translation), falls
+under gravity, bounces once lightly if it strikes hard, and lies on the ground for 90 s before
+it is gone; the field holds 24 and recycles the longest-lying. `FallingFruitRenderer` rebuilds
+small faceted spheres (orange for form 2, purple for form 5, darkening a little as they age)
+into one dynamic vertex-coloured draw within 90 m. The startup log adds "fruit knocked loose
+by picking monkeys drops from the crown and lies under the tree", pinned by the native capture
+tool. New core check with a synthetic picking monkey: several fruit drop within half a minute,
+start up in the crown and land on the ground under the tree. Native `monkey-tree` and `fruit`
+pass. In this pass's full run `IslandGpuQualificationSupervisorTests` failed once under
+`ctest -j 3` (`test_failed_workload_is_not_qualified` saw exit 1 instead of 7) and passed when
+run alone; it exercises the supervisor's lock and process handling, so it is load-sensitive
+rather than related to the fruit.
+
 ## Portable evidence for backlog items 7–20 (2026-10-20)
 
 The Web package rebuilt after item 20 (`cmake --build --preset web-webgl2`) runs the eleven

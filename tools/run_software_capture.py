@@ -963,6 +963,8 @@ def main():
                 raise RuntimeError("current seabird plunge dive is missing; check for a stale executable")
             if "resident's lookout tower beside the hut carries a railed platform the walker climbs by a cleated ramp" not in diagnostics:
                 raise RuntimeError("current lookout tower is missing; check for a stale executable")
+            if "fruit knocked loose by picking monkeys drops from the crown and lies under the tree" not in diagnostics:
+                raise RuntimeError("current falling fruit is missing; check for a stale executable")
             if "seabed ripples stay below the waterline in short near trains and beach flecks fade with the ground footprint" not in diagnostics:
                 raise RuntimeError("current seabed ripple confinement is missing; check for a stale executable")
             if "canopy per-tree frustum boxes contain both LODs and wind" not in diagnostics:
