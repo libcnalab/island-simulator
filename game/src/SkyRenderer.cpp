@@ -121,11 +121,19 @@ vec3 cumulusMass(vec3 color, vec4 cloud, float seed, float azimuth, float skyEle
     float broadBase = 0.54 - dot(baseCoordinate, baseCoordinate);
     float scallop = sin(local.x * 14.0 + seed * 2.7) * 0.035
         + sin(local.x * 23.0 - seed * 1.9) * 0.018;
+    // A third, finer octave frays the outline into small turrets and notches; it acts only
+    // near the edge so the dense core keeps its authored lobes.
+    float fringe = (skyNoise(noiseCoordinate * 4.9 + vec2(27.0, 13.0)) - 0.5)
+        * (0.6 + 0.6 * max(local.y, 0.0));
     float shape = max(broadBase, billows + scallop * smoothstep(-0.05, 0.58, local.y))
         + topErosion * 0.92
         - max(-local.y - 0.48, 0.0) * 4.2;
+    shape += fringe * 0.26 * (1.0 - smoothstep(0.10, 0.60, shape));
     float coverage = smoothstep(0.0, 0.32, shape);
     if (coverage <= 0.0) return color;
+    // Two layers instead of one smooth blob: a thin translucent fringe around a denser core,
+    // with a slightly shaded band where the fringe meets the core on the shadow side.
+    float core = smoothstep(0.22, 0.58, shape);
     float topLight = smoothstep(-0.62, 0.72, local.y + (detail - 0.5) * 0.65);
     float dSun = azimuth - sunAzimuth;
     dSun -= 6.28318530718 * floor(dSun / 6.28318530718 + 0.5);
@@ -134,9 +142,12 @@ vec3 cumulusMass(vec3 color, vec4 cloud, float seed, float azimuth, float skyEle
         topLight * (0.48 + 0.52 * sunSide));
     float softRim = smoothstep(0.18, 0.78, shape) * smoothstep(0.02, 0.62, local.y + 0.20);
     cloudColor += vec3(0.055, 0.047, 0.030) * softRim * sunSide;
+    vec3 fringeColor = mix(vec3(0.80, 0.86, 0.92), vec3(1.0, 0.99, 0.96), topLight * sunSide);
+    float shadeBand = (1.0 - core) * core * 4.0 * (1.0 - topLight) * 0.5;
+    cloudColor = mix(fringeColor, cloudColor, core) * (1.0 - 0.10 * shadeBand);
     // Far masses sit inside the haze: soften toward the horizon colour.
     cloudColor = mix(cloudColor, hazeColor, 0.30 * (1.0 - smoothstep(0.03, 0.20, skyElevation)));
-    return mix(color, cloudColor, coverage * 0.92);
+    return mix(color, cloudColor, coverage * mix(0.58, 0.92, core));
 }
 
 void main()
@@ -352,6 +363,10 @@ void main()
                 "island-simulator: sky cumulus use compact normalized breakup instead of horizon-spanning ribbons";
             std::cout << cloudScaleDiagnostic << '\n';
             MirrorRuntimeDiagnosticToPlatformLog(cloudScaleDiagnostic);
+            constexpr const char* cloudEdgeDiagnostic =
+                "island-simulator: sky cumulus carry a frayed translucent fringe layer around a denser shaded core";
+            std::cout << cloudEdgeDiagnostic << '\n';
+            MirrorRuntimeDiagnosticToPlatformLog(cloudEdgeDiagnostic);
         } else {
             std::cerr << "island-simulator: gradient sky stock-effect fallback: "
                       << fallbackReason_ << '\n';

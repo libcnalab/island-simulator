@@ -46,6 +46,22 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Latest sky pass — fringed cumulus layers and cloud shadows on the sea
+
+Backlog item 5. The eleven fixed cumulus masses now carry a third, finer erosion octave that
+acts only near the outline (small turrets and notches) and render as two layers instead of one
+smooth blob: a thin translucent fringe (opacity 0.58, cooler and brighter) around a denser core
+(0.92) with a faint shaded band where the fringe meets the core on the shadow side. The ocean
+fragment shader adds `cloudShadow`: a world-anchored two-octave patch field (160 m and 66 m
+cells) drifting with the trade wind at 1.6 m/s, thresholded to roughly a quarter coverage with
+soft edges, that darkens the water body and glints by 30 % but not the reflected sky; it is kept
+off the lagoon (fades in between 24 and 95 m offshore) so the sunlit beach and the water beside
+it never disagree. Diagnostics "sky cumulus carry a frayed translucent fringe layer around a
+denser shaded core" (pinned natively, in the Web smoke and the Android runtime smoke) and "open
+sea carries drifting cumulus shadow patches beyond the lagoon" (native). Inspected native
+`20261019T204907Z-overview`, `headland`, `bay` and `water` pass their gates; the overview shows
+the shadow patches on the open sea and the frayed cloud edges.
+
 ## Latest beach-streak audit — seabed ripples confined below the waterline
 
 Backlog item 4. The light/dark streaks converging over the whole foreground of the wide wreck

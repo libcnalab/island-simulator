@@ -1027,6 +1027,10 @@ def main():
                 raise RuntimeError("current cumulus silhouette and lighting are missing; check for a stale executable")
             if "sky cumulus use compact normalized breakup instead of horizon-spanning ribbons" not in diagnostics:
                 raise RuntimeError("current compact cumulus scale is missing; check for a stale executable")
+            if "sky cumulus carry a frayed translucent fringe layer around a denser shaded core" not in diagnostics:
+                raise RuntimeError("current cumulus fringe layer is missing; check for a stale executable")
+            if "open sea carries drifting cumulus shadow patches beyond the lagoon" not in diagnostics:
+                raise RuntimeError("current sea cloud shadows are missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

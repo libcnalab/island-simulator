@@ -66,6 +66,8 @@ namespace island
             "island-simulator: aerial ocean progressively suppresses close ripple cells without changing swimming-height detail";
         constexpr const char* GrazingRuffleDiagnostic =
             "island-simulator: swimming-height ocean reuses filtered ripple cells for restrained grazing reflection ruffles";
+        constexpr const char* CloudShadowDiagnostic =
+            "island-simulator: open sea carries drifting cumulus shadow patches beyond the lagoon";
         constexpr const char* RippleIrregularityDiagnostic =
             "island-simulator: ocean ripple cells use filtered low-frequency phase warp to avoid a repeated reef lattice";
         constexpr const char* VertexBody = R"(
@@ -124,6 +126,35 @@ uniform vec4 uCoastalOptics;
 uniform vec4 uSurfaceAppearance;
 
 out vec4 fragColor;
+
+float cloudShadowHash(vec2 p)
+{
+    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+}
+
+float cloudShadowNoise(vec2 grid)
+{
+    vec2 cell = floor(grid);
+    vec2 t = fract(grid);
+    t = t * t * (3.0 - 2.0 * t);
+    float lower = mix(cloudShadowHash(cell), cloudShadowHash(cell + vec2(1.0, 0.0)), t.x);
+    float upper = mix(cloudShadowHash(cell + vec2(0.0, 1.0)),
+                      cloudShadowHash(cell + vec2(1.0, 1.0)), t.x);
+    return mix(lower, upper, t.y);
+}
+
+// Shadows of the drifting fair-weather cumulus on the open sea: a slow world-anchored
+// patch field moving with the trade wind. Soft 30 m edges, about a quarter coverage, and
+// kept off the lagoon so the sunlit beach and the water beside it never disagree.
+float cloudShadow(vec2 position, float offshore, float time)
+{
+    vec2 drift = position + vec2(1.6, 0.35) * time;
+    float field = cloudShadowNoise(drift * 0.0062)
+        + (cloudShadowNoise(drift * 0.0151 + 7.3) - 0.5) * 0.38;
+    return smoothstep(0.56, 0.70, field) * smoothstep(24.0, 95.0, offshore);
+}
 
 float coastalWindExposure(vec2 position,float shoreDistance)
 {
@@ -318,6 +349,11 @@ void main()
     foam = clamp(foam, 0.0, 0.86);
     water = mix(water, vec3(0.82, 0.94, 0.91), foam);
 
+    // Cumulus shadows darken the body colour and the glints but not the reflected sky, which
+    // the cloud itself still lights from above.
+    float cloudShade = cloudShadow(vWorld.xz, offshore, uTime);
+    water *= 1.0 - 0.30 * cloudShade;
+
     float distanceFog = smoothstep(300.0, 760.0, distanceToCamera);
     float grazingHaze = smoothstep(0.45, 0.88, 1.0 - viewFacing)
         * smoothstep(240.0, 650.0, distanceToCamera);
@@ -436,6 +472,7 @@ void main()
                       << AerialRippleDiagnostic << '\n'
                       << GrazingRuffleDiagnostic << '\n'
                       << RippleIrregularityDiagnostic << '\n'
+                      << CloudShadowDiagnostic << '\n'
                       << "island-simulator: ocean shoreline foam uses broken continuity mask\n";
             MirrorRuntimeDiagnosticToPlatformLog(
                 "island-simulator: ocean sunward ripple crests reuse analytic slope field");
@@ -451,6 +488,7 @@ void main()
             MirrorRuntimeDiagnosticToPlatformLog(AerialRippleDiagnostic);
             MirrorRuntimeDiagnosticToPlatformLog(GrazingRuffleDiagnostic);
             MirrorRuntimeDiagnosticToPlatformLog(RippleIrregularityDiagnostic);
+            MirrorRuntimeDiagnosticToPlatformLog(CloudShadowDiagnostic);
         } else {
             std::cerr << "island-simulator: ocean stock-effect fallback: " << fallbackReason_
                       << '\n';
