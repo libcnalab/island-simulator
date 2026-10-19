@@ -174,6 +174,7 @@ namespace island
             case FixedViewpoint::HutMaterialDetail: return "hut-material";
             case FixedViewpoint::HelicopterDetail: return "helicopter";
             case FixedViewpoint::HelicopterInteriorDetail: return "helicopter-inside";
+            case FixedViewpoint::HelicopterApproach: return "helicopter-approach";
             case FixedViewpoint::CrabDetail: return "crabs";
             case FixedViewpoint::HermitCrabDetail: return "hermit-crabs";
             case FixedViewpoint::CoconutCrabDetail: return "coconut-crabs";
@@ -388,6 +389,17 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: bear QA camera frames and follows the single peaceful adult\n";
+        } else if(viewpoint_==FixedViewpoint::HelicopterApproach) {
+            // An ordinary first-person sight of the aircraft: eye height on the real ground
+            // about eight metres off its front-left quarter, not an elevated QA frame.  The
+            // vegetation clearing is only 6.2 m, so a farther stance is screened by plants.
+            const auto foot=helicopterPlacement_->World(-7.0f,0.0f,4.5f);
+            cameraPosition_=Vector3(foot.x,terrain_.Height(foot.x,foot.z)+PlayerMotion::EyeHeight,foot.z);
+            const auto target=helicopterPlacement_->World(0.0f,1.35f,0.0f);
+            const Vector3 direction=Vector3(target.x,target.y,target.z)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: helicopter QA camera frames an ordinary eye-height approach from the front-left quarter\n";
         } else if(viewpoint_==FixedViewpoint::HelicopterDetail
                   ||viewpoint_==FixedViewpoint::HelicopterInteriorDetail) {
             const bool inside=viewpoint_==FixedViewpoint::HelicopterInteriorDetail;

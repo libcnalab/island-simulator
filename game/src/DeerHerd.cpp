@@ -138,6 +138,15 @@ namespace island
                 + static_cast<std::uint32_t>(index) * 19U) % 171U) * .01f;
             agent.targetHeadingRadians = Wrap(agent.state.headingRadians + turn);
         }
+        // Straying past the home margin overrides the behavioural target before the one
+        // bounded turn of this update.  A second Turn() here used to double the per-frame
+        // heading change whenever a retreating or wandering deer was also heading home.
+        const float homeDistance = std::hypot(agent.state.x - agent.home.x,
+                                               agent.state.z - agent.home.z);
+        if (homeDistance > agent.home.radius * .68f) {
+            agent.targetHeadingRadians = std::atan2(
+                agent.home.z - agent.state.z, agent.home.x - agent.state.x);
+        }
         const float turnRate = agent.state.behavior == DeerBehavior::Retreat ? 1.45f : .92f;
         agent.state.headingRadians = Turn(agent.state.headingRadians,
             agent.targetHeadingRadians, turnRate * deltaSeconds);
@@ -153,14 +162,6 @@ namespace island
         const float targetGraze = agent.state.behavior == DeerBehavior::Graze ? 1.0f : 0.0f;
         agent.state.grazeAmount += std::clamp(targetGraze - agent.state.grazeAmount,
             -1.8f * deltaSeconds, 1.3f * deltaSeconds);
-        const float homeDistance = std::hypot(agent.state.x - agent.home.x,
-                                               agent.state.z - agent.home.z);
-        if (homeDistance > agent.home.radius * .68f) {
-            agent.targetHeadingRadians = std::atan2(
-                agent.home.z - agent.state.z, agent.home.x - agent.state.x);
-            agent.state.headingRadians = Turn(agent.state.headingRadians,
-                agent.targetHeadingRadians, turnRate * deltaSeconds);
-        }
         const float nextX = agent.state.x
             + std::cos(agent.state.headingRadians) * agent.state.speed * deltaSeconds;
         const float nextZ = agent.state.z

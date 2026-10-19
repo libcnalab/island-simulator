@@ -177,8 +177,11 @@ void CrocodileGroup::UpdateAgent(Agent& agent,float dt,float observerX,float obs
     }
     float desired=std::atan2(targetZ-agent.state.z,targetX-agent.state.x);
     desired+=std::sin(elapsedSeconds_*.17f+agent.phaseOffset)*.10f;
-    agent.state.headingRadians=MoveAngle(agent.state.headingRadians,desired,
-        dt*(agent.state.behavior==CrocodileBehavior::Retreat?1.15f:.42f));
+    // One bounded turn per update.  A blocked move below re-aims from this same starting
+    // heading with the same budget instead of adding a second, faster turn in one frame.
+    const float previousHeading=agent.state.headingRadians;
+    const float turnStep=dt*(agent.state.behavior==CrocodileBehavior::Retreat?1.15f:.42f);
+    agent.state.headingRadians=MoveAngle(previousHeading,desired,turnStep);
     const float targetSpeed=agent.state.behavior==CrocodileBehavior::Bask?0.0f:
         agent.state.behavior==CrocodileBehavior::Crawl?.34f:
         agent.state.behavior==CrocodileBehavior::Swim?.72f:1.05f;
@@ -186,9 +189,9 @@ void CrocodileGroup::UpdateAgent(Agent& agent,float dt,float observerX,float obs
     const float nx=agent.state.x+std::cos(agent.state.headingRadians)*agent.state.speed*dt;
     const float nz=agent.state.z+std::sin(agent.state.headingRadians)*agent.state.speed*dt;
     if(IsValidHabitat(nx,nz,agent.home)) {agent.state.x=nx;agent.state.z=nz;}
-    else agent.state.headingRadians=MoveAngle(agent.state.headingRadians,
+    else agent.state.headingRadians=MoveAngle(previousHeading,
         std::atan2((agent.home.waterZ+agent.home.landZ)*.5f-agent.state.z,
-                   (agent.home.waterX+agent.home.landX)*.5f-agent.state.x),dt*1.4f);
+                   (agent.home.waterX+agent.home.landX)*.5f-agent.state.x),turnStep);
 
     const auto sample=terrain_.Sample(agent.state.x,agent.state.z);
     const float targetSubmerged=(agent.state.behavior==CrocodileBehavior::Swim

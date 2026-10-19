@@ -213,9 +213,9 @@ class BrowserSoftwareTests(unittest.TestCase):
             return {"mode": mode, "passed": True, "glError": 0, "contextLost": False,
                 "renderer": "ANGLE SwiftShader", "screenshot": mode + ".png",
                 "intervals": [16.7] * 60, "result": {"output": markers}}
-        report = {"passed": True, "views": [view("helicopter"), view("helicopter-inside")]}
+        report = {"passed": True, "views": [view("helicopter"), view("helicopter-inside"), view("helicopter-approach")]}
         self.assertEqual(gate.validate_helicopter_report(report),
-                         ["helicopter.png", "helicopter-inside.png"])
+                         ["helicopter.png", "helicopter-inside.png", "helicopter-approach.png"])
         report["views"][1]["result"]["output"] = markers.replace(
             "helicopter main rotor uses four closed tapered blades with visible leading, trailing, and tip edges\n", "")
         with self.assertRaises(RuntimeError):

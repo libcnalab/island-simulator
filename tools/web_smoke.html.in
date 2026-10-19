@@ -128,6 +128,7 @@
       ["resident", ["--viewpoint", "resident", "--debug-overlay"]],
       ["helicopter", ["--viewpoint", "helicopter", "--debug-overlay"]],
       ["helicopter-inside", ["--viewpoint", "helicopter-inside", "--debug-overlay"]],
+      ["helicopter-approach", ["--viewpoint", "helicopter-approach", "--debug-overlay"]],
       ["monkeys", ["--viewpoint", "monkeys"]],
       ["goats", ["--viewpoint", "goats"]],
       ["deer", ["--viewpoint", "deer"]],

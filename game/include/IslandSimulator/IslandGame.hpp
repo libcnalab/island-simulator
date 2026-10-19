@@ -187,6 +187,7 @@ namespace island
         HutMaterialDetail,
         HelicopterDetail,
         HelicopterInteriorDetail,
+        HelicopterApproach,
         CrabDetail,
         HermitCrabDetail,
         CoconutCrabDetail,

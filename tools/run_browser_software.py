@@ -134,8 +134,8 @@ def validate_bunker_report(report):
 def validate_helicopter_report(report):
     views = report.get("views", [])
     if (report.get("passed") is not True
-        or [view.get("mode") for view in views] != ["helicopter", "helicopter-inside"]):
-        raise RuntimeError("helicopter report lacks successful exterior and interior views")
+        or [view.get("mode") for view in views] != ["helicopter", "helicopter-inside", "helicopter-approach"]):
+        raise RuntimeError("helicopter report lacks successful exterior, interior and eye-height approach views")
     frames = []
     for view in views:
         result = view.get("result", {})
@@ -1064,8 +1064,8 @@ def main(argv=None):
                 if not all(path.is_file() for path in paths):
                     raise RuntimeError("helicopter image file missing")
                 identities=[artifact_identity(path) for path in paths]
-                if identities[0]["sha256"] == identities[1]["sha256"]:
-                    raise RuntimeError("helicopter exterior and interior frames are byte-identical")
+                if len({identity["sha256"] for identity in identities}) != len(identities):
+                    raise RuntimeError("helicopter exterior, interior and approach frames contain byte-identical views")
                 metadata["helicopter_frames"]=identities
             if args.scope == "cave":
                 cave_report=json.loads((evidence / "island-browser-cave.json").read_text())

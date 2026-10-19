@@ -87,6 +87,7 @@ namespace
         case FixedViewpoint::HutMaterialDetail: return "hut-material";
         case FixedViewpoint::HelicopterDetail: return "helicopter";
         case FixedViewpoint::HelicopterInteriorDetail: return "helicopter-inside";
+        case FixedViewpoint::HelicopterApproach: return "helicopter-approach";
         case FixedViewpoint::CrabDetail: return "crabs";
         case FixedViewpoint::HermitCrabDetail: return "hermit-crabs";
         case FixedViewpoint::CoconutCrabDetail: return "coconut-crabs";
@@ -174,7 +175,7 @@ int main(const int argc, char* argv[])
                 std::cerr << "island-simulator: --viewpoint requires overview, bay, bay-ground, beach, jungle, snags, sapling, "
                              "east, headland, tide-pools, turtle-nest, cave, cave-top, cave-inside, cave-back, bunker, bunker-corridor, bunker-computers, bunker-reactor, bunker-service, bunker-end, campfire, campfire-wide, resident, bear, clearing-edge, canopy (inspection only), west, stream, wetland, mangroves, grass, ground, ground-broadleaf, bush, litter, contact, movement, palms, fallen-palm, broken-palm, water, "
                              "wet-sand, current, distant, props, driftwood, reef, reef-habitat, fronds, birds, bats, bat-roost, fish, "
-                             "shark, dolphins, monkeys, monkey-tree, monkey-climb, shipwreck, hut, hut-material, helicopter, helicopter-inside, crabs, hermit-crabs, coconut-crabs, crocodiles, boars, goats, spiders, spiders-bright, spider-web, snakes, snake-head, tree-snakes, butterflies, geckos, skinks, dragonflies, frogs, mice, rats, flies, ants, cicadas, turtles, or traversal\n";
+                             "shark, dolphins, monkeys, monkey-tree, monkey-climb, shipwreck, hut, hut-material, helicopter, helicopter-inside, helicopter-approach, crabs, hermit-crabs, coconut-crabs, crocodiles, boars, goats, spiders, spiders-bright, spider-web, snakes, snake-head, tree-snakes, butterflies, geckos, skinks, dragonflies, frogs, mice, rats, flies, ants, cicadas, turtles, or traversal\n";
                 return 2;
             }
             const std::string_view name(argv[index]);
@@ -312,6 +313,8 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::HelicopterDetail;
             } else if (name == "helicopter-inside") {
                 viewpoint = island::FixedViewpoint::HelicopterInteriorDetail;
+            } else if (name == "helicopter-approach") {
+                viewpoint = island::FixedViewpoint::HelicopterApproach;
             } else if (name == "crabs") {
                 viewpoint = island::FixedViewpoint::CrabDetail;
             } else if (name == "hermit-crabs") {

@@ -644,6 +644,24 @@ existing two-worker limit remains suitable.
   `28ff528686b7dfbfc1a3c7ba2f8765cf48183f50119421f4025ea8eadeadff55` and contains a
   19,793,640-byte `libmain.so`. An ordinary interactive multi-species approach audit and physical
   Android-device observation remain before closure.
+  2026-10-19: one deterministic multi-species audit now exists, `IslandCloseObserverTurningTests`
+  (`tests/CloseObserverTurningTests.cpp`). A walking observer (1.4 m/s) closes from twelve metres
+  on the lead agent of each population at the game's 60 Hz step for twelve seconds, and every
+  agent that has been in its full simulation tier for consecutive frames is held to its declared
+  per-frame turn ceiling (goats 1.8, boars 2.1, deer 1.45, bear 0.78, crocodiles 1.15, monkeys
+  1.9 rad/s; snakes 3.5 rad/s on the station-averaged forebody axis, because the accepted
+  articulated escape displaces the head laterally beyond the 1.8 rad/s steering scalar while its
+  rate still changes smoothly). Reduced-tier agents beyond the full distance integrate several
+  frames at once by design and are only reported. The audit exposed two real defects that the
+  per-species suites had not reached: a deer straying past 68% of its home radius was turned a
+  second time in the same update (1.84 rad/s measured against 0.92/1.45 declared), and a
+  crocodile whose move was blocked received a second 1.4 rad/s re-aim on top of its bounded
+  turn (1.46 rad/s measured). `DeerHerd` now overrides the behavioural target with the home
+  direction before its single bounded turn, and `CrocodileGroup` re-aims a blocked move from
+  the pre-turn heading with the same budget. Measured maxima are now exactly the declared
+  ceilings for every species (snakes 3.25 of 3.5), with no teleporting body and the lead
+  agents retreating to 1.2--7.5 m clearance. All 73 active native tests pass. Physical
+  Android-device observation remains.
 - [~] Relocate the campfire and its stored firewood from the beach to a plausible inland clearing.
   This 2026-10-17 instruction supersedes the earlier corrected request that explicitly placed it on
   the beach. Preserve the fire, woodpile, collision, audio/light behavior and safe player access;
@@ -708,6 +726,20 @@ existing two-worker limit remains suitable.
   native charcoal-material capture `20261017T121744.473306Z-spiders-bright` pass; a natural player
   route plus Web/Android evidence remain. Validate a natural player route as well as focused
   native/Web/Android evidence.
+  2026-10-19 discoverability audit on ordinary, non-spider viewpoints of the current build: the
+  debug inventory reports 6/1000 spiders rendered in `20261019T170503.742767Z-jungle`, 21/1000 in
+  `170515.019252Z-ground` and 21/1000 in `170530.605719Z-litter` (0 in the open `east`, `west`
+  and `movement` views, which are outside the jungle-floor habitat). The inspected litter and
+  ground frames show several charcoal spiders as readable eight-legged silhouettes on the brown
+  litter at 5--15 m, so the population is discoverable from the ordinary forest route rather
+  than only from the focused QA camera. The `ground` frame's generic luminance gate failure
+  (16.56 against 18.0) predates this audit (`20261016T211513.767492Z-ground` failed identically)
+  and is unrelated to spiders. Current Chrome 155/SwiftShader
+  `20261019T170503.770684Z-chrome-spiders` passes four pose frames plus the web view, 60 positive
+  intervals each, GL error zero, live contexts and no kernel faults; the inspected pose frame
+  shows the current charcoal setae material, tiered eyes and lance abdomen. Android ARM64
+  assemble/lint of the same sources passes (identity recorded under the helicopter approach
+  entry); only device/emulator runtime observation remains.
 - [~] Reopen the cave-overhead integration after operator review. The focused capture passed, but
   the ordinary overhead view still exposes an artificial cave shell/trench instead of a continuous
   hill with a convincing topsoil mantle. Rework the actual terrain/soil cap and its grass blend,
@@ -759,6 +791,22 @@ existing two-worker limit remains suitable.
   captures `20261017T133538.847983Z-helicopter` and
   `20261017T133704.978924Z-helicopter-inside` pass with the doorway, controls and footwell still
   open. Ordinary unscripted approach plus Web/Android validation remain open.
+  2026-10-19: a permanent `helicopter-approach` viewpoint now frames the aircraft the way a
+  walking player first meets it: eye height on the real ground about eight metres off the
+  front-left quarter (`HelicopterPlacement::World(-7, 0, 4.5)`), looking at the cabin. Farther
+  stances (13 m front-left, 7.6 m abeam) were tried and rejected because the vegetation
+  clearing is only 6.2 m and ground plants screened the fuselage. Inspected native
+  `20261019T171151Z-helicopter-approach` passes (252 bins, luminance deviation 44.72, spatial
+  contrast 236.02, kernel `[]`): through foreground leaves the weathered olive fuselage, lit
+  framed glazing, open doors with seats, skids and drooped rotor read as one coherent aircraft at
+  the reduced-detail target; broad panels remain smooth rather than flat-shaded facets. The Web
+  helicopter scope gained the same view: Chrome 155/SwiftShader
+  `20261019T171502.839144Z-chrome-helicopter` passes exterior, interior and approach views with
+  60 positive intervals each, GL error zero, live contexts, three distinct frames and no kernel
+  faults, and the inspected WebGL approach frame matches native. Android ARM64 assemble/lint of
+  the final 2026-10-19 sources (pinned Sharp Runtime, no emulator) pass: the 24,840,787-byte APK
+  has SHA-256 `ff8e997b068319bcb7c5ef08fd3377578fa263d7e774f6cc0a7d42c6536fdbcc` and contains a
+  19,798,216-byte `libmain.so`. Device/emulator runtime remains open.
 
 - [x] Clean obsolete generated screenshots and image captures from all project `build*`
   directories. Preserve source assets, every artifact still cited by `PLAN.md`/documentation,

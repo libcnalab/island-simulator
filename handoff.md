@@ -4,17 +4,15 @@
 
 Distilled from `PLAN.md` "Latest operator priorities — 2026-10-12" and "Current significant
 unfinished work — 2026-10-15". Remove an item only when its evidence is recorded in `PLAN.md`.
-Done 2026-10-19: cave overhead mantle (turf re-hue, hashed 401 tufts, `cave-top` in the Web cave
-scope; evidence in the reopened cave item of `PLAN.md`).
+Done 2026-10-19 (evidence in the matching `PLAN.md` items): cave overhead mantle (turf re-hue,
+hashed 401 tufts, `cave-top` in the Web cave scope); spider discoverability on ordinary jungle
+views plus current Chrome evidence; permanent eye-height `helicopter-approach` viewpoint with
+native/Chrome/Android evidence; `IslandCloseObserverTurningTests` multi-species turning audit,
+which fixed double per-frame turns in `DeerHerd` and `CrocodileGroup`.
 
-1. Spiders (1000): inspect a natural player-route view and current Chrome/SwiftShader evidence.
-2. Helicopter exterior: inspect an ordinary player-height approach view and current
-   Chrome/SwiftShader evidence after the 2026-10-17 exterior/glazing passes.
-3. Close-observer turning: one deterministic multi-species close-approach audit covering goats,
-   boars, deer, bear, crocodiles, monkeys and snakes.
-4. Whole-island critique: one inspected jungle-floor/canopy repetition improvement and a
+1. Whole-island critique: one inspected jungle-floor/canopy repetition improvement and a
    moving-edge aliasing review.
-5. Shipwreck: wide matched comparison and debris sand/water integration review.
+2. Shipwreck: wide matched comparison and debris sand/water integration review.
 
 Not agent-actionable (stay open in `PLAN.md`; need the operator or physical hardware): human
 speaker/headphone listening (goat, boar, fly, snake hiss, audio-focus lifecycle), the physical-GPU
