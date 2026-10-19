@@ -47,6 +47,8 @@ namespace island
         {
             return sites_;
         }
+        /** @brief Adds a structure perch placed after the natural layouts (the jetty post). */
+        void AddSite(const BirdPerchSite& site) { sites_.push_back(site); }
 
     private:
         std::vector<BirdPerchSite> sites_;

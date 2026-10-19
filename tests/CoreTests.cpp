@@ -34,6 +34,8 @@
 #include "IslandSimulator/WreckScourPatch.hpp"
 #include "IslandSimulator/StreamCourse.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
+#include "IslandSimulator/HutLayout.hpp"
+#include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/DolphinPod.hpp"
 #include "IslandSimulator/JungleLayout.hpp"
 #include "IslandSimulator/LocomotionPaceToggle.hpp"
@@ -7339,6 +7341,34 @@ int main()
               "player capsule cannot tunnel through an authored land-rock proxy");
         Check(rockObstacleRejections > 0 && rockTerrainRejections == 0,
               "authored land-rock traversal is rejected by collision rather than terrain");
+    }
+
+    {
+        // The jetty below the hut: rooted on sand, ending over water, a deck the walker can
+        // stand on above the shallows, and a canoe on dry sand beside the root.
+        const island::IslandTerrain terrain;
+        island::HutPlacement hut{};
+        hut.x=island::HutLayout::PreferredClearingX; hut.z=island::HutLayout::PreferredClearingZ;
+        const auto jetty=island::JettyLayout::FindInWorld(terrain,hut);
+        Check(jetty.has_value(),"a jetty site exists on the shore below the hut clearing");
+        if(jetty) {
+            const float rootHeight=terrain.Height(jetty->rootX,jetty->rootZ);
+            const float endX=jetty->rootX+jetty->dirX*island::JettyPlacement::Length;
+            const float endZ=jetty->rootZ+jetty->dirZ*island::JettyPlacement::Length;
+            Check(rootHeight>=island::JettyLayout::MinimumRootHeight&&terrain.Height(endX,endZ)<0.0f,
+                  "jetty roots on the sand and ends over water");
+            const float midX=jetty->rootX+jetty->dirX*9.0f,midZ=jetty->rootZ+jetty->dirZ*9.0f;
+            const float midTerrain=terrain.Height(midX,midZ);
+            Check(jetty->OnDeck(midX,midZ)&&jetty->SupportHeight(midX,midZ,midTerrain)==jetty->deckY
+                  &&jetty->deckY>=island::JettyLayout::DeckClearance,
+                  "jetty deck supports the walker at its level height over the shallows");
+            const float offX=midX+jetty->AcrossX()*2.5f,offZ=midZ+jetty->AcrossZ()*2.5f;
+            Check(!jetty->OnDeck(offX,offZ)&&jetty->SupportHeight(offX,offZ,-0.7f)==-0.7f,
+                  "jetty support leaves the water beside the deck alone");
+            Check(jetty->canoeY>=island::JettyLayout::MinimumCanoeHeight,"the dugout canoe rests on dry sand");
+            const auto perch=jetty->MooringPerch();
+            Check(perch.y>jetty->deckY+0.5f,"the mooring post offers a perch above the deck");
+        }
     }
 
     {

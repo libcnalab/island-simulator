@@ -1,4 +1,5 @@
 #include "IslandSimulator/IslandGame.hpp"
+#include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/StreamCourse.hpp"
 #include "IslandSimulator/WreckScourPatch.hpp"
 #include "IslandSimulator/CanopyLighting.hpp"
@@ -185,6 +186,7 @@ namespace island
             case FixedViewpoint::AnimalTrackDetail: return "tracks";
             case FixedViewpoint::FruitTreeDetail: return "fruit";
             case FixedViewpoint::StreamCascadeDetail: return "cascade";
+            case FixedViewpoint::JettyDetail: return "jetty";
             case FixedViewpoint::FallenLogDetail: return "log";
             case FixedViewpoint::HutDetail: return "hut";
             case FixedViewpoint::HutMaterialDetail: return "hut-material";
@@ -298,7 +300,6 @@ namespace island
           benchmarkPath_(std::move(benchmarkPath)),
           startupReportPath_(std::move(startupReportPath))
     {
-        birdFlock_.SetPerchSites(birdPerchLayout_.Sites());
         std::vector<CrabHabitatCue> crabDebrisCues;
         crabDebrisCues.reserve(naturalPropLayout_.Driftwood().size()
                                + naturalPropLayout_.BeachDetails().size());
@@ -325,10 +326,17 @@ namespace island
         worldObstacles.insert(worldObstacles.end(),fireObstacles.begin(),fireObstacles.end());
         hutPlacement_=HutLayout::FindInWorld(terrain_,jungleLayout_,worldObstacles);
         if(hutPlacement_) worldObstacles.push_back({hutPlacement_->x,hutPlacement_->z,HutLayout::CollisionRadius});
+        if(hutPlacement_) jettyPlacement_=JettyLayout::FindInWorld(terrain_,*hutPlacement_);
+        if(jettyPlacement_) {
+            for(const auto& obstacle:jettyPlacement_->CanoeObstacles()) worldObstacles.push_back(obstacle);
+            birdPerchLayout_.AddSite(jettyPlacement_->MooringPerch());
+        }
+        birdFlock_.SetPerchSites(birdPerchLayout_.Sites());
         helicopterPlacement_=HelicopterLayout::FindInWorld(terrain_,jungleLayout_,worldObstacles);
         if(!helicopterPlacement_)throw std::runtime_error("No valid central helicopter site");
         worldCollisionGrid_.Reset(worldObstacles);
         playerMotion_.SetHelicopter(&*helicopterPlacement_);
+        if(jettyPlacement_) playerMotion_.SetJetty(&*jettyPlacement_);
         std::vector<CircularObstacle> wildlifeObstacles(worldObstacles);
         // Keep complete animal bodies out of the authored rotor/clearing footprint,
         // not merely outside the fuselage collision proxy. Goat habitat selection
@@ -1352,6 +1360,18 @@ namespace island
             yaw_ = std::atan2(direction.X, direction.Z);
             pitch_ = std::atan2(direction.Y, std::hypot(direction.X, direction.Z));
             std::cout << "island-simulator: fruit QA camera frames a fruit-bearing canopy crown\n";
+        } else if (viewpoint_ == FixedViewpoint::JettyDetail) {
+            // Stand on the sand beside the canoe and look down the deck to the mooring post.
+            if(!jettyPlacement_) throw std::runtime_error("Jetty QA requires a valid site");
+            const auto& j=*jettyPlacement_;
+            const float cameraX=j.rootX-j.dirX*4.0f+j.AcrossX()*5.5f;
+            const float cameraZ=j.rootZ-j.dirZ*4.0f+j.AcrossZ()*5.5f;
+            cameraPosition_=Vector3(cameraX,terrain_.Height(cameraX,cameraZ)+PlayerMotion::EyeHeight,cameraZ);
+            const Vector3 target(j.rootX+j.dirX*7.0f,j.deckY+0.3f,j.rootZ+j.dirZ*7.0f);
+            const Vector3 direction=target-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: jetty QA camera looks along the deck from the canoe\n";
         } else if (viewpoint_ == FixedViewpoint::StreamCascadeDetail) {
             // Stand on the bank beside the plunge pool and look back up at the lip.
             const StreamCourse course(terrain_);
@@ -2025,6 +2045,7 @@ namespace island
         naturalPropRenderer_ = std::make_unique<NaturalPropRenderer>(device, naturalPropLayout_);
         shipwreckRenderer_ = std::make_unique<ShipwreckRenderer>(device, shipwreckLayout_);
         if(hutPlacement_) hutRenderer_=std::make_unique<HutRenderer>(device,*hutPlacement_);
+        if(jettyPlacement_) jettyRenderer_=std::make_unique<JettyRenderer>(device,*jettyPlacement_);
         helicopterRenderer_=std::make_unique<HelicopterRenderer>(device,*helicopterPlacement_);
         palmRenderer_ = std::make_unique<PalmRenderer>(
             device, vegetationLayout_, qualityProfile_.vegetationMaximumDistanceScale);
@@ -4023,6 +4044,7 @@ namespace island
                 jungleRenderer_->DrawSunShadow(*sunShadowMap_);
                 palmRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (hutRenderer_) hutRenderer_->DrawSunShadow(*sunShadowMap_);
+                if (jettyRenderer_) jettyRenderer_->DrawSunShadow(*sunShadowMap_);
                 shipwreckRenderer_->DrawSunShadow(*sunShadowMap_);
                 helicopterRenderer_->DrawSunShadow(*sunShadowMap_);
                 sunShadowMap_->End();
@@ -4069,6 +4091,10 @@ namespace island
         {
             GpuDiagnosticScope gpuPass("shipwreck");
             shipwreckRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_);
+        }
+        if(jettyRenderer_) {
+            GpuDiagnosticScope gpuPass("jetty");
+            jettyRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }
         if(hutRenderer_) {
             GpuDiagnosticScope gpuPass("hut");

@@ -2,6 +2,7 @@
 
 #include "IslandSimulator/WorldCollisionGrid.hpp"
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
+#include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/LocalTerrainPatch.hpp"
 #include "IslandSimulator/CaveGroundPatch.hpp"
 #include "IslandSimulator/HelicopterLayout.hpp"
@@ -91,6 +92,8 @@ namespace island
             }
             if(helicopter_)
                 sample.height=helicopter_->SupportHeight(px,pz,sample.height);
+            if(jetty_)
+                sample.height=jetty_->SupportHeight(px,pz,sample.height);
             contact.height = std::max(contact.height, sample.height);
             contact.maximumSlopeRadians = std::max(contact.maximumSlopeRadians,
                                                     sample.slopeRadians);
@@ -316,7 +319,10 @@ namespace island
                                             const float maximumVerticalDelta) noexcept
     {
         const TerrainSample centre = terrain.Sample(position_.x, position_.z);
-        if (mode_ == LocomotionMode::Walking && centre.height < WaterEntryTerrainHeight) {
+        // The jetty deck keeps a walker dry over submerged ground; stepping off its end drops
+        // them into the water as usual.
+        const bool onDeck = jetty_ && jetty_->OnDeck(position_.x, position_.z);
+        if (mode_ == LocomotionMode::Walking && centre.height < WaterEntryTerrainHeight && !onDeck) {
             mode_ = LocomotionMode::Swimming;
         } else if (mode_ == LocomotionMode::Swimming && centre.height > WaterExitTerrainHeight) {
             mode_ = LocomotionMode::Walking;

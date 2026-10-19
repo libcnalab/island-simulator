@@ -86,6 +86,7 @@ add_library(island_core STATIC
     game/src/BushProfile.cpp
     game/src/IslandTerrain.cpp
     game/src/HutLayout.cpp
+    game/src/JettyLayout.cpp
     game/src/HelicopterLayout.cpp
     game/src/GoatHabitat.cpp
     game/src/SpiderHabitat.cpp
@@ -694,6 +695,7 @@ if(ISLAND_BUILD_GAME)
         game/src/StingrayRenderer.cpp
         game/src/ShipwreckRenderer.cpp
         game/src/HutRenderer.cpp
+        game/src/JettyRenderer.cpp
         game/src/HelicopterRenderer.cpp
         game/src/ShorelineRenderer.cpp
         game/src/SkyRenderer.cpp

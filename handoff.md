@@ -42,7 +42,7 @@ here as done with their `PLAN.md` evidence reference.
 10. [x] Tracks (PLAN "Latest ground-sign pass — deer and boar track lines", `tracks` viewpoint).
 11. [x] Sea from within (PLAN "Latest sea-from-within pass — leaping dolphins, a surface fin and parting schools").
 12. [x] Signs of the resident at the hut (PLAN "Latest occupation pass"); the canoe moves to item 13.
-13. [ ] A jetty or stone breakwater near the hut as a shore landmark where birds perch.
+13. [x] Jetty and dugout canoe (PLAN "Latest landing pass — the resident's jetty and dugout canoe", `jetty` viewpoint).
 14. [ ] Rope bridge over the stream and/or a tree lookout platform (walkable).
 15. [x] Lianas and aerial roots (PLAN "Latest canopy-interior pass").
 16. [x] Flowering shrubs and banana stools (PLAN "Latest understory-colour pass").

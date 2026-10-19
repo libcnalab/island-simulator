@@ -46,6 +46,31 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Latest landing pass — the resident's jetty and dugout canoe
+
+Backlog item 13 (with the canoe deferred from item 12). `JettyLayout::FindInWorld` sites a
+plank jetty on the hut's own radial, fanning ±0.36 rad in 0.03 rad steps until the root sits on
+sand 2.2 m inside the shoreline (0.04–0.80 m high), the 14 m deck clears the ground along its
+length, its far half stands over water and its end is 0.18–2.4 m deep. The deck ramps from a
+first plank 12 cm above the sand to a level 0.85 m above mean water over its first four metres,
+on five post pairs and a taller mooring post at the end; a 4.2 m dugout with a paddle across
+its gunwales lies on the sand 3.4 m beside the root. `JettyPlacement::SupportHeight` carries the
+walker along the deck exactly as the helicopter floor does, and `PlayerMotion` no longer enters
+swimming while the walker stands on the deck over submerged ground (stepping off the end still
+drops them in); the canoe adds two collision circles, and the mooring post adds a ninth bird
+perch (a structure perch, installed after the hut so the flock's perch list is set once all
+layouts exist). `JettyRenderer` bakes per-face fixed-sun light into one opaque vertex-coloured
+draw (1,232 triangles: planks with per-plank weathering and an occasional sprung plank,
+stringers, posts, lofted hollow hull with gunwales, paddle), fogged over the ocean's band, and
+casts into the sun shadow map. A `jetty` QA viewpoint stands on the sand beside the canoe
+looking down the deck. The startup log adds "resident's jetty runs from the beach below the hut
+to a mooring-post perch, with a dugout canoe drawn up beside the root", pinned by the native
+capture tool. New core checks: a site exists below the authored hut clearing, it roots on sand
+and ends over water, the deck supports the walker at its level height mid-span and leaves the
+water beside it alone, the canoe rests on dry sand, and the mooring post perches above the deck.
+Inspected native `20261019T213727Z-jetty` shows the ramped deck, posts in the shallows, the
+mooring post and the canoe with its paddle; `hut` still passes.
+
 ## Latest sea-from-within pass — leaping dolphins, a surface fin and parting schools
 
 Backlog item 11. Dolphins gain a `Leap` behaviour: every fourth surfacing ends in a 1.5 s

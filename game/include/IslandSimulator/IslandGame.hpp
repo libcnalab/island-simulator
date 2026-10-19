@@ -93,6 +93,7 @@
 #include "IslandSimulator/ShipwreckLayout.hpp"
 #include "IslandSimulator/ShipwreckRenderer.hpp"
 #include "IslandSimulator/HutRenderer.hpp"
+#include "IslandSimulator/JettyRenderer.hpp"
 #include "IslandSimulator/HelicopterLayout.hpp"
 #include "IslandSimulator/HelicopterRenderer.hpp"
 #include "IslandSimulator/ShorelineRenderer.hpp"
@@ -189,6 +190,7 @@ namespace island
         FruitTreeDetail,
         FallenLogDetail,
         StreamCascadeDetail,
+        JettyDetail,
         HutDetail,
         HutMaterialDetail,
         HelicopterDetail,
@@ -366,6 +368,7 @@ namespace island
         ShipwreckLayout shipwreckLayout_;
         BirdPerchLayout birdPerchLayout_;
         std::optional<HutPlacement> hutPlacement_;
+        std::optional<JettyPlacement> jettyPlacement_;
         std::optional<HelicopterPlacement> helicopterPlacement_;
         CampfireLayout campfireLayout_{terrain_};
         BunkerLayout bunkerLayout_{terrain_};
@@ -435,6 +438,7 @@ namespace island
         std::unique_ptr<DolphinRenderer> dolphinRenderer_;
         std::unique_ptr<ShipwreckRenderer> shipwreckRenderer_;
         std::unique_ptr<HutRenderer> hutRenderer_;
+        std::unique_ptr<JettyRenderer> jettyRenderer_;
         std::unique_ptr<HelicopterRenderer> helicopterRenderer_;
         std::unique_ptr<ShorelineRenderer> shorelineRenderer_;
         std::unique_ptr<SkyRenderer> skyRenderer_;
