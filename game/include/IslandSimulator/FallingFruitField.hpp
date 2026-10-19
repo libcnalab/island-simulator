@@ -39,6 +39,9 @@ public:
     // Palms shed in gusts near the observer; seconds is the world clock the gust field uses.
     void UpdateCoconuts(float seconds,float observerX,float observerZ) noexcept;
     [[nodiscard]] std::uint32_t CoconutDropCount() const noexcept {return coconutDrops_;}
+    /** @brief The last coconut to hit the ground, counted so a landing is noted once. */
+    struct Landing { float x=0,y=0,z=0; std::uint32_t count=0; };
+    [[nodiscard]] const Landing& LastCoconutLanding() const noexcept {return landing_;}
     [[nodiscard]] std::span<const FallingFruit> Fruit() const noexcept {return fruit_;}
     [[nodiscard]] std::size_t ActiveCount() const noexcept;
     [[nodiscard]] std::uint32_t DropCount() const noexcept {return drops_;}
@@ -49,6 +52,7 @@ private:
     std::span<const PalmPlacement> palms_;
     std::vector<float> palmGust_;       // last gust strength seen at each palm
     std::uint32_t coconutDrops_=0;
+    Landing landing_;
     std::array<FallingFruit,Capacity> fruit_{};
     std::array<float,16> pickTimers_{};
     std::uint32_t drops_=0;

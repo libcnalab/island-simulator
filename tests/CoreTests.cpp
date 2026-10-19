@@ -7491,6 +7491,8 @@ int main()
             for(const auto& f:grove.Fruit()) if(f.active&&f.variant==island::FallingFruitField::CoconutVariant) nutTop=std::max(nutTop,f.y);
         }
         Check(grove.CoconutDropCount()>=1U&&nutTop>palms[0].y+6.0f,"gust fronts shake a coconut from the palm crown within four minutes");
+        Check(grove.LastCoconutLanding().count>=1U&&std::abs(grove.LastCoconutLanding().y-(terrain.Height(grove.LastCoconutLanding().x,grove.LastCoconutLanding().z)+0.10f))<0.01f,
+              "the coconut's landing is counted where it struck the ground");
         Check(highest>monkey.selectedTree.y+3.0f,"the fruit starts up in the crown");
         Check(landed,"the fruit lands on the ground under the tree and lies there");
     }

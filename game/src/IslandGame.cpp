@@ -2211,6 +2211,7 @@ namespace island
                      "intermittent glide\n"
                   << "island-simulator: seabirds break from their high orbits to circle low over the fish school of the moment\n"
                   << "island-simulator: circling seabirds plunge-dive every nine seconds and each strike raises a foam ring on the water and a positional splash\n"
+                  << "island-simulator: a falling coconut lands with a positional thud heard within thirty metres\n"
                   << "island-simulator: gust fronts sweep the grass, crowns and fronds downwind together every twenty-two seconds within their authored sway\n"
                   << "island-simulator: four fruit doves alternate canopy perches with bounded dry-ground walking and foraging\n"
                   << "island-simulator: fruit doves coo in low slow phrases and thrust their heads as they walk; parrots keep their squawk and a pigeon-grey dove joins the green ones\n"
@@ -2564,6 +2565,11 @@ namespace island
         }
         fallingFruit_.Update(deltaSeconds, monkeyTroop_.Monkeys());
         fallingFruit_.UpdateCoconuts(seaForageSeconds_, cameraPosition_.X, cameraPosition_.Z);
+        if (soundscape_ && fallingFruit_.LastCoconutLanding().count != notedThudCount_) {
+            const auto& landing = fallingFruit_.LastCoconutLanding();
+            notedThudCount_ = landing.count;
+            soundscape_->NoteCoconutThud(landing.x, landing.y, landing.z);
+        }
         {
             // The seabirds' school of the moment: the schools take turns every ninety seconds
             // so the low circling moves around the coast instead of fixing on one bay.

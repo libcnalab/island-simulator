@@ -128,6 +128,9 @@ namespace island
     /** @brief Generates a seabird's plunge: a heavy strike with a spray of droplets. */
     [[nodiscard]] AmbientLoop GenerateBirdSplash();
 
+    /** @brief Generates a coconut landing: a dull hollow knock and a short hiss of sand. */
+    [[nodiscard]] AmbientLoop GenerateCoconutThud();
+
     /** @brief Generates one restrained monkey contact call for the interior jungle. */
     [[nodiscard]] AmbientLoop GenerateMonkeyCall();
 
@@ -306,7 +309,8 @@ namespace island
         Frog,
         Cicada,
         Fly,
-        Splash
+        Splash,
+        Thud
     };
 
     /** @brief Nearest currently eligible world-space source for one wildlife species. */

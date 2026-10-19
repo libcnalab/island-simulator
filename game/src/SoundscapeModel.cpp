@@ -834,6 +834,30 @@ namespace island
         return Quantize(samples, 0.70f);
     }
 
+    AmbientLoop GenerateCoconutThud()
+    {
+        constexpr std::size_t frameCount = static_cast<std::size_t>(AmbientSampleRate * 9 / 20);
+        const std::vector<float> noise = Noise(0x27c4e9b1U, frameCount);
+        const std::vector<float> hiss = CircularSmooth(noise, 3U);
+        const std::vector<float> body = CircularSmooth(noise, 160U);
+        std::vector<float> samples(frameCount);
+        for (std::size_t index = 0; index < samples.size(); ++index) {
+            const float seconds = static_cast<float>(index) / static_cast<float>(AmbientSampleRate);
+            const float phase = static_cast<float>(index) / static_cast<float>(samples.size() - 1U);
+            const float attack = SmoothStep(0.0f, 0.006f, phase);
+            // The knock: a low damped tone, a touch of a second partial, over in a tenth of a second.
+            const float knock = std::exp(-seconds * 26.0f)
+                * (std::sin(2.0f * std::numbers::pi_v<float> * 96.0f * seconds)
+                   + 0.35f * std::sin(2.0f * std::numbers::pi_v<float> * 215.0f * seconds));
+            const float sand = std::exp(-std::pow((phase - 0.10f) / 0.09f, 2.0f));
+            const float release = 1.0f - SmoothStep(0.42f, 1.0f, phase);
+            samples[index] = attack * release * (knock * 0.80f + hiss[index] * sand * 0.28f + body[index] * 0.10f * sand);
+        }
+        samples.front() = 0.0f;
+        samples.back() = 0.0f;
+        return Quantize(samples, 0.66f);
+    }
+
     AmbientLoop GenerateFrogCall(const std::uint8_t variant)
     {
         constexpr std::size_t frameCount = static_cast<std::size_t>(

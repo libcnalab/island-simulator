@@ -75,6 +75,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 12: the resident's tour calls at the jetty foot (PLAN "Loop pass 12").
 - Pass 13: the resident's bare footprints along the beach from the jetty (PLAN "Loop pass 13").
 - Pass 14: gust fronts shake coconuts from the nearer palms (PLAN "Loop pass 14").
+- Pass 15: a positional thud when a coconut lands (PLAN "Loop pass 15").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

@@ -155,6 +155,13 @@ namespace island
         pendingSplashSeconds_ = 1.5f;
     }
 
+    void Soundscape::NoteCoconutThud(const float x, const float y, const float z) noexcept
+    {
+        if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) return;
+        pendingThud_ = {true, x, y, z, 0U};
+        pendingThudSeconds_ = 1.0f;
+    }
+
     void Soundscape::SetStreamCascade(const float x, const float z) noexcept
     {
         if (std::isfinite(x) && std::isfinite(z)) streamCascade_ = {x, z, true};
@@ -359,6 +366,8 @@ namespace island
             doveCallAlternateEffect_->setNameProperty("Procedural fruit dove coo alternate");
             birdSplashEffect_ = CreateOneShotSoundEffect(GenerateBirdSplash());
             birdSplashEffect_->setNameProperty("Procedural seabird plunge splash");
+            coconutThudEffect_ = CreateOneShotSoundEffect(GenerateCoconutThud());
+            coconutThudEffect_->setNameProperty("Procedural coconut thud");
             monkeyCallEffect_ = CreateOneShotSoundEffect(GenerateMonkeyCall());
             monkeyCallEffect_->setNameProperty("Procedural monkey contact call");
             monkeyCallAlternateEffect_ = CreateOneShotSoundEffect(
@@ -560,6 +569,7 @@ namespace island
             doveCallAlternateEffect_.reset();
             doveCallEffect_.reset();
             birdSplashEffect_.reset();
+            coconutThudEffect_.reset();
             birdCallAlternateEffect_.reset();
             birdCallEffect_.reset();
             waterMovementEffect_.reset();
@@ -1146,6 +1156,19 @@ namespace island
                 pendingSplash_.available = false;
             }
         }
+        // A coconut's landing is a short, close thud: heard within about thirty metres.
+        if (pendingThud_.available) {
+            pendingThudSeconds_ -= safeDelta;
+            const float distance = std::hypot(std::hypot(pendingThud_.x - listenerState.x,
+                pendingThud_.z - listenerState.z), pendingThud_.y - listenerState.y);
+            const float falloff = 1.0f - std::clamp((distance - 4.0f) / 28.0f, 0.0f, 1.0f);
+            if (wildlifeSlotAvailable && wildlifeCall.type == WildlifeCallType::None && falloff > 0.02f) {
+                wildlifeCall = {WildlifeCallType::Thud, 0U, 0.40f * falloff, 0.0f, pendingThud_};
+                pendingThud_.available = false;
+            } else if (pendingThudSeconds_ <= 0.0f || falloff <= 0.02f) {
+                pendingThud_.available = false;
+            }
+        }
         if (wildlifeCall.type == WildlifeCallType::None) {
             return;
         }
@@ -1188,6 +1211,8 @@ namespace island
             wildlifeEffect = flyBuzzEffects_.at(wildlifeCall.variant).get();
         } else if (wildlifeCall.type == WildlifeCallType::Splash) {
             wildlifeEffect = birdSplashEffect_.get();
+        } else if (wildlifeCall.type == WildlifeCallType::Thud) {
+            wildlifeEffect = coconutThudEffect_.get();
         }
         if (!wildlifeEffect) {
             return;
@@ -1243,7 +1268,8 @@ namespace island
                 :wildlifeCall.type==WildlifeCallType::Goat?1.25f
                 :wildlifeCall.type==WildlifeCallType::Cicada?1.40f
                 :wildlifeCall.type==WildlifeCallType::Fly?.90f
-                :wildlifeCall.type==WildlifeCallType::Splash?.75f:1.50f;
+                :wildlifeCall.type==WildlifeCallType::Splash?.75f
+                :wildlifeCall.type==WildlifeCallType::Thud?.50f:1.50f;
             if (wildlifeCall.type == WildlifeCallType::Bird) {
                 ++playedBirdCallCount_;
                 if (playedBirdCallCount_ == 1) {
@@ -1421,6 +1447,7 @@ namespace island
         doveCallAlternateEffect_.reset();
         doveCallEffect_.reset();
         birdSplashEffect_.reset();
+        coconutThudEffect_.reset();
         birdCallAlternateEffect_.reset();
         birdCallEffect_.reset();
         waterMovementEffect_.reset();

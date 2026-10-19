@@ -46,6 +46,20 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 15 (2026-10-20) — the coconut's thud
+
+A coconut's first strike on the ground (`FallingFruitField::LastCoconutLanding`, counted so each
+landing is noted once) is now heard: `GenerateCoconutThud` synthesises a 0.45 s dull hollow
+knock (a damped 96 Hz tone with a weak 215 Hz partial) and a short hiss of sand, the game notes
+each landing to the soundscape (`NoteCoconutThud`), and the wildlife one-shot slot plays it as
+`WildlifeCallType::Thud` within a second when free at 0.40 falling to nothing between 4 and
+32 m, holding the slot half a second; a thud out of earshot or too late is dropped. The clip
+joins the audio inventory (57 clips, 7,298,544 PCM bytes pinned). The startup log adds "a
+falling coconut lands with a positional thud heard within thirty metres", pinned by the native
+capture tool, and the grove core check also asserts the landing is counted where the nut struck
+the ground. `IslandAudioPreviewExport` and native `palms` pass. Human listening remains an
+operator check.
+
 ## Loop pass 14 (2026-10-20) — gusts shake coconuts from the palms
 
 The gust fronts of pass 5, the coconut palms and the fallen coconuts of item 17 now meet.

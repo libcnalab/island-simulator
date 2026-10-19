@@ -94,8 +94,11 @@ void FallingFruitField::Update(const float deltaSeconds,const std::span<const Mo
             f.velocityY-=Gravity*dt;
             f.y+=f.velocityY*dt;
             if(f.y<=f.groundY) {
-                // A small bounce, then rest.
-                if(f.velocityY<-2.5f) { f.y=f.groundY; f.velocityY=-f.velocityY*0.18f; }
+                // A small bounce, then rest; a coconut's first strike is the thud.
+                if(f.velocityY<-2.5f) {
+                    if(f.variant==CoconutVariant) landing_={f.x,f.groundY,f.z,landing_.count+1U};
+                    f.y=f.groundY; f.velocityY=-f.velocityY*0.18f;
+                }
                 else { f.y=f.groundY; f.velocityY=0; f.restSeconds=0.0f; }
             }
         } else {

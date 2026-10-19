@@ -455,6 +455,7 @@ namespace island
         float lastSubmergedDepth_ = 0.0f, bubbleBurst_ = 0.0f;
         float seaForageSeconds_ = 0.0f;
         std::uint32_t notedDiveCount_ = 0U;
+        std::uint32_t notedThudCount_ = 0U;
         std::unique_ptr<HelicopterRenderer> helicopterRenderer_;
         std::unique_ptr<ShorelineRenderer> shorelineRenderer_;
         std::unique_ptr<SkyRenderer> skyRenderer_;
