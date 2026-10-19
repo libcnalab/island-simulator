@@ -46,7 +46,10 @@ int main() {
       Check(std::hypot(a.x - pod.Homes()[i].x, a.z - pod.Homes()[i].z) <=
                 pod.Homes()[i].radius + .01f,
             "dolphin left home range");
-      Check(a.y >= sample.height + 1.24f * a.scale - .02f && a.y <= -.20f,
+      // A leaping dolphin clears the surface by design; everything else stays under it.
+      const float ceiling = a.behavior == island::DolphinBehavior::Leap
+          ? -.24f + island::DolphinPod::LeapHeight + .02f : -.20f;
+      Check(a.y >= sample.height + 1.24f * a.scale - .02f && a.y <= ceiling,
             "dolphin crossed seabed or water surface");
       cruise |= a.behavior == island::DolphinBehavior::Cruise;
       surface |= a.behavior == island::DolphinBehavior::Surface;
