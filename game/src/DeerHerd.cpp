@@ -154,6 +154,7 @@ namespace island
         const bool sentinelSees = observerValid && std::hypot(sentinel.x - observerX,
             sentinel.z - observerZ) < SentinelAlertDistance;
         sentinelAlertSeconds_ = sentinelSees ? sentinelAlertSeconds_ + safeDelta : 0.0f;
+        disturbanceSeconds_ = std::max(0.0f, disturbanceSeconds_ - safeDelta);
         for (std::size_t index = 0; index < Count; ++index) {
             Agent& agent = agents_[index];
             const float distance = observerValid
@@ -172,6 +173,14 @@ namespace island
             }
             states_[index] = agent.state;
         }
+    }
+
+    void DeerHerd::NoteDisturbance(const float x, const float z) noexcept
+    {
+        if (!std::isfinite(x) || !std::isfinite(z)) return;
+        disturbanceX_ = x;
+        disturbanceZ_ = z;
+        disturbanceSeconds_ = StartleSeconds;
     }
 
     void DeerHerd::UpdateAgent(Agent& agent, const float deltaSeconds,
@@ -201,6 +210,15 @@ namespace island
             agent.behaviorSeconds = std::max(agent.behaviorSeconds, 0.5f);
             agent.targetHeadingRadians = std::atan2(
                 observerZ - agent.state.z, observerX - agent.state.x);
+            alertFacing = true;
+        } else if (disturbanceSeconds_ > 0.0f && std::hypot(agent.state.x - disturbanceX_,
+            agent.state.z - disturbanceZ_) < StartleDistance) {
+            // A thud nearby: the deer stops and stands facing where it came from until the
+            // startle fades, then grazing goes on.
+            agent.state.behavior = DeerBehavior::Rest;
+            agent.behaviorSeconds = std::max(agent.behaviorSeconds, 0.5f);
+            agent.targetHeadingRadians = std::atan2(
+                disturbanceZ_ - agent.state.z, disturbanceX_ - agent.state.x);
             alertFacing = true;
         } else if ((agent.behaviorSeconds -= deltaSeconds) <= 0.0f) {
             ++agent.transitions;

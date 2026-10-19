@@ -173,6 +173,8 @@ void GoatHerd::Step(std::size_t index,float dt,GoatPoint observer,bool observerV
         ?std::hypot(state.x-observer.x,state.y+.8f-observer.y,state.z-observer.z)
         :std::numeric_limits<float>::infinity();
     const bool retreat=observerRange<7;
+    const bool startled=disturbanceSeconds_>0
+        &&std::hypot(state.x-disturbanceX_,state.z-disturbanceZ_)<StartleDistance;
     if(retreat) {
         state.behavior=GoatBehavior::Retreat;intent.remaining=.75f;
         const float dx=state.x-observer.x,dz=state.z-observer.z;
@@ -187,6 +189,12 @@ void GoatHerd::Step(std::size_t index,float dt,GoatPoint observer,bool observerV
         state.behavior=GoatBehavior::Rest;intent.remaining=std::max(intent.remaining,.5f);
         if(intent.avoidance==0)
             intent.targetHeading=std::atan2(observer.z-state.z,observer.x-state.x);
+    } else if(startled) {
+        // A thud nearby: the goat stops and stands facing where it came from until the
+        // startle fades, then its wandering goes on.
+        state.behavior=GoatBehavior::Rest;intent.remaining=std::max(intent.remaining,.5f);
+        if(intent.avoidance==0)
+            intent.targetHeading=std::atan2(disturbanceZ_-state.z,disturbanceX_-state.x);
     } else if(intent.remaining<=0) {
         const auto bits=Mix(GoatHabitat::Seed+static_cast<std::uint32_t>(index)*7919U+(++intent.decisions)*104729U);
         state.behavior=bits%5<3?GoatBehavior::Walk:(bits%5==3?GoatBehavior::Graze:GoatBehavior::Rest);
@@ -208,7 +216,7 @@ void GoatHerd::Step(std::size_t index,float dt,GoatPoint observer,bool observerV
     }
     // An alert goat shuffles slowly through its ordinary stepping until it faces the
     // player, rather than pivoting on planted hooves, then stands and watches.
-    const bool alertTurning=observerRange<AlertDistance&&!retreat
+    const bool alertTurning=(observerRange<AlertDistance||startled)&&!retreat
         &&std::abs(Wrap(intent.targetHeading-state.heading))>.18f;
     const float desired=state.behavior==GoatBehavior::Retreat?MaximumSpeed:
         (state.behavior==GoatBehavior::Walk||(state.behavior==GoatBehavior::Drink&&!drinking)?.65f
@@ -237,6 +245,10 @@ void GoatHerd::Step(std::size_t index,float dt,GoatPoint observer,bool observerV
         if(!retreat) intent.remaining=std::min(intent.remaining,.7f);
     }
 }
+void GoatHerd::NoteDisturbance(float x,float z) noexcept {
+    if(!std::isfinite(x)||!std::isfinite(z)) return;
+    disturbanceX_=x;disturbanceZ_=z;disturbanceSeconds_=StartleSeconds;
+}
 void GoatHerd::Update(float dt,GoatPoint observer) {
     if(!std::isfinite(dt)||dt<=0) return;
     dt=std::min(dt,.1f);
@@ -248,6 +260,7 @@ void GoatHerd::Update(float dt,GoatPoint observer) {
     const bool sentinelSees=observerValid&&std::hypot(sentinel.x-observer.x,
         sentinel.y+.8f-observer.y,sentinel.z-observer.z)<SentinelAlertDistance;
     sentinelAlertSeconds_=sentinelSees?sentinelAlertSeconds_+dt:0;
+    disturbanceSeconds_=std::max(0.0f,disturbanceSeconds_-dt);
     for(int step=0;step<steps;++step) for(std::size_t i=0;i<states_.size();++i) {
         Step(i,dt/static_cast<float>(steps),observer,observerValid);
         AdvanceFeet(i,dt/static_cast<float>(steps));

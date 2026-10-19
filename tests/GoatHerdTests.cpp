@@ -30,6 +30,26 @@ int main() {
     occupied.push_back({hut->x,hut->z,HutLayout::CollisionRadius});
     const WorldCollisionGrid grid(occupied);
     GoatHerd herd(terrain,jungle,occupied),repeat(terrain,jungle,occupied);
+    {
+        // A coconut's thud twelve metres from a goat, no observer about: it stands facing the
+        // fall and turns toward it; after the startle fades it wanders on.
+        GoatHerd startled(terrain,jungle,occupied);
+        const GoatPoint nobody{std::numeric_limits<float>::quiet_NaN(),0,0};
+        for(int frame=0;frame<200;++frame) startled.Update(.05f,nobody);
+        const auto grazer=startled.Goats()[1];
+        const float thudX=grazer.x+12,thudZ=grazer.z;
+        startled.NoteDisturbance(thudX,thudZ);
+        bool stoodFacing=false;
+        for(int frame=0;frame<80;++frame) {
+            startled.Update(.05f,nobody);
+            const auto& goat=startled.Goats()[1];
+            const float toward=std::remainder(std::atan2(thudZ-goat.z,thudX-goat.x)-goat.heading,6.2831853f);
+            if(goat.behavior==GoatBehavior::Rest&&std::abs(toward)<.35f) stoodFacing=true;
+        }
+        check(startled.Startled()&&stoodFacing,"a thud twelve metres off stops the goat and turns it toward the fall");
+        for(int frame=0;frame<80;++frame) startled.Update(.05f,nobody);
+        check(!startled.Startled(),"the goat's startle fades after six seconds");
+    }
     const auto copy=[](const GoatHerd& h){return std::vector<GoatState>(h.Goats().begin(),h.Goats().end());};
     const auto equal=[&](const GoatHerd& a,const GoatHerd& b){return copy(a)==copy(b);};
     const GoatPoint distant{1000,1000,1000};

@@ -7715,6 +7715,23 @@ int main()
               "deer herd reaction delay elapses while the sentinel keeps watching");
         herd.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
         Check(!herd.SentinelAlert(), "deer sentinel relaxes once the observer is gone");
+        // A coconut's thud with no observer about: the deer 12 m from it stands facing the
+        // fall and turns toward it; after the startle fades it is free to graze again.
+        // The observer stands 60 m off: near enough for full simulation, too far to alarm.
+        for (int step = 0; step < 200; ++step) herd.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
+        const auto grazer = herd.Deer()[2];
+        const float thudX = grazer.x + 12.0f, thudZ = grazer.z;
+        herd.NoteDisturbance(thudX, thudZ);
+        bool stoodFacing = false;
+        for (int step = 0; step < 110; ++step) {
+            herd.Update(0.05f, grazer.x, grazer.y + 1.6f, grazer.z + 60.0f);
+            const auto& deer = herd.Deer()[2];
+            const float toward = std::remainder(std::atan2(thudZ - deer.z, thudX - deer.x) - deer.headingRadians, 6.2831853f);
+            if (deer.behavior == island::DeerBehavior::Rest && std::abs(toward) < 0.35f) stoodFacing = true;
+        }
+        Check(herd.Startled() && stoodFacing, "a thud twelve metres off stops the deer and turns it toward the fall");
+        for (int step = 0; step < 80; ++step) herd.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
+        Check(!herd.Startled(), "the deer's startle fades after six seconds");
     }
 
     {

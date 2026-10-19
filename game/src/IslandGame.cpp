@@ -2082,7 +2082,8 @@ namespace island
                   << boarHerd_.WallowerCount() << " boars wallow at the bank and carry the mud on their legs and bellies; "
                   << "boars root at the nearest trunk base, monkeys favour fruiting crowns and linger to pick\n";
         std::cout << "island-simulator: herd behaviour: goats share their separated ranges and the "
-                     "East deer pair walks back together; a sentinel lifts its head first and the others follow after 0.7 s\n";
+                     "East deer pair walks back together; a sentinel lifts its head first and the others follow after 0.7 s; "
+                     "a coconut's thud startles the deer and goats within 30 m, who stand facing the fall for 6 s\n";
         std::cout << "island-simulator: snakes " << snakes_->Snakes().size()
                   << " ground agents with separated dense-understory-margin homes; "
                   << snakes_->TreeSnakes().size()<<" arboreal agents on sampled broadleaf trunks\n";
@@ -2571,6 +2572,9 @@ namespace island
             const auto& landing = fallingFruit_.LastCoconutLanding();
             notedThudCount_ = landing.count;
             soundscape_->NoteCoconutThud(landing.x, landing.y, landing.z);
+            // The thud carries: deer and goats within thirty metres stop and face the fall.
+            if (deer_) deer_->NoteDisturbance(landing.x, landing.z);
+            if (goats_) goats_->NoteDisturbance(landing.x, landing.z);
         }
         {
             // The seabirds' school of the moment: the schools take turns every ninety seconds

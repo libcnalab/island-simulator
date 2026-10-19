@@ -46,6 +46,20 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 19 (2026-10-20) — the thud startles the herds
+
+The coconut's thud of pass 15 reached the player's ears and nothing else. Both herds now take a
+disturbance point (`DeerHerd::NoteDisturbance`, `GoatHerd::NoteDisturbance`), which the game
+sets from the landing the moment it notes the thud. For six seconds any deer or goat within
+30 m of the point that is not already alarmed by the player stops, stands (the Rest pose) and
+turns to face the fall at its ordinary alert turn rate, the goats shuffling round as they do
+for a watcher; when the startle fades the grazing and wandering go on. The herd-behaviour
+diagnostic gains "a coconut's thud startles the deer and goats within 30 m, who stand facing
+the fall for 6 s", pinned by the native capture tool. Core and goat-herd checks: a thud twelve
+metres from a grazing deer or goat (observer 60 m off for the deer, so it is fully simulated)
+puts it in Rest facing within 0.35 rad of the fall inside the window, and the startle has
+faded four seconds later. Native `deer` and `goats` pass.
+
 ## Loop pass 18 (2026-10-20) — the boars take the fallen fruit and coconuts
 
 The boars rooted at trunk bases while fruit and coconuts lay about them. The herd now reads the

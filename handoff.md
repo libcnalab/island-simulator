@@ -79,6 +79,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 16: one shared wrack line that the beach crabs work and feed along (PLAN "Loop pass 16").
 - Pass 17: the monkeys walk to the fallen fruit and eat it (PLAN "Loop pass 17").
 - Pass 18: the boars forage for the fallen fruit and coconuts before the trunk bases (PLAN "Loop pass 18").
+- Pass 19: a coconut's thud startles the deer and goats within 30 m (PLAN "Loop pass 19").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

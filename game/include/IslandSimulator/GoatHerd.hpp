@@ -21,6 +21,8 @@ public:
     // reaction delay the rest of the herd lifts their heads within the wider range too.
     static constexpr float SentinelAlertDistance=20.0f;
     static constexpr float HerdReactionSeconds=.7f;
+    // A sudden sound (a coconut's thud) within this range makes a goat stand and face it.
+    static constexpr float StartleDistance=30.0f,StartleSeconds=6.0f;
     GoatHerd(const IslandTerrain& terrain,const JungleLayout& jungle,
         std::span<const CircularObstacle> obstacles);
     void Update(float dt,GoatPoint observer);
@@ -29,6 +31,9 @@ public:
     // Goats whose range reaches a stream bank; they walk there to drink.
     [[nodiscard]] std::size_t DrinkerCount() const noexcept;
     [[nodiscard]] bool SentinelAlert() const noexcept {return sentinelAlertSeconds_>0;}
+    // A sudden sound at a point; nearby goats stand alert facing it for a while.
+    void NoteDisturbance(float x,float z) noexcept;
+    [[nodiscard]] bool Startled() const noexcept {return disturbanceSeconds_>0;}
     [[nodiscard]] float SentinelAlertSeconds() const noexcept {return sentinelAlertSeconds_;}
 private:
     void FindDrinkingPoint(std::size_t index) noexcept;
@@ -50,5 +55,6 @@ private:
     };
     std::array<Intent,GoatHabitat::Count> intents_{};
     float sentinelAlertSeconds_=0;
+    float disturbanceX_=0,disturbanceZ_=0,disturbanceSeconds_=0;
 };
 }

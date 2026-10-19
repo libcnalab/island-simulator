@@ -37,6 +37,9 @@ namespace island
         // the wider range once the sentinel has stood alert for the reaction delay.
         static constexpr float SentinelAlertDistance = 24.0f;
         static constexpr float HerdReactionSeconds = .7f;
+        // A sudden sound (a coconut's thud) within this range makes a deer stand and face it.
+        static constexpr float StartleDistance = 30.0f;
+        static constexpr float StartleSeconds = 6.0f;
         // A clearing pair drifting further apart than this walks back together.
         static constexpr float CohesionDistance = 9.0f;
         static constexpr float FullSimulationDistance = 90.0f;
@@ -53,6 +56,9 @@ namespace island
         [[nodiscard]] std::size_t DrinkerCount() const noexcept;
         [[nodiscard]] bool DrinkPoint(std::size_t index, float& x, float& z) const noexcept;
         [[nodiscard]] bool SentinelAlert() const noexcept { return sentinelAlertSeconds_ > 0.0f; }
+        /** @brief A sudden sound at a point; nearby deer stand alert facing it for a while. */
+        void NoteDisturbance(float x, float z) noexcept;
+        [[nodiscard]] bool Startled() const noexcept { return disturbanceSeconds_ > 0.0f; }
         [[nodiscard]] float SentinelAlertSeconds() const noexcept { return sentinelAlertSeconds_; }
 
     private:
@@ -80,5 +86,6 @@ namespace island
         std::array<DeerHome, Count> homes_{};
         std::uint64_t frameIndex_ = 0U;
         float sentinelAlertSeconds_ = 0.0f;
+        float disturbanceX_ = 0.0f, disturbanceZ_ = 0.0f, disturbanceSeconds_ = 0.0f;
     };
 }
