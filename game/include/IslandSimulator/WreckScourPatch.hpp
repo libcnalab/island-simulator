@@ -41,7 +41,9 @@ public:
         const float leeAmount=std::clamp(0.5f+0.5f*lee,0.0f,1.0f);
         const float crest=std::lerp(SeaCrest,LeeCrest,leeAmount);
         const float decay=std::lerp(SeaDecay,LeeDecay,leeAmount);
-        const float cap=std::lerp(SeaCap,LeeCap,leeAmount);
+        // Only the shoreward quadrant may break the surface; abeam and seaward the cap is
+        // below the waterline however long the bar runs around the hull ends.
+        const float cap=std::lerp(SeaCap,LeeCap,std::clamp((lee-0.15f)/0.70f,0.0f,1.0f));
         // Irregular ripple of the bar edge from a cheap fixed-seed field.
         const float ripple=0.82f+0.18f*std::sin(along*0.9f+across*1.3f+1.7f)
             *std::cos(along*0.37f-across*0.61f);
