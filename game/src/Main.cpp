@@ -89,6 +89,7 @@ namespace
         case FixedViewpoint::StreamCascadeDetail: return "cascade";
         case FixedViewpoint::JettyDetail: return "jetty";
         case FixedViewpoint::BridgeDetail: return "bridge";
+        case FixedViewpoint::LookoutDetail: return "lookout";
         case FixedViewpoint::FallenLogDetail: return "log";
         case FixedViewpoint::HutDetail: return "hut";
         case FixedViewpoint::HutMaterialDetail: return "hut-material";
@@ -182,7 +183,7 @@ int main(const int argc, char* argv[])
                 std::cerr << "island-simulator: --viewpoint requires overview, bay, bay-ground, beach, jungle, snags, sapling, "
                              "east, headland, tide-pools, turtle-nest, cave, cave-top, cave-inside, cave-back, bunker, bunker-corridor, bunker-computers, bunker-reactor, bunker-service, bunker-end, campfire, campfire-wide, resident, bear, clearing-edge, canopy (inspection only), west, stream, wetland, mangroves, grass, ground, ground-broadleaf, bush, litter, contact, movement, palms, fallen-palm, broken-palm, water, "
                              "wet-sand, current, distant, props, driftwood, reef, reef-habitat, fronds, birds, bats, bat-roost, fish, "
-                             "shark, dolphins, monkeys, monkey-tree, monkey-climb, shipwreck, shipwreck-wide, tracks, fruit, cascade, jetty, bridge, log, hut, hut-material, helicopter, helicopter-inside, helicopter-approach, crabs, hermit-crabs, coconut-crabs, crocodiles, boars, goats, spiders, spiders-bright, spider-web, snakes, snake-head, tree-snakes, butterflies, geckos, skinks, dragonflies, frogs, mice, rats, flies, ants, cicadas, turtles, or traversal\n";
+                             "shark, dolphins, monkeys, monkey-tree, monkey-climb, shipwreck, shipwreck-wide, tracks, fruit, cascade, jetty, bridge, lookout, log, hut, hut-material, helicopter, helicopter-inside, helicopter-approach, crabs, hermit-crabs, coconut-crabs, crocodiles, boars, goats, spiders, spiders-bright, spider-web, snakes, snake-head, tree-snakes, butterflies, geckos, skinks, dragonflies, frogs, mice, rats, flies, ants, cicadas, turtles, or traversal\n";
                 return 2;
             }
             const std::string_view name(argv[index]);
@@ -324,6 +325,8 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::JettyDetail;
             } else if (name == "bridge") {
                 viewpoint = island::FixedViewpoint::BridgeDetail;
+            } else if (name == "lookout") {
+                viewpoint = island::FixedViewpoint::LookoutDetail;
             } else if (name == "log") {
                 viewpoint = island::FixedViewpoint::FallenLogDetail;
             } else if (name == "hut") {

@@ -94,6 +94,7 @@
 #include "IslandSimulator/ShipwreckRenderer.hpp"
 #include "IslandSimulator/HutRenderer.hpp"
 #include "IslandSimulator/BridgeRenderer.hpp"
+#include "IslandSimulator/LookoutRenderer.hpp"
 #include "IslandSimulator/JettyRenderer.hpp"
 #include "IslandSimulator/UnderwaterEffectRenderer.hpp"
 #include "IslandSimulator/HelicopterLayout.hpp"
@@ -194,6 +195,7 @@ namespace island
         StreamCascadeDetail,
         JettyDetail,
         BridgeDetail,
+        LookoutDetail,
         HutDetail,
         HutMaterialDetail,
         HelicopterDetail,
@@ -373,6 +375,7 @@ namespace island
         std::optional<HutPlacement> hutPlacement_;
         std::optional<JettyPlacement> jettyPlacement_;
         std::optional<BridgePlacement> bridgePlacement_;
+        std::optional<LookoutPlacement> lookoutPlacement_;
         std::optional<HelicopterPlacement> helicopterPlacement_;
         CampfireLayout campfireLayout_{terrain_};
         BunkerLayout bunkerLayout_{terrain_};
@@ -444,6 +447,7 @@ namespace island
         std::unique_ptr<HutRenderer> hutRenderer_;
         std::unique_ptr<JettyRenderer> jettyRenderer_;
         std::unique_ptr<BridgeRenderer> bridgeRenderer_;
+        std::unique_ptr<LookoutRenderer> lookoutRenderer_;
         std::unique_ptr<UnderwaterEffectRenderer> underwaterEffect_;
         float lastSubmergedDepth_ = 0.0f, bubbleBurst_ = 0.0f;
         float seaForageSeconds_ = 0.0f;

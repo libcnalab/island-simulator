@@ -46,6 +46,28 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 8 (2026-10-20) — the resident's lookout tower
+
+The second half of backlog item 14: a walkable lookout. A tree platform would need climbing
+through the trunk's own collision proxy, so the lookout is a post tower in the hut clearing:
+`LookoutLayout::FindInWorld` fans eighteen bearings round the hut's left side and back at 8.4 m
+and takes the first whose platform square and ramp run lie on ground with less than 0.9 m
+relief (the rendered surface's height range), above the 30 m shore distance, clear of every
+world obstacle by 1.2 m, with a ramp no steeper than 0.47 rad. Four posts sunk 0.45 m carry a
+2.5 m plank platform 3.2 m above the highest post ground with two-bar rails on three sides, and
+a 7.6 m cleated ramp runs from the open side down to the ground away from the hut.
+`LookoutPlacement::SupportHeight` lifts the walker on the platform and along the ramp
+(`PlayerMotion::SetLookout`, after the other structure supports), the four posts join the world
+obstacles, and the decks ring wooden underfoot. `LookoutRenderer` (784 triangles, one
+vertex-coloured draw on the shared builder, sun-shadow caster) draws posts, braces, planks,
+rails, stringers, planks and cleats. A `lookout` QA viewpoint stands beside the ramp foot
+looking up it. The startup log adds "resident's lookout tower beside the hut carries a railed
+platform the walker climbs by a cleated ramp", pinned by the native capture tool. New core
+checks: a site exists beside the authored hut clearing, the platform stands three metres up, the
+ramp carries the walker between the ground and the platform, its slope is within the walk limit,
+and the support leaves the ground beside it alone. Inspected native `20261019T225658Z-lookout`
+shows the ramp, posts and railed platform with the hut behind; `hut` still passes.
+
 ## Loop pass 7 (2026-10-20) — seabird plunge dives
 
 A seabird circling low over a school now strikes: once settled (`huntAmount` above 0.95) it

@@ -14,6 +14,7 @@ namespace island
     class LocalTerrainPatch;
     struct JettyPlacement;
     struct BridgePlacement;
+    struct LookoutPlacement;
     class CaveLayout;
     class CaveGroundPatch;
     class BunkerLayout;
@@ -125,6 +126,7 @@ namespace island
         // Immutable jetty deck; null disables it. The deck carries the walker over water.
         void SetJetty(const JettyPlacement* jetty) noexcept {jetty_=jetty;}
         void SetBridge(const BridgePlacement* bridge) noexcept {bridge_=bridge;}
+        void SetLookout(const LookoutPlacement* lookout) noexcept {lookout_=lookout;}
         [[nodiscard]] float SubmergedDepth() const noexcept { return swimDepth_.SubmergedDepth(); }
 
         /**
@@ -225,6 +227,7 @@ namespace island
         const HelicopterPlacement* helicopter_ = nullptr;
         const JettyPlacement* jetty_ = nullptr;
         const BridgePlacement* bridge_ = nullptr;
+        const LookoutPlacement* lookout_ = nullptr;
         SwimDepth swimDepth_;
         bool swimAscend_ = false, swimDescend_ = false;
         float velocityX_ = 0.0f;

@@ -3,6 +3,7 @@
 #include "IslandSimulator/WorldCollisionGrid.hpp"
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include "IslandSimulator/BridgeLayout.hpp"
+#include "IslandSimulator/LookoutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/LocalTerrainPatch.hpp"
 #include "IslandSimulator/CaveGroundPatch.hpp"
@@ -97,6 +98,8 @@ namespace island
                 sample.height=jetty_->SupportHeight(px,pz,sample.height);
             if(bridge_)
                 sample.height=bridge_->SupportHeight(px,pz,sample.height);
+            if(lookout_)
+                sample.height=lookout_->SupportHeight(px,pz,sample.height);
             contact.height = std::max(contact.height, sample.height);
             contact.maximumSlopeRadians = std::max(contact.maximumSlopeRadians,
                                                     sample.slopeRadians);

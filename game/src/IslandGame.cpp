@@ -1,5 +1,6 @@
 #include "IslandSimulator/IslandGame.hpp"
 #include "IslandSimulator/BridgeLayout.hpp"
+#include "IslandSimulator/LookoutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/StreamCourse.hpp"
 #include "IslandSimulator/WreckScourPatch.hpp"
@@ -189,6 +190,7 @@ namespace island
             case FixedViewpoint::StreamCascadeDetail: return "cascade";
             case FixedViewpoint::JettyDetail: return "jetty";
             case FixedViewpoint::BridgeDetail: return "bridge";
+            case FixedViewpoint::LookoutDetail: return "lookout";
             case FixedViewpoint::FallenLogDetail: return "log";
             case FixedViewpoint::HutDetail: return "hut";
             case FixedViewpoint::HutMaterialDetail: return "hut-material";
@@ -333,6 +335,9 @@ namespace island
             for(const auto& obstacle:jettyPlacement_->CanoeObstacles()) worldObstacles.push_back(obstacle);
             birdPerchLayout_.AddSite(jettyPlacement_->MooringPerch());
         }
+        if(hutPlacement_) lookoutPlacement_=LookoutLayout::FindInWorld(terrain_,*hutPlacement_,worldObstacles);
+        if(lookoutPlacement_)
+            for(const auto& obstacle:lookoutPlacement_->PostObstacles()) worldObstacles.push_back(obstacle);
         birdFlock_.SetPerchSites(birdPerchLayout_.Sites());
         butterflyMeadow_.SetFlowerBushes(jungleLayout_.Bushes());
         bridgePlacement_=BridgeLayout::FindInWorld(terrain_,StreamCourse(terrain_));
@@ -342,6 +347,7 @@ namespace island
         playerMotion_.SetHelicopter(&*helicopterPlacement_);
         if(jettyPlacement_) playerMotion_.SetJetty(&*jettyPlacement_);
         if(bridgePlacement_) playerMotion_.SetBridge(&*bridgePlacement_);
+        if(lookoutPlacement_) playerMotion_.SetLookout(&*lookoutPlacement_);
         std::vector<CircularObstacle> wildlifeObstacles(worldObstacles);
         // Keep complete animal bodies out of the authored rotor/clearing footprint,
         // not merely outside the fuselage collision proxy. Goat habitat selection
@@ -1365,6 +1371,18 @@ namespace island
             yaw_ = std::atan2(direction.X, direction.Z);
             pitch_ = std::atan2(direction.Y, std::hypot(direction.X, direction.Z));
             std::cout << "island-simulator: fruit QA camera frames a fruit-bearing canopy crown\n";
+        } else if (viewpoint_ == FixedViewpoint::LookoutDetail) {
+            // Stand beside the ramp foot and look up it to the railed platform.
+            if(!lookoutPlacement_) throw std::runtime_error("Lookout QA requires a valid site");
+            const auto& l=*lookoutPlacement_;
+            const float cameraX=l.x+l.dirX*(LookoutPlacement::Half+LookoutPlacement::RampLength+3.0f)+l.AcrossX()*4.0f;
+            const float cameraZ=l.z+l.dirZ*(LookoutPlacement::Half+LookoutPlacement::RampLength+3.0f)+l.AcrossZ()*4.0f;
+            cameraPosition_=Vector3(cameraX,terrain_.Height(cameraX,cameraZ)+PlayerMotion::EyeHeight,cameraZ);
+            const Vector3 target(l.x,l.platformY+0.6f,l.z);
+            const Vector3 direction=target-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: lookout QA camera looks up the ramp at the platform\n";
         } else if (viewpoint_ == FixedViewpoint::BridgeDetail) {
             // Stand on the left bank a little downstream and look across the span.
             if(!bridgePlacement_) throw std::runtime_error("Bridge QA requires a valid site");
@@ -2065,6 +2083,7 @@ namespace island
         if(hutPlacement_) hutRenderer_=std::make_unique<HutRenderer>(device,*hutPlacement_);
         if(jettyPlacement_) jettyRenderer_=std::make_unique<JettyRenderer>(device,*jettyPlacement_);
         if(bridgePlacement_) bridgeRenderer_=std::make_unique<BridgeRenderer>(device,*bridgePlacement_);
+        if(lookoutPlacement_) lookoutRenderer_=std::make_unique<LookoutRenderer>(device,*lookoutPlacement_);
         helicopterRenderer_=std::make_unique<HelicopterRenderer>(device,*helicopterPlacement_);
         palmRenderer_ = std::make_unique<PalmRenderer>(
             device, vegetationLayout_, qualityProfile_.vegetationMaximumDistanceScale);
@@ -3539,7 +3558,8 @@ namespace island
         if (!std::isfinite(position.x) || !std::isfinite(position.z)) return FootstepSurface::None;
         // Plank decks ring hollow underfoot wherever they carry the walker.
         if ((jettyPlacement_ && jettyPlacement_->OnDeck(position.x, position.z))
-            || (bridgePlacement_ && bridgePlacement_->OnDeck(position.x, position.z)))
+            || (bridgePlacement_ && bridgePlacement_->OnDeck(position.x, position.z))
+            || (lookoutPlacement_ && lookoutPlacement_->OnDeck(position.x, position.z)))
             return FootstepSurface::Wood;
         const TerrainSample sample = terrain_.Sample(position.x, position.z);
         // Ankle-deep water before the swim threshold wades; the scheduler stays silent once
@@ -4093,6 +4113,7 @@ namespace island
                 if (hutRenderer_) hutRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (jettyRenderer_) jettyRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (bridgeRenderer_) bridgeRenderer_->DrawSunShadow(*sunShadowMap_);
+                if (lookoutRenderer_) lookoutRenderer_->DrawSunShadow(*sunShadowMap_);
                 shipwreckRenderer_->DrawSunShadow(*sunShadowMap_);
                 helicopterRenderer_->DrawSunShadow(*sunShadowMap_);
                 sunShadowMap_->End();
@@ -4147,6 +4168,10 @@ namespace island
         if(bridgeRenderer_) {
             GpuDiagnosticScope gpuPass("bridge");
             bridgeRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
+        }
+        if(lookoutRenderer_) {
+            GpuDiagnosticScope gpuPass("lookout");
+            lookoutRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }
         if(hutRenderer_) {
             GpuDiagnosticScope gpuPass("hut");

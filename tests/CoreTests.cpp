@@ -38,6 +38,7 @@
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
+#include "IslandSimulator/LookoutLayout.hpp"
 #include "IslandSimulator/BridgeLayout.hpp"
 #include "IslandSimulator/ButterflyMeadow.hpp"
 #include "IslandSimulator/DolphinPod.hpp"
@@ -7451,6 +7452,33 @@ int main()
             }
         }
         Check(visitedBush, "a butterfly hovers at blossom height over the flowering bush");
+    }
+
+    {
+        // The lookout tower beside the hut clearing: a site exists, the platform stands three
+        // metres up, the ramp is walkable, and the support acts only on the deck and ramp.
+        const island::IslandTerrain terrain;
+        island::HutPlacement hut{};
+        hut.x=island::HutLayout::PreferredClearingX; hut.z=island::HutLayout::PreferredClearingZ;
+        hut.yawRadians=std::atan2(hut.x,hut.z);
+        const auto lookout=island::LookoutLayout::FindInWorld(terrain,hut,{});
+        Check(lookout.has_value(),"a lookout tower site exists beside the hut clearing");
+        if(lookout) {
+            const float ground=terrain.Height(lookout->x,lookout->z);
+            Check(lookout->SupportHeight(lookout->x,lookout->z,ground)>=ground+3.0f,
+                  "the lookout platform stands three metres above the ground");
+            const float midU=island::LookoutPlacement::Half+island::LookoutPlacement::RampLength*0.5f;
+            const float midX=lookout->x+lookout->dirX*midU,midZ=lookout->z+lookout->dirZ*midU;
+            const float midGround=terrain.Height(midX,midZ);
+            const float midSupport=lookout->SupportHeight(midX,midZ,midGround);
+            Check(lookout->OnRamp(midX,midZ)&&midSupport>midGround&&midSupport<lookout->platformY,
+                  "the ramp carries the walker between the ground and the platform");
+            Check(std::atan2(lookout->platformY-lookout->rampFootY,island::LookoutPlacement::RampLength)
+                  <island::PlayerMotion::MaximumWalkSlopeRadians,"the lookout ramp is walkable");
+            const float offX=lookout->x+lookout->AcrossX()*3.0f,offZ=lookout->z+lookout->AcrossZ()*3.0f;
+            Check(!lookout->OnDeck(offX,offZ)&&lookout->SupportHeight(offX,offZ,2.0f)==2.0f,
+                  "the lookout support leaves the ground beside it alone");
+        }
     }
 
     {
