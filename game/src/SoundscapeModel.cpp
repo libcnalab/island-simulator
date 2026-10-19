@@ -809,6 +809,31 @@ namespace island
         return Quantize(samples, 0.56f);
     }
 
+    AmbientLoop GenerateBirdSplash()
+    {
+        // Heavier and longer than a wading step: a hard strike, a spray, then the water
+        // closing over it.
+        constexpr std::size_t frameCount = static_cast<std::size_t>(AmbientSampleRate * 7 / 10);
+        const std::vector<float> noise = Noise(0x5e1a7b03U, frameCount);
+        const std::vector<float> droplets = CircularSmooth(noise, 2U);
+        const std::vector<float> splash = CircularSmooth(noise, 17U);
+        const std::vector<float> body = CircularSmooth(noise, 230U);
+        std::vector<float> samples(frameCount);
+        for (std::size_t index = 0; index < samples.size(); ++index) {
+            const float phase = static_cast<float>(index) / static_cast<float>(samples.size() - 1U);
+            const float attack = SmoothStep(0.0f, 0.012f, phase);
+            const float release = 1.0f - SmoothStep(0.36f, 1.0f, phase);
+            const float strike = std::exp(-phase * 9.0f);
+            const float spray = std::exp(-std::pow((phase - 0.16f) / 0.11f, 2.0f));
+            samples[index] = attack * release
+                * (droplets[index] * (0.22f + spray * 0.55f)
+                   + splash[index] * (0.45f + strike * 0.65f) + body[index] * 0.38f);
+        }
+        samples.front() = 0.0f;
+        samples.back() = 0.0f;
+        return Quantize(samples, 0.70f);
+    }
+
     AmbientLoop GenerateFrogCall(const std::uint8_t variant)
     {
         constexpr std::size_t frameCount = static_cast<std::size_t>(

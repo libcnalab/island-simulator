@@ -96,6 +96,8 @@ namespace island
         void SetShipwreckSource(float x, float y, float z) noexcept;
         /** @brief The stream cascade lip; its white water carries further than the quiet reaches. */
         void SetStreamCascade(float x, float z) noexcept;
+        /** @brief A seabird has just struck the water here; played once when the slot is free. */
+        void NoteBirdSplash(float x, float y, float z) noexcept;
 
         /** @brief Supplies the sampled portal elevation for underground acoustic zoning. */
         void SetBunkerSource(float entranceGroundY) noexcept;
@@ -247,6 +249,9 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> parrotCallEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> doveCallEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> doveCallAlternateEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> birdSplashEffect_;
+        WildlifeAudioSource pendingSplash_;
+        float pendingSplashSeconds_ = 0.0f;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>
             parrotCallAlternateEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> monkeyCallEffect_;

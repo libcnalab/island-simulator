@@ -148,6 +148,13 @@ namespace island
 
     Soundscape::~Soundscape() = default;
 
+    void Soundscape::NoteBirdSplash(const float x, const float y, const float z) noexcept
+    {
+        if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) return;
+        pendingSplash_ = {true, x, y, z, 0U};
+        pendingSplashSeconds_ = 1.5f;
+    }
+
     void Soundscape::SetStreamCascade(const float x, const float z) noexcept
     {
         if (std::isfinite(x) && std::isfinite(z)) streamCascade_ = {x, z, true};
@@ -350,6 +357,8 @@ namespace island
             doveCallEffect_->setNameProperty("Procedural fruit dove coo");
             doveCallAlternateEffect_ = CreateOneShotSoundEffect(GenerateDoveCallAlternate());
             doveCallAlternateEffect_->setNameProperty("Procedural fruit dove coo alternate");
+            birdSplashEffect_ = CreateOneShotSoundEffect(GenerateBirdSplash());
+            birdSplashEffect_->setNameProperty("Procedural seabird plunge splash");
             monkeyCallEffect_ = CreateOneShotSoundEffect(GenerateMonkeyCall());
             monkeyCallEffect_->setNameProperty("Procedural monkey contact call");
             monkeyCallAlternateEffect_ = CreateOneShotSoundEffect(
@@ -550,6 +559,7 @@ namespace island
             parrotCallEffect_.reset();
             doveCallAlternateEffect_.reset();
             doveCallEffect_.reset();
+            birdSplashEffect_.reset();
             birdCallAlternateEffect_.reset();
             birdCallEffect_.reset();
             waterMovementEffect_.reset();
@@ -1122,6 +1132,20 @@ namespace island
             wildlifeCall = {WildlifeCallType::Fly, flyBuzz.variant,
                 flyBuzz.volume, flyBuzz.pitch, flyBuzz.source};
         }
+        // A seabird's strike is played once, soon after it happens, when the slot is free;
+        // it carries about as far as a gull's call and is dropped if it cannot play in time.
+        if (pendingSplash_.available) {
+            pendingSplashSeconds_ -= safeDelta;
+            const float distance = std::hypot(std::hypot(pendingSplash_.x - listenerState.x,
+                pendingSplash_.z - listenerState.z), pendingSplash_.y - listenerState.y);
+            const float falloff = 1.0f - std::clamp((distance - 12.0f) / 70.0f, 0.0f, 1.0f);
+            if (wildlifeSlotAvailable && wildlifeCall.type == WildlifeCallType::None && falloff > 0.02f) {
+                wildlifeCall = {WildlifeCallType::Splash, 0U, 0.36f * falloff, -0.04f, pendingSplash_};
+                pendingSplash_.available = false;
+            } else if (pendingSplashSeconds_ <= 0.0f || falloff <= 0.02f) {
+                pendingSplash_.available = false;
+            }
+        }
         if (wildlifeCall.type == WildlifeCallType::None) {
             return;
         }
@@ -1162,6 +1186,8 @@ namespace island
             wildlifeEffect = cicadaEffects_.at(wildlifeCall.variant).get();
         } else if (wildlifeCall.type == WildlifeCallType::Fly) {
             wildlifeEffect = flyBuzzEffects_.at(wildlifeCall.variant).get();
+        } else if (wildlifeCall.type == WildlifeCallType::Splash) {
+            wildlifeEffect = birdSplashEffect_.get();
         }
         if (!wildlifeEffect) {
             return;
@@ -1216,7 +1242,8 @@ namespace island
                 :wildlifeCall.type==WildlifeCallType::Bear?1.60f
                 :wildlifeCall.type==WildlifeCallType::Goat?1.25f
                 :wildlifeCall.type==WildlifeCallType::Cicada?1.40f
-                :wildlifeCall.type==WildlifeCallType::Fly?.90f:1.50f;
+                :wildlifeCall.type==WildlifeCallType::Fly?.90f
+                :wildlifeCall.type==WildlifeCallType::Splash?.75f:1.50f;
             if (wildlifeCall.type == WildlifeCallType::Bird) {
                 ++playedBirdCallCount_;
                 if (playedBirdCallCount_ == 1) {
@@ -1393,6 +1420,7 @@ namespace island
         parrotCallEffect_.reset();
         doveCallAlternateEffect_.reset();
         doveCallEffect_.reset();
+        birdSplashEffect_.reset();
         birdCallAlternateEffect_.reset();
         birdCallEffect_.reset();
         waterMovementEffect_.reset();

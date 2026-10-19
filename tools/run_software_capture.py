@@ -959,7 +959,7 @@ def main():
                 raise RuntimeError("current gust fronts are missing; check for a stale executable")
             if "boars wallow at the bank and carry the mud on their legs and bellies" not in diagnostics:
                 raise RuntimeError("current boar wallow is missing; check for a stale executable")
-            if "circling seabirds plunge-dive every nine seconds and each strike raises a foam ring on the water" not in diagnostics:
+            if "circling seabirds plunge-dive every nine seconds and each strike raises a foam ring on the water and a positional splash" not in diagnostics:
                 raise RuntimeError("current seabird plunge dive is missing; check for a stale executable")
             if "resident's lookout tower beside the hut carries a railed platform the walker climbs by a cleated ramp" not in diagnostics:
                 raise RuntimeError("current lookout tower is missing; check for a stale executable")

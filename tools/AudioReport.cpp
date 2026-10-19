@@ -226,6 +226,8 @@ namespace
                          island::GenerateDoveCall()});
         clips.push_back({"dove coo B", "dove-coo-b.wav", false, 29767U,
                          island::GenerateDoveCallAlternate()});
+        clips.push_back({"seabird splash", "seabird-splash.wav", false, 15435U,
+                         island::GenerateBirdSplash()});
         clips.push_back({"monkey call A", "monkey-call-a.wav", false, 39690U,
                          island::GenerateMonkeyCall()});
         clips.push_back({"monkey call B", "monkey-call-b.wav", false, 46305U,

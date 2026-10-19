@@ -125,6 +125,9 @@ namespace island
     /** @brief Generates the dove's longer three-note advertising coo. */
     [[nodiscard]] AmbientLoop GenerateDoveCallAlternate();
 
+    /** @brief Generates a seabird's plunge: a heavy strike with a spray of droplets. */
+    [[nodiscard]] AmbientLoop GenerateBirdSplash();
+
     /** @brief Generates one restrained monkey contact call for the interior jungle. */
     [[nodiscard]] AmbientLoop GenerateMonkeyCall();
 
@@ -302,7 +305,8 @@ namespace island
         Goat,
         Frog,
         Cicada,
-        Fly
+        Fly,
+        Splash
     };
 
     /** @brief Nearest currently eligible world-space source for one wildlife species. */

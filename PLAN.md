@@ -46,6 +46,30 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Portable evidence for backlog items 7–20 (2026-10-20)
+
+The Web package rebuilt after item 20 (`cmake --build --preset web-webgl2`) runs the eleven
+Chrome 155/SwiftShader scopes `birds`, `deer`, `goats`, `boars`, `monkeys`, `fish`, `dolphins`,
+`shark`, `hut`, `stream` and `terrain` to "Software browser suite passed; no new kernel GPU
+faults detected" (the monkeys and terrain scopes needed `--timeout 600`; their first runs
+exceeded the 420 s limit under concurrent native test load, not for any rendering reason).
+Evidence directories: `20261019T215750.385937Z-chrome-birds`, `20261019T220256.126092Z-chrome-deer`, `20261019T220559.399596Z-chrome-goats`, `20261019T221111.237121Z-chrome-boars`, `20261019T221405.134950Z-chrome-monkeys`, `20261019T222105.605281Z-chrome-fish`, `20261019T222216.204142Z-chrome-dolphins`, `20261019T222339.767242Z-chrome-shark`, `20261019T222626.717806Z-chrome-hut`, `20261019T223317.850189Z-chrome-stream`, `20261019T223636.618200Z-chrome-terrain`, `20261019T224919.206318Z-chrome-monkeys`. The Android
+`assembleDebug` and `lintDebug` on the pinned Sharp Runtime pass (`app-debug.apk` sha256
+`cd308ae41d542a14…`). The loop passes since then change native-only behaviour and shaders that
+the same scopes cover; their portable runs are batched with the next Web rebuild.
+
+## Loop pass 9 (2026-10-20) — the strike's splash
+
+The plunge of pass 7 was silent. `GenerateBirdSplash` synthesises a 0.7 s strike (a hard
+attack, a spray of droplets peaking at 0.16 s, the water closing over it), the game notes every
+new `DiveCount` to the soundscape (`NoteBirdSplash` at the strike point on the water surface),
+and the wildlife one-shot slot plays it as `WildlifeCallType::Splash` within 1.5 s when free,
+at 0.36 falling to nothing between 12 and 82 m, holding the slot 0.75 s; a strike that cannot
+play in time or is out of earshot is dropped rather than queued. The clip joins the audio
+inventory (56 clips, 7,278,700 PCM bytes pinned). The plunge diagnostic now ends "and a
+positional splash", pinned by the native capture tool; `IslandAudioPreviewExport` and the core
+checks pass, and native `birds` passes. Human listening remains an operator check.
+
 ## Loop pass 8 (2026-10-20) — the resident's lookout tower
 
 The second half of backlog item 14: a walkable lookout. A tree platform would need climbing
