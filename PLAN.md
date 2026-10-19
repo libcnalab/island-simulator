@@ -46,6 +46,20 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 14 (2026-10-20) — gusts shake coconuts from the palms
+
+The gust fronts of pass 5, the coconut palms and the fallen coconuts of item 17 now meet.
+`FallingFruitField::UpdateCoconuts` watches every living fruiting palm (forms 1 and 3) within
+80 m of the observer: when a gust front arrives over it (the shared `WindGust::Strength`
+crossing 0.85), a deterministic per-palm, per-front draw drops a nut one time in ten. The nut
+starts under the crown (the mesh's frond base at 9.4 m plus the form's step, scaled, leaned
+downwind), falls with the same gravity, bounce and rest as the monkeys' fruit, lies 240 s, and
+draws as a larger husk-brown sphere in the same dynamic batch. The fruit diagnostic now ends
+"gust fronts shake coconuts from the nearer palms", pinned by the native capture tool. New core
+check: one living fruiting palm beside the observer sheds at least one nut from above six metres
+within four simulated minutes. Native `palms` passes. A thud for the landing is a candidate for
+a later pass.
+
 ## Loop pass 13 (2026-10-20) — the resident's footprints on the beach
 
 The animal track lines of backlog item 10 never showed a human. `JettyPlacement::FootprintLines`

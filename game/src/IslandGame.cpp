@@ -2102,6 +2102,7 @@ namespace island
         if(bridgePlacement_) bridgeRenderer_=std::make_unique<BridgeRenderer>(device,*bridgePlacement_);
         if(lookoutPlacement_) lookoutRenderer_=std::make_unique<LookoutRenderer>(device,*lookoutPlacement_);
         fallingFruitRenderer_=std::make_unique<FallingFruitRenderer>(device);
+        fallingFruit_.SetPalms(vegetationLayout_.Palms());
         helicopterRenderer_=std::make_unique<HelicopterRenderer>(device,*helicopterPlacement_);
         palmRenderer_ = std::make_unique<PalmRenderer>(
             device, vegetationLayout_, qualityProfile_.vegetationMaximumDistanceScale);
@@ -2562,6 +2563,7 @@ namespace island
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
         }
         fallingFruit_.Update(deltaSeconds, monkeyTroop_.Monkeys());
+        fallingFruit_.UpdateCoconuts(seaForageSeconds_, cameraPosition_.X, cameraPosition_.Z);
         {
             // The seabirds' school of the moment: the schools take turns every ninety seconds
             // so the low circling moves around the coast instead of fixing on one bay.

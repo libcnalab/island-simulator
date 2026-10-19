@@ -26,7 +26,7 @@ FallingFruitRenderer::FallingFruitRenderer(GraphicsDevice& device)
     effect_->setFogEnabledProperty(true);
     effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
     effect_->setFogStartProperty(300.0f);effect_->setFogEndProperty(760.0f);
-    const char* message="island-simulator: fruit knocked loose by picking monkeys drops from the crown and lies under the tree";
+    const char* message="island-simulator: fruit knocked loose by picking monkeys drops from the crown and lies under the tree; gust fronts shake coconuts from the nearer palms";
     std::cout<<message<<'\n';MirrorRuntimeDiagnosticToPlatformLog(message);
 }
 
@@ -39,10 +39,11 @@ void FallingFruitRenderer::Draw(const Matrix& view,const Matrix& projection,cons
     for(const auto& f:fruit) {
         if(!f.active||!std::isfinite(f.x)||!std::isfinite(f.y)||!std::isfinite(f.z)) continue;
         if((Vector3(f.x,f.y,f.z)-camera).LengthSquared()>90.0f*90.0f) continue;
-        const Vector3 base=f.variant==2?Vector3(216,152,54):Vector3(146,54,80);
+        const bool coconut=f.variant==FallingFruitField::CoconutVariant;
+        const Vector3 base=coconut?Vector3(118,96,58):f.variant==2?Vector3(216,152,54):Vector3(146,54,80);
         // Lying fruit darkens a little as it ages.
         const float age=f.restSeconds>0?std::min(1.0f,f.restSeconds/FallingFruitField::RestSeconds):0.0f;
-        const float radius=0.09f;
+        const float radius=coconut?0.15f:0.09f;
         const Vector3 centre(f.x,f.y+radius*0.9f,f.z);
         const auto point=[&](int ring,int seg){
             const float v=-0.5f*Pi+Pi*static_cast<float>(ring)/4.0f;

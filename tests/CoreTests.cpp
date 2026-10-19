@@ -7479,6 +7479,18 @@ int main()
             }
         }
         Check(field.DropCount()>=3U,"a picking monkey knocks several fruit loose within half a minute");
+        // Gust fronts over coconut palms: with one living fruiting palm beside the observer,
+        // the fronts passing over four minutes shake at least one nut loose, from the crown.
+        const std::vector<island::PalmPlacement> palms{{-60.0f,terrain.Height(-60.0f,-60.0f),-60.0f,0.3f,1.0f,60.0f,0.0f,1U,island::PalmCondition::Living}};
+        island::FallingFruitField grove(terrain);
+        grove.SetPalms(palms);
+        float nutTop=-1e9f;
+        for(int step=0;step<4800;++step) {
+            grove.UpdateCoconuts(static_cast<float>(step)*0.05f,-60.0f,-58.0f);
+            grove.Update(0.05f,{});
+            for(const auto& f:grove.Fruit()) if(f.active&&f.variant==island::FallingFruitField::CoconutVariant) nutTop=std::max(nutTop,f.y);
+        }
+        Check(grove.CoconutDropCount()>=1U&&nutTop>palms[0].y+6.0f,"gust fronts shake a coconut from the palm crown within four minutes");
         Check(highest>monkey.selectedTree.y+3.0f,"the fruit starts up in the crown");
         Check(landed,"the fruit lands on the ground under the tree and lies there");
     }

@@ -963,7 +963,7 @@ def main():
                 raise RuntimeError("current seabird plunge dive is missing; check for a stale executable")
             if "resident's lookout tower beside the hut carries a railed platform the walker climbs by a cleated ramp and a rail-post perch for the birds" not in diagnostics:
                 raise RuntimeError("current lookout tower is missing; check for a stale executable")
-            if "fruit knocked loose by picking monkeys drops from the crown and lies under the tree" not in diagnostics:
+            if "fruit knocked loose by picking monkeys drops from the crown and lies under the tree; gust fronts shake coconuts from the nearer palms" not in diagnostics:
                 raise RuntimeError("current falling fruit is missing; check for a stale executable")
             if "resident tour visits 1 landmark(s): the jetty foot joins the campfire, path and clearing calls" not in diagnostics:
                 raise RuntimeError("current resident jetty call is missing; check for a stale executable")
