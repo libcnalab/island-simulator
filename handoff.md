@@ -58,6 +58,8 @@ Loop log (propose → implement, continues until the operator stops the session)
   (PLAN "Loop pass 2").
 - Pass 3: seabirds leave their high orbits to circle low over the fish school of the moment
   (PLAN "Loop pass 3").
+- Pass 4: a broken high-tide wrack line of weed, twigs and shell on the upper beach
+  (PLAN "Loop pass 4").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

@@ -100,6 +100,8 @@ namespace island
             "island-simulator: low coastal cliffs retain salt-worn mineral colour, distance-stable macro strata, drainage streaks, and cool open-sky fill";
         constexpr std::string_view RippleTrainDiagnostic =
             "island-simulator: seabed ripples stay below the waterline in short near trains and beach flecks fade with the ground footprint";
+        constexpr std::string_view WrackLineDiagnostic =
+            "island-simulator: beaches carry a broken high-tide wrack line of stranded weed, twigs and shell";
         constexpr std::string_view DappleFleckDiagnostic =
             "island-simulator: shaded forest floor carries drifting leaf-gap sun flecks";
         constexpr std::string_view SeabedCausticDiagnostic =
@@ -436,6 +438,32 @@ void main()
         float drySubstrate = sand
             * (1.0 - smoothstep(18.0, 58.0, distanceToCamera))
             * smoothstep(1.4, 4.8, signedShoreDistance) * fleckVisibility;
+
+        // The wrack line: the last high tide's strandings along the upper beach, a band a
+        // few metres inland that the broad fields break into drifts and gaps. Dark weed
+        // strands lie shore-parallel, with pale shell grit and a few twigs among them.
+        float wrackCentre = 5.4 + broad * 2.6 + medium * 0.6;
+        float wrackBand = 1.0 - smoothstep(0.70, 1.60, abs(signedShoreDistance - wrackCentre)
+            + medium * 0.35);
+        float wrackDrift = smoothstep(-0.02, 0.18, valueNoise(p * 0.21 + vec2(31.3, -17.9)) + broad * 0.4);
+        float wrack = sand * wrackBand * wrackDrift * smoothstep(0.12, 0.40, vWorld.y)
+            * (1.0 - smoothstep(26.0, 64.0, distanceToCamera));
+        if (wrack > 0.0) {
+            // Strands lie along the shore: slow along the coast arc, fast across the shore
+            // distance, so each reads as a stranded ribbon of weed.
+            vec2 wrackArc = p / max(length(p), 1.0) * 250.0;
+            vec2 strandGrid = vec2(wrackArc.x * 0.42 + wrackArc.y * 0.17 + signedShoreDistance * 0.9,
+                                   signedShoreDistance * 6.5 + broad * 3.0);
+            float strand = valueNoise(strandGrid + vec2(7.7, 2.1));
+            float weed = smoothstep(0.02, 0.24, strand) * (1.0 - smoothstep(0.03, 0.10, groundPixelWidth));
+            float shellGrit = groundFleck(p, 2.4, vec2(5.9, -21.3), 0.72) * fleckVisibility;
+            float twig = groundFleck(p, 0.65, vec2(-13.1, 8.4), 0.90) * fleckVisibility;
+            color = mix(color, vec3(0.16, 0.14, 0.07) * vGroundLight, weed * wrack * 0.90);
+            color = mix(color, vec3(0.86, 0.80, 0.64) * vGroundLight, shellGrit * wrack * 0.55);
+            color = mix(color, vec3(0.38, 0.30, 0.19) * vGroundLight, twig * wrack * 0.65);
+            // The band itself is a little darker and damper than the dry sand around it.
+            color *= 1.0 - wrack * 0.16;
+        }
         if (drySubstrate > 0.0) {
             float darkPebble = groundFleck(p, 0.90, vec2(8.2, -15.7), 0.60);
             float paleShell = groundFleck(p, 1.15, vec2(-11.4, 6.9), 0.79);
@@ -1247,6 +1275,8 @@ void main()
                     MirrorRuntimeDiagnosticToPlatformLog(SeabedCausticDiagnostic);
                     std::cout << DappleFleckDiagnostic << '\n';
                     MirrorRuntimeDiagnosticToPlatformLog(DappleFleckDiagnostic);
+                    std::cout << WrackLineDiagnostic << '\n';
+                    MirrorRuntimeDiagnosticToPlatformLog(WrackLineDiagnostic);
                     std::cout << RippleTrainDiagnostic << '\n';
                     MirrorRuntimeDiagnosticToPlatformLog(RippleTrainDiagnostic);
                 } else {

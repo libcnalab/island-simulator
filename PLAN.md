@@ -46,6 +46,22 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 4 (2026-10-20) — the high-tide wrack line
+
+Real beaches carry the last high tide's strandings a few metres up the sand; ours ran clean
+from the wet band to the dunes. The terrain material now lays a wrack line on the upper beach:
+a band centred 5.4 m inland (full within 0.7 m, gone by 1.6 m), wandered by the broad and medium
+fields (±2.6 m and ±0.6 m) and broken into drifts and gaps by a 5 m value-noise field (about
+half the shoreline carries it), present only on sand above 0.12 m and within 26–64 m of the
+camera. Inside it, shore-parallel dark weed strands (a value-noise field slow along the coast
+arc and 6.5 cells/m across the shore distance, footprint-filtered), pale shell grit (a
+2.4 cells/m fleck field) and a few darker twigs (0.65 cells/m) lie on sand that is itself 16 %
+darker and damper. A magenta probe confirmed the band's place a few metres above the wet sand
+before the strands were tuned to read at walking distance. The startup log adds "beaches carry a broken high-tide wrack line of
+stranded weed, twigs and shell", pinned by the native capture tool. Inspected native
+`20261019T222306Z-wet-sand` shows the broken dark line with its strands and grit a few metres
+above the wet band; `beach`, `shipwreck-wide` and `hermit-crabs` pass their gates.
+
 ## Loop pass 3 (2026-10-20) — seabirds work the fish schools
 
 The six seabirds only ever rode their high orbits 125–233 m out; a tropical shore shows them
