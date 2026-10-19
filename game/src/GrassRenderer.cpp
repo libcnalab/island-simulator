@@ -1,4 +1,5 @@
 #include "IslandSimulator/GrassRenderer.hpp"
+#include "IslandSimulator/WindGust.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/CampfireLighting.hpp"
 #include "IslandSimulator/GpuDiagnostics.hpp"
@@ -251,6 +252,10 @@ void main()
     float phase = (aWindData.y + aVariation.z) * 6.28318530718;
     float broad = sin(uTime * 0.86 + phase + world.x * 0.031 + world.z * 0.024);
     float detail = sin(uTime * 1.37 + phase * 1.73 - world.x * 0.071 + world.z * 0.063);
+    // A passing gust front leans every blade together downwind within the same amplitude.
+    float gust = windGust(world.xz, uTime);
+    broad = mix(broad, 1.0, gust * 0.85);
+    detail *= 1.0 - 0.4 * gust;
     float sway = (broad * grassBroadWind + detail * grassDetailWind) * heightWeight * aVariation.x
         * mix(grassMinimumWindGain, grassMaximumWindGain, bladeRandom) * visibility;
     world.x += sway;
@@ -353,6 +358,7 @@ void main()
             if (embedded) {
                 return std::string("#version 300 es\nprecision highp float;\n")
                     + environment::FogShaderDefinition
+                    + WindGust::Shader
                     + GrassMotion::ShaderConstants()
                     + GrassFootprintShaderConstants()
                     + GrassMaterialShaderConstants()
@@ -360,6 +366,7 @@ void main()
                     + (canopy ? std::string(CampfireLighting::Shader) + SunShadowMap::ReceiverShader : std::string()) + body;
             }
             return std::string("#version 330 core\n") + environment::FogShaderDefinition
+                + WindGust::Shader
                 + GrassMotion::ShaderConstants()
                 + GrassFootprintShaderConstants()
                 + GrassMaterialShaderConstants()

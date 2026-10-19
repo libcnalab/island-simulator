@@ -46,6 +46,24 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 5 (2026-10-20) — gust fronts
+
+The grass, crowns and fronds each swayed on their own two sines; nothing ever moved across the
+island together. `WindGust` (shared GLSL and a CPU mirror) defines gust fronts: bands 140 m apart
+travelling downwind (toward -x with the trade wind) at 6.5 m/s, so a front passes any point every
+21.5 s, each front 11–42 m wide with soft edges and varying in strength across the wind (0.45–1)
+through a slow sine. A gust never raises an amplitude: in each vertex shader the broad sway
+blends toward a full downwind lean (`mix(broad, 1, 0.85 gust)`) and the detail sway eases by
+40 %, so `jungleBroadWind + jungleDetailWind` and the grass and palm amplitudes stay as authored
+and every collision and clearance envelope holds. The grass samples the gust at its blade's world
+position, the canopy and palms at their instance position (`aInstance3.xz`). The startup log
+adds "gust fronts sweep the grass, crowns and fronds downwind together every twenty-two seconds
+within their authored sway", pinned by the native capture tool. New core checks on the CPU
+mirror: a front passes a fixed point within half a minute and clears again, fronts repeat with
+spacing over speed, and the front peaking at the origin peaks 20 m downwind about three seconds
+later (a first draft travelled upwind and its first-sighting test was wrong for a periodic
+field). Native `grass`, `palms`, `jungle` and `east` pass.
+
 ## Loop pass 4 (2026-10-20) — the high-tide wrack line
 
 Real beaches carry the last high tide's strandings a few metres up the sand; ours ran clean

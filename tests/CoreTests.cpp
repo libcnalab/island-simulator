@@ -2,6 +2,7 @@
 #include "IslandSimulator/AquaticLightingModel.hpp"
 #include "IslandSimulator/BenchmarkTraversalRoute.hpp"
 #include "IslandSimulator/BirdFlock.hpp"
+#include "IslandSimulator/WindGust.hpp"
 #include "IslandSimulator/BirdPerchLayout.hpp"
 #include "IslandSimulator/ButterflyMeadow.hpp"
 #include "IslandSimulator/GeckoPopulation.hpp"
@@ -7343,6 +7344,35 @@ int main()
               "player capsule cannot tunnel through an authored land-rock proxy");
         Check(rockObstacleRejections > 0 && rockTerrainRejections == 0,
               "authored land-rock traversal is rejected by collision rather than terrain");
+    }
+
+    {
+        // Gust fronts: bounded, periodic at a fixed point, and travelling downwind (toward -x).
+        float peak = 0.0f, low = 1.0f;
+        for (float t = 0.0f; t < 30.0f; t += 0.1f) {
+            const float g = island::WindGust::Strength(12.0f, -40.0f, t);
+            peak = std::max(peak, g); low = std::min(low, g);
+        }
+        Check(peak > 0.5f && low <= 0.0f, "a gust front passes a fixed point within half a minute and clears again");
+        const float period = island::WindGust::FrontSpacing / island::WindGust::FrontSpeed;
+        Check(std::abs(island::WindGust::Strength(12.0f, -40.0f, 3.0f)
+                       - island::WindGust::Strength(12.0f, -40.0f, 3.0f + period)) < 0.3f,
+              "gust fronts repeat with the front spacing over the front speed");
+        // The front that peaks at the origin peaks 20 m downwind (smaller x) about three
+        // seconds later: fronts are spatially periodic, so compare peak times, not first sightings.
+        float peakHere = 0.0f, peakHereStrength = -1.0f;
+        for (float t = 0.0f; t < period; t += 0.05f) {
+            const float g = island::WindGust::Strength(0.0f, 0.0f, t);
+            if (g > peakHereStrength) { peakHereStrength = g; peakHere = t; }
+        }
+        float peakDownwind = 0.0f, peakDownwindStrength = -1.0f;
+        for (float t = peakHere; t < peakHere + period; t += 0.05f) {
+            const float g = island::WindGust::Strength(-20.0f, 0.0f, t);
+            if (g > peakDownwindStrength) { peakDownwindStrength = g; peakDownwind = t; }
+        }
+        const float expectedLag = 20.0f / island::WindGust::FrontSpeed;
+        Check(std::abs((peakDownwind - peakHere) - expectedLag) < 1.0f,
+              "gust fronts travel downwind at the front speed");
     }
 
     {

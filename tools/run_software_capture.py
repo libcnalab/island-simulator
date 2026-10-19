@@ -955,6 +955,8 @@ def main():
                 raise RuntimeError("current seabird hunting is missing; check for a stale executable")
             if "beaches carry a broken high-tide wrack line of stranded weed, twigs and shell" not in diagnostics:
                 raise RuntimeError("current wrack line is missing; check for a stale executable")
+            if "gust fronts sweep the grass, crowns and fronds downwind together" not in diagnostics:
+                raise RuntimeError("current gust fronts are missing; check for a stale executable")
             if "seabed ripples stay below the waterline in short near trains and beach flecks fade with the ground footprint" not in diagnostics:
                 raise RuntimeError("current seabed ripple confinement is missing; check for a stale executable")
             if "canopy per-tree frustum boxes contain both LODs and wind" not in diagnostics:

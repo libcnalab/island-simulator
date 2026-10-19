@@ -2171,6 +2171,7 @@ namespace island
                   << "island-simulator: bird flight uses slow radial drift, banking, and "
                      "intermittent glide\n"
                   << "island-simulator: seabirds break from their high orbits to circle low over the fish school of the moment\n"
+                  << "island-simulator: gust fronts sweep the grass, crowns and fronds downwind together every twenty-two seconds within their authored sway\n"
                   << "island-simulator: four fruit doves alternate canopy perches with bounded dry-ground walking and foraging\n"
                   << "island-simulator: fruit doves coo in low slow phrases and thrust their heads as they walk; parrots keep their squawk and a pigeon-grey dove joins the green ones\n"
                   << "island-simulator: fruit bats " << fruitBatColony_.Bats().size()

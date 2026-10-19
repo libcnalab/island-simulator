@@ -4,6 +4,7 @@
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/JungleMaterial.hpp"
 #include "IslandSimulator/PrevailingWind.hpp"
+#include "IslandSimulator/WindGust.hpp"
 #include "IslandSimulator/ProceduralMeshValidation.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "IslandSimulator/SurfaceNormals.hpp"
@@ -147,6 +148,10 @@ void main()
     float phase = aWindData.y * 6.28318530718;
     float broad = sin(uTime * 0.73 + phase + local.y * 0.11);
     float detail = sin(uTime * 1.19 + phase * 1.67 + local.x * 0.31 - local.z * 0.27);
+    // A passing gust front leans the fronds together downwind within the same amplitude.
+    float gust = windGust(aInstance3.xz, uTime);
+    broad = mix(broad, 1.0, gust * 0.85);
+    detail *= 1.0 - 0.4 * gust;
     float sway = (broad * 0.115 + detail * 0.032) * aWindData.x;
     local.x += sway;
     local.z += sway * 0.37;
@@ -244,10 +249,10 @@ void main()
                 : std::string();
             if (embedded) {
                 return std::string("#version 300 es\nprecision highp float;\nprecision highp int;\n")
-                    + environment::FogShaderDefinition + materials + body;
+                    + environment::FogShaderDefinition + WindGust::Shader + materials + body;
             }
             return std::string("#version 330 core\n")
-                + environment::FogShaderDefinition + materials + body;
+                + environment::FogShaderDefinition + WindGust::Shader + materials + body;
         }
 
         [[nodiscard]] CNA::Graphics::ShaderPackageEXT CreateShaderPackage()

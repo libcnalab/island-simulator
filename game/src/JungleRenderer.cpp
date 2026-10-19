@@ -1,4 +1,5 @@
 #include "IslandSimulator/JungleRenderer.hpp"
+#include "IslandSimulator/WindGust.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/CampfireLighting.hpp"
 #include "IslandSimulator/MonkeyTroop.hpp"
@@ -174,6 +175,10 @@ void main()
     float phase = aWindData.y * 6.28318530718;
     float broad = sin(uTime * 0.61 + phase + local.y * 0.075);
     float detail = sin(uTime * 1.07 + phase * 1.41 + local.x * 0.18 - local.z * 0.21);
+    // A passing gust front leans the crowns together downwind within the same amplitude.
+    float gust = windGust(aInstance3.xz, uTime);
+    broad = mix(broad, 1.0, gust * 0.85);
+    detail *= 1.0 - 0.4 * gust;
     float sway = (broad * jungleBroadWind + detail * jungleDetailWind) * aWindData.x;
     local.x += sway;
     local.z += sway * jungleWindZ;
@@ -358,12 +363,14 @@ void main()
             if (embedded) {
                 return std::string("#version 300 es\nprecision highp float;\nprecision highp int;\n")
                     + environment::FogShaderDefinition
+                    + WindGust::Shader
                     + (canopy ? std::string(CampfireLighting::Shader) + SunShadowMap::ReceiverShader : std::string())
                     + (canopy ? std::string(CanopyLighting::Shader) + JungleMaterial::Shader() + BarkMaterial::Shader + TrunkSurface::Shader() + LeafSurfaceMaterial::Shader()
                               : JungleWind::ShaderConstants() + std::string(RenderedTerrainSurface::Shader)) + body;
             }
             return std::string("#version 330 core\n")
                 + environment::FogShaderDefinition
+                + WindGust::Shader
                 + (canopy ? std::string(CampfireLighting::Shader) + SunShadowMap::ReceiverShader : std::string())
                 + (canopy ? std::string(CanopyLighting::Shader) + JungleMaterial::Shader() + BarkMaterial::Shader + TrunkSurface::Shader() + LeafSurfaceMaterial::Shader()
                           : JungleWind::ShaderConstants() + std::string(RenderedTerrainSurface::Shader)) + body;
