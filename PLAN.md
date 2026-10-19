@@ -80,7 +80,10 @@ low bank conditions instead. All 73 active native tests and 48 harness tests pas
 155/SwiftShader `20261019T200716.647524Z-chrome-stream` passes on the rebuilt Web package with the
 ten banana stools and 1,747 understory plants reported, GL error zero and no kernel faults; the
 Android identity is recorded with the occupation pass below, whose first assemble exposed a
-missing `<numbers>` include that GCC had tolerated transitively.
+missing `<numbers>` include that GCC had tolerated transitively; the fixed assemble and lint pass
+(`app-debug.apk` sha256 `968931cbe5500a4c…`, HutRenderer object rebuilt). The coconut pile first sat
+behind the hut from both QA cameras, so its site moved to (3.0, 2.7) beside the fish rack where the
+`hut` overview shows it; the `hut-material` route shows the net frame and basket.
 
 ## Latest canopy-interior pass — lianas and aerial roots
 
