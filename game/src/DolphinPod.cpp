@@ -166,12 +166,19 @@ void DolphinPod::UpdateAgent(Agent &agent, const float delta) noexcept {
       agent.state.behavior = agent.transitionCount % 3 == 0
                                  ? DolphinBehavior::Dive
                                  : DolphinBehavior::Surface;
+    else if (agent.state.behavior == DolphinBehavior::Surface &&
+             agent.transitionCount % 4 == 1)
+      agent.state.behavior = DolphinBehavior::Leap;
     else
       agent.state.behavior = DolphinBehavior::Cruise;
+    if (agent.state.behavior == DolphinBehavior::Leap)
+      ++leapCount_;
     agent.behaviorSeconds = agent.state.behavior == DolphinBehavior::Surface
                                 ? 3.2f + .45f * (agent.transitionCount % 3)
                             : agent.state.behavior == DolphinBehavior::Dive
                                 ? 5.0f + .7f * (agent.transitionCount % 4)
+                            : agent.state.behavior == DolphinBehavior::Leap
+                                ? LeapSeconds
                                 : 11.0f + 1.3f * (agent.transitionCount % 5);
   }
   agent.routePhase = std::fmod(agent.routePhase + delta * .105f, TwoPi);
@@ -192,6 +199,8 @@ void DolphinPod::UpdateAgent(Agent &agent, const float delta) noexcept {
   const float targetSpeed =
       agent.state.behavior == DolphinBehavior::Cruise
           ? 2.25f
+      : agent.state.behavior == DolphinBehavior::Leap
+          ? 3.6f
           : (agent.state.behavior == DolphinBehavior::Surface ? 1.75f : 2.05f);
   agent.state.speed +=
       std::clamp(targetSpeed - agent.state.speed, -.7f * delta, .7f * delta);
@@ -210,14 +219,23 @@ void DolphinPod::UpdateAgent(Agent &agent, const float delta) noexcept {
   const float targetY =
       DesiredDepth(agent, terrain_.Height(agent.state.x, agent.state.z));
   const float oldY = agent.state.y;
-  agent.state.y +=
-      std::clamp(targetY - agent.state.y, -.85f * delta, .85f * delta);
+  const bool leaping = agent.state.behavior == DolphinBehavior::Leap;
+  if (leaping) {
+    // The arc is driven directly: a vertical-speed clamp would flatten it into a bump.
+    const float t = std::clamp(1.0f - agent.behaviorSeconds / LeapSeconds, 0.0f, 1.0f);
+    agent.state.y = -.24f + LeapHeight * std::sin(t * 3.14159265f);
+  } else {
+    agent.state.y +=
+        std::clamp(targetY - agent.state.y, -.85f * delta, .85f * delta);
+  }
+  const float pitchLimit = leaping ? .95f : .36f;
   const float targetPitch =
       std::clamp(std::atan2((agent.state.y - oldY) / delta,
                             std::max(.4f, agent.state.speed)),
-                 -.36f, .36f);
+                 -pitchLimit, pitchLimit);
   agent.state.pitchRadians += std::clamp(targetPitch - agent.state.pitchRadians,
-                                         -.65f * delta, .65f * delta);
+                                         -(leaping ? 3.2f : .65f) * delta,
+                                         (leaping ? 3.2f : .65f) * delta);
   agent.tailPhase = std::fmod(
       agent.tailPhase + delta * (5.0f + agent.state.speed * .9f), TwoPi);
   agent.state.tailBeat = std::sin(agent.tailPhase);

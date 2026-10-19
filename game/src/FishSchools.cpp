@@ -169,6 +169,9 @@ namespace island
             ? std::clamp(deltaSeconds, 0.0f, 0.1f) : 0.0f;
         elapsedSeconds_ += safeDelta;
         ++frameIndex_;
+        observerValid_ = std::isfinite(observerX) && std::isfinite(observerY)
+            && std::isfinite(observerZ);
+        observerX_ = observerX; observerY_ = observerY; observerZ_ = observerZ;
         fullSimulationCount_ = 0;
         reducedSimulationCount_ = 0;
         dormantSimulationCount_ = 0;
@@ -265,12 +268,28 @@ namespace island
             Agent& agent = agents_[schoolIndex * FishPerSchool + memberIndex];
             const float localDrift = std::sin(elapsedSeconds_ * agent.wanderFrequency
                                               + agent.wanderPhase);
-            const float targetX = school.centreX
+            float targetX = school.centreX
                 + tangentX * (agent.alongOffset + localDrift * 0.75f)
                 + radialX * (agent.radialOffset + localDrift * 0.32f);
-            const float targetZ = school.centreZ
+            float targetZ = school.centreZ
                 + tangentZ * (agent.alongOffset + localDrift * 0.75f)
                 + radialZ * (agent.radialOffset + localDrift * 0.32f);
+            // The school parts around the swimmer: a fish inside the parting distance has
+            // its slot pushed straight away from them and hurries there.
+            float hurry = 1.0f;
+            if (observerValid_) {
+                const float awayX = agent.state.x - observerX_;
+                const float awayZ = agent.state.z - observerZ_;
+                const float swimmerDistance = std::hypot(agent.state.y - observerY_,
+                                                         std::hypot(awayX, awayZ));
+                const float planar = std::max(std::hypot(awayX, awayZ), 0.05f);
+                if (swimmerDistance < PartingDistance) {
+                    const float push = (PartingDistance - swimmerDistance) * 1.8f + 0.6f;
+                    targetX += awayX / planar * push;
+                    targetZ += awayZ / planar * push;
+                    hurry = 1.7f;
+                }
+            }
             const float toTargetX = targetX - agent.state.x;
             const float toTargetZ = targetZ - agent.state.z;
             const float targetDistance = std::hypot(toTargetX, toTargetZ);
@@ -289,7 +308,8 @@ namespace island
                 desiredBank - agent.state.bankRadians,
                 -1.1f * deltaSeconds, 1.1f * deltaSeconds);
 
-            const float speedScale = std::clamp(0.78f + targetDistance * 0.22f, 0.78f, 1.32f);
+            const float speedScale = std::clamp(0.78f + targetDistance * 0.22f, 0.78f, 1.32f)
+                * hurry;
             const float proposedX = agent.state.x + std::cos(agent.state.headingRadians)
                 * agent.state.speed * speedScale * deltaSeconds;
             const float proposedZ = agent.state.z + std::sin(agent.state.headingRadians)

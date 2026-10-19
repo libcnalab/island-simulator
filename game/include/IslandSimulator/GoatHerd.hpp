@@ -21,8 +21,6 @@ public:
     // reaction delay the rest of the herd lifts their heads within the wider range too.
     static constexpr float SentinelAlertDistance=20.0f;
     static constexpr float HerdReactionSeconds=.7f;
-    // A goat drifting further than this from the herd centroid walks back toward it.
-    static constexpr float CohesionDistance=9.0f;
     GoatHerd(const IslandTerrain& terrain,const JungleLayout& jungle,
         std::span<const CircularObstacle> obstacles);
     void Update(float dt,GoatPoint observer);
@@ -51,6 +49,6 @@ private:
         float drinkX=0,drinkZ=0,faceX=0,faceZ=0; bool hasDrink=false;
     };
     std::array<Intent,GoatHabitat::Count> intents_{};
-    float sentinelAlertSeconds_=0,centroidX_=0,centroidZ_=0;
+    float sentinelAlertSeconds_=0;
 };
 }

@@ -937,6 +937,8 @@ def main():
                 raise RuntimeError("current ecological links are missing; check for a stale executable")
             if "a sentinel lifts its head first and the others follow after 0.7 s" not in diagnostics:
                 raise RuntimeError("current herd behaviour is missing; check for a stale executable")
+            if "fish schools part around the swimmer within three metres" not in diagnostics:
+                raise RuntimeError("current sea-from-within behaviour is missing; check for a stale executable")
             if "seabed ripples stay below the waterline in short near trains and beach flecks fade with the ground footprint" not in diagnostics:
                 raise RuntimeError("current seabed ripple confinement is missing; check for a stale executable")
             if "canopy per-tree frustum boxes contain both LODs and wind" not in diagnostics:

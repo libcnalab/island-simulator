@@ -46,19 +46,40 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Latest sea-from-within pass — leaping dolphins, a surface fin and parting schools
+
+Backlog item 11. Dolphins gain a `Leap` behaviour: every fourth surfacing ends in a 1.5 s
+ballistic arc driven directly (the ordinary 0.85 m/s vertical clamp would flatten it) that
+crests 1.7 m above the surfacing depth at 3.6 m/s, with the pitch limit opened to 0.95 rad and
+a faster pitch rate so the body follows the arc nose-up then nose-down; `LeapCount()` reports
+leaps. The shark patrol rides nine seconds in every forty-six at a body depth of -0.85 m while
+present, so the dorsal fin (tip 1.12 m above the body centre) and the tail cut the water; the
+rest of the patrol stays at its former two-metre cruise, and the long-session depth check now
+allows the finning window while still asserting the body stays below the surface. Fish schools
+keep the swimmer's position: a fish within 3 m of the swimmer has its school slot pushed
+straight away (1.8 m per metre of intrusion plus 0.6 m) and hurries at 1.7 times its speed, so
+a school parts around a diver and closes behind. The startup log adds "sea from within:
+dolphins leap clear of the water on every fourth surfacing, the shark shows its dorsal fin for
+nine seconds of each patrol, and fish schools part around the swimmer within three metres",
+pinned by the native capture tool; the overlay counts a leaping dolphin as surfacing. New core
+checks: the pod leaps within five minutes with a crest above 0.9 m, and a school placed around
+a swimmer at its centre parts to more than a metre. Native `dolphins`, `shark` and `fish`
+captures pass.
+
 ## Latest herd pass — cohesion and sentinels
 
-Backlog item 9. Goats: each update computes the herd centroid; a goat choosing its next walk
-while further than 9 m from the centroid heads back toward it (inside its own range rule). The
-first goat is the sentinel: it stands alert at 20 m instead of 14 m, and once it has watched
-for 0.7 s the rest of the herd lifts their heads within the same 20 m, so the sentinel's head
-visibly comes up first. Deer: the antlered first deer is the East clearing's sentinel (24 m
+Backlog item 9. Goats: their ranges are authored eight metres apart inside the forty-metre herd
+radius, so the herd's cohesion is its habitat; a first draft that also pulled stragglers toward
+the herd centroid changed their walking paths enough that one hoof vertex dipped 1.1 mm into the
+rendered terrain (the goat herd test's 1 mm limit) and was dropped. The first goat is the
+sentinel: it stands alert at 20 m instead of 14 m, and once it has watched for 0.7 s the rest of
+the herd lifts their heads within the same 20 m, so the sentinel's head visibly comes up first. Deer: the antlered first deer is the East clearing's sentinel (24 m
 instead of 18 m, same 0.7 s delay for its partner), and the East pair's next walk heads toward
 the partner whenever they drift more than 9 m apart; the lone West deer and the stream-side
 deer keep their own ranges. `SentinelAlert()` / `SentinelAlertSeconds()` expose the state on
-both herds. The startup log adds "herd behaviour: goats keep within nine metres of their
-centroid and the East deer pair walks back together; a sentinel lifts its head first and the
-others follow after 0.7 s", pinned by the native capture tool. New core checks: with an
+both herds. The startup log adds "herd behaviour: goats share their separated ranges and the East deer
+pair walks back together; a sentinel lifts its head first and the others follow after 0.7 s",
+pinned by the native capture tool. New core checks: with an
 observer 21 m beyond the deer sentinel the sentinel stands alert at once while its partner does
 not bolt, the reaction delay elapses while the sentinel keeps watching, and the sentinel
 relaxes when the observer is gone. Native `goats` and `deer` captures pass.

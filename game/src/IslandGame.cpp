@@ -2012,7 +2012,7 @@ namespace island
         std::cout << "island-simulator: ecological links: " << deer_->DrinkerCount() << " deer and "
                   << goats_->DrinkerCount() << " goats walk to the stream bank to drink; "
                   << "boars root at the nearest trunk base, monkeys favour fruiting crowns and linger to pick\n";
-        std::cout << "island-simulator: herd behaviour: goats keep within nine metres of their centroid and the "
+        std::cout << "island-simulator: herd behaviour: goats share their separated ranges and the "
                      "East deer pair walks back together; a sentinel lifts its head first and the others follow after 0.7 s\n";
         std::cout << "island-simulator: snakes " << snakes_->Snakes().size()
                   << " ground agents with separated dense-understory-margin homes; "
@@ -2176,6 +2176,8 @@ namespace island
                   << "island-simulator: one occasional non-hostile offshore shark patrol\n"
                   << "island-simulator: dolphins " << dolphinPod_.Dolphins().size()
                   << " agents in a peaceful offshore cruise, surface, and dive pod\n"
+                  << "island-simulator: sea from within: dolphins leap clear of the water on every fourth surfacing, "
+                     "the shark shows its dorsal fin for nine seconds of each patrol, and fish schools part around the swimmer within three metres\n"
                   << "island-simulator: dolphin near/far geometry "
                   << DolphinRenderer::MaximumNearVertexCount << '/'
                   << DolphinRenderer::MaximumFarVertexCount
@@ -4509,6 +4511,7 @@ namespace island
                 case DolphinBehavior::Cruise:++overlayState.cruisingDolphins;break;
                 case DolphinBehavior::Surface:++overlayState.surfacingDolphins;break;
                 case DolphinBehavior::Dive:++overlayState.divingDolphins;break;
+                case DolphinBehavior::Leap:++overlayState.surfacingDolphins;break;
                 }
             }
             overlayState.dolphinDraws = dolphinRenderer_->DrawCallCount();

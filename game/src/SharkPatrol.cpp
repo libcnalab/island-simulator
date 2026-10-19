@@ -182,7 +182,10 @@ namespace island
         }
 
         const float seabed = terrain_.Height(state_.x, state_.z);
-        const float surfacePatrolDepth = -2.35f
+        // Nine seconds in every forty-six the patrol rides just under the surface so the
+        // dorsal fin and the tail tip cut the water; otherwise it cruises two metres down.
+        const bool finning = state_.present && std::fmod(elapsedSeconds_, 46.0f) < 9.0f;
+        const float surfacePatrolDepth = finning ? -0.85f : -2.35f
             + std::sin(elapsedSeconds_ * 0.19f + 0.6f) * 0.42f;
         const float hiddenDepth = std::max(seabed + 0.85f, -8.0f);
         const float desiredDepth = hiddenDepth

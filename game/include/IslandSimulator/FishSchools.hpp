@@ -47,6 +47,8 @@ namespace island
         static constexpr std::size_t FishCount = SchoolCount * FishPerSchool;
         static constexpr float FullSimulationDistance = 80.0f;
         static constexpr float ReducedSimulationDistance = 225.0f;
+        // Fish closer than this to the swimmer are pushed out of their school slot and away.
+        static constexpr float PartingDistance = 3.0f;
 
         explicit FishSchools(const IslandTerrain& terrain);
 
@@ -102,6 +104,8 @@ namespace island
         std::vector<FishSchoolState> schoolStates_;
         float elapsedSeconds_ = 0.0f;
         std::uint64_t frameIndex_ = 0U;
+        float observerX_ = 0.0f, observerY_ = 0.0f, observerZ_ = 0.0f;
+        bool observerValid_ = false;
         int fullSimulationCount_ = 0;
         int reducedSimulationCount_ = 0;
         int dormantSimulationCount_ = 0;

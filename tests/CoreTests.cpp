@@ -34,6 +34,7 @@
 #include "IslandSimulator/WreckScourPatch.hpp"
 #include "IslandSimulator/StreamCourse.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
+#include "IslandSimulator/DolphinPod.hpp"
 #include "IslandSimulator/JungleLayout.hpp"
 #include "IslandSimulator/LocomotionPaceToggle.hpp"
 #include "IslandSimulator/MonkeyTroop.hpp"
@@ -3967,8 +3968,10 @@ int main()
         Check(sample.signedShoreDistance <= -33.8f
                   && sample.signedShoreDistance >= -88.2f,
               "shark remains in the authored offshore patrol belt");
+        // The body stays under the surface even in the finning window, when the centre
+        // rides at -0.85 m so only the dorsal fin (tip 1.12 m above centre) cuts the water.
         Check(sample.height <= -2.95f && state.y >= sample.height + 0.70f
-                  && state.y <= -1.0f,
+                  && state.y <= -0.80f,
               "shark remains below the surface and above the offshore seabed");
         Check(state.activity >= 0.0f && state.activity <= 1.0f,
               "shark activity blend remains normalized");
@@ -7336,6 +7339,37 @@ int main()
               "player capsule cannot tunnel through an authored land-rock proxy");
         Check(rockObstacleRejections > 0 && rockTerrainRejections == 0,
               "authored land-rock traversal is rejected by collision rather than terrain");
+    }
+
+    {
+        // Sea from within: the pod leaps within a few minutes, the shark fins at the surface
+        // during its window, and a school parts around a swimmer placed at its centre.
+        const island::IslandTerrain terrain;
+        island::DolphinPod pod(terrain);
+        float crest = -10.0f;
+        for (int step = 0; step < 6000; ++step) {
+            pod.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
+            for (const auto& dolphin : pod.Dolphins()) crest = std::max(crest, dolphin.y);
+        }
+        Check(pod.LeapCount() >= 1U && crest > 0.9f,
+              "dolphins leap clear of the water within five minutes");
+        island::FishSchools schools(terrain);
+        schools.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
+        const auto centre = schools.Schools()[0];
+        auto nearest = [&](float x, float y, float z) {
+            float best = 1e9f;
+            for (std::size_t i = 0; i < island::FishSchools::FishPerSchool; ++i) {
+                const auto& fish = schools.Fish()[i];
+                best = std::min(best, std::hypot(fish.y - y, std::hypot(fish.x - x, fish.z - z)));
+            }
+            return best;
+        };
+        const float before = nearest(centre.centreX, centre.centreY, centre.centreZ);
+        for (int step = 0; step < 80; ++step)
+            schools.Update(0.05f, centre.centreX, centre.centreY, centre.centreZ);
+        const float after = nearest(centre.centreX, centre.centreY, centre.centreZ);
+        Check(after > before + 0.4f && after > 1.0f,
+              "a fish school parts around a swimmer at its centre");
     }
 
     {

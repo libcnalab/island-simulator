@@ -10,7 +10,7 @@
 namespace island {
 class IslandTerrain;
 
-enum class DolphinBehavior : std::uint8_t { Cruise, Surface, Dive };
+enum class DolphinBehavior : std::uint8_t { Cruise, Surface, Dive, Leap };
 
 struct DolphinState {
   float x = 0, z = 0, y = 0;
@@ -32,6 +32,9 @@ public:
   static constexpr float MinimumShoreDistance = -105.0f;
   static constexpr float MaximumShoreDistance = -34.0f;
   static constexpr float FullSimulationDistance = 190.0f;
+  // A leap: a ballistic arc from the surfacing depth, clear of the water at its crest.
+  static constexpr float LeapSeconds = 1.5f;
+  static constexpr float LeapHeight = 1.7f;
   static constexpr float ReducedSimulationDistance = 520.0f;
 
   explicit DolphinPod(const IslandTerrain &terrain);
@@ -45,6 +48,7 @@ public:
     return homes_;
   }
   [[nodiscard]] int FullSimulationCount() const noexcept { return fullCount_; }
+  [[nodiscard]] std::uint32_t LeapCount() const noexcept { return leapCount_; }
   [[nodiscard]] int ReducedSimulationCount() const noexcept {
     return reducedCount_;
   }
@@ -74,5 +78,6 @@ private:
   float elapsedSeconds_ = 0;
   std::uint64_t frameIndex_ = 0;
   int fullCount_ = 0, reducedCount_ = 0, dormantCount_ = 0;
+  std::uint32_t leapCount_ = 0;
 };
 } // namespace island
