@@ -342,6 +342,10 @@ namespace island
                 GenerateParrotCallAlternate());
             parrotCallAlternateEffect_->setNameProperty(
                 "Original procedural parrot squawk alternate");
+            doveCallEffect_ = CreateOneShotSoundEffect(GenerateDoveCall());
+            doveCallEffect_->setNameProperty("Procedural fruit dove coo");
+            doveCallAlternateEffect_ = CreateOneShotSoundEffect(GenerateDoveCallAlternate());
+            doveCallAlternateEffect_->setNameProperty("Procedural fruit dove coo alternate");
             monkeyCallEffect_ = CreateOneShotSoundEffect(GenerateMonkeyCall());
             monkeyCallEffect_->setNameProperty("Procedural monkey contact call");
             monkeyCallAlternateEffect_ = CreateOneShotSoundEffect(
@@ -538,6 +542,8 @@ namespace island
             monkeyCallEffect_.reset();
             parrotCallAlternateEffect_.reset();
             parrotCallEffect_.reset();
+            doveCallAlternateEffect_.reset();
+            doveCallEffect_.reset();
             birdCallAlternateEffect_.reset();
             birdCallEffect_.reset();
             waterMovementEffect_.reset();
@@ -1115,9 +1121,14 @@ namespace island
         if (wildlifeCall.type == WildlifeCallType::Bird) {
             const bool parrot = wildlifeCall.source.kind
                 == static_cast<std::uint8_t>(BirdSpecies::Parrot);
+            const bool dove = wildlifeCall.source.kind
+                == static_cast<std::uint8_t>(BirdSpecies::FruitDove);
             wildlifeEffect = parrot
                 ? (wildlifeCall.variant == 1U
                     ? parrotCallAlternateEffect_.get() : parrotCallEffect_.get())
+                : dove
+                ? (wildlifeCall.variant == 1U
+                    ? doveCallAlternateEffect_.get() : doveCallEffect_.get())
                 : (wildlifeCall.variant == 1U
                     ? birdCallAlternateEffect_.get() : birdCallEffect_.get());
         } else if (wildlifeCall.type == WildlifeCallType::Monkey) {
@@ -1369,6 +1380,8 @@ namespace island
         monkeyCallEffect_.reset();
         parrotCallAlternateEffect_.reset();
         parrotCallEffect_.reset();
+        doveCallAlternateEffect_.reset();
+        doveCallEffect_.reset();
         birdCallAlternateEffect_.reset();
         birdCallEffect_.reset();
         waterMovementEffect_.reset();

@@ -115,6 +115,12 @@ namespace island
     /** @brief Generates an alternate three-part parrot contact phrase. */
     [[nodiscard]] AmbientLoop GenerateParrotCallAlternate();
 
+    /** @brief Generates a fruit dove's low, soft two-note coo. */
+    [[nodiscard]] AmbientLoop GenerateDoveCall();
+
+    /** @brief Generates the dove's longer three-note advertising coo. */
+    [[nodiscard]] AmbientLoop GenerateDoveCallAlternate();
+
     /** @brief Generates one restrained monkey contact call for the interior jungle. */
     [[nodiscard]] AmbientLoop GenerateMonkeyCall();
 

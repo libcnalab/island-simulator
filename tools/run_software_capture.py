@@ -1173,6 +1173,7 @@ def main():
             if args.viewpoint == "ground-doves":
                 for marker in (
                     "four fruit doves alternate canopy perches with bounded dry-ground walking and foraging",
+                    "fruit doves coo in low slow phrases and thrust their heads as they walk; parrots keep their squawk and a pigeon-grey dove joins the green ones",
                     "ground-dove QA camera frames one walking fruit dove on dry interior terrain",
                     "near birds use closed lofted bodies, multi-ring heads, fitted beaks, and lateral eyes",
                     "near birds use compact rounded heads, camera-facing six-facet eyes, fitted hooked beaks, solid swept wings, and split tail feathers"):

@@ -46,6 +46,24 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Latest bird-identity pass — dove coos, pigeon walk and a grey dove
+
+Backlog item 7. Parrots already had their hooked beak, green/red/blue palettes and their own
+squawk; the fruit doves had a dove silhouette but chirped with the generic songbird clips and
+walked with a fixed head. `GenerateDoveCall` / `GenerateDoveCallAlternate` synthesise low, slow
+coos (fundamentals 450–575 Hz with a sub-octave, 5–6 Hz pulse instead of the songbirds' fast
+tremolo) and the wildlife call slot routes a `FruitDove` source to them, so the three bird
+species now have three voices. Ground-foraging doves carry a `headBob` (a clipped sine at step
+rate scaled by walking speed) that thrusts the near head forward 5.5 cm and dips it, the pigeon
+walk; it clears when the dove departs. A third dove palette, pigeon grey with a rose breast
+and an iridescent green neck, joins the two fruit-dove greens. The audio inventory gains the
+two parrot squawks and the two dove coos (53 clips, 7,221,370 PCM bytes, pinned in
+`ValidateAudioPreviewTests`). The startup log adds "fruit doves coo in low slow phrases and
+thrust their heads as they walk; parrots keep their squawk and a pigeon-grey dove joins the
+green ones", pinned by the native `ground-doves` capture. Inspected native
+`20261019T205938Z-ground-doves` shows the grey pigeon-palette dove walking; `birds` still frames
+the parrot. Human listening of the coo remains an operator check.
+
 ## Latest stream pass — a small cascade and plunge pool
 
 Backlog item 6. `StreamCourse::ShapeCascade` finds the steepest three-metre run of the natural

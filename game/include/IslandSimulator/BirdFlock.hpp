@@ -52,6 +52,8 @@ namespace island
         float bankRadians = 0.0f;
         float glideAmount = 0.0f;
         float perchAmount = 0.0f;
+        /** @brief Pigeon-walk head thrust, 0..1, nonzero only while foraging on the ground. */
+        float headBob = 0.0f;
         float scale = 1.0f;
         BirdPathFamily family = BirdPathFamily::Shore;
         BirdSpecies species = BirdSpecies::Coastal;

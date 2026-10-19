@@ -678,12 +678,18 @@ namespace island
             agent.state.perchAmount = 1.0f;
             agent.state.wingPose = 0.025f * std::sin(
                 elapsedSeconds_ * 2.1f + static_cast<float>(agent.index));
+            // A pigeon's head thrusts forward with each step and holds while the body
+            // catches up: a clipped sine at step rate, scaled by the walking speed.
+            agent.state.headBob = std::clamp(0.5f + 0.9f * std::sin(
+                elapsedSeconds_ * 7.4f + static_cast<float>(agent.index) * 1.3f), 0.0f, 1.0f)
+                * std::clamp(speed / 0.40f, 0.0f, 1.0f);
             const float duration = 10.0f + std::fmod(
                 static_cast<float>(agent.index) * 1.9f
                     + static_cast<float>(agent.perchCycle) * 1.4f, 7.0f);
             if (agent.behaviorSeconds >= duration) {
                 agent.state.behavior = BirdBehavior::GroundDepart;
                 agent.behaviorSeconds = 0.0f;
+                agent.state.headBob = 0.0f;
             }
             return;
         }

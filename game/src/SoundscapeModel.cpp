@@ -763,6 +763,38 @@ namespace island
         return Quantize(samples, 0.60f);
     }
 
+    // Doves coo rather than chirp: low fundamentals, slow onsets, almost no sweep, and a
+    // gentle pulse instead of the songbirds' fast tremolo.
+    AmbientLoop GenerateDoveCall()
+    {
+        constexpr std::size_t frameCount = static_cast<std::size_t>(
+            AmbientSampleRate * 6 / 5);
+        std::vector<float> samples(frameCount, 0.0f);
+        AddBirdChirp(samples, 0.05f, 0.34f, 528.0f, 486.0f, 0.46f, 5.5f);
+        AddBirdChirp(samples, 0.05f, 0.34f, 264.0f, 243.0f, 0.20f, 5.5f);
+        AddBirdChirp(samples, 0.46f, 0.52f, 574.0f, 512.0f, 0.56f, 6.0f);
+        AddBirdChirp(samples, 0.46f, 0.52f, 287.0f, 256.0f, 0.24f, 6.0f);
+        samples.front() = 0.0f;
+        samples.back() = 0.0f;
+        return Quantize(samples, 0.58f);
+    }
+
+    AmbientLoop GenerateDoveCallAlternate()
+    {
+        constexpr std::size_t frameCount = static_cast<std::size_t>(
+            AmbientSampleRate * 27 / 20);
+        std::vector<float> samples(frameCount, 0.0f);
+        AddBirdChirp(samples, 0.06f, 0.26f, 502.0f, 470.0f, 0.40f, 5.0f);
+        AddBirdChirp(samples, 0.06f, 0.26f, 251.0f, 235.0f, 0.18f, 5.0f);
+        AddBirdChirp(samples, 0.40f, 0.44f, 548.0f, 492.0f, 0.54f, 5.8f);
+        AddBirdChirp(samples, 0.40f, 0.44f, 274.0f, 246.0f, 0.22f, 5.8f);
+        AddBirdChirp(samples, 0.92f, 0.36f, 516.0f, 452.0f, 0.44f, 5.2f);
+        AddBirdChirp(samples, 0.92f, 0.36f, 258.0f, 226.0f, 0.19f, 5.2f);
+        samples.front() = 0.0f;
+        samples.back() = 0.0f;
+        return Quantize(samples, 0.56f);
+    }
+
     AmbientLoop GenerateFrogCall(const std::uint8_t variant)
     {
         constexpr std::size_t frameCount = static_cast<std::size_t>(

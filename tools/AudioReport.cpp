@@ -214,6 +214,14 @@ namespace
                          island::GenerateBirdCall()});
         clips.push_back({"bird call B", "bird-call-b.wav", false, 29767U,
                          island::GenerateBirdCallAlternate()});
+        clips.push_back({"parrot squawk A", "parrot-squawk-a.wav", false, 31972U,
+                         island::GenerateParrotCall()});
+        clips.push_back({"parrot squawk B", "parrot-squawk-b.wav", false, 35280U,
+                         island::GenerateParrotCallAlternate()});
+        clips.push_back({"dove coo A", "dove-coo-a.wav", false, 26460U,
+                         island::GenerateDoveCall()});
+        clips.push_back({"dove coo B", "dove-coo-b.wav", false, 29767U,
+                         island::GenerateDoveCallAlternate()});
         clips.push_back({"monkey call A", "monkey-call-a.wav", false, 39690U,
                          island::GenerateMonkeyCall()});
         clips.push_back({"monkey call B", "monkey-call-b.wav", false, 46305U,

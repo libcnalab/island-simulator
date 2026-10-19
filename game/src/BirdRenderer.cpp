@@ -81,13 +81,17 @@ namespace island
              Color(224, 174, 43, 255), Color(59, 53, 47, 255), Color(12, 11, 8, 255)}
         }};
 
-        const std::array<BirdPalette, 2> DovePalettes = {{
+        // Fruit-dove greens, and a pigeon grey with a rose breast and iridescent neck.
+        const std::array<BirdPalette, 3> DovePalettes = {{
             {Color(91, 137, 84, 255), Color(48, 102, 62, 255),
              Color(181, 191, 150, 255), Color(45, 88, 59, 255),
              Color(158, 86, 128, 255), Color(78, 70, 64, 255), Color(43, 20, 18, 255)},
             {Color(99, 143, 94, 255), Color(54, 108, 69, 255),
              Color(201, 196, 163, 255), Color(49, 92, 65, 255),
-             Color(111, 126, 144, 255), Color(83, 72, 62, 255), Color(47, 21, 17, 255)}
+             Color(111, 126, 144, 255), Color(83, 72, 62, 255), Color(47, 21, 17, 255)},
+            {Color(176, 132, 142, 255), Color(118, 122, 132, 255),
+             Color(206, 206, 202, 255), Color(72, 74, 84, 255),
+             Color(96, 148, 128, 255), Color(86, 76, 70, 255), Color(40, 22, 20, 255)}
         }};
 
         [[nodiscard]] const BirdPalette& PaletteForBird(const BirdState& bird)
@@ -392,7 +396,10 @@ namespace island
             const Vector3 up = Vector3::Up * bankCosine - levelRight * bankSine;
             const float scale = bird.scale;
             AppendNearBody(vertices,centre,right,up,forward,scale,palette,bird.species);
-            AppendNearHead(vertices,centre,right,up,forward,scale,palette,bird.species,
+            // The walking dove's head thrusts forward and dips slightly with each step.
+            const Vector3 headCentre = centre + forward * (bird.headBob * 0.055f * scale)
+                - up * (bird.headBob * 0.018f * scale);
+            AppendNearHead(vertices,headCentre,right,up,forward,scale,palette,bird.species,
                            cameraPosition);
 
             const float perch = std::clamp(bird.perchAmount, 0.0f, 1.0f);
