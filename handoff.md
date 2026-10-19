@@ -1,5 +1,26 @@
 # island-simulator handoff
 
+## Backlog (agent-actionable, 2026-10-19)
+
+Distilled from `PLAN.md` "Latest operator priorities — 2026-10-12" and "Current significant
+unfinished work — 2026-10-15". Remove an item only when its evidence is recorded in `PLAN.md`.
+Done 2026-10-19: cave overhead mantle (turf re-hue, hashed 401 tufts, `cave-top` in the Web cave
+scope; evidence in the reopened cave item of `PLAN.md`).
+
+1. Spiders (1000): inspect a natural player-route view and current Chrome/SwiftShader evidence.
+2. Helicopter exterior: inspect an ordinary player-height approach view and current
+   Chrome/SwiftShader evidence after the 2026-10-17 exterior/glazing passes.
+3. Close-observer turning: one deterministic multi-species close-approach audit covering goats,
+   boars, deer, bear, crocodiles, monkeys and snakes.
+4. Whole-island critique: one inspected jungle-floor/canopy repetition improvement and a
+   moving-edge aliasing review.
+5. Shipwreck: wide matched comparison and debris sand/water integration review.
+
+Not agent-actionable (stay open in `PLAN.md`; need the operator or physical hardware): human
+speaker/headphone listening (goat, boar, fly, snake hiss, audio-focus lifecycle), the physical-GPU
+59--60 FPS comparison and AMD hardware qualification (the AMD latch forbids automated host-GPU
+runs), and Android runtime on an emulator or physical device (emulator/KVM setup is off-limits).
+
 ## Current checkpoint — high campfire smoke and live animal-mix audit
 
 The narrow goal for this checkpoint is complete in source: finish the campfire smoke, verify goat
@@ -55,8 +76,8 @@ Validation/build constraints for the next agent:
 - Never use the host AMD GPU for automated work and do not touch Android emulator/KVM setup.
 - Compile with at most three CPU jobs (`--parallel 3` / `-j 3`); the Android wrapper already caps
   Gradle/native work to two workers.
-- Native writable ccache currently needs `CCACHE_DIR=/tmp/island-simulator-native-ccache` because
-  its former default path is read-only in the current sandbox.
+- Use the one shared ccache: `CCACHE_DIR=/rv/cnaccache CCACHE_BASEDIR=/rv` (writable again as of
+  2026-10-19); never create a private cache under `/tmp`.
 - Android uses the pinned local runtime at
   `build/dependencies/sharp-runtime-pinned` (`-PsharpRuntimeRoot=...`) and needs no network.
 - Two report-only CTests, `IslandGameStartupReportValidation` and

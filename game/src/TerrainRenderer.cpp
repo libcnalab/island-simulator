@@ -949,16 +949,29 @@ void main()
         *(1.0-smoothstep(6.1+apronNoise*.55,7.45+apronNoise*.55,caveAxis));
     vec3 apronStone=mix(vec3(.265,.27,.245),vec3(.405,.37,.30),
         clamp(caveGrain*.72+.18+medium*.18,0.0,1.0))*vGroundLight;
-    // Soil excavated from the cavity covers the steep replacement-mesh shoulders.
-    // Keeping the normal biome tint here produced two saturated green rails that
-    // outlined the buried shell from the air even though its crown was earthy.
-    float caveBuriedShoulder=smoothstep(-.5,2.0,caveDepth)
-        *(1.0-smoothstep(18.0,22.0,caveDepth))
-        *smoothstep(caveWidth-.18,caveWidth+.42,caveAxis)
-        *(1.0-smoothstep(7.15,8.55,caveAxis));
+    // The buried shell and its soil bank are one hillside.  Bright biome rails on the
+    // steep replacement shoulders were first replaced by an 84% dark-earth override,
+    // which only swapped them for two dark rails beside a paler crown, so from above
+    // the landmark still read as a berm.  Treat the whole mantle, crown included, as
+    // the neighbouring living turf with broken patches of excavated earth.  The
+    // height factor keeps this cap off the low cave floor at the same X/Z.
+    float mantlePatch=valueNoise(vWorld.xz*.41+vec2(5.0,11.0))*.62
+        +valueNoise(vWorld.xz*1.3+vec2(2.0,7.0))*.38;
+    // Noisy, wide edges: a clean rectangular mask outlined the mantle from above.
+    float mantleEdge=(mantlePatch-.5)*3.2;
+    float caveMantle=smoothstep(-.5,2.5,caveDepth+mantleEdge)
+        *(1.0-smoothstep(17.0,22.5,caveDepth+mantleEdge))
+        *(1.0-smoothstep(6.0,9.4,caveAxis+mantleEdge))
+        *smoothstep(.55,1.25,vWorld.y-caveFloorHeight);
+    float earthExposure=smoothstep(.44,.70,mantlePatch)*.92;
     vec3 shoulderEarth=mix(vec3(.225,.19,.095),vec3(.37,.305,.16),
         clamp(caveGrain*.74+medium*.26,0.0,1.0))*vGroundLight;
-    color=mix(color,shoulderEarth,caveBuriedShoulder*.84);
+    // Re-hue the existing substrate toward turf exactly as the surrounding ground does,
+    // so the mantle keeps its neighbours' luminance instead of a darker green tone.
+    const vec3 mantleLuminance=vec3(0.30,0.55,0.15);
+    vec3 mantleTurf=mix(dot(color,mantleLuminance)*turf/max(dot(turf,mantleLuminance),0.0001),
+        turf*vGroundLight,0.35)*(.86+.26*caveGrain);
+    color=mix(color,mix(mantleTurf,shoulderEarth,earthExposure),caveMantle*.72);
     color=mix(color,apronStone,caveApron*.86);
     color=mix(color,caveStone,caveFloor);
     color=mix(color,closureStone,caveClosure);
@@ -1324,7 +1337,7 @@ void main()
         std::cout<<"island-simulator: cave ground batch adds a broad forest-soil overburden above the closed roof\n";
         const char* caveApron="island-simulator: cave terrain shoulders confine the irregular rock apron to the eroded portal";
         std::cout<<caveApron<<'\n';MirrorRuntimeDiagnosticToPlatformLog(caveApron);
-        const char* caveSoil="island-simulator: cave replacement shoulders use excavated earth instead of bright biome rails";
+        const char* caveSoil="island-simulator: cave replacement mantle carries hillside turf with broken excavated-earth patches instead of dark or bright rails";
         std::cout<<caveSoil<<'\n';MirrorRuntimeDiagnosticToPlatformLog(caveSoil);
     }
 

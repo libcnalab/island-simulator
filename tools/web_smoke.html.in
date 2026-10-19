@@ -52,6 +52,7 @@
       ["hut", ["--viewpoint", "hut", "--debug-overlay"]],
       ["hut-material", ["--viewpoint", "hut-material", "--debug-overlay"]],
       ["cave", ["--viewpoint", "cave", "--debug-overlay"]],
+      ["cave-top", ["--viewpoint", "cave-top", "--debug-overlay"]],
       ["cave-inside", ["--viewpoint", "cave-inside", "--debug-overlay"]],
       ["bunker", ["--viewpoint", "bunker", "--debug-overlay"]],
       ["bunker-corridor", ["--viewpoint", "bunker-corridor", "--debug-overlay"]],

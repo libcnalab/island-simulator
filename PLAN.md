@@ -724,6 +724,27 @@ existing two-worker limit remains suitable.
   `20261017T132240.416913Z-cave` and `20261017T132322.976770Z-cave-inside` passes; the top is now
   visibly soil/vegetation-covered while the rock portal and 20 m passage remain readable. Ordinary
   free-flight plus Web and Android views remain before closure.
+  2026-10-19 follow-up: the inspected `cave-top` frame still read as a berm, because the 84%
+  dark-earth override on the steep replacement shoulders had merely replaced the two bright rails
+  with two dark ones beside a paler crown, and the 139 overburden tufts (17--29 cm, one per
+  thirteen cover cells on a modular lattice) vanished at that height. The terrain shader now
+  treats the whole mantle, crown included, as the neighbouring living turf re-hued from the
+  substrate luminance with broken excavated-earth patches, behind a noise-widened edge instead of
+  a rectangular mask and kept off the low cave floor by the existing height factor. The cave draw
+  seeds its overburden tufts by integer cell hash with bilinear in-cell jitter, 24--40 cm high
+  and in the warm tone of the surrounding grass: 401 tufts and 44 fern fans, 5,292 triangles in
+  the same single draw (from 4,110). Collision, layout, cover-mesh dimensions and the
+  `IslandCaveLayoutTests` are unchanged. Inspected native `20261019T164931.324504Z-cave-top`
+  (170 bins, luminance deviation 11.49, spatial contrast 34.74), `164951.820501Z-cave`,
+  `164959.787453Z-cave-inside` and `165008.424833Z-cave-back` pass with empty kernel deltas; the
+  overhead frame now shows one continuous grassy slope around the rock portal. The Web cave scope
+  gained the `cave-top` view; Chrome 155/SwiftShader `20261019T165325.321967Z-chrome-cave` passes
+  three distinct views, 60 positive intervals each, GL error zero, live contexts and no kernel
+  faults, and the overhead frame matches native. All 72 active native tests and 48 harness tests
+  pass. Android ARM64 assemble/lint pass with the pinned Sharp Runtime and no emulator: the
+  24,839,987-byte APK has SHA-256
+  `85fb6d1a008f7baefaa25231947c5fc5e840cfd67c0a0181cfa48cabcce0f441` and contains a
+  19,797,416-byte `libmain.so`. Android runtime on a device or emulator remains open.
 - [~] Reopen the helicopter exterior finish after operator review. Its construction is recognisable
   and enterable, but broad surfaces still read as flat prototype geometry. Improve fuselage surface
   shaping, normals and restrained painted-metal/glass/panel value variation within the current

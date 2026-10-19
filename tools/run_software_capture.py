@@ -866,7 +866,7 @@ def main():
                 side = "back" if args.viewpoint == "cave-back" else ("inside" if args.viewpoint == "cave-inside" else ("overhead" if args.viewpoint == "cave-top" else "outside"))
                 for marker in (f"cave QA camera {side}", "cave ground replacement",
                                "cave rock first visible draw",
-                               "cave rock 4110 triangles in one shared draw; 20m walkable interior",
+                               "cave rock 5292 triangles in one shared draw; 20m walkable interior",
                                "cave compact asymmetric mouth uses normal-lit fractured stone and restrained moss",
                                "cave narrow eroded lip grows into an irregular closed rock mantle",
                                "cave connected shell strips share smooth lighting normals while portal breaks stay sharp",
@@ -874,11 +874,11 @@ def main():
                                "cave mouth is embedded in a rising inland mountain slope",
                                "cave crown is concealed from above by blended earth and 375 irregular three-blade tufts in the existing draw",
                                "cave crown adds 44 low fern fans to break its overhead outline in the existing draw",
-                               "cave soil overburden carries 139 low tufts and 11 fern fans in the existing draw",
+                               "cave soil overburden carries 401 low tufts and 44 fern fans in the existing draw",
                                "cave ground batch adds a broad forest-soil overburden above the closed roof",
                                "cave portal uses five offset partly buried rock outcrops outside the walkable opening",
                                "cave terrain shoulders confine the irregular rock apron to the eroded portal",
-                               "cave replacement shoulders use excavated earth instead of bright biome rails",
+                               "cave replacement mantle carries hillside turf with broken excavated-earth patches instead of dark or bright rails",
                                "cave rock loaded Content/structures/cave-rock.png; 256x256, 9 mips, 349524 RGBA8 bytes; mirrored triplanar sampling"):
                     if marker not in diagnostics:
                         raise RuntimeError(f"cave integration diagnostic missing: {marker}")

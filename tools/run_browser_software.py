@@ -59,15 +59,16 @@ def validate_shipwreck_report(report):
 def validate_cave_report(report):
     views = report.get("views", [])
     if (report.get("passed") is not True
-        or [view.get("mode") for view in views] != ["cave", "cave-inside"]):
-        raise RuntimeError("cave report lacks successful exterior and interior views")
+        or [view.get("mode") for view in views] != ["cave", "cave-top", "cave-inside"]):
+        raise RuntimeError("cave report lacks successful exterior, overhead and interior views")
     frames = []
     for view in views:
         result = view.get("result", {})
         log = result.get("output", "")
         intervals = view.get("intervals", [])
         frame = view.get("screenshot")
-        side = "inside" if view.get("mode") == "cave-inside" else "outside"
+        side = ("inside" if view.get("mode") == "cave-inside"
+                else "overhead" if view.get("mode") == "cave-top" else "outside")
         if (view.get("passed") is not True or view.get("glError") != 0
             or view.get("contextLost") is not False or result.get("error") or result.get("exited")
             or "SwiftShader" not in view.get("renderer", "") or len(intervals) != 60
@@ -76,13 +77,13 @@ def validate_cave_report(report):
             or not isinstance(frame, str) or not frame.endswith(".png")
             or f"cave QA camera {side}" not in log
             or "cave rock first visible draw" not in log
-            or "cave rock 4110 triangles in one shared draw; 20m walkable interior" not in log
+            or "cave rock 5292 triangles in one shared draw; 20m walkable interior" not in log
             or "cave terrain shoulders confine the irregular rock apron to the eroded portal" not in log
             or "cave connected shell strips share smooth lighting normals while portal breaks stay sharp" not in log
             or "cave adds six high-clearance eroded ceiling pendants in the existing draw" not in log
             or "cave mouth is embedded in a rising inland mountain slope" not in log
             or "cave crown is concealed from above by blended earth and 375 irregular three-blade tufts in the existing draw" not in log
-            or "cave soil overburden carries 139 low tufts and 11 fern fans in the existing draw" not in log
+            or "cave soil overburden carries 401 low tufts and 44 fern fans in the existing draw" not in log
             or "cave ground batch adds a broad forest-soil overburden above the closed roof" not in log
             or "cave portal uses five offset partly buried rock outcrops outside the walkable opening" not in log
             or "cave rock loaded Content/structures/cave-rock.png; 256x256, 9 mips, 349524 RGBA8 bytes; mirrored triplanar sampling" not in log
@@ -1073,8 +1074,8 @@ def main(argv=None):
                 if not all(path.is_file() for path in paths):
                     raise RuntimeError("cave image file missing")
                 identities=[artifact_identity(path) for path in paths]
-                if identities[0]["sha256"] == identities[1]["sha256"]:
-                    raise RuntimeError("cave exterior and interior frames are byte-identical")
+                if len({identity["sha256"] for identity in identities}) != len(identities):
+                    raise RuntimeError("cave exterior, overhead and interior frames contain byte-identical views")
                 metadata["cave_frames"]=identities
             if args.scope == "bunker":
                 bunker_report=json.loads((evidence / "island-browser-bunker.json").read_text())

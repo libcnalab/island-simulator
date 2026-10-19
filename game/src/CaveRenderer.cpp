@@ -118,8 +118,10 @@ void main(){
     earth*=.91+.15*soilMottle;
     vec3 covered=mix(earth,vec3(.205,.285,.080),turf*.36);
     stone=mix(stone,covered,cap*.985);
+    // Blades match the warm sunlit tone of the neighbouring grass field; the former
+    // darker green merged with the turf mantle and vanished from the overhead view.
     if(grassBlade>0.5)
-        stone=mix(vec3(.13,.225,.055),vec3(.225,.345,.085),
+        stone=mix(vec3(.19,.30,.075),vec3(.34,.45,.13),
                   .35+.65*noise(local*1.7+vec3(3.0,7.0,2.0)));
     float damp=(1.0-exterior)*smoothstep(5.0,18.0,local.z)
         *(.55+.45*noise(local*.37+vec3(1.0,8.0,3.0)));
@@ -249,19 +251,40 @@ CaveRenderer::CaveRenderer(GraphicsDevice& device,const CaveLayout& cave,
         }
         ++grassTuftCount;
     }
-    // The broader terrain-material overburden hides most shell-rooted tufts.  Seed a
-    // restrained, irregular second set directly on that visible surface so the new
-    // hillside does not become a conspicuously bare mound.  The blades and fern fans
-    // still share this cave vertex buffer, shader and draw call.
+    // The broader terrain-material overburden hides most shell-rooted tufts.  Seed an
+    // irregular second set directly on that visible surface so the new hillside does
+    // not become a conspicuously bare mound.  One tuft per roughly five cover cells
+    // and blade heights near the surrounding grass keep the mantle reading as the
+    // same turf as its neighbours from the elevated overhead view; the former
+    // one-in-thirteen, 17--29 cm set vanished at that distance.  The blades and fern
+    // fans still share this cave vertex buffer, shader and draw call.
     const auto cover=ground.CoverVertices();
     int coverTuftCount=0,coverFernCount=0;
+    // Integer hashes choose the occupied cells and jitter each tuft inside its cell;
+    // a modular selection on the regular cover grid produced visible lattice rows.
+    const auto cellHash=[](int row,int column,unsigned salt) {
+        unsigned value=static_cast<unsigned>(row)*73856093u
+            ^static_cast<unsigned>(column)*19349663u^salt*83492791u;
+        value^=value>>13;value*=0x5bd1e995u;value^=value>>15;
+        return static_cast<float>(value&0x00ffffffu)/static_cast<float>(0x01000000u);
+    };
     for(int row=1;row<CaveGroundPatch::CoverRows-1;++row) {
         for(int column=1;column<CaveGroundPatch::CoverColumns-1;++column) {
-            if((row*37+column*17+row*column*3)%13!=4)continue;
+            if(cellHash(row,column,1u)>=.20f)continue;
             const int index=row*CaveGroundPatch::CoverColumns+column;
-            const auto point=cover[static_cast<std::size_t>(index)];
+            const auto bilinear=[&](float u,float v) {
+                const auto a=cover[static_cast<std::size_t>(index)];
+                const auto b=cover[static_cast<std::size_t>(index+1)];
+                const auto c=cover[static_cast<std::size_t>(index+CaveGroundPatch::CoverColumns)];
+                const auto d=cover[static_cast<std::size_t>(index+CaveGroundPatch::CoverColumns+1)];
+                const auto lerp3=[](CavePoint p,CavePoint q,float t) {
+                    return CavePoint{std::lerp(p.x,q.x,t),std::lerp(p.y,q.y,t),std::lerp(p.z,q.z,t)};
+                };
+                return lerp3(lerp3(a,b,u),lerp3(c,d,u),v);
+            };
+            const auto point=bilinear(cellHash(row,column,2u),cellHash(row,column,3u));
             const auto local=cave.Local(point);
-            if(local.z<1.7f||local.z>22.7f||std::abs(local.x)>11.4f)continue;
+            if(local.z<1.7f||local.z>22.7f||std::abs(local.x)>12.2f)continue;
             const auto toVector=[](CavePoint p){return Vector3(p.x,p.y,p.z);};
             Vector3 surfaceNormal=Vector3::Cross(
                 toVector(cover[static_cast<std::size_t>(index+CaveGroundPatch::CoverColumns)])
@@ -274,8 +297,8 @@ CaveRenderer::CaveRenderer(GraphicsDevice& device,const CaveLayout& cave,
             const float phase=static_cast<float>(index);
             const float angle=std::fmod(phase*1.618034f+local.z*.23f,
                 2.0f*std::numbers::pi_v<float>);
-            const float height=.17f+.12f*(.5f+.5f*std::sin(phase*.91f));
-            const float halfWidth=.052f+.019f*(.5f+.5f*std::sin(phase*1.37f));
+            const float height=.24f+.16f*(.5f+.5f*std::sin(phase*.91f));
+            const float halfWidth=.058f+.022f*(.5f+.5f*std::sin(phase*1.37f));
             const Vector3 c(point.x,point.y+.018f,point.z);
             const Vector3 first(std::cos(angle)*halfWidth,0,std::sin(angle)*halfWidth);
             const Vector3 second(-first.Z,0,first.X);

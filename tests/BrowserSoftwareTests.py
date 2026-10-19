@@ -497,17 +497,17 @@ class BrowserSoftwareTests(unittest.TestCase):
     def test_cave_scope_requires_current_exterior_interior_material(self):
         self.assertIn("cave", gate.SCOPES)
         page = (ROOT / "tools/web_smoke.html.in").read_text()
-        for mode in ("cave", "cave-inside"):
+        for mode in ("cave", "cave-top", "cave-inside"):
             self.assertIn(f'["{mode}", ["--viewpoint", "{mode}", "--debug-overlay"]]', page)
         markers = (
             "cave rock first visible draw",
-            "cave rock 4110 triangles in one shared draw; 20m walkable interior",
+            "cave rock 5292 triangles in one shared draw; 20m walkable interior",
             "cave terrain shoulders confine the irregular rock apron to the eroded portal",
             "cave connected shell strips share smooth lighting normals while portal breaks stay sharp",
             "cave adds six high-clearance eroded ceiling pendants in the existing draw",
             "cave mouth is embedded in a rising inland mountain slope",
             "cave crown is concealed from above by blended earth and 375 irregular three-blade tufts in the existing draw",
-            "cave soil overburden carries 139 low tufts and 11 fern fans in the existing draw",
+            "cave soil overburden carries 401 low tufts and 44 fern fans in the existing draw",
             "cave ground batch adds a broad forest-soil overburden above the closed roof",
             "cave portal uses five offset partly buried rock outcrops outside the walkable opening",
             "cave rock loaded Content/structures/cave-rock.png; 256x256, 9 mips, 349524 RGBA8 bytes; mirrored triplanar sampling")
@@ -516,9 +516,9 @@ class BrowserSoftwareTests(unittest.TestCase):
                 "glError": 0, "contextLost": False, "renderer": "ANGLE SwiftShader",
                 "screenshot": mode + ".png", "intervals": [16.0] * 60,
                 "result": {"error": "", "exited": False, "output":
-                    f"cave QA camera {'inside' if mode == 'cave-inside' else 'outside'}\n"
-                    + "\n".join(markers)}} for mode in ("cave", "cave-inside")]}
-        self.assertEqual(gate.validate_cave_report(report()), ["cave.png", "cave-inside.png"])
+                    f"cave QA camera {'inside' if mode == 'cave-inside' else 'overhead' if mode == 'cave-top' else 'outside'}\n"
+                    + "\n".join(markers)}} for mode in ("cave", "cave-top", "cave-inside")]}
+        self.assertEqual(gate.validate_cave_report(report()), ["cave.png", "cave-top.png", "cave-inside.png"])
         for index in range(len(markers)):
             bad = report()
             bad["views"][0]["result"]["output"] = bad["views"][0]["result"]["output"].replace(markers[index], "")
