@@ -983,7 +983,8 @@ void main()
 
         void AppendCanopyLiana(PlantGeometry& geometry, const Vector3& anchor,
                                const int variant, const float directionAngle,
-                               const float length, const float windPhase)
+                               const float length, const float windPhase,
+                               const bool aerialRoot)
         {
             constexpr int Segments = 6;
             constexpr int Sides = 3;
@@ -995,17 +996,21 @@ void main()
                     + t * t * 0.09f;
                 const float curl = std::sin(
                     t * 2.0f * std::numbers::pi_v<float>
-                    + static_cast<float>(variant) * 0.71f) * 0.055f;
+                    + static_cast<float>(variant) * 0.71f) * (aerialRoot ? 0.025f : 0.055f);
                 return anchor - Vector3::Up * (length * t)
-                    + direction * outward + side * curl;
+                    + direction * outward * (aerialRoot ? 0.45f : 1.0f) + side * curl;
             };
 
-            const Color vineColor(57 + variant * 2, 78 + variant * 3, 34, 255);
+            // Aerial roots are bare, straighter and bark-brown; lianas keep their green vine.
+            const Color vineColor = aerialRoot
+                ? Color(96, 74, 48, 255)
+                : Color(57 + variant * 2, 78 + variant * 3, 34, 255);
             const auto base = static_cast<std::uint16_t>(geometry.vertices.size());
             for (int segment = 0; segment <= Segments; ++segment) {
                 const float t = static_cast<float>(segment) / static_cast<float>(Segments);
                 const Vector3 centre = centreAt(t);
-                const float radius = 0.038f - t * 0.016f;
+                // Thick enough to read as a vine from the forest floor twenty metres away.
+                const float radius = (aerialRoot ? 0.040f : 0.062f) - t * 0.018f;
                 const float windWeight = 0.58f + t * 0.32f;
                 for (int sideIndex = 0; sideIndex < Sides; ++sideIndex) {
                     const float angle = 2.0f * std::numbers::pi_v<float>
@@ -1035,6 +1040,7 @@ void main()
                 }
             }
 
+            if (aerialRoot) return;
             const Color leafColor(42, 112 + variant * 4, 47, 255);
             AppendPointedLeaf(
                 geometry, centreAt(0.43f), directionAngle + 1.06f,
@@ -1206,15 +1212,29 @@ void main()
                             std::fmod(phase + 0.071f, 1.0f), 0.11f, lowerPosture.pitch, lowerPosture.roll);
                     }
                 }
-                const int lianaCluster = variant == 1 ? 5 : 2;
-                if (!farMesh && (variant == 1 || variant == 3)
-                    && cluster == lianaCluster) {
+                // Lianas hang from alternate lobes of every natural broadleaf form except the
+                // fruiting mango form, long enough to read as vines between crowns from the
+                // forest floor but ending well above the ground on every tree scale.  The fig
+                // form adds bare aerial roots instead.  Near mesh only.
+                const bool lianaForm = variant != 2 && variant != 5
+                    && variant != MangroveCanopyVariant;
+                if (!farMesh && lianaForm && (cluster % 3 == 1 || cluster == 6)) {
+                    const float lianaLength = std::clamp(
+                        centre.Y * 0.55f + 0.3f * static_cast<float>((cluster + variant) % 3),
+                        2.4f, 5.6f);
                     AppendCanopyLiana(
                         geometry,
-                        centre - Vector3::Up
-                            * (1.04f + 0.08f * static_cast<float>(variant)),
-                        variant, angle + (variant == 1 ? 0.34f : -0.41f),
-                        2.45f + 0.24f * static_cast<float>(variant), phase);
+                        centre - Vector3::Up * (0.92f + 0.06f * static_cast<float>(variant % 4)),
+                        variant, angle + (cluster % 2 == 0 ? 0.34f : -0.41f),
+                        lianaLength, std::fmod(phase + 0.13f * static_cast<float>(cluster), 1.0f),
+                        false);
+                }
+                if (!farMesh && variant == 5 && cluster % 2 == 0) {
+                    const float rootLength = std::clamp(centre.Y * 0.7f, 3.0f, 6.5f);
+                    AppendCanopyLiana(
+                        geometry, centre - Vector3::Up * 0.55f, variant,
+                        angle + 0.8f * static_cast<float>(cluster), rootLength,
+                        std::fmod(phase + 0.21f * static_cast<float>(cluster), 1.0f), true);
                 }
             }
             return geometry;
@@ -1904,6 +1924,7 @@ void main()
         MirrorRuntimeDiagnosticToPlatformLog(crownCoverageDiagnostic);
         if (customShaderReady_) {
             std::cout << "island-simulator: jungle portable wind shader with canopy/understory/bush/ground LOD\n";
+            std::cout << "island-simulator: canopy crowns hang lianas beneath alternate lobes and the fig form drops bare aerial roots\n";
             constexpr const char* leafMaterialDiagnostic =
                 "island-simulator: jungle leaves use smooth normals, filtered veins and restrained wax shading";
             std::cout << leafMaterialDiagnostic << '\n';

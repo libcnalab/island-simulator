@@ -959,7 +959,7 @@ def main():
                 raise RuntimeError("current canopy epiphyte detail is missing; check for a stale executable")
             if "canopy forms use distinct emerald, olive, blue-green, and warm-green palettes with bounded lobe variation" not in diagnostics:
                 raise RuntimeError("current canopy palette variation is missing; check for a stale executable")
-            if "canopy mesh variant=0 near-vertices=4874 near-triangles=4688 far-vertices=1071 far-triangles=1120" not in diagnostics:
+            if "canopy mesh variant=0 near-vertices=4998 near-triangles=4864 far-vertices=1071 far-triangles=1120" not in diagnostics:
                 raise RuntimeError("current far canopy support branches are missing; check for a stale executable")
             if "eight structural crown forms share eight LOD lobe anchors and supported trunk bends" not in diagnostics:
                 raise RuntimeError("current canopy structure is missing; check for a stale executable")

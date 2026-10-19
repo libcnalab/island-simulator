@@ -45,7 +45,7 @@ here as done with their `PLAN.md` evidence reference.
 12. [ ] Signs of the resident at the hut: fish-drying rack, coconut pile, dugout canoe, net rack.
 13. [ ] A jetty or stone breakwater near the hut as a shore landmark where birds perch.
 14. [ ] Rope bridge over the stream and/or a tree lookout platform (walkable).
-15. [ ] Lianas and hanging roots between canopy crowns.
+15. [x] Lianas and aerial roots (PLAN "Latest canopy-interior pass").
 16. [ ] Flowering shrubs (hibiscus, plumeria) and banana plants near the stream.
 17. [x] Fruit in crowns and fallen coconuts (PLAN "Latest harvest pass", `fruit` viewpoint).
 18. [x] Fungi on logs and moss on rocks (PLAN "Latest decay pass", `log` viewpoint).

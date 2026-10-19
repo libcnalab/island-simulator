@@ -46,6 +46,19 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Latest canopy-interior pass — lianas and aerial roots
+
+Backlog item 15. The near crown of every natural broadleaf form except the mango form now hangs a
+liana from each of its alternate lobes (three per tree), 2.4--5.6 m long and clamped to 55% of the
+lobe height so no vine reaches the ground on any tree scale; vines are 6 cm thick at the root,
+tapering, with the existing curl, outward sweep, two pointed leaves and wind weight. The fig form
+instead drops bare bark-brown aerial roots from its even lobes, straighter and 4 cm thick. The far
+LOD is untouched, so only the pinned near canopy inventory moved (variant 0: 4,998 vertices /
+4,864 triangles, from 4,874 / 4,688), updated in the native, Web and Android harnesses. The first
+version's 3.8 cm vines were invisible from the forest floor and were thickened. Inspected native
+`20261019T195149Z-hut` shows several green lianas hanging through the crowns beside the hut, and
+the `monkey-tree` and `jungle` frames pass. All 73 active native tests and 48 harness tests pass.
+
 ## Latest decay pass — bracket fungi and rock moss
 
 Backlog item 18. Near-LOD fallen logs now carry four bracket-fungus shelves on their flanks: pale

@@ -1202,7 +1202,7 @@ try {
             && log.includes("near monkeys use a compact forward-set cranium, reduced cheek ruffs, and fitted ears")
             && log.includes("monkey shoulder and hip mantles blend the trunk into all four animated limbs")
             // Curved leaf budgets are unchanged; flared trunks, rounded buttresses and six-sided branches.
-            && /canopy mesh variant=0 near-vertices=4874 near-triangles=4688 far-vertices=1071 far-triangles=1120/.test(log)
+            && /canopy mesh variant=0 near-vertices=4998 near-triangles=4864 far-vertices=1071 far-triangles=1120/.test(log)
             && (mode !== "boars" || /boars [1-6]\/6 visible, 2 draw/.test(log))
             && (mode !== "monkeys" || /monkeys [1-7]\/7 visible/.test(log))
             && !/(?:stock-effect|material) fallback:|GL_INVALID_|gl-error |gl-debug .*severity=high/i.test(log);
