@@ -10,7 +10,11 @@ struct ResidentPoint {float x=0,y=0,z=0;bool operator==(const ResidentPoint&) co
 class ResidentRoute final {
 public:
     static constexpr float Clearance=.50f,GridSpacing=3.0f,Extent=258.0f;
-    ResidentRoute(const IslandTerrain& terrain,const RenderedTerrainSurface& ground,const WorldCollisionGrid& solids);
+    // Landmarks are extra tour goals (the jetty foot) visited after the west clearing; a
+    // landmark the search cannot reach safely is dropped rather than breaking the tour.
+    ResidentRoute(const IslandTerrain& terrain,const RenderedTerrainSurface& ground,const WorldCollisionGrid& solids,
+                  std::span<const ResidentPoint> landmarks={});
+    [[nodiscard]] std::size_t LandmarkCount() const noexcept {return landmarks_;}
     [[nodiscard]] std::span<const ResidentPoint> Points() const noexcept {return points_;}
     [[nodiscard]] std::span<const std::size_t> PausePoints() const noexcept {return pauses_;}
     [[nodiscard]] float Length() const noexcept {return length_;}
@@ -22,5 +26,8 @@ private:
     std::vector<ResidentPoint> points_;
     std::vector<std::size_t> pauses_;
     float length_=0;
+    std::size_t landmarks_=0;
+    void Build(const IslandTerrain& terrain,const RenderedTerrainSurface& ground,const WorldCollisionGrid& solids,
+               std::span<const ResidentPoint> landmarks);
 };
 }

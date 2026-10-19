@@ -89,8 +89,9 @@ bool ResidentMotion::FitPose(float x,float z,float heading,float speed,ResidentP
     }
     return true;
 }
-ResidentMotion::ResidentMotion(const IslandTerrain& terrain,std::span<const CircularObstacle> solids)
-    :terrain_(terrain),ground_(terrain),solids_(solids),route_(terrain,ground_,solids_) {
+ResidentMotion::ResidentMotion(const IslandTerrain& terrain,std::span<const CircularObstacle> solids,
+                               const std::span<const ResidentPoint> landmarks)
+    :terrain_(terrain),ground_(terrain),solids_(solids),route_(terrain,ground_,solids_,landmarks) {
     const auto start=route_.Points()[0],next=route_.Points()[1];
     state_.x=start.x;state_.z=start.z;state_.y=start.y;
     state_.heading=std::atan2(next.x-start.x,next.z-start.z);

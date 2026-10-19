@@ -4,6 +4,7 @@
 #include "IslandSimulator/NaturalPropLayout.hpp"
 #include "IslandSimulator/ShipwreckLayout.hpp"
 #include "IslandSimulator/HutLayout.hpp"
+#include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/CampfireLayout.hpp"
 #include "IslandSimulator/StreamBedPatch.hpp"
 #include <algorithm>
@@ -72,6 +73,22 @@ int main() {
     const auto& route=actor.Route();
     std::cout<<"resident tour "<<route.Points().size()<<" points "<<route.Length()<<" metres; setup "<<setup<<" ms\n"<<std::flush;
     Check(route.Length()>400&&route.Length()<1800&&route.Points().size()<512,"resident does not have a bounded island tour");
+    {
+        // With the jetty foot as a landmark the tour calls there and pauses, and stays bounded.
+        const auto jetty=JettyLayout::FindInWorld(terrain,*hut);
+        Check(jetty.has_value(),"actual resident world is missing the jetty");
+        const std::vector<ResidentPoint> landmarks{{jetty->rootX-jetty->dirX*3.0f,0.0f,jetty->rootZ-jetty->dirZ*3.0f}};
+        ResidentMotion caller(terrain,solids,landmarks);
+        const auto& tour=caller.Route();
+        Check(tour.LandmarkCount()==1,"resident tour accepted the jetty landmark");
+        bool pausesAtJetty=false;
+        for(const auto pause:tour.PausePoints()) {
+            const auto p=tour.Points()[pause];
+            if(std::hypot(p.x-landmarks[0].x,p.z-landmarks[0].z)<5.0f) pausesAtJetty=true;
+        }
+        Check(pausesAtJetty,"resident tour pauses at the jetty foot");
+        Check(tour.Length()>route.Length()&&tour.Length()<2600,"resident tour with the jetty call stays bounded");
+    }
     const StreamBedPatch stream(StreamCourse(terrain),actor.Ground());
     for(std::size_t i=1;i<route.Points().size();++i) {
         const auto a=route.Points()[i-1],b=route.Points()[i];

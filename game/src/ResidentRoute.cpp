@@ -115,14 +115,28 @@ private:
     std::vector<std::uint8_t> valid,knownEdges,safeEdges;
 };
 }
-ResidentRoute::ResidentRoute(const IslandTerrain& terrain,const RenderedTerrainSurface& ground,const WorldCollisionGrid& solids) {
+ResidentRoute::ResidentRoute(const IslandTerrain& terrain,const RenderedTerrainSurface& ground,const WorldCollisionGrid& solids,
+                             const std::span<const ResidentPoint> landmarks) {
+    try {
+        Build(terrain,ground,solids,landmarks);
+    } catch(const std::runtime_error&) {
+        if(landmarks.empty()) throw;
+        points_.clear();pauses_.clear();length_=0;
+        Build(terrain,ground,solids,{});
+    }
+}
+
+void ResidentRoute::Build(const IslandTerrain& terrain,const RenderedTerrainSurface& ground,const WorldCollisionGrid& solids,
+                          const std::span<const ResidentPoint> landmarks) {
     Search search(terrain,ground,solids);
-    const std::array authored{ResidentPoint{CampfireSite::X+6,0,CampfireSite::Z+5},
+    std::vector<ResidentPoint> authored{ResidentPoint{CampfireSite::X+6,0,CampfireSite::Z+5},
         ResidentPoint{VegetationLayout::PrimaryPathCenterX(135),0,135},
-        ResidentPoint{VegetationLayout::WestClearing.x,0,VegetationLayout::WestClearing.z},
-        ResidentPoint{VegetationLayout::PrimaryPathCenterX(-165),0,-165},
-        ResidentPoint{VegetationLayout::PrimaryPathCenterX(-100),0,-100}};
-    std::array<int,authored.size()> goals{};
+        ResidentPoint{VegetationLayout::WestClearing.x,0,VegetationLayout::WestClearing.z}};
+    for(const auto& landmark:landmarks) authored.push_back(landmark);
+    authored.push_back(ResidentPoint{VegetationLayout::PrimaryPathCenterX(-165),0,-165});
+    authored.push_back(ResidentPoint{VegetationLayout::PrimaryPathCenterX(-100),0,-100});
+    landmarks_=landmarks.size();
+    std::vector<int> goals(authored.size());
     for(std::size_t i=0;i<authored.size();++i)goals[i]=search.Nearest(authored[i]);
     points_.push_back(search.Point(goals[0]));points_.back().y=ground.Sample(points_[0].x,points_[0].z).height;
     pauses_.push_back(0);

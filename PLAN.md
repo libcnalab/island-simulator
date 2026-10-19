@@ -46,6 +46,19 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 12 (2026-10-20) — the resident calls at the jetty
+
+The resident's closed tour (campfire, the path at z = 135, the west clearing, the path at
+z = -165 and z = -100) never went near the new landing. `ResidentRoute` now takes landmarks:
+extra tour goals inserted after the west clearing, each snapped to the nearest safe grid node
+and joined by the same A* over safe segments, with its own pause point; if a landmark cannot
+be reached safely the route is rebuilt without it rather than breaking the tour. The game
+hands over the jetty foot, three metres up the sand from the deck's root, and on this island
+the search reaches it (`LandmarkCount()` is 1), so the resident now walks down to the jetty,
+pauses there and carries on. The startup log adds "resident tour visits 1 landmark(s): the
+jetty foot joins the campfire, path and clearing calls", pinned by the native capture tool.
+The resident tests and native `resident` pass.
+
 ## Loop pass 11 (2026-10-20) — the water at the jetty posts, and a perch on the lookout
 
 Two small truths the new structures lacked. The ocean shader now takes the jetty's root and

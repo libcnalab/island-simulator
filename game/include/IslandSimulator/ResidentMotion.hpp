@@ -37,7 +37,8 @@ struct ResidentState {
 class ResidentMotion final {
 public:
     static constexpr float WalkingSpeed=.95f,SwingSeconds=.45f;
-    ResidentMotion(const IslandTerrain& terrain,std::span<const CircularObstacle> solids);
+    ResidentMotion(const IslandTerrain& terrain,std::span<const CircularObstacle> solids,
+                   std::span<const ResidentPoint> landmarks={});
     void Update(float seconds,ResidentPoint observer);
     [[nodiscard]] const ResidentState& State()const noexcept {return state_;}
     [[nodiscard]] const ResidentRoute& Route()const noexcept {return route_;}

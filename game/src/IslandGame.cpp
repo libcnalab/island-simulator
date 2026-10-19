@@ -357,7 +357,14 @@ namespace island
         // represented the airframe itself.
         wildlifeObstacles.push_back({helicopterPlacement_->x,helicopterPlacement_->z,
                                      HelicopterSite::ClearingRadius});
-        resident_=std::make_unique<ResidentMotion>(terrain_,wildlifeObstacles);
+        // The resident's tour also calls at the jetty foot, three metres up the sand from the
+        // deck's root, when the route search can reach it.
+        std::vector<ResidentPoint> residentLandmarks;
+        if(jettyPlacement_) residentLandmarks.push_back({jettyPlacement_->rootX-jettyPlacement_->dirX*3.0f,0.0f,
+            jettyPlacement_->rootZ-jettyPlacement_->dirZ*3.0f});
+        resident_=std::make_unique<ResidentMotion>(terrain_,wildlifeObstacles,residentLandmarks);
+        std::cout<<"island-simulator: resident tour visits "<<resident_->Route().LandmarkCount()
+                 <<" landmark(s): the jetty foot joins the campfire, path and clearing calls\n";
         bear_=std::make_unique<BearMotion>(terrain_,wildlifeObstacles);
         monkeyTroop_.SetObstacles(wildlifeObstacles);
         monkeyTroop_.SetCanopy(jungleLayout_.Canopy());

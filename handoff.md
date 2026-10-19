@@ -72,6 +72,7 @@ Loop log (propose → implement, continues until the operator stops the session)
   pass 10").
 - Pass 11: foam collars at the jetty posts and a bird perch on the lookout rail (PLAN "Loop
   pass 11").
+- Pass 12: the resident's tour calls at the jetty foot (PLAN "Loop pass 12").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted
