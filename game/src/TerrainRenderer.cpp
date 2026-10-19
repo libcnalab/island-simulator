@@ -97,6 +97,8 @@ namespace island
             "island-simulator: inland ridge outcrops follow measured steepness with broken medium-scale exposure";
         constexpr std::string_view CoastalCliffFillDiagnostic =
             "island-simulator: low coastal cliffs retain salt-worn mineral colour, distance-stable macro strata, drainage streaks, and cool open-sky fill";
+        constexpr std::string_view HillsideGrainDiagnostic =
+            "island-simulator: open inland ground keeps footprint-filtered metre-scale tussock grain through the mid distance";
 
         const VertexDeclaration& TerrainDeclaration()
         {
@@ -293,6 +295,20 @@ void main()
     if (fineVisibility > 0.0) {
         fine = sin(p.x * 1.73 + p.y * 0.41)
             * sin(p.y * 1.37 - p.x * 0.56) * fineVisibility;
+    }
+    // Metre-scale hillside grain. The close clods, turf clumps and litter fade by 68 m and
+    // the broad fields alone left open ground between 20 and 150 m as a smooth painted
+    // surface with soft classification blotches. These two fields carry no distance fade of
+    // their own: only the footprint filter removes them, like the other substrate fields.
+    float hummockVisibility = 1.0 - smoothstep(0.18, 0.50, groundPixelWidth * 0.85);
+    float tussockVisibility = 1.0 - smoothstep(0.18, 0.50, groundPixelWidth * 1.9);
+    float hummock = 0.0;
+    float tussock = 0.0;
+    if (hummockVisibility > 0.0) {
+        hummock = valueNoise(p * 0.85 + vec2(27.9, -41.3)) * hummockVisibility;
+    }
+    if (tussockVisibility > 0.0) {
+        tussock = valueNoise(p * 1.9 + vec2(-15.2, 33.8)) * tussockVisibility;
     }
 
     float signedShoreDistance = vTerrainData.x;
@@ -500,7 +516,9 @@ void main()
     float forestFloorMask = smoothstep(24.0, 54.0, signedShoreDistance)
         * (1.0 - steep) * (1.0 - sand)
         * (1.0 - max(eastClearingMask, westClearingMask) * 0.72);
-    float forestMaterialField = broad * 0.70 + medium * 0.45 + fine * 0.035;
+    // The hummock field frays the humus and moss classification edges so the patches read
+    // as ground cover rather than soft stains once the camera is beyond the litter range.
+    float forestMaterialField = broad * 0.70 + medium * 0.45 + hummock * 0.16 + fine * 0.035;
     // Shared with grass placement: sunlit, patch-rich ground carries a living turf layer,
     // shaded or patch-poor ground keeps exposed humus and fallen leaves.
     vec2 groundField = canopyGroundField(p);
@@ -666,6 +684,22 @@ void main()
         vec3 turfChroma = turf / max(dot(turf, luminanceWeights), 0.0001);
         vec3 tinted = dot(color, luminanceWeights) * turfChroma;
         color = mix(color, mix(tinted, turf * vGroundLight, 0.35), turfWeight);
+    }
+
+    // Mid-distance hillside grain on open inland ground: sunlit tussock crowns against the
+    // shaded gaps between them, with a dry-straw lean on the crowns. It begins where the
+    // litter and clod detail is still full so the two hand over without a visible seam, and
+    // the footprint filters on the fields themselves end it at the far silhouette.
+    float openGround = interior * (1.0 - steep) * (1.0 - sand) * (1.0 - routeMask)
+        * (1.0 - max(eastClearingMask, westClearingMask) * 0.5);
+    float hillsideGrain = openGround * smoothstep(10.0, 26.0, distanceToCamera)
+        * (1.0 - closeDetail * 0.45);
+    if (hillsideGrain > 0.0) {
+        float grain = hummock * 0.80 + tussock * 0.75;
+        float crown = smoothstep(0.03, 0.26, grain);
+        color *= vec3(1.0 + grain * 0.38, 1.0 + grain * 0.44, 1.0 + grain * 0.22) * hillsideGrain
+            + vec3(1.0 - hillsideGrain);
+        color = mix(color, color * vec3(1.07, 1.00, 0.82), crown * hillsideGrain * 0.38);
     }
 
     // Wind-exposed upper ridges carry a sparse sun-cured turf transition between the
@@ -1149,6 +1183,8 @@ void main()
                     MirrorRuntimeDiagnosticToPlatformLog(RidgeOutcropDiagnostic);
                     std::cout << CoastalCliffFillDiagnostic << '\n';
                     MirrorRuntimeDiagnosticToPlatformLog(CoastalCliffFillDiagnostic);
+                    std::cout << HillsideGrainDiagnostic << '\n';
+                    MirrorRuntimeDiagnosticToPlatformLog(HillsideGrainDiagnostic);
                 } else {
                     std::cerr << "island-simulator: terrain material fallback: "
                               << materialEffect_->GetCompileErrorEXT() << '\n';

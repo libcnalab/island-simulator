@@ -31,8 +31,7 @@ here as done with their `PLAN.md` evidence reference.
 
 1. [x] Directional sun shadows (`SunShadowMap`, PLAN "Latest lighting pass — directional sun shadow
    map"); animals/structures/water as receivers remain a later pass.
-2. [ ] Mid-distance (20--40 m) open hillside reads as a smooth painted surface with dark blotches
-   where the material classification fades; add mid-distance detail.
+2. [x] Mid-distance hillside grain (PLAN "Latest hillside pass — mid-distance tussock grain").
 3. [ ] Sand scour/drift mound against the shipwreck hull (terrain replacement like the cave mantle).
 4. [ ] Audit the vertical light/dark sand streaks at grazing angles (wide wreck frame foreground).
 5. [ ] Cumulus: layered edges and cloud shadows on the sea instead of smooth blobs.

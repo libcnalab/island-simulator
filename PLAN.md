@@ -46,6 +46,26 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Latest hillside pass — mid-distance tussock grain
+
+Backlog item 2. The terrain fragment shader's close detail (clods, turf clumps, litter) fades
+between 24 and 68 m and the only fields left beyond it were the 17 m `broad` and 3 m `medium`
+classification blotches, so open inland ground between 20 and 150 m read as a smooth painted
+green with soft dark stains (first seen in the `chrome-grass-motion` step frames). Two new
+footprint-filtered value-noise fields, a 1.2 m hummock (0.85 cells/m) and a 0.5 m tussock
+(1.9 cells/m), now carry metre-scale grain on open interior ground (not sand, not steep, not the
+path, half in the clearings): sunlit crowns against shaded gaps with a dry-straw lean on the
+crowns. They fade in from 10 to 26 m so they hand over under the still-full close detail without
+a seam, and only their footprint filters end them at the far silhouette, the convention the other
+substrate fields follow. The hummock field also enters `forestMaterialField`, so the humus and
+moss classification edges fray at metre scale instead of ending in smooth stains. The startup log
+adds "open inland ground keeps footprint-filtered metre-scale tussock grain through the mid
+distance", pinned by the native capture tool, the Web smoke and the Android runtime smoke.
+Inspected native `20261019T202257Z-east` (the hill behind the deer, 30–60 m) and
+`20261019T202354Z-west` show the hillside as grained turf rather than a flat surface; `overview`,
+`headland` and `clearing-edge` still pass their gates. The `ground` viewpoint's luminance gate
+remains the pre-existing failure recorded on 2026-10-16.
+
 ## Latest occupation pass — the resident's yard
 
 Backlog item 12. `HutPlacement` now carries four yard ground samples (`HutLayout::YardSites`,

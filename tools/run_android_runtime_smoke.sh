@@ -289,6 +289,8 @@ while [ "$(date +%s)" -lt "$DEADLINE" ]; do
             "$LOG_FILE" \
         && grep -q "island-simulator: inland ridge outcrops follow measured steepness with broken medium-scale exposure" \
             "$LOG_FILE" \
+        && grep -q "island-simulator: open inland ground keeps footprint-filtered metre-scale tussock grain through the mid distance" \
+            "$LOG_FILE" \
         && grep -q "island-simulator: sky cumulus use layered billow silhouettes with blue-grey undersides and sunlit crowns" \
             "$LOG_FILE" \
         && grep -q "island-simulator: sky cumulus use compact normalized breakup instead of horizon-spanning ribbons" \
