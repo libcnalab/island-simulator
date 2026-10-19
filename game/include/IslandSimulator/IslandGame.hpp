@@ -446,6 +446,7 @@ namespace island
         std::unique_ptr<BridgeRenderer> bridgeRenderer_;
         std::unique_ptr<UnderwaterEffectRenderer> underwaterEffect_;
         float lastSubmergedDepth_ = 0.0f, bubbleBurst_ = 0.0f;
+        float seaForageSeconds_ = 0.0f;
         std::unique_ptr<HelicopterRenderer> helicopterRenderer_;
         std::unique_ptr<ShorelineRenderer> shorelineRenderer_;
         std::unique_ptr<SkyRenderer> skyRenderer_;

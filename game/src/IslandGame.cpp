@@ -2170,6 +2170,7 @@ namespace island
                   << " real branch, rock, and wreck perches with approach and departure\n"
                   << "island-simulator: bird flight uses slow radial drift, banking, and "
                      "intermittent glide\n"
+                  << "island-simulator: seabirds break from their high orbits to circle low over the fish school of the moment\n"
                   << "island-simulator: four fruit doves alternate canopy perches with bounded dry-ground walking and foraging\n"
                   << "island-simulator: fruit doves coo in low slow phrases and thrust their heads as they walk; parrots keep their squawk and a pigeon-grey dove joins the green ones\n"
                   << "island-simulator: fruit bats " << fruitBatColony_.Bats().size()
@@ -2519,6 +2520,17 @@ namespace island
             const auto direction=target-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+        }
+        {
+            // The seabirds' school of the moment: the schools take turns every ninety seconds
+            // so the low circling moves around the coast instead of fixing on one bay.
+            const auto schools = fishSchools_.Schools();
+            seaForageSeconds_ += deltaSeconds;
+            if (!schools.empty()) {
+                const auto turn = static_cast<std::size_t>(seaForageSeconds_ / 90.0f) % schools.size();
+                const FishSchoolState& school = schools[turn];
+                birdFlock_.SetSeaForage(school.centreX, school.centreZ, true);
+            }
         }
         birdFlock_.Update((viewpoint_ == FixedViewpoint::BirdDetail
                               || viewpoint_ == FixedViewpoint::GroundDoveDetail)

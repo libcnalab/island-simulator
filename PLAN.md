@@ -46,6 +46,23 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 3 (2026-10-20) — seabirds work the fish schools
+
+The six seabirds only ever rode their high orbits 125–233 m out; a tropical shore shows them
+working bait. `BirdFlock::SetSeaForage` takes the fish school of the moment (the game hands the
+schools over in turn, ninety seconds each, so the circling moves around the coast), and every
+75 s a seabird whose turn has come leaves its route for 42 s: it flies straight at the school
+while more than three orbit radii away, then its orbit centre becomes the school with an 11 m
+radius and a firmer radial pull, and its altitude blends (`huntAmount`,
+ramping over two seconds so the dive and the climb back read as flight) from the route height
+to 7.5 m above the water, never below four metres over the ground ahead; when the school is
+withdrawn the hunts end and the island orbit's radial correction draws it back out. The
+startup log adds "seabirds break from their high orbits to circle low over the fish school of
+the moment", pinned by the native capture tool. New core check: given a school point 25 m off
+the east shore, a seabird circles within 22 m of it below 14 m within four minutes (a first
+draft with a 26 s hunt and a spiral approach never arrived in time), and no bird hunts once the
+school is withdrawn. Native `birds` passes.
+
 ## Loop pass 2 (2026-10-20) — butterflies work the flowering bushes
 
 The hibiscus and plumeria bushes added for backlog item 16 flower unvisited while the

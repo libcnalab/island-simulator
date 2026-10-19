@@ -93,6 +93,7 @@ namespace island
             route.baseAltitude = 71.0f + static_cast<float>(index % 4U) * 8.0f;
             route.minimumClearance = 46.0f;
             agent.state.speed = 12.4f + static_cast<float>(index % 4U) * 1.1f;
+            agent.nextHuntSeconds = 20.0f + static_cast<float>(index - 18U) * 12.5f;
         }
         route.family = agent.state.family;
 
@@ -419,22 +420,54 @@ namespace island
         UpdateFlight(agent, deltaSeconds);
     }
 
+    void BirdFlock::SetSeaForage(const float x, const float z, const bool valid) noexcept
+    {
+        forageValid_ = valid && std::isfinite(x) && std::isfinite(z);
+        if (forageValid_) { forageX_ = x; forageZ_ = z; }
+    }
+
+    std::size_t BirdFlock::HuntingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.huntSeconds > 0.0f ? 1U : 0U;
+        return count;
+    }
+
     void BirdFlock::UpdateFlight(Agent& agent, const float deltaSeconds) noexcept
     {
         agent.state.perchAmount = std::max(
             0.0f, agent.state.perchAmount - deltaSeconds * 1.5f);
-        const float radius = std::max(1.0f, std::hypot(agent.state.x, agent.state.z));
-        const float radialX = agent.state.x / radius;
-        const float radialZ = agent.state.z / radius;
+        // Seabirds work the sea: every so often one leaves its high orbit to circle low over
+        // the current fish school, then climbs back onto its route.
+        if (agent.state.species == BirdSpecies::Seabird) {
+            if (agent.huntSeconds > 0.0f) {
+                agent.huntSeconds = forageValid_ ? agent.huntSeconds - deltaSeconds : 0.0f;
+            } else if ((agent.nextHuntSeconds -= deltaSeconds) <= 0.0f && forageValid_) {
+                agent.huntSeconds = HuntSeconds;
+                agent.nextHuntSeconds = HuntIntervalSeconds;
+            }
+        }
+        const bool hunting = agent.huntSeconds > 0.0f;
+        agent.state.huntAmount += std::clamp((hunting ? 1.0f : 0.0f) - agent.state.huntAmount,
+                                             -deltaSeconds * 0.5f, deltaSeconds * 0.5f);
+        // Orbit centre and radius: the island for the route, the school while hunting.
+        const float centreX = hunting ? forageX_ : 0.0f;
+        const float centreZ = hunting ? forageZ_ : 0.0f;
+        const float radius = std::max(1.0f, std::hypot(agent.state.x - centreX, agent.state.z - centreZ));
+        const float radialX = (agent.state.x - centreX) / radius;
+        const float radialZ = (agent.state.z - centreZ) / radius;
         const float tangentX = -radialZ * static_cast<float>(agent.route.direction);
         const float tangentZ = radialX * static_cast<float>(agent.route.direction);
-        const float preferredRadius = agent.route.preferredRadius
+        const float preferredRadius = hunting ? HuntOrbitRadius : agent.route.preferredRadius
             + std::sin(elapsedSeconds_ * agent.radialDriftFrequency
                        + agent.radialDriftPhase) * agent.radialDriftAmplitude;
         const float radialCorrection = std::clamp(
-            (preferredRadius - radius) * 0.018f, -0.52f, 0.52f);
-        const float desiredX = tangentX + radialX * radialCorrection;
-        const float desiredZ = tangentZ + radialZ * radialCorrection;
+            (preferredRadius - radius) * (hunting ? 0.06f : 0.018f), -0.85f, 0.85f);
+        // A hunting bird still far from the school flies straight at it; the orbit only
+        // begins once it is within a few orbit radii.
+        const bool approaching = hunting && radius > HuntOrbitRadius * 3.0f;
+        const float desiredX = approaching ? -radialX : tangentX + radialX * radialCorrection;
+        const float desiredZ = approaching ? -radialZ : tangentZ + radialZ * radialCorrection;
         const float wander = std::sin(elapsedSeconds_ * agent.wanderFrequencyA
                                       + agent.wanderPhaseA) * 0.18f
             + std::sin(elapsedSeconds_ * agent.wanderFrequencyB
@@ -465,13 +498,19 @@ namespace island
             agent.state.z + std::sin(agent.state.headingRadians) * lookAhead);
         const float verticalWave = std::sin(elapsedSeconds_ * agent.verticalFrequency * TwoPi
                                             + agent.verticalPhase);
-        const float desiredAltitude = std::max(
+        const float routeAltitude = std::max(
             agent.route.baseAltitude + verticalWave * agent.route.verticalAmplitude,
             std::max(terrainHeight, upcomingHeight) + agent.route.minimumClearance + 2.0f);
+        // Over the school the bird drops to a few metres above the water, never below it or
+        // below the land ahead; the blend keeps the climb back gradual.
+        const float huntAltitude = std::max(HuntAltitude + verticalWave * 1.2f,
+            std::max(terrainHeight, upcomingHeight) + 4.0f);
+        const float desiredAltitude = std::lerp(routeAltitude, huntAltitude, agent.state.huntAmount);
         const float maximumVerticalStep = deltaSeconds * 4.5f;
         agent.state.y += std::clamp(desiredAltitude - agent.state.y,
                                     -maximumVerticalStep, maximumVerticalStep);
-        agent.state.y = std::max(agent.state.y, terrainHeight + agent.route.minimumClearance);
+        const float clearance = std::lerp(agent.route.minimumClearance, 4.0f, agent.state.huntAmount);
+        agent.state.y = std::max(agent.state.y, terrainHeight + clearance);
 
         agent.flapPhase = std::fmod(agent.flapPhase + agent.flapSpeed * deltaSeconds, TwoPi);
         const float glideSignal = std::sin(

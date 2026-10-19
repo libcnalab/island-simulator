@@ -7346,6 +7346,31 @@ int main()
     }
 
     {
+        // Seabirds leave their high orbit to circle low over the fish school they are given,
+        // and climb back onto the route once it is withdrawn.
+        const island::IslandTerrain terrain;
+        island::BirdFlock flock(terrain);
+        // A school point off the east shore at a typical offshore distance.
+        const float shore = terrain.ShoreRadius(0.3f);
+        const float forageX = std::cos(0.3f) * (shore + 25.0f), forageZ = std::sin(0.3f) * (shore + 25.0f);
+        flock.SetSeaForage(forageX, forageZ, true);
+        bool circledLow = false;
+        for (int step = 0; step < 4800 && !circledLow; ++step) {
+            flock.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
+            for (const auto& bird : flock.Birds()) {
+                if (bird.species != island::BirdSpecies::Seabird) continue;
+                if (bird.huntAmount > 0.9f && bird.y < 14.0f && bird.y > 3.0f
+                    && std::hypot(bird.x - forageX, bird.z - forageZ) < 22.0f) circledLow = true;
+            }
+        }
+        Check(circledLow, "a seabird circles low over the fish school within four minutes");
+        flock.SetSeaForage(0.0f, 0.0f, false);
+        for (int step = 0; step < 1200; ++step)
+            flock.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
+        Check(flock.HuntingCount() == 0U, "seabirds return to their routes once the school is withdrawn");
+    }
+
+    {
         // Butterflies alternate their nectar visits between the ground patch and a flowering
         // bush inside the habitat, hovering at blossom height over the bush.
         const island::IslandTerrain terrain;

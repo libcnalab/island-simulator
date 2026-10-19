@@ -55,6 +55,8 @@ namespace island
         /** @brief Pigeon-walk head thrust, 0..1, nonzero only while foraging on the ground. */
         float headBob = 0.0f;
         float scale = 1.0f;
+        /** @brief 0..1 while a seabird has left its high orbit to circle low over a fish school. */
+        float huntAmount = 0.0f;
         BirdPathFamily family = BirdPathFamily::Shore;
         BirdSpecies species = BirdSpecies::Coastal;
         BirdBehavior behavior = BirdBehavior::Fly;
@@ -105,6 +107,13 @@ namespace island
 
         /** @brief Installs static anchors after world layouts have been constructed. */
         void SetPerchSites(std::span<const BirdPerchSite> sites);
+        /** @brief The fish school the seabirds may work this moment; invalid clears it. */
+        void SetSeaForage(float x, float z, bool valid) noexcept;
+        [[nodiscard]] std::size_t HuntingCount() const noexcept;
+        static constexpr float HuntOrbitRadius = 11.0f;
+        static constexpr float HuntAltitude = 7.5f;
+        static constexpr float HuntSeconds = 42.0f;
+        static constexpr float HuntIntervalSeconds = 75.0f;
 
         [[nodiscard]] std::span<const BirdState> Birds() const noexcept;
         [[nodiscard]] std::span<const BirdRouteState> Routes() const noexcept;
@@ -148,6 +157,8 @@ namespace island
             std::uint32_t perchCycle = 0U;
             float groundTargetX = 0.0f;
             float groundTargetZ = 0.0f;
+            float huntSeconds = 0.0f;       // remaining low circling; 0 when on the high route
+            float nextHuntSeconds = 0.0f;
             std::size_t index = 0U;
         };
 
@@ -166,6 +177,8 @@ namespace island
         std::array<BirdRouteRegion, 3> routeRegions_{};
         float elapsedSeconds_ = 0.0f;
         std::uint64_t frameIndex_ = 0U;
+        float forageX_ = 0.0f, forageZ_ = 0.0f;
+        bool forageValid_ = false;
         int fullSimulationCount_ = 0;
         int reducedSimulationCount_ = 0;
         int dormantSimulationCount_ = 0;
