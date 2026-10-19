@@ -155,7 +155,7 @@ namespace island
             }
 
             void Body(const Color& color, const float dip, const float bob, const bool juvenile,
-                      const int sides)
+                      const int sides, const float mud = 0.0f)
             {
                 // One continuous neck/head/snout surface removes intersecting primitive seams.
                 const auto profile = MakeBoarBodyProfile(dip);
@@ -177,8 +177,16 @@ namespace island
                     const float shoulder = .075f * std::exp(
                         -std::pow((ring.z - .25f) / .25f, 2.0f));
                     const float cheek = .085f * std::clamp((ring.z - .52f) / .34f, 0.0f, 1.0f);
-                    const auto coat = wildlife_render::ScaleColor(
+                    auto coat = wildlife_render::ScaleColor(
                         color, grain * dorsal * stripe * (1.0f + shoulder + cheek));
+                    // Wet mud from a wallow darkens the belly and lower flanks; the back stays dry.
+                    const float belly = std::clamp((0.52f - (ring.centreY + s * ring.radiusY)) / 0.22f, 0.0f, 1.0f);
+                    if (mud > 0.0f && belly > 0.0f) {
+                        const float weight = mud * belly;
+                        coat = Color(static_cast<int>(std::lerp(static_cast<float>(coat.getRProperty()), 88.0f, weight)),
+                                     static_cast<int>(std::lerp(static_cast<float>(coat.getGProperty()), 66.0f, weight)),
+                                     static_cast<int>(std::lerp(static_cast<float>(coat.getBProperty()), 46.0f, weight)), 255);
+                    }
                     const Vector2 uv(BoarFurAlong(ring.z),
                         MonkeyFurUv::Around(angle));
                     return SmoothVertex(point, Vector3(nx, ny, nz), coat, uv);
@@ -205,8 +213,14 @@ namespace island
             const float bob = grounded.bodyBob;
             const float dip = boar.rootingPose * 0.15f;
             const std::array<Color,3> furTints{Color(245,239,229),Color(211,217,222),Color(255,240,218)};
-            const auto fur=furTints[boar.colorVariant%furTints.size()];
-            mesh.Body(fur, dip, bob, boar.scale < 0.8f, sides);
+            const auto dryFur=furTints[boar.colorVariant%furTints.size()];
+            // Legs carry the full wallow mud; the body builder keeps it to the belly.
+            const auto mudded=[&](const Color& base,float weight){
+                return Color(static_cast<int>(std::lerp(static_cast<float>(base.getRProperty()),88.0f,weight)),
+                    static_cast<int>(std::lerp(static_cast<float>(base.getGProperty()),66.0f,weight)),
+                    static_cast<int>(std::lerp(static_cast<float>(base.getBProperty()),46.0f,weight)),255);};
+            const auto fur=mudded(dryFur,boar.mudAmount*0.85f);
+            mesh.Body(dryFur, dip, bob, boar.scale < 0.8f, sides, boar.mudAmount);
             mesh.Ellipsoid(Vector3(0, 0.42f - dip + bob, BoarMuzzleZ(1.047f)), Vector3(0.114f, 0.09f, 0.0175f),
                            Color(120, 86, 68), near ? 12 : 6, 4);
             for (int side : {-1, 1}) {

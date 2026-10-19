@@ -46,6 +46,27 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 6 (2026-10-20) — boars wallow at the stream bank
+
+The boars live on the vegetated banks of the western drainage corridor yet never entered it:
+the stream corridor is the drainage field itself (0.96–0.97 at the bank against the habitat's
+0.74 limit), and a probe showed every bank point otherwise valid. Each boar now finds, at
+placement, the closest bank point a metre outside the channel within 0.9 of its range that
+passes every habitat rule except drainage (`IsValidGround(x, z, allowDrainage)`); all six boars
+have one. Steps onto drainage ground are allowed only for the new `Wallow` behaviour and for a
+boar already standing on it (`BoarState::inChannel`, so one startled off its trip by the player
+walks out instead of freezing), and ordinary foraging still keeps out of the corridor; the boar
+herd test checks the strict habitat for every boar that is neither wallowing nor in the channel. Every third rest becomes a walk to the wallow at 0.5 m/s,
+then fourteen seconds standing in the bank mud with the snout down (the rooting pose), facing
+the water; `mudAmount` wets to 1 over six seconds there and dries off over 150 s afterwards.
+The renderer paints the mud: the legs take 85 % of it and the body builder darkens the belly
+and lower flanks (a height band below 0.52 m of the body frame) toward wet-mud brown while the
+back stays dry. The wallow is quiet snuffling to the call scheduler. The ecology line now
+reports "N boars wallow at the bank and carry the mud on their legs and bellies", pinned by the
+native capture tool. New core check: at least one boar range reaches a bank, and within ten
+simulated minutes a boar is wallowing with mud above 0.5 and reaches full mud. Native `boars`
+passes.
+
 ## Loop pass 5 (2026-10-20) — gust fronts
 
 The grass, crowns and fronds each swayed on their own two sines; nothing ever moved across the

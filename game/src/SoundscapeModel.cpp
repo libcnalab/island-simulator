@@ -1331,6 +1331,8 @@ namespace island
                     kind = BoarCallKind::Grunt; interval = 12.0f; break;
                 case BoarBehavior::Retreat:
                     kind = BoarCallKind::Grunt; interval = 6.0f; break;
+                case BoarBehavior::Wallow:
+                    kind = BoarCallKind::Snuffle; interval = 9.0f; break;
                 default: continue;
             }
             const float sourceY = boar.y + 0.55f * boar.scale;

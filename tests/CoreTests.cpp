@@ -3,6 +3,7 @@
 #include "IslandSimulator/BenchmarkTraversalRoute.hpp"
 #include "IslandSimulator/BirdFlock.hpp"
 #include "IslandSimulator/WindGust.hpp"
+#include "IslandSimulator/BoarHerd.hpp"
 #include "IslandSimulator/BirdPerchLayout.hpp"
 #include "IslandSimulator/ButterflyMeadow.hpp"
 #include "IslandSimulator/GeckoPopulation.hpp"
@@ -7344,6 +7345,24 @@ int main()
               "player capsule cannot tunnel through an authored land-rock proxy");
         Check(rockObstacleRejections > 0 && rockTerrainRejections == 0,
               "authored land-rock traversal is rejected by collision rather than terrain");
+    }
+
+    {
+        // Boars whose range reaches the stream bank walk there to wallow and come back muddy;
+        // the mud then dries off.
+        const island::IslandTerrain terrain;
+        island::BoarHerd herd(terrain);
+        Check(herd.WallowerCount() >= 1U, "at least one boar range reaches a stream bank");
+        float wettest = 0.0f;
+        bool wallowed = false;
+        for (int step = 0; step < 12000; ++step) {
+            herd.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
+            for (const auto& boar : herd.Boars()) {
+                wettest = std::max(wettest, boar.mudAmount);
+                wallowed |= boar.behavior == island::BoarBehavior::Wallow && boar.mudAmount > 0.5f;
+            }
+        }
+        Check(wallowed && wettest > 0.9f, "a boar wallows at the bank within ten minutes and comes out muddy");
     }
 
     {

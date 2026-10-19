@@ -13,7 +13,7 @@ namespace island
 {
     class IslandTerrain;
 
-    enum class BoarBehavior : std::uint8_t { Rest, Forage, Wander, Retreat };
+    enum class BoarBehavior : std::uint8_t { Rest, Forage, Wander, Retreat, Wallow };
 
     /** @brief Ground-relative pose; yaw zero faces positive X, matching other wildlife. */
     struct BoarState
@@ -24,6 +24,10 @@ namespace island
         float speed = 0.0f;
         float gaitPhase = 0.0f;
         float rootingPose = 0.0f;
+        /** @brief 0..1 wet mud on the legs and belly from the last wallow; dries off slowly. */
+        float mudAmount = 0.0f;
+        /** @brief True while the boar stands on the stream's drainage ground for its wallow trip. */
+        bool inChannel = false;
         float scale = 1.0f;
         BoarBehavior behavior = BoarBehavior::Rest;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
@@ -55,7 +59,11 @@ namespace island
         void Update(float deltaSeconds, float observerX, float observerY,
                     float observerZ) noexcept;
         [[nodiscard]] std::span<const BoarState> Boars() const noexcept { return states_; }
-        [[nodiscard]] bool IsValidGround(float x, float z) const noexcept;
+        [[nodiscard]] bool IsValidGround(float x, float z, bool allowDrainage = false) const noexcept;
+        /** @brief Boars whose range reaches a stream bank; they walk there to wallow. */
+        [[nodiscard]] std::size_t WallowerCount() const noexcept;
+        static constexpr float WallowSeconds = 14.0f;
+        static constexpr float MudDrySeconds = 150.0f;
 
     private:
         struct Agent
@@ -68,8 +76,13 @@ namespace island
             // Standing point beside the trunk base the boar forages toward; valid when hasRoot.
             float rootX = 0.0f, rootZ = 0.0f, trunkX = 0.0f, trunkZ = 0.0f;
             bool hasRoot = false;
+            // The nearest reachable stream bank and the water it faces; valid when hasWallow.
+            float wallowX = 0.0f, wallowZ = 0.0f, faceX = 0.0f, faceZ = 0.0f;
+            bool hasWallow = false;
+            bool inCorridor = false;        // still on drainage ground after the wallow ended
         };
         void ChooseRootingSite(Agent& agent) noexcept;
+        void FindWallow(Agent& agent) noexcept;
         void Initialize(std::size_t index);
         void Step(Agent& agent, float dt, float observerX, float observerZ,
                   bool observerValid) noexcept;

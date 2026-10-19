@@ -2048,6 +2048,7 @@ namespace island
                   << " agents in moist non-channel interior habitat\n";
         std::cout << "island-simulator: ecological links: " << deer_->DrinkerCount() << " deer and "
                   << goats_->DrinkerCount() << " goats walk to the stream bank to drink; "
+                  << boarHerd_.WallowerCount() << " boars wallow at the bank and carry the mud on their legs and bellies; "
                   << "boars root at the nearest trunk base, monkeys favour fruiting crowns and linger to pick\n";
         std::cout << "island-simulator: herd behaviour: goats share their separated ranges and the "
                      "East deer pair walks back together; a sentinel lifts its head first and the others follow after 0.7 s\n";

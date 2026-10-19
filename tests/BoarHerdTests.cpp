@@ -6,8 +6,8 @@
 #include "IslandSimulator/VegetationLayout.hpp"
 
 #include <array>
-#include <cmath>
 #include <iostream>
+#include <cmath>
 #include <limits>
 #include <stdexcept>
 #include <vector>
@@ -31,7 +31,7 @@ int main()
     obstacles.insert(obstacles.end(), jungle.Obstacles().begin(), jungle.Obstacles().end());
     obstacles.insert(obstacles.end(), props.Obstacles().begin(), props.Obstacles().end());
     island::BoarHerd herd(terrain, obstacles), repeated(terrain, obstacles);
-    std::array<bool, 4> behaviors{};
+    std::array<bool, 5> behaviors{};
     for (int frame = 0; frame < 12000; ++frame) {
         const auto first = herd.Boars().front();
         const bool approach = frame % 1500 < 90;
@@ -45,11 +45,17 @@ int main()
             const auto& other = repeated.Boars()[index];
             Check(boar.x == other.x && boar.z == other.z && boar.gaitPhase == other.gaitPhase,
                   "boar simulation must be deterministic");
-            Check(herd.IsValidGround(boar.x, boar.z), "boar left valid obstacle-free habitat");
+            // A wallowing or still-muddy boar may stand on the stream's drainage ground; every
+            // other habitat rule holds there too, and a dry boar is never in the corridor.
+            Check(herd.IsValidGround(boar.x, boar.z, true), "boar left valid obstacle-free habitat");
+            if (!boar.inChannel && boar.behavior != island::BoarBehavior::Wallow)
+                Check(herd.IsValidGround(boar.x, boar.z), "a boar off its wallow trip stood in the drainage corridor");
             const auto inland = island::IslandEnvironmentField::SampleInland(
                 boar.x, boar.z, terrain.SignedShoreDistance(boar.x, boar.z));
+            const bool mayStandInChannel = boar.inChannel
+                || boar.behavior == island::BoarBehavior::Wallow;
             Check(inland.moisture >= island::BoarHerd::MinimumHabitatMoisture
-                      && inland.drainage <= island::BoarHerd::MaximumHabitatDrainage
+                      && (mayStandInChannel || inland.drainage <= island::BoarHerd::MaximumHabitatDrainage)
                       && inland.saltExposure <= island::BoarHerd::MaximumHabitatSaltExposure,
                   "boar left the shared damp, non-channel interior habitat");
             Check(std::hypot(boar.x - boar.homeX, boar.z - boar.homeZ) <= island::BoarHerd::HomeRadius,

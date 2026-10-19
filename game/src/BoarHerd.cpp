@@ -1,4 +1,5 @@
 #include "IslandSimulator/BoarHerd.hpp"
+#include "IslandSimulator/StreamRoute.hpp"
 #include "IslandSimulator/IslandEnvironmentField.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/CaveSite.hpp"
@@ -47,16 +48,18 @@ namespace island
         frame_ = 0;
     }
 
-    bool BoarHerd::IsValidGround(const float x, const float z) const noexcept
+    bool BoarHerd::IsValidGround(const float x, const float z, const bool allowDrainage) const noexcept
     {
         if (!std::isfinite(x) || !std::isfinite(z) || CaveSite::Reserves(x,z,CollisionRadius)) return false;
         const auto sample = terrain_.Sample(x, z);
         const auto environment = IslandEnvironmentField::SampleInland(
             x, z, sample.signedShoreDistance);
+        // The stream corridor is the drainage field itself: ordinary foraging keeps out of it,
+        // but a boar walking to its wallow is allowed onto the bank.
         if (sample.signedShoreDistance < MinimumShoreDistance
             || sample.height < 2.0f || sample.slopeRadians > MaximumSlope
             || environment.moisture < MinimumHabitatMoisture
-            || environment.drainage > MaximumHabitatDrainage
+            || (!allowDrainage && environment.drainage > MaximumHabitatDrainage)
             || environment.saltExposure > MaximumHabitatSaltExposure) return false;
         for (const auto& obstacle : obstacles_) {
             if (std::hypot(x - obstacle.x, z - obstacle.z)
@@ -102,7 +105,39 @@ namespace island
         agent.remainingSeconds = 2.0f + static_cast<float>(index) * 0.8f;
         agent.targetHeading = state.headingRadians;
         agent.decisions = static_cast<std::uint32_t>(index) * 173U;
+        FindWallow(agent);
         states_[index] = state;
+    }
+
+    // The bank a metre outside the channel on the home's side, at the closest point of the
+    // authored stream route inside the range that the habitat rules allow a boar to stand on.
+    void BoarHerd::FindWallow(Agent& agent) noexcept
+    {
+        const BoarState& state = agent.state;
+        agent.hasWallow = false;
+        float best = std::numeric_limits<float>::max();
+        for (float along = 6.0f; along < StreamRoute::NominalLength - 6.0f; along += 1.0f) {
+            const float cx = StreamRoute::SourceX - along;
+            const float cz = StreamRoute::CentreZ(cx);
+            const float tangentZ = StreamRoute::CentreZ(cx - 1.0f) - cz;
+            const float length = std::hypot(1.0f, tangentZ);
+            const float normalX = tangentZ / length, normalZ = 1.0f / length;
+            const float side = (state.homeZ - cz) * normalZ + (state.homeX - cx) * normalX < 0.0f ? -1.0f : 1.0f;
+            const float offset = StreamRoute::HalfWidth(cx) + 1.1f;
+            const float x = cx + normalX * offset * side, z = cz + normalZ * offset * side;
+            const float homeDistance = std::hypot(x - state.homeX, z - state.homeZ);
+            if (homeDistance >= best || homeDistance > HomeRadius * 0.9f || !IsValidGround(x, z, true)) continue;
+            best = homeDistance;
+            agent.wallowX = x; agent.wallowZ = z; agent.faceX = cx; agent.faceZ = cz;
+            agent.hasWallow = true;
+        }
+    }
+
+    std::size_t BoarHerd::WallowerCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.hasWallow ? 1U : 0U;
+        return count;
     }
 
     // The nearest trunk (a static obstacle) inside the range, approached from the boar's side
@@ -192,6 +227,21 @@ namespace island
                 ChooseRootingSite(agent);
                 if (agent.hasRoot) agent.remainingSeconds += 6.0f;
             }
+            // Every third rest of a boar with a reachable bank becomes a walk to the water
+            // to wallow: the trip plus the time in the mud.
+            if (state.behavior == BoarBehavior::Rest && agent.hasWallow && agent.decisions % 3U == 0U) {
+                state.behavior = BoarBehavior::Wallow;
+                agent.remainingSeconds = WallowSeconds
+                    + std::hypot(agent.wallowX - state.x, agent.wallowZ - state.z) / 0.5f;
+            }
+        }
+        bool wallowing = false;
+        if (state.behavior == BoarBehavior::Wallow) {
+            const float bankDistance = std::hypot(state.x - agent.wallowX, state.z - agent.wallowZ);
+            wallowing = bankDistance < 0.5f;
+            agent.targetHeading = wallowing
+                ? std::atan2(agent.faceZ - state.z, agent.faceX - state.x)
+                : std::atan2(agent.wallowZ - state.z, agent.wallowX - state.x);
         }
         bool rooting = false;
         if (state.behavior == BoarBehavior::Forage && agent.hasRoot) {
@@ -202,7 +252,7 @@ namespace island
                 ? std::atan2(agent.trunkZ - state.z, agent.trunkX - state.x)
                 : std::atan2(agent.rootZ - state.z, agent.rootX - state.x);
         }
-        if (!alertFacing
+        if (!alertFacing && state.behavior != BoarBehavior::Wallow
             && std::hypot(state.x - state.homeX, state.z - state.homeZ) > HomeRadius * 0.72f) {
             agent.targetHeading = std::atan2(state.homeZ - state.z, state.homeX - state.x);
         }
@@ -211,7 +261,8 @@ namespace island
         const float targetSpeed = state.behavior == BoarBehavior::Retreat ? 2.8f
             : state.behavior == BoarBehavior::Wander ? 0.85f
             : state.behavior == BoarBehavior::Forage
-                ? (agent.hasRoot ? (rooting ? 0.0f : 0.42f) : 0.11f) : 0.0f;
+                ? (agent.hasRoot ? (rooting ? 0.0f : 0.42f) : 0.11f)
+            : state.behavior == BoarBehavior::Wallow ? (wallowing ? 0.0f : 0.5f) : 0.0f;
         state.speed += std::clamp(targetSpeed - state.speed, -dt * 3.5f, dt * 2.4f);
         const float x = state.x + std::cos(state.headingRadians) * state.speed * dt;
         const float z = state.z + std::sin(state.headingRadians) * state.speed * dt;
@@ -223,8 +274,14 @@ namespace island
             const float nextDistance = std::hypot(x - other.state.x, z - other.state.z);
             if (nextDistance < clearance && nextDistance < previousDistance) separated = false;
         }
+        // The wallow trip may cross the stream's drainage ground, and a boar already on it
+        // (even one startled off its trip) may keep walking until it is back on ordinary
+        // habitat; nothing else takes a boar into the channel.
+        const bool strictlyValid = IsValidGround(x, z);
+        const bool allowance = state.behavior == BoarBehavior::Wallow || agent.inCorridor;
         if (separated && std::hypot(x - state.homeX, z - state.homeZ) <= HomeRadius
-            && IsValidGround(x, z)) {
+            && (strictlyValid || (allowance && IsValidGround(x, z, true)))) {
+            agent.inCorridor = !strictlyValid;
             state.gaitPhase = std::fmod(state.gaitPhase + state.speed * dt * 7.0f, Tau);
             state.x = x;
             state.z = z;
@@ -233,7 +290,12 @@ namespace island
             agent.targetHeading = Wrap(state.headingRadians + 1.1f);
         }
         state.y = terrain_.Height(state.x, state.z);
-        const float rootTarget = state.behavior == BoarBehavior::Forage ? 1.0f : 0.0f;
+        state.inChannel = agent.inCorridor;
+        // In the mud the boar drops its snout like rooting; the coat wets while it stays and
+        // dries off over a few minutes once it leaves.
+        const float rootTarget = state.behavior == BoarBehavior::Forage || wallowing ? 1.0f : 0.0f;
         state.rootingPose += std::clamp(rootTarget - state.rootingPose, -dt * 1.8f, dt * 1.2f);
+        state.mudAmount = wallowing ? std::min(1.0f, state.mudAmount + dt / 6.0f)
+            : std::max(0.0f, state.mudAmount - dt / MudDrySeconds);
     }
 }
