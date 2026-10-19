@@ -189,7 +189,9 @@ namespace island
             const float distance = std::hypot(dx,dz);
             // Stage outside even the flared base; do not disable the selected tree's collision.
             const float standOff = MonkeyTreeReach::StandOff(tree.scale,agent.state.scale);
-            if (distance < standOff - .01f || distance > bestDistance) continue;
+            // Fruiting crowns count as nearer than they are: the troop favours them.
+            const float preference = distance * (IsFruitingCanopyVariant(tree.variant) ? .55f : 1.0f);
+            if (distance < standOff - .01f || preference > bestDistance) continue;
             const float x = tree.x+dx/distance*standOff, z = tree.z+dz/distance*standOff;
             if (std::hypot(x-agent.state.homeX,z-agent.state.homeZ) > MaximumHomeDistance
                 || !IsValidGround(x,z)
@@ -213,7 +215,7 @@ namespace island
                 reachable = contact.has_value() && !limited;
             }
             if (!reachable) continue;
-            bestDistance = distance;
+            bestDistance = preference;
             best = static_cast<int>(index); bestX = x; bestZ = z;
         }
         if (best < 0) return false;
@@ -335,8 +337,11 @@ namespace island
             agent.state.speed = 0.0f;
             break;
         case MonkeyBehavior::InspectTree:
-            agent.stateSecondsRemaining = 6.0f;
-            agent.state.treeInspectionRemaining = 6.0f;
+            // A fruiting crown holds the monkey half again as long: it is picking.
+            agent.state.pickingFruit = agent.state.treeIndex >= 0
+                && IsFruitingCanopyVariant(agent.state.selectedTree.variant);
+            agent.stateSecondsRemaining = agent.state.pickingFruit ? 9.0f : 6.0f;
+            agent.state.treeInspectionRemaining = agent.stateSecondsRemaining;
             agent.state.speed = 0;
             break;
         case MonkeyBehavior::Wander:

@@ -1474,6 +1474,8 @@ namespace island
                 kind = GoatCallKind::Breath; interval = 17.0f; break;
             case GoatBehavior::Retreat:
                 kind = GoatCallKind::Bleat; interval = 6.0f; break;
+            case GoatBehavior::Drink:
+                kind = GoatCallKind::Hoof; interval = 9.0f; break;
             }
             const float sourceY = goat.y + .78f * goat.scale;
             const float distance = std::hypot(std::hypot(goat.x - listenerX,

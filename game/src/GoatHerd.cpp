@@ -1,4 +1,6 @@
 #include "IslandSimulator/GoatHerd.hpp"
+#include "IslandSimulator/StreamRoute.hpp"
+#include <limits>
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -47,6 +49,29 @@ GoatHerd::GoatHerd(const IslandTerrain& terrain,const JungleLayout& jungle,
         }
         s.pose=ContactPose(s,feet_[i]);
     }
+    for(std::size_t i=0;i<states_.size();++i) FindDrinkingPoint(i);
+}
+// The bank one metre outside the channel on the home's side, at the closest point of the
+// authored route the goat may stand on; dry upper slopes usually lie beyond reach.
+void GoatHerd::FindDrinkingPoint(std::size_t index) noexcept {
+    auto& intent=intents_[index];intent.hasDrink=false;
+    float best=std::numeric_limits<float>::max();
+    for(float along=6;along<StreamRoute::NominalLength-6;along+=1) {
+        const float cx=StreamRoute::SourceX-along,cz=StreamRoute::CentreZ(cx);
+        const float tangentZ=StreamRoute::CentreZ(cx-1)-cz,length=std::hypot(1.0f,tangentZ);
+        const float normalX=tangentZ/length,normalZ=1.0f/length;
+        const float side=(homes_[index].z-cz)*normalZ+(homes_[index].x-cx)*normalX<0?-1.0f:1.0f;
+        const float offset=StreamRoute::HalfWidth(cx)+1.05f;
+        const float x=cx+normalX*offset*side,z=cz+normalZ*offset*side;
+        const float homeDistance=std::hypot(x-homes_[index].x,z-homes_[index].z);
+        if(homeDistance>=best||!IsValidPosition(index,x,z))continue;
+        best=homeDistance;intent.drinkX=x;intent.drinkZ=z;intent.faceX=cx;intent.faceZ=cz;intent.hasDrink=true;
+    }
+}
+std::size_t GoatHerd::DrinkerCount() const noexcept {
+    std::size_t count=0;
+    for(const auto& intent:intents_)count+=intent.hasDrink?1U:0U;
+    return count;
 }
 bool GoatHerd::IsValidPosition(std::size_t index,float x,float z) const {
     if(index>=states_.size()) return false;
@@ -167,15 +192,28 @@ void GoatHerd::Step(std::size_t index,float dt,GoatPoint observer,bool observerV
         intent.targetHeading=static_cast<float>((bits>>16)%4096)/4096*Tau-Pi;
         if(std::hypot(state.x-homes_[index].x,state.z-homes_[index].z)>HomeRadius-3)
             intent.targetHeading=std::atan2(homes_[index].z-state.z,homes_[index].x-state.x);
+        // Every third rest of a goat with a reachable bank becomes a walk to the water.
+        if(intent.hasDrink&&bits%5==4&&intent.decisions%3==0) {
+            state.behavior=GoatBehavior::Drink;intent.remaining=20;
+        }
+    }
+    bool drinking=false;
+    if(state.behavior==GoatBehavior::Drink) {
+        drinking=std::hypot(state.x-intent.drinkX,state.z-intent.drinkZ)<.9f;
+        if(intent.avoidance==0)
+            intent.targetHeading=drinking?std::atan2(intent.faceZ-state.z,intent.faceX-state.x)
+                :std::atan2(intent.drinkZ-state.z,intent.drinkX-state.x);
     }
     // An alert goat shuffles slowly through its ordinary stepping until it faces the
     // player, rather than pivoting on planted hooves, then stands and watches.
     const bool alertTurning=observerRange<AlertDistance&&!retreat
         &&std::abs(Wrap(intent.targetHeading-state.heading))>.18f;
     const float desired=state.behavior==GoatBehavior::Retreat?MaximumSpeed:
-        (state.behavior==GoatBehavior::Walk?.65f:alertTurning?.25f:0);
+        (state.behavior==GoatBehavior::Walk||(state.behavior==GoatBehavior::Drink&&!drinking)?.65f
+        :alertTurning?.25f:0);
     state.speed+=std::clamp(desired-state.speed,-1.5f*dt,.8f*dt);
-    const float graze=state.behavior==GoatBehavior::Graze&&state.speed<.05f?1.0f:0.0f;
+    // Drinking is the grazing head-down pose held at the water's edge.
+    const float graze=(state.behavior==GoatBehavior::Graze||drinking)&&state.speed<.05f?1.0f:0.0f;
     state.grazingPose+=std::clamp(graze-state.grazingPose,-2*dt,dt);
     if(state.speed<=.0001f) { state.speed=0;return; }
     const float heading=Wrap(state.heading+std::clamp(Wrap(intent.targetHeading-state.heading),-1.8f*dt,1.8f*dt));

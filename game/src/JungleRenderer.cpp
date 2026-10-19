@@ -1127,7 +1127,7 @@ void main()
                                   phase, farMesh, farMesh);
                 // Two canopy forms bear fruit: small clusters hang beneath alternate lobes of
                 // the near crown only, so the far silhouette and its LOD hand-off are unchanged.
-                if (!farMesh && (variant == 2 || variant == 5) && cluster % 2 == 1) {
+                if (!farMesh && IsFruitingCanopyVariant(variant) && cluster % 2 == 1) {
                     const Color fruitColor = variant == 2 ? Color(216, 152, 54, 255)
                                                           : Color(146, 54, 80, 255);
                     // Hang them on the lobe's outer underside where leaves thin out, so the

@@ -2006,9 +2006,12 @@ namespace island
         std::cout << "island-simulator: goats " << goats_->Goats().size()
                   << " agents on shared-field dry open slopes, terrain-fitted limbs, directional fur material\n";
         std::cout << "island-simulator: deer " << deer_->Deer().size()
-                  << " agents graze and walk in two inland clearings and retreat non-aggressively\n";
+                  << " agents graze and walk in two inland clearings and the stream valley and retreat non-aggressively\n";
         std::cout << "island-simulator: boars " << boarHerd_.Boars().size()
                   << " agents in moist non-channel interior habitat\n";
+        std::cout << "island-simulator: ecological links: " << deer_->DrinkerCount() << " deer and "
+                  << goats_->DrinkerCount() << " goats walk to the stream bank to drink; "
+                  << "boars root at the nearest trunk base, monkeys favour fruiting crowns and linger to pick\n";
         std::cout << "island-simulator: snakes " << snakes_->Snakes().size()
                   << " ground agents with separated dense-understory-margin homes; "
                   << snakes_->TreeSnakes().size()<<" arboreal agents on sampled broadleaf trunks\n";

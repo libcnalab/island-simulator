@@ -1,5 +1,6 @@
 #include "IslandSimulator/DeerHerd.hpp"
 
+#include "IslandSimulator/StreamRoute.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
 
 #include <algorithm>
@@ -15,12 +16,26 @@ namespace island
     {
         constexpr float Pi = std::numbers::pi_v<float>;
         constexpr float TwoPi = 2.0f * Pi;
-        constexpr std::array<std::array<float, 2>, DeerHerd::Count> Centres = {{
-            {{VegetationLayout::EastClearing.x - 5.0f, VegetationLayout::EastClearing.z + 2.0f}},
-            {{VegetationLayout::EastClearing.x + 7.0f, VegetationLayout::EastClearing.z - 3.0f}},
-            {{VegetationLayout::WestClearing.x - 4.0f, VegetationLayout::WestClearing.z + 2.0f}},
-            {{VegetationLayout::WestClearing.x + 7.0f, VegetationLayout::WestClearing.z - 4.0f}},
-        }};
+        // Both clearings lie about a hundred metres from the stream, so the fourth deer keeps
+        // a stream-side range instead: nine metres off the channel on the upper reach, where
+        // its drinking walk is short enough to be seen.
+        std::array<float, 2> StreamSideCentre() noexcept
+        {
+            const float cx = StreamRoute::SourceX - 24.0f;
+            const float cz = StreamRoute::CentreZ(cx);
+            const float tangentZ = StreamRoute::CentreZ(cx - 1.0f) - cz;
+            const float length = std::hypot(1.0f, tangentZ);
+            return {{cx + tangentZ / length * 9.0f, cz + 1.0f / length * 9.0f}};
+        }
+        std::array<float, 2> Centre(const std::size_t index) noexcept
+        {
+            constexpr std::array<std::array<float, 2>, 3> Clearings = {{
+                {{VegetationLayout::EastClearing.x - 5.0f, VegetationLayout::EastClearing.z + 2.0f}},
+                {{VegetationLayout::EastClearing.x + 7.0f, VegetationLayout::EastClearing.z - 3.0f}},
+                {{VegetationLayout::WestClearing.x - 4.0f, VegetationLayout::WestClearing.z + 2.0f}},
+            }};
+            return index < Clearings.size() ? Clearings[index] : StreamSideCentre();
+        }
 
         float Wrap(const float angle) noexcept { return std::remainder(angle, TwoPi); }
         float Turn(const float current, const float target, const float limit) noexcept
@@ -38,6 +53,48 @@ namespace island
             states_[index] = agents_[index].state;
             homes_[index] = agents_[index].home;
         }
+        for (std::size_t index = 0; index < Count; ++index) {
+            FindDrinkingPoint(index);
+        }
+    }
+
+    // The bank one metre outside the channel on the home's side, at the closest point of the
+    // authored route that the deer may actually stand on; most homes lie beyond reach.
+    void DeerHerd::FindDrinkingPoint(const std::size_t index) noexcept
+    {
+        Agent& agent = agents_[index];
+        agent.hasDrink = false;
+        float bestDistance = std::numeric_limits<float>::max();
+        for (float along = 6.0f; along < StreamRoute::NominalLength - 6.0f; along += 1.0f) {
+            const float cx = StreamRoute::SourceX - along;
+            const float cz = StreamRoute::CentreZ(cx);
+            const float tangentZ = StreamRoute::CentreZ(cx - 1.0f) - cz;
+            const float length = std::hypot(1.0f, tangentZ);
+            const float normalX = tangentZ / length, normalZ = 1.0f / length;
+            const float side = (agent.home.z - cz) * normalZ + (agent.home.x - cx) * normalX < 0.0f
+                ? -1.0f : 1.0f;
+            const float offset = StreamRoute::HalfWidth(cx) + 1.05f;
+            const float x = cx + normalX * offset * side, z = cz + normalZ * offset * side;
+            const float homeDistance = std::hypot(x - agent.home.x, z - agent.home.z);
+            if (homeDistance >= bestDistance || !IsValidPosition(index, x, z)) continue;
+            bestDistance = homeDistance;
+            agent.drinkX = x; agent.drinkZ = z; agent.faceX = cx; agent.faceZ = cz;
+            agent.hasDrink = true;
+        }
+    }
+
+    std::size_t DeerHerd::DrinkerCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.hasDrink ? 1U : 0U;
+        return count;
+    }
+
+    bool DeerHerd::DrinkPoint(const std::size_t index, float& x, float& z) const noexcept
+    {
+        if (index >= Count || !agents_[index].hasDrink) return false;
+        x = agents_[index].drinkX; z = agents_[index].drinkZ;
+        return true;
     }
 
     void DeerHerd::Initialize(const std::size_t index)
@@ -49,8 +106,8 @@ namespace island
             const float angle = static_cast<float>(attempt) * 2.39996323f
                 + static_cast<float>(index) * 1.13f;
             const float radius = .6f + static_cast<float>(attempt / 24) * 1.15f;
-            agent.home.x = Centres[index][0] + std::cos(angle) * radius;
-            agent.home.z = Centres[index][1] + std::sin(angle) * radius;
+            agent.home.x = Centre(index)[0] + std::cos(angle) * radius;
+            agent.home.z = Centre(index)[1] + std::sin(angle) * radius;
             const TerrainSample sample = terrain_.Sample(agent.home.x, agent.home.z);
             found = (sample.surface == TerrainSurface::InteriorGround
                      || sample.surface == TerrainSurface::CoastalGround)
@@ -148,6 +205,20 @@ namespace island
             const float turn = -.85f + static_cast<float>((agent.transitions * 37U
                 + static_cast<std::uint32_t>(index) * 19U) % 171U) * .01f;
             agent.targetHeadingRadians = Wrap(agent.state.headingRadians + turn);
+            // Every other rest of a deer with a reachable bank becomes a walk to the water.
+            if (agent.hasDrink && phase == 5U && (agent.transitions / 7U) % 2U == 0U) {
+                agent.state.behavior = DeerBehavior::Drink;
+                agent.behaviorSeconds = 22.0f;
+            }
+        }
+        bool drinking = false;
+        if (agent.state.behavior == DeerBehavior::Drink) {
+            const float bankDistance = std::hypot(agent.state.x - agent.drinkX,
+                                                   agent.state.z - agent.drinkZ);
+            drinking = bankDistance < 0.9f;
+            agent.targetHeadingRadians = drinking
+                ? std::atan2(agent.faceZ - agent.state.z, agent.faceX - agent.state.x)
+                : std::atan2(agent.drinkZ - agent.state.z, agent.drinkX - agent.state.x);
         }
         // Straying past the home margin overrides the behavioural target before the one
         // bounded turn of this update.  A second Turn() here used to double the per-frame
@@ -155,7 +226,8 @@ namespace island
         const float homeDistance = std::hypot(agent.state.x - agent.home.x,
                                                agent.state.z - agent.home.z);
         // A standing, watching deer is not travelling, so the home pull waits until it moves.
-        if (homeDistance > agent.home.radius * .68f && !alertFacing) {
+        if (homeDistance > agent.home.radius * .68f && !alertFacing
+            && agent.state.behavior != DeerBehavior::Drink) {
             agent.targetHeadingRadians = std::atan2(
                 agent.home.z - agent.state.z, agent.home.x - agent.state.x);
         }
@@ -167,11 +239,14 @@ namespace island
         const float turnAlignment = std::clamp(
             (std::cos(headingError) + .18f) / 1.18f, 0.0f, 1.0f);
         const float targetSpeed = (agent.state.behavior == DeerBehavior::Retreat ? 3.1f
-            : agent.state.behavior == DeerBehavior::Walk ? .78f : 0.0f)
+            : agent.state.behavior == DeerBehavior::Walk ? .78f
+            : agent.state.behavior == DeerBehavior::Drink && !drinking ? .78f : 0.0f)
             * (.12f + .88f * turnAlignment);
         agent.state.speed += std::clamp(targetSpeed - agent.state.speed,
             -2.8f * deltaSeconds, 3.8f * deltaSeconds);
-        const float targetGraze = agent.state.behavior == DeerBehavior::Graze ? 1.0f : 0.0f;
+        // Drinking is the grazing head-down pose held at the water's edge.
+        const float targetGraze = agent.state.behavior == DeerBehavior::Graze || drinking
+            ? 1.0f : 0.0f;
         agent.state.grazeAmount += std::clamp(targetGraze - agent.state.grazeAmount,
             -1.8f * deltaSeconds, 1.3f * deltaSeconds);
         const float nextX = agent.state.x

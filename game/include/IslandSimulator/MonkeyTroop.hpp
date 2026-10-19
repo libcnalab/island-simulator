@@ -49,6 +49,8 @@ namespace island
         CanopyPlacement selectedTree{};
         float treeInspectionSeconds = 0.0f;
         float treeInspectionRemaining = 0.0f;
+        // True while inspecting one of the fruiting canopy forms: the monkey is picking.
+        bool pickingFruit = false;
         std::shared_ptr<const MonkeyTreeExcursion::Plan> treeExcursion;
         MonkeyTreeExcursion::Clock treeClock;
         bool treeReleasing = false;

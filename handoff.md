@@ -37,7 +37,7 @@ here as done with their `PLAN.md` evidence reference.
 5. [x] Cumulus layers and sea cloud shadows (PLAN "Latest sky pass — fringed cumulus layers and cloud shadows on the sea").
 6. [x] Stream cascade and plunge pool (PLAN "Latest stream pass — a small cascade and plunge pool", `cascade` viewpoint).
 7. [x] Bird identity: dove coos, pigeon walk, grey dove (PLAN "Latest bird-identity pass").
-8. [ ] Ecological links: goats/deer drink at the stream, monkeys pick fruit, boars root at roots.
+8. [x] Ecological links (PLAN "Latest ecology pass"); goats have the behaviour but no goat range reaches the stream.
 9. [ ] Herd behaviour: goats/deer keep as a group, a sentinel raises its head first.
 10. [x] Tracks (PLAN "Latest ground-sign pass — deer and boar track lines", `tracks` viewpoint).
 11. [ ] Sea from within: dolphin leaps, shark fin at the surface, fish school parts around the diver.

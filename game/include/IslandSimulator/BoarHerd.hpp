@@ -65,7 +65,11 @@ namespace island
             float pendingSeconds = 0.0f;
             float targetHeading = 0.0f;
             std::uint32_t decisions = 0;
+            // Standing point beside the trunk base the boar forages toward; valid when hasRoot.
+            float rootX = 0.0f, rootZ = 0.0f, trunkX = 0.0f, trunkZ = 0.0f;
+            bool hasRoot = false;
         };
+        void ChooseRootingSite(Agent& agent) noexcept;
         void Initialize(std::size_t index);
         void Step(Agent& agent, float dt, float observerX, float observerZ,
                   bool observerValid) noexcept;

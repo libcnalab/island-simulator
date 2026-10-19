@@ -46,6 +46,31 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Latest ecology pass — drinking deer, rooting boars, fruit-picking monkeys
+
+Backlog item 8. Deer and goats gain a `Drink` behaviour: at construction each animal searches
+the authored stream route for the closest bank point (one metre outside the channel on its own
+side) that its range and ground rules allow it to stand on; every other rest of a deer with such
+a point, and every third of a goat, becomes a walk to the bank, where it faces the water and
+holds the grazing head-down pose for the remainder of the bout. Both clearings lie 95–115 m
+from the stream, so the fourth deer now keeps a stream-side range nine metres off the upper
+reach instead of a second West-clearing home; it is the one drinker. The goat slopes are dry
+upper ground far from the valley, so no goat qualifies on this island (the diagnostic reports
+"1 deer and 0 goats"); moving a goat range toward the valley is a candidate for the loop.
+Boars entering `Forage` choose the nearest trunk (a static obstacle of 0.12–1.6 m radius inside
+their range) and a standing point just outside its collision envelope on valid ground, walk
+there at 0.42 m/s and then stand with the snout toward the trunk, rooting among its surface
+roots, for six extra seconds. Monkeys weight fruiting canopy forms (`IsFruitingCanopyVariant`,
+variants 2 and 5, now shared with the renderer's fruit clusters) as 0.55 of their distance when
+choosing a tree and hold their inspection nine seconds instead of six there (`pickingFruit`).
+The startup log adds "ecological links: N deer and M goats walk to the stream bank to drink;
+boars root at the nearest trunk base, monkeys favour fruiting crowns and linger to pick",
+pinned by the native capture tool; the `boars` view joins the close-natural-detail profile
+because the rooting boar now fills the frame with evenly lit ground. The goat contact-call
+scheduler treats drinking as quiet hoof work. Inspected native `20261019T211710Z-boars` shows
+the boar rooting; `deer` still frames the first clearing deer. Goat drinking remains unexercised
+on this island.
+
 ## Latest bird-identity pass — dove coos, pigeon walk and a grey dove
 
 Backlog item 7. Parrots already had their hooked beak, green/red/blue palettes and their own

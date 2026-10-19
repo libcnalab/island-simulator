@@ -933,6 +933,8 @@ def main():
                 raise RuntimeError("current mid-distance hillside grain is missing; check for a stale executable")
             if "wreck scour bar rises on the lee side of the hull and stays submerged to seaward" not in diagnostics:
                 raise RuntimeError("current wreck scour bar is missing; check for a stale executable")
+            if "boars root at the nearest trunk base, monkeys favour fruiting crowns and linger to pick" not in diagnostics:
+                raise RuntimeError("current ecological links are missing; check for a stale executable")
             if "seabed ripples stay below the waterline in short near trains and beach flecks fade with the ground footprint" not in diagnostics:
                 raise RuntimeError("current seabed ripple confinement is missing; check for a stale executable")
             if "canopy per-tree frustum boxes contain both LODs and wind" not in diagnostics:

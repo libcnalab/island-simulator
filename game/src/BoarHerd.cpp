@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <limits>
 #include <numbers>
 #include <stdexcept>
 
@@ -104,6 +105,27 @@ namespace island
         states_[index] = state;
     }
 
+    // The nearest trunk (a static obstacle) inside the range, approached from the boar's side
+    // to a standing point just outside the collision envelope on valid ground.
+    void BoarHerd::ChooseRootingSite(Agent& agent) noexcept
+    {
+        const BoarState& state = agent.state;
+        float best = std::numeric_limits<float>::max();
+        for (const auto& obstacle : obstacles_) {
+            if (obstacle.radius < 0.12f || obstacle.radius > 1.6f) continue;
+            const float distance = std::hypot(obstacle.x - state.x, obstacle.z - state.z);
+            if (distance < 0.01f || distance >= best) continue;
+            const float standOff = obstacle.radius + CollisionRadius + 0.12f;
+            const float x = obstacle.x + (state.x - obstacle.x) / distance * standOff;
+            const float z = obstacle.z + (state.z - obstacle.z) / distance * standOff;
+            if (std::hypot(x - state.homeX, z - state.homeZ) > HomeRadius * 0.9f
+                || !IsValidGround(x, z)) continue;
+            best = distance;
+            agent.rootX = x; agent.rootZ = z; agent.trunkX = obstacle.x; agent.trunkZ = obstacle.z;
+            agent.hasRoot = true;
+        }
+    }
+
     void BoarHerd::Update(const float deltaSeconds, const float observerX,
                          const float observerY, const float observerZ) noexcept
     {
@@ -165,6 +187,20 @@ namespace island
                 : (choice < 0.25f ? BoarBehavior::Rest : BoarBehavior::Wander);
             agent.remainingSeconds = 3.0f + choice * 6.0f;
             agent.targetHeading = Wrap(state.headingRadians + (choice - 0.5f) * 3.4f);
+            agent.hasRoot = false;
+            if (state.behavior == BoarBehavior::Forage) {
+                ChooseRootingSite(agent);
+                if (agent.hasRoot) agent.remainingSeconds += 6.0f;
+            }
+        }
+        bool rooting = false;
+        if (state.behavior == BoarBehavior::Forage && agent.hasRoot) {
+            // Walk to the trunk's root flare, then stand with the snout among the roots.
+            const float siteDistance = std::hypot(state.x - agent.rootX, state.z - agent.rootZ);
+            rooting = siteDistance < 0.4f;
+            agent.targetHeading = rooting
+                ? std::atan2(agent.trunkZ - state.z, agent.trunkX - state.x)
+                : std::atan2(agent.rootZ - state.z, agent.rootX - state.x);
         }
         if (!alertFacing
             && std::hypot(state.x - state.homeX, state.z - state.homeZ) > HomeRadius * 0.72f) {
@@ -174,7 +210,8 @@ namespace island
             Wrap(agent.targetHeading - state.headingRadians), -dt * 2.1f, dt * 2.1f));
         const float targetSpeed = state.behavior == BoarBehavior::Retreat ? 2.8f
             : state.behavior == BoarBehavior::Wander ? 0.85f
-            : state.behavior == BoarBehavior::Forage ? 0.11f : 0.0f;
+            : state.behavior == BoarBehavior::Forage
+                ? (agent.hasRoot ? (rooting ? 0.0f : 0.42f) : 0.11f) : 0.0f;
         state.speed += std::clamp(targetSpeed - state.speed, -dt * 3.5f, dt * 2.4f);
         const float x = state.x + std::cos(state.headingRadians) * state.speed * dt;
         const float z = state.z + std::sin(state.headingRadians) * state.speed * dt;

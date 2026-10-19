@@ -7,6 +7,11 @@ namespace island
 {
     inline constexpr int NaturalCanopyFormCount = 8;
     inline constexpr int MangroveCanopyVariant = NaturalCanopyFormCount;
+    // Canopy forms whose lobes bear fruit clusters; monkeys favour them and linger to pick.
+    [[nodiscard]] inline constexpr bool IsFruitingCanopyVariant(const int variant) noexcept
+    {
+        return variant == 2 || variant == 5;
+    }
     inline constexpr int CanopyFormCount = NaturalCanopyFormCount + 1;
     [[nodiscard]] inline float CanopyNearLodDistance(float yaw) noexcept
     {
