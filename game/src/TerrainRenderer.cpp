@@ -100,6 +100,8 @@ namespace island
             "island-simulator: low coastal cliffs retain salt-worn mineral colour, distance-stable macro strata, drainage streaks, and cool open-sky fill";
         constexpr std::string_view RippleTrainDiagnostic =
             "island-simulator: seabed ripples stay below the waterline in short near trains and beach flecks fade with the ground footprint";
+        constexpr std::string_view DappleFleckDiagnostic =
+            "island-simulator: shaded forest floor carries drifting leaf-gap sun flecks";
         constexpr std::string_view SeabedCausticDiagnostic =
             "island-simulator: shallow seabed carries moving refracted-sun caustics that fade with depth and footprint";
         constexpr std::string_view HillsideGrainDiagnostic =
@@ -985,7 +987,21 @@ void main()
     // occlusion under crowns, so shade is directional and crisp instead of a soft blob.
     float sunVisibility=sunShadowVisibility(vWorld);
     float skyOcclusion=mix(terrainTransmission,1.0,uSunShadowParams.x*0.55);
-    color *= mix(uCanopyAmbient, vec3(1.0), min(skyOcclusion,sunVisibility));
+    float lit=min(skyOcclusion,sunVisibility);
+    // Dappled light: the solid crowns cast one shade, but real crowns leak sun through leaf
+    // gaps as small bright flecks that drift as the leaves move. Only under a crown, only in
+    // its shade, close, and footprint-filtered; a fleck restores the sunlit value.
+    float dappleShade=(1.0-lit)*max(smoothstep(0.02,0.22,1.0-terrainTransmission),forestFloorMask*0.8);
+    float fleckVisibility=dappleShade*(1.0-smoothstep(0.03,0.10,groundPixelWidth))
+        *(1.0-smoothstep(30.0,70.0,distanceToCamera));
+    if(fleckVisibility>0.0) {
+        vec2 drift=vec2(uSeaSeconds*0.11,uSeaSeconds*0.07);
+        float fleckField=valueNoise(p*2.6+drift+vec2(3.1,-8.7))
+            +0.5*valueNoise(p*5.9-drift*1.4+vec2(-4.2,2.3));
+        float fleck=smoothstep(0.14,0.34,fleckField);
+        lit=max(lit,fleck*fleckVisibility*0.95);
+    }
+    color *= mix(uCanopyAmbient, vec3(1.0), lit);
     // The replacement mesh is also the cave floor: no coplanar rock-floor overlay.
     vec2 caveOffset=vWorld.xz-uCaveEntrance.xz;
     float caveDepth=dot(caveOffset,uCaveForward);
@@ -1229,6 +1245,8 @@ void main()
                     MirrorRuntimeDiagnosticToPlatformLog(HillsideGrainDiagnostic);
                     std::cout << SeabedCausticDiagnostic << '\n';
                     MirrorRuntimeDiagnosticToPlatformLog(SeabedCausticDiagnostic);
+                    std::cout << DappleFleckDiagnostic << '\n';
+                    MirrorRuntimeDiagnosticToPlatformLog(DappleFleckDiagnostic);
                     std::cout << RippleTrainDiagnostic << '\n';
                     MirrorRuntimeDiagnosticToPlatformLog(RippleTrainDiagnostic);
                 } else {

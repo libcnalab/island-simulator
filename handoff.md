@@ -51,6 +51,10 @@ here as done with their `PLAN.md` evidence reference.
 19. [x] Player shadow and surface-dependent footsteps (PLAN "Latest player-presence pass").
 20. [x] Diving details (PLAN "Latest diving pass — light shafts, bubbles and seabed caustics").
 
+Loop log (propose → implement, continues until the operator stops the session):
+- Pass 1: dappled leaf-gap sun flecks on the shaded forest floor; `ground` view reclassified
+  (PLAN "Loop pass 1").
+
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted
 green surface with soft dark blotches where the forest-material classification fades.

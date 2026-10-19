@@ -46,6 +46,23 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 1 (2026-10-19/20) — dappled light on the shaded forest floor
+
+With the twenty-item operator backlog complete, the open-ended propose-and-implement loop
+began. First pass: the canopy's solid crowns cast one even shade, but real crowns leak sun
+through leaf gaps as small bright flecks that drift as the leaves move. The terrain material now
+derives `dappleShade` from the shadow-map/sky blend (how shaded the texel is) gated by the baked
+crown field or the forest-floor mask, and within 30–70 m and a 3–10 cm footprint restores up to
+95 % of the sunlit value where a two-octave drifting value-noise field (0.4 m and 0.17 m cells,
+drift 0.11/0.07 m/s from `uSeaSeconds`) exceeds its threshold, so about a fifth of each crown
+shadow is sun-flecked. The startup log adds "shaded forest floor carries drifting leaf-gap sun
+flecks", pinned by the native capture tool. A forced-on probe confirmed the term reaches the
+crown shade before the threshold was set. While here, the `ground` viewpoint's luminance gate
+(failing since 2026-10-16 at 17.69 against the scene profile's 18.0, the sunlit close humus
+simply has a narrow tonal range) is classified as close-natural-detail like its sibling close
+views; it passes there. Inspected native `20261019T215850Z-jungle` shows the mottled flecks in
+the crown shade; `litter`, `east` and `ground` pass.
+
 ## Latest diving pass — light shafts, bubbles and seabed caustics
 
 Backlog item 20. `UnderwaterEffectRenderer` is a full-screen clip-space triangle drawn after
