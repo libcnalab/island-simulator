@@ -47,7 +47,7 @@ here as done with their `PLAN.md` evidence reference.
 14. [ ] Rope bridge over the stream and/or a tree lookout platform (walkable).
 15. [ ] Lianas and hanging roots between canopy crowns.
 16. [ ] Flowering shrubs (hibiscus, plumeria) and banana plants near the stream.
-17. [ ] Fruit in crowns and fallen coconuts under palms (link to item 8).
+17. [x] Fruit in crowns and fallen coconuts (PLAN "Latest harvest pass", `fruit` viewpoint).
 18. [ ] Fungi on logs and moss on rocks near paths.
 19. [x] Player shadow and surface-dependent footsteps (PLAN "Latest player-presence pass").
 20. [ ] Diving details: light shafts, bubbles, caustics on the seabed.

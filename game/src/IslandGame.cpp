@@ -181,6 +181,7 @@ namespace island
             case FixedViewpoint::ShipwreckDetail: return "shipwreck";
             case FixedViewpoint::ShipwreckWide: return "shipwreck-wide";
             case FixedViewpoint::AnimalTrackDetail: return "tracks";
+            case FixedViewpoint::FruitTreeDetail: return "fruit";
             case FixedViewpoint::HutDetail: return "hut";
             case FixedViewpoint::HutMaterialDetail: return "hut-material";
             case FixedViewpoint::HelicopterDetail: return "helicopter";
@@ -1323,6 +1324,18 @@ namespace island
             const Vector3 toMonkey = monkeyTarget-cameraPosition_;
             yaw_ = std::atan2(toMonkey.X, toMonkey.Z);
             pitch_ = std::atan2(toMonkey.Y, std::hypot(toMonkey.X, toMonkey.Z));
+        } else if (viewpoint_ == FixedViewpoint::FruitTreeDetail) {
+            // Frame the crown of the first fruit-bearing canopy form from eleven metres.
+            const auto& canopy = jungleLayout_.Canopy();
+            const auto tree = std::find_if(canopy.begin(), canopy.end(),
+                [](const CanopyPlacement& candidate) { return candidate.variant == 2U; });
+            if (tree == canopy.end()) throw std::runtime_error("No fruit-bearing canopy tree");
+            const float crownY = tree->y + 7.2f * tree->scale;
+            cameraPosition_ = Vector3(tree->x + 8.5f, crownY - 4.2f, tree->z + 7.0f);
+            const Vector3 direction = Vector3(tree->x, crownY, tree->z) - cameraPosition_;
+            yaw_ = std::atan2(direction.X, direction.Z);
+            pitch_ = std::atan2(direction.Y, std::hypot(direction.X, direction.Z));
+            std::cout << "island-simulator: fruit QA camera frames a fruit-bearing canopy crown\n";
         } else if (viewpoint_ == FixedViewpoint::AnimalTrackDetail) {
             // Stand beside the first stream-bank deer print line and look down along it.
             const auto& tracks = naturalPropLayout_.AnimalTracks();

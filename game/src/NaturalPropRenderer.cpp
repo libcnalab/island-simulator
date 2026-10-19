@@ -1203,6 +1203,53 @@ void main()
             return geometry;
         }
 
+        // A husked coconut lying on its side: a short ovoid with the three faint husk
+        // ridges suggested by per-vertex shading rather than geometry.
+        [[nodiscard]] PropGeometry CreateFallenCoconutGeometry(const int variant)
+        {
+            PropGeometry geometry;
+            constexpr int rings = 5;
+            constexpr int slices = 9;
+            geometry.vertices.reserve(static_cast<std::size_t>((rings + 1) * slices));
+            geometry.indices.reserve(static_cast<std::size_t>(rings * slices * 6));
+            const Color husk = variant == 0 ? Color(126, 134, 58, 255) : Color(118, 86, 48, 255);
+            const Vector3 radius(0.098f, 0.070f, 0.076f);
+            const auto base = static_cast<std::uint16_t>(geometry.vertices.size());
+            for (int ring = 0; ring <= rings; ++ring) {
+                const float ringT = static_cast<float>(ring) / static_cast<float>(rings);
+                const float longitude = -std::numbers::pi_v<float> * 0.5f
+                    + ringT * std::numbers::pi_v<float>;
+                const float along = std::sin(longitude);
+                const float girth = std::cos(longitude);
+                // Slightly pointed at the stem end, rounder at the eyes end.
+                const float taper = 0.92f + 0.08f * std::cos(longitude * 0.5f) - 0.10f * along;
+                for (int slice = 0; slice < slices; ++slice) {
+                    const float angle = 2.0f * std::numbers::pi_v<float>
+                        * static_cast<float>(slice) / static_cast<float>(slices);
+                    const float ridge = 1.0f + 0.045f * std::cos(angle * 3.0f + 0.4f);
+                    const Vector3 direction(along, girth * std::cos(angle), girth * std::sin(angle));
+                    const Vector3 position(direction.X * radius.X,
+                                           direction.Y * radius.Y * taper * ridge,
+                                           direction.Z * radius.Z * taper * ridge);
+                    const float light = 0.62f + 0.38f * std::max(
+                        0.0f, direction.Y * 0.80f + direction.X * 0.25f - direction.Z * 0.30f);
+                    geometry.vertices.emplace_back(position, ShadeColor(husk, light * (0.94f + 0.06f * ridge)));
+                }
+            }
+            for (int ring = 0; ring < rings; ++ring) {
+                for (int slice = 0; slice < slices; ++slice) {
+                    const int next = (slice + 1) % slices;
+                    const auto lower = static_cast<std::uint16_t>(base + ring * slices + slice);
+                    const auto lowerNext = static_cast<std::uint16_t>(base + ring * slices + next);
+                    const auto upper = static_cast<std::uint16_t>(base + (ring + 1) * slices + slice);
+                    const auto upperNext = static_cast<std::uint16_t>(base + (ring + 1) * slices + next);
+                    geometry.indices.insert(geometry.indices.end(),
+                                            {lower, upper, lowerNext, lowerNext, upper, upperNext});
+                }
+            }
+            return geometry;
+        }
+
         [[nodiscard]] PropGeometry CreateBeachDetailGeometry(const int variant)
         {
             PropGeometry geometry;
@@ -1531,6 +1578,8 @@ void main()
             std::cout << "island-simulator: " << deerTracks << " deer and " << boarTracks
                       << " boar track lines press into stream-bank mud and wet sand\n";
         }
+        std::cout << "island-simulator: " << totalFallenCoconutCount_
+                  << " fallen coconuts rest under the bearing palms\n";
         std::cout << "island-simulator: two turtle nesting traces use paired flipper tracks "
                      "and disturbed dry-sand nests\n";
         std::cout << "island-simulator: prevailing-wind shelter adds "
@@ -1657,6 +1706,10 @@ void main()
             upload(CreateAnimalTrackGeometry(static_cast<int>(variant)),
                    animalTrackMeshes_[variant], "animal-track");
         }
+        for (std::size_t variant = 0; variant < fallenCoconutMeshes_.size(); ++variant) {
+            upload(CreateFallenCoconutGeometry(static_cast<int>(variant)),
+                   fallenCoconutMeshes_[variant], "fallen-coconut");
+        }
         for (std::size_t variant = 0; variant < fallenFrondMeshes_.size(); ++variant) {
             upload(CreateFallenFrondGeometry(static_cast<int>(variant)),
                    fallenFrondMeshes_[variant], "fallen-frond");
@@ -1748,6 +1801,19 @@ void main()
                          Vector3(track.x - radius, track.y - 0.02f, track.z - radius),
                          Vector3(track.x + radius, track.y + 0.03f, track.z + radius));
             ++totalAnimalTrackCount_;
+        }
+        for (const FallenCoconutPlacement& coconut : layout.FallenCoconuts()) {
+            PropCell& cell = cells_[CellIndex(coconut.x, coconut.z)];
+            cell.fallenCoconuts.push_back({
+                Matrix::CreateScale(coconut.scale)
+                    * Matrix::CreateRotationY(coconut.yawRadians)
+                    * Matrix::CreateTranslation(coconut.x, coconut.y, coconut.z),
+                coconut.variant, coconut.x, coconut.z});
+            const float radius = coconut.scale * 0.12f;
+            extendBounds(cell,
+                         Vector3(coconut.x - radius, coconut.y - radius, coconut.z - radius),
+                         Vector3(coconut.x + radius, coconut.y + radius, coconut.z + radius));
+            ++totalFallenCoconutCount_;
         }
         for (const FallenFrondPlacement& frond : layout.FallenFronds()) {
             PropCell& cell = cells_[CellIndex(frond.x, frond.z)];
@@ -1851,6 +1917,7 @@ void main()
         for (auto& transforms : visibleDriftwoodFar_) transforms.clear();
         for (auto& transforms : visibleBeachDetails_) transforms.clear();
         for (auto& transforms : visibleAnimalTracks_) transforms.clear();
+        for (auto& transforms : visibleFallenCoconuts_) transforms.clear();
         for (auto& transforms : visibleFallenFronds_) transforms.clear();
         for (auto& transforms : visibleReefHabitatNear_) transforms.clear();
         for (auto& transforms : visibleReefHabitatFar_) transforms.clear();
@@ -1862,6 +1929,7 @@ void main()
         visibleDriftwoodFarCount_ = 0;
         visibleBeachDetailCount_ = 0;
         visibleAnimalTrackCount_ = 0;
+        visibleFallenCoconutCount_ = 0;
         visibleFallenFrondCount_ = 0;
         visibleReefHabitatCount_ = 0;
         visibleCellCount_ = 0;
@@ -1958,6 +2026,17 @@ void main()
                 ++visibleAnimalTrackCount_;
                 cellVisible = true;
             }
+            for (const DrawInstance& instance : cell.fallenCoconuts) {
+                const float nutDeltaX = instance.x - cameraPosition.X;
+                const float nutDeltaZ = instance.z - cameraPosition.Z;
+                if (nutDeltaX * nutDeltaX + nutDeltaZ * nutDeltaZ
+                    > FallenFrondMaximumDistance * FallenFrondMaximumDistance) {
+                    continue;
+                }
+                visibleFallenCoconuts_[instance.variant].push_back(instance.transform);
+                ++visibleFallenCoconutCount_;
+                cellVisible = true;
+            }
             for (const DrawInstance& instance : cell.fallenFronds) {
                 const float frondDeltaX = instance.x - cameraPosition.X;
                 const float frondDeltaZ = instance.z - cameraPosition.Z;
@@ -2023,6 +2102,9 @@ void main()
         }
         for (std::size_t variant = 0; variant < animalTrackMeshes_.size(); ++variant) {
             DrawInstances(animalTrackMeshes_[variant], visibleAnimalTracks_[variant]);
+        }
+        for (std::size_t variant = 0; variant < fallenCoconutMeshes_.size(); ++variant) {
+            DrawInstances(fallenCoconutMeshes_[variant], visibleFallenCoconuts_[variant]);
         }
         for (std::size_t variant = 0; variant < fallenFrondMeshes_.size(); ++variant) {
             DrawInstances(fallenFrondMeshes_[variant], visibleFallenFronds_[variant]);

@@ -1119,6 +1119,25 @@ void main()
                                           width * 0.91f * crownFill.coreZ),
                                   cluster % 3 == 0 ? ShadeColor(clusterLeaf, 1.10f) : clusterLeaf,
                                   phase, farMesh, farMesh);
+                // Two canopy forms bear fruit: small clusters hang beneath alternate lobes of
+                // the near crown only, so the far silhouette and its LOD hand-off are unchanged.
+                if (!farMesh && (variant == 2 || variant == 5) && cluster % 2 == 1) {
+                    const Color fruitColor = variant == 2 ? Color(216, 152, 54, 255)
+                                                          : Color(146, 54, 80, 255);
+                    // Hang them on the lobe's outer underside where leaves thin out, so the
+                    // colour reads from the ground instead of hiding inside the foliage core.
+                    for (int fruit = 0; fruit < 5; ++fruit) {
+                        const float fruitAngle = angle + 0.72f * static_cast<float>(fruit) + phase * 2.3f;
+                        const Vector3 fruitCentre = centre
+                            + Vector3(std::cos(fruitAngle) * width * 0.66f,
+                                      -crownHeight * (0.58f + 0.10f * static_cast<float>(fruit % 2)),
+                                      std::sin(fruitAngle) * width * 0.60f);
+                        AppendLeafCluster(geometry, fruitCentre, Vector3(0.11f, 0.135f, 0.11f),
+                                          ShadeColor(fruitColor, 1.08f + 0.06f * static_cast<float>(fruit % 3)),
+                                          std::fmod(phase + 0.17f * static_cast<float>(fruit), 1.0f),
+                                          true, true);
+                    }
+                }
                 {
                     // Retain source identities on the golden-angle shell. Fewer shoots fund
                     // curved blade outlines without adding triangles or alpha overdraw.

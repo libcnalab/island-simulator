@@ -1093,5 +1093,44 @@ namespace island
             frond.y = maximumSupportHeight + 0.022f;
             fallenFronds_.push_back(frond);
         }
+
+        // Coconuts drop from the two bearing palm forms and roll a little way from the stem.
+        fallenCoconuts_.reserve(240U);
+        for (const PalmPlacement& palm : palms.Palms()) {
+            if (palm.condition != PalmCondition::Living
+                || (palm.variant != 1U && palm.variant != 3U)) {
+                continue;
+            }
+            const auto palmX = static_cast<std::int32_t>(std::lround(palm.x * 8.0f));
+            const auto palmZ = static_cast<std::int32_t>(std::lround(palm.z * 8.0f));
+            const int nutCount = static_cast<int>(
+                UnitRandom(Hash(palmX, palmZ, seed ^ 0x1f83d9abU)) * 3.0f);
+            for (int nut = 0; nut < nutCount; ++nut) {
+                const std::uint32_t nutHash = Hash(palmX + nut * 31, palmZ - nut * 17,
+                                                   seed ^ 0x5be0cd19U);
+                const float angle = UnitRandom(nutHash) * 2.0f * std::numbers::pi_v<float>;
+                const float offset = 0.55f + 1.9f
+                    * UnitRandom(Hash(palmX, palmZ + nut, seed ^ 0x3c6ef372U));
+                const float x = palm.x + std::cos(angle) * offset;
+                const float z = palm.z + std::sin(angle) * offset;
+                const TerrainSample sample = terrain.Sample(x, z);
+                if (!std::isfinite(sample.height) || sample.height < 0.15f
+                    || sample.slopeRadians > 0.45f
+                    || VegetationLayout::IsReservedRoute(x, z)
+                    || std::ranges::any_of(fallenCoconuts_, [x, z](const auto& other) {
+                           return DistanceSquared(x, z, other.x, other.z) < 0.09f;
+                       })) {
+                    continue;
+                }
+                FallenCoconutPlacement coconut;
+                coconut.scale = 0.86f + 0.26f * UnitRandom(nutHash >> 3U);
+                coconut.x = x;
+                coconut.y = sample.height + 0.068f * coconut.scale;
+                coconut.z = z;
+                coconut.yawRadians = UnitRandom(nutHash >> 7U) * 2.0f * std::numbers::pi_v<float>;
+                coconut.variant = static_cast<std::uint8_t>((nutHash >> 5U) & 1U);
+                fallenCoconuts_.push_back(coconut);
+            }
+        }
     }
 }

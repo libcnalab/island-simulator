@@ -6230,6 +6230,14 @@ int main()
           "driftwood population stays inside its sparse beach-composition budget");
     Check(props.BeachDetails().size() >= 120U && props.BeachDetails().size() <= 600U,
           "shell/pebble/wrack clusters stay inside their near-field beach-detail budget");
+    Check(props.FallenCoconuts().size() >= 20U && props.FallenCoconuts().size() <= 400U
+              && props.FallenCoconuts().size() == repeatedProps.FallenCoconuts().size(),
+          "fallen coconuts stay inside their bounded deterministic budget");
+    for (const auto& coconut : props.FallenCoconuts()) {
+        const auto sample = terrain.Sample(coconut.x, coconut.z);
+        Check(sample.height >= 0.15f && coconut.y > sample.height && coconut.y < sample.height + 0.12f,
+              "fallen coconuts rest on dry supported ground");
+    }
     Check(props.AnimalTracks().size() >= 8U && props.AnimalTracks().size() <= 40U
               && props.AnimalTracks().size() == repeatedProps.AnimalTracks().size(),
           "deer and boar track lines stay inside their bounded deterministic budget");

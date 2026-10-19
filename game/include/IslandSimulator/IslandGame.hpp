@@ -186,6 +186,7 @@ namespace island
         ShipwreckDetail,
         ShipwreckWide,
         AnimalTrackDetail,
+        FruitTreeDetail,
         HutDetail,
         HutMaterialDetail,
         HelicopterDetail,

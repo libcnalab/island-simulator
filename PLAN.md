@@ -46,6 +46,23 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Latest harvest pass — fallen coconuts and fruiting crowns
+
+Backlog item 17. The two coconut-bearing palm forms (variants 1 and 3, which already carry crown
+nuts) now drop zero to two coconuts each, rolled 0.55--2.45 m from the stem onto supported ground
+above the water, off reserved routes and 30 cm apart: 159 fallen coconuts in a new deterministic
+`NaturalPropLayout` family drawn by the prop renderer as nine-sided five-ring husked ovoids lying
+on their side (fresh green-yellow or dry brown husk, faint shading ridges) within the fallen-frond
+cull distance. Canopy forms 2 and 5 hang five fruits under each alternate crown lobe of the near
+mesh only (orange mango-like or dark red fig-like, 11 cm radius, reusing the leaf-cluster ovoid),
+so far silhouettes and the LOD hand-off are untouched. A permanent `fruit` QA viewpoint frames the
+first fruiting crown; the first version hid 7.5 cm fruit inside the foliage core and was moved to
+the lobe undersides and enlarged. Inspected native `20261019T194412Z-fruit` (315 bins, luminance
+deviation 49.78) shows the orange fruit beneath the crown, and `-palms` shows husked coconuts at
+the palm bases. `IslandCoreTests` gains budget, determinism and ground-support checks for the
+coconuts; all 73 active native tests pass. Web/Android identities for this and the following
+small prop passes are recorded with the next combined portable run.
+
 ## Latest ground-sign pass — deer and boar track lines
 
 Backlog item 10. `NaturalPropLayout` now places short print lines as a separate deterministic

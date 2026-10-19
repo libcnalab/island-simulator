@@ -101,6 +101,17 @@ namespace island
         std::uint8_t variant = 0U;
     };
 
+    /** @brief One fallen coconut resting on the ground near a bearing palm. */
+    struct FallenCoconutPlacement
+    {
+        float x = 0.0f;
+        float y = 0.0f;
+        float z = 0.0f;
+        float yawRadians = 0.0f;
+        float scale = 1.0f;
+        std::uint8_t variant = 0U; // 0 fresh green-yellow husk, 1 dry brown husk
+    };
+
     /** @brief One non-solid coral head or low underwater reef rock rooted in the seabed. */
     struct ReefHabitatPlacement
     {
@@ -124,6 +135,7 @@ namespace island
         static constexpr int BeachDetailVariantCount = 6;
         static constexpr int AnimalTrackVariantCount = 2;
         static constexpr int FallenFrondVariantCount = 3;
+        static constexpr int FallenCoconutVariantCount = 2;
         static constexpr int ReefHabitatVariantCount = 4;
         static constexpr int ReefHabitatSiteCount = 640;
         static constexpr int AuthoredClearingRockCount = 5;
@@ -184,6 +196,10 @@ namespace island
         {
             return fallenFronds_;
         }
+        [[nodiscard]] const std::vector<FallenCoconutPlacement>& FallenCoconuts() const noexcept
+        {
+            return fallenCoconuts_;
+        }
         [[nodiscard]] const std::vector<ReefHabitatPlacement>& ReefHabitat() const noexcept
         {
             return reefHabitat_;
@@ -206,6 +222,7 @@ namespace island
         std::vector<BeachDetailPlacement> beachDetails_;
         std::vector<AnimalTrackPlacement> animalTracks_;
         std::vector<FallenFrondPlacement> fallenFronds_;
+        std::vector<FallenCoconutPlacement> fallenCoconuts_;
         std::vector<ReefHabitatPlacement> reefHabitat_;
         std::vector<CircularObstacle> obstacles_;
         std::size_t streamBankRockCount_ = 0;
