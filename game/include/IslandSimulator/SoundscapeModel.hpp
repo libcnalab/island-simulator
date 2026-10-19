@@ -99,6 +99,10 @@ namespace island
     /** @brief Short hard step on exposed stone. */
     [[nodiscard]] AmbientLoop GenerateRockFootstep();
     [[nodiscard]] AmbientLoop GenerateRockFootstepAlternate();
+
+    /** @brief Generates a hollow plank footstep for the jetty and the rope bridge. */
+    [[nodiscard]] AmbientLoop GenerateWoodFootstep();
+    [[nodiscard]] AmbientLoop GenerateWoodFootstepAlternate();
     /** @brief Wading splash for ankle-deep water. */
     [[nodiscard]] AmbientLoop GenerateWadeFootstep();
     [[nodiscard]] AmbientLoop GenerateWadeFootstepAlternate();
@@ -245,7 +249,8 @@ namespace island
         Soil,
         Grass,
         Rock,
-        Shallows
+        Shallows,
+        Wood
     };
 
     /** @brief One distance-scheduled land footstep with bounded playback variation. */

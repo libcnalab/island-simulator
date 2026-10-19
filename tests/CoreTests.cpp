@@ -36,6 +36,7 @@
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
+#include "IslandSimulator/BridgeLayout.hpp"
 #include "IslandSimulator/DolphinPod.hpp"
 #include "IslandSimulator/JungleLayout.hpp"
 #include "IslandSimulator/LocomotionPaceToggle.hpp"
@@ -7341,6 +7342,31 @@ int main()
               "player capsule cannot tunnel through an authored land-rock proxy");
         Check(rockObstacleRejections > 0 && rockTerrainRejections == 0,
               "authored land-rock traversal is rejected by collision rather than terrain");
+    }
+
+    {
+        // The rope bridge: anchored on both banks above the water, a walkway that sags but
+        // clears the stream, and a support that only acts over the planks.
+        const island::IslandTerrain terrain;
+        const island::StreamCourse course(terrain);
+        const auto bridge=island::BridgeLayout::FindInWorld(terrain,course);
+        Check(bridge.has_value(),"a rope bridge site exists on the stream's lower reach");
+        if(bridge) {
+            const auto& station=course.Station(bridge->station);
+            Check(bridge->station>course.CascadeIndex()+island::StreamCourse::PoolLength,
+                  "rope bridge crosses downstream of the plunge pool");
+            Check(bridge->ay>station.water+0.3f&&bridge->by>station.water+0.3f,
+                  "rope bridge anchors stand on both banks above the water");
+            const float midX=(bridge->ax+bridge->bx)*0.5f,midZ=(bridge->az+bridge->bz)*0.5f;
+            const float mid=bridge->DeckHeight(bridge->span*0.5f);
+            Check(mid<std::min(bridge->ay,bridge->by)&&mid>station.water+0.2f,
+                  "rope bridge walkway sags below its anchors but clears the stream");
+            Check(bridge->OnDeck(midX,midZ)&&bridge->SupportHeight(midX,midZ,station.bed)==mid,
+                  "rope bridge supports the walker above the carved bed mid-span");
+            const float offX=midX+bridge->AcrossX()*1.6f,offZ=midZ+bridge->AcrossZ()*1.6f;
+            Check(!bridge->OnDeck(offX,offZ)&&bridge->SupportHeight(offX,offZ,station.bed)==station.bed,
+                  "rope bridge support leaves the stream beside the planks alone");
+        }
     }
 
     {

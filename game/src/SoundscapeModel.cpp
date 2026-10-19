@@ -185,7 +185,7 @@ namespace island
             }
         }
 
-        enum class FootstepMaterial : std::uint8_t { Sand, Soil, Grass, Rock };
+        enum class FootstepMaterial : std::uint8_t { Sand, Soil, Grass, Rock, Wood };
 
         struct FootstepProfile
         {
@@ -214,6 +214,10 @@ namespace island
                 // A short, hard tap: fast attack, early release and a bright thump.
                 return {1U, 6U, 36U, 0.012f, 0.075f, 150.0f, 92.0f, 14.0f,
                         0.42f, 0.50f, 0.10f, 0.30f, 0.12f, 0.46f, 0.10f, 0.60f};
+            case FootstepMaterial::Wood:
+                // A plank knocks: short attack, a lower resonant thump, little grit.
+                return {1U, 8U, 44U, 0.010f, 0.090f, 118.0f, 72.0f, 9.0f,
+                        0.20f, 0.18f, 0.04f, 0.16f, 0.26f, 0.70f, 0.14f, 0.60f};
             }
         }
 
@@ -694,6 +698,16 @@ namespace island
     AmbientLoop GenerateRockFootstepAlternate()
     {
         return GenerateFootstepClip(0x15fb73c8U, FootstepMaterial::Rock, true);
+    }
+
+    AmbientLoop GenerateWoodFootstep()
+    {
+        return GenerateFootstepClip(0x3b9e51d7U, FootstepMaterial::Wood, false);
+    }
+
+    AmbientLoop GenerateWoodFootstepAlternate()
+    {
+        return GenerateFootstepClip(0xc8427a16U, FootstepMaterial::Wood, true);
     }
 
     AmbientLoop GenerateWadeFootstep()
@@ -1198,6 +1212,9 @@ namespace island
             break;
         case FootstepSurface::Shallows:
             request.pitch = -0.030f + NextUnit() * 0.09f + runBlend * 0.015f;
+            break;
+        case FootstepSurface::Wood:
+            request.pitch = 0.010f + NextUnit() * 0.07f + runBlend * 0.020f;
             break;
         case FootstepSurface::Soil:
         default:

@@ -325,6 +325,10 @@ namespace island
             rockFootstepAlternateEffect_ = CreateOneShotSoundEffect(
                 GenerateRockFootstepAlternate());
             rockFootstepAlternateEffect_->setNameProperty("Procedural stone footstep alternate");
+            woodFootstepEffect_ = CreateOneShotSoundEffect(GenerateWoodFootstep());
+            woodFootstepEffect_->setNameProperty("Procedural plank footstep");
+            woodFootstepAlternateEffect_ = CreateOneShotSoundEffect(GenerateWoodFootstepAlternate());
+            woodFootstepAlternateEffect_->setNameProperty("Procedural plank footstep alternate");
             wadeFootstepEffect_ = CreateOneShotSoundEffect(GenerateWadeFootstep());
             wadeFootstepEffect_->setNameProperty("Procedural wading footstep");
             wadeFootstepAlternateEffect_ = CreateOneShotSoundEffect(
@@ -522,6 +526,8 @@ namespace island
             wadeFootstepEffect_.reset();
             rockFootstepAlternateEffect_.reset();
             rockFootstepEffect_.reset();
+            woodFootstepAlternateEffect_.reset();
+            woodFootstepEffect_.reset();
             grassFootstepAlternateEffect_.reset();
             grassFootstepEffect_.reset();
             soilFootstepAlternateEffect_.reset();
@@ -936,6 +942,9 @@ namespace island
             break;
         case FootstepSurface::Shallows:
             footstepEffect = alternateStep ? wadeFootstepAlternateEffect_.get() : wadeFootstepEffect_.get();
+            break;
+        case FootstepSurface::Wood:
+            footstepEffect = alternateStep ? woodFootstepAlternateEffect_.get() : woodFootstepEffect_.get();
             break;
         case FootstepSurface::None:
         default:
@@ -1361,6 +1370,8 @@ namespace island
         wadeFootstepEffect_.reset();
         rockFootstepAlternateEffect_.reset();
         rockFootstepEffect_.reset();
+        woodFootstepAlternateEffect_.reset();
+        woodFootstepEffect_.reset();
         grassFootstepAlternateEffect_.reset();
         grassFootstepEffect_.reset();
         soilFootstepEffect_.reset();

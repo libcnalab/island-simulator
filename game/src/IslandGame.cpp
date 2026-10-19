@@ -1,4 +1,5 @@
 #include "IslandSimulator/IslandGame.hpp"
+#include "IslandSimulator/BridgeLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/StreamCourse.hpp"
 #include "IslandSimulator/WreckScourPatch.hpp"
@@ -187,6 +188,7 @@ namespace island
             case FixedViewpoint::FruitTreeDetail: return "fruit";
             case FixedViewpoint::StreamCascadeDetail: return "cascade";
             case FixedViewpoint::JettyDetail: return "jetty";
+            case FixedViewpoint::BridgeDetail: return "bridge";
             case FixedViewpoint::FallenLogDetail: return "log";
             case FixedViewpoint::HutDetail: return "hut";
             case FixedViewpoint::HutMaterialDetail: return "hut-material";
@@ -332,11 +334,13 @@ namespace island
             birdPerchLayout_.AddSite(jettyPlacement_->MooringPerch());
         }
         birdFlock_.SetPerchSites(birdPerchLayout_.Sites());
+        bridgePlacement_=BridgeLayout::FindInWorld(terrain_,StreamCourse(terrain_));
         helicopterPlacement_=HelicopterLayout::FindInWorld(terrain_,jungleLayout_,worldObstacles);
         if(!helicopterPlacement_)throw std::runtime_error("No valid central helicopter site");
         worldCollisionGrid_.Reset(worldObstacles);
         playerMotion_.SetHelicopter(&*helicopterPlacement_);
         if(jettyPlacement_) playerMotion_.SetJetty(&*jettyPlacement_);
+        if(bridgePlacement_) playerMotion_.SetBridge(&*bridgePlacement_);
         std::vector<CircularObstacle> wildlifeObstacles(worldObstacles);
         // Keep complete animal bodies out of the authored rotor/clearing footprint,
         // not merely outside the fuselage collision proxy. Goat habitat selection
@@ -1360,6 +1364,18 @@ namespace island
             yaw_ = std::atan2(direction.X, direction.Z);
             pitch_ = std::atan2(direction.Y, std::hypot(direction.X, direction.Z));
             std::cout << "island-simulator: fruit QA camera frames a fruit-bearing canopy crown\n";
+        } else if (viewpoint_ == FixedViewpoint::BridgeDetail) {
+            // Stand on the left bank a little downstream and look across the span.
+            if(!bridgePlacement_) throw std::runtime_error("Bridge QA requires a valid site");
+            const auto& b=*bridgePlacement_;
+            const float cameraX=b.ax-b.dirX*2.2f-b.AcrossX()*4.6f;
+            const float cameraZ=b.az-b.dirZ*2.2f-b.AcrossZ()*4.6f;
+            cameraPosition_=Vector3(cameraX,terrain_.Height(cameraX,cameraZ)+PlayerMotion::EyeHeight,cameraZ);
+            const Vector3 target((b.ax+b.bx)*0.5f,b.DeckHeight(b.span*0.5f)+0.5f,(b.az+b.bz)*0.5f);
+            const Vector3 direction=target-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: bridge QA camera looks across the rope bridge from the bank\n";
         } else if (viewpoint_ == FixedViewpoint::JettyDetail) {
             // Stand on the sand beside the canoe and look down the deck to the mooring post.
             if(!jettyPlacement_) throw std::runtime_error("Jetty QA requires a valid site");
@@ -2046,6 +2062,7 @@ namespace island
         shipwreckRenderer_ = std::make_unique<ShipwreckRenderer>(device, shipwreckLayout_);
         if(hutPlacement_) hutRenderer_=std::make_unique<HutRenderer>(device,*hutPlacement_);
         if(jettyPlacement_) jettyRenderer_=std::make_unique<JettyRenderer>(device,*jettyPlacement_);
+        if(bridgePlacement_) bridgeRenderer_=std::make_unique<BridgeRenderer>(device,*bridgePlacement_);
         helicopterRenderer_=std::make_unique<HelicopterRenderer>(device,*helicopterPlacement_);
         palmRenderer_ = std::make_unique<PalmRenderer>(
             device, vegetationLayout_, qualityProfile_.vegetationMaximumDistanceScale);
@@ -3494,6 +3511,10 @@ namespace island
         if (flightMotion_.IsActive() || IsDebugFreeCameraActive()) return FootstepSurface::None;
         const PlayerPosition& position = playerMotion_.Position();
         if (!std::isfinite(position.x) || !std::isfinite(position.z)) return FootstepSurface::None;
+        // Plank decks ring hollow underfoot wherever they carry the walker.
+        if ((jettyPlacement_ && jettyPlacement_->OnDeck(position.x, position.z))
+            || (bridgePlacement_ && bridgePlacement_->OnDeck(position.x, position.z)))
+            return FootstepSurface::Wood;
         const TerrainSample sample = terrain_.Sample(position.x, position.z);
         // Ankle-deep water before the swim threshold wades; the scheduler stays silent once
         // the player is actually swimming.
@@ -4045,6 +4066,7 @@ namespace island
                 palmRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (hutRenderer_) hutRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (jettyRenderer_) jettyRenderer_->DrawSunShadow(*sunShadowMap_);
+                if (bridgeRenderer_) bridgeRenderer_->DrawSunShadow(*sunShadowMap_);
                 shipwreckRenderer_->DrawSunShadow(*sunShadowMap_);
                 helicopterRenderer_->DrawSunShadow(*sunShadowMap_);
                 sunShadowMap_->End();
@@ -4095,6 +4117,10 @@ namespace island
         if(jettyRenderer_) {
             GpuDiagnosticScope gpuPass("jetty");
             jettyRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
+        }
+        if(bridgeRenderer_) {
+            GpuDiagnosticScope gpuPass("bridge");
+            bridgeRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }
         if(hutRenderer_) {
             GpuDiagnosticScope gpuPass("hut");

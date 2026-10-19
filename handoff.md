@@ -43,7 +43,7 @@ here as done with their `PLAN.md` evidence reference.
 11. [x] Sea from within (PLAN "Latest sea-from-within pass — leaping dolphins, a surface fin and parting schools").
 12. [x] Signs of the resident at the hut (PLAN "Latest occupation pass"); the canoe moves to item 13.
 13. [x] Jetty and dugout canoe (PLAN "Latest landing pass — the resident's jetty and dugout canoe", `jetty` viewpoint).
-14. [ ] Rope bridge over the stream and/or a tree lookout platform (walkable).
+14. [x] Rope bridge over the stream (PLAN "Latest crossing pass", `bridge` viewpoint); a tree lookout platform remains a loop candidate.
 15. [x] Lianas and aerial roots (PLAN "Latest canopy-interior pass").
 16. [x] Flowering shrubs and banana stools (PLAN "Latest understory-colour pass").
 17. [x] Fruit in crowns and fallen coconuts (PLAN "Latest harvest pass", `fruit` viewpoint).

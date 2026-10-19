@@ -204,6 +204,10 @@ namespace
                          island::GenerateGrassFootstepAlternate()});
         clips.push_back({"stone footstep A", "stone-footstep-a.wav", false, 6615U,
                          island::GenerateRockFootstep()});
+        clips.push_back({"plank footstep A", "plank-footstep-a.wav", false, 6615U,
+                         island::GenerateWoodFootstep()});
+        clips.push_back({"plank footstep B", "plank-footstep-b.wav", false, 6615U,
+                         island::GenerateWoodFootstepAlternate()});
         clips.push_back({"stone footstep B", "stone-footstep-b.wav", false, 6615U,
                          island::GenerateRockFootstepAlternate()});
         clips.push_back({"wading footstep A", "wading-footstep-a.wav", false, 9922U,

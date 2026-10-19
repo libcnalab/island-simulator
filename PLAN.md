@@ -46,6 +46,31 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Latest crossing pass — a rope bridge over the stream and plank footsteps
+
+Backlog item 14 (the walkable member; the tree lookout stays open). `BridgeLayout::FindInWorld`
+walks the stream stations from six past the plunge pool (or three fifths of the course,
+whichever is later) toward the mouth and takes the first crossing whose anchors, 1.7 m outside
+the channel on both banks, stand at least 0.24 m above the water (the right bank of the lower
+reach sits only 0.27–0.30 m up), differ by no more than 0.6 m, slope less than 0.45 rad and are
+not submerged, with the walkway's sagging middle still 0.18 m clear of the water; it lands at
+station 59, a 5.3 m span. `BridgePlacement::DeckHeight` is linear between the anchors minus a
+0.12 m parabolic sag; `SupportHeight` carries the walker across (after the stream bed patch and
+the other structure supports) and `OnDeck` keeps them out of swimming mode like the jetty.
+`BridgeRenderer` (932 triangles, one vertex-coloured draw, sun-shadow caster) draws planks
+following the sag, two carrying ropes under the plank ends, two hand ropes on end posts and
+vertical ties every 0.6 m; the per-face sun lighting now lives in a shared
+`StructureMeshBuilder` that the jetty uses too. Walking on either deck now rings hollow:
+`FootstepSurface::Wood` with a plank profile (short attack, lower resonant thump, little grit)
+and two new clips (55 clips, 7,247,830 PCM bytes pinned). A `bridge` QA viewpoint stands on the
+left bank looking across (close-natural-detail profile). The startup log adds "rope bridge
+crosses the stream's lower reach on a sagging plank walkway with hand ropes; the walker crosses
+dry", pinned by the native capture tool. New core checks: the site exists downstream of the
+plunge pool, both anchors stand above the water, the walkway sags below its anchors but clears
+the stream, and the support acts mid-span above the carved bed and nowhere beside the planks.
+Inspected native `20261019T214605Z-bridge` shows the span with its ropes and ties over the
+stream; `stream` still passes.
+
 ## Latest landing pass — the resident's jetty and dugout canoe
 
 Backlog item 13 (with the canoe deferred from item 12). `JettyLayout::FindInWorld` sites a
