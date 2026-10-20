@@ -54,6 +54,29 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 52 (2026-10-20) — the grass bends under the animals
+
+The grass parted only for the walker; a deer could stand in it untouched. A core
+`GrassWalkers` helper gathers the bodies that press the grass, the herds (deer 0.55 m,
+goats 0.45 m, boars 0.62 m wide), the bear (0.95 m) and the resident (0.38 m), with a
+strength of 0.35 standing rising to 1 at 0.5 m/s, and selects the six nearest the camera
+within 35 m. The grass shader takes them as `uWalkers[6]` (x, z, radius², strength) and
+presses the blades inside each radius away from the body and down by 0.8 and 0.9 of the
+walker's own push and lowering, scaled by the strength, in the same vertex pass. Diagnostic
+"the grass bends under the nearest six animals and the resident as they pass, not only under
+the walker" is pinned by the native capture tool. Core checks: of nine candidates the six
+nearest within reach are taken nearest first, the strengthless and the out-of-reach left
+out; a standing body presses lightly and a moving one fully. Native `deer` passes.
+
+## Android evidence for the loop passes (2026-10-20 03:43)
+
+`:app:assembleDebug :app:lintDebug` with the Gradle 8.12 distribution (the project has no
+wrapper checked in; the plugin is 8.7.3) built the arm64-v8a native library through
+`buildCMakeDebug` and passed lint with the sources at loop pass 51: BUILD SUCCESSFUL,
+`app-debug.apk` sha256
+`05adc63734772430db3e77b922a08b5146344d27f1dc1f8de2b4e7fd5b67a5be` (03:43). This is compilation and lint
+evidence, not device execution.
+
 ## Loop pass 51 (2026-10-20) — a settled stingray bursts from the sand
 
 A settled ray turned away from the swimmer at its slow settle speed, as if it had never

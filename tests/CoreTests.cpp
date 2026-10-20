@@ -14,6 +14,7 @@
 #include "IslandSimulator/CoconutCrabGroup.hpp"
 #include "IslandSimulator/AntTrails.hpp"
 #include "IslandSimulator/StingraySandField.hpp"
+#include "IslandSimulator/GrassWalkers.hpp"
 #include "IslandSimulator/CrabColony.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
 #include "IslandSimulator/CoastalWindResponse.hpp"
@@ -8055,6 +8056,22 @@ int main()
             Check(sand.ActiveCount()==island::StingraySandField::PuffsPerBurst&&ringed,"a ring of sand puffs rises where the ray lay");
             for(int step=0;step<50;++step) sand.Update(0.05f,rays.LastBurst());
             Check(sand.ActiveCount()==0U,"the sand settles again within two seconds");
+        }
+        // The grass walkers: of nine candidates the six nearest the camera within reach are
+        // taken in distance order, the far and the strengthless left out; a standing body
+        // presses lightly and a trotting one fully.
+        {
+            std::vector<island::GrassWalker> candidates;
+            for(int i=0;i<9;++i) candidates.push_back({static_cast<float>(i)*4.0f,0.0f,0.5f,1.0f});
+            candidates[3].strength=0.0f;          // a body that is not there
+            candidates.push_back({100.0f,0.0f,0.5f,1.0f});   // beyond reach
+            std::array<island::GrassWalker,island::GrassWalkers::Slots> chosen{};
+            const std::size_t taken=island::GrassWalkers::Select(candidates,0.0f,0.0f,chosen);
+            bool ordered=true;
+            for(std::size_t i=1;i<taken;++i) if(chosen[i].x<chosen[i-1].x) ordered=false;
+            Check(taken==6U&&ordered&&chosen[0].x==0.0f&&chosen[5].x==24.0f,"the six nearest bodies in reach press the grass, nearest first");
+            Check(island::GrassWalkers::Strength(0.0f)>0.3f&&island::GrassWalkers::Strength(0.0f)<0.4f&&island::GrassWalkers::Strength(1.0f)==1.0f,
+                  "a standing body presses the grass lightly and a moving one fully");
         }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls

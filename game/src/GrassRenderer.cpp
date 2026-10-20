@@ -187,6 +187,7 @@ uniform vec3 uCameraPosition;
 uniform vec2 uGrassFadeRange;
 uniform vec2 uPlayerPosition;
 uniform float uPlayerInteractionStrength;
+uniform vec4 uWalkers[6];   // other bodies in the grass: x, z, radius squared, strength (0: none)
 
 out vec3 vColor;
 out vec3 vWorld;
@@ -247,6 +248,18 @@ void main()
         float lowering = mix(grassMinimumLowering, grassMaximumLowering, interactionStrength);
         world.xz += awayFromPlayer * interaction * pushDistance * aVariation.x;
         world.y -= interaction * lowering * aVariation.x;
+    }
+    // The animals and the resident press the grass as they pass, each by its own width.
+    for (int walker = 0; walker < 6; ++walker) {
+        vec4 body = uWalkers[walker];
+        if (body.w <= 0.0) continue;
+        vec2 bodyOffset = world.xz - body.xy;
+        float bodyDistanceSquared = dot(bodyOffset, bodyOffset);
+        if (bodyDistanceSquared >= body.z) continue;
+        float press = (1.0 - smoothstep(0.04, body.z, bodyDistanceSquared)) * heightWeight * visibility * body.w;
+        vec2 awayFromBody = bodyOffset * inversesqrt(max(bodyDistanceSquared, 0.01));
+        world.xz += awayFromBody * press * grassMaximumPush * 0.8 * aVariation.x;
+        world.y -= press * grassMaximumLowering * 0.9 * aVariation.x;
     }
 
     float phase = (aWindData.y + aVariation.z) * 6.28318530718;
@@ -948,7 +961,8 @@ void main()
 
     void GrassRenderer::Draw(const Matrix& view, const Matrix& projection,
                              const Vector3& cameraPosition, const Vector3& playerPosition,
-                             const float playerInteractionStrength, const float timeSeconds)
+                             const float playerInteractionStrength, const float timeSeconds,
+                             const std::span<const GrassWalker> walkers)
     {
         visiblePatchCount_ = 0;
         visibleNearPatchCount_ = 0;
@@ -990,6 +1004,13 @@ void main()
                 "uPlayerInteractionStrength",
                 std::isfinite(playerInteractionStrength)
                     ? std::clamp(playerInteractionStrength, 0.0f, 1.0f) : 0.0f);
+            for (std::size_t slot = 0; slot < GrassWalkers::Slots; ++slot) {
+                const GrassWalker body = slot < walkers.size() ? walkers[slot] : GrassWalker{};
+                const bool valid = std::isfinite(body.x) && std::isfinite(body.z) && body.strength > 0.0f;
+                const std::string name = "uWalkers[" + std::to_string(slot) + "]";
+                customEffect_->SetUniformVec4(name.c_str(), valid ? body.x : 0.0f, valid ? body.z : 0.0f,
+                    valid ? body.radius * body.radius : 0.0f, valid ? std::clamp(body.strength, 0.0f, 1.0f) : 0.0f);
+            }
             customEffect_->SetUniformFloat("uTime", timeSeconds);
             CampfireLighting::Bind(*customEffect_,timeSeconds);
         } else {

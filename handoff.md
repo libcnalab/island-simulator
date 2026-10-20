@@ -112,6 +112,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 49: three dragonflies patrol the cascade's plunge pool (PLAN "Loop pass 49").
 - Pass 50: two frogs keep the banks of the plunge pool (PLAN "Loop pass 50").
 - Pass 51: a settled stingray bursts out of the sand when the swimmer nears (PLAN "Loop pass 51").
+- Pass 52: the grass bends under the nearest animals and the resident as they pass (PLAN "Loop pass 52").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

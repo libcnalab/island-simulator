@@ -1,4 +1,6 @@
 #pragma once
+#include "IslandSimulator/GrassWalkers.hpp"
+#include <span>
 
 #include <array>
 #include <cstddef>
@@ -49,11 +51,13 @@ namespace island
         GrassRenderer(GrassRenderer&&) = delete;
         GrassRenderer& operator=(GrassRenderer&&) = delete;
 
+        // walkers: up to GrassWalkers::Slots other bodies pressing the grass this frame.
         void Draw(const Microsoft::Xna::Framework::Matrix& view,
                   const Microsoft::Xna::Framework::Matrix& projection,
                   const Microsoft::Xna::Framework::Vector3& cameraPosition,
                   const Microsoft::Xna::Framework::Vector3& playerPosition,
-                  float playerInteractionStrength, float timeSeconds);
+                  float playerInteractionStrength, float timeSeconds,
+                  std::span<const GrassWalker> walkers = {});
 
         [[nodiscard]] bool UsesCustomShader() const noexcept { return customShaderReady_; }
         [[nodiscard]] int TotalPatchCount() const noexcept { return totalPatchCount_; }

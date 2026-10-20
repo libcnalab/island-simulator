@@ -1143,6 +1143,8 @@ def main():
                 raise RuntimeError("current plunge-pool frogs are missing; check for a stale executable")
             if "a settled stingray bursts out of the sand in a puff when the swimmer comes near" not in diagnostics:
                 raise RuntimeError("current stingray sand bursts are missing; check for a stale executable")
+            if "the grass bends under the nearest six animals and the resident as they pass, not only under the walker" not in diagnostics:
+                raise RuntimeError("current wildlife grass pressing is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":
