@@ -2388,6 +2388,7 @@ namespace island
                   << "island-simulator: the resident's footfalls sound on the ground under them, sand, soil, grass, rock, shallows or planks, heard within twenty-four metres\n"
                   << "island-simulator: on the walk the resident whistles an original short phrase every half minute, heard within thirty metres\n"
                   << "island-simulator: a bird flushing from a perch or the ground claps its wings, an original half-second whir heard within twenty metres\n"
+                  << "island-simulator: a flushing bird lets a pale feather go that rocks down slower than a leaf and lies where it lands\n"
                   << "island-simulator: the bear walks to fruit and coconuts lying in its range and eats them where they lie\n"
                   << "island-simulator: the boars stand off from the bear and trot away when it comes close, as from the walker\n"
                   << "island-simulator: the hut's roof ridge is a perch for the birds\n"
@@ -2792,7 +2793,10 @@ namespace island
         if (soundscape_ && birdFlock_.AnyFlushCount() != notedFlushes_) {
             notedFlushes_ = birdFlock_.AnyFlushCount();
             const BirdFlock::BirdFlush& flush = birdFlock_.LastFlush();
-            if (flush.valid) soundscape_->NoteWingClap(flush.x, flush.y, flush.z);
+            if (flush.valid) {
+                soundscape_->NoteWingClap(flush.x, flush.y, flush.z);
+                canopyLeafFall_.Feather(flush.x, flush.y, flush.z, notedFlushes_ * 7919U);
+            }
         }
         if (birdFlock_.LandingCount() != notedLandingCount_) {
             notedLandingCount_ = birdFlock_.LandingCount();

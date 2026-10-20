@@ -1253,6 +1253,8 @@ def main():
                 raise RuntimeError("current resident whistle is missing; check for a stale executable")
             if "a bird flushing from a perch or the ground claps its wings" not in diagnostics:
                 raise RuntimeError("current wing clap is missing; check for a stale executable")
+            if "a flushing bird lets a pale feather go that rocks down slower than a leaf" not in diagnostics:
+                raise RuntimeError("current flush feather is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

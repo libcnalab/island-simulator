@@ -54,6 +54,21 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 107 (2026-10-20) — a feather from a flushing bird
+
+A bird's flush left nothing behind but its clap. `CanopyLeafFallField::Feather(x,y,z,seed)`
+lets a pale feather go a quarter metre beside and fifteen centimetres below a flushing bird
+(nothing from a bird on the floor): a `DriftingLeaf` of a fourth variant the stream's leaf
+renderer draws pale (226,220,206), falling at its own 0.28 m/s (`FeatherFallSpeed`, about
+half a leaf's pace, each leaf now keeping its own descent speed), carried downwind at six
+tenths of a leaf's drift with a rock nearly twice as wide, and lying where it lands as a
+leaf does. `FeatherCount()` counts them, and the game lets one go at every noted flush
+beside the wing clap. The startup report gains "a flushing bird lets a pale feather go that
+rocks down slower than a leaf and lies where it lands", pinned by the native capture tool.
+Core checks: a flush lets one feather go beside the leaf; over two seconds it comes down at
+about half the leaf's pace; a bird flushing off the floor lets none go. Native
+`ground-doves` passes.
+
 ## Loop pass 106 (2026-10-20) — the wing clap of a flushing bird
 
 A bird flushed from its perch or off the ground in silence. `GenerateWingClap(variant)` is

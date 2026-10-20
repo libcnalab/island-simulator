@@ -44,7 +44,19 @@ void CanopyLeafFallField::Shake(const float x,const float y,const float z,const 
     ++shakes_;
 }
 
-void CanopyLeafFallField::Let(const float x,const float y,const float z,const float yaw,const std::uint32_t seed) noexcept {
+void CanopyLeafFallField::Feather(const float x,const float y,const float z,const std::uint32_t seed) noexcept {
+    if(!std::isfinite(x)||!std::isfinite(y)||!std::isfinite(z)) return;
+    if(y<terrain_.Height(x,z)+0.3f) return;   // a bird on the floor lets nothing go
+    std::uint32_t hash=seed*0x9e3779b9U^0x5bd1e995U;
+    hash^=hash>>16U;hash*=0x7feb352dU;hash^=hash>>15U;
+    const float angle=static_cast<float>(hash%360U)*(Tau/360.0f);
+    const std::size_t slot=Let(x+std::cos(angle)*0.25f,y-0.15f,z+std::sin(angle)*0.25f,angle,hash);
+    leaves_[slot].variant=FeatherVariant;
+    leaves_[slot].speed=FeatherFallSpeed;
+    ++feathers_;
+}
+
+std::size_t CanopyLeafFallField::Let(const float x,const float y,const float z,const float yaw,const std::uint32_t seed) noexcept {
     // A free slot, or the leaf that has lain longest.
     std::size_t slot=Capacity;
     for(std::size_t i=0;i<Capacity;++i) if(!leaves_[i].active) {slot=i;break;}
@@ -62,6 +74,7 @@ void CanopyLeafFallField::Let(const float x,const float y,const float z,const fl
     leaf.active=true;leaf.atSea=false;leaf.seaSeconds=0;
     phase_[slot]=static_cast<float>((seed>>3U)%628U)*0.01f;
     rest_[slot]=-1.0f;
+    return slot;
 }
 
 void CanopyLeafFallField::Update(const float seconds,const float deltaSeconds,
@@ -89,13 +102,14 @@ void CanopyLeafFallField::Update(const float seconds,const float deltaSeconds,
         DriftingLeaf& leaf=leaves_[i];
         if(!leaf.active) continue;
         if(rest_[i]<0.0f) {
-            // Falling: a steady descent, carried downwind, rocking side to side and turning.
+            // Falling: a steady descent at the leaf's own speed (a feather's is slower and
+            // its rock wider), carried downwind, rocking side to side and turning.
+            const float rock=leaf.variant==FeatherVariant?1.8f:1.0f;
             phase_[i]=std::fmod(phase_[i]+dt*2.2f,Tau);
-            leaf.x+=(-DriftSpeed+std::sin(phase_[i])*SwaySpeed)*dt;
-            leaf.z+=std::cos(phase_[i]*0.9f)*SwaySpeed*0.7f*dt;
-            leaf.y-=FallSpeed*dt;
+            leaf.x+=(-DriftSpeed*(leaf.variant==FeatherVariant?0.6f:1.0f)+std::sin(phase_[i])*SwaySpeed*rock)*dt;
+            leaf.z+=std::cos(phase_[i]*0.9f)*SwaySpeed*0.7f*rock*dt;
+            leaf.y-=leaf.speed*dt;
             leaf.yawRadians=std::fmod(leaf.yawRadians+SpinRate*dt,Tau);
-            leaf.speed=FallSpeed;
             const float ground=std::max(terrain_.Height(leaf.x,leaf.z),0.0f)+0.03f;
             if(leaf.y<=ground) {leaf.y=ground;rest_[i]=0.0f;leaf.speed=0.0f;}
         } else {

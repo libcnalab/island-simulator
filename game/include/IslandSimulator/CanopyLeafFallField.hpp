@@ -36,16 +36,22 @@ public:
     /** @brief Something moving in a crown (a bird landing, a monkey passing) shakes a leaf
      *  loose just below the point. */
     void Shake(float x,float y,float z,std::uint32_t seed) noexcept;
+    /** @brief A bird flushing lets a feather go: pale, falling at FeatherFallSpeed with a
+     *  wider rock, drawn by the leaf renderer as its pale variant. */
+    void Feather(float x,float y,float z,std::uint32_t seed) noexcept;
+    [[nodiscard]] std::uint32_t FeatherCount() const noexcept {return feathers_;}
+    static constexpr float FeatherFallSpeed=0.28f;
+    static constexpr std::uint8_t FeatherVariant=3;
     [[nodiscard]] std::uint32_t ShakeCount() const noexcept {return shakes_;}
 private:
     void Release(const CanopyPlacement& crown,std::uint32_t seed) noexcept;
-    void Let(float x,float y,float z,float yaw,std::uint32_t seed) noexcept;
+    std::size_t Let(float x,float y,float z,float yaw,std::uint32_t seed) noexcept;
     const IslandTerrain& terrain_;
     std::span<const CanopyPlacement> crowns_;
     std::vector<float> crownGust_;
     std::array<DriftingLeaf,Capacity> leaves_{};
     std::array<float,Capacity> phase_{};
     std::array<float,Capacity> rest_{};   // seconds lying; negative while falling
-    std::uint32_t releases_=0,shakes_=0;
+    std::uint32_t releases_=0,shakes_=0,feathers_=0;
 };
 }

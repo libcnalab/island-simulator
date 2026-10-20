@@ -36,7 +36,8 @@ void StreamDriftRenderer::Draw(const Matrix& view,const Matrix& projection,const
     for(const auto& leaf:leaves) {
         if(!leaf.active||!std::isfinite(leaf.x)||!std::isfinite(leaf.y)||!std::isfinite(leaf.z)) continue;
         if((Vector3(leaf.x,leaf.y,leaf.z)-camera).LengthSquared()>70.0f*70.0f) continue;
-        const Vector3 base=leaf.variant==0?Vector3(96,128,54):leaf.variant==1?Vector3(122,88,46):Vector3(176,150,58);
+        const Vector3 base=leaf.variant==0?Vector3(96,128,54):leaf.variant==1?Vector3(122,88,46)
+            :leaf.variant==2?Vector3(176,150,58):Vector3(226,220,206);   // 3: a bird's pale feather
         const float c=std::cos(leaf.yawRadians),s=std::sin(leaf.yawRadians);
         const auto at=[&](float along,float across,float lift){
             return Vector3(leaf.x+c*along-s*across,leaf.y+lift,leaf.z+s*along+c*across);};

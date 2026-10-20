@@ -7909,6 +7909,26 @@ int main()
         Check(shakenLeaf && shaken.ShakeCount() == 1U && shaken.ActiveCount() == 1U, "a shake up in a crown lets one leaf go just below the point");
         shaken.Shake(shakeX, terrain.Height(shakeX, shakeZ) + 0.5f, shakeZ, 6U);
         Check(shaken.ActiveCount() == 1U, "a shake at ground level lets no leaf go");
+        // A feather from a flushing bird: pale, and it comes down at about half a leaf's pace.
+        island::CanopyLeafFallField feathered(terrain);
+        feathered.Shake(shakeX, shakeY, shakeZ, 5U);
+        feathered.Feather(shakeX, shakeY, shakeZ, 9U);
+        Check(feathered.FeatherCount() == 1U && feathered.ActiveCount() == 2U, "a flushing bird lets one feather go beside the leaf");
+        float leafStart = 0.0f, featherStart = 0.0f;
+        std::size_t leafSlot = 99, featherSlot = 99;
+        for (std::size_t i = 0; i < feathered.Leaves().size(); ++i) {
+            const auto& item = feathered.Leaves()[i];
+            if (!item.active) continue;
+            if (item.variant == island::CanopyLeafFallField::FeatherVariant) { featherSlot = i; featherStart = item.y; }
+            else { leafSlot = i; leafStart = item.y; }
+        }
+        for (int step = 0; step < 40; ++step) feathered.Update(0.0f, 0.05f, 1000.0f, 1000.0f);
+        const float leafDrop = leafStart - feathered.Leaves()[leafSlot].y;
+        const float featherDrop = featherStart - feathered.Leaves()[featherSlot].y;
+        Check(featherSlot < 99 && leafSlot < 99 && featherDrop > 0.4f && featherDrop < 0.7f && leafDrop > 1.0f,
+              "the feather comes down at about half the leaf's pace");
+        feathered.Feather(shakeX, terrain.Height(shakeX, shakeZ) + 0.1f, shakeZ, 10U);
+        Check(feathered.FeatherCount() == 1U, "a bird flushing off the floor lets no feather go");
     }
 
     {
