@@ -7504,6 +7504,49 @@ int main()
     }
 
     {
+        // Fruit doves land beside the fallen fruit: with fruit lying on dove-grade ground
+        // within range, a dove's next ground visit goes there and it forages around it.
+        const island::IslandTerrain terrain;
+        island::BirdFlock doves(terrain);
+        const island::BirdState& dove = doves.Birds()[14U];
+        float treeX = 0.0f, treeZ = 0.0f;
+        bool spot = false;
+        for (float radius = 8.0f; radius < 50.0f && !spot; radius += 4.0f)
+            for (int step = 0; step < 12 && !spot; ++step) {
+                const float angle = static_cast<float>(step) * 0.5236f;
+                const float x = dove.x + std::cos(angle) * radius, z = dove.z + std::sin(angle) * radius;
+                const auto sample = terrain.Sample(x, z);
+                if (!sample.IsSubmerged() && sample.height > 0.8f && sample.signedShoreDistance > 24.0f
+                    && sample.slopeRadians < 0.25f) { treeX = x; treeZ = z; spot = true; }
+            }
+        Check(spot, "dove-grade ground lies within fifty metres of the first dove");
+        const std::vector<island::BirdPerchSite> sites{{treeX + 3.0f, terrain.Height(treeX + 3.0f, treeZ) + 2.5f, treeZ, 0.0f, island::BirdPerchKind::Branch}};
+        doves.SetPerchSites(sites);
+        island::FallingFruitField orchard(terrain);
+        island::MonkeyState picker{};
+        picker.behavior = island::MonkeyBehavior::InspectTree;
+        picker.pickingFruit = true;
+        picker.simulationTier = island::WildlifeSimulationTier::Full;
+        picker.selectedTree = {treeX, terrain.Height(treeX, treeZ), treeZ, 0.4f, 1.0f, 2U};
+        std::vector<island::MonkeyState> pickers{picker};
+        for (int step = 0; step < 400; ++step) orchard.Update(0.05f, pickers);
+        bool foragedAtFruit = false;
+        for (int step = 0; step < 7200 && !foragedAtFruit; ++step) {
+            doves.SetLyingFruit(orchard.Fruit());
+            doves.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
+            orchard.Update(0.05f, pickers);
+            for (std::size_t index = 14U; index < 18U && index < doves.Birds().size(); ++index) {
+                const auto& bird = doves.Birds()[index];
+                if (bird.behavior != island::BirdBehavior::GroundForage) continue;
+                for (const auto& fruit : orchard.Fruit())
+                    if (fruit.active && std::hypot(bird.x - fruit.x, bird.z - fruit.z) < 3.0f) foragedAtFruit = true;
+            }
+        }
+        Check(doves.FruitLandingCount() >= 1U && foragedAtFruit,
+              "a fruit dove lands beside the fallen fruit and forages around it within six minutes");
+    }
+
+    {
         // Butterflies alternate their nectar visits between the ground patch and a flowering
         // bush inside the habitat, hovering at blossom height over the bush.
         const island::IslandTerrain terrain;

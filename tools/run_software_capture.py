@@ -945,6 +945,8 @@ def main():
                 raise RuntimeError("current gust swell is missing; check for a stale executable")
             if "a fallen fruit bounces off where it strikes and rolls downhill to rest" not in diagnostics:
                 raise RuntimeError("current fruit roll is missing; check for a stale executable")
+            if "a dove's ground visit crosses to the nearest fruit lying on dove-grade ground when there is any" not in diagnostics:
+                raise RuntimeError("current dove fruit landing is missing; check for a stale executable")
             if "fish schools part around the swimmer within three metres" not in diagnostics:
                 raise RuntimeError("current sea-from-within behaviour is missing; check for a stale executable")
             if "resident's jetty runs from the beach below the hut to a mooring-post perch, with a dugout canoe drawn up beside the root; the water collars its posts with foam" not in diagnostics:

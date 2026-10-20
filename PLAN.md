@@ -46,6 +46,21 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 25 (2026-10-20) — the fruit doves land beside the fallen fruit
+
+The fruit doves' ground visits went to a pseudo-random dry spot on their ring; the fruit the
+monkeys knocked down (and the resident of the name) never met. The flock reads the fruit span
+(`BirdFlock::SetLyingFruit`) and a dove's ground visit (every other perch cycle) first looks
+for the nearest resting, non-rolling, non-coconut fruit on dove-grade ground (dry, above
+0.8 m, more than 22 m inland, slope under 0.30 rad) and lands 0.4 m short of it
+(`FindFruitLanding`); the existing forage walk then works the 2.4 m around the fruit. The
+range is the whole island (240 m): a probe showed the doves' route decisions fall 180 m or
+more from the test tree, so a 60 m rule never fired in six minutes. The visit counts in
+`FruitLandingCount()`. The dove diagnostic gains "a dove's ground visit crosses to the nearest
+fruit lying on dove-grade ground when there is any", pinned by the native capture tool. Core
+check: with fruit shaken down on dove-grade ground near the first dove's start, a dove is
+foraging within 3 m of a fruit inside six simulated minutes. Native `ground-doves` passes.
+
 ## Loop pass 24 (2026-10-20) — the fallen fruit bounces and rolls
 
 A fruit stopped dead on the spot it struck, as nothing dropped onto a slope does. `FallingFruit`

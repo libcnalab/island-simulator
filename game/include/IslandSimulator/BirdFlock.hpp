@@ -11,6 +11,7 @@
 
 namespace island
 {
+    struct FallingFruit;
     class IslandTerrain;
 
     /** @brief Broad route family used to compose varied island bird traffic. */
@@ -123,6 +124,13 @@ namespace island
         [[nodiscard]] std::uint32_t DiveCount() const noexcept { return diveCount_; }
         /** @brief A sudden sound at a point; perched birds near it flush within the second. */
         void NoteDisturbance(float x, float z) noexcept;
+        /** @brief Fruit lying on the ground this frame; a fruit dove's ground visit lands
+         *  beside the nearest one within FruitLandingRange when there is any. The doves'
+         *  routes ring the island, so the range is the island: a dove sees the fruit from
+         *  the air and crosses to it. */
+        void SetLyingFruit(std::span<const FallingFruit> fruit) noexcept { lyingFruit_ = fruit; }
+        [[nodiscard]] std::uint32_t FruitLandingCount() const noexcept { return fruitLandings_; }
+        static constexpr float FruitLandingRange = 240.0f;
         [[nodiscard]] std::uint32_t FlushCount() const noexcept { return flushCount_; }
         // A perched bird leaves when the observer comes this close, or a thud lands this near.
         static constexpr float FlushDistance = 9.0f;
@@ -207,6 +215,9 @@ namespace island
         std::uint32_t diveCount_ = 0U;
         float disturbanceX_ = 0.0f, disturbanceZ_ = 0.0f, disturbanceSeconds_ = 0.0f;
         std::uint32_t flushCount_ = 0U;
+        std::span<const FallingFruit> lyingFruit_;
+        std::uint32_t fruitLandings_ = 0U;
+        [[nodiscard]] bool FindFruitLanding(const Agent& agent, float& x, float& z) const noexcept;
         int fullSimulationCount_ = 0;
         int reducedSimulationCount_ = 0;
         int dormantSimulationCount_ = 0;

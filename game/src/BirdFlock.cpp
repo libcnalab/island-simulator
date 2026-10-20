@@ -1,4 +1,5 @@
 #include "IslandSimulator/BirdFlock.hpp"
+#include "IslandSimulator/FallingFruitField.hpp"
 
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
@@ -251,6 +252,29 @@ namespace island
         }
     }
 
+    // The nearest resting fruit within range of the dove on ground a dove may land on; the
+    // landing is set just short of it so the forage walk works around the fruit.
+    bool BirdFlock::FindFruitLanding(const Agent& agent, float& x, float& z) const noexcept
+    {
+        float best = FruitLandingRange;
+        bool found = false;
+        for (const FallingFruit& fruit : lyingFruit_) {
+            if (!fruit.active || fruit.restSeconds < 0.0f || fruit.rolling
+                || fruit.variant == FallingFruitField::CoconutVariant) continue;
+            const float distance = std::hypot(fruit.x - agent.state.x, fruit.z - agent.state.z);
+            if (distance >= best) continue;
+            const TerrainSample sample = terrain_.Sample(fruit.x, fruit.z);
+            if (sample.IsSubmerged() || sample.height <= 0.8f
+                || sample.signedShoreDistance <= 22.0f || sample.slopeRadians >= 0.30f) continue;
+            best = distance;
+            const float toward = distance > 0.01f ? std::atan2(agent.state.z - fruit.z, agent.state.x - fruit.x) : 0.0f;
+            x = fruit.x + std::cos(toward) * 0.4f;
+            z = fruit.z + std::sin(toward) * 0.4f;
+            found = true;
+        }
+        return found;
+    }
+
     void BirdFlock::NoteDisturbance(const float x, const float z) noexcept
     {
         if (!std::isfinite(x) || !std::isfinite(z)) return;
@@ -374,7 +398,18 @@ namespace island
             && elapsedSeconds_ >= agent.nextPerchSeconds) {
             if (agent.state.species == BirdSpecies::FruitDove
                 && agent.perchCycle % 2U == 0U) {
-                for (std::size_t attempt = 0; attempt < 18U; ++attempt) {
+                // Fruit on the ground within range settles the question of where to land.
+                float fruitX = 0.0f, fruitZ = 0.0f;
+                if (FindFruitLanding(agent, fruitX, fruitZ)) {
+                    agent.groundTargetX = fruitX;
+                    agent.groundTargetZ = fruitZ;
+                    agent.state.behavior = BirdBehavior::GroundApproach;
+                    agent.behaviorSeconds = 0.0f;
+                    ++agent.perchCycle;
+                    ++fruitLandings_;
+                }
+                for (std::size_t attempt = 0; attempt < 18U
+                     && agent.state.behavior != BirdBehavior::GroundApproach; ++attempt) {
                     const float side = attempt % 2U == 0U ? -1.0f : 1.0f;
                     const float offset = attempt == 0U ? 0.0f
                         : side * static_cast<float>((attempt + 1U) / 2U) * 0.12f;

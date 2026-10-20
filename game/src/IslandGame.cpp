@@ -2217,7 +2217,8 @@ namespace island
                   << "island-simulator: passing gust fronts swell the breeze and canopy beds at the listener\n"
                   << "island-simulator: a fallen fruit bounces off where it strikes and rolls downhill to rest\n"
                   << "island-simulator: gust fronts sweep the grass, crowns and fronds downwind together every twenty-two seconds within their authored sway\n"
-                  << "island-simulator: four fruit doves alternate canopy perches with bounded dry-ground walking and foraging\n"
+                  << "island-simulator: four fruit doves alternate canopy perches with bounded dry-ground walking and foraging; "
+                     "a dove's ground visit crosses to the nearest fruit lying on dove-grade ground when there is any\n"
                   << "island-simulator: fruit doves coo in low slow phrases and thrust their heads as they walk; parrots keep their squawk and a pigeon-grey dove joins the green ones\n"
                   << "island-simulator: fruit bats " << fruitBatColony_.Bats().size()
                   << " agents use six inland canopy roosts with four hanging and two bounded daytime flights\n"
@@ -2593,6 +2594,7 @@ namespace island
                 birdFlock_.SetSeaForage(school.centreX, school.centreZ, true);
             }
         }
+        birdFlock_.SetLyingFruit(fallingFruit_.Fruit());
         birdFlock_.Update((viewpoint_ == FixedViewpoint::BirdDetail
                               || viewpoint_ == FixedViewpoint::GroundDoveDetail)
                                  ? 0.0f : deltaSeconds,
