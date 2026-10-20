@@ -46,6 +46,22 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 23 (2026-10-20) — the gust front is heard
+
+The gust fronts of pass 9 leaned the grass, thrashed the palms and shook coconuts down, and
+the breeze bed played on unchanged. `SoundscapeModel::Update` takes a gust strength (0..1,
+default 0): the breeze bed target rises by up to 90 % and the canopy (jungle) bed by up to
+45 %, each under a ceiling (0.40 and 0.20), through the same 1.8 s blend as the zone mix, so
+the swell builds and dies with the front's 20-odd second passage. `Soundscape` samples
+`WindGust::Strength` at the listener on the clock the coconuts use (`SetWindClock`, set from
+the game's sea-forage seconds every frame, the same clock the shaders' uTime fronts follow)
+and passes it in. Diagnostic "passing gust fronts swell the breeze and canopy beds at the
+listener" is printed in the game's startup report (the soundscape does not start under the
+software capture, so its own report is not where pins can live) and pinned by the native
+capture tool. Core checks: with a front held at full strength the beds settle above 1.5× and
+1.2× the calm mix within their ceilings; with it gone they return within 0.002 of calm.
+Native `palms` passes; the audio inventory is unchanged.
+
 ## Loop pass 22 (2026-10-20) — the resident's walk scatters the crabs
 
 The beach crabs scuttled only from the player; the resident's tour along the beach (pass 13's

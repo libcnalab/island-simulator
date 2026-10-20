@@ -1503,6 +1503,26 @@ int main()
               && variedAmbient.jungleVolume
                   == repeatedAmbientVariationModel.Mix().jungleVolume,
           "slow ambient-bed variation is deterministic after reset");
+    // A gust front at the listener swells the breeze and canopy beds above the zone mix,
+    // within their ceilings; with the front gone the beds settle back to the calm mix.
+    island::SoundscapeModel gustModel, calmModel;
+    gustModel.Reset(ambientVariationDistance, false);
+    calmModel.Reset(ambientVariationDistance, false);
+    for (int step = 0; step < 240; ++step) {
+        (void)gustModel.Update(ambientVariationDistance, false, 0.25f, 0.5f, 0.0f, 0.0f, 1.0f);
+        (void)calmModel.Update(ambientVariationDistance, false, 0.25f);
+    }
+    Check(gustModel.Mix().breezeVolume > calmModel.Mix().breezeVolume * 1.5f
+              && gustModel.Mix().breezeVolume <= island::SoundscapeModel::GustBreezeCeiling
+              && gustModel.Mix().jungleVolume > calmModel.Mix().jungleVolume * 1.2f
+              && gustModel.Mix().jungleVolume <= island::SoundscapeModel::GustJungleCeiling,
+          "a gust front at the listener swells the breeze and canopy beds within their ceilings");
+    for (int step = 0; step < 240; ++step) {
+        (void)gustModel.Update(ambientVariationDistance, false, 0.25f, 0.5f, 0.0f, 0.0f, 0.0f);
+        (void)calmModel.Update(ambientVariationDistance, false, 0.25f);
+    }
+    Check(std::abs(gustModel.Mix().breezeVolume - calmModel.Mix().breezeVolume) < 0.002f,
+          "the beds settle back to the calm mix once the front has passed");
 
     const island::WaterMovementMix dryMovement =
         island::WaterMovementModel::TargetMix(0.0f, false, 4.3f);

@@ -91,6 +91,9 @@ namespace island
 
         /** @brief Names the ground under the player's feet for the next footsteps (None = shore rule). */
         void SetFootstepGround(FootstepSurface ground) noexcept { footstepGround_ = ground; }
+        /** @brief The clock the gust fronts run on (the same one the grass and palms use). */
+        void SetWindClock(float seconds) noexcept { windSeconds_ = seconds; }
+        [[nodiscard]] float GustStrength() const noexcept { return gustStrength_; }
 
         /** @brief Supplies the immutable grounded-wreck emitter position. */
         void SetShipwreckSource(float x, float y, float z) noexcept;
@@ -168,6 +171,8 @@ namespace island
         WaterTransitionScheduler waterTransitionScheduler_;
         FootstepScheduler footstepScheduler_;
         FootstepSurface footstepGround_ = FootstepSurface::None;
+        float windSeconds_ = 0.0f;
+        float gustStrength_ = 0.0f;
         WildlifeCallScheduler wildlifeScheduler_;
         BoarCallScheduler boarScheduler_;
         GoatCallScheduler goatScheduler_;

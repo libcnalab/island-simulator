@@ -2048,7 +2048,8 @@ namespace island
                                           const float deltaSeconds,
                                           const float coastalWindExposure,
                                           const float streamPresence,
-                                          const float seasonalWetlandPresence) noexcept
+                                          const float seasonalWetlandPresence,
+                                          const float gustStrength) noexcept
     {
         SoundscapeMix target = TargetMix(signedShoreDistance, swimming,
                                          coastalWindExposure, streamPresence,
@@ -2061,6 +2062,11 @@ namespace island
         target.breezeVolume *= SlowBedGain(variationSeconds_, 0.075f, 0.024, 0.055);
         target.jungleVolume *= SlowBedGain(variationSeconds_, 0.055f, 0.029, 0.063);
         target.streamVolume *= SlowBedGain(variationSeconds_, 0.045f, 0.026, 0.067);
+        // The gust front that leans the grass and thrashes the palms is heard as well: the
+        // breeze and canopy beds swell with it and settle again as it passes.
+        const float gust = std::isfinite(gustStrength) ? std::clamp(gustStrength, 0.0f, 1.0f) : 0.0f;
+        target.breezeVolume = std::min(GustBreezeCeiling, target.breezeVolume * (1.0f + gust * GustBreezeRise));
+        target.jungleVolume = std::min(GustJungleCeiling, target.jungleVolume * (1.0f + gust * GustJungleRise));
         const float blend = 1.0f - std::exp(-safeDelta / 1.8f);
         const float jungleBlend = 1.0f - std::exp(-safeDelta / 2.6f);
         mix_.surfVolume += (target.surfVolume - mix_.surfVolume) * blend;

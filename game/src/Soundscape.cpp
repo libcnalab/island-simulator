@@ -1,4 +1,5 @@
 #include "IslandSimulator/Soundscape.hpp"
+#include "IslandSimulator/WindGust.hpp"
 #include "IslandSimulator/BunkerSite.hpp"
 #include "IslandSimulator/CampfireLayout.hpp"
 #include "IslandSimulator/IslandEnvironmentField.hpp"
@@ -692,8 +693,11 @@ namespace island
             *(1.0f-std::exp(-safeDelta*3.2f));
         const float seasonalWetland=IslandEnvironmentField::SeasonalWetlandPotential(
             listenerState.x,listenerState.z,signedShoreDistance);
+        gustStrength_ = std::isfinite(listenerState.x) && std::isfinite(listenerState.z)
+            ? WindGust::Strength(listenerState.x, listenerState.z, windSeconds_) : 0.0f;
         (void)model_.Update(signedShoreDistance, swimming, safeDelta,
-                            coastalWindExposure, streamSound_.presence,seasonalWetland);
+                            coastalWindExposure, streamSound_.presence,seasonalWetland,
+                            gustStrength_);
         (void)waterMovementModel_.Update(
             waterDepth, swimming, horizontalSpeed, safeDelta, oceanCurrentStrength);
         underwaterAudio_=UnderwaterAudioResponse(swimming?submergedDepth:0.0f);

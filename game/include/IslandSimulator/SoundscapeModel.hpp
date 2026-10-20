@@ -598,7 +598,14 @@ namespace island
                                            float deltaSeconds,
                                            float coastalWindExposure=.5f,
                                            float streamPresence=0.0f,
-                                           float seasonalWetlandPresence=0.0f) noexcept;
+                                           float seasonalWetlandPresence=0.0f,
+                                           float gustStrength=0.0f) noexcept;
+        /** @brief A passing gust front (0..1 at the listener) swells the breeze and canopy
+         *  beds above the zone mix, within these ceilings. */
+        static constexpr float GustBreezeRise = 0.9f;
+        static constexpr float GustJungleRise = 0.45f;
+        static constexpr float GustBreezeCeiling = 0.40f;
+        static constexpr float GustJungleCeiling = 0.20f;
 
         [[nodiscard]] const SoundscapeMix& Mix() const noexcept { return mix_; }
 
