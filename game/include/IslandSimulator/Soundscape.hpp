@@ -120,6 +120,10 @@ namespace island
         /** @brief The resident whistling a phrase on the walk, where they are; heard within
          *  about thirty metres. */
         void NoteResidentWhistle(float x, float y, float z) noexcept;
+        /** @brief A bird flushing from a perch or the ground, where it was: its wing clap,
+         *  heard within about twenty metres. */
+        void NoteWingClap(float x, float y, float z) noexcept;
+        [[nodiscard]] int PlayedWingClapCount() const noexcept { return playedWingClapCount_; }
         [[nodiscard]] int PlayedResidentWhistleCount() const noexcept { return playedResidentWhistleCount_; }
         /** @brief The goat sentinel standing alert at the walker: its alarm bleat goes next. */
         void NoteGoatAlarm(std::size_t animalIndex) noexcept;
@@ -286,6 +290,7 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> birdSplashEffect_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> deerSnortEffects_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> residentWhistleEffects_;
+        std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> wingClapEffects_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> coconutThudEffect_;
         WildlifeAudioSource pendingSplash_;
         float pendingSplashSeconds_ = 0.0f;
@@ -299,6 +304,10 @@ namespace island
         WildlifeAudioSource pendingWhistle_;
         float pendingWhistleSeconds_ = 0.0f;
         std::uint32_t whistleCount_ = 0U;
+        WildlifeAudioSource pendingClap_;
+        float pendingClapSeconds_ = 0.0f;
+        std::uint32_t clapCount_ = 0U;
+        int playedWingClapCount_ = 0;
         int playedResidentWhistleCount_ = 0;
         WildlifeAudioSource pendingThud_;
         float pendingThudSeconds_ = 0.0f;

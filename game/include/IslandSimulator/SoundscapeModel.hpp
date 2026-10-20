@@ -338,7 +338,8 @@ namespace island
         Splash,
         Thud,
         Deer,
-        Resident
+        Resident,
+        WingClap
     };
 
     /** @brief Nearest currently eligible world-space source for one wildlife species. */
@@ -529,6 +530,8 @@ namespace island
     /** @brief Original short whistled phrase for the resident on the walk: two or three
      *  soft notes with a little vibrato, 1.4 seconds. */
     [[nodiscard]] AmbientLoop GenerateResidentWhistle(std::uint8_t variant);
+    /** @brief Original wing clap of a bird flushing: six quick beats of air, half a second. */
+    [[nodiscard]] AmbientLoop GenerateWingClap(std::uint8_t variant);
     [[nodiscard]] float SnakeHissVolume(float distance) noexcept;
 
     struct SnakeHissRequest

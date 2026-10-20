@@ -54,6 +54,21 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 106 (2026-10-20) — the wing clap of a flushing bird
+
+A bird flushed from its perch or off the ground in silence. `GenerateWingClap(variant)` is
+an original half-second whir (six quick beats of air: low filtered noise thumped at 11.5 Hz,
+or 9 Hz for a larger pair of wings, with a brighter edge, dying away by 0.46 s), built into
+two one-shot effects and carried by `WildlifeCallType::WingClap` through the shared wildlife
+slot (0.55 s). The bird flock notes where its last flush happened (`LastFlush`,
+`AnyFlushCount` over perched and ground flushes), and the game hands each one to
+`Soundscape::NoteWingClap`, heard within about twenty metres and dropped if the slot stays
+busy for half a second. The startup report gains "a bird flushing from a perch or the
+ground claps its wings, an original half-second whir heard within twenty metres", pinned by
+the native capture tool. Core checks: the flush of the perched bird is noted at the perch;
+the clap PCM is deterministic, two variants, half a second and silent at both ends; it
+beats at least four separate times and is gone by the end. Native `ground-doves` passes.
+
 ## Loop pass 105 (2026-10-20) — the resident whistles on the walk
 
 The resident now has a voice: `GenerateResidentWhistle(variant)` is an original whistled

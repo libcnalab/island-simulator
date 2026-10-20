@@ -167,6 +167,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 103: the deer sentinel coming alert at the walker snorts an original alarm heard within fifty metres (PLAN "Loop pass 103").
 - Pass 104: the resident's footfalls sound on the ground under them, heard within twenty-four metres (PLAN "Loop pass 104").
 - Pass 105: on the walk the resident whistles an original short phrase every half minute (PLAN "Loop pass 105").
+- Pass 106: a bird flushing from a perch or the ground claps its wings, heard within twenty metres (PLAN "Loop pass 106").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

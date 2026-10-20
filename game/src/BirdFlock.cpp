@@ -337,6 +337,7 @@ namespace island
                         agent.behaviorSeconds = 0.0f;
                         agent.state.headBob = 0.0f;
                         ++groundFlushes_;
+                        lastFlush_ = {agent.state.x, agent.state.y, agent.state.z, true};
                         break;
                     }
                 }
@@ -360,6 +361,7 @@ namespace island
                     agent.behaviorSeconds = 0.0f;
                     ++flushCount_;
                     if (snaked) ++snakeFlushes_;
+                    lastFlush_ = {agent.state.x, agent.state.y, agent.state.z, true};
                 }
             }
             agent.accumulatedSeconds += safeDelta;

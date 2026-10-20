@@ -1650,6 +1650,31 @@ namespace island
         return {};
     }
 
+    AmbientLoop GenerateWingClap(const std::uint8_t variant)
+    {
+        // A flushing bird's wing clap: six quick beats of air in half a second, each a
+        // soft thump of low filtered noise with a brighter edge, the whole dying away as
+        // the bird gets its height; the second variant a larger, slower pair of wings.
+        constexpr std::size_t frames = static_cast<std::size_t>(AmbientSampleRate * 0.5f);
+        std::vector<float> samples(frames, 0.0f);
+        const bool large = (variant & 1U) != 0U;
+        DeterministicNoise noise(0x4f1e2d3cU + static_cast<std::uint32_t>(large) * 331U);
+        const float beatHertz = large ? 9.0f : 11.5f;
+        float low = 0.0f, slower = 0.0f;
+        for (std::size_t i = 0; i < frames; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            const float raw = noise.Next();
+            low += (large ? 0.08f : 0.13f) * (raw - low);
+            slower += 0.02f * (low - slower);
+            const float cycle = std::fmod(t * beatHertz, 1.0f);
+            const float beat = SmoothStep(0.0f, 0.18f, cycle) * (1.0f - SmoothStep(0.30f, 0.62f, cycle));
+            const float fade = 1.0f - SmoothStep(0.45f, 0.92f, t / 0.5f);
+            const float lift = SmoothStep(0.0f, 0.03f, t);
+            samples[i] = lift * fade * beat * ((low - slower) * 2.2f + (raw - low) * 0.45f);
+        }
+        return Quantize(samples, .58f);
+    }
+
     AmbientLoop GenerateResidentWhistle(const std::uint8_t variant)
     {
         // A whistled phrase: soft sine notes with a touch of breath and vibrato, each note

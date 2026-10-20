@@ -179,6 +179,11 @@ namespace island
         static constexpr float GroundFlushDistance = 4.0f;
         static constexpr float FruitLandingRange = 240.0f;
         [[nodiscard]] std::uint32_t FlushCount() const noexcept { return flushCount_; }
+        /** @brief The last bird to flush, perched or on the ground, where it was: the wing
+         *  clap sounds there. */
+        struct BirdFlush { float x = 0.0f, y = 0.0f, z = 0.0f; bool valid = false; };
+        [[nodiscard]] const BirdFlush& LastFlush() const noexcept { return lastFlush_; }
+        [[nodiscard]] std::uint32_t AnyFlushCount() const noexcept { return flushCount_ + groundFlushes_; }
         // A perched bird leaves when the observer comes this close, or a thud lands this near.
         static constexpr float FlushDistance = 9.0f;
         static constexpr float DisturbanceDistance = 30.0f;
@@ -276,6 +281,7 @@ namespace island
         std::uint32_t feeds_ = 0U;
         float disturbanceX_ = 0.0f, disturbanceZ_ = 0.0f, disturbanceSeconds_ = 0.0f;
         std::uint32_t flushCount_ = 0U;
+        BirdFlush lastFlush_;
         std::span<const SnakeState> snakes_;
         std::uint32_t snakeFlushes_ = 0U;
         std::span<const FallingFruit> lyingFruit_;

@@ -2275,6 +2275,23 @@ int main()
         Check(peakA>6000&&perSecond>1500.0f&&perSecond<2100.0f,
             "the whistle's first note is a clear tone near 880 Hz");
     }
+    {
+        // The wing clap: deterministic, two distinct variants, half a second silent at both
+        // ends, beating (several separate bursts) and dying away by the end.
+        const auto clapA=island::GenerateWingClap(0),clapB=island::GenerateWingClap(1);
+        const std::size_t frames=static_cast<std::size_t>(22050*0.5f);
+        int bursts=0;bool loud=false;
+        for(std::size_t i=0;i<clapA.samples.size();i+=220) {
+            int peak=0;for(std::size_t j=i;j<std::min(i+220,clapA.samples.size());++j) peak=std::max(peak,std::abs(static_cast<int>(clapA.samples[j])));
+            const bool now=peak>2500; if(now&&!loud) ++bursts; loud=now;
+        }
+        int tail=0;for(std::size_t i=frames-900;i<frames;++i) tail=std::max(tail,std::abs(static_cast<int>(clapA.samples[i])));
+        Check(clapA.sampleRate==22050&&clapA.samples.size()==frames&&clapB.samples.size()==frames
+            &&clapA.samples!=clapB.samples&&clapA.samples==island::GenerateWingClap(0).samples
+            &&clapA.samples.front()==0&&clapA.samples.back()==0&&clapB.samples.front()==0&&clapB.samples.back()==0,
+            "wing clap PCM is deterministic, two variants, half a second and silent at endpoints");
+        Check(bursts>=4&&tail<600,"the wing clap beats several times and dies away by the end");
+    }
     Check(island::SnakeHissVolume(0)>.25f
         && island::SnakeHissVolume(8)<island::SnakeHissVolume(2)
         && island::SnakeHissVolume(16)==0 && island::SnakeHissVolume(-1)==0
@@ -7803,6 +7820,9 @@ int main()
         sitting.Update(0.05f, perchX + 6.0f, sites[0].y, perchZ);
         Check(sitting.Birds()[0].behavior == island::BirdBehavior::Depart && sitting.FlushCount() == 1U,
               "a walker 6 m off flushes the perched bird");
+        Check(sitting.LastFlush().valid && sitting.AnyFlushCount() == 1U
+                  && std::hypot(sitting.LastFlush().x - perchX, sitting.LastFlush().z - perchZ) < 0.5f,
+              "the flush is noted at the perch for the wing clap");
         float climbed = sitting.Birds()[0].y;
         for (int step = 0; step < 70; ++step) { sitting.Update(0.05f, perchX + 6.0f, sites[0].y, perchZ); climbed = std::max(climbed, sitting.Birds()[0].y); }
         Check(sitting.Birds()[0].behavior == island::BirdBehavior::Fly && climbed > sites[0].y + 2.0f,
