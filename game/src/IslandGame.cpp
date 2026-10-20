@@ -2374,6 +2374,7 @@ namespace island
                   << "island-simulator: mice, rats, geckos and skinks scatter from a passing animal or the resident as from the walker\n"
                   << "island-simulator: a mouse or rat setting out to forage with fruit lying within six metres goes to it and nibbles there a while\n"
                   << "island-simulator: an alert deer swings both ears toward the watcher\n"
+                  << "island-simulator: a bolting deer flags its tail up, and a grazing or resting deer flicks it every few seconds\n"
                   << "island-simulator: the bear walks to fruit and coconuts lying in its range and eats them where they lie\n"
                   << "island-simulator: the boars stand off from the bear and trot away when it comes close, as from the walker\n"
                   << "island-simulator: the hut's roof ridge is a perch for the birds\n"

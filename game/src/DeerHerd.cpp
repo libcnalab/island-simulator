@@ -285,6 +285,18 @@ namespace island
             ? 1.0f : 0.0f;
         agent.state.grazeAmount += std::clamp(targetGraze - agent.state.grazeAmount,
             -1.8f * deltaSeconds, 1.3f * deltaSeconds);
+        // The tail: flagged up at a bolt (the white flag), a flick every few seconds while
+        // grazing, resting or drinking, hanging on the walk.
+        agent.flickClock += deltaSeconds;
+        const float flickPeriod = FlickPeriodSeconds
+            + 1.3f * static_cast<float>(static_cast<int>(std::abs(agent.home.x)) % 4);
+        if (agent.flickClock >= flickPeriod) agent.flickClock = 0.0f;
+        const bool stillness = agent.state.behavior == DeerBehavior::Graze
+            || agent.state.behavior == DeerBehavior::Rest || drinking;
+        const float targetTail = agent.state.behavior == DeerBehavior::Retreat ? 1.0f
+            : stillness && agent.flickClock < FlickSeconds ? 0.55f : 0.0f;
+        agent.state.tailRaise += std::clamp(targetTail - agent.state.tailRaise,
+            -6.0f * deltaSeconds, 8.0f * deltaSeconds);
         const float nextX = agent.state.x
             + std::cos(agent.state.headingRadians) * agent.state.speed * deltaSeconds;
         const float nextZ = agent.state.z

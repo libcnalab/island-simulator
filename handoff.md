@@ -148,6 +148,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 85: every fourth forage without a coconut a crab climbs a living palm trunk, pauses near three metres up and comes down (PLAN "Loop pass 85").
 - Pass 86: a monkey the walker closes on gives an alarm call as it breaks into flight (PLAN "Loop pass 86").
 - Pass 87: an octopus lying still takes the sand's tones and flashes back to its own colours when it moves or is startled (PLAN "Loop pass 87").
+- Pass 88: a bolting deer flags its tail up and a grazing or resting deer flicks it every few seconds (PLAN "Loop pass 88").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

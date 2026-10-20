@@ -9028,6 +9028,32 @@ int main()
     }
 
     {
+        // The deer's tail: flagged up within half a second of a bolt, down again once the
+        // walker is gone, and flicked half up every few seconds while grazing or resting.
+        const island::IslandTerrain terrain;
+        island::DeerHerd herd(terrain, {});
+        const auto start = herd.Deer()[2];
+        bool flagged = false;
+        for (int step = 0; step < 30 && !flagged; ++step) {
+            herd.Update(0.05f, start.x + 3.0f, start.y + 1.6f, start.z);
+            const auto& deer = herd.Deer()[2];
+            flagged = deer.behavior == island::DeerBehavior::Retreat && deer.tailRaise > 0.9f;
+        }
+        Check(flagged, "a bolting deer flags its tail up within a second and a half");
+        bool lowered = false, flicked = false, settled = false;
+        for (int step = 0; step < 600 && !(lowered && flicked && settled); ++step) {
+            herd.Update(0.05f, 1000.0f, 0.0f, 1000.0f);
+            const auto& deer = herd.Deer()[2];
+            if (deer.behavior != island::DeerBehavior::Retreat && deer.tailRaise < 0.3f) lowered = true;
+            const bool still = deer.behavior == island::DeerBehavior::Graze || deer.behavior == island::DeerBehavior::Rest;
+            if (lowered && still && deer.tailRaise > 0.4f && deer.tailRaise < 0.7f) flicked = true;
+            if (flicked && still && deer.tailRaise < 0.1f) settled = true;
+        }
+        Check(lowered, "with the walker gone the tail comes down");
+        Check(flicked && settled, "a grazing or resting deer flicks its tail half up and lets it hang again");
+    }
+
+    {
         // Deer herd: the antlered sentinel stands alert before its clearing partner, and the
         // partner's wider alert range opens only after the reaction delay.
         const island::IslandTerrain terrain;

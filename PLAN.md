@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 88 (2026-10-20) — the deer's tail flags and flicks
+
+The deer's tail hung still in every mood. `DeerState::tailRaise` (0 hanging, 1 flagged up)
+is driven by the herd: a bolting deer flags it up (the white underside shown, as a deer
+running from a walker does) within a fraction of a second, a grazing, resting or drinking
+deer flicks it half up for 0.45 s every four to eight seconds (the period per deer from its
+home), and it hangs on the walk; it rises at 8/s and falls at 6/s. The deer renderer lofts
+the tail along stations that swing up from the root with the raise (less back, more up
+along the length). The startup report gains "a bolting deer flags its tail up, and a
+grazing or resting deer flicks it every few seconds", pinned by the native capture tool.
+Core checks: the third deer bolting from a walker three metres off has its tail flagged
+within a second and a half; with the walker gone it comes down; and a grazing or resting
+deer flicks it half up and lets it hang again. Native `deer` passes.
+
 ## Loop pass 87 (2026-10-20) — the octopus matches the sand
 
 An octopus lying in its den or at a forage kept its own rust and umber whatever it lay on.

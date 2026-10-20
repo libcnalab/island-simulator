@@ -390,12 +390,15 @@ namespace island
                 }
             }
             const Vector3 tailRoot = body - forward * (.73f * scale) + up * (.17f * scale);
+            // Raised, the tail swings up from its root: back less, up more along its length.
+            const float raise = std::clamp(deer.tailRaise, 0.0f, 1.0f);
+            const float back = 1.0f - .72f * raise;
             const std::array<Vector3,5> tailStations{{
                 tailRoot,
-                tailRoot-forward*(.08f*scale)+up*(.035f*scale),
-                tailRoot-forward*(.18f*scale)+up*(.080f*scale),
-                tailRoot-forward*(.28f*scale)+up*(.100f*scale),
-                tailRoot-forward*(.35f*scale)+up*(.070f*scale)}};
+                tailRoot-forward*(.08f*back*scale)+up*((.035f+.09f*raise)*scale),
+                tailRoot-forward*(.18f*back*scale)+up*((.080f+.20f*raise)*scale),
+                tailRoot-forward*(.28f*back*scale)+up*((.100f+.31f*raise)*scale),
+                tailRoot-forward*(.35f*back*scale)+up*((.070f+.40f*raise)*scale)}};
             const std::array<float,5> tailRadii{{.072f*scale,.090f*scale,.075f*scale,
                                                  .045f*scale,.012f*scale}};
             LoftTube(out,tailStations,tailRadii,right,pale,transmission,near?10:7);

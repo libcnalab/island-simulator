@@ -18,6 +18,9 @@ namespace island
         float x = 0.0f, y = 0.0f, z = 0.0f;
         float headingRadians = 0.0f, speed = 0.0f;
         float gaitPhase = 0.0f, grazeAmount = 0.0f, scale = 1.0f;
+        /** @brief 0..1 the tail raised: flagged up at a bolt, half up in the flick a grazing
+         *  or resting deer gives every few seconds, hanging otherwise. */
+        float tailRaise = 0.0f;
         DeerBehavior behavior = DeerBehavior::Graze;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
         std::uint8_t coatVariant = 0U;
@@ -41,6 +44,9 @@ namespace island
         static constexpr float StartleDistance = 30.0f;
         // No deer comes closer than this to the campfire, grazing or fleeing.
         static constexpr float FireClearance = 7.0f;
+        // The tail flick's bout and the period between flicks (plus a little per deer).
+        static constexpr float FlickSeconds = 0.45f;
+        static constexpr float FlickPeriodSeconds = 4.0f;
         static constexpr float StartleSeconds = 6.0f;
         // A clearing pair drifting further apart than this walks back together.
         static constexpr float CohesionDistance = 9.0f;
@@ -75,6 +81,7 @@ namespace island
             // Nearest reachable stream bank and the water it faces; valid when hasDrink.
             float drinkX = 0.0f, drinkZ = 0.0f, faceX = 0.0f, faceZ = 0.0f;
             bool hasDrink = false;
+            float flickClock = 0.0f;
         };
         void FindDrinkingPoint(std::size_t index) noexcept;
 
