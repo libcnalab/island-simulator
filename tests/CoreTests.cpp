@@ -7678,6 +7678,52 @@ int main()
     }
 
     {
+        // Fruit lying inside a rodent's range: the rodent's next forage goes to it, it feeds
+        // there (still, nibbling) for a while, then rests; fruit beyond its range it ignores.
+        const island::IslandTerrain terrain;
+        island::RodentPopulation rodents(terrain);
+        island::FallingFruitField field(terrain);
+        std::size_t subject = rodents.Rodents().size();
+        for (std::size_t i = 0; i < rodents.Rodents().size() && subject == rodents.Rodents().size(); ++i) {
+            const auto& home = rodents.Homes()[i];
+            // A crown at the rodent's home drops fruit within a few metres of it.
+            field.DropFrom(island::CanopyPlacement{home.x, terrain.Height(home.x, home.z), home.z, 0.4f, 1.0f, 2U});
+            field.DropFrom(island::CanopyPlacement{home.x, terrain.Height(home.x, home.z), home.z, 1.9f, 1.0f, 4U});
+            const std::vector<island::MonkeyState> nobody;
+            for (int step = 0; step < 400; ++step) field.Update(0.05f, nobody);
+            for (const auto& fruit : field.Fruit())
+                if (fruit.active && fruit.restSeconds >= 0.0f && !fruit.rolling && rodents.IsValidPosition(i, fruit.x, fruit.z)
+                    && std::hypot(fruit.x - home.x, fruit.z - home.z) < home.radius * 0.9f) subject = i;
+        }
+        Check(subject < rodents.Rodents().size(), "a rodent has lying fruit on ground it accepts inside its range");
+        rodents.SetLyingFruit(field.Fruit());
+        const auto& home = rodents.Homes()[subject];
+        bool fed = false, still = false;
+        for (int step = 0; step < 2400 && !fed; ++step) {
+            rodents.Update(0.05f, home.x + 12.0f, terrain.Height(home.x, home.z) + 1.0f, home.z);
+            const auto& rodent = rodents.Rodents()[subject];
+            for (const auto& fruit : field.Fruit())
+                if (fruit.active && std::hypot(fruit.x - rodent.x, fruit.z - rodent.z) < island::RodentPopulation::FruitReach + 0.05f
+                    && rodents.FeedingCount() >= 1U) fed = true;
+        }
+        Check(fed && rodents.FruitVisitCount() >= 1U, "a rodent goes to fruit lying in its range and feeds there within two minutes");
+        for (int step = 0; step < 20; ++step) {
+            rodents.Update(0.05f, home.x + 12.0f, terrain.Height(home.x, home.z) + 1.0f, home.z);
+            if (rodents.FeedingCount() >= 1U && rodents.Rodents()[subject].speed < 0.05f) still = true;
+        }
+        Check(still, "the feeding rodent comes to a stand at the fruit within a second");
+        island::RodentPopulation unfed(terrain);
+        const auto& farHome = unfed.Homes()[subject];
+        island::FallingFruitField farField(terrain);
+        farField.DropFrom(island::CanopyPlacement{farHome.x + 40.0f, terrain.Height(farHome.x + 40.0f, farHome.z), farHome.z, 0.4f, 1.0f, 2U});
+        const std::vector<island::MonkeyState> nobody;
+        for (int step = 0; step < 400; ++step) farField.Update(0.05f, nobody);
+        unfed.SetLyingFruit(farField.Fruit());
+        for (int step = 0; step < 1200; ++step) unfed.Update(0.05f, farHome.x + 12.0f, terrain.Height(farHome.x, farHome.z) + 1.0f, farHome.z);
+        Check(unfed.FruitVisitCount() == 0U, "fruit lying forty metres off draws no rodent");
+    }
+
+    {
         // A fruit lets go from any crown handed to the fruit field, as from a picking
         // monkey's: it starts up in the crown and comes down to lie on the ground.
         const island::IslandTerrain terrain;

@@ -54,6 +54,21 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 80 (2026-10-20) — mice and rats feed at fallen fruit
+
+The rodents foraged in loops that never noticed the fruit the monkeys and bats let fall.
+`RodentPopulation::SetLyingFruit` hands them the fruit field each frame; a rodent setting out
+to forage looks for the nearest fruit lying still within 6 m (`FruitRange`), inside its own
+range and on ground it accepts (coconuts are beyond a rodent), and makes the forage a walk
+to it: it steers to the fruit, comes to a stand within 0.32 m (`FruitReach`), nibbles there
+six seconds (the sniff motion three times as fast) and then rests; a fright or the fruit's
+disappearance ends the visit. `FruitVisitCount()` and `FeedingCount()` expose it. The
+startup report gains "a mouse or rat setting out to forage with fruit lying within six
+metres goes to it and nibbles there a while", pinned by the native capture tool. Core
+checks: fruit dropped from a crown at a rodent's home draws it there within two minutes,
+where it comes to a stand within a second; fruit lying forty metres off draws none. Native
+`mice` passes.
+
 ## Loop pass 79 (2026-10-20) — a roosting bat's stir lets fruit drop
 
 The fruit bats hung in their roost crowns without touching them. Each `FruitBatRoost` now

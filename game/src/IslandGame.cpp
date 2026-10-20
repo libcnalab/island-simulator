@@ -2331,6 +2331,7 @@ namespace island
                   << "island-simulator: the grass bends under the nearest six animals and the resident as they pass, not only under the walker\n"
                   << "island-simulator: the bushes and understory are brushed aside by the same bodies as they pass\n"
                   << "island-simulator: mice, rats, geckos and skinks scatter from a passing animal or the resident as from the walker\n"
+                  << "island-simulator: a mouse or rat setting out to forage with fruit lying within six metres goes to it and nibbles there a while\n"
                   << "island-simulator: an alert deer swings both ears toward the watcher\n"
                   << "island-simulator: the bear walks to fruit and coconuts lying in its range and eats them where they lie\n"
                   << "island-simulator: the boars stand off from the bear and trot away when it comes close, as from the walker\n"
@@ -2817,6 +2818,7 @@ namespace island
             rodentObserver = Vector3(rodent.x, rodent.y + 18.0f, rodent.z);
         }
         rodentPopulation_.SetWalkers(smallFaunaWalkers);
+        rodentPopulation_.SetLyingFruit(fallingFruit_.Fruit());
         rodentPopulation_.Update(
             viewpoint_ == FixedViewpoint::MouseDetail
                     || viewpoint_ == FixedViewpoint::RatDetail

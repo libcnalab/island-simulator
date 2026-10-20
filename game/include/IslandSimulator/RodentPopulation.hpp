@@ -2,6 +2,7 @@
 
 #include "IslandSimulator/WildlifeSimulation.hpp"
 #include "IslandSimulator/GrassWalkers.hpp"
+#include "IslandSimulator/FallingFruitField.hpp"
 
 #include <array>
 #include <cstddef>
@@ -45,6 +46,14 @@ namespace island
          *  the nearest of them frightens an animal as the walker does. */
         void SetWalkers(std::span<const GrassWalker> walkers) noexcept { walkers_ = walkers; }
         [[nodiscard]] std::uint32_t WalkerScatterCount() const noexcept { return walkerScatters_; }
+        /** @brief Fruit lying on the ground this frame: a rodent setting out to forage with
+         *  a fruit lying within FruitRange inside its range goes to it and feeds there. */
+        void SetLyingFruit(std::span<const FallingFruit> fruit) noexcept { lyingFruit_ = fruit; }
+        [[nodiscard]] std::uint32_t FruitVisitCount() const noexcept { return fruitVisits_; }
+        [[nodiscard]] std::size_t FeedingCount() const noexcept;
+        static constexpr float FruitRange = 6.0f;
+        static constexpr float FruitReach = 0.32f;
+        static constexpr float FeedSeconds = 6.0f;
 
         [[nodiscard]] std::span<const RodentState> Rodents() const noexcept { return states_; }
         [[nodiscard]] std::span<const RodentHome> Homes() const noexcept { return homes_; }
@@ -58,6 +67,8 @@ namespace island
             float behaviorSeconds = 0.0f;
             float accumulatedSeconds = 0.0f;
             std::uint32_t transitions = 0U;
+            int fruitTarget = -1;          // index into the lying fruit; -1 for none
+            float feedSeconds = 0.0f;      // time spent feeding at it
         };
 
         void Initialize(std::size_t index);
@@ -70,5 +81,8 @@ namespace island
         std::uint64_t frameIndex_ = 0U;
         std::span<const GrassWalker> walkers_;
         std::uint32_t walkerScatters_ = 0U;
+        std::span<const FallingFruit> lyingFruit_;
+        std::uint32_t fruitVisits_ = 0U;
+        [[nodiscard]] int FindFruit(const Agent& agent, std::size_t index) const noexcept;
     };
 }

@@ -121,6 +121,33 @@ namespace island
         }
     }
 
+    // The nearest fruit lying still within FruitRange of the rodent, inside its range and on
+    // ground it accepts; coconuts are beyond a rodent.
+    int RodentPopulation::FindFruit(const Agent& agent, const std::size_t index) const noexcept
+    {
+        int best = -1;
+        float bestDistance = FruitRange;
+        for (std::size_t i = 0; i < lyingFruit_.size(); ++i) {
+            const FallingFruit& fruit = lyingFruit_[i];
+            if (!fruit.active || fruit.restSeconds < 0.0f || fruit.rolling || fruit.afloat
+                || fruit.variant == FallingFruitField::CoconutVariant) continue;
+            const float distance = std::hypot(fruit.x - agent.state.x, fruit.z - agent.state.z);
+            if (distance >= bestDistance) continue;
+            if (std::hypot(fruit.x - agent.home.x, fruit.z - agent.home.z) > agent.home.radius * .95f) continue;
+            if (!IsValidPosition(index, fruit.x, fruit.z)) continue;
+            bestDistance = distance;
+            best = static_cast<int>(i);
+        }
+        return best;
+    }
+
+    std::size_t RodentPopulation::FeedingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.fruitTarget >= 0 && agent.feedSeconds > 0.0f ? 1U : 0U;
+        return count;
+    }
+
     void RodentPopulation::UpdateAgent(Agent& agent, const std::size_t index,
                                        const float deltaSeconds, const float observerX,
                                        const float observerZ, const bool observerValid) noexcept
@@ -142,6 +169,8 @@ namespace island
             if (walkerThreat && agent.state.behavior != RodentBehavior::Scurry) ++walkerScatters_;
             agent.state.behavior = RodentBehavior::Scurry;
             agent.behaviorSeconds = .75f;
+            agent.fruitTarget = -1;
+            agent.feedSeconds = 0.0f;
             agent.state.headingRadians = std::atan2(
                 agent.state.z - threatZ, agent.state.x - threatX);
         } else if ((agent.behaviorSeconds -= deltaSeconds) <= 0.0f) {
@@ -158,6 +187,38 @@ namespace island
                 agent.behaviorSeconds = 2.2f + .5f * static_cast<float>(agent.transitions % 7U);
                 agent.state.headingRadians = Wrap(agent.state.headingRadians
                     + .65f + .31f * static_cast<float>(agent.transitions % 5U));
+                agent.fruitTarget = -1;
+                agent.feedSeconds = 0.0f;
+                // Fruit lying near: the forage is a walk to it and a feed there.
+                if (agent.state.behavior == RodentBehavior::Forage) {
+                    agent.fruitTarget = FindFruit(agent, index);
+                    if (agent.fruitTarget >= 0) { agent.behaviorSeconds = 30.0f; ++fruitVisits_; }
+                }
+            }
+        }
+        // On the way to a fruit, and at it: the fruit gone, the forage is an ordinary one.
+        bool feeding = false;
+        if (agent.fruitTarget >= 0) {
+            const std::size_t fruitIndex = static_cast<std::size_t>(agent.fruitTarget);
+            if (fruitIndex >= lyingFruit_.size() || !lyingFruit_[fruitIndex].active
+                || agent.state.behavior != RodentBehavior::Forage) {
+                agent.fruitTarget = -1;
+                agent.feedSeconds = 0.0f;
+                agent.behaviorSeconds = std::min(agent.behaviorSeconds, 1.0f);
+            } else {
+                const FallingFruit& fruit = lyingFruit_[fruitIndex];
+                const float toFruit = std::hypot(fruit.x - agent.state.x, fruit.z - agent.state.z);
+                feeding = toFruit < FruitReach;
+                if (feeding) {
+                    agent.feedSeconds += deltaSeconds;
+                    if (agent.feedSeconds >= FeedSeconds) {
+                        agent.fruitTarget = -1;
+                        agent.feedSeconds = 0.0f;
+                        agent.state.behavior = RodentBehavior::Rest;
+                        agent.behaviorSeconds = 2.0f;
+                        feeding = false;
+                    }
+                }
             }
         }
         const float visibilityTarget = agent.state.behavior == RodentBehavior::Hidden ? 0.0f : 1.0f;
@@ -165,7 +226,7 @@ namespace island
             -4.5f * deltaSeconds, 3.0f * deltaSeconds);
         const float targetSpeed = agent.state.behavior == RodentBehavior::Scurry
             ? (agent.state.species == RodentSpecies::Mouse ? 1.65f : 1.45f)
-            : agent.state.behavior == RodentBehavior::Forage ? .28f : 0.0f;
+            : agent.state.behavior == RodentBehavior::Forage && !feeding ? .28f : 0.0f;
         agent.state.speed += std::clamp(targetSpeed - agent.state.speed,
             -4.0f * deltaSeconds, 6.0f * deltaSeconds);
         const float homeDistance = std::hypot(agent.state.x - agent.home.x,
@@ -174,7 +235,11 @@ namespace island
             agent.state.headingRadians = Turn(agent.state.headingRadians,
                 std::atan2(agent.home.z - agent.state.z, agent.home.x - agent.state.x),
                 3.2f * deltaSeconds);
-        } else if (agent.state.behavior == RodentBehavior::Forage) {
+        } else if (agent.fruitTarget >= 0 && !feeding) {
+            const FallingFruit& fruit = lyingFruit_[static_cast<std::size_t>(agent.fruitTarget)];
+            agent.state.headingRadians = Turn(agent.state.headingRadians,
+                std::atan2(fruit.z - agent.state.z, fruit.x - agent.state.x), 4.0f * deltaSeconds);
+        } else if (agent.state.behavior == RodentBehavior::Forage && !feeding) {
             agent.state.headingRadians = Wrap(agent.state.headingRadians
                 + std::sin(agent.state.sniffPhase * .7f) * .45f * deltaSeconds);
         }
@@ -193,7 +258,8 @@ namespace island
         }
         agent.state.gaitPhase = std::fmod(agent.state.gaitPhase
             + deltaSeconds * (2.0f + 11.0f * agent.state.speed), TwoPi);
-        agent.state.sniffPhase = std::fmod(agent.state.sniffPhase + deltaSeconds * 2.7f, TwoPi);
+        // Feeding, the sniff becomes a nibble: the same motion, three times as fast.
+        agent.state.sniffPhase = std::fmod(agent.state.sniffPhase + deltaSeconds * (feeding ? 8.1f : 2.7f), TwoPi);
         agent.state.y = terrain_.Height(agent.state.x, agent.state.z) + .018f;
     }
 }
