@@ -662,6 +662,11 @@ namespace island
                 }
             } else if (agent.raftSeconds > 0.0f) {
                 agent.raftSeconds = std::max(0.0f, agent.raftSeconds - deltaSeconds);
+                // Lifting off the raft, the bird shakes the water from its feathers.
+                if (agent.raftSeconds <= 0.0f) {
+                    agent.ruffleSeconds = WaterShakeSeconds;
+                    ++waterShakes_;
+                }
             } else {
                 agent.nextHuntSeconds -= deltaSeconds;
                 // Another bird's strike just now, within the joining distance: this one
@@ -687,6 +692,11 @@ namespace island
         const bool hunting = agent.huntSeconds > 0.0f || rafting;
         agent.state.raftAmount += std::clamp((rafting ? 1.0f : 0.0f) - agent.state.raftAmount,
                                              -deltaSeconds * 0.5f, deltaSeconds * 0.5f);
+        // A ruffle in flight (the shake off the raft) runs and smooths here; the perch's
+        // ruffle runs in the perch branch.
+        agent.ruffleSeconds = std::max(0.0f, agent.ruffleSeconds - deltaSeconds);
+        agent.state.ruffleAmount += std::clamp((agent.ruffleSeconds > 0.0f ? 1.0f : 0.0f) - agent.state.ruffleAmount,
+                                               -deltaSeconds * 4.0f, deltaSeconds * 8.0f);
         const float raft = agent.state.raftAmount;
         agent.state.perchAmount = std::max(agent.state.perchAmount, raft);
         // Once settled low over the school a bird plunges every few seconds: a short fold to

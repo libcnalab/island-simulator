@@ -2446,7 +2446,7 @@ namespace island
                      "intermittent glide\n"
                   << "island-simulator: seabirds break from their high orbits to circle low over the fish school of the moment\n"
                   << "island-simulator: circling seabirds plunge-dive every nine seconds and each strike raises a foam ring on the water and a positional splash\n"
-                  << "island-simulator: a seabird done hunting settles onto the sea and rafts there with folded wings, head to wind, before climbing back to its route\n"
+                  << "island-simulator: a seabird done hunting settles onto the sea and rafts there with folded wings, head to wind, before climbing back to its route; lifting off, it shakes the water from its feathers\n"
                   << "island-simulator: a seabird's strike brings the others on their routes within a hundred and twenty metres in to hunt the same school\n"
                   << "island-simulator: a dolphin's leap brings the seabirds on their routes within a hundred and sixty metres in to hunt the school of the moment\n"
                   << "island-simulator: a perched bird flushes from the resident or an animal walking up under its perch as from the walker\n"

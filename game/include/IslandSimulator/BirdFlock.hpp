@@ -204,6 +204,10 @@ namespace island
         [[nodiscard]] std::uint32_t RuffleCount() const noexcept { return ruffles_; }
         [[nodiscard]] std::size_t RufflingCount() const noexcept;
         static constexpr float RuffleSeconds = 0.7f;
+        /** @brief Water shakes begun: a seabird lifting off its raft shakes the water from
+         *  its feathers, a longer ruffle of WaterShakeSeconds as it climbs. */
+        [[nodiscard]] std::uint32_t WaterShakeCount() const noexcept { return waterShakes_; }
+        static constexpr float WaterShakeSeconds = 1.4f;
         static constexpr float SnakeFlushDistance = 3.0f;
         /** @brief Fruit lying on the ground this frame; a fruit dove's ground visit lands
          *  beside the nearest one within FruitLandingRange when there is any. The doves'
@@ -348,6 +352,7 @@ namespace island
         std::uint32_t preens_ = 0U;
         std::uint32_t stretches_ = 0U;
         std::uint32_t ruffles_ = 0U;
+        std::uint32_t waterShakes_ = 0U;
         std::uint32_t mobs_ = 0U;
         BirdMob lastMob_;
         std::span<const FallingFruit> lyingFruit_;

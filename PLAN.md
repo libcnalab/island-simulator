@@ -54,6 +54,17 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 188 (2026-10-20) — a seabird shakes the water off
+
+A seabird climbed off its raft as sleek as it had sat. As the raft's `raftSeconds` run out
+the bird now shakes the water from its feathers: its ruffle is set to `WaterShakeSeconds`
+(1.4 s), twice a preen's, and the ruffle's run and smoothing are carried in the flight path
+too (the perch's ruffle runs in the perch branch), so the body puffs as it lifts off and
+smooths as it climbs; the shakes are counted (`WaterShakeCount()`). The seabird raft
+report line gains "lifting off, it shakes the water from its feathers" (pinned). Core
+check: the rafting seabird's raft ends in a water shake, the ruffle at full within the
+seconds after and smoothed again as it climbs. Native `bird-preen` passes.
+
 ## Loop pass 187 (2026-10-20) — a dolphin slaps its tail
 
 A surfacing dolphin only breathed and swam on. `DolphinState::tailSlap` (0..1) now carries

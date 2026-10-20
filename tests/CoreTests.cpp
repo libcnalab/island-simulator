@@ -8229,6 +8229,18 @@ int main()
             flock.Update(0.05f, forageX, 2.0f, forageZ);
         raftEndX = flock.Birds()[rafter].x;
         Check(rafted && raftEndX < raftStartX - 0.5f, "the rafting seabird drifts downwind on the water");
+        // Lifting off the raft, the bird shakes the water from its feathers: the ruffle at
+        // full within the seconds after the raft's end, and smoothed again as it climbs.
+        {
+            bool lifted = false; float shakePeak = 0.0f; int sinceLift = 0; bool smoothed = false;
+            for (int step = 0; step < 800 && !(lifted && sinceLift > 80); ++step) {
+                flock.Update(0.05f, forageX, 2.0f, forageZ);
+                const auto& bird = flock.Birds()[rafter];
+                if (!lifted && bird.raftAmount < 0.5f && flock.WaterShakeCount() >= 1U) lifted = true;
+                if (lifted) { ++sinceLift; shakePeak = std::max(shakePeak, bird.ruffleAmount); if (shakePeak > 0.9f && bird.ruffleAmount < 0.1f) smoothed = true; }
+            }
+            Check(lifted && shakePeak > 0.9f && smoothed, "a seabird lifting off its raft does not shake the water from its feathers and smooth them again");
+        }
         flock.SetSeaForage(0.0f, 0.0f, false);
         for (int step = 0; step < 1200; ++step)
             flock.Update(0.05f, forageX, 2.0f, forageZ);
