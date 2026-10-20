@@ -109,6 +109,9 @@ namespace island
         /** @brief A monkey breaking into flight from the walker: its alarm call, the troop's
          *  second phrase pitched up and loud, heard within about forty metres. */
         void NoteMonkeyAlarm(float x, float y, float z) noexcept;
+        /** @brief The deer sentinel coming alert: its snort, placed where it stands, heard
+         *  within about fifty metres. */
+        void NoteDeerSnort(float x, float y, float z) noexcept;
         /** @brief The goat sentinel standing alert at the walker: its alarm bleat goes next. */
         void NoteGoatAlarm(std::size_t animalIndex) noexcept;
         /** @brief A boar the bear sent off: its alarm grunt goes next. */
@@ -161,6 +164,7 @@ namespace island
         [[nodiscard]] int PlayedSnakeHissCount() const noexcept { return playedSnakeHissCount_; }
         [[nodiscard]] int PlayedBearCallCount() const noexcept{return playedBearCallCount_;}
         [[nodiscard]] int PlayedFrogCallCount() const noexcept{return playedFrogCallCount_;}
+        [[nodiscard]] int PlayedDeerSnortCount() const noexcept{return playedDeerSnortCount_;}
         [[nodiscard]] int PlayedCicadaCallCount() const noexcept{return playedCicadaCallCount_;}
         [[nodiscard]] int PlayedFlyBuzzCount() const noexcept{return playedFlyBuzzCount_;}
         [[nodiscard]] bool IsWildlifeCallActive() const noexcept
@@ -267,6 +271,7 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> doveCallEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> doveCallAlternateEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> birdSplashEffect_;
+        std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> deerSnortEffects_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> coconutThudEffect_;
         WildlifeAudioSource pendingSplash_;
         float pendingSplashSeconds_ = 0.0f;
@@ -274,6 +279,9 @@ namespace island
         float pendingPlipSeconds_ = 0.0f;
         WildlifeAudioSource pendingAlarm_;
         float pendingAlarmSeconds_ = 0.0f;
+        WildlifeAudioSource pendingSnort_;
+        float pendingSnortSeconds_ = 0.0f;
+        std::uint32_t snortCount_ = 0U;
         WildlifeAudioSource pendingThud_;
         float pendingThudSeconds_ = 0.0f;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>
@@ -315,6 +323,7 @@ namespace island
         int playedSnakeHissCount_ = 0;
         int playedBearCallCount_=0;
         int playedFrogCallCount_=0;
+        int playedDeerSnortCount_=0;
         int playedCicadaCallCount_=0;
         int playedFlyBuzzCount_=0;
         float shipwreckX_ = 0.0f;

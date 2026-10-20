@@ -2234,6 +2234,19 @@ int main()
         && hissA.samples.back()==0 && hissB.samples.front()==0 && hissB.samples.back()==0
         && hissA.samples==island::GenerateSnakeHiss(0).samples,
         "snake hiss PCM is deterministic, distinct, bounded and silent at endpoints");
+    {
+        // The deer's alarm snort: deterministic, two distinct variants, a second of PCM,
+        // silent at both ends, its blast in the first half second and the tail gone by
+        // the end.
+        const auto snortA=island::GenerateDeerSnort(0),snortB=island::GenerateDeerSnort(1);
+        auto peakIn=[](const island::AmbientLoop& loop,std::size_t from,std::size_t to){int peak=0;for(std::size_t i=from;i<to&&i<loop.samples.size();++i)peak=std::max(peak,std::abs(static_cast<int>(loop.samples[i])));return peak;};
+        Check(snortA.sampleRate==22050&&snortA.samples.size()==22050U&&snortB.samples.size()==22050U
+            &&snortA.samples!=snortB.samples&&snortA.samples==island::GenerateDeerSnort(0).samples
+            &&snortA.samples.front()==0&&snortA.samples.back()==0&&snortB.samples.front()==0&&snortB.samples.back()==0,
+            "deer snort PCM is deterministic, distinct, a second long and silent at endpoints");
+        Check(peakIn(snortA,0,11025)>8000&&peakIn(snortA,16000,22050)<400&&peakIn(snortB,8800,15500)>6000,
+            "the snort's blast lies in the first half second, the doubled variant's second blast after it, and the tail is gone");
+    }
     Check(island::SnakeHissVolume(0)>.25f
         && island::SnakeHissVolume(8)<island::SnakeHissVolume(2)
         && island::SnakeHissVolume(16)==0 && island::SnakeHissVolume(-1)==0

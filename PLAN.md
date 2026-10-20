@@ -54,6 +54,22 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 103 (2026-10-20) — the deer sentinel snorts the alarm
+
+The deer were the one herd with no voice: the sentinel lifted its head at the walker in
+silence. `GenerateDeerSnort(variant)` is an original synthesized alarm snort (a second of
+22.05 kHz PCM: a sharp nasal blast of filtered noise with a 0.04 s attack, a 0.35 s body and
+a short rough tail; the second variant doubled, the way a deer stamps it twice), built into
+two one-shot effects at startup. `WildlifeCallType::Deer` carries it through the shared
+wildlife call slot (0.7 s), and `Soundscape::NoteDeerSnort(x,y,z)` queues it where the
+sentinel stands, heard within about fifty metres, dropped if the slot stays busy for a
+second; the game gives it the moment the deer sentinel's alert begins (pass 9's sentinel
+rule). The startup report gains "the deer sentinel coming alert at the walker snorts the
+alarm, an original short nasal blast heard within fifty metres", pinned by the native
+capture tool. Core checks: the snort PCM is deterministic, two distinct variants, a second
+long and silent at both ends; its blast lies in the first half second, the doubled
+variant's second blast after it, and the tail is gone by the end. Native `deer` passes.
+
 ## Loop pass 102 (2026-10-20) — the boars' alarm grunt at the bear
 
 A boar the bear sent off (pass 68) trotted away in silence. The herd now notes which boar

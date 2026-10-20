@@ -310,7 +310,8 @@ namespace island
         Cicada,
         Fly,
         Splash,
-        Thud
+        Thud,
+        Deer
     };
 
     /** @brief Nearest currently eligible world-space source for one wildlife species. */
@@ -496,6 +497,8 @@ namespace island
 
     /** @brief One original broadband hiss; two variants share a one-second budget. */
     [[nodiscard]] AmbientLoop GenerateSnakeHiss(std::uint8_t variant);
+    /** @brief Original short deer alarm snort: a sharp nasal blast with a short tail. */
+    [[nodiscard]] AmbientLoop GenerateDeerSnort(std::uint8_t variant);
     [[nodiscard]] float SnakeHissVolume(float distance) noexcept;
 
     struct SnakeHissRequest

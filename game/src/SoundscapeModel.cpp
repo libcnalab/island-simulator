@@ -1650,6 +1650,38 @@ namespace island
         return {};
     }
 
+    AmbientLoop GenerateDeerSnort(const std::uint8_t variant)
+    {
+        // A deer's alarm snort: a sharp blast of breath through the nose, 0.35 s with a
+        // short rough tail; the second variant doubled, the way a deer stamps it twice.
+        constexpr std::size_t frames = AmbientSampleRate;
+        std::vector<float> samples(frames, 0.0f);
+        const bool doubled = (variant & 1U) != 0U;
+        DeterministicNoise noise(0x7e33a51dU + static_cast<std::uint32_t>(doubled) * 4231U);
+        float low = 0.0f, slower = 0.0f;
+        const auto blast = [](const float t, const float begin, const float length) {
+            const float u = (t - begin) / length;
+            if (u <= 0.0f || u >= 1.0f) return 0.0f;
+            const float attack = SmoothStep(0.0f, 0.04f, u);
+            const float release = 1.0f - SmoothStep(0.28f, 1.0f, u);
+            return attack * release;
+        };
+        for (std::size_t i = 0; i < frames; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            const float raw = noise.Next();
+            low += 0.21f * (raw - low);
+            slower += 0.035f * (low - slower);
+            const float mid = low - slower;
+            const float envelope = doubled
+                ? blast(t, .04f, .30f) + .9f * blast(t, .40f, .30f)
+                : blast(t, .05f, .36f);
+            const float rasp = .82f + .18f * std::sin(
+                2.0f * std::numbers::pi_v<float> * (doubled ? 46.0f : 38.0f) * t);
+            samples[i] = envelope * rasp * (mid * 1.9f + (raw - low) * .35f);
+        }
+        return Quantize(samples, .66f);
+    }
+
     AmbientLoop GenerateSnakeHiss(const std::uint8_t variant)
     {
         constexpr std::size_t frames = AmbientSampleRate;

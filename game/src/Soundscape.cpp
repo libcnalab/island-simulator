@@ -180,6 +180,14 @@ namespace island
         goatScheduler_.NoteAlarm(animalIndex);
     }
 
+    void Soundscape::NoteDeerSnort(const float x, const float y, const float z) noexcept
+    {
+        if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) return;
+        pendingSnort_ = {true, x, y, z, 0U};
+        pendingSnortSeconds_ = 1.0f;
+        ++snortCount_;
+    }
+
     void Soundscape::NoteMonkeyAlarm(const float x, const float y, const float z) noexcept
     {
         if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) return;
@@ -391,6 +399,10 @@ namespace island
             doveCallAlternateEffect_->setNameProperty("Procedural fruit dove coo alternate");
             birdSplashEffect_ = CreateOneShotSoundEffect(GenerateBirdSplash());
             birdSplashEffect_->setNameProperty("Procedural seabird plunge splash");
+            for (std::size_t i = 0; i < deerSnortEffects_.size(); ++i) {
+                deerSnortEffects_[i] = CreateOneShotSoundEffect(GenerateDeerSnort(static_cast<std::uint8_t>(i)));
+                deerSnortEffects_[i]->setNameProperty("Original procedural deer snort " + std::to_string(i));
+            }
             coconutThudEffect_ = CreateOneShotSoundEffect(GenerateCoconutThud());
             coconutThudEffect_->setNameProperty("Procedural coconut thud");
             monkeyCallEffect_ = CreateOneShotSoundEffect(GenerateMonkeyCall());
@@ -594,6 +606,7 @@ namespace island
             doveCallAlternateEffect_.reset();
             doveCallEffect_.reset();
             birdSplashEffect_.reset();
+            for (auto& effect : deerSnortEffects_) effect.reset();
             coconutThudEffect_.reset();
             birdCallAlternateEffect_.reset();
             birdCallEffect_.reset();
@@ -1212,6 +1225,20 @@ namespace island
                 pendingAlarm_.available = false;
             }
         }
+        // The deer sentinel's alarm snort: sharp and short, heard within about fifty metres,
+        // dropped if the slot stays busy for a second.
+        if (pendingSnort_.available) {
+            pendingSnortSeconds_ -= safeDelta;
+            const float distance = std::hypot(std::hypot(pendingSnort_.x - listenerState.x,
+                pendingSnort_.z - listenerState.z), pendingSnort_.y - listenerState.y);
+            const float falloff = 1.0f - std::clamp((distance - 5.0f) / 45.0f, 0.0f, 1.0f);
+            if (wildlifeSlotAvailable && wildlifeCall.type == WildlifeCallType::None && falloff > 0.02f) {
+                wildlifeCall = {WildlifeCallType::Deer, static_cast<std::uint8_t>(snortCount_ % 2U), 0.5f * falloff, 0.0f, pendingSnort_};
+                pendingSnort_.available = false;
+            } else if (pendingSnortSeconds_ <= 0.0f || falloff <= 0.02f) {
+                pendingSnort_.available = false;
+            }
+        }
         // A coconut's landing is a short, close thud: heard within about thirty metres.
         if (pendingThud_.available) {
             pendingThudSeconds_ -= safeDelta;
@@ -1265,6 +1292,8 @@ namespace island
             wildlifeEffect = cicadaEffects_.at(wildlifeCall.variant).get();
         } else if (wildlifeCall.type == WildlifeCallType::Fly) {
             wildlifeEffect = flyBuzzEffects_.at(wildlifeCall.variant).get();
+        } else if (wildlifeCall.type == WildlifeCallType::Deer) {
+            wildlifeEffect = deerSnortEffects_.at(wildlifeCall.variant).get();
         } else if (wildlifeCall.type == WildlifeCallType::Splash) {
             wildlifeEffect = birdSplashEffect_.get();
         } else if (wildlifeCall.type == WildlifeCallType::Thud) {
@@ -1324,6 +1353,7 @@ namespace island
                 :wildlifeCall.type==WildlifeCallType::Goat?1.25f
                 :wildlifeCall.type==WildlifeCallType::Cicada?1.40f
                 :wildlifeCall.type==WildlifeCallType::Fly?.90f
+                :wildlifeCall.type==WildlifeCallType::Deer?.70f
                 :wildlifeCall.type==WildlifeCallType::Splash?.75f
                 :wildlifeCall.type==WildlifeCallType::Thud?.50f:1.50f;
             if (wildlifeCall.type == WildlifeCallType::Bird) {
@@ -1350,6 +1380,11 @@ namespace island
                 if (playedSnakeHissCount_ == 1) {
                     std::cout << "island-simulator: first positional snake hiss played; animal "
                               << snakeHiss.animalIndex << '\n' << std::flush;
+                }
+            } else if(wildlifeCall.type==WildlifeCallType::Deer) {
+                ++playedDeerSnortCount_;
+                if (playedDeerSnortCount_ == 1) {
+                    std::cout << "island-simulator: first positional deer snort played\n" << std::flush;
                 }
             } else if(wildlifeCall.type==WildlifeCallType::Goat) {
                 ++playedGoatCallCount_;
@@ -1503,6 +1538,7 @@ namespace island
         doveCallAlternateEffect_.reset();
         doveCallEffect_.reset();
         birdSplashEffect_.reset();
+        for (auto& effect : deerSnortEffects_) effect.reset();
         coconutThudEffect_.reset();
         birdCallAlternateEffect_.reset();
         birdCallEffect_.reset();

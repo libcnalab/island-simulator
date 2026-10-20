@@ -2383,6 +2383,7 @@ namespace island
                   << "island-simulator: a mouse or rat setting out to forage with fruit lying within six metres goes to it and nibbles there a while\n"
                   << "island-simulator: an alert deer swings both ears toward the watcher\n"
                   << "island-simulator: a bolting deer flags its tail up, and a grazing or resting deer flicks it every few seconds\n"
+                  << "island-simulator: the deer sentinel coming alert at the walker snorts the alarm, an original short nasal blast heard within fifty metres\n"
                   << "island-simulator: the resident's pause at the campfire tends the fire, its tongues and plume standing a third taller while they stay\n"
                   << "island-simulator: the bear walks to fruit and coconuts lying in its range and eats them where they lie\n"
                   << "island-simulator: the boars stand off from the bear and trot away when it comes close, as from the walker\n"
@@ -3047,6 +3048,12 @@ namespace island
         }
         deer_->Update(viewpoint_==FixedViewpoint::DeerDetail?0.0f:deltaSeconds,
             cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z);
+        // The deer sentinel coming alert at the walker snorts the alarm.
+        if(soundscape_&&deer_->SentinelAlert()&&!deerSentinelWasAlert_&&!deer_->Deer().empty()) {
+            const auto& sentinel=deer_->Deer().front();
+            soundscape_->NoteDeerSnort(sentinel.x,sentinel.y+1.1f*sentinel.scale,sentinel.z);
+        }
+        deerSentinelWasAlert_=deer_->SentinelAlert();
         if(viewpoint_==FixedViewpoint::DeerDetail) {
             const auto& current=deer_->Deer().front();
             cameraPosition_+=Vector3(current.x-previousDeer.x,current.y-previousDeer.y,
