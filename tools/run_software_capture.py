@@ -1195,6 +1195,8 @@ def main():
                 raise RuntimeError("current canopy leaf fall is missing; check for a stale executable")
             if "a bird settling on a branch and a monkey moving through a crown shake a leaf loose" not in diagnostics:
                 raise RuntimeError("current crown shake leaf fall is missing; check for a stale executable")
+            if "a fish school passing the jetty turns in and holds off the end of the deck" not in diagnostics:
+                raise RuntimeError("current jetty-shade fish hold is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

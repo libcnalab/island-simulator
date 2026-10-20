@@ -54,6 +54,24 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 78 (2026-10-20) — a fish school holds in the jetty's shade
+
+The schools circled their routes past the jetty as past any shore. `FishSchools::SetShelter`
+gives them one shaded hold: a school whose centre passes within 12 m of it (and whose
+cooldown has run out) turns in, eases to the point at 1.5 m/s and holds there thirty
+seconds (`holdSeconds`, the route angle kept in step so the resume is seamless), then goes
+on its way and does not turn in again for ninety seconds. The water under the deck itself is
+under half a metre deep (probed: 0.15–0.48 m along the deck), too shallow for a school whose
+centres need 0.85 m, so the game puts the point at the first spot out along the jetty's line
+with water at least `ShelterDepth` (0.95 m): a little off the end of the deck, in its
+shade, about four metres past the mooring. `ShelteringCount()` and `ShelterCount()` expose
+it. The startup report gains "a fish school passing the jetty turns in and holds off the
+end of the deck, in its shade, a while before going on", pinned by the native capture tool.
+Core checks: a school within range turns in at once, eases to the point and holds there for
+the hold's length, then moves on without turning in again; its fish keep finite poses; and
+the world's jetty line reaches school-deep water a little off the deck's end and within
+thirty metres. Native `jetty` passes.
+
 ## Loop pass 77 (2026-10-20) — a landing bird and a passing monkey shake leaves loose
 
 Leaf fall only came with the gusts. `CanopyLeafFallField::Shake(x,y,z,seed)` lets a leaf go

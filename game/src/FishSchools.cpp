@@ -162,6 +162,19 @@ namespace island
         school.centreY = FishDepth(sample.height, school.routeAngle, elapsedSeconds_);
     }
 
+    void FishSchools::SetShelter(const float x, const float z, const bool valid) noexcept
+    {
+        shelterValid_ = valid && std::isfinite(x) && std::isfinite(z);
+        if (shelterValid_) { shelterX_ = x; shelterZ_ = z; }
+    }
+
+    std::size_t FishSchools::ShelteringCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const School& school : schools_) count += school.sheltering ? 1U : 0U;
+        return count;
+    }
+
     void FishSchools::Update(const float deltaSeconds, const float observerX,
                              const float observerY, const float observerZ) noexcept
     {
@@ -258,6 +271,37 @@ namespace island
                 school.nextBreachSeconds = BreachIntervalSeconds + static_cast<float>((schoolIndex * 5U + breach_.count) % 9U);
             }
         }
+        // The shade under the jetty: a school passing within range turns in and holds there
+        // a while, then goes on its way and does not turn in again for a time.
+        if (shelterValid_ && !school.sheltering && school.nextShelterSeconds <= 0.0f
+            && std::hypot(school.centreX - shelterX_, school.centreZ - shelterZ_) < ShelterRange) {
+            school.sheltering = true;
+            school.holdSeconds = ShelterSeconds;
+            ++shelters_;
+        }
+        if (school.sheltering) {
+            school.holdSeconds -= deltaSeconds;
+            if (school.holdSeconds <= 0.0f || !shelterValid_) {
+                school.sheltering = false;
+                school.nextShelterSeconds = ShelterIntervalSeconds;
+            }
+        } else {
+            school.nextShelterSeconds = std::max(0.0f, school.nextShelterSeconds - deltaSeconds);
+        }
+        if (school.sheltering) {
+            // Into the shade and hold: the centre eases to the shelter point; the route angle
+            // keeps step so the resume is seamless.
+            const float toX = shelterX_ - school.centreX, toZ = shelterZ_ - school.centreZ;
+            const float toLength = std::hypot(toX, toZ);
+            const float step = std::min(toLength, ShelterApproachSpeed * deltaSeconds);
+            if (toLength > 0.001f) {
+                school.centreX += toX / toLength * step;
+                school.centreZ += toZ / toLength * step;
+            }
+            school.routeAngle = WrapAngle(std::atan2(school.centreZ, school.centreX));
+            const auto shelterSample = terrain_.Sample(school.centreX, school.centreZ);
+            school.centreY = FishDepth(shelterSample.height, school.routeAngle, elapsedSeconds_);
+        } else {
         const float routeRadius = std::max(1.0f, std::hypot(school.centreX, school.centreZ));
         const float oldAngle = school.routeAngle;
         const float angleStep = static_cast<float>(school.direction) * school.routeSpeed
@@ -272,6 +316,7 @@ namespace island
             school.direction = -school.direction;
             school.routeAngle = WrapAngle(oldAngle - angleStep);
             ResolveSchoolCentre(school);
+        }
         }
         const float radialLength = std::max(1.0f, std::hypot(school.centreX, school.centreZ));
         const float radialX = school.centreX / radialLength;

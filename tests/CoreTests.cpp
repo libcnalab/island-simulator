@@ -7678,6 +7678,51 @@ int main()
     }
 
     {
+        // A fish school passing a shelter turns in and holds there, then goes on and does not
+        // turn in again for a while.
+        const island::IslandTerrain terrain;
+        island::FishSchools schools(terrain);
+        const island::FishSchoolState start = schools.Schools()[0];
+        const float shelterX = start.centreX + 4.0f, shelterZ = start.centreZ;
+        schools.SetShelter(shelterX, shelterZ, true);
+        schools.Update(0.05f, start.centreX, 0.0f, start.centreZ);
+        Check(schools.ShelteringCount() >= 1U && schools.ShelterCount() >= 1U,
+              "a school within range of the shelter turns in at once");
+        bool held = true;
+        for (int step = 0; step < 560; ++step) {
+            schools.Update(0.05f, start.centreX, 0.0f, start.centreZ);
+            const auto& school = schools.Schools()[0];
+            if (step > 100 && std::hypot(school.centreX - shelterX, school.centreZ - shelterZ) > 0.5f) held = false;
+        }
+        Check(held && schools.ShelteringCount() >= 1U, "the school eases to the shelter point and holds there for the hold's length");
+        for (int step = 0; step < 60; ++step) schools.Update(0.05f, start.centreX, 0.0f, start.centreZ);
+        const island::FishSchoolState released = schools.Schools()[0];
+        bool movedOn = false;
+        for (int step = 0; step < 400 && !movedOn; ++step) {
+            schools.Update(0.05f, start.centreX, 0.0f, start.centreZ);
+            const auto& school = schools.Schools()[0];
+            movedOn = std::hypot(school.centreX - released.centreX, school.centreZ - released.centreZ) > 2.0f;
+        }
+        Check(movedOn && schools.ShelterCount() == 1U, "after the hold the school goes on its way and does not turn in again at once");
+        bool fishFollow = true;
+        for (const auto& fish : schools.Fish())
+            if (fish.schoolIndex == 0U && !std::isfinite(fish.x + fish.y + fish.z)) fishFollow = false;
+        Check(fishFollow, "the school's fish keep finite poses through the hold");
+        // The world's jetty line reaches water deep enough for a school within forty metres,
+        // and not under the deck itself (the water there is under half a metre).
+        const island::JungleLayout jettyJungle(terrain);
+        const std::vector<island::CircularObstacle> none;
+        const auto hut = island::HutLayout::FindInWorld(terrain, jettyJungle, none);
+        const auto jetty = hut ? island::JettyLayout::FindInWorld(terrain, *hut) : std::nullopt;
+        float shadeAlong = -1.0f;
+        if (jetty)
+            for (float along = 5.0f; along <= 40.0f && shadeAlong < 0.0f; along += 1.0f)
+                if (-terrain.Height(jetty->rootX + jetty->dirX * along, jetty->rootZ + jetty->dirZ * along) >= island::FishSchools::ShelterDepth) shadeAlong = along;
+        Check(jetty.has_value() && shadeAlong > island::JettyPlacement::Length && shadeAlong < 30.0f,
+              "the jetty's line reaches school-deep water a little off the end of the deck");
+    }
+
+    {
         // A bird settling on a branch perch is noted with the perch's position, so the
         // game can shake a leaf loose there; a wreck perch is not a crown.
         const island::IslandTerrain terrain;

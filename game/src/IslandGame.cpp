@@ -336,6 +336,13 @@ namespace island
         if(jettyPlacement_) {
             for(const auto& obstacle:jettyPlacement_->CanoeObstacles()) worldObstacles.push_back(obstacle);
             birdPerchLayout_.AddSite(jettyPlacement_->MooringPerch());
+            // The water under the deck is too shallow for a school; the first point out along
+            // the jetty's line deep enough is the shade off its end a passing school turns into.
+            for(float along=5.0f;along<=40.0f;along+=1.0f) {
+                const float x=jettyPlacement_->rootX+jettyPlacement_->dirX*along;
+                const float z=jettyPlacement_->rootZ+jettyPlacement_->dirZ*along;
+                if(-terrain_.Height(x,z)>=FishSchools::ShelterDepth) {fishSchools_.SetShelter(x,z,true);break;}
+            }
         }
         if(hutPlacement_) birdPerchLayout_.AddSite(HutLayout::RidgePerch(*hutPlacement_));
         if(hutPlacement_) lookoutPlacement_=LookoutLayout::FindInWorld(terrain_,*hutPlacement_,worldObstacles);
@@ -2266,6 +2273,7 @@ namespace island
                   << "island-simulator: seabirds break from their high orbits to circle low over the fish school of the moment\n"
                   << "island-simulator: circling seabirds plunge-dive every nine seconds and each strike raises a foam ring on the water and a positional splash\n"
                   << "island-simulator: a seabird done hunting settles onto the sea and rafts there with folded wings, head to wind, before climbing back to its route\n"
+                  << "island-simulator: a fish school passing the jetty turns in and holds off the end of the deck, in its shade, a while before going on\n"
                   << "island-simulator: a falling coconut lands with a positional thud heard within thirty metres\n"
                   << "island-simulator: a fish breaking the surface makes a small plip heard within twenty-five metres\n"
                   << "island-simulator: a crocodile sliding off the bank goes under with a heavy splash and a ring on the water\n"

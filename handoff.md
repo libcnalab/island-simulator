@@ -138,6 +138,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 75: a hermit crab still pressed after its retreat pulls into its shell until the beach is clear (PLAN "Loop pass 75").
 - Pass 76: at a gust front the crowns let go leaves that spiral down, drift downwind and lie on the floor (PLAN "Loop pass 76").
 - Pass 77: a bird settling on a branch and a monkey moving through a crown shake a leaf loose (PLAN "Loop pass 77").
+- Pass 78: a fish school passing the jetty turns in and holds off the end of the deck in its shade a while (PLAN "Loop pass 78").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

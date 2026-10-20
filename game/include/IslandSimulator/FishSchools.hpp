@@ -63,6 +63,18 @@ namespace island
         [[nodiscard]] const FishBreach& LastBreach() const noexcept { return breach_; }
         static constexpr float BreachSeconds = 2.2f;
         static constexpr float BreachIntervalSeconds = 14.0f;
+        /** @brief A shaded hold (the water under the jetty's deck): a school passing within
+         *  ShelterRange turns in, holds there ShelterSeconds, and goes on; not again for
+         *  ShelterIntervalSeconds. */
+        void SetShelter(float x, float z, bool valid) noexcept;
+        [[nodiscard]] std::size_t ShelteringCount() const noexcept;
+        [[nodiscard]] std::uint32_t ShelterCount() const noexcept { return shelters_; }
+        static constexpr float ShelterRange = 12.0f;
+        static constexpr float ShelterSeconds = 30.0f;
+        static constexpr float ShelterIntervalSeconds = 90.0f;
+        static constexpr float ShelterApproachSpeed = 1.5f;
+        /** @brief Water this deep is where a shelter point is placed (the schools' seabed minimum and a little). */
+        static constexpr float ShelterDepth = 0.95f;
         [[nodiscard]] int FullSimulationCount() const noexcept { return fullSimulationCount_; }
         [[nodiscard]] int ReducedSimulationCount() const noexcept {
             return reducedSimulationCount_;
@@ -94,6 +106,9 @@ namespace island
             float centreZ = 0.0f;
             float accumulatedSeconds = 0.0f;
             float nextBreachSeconds = 6.0f;
+            float holdSeconds = 0.0f;         // remaining hold in the shelter
+            float nextShelterSeconds = 0.0f;  // cooldown before the next hold
+            bool sheltering = false;
             int direction = 1;
             WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
         };
@@ -107,6 +122,9 @@ namespace island
         const IslandTerrain& terrain_;
         std::vector<School> schools_;
         FishBreach breach_;
+        float shelterX_ = 0.0f, shelterZ_ = 0.0f;
+        bool shelterValid_ = false;
+        std::uint32_t shelters_ = 0U;
         std::vector<Agent> agents_;
         std::vector<FishState> states_;
         std::vector<FishSchoolState> schoolStates_;
