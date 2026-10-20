@@ -940,6 +940,10 @@ def main():
                 raise RuntimeError("current wreck scour bar is missing; check for a stale executable")
             if "boars root at the nearest trunk base, monkeys favour fruiting crowns and linger to pick" not in diagnostics:
                 raise RuntimeError("current ecological links are missing; check for a stale executable")
+            if not re.search(r"goats to the rain-filled basin on their slope", diagnostics) or re.search(r" 0 goats to the rain-filled basin", diagnostics):
+                raise RuntimeError("the goats' waterhole is missing or no goat can reach it; check for a stale executable")
+            if "the goats' slope holds a rain-filled rock basin, a still dark pool in a ring of wet soil where they drink" not in diagnostics:
+                raise RuntimeError("current goat waterhole rendering is missing; check for a stale executable")
             if "a sentinel lifts its head first and the others follow after 0.7 s" not in diagnostics:
                 raise RuntimeError("current herd behaviour is missing; check for a stale executable")
             if "a coconut's thud startles the deer and goats within 30 m, who stand facing the fall for 6 s" not in diagnostics:

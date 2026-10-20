@@ -305,6 +305,27 @@ int main() {
         }
         check(chewStill.vertices.size()==chewMesh.vertices.size()&&jawMoved>0&&onlyJaw,"the chew does not move the jaw's beard and creases alone");
     }
+    {
+        // The waterhole: a basin sits among the goats' homes on ground they accept, at least
+        // two goats can reach its rim, and within five minutes a goat walks there and drinks,
+        // head down at the rim facing the water, always on its accepted ground.
+        GoatHerd drinkers(terrain,jungle,occupied);
+        const auto& hole=drinkers.WaterholeSite();
+        check(hole.valid&&GoatHabitat::AcceptsGround(terrain,surface,hole.x,hole.z),"the goats have no waterhole on their slope");
+        check(drinkers.DrinkerCount()>=2,"fewer than two goats can reach the waterhole");
+        bool drank=false;
+        for(int frame=0;frame<3000&&!drank;++frame) {
+            drinkers.Update(.1f,{1000,1000,1000});
+            for(std::size_t i=0;i<drinkers.Goats().size();++i) {
+                const auto& g=drinkers.Goats()[i];
+                check(drinkers.IsValidPosition(i,g.x,g.z),"a goat left its ground on the way to drink");
+                if(g.behavior==GoatBehavior::Drink&&g.grazingPose>.9f
+                   &&std::hypot(g.x-hole.x,g.z-hole.z)<GoatHerd::WaterholeCoreRadius+GoatHabitat::BodyClearance+.6f)
+                    drank=true;
+            }
+        }
+        check(drank,"no goat drinks at the waterhole within five minutes");
+    }
     const std::array<CircularObstacle,1> blocked{{{0,0,400}}};
     bool rejected=false;
     try { GoatHerd impossible(terrain,jungle,blocked); } catch(const std::runtime_error&) { rejected=true; }

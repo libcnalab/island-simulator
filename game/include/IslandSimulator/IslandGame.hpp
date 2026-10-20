@@ -108,6 +108,7 @@
 #include "IslandSimulator/UnderwaterEffectRenderer.hpp"
 #include "IslandSimulator/CanopyShaftRenderer.hpp"
 #include "IslandSimulator/FootprintTrailRenderer.hpp"
+#include "IslandSimulator/WaterholeRenderer.hpp"
 #include "IslandSimulator/RootingDustRenderer.hpp"
 #include "IslandSimulator/ShellDragRenderer.hpp"
 #include "IslandSimulator/WallowScarRenderer.hpp"
@@ -512,6 +513,7 @@ namespace island
         std::array<FootprintTrail,DeerHerd::Count> deerPrints_{};
         std::array<FootprintTrail,BoarHerd::BoarCount> boarPrints_{};
         std::unique_ptr<FootprintTrailRenderer> footprintRenderer_;
+        std::unique_ptr<WaterholeRenderer> waterholeRenderer_;
         RootingDustField rootingDust_{terrain_};
         HoofDustField hoofDust_{terrain_};
         FinWakeField finWake_;

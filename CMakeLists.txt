@@ -734,6 +734,7 @@ if(ISLAND_BUILD_GAME)
         game/src/CascadeMistRenderer.cpp
         game/src/CanopyShaftRenderer.cpp
         game/src/FootprintTrailRenderer.cpp
+        game/src/WaterholeRenderer.cpp
         game/src/RootingDustRenderer.cpp
         game/src/ShellDragRenderer.cpp
         game/src/WallowScarRenderer.cpp

@@ -32,6 +32,7 @@ GoatHerd::GoatHerd(const IslandTerrain& terrain,const JungleLayout& jungle,
     for(const auto& plant:jungle.Understory()) occupied.push_back({plant.x,plant.z,1.8f*plant.scale});
     for(const auto& bush:jungle.Bushes()) occupied.push_back({bush.x,bush.z,1.2f*bush.scale});
     clearance_.Reset(occupied);
+    FindWaterhole(occupied);
     for(std::size_t i=0;i<states_.size();++i) {
         const auto home=homes_[i];
         states_[i].x=home.x;states_[i].y=home.y;states_[i].z=home.z;
@@ -51,8 +52,43 @@ GoatHerd::GoatHerd(const IslandTerrain& terrain,const JungleLayout& jungle,
     }
     for(std::size_t i=0;i<states_.size();++i) FindDrinkingPoint(i);
 }
+// The basin: on a half-metre grid within 14 m of the homes' centroid, the accepted ground
+// (the goats' own slope rule, clear of trees, plants and every solid) that the most homes can
+// reach, the flattest among those; its core joins the solids so no goat walks through it.
+void GoatHerd::FindWaterhole(std::vector<CircularObstacle>& occupied) {
+    float cx=0,cz=0;
+    for(const auto& home:homes_){cx+=home.x;cz+=home.z;}
+    cx/=static_cast<float>(homes_.size());cz/=static_cast<float>(homes_.size());
+    int bestReach=0;float bestFlat=-1;
+    for(float dz=-14;dz<=14;dz+=.5f)for(float dx=-14;dx<=14;dx+=.5f) {
+        const float x=cx+dx,z=cz+dz;
+        if(clearance_.IntersectsCircle(x,z,WaterholeRadius+GoatHabitat::BodyClearance)) continue;
+        // Clear of every home: a goat must never start inside the basin's core.
+        bool clearOfHomes=true;
+        for(const auto& home:homes_)
+            if(std::hypot(x-home.x,z-home.z)<WaterholeRadius+2.0f*GoatHabitat::BodyClearance) clearOfHomes=false;
+        if(!clearOfHomes) continue;
+        bool ground=GoatHabitat::AcceptsGround(terrain_,surface_,x,z);
+        for(int i=0;i<8&&ground;++i) {
+            const float a=static_cast<float>(i)*std::numbers::pi_v<float>/4;
+            ground=GoatHabitat::AcceptsGround(terrain_,surface_,x+std::cos(a)*WaterholeRadius,z+std::sin(a)*WaterholeRadius);
+        }
+        if(!ground) continue;
+        int reach=0;
+        for(const auto& home:homes_) if(std::hypot(x-home.x,z-home.z)<HomeRadius-2.5f) ++reach;
+        const float flat=surface_.Sample(x,z).normal.y;
+        if(reach>bestReach||(reach==bestReach&&flat>bestFlat)) {
+            bestReach=reach;bestFlat=flat;
+            waterhole_={x,surface_.Sample(x,z).height,z,WaterholeRadius,reach>0};
+        }
+    }
+    if(!waterhole_.valid) return;
+    occupied.push_back({waterhole_.x,waterhole_.z,WaterholeCoreRadius});
+    clearance_.Reset(occupied);
+}
 // The bank one metre outside the channel on the home's side, at the closest point of the
-// authored route the goat may stand on; dry upper slopes usually lie beyond reach.
+// authored route the goat may stand on; dry upper slopes usually lie beyond reach, and a
+// goat with no bank in reach drinks at the rim of the basin on its slope.
 void GoatHerd::FindDrinkingPoint(std::size_t index) noexcept {
     auto& intent=intents_[index];intent.hasDrink=false;
     float best=std::numeric_limits<float>::max();
@@ -66,6 +102,18 @@ void GoatHerd::FindDrinkingPoint(std::size_t index) noexcept {
         const float homeDistance=std::hypot(x-homes_[index].x,z-homes_[index].z);
         if(homeDistance>=best||!IsValidPosition(index,x,z))continue;
         best=homeDistance;intent.drinkX=x;intent.drinkZ=z;intent.faceX=cx;intent.faceZ=cz;intent.hasDrink=true;
+    }
+    if(intent.hasDrink||!waterhole_.valid) return;
+    // At the basin: stand just clear of its core on the home's side (then round the rim if
+    // that side is blocked), muzzle over the water.
+    const float base=std::atan2(homes_[index].z-waterhole_.z,homes_[index].x-waterhole_.x);
+    const float stand=WaterholeCoreRadius+GoatHabitat::BodyClearance+.1f;
+    for(int k=0;k<16;++k) {
+        const float a=base+static_cast<float>((k+1)/2)*(k%2?1.0f:-1.0f)*std::numbers::pi_v<float>/8;
+        const float x=waterhole_.x+std::cos(a)*stand,z=waterhole_.z+std::sin(a)*stand;
+        if(!IsValidPosition(index,x,z)) continue;
+        intent.drinkX=x;intent.drinkZ=z;intent.faceX=waterhole_.x;intent.faceZ=waterhole_.z;intent.hasDrink=true;
+        return;
     }
 }
 std::size_t GoatHerd::DrinkerCount() const noexcept {

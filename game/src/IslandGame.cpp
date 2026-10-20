@@ -2268,8 +2268,8 @@ namespace island
                   << "coming up from a graze a deer tosses its head\n";
         std::cout << "island-simulator: boars " << boarHerd_.Boars().size()
                   << " agents in moist non-channel interior habitat; a rest a second and a half in settles a boar onto folded legs, body on the ground, for a longer lie, and an alarm has it up within half a second\n";
-        std::cout << "island-simulator: ecological links: " << deer_->DrinkerCount() << " deer and "
-                  << goats_->DrinkerCount() << " goats walk to the stream bank to drink; "
+        std::cout << "island-simulator: ecological links: " << deer_->DrinkerCount() << " deer walk to the stream bank to drink and "
+                  << goats_->DrinkerCount() << " goats to the rain-filled basin on their slope; "
                   << boarHerd_.WallowerCount() << " boars wallow at the bank and carry the mud on their legs and bellies; "
                   << "a boar stepping out of its wallow stands and shakes, the mud flying from its flanks; "
                   << "a boar rooting with its snout down works the snout side to side; "
@@ -2349,6 +2349,9 @@ namespace island
         underwaterEffect_ = std::make_unique<UnderwaterEffectRenderer>(device);
         std::cout << "island-simulator: screen-space canopy sun shafts are off; the light under the crowns comes from the shade field and the drifting leaf-gap flecks\n";
         footprintRenderer_ = std::make_unique<FootprintTrailRenderer>(device, terrain_);
+        if (goats_->WaterholeSite().valid)
+            waterholeRenderer_ = std::make_unique<WaterholeRenderer>(device, terrain_,
+                goats_->WaterholeSite().x, goats_->WaterholeSite().z, GoatHerd::WaterholeRadius);
         rootingDustRenderer_ = std::make_unique<RootingDustRenderer>(device);
         shellDragRenderer_ = std::make_unique<ShellDragRenderer>(device, terrain_);
         {
@@ -4851,6 +4854,7 @@ namespace island
             birdShadowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,birdFlock_.Birds());
             seabedShadowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,
                 fishSchools_.Fish(),stingrayGroup_.Stingrays(),seaTurtleGroup_.Turtles(),&sharkPatrol_.State());
+            if (waterholeRenderer_) waterholeRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
             footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,footprints_.Prints());
             for(const auto& trail:deerPrints_) if(trail.ActiveCount()>0U) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,trail.Prints());
             for(const auto& trail:boarPrints_) if(trail.ActiveCount()>0U) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,trail.Prints());

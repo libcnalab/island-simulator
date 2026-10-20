@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 #include "IslandSimulator/GoatHabitat.hpp"
 #include "IslandSimulator/GoatPose.hpp"
 
@@ -45,6 +46,12 @@ public:
     [[nodiscard]] bool IsValidPosition(std::size_t index,float x,float z) const;
     // Goats whose range reaches a stream bank; they walk there to drink.
     [[nodiscard]] std::size_t DrinkerCount() const noexcept;
+    // The goats' water: their dry slope lies 85-110 m above and away from the stream, so a
+    // rain-filled rock basin sits among their homes, on the flattest accepted ground within
+    // reach of most of them; a goat without a stream bank in reach drinks at its rim.
+    struct Waterhole { float x=0,y=0,z=0,radius=0; bool valid=false; };
+    [[nodiscard]] const Waterhole& WaterholeSite() const noexcept {return waterhole_;}
+    static constexpr float WaterholeRadius=1.4f,WaterholeCoreRadius=0.6f;
     [[nodiscard]] bool SentinelAlert() const noexcept {return sentinelAlertSeconds_>0;}
     // A sudden sound at a point; nearby goats stand alert facing it for a while.
     void NoteDisturbance(float x,float z) noexcept;
@@ -106,5 +113,7 @@ private:
     std::uint32_t lies_=0;
     std::uint32_t wags_=0;
     std::uint32_t earFlicks_=0;
+    Waterhole waterhole_;
+    void FindWaterhole(std::vector<CircularObstacle>& occupied);
 };
 }

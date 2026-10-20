@@ -54,6 +54,27 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 203 (2026-10-20) — the goats drink at a rain-filled basin
+
+Backlog item 8 asked that the goats and deer walk to water to drink, and the ecology pass
+had left the goats out: their dry slope lies 85 to 110 m from the stream and 38 m above it
+(measured), beyond any range their slope rule allows, so the report read "0 goats". Now
+`GoatHerd::FindWaterhole` sets a rain-filled rock basin among the homes: on a half-metre
+grid within 14 m of the homes' centroid, accepted goat ground all round its 1.4 m rim,
+clear of trees, plants and solids and of every home, the spot most homes can reach (the
+flattest among those); its 0.6 m core joins the solids so no goat walks through it. A goat
+with no stream bank in reach drinks at the rim (`FindDrinkingPoint` falls back to the
+basin, standing just clear of the core on its home's side, muzzle over the water). New
+`WaterholeRenderer` draws it once: a terrain-conforming disc of still dark water catching
+the sky toward its far edge inside a ring of wet soil, culled beyond 90 m. The ecology line
+now reads "1 deer walk to the stream bank to drink and 4 goats to the rain-filled basin on
+their slope" (the tool fails on 0 goats), and the renderer's line is pinned.
+GoatHerdTests: the basin lies on accepted ground, at least two goats can reach it, and
+within five minutes a goat drinks at its rim, every goat staying on its ground. The world
+report caught a first site that overlapped a home (a goat started inside the core); the
+search now keeps clear of every home, and the report is valid again. Native `goats`
+passes.
+
 ## Loop pass 202 (2026-10-20) — a dolphin's blowhole opens for the breath
 
 A dolphin surfaced with its blowhole shut. `DolphinState::blowhole` (0..1) now carries the
