@@ -88,6 +88,13 @@ bool DolphinPod::ValidHabitat(const float x, const float z,
          std::hypot(x - home.x, z - home.z) <= home.radius;
 }
 
+std::size_t DolphinPod::SpyHoppingCount() const noexcept {
+  std::size_t count = 0;
+  for (const auto &agent : agents_)
+    count += agent.state.behavior == DolphinBehavior::SpyHop ? 1U : 0U;
+  return count;
+}
+
 float DolphinPod::DesiredDepth(const Agent &agent,
                                const float seabed) const noexcept {
   const float lower = seabed + 1.25f * agent.state.scale;
@@ -96,6 +103,8 @@ float DolphinPod::DesiredDepth(const Agent &agent,
     return std::max(lower, surface);
   if (agent.state.behavior == DolphinBehavior::Dive)
     return std::max(lower, -4.6f);
+  if (agent.state.behavior == DolphinBehavior::SpyHop)
+    return std::max(lower, SpyHopDepth);
   const float cruise =
       -1.75f + .32f * std::sin(elapsedSeconds_ * .24f + agent.depthPhase);
   return std::max(lower, std::min(surface, cruise));
@@ -191,18 +200,24 @@ void DolphinPod::UpdateAgent(Agent &agent, const float delta) noexcept {
     else if (agent.state.behavior == DolphinBehavior::Surface &&
              agent.transitionCount % 4 == 1)
       agent.state.behavior = DolphinBehavior::Leap;
+    else if (agent.state.behavior == DolphinBehavior::Surface &&
+             agent.transitionCount % 4 == 3)
+      agent.state.behavior = DolphinBehavior::SpyHop;
     else
       agent.state.behavior = DolphinBehavior::Cruise;
     if (agent.state.behavior == DolphinBehavior::Leap) {
       ++leapCount_;
       lastLeap_ = {agent.state.x, agent.state.z, true};
     }
+    if (agent.state.behavior == DolphinBehavior::SpyHop) ++spyHops_;
     agent.behaviorSeconds = agent.state.behavior == DolphinBehavior::Surface
                                 ? 3.2f + .45f * (agent.transitionCount % 3)
                             : agent.state.behavior == DolphinBehavior::Dive
                                 ? 5.0f + .7f * (agent.transitionCount % 4)
                             : agent.state.behavior == DolphinBehavior::Leap
                                 ? LeapSeconds
+                            : agent.state.behavior == DolphinBehavior::SpyHop
+                                ? SpyHopSeconds
                                 : 11.0f + 1.3f * (agent.transitionCount % 5);
   }
   agent.routePhase = std::fmod(agent.routePhase + delta * .105f, TwoPi);
@@ -237,6 +252,8 @@ void DolphinPod::UpdateAgent(Agent &agent, const float delta) noexcept {
           ? 2.25f
       : agent.state.behavior == DolphinBehavior::Leap
           ? 3.6f
+      : agent.state.behavior == DolphinBehavior::SpyHop
+          ? SpyHopSpeed
           : (agent.state.behavior == DolphinBehavior::Surface ? 1.75f : 2.05f);
   agent.state.speed +=
       std::clamp(targetSpeed + (berthing ? 1.0f : 0.0f) - agent.state.speed, -.7f * delta, .7f * delta);
@@ -264,14 +281,17 @@ void DolphinPod::UpdateAgent(Agent &agent, const float delta) noexcept {
     agent.state.y +=
         std::clamp(targetY - agent.state.y, -.85f * delta, .85f * delta);
   }
+  // Spy-hopping, the body pitches head-up out of the water; otherwise the pitch
+  // follows the climb or dive.
+  const bool spyHopping = agent.state.behavior == DolphinBehavior::SpyHop;
   const float pitchLimit = leaping ? .95f : .36f;
-  const float targetPitch =
+  const float targetPitch = spyHopping ? SpyHopPitch :
       std::clamp(std::atan2((agent.state.y - oldY) / delta,
                             std::max(.4f, agent.state.speed)),
                  -pitchLimit, pitchLimit);
+  const float pitchRate = leaping ? 3.2f : spyHopping ? 1.6f : .65f;
   agent.state.pitchRadians += std::clamp(targetPitch - agent.state.pitchRadians,
-                                         -(leaping ? 3.2f : .65f) * delta,
-                                         (leaping ? 3.2f : .65f) * delta);
+                                         -pitchRate * delta, pitchRate * delta);
   agent.tailPhase = std::fmod(
       agent.tailPhase + delta * (5.0f + agent.state.speed * .9f), TwoPi);
   agent.state.tailBeat = std::sin(agent.tailPhase);

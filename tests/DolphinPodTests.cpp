@@ -19,7 +19,7 @@ int main() {
         "wrong dolphin count");
   invalid.Update(std::numeric_limits<float>::quiet_NaN(), NAN, NAN, NAN);
   bool cruise = false, surface = false, dive = false, left = false,
-       right = false, up = false, down = false;
+       right = false, up = false, down = false, spyHop = false, hopHeadUp = false;
   bool observedFullTier = false;
   float minimumDepth = 0, maximumDepth = -100;
   float travel = 0;
@@ -46,14 +46,20 @@ int main() {
       Check(std::hypot(a.x - pod.Homes()[i].x, a.z - pod.Homes()[i].z) <=
                 pod.Homes()[i].radius + .01f,
             "dolphin left home range");
-      // A leaping dolphin clears the surface by design; everything else stays under it.
+      // A leaping dolphin clears the surface by design, a spy-hopping one rises to its
+      // hop depth with its head out; everything else stays under the surface.
       const float ceiling = a.behavior == island::DolphinBehavior::Leap
-          ? -.24f + island::DolphinPod::LeapHeight + .02f : -.20f;
+          ? -.24f + island::DolphinPod::LeapHeight + .02f
+          : a.behavior == island::DolphinBehavior::SpyHop
+              ? island::DolphinPod::SpyHopDepth + .02f : -.20f;
       Check(a.y >= sample.height + 1.24f * a.scale - .02f && a.y <= ceiling,
             "dolphin crossed seabed or water surface");
       cruise |= a.behavior == island::DolphinBehavior::Cruise;
       surface |= a.behavior == island::DolphinBehavior::Surface;
       dive |= a.behavior == island::DolphinBehavior::Dive;
+      spyHop |= a.behavior == island::DolphinBehavior::SpyHop;
+      hopHeadUp |= a.behavior == island::DolphinBehavior::SpyHop && a.pitchRadians > .9f
+          && a.y > -.25f && a.speed < .5f;
       minimumDepth = std::min(minimumDepth, a.y);
       maximumDepth = std::max(maximumDepth, a.y);
       left |= a.tailBeat < -.8f;
@@ -67,6 +73,8 @@ int main() {
     previous = pod.Dolphins().front();
   }
   Check(cruise && surface && dive, "dolphin behavior cycle incomplete");
+  Check(spyHop && hopHeadUp && pod.SpyHopCount() >= 1,
+        "a dolphin does not spy-hop, slowed, head-up and out of the water");
   Check(maximumDepth > -.40f && minimumDepth < -2.20f,
         "dolphin did not complete surface and dive travel");
   Check(left && right && up && down,

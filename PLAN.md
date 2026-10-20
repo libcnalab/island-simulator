@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 167 (2026-10-20) — a dolphin spy-hops
+
+The pod surfaced, dived and leapt but never looked about. `DolphinBehavior::SpyHop` now
+follows every fourth surfacing after the leap's: the dolphin slows to `SpyHopSpeed`
+(0.25 m/s), rises to `SpyHopDepth` (-0.22 m, the body centre just under the surface line
+the pod audit holds every non-leaping dolphin to) and pitches head-up to `SpyHopPitch`
+(1.15 rad) at 1.6 rad/s, its head and melon out of the water, for `SpyHopSeconds` (3 s),
+then cruises on; the hops are counted (`SpyHopCount()`, `SpyHoppingCount()`). The overlay's
+behaviour tally counts a spy-hop with the surfacings. The dolphins report line gains "every
+fourth surfacing after the leap's is a spy-hop, the dolphin slowing to rise head-up out of
+the water and look around for a few seconds" (pinned). DolphinPodTests: through its ten
+minutes a dolphin spy-hops slowed, pitched past 0.9 rad at the hop depth, with the seabed
+and surface audit holding. Native `dolphins` passes.
+
 ## Loop pass 166 (2026-10-20) — the shark gapes
 
 The shark swam with its mouth fixed. `SharkState::jawOpen` (0..1) now carries the gape:

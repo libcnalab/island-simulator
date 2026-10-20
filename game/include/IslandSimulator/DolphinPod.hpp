@@ -10,7 +10,7 @@
 namespace island {
 class IslandTerrain;
 
-enum class DolphinBehavior : std::uint8_t { Cruise, Surface, Dive, Leap };
+enum class DolphinBehavior : std::uint8_t { Cruise, Surface, Dive, Leap, SpyHop };
 
 struct DolphinState {
   float x = 0, z = 0, y = 0;
@@ -59,6 +59,12 @@ public:
   [[nodiscard]] const Splash& LastSplash() const noexcept { return splash_; }
   [[nodiscard]] std::uint32_t SplashCount() const noexcept { return splash_.count; }
   static constexpr float SplashSeconds = 2.6f;
+  /** @brief Spy-hops begun: every fourth surfacing after the leap's, the dolphin slows,
+   *  rises to SpyHopDepth and pitches head-up to SpyHopPitch, its head out of the water
+   *  to look around for SpyHopSeconds, then cruises on. */
+  [[nodiscard]] std::uint32_t SpyHopCount() const noexcept { return spyHops_; }
+  [[nodiscard]] std::size_t SpyHoppingCount() const noexcept;
+  static constexpr float SpyHopSeconds = 3.0f, SpyHopDepth = -0.22f, SpyHopPitch = 1.15f, SpyHopSpeed = 0.25f;
   /** @brief The shark this frame (while present): a dolphin within BerthDistance of it
    *  turns off its route to keep the berth, a little faster, until it is clear. */
   void SetThreat(float x, float z, bool valid) noexcept;
@@ -96,6 +102,7 @@ private:
   std::uint64_t frameIndex_ = 0;
   int fullCount_ = 0, reducedCount_ = 0, dormantCount_ = 0;
   std::uint32_t leapCount_ = 0;
+  std::uint32_t spyHops_ = 0;
   Leap lastLeap_;
   Splash splash_;
   float threatX_ = 0, threatZ_ = 0;

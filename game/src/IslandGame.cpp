@@ -2567,7 +2567,8 @@ namespace island
                   << "island-simulator: one occasional non-hostile offshore shark patrol\n"
                   << "island-simulator: dolphins " << dolphinPod_.Dolphins().size()
                   << " agents in a peaceful offshore cruise, surface, and dive pod; a dolphin within twenty-eight metres of the shark leaves its route to keep its berth; "
-                  << "a leap comes down in a splash, the sea's foam ring and the positional splash where the dolphin re-enters\n"
+                  << "a leap comes down in a splash, the sea's foam ring and the positional splash where the dolphin re-enters; "
+                  << "every fourth surfacing after the leap's is a spy-hop, the dolphin slowing to rise head-up out of the water and look around for a few seconds\n"
                   << "island-simulator: sea from within: dolphins leap clear of the water on every fourth surfacing, "
                      "the shark shows its dorsal fin for nine seconds of each patrol, and fish schools part around the swimmer within three metres\n"
                   << "island-simulator: dolphin near/far geometry "
@@ -5360,6 +5361,7 @@ namespace island
                 case DolphinBehavior::Surface:++overlayState.surfacingDolphins;break;
                 case DolphinBehavior::Dive:++overlayState.divingDolphins;break;
                 case DolphinBehavior::Leap:++overlayState.surfacingDolphins;break;
+                case DolphinBehavior::SpyHop:++overlayState.surfacingDolphins;break;
                 }
             }
             overlayState.dolphinDraws = dolphinRenderer_->DrawCallCount();
