@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 262 (2026-10-20) — waiting out the rain; frogs after rain
+
+Two small weather touches. In a downpour (rain above 0.6) the resident now waits it out
+wherever they have stopped on their round (the pause is held, as at the fire at night) and
+walks on when it eases. And the night chorus swells after rain: the crickets and frogs call up
+to 1.6 times as loud on soaked ground once the rain has stopped (while it still pours, the rain
+damps them as before). Not yet heard by a person; the suite passes. (The `resident` QA view,
+which stages the resident's walk and checks it, keeps them walking: forced into a thunderstorm
+it failed the walk check until it was exempted; both now pass.)
+
 ## Loop pass 261 (2026-10-20) — the beach crabs go down at night
 
 The beach's claw-waving crabs keep to the day. `CrabColony` takes the darkness (`SetNightness`;

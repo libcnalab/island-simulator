@@ -1901,7 +1901,8 @@ namespace island
                 *underwaterAudio_.airGain*enclosureAir*gain);
             // the night chorus: everywhere on land, fuller where the jungle bed is, damped by rain
             if (nightChorusInstance_) nightChorusInstance_->setVolumeProperty(std::min(0.6f,
-                (0.20f+0.9f*model_.Mix().jungleVolume)*nightness_*(1.0f-0.6f*std::clamp(weatherRain_,0.0f,1.0f)))
+                (0.20f+0.9f*model_.Mix().jungleVolume)*nightness_*(1.0f-0.6f*std::clamp(weatherRain_,0.0f,1.0f))
+                *(1.0f+0.6f*weatherWetness_*(1.0f-std::clamp(weatherRain_,0.0f,1.0f))))
                 *underwaterAudio_.airGain*enclosureAir*gain);
             streamInstance_->setVolumeProperty(model_.Mix().streamVolume
                 *(1.0f+0.6f*streamSound_.turbulence)

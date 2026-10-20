@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 262: the resident waits out a downpour where they have stopped, and the night chorus swells on soaked ground after rain (PLAN "Loop pass 262").
 - Pass 261: the beach crabs go home down their burrows at night (or dig in where they stand) and come up in the morning (PLAN "Loop pass 261").
 - Pass 260: raindrops ring the puddles while it rains (PLAN "Loop pass 260").
 - Pass 259: distant rain curtains: grey shafts of rain hang from far showers over the sea round the horizon in showery and overcast weather (PLAN "Loop pass 259").

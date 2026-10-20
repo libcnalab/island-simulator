@@ -3144,6 +3144,7 @@ namespace island
             if (soundscape_) {
                 soundscape_->SetWeather(weather_.State().rain, weather_.State().strikes, weather_.State().lastStrikeDistance);
                 soundscape_->SetWind(weather_.State().wind);
+                soundscape_->SetWetness(weather_.State().wetness);
                 soundscape_->SetNightness(1.0f - std::clamp((light.sunElevationDegrees + 2.0f) / 10.0f, 0.0f, 1.0f));
                 {
                     // the dawn chorus: from first light to an hour and a half after sunrise
@@ -3252,7 +3253,11 @@ namespace island
             // At the fire the resident crouches to tend it, hands to the flames; at night they
             // stay there, keeping it up until dawn, instead of walking their round in the dark.
             resident_->SetCrouch(tending?1.0f:0.0f);
-            resident_->SetHoldPause(tending&&sun_light::Current().lighting.sunElevationDegrees<-2.0f);
+            // ...and in a downpour they wait it out wherever they have stopped (under the trees,
+            // at the fire, on the jetty foot) before walking on.
+            // (The resident's own QA view stages their walk and keeps them walking.)
+            resident_->SetHoldPause((tending&&sun_light::Current().lighting.sunElevationDegrees<-2.0f)
+                ||(weather_now::Current().rain>0.6f&&viewpoint_!=FixedViewpoint::ResidentDetail));
         }
         {
             // The resident's footfalls: one every 0.68 m of their walk, on the ground under them.
