@@ -481,17 +481,22 @@ namespace island
 
             if (perch > 0.35f) {
                 for (const float side : {-1.0f, 1.0f}) {
+                    // Scratching, the one foot comes up past the wing to the head by the
+                    // scratch amount; the same points either way.
+                    const float scratch = (side == (bird.scratchSide < 0.0f ? -1.0f : 1.0f) && !groundDove)
+                        ? std::clamp(bird.scratchAmount, 0.0f, 1.0f) : 0.0f;
+                    const float lift = scratch * 0.24f, ahead = scratch * 0.19f, in = scratch * 0.02f;
                     const Vector3 leg = LocalPoint(
-                        centre, right, up, forward, side * 0.055f, -0.075f, 0.01f, scale);
+                        centre, right, up, forward, side * 0.055f, -0.075f + lift * 0.4f, 0.01f + ahead * 0.4f, scale);
                     const Vector3 foot = LocalPoint(
-                        centre, right, up, forward, side * 0.055f,
-                        groundDove ? -0.20f : -0.12f, 0.01f, scale);
+                        centre, right, up, forward, side * (0.055f - in),
+                        (groundDove ? -0.20f : -0.12f) + lift, 0.01f + ahead, scale);
                     const Vector3 toe = LocalPoint(
-                        centre, right, up, forward, side * 0.055f,
-                        groundDove ? -0.197f : -0.117f, 0.105f, scale);
+                        centre, right, up, forward, side * (0.055f - in),
+                        (groundDove ? -0.197f : -0.117f) + lift * 1.15f, 0.105f + ahead, scale);
                     const Vector3 rearToe = LocalPoint(
-                        centre, right, up, forward, side * 0.055f,
-                        groundDove ? -0.197f : -0.117f, -0.06f, scale);
+                        centre, right, up, forward, side * (0.055f - in),
+                        (groundDove ? -0.197f : -0.117f) + lift * 0.9f, -0.06f + ahead, scale);
                     if(groundDove) {
                         const Color footColor(132,82,67,255);
                         const Vector3 outerToe=LocalPoint(centre,right,up,forward,

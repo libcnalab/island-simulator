@@ -79,6 +79,11 @@ namespace island
         /** @brief 0..1 the ruffle: a perched bird shakes its feathers out as each preen ends,
          *  the body puffed for a moment and smoothed again. */
         float ruffleAmount = 0.0f;
+        /** @brief 0..1 the head scratch: a perched bird brings one foot up past the wing to
+         *  its head for a second or so now and then; scratchSide (+1 right, -1 left) is the
+         *  foot, the feet taking turns. */
+        float scratchAmount = 0.0f;
+        float scratchSide = 1.0f;
         BirdPathFamily family = BirdPathFamily::Shore;
         BirdSpecies species = BirdSpecies::Coastal;
         BirdBehavior behavior = BirdBehavior::Fly;
@@ -208,6 +213,12 @@ namespace island
          *  its feathers, a longer ruffle of WaterShakeSeconds as it climbs. */
         [[nodiscard]] std::uint32_t WaterShakeCount() const noexcept { return waterShakes_; }
         static constexpr float WaterShakeSeconds = 1.4f;
+        /** @brief Head scratches begun (a perched bird, not feeding, preening or stretching,
+         *  about every HeadScratchPeriodSeconds for HeadScratchSeconds) and the birds at it. */
+        [[nodiscard]] std::uint32_t HeadScratchCount() const noexcept { return headScratches_; }
+        [[nodiscard]] std::size_t HeadScratchingCount() const noexcept;
+        static constexpr float HeadScratchSeconds = 1.2f;
+        static constexpr float HeadScratchPeriodSeconds = 29.0f;
         static constexpr float SnakeFlushDistance = 3.0f;
         /** @brief Fruit lying on the ground this frame; a fruit dove's ground visit lands
          *  beside the nearest one within FruitLandingRange when there is any. The doves'
@@ -307,6 +318,7 @@ namespace island
             bool preening = false;          // in a preening bout on the perch
             bool stretching = false;        // in a wing stretch on the perch
             float ruffleSeconds = 0.0f;     // remaining feather ruffle after a preen; 0 when smooth
+            bool headScratching = false;    // in a head scratch on the perch
             float mobSeconds = 0.0f;        // remaining circling over a snake; 0 when not mobbing
             float mobX = 0.0f, mobY = 0.0f, mobZ = 0.0f;
             float mobChatter = 0.0f;
@@ -353,6 +365,7 @@ namespace island
         std::uint32_t stretches_ = 0U;
         std::uint32_t ruffles_ = 0U;
         std::uint32_t waterShakes_ = 0U;
+        std::uint32_t headScratches_ = 0U;
         std::uint32_t mobs_ = 0U;
         BirdMob lastMob_;
         std::span<const FallingFruit> lyingFruit_;

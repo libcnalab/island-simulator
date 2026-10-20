@@ -8459,6 +8459,21 @@ int main()
         }
         Check(ruffler.RuffleCount() >= 1U && rufflePeak > 0.9f && ruffleFrames >= 8 && ruffleFrames <= 30 && smoothAfter > 0 && !earlyRuffle,
               "a perched bird shakes its feathers out as its preen ends and smooths them again");
+        // The head scratch: through its stay the seeded bird brings a foot up to its head
+        // for a bout of a second or so, never while preening or stretching.
+        island::BirdFlock scratcher(terrain);
+        scratcher.SetPerchSites(sites);
+        float scratchPeak = 0.0f; bool scratchClash = false; int scratchFrames = 0, longestScratchBout = 0;
+        for (int step = 0; step < 400; ++step) {
+            scratcher.Update(0.05f, perchX + 25.0f, sites[0].y, perchZ);
+            const auto& bird = scratcher.Birds()[0];
+            if (bird.behavior != island::BirdBehavior::Perched) break;
+            scratchPeak = std::max(scratchPeak, bird.scratchAmount);
+            if (bird.scratchAmount > 0.5f && (bird.preenAmount > 0.5f || bird.stretchAmount > 0.5f)) scratchClash = true;
+            scratchFrames = bird.scratchAmount > 0.5f ? scratchFrames + 1 : 0; longestScratchBout = std::max(longestScratchBout, scratchFrames);
+        }
+        Check(scratcher.HeadScratchCount() >= 1U && scratchPeak > 0.9f && longestScratchBout >= 10 && longestScratchBout <= 40 && !scratchClash,
+              "a perched bird does not scratch its head with a foot between its preens and stretches");
         float climbed = sitting.Birds()[0].y;
         for (int step = 0; step < 70; ++step) { sitting.Update(0.05f, perchX + 6.0f, sites[0].y, perchZ); climbed = std::max(climbed, sitting.Birds()[0].y); }
         Check(sitting.Birds()[0].behavior == island::BirdBehavior::Fly && climbed > sites[0].y + 2.0f,

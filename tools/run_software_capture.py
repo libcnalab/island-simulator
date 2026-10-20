@@ -1448,6 +1448,8 @@ def main():
                 raise RuntimeError("current spider grooming is missing; check for a stale executable")
             if "coming up from a graze a deer tosses its head" not in diagnostics:
                 raise RuntimeError("current deer head toss is missing; check for a stale executable")
+            if "a perched bird scratches its head with a foot now and then, the foot brought up past the wing, the feet taking turns" not in diagnostics:
+                raise RuntimeError("current bird head scratch is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:

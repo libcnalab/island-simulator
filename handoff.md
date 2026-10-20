@@ -263,6 +263,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 199: a ground spider at rest draws a front leg in and works it through its mouthparts, the legs taking turns (`SpiderState::groom`/`groomLeg`, `SpiderColony::GroomCount`) (PLAN "Loop pass 199").
 - Pass 200: coming up from a graze a deer tosses its head (`DeerState::headToss`, `DeerHerd::TossCount`) (PLAN "Loop pass 200").
 - Fix (operator report): flight crash from the blown sand overflowing its 18-puff dust buffer (renderer capacity + bounded uploads); screen-space canopy sun shafts removed (they striped the view in flight); sun shadow map texel-snapped with receiver-plane depth bias (PLAN "Fix pass (2026-10-20)").
+- Pass 201: a perched bird scratches its head with a foot now and then, the feet taking turns (`BirdState::scratchAmount`/`scratchSide`, `BirdFlock::HeadScratchCount`); the inventory's misleading "large-object sun shadows 0" label renamed (PLAN "Loop pass 201").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

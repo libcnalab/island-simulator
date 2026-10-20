@@ -54,6 +54,28 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 201 (2026-10-20) — a perched bird scratches its head
+
+A perched bird never lifted a foot. `BirdState::scratchAmount` (0..1) and `scratchSide`
+(+1 right, -1 left) now carry the scratch: about every `HeadScratchPeriodSeconds` (29 s,
+plus a little per bird) a perched bird, not feeding, preening or stretching and past its
+first second and a half on the perch, brings one foot up past the wing to its head for
+`HeadScratchSeconds` (1.2 s), eased at 4/s, the feet alternating; a departure or flush
+drops it, and the scratches are counted (`HeadScratchCount()`, `HeadScratchingCount()`). In
+the near renderer the scratching foot, with its toes, rises 24 % of the scale, comes 19 %
+forward and draws in toward the body, on the same points (ground doves keep their planted
+toes). A new report line "a perched bird scratches its head with a foot now and then, the
+foot brought up past the wing, the feet taking turns" is pinned. Core check: through its
+stay the seeded perched bird scratches its head for a bout of half a second to two
+seconds, never while preening or stretching. Native `bird-preen` passes.
+
+Also in this pass: the world inventory's "large-object sun shadows N" label named the old
+contact-batch mass shadows, which are switched off whenever the sun shadow map runs (it
+casts the trees', hut's, wreck's and helicopter's shadows: "sun shadow map N renders, M
+casters" on the same line), so its 0 read as if the island had no large-object shadows.
+It is now "contact-batch mass shadows N (off: the sun shadow map casts the large
+objects)".
+
 ## Fix pass (2026-10-20) — a flight crash, and the stripes in flight
 
 Two operator reports from a native flight. **The crash** ("The data is not the correct size

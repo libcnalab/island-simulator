@@ -381,6 +381,8 @@ namespace island
                     agent.stretching = false;
                     agent.state.ruffleAmount = 0.0f;
                     agent.ruffleSeconds = 0.0f;
+                    agent.state.scratchAmount = 0.0f;
+                    agent.headScratching = false;
                     ++flushCount_;
                     if (snaked) {
                         // Flushed by a snake, the bird mobs it: it circles low over the head,
@@ -592,6 +594,14 @@ namespace island
         std::size_t count = 0;
         for (const Agent& agent : agents_)
             count += agent.mobSeconds > 0.0f && agent.state.behavior == BirdBehavior::Depart ? 1U : 0U;
+        return count;
+    }
+
+    std::size_t BirdFlock::HeadScratchingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_)
+            count += agent.headScratching && agent.state.behavior == BirdBehavior::Perched ? 1U : 0U;
         return count;
     }
 
@@ -941,6 +951,22 @@ namespace island
             }
             agent.state.stretchAmount += std::clamp((agent.stretching ? 1.0f : 0.0f) - agent.state.stretchAmount,
                                                     -deltaSeconds * 4.0f, deltaSeconds * 3.0f);
+            // Now and then a perched bird scratches its head: about every half minute, a
+            // little more per bird, one foot comes up past the wing to the head for a second
+            // or so, the feet alternating; never feeding, preening, stretching or newly landed.
+            {
+                const float scratchCycle = std::fmod(elapsedSeconds_ + static_cast<float>(agent.index) * 2.9f + 22.0f,
+                                                     HeadScratchPeriodSeconds + static_cast<float>(agent.index % 3U));
+                const bool inScratch = scratchCycle < HeadScratchSeconds && !agent.feeding && !agent.preening
+                    && !agent.stretching && agent.behaviorSeconds > 1.5f;
+                if (inScratch && !agent.headScratching) {
+                    ++headScratches_;
+                    agent.state.scratchSide = (headScratches_ + agent.index) % 2U == 0U ? 1.0f : -1.0f;
+                }
+                agent.headScratching = inScratch;
+            }
+            agent.state.scratchAmount += std::clamp((agent.headScratching ? 1.0f : 0.0f) - agent.state.scratchAmount,
+                                                    -deltaSeconds * 4.0f, deltaSeconds * 4.0f);
             const float duration = (8.0f + std::fmod(
                 static_cast<float>(agent.index) * 1.7f
                     + static_cast<float>(agent.perchCycle) * 1.3f,
@@ -957,6 +983,8 @@ namespace island
                 agent.stretching = false;
                 agent.state.ruffleAmount = 0.0f;
                 agent.ruffleSeconds = 0.0f;
+                agent.state.scratchAmount = 0.0f;
+                agent.headScratching = false;
             }
             return;
         }
