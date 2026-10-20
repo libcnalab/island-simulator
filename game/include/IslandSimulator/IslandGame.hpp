@@ -201,6 +201,7 @@ namespace island
         FruitBatRoostDetail,
         FishDetail,
         StingrayDetail,
+        StingrayBuriedDetail,
         OctopusDetail,
         SharkDetail,
         DolphinDetail,
@@ -503,6 +504,7 @@ namespace island
         DolphinBlowField dolphinBlows_;
         std::unique_ptr<CascadeMistRenderer> dolphinBlowRenderer_;
         StingraySandField stingraySand_;
+        StingraySandField stingrayFlickSand_;
         std::unique_ptr<RootingDustRenderer> stingraySandRenderer_;
         OctopusInkField octopusInk_;
         std::unique_ptr<RootingDustRenderer> octopusInkRenderer_;

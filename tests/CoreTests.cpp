@@ -9086,6 +9086,29 @@ int main()
             for(int step=0;step<40;++step) { rays.Update(0.05f,lay.x+30.0f,lay.y,lay.z); away=std::hypot(rays.Stingrays()[settled].x-(lay.x+6.0f),rays.Stingrays()[settled].z-lay.z); }
             Check(away>6.5f,"the burst ray glides away from the shark");
         }
+        // A settled ray buries itself: two seconds into its settle it flicks sand over its
+        // back (a ring of puffs where it lies) and the disc takes the sand over a few
+        // seconds; the swimmer coming close bursts it out and the sand sheds at once.
+        {
+            island::StingrayGroup rays(terrain);
+            std::size_t settled=island::StingrayGroup::Count;
+            for(std::size_t i=0;i<rays.Stingrays().size();++i) if(rays.Stingrays()[i].behavior==island::StingrayBehavior::Settle) { settled=i; break; }
+            Check(settled<island::StingrayGroup::Count,"a stingray starts settled for the bury check");
+            const auto lay=rays.Stingrays()[settled];
+            for(int step=0;step<30;++step) rays.Update(0.05f,lay.x+30.0f,lay.y,lay.z);
+            Check(rays.BuryCount()==0U&&rays.Stingrays()[settled].buryAmount==0.0f,"a ray settled a second and a half has not flicked yet");
+            for(int step=0;step<20;++step) rays.Update(0.05f,lay.x+30.0f,lay.y,lay.z);
+            Check(rays.BuryCount()==1U&&rays.LastFlick().count==1U&&rays.BuriedCount()==1U
+                  &&std::hypot(rays.LastFlick().x-lay.x,rays.LastFlick().z-lay.z)<0.5f,"two and a half seconds in the settled ray has flicked sand over its back where it lies");
+            island::StingraySandField flickSand;
+            flickSand.Update(0.05f,rays.LastFlick());
+            Check(flickSand.ActiveCount()==island::StingraySandField::PuffsPerBurst,"the flick raises a ring of sand puffs");
+            for(int step=0;step<60;++step) rays.Update(0.05f,lay.x+30.0f,lay.y,lay.z);
+            Check(rays.Stingrays()[settled].buryAmount>0.9f&&rays.Stingrays()[settled].behavior==island::StingrayBehavior::Settle,"a few seconds on the ray lies fully buried");
+            for(int step=0;step<12;++step) rays.Update(0.05f,lay.x+2.0f,lay.y,lay.z);
+            Check(rays.Stingrays()[settled].behavior==island::StingrayBehavior::Glide&&rays.Stingrays()[settled].buryAmount<0.3f&&rays.BuriedCount()==0U,
+                  "the swimmer at two metres bursts the buried ray out and the sand sheds within half a second");
+        }
         // The grass walkers: of nine candidates the six nearest the camera within reach are
         // taken in distance order, the far and the strengthless left out; a standing body
         // presses lightly and a trotting one fully.

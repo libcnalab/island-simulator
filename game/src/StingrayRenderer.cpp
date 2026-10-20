@@ -146,9 +146,24 @@ namespace island
             return {{sine*radial*radius,cosine*radial*radius}};
         }
 
+        // Sand flicked over a settled ray's back takes the dorsal tones toward the seabed's.
+        [[nodiscard]] Palette BuriedPalette(const StingrayState& ray)
+        {
+            Palette palette=Palettes[ray.colorVariant%Palettes.size()];
+            const float bury=std::clamp(ray.buryAmount,0.0f,1.0f)*.78f;
+            if(bury<=0.0f) return palette;
+            const Color sand(201,186,150,255);
+            palette.dorsal=Color::Lerp(palette.dorsal,sand,bury);
+            palette.highlight=Color::Lerp(palette.highlight,sand,bury);
+            palette.margin=Color::Lerp(palette.margin,sand,bury);
+            palette.spot=Color::Lerp(palette.spot,sand,bury*.85f);
+            palette.tail=Color::Lerp(palette.tail,sand,bury);
+            return palette;
+        }
+
         void AppendNear(std::vector<VertexPositionColor>& out, const StingrayState& ray)
         {
-            const Palette& palette=Palettes[ray.colorVariant%Palettes.size()];
+            const Palette palette=BuriedPalette(ray);
             const Basis basis=MakeBasis(ray);
             const Vector3 dorsalCentre=basis.Point(0,.105f,.04f);
             const Vector3 ventralCentre=basis.Point(0,-.050f,.01f);
@@ -293,7 +308,7 @@ namespace island
 
         void AppendFar(std::vector<VertexPositionColor>& out, const StingrayState& ray)
         {
-            const Palette& palette=Palettes[ray.colorVariant%Palettes.size()];
+            const Palette palette=BuriedPalette(ray);
             const Basis basis=MakeBasis(ray);
             const Vector3 nose=basis.Point(0,.08f,.94f);
             const Vector3 left=basis.Point(-1.18f,ray.wingWave*.16f,-.02f);

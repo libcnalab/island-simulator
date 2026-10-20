@@ -169,6 +169,26 @@ namespace island
 #endif
     }
 
+    std::size_t StingrayGroup::BuriedCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.buried ? 1U : 0U;
+        return count;
+    }
+
+    void StingrayGroup::PreviewBury(const std::size_t index) noexcept
+    {
+        if (index >= agents_.size()) return;
+        Agent& agent = agents_[index];
+        agent.state.behavior = StingrayBehavior::Settle;
+        agent.state.speed = 0.0f;
+        agent.state.buryAmount = 1.0f;
+        agent.behaviorSeconds = 30.0f;
+        agent.settledSeconds = BuryDelaySeconds + 1.0f;
+        agent.buried = true;
+        states_[index] = agent.state;
+    }
+
     void StingrayGroup::UpdateAgent(Agent& agent, const float deltaSeconds,
                                     const float observerX, const float observerZ,
                                     const bool observerValid) noexcept
@@ -255,6 +275,27 @@ namespace island
                                     -.22f * deltaSeconds, .22f * deltaSeconds);
         const float flapRate = agent.state.behavior == StingrayBehavior::Glide ? 2.4f : 1.15f;
         agent.flapPhase = std::fmod(agent.flapPhase + flapRate * deltaSeconds, TwoPi);
-        agent.state.wingWave = std::sin(agent.flapPhase);
+        // Settled two seconds, the ray flicks its wings to throw sand over its back (the
+        // puffs rise where it lies) and lies half-buried, the disc taking the sand's tones
+        // over a few seconds; moving off or bursting away sheds the sand at once.
+        if (agent.state.behavior == StingrayBehavior::Settle) {
+            agent.settledSeconds += deltaSeconds;
+            if (!agent.buried && agent.settledSeconds >= BuryDelaySeconds) {
+                agent.buried = true;
+                agent.flickSeconds = FlickSeconds;
+                flick_ = {agent.state.x, agent.state.y, agent.state.z, agent.state.scale, flick_.count + 1U};
+                ++buries_;
+            }
+        } else {
+            agent.settledSeconds = 0.0f;
+            agent.buried = false;
+            agent.flickSeconds = 0.0f;
+        }
+        agent.state.buryAmount += std::clamp((agent.buried ? 1.0f : 0.0f) - agent.state.buryAmount,
+                                             -ShedRate * deltaSeconds, BuryRate * deltaSeconds);
+        const float flick = std::clamp(agent.flickSeconds / FlickSeconds, 0.0f, 1.0f);
+        agent.flickSeconds = std::max(0.0f, agent.flickSeconds - deltaSeconds);
+        agent.state.wingWave = std::clamp(std::sin(agent.flapPhase) * (1.0f - flick)
+            + std::sin(agent.flickSeconds * 22.0f) * flick, -1.0f, 1.0f);
     }
 }

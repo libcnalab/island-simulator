@@ -54,6 +54,28 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 120 (2026-10-20) — a settled stingray buries itself
+
+A settled ray lay on the sand in its own colours until it burst away. `StingrayState::
+buryAmount` (0..1) now carries a burial: two seconds into a settle (`settledSeconds` past
+`BuryDelaySeconds`) the ray flicks its wings for 0.8 s (a fast beat blended into
+`wingWave`), `LastFlick()` records where it lies (a `StingrayBurst`-shaped record, counted),
+and the amount rises at 0.4/s; moving off or bursting away sheds it at 1.5/s. `BuryCount()`
+counts flicks, `BuriedCount()` the rays lying buried. The game feeds the flick to a second
+`StingraySandField` so the same ring of sand puffs rises where the ray lies, drawn by the
+stingray sand renderer. `StingrayRenderer::BuriedPalette` takes the dorsal, highlight,
+margin, spot and tail tones toward the seabed's sand (201,186,150) by 0.78 × the amount in
+both LODs, so the buried ray reads as a sand-coloured disc with only the eye mounds and
+the spiracles standing out. A QA viewpoint `stingray-buried` (`StingrayBuriedDetail`,
+`PreviewBury(2)` each frame with the group frozen) frames the seeded settled ray from its
+quarter; the capture tool accepts it and requires the buried camera line. The stingray
+report line gains "a settled ray two seconds in flicks sand over its back and lies
+half-buried in the sand's tones until it moves" (pinned). Core checks: a ray settled a
+second and a half has not flicked; at two and a half seconds it has flicked where it lies
+and a sand field fed the flick raises the ring of puffs; a few seconds on it lies fully
+buried; the swimmer at two metres bursts it out and the sand sheds within half a second.
+Native `stingray-buried` passes (luminance deviation 28.5; the disc matches the sand).
+
 ## Loop pass 119 (2026-10-20) — a resting boar lies down
 
 A resting boar stood through every rest. `BoarState::lieAmount` (0..1) now carries a

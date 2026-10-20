@@ -27,6 +27,9 @@ namespace island
         float bankRadians = 0.0f;
         float speed = 0.0f;
         float wingWave = 0.0f;
+        /** @brief 0..1 buried: sand flicked over the back of a settled ray, taking the disc
+         *  toward the sand's tones; it sheds as the ray moves off or bursts away. */
+        float buryAmount = 0.0f;
         float scale = 1.0f;
         StingrayBehavior behavior = StingrayBehavior::Glide;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
@@ -55,6 +58,16 @@ namespace island
          *  it lay, counted so a burst is noted once. */
         struct StingrayBurst { float x = 0.0f, y = 0.0f, z = 0.0f, scale = 1.0f; std::uint32_t count = 0; };
         [[nodiscard]] const StingrayBurst& LastBurst() const noexcept { return burst_; }
+        /** @brief The last settled ray to flick sand over its back, BuryDelaySeconds into its
+         *  settle: where it lies, counted so the flick's puffs rise once; the disc then takes
+         *  the sand's tones over a few seconds and sheds them when the ray moves. */
+        [[nodiscard]] const StingrayBurst& LastFlick() const noexcept { return flick_; }
+        [[nodiscard]] std::uint32_t BuryCount() const noexcept { return buries_; }
+        [[nodiscard]] std::size_t BuriedCount() const noexcept;
+        /** @brief QA: holds one ray settled and fully buried for a still capture. */
+        void PreviewBury(std::size_t index) noexcept;
+        static constexpr float BuryDelaySeconds = 2.0f, FlickSeconds = 0.8f;
+        static constexpr float BuryRate = 0.4f, ShedRate = 1.5f;
         /** @brief The shark this frame (while present): a ray within ThreatDistance of it
          *  turns away as from the swimmer, and a settled one bursts from the sand. */
         void SetThreat(float x, float z, bool valid) noexcept;
@@ -85,6 +98,9 @@ namespace island
             float behaviorSeconds = 0.0f;
             float accumulatedSeconds = 0.0f;
             std::uint32_t transitionCount = 0U;
+            float settledSeconds = 0.0f;    // time lying settled since the last move
+            float flickSeconds = 0.0f;      // the sand flick's wing beats remaining
+            bool buried = false;
         };
 
         void Initialize(std::size_t index);
@@ -102,6 +118,8 @@ namespace island
         float elapsedSeconds_ = 0.0f;
         std::uint64_t frameIndex_ = 0U;
         StingrayBurst burst_;
+        StingrayBurst flick_;
+        std::uint32_t buries_ = 0U;
         float threatX_ = 0.0f, threatZ_ = 0.0f;
         bool threatValid_ = false;
         std::uint32_t threatBursts_ = 0U;

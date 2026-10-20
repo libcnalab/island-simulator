@@ -77,6 +77,7 @@ namespace
         case FixedViewpoint::FruitBatRoostDetail: return "bat-roost";
         case FixedViewpoint::FishDetail: return "fish";
         case FixedViewpoint::StingrayDetail: return "stingrays";
+        case FixedViewpoint::StingrayBuriedDetail: return "stingray-buried";
         case FixedViewpoint::OctopusDetail: return "octopuses";
         case FixedViewpoint::SharkDetail: return "shark";
         case FixedViewpoint::DolphinDetail: return "dolphins";
@@ -304,6 +305,8 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::FishDetail;
             } else if (name == "stingrays") {
                 viewpoint = island::FixedViewpoint::StingrayDetail;
+            } else if (name == "stingray-buried") {
+                viewpoint = island::FixedViewpoint::StingrayBuriedDetail;
             } else if(name=="octopuses") {
                 viewpoint=island::FixedViewpoint::OctopusDetail;
             } else if (name == "shark") {

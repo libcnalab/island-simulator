@@ -180,6 +180,7 @@ namespace island
             case FixedViewpoint::FruitBatRoostDetail: return "bat-roost";
             case FixedViewpoint::FishDetail: return "fish";
             case FixedViewpoint::StingrayDetail: return "stingrays";
+            case FixedViewpoint::StingrayBuriedDetail: return "stingray-buried";
             case FixedViewpoint::OctopusDetail: return "octopuses";
             case FixedViewpoint::SharkDetail: return "shark";
             case FixedViewpoint::DolphinDetail: return "dolphins";
@@ -1276,6 +1277,20 @@ namespace island
             yaw_=std::atan2(toRay.X,toRay.Z);
             pitch_=std::atan2(toRay.Y,std::hypot(toRay.X,toRay.Z));
             std::cout<<"island-simulator: stingray QA camera follows one shallow-sand glide\n";
+        } else if (viewpoint_ == FixedViewpoint::StingrayBuriedDetail
+                   && stingrayGroup_.Stingrays().size() > 2U) {
+            // The third ray is seeded settled; held buried, framed from its quarter.
+            stingrayGroup_.PreviewBury(2U);
+            const StingrayState& ray = stingrayGroup_.Stingrays()[2U];
+            const Vector3 forward(std::cos(ray.headingRadians),0.0f,
+                                  std::sin(ray.headingRadians));
+            const Vector3 side(-forward.Z,0.0f,forward.X);
+            cameraPosition_=Vector3(ray.x,ray.y,ray.z)
+                +side*2.0f+forward*1.5f+Vector3::Up*1.1f;
+            const Vector3 toRay=Vector3(ray.x,ray.y,ray.z)-cameraPosition_;
+            yaw_=std::atan2(toRay.X,toRay.Z);
+            pitch_=std::atan2(toRay.Y,std::hypot(toRay.X,toRay.Z));
+            std::cout<<"island-simulator: stingray QA camera frames one settled ray lying half-buried in the sand\n";
         } else if(viewpoint_==FixedViewpoint::OctopusDetail&&!octopusGroup_.Octopuses().empty()){
             const auto& o=octopusGroup_.Octopuses().front();Vector3 forward(std::cos(o.headingRadians),0,std::sin(o.headingRadians)),side(-forward.Z,0,forward.X);
             cameraPosition_=Vector3(o.x,o.y+.28f,o.z)+forward*1.65f+side*.85f+Vector3::Up*.36f;
@@ -2461,7 +2476,8 @@ namespace island
                   << " agents in " << FishSchools::SchoolCount
                   << " distance-throttled shallow-water schools\n"
                   << "island-simulator: stingrays " << stingrayGroup_.Stingrays().size()
-                  << " agents glide, forage, and settle over shallow sandy seabed; the shark passing within nine metres turns them away and bursts a settled one from the sand\n"
+                  << " agents glide, forage, and settle over shallow sandy seabed; the shark passing within nine metres turns them away and bursts a settled one from the sand; "
+                  << "a settled ray two seconds in flicks sand over its back and lies half-buried in the sand's tones until it moves\n"
                   << "island-simulator: octopuses " << octopusGroup_.Octopuses().size()
                   << " agents den, crawl, forage, and swim in reef and rocky shallows; one lying still takes the sand's tones over a few seconds and flashes back to its own colours when it moves or is startled\n"
                   << "island-simulator: sea turtles " << seaTurtleGroup_.Turtles().size()
@@ -3242,9 +3258,12 @@ namespace island
             const SharkState& shark=sharkPatrol_.State();
             stingrayGroup_.SetThreat(shark.x,shark.z,shark.present&&shark.visible);
         }
-        stingrayGroup_.Update(viewpoint_==FixedViewpoint::StingrayDetail?0.0f:deltaSeconds,
+        if(viewpoint_==FixedViewpoint::StingrayBuriedDetail) stingrayGroup_.PreviewBury(2U);
+        stingrayGroup_.Update(viewpoint_==FixedViewpoint::StingrayDetail||viewpoint_==FixedViewpoint::StingrayBuriedDetail?0.0f:deltaSeconds,
                               cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z);
         stingraySand_.Update(deltaSeconds,stingrayGroup_.LastBurst());
+        // The sand a settling ray flicks over its back rises in the same puffs.
+        stingrayFlickSand_.Update(deltaSeconds,stingrayGroup_.LastFlick());
         if(viewpoint_==FixedViewpoint::StingrayDetail) {
             const StingrayState& subject=stingrayGroup_.Stingrays().front();
             cameraPosition_+=Vector3(subject.x-previousStingraySubject.x,
@@ -4842,6 +4861,7 @@ namespace island
             cascadeMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,cascadeMist_.Puffs());
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,rootingDust_.Puffs());
             stingraySandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,stingraySand_.Puffs());
+            stingraySandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,stingrayFlickSand_.Puffs());
             octopusInkRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,octopusInk_.Puffs());
             surfSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,surfSpray_.Puffs());
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,dolphinBlows_.Puffs());
