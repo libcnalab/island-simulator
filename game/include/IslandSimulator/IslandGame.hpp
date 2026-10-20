@@ -544,6 +544,10 @@ namespace island
         std::unique_ptr<LocalLightRenderer> localLights_;
         std::unique_ptr<RainRingRenderer> rainRings_;
         std::unique_ptr<FireflySwarm> fireflies_;
+        // the day fliers still out this frame (they roost one by one at dusk)
+        std::vector<ButterflyState> awakeButterflies_;
+        std::vector<DragonflyState> awakeDragonflies_;
+        std::vector<FlyState> awakeFlies_;
         std::unique_ptr<FireflyRenderer> fireflyRenderer_;
         std::unique_ptr<MorningMistField> morningMist_;
         std::unique_ptr<MistBankRenderer> mistBankRenderer_;

@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 257 (2026-10-20) — the day fliers roost at dusk
+
+Butterflies, dragonflies and flies flew on through the night. They now go to roost in the
+leaves at dusk: from the sun 1 degree under the horizon to 7 degrees under, one by one (each by
+its own share, spread over the swarm), the game leaves them out of the frame's draw, and they
+come out again in the same order at dawn; their simulation runs on unseen. The fireflies take
+over the night (Loop pass 231). The insects' renderers walk their spans in order, so a smaller
+span changes no other insect's look. `butterflies`, `dragonflies`, `flies` (by day, unchanged)
+and `east` at 19:00 pass.
+
 ## Loop pass 256 (2026-10-20) — the stars behind the clouds
 
 After the moon (Loop pass 254), the stars: the low ones (below about 27 degrees, where the

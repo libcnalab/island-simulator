@@ -5518,12 +5518,24 @@ namespace island
 
         {
             GpuDiagnosticScope gpuPass("butterflies");
+            // The day fliers (butterflies, dragonflies, flies) go to roost in the leaves at dusk,
+            // one by one as the light goes, and come out again in the morning.
+            const float dusk = std::clamp((-sun_light::Current().lighting.sunElevationDegrees + 1.0f) / 6.0f, 0.0f, 1.0f);
+            const auto awake = [dusk](const auto& all, auto& kept) {
+                kept.clear();
+                for (std::size_t i = 0; i < all.size(); ++i)
+                    if (dusk <= 0.0f || static_cast<float>((i * 37U) % 100U) / 100.0f >= dusk) kept.push_back(all[i]);
+                return std::span(kept.data(), kept.size());
+            };
+            const auto butterflies = awake(butterflyMeadow_.Butterflies(), awakeButterflies_);
+            const auto dragonflies = awake(dragonflySwarm_.Dragonflies(), awakeDragonflies_);
+            const auto flies = awake(flySwarms_.Flies(), awakeFlies_);
             butterflyRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
-                                     butterflyMeadow_.Butterflies(),
+                                     butterflies,
                                      butterflyMeadow_.FlowerPatches(),
                                      geckoPopulation_.Geckos(), skinkPopulation_.Skinks(),
-                                     dragonflySwarm_.Dragonflies(), frogPopulation_.Frogs(),
-                                     rodentPopulation_.Rodents(), flySwarms_.Flies(),
+                                     dragonflies, frogPopulation_.Frogs(),
+                                     rodentPopulation_.Rodents(), flies,
                                      antTrails_.Ants(), cicadaColony_.Cicadas(),
                                      beetlePopulation_.Beetles());
         }
