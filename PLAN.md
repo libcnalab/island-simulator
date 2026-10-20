@@ -54,6 +54,29 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 126 (2026-10-20) — a resting goat lies down
+
+The goats, like the boars before pass 119, stood through every rest. `GoatState::lieAmount`
+(0..1) and the herd's `Intent::restSeconds` / `lying` carry a lie-down: a rest two seconds
+in with no walker inside the sentinel's alert range, no startle and no retreat settles the
+goat at 0.7/s and lengthens the rest by 8 s; any disturbance or the next walk has it up at
+2.0/s. `LieCount()`, `LyingCount()` and `Lying(index)` report it. The authoritative pose
+carries the lie inside `ContactPose`: the body origin settles 0.30 m (scaled) along its up
+axis, the gait bob fades, and each leg's knee and hoof blend from the planted chain to a
+folded one (fore cannons back along the ground from knees set forward, hind legs tucked
+with the hooves brought forward); the blended hoof is then re-grounded exactly at its sole
+on the rendered terrain and takes the ground's normal there, as a planted foot does, so the
+sole-contact and hoof-penetration audits hold through the fold; the planted-foot
+invariant in the herd test is exempted while a goat folds or rises. A QA viewpoint
+`goat-lying` (`GoatLyingDetail`, `PreviewLie(1)` each frame with the herd frozen) frames
+the second goat down at rest, nearer and lower than `goats`; the capture tool accepts it
+and requires the lying camera line. The goats report line gains "a rest two seconds in,
+undisturbed, settles a goat onto folded legs for a longer lie, and the walker's approach
+has it up at once" (pinned). Goat herd checks: the second goat lies down within three
+minutes with nobody about, its body 0.2–0.4 m lower, every hoof on the ground and no leg
+flagged unreachable, and the walker at ten metres has it up within half a second. Native
+`goat-lying` passes (the goat lies on folded legs, hooves on the turf, head up).
+
 ## Loop pass 125 (2026-10-20) — snakes flick their tongues
 
 A snake's head was a closed muzzle. `SnakeState::tongue` (0..1) now carries the forked

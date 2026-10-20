@@ -7,6 +7,9 @@ enum class GoatBehavior { Graze,Walk,Rest,Retreat,Drink,Spar };
 struct GoatState {
     float x=0,y=0,z=0,heading=0,speed=0,phase=0,grazingPose=0;
     float scale=1;
+    // 0..1 lying down: a rest two seconds in, undisturbed, settles the goat onto folded legs,
+    // body on the ground (the pose carries it); the walker's approach has it up at once.
+    float lieAmount=0;
     GoatBehavior behavior=GoatBehavior::Graze;
     GoatGroundPose pose{}; // Authoritative planted-foot pose shared with rendering.
     bool operator==(const GoatState&) const = default;
@@ -42,6 +45,15 @@ public:
     [[nodiscard]] std::size_t SparringCount() const noexcept;
     [[nodiscard]] std::uint32_t SparCount() const noexcept {return spars_;}
     [[nodiscard]] int SparPartner(std::size_t index) const noexcept {return index<GoatHabitat::Count?intents_[index].partner:-1;}
+    // Lie-downs begun: a rest LieDelaySeconds in, with no walker, startle or retreat, settles
+    // the goat onto folded legs and lengthens the rest by LieBonusSeconds; any disturbance
+    // or the next walk has it up at RiseRate.
+    [[nodiscard]] std::uint32_t LieCount() const noexcept {return lies_;}
+    [[nodiscard]] std::size_t LyingCount() const noexcept;
+    [[nodiscard]] bool Lying(std::size_t index) const noexcept {return index<GoatHabitat::Count&&intents_[index].lying;}
+    // QA: holds one goat lying at rest for a still capture.
+    void PreviewLie(std::size_t index);
+    static constexpr float LieDelaySeconds=2.0f,LieBonusSeconds=8.0f,LieDownRate=.7f,RiseRate=2.0f;
 private:
     void FindDrinkingPoint(std::size_t index) noexcept;
     void Step(std::size_t index,float dt,GoatPoint observer,bool observerValid);
@@ -60,10 +72,12 @@ private:
         float remaining=0,targetHeading=0,avoidance=0; std::uint32_t decisions=0;
         float drinkX=0,drinkZ=0,faceX=0,faceZ=0; bool hasDrink=false;
         int partner=-1; float sparClock=0;
+        float restSeconds=0; bool lying=false;   // time into the undisturbed rest, and down
     };
     std::array<Intent,GoatHabitat::Count> intents_{};
     float sentinelAlertSeconds_=0;
     float disturbanceX_=0,disturbanceZ_=0,disturbanceSeconds_=0;
     std::uint32_t spars_=0;
+    std::uint32_t lies_=0;
 };
 }

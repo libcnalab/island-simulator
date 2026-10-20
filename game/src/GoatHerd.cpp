@@ -120,6 +120,41 @@ GoatGroundPose GoatHerd::ContactPose(const GoatState& state,const Feet& feet) co
         const auto project=[&](GoatPoint axis){return normal.x*axis.x+normal.y*axis.y+normal.z*axis.z;};
         pose.legs[leg].soleNormal={project(pose.right),project(pose.up),project(pose.forward)};
     }
+    // Lying: the body settles along its up axis and the legs fold under it, the fore
+    // cannons lying back along the ground from knees set forward, the hind legs tucked with
+    // the hooves brought forward, each hoof on the ground under the lowered body.
+    const float lie=std::clamp(state.lieAmount,0.0f,1.0f);
+    if(lie>0) {
+        const float drop=lie*.30f*state.scale;
+        pose.origin={pose.origin.x-pose.up.x*drop,pose.origin.y-pose.up.y*drop,pose.origin.z-pose.up.z*drop};
+        pose.bodyBob*=1-lie;
+        for(std::size_t leg=0;leg<4;++leg) {
+            const bool front=leg%2==1;
+            auto& chain=pose.legs[leg];
+            const auto root=chain.root;
+            GoatPoint hoof{root.x*1.12f,0,front?root.z-.20f:root.z+.40f};
+            auto world=pose.ToWorld(hoof);
+            world.y=surface_.Sample(world.x,world.z).height;
+            const float ground=pose.ToLocal(world).y;
+            hoof.y=ground+GoatLegPose::HoofHeight;
+            const GoatPoint knee{root.x*1.06f,ground+.12f,root.z+(front?.16f:.12f)};
+            const auto mix=[lie](GoatPoint a,GoatPoint b){return GoatPoint{std::lerp(a.x,b.x,lie),std::lerp(a.y,b.y,lie),std::lerp(a.z,b.z,lie)};};
+            chain.knee=mix(chain.knee,knee);
+            // The blended hoof is re-grounded exactly at its sole, as the standing solver
+            // grounds the planted feet, so the contact stays on the rendered terrain
+            // through the fold.
+            const auto blended=mix(chain.hoof,hoof);
+            auto sole=pose.ToWorld({blended.x,blended.y-GoatLegPose::HoofHeight,blended.z+GoatLegPose::SoleForward});
+            sole.y=surface_.Sample(sole.x,sole.z).height;
+            const auto grounded=pose.ToLocal(sole);
+            chain.hoof={grounded.x,grounded.y+GoatLegPose::HoofHeight,grounded.z-GoatLegPose::SoleForward};
+            // The sole takes the ground's normal where it now rests, as a planted foot does.
+            const auto normal=surface_.Sample(sole.x,sole.z).normal;
+            const auto project=[&](GoatPoint axis){return normal.x*axis.x+normal.y*axis.y+normal.z*axis.z;};
+            chain.soleNormal={project(pose.right),project(pose.up),project(pose.forward)};
+            chain.stance=true;chain.reachLimited=false;
+        }
+    }
     return pose;
 }
 void GoatHerd::AdvanceFeet(std::size_t index,float dt) {
@@ -279,6 +314,16 @@ void GoatHerd::Step(std::size_t index,float dt,GoatPoint observer,bool observerV
     // shove is the same lowering, taken in turns with its partner.
     const float graze=(state.behavior==GoatBehavior::Graze||drinking||butting)&&state.speed<.05f?1.0f:0.0f;
     state.grazingPose+=std::clamp(graze-state.grazingPose,-2*dt,dt);
+    // A rest two seconds in, undisturbed, settles the goat onto folded legs for a longer
+    // lie; the walker within the alert range, a startle, a retreat or the next walk has it
+    // on its feet again within half a second.
+    const bool undisturbed=state.behavior==GoatBehavior::Rest&&observerRange>=SentinelAlertDistance
+        &&!startled&&!retreat&&state.speed<.05f;
+    intent.restSeconds=undisturbed?intent.restSeconds+dt:0;
+    const bool shouldLie=undisturbed&&intent.restSeconds>LieDelaySeconds;
+    if(shouldLie&&!intent.lying) {++lies_;intent.remaining+=LieBonusSeconds;}
+    intent.lying=shouldLie;
+    state.lieAmount+=std::clamp((intent.lying?1.0f:0.0f)-state.lieAmount,-dt*RiseRate,dt*LieDownRate);
     if(state.speed<=.0001f) { state.speed=0;return; }
     const float heading=Wrap(state.heading+std::clamp(Wrap(intent.targetHeading-state.heading),-1.8f*dt,1.8f*dt));
     bool waitingForStep=false;
@@ -313,6 +358,18 @@ std::size_t GoatHerd::SparringCount() const noexcept {
 void GoatHerd::NoteDisturbance(float x,float z) noexcept {
     if(!std::isfinite(x)||!std::isfinite(z)) return;
     disturbanceX_=x;disturbanceZ_=z;disturbanceSeconds_=StartleSeconds;
+}
+std::size_t GoatHerd::LyingCount() const noexcept {
+    std::size_t count=0;
+    for(const auto& intent:intents_) count+=intent.lying?1U:0U;
+    return count;
+}
+void GoatHerd::PreviewLie(std::size_t index) {
+    if(index>=states_.size()) return;
+    auto& state=states_[index];auto& intent=intents_[index];
+    state.behavior=GoatBehavior::Rest;state.speed=0;state.grazingPose=0;state.lieAmount=1;
+    intent.remaining=30;intent.restSeconds=LieDelaySeconds+1;intent.lying=true;
+    state.pose=ContactPose(state,feet_[index]);
 }
 void GoatHerd::Update(float dt,GoatPoint observer) {
     if(!std::isfinite(dt)||dt<=0) return;

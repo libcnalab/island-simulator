@@ -230,6 +230,7 @@ namespace island
         BoarDetail,
         BoarLyingDetail,
         GoatDetail,
+        GoatLyingDetail,
         DeerDetail,
         DeerBeddedDetail,
         SpiderDetail,

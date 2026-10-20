@@ -79,7 +79,9 @@ int main() {
                 const auto& current=s.pose.legs[leg];const auto& previous=p.pose.legs[leg];
                 supports+=current.stance?1:0;
                 check(!current.reachLimited,"authoritative goat contact pose is unreachable");
-                if(current.stance&&previous.stance) {
+                // A goat folding its legs to lie down, or rising, moves its hooves under it;
+                // the planted-foot invariant holds for a goat on its feet.
+                if(current.stance&&previous.stance&&s.lieAmount==0&&p.lieAmount==0) {
                     const auto a=p.pose.ToWorld({previous.hoof.x,previous.hoof.y-GoatLegPose::HoofHeight,
                         previous.hoof.z+GoatLegPose::SoleForward});
                     const auto b=s.pose.ToWorld({current.hoof.x,current.hoof.y-GoatLegPose::HoofHeight,
@@ -189,6 +191,29 @@ int main() {
             if(sb.grazingPose>.9f&&sa.grazingPose<.3f) bLowered=true;
         }
         check(aLowered&&bLowered,"sparring goats do not take turns lowering their heads");
+    }
+    {
+        // A resting goat lies down: a rest two seconds in, undisturbed, settles the goat onto
+        // folded legs (the rest lengthened for it); the lying pose sits lower with every hoof
+        // on the ground; the walker at ten metres has it up within half a second.
+        GoatHerd liers(terrain,jungle,occupied);
+        const GoatPoint nobody{std::numeric_limits<float>::quiet_NaN(),0,0};
+        bool lay=false;
+        for(int frame=0;frame<3600&&!lay;++frame) { liers.Update(.05f,nobody); lay=liers.Goats()[1].lieAmount>.9f; }
+        check(lay&&liers.LieCount()>=1&&liers.Lying(1)&&liers.Goats()[1].behavior==GoatBehavior::Rest,
+            "a resting goat does not lie down within three minutes");
+        const auto lying=liers.Goats()[1];
+        const auto standing=FitGoatGroundPose(terrain,surface,lying.x,lying.z,lying.heading,0,0,lying.scale);
+        check(standing.origin.y-lying.pose.origin.y>.2f&&standing.origin.y-lying.pose.origin.y<.4f,
+            "the lying goat's body does not settle lower");
+        for(const auto& leg:lying.pose.legs) {
+            const auto sole=lying.pose.ToWorld({leg.hoof.x,leg.hoof.y-GoatLegPose::HoofHeight,leg.hoof.z});
+            check(std::abs(sole.y-surface.Sample(sole.x,sole.z).height)<.12f,"a lying goat's hoof leaves the ground");
+            check(!leg.reachLimited,"a lying goat's folded leg is flagged unreachable");
+        }
+        bool up=false;
+        for(int frame=0;frame<12&&!up;++frame) { liers.Update(.05f,{lying.x+10,lying.y+1.6f,lying.z}); up=liers.Goats()[1].lieAmount<.2f&&!liers.Lying(1); }
+        check(up,"the walker at ten metres does not get the lying goat up within half a second");
     }
     const std::array<CircularObstacle,1> blocked{{{0,0,400}}};
     bool rejected=false;

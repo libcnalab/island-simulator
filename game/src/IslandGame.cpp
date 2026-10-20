@@ -208,6 +208,7 @@ namespace island
             case FixedViewpoint::BoarDetail: return "boars";
             case FixedViewpoint::BoarLyingDetail: return "boar-lying";
             case FixedViewpoint::GoatDetail: return "goats";
+            case FixedViewpoint::GoatLyingDetail: return "goat-lying";
             case FixedViewpoint::DeerDetail: return "deer";
             case FixedViewpoint::DeerBeddedDetail: return "deer-bedded";
             case FixedViewpoint::SpiderDetail: return "spiders";
@@ -1694,13 +1695,17 @@ namespace island
             const auto direction=Vector3(spider.x,spider.y+.035f,spider.z)-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
-        } else if (viewpoint_ == FixedViewpoint::GoatDetail) {
-            const auto& goat=goats_->Goats().front();
-            const float x=goat.x+7.5f,z=goat.z+4.0f;
-            cameraPosition_=Vector3(x,std::max(terrain_.Height(x,z)+.4f,goat.y+2.1f),z);
-            const auto direction=Vector3(goat.x,goat.y+.75f,goat.z)-cameraPosition_;
+        } else if (viewpoint_ == FixedViewpoint::GoatDetail || viewpoint_ == FixedViewpoint::GoatLyingDetail) {
+            // The lying view holds the second goat down at rest, framed nearer and lower.
+            const bool lying=viewpoint_==FixedViewpoint::GoatLyingDetail;
+            if(lying) goats_->PreviewLie(1U);
+            const auto& goat=lying?goats_->Goats()[1U]:goats_->Goats().front();
+            const float x=goat.x+(lying?5.0f:7.5f),z=goat.z+(lying?2.6f:4.0f);
+            cameraPosition_=Vector3(x,std::max(terrain_.Height(x,z)+.4f,goat.y+(lying?1.6f:2.1f)),z);
+            const auto direction=Vector3(goat.x,goat.y+(lying?.35f:.75f),goat.z)-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            if(lying) std::cout<<"island-simulator: goat QA camera frames one resting goat lying on folded legs\n";
         } else if (viewpoint_ == FixedViewpoint::DeerDetail || viewpoint_ == FixedViewpoint::DeerBeddedDetail) {
             const bool bedded=viewpoint_==FixedViewpoint::DeerBeddedDetail;
             // The bedded view sets the antlered deer down as a shade rest does and frames it
@@ -2214,7 +2219,8 @@ namespace island
                   << " agents with retained stance anchors; canopy webs "
                   << spiderWebRenderer_->SiteCount()<<" qualified sites in one bounded translucent batch\n";
         std::cout << "island-simulator: goats " << goats_->Goats().size()
-                  << " agents on shared-field dry open slopes, terrain-fitted limbs, directional fur material\n";
+                  << " agents on shared-field dry open slopes, terrain-fitted limbs, directional fur material; "
+                  << "a rest two seconds in, undisturbed, settles a goat onto folded legs for a longer lie, and the walker's approach has it up at once\n";
         std::cout << "island-simulator: deer " << deer_->Deer().size()
                   << " agents graze and walk in two inland clearings and the stream valley and retreat non-aggressively\n";
         std::cout << "island-simulator: boars " << boarHerd_.Boars().size()
@@ -3194,7 +3200,8 @@ namespace island
         const GoatPoint goatObserver=UsesGoatCaptureClock()
             ?GoatPoint{std::numeric_limits<float>::quiet_NaN(),0,0}
             :GoatPoint{cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z};
-        measureWildlife(1, [&] { goats_->Update(deltaSeconds,goatObserver); });
+        if(viewpoint_==FixedViewpoint::GoatLyingDetail) goats_->PreviewLie(1U);
+        measureWildlife(1, [&] { goats_->Update(viewpoint_==FixedViewpoint::GoatLyingDetail?0.0f:deltaSeconds,goatObserver); });
         // The sentinel coming alert at the walker gives the alarm bleat.
         if(soundscape_&&goats_->SentinelAlert()&&!goatSentinelWasAlert_) soundscape_->NoteGoatAlarm(0U);
         goatSentinelWasAlert_=goats_->SentinelAlert();
@@ -4148,7 +4155,7 @@ namespace island
                                            renderCameraPosition_ + forward,
                                            Vector3::Up);
         cameraProjection_ = Matrix::CreatePerspectiveFieldOfView(
-            (viewpoint_==FixedViewpoint::BoarDetail||viewpoint_==FixedViewpoint::BoarLyingDetail||viewpoint_==FixedViewpoint::GoatDetail
+            (viewpoint_==FixedViewpoint::BoarDetail||viewpoint_==FixedViewpoint::BoarLyingDetail||viewpoint_==FixedViewpoint::GoatDetail||viewpoint_==FixedViewpoint::GoatLyingDetail
                 ||viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail
                 ||viewpoint_==FixedViewpoint::ResidentDetail||viewpoint_==FixedViewpoint::BearDetail
                 ||viewpoint_==FixedViewpoint::MouseDetail||viewpoint_==FixedViewpoint::RatDetail
