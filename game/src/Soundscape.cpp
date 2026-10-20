@@ -244,6 +244,25 @@ namespace island
         }
     }
 
+    void Soundscape::NoteQuadImpact(const float strength, const float x, const float y, const float z,
+                                    const bool riding) noexcept
+    {
+        if (!available_ || muted_ || !impactEffect_ || !std::isfinite(strength) || !std::isfinite(x) || !std::isfinite(z)) return;
+        (void)y;
+        float volume = std::clamp(0.35f + 0.65f * strength, 0.0f, 1.0f) * underwaterAudio_.airGain;
+        if (!riding) volume *= std::clamp(1.0f - (std::hypot(x - listenerX_, z - listenerZ_) - 4.0f) / 50.0f, 0.0f, 1.0f);
+        if (volume < 0.02f) return;
+        try {
+            impactInstance_ = std::make_unique<SoundEffectInstance>(impactEffect_->CreateInstance());
+            impactInstance_->setVolumeProperty(volume);
+            impactInstance_->setPitchProperty(std::clamp(0.1f - 0.3f * strength, -0.3f, 0.1f));   // a harder hit, a deeper note
+            impactInstance_->Play();
+            ++playedImpactCount_;
+        } catch (const std::exception&) {
+            impactInstance_.reset();
+        }
+    }
+
     void Soundscape::SetWeather(const float rain, const std::uint32_t strikes, const float strikeDistance) noexcept
     {
         weatherRain_ = std::isfinite(rain) ? std::clamp(rain, 0.0f, 1.0f) : 0.0f;
@@ -433,6 +452,8 @@ namespace island
                 engineInstances_[i] = std::make_unique<SoundEffectInstance>(engineEffects_[i]->CreateInstance());
                 engineInstances_[i]->setIsLoopedProperty(true);
             }
+            impactEffect_ = CreateOneShotSoundEffect(GenerateQuadImpact());
+            impactEffect_->setNameProperty("Procedural quad impact");
             rainEffect_=CreateLoopedSoundEffect(GenerateRainLoop());
             rainEffect_->setNameProperty("Procedural rain");
             rainInstance_=std::make_unique<SoundEffectInstance>(rainEffect_->CreateInstance());

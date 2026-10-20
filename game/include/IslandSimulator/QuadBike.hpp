@@ -82,6 +82,9 @@ namespace island
         [[nodiscard]] float EngineRpm() const noexcept { return rpm_; }
         [[nodiscard]] float Throttle() const noexcept { return throttle_; }
         [[nodiscard]] std::uint32_t Rollovers() const noexcept { return rollovers_; }
+        /** @brief The hardest knock in the last Step, m/s: speed into a tree or rock, of the
+         *  chassis meeting the ground, or of a wheel's travel bottoming out on a landing. */
+        [[nodiscard]] float LastImpact() const noexcept { return impact_; }
         /** @brief Per wheel (front-left, front-right, rear-left, rear-right): compression 0..1,
          *  spin angle, contact, and the hub position in the world. */
         [[nodiscard]] float Compression(int wheel) const noexcept { return compression_[static_cast<std::size_t>(wheel)]; }
@@ -104,7 +107,7 @@ namespace island
         std::array<float, 4> compression_{}, spin_{}, previousLength_{};
         std::array<bool, 4> contact_{};
         std::array<BikeVec, 4> hub_{};
-        float steer_ = 0.0f, rpm_ = IdleRpm, throttle_ = 0.0f;
+        float steer_ = 0.0f, rpm_ = IdleRpm, throttle_ = 0.0f, impact_ = 0.0f;
         bool wasOverturned_ = false;
         std::uint32_t rollovers_ = 0;
     };

@@ -68,6 +68,9 @@ namespace island
      *  EngineLowRpm, 1 at EngineHighRpm; played pitch-shifted and crossfaded by the revs. */
     [[nodiscard]] AmbientLoop GenerateEngineLoop(std::uint8_t variant);
     inline constexpr float EngineLowRpm = 2200.0f, EngineHighRpm = 5600.0f;
+    /** @brief The quad striking something or landing on its side: a dull body thump, the crack
+     *  of its plastic and a rattle of loose metal, under a second. */
+    [[nodiscard]] AmbientLoop GenerateQuadImpact();
 
     /** @brief Generates one four-second stronger-wave wash for sparse shoreline accents. */
     [[nodiscard]] AmbientLoop GenerateWaveAccent();

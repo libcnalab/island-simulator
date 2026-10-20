@@ -12,6 +12,8 @@
 #include "IslandSimulator/QuadRider.hpp"
 #include "IslandSimulator/QuadBikeRenderer.hpp"
 #include "IslandSimulator/QuadBike.hpp"
+#include "IslandSimulator/QuadWheelTraces.hpp"
+#include "IslandSimulator/TyreTrackRenderer.hpp"
 #include "IslandSimulator/RainRenderer.hpp"
 #include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/TimeOfDayRenderer.hpp"
@@ -249,6 +251,7 @@ namespace island
         QuadDetail,
         QuadRideDetail,
         QuadChaseDetail,
+        QuadDriveDetail,
         CrabDetail,
         HermitCrabDetail,
         CoconutCrabDetail,
@@ -532,6 +535,12 @@ namespace island
         std::unique_ptr<QuadRider> quadRider_;
         ExhaustSmokeField exhaust_;
         std::unique_ptr<RootingDustRenderer> exhaustRenderer_;
+        TyreTrackField tyreTracks_;
+        WheelThrowField wheelDust_{WheelThrowField::Kind::Dust}, wheelSpray_{WheelThrowField::Kind::Spray};
+        std::unique_ptr<TyreTrackRenderer> tyreTrackRenderer_;
+        std::unique_ptr<RootingDustRenderer> wheelDustRenderer_, wheelSprayRenderer_;
+        std::uint32_t quadPreviousRollovers_ = 0;
+        float quadImpactCooldown_ = 0.0f;
         std::unique_ptr<RenderedTerrainSurface> quadSurface_;
         BikeControls quadControls_{};
         bool riding_ = false, quadKeyWasDown_ = false, quadRightKeyWasDown_ = false, quadPlaced_ = false;
@@ -542,6 +551,7 @@ namespace island
         void PlaceQuadNear(float x, float z, float yawRadians);
         [[nodiscard]] float QuadLampNightness() const noexcept;
         void UpdateQuad(float deltaSeconds);
+        void UpdateQuadChaseCamera(float deltaSeconds);
         void ToggleQuad();
         std::unique_ptr<RainRenderer> rain_;
         bool weatherKeyWasDown_ = false;

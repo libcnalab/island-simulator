@@ -54,6 +54,28 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Quad bike pass 2 (2026-10-20) — ruts, dust, spray and knocks
+
+What the wheels leave and throw. A core `TyreTrackField` lays a piece of rut every third of a
+metre behind each wheel rolling on sand or soil (none on rock or under water), as wide as the
+tyre and pressed deeper under load; the ground keeps them five minutes, the wet sand at the
+water's edge one (480 pieces, the oldest giving way). `TyreTrackRenderer` draws each piece as a
+terrain-conforming rut, darker inside soft lips, with the knobs' staggered prints across it
+within 22 m, alpha-blended beside the footprints, to 42 m. A core `WheelThrowField` (two
+instances): dust off dry sand and coastal soil (the forest floor only after a dry spell, none
+in the wet), from 2 m/s, more with the speed and from the driven rear wheels, hanging in the
+quad's wake, swelling, settling and drifting downwind within 1.8 s; spray in water deeper
+than 3 cm, flung up and back and falling within 0.8 s (each 96 puffs, drawn as dust puffs in
+sand and foam colours). `QuadBike::LastImpact` reports the hardest knock of a step (the speed
+into a tree or rock, of the chassis meeting the ground, or of a wheel's travel bottoming out),
+and from 2 m/s, or on a rollover, the soundscape plays a procedural knock (a sagging body
+thump, the crack of the plastic and a second knock, a rattle of loose metal), louder and deeper
+the harder it is. A new QA view `quad-drive` sets off up the beach path from the south shore
+on a fixed clock (32 updates of 0.1 s) with the chase camera following: 39 km/h, 100 rut
+pieces and the dust behind. Core checks: ruts per third of a metre on sand, none on rock,
+short-lived on wet sand; dust at speed only, spray only in water; a tree knocks hard, the flat
+does not.
+
 ## Quad bike pass 1 (2026-10-20) — ride a utility quad over the island
 
 Operator request: an ATV to ride, switched to and from walking by a key, with a CNA avatar on

@@ -518,6 +518,29 @@ namespace island
         return Quantize(samples, near ? 0.92f : 0.75f);
     }
 
+    AmbientLoop GenerateQuadImpact()
+    {
+        constexpr float seconds = 0.9f;
+        const auto frameCount = static_cast<std::size_t>(AmbientSampleRate * seconds);
+        const std::vector<float> noise = Noise(0x3c6ef372U, frameCount);
+        const std::vector<float> mid = CircularSmooth(noise, 5U);
+        const std::vector<float> low = CircularSmooth(noise, 40U);
+        std::vector<float> samples(frameCount, 0.0f);
+        for (std::size_t i = 0; i < frameCount; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            // the body's thump, its pitch sagging as it rings down
+            const float thump = std::sin(2.0f * std::numbers::pi_v<float> * (78.0f * t - 18.0f * t * t)) * std::exp(-t * 11.0f);
+            // the plastic's crack and a second knock as it settles
+            const float crack = (noise[i] - mid[i]) * (std::exp(-t * 60.0f) + 0.45f * std::exp(-std::max(t - 0.14f, 0.0f) * 45.0f)
+                                                        * (t > 0.14f ? 1.0f : 0.0f));
+            // loose metal rattling: bursts of bright noise, fading
+            const float rattle = (mid[i] - low[i]) * 0.55f * std::exp(-t * 6.0f)
+                * (0.5f + 0.5f * std::sin(2.0f * std::numbers::pi_v<float> * 23.0f * t));
+            samples[i] = thump * 0.9f + low[i] * 2.4f * std::exp(-t * 16.0f) + crack * 1.3f + rattle;
+        }
+        return Quantize(samples, 0.9f);
+    }
+
     AmbientLoop GenerateEngineLoop(const std::uint8_t variant)
     {
         // A 450 cc single fires every second revolution: a bark of exhaust per firing (a short

@@ -66,6 +66,7 @@
 #include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/QuadBike.hpp"
 #include "IslandSimulator/ExhaustSmokeField.hpp"
+#include "IslandSimulator/QuadWheelTraces.hpp"
 #include "IslandSimulator/CrabBubbleField.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
 #include "IslandSimulator/CicadaColony.hpp"
@@ -6786,6 +6787,24 @@ int main()
         std::cout << "quad bike: top " << topSpeed * 3.6f << " km/h, 0-50 km/h in " << timeTo50 << " s, brakes from top in "
                   << brakeDistance << " m\n";
 
+        // Knocks: driving on the flat makes none; a tree at speed makes a hard one.
+        QuadBike rider({0.0f, 0.0f, 0.0f}, 0.0f);
+        rider.Place({0.0f, 0.0f, 0.0f}, 0.0f, flat);
+        const auto tree = [](float x, float z, float radius, float& pushX, float& pushZ) {
+            const float dx = x - 0.0f, dz = z - 30.0f, distance = std::hypot(dx, dz), reach = radius + 0.4f;
+            if (distance >= reach || distance < 1e-4f) return false;
+            pushX = dx / distance * (reach - distance);
+            pushZ = dz / distance * (reach - distance);
+            return true;
+        };
+        float flatKnock = 0.0f, treeKnock = 0.0f;
+        for (int i = 0; i < 60 * 8; ++i) {
+            rider.Step(1.0f / 60.0f, {0.7f, 0.0f, false}, flat, tree);
+            if (i > 60 && rider.Position().z < 27.0f) flatKnock = std::max(flatKnock, rider.LastImpact());
+            if (rider.Position().z >= 27.0f) treeKnock = std::max(treeKnock, rider.LastImpact());
+        }
+        Check(flatKnock < 1.5f && treeKnock > 4.0f, "a tree at speed knocks the quad hard; the flat does not");
+
         // The engine's two loops: whole firing cycles of a single near two seconds, audible,
         // the high one firing faster (more barks a second).
         const auto low = island::GenerateEngineLoop(0), high = island::GenerateEngineLoop(1);
@@ -6832,6 +6851,43 @@ int main()
         bool cleared = true;
         for (const auto& puff : open.Puffs()) cleared = cleared && !puff.active;
         Check(cleared, "the exhaust clears within its life once the engine stops");
+
+        // The wheels' traces: ruts on sand every third of a metre, none on rock; the wet sand's
+        // go sooner; dust off dry ground at speed, none at a walk; spray only in water.
+        std::array<island::WheelOnGround, 4> wheels{};
+        for (auto& wheel : wheels) { wheel.down = true; wheel.soft = true; wheel.dusty = true; wheel.load = 0.4f; }
+        island::TyreTrackField ruts;
+        for (int i = 0; i <= 100; ++i) {
+            for (std::size_t w = 0; w < wheels.size(); ++w) {
+                wheels[w].x = (w % 2 == 0 ? -1.0f : 1.0f) * (w < 2 ? 0.59f : 0.80f);
+                wheels[w].z = static_cast<float>(i) * 0.1f + (w < 2 ? 0.625f : -0.625f);
+                wheels[w].soft = w != 3;   // the rear right on rock
+                wheels[w].wet = w == 1;
+            }
+            ruts.Update(1.0f / 60.0f, wheels);
+        }
+        std::size_t perWheel[4] = {0, 0, 0, 0};
+        float wetLife = 0.0f;
+        for (const auto& track : ruts.Tracks()) {
+            if (!track.active) continue;
+            const std::size_t w = (track.x0 < 0.0f ? 0U : 1U) + (std::abs(track.x0) > 0.7f ? 2U : 0U);
+            ++perWheel[w];
+            if (w == 1U) wetLife = track.life;
+        }
+        Check(perWheel[0] >= 20 && perWheel[0] <= 32 && perWheel[3] == 0 && wetLife == island::TyreTrackField::WetLifeSeconds,
+              "tyres leave a rut piece every third of a metre on sand, none on rock, short-lived on wet sand");
+        for (auto& wheel : wheels) wheel.soft = true;
+        island::WheelThrowField dust(island::WheelThrowField::Kind::Dust), walk(island::WheelThrowField::Kind::Dust),
+            spray(island::WheelThrowField::Kind::Spray), dry(island::WheelThrowField::Kind::Spray);
+        for (int i = 0; i < 60; ++i) {
+            dust.Update(1.0f / 60.0f, wheels, {0.0f, 0.0f, 12.0f}, 1.0f, 0.0f);
+            walk.Update(1.0f / 60.0f, wheels, {0.0f, 0.0f, 1.0f}, 1.0f, 0.0f);
+            dry.Update(1.0f / 60.0f, wheels, {0.0f, 0.0f, 8.0f}, 1.0f, 0.0f);
+        }
+        for (auto& wheel : wheels) wheel.waterDepth = 0.2f;
+        for (int i = 0; i < 60; ++i) spray.Update(1.0f / 60.0f, wheels, {0.0f, 0.0f, 8.0f}, 1.0f, 0.0f);
+        Check(dust.Emitted() > 10U && walk.Emitted() == 0U && spray.Emitted() > 10U && dry.Emitted() == 0U,
+              "the wheels throw dust off dry ground at speed (not at a walk) and spray only in water");
     }
     const island::GrassLodSplit emptyGrassLod = island::GrassLod::Split(0, 82.0f);
     Check(emptyGrassLod.nearCount == 0 && emptyGrassLod.middleCount == 0

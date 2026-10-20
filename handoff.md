@@ -78,8 +78,9 @@ Operator request 2026-10-20 (the next task after the weather): ride a quad bike 
       shadow, headlights by day and a pool of light on the ground at night (PLAN "Quad bike pass 1").
 - [x] Drives over the island's terrain with suspension, can roll over; Backspace rights it.
 - [x] Engine sound following the revs; a top speed of a real ATV (80 km/h).
-- [ ] Still open: dust and spray from the wheels, tyre tracks in sand, a crash sound, the
-      engine heard from the walker's ears while it idles parked (it stops when you step off).
+- [x] Tyre tracks in sand and soil, dust off dry ground, spray in the shallows, a knock sound
+      for trees, rocks, hard landings and rollovers (PLAN "Quad bike pass 2").
+- [ ] Still open: the engine idling on after you step off (it stops now), skid sounds.
 
 Loop log (propose → implement, continues until the operator stops the session):
 - Pass 1: dappled leaf-gap sun flecks on the shaded forest floor; `ground` view reclassified

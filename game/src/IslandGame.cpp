@@ -215,6 +215,7 @@ namespace island
             case FixedViewpoint::QuadDetail: return "quad";
             case FixedViewpoint::QuadRideDetail: return "quad-ride";
             case FixedViewpoint::QuadChaseDetail: return "quad-chase";
+            case FixedViewpoint::QuadDriveDetail: return "quad-drive";
             case FixedViewpoint::CrabDetail: return "crabs";
             case FixedViewpoint::HermitCrabDetail: return "hermit-crabs";
             case FixedViewpoint::CoconutCrabDetail: return "coconut-crabs";
@@ -2065,7 +2066,7 @@ namespace island
         getWindowProperty().setTitleProperty("island-simulator");
         setIsMouseVisibleProperty(true);
         // Capture-only clock: no wall-time catch-up updates between recorded frames.
-        setIsFixedTimeStepProperty(benchmarkPath_.empty() && !UsesSnakeCaptureClock() && !UsesGoatCaptureClock() && !UsesSpiderCaptureClock() && !UsesBoarCaptureClock()&&!UsesCampfireCaptureClock()&&!UsesResidentCaptureClock()&&!UsesBearCaptureClock());
+        setIsFixedTimeStepProperty(benchmarkPath_.empty() && !UsesSnakeCaptureClock() && !UsesGoatCaptureClock() && !UsesSpiderCaptureClock() && !UsesBoarCaptureClock()&&!UsesCampfireCaptureClock()&&!UsesResidentCaptureClock()&&!UsesBearCaptureClock()&&!(viewpoint_==FixedViewpoint::QuadDriveDetail&&!capturePath_.empty()));
         InitializeUserSettings();
 #if defined(__EMSCRIPTEN__)
         soundscapeNeedsGesture_ = true;
@@ -2449,6 +2450,13 @@ namespace island
                 "island-simulator: the quad's exhaust puffs thicker with the throttle, carried with its speed and drifting downwind",
                 112, 112, 118, ExhaustSmokeField::Capacity);
             quadSurface_ = std::make_unique<RenderedTerrainSurface>(terrain_);
+            tyreTrackRenderer_ = std::make_unique<TyreTrackRenderer>(device, terrain_);
+            wheelDustRenderer_ = std::make_unique<RootingDustRenderer>(device,
+                "island-simulator: the quad's wheels throw dust off dry sand and soil, more with the speed, settling downwind",
+                214, 200, 172, WheelThrowField::Capacity);
+            wheelSprayRenderer_ = std::make_unique<RootingDustRenderer>(device,
+                "island-simulator: driven through the shallows the quad's wheels fling spray up and back",
+                226, 234, 238, WheelThrowField::Capacity);
             // Parked in a clear, level spot beside the hut, facing away from it.
             if (hutPlacement_) {
                 const auto& h = *hutPlacement_;
@@ -2468,7 +2476,22 @@ namespace island
                 }
             }
             if (!quadPlaced_) PlaceQuadNear(cameraPosition_.X + 3.0f, cameraPosition_.Z, 0.0f);
-            if (viewpoint_ == FixedViewpoint::QuadChaseDetail) {
+            if (viewpoint_ == FixedViewpoint::QuadDriveDetail) {
+                // Driven: set off up the beach path at a run before the capture (on a fixed
+                // clock), the chase camera following, to show its ruts and its dust.
+                {
+                    // up the beach path from the south shore, which runs clear of the trees
+                    constexpr float startZ = -222.0f;
+                    const float x0 = VegetationLayout::PrimaryPathCenterX(startZ), x1 = VegetationLayout::PrimaryPathCenterX(startZ + 6.0f);
+                    PlaceQuadNear(x0, startZ, std::atan2(x1 - x0, 6.0f));
+                }
+                riding_ = true;
+                quadControls_ = {0.8f, 0.0f, false};
+                quadCameraYaw_ = quad_.YawRadians();
+                const auto start = quad_.Position();
+                quadCamera_ = Vector3(start.x - std::sin(quadCameraYaw_) * 4.8f, start.y + 1.9f, start.z - std::cos(quadCameraYaw_) * 4.8f);
+                std::cout << "island-simulator: quad QA drive sets off with the chase camera\n";
+            } else if (viewpoint_ == FixedViewpoint::QuadChaseDetail) {
                 // Ridden, from the rider's chase camera: behind and above, over the rider's
                 // shoulders to the ground the lamps light ahead.
                 riding_ = true;
@@ -3039,7 +3062,8 @@ namespace island
             MirrorRuntimeDiagnosticToPlatformLog("island-simulator: snake QA update resumed after first draw");
         }
         if(snakeCaptureClock) ++snakeCaptureUpdates_;
-        const float deltaSeconds = canopyLodInspection_ ? 0.0f : (snakeCaptureClock||goatCaptureClock||spiderCaptureClock||boarCaptureClock||campfireCaptureClock||residentCaptureClock||bearCaptureClock) ? 0.1f : std::min(
+        const bool quadDriveClock = viewpoint_ == FixedViewpoint::QuadDriveDetail && !capturePath_.empty();
+        const float deltaSeconds = canopyLodInspection_ ? 0.0f : (snakeCaptureClock||goatCaptureClock||spiderCaptureClock||boarCaptureClock||campfireCaptureClock||residentCaptureClock||bearCaptureClock||quadDriveClock) ? 0.1f : std::min(
             0.1f, static_cast<float>(gameTime.getElapsedGameTimeProperty().getTotalMillisecondsProperty())
                 / 1000.0f);
         worldSeedCopyFeedbackSeconds_ = std::max(
@@ -3117,6 +3141,7 @@ namespace island
             UpdateCamera(deltaSeconds);
         }
         UpdateQuad(deltaSeconds);
+        if (viewpoint_ == FixedViewpoint::QuadDriveDetail) UpdateQuadChaseCamera(deltaSeconds);
         const bool waterViewAllowed = viewpoint_ == FixedViewpoint::None
             || viewpoint_ == FixedViewpoint::WaterlineDetail
             || viewpoint_ == FixedViewpoint::CurrentBoundaryDetail
@@ -4070,6 +4095,44 @@ namespace island
         const auto obstacles = [this](float x, float z, float r, float& px, float& pz) { return QuadObstacle(x, z, r, px, pz); };
         const BikeControls controls = riding_ ? quadControls_ : BikeControls{0.0f, 0.0f, true};
         quad_.Step(deltaSeconds, controls, ground, obstacles);
+        // What the wheels leave and throw: ruts in sand and soil, dust off dry ground, spray in
+        // the shallows.
+        std::array<WheelOnGround, 4> wheels{};
+        const BikeVec up = quad_.Up();
+        const float wetness = weather_now::Current().wetness;
+        for (int w = 0; w < 4; ++w) {
+            const BikeVec hub = quad_.WheelHub(w);
+            WheelOnGround& wheel = wheels[static_cast<std::size_t>(w)];
+            wheel.x = hub.x - up.x * QuadBike::WheelRadius;
+            wheel.z = hub.z - up.z * QuadBike::WheelRadius;
+            const auto sample = terrain_.Sample(wheel.x, wheel.z);
+            wheel.y = sample.height;
+            wheel.width = w < 2 ? 0.20f : 0.245f;
+            wheel.load = quad_.Compression(w);
+            wheel.down = quad_.WheelContact(w);
+            wheel.waterDepth = std::max(0.0f, -sample.height);
+            const auto surface = sample.surface;
+            wheel.wet = surface == TerrainSurface::WetSand || wetness > 0.6f;
+            wheel.soft = wheel.waterDepth < 0.05f && (surface == TerrainSurface::DrySand || surface == TerrainSurface::WetSand
+                || surface == TerrainSurface::CoastalGround || surface == TerrainSurface::InteriorGround);
+            // the forest floor stays damp under the canopy: it dusts only after a dry spell
+            wheel.dusty = (wetness < 0.35f && (surface == TerrainSurface::DrySand || surface == TerrainSurface::CoastalGround))
+                || (wetness < 0.1f && surface == TerrainSurface::InteriorGround);
+        }
+        tyreTracks_.Update(deltaSeconds, wheels);
+        wheelDust_.Update(deltaSeconds, wheels, quad_.Velocity(), wind::DirectionX, wind::DirectionZ);
+        wheelSpray_.Update(deltaSeconds, wheels, quad_.Velocity(), wind::DirectionX, wind::DirectionZ);
+        // A hard knock (a trunk, a rock, the chassis on the ground, a heavy landing) or the
+        // quad going over.
+        const float knock = quad_.LastImpact();
+        quadImpactCooldown_ = std::max(0.0f, quadImpactCooldown_ - deltaSeconds);
+        const bool rolled = quad_.Rollovers() != quadPreviousRollovers_;
+        quadPreviousRollovers_ = quad_.Rollovers();
+        if (soundscape_ && quadImpactCooldown_ <= 0.0f && (knock > 2.0f || rolled)) {
+            const auto p = quad_.Position();
+            soundscape_->NoteQuadImpact(rolled ? 1.0f : std::clamp((knock - 2.0f) / 6.0f, 0.0f, 1.0f), p.x, p.y, p.z, riding_);
+            quadImpactCooldown_ = 0.35f;
+        }
         // The exhaust while the engine runs (it runs while ridden).
         const BikeVec tip = quad_.ToWorld(QuadBikeRenderer::ExhaustTip);
         const BikeVec back{-quad_.Forward().x, -quad_.Forward().y, -quad_.Forward().z};
@@ -4083,6 +4146,28 @@ namespace island
             const auto p = quad_.Position();
             playerMotion_.SetPosition(terrain_, p.x, p.z);
         }
+    }
+
+    void IslandGame::UpdateQuadChaseCamera(const float deltaSeconds)
+    {
+        // A chase camera behind the quad; the mouse swings it round, and it settles back
+        // behind when the mouse rests.
+        const float looked = std::remainder(yaw_ - quadPreviousYaw_, 6.2831853f);
+        quadOrbit_ = std::remainder(quadOrbit_ + looked, 6.2831853f);
+        quadOrbitIdle_ = std::abs(looked) > 1e-4f ? 0.0f : quadOrbitIdle_ + deltaSeconds;
+        if (quadOrbitIdle_ > 1.5f) quadOrbit_ *= std::exp(-deltaSeconds * 1.8f);
+        const auto p = quad_.Position();
+        const float targetYaw = quad_.YawRadians() + quadOrbit_;
+        quadCameraYaw_ += std::remainder(targetYaw - quadCameraYaw_, 6.2831853f) * (1.0f - std::exp(-deltaSeconds * 6.0f));
+        Vector3 desired(p.x - std::sin(quadCameraYaw_) * 4.8f, p.y + 1.9f, p.z - std::cos(quadCameraYaw_) * 4.8f);
+        desired.Y = std::max(desired.Y, terrain_.Height(desired.X, desired.Z) + 0.6f);
+        quadCamera_ = Vector3::Lerp(quadCamera_, desired, 1.0f - std::exp(-deltaSeconds * 9.0f));
+        cameraPosition_ = quadCamera_;
+        const Vector3 look(p.x - quadCamera_.X, p.y + 0.7f - quadCamera_.Y, p.z - quadCamera_.Z);
+        yaw_ = std::atan2(look.X, look.Z);
+        pitch_ = std::atan2(look.Y, std::hypot(look.X, look.Z));
+        quadPreviousYaw_ = yaw_;
+        cameraMotion_.Reset();
     }
 
     void IslandGame::UpdateBenchmarkTraversal()
@@ -4516,24 +4601,7 @@ namespace island
             const float steer = (digitalInput.right ? 1.0f : 0.0f) - (digitalInput.left ? 1.0f : 0.0f)
                 + touchControlState_.moveRight;
             quadControls_ = {std::clamp(throttle, -1.0f, 1.0f), std::clamp(steer, -1.0f, 1.0f), keyboard.IsKeyDown(Keys::Space)};
-            // A chase camera behind the quad; the mouse swings it round, and it settles back
-            // behind when the mouse rests.
-            const float looked = std::remainder(yaw_ - quadPreviousYaw_, 6.2831853f);
-            quadOrbit_ = std::remainder(quadOrbit_ + looked, 6.2831853f);
-            quadOrbitIdle_ = std::abs(looked) > 1e-4f ? 0.0f : quadOrbitIdle_ + deltaSeconds;
-            if (quadOrbitIdle_ > 1.5f) quadOrbit_ *= std::exp(-deltaSeconds * 1.8f);
-            const auto p = quad_.Position();
-            const float targetYaw = quad_.YawRadians() + quadOrbit_;
-            quadCameraYaw_ += std::remainder(targetYaw - quadCameraYaw_, 6.2831853f) * (1.0f - std::exp(-deltaSeconds * 6.0f));
-            Vector3 desired(p.x - std::sin(quadCameraYaw_) * 4.8f, p.y + 1.9f, p.z - std::cos(quadCameraYaw_) * 4.8f);
-            desired.Y = std::max(desired.Y, terrain_.Height(desired.X, desired.Z) + 0.6f);
-            quadCamera_ = Vector3::Lerp(quadCamera_, desired, 1.0f - std::exp(-deltaSeconds * 9.0f));
-            cameraPosition_ = quadCamera_;
-            const Vector3 look(p.x - quadCamera_.X, p.y + 0.7f - quadCamera_.Y, p.z - quadCamera_.Z);
-            yaw_ = std::atan2(look.X, look.Z);
-            pitch_ = std::atan2(look.Y, std::hypot(look.X, look.Z));
-            quadPreviousYaw_ = yaw_;
-            cameraMotion_.Reset();
+            UpdateQuadChaseCamera(deltaSeconds);
             return;
         }
         quadPreviousYaw_ = yaw_;
@@ -5277,6 +5345,7 @@ namespace island
                 fishSchools_.Fish(),stingrayGroup_.Stingrays(),seaTurtleGroup_.Turtles(),&sharkPatrol_.State());
             if (waterholeRenderer_) waterholeRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
             footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,footprints_.Prints());
+            if(tyreTrackRenderer_) tyreTrackRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,tyreTracks_.Tracks());
             for(const auto& trail:deerPrints_) if(trail.ActiveCount()>0U) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,trail.Prints());
             for(const auto& trail:boarPrints_) if(trail.ActiveCount()>0U) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,trail.Prints());
             shellDragRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,shellDrags_.Segments());
@@ -5536,6 +5605,8 @@ namespace island
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,crabBubbles_.Puffs());
             turtleBreathRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,turtleBreaths_.Puffs());
             if (exhaustRenderer_) exhaustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,exhaust_.Puffs());
+            if (wheelDustRenderer_) wheelDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,wheelDust_.Puffs());
+            if (wheelSprayRenderer_) wheelSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,wheelSpray_.Puffs());
         }
         {
             // The hour: the scene graded (golden hours, a dark blue night), then the stars and
@@ -6488,13 +6559,21 @@ namespace island
                 <<" frames="<<drawnFrames_<<" time="<<timeSeconds
                 <<" draws="<<streamWaterRenderer_->DrawCallCount()<<" triangles=6080\n";
         }
-        const std::uint32_t targetFrames = goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture ? 64U : snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
+        const std::uint32_t targetFrames = goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture ? 64U : snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||viewpoint_==FixedViewpoint::QuadDriveDetail ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
                 && (viewpoint_ == FixedViewpoint::MonkeyDetail || viewpoint_ == FixedViewpoint::MonkeyTreeDetail || viewpoint_ == FixedViewpoint::MonkeyClimbDetail)
             ? MonkeyCaptureFrames : SmokeTestFrames;
         if (!capturePath_.empty() && drawnFrames_ == targetFrames) {
             {
                 GpuDiagnosticScope gpuPass("capture-readback");
                 CaptureFrame(capturePath_);
+            }
+            if (viewpoint_ == FixedViewpoint::QuadDriveDetail) {
+                const auto q = quad_.Position();
+                std::cout << "island-simulator: quad QA drive: " << static_cast<int>(std::lround(quad_.Speed() * 3.6f))
+                          << " km/h at (" << static_cast<int>(q.x) << ", " << static_cast<int>(q.z) << "), "
+                          << tyreTracks_.LaidCount() << " rut pieces laid, " << wheelDust_.Emitted() << " dust puffs, "
+                          << wheelSpray_.Emitted() << " spray puffs, " << (soundscape_ ? soundscape_->PlayedQuadImpactCount() : 0)
+                          << " knocks\n";
             }
             if (viewpoint_ == FixedViewpoint::MonkeyDetail || viewpoint_ == FixedViewpoint::MonkeyTreeDetail || viewpoint_ == FixedViewpoint::MonkeyClimbDetail) {
                 const auto& subject = monkeyTroop_.Monkeys()[monkeyQaSubjectIndex_];

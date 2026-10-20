@@ -125,6 +125,7 @@ namespace island
         if (!ground || !std::isfinite(seconds) || seconds <= 0.0f) return;
         const float total = std::min(seconds, 0.1f);
         const float dt = total / static_cast<float>(Substeps);
+        impact_ = 0.0f;
         for (int i = 0; i < Substeps; ++i) Substep(dt, controls, ground, obstacles);
         const bool over = Overturned();
         if (over && !wasOverturned_) ++rollovers_;
@@ -167,8 +168,10 @@ namespace island
                     const float compressionSpeed = (previousLength_[w] - rawLength) / dt;
                     float spring = SpringRate * (SuspensionRest - rawLength) + DamperRate * compressionSpeed;
                     // the bump stop: travel used up, the frame takes the blow
-                    if (rawLength < SuspensionRest - SuspensionTravel)
+                    if (rawLength < SuspensionRest - SuspensionTravel) {
                         spring += SpringRate * 8.0f * (SuspensionRest - SuspensionTravel - rawLength);
+                        impact_ = std::max(impact_, compressionSpeed);
+                    }
                     spring = std::max(spring, 0.0f);
                     const BikeVec hub = Sub(mount, Mul(axisY_, length));
                     const BikeVec contactPoint = Sub(hub, Mul(g.normal, WheelRadius));
@@ -229,6 +232,7 @@ namespace island
             if (depth <= 0.0f) continue;
             const BikeVec v = pointVelocity(at);
             const float vNormal = Dot(v, g.normal);
+            impact_ = std::max(impact_, -vNormal);
             const float normalForce = std::max(0.0f, HullStiffness * depth - HullDamping * vNormal);
             const BikeVec vTangent = Sub(v, Mul(g.normal, vNormal));
             BikeVec friction = Mul(vTangent, -1500.0f);
@@ -271,6 +275,7 @@ namespace island
                 position_.z += pushZ;
                 const BikeVec n = Normalised({pushX, 0.0f, pushZ}, {0, 0, 0});
                 const float into = Dot(velocity_, n);
+                impact_ = std::max(impact_, -into);
                 if (into < 0.0f) velocity_ = Sub(velocity_, Mul(n, into * 1.25f));
             }
         }
