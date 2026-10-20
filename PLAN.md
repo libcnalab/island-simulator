@@ -54,6 +54,26 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 73 (2026-10-20) — beach crabs bolt down their burrow
+
+Each beach colony has had a visible burrow since the debris-anchoring pass, but no crab
+ever used it: a frightened crab only scuttled away. Now `CrabBehavior::Hide` is the refuge:
+when the walker or the resident comes within the scuttle distance and the colony's burrow
+lies within 3.5 m roughly along the line of flight (or the crab is already at its mouth),
+the scuttle is aimed at the hole, and at the mouth (0.55 m) the crab goes down it:
+`hideAmount` rises over 0.4 s while the body slides to the burrow's centre and sinks 20 cm
+below the sand. It stays down until no threat has been within 1.6 scuttle distances for
+four seconds, then comes up over 0.7 s, rests at the mouth and goes on with its bouts. The
+separation rule ignores a crab down the hole and allows any move that draws two crabs apart,
+so a colony that came up out of one hole on top of each other disperses instead of locking.
+`HiddenCount()` and `HideCount()` expose it. The startup report's crab line gains "a crab
+near its colony's burrow bolts down the hole and comes up once the beach has been clear a
+few seconds", pinned by the native capture tool. Core checks: a crab within reach of its
+burrow, frightened from the far side, is down the hole within six seconds (hidden, at the
+centre, below the sand); with the beach clear it comes up within fifteen seconds; and it
+leaves the mouth for its bouts within half a minute. The earlier walker-scatter checks still
+pass. Native `crabs` passes (luminance deviation 38).
+
 ## Loop pass 72 (2026-10-20) — goats spar head to head
 
 The goats grazed, walked, rested and drank, each in its own range, and never touched one

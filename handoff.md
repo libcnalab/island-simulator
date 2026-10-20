@@ -133,6 +133,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 70: seabirds done hunting raft on the sea with folded wings before climbing back to their routes (PLAN "Loop pass 70").
 - Pass 71: fruit doves come down to the plunge pool's bank to bathe in wing-flicking, head-dipping bouts (PLAN "Loop pass 71").
 - Pass 72: goats square up to a neighbour and spar nose to nose, taking turns lowering their heads (PLAN "Loop pass 72").
+- Pass 73: a frightened beach crab near its colony's burrow bolts down the hole and comes up once the beach is clear (PLAN "Loop pass 73").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

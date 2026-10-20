@@ -17,7 +17,8 @@ namespace island
     {
         Pause,
         Forage,
-        Scuttle
+        Scuttle,
+        Hide
     };
 
     /** @brief Renderer-independent state for one procedural beach crab. */
@@ -31,6 +32,8 @@ namespace island
         float speed = 0.0f;
         float legPhase = 0.0f;
         float clawPose = 0.0f;
+        /** @brief 0..1 down the colony's burrow: the body sinks below the sand at 1. */
+        float hideAmount = 0.0f;
         float scale = 1.0f;
         CrabBehavior behavior = CrabBehavior::Pause;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
@@ -80,6 +83,14 @@ namespace island
          *  of the observer and the walker is nearer. Activation stays observer-relative. */
         void SetWalker(float x, float z, bool valid) noexcept;
         static constexpr float ScuttleDistance = 5.2f;
+        /** @brief A frightened crab this near its colony's burrow, with the hole roughly along
+         *  its line of flight, bolts for it and goes down; it comes up once the beach has been
+         *  clear (no threat within 1.6 scuttle distances) for EmergeDelaySeconds. */
+        static constexpr float BurrowDashDistance = 3.5f;
+        static constexpr float BurrowArriveDistance = 0.55f;
+        static constexpr float EmergeDelaySeconds = 4.0f;
+        [[nodiscard]] std::size_t HiddenCount() const noexcept;
+        [[nodiscard]] std::uint32_t HideCount() const noexcept { return hides_; }
 
         [[nodiscard]] std::span<const CrabState> Crabs() const noexcept;
         [[nodiscard]] std::span<const CrabHomeRange> Homes() const noexcept;
@@ -103,6 +114,8 @@ namespace island
             float accumulatedSeconds = 0.0f;
             std::uint32_t transitionCount = 0U;
             int preferredDirection = 1;
+            bool toBurrow = false;
+            float clearSeconds = 0.0f;
         };
 
         void InitializeAgent(std::size_t index);
@@ -126,5 +139,6 @@ namespace island
         int dormantSimulationCount_ = 0;
         std::array<CrabHabitatCue, 6> debrisAnchors_{};
         bool debrisAnchored_ = false;
+        std::uint32_t hides_ = 0U;
     };
 }

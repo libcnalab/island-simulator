@@ -2307,7 +2307,8 @@ namespace island
                   << " agents resting, foraging, and hiding in three inland leaf-litter colonies\n"
                   << "island-simulator: beach crabs " << crabColony_.Crabs().size()
                   << " agents in deterministic sand-and-debris-constrained colonies; every other bout works the wrack line and feeds among the strandings; "
-                     "the resident's walk along the beach scatters them as the player's does\n"
+                     "the resident's walk along the beach scatters them as the player's does; "
+                     "a crab near its colony's burrow bolts down the hole and comes up once the beach has been clear a few seconds\n"
                   << "island-simulator: hermit crabs " << hermitCrabGroup_.Crabs().size()
                   << " agents in deterministic sheltered-beach habitats\n"
                   << "island-simulator: coconut crabs " << coconutCrabGroup_.Crabs().size()

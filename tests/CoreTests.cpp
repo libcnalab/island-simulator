@@ -3828,6 +3828,47 @@ int main()
         }
         Check(settled, "with the walker gone the crab returns to its bouts");
     }
+    {
+        // A crab within reach of its colony's burrow, frightened from the far side, bolts for
+        // the hole and goes down it; once the beach is clear for a few seconds it comes up
+        // and goes back to its bouts, leaving the hole.
+        island::CrabColony burrowCrabs(terrain);
+        std::size_t subject = burrowCrabs.Crabs().size();
+        for (std::size_t i = 0; i < burrowCrabs.Crabs().size() && subject == burrowCrabs.Crabs().size(); ++i) {
+            const auto& hole = burrowCrabs.Burrows()[i / 5U];
+            const float d = std::hypot(burrowCrabs.Crabs()[i].x - hole.x, burrowCrabs.Crabs()[i].z - hole.z);
+            if (d > 0.8f && d < 2.5f) subject = i;
+        }
+        Check(subject < burrowCrabs.Crabs().size(), "a crab starts within reach of its colony's burrow");
+        const island::CrabBurrow hole = burrowCrabs.Burrows()[subject / 5U];
+        const island::CrabState start = burrowCrabs.Crabs()[subject];
+        const float dx = start.x - hole.x, dz = start.z - hole.z, d = std::max(std::hypot(dx, dz), 0.001f);
+        const float threatX = start.x + dx / d * 2.0f, threatZ = start.z + dz / d * 2.0f;
+        bool hid = false;
+        for (int frame = 0; frame < 360 && !hid; ++frame) {
+            burrowCrabs.Update(1.0f / 60.0f, threatX, start.y + 1.5f, threatZ);
+            const auto& crab = burrowCrabs.Crabs()[subject];
+            hid = crab.behavior == island::CrabBehavior::Hide && crab.hideAmount > 0.9f
+                && std::hypot(crab.x - hole.x, crab.z - hole.z) < 0.3f
+                && crab.y < terrain.Height(crab.x, crab.z) - 0.05f;
+        }
+        Check(hid && burrowCrabs.HideCount() >= 1U && burrowCrabs.HiddenCount() >= 1U,
+              "a frightened crab bolts for its colony's burrow and goes down the hole within six seconds");
+        bool emerged = false;
+        for (int frame = 0; frame < 900 && !emerged; ++frame) {
+            burrowCrabs.Update(1.0f / 60.0f, start.x, start.y + 1.5f, start.z + 40.0f);
+            const auto& crab = burrowCrabs.Crabs()[subject];
+            emerged = crab.behavior != island::CrabBehavior::Hide && crab.hideAmount <= 0.0f;
+        }
+        Check(emerged, "with the beach clear the hidden crab comes up again within fifteen seconds");
+        bool left = false;
+        for (int frame = 0; frame < 1800 && !left; ++frame) {
+            burrowCrabs.Update(1.0f / 60.0f, start.x, start.y + 1.5f, start.z + 40.0f);
+            const auto& crab = burrowCrabs.Crabs()[subject];
+            left = std::hypot(crab.x - hole.x, crab.z - hole.z) > 0.8f;
+        }
+        Check(left, "the emerged crab leaves the burrow mouth for its bouts within half a minute");
+    }
 
     island::FishSchools fishSchools(terrain);
     island::FishSchools repeatedFishSchools(terrain);

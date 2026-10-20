@@ -286,7 +286,8 @@ namespace island
                 threatZ = walkerZ_;
             }
         }
-        if (observerDistance < ScuttleDistance) {
+        const CrabBurrow& burrow = burrows_[std::min(index / 5U, burrows_.size() - 1U)];
+        if (observerDistance < ScuttleDistance && agent.state.behavior != CrabBehavior::Hide) {
             agent.state.behavior = CrabBehavior::Scuttle;
             agent.behaviorSeconds = 1.5f;
             float awayX = agent.state.x - threatX;
@@ -299,6 +300,33 @@ namespace island
             } else {
                 agent.state.travelHeadingRadians += static_cast<float>(agent.preferredDirection)
                     * std::numbers::pi_v<float> * 0.5f;
+            }
+            // The colony's burrow, when it lies near and roughly along the line of flight, is
+            // the refuge: the crab bolts for the hole and, at its mouth, goes down it.
+            const float toBurrowX = burrow.x - agent.state.x, toBurrowZ = burrow.z - agent.state.z;
+            const float burrowDistance = std::hypot(toBurrowX, toBurrowZ);
+            agent.toBurrow = false;
+            if (burrowDistance > 0.001f && burrowDistance < BurrowDashDistance) {
+                const float along = (toBurrowX * std::cos(agent.state.travelHeadingRadians)
+                    + toBurrowZ * std::sin(agent.state.travelHeadingRadians)) / burrowDistance;
+                if (along > 0.3f || burrowDistance < BurrowArriveDistance) {
+                    agent.toBurrow = true;
+                    agent.state.travelHeadingRadians = std::atan2(toBurrowZ, toBurrowX);
+                    if (burrowDistance < BurrowArriveDistance) {
+                        agent.state.behavior = CrabBehavior::Hide;
+                        agent.clearSeconds = 0.0f;
+                        ++hides_;
+                    }
+                }
+            }
+        } else if (agent.state.behavior == CrabBehavior::Hide) {
+            // Down the hole until the beach has been clear a while, then up and on.
+            agent.clearSeconds = observerDistance < ScuttleDistance * 1.6f
+                ? 0.0f : agent.clearSeconds + deltaSeconds;
+            if (agent.clearSeconds >= EmergeDelaySeconds && agent.state.hideAmount <= 0.0f) {
+                agent.state.behavior = CrabBehavior::Pause;
+                agent.behaviorSeconds = 1.0f;
+                agent.toBurrow = false;
             }
         } else {
             agent.behaviorSeconds -= deltaSeconds;
@@ -348,6 +376,21 @@ namespace island
         } else if (agent.state.behavior == CrabBehavior::Scuttle) {
             targetSpeed = 1.85f + agent.state.scale * 0.35f;
         }
+        if (agent.state.behavior == CrabBehavior::Hide) {
+            // Into the hole: the body slides to the burrow's centre and sinks below the sand;
+            // coming up is the reverse, the crab resting at the mouth until it goes on.
+            const float target = agent.clearSeconds >= EmergeDelaySeconds ? 0.0f : 1.0f;
+            agent.state.hideAmount += std::clamp(target - agent.state.hideAmount,
+                                                 -deltaSeconds * 1.5f, deltaSeconds * 2.5f);
+            if (target > 0.0f) {
+                const float pull = std::min(1.0f, deltaSeconds * 4.0f);
+                agent.state.x += (burrow.x - agent.state.x) * pull;
+                agent.state.z += (burrow.z - agent.state.z) * pull;
+            }
+            agent.state.speed = 0.0f;
+        } else {
+            agent.state.hideAmount = std::max(0.0f, agent.state.hideAmount - deltaSeconds * 1.5f);
+        }
         agent.state.speed += std::clamp(targetSpeed - agent.state.speed,
                                         -deltaSeconds * 2.8f, deltaSeconds * 4.8f);
 
@@ -364,13 +407,18 @@ namespace island
             + std::cos(agent.state.travelHeadingRadians) * agent.state.speed * deltaSeconds;
         const float candidateZ = agent.state.z
             + std::sin(agent.state.travelHeadingRadians) * agent.state.speed * deltaSeconds;
+        // Crabs keep their separation, except from one down the hole and when the move
+        // draws them apart (crabs coming up out of one burrow start on top of each other).
         const bool separated = std::ranges::all_of(agents_, [&](const Agent& other) {
             const std::size_t otherIndex = static_cast<std::size_t>(
                 &other - agents_.data());
-            return otherIndex == index
-                || std::hypot(candidateX - other.state.x,
-                              candidateZ - other.state.z)
-                    >= MinimumAgentSeparation;
+            if (otherIndex == index || other.state.behavior == CrabBehavior::Hide) return true;
+            const float candidateDistance = std::hypot(candidateX - other.state.x,
+                                                       candidateZ - other.state.z);
+            const float currentDistance = std::hypot(agent.state.x - other.state.x,
+                                                     agent.state.z - other.state.z);
+            return candidateDistance >= MinimumAgentSeparation
+                || candidateDistance >= currentDistance;
         });
         if (IsValidHabitat(candidateX, candidateZ, agent.home) && separated) {
             agent.state.x = candidateX;
@@ -390,7 +438,8 @@ namespace island
                 - static_cast<float>(agent.preferredDirection)
                     * std::numbers::pi_v<float> * 0.5f,
             deltaSeconds * 3.5f);
-        agent.state.y = terrain_.Height(agent.state.x, agent.state.z) + 0.075f;
+        agent.state.y = terrain_.Height(agent.state.x, agent.state.z) + 0.075f
+            - 0.2f * agent.state.hideAmount;
         agent.movementPhase = std::fmod(agent.movementPhase + deltaSeconds * 0.73f, TwoPi);
         agent.animationPhase = std::fmod(
             agent.animationPhase + deltaSeconds * (4.0f + agent.state.speed * 8.0f), TwoPi);
@@ -406,6 +455,13 @@ namespace island
     std::span<const CrabState> CrabColony::Crabs() const noexcept
     {
         return states_;
+    }
+
+    std::size_t CrabColony::HiddenCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const CrabState& crab : states_) count += crab.behavior == CrabBehavior::Hide ? 1U : 0U;
+        return count;
     }
 
     std::span<const CrabHomeRange> CrabColony::Homes() const noexcept
