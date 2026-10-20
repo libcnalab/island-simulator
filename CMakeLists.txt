@@ -129,6 +129,7 @@ add_library(island_core STATIC
     game/src/GoatHerd.cpp
     game/src/GoatMesh.cpp
     game/src/JungleLayout.cpp
+    game/src/SlopeScrubLayout.cpp
     game/src/LeafBladeProfile.cpp
     game/src/UnderstoryLeafProfile.cpp
     game/src/LocomotionPaceToggle.cpp

@@ -61,6 +61,7 @@
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include "IslandSimulator/SunShadowFade.hpp"
 #include "IslandSimulator/VegetationFade.hpp"
+#include "IslandSimulator/SlopeScrubLayout.hpp"
 #include "IslandSimulator/CrabBubbleField.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
 #include "IslandSimulator/CicadaColony.hpp"
@@ -6564,6 +6565,34 @@ int main()
         Check(fade::FarShrink(286.0f * 0.88f, 286.0f, fade::TreeShrinkFraction) == 1.0f
                   && fade::FarShrink(286.0f, 286.0f, fade::TreeShrinkFraction) == 0.0f && treeStep < 0.001f,
               "trees and palms shrink smoothly to nothing over the last 12 % of their range");
+    }
+    {
+        // Coastal scrub on the bare banks (loop pass 223): deterministic, only where the other
+        // plant rules leave the ground bare (a steep bank or the strip behind the beach), clear
+        // of the reserved routes, the hut's clearing and the given circles.
+        const island::IslandTerrain terrain;
+        const island::SlopeScrubLayout::ClearCircle circle{0.0f, 0.0f, 30.0f};
+        const auto scrub = island::SlopeScrubLayout::Generate(terrain, std::span(&circle, 1));
+        const auto again = island::SlopeScrubLayout::Generate(terrain, std::span(&circle, 1));
+        bool same = scrub.size() == again.size(), ruled = true, clear = true, steepShare = false;
+        std::size_t steep = 0;
+        for (std::size_t i = 0; i < scrub.size(); ++i) {
+            const auto& b = scrub[i];
+            if (same && (b.x != again[i].x || b.z != again[i].z || b.variant != again[i].variant)) same = false;
+            const auto sample = terrain.Sample(b.x, b.z);
+            if (!island::SlopeScrubLayout::Accepts(sample.height, sample.slopeRadians, sample.signedShoreDistance,
+                                                   sample.coastalRockiness)) ruled = false;
+            if (island::VegetationLayout::IsReservedRoute(b.x, b.z) || std::hypot(b.x, b.z) < 30.0f) clear = false;
+            if (sample.slopeRadians >= island::SlopeScrubLayout::SteepSlope) ++steep;
+        }
+        steepShare = steep * 4 >= scrub.size();
+        Check(same, "the coastal scrub is deterministic");
+        Check(scrub.size() >= 300 && scrub.size() <= 3000, "the coastal scrub covers the bare banks with a bounded count");
+        Check(ruled, "the coastal scrub grows only on steep banks and beach backs above the dry sand");
+        Check(clear, "the coastal scrub stays off the reserved routes and the clear circles");
+        Check(steepShare, "at least a quarter of the coastal scrub holds the steep banks");
+        std::cout << "coastal scrub: " << scrub.size() << " bushes, " << steep << " on banks steeper than "
+                  << island::SlopeScrubLayout::SteepSlope << " rad\n";
     }
     const island::GrassLodSplit emptyGrassLod = island::GrassLod::Split(0, 82.0f);
     Check(emptyGrassLod.nearCount == 0 && emptyGrassLod.middleCount == 0

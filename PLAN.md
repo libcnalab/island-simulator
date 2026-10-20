@@ -54,6 +54,30 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 223 (2026-10-20) — coastal scrub on the banks every other plant left bare
+
+The bank rising behind the jetty's beach read as one large smooth bare slope. Every plant
+rule stops short of it: grass needs 20 m from the shore, 2.1 m of height, a slope under 28
+degrees and a coastal rockiness under 0.6; bushes 38 m, 3 m, 30 degrees and 0.6; ground
+plants 27 m and 32 degrees. A terrain probe up that bank found slopes of 0.6-0.8 rad and a
+rockiness of 0.56-0.82 within 3-10 m of the shore, while the terrain draws it as smooth
+olive ground rather than rock. (A first attempt only stopped the sand treatment on steep
+ground and changed nothing visible; it was reverted.) A new core `SlopeScrubLayout` grows
+low scrub exactly there: on a steep bank (0.45-0.95 rad) from 1.0 m and 3.5 m from the shore
+(a foredune) and on the gentle beach back between 16 and 40 m from the shore above the dry
+sand, up to a rockiness of 0.9 (thinner as it rises), in clumps, on a 1.7 m grid (a steep
+bank is narrow on the map but tall on screen; a 5.2 m and then a 3.4 m grid left the face
+bare), clear of the reserved routes (cave, bunker, campfire, helicopter, paths, spawn), the
+hut's clearing, the goats' basin, the lookout and the jetty's root, and off the stream's
+banks. The jungle renderer draws them as extra small bushes (scale 0.47-0.95) with their own
+count, so the jungle layout's 569 bushes and every pinned layout count are unchanged. Core
+check: deterministic, 1131 bushes (745 on banks steeper than 0.45 rad) with a test circle,
+each on ground the rule accepts and off the routes. Startup: "coastal scrub 1262 low bushes
+on the steep banks and the beach backs that the other plants leave bare", pinned (at least
+100). The `jetty` view now shows scrub along the bank's face and skyline (48 bushes drawn
+where it drew 3); `cave`, `bunker`, `lookout`, `goats`, `campfire`, `helicopter-approach`,
+`hut` and `beach` pass with their entrances, basin and footprints clear.
+
 ## Loop pass 222 (2026-10-20) — the resident's footprints read as prints in dry sand
 
 The resident's bare footprints from the jetty along the beach used the hoof prints'

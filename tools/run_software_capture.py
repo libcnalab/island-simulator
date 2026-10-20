@@ -1128,6 +1128,9 @@ def main():
                 raise RuntimeError("current land cloud shadows are missing; check for a stale executable")
             if "a mist of spray hangs at the cascade's foot, rising and drifting on the breeze and laid over by the gust fronts" not in diagnostics:
                 raise RuntimeError("current cascade mist is missing; check for a stale executable")
+            scrub = re.search(r"coastal scrub (\d+) low bushes on the steep banks and the beach backs that the other plants leave bare", diagnostics)
+            if not scrub or int(scrub.group(1)) < 100:
+                raise RuntimeError("current coastal scrub on the bare banks is missing; check for a stale executable")
             if not re.search(r"jungle floor plants swap meshes at staggered per-plant distances \(\+-\d+ %\) and shrink into the ground over the last \d+ % of their range instead of popping on fixed circles", diagnostics):
                 raise RuntimeError("current jungle floor fades are missing; check for a stale executable")
             if not re.search(r"canopy trees and palms shrink away over the last \d+ % of theirs, palms each by its own distance rather than by 85 m cell", diagnostics):

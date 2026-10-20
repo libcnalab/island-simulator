@@ -1,3 +1,4 @@
+#include "IslandSimulator/SlopeScrubLayout.hpp"
 #include "IslandSimulator/IslandGame.hpp"
 #include "IslandSimulator/BridgeLayout.hpp"
 #include "IslandSimulator/LookoutLayout.hpp"
@@ -438,6 +439,18 @@ namespace island
         snakes_ = std::make_unique<SnakePopulation>(
             terrain_,jungleLayout_,wildlifeObstacles);
         goats_ = std::make_unique<GoatHerd>(terrain_,jungleLayout_,wildlifeObstacles);
+        {
+            // Coastal scrub on the banks every other plant rule leaves bare, kept off the
+            // goats' basin, the lookout's footprint and the jetty's root.
+            std::vector<SlopeScrubLayout::ClearCircle> clear;
+            if (goats_->WaterholeSite().valid)
+                clear.push_back({goats_->WaterholeSite().x, goats_->WaterholeSite().z, GoatHerd::WaterholeRadius + 2.5f});
+            if (lookoutPlacement_)
+                clear.push_back({lookoutPlacement_->x, lookoutPlacement_->z, LookoutPlacement::RampLength + 2.0f});
+            if (jettyPlacement_)
+                clear.push_back({jettyPlacement_->rootX, jettyPlacement_->rootZ, 7.0f});
+            slopeScrub_ = SlopeScrubLayout::Generate(terrain_, clear);
+        }
         deer_ = std::make_unique<DeerHerd>(terrain_,wildlifeObstacles);
         deer_->SetLight(&canopyLightField_);
         for(auto& trail:deerPrints_) { trail.SetKind(1U); trail.SetStride(0.9f); }
@@ -2217,7 +2230,8 @@ namespace island
             device, terrain_, grassLayout_, *canopyLighting, *terrainHeightMap, qualityProfile_.grassMaximumDistance);
         auto jungleRenderer = std::make_unique<JungleRenderer>(device, terrain_, jungleLayout_,
                                                               *canopyLighting, *terrainHeightMap,
-                                                              qualityProfile_.vegetationMaximumDistanceScale);
+                                                              qualityProfile_.vegetationMaximumDistanceScale,
+                                                              slopeScrub_);
         if (canopyLodInspection_) {
             const auto camera = jungleRenderer->SetLodInspection(*canopyLodInspection_);
             if (viewpoint_ == FixedViewpoint::CanopyInspection) {

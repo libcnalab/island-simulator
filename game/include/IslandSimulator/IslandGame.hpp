@@ -403,6 +403,7 @@ namespace island
         MonkeyTroop monkeyTroop_;
         VegetationLayout vegetationLayout_;
         JungleLayout jungleLayout_;
+        std::vector<BushPlacement> slopeScrub_;   // SlopeScrubLayout: the bare banks' coastal scrub
         AntTrails antTrails_;
         CicadaColony cicadaColony_;
         BeetlePopulation beetlePopulation_;

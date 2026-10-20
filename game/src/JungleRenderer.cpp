@@ -1843,7 +1843,8 @@ void main()
                                    const JungleLayout& layout,
                                    CanopyLighting& canopyLighting,
                                    RenderedTerrainHeightMap& terrainHeightMap,
-                                   const float maximumDistanceScale)
+                                   const float maximumDistanceScale,
+                                   const std::span<const BushPlacement> extraBushes)
         : device_(device), canopyLighting_(canopyLighting), terrainHeightMap_(terrainHeightMap),
           maximumDistanceScale_(maximumDistanceScale)
     {
@@ -1883,7 +1884,7 @@ void main()
 
         if (customShaderReady_) leafMaterial_ = std::make_unique<LeafSurfaceMaterial>(device_);
         CreateMeshes();
-        CreateCells(terrain, layout);
+        CreateCells(terrain, layout, extraBushes);
         constexpr const char* rootDiagnostic =
             "island-simulator: jungle root origins and culling bounds follow rendered terrain triangles";
         std::cout << rootDiagnostic << '\n';
@@ -1912,6 +1913,8 @@ void main()
                   << " low bushes, "
                   << (instancingSupported_ ? "hardware instancing" : "per-plant fallback")
                   << '\n';
+        std::cout << "island-simulator: coastal scrub " << totalScrubCount_
+                  << " low bushes on the steep banks and the beach backs that the other plants leave bare\n";
         std::cout << "island-simulator: jungle ground layer " << totalGroundPlantCount_
                   << " small plants\n";
         const std::string snagDiagnostic = "island-simulator: forest age structure includes "
@@ -2319,7 +2322,8 @@ void main()
         }
     }
 
-    void JungleRenderer::CreateCells(const IslandTerrain& terrain, const JungleLayout& layout)
+    void JungleRenderer::CreateCells(const IslandTerrain& terrain, const JungleLayout& layout,
+                                     const std::span<const BushPlacement> extraBushes)
     {
         // Startup-only CPU cache; avoid a large Web stack allocation. No new GPU
         // texture, per-frame height query or shader-side deformation is required.
@@ -2403,6 +2407,21 @@ void main()
             extendMeshBounds(cell, bush.x, bush.y, bush.z, bush.scale,
                              bushNearMeshes_[bush.variant], bushFarMeshes_[bush.variant]);
             ++totalBushCount_;
+        }
+        // The coastal scrub: the same bushes, smaller, on the banks the layout leaves bare.
+        for (const BushPlacement& source : extraBushes) {
+            if (source.variant >= bushNearMeshes_.size()) continue;
+            const auto bush = GroundJunglePlacement(source, *surface);
+            JungleCell& cell = cells_[CellIndex(bush.x, bush.z)];
+            cell.bushes.push_back({Matrix::CreateScale(bush.scale)
+                                       * Matrix::CreateRotationY(bush.yawRadians)
+                                       * Matrix::CreateTranslation(bush.x, bush.y, bush.z),
+                                   bush.variant, bush.x, bush.z,
+                                   [&] { const float d = vegetation_fade::StaggeredNearDistance(
+                                             BushNearDistance, bush.x, bush.z); return d * d; }()});
+            extendMeshBounds(cell, bush.x, bush.y, bush.z, bush.scale,
+                             bushNearMeshes_[bush.variant], bushFarMeshes_[bush.variant]);
+            ++totalScrubCount_;
         }
         for (const GroundPlantPlacement& source : layout.GroundPlants()) {
             const auto plant = GroundJunglePlacement(source, *surface);

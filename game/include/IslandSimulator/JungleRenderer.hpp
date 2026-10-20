@@ -43,7 +43,8 @@ namespace island
         JungleRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                        const IslandTerrain& terrain, const JungleLayout& layout,
                        CanopyLighting& canopyLighting, RenderedTerrainHeightMap& terrainHeightMap,
-                       float maximumDistanceScale = 1.0f);
+                       float maximumDistanceScale = 1.0f,
+                       std::span<const BushPlacement> extraBushes = {});
         ~JungleRenderer();
 
         JungleRenderer(const JungleRenderer&) = delete;
@@ -159,7 +160,8 @@ namespace island
         [[nodiscard]] static const Microsoft::Xna::Framework::Graphics::VertexDeclaration&
             InstanceDeclaration();
         void CreateMeshes();
-        void CreateCells(const IslandTerrain& terrain, const JungleLayout& layout);
+        void CreateCells(const IslandTerrain& terrain, const JungleLayout& layout,
+                         std::span<const BushPlacement> extraBushes);
         void DrawInstances(PlantMesh& mesh,
                            const std::vector<Microsoft::Xna::Framework::Matrix>& transforms);
 
@@ -209,6 +211,7 @@ namespace island
         int totalStandingSnagCount_ = 0;
         int totalUnderstoryCount_ = 0;
         int totalBushCount_ = 0;
+        int totalScrubCount_ = 0;   // extra bushes: the coastal scrub on the bare banks
         int totalGroundPlantCount_ = 0;
         int visibleCanopyCount_ = 0;
         int visibleStandingSnagCount_ = 0;
