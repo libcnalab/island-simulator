@@ -393,10 +393,19 @@ namespace island
                 jettyPlacement_->rootZ-jettyPlacement_->dirZ*3.0f});
             residentFacings.push_back({jettyPlacement_->dirX,0.0f,jettyPlacement_->dirZ});
         }
+        // The tour also calls at the lookout's ramp foot, two metres beyond the ramp's end,
+        // where the resident turns to look up the ramp at the platform.
+        if(lookoutPlacement_) {
+            const float footAlong=LookoutPlacement::RampLength+2.0f;
+            residentLandmarks.push_back({lookoutPlacement_->x+lookoutPlacement_->dirX*footAlong,0.0f,
+                lookoutPlacement_->z+lookoutPlacement_->dirZ*footAlong});
+            residentFacings.push_back({-lookoutPlacement_->dirX,0.0f,-lookoutPlacement_->dirZ});
+        }
         resident_=std::make_unique<ResidentMotion>(terrain_,wildlifeObstacles,residentLandmarks,residentFacings);
         std::cout<<"island-simulator: resident tour visits "<<resident_->Route().LandmarkCount()
-                 <<" landmark(s): the jetty foot joins the campfire, path and clearing calls; "
-                 <<"at the jetty foot the resident turns to look out along the deck to sea; at the campfire the resident stands facing the fire; "
+                 <<" landmark(s): the jetty foot and the lookout's ramp foot join the campfire, path and clearing calls; "
+                 <<"at the jetty foot the resident turns to look out along the deck to sea; at the lookout's ramp foot the resident looks up the ramp at the platform; "
+                 <<"at the campfire the resident stands facing the fire; "
                  <<"the resident raises a hand to a player who stops close by\n";
         bear_=std::make_unique<BearMotion>(terrain_,wildlifeObstacles);
         monkeyTroop_.SetObstacles(wildlifeObstacles);

@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 112 (2026-10-20) — the resident's tour calls at the lookout
+
+The lookout stood on the resident's island without the resident ever going near it. The
+tour now takes a second landmark with a facing: the lookout's ramp foot, two metres beyond
+the ramp's end, where the resident pauses and turns to look up the ramp at the platform
+(the pause-facing rule the jetty foot uses, pass 31). The tour diagnostic now reads
+"resident tour visits 2 landmark(s): the jetty foot and the lookout's ramp foot join the
+campfire, path and clearing calls; … at the lookout's ramp foot the resident looks up the
+ramp at the platform …", and the native capture tool pins both the count and the lookout
+clause. Core checks: with the world's jetty and lookout placed, a resident route given both
+landmarks takes both, and within half an hour the resident pauses at the lookout's ramp
+foot looking up the ramp. Native `lookout` and `resident` pass.
+
 ## Loop pass 111 (2026-10-20) — the seabirds follow the dolphins
 
 The pod's leaps and the seabirds' hunts were unconnected. The pod now notes where its last

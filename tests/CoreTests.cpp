@@ -9496,6 +9496,39 @@ int main()
             tended = island::CampfireSite::Tending(state.x, state.z, state.mode == island::ResidentMode::Pausing);
         }
         Check(tended, "the resident's route brings a pause within tend distance of the campfire within twenty minutes");
+        {
+            // Two landmarks with facings, as the game gives the jetty foot and the lookout's
+            // ramp foot: the route takes both, and at a landmark pause the resident turns to
+            // its facing.
+            const island::JungleLayout jungle(terrain);
+            const std::vector<island::CircularObstacle> none;
+            const auto hut = island::HutLayout::FindInWorld(terrain, jungle, none);
+            const auto jetty = hut ? island::JettyLayout::FindInWorld(terrain, *hut) : std::nullopt;
+            const auto lookout = hut ? island::LookoutLayout::FindInWorld(terrain, *hut, none) : std::nullopt;
+            Check(jetty.has_value() && lookout.has_value(), "the jetty and the lookout are placed for the resident's calls");
+            const island::JettyPlacement deck = jetty.value_or(island::JettyPlacement{});
+            const island::LookoutPlacement tower = lookout.value_or(island::LookoutPlacement{});
+            const float footAlong = island::LookoutPlacement::RampLength + 2.0f;
+            const std::vector<island::ResidentPoint> landmarks{
+                {deck.rootX - deck.dirX * 3.0f, 0.0f, deck.rootZ - deck.dirZ * 3.0f},
+                {tower.x + tower.dirX * footAlong, 0.0f, tower.z + tower.dirZ * footAlong}};
+            const std::vector<island::ResidentPoint> facings{
+                {deck.dirX, 0.0f, deck.dirZ}, {-tower.dirX, 0.0f, -tower.dirZ}};
+            island::ResidentMotion caller(terrain, {}, landmarks, facings);
+            Check(caller.Route().LandmarkCount() == 2U, "the route takes both the jetty foot and the lookout's ramp foot");
+            bool atLookout = false, facedUp = false;
+            for (int step = 0; step < 36000 && !(atLookout && facedUp); ++step) {
+                caller.Update(0.05f, {1000.0f, 0.0f, 1000.0f});
+                const auto& state = caller.State();
+                if (state.mode == island::ResidentMode::Pausing && caller.LookingOut()
+                    && std::hypot(state.x - landmarks[1].x, state.z - landmarks[1].z) < 2.5f) {
+                    atLookout = true;
+                    const float wantHeading = std::atan2(-tower.dirX, -tower.dirZ);
+                    if (std::abs(std::remainder(state.heading - wantHeading, 6.2831853f)) < 0.35f) facedUp = true;
+                }
+            }
+            Check(atLookout && facedUp, "the resident pauses at the lookout's ramp foot within half an hour and looks up the ramp");
+        }
     }
 
     {

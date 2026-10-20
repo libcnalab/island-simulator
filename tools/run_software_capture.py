@@ -983,7 +983,7 @@ def main():
                 raise RuntimeError("current falling fruit is missing; check for a stale executable")
             if "at the jetty foot the resident turns to look out along the deck to sea" not in diagnostics:
                 raise RuntimeError("current resident jetty look-out is missing; check for a stale executable")
-            if "resident tour visits 1 landmark(s): the jetty foot joins the campfire, path and clearing calls" not in diagnostics:
+            if "resident tour visits 2 landmark(s): the jetty foot and the lookout's ramp foot join the campfire, path and clearing calls" not in diagnostics:
                 raise RuntimeError("current resident jetty call is missing; check for a stale executable")
             if "bare footprints lead along the sand from the jetty foot past the canoe" not in diagnostics:
                 raise RuntimeError("current resident footprints are missing; check for a stale executable")
@@ -1263,6 +1263,8 @@ def main():
                 raise RuntimeError("current crocodile hiss is missing; check for a stale executable")
             if "a dolphin's leap brings the seabirds on their routes within a hundred and sixty metres in to hunt" not in diagnostics:
                 raise RuntimeError("current dolphin-led seabird hunt is missing; check for a stale executable")
+            if "at the lookout's ramp foot the resident looks up the ramp at the platform" not in diagnostics:
+                raise RuntimeError("current resident lookout call is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":
