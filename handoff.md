@@ -226,6 +226,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 162: a ground spider the walker stands over within four metres rears, front legs raised in a threat display (`SpiderState::display`, `SpiderColony::DisplayCount`) (PLAN "Loop pass 162").
 - Pass 163: a beetle at rest in the open lifts its wing cases a crack and holds them up until it moves on (`BeetleState::elytraLift`, `BeetlePopulation::FanCount`) (PLAN "Loop pass 163").
 - Pass 164: a calling cicada's abdomen swells and drums with the call and its wings tremble (`CicadaState::call`/`tymbalPhase`) (PLAN "Loop pass 164").
+- Pass 165: a perched bird shakes its feathers out as each preen ends (`BirdState::ruffleAmount`, `BirdFlock::RuffleCount`) (PLAN "Loop pass 165").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

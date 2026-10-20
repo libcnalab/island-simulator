@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 165 (2026-10-20) — a bird shakes its feathers out
+
+A perched bird came out of a preen with its plumage as sleek as it went in.
+`BirdState::ruffleAmount` (0..1) now carries the ruffle: as each preen bout ends on the
+perch the bird shakes its feathers out for `RuffleSeconds` (0.7 s), the ruffle rising at
+8/s and smoothing at 4/s; a departure or flush drops it, and the ruffles are counted
+(`RuffleCount()`, `RufflingCount()`). In the near renderer the body's rings puff out by
+up to a fifth on the same vertices. A new report line "a perched bird shakes its feathers
+out as each preen ends, the body puffed for a moment and smoothed again" is pinned. Core
+check: the seeded perched bird's first preen ends in a ruffle that rises to full and is
+smoothed within a second and a half, with none before the preen ends. Native `bird-preen`
+passes.
+
 ## Loop pass 164 (2026-10-20) — a calling cicada drums
 
 A calling cicada looked no different from a resting one. `CicadaState::call` (0..1) and

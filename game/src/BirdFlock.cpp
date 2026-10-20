@@ -379,6 +379,8 @@ namespace island
                     agent.preening = false;
                     agent.state.stretchAmount = 0.0f;
                     agent.stretching = false;
+                    agent.state.ruffleAmount = 0.0f;
+                    agent.ruffleSeconds = 0.0f;
                     ++flushCount_;
                     if (snaked) {
                         // Flushed by a snake, the bird mobs it: it circles low over the head,
@@ -590,6 +592,14 @@ namespace island
         std::size_t count = 0;
         for (const Agent& agent : agents_)
             count += agent.mobSeconds > 0.0f && agent.state.behavior == BirdBehavior::Depart ? 1U : 0U;
+        return count;
+    }
+
+    std::size_t BirdFlock::RufflingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_)
+            count += agent.ruffleSeconds > 0.0f && agent.state.behavior == BirdBehavior::Perched ? 1U : 0U;
         return count;
     }
 
@@ -893,10 +903,18 @@ namespace island
                     ++preens_;
                     agent.state.preenSide = (preens_ + agent.index) % 2U == 0U ? 1.0f : -1.0f;
                 }
+                // As the preen ends the bird shakes its feathers out: a ruffle for a moment.
+                if (!inPreen && agent.preening) {
+                    agent.ruffleSeconds = RuffleSeconds;
+                    ++ruffles_;
+                }
                 agent.preening = inPreen;
             }
             agent.state.preenAmount += std::clamp((agent.preening ? 1.0f : 0.0f) - agent.state.preenAmount,
                                                   -deltaSeconds * 5.0f, deltaSeconds * 3.0f);
+            agent.ruffleSeconds = std::max(0.0f, agent.ruffleSeconds - deltaSeconds);
+            agent.state.ruffleAmount += std::clamp((agent.ruffleSeconds > 0.0f ? 1.0f : 0.0f) - agent.state.ruffleAmount,
+                                                   -deltaSeconds * 4.0f, deltaSeconds * 8.0f);
             // Between its preens a perched bird stretches: about every seventeen seconds, a
             // little more per bird, one wing opens out and down from its fold for a second
             // or two, the wings alternating; never feeding, preening or newly landed.
@@ -927,6 +945,8 @@ namespace island
                 agent.preening = false;
                 agent.state.stretchAmount = 0.0f;
                 agent.stretching = false;
+                agent.state.ruffleAmount = 0.0f;
+                agent.ruffleSeconds = 0.0f;
             }
             return;
         }

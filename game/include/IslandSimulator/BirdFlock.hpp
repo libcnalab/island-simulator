@@ -76,6 +76,9 @@ namespace island
         float stretchAmount = 0.0f;
         /** @brief The wing stretched: +1 right, -1 left, alternating stretch by stretch. */
         float stretchSide = 1.0f;
+        /** @brief 0..1 the ruffle: a perched bird shakes its feathers out as each preen ends,
+         *  the body puffed for a moment and smoothed again. */
+        float ruffleAmount = 0.0f;
         BirdPathFamily family = BirdPathFamily::Shore;
         BirdSpecies species = BirdSpecies::Coastal;
         BirdBehavior behavior = BirdBehavior::Fly;
@@ -196,6 +199,11 @@ namespace island
         [[nodiscard]] std::size_t StretchingCount() const noexcept;
         static constexpr float StretchSeconds = 1.8f;
         static constexpr float StretchPeriodSeconds = 17.0f;
+        /** @brief Ruffles begun (one as each preen bout ends on the perch, for RuffleSeconds)
+         *  and the perched birds mid-ruffle. */
+        [[nodiscard]] std::uint32_t RuffleCount() const noexcept { return ruffles_; }
+        [[nodiscard]] std::size_t RufflingCount() const noexcept;
+        static constexpr float RuffleSeconds = 0.7f;
         static constexpr float SnakeFlushDistance = 3.0f;
         /** @brief Fruit lying on the ground this frame; a fruit dove's ground visit lands
          *  beside the nearest one within FruitLandingRange when there is any. The doves'
@@ -294,6 +302,7 @@ namespace island
             bool feeding = false;           // in a feeding bout on a fruiting perch
             bool preening = false;          // in a preening bout on the perch
             bool stretching = false;        // in a wing stretch on the perch
+            float ruffleSeconds = 0.0f;     // remaining feather ruffle after a preen; 0 when smooth
             float mobSeconds = 0.0f;        // remaining circling over a snake; 0 when not mobbing
             float mobX = 0.0f, mobY = 0.0f, mobZ = 0.0f;
             float mobChatter = 0.0f;
@@ -338,6 +347,7 @@ namespace island
         std::uint32_t walkerFlushes_ = 0U;
         std::uint32_t preens_ = 0U;
         std::uint32_t stretches_ = 0U;
+        std::uint32_t ruffles_ = 0U;
         std::uint32_t mobs_ = 0U;
         BirdMob lastMob_;
         std::span<const FallingFruit> lyingFruit_;

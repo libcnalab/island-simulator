@@ -232,17 +232,20 @@ namespace island
         void AppendNearBody(std::vector<VertexPositionColor>& vertices,
                             const Vector3& centre,const Vector3& right,
                             const Vector3& up,const Vector3& forward,const float scale,
-                            const BirdPalette& palette,const BirdSpecies species)
+                            const BirdPalette& palette,const BirdSpecies species,
+                            const float ruffle=0.0f)
         {
             constexpr int Sides=16;
             const bool dove=species==BirdSpecies::FruitDove;
+            // Ruffled, the body's rings puff out by up to a fifth; the same vertices.
+            const float puff=1.0f+.20f*std::clamp(ruffle,0.0f,1.0f);
             const Vector3 tail=LocalPoint(centre,right,up,forward,0,dove?.008f:0.0f,
                 dove?-.45f:-.49f,scale);
             const Vector3 neck=LocalPoint(centre,right,up,forward,0,dove?.030f:.015f,
                 dove?.365f:.34f,scale);
             const auto ring=[&](float angle,float xRadius,float yRadius,float z) {
-                return LocalPoint(centre,right,up,forward,std::cos(angle)*xRadius,
-                    std::sin(angle)*yRadius,z,scale);
+                return LocalPoint(centre,right,up,forward,std::cos(angle)*xRadius*puff,
+                    std::sin(angle)*yRadius*puff,z,scale);
             };
             for(int side=0;side<Sides;++side) {
                 const float a0=6.28318530718f*static_cast<float>(side)/Sides;
@@ -395,7 +398,7 @@ namespace island
             const Vector3 right = levelRight * bankCosine + Vector3::Up * bankSine;
             const Vector3 up = Vector3::Up * bankCosine - levelRight * bankSine;
             const float scale = bird.scale;
-            AppendNearBody(vertices,centre,right,up,forward,scale,palette,bird.species);
+            AppendNearBody(vertices,centre,right,up,forward,scale,palette,bird.species,bird.ruffleAmount);
             // The walking dove's head thrusts forward and dips slightly with each step.
             // Preening, the head turns back over one shoulder (a hundred and twenty degrees)
             // and down into the wing, pivoting about the neck root.

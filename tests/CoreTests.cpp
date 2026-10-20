@@ -8300,6 +8300,24 @@ int main()
         longestStretch = std::max(longestStretch, stretchBout);
         Check(stretcher.StretchCount() >= 1U && stretchPeak > 0.9f && longestStretch > 0.8f && longestStretch < 3.0f && !together,
               "a perched bird stretches one wing for a bout of a second or two between its preens");
+        // The ruffle: as the seeded bird's first preen ends it shakes its feathers out, the
+        // ruffle rising to full within a quarter second of the preen's end and smoothed again
+        // within a second and a half; none before the preen ends.
+        island::BirdFlock ruffler(terrain);
+        ruffler.SetPerchSites(sites);
+        bool preened = false, earlyRuffle = false; float rufflePeak = 0.0f; int ruffleFrames = 0, smoothAfter = -1;
+        for (int step = 0; step < 400; ++step) {
+            ruffler.Update(0.05f, perchX + 25.0f, sites[0].y, perchZ);
+            const auto& bird = ruffler.Birds()[0];
+            if (bird.behavior != island::BirdBehavior::Perched) break;
+            if (bird.preenAmount > 0.5f) preened = true;
+            if (!preened && bird.ruffleAmount > 0.1f) earlyRuffle = true;
+            rufflePeak = std::max(rufflePeak, bird.ruffleAmount);
+            if (bird.ruffleAmount > 0.5f) ++ruffleFrames;
+            if (rufflePeak > 0.9f && bird.ruffleAmount < 0.1f && smoothAfter < 0) smoothAfter = step;
+        }
+        Check(ruffler.RuffleCount() >= 1U && rufflePeak > 0.9f && ruffleFrames >= 8 && ruffleFrames <= 30 && smoothAfter > 0 && !earlyRuffle,
+              "a perched bird shakes its feathers out as its preen ends and smooths them again");
         float climbed = sitting.Birds()[0].y;
         for (int step = 0; step < 70; ++step) { sitting.Update(0.05f, perchX + 6.0f, sites[0].y, perchZ); climbed = std::max(climbed, sitting.Birds()[0].y); }
         Check(sitting.Birds()[0].behavior == island::BirdBehavior::Fly && climbed > sites[0].y + 2.0f,
