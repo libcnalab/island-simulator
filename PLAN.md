@@ -54,6 +54,24 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 212 (2026-10-20) — the props and the palm crowns' shading fade too
+
+The rest of the flight audit's hard switches outside the canopy's own mesh swap. The
+natural props swapped meshes and vanished on fixed circles: rocks at 92/285 m, logs at
+72/175 m, driftwood at 58/145 m, reef habitat at 46/138 m, and the beach details and animal
+tracks vanished at 52 m and the fallen fronds and nuts at 76 m (a ring of pebbles and shells
+following the walker along the beach). Each now shrinks to nothing over the last part of its
+range, 12 % for the larger props and 22 % for the small beach items, and the larger ones
+swap meshes at their own staggered distances (+-12 %), the same `vegetation_fade` rules as
+the jungle. A palm's frond face shading was switched per mesh by a uniform (1 on the near
+mesh, 0 on the far), stepping each crown's brightness by up to 8 % at its swap; it now fades
+with each fragment's own distance between 115 and 155 m on both meshes. Left alone: the
+canopy's near/far mesh swap at 105-129 m (already staggered by tree yaw; a geometry swap
+that a scale fade would not hide). Startup: "... rocks, logs, driftwood, reef habitat, beach
+details, tracks, fronds and nuts shrink away too, and a palm's frond shading fades with
+distance instead of switching with its mesh", pinned. Native `beach`, `palms` and `jetty`
+pass, 0.1 to 1.2 % of pixels changed by 20 levels or more against their last captures.
+
 ## Loop pass 211 (2026-10-20) — far trees and palms shrink away, palms by their own distance
 
 Third and fourth from the flight audit. Canopy trees were cut per tree at 475 m times the

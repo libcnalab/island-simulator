@@ -1,3 +1,4 @@
+#include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/NaturalPropRenderer.hpp"
 
 #include "IslandSimulator/EnvironmentLighting.hpp"
@@ -2018,6 +2019,15 @@ void main()
             const float deltaZ = closestZ - cameraPosition.Z;
             const float distanceSquared = deltaX * deltaX + deltaZ * deltaZ;
             bool cellVisible = false;
+            // Every prop shrinks to nothing over the last part of its range instead of popping,
+            // and the larger ones swap meshes at their own staggered distances.
+            const auto shrunk = [](const Matrix& transform, const float scale) {
+                return scale < 1.0f ? Matrix::CreateScale(scale) * transform : transform;
+            };
+            const auto staggeredNear = [](const DrawInstance& instance, const float base) {
+                const float d = vegetation_fade::StaggeredNearDistance(base, instance.x, instance.z);
+                return d * d;
+            };
             if (distanceSquared <= RockMaximumDistance * RockMaximumDistance) {
                 for (const DrawInstance& instance : cell.rocks) {
                     const float instanceDeltaX = instance.x - cameraPosition.X;
@@ -2028,10 +2038,12 @@ void main()
                         > RockMaximumDistance * RockMaximumDistance) {
                         continue;
                     }
-                    const bool nearLod = instanceDistanceSquared
-                        <= RockNearDistance * RockNearDistance;
+                    const float shrink = vegetation_fade::FarShrink(std::sqrt(instanceDistanceSquared),
+                        RockMaximumDistance, vegetation_fade::TreeShrinkFraction);
+                    if (shrink <= 0.0f) continue;
+                    const bool nearLod = instanceDistanceSquared <= staggeredNear(instance, RockNearDistance);
                     (nearLod ? visibleRockNear_ : visibleRockFar_)[instance.variant]
-                        .push_back(instance.transform);
+                        .push_back(shrunk(instance.transform, shrink));
                     ++visibleRockCount_;
                     if (instance.offshore) ++visibleReefRockCount_;
                     cellVisible = true;
@@ -2046,10 +2058,12 @@ void main()
                     if (instanceDistanceSquared > LogMaximumDistance * LogMaximumDistance) {
                         continue;
                     }
-                    const bool nearLod = instanceDistanceSquared
-                        <= LogNearDistance * LogNearDistance;
+                    const float shrink = vegetation_fade::FarShrink(std::sqrt(instanceDistanceSquared),
+                        LogMaximumDistance, vegetation_fade::TreeShrinkFraction);
+                    if (shrink <= 0.0f) continue;
+                    const bool nearLod = instanceDistanceSquared <= staggeredNear(instance, LogNearDistance);
                     (nearLod ? visibleLogNear_ : visibleLogFar_)[instance.variant]
-                        .push_back(instance.transform);
+                        .push_back(shrunk(instance.transform, shrink));
                     ++visibleLogCount_;
                     cellVisible = true;
                 }
@@ -2064,10 +2078,12 @@ void main()
                         > DriftwoodMaximumDistance * DriftwoodMaximumDistance) {
                         continue;
                     }
-                    const bool nearLod = instanceDistanceSquared
-                        <= DriftwoodNearDistance * DriftwoodNearDistance;
+                    const float shrink = vegetation_fade::FarShrink(std::sqrt(instanceDistanceSquared),
+                        DriftwoodMaximumDistance, vegetation_fade::TreeShrinkFraction);
+                    if (shrink <= 0.0f) continue;
+                    const bool nearLod = instanceDistanceSquared <= staggeredNear(instance, DriftwoodNearDistance);
                     (nearLod ? visibleDriftwoodNear_ : visibleDriftwoodFar_)[instance.variant]
-                        .push_back(instance.transform);
+                        .push_back(shrunk(instance.transform, shrink));
                     ++visibleDriftwoodCount_;
                     if (nearLod) ++visibleDriftwoodNearCount_;
                     else ++visibleDriftwoodFarCount_;
@@ -2077,44 +2093,40 @@ void main()
             for (const DrawInstance& instance : cell.beachDetails) {
                 const float detailDeltaX = instance.x - cameraPosition.X;
                 const float detailDeltaZ = instance.z - cameraPosition.Z;
-                if (detailDeltaX * detailDeltaX + detailDeltaZ * detailDeltaZ
-                    > BeachDetailMaximumDistance * BeachDetailMaximumDistance) {
-                    continue;
-                }
-                visibleBeachDetails_[instance.variant].push_back(instance.transform);
+                const float shrink = vegetation_fade::FarShrink(
+                    std::sqrt(detailDeltaX * detailDeltaX + detailDeltaZ * detailDeltaZ), BeachDetailMaximumDistance);
+                if (shrink <= 0.0f) continue;
+                visibleBeachDetails_[instance.variant].push_back(shrunk(instance.transform, shrink));
                 ++visibleBeachDetailCount_;
                 cellVisible = true;
             }
             for (const DrawInstance& instance : cell.animalTracks) {
                 const float trackDeltaX = instance.x - cameraPosition.X;
                 const float trackDeltaZ = instance.z - cameraPosition.Z;
-                if (trackDeltaX * trackDeltaX + trackDeltaZ * trackDeltaZ
-                    > BeachDetailMaximumDistance * BeachDetailMaximumDistance) {
-                    continue;
-                }
-                visibleAnimalTracks_[instance.variant].push_back(instance.transform);
+                const float shrink = vegetation_fade::FarShrink(
+                    std::sqrt(trackDeltaX * trackDeltaX + trackDeltaZ * trackDeltaZ), BeachDetailMaximumDistance);
+                if (shrink <= 0.0f) continue;
+                visibleAnimalTracks_[instance.variant].push_back(shrunk(instance.transform, shrink));
                 ++visibleAnimalTrackCount_;
                 cellVisible = true;
             }
             for (const DrawInstance& instance : cell.fallenCoconuts) {
                 const float nutDeltaX = instance.x - cameraPosition.X;
                 const float nutDeltaZ = instance.z - cameraPosition.Z;
-                if (nutDeltaX * nutDeltaX + nutDeltaZ * nutDeltaZ
-                    > FallenFrondMaximumDistance * FallenFrondMaximumDistance) {
-                    continue;
-                }
-                visibleFallenCoconuts_[instance.variant].push_back(instance.transform);
+                const float shrink = vegetation_fade::FarShrink(
+                    std::sqrt(nutDeltaX * nutDeltaX + nutDeltaZ * nutDeltaZ), FallenFrondMaximumDistance);
+                if (shrink <= 0.0f) continue;
+                visibleFallenCoconuts_[instance.variant].push_back(shrunk(instance.transform, shrink));
                 ++visibleFallenCoconutCount_;
                 cellVisible = true;
             }
             for (const DrawInstance& instance : cell.fallenFronds) {
                 const float frondDeltaX = instance.x - cameraPosition.X;
                 const float frondDeltaZ = instance.z - cameraPosition.Z;
-                if (frondDeltaX * frondDeltaX + frondDeltaZ * frondDeltaZ
-                    > FallenFrondMaximumDistance * FallenFrondMaximumDistance) {
-                    continue;
-                }
-                visibleFallenFronds_[instance.variant].push_back(instance.transform);
+                const float shrink = vegetation_fade::FarShrink(
+                    std::sqrt(frondDeltaX * frondDeltaX + frondDeltaZ * frondDeltaZ), FallenFrondMaximumDistance);
+                if (shrink <= 0.0f) continue;
+                visibleFallenFronds_[instance.variant].push_back(shrunk(instance.transform, shrink));
                 ++visibleFallenFrondCount_;
                 cellVisible = true;
             }
@@ -2126,10 +2138,12 @@ void main()
                         + reefDeltaZ * reefDeltaZ;
                     if (reefDistanceSquared
                         > ReefHabitatMaximumDistance * ReefHabitatMaximumDistance) continue;
-                    const bool nearLod = reefDistanceSquared
-                        <= ReefHabitatNearDistance * ReefHabitatNearDistance;
+                    const float shrink = vegetation_fade::FarShrink(std::sqrt(reefDistanceSquared),
+                        ReefHabitatMaximumDistance, vegetation_fade::TreeShrinkFraction);
+                    if (shrink <= 0.0f) continue;
+                    const bool nearLod = reefDistanceSquared <= staggeredNear(instance, ReefHabitatNearDistance);
                     (nearLod ? visibleReefHabitatNear_ : visibleReefHabitatFar_)
-                        [instance.variant].push_back(instance.transform);
+                        [instance.variant].push_back(shrunk(instance.transform, shrink));
                     ++visibleReefHabitatCount_;
                     cellVisible = true;
                 }

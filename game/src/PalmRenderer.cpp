@@ -198,7 +198,7 @@ in float vLocalHeight;
 
 uniform vec3 uCameraPosition;
 uniform vec3 uToSun;
-uniform float uMaterialDetail;
+uniform vec2 uFaceDetailFade;   // the frond face shading fades out between these distances
 
 out vec4 fragColor;
 
@@ -226,12 +226,16 @@ void main()
         float boleShade = mix(0.86, 1.0, smoothstep(0.0, 1.6, aboveGround));
         material *= daylight * (1.0 - scar * 0.13) * boleShade
             * trunkContactOcclusion(aboveGround);
-    } else if (uMaterialDetail > 0.5) {
+    } else {
+        // The frond faces' shading fades with the fragment's own distance on the near and far
+        // meshes alike; switching it with the mesh stepped each crown's brightness by up to 8 %.
         float inverseFaceLength = inversesqrt(max(dot(faceVector, faceVector), 0.00000001));
         vec3 faceNormal = faceVector * inverseFaceLength;
         float twoSidedDiffuse = abs(dot(faceNormal, uToSun));
         float upwardFill = abs(faceNormal.y);
-        material *= 0.88 + twoSidedDiffuse * 0.16 + upwardFill * 0.04;
+        float faceDetail = 1.0 - smoothstep(uFaceDetailFade.x, uFaceDetailFade.y,
+                                            length(vWorld.xz - uCameraPosition.xz));
+        material *= mix(1.0, 0.88 + twoSidedDiffuse * 0.16 + upwardFill * 0.04, faceDetail);
     }
     // Directional sun shadow from neighbouring palms, crowns and structures.
     material *= mix(vec3(0.56, 0.60, 0.66), vec3(1.0), sunShadowVisibility(vWorld));
@@ -1294,22 +1298,14 @@ void main()
             effect_->setProjectionProperty(projection);
         }
 
+        if (customShaderReady_) {
+            customEffect_->SetUniformVec2("uFaceDetailFade", NearLodMinimumDistance - 10.0f,
+                                          NearLodMinimumDistance + NearLodDistanceRange + 10.0f);
+        }
         for (std::size_t variant = 0; variant < nearMeshes_.size(); ++variant) {
-            if (customShaderReady_) {
-                customEffect_->SetUniformFloat("uMaterialDetail", 1.0f);
-            }
             DrawVariant(nearMeshes_[variant], visibleNearTransforms_[variant]);
-            if (customShaderReady_) {
-                customEffect_->SetUniformFloat("uMaterialDetail", 0.0f);
-            }
             DrawVariant(farMeshes_[variant], visibleFarTransforms_[variant]);
-            if (customShaderReady_) {
-                customEffect_->SetUniformFloat("uMaterialDetail", 1.0f);
-            }
             DrawVariant(brokenNearMeshes_[variant], visibleBrokenNearTransforms_[variant]);
-            if (customShaderReady_) {
-                customEffect_->SetUniformFloat("uMaterialDetail", 0.0f);
-            }
             DrawVariant(brokenFarMeshes_[variant], visibleBrokenFarTransforms_[variant]);
         }
         device_.SetVertexBuffers({});

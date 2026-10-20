@@ -274,6 +274,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 209: grass mesh tiers are chosen per patch by its own distance and rank, morphing over 5 m, drawn by quarter-cell ranges, instead of per 37.5 m cell by the cell centre (which thinned patches 51 m away in square blocks); about +25-30 % grass vertex work (PLAN "Loop pass 209").
 - Pass 210: jungle understory, bushes and ground plants (and standing snags) swap meshes at staggered per-plant distances (+-12 %) and shrink into the ground over the last 22 % of their range instead of popping on six fixed circles (PLAN "Loop pass 210").
 - Pass 211: canopy trees and palms shrink to nothing over the last 12 % of their range instead of a hard cut, and palms are judged each by its own distance instead of by their 85 m cell's centre (PLAN "Loop pass 211").
+- Pass 212: rocks, logs, driftwood, reef habitat, beach details, tracks, fallen fronds and nuts shrink away over the end of their range with staggered mesh swaps, and the palm frond shading fades with distance instead of switching with the mesh (PLAN "Loop pass 212").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

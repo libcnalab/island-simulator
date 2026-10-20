@@ -1904,7 +1904,9 @@ void main()
                   << static_cast<int>(vegetation_fade::ShrinkFraction * 100.0f + 0.5f)
                   << " % of their range instead of popping on fixed circles; canopy trees and palms shrink away over the last "
                   << static_cast<int>(vegetation_fade::TreeShrinkFraction * 100.0f + 0.5f)
-                  << " % of theirs, palms each by its own distance rather than by 85 m cell\n";
+                  << " % of theirs, palms each by its own distance rather than by 85 m cell; rocks, logs, "
+                     "driftwood, reef habitat, beach details, tracks, fronds and nuts shrink away too, and a palm's "
+                     "frond shading fades with distance instead of switching with its mesh\n";
         std::cout << "island-simulator: jungle " << totalCanopyCount_ << " canopy trees, "
                   << totalUnderstoryCount_ << " understory plants, " << totalBushCount_
                   << " low bushes, "
