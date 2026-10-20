@@ -186,6 +186,31 @@ int main() {
         for(int step=0;step<100;++step){const auto& s=threat.Spiders()[0];threat.Update(.02f,{s.x+7.0f,s.y+1.0f,s.z});}
         check(threat.Spiders()[0].display==0&&threat.DisplayingCount()==0,"a spider keeps rearing once the walker has stood off");
     }
+    {
+        // The groom: with the walker far above, within a minute a resting spider draws a
+        // front leg in to its mouthparts, the groom at full with that foot raised off the
+        // ground within reach and six feet down, and sets it down again; the next groom
+        // takes the other front leg.
+        SpiderColony groomer(terrain,jungle,obstacles);
+        const auto& first=groomer.Spiders()[0];
+        const SpiderPoint overhead{first.x,first.y+3.0f,first.z};
+        bool raised=false,setDown=false; std::uint8_t firstLeg=255U,secondLeg=255U;
+        for(int step=0;step<3000&&secondLeg==255U;++step) {
+            groomer.Update(.02f,overhead);
+            for(std::size_t i=0;i<SpiderHabitat::GroundCount;++i) {
+                const auto& s=groomer.Spiders()[i];
+                if(s.groom>.9f) {
+                    const std::size_t leg=s.groomLeg==4U?4U:0U;
+                    const auto foot=s.pose.feet[leg];
+                    const bool up=!s.pose.stance[leg]&&foot.y-surface.Sample(foot.x,foot.z).height>.02f&&!s.pose.legs[leg].reachLimited
+                        &&std::count(s.pose.stance.begin(),s.pose.stance.end(),true)>=6;
+                    if(up) { raised=true; if(firstLeg==255U) firstLeg=s.groomLeg; else if(s.groomLeg!=firstLeg) secondLeg=s.groomLeg; }
+                }
+                if(raised&&s.groom==0) setDown=true;
+            }
+        }
+        check(groomer.GroomCount()>=2&&raised&&setDown&&firstLeg!=255U&&secondLeg!=255U,"a resting spider does not groom a front leg and then the other");
+    }
     for(float dt:{0.0f,-1.0f,INFINITY,NAN})invalid.Update(dt,{0,0,0});
     check(std::equal(before.begin(),before.end(),invalid.Spiders().begin()),"invalid dt changed spiders");
     std::cout<<"stance pairs "<<pairs<<", swing samples "<<swings<<", min mesh clearance "<<minimumClearance<<'\n';

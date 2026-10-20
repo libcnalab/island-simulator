@@ -41,6 +41,19 @@ SpiderGroundPose SpiderColony::Pose(const SpiderState& state,const Feet& feet) c
     // Rearing, the front pair of legs is raised: once the display is past half, each front
     // foot leaves its anchor for a point lifted and drawn in by the display amount, well
     // within the leg's reach; the other six stay planted.
+    // Grooming, the one front leg is drawn in to the mouthparts: once the groom is past
+    // half its foot leaves its anchor for a point in under the body's front and up,
+    // worked back and forth a little with the groom.
+    if(state.groom>.5f&&state.display<=.5f) {
+        const std::size_t leg=state.groomLeg==4U?4U:0U;
+        const auto neutral=SpiderPose::NeutralFoot(leg);
+        const float k=std::clamp(state.groom,0.0f,1.0f);
+        const SpiderPoint drawn{neutral.x*.55f,.040f,neutral.z*.85f+.012f*std::sin(k*31.0f)};
+        const auto target=Add(Mul(neutral,1-k),Mul(drawn,k));
+        // Only a target within the leg's reach is taken; otherwise the foot keeps its anchor.
+        const auto solved=SpiderPose::Solve(leg,target);
+        if(!solved.reachLimited) {pose.feet[leg]=pose.ToWorld(target);pose.stance[leg]=false;pose.legs[leg]=solved;}
+    }
     if(state.display>.5f)for(const std::size_t leg:{std::size_t{0},std::size_t{4}}) {
         const auto neutral=SpiderPose::NeutralFoot(leg);
         const float k=std::clamp(state.display,0.0f,1.0f);
@@ -50,6 +63,11 @@ SpiderGroundPose SpiderColony::Pose(const SpiderState& state,const Feet& feet) c
         pose.legs[leg]=SpiderPose::Solve(leg,target);
     }
     return pose;
+}
+std::size_t SpiderColony::GroomingCount() const noexcept {
+    std::size_t count=0;
+    for(const auto& intent:intents_)count+=intent.grooming?1U:0U;
+    return count;
 }
 std::size_t SpiderColony::DisplayingCount() const noexcept {
     std::size_t count=0;
@@ -107,7 +125,7 @@ void SpiderColony::AdvanceFeet(std::size_t index,float dt) {
     const auto active=std::count_if(feet.begin(),feet.end(),[](const auto& f){return f.swinging;});
     std::size_t selected=8;float largest=.00455f;
     // A rearing spider plants no new steps: its feet stay where they are under the display.
-    if(active<2&&state.display<.1f)for(std::size_t leg=0;leg<8;++leg)if(!feet[leg].swinging) {
+    if(active<2&&state.display<.1f&&state.groom<.1f)for(std::size_t leg=0;leg<8;++leg)if(!feet[leg].swinging) {
         const auto neutral=SpiderPose::NeutralFoot(leg);
         const auto local=frame.ToLocal(feet[leg].position);
         // A freshly planted foot ahead of its neutral point is useful support,
@@ -145,6 +163,17 @@ void SpiderColony::Step(std::size_t index,float dt,SpiderPoint observer,bool obs
     intent.displaying=threatened;
     state.display+=std::clamp((threatened?1.0f:0.0f)-state.display,-DisplayLowerRate*dt,DisplayRaiseRate*dt);
     if(threatened){state.behavior=SpiderBehavior::Rest;intent.remaining=std::max(intent.remaining,.3f);}
+    // The groom: resting and unthreatened, a second in and every dozen seconds after (a
+    // little per spider), one front leg is drawn in and worked through the mouthparts for
+    // a few seconds, the legs taking turns; a threat or the crawl on drops it.
+    const bool resting=state.behavior==SpiderBehavior::Rest&&!threatened&&!retreat;
+    intent.groomClock=resting?intent.groomClock+dt:0.0f;
+    const float groomPeriod=GroomPeriodSeconds+1.3f*static_cast<float>(index%4U);
+    const float groomCycle=std::fmod(intent.groomClock,groomPeriod);
+    const bool grooming=resting&&groomCycle>=GroomDelaySeconds&&groomCycle<GroomDelaySeconds+GroomSeconds;
+    if(grooming&&!intent.grooming){++grooms_;state.groomLeg=state.groomLeg==0U?4U:0U;}
+    intent.grooming=grooming;
+    state.groom+=std::clamp((grooming?1.0f:0.0f)-state.groom,-3.0f*dt,2.0f*dt);
     if(retreat) {
         state.behavior=SpiderBehavior::Retreat;intent.remaining=.5f;
         if(std::hypot(state.x-observer.x,state.z-observer.z)>.001f)

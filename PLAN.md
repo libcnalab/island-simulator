@@ -54,6 +54,22 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 199 (2026-10-20) — a resting spider grooms a leg
+
+A ground spider at rest held all eight legs planted. `SpiderState::groom` (0..1) and
+`groomLeg` (0 the left front, 4 the right) now carry the groom: resting and unthreatened, a
+second into every `GroomPeriodSeconds` (12 s, plus a little per spider) one front leg is
+drawn in toward the mouthparts and worked there for `GroomSeconds` (2.5 s), rising at 2/s
+and set down at 3/s, the front legs taking turns; a threat or the crawl on drops it, no new
+steps are planted while it holds, and the grooms are counted (`GroomCount()`,
+`GroomingCount()`). In the pose, once the groom is past half, that foot leaves its anchor
+for a point drawn in and up (only when the solve is within reach; otherwise the foot keeps
+its anchor, so the gait audit's no-stretched-leg rule holds). A new report line "a ground
+spider at rest draws a front leg in and works it through its mouthparts every dozen
+seconds or so, the legs taking turns" is pinned. SpiderColonyTests: within a minute a
+resting spider grooms a front leg at full with that foot raised within reach and six feet
+down, sets it down, and the next groom takes the other front leg. Native `spiders` passes.
+
 ## Loop pass 198 (2026-10-20) — ants meet head to head
 
 Ants walking a trail in opposite directions passed through each other without a pause.

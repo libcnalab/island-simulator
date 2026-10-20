@@ -23,6 +23,11 @@ struct SpiderState {
     // range and DisplayDistance has the spider stop and rear, its front pair of legs raised
     // off the ground; stepping closer drops it for the retreat, leaving lets it down.
     float display=0;
+    // 0..1 the groom: a spider at rest, unthreatened, draws one front leg (groomLeg: 0 the
+    // left, 4 the right) in to its mouthparts and works it through them for a few seconds,
+    // the legs taking turns; a threat or the next crawl drops it.
+    float groom=0;
+    std::uint8_t groomLeg=0;
     SpiderGroundPose pose{};
     bool operator==(const SpiderState&) const = default;
 };
@@ -35,6 +40,11 @@ public:
     // Displays begun, and the spiders rearing this moment.
     [[nodiscard]] std::uint32_t DisplayCount() const noexcept {return displays_;}
     [[nodiscard]] std::size_t DisplayingCount() const noexcept;
+    // Grooms begun (a rest GroomDelaySeconds in, every GroomPeriodSeconds, GroomSeconds long)
+    // and the spiders grooming this moment.
+    [[nodiscard]] std::uint32_t GroomCount() const noexcept {return grooms_;}
+    [[nodiscard]] std::size_t GroomingCount() const noexcept;
+    static constexpr float GroomDelaySeconds=1.0f,GroomSeconds=2.5f,GroomPeriodSeconds=12.0f;
     SpiderColony(const IslandTerrain& terrain,const JungleLayout& jungle,
         std::span<const CircularObstacle> obstacles);
     void Update(float dt,SpiderPoint observer);
@@ -43,7 +53,7 @@ public:
 private:
     struct Foot {SpiderPoint position{},start{},target{};float progress=0;bool swinging=false;};
     using Feet=std::array<Foot,8>;
-    struct Intent {float remaining=0,heading=0;std::uint32_t decisions=0;bool displaying=false;};
+    struct Intent {float remaining=0,heading=0;std::uint32_t decisions=0;bool displaying=false;float groomClock=0;bool grooming=false;};
     [[nodiscard]] SpiderGroundPose Frame(float x,float z,float heading) const;
     [[nodiscard]] SpiderGroundPose Pose(const SpiderState& state,const Feet& feet) const;
     [[nodiscard]] bool Valid(const SpiderGroundPose& pose) const;
@@ -57,5 +67,6 @@ private:
     std::array<float,SpiderHabitat::GroundCount> accumulatedSeconds_{};
     std::uint64_t frameIndex_=0;
     std::uint32_t displays_=0;
+    std::uint32_t grooms_=0;
 };
 }
