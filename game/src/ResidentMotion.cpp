@@ -90,8 +90,8 @@ bool ResidentMotion::FitPose(float x,float z,float heading,float speed,ResidentP
     return true;
 }
 ResidentMotion::ResidentMotion(const IslandTerrain& terrain,std::span<const CircularObstacle> solids,
-                               const std::span<const ResidentPoint> landmarks)
-    :terrain_(terrain),ground_(terrain),solids_(solids),route_(terrain,ground_,solids_,landmarks) {
+                               const std::span<const ResidentPoint> landmarks,const std::span<const ResidentPoint> landmarkFacings)
+    :terrain_(terrain),ground_(terrain),solids_(solids),route_(terrain,ground_,solids_,landmarks,landmarkFacings) {
     const auto start=route_.Points()[0],next=route_.Points()[1];
     state_.x=start.x;state_.z=start.z;state_.y=start.y;
     state_.heading=std::atan2(next.x-start.x,next.z-start.z);
@@ -124,8 +124,17 @@ void ResidentMotion::Step(float seconds,ResidentPoint observer) {
     auto target=route_.Points()[state_.nextPoint];
     float distance=std::hypot(target.x-state_.x,target.z-state_.z);
     if(distance<.12f&&pauseRemaining_<=0) {
-        if(std::find(route_.PausePoints().begin(),route_.PausePoints().end(),state_.nextPoint)!=route_.PausePoints().end()
-            ||state_.nextPoint==route_.Points().size()-1){pauseRemaining_=6+static_cast<float>(state_.pauseCount%3)*2;++state_.pauseCount;}
+        const auto pause=std::find(route_.PausePoints().begin(),route_.PausePoints().end(),state_.nextPoint);
+        pauseFacing_=false;
+        if(pause!=route_.PausePoints().end()||state_.nextPoint==route_.Points().size()-1){
+            pauseRemaining_=6+static_cast<float>(state_.pauseCount%3)*2;++state_.pauseCount;
+            // A pause with a view: the resident turns to it and stands looking for longer.
+            const std::size_t k=pause!=route_.PausePoints().end()?static_cast<std::size_t>(pause-route_.PausePoints().begin()):route_.PauseFacings().size();
+            if(k<route_.PauseFacings().size()&&std::isfinite(route_.PauseFacings()[k].x)) {
+                pauseFacing_=true;pauseFaceX_=route_.PauseFacings()[k].x;pauseFaceZ_=route_.PauseFacings()[k].z;
+                pauseRemaining_+=8;
+            }
+        }
         ++state_.nextPoint;
         if(state_.nextPoint>=route_.Points().size()){state_.nextPoint=1;++state_.completedLaps;}
         target=route_.Points()[state_.nextPoint];distance=std::hypot(target.x-state_.x,target.z-state_.z);
@@ -133,7 +142,9 @@ void ResidentMotion::Step(float seconds,ResidentPoint observer) {
     const bool yield=Finite(observer)&&std::abs(observer.y-state_.y-1.0f)<3.0f
         &&std::hypot(observer.x-state_.x,observer.z-state_.z)<1.7f;
     float desiredSpeed=0;
-    const float desiredHeading=std::atan2(target.x-state_.x,target.z-state_.z),turn=Wrap(desiredHeading-state_.heading);
+    const float desiredHeading=pauseRemaining_>0&&pauseFacing_?std::atan2(pauseFaceX_,pauseFaceZ_)
+        :std::atan2(target.x-state_.x,target.z-state_.z);
+    const float turn=Wrap(desiredHeading-state_.heading);
     state_.mode=yield?ResidentMode::Yielding:pauseRemaining_>0?ResidentMode::Pausing:
         std::abs(turn)>.28f?ResidentMode::Turning:ResidentMode::Walking;
     if(!yield&&pauseRemaining_>0)pauseRemaining_=std::max(0.0f,pauseRemaining_-seconds);

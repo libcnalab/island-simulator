@@ -359,12 +359,16 @@ namespace island
                                      HelicopterSite::ClearingRadius});
         // The resident's tour also calls at the jetty foot, three metres up the sand from the
         // deck's root, when the route search can reach it.
-        std::vector<ResidentPoint> residentLandmarks;
-        if(jettyPlacement_) residentLandmarks.push_back({jettyPlacement_->rootX-jettyPlacement_->dirX*3.0f,0.0f,
-            jettyPlacement_->rootZ-jettyPlacement_->dirZ*3.0f});
-        resident_=std::make_unique<ResidentMotion>(terrain_,wildlifeObstacles,residentLandmarks);
+        std::vector<ResidentPoint> residentLandmarks,residentFacings;
+        if(jettyPlacement_) {
+            residentLandmarks.push_back({jettyPlacement_->rootX-jettyPlacement_->dirX*3.0f,0.0f,
+                jettyPlacement_->rootZ-jettyPlacement_->dirZ*3.0f});
+            residentFacings.push_back({jettyPlacement_->dirX,0.0f,jettyPlacement_->dirZ});
+        }
+        resident_=std::make_unique<ResidentMotion>(terrain_,wildlifeObstacles,residentLandmarks,residentFacings);
         std::cout<<"island-simulator: resident tour visits "<<resident_->Route().LandmarkCount()
-                 <<" landmark(s): the jetty foot joins the campfire, path and clearing calls\n";
+                 <<" landmark(s): the jetty foot joins the campfire, path and clearing calls; "
+                 <<"at the jetty foot the resident turns to look out along the deck to sea\n";
         bear_=std::make_unique<BearMotion>(terrain_,wildlifeObstacles);
         monkeyTroop_.SetObstacles(wildlifeObstacles);
         monkeyTroop_.SetCanopy(jungleLayout_.Canopy());

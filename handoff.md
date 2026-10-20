@@ -91,6 +91,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 28: leaves drift down the stream on the current, over the cascade and out to sea (PLAN "Loop pass 28").
 - Pass 29: gust fronts drive pale sand streamers along the dry beach (PLAN "Loop pass 29").
 - Pass 30: small fish hold station in the plunge pool, dart and scatter from the walker (PLAN "Loop pass 30").
+- Pass 31: the resident turns to look out to sea during the jetty-foot pause (PLAN "Loop pass 31").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

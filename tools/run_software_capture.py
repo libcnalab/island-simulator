@@ -981,6 +981,8 @@ def main():
                 raise RuntimeError("current lookout tower is missing; check for a stale executable")
             if "fruit knocked loose by picking monkeys drops from the crown and lies under the tree; gust fronts shake coconuts from the nearer palms" not in diagnostics:
                 raise RuntimeError("current falling fruit is missing; check for a stale executable")
+            if "at the jetty foot the resident turns to look out along the deck to sea" not in diagnostics:
+                raise RuntimeError("current resident jetty look-out is missing; check for a stale executable")
             if "resident tour visits 1 landmark(s): the jetty foot joins the campfire, path and clearing calls" not in diagnostics:
                 raise RuntimeError("current resident jetty call is missing; check for a stale executable")
             if "bare footprints lead along the sand from the jetty foot past the canoe" not in diagnostics:

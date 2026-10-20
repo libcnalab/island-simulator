@@ -78,9 +78,27 @@ int main() {
         const auto jetty=JettyLayout::FindInWorld(terrain,*hut);
         Check(jetty.has_value(),"actual resident world is missing the jetty");
         const std::vector<ResidentPoint> landmarks{{jetty->rootX-jetty->dirX*3.0f,0.0f,jetty->rootZ-jetty->dirZ*3.0f}};
-        ResidentMotion caller(terrain,solids,landmarks);
+        const std::vector<ResidentPoint> facings{{jetty->dirX,0.0f,jetty->dirZ}};
+        ResidentMotion caller(terrain,solids,landmarks,facings);
         const auto& tour=caller.Route();
         Check(tour.LandmarkCount()==1,"resident tour accepted the jetty landmark");
+        Check(tour.PauseFacings().size()==tour.PausePoints().size(),"resident pause facings pair with the pause points");
+        bool jettyFacing=false;
+        for(std::size_t k=0;k<tour.PausePoints().size();++k) {
+            const auto p=tour.Points()[tour.PausePoints()[k]];
+            if(std::hypot(p.x-landmarks[0].x,p.z-landmarks[0].z)<5.0f&&std::isfinite(tour.PauseFacings()[k].x)) jettyFacing=true;
+        }
+        Check(jettyFacing,"the jetty pause carries the look-out facing");
+        // Walking the tour: at the jetty pause the resident turns to face out along the deck.
+        bool lookedOut=false;
+        const float seaward=std::atan2(jetty->dirX,jetty->dirZ);
+        for(int step=0;step<60000&&!lookedOut;++step) {
+            caller.Update(.05f,ResidentPoint{1000,0,1000});
+            const auto& s=caller.State();
+            if(caller.LookingOut()&&s.mode==ResidentMode::Pausing&&std::hypot(s.x-landmarks[0].x,s.z-landmarks[0].z)<5.0f
+                &&std::abs(std::remainder(s.heading-seaward,6.2831853f))<.3f) lookedOut=true;
+        }
+        Check(lookedOut,"the resident turns to look out to sea during the jetty pause");
         bool pausesAtJetty=false;
         for(const auto pause:tour.PausePoints()) {
             const auto p=tour.Points()[pause];

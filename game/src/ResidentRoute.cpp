@@ -116,18 +116,28 @@ private:
 };
 }
 ResidentRoute::ResidentRoute(const IslandTerrain& terrain,const RenderedTerrainSurface& ground,const WorldCollisionGrid& solids,
-                             const std::span<const ResidentPoint> landmarks) {
+                             const std::span<const ResidentPoint> landmarks,const std::span<const ResidentPoint> landmarkFacings) {
     try {
-        Build(terrain,ground,solids,landmarks);
+        Build(terrain,ground,solids,landmarks,landmarkFacings);
     } catch(const std::runtime_error&) {
         if(landmarks.empty()) throw;
-        points_.clear();pauses_.clear();length_=0;
-        Build(terrain,ground,solids,{});
+        points_.clear();pauses_.clear();pauseFacings_.clear();length_=0;
+        Build(terrain,ground,solids,{},{});
     }
 }
 
 void ResidentRoute::Build(const IslandTerrain& terrain,const RenderedTerrainSurface& ground,const WorldCollisionGrid& solids,
-                          const std::span<const ResidentPoint> landmarks) {
+                          const std::span<const ResidentPoint> landmarks,const std::span<const ResidentPoint> landmarkFacings) {
+    constexpr float None=std::numeric_limits<float>::quiet_NaN();
+    // Authored goals 0..2 are the campfire, path and clearing; the landmarks follow them.
+    const auto facingOfGoal=[&](std::size_t goal)->ResidentPoint{
+        if(goal>=3&&goal-3<landmarks.size()&&landmarkFacings.size()==landmarks.size()) {
+            const auto& f=landmarkFacings[goal-3];
+            const float length=std::hypot(f.x,f.z);
+            if(std::isfinite(length)&&length>1e-4f) return {f.x/length,0,f.z/length};
+        }
+        return {None,0,None};
+    };
     Search search(terrain,ground,solids);
     std::vector<ResidentPoint> authored{ResidentPoint{CampfireSite::X+6,0,CampfireSite::Z+5},
         ResidentPoint{VegetationLayout::PrimaryPathCenterX(135),0,135},
@@ -139,7 +149,7 @@ void ResidentRoute::Build(const IslandTerrain& terrain,const RenderedTerrainSurf
     std::vector<int> goals(authored.size());
     for(std::size_t i=0;i<authored.size();++i)goals[i]=search.Nearest(authored[i]);
     points_.push_back(search.Point(goals[0]));points_.back().y=ground.Sample(points_[0].x,points_[0].z).height;
-    pauses_.push_back(0);
+    pauses_.push_back(0);pauseFacings_.push_back(facingOfGoal(0));
     for(std::size_t leg=0;leg<goals.size();++leg) {
         const auto path=search.Path(goals[leg],goals[(leg+1)%goals.size()]);
         for(std::size_t first=0;first+1<path.size();) {
@@ -147,7 +157,7 @@ void ResidentRoute::Build(const IslandTerrain& terrain,const RenderedTerrainSurf
             while(last>first+1&&!SafeSegment(terrain,ground,solids,path[first],path[last]))--last;
             points_.push_back(path[last]);first=last;
         }
-        if(leg+1<goals.size())pauses_.push_back(points_.size()-1);
+        if(leg+1<goals.size()){pauses_.push_back(points_.size()-1);pauseFacings_.push_back(facingOfGoal(leg+1));}
     }
     if(points_.size()<6||points_.size()>512||points_.front()!=points_.back())
         throw std::runtime_error("Resident tour is not a bounded closed route");

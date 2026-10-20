@@ -38,9 +38,11 @@ class ResidentMotion final {
 public:
     static constexpr float WalkingSpeed=.95f,SwingSeconds=.45f;
     ResidentMotion(const IslandTerrain& terrain,std::span<const CircularObstacle> solids,
-                   std::span<const ResidentPoint> landmarks={});
+                   std::span<const ResidentPoint> landmarks={},std::span<const ResidentPoint> landmarkFacings={});
     void Update(float seconds,ResidentPoint observer);
     [[nodiscard]] const ResidentState& State()const noexcept {return state_;}
+    // True while a pause has a direction to face (the jetty foot looks out to sea).
+    [[nodiscard]] bool LookingOut()const noexcept {return pauseFacing_&&pauseRemaining_>0;}
     [[nodiscard]] const ResidentRoute& Route()const noexcept {return route_;}
     [[nodiscard]] const RenderedTerrainSurface& Ground()const noexcept {return ground_;}
 private:
@@ -61,5 +63,6 @@ private:
     std::array<Foot,2> feet_{};
     ResidentState state_;
     float pauseRemaining_=3;
+    float pauseFaceX_=0,pauseFaceZ_=0;bool pauseFacing_=false;
 };
 }

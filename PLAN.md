@@ -46,6 +46,21 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 31 (2026-10-20) — the resident looks out to sea at the jetty
+
+The resident's call at the jetty foot was a pause facing wherever the path happened to point.
+`ResidentRoute` takes one facing per landmark (`landmarkFacings`, unit x/z) and keeps a
+`PauseFacings()` list parallel to its pause points (NaN for the authored pauses); the game
+passes the jetty's seaward direction for the jetty-foot landmark. In `ResidentMotion::Step`
+a pause that starts at a point with a facing lasts 8 s longer and, while it lasts, the
+desired heading is that facing instead of the next route point, so the resident turns at the
+usual 1.1 rad/s shuffle to stand looking out along the deck, then turns back onto the path;
+`LookingOut()` reports it. The resident diagnostic gains "at the jetty foot the resident
+turns to look out along the deck to sea", pinned by the native capture tool. Resident
+checks: the facings pair with the pause points and the jetty pause carries one; walking the
+tour at 20 Hz for up to fifty simulated minutes, the resident is found pausing within 5 m of
+the jetty foot with its heading within 0.3 rad of seaward. Native `resident` passes.
+
 ## Loop pass 30 (2026-10-20) — small fish in the plunge pool
 
 The cascade's pool held water and nothing else. A core `StreamFishField` keeps ten small fish
