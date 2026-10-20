@@ -1,5 +1,6 @@
 #include "IslandSimulator/PrevailingWind.hpp"
 #include "IslandSimulator/QuadBike.hpp"
+#include "IslandSimulator/WindGust.hpp"
 #include "IslandSimulator/WildlifeRenderLighting.hpp"
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/SlopeScrubLayout.hpp"
@@ -3132,6 +3133,8 @@ namespace island
                 : std::fmod(dayNight_.Hour() - hoursBefore + 24.0f, 24.0f);
             weather_.Advance(dayNight_.Frozen() && !weather_.Forced() ? 0.0f : deltaSeconds, gameHours);
             weather_now::Set(weather_.State());
+            // the gust fronts follow the weather's wind (faster and closer in a storm)
+            WindGust::Advance(deltaSeconds, weather_.State().wind);
             auto light = dayNight_.Lighting();
             WeatherSystem::ApplyTo(light, weather_.State());
             sun_light::Set(light);

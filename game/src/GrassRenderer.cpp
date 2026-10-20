@@ -1065,6 +1065,10 @@ void main()
                     valid ? body.radius * body.radius : 0.0f, valid ? std::clamp(body.strength, 0.0f, 1.0f) : 0.0f);
             }
             customEffect_->SetUniformFloat("uTime", timeSeconds);
+            {
+                const auto& gusts = WindGust::Live();
+                customEffect_->SetUniformVec4("uGustClock", gusts.travelled, gusts.spacing, gusts.floor, gusts.live ? 1.0f : 0.0f);
+            }
             CampfireLighting::Bind(*customEffect_,timeSeconds);
         } else {
             fallbackEffect_->setViewProperty(view);

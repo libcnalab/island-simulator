@@ -233,6 +233,23 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 234 (2026-10-20) — gust fronts that follow the weather
+
+The gust fronts that lean the grass, the crowns, the fronds and the sea's ripples together
+(Loop pass 5) ran on the fixed trade wind: one every 21.5 s at 6.5 m/s whatever the sky did.
+`WindGust` now has a live clock the game advances each frame with the weather's wind: the
+fronts travel at 6.5 m/s times wind^0.6 and come every 140 m / wind^0.8 (a thunderstorm's wind
+of 2: 9.9 m/s every 80 m, a front about every eight seconds) and fill more of their width
+(their across-wind floor rising from 0.45 to 0.70); the clock accumulates the distance the
+fronts have travelled, so a change of wind slides them on instead of making them jump. The
+shared shader function reads it from `uGustClock` (bound by the grass, jungle, palm, ocean and
+terrain shaders) and the CPU form (`Strength`, used by the blown sand, the coconuts, the
+leaves, the mists and the soundscape's gusts) from the same clock; unset (every test, and the
+fixed form before the game's first frame) both keep the former trade-wind form. As before a
+gust never raises a sway amplitude: it only makes the existing sway lean together, so every
+collision and clearance envelope stays as authored. Core check: a storm's fronts come at least
+twice as often, and a wind rising over 30 s never makes a front jump.
+
 ## Loop pass 233 (2026-10-20) — puddles after rain
 
 The rain only darkened the ground. Once the weather has soaked it (wetness from 0.45, full by

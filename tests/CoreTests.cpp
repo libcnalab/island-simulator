@@ -6747,6 +6747,35 @@ int main()
         const bool all = std::all_of(flashed.begin(), flashed.end(), [](bool b) { return b; });
         Check(dayGlow == 0 && wetGlow == 0 && nightPeak >= 6 && all && low,
               "fireflies only on dry nights, every one flashing within seconds, low over the ground");
+        // Storm gusts: on the live clock the fronts come about twice as often in a storm as in
+        // the trade wind, and a change of wind never makes a front jump.
+        {
+            namespace gust = island::WindGust;
+            const auto passes = [](const float wind) {
+                gust::Live() = gust::Clock{};
+                int fronts = 0;
+                bool inFront = false;
+                for (int i = 0; i < 60 * 120; ++i) {
+                    gust::Advance(1.0f / 60.0f, wind);
+                    const bool now = gust::Strength(0.0f, 0.0f, static_cast<float>(i) / 60.0f) > 0.3f;
+                    if (now && !inFront) ++fronts;
+                    inFront = now;
+                }
+                return fronts;
+            };
+            const int trade = passes(1.0f), storm = passes(2.0f);
+            gust::Live() = gust::Clock{};
+            float worstStep = 0.0f, previous = -1.0f;
+            for (int i = 0; i < 60 * 60; ++i) {
+                gust::Advance(1.0f / 60.0f, 1.0f + std::min(1.0f, static_cast<float>(i) / 1800.0f));   // the wind rising over 30 s
+                const float now = gust::Strength(-30.0f, 0.0f, static_cast<float>(i) / 60.0f);
+                if (previous >= 0.0f) worstStep = std::max(worstStep, std::abs(now - previous));
+                previous = now;
+            }
+            gust::Live() = gust::Clock{};
+            Check(storm >= trade * 2 && trade >= 4 && worstStep < 0.08f,
+                  "storm gust fronts come twice as often as the trade wind's, and a rising wind never makes them jump");
+        }
         // Rain rings on the sea: world-anchored and repeatable, each inside its own cell,
         // more cells striking in heavier rain, none in no rain.
         int light = 0, heavy = 0, none = 0;

@@ -1603,6 +1603,10 @@ void main()
             materialEffect_->SetUniformFloat("uSeaSeconds",std::isfinite(seconds)?std::remainder(seconds,628.31853f):0.0f);
             // The gust fronts must sit where the grass and sea put them, so their clock is not wrapped.
             materialEffect_->SetUniformFloat("uWindSeconds",std::isfinite(seconds)?seconds:0.0f);
+            {
+                const auto& gusts = WindGust::Live();
+                materialEffect_->SetUniformVec4("uGustClock", gusts.travelled, gusts.spacing, gusts.floor, gusts.live ? 1.0f : 0.0f);
+            }
             canopyLighting_.Bind(*materialEffect_);
             forestFloor_->Bind(*materialEffect_);
             if (sunShadow_) sunShadow_->Bind(*materialEffect_);

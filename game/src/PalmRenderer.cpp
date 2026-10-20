@@ -1292,6 +1292,10 @@ void main()
                 "uToSun", sun_light::UniformDirection().x, sun_light::UniformDirection().y,
                 sun_light::UniformDirection().z);
             customEffect_->SetUniformFloat("uTime", timeSeconds);
+            {
+                const auto& gusts = WindGust::Live();
+                customEffect_->SetUniformVec4("uGustClock", gusts.travelled, gusts.spacing, gusts.floor, gusts.live ? 1.0f : 0.0f);
+            }
             if (sunShadow_) sunShadow_->Bind(*customEffect_);
             else SunShadowMap::BindDisabled(*customEffect_);
         } else {
