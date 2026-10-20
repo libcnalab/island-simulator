@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 244 (2026-10-20) — the hatchlings run at night
+
+Sea turtle hatchlings break out of the sand at night, when it has cooled and the moonlit sea
+shows them the way; here a clutch broke out every 140 s at any hour. `HatchlingField` now takes
+the darkness (`SetNightness`): once set, a clutch that falls due by day waits for the dark
+(the sun 2 degrees under) and breaks out once it falls; never set (the tests), any hour will
+do. The `turtle-nest` QA view keeps its daytime clutch (the game does not set the hour there).
+Core check: a clutch waits through ten minutes of day and breaks out within two seconds of
+the dark. `turtle-nest` passes.
+
 ## Loop pass 243 (2026-10-20) — bioluminescence in the surf
 
 A tropical night detail: `ShorelineRenderer::DrawGlow` draws the foam ribbon a second time

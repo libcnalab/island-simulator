@@ -10107,6 +10107,17 @@ int main()
         const float nestX=terrain.ShoreRadius(0.0f)-6.0f;
         const std::vector<island::HatchlingNest> nests{{nestX,0.0f}};
         hatchlings.SetNests(nests);
+        {
+            // With the clock set, a clutch waits for the dark and breaks out once it falls.
+            island::HatchlingField nightly(terrain);
+            nightly.SetNests(nests);
+            nightly.SetNightness(0.0f);
+            for(int step=0;step<200*10;++step) nightly.Update(0.05f);
+            const auto byDay=nightly.ClutchCount();
+            nightly.SetNightness(1.0f);
+            for(int step=0;step<40;++step) nightly.Update(0.05f);
+            Check(byDay==0U&&nightly.ClutchCount()==1U,"a clutch waits for the dark and breaks out once it falls");
+        }
         for(int step=0;step<200;++step) hatchlings.Update(0.05f);
         Check(hatchlings.ClutchCount()==1U&&hatchlings.ActiveCount()==island::HatchlingField::ClutchSize,"a clutch breaks out of the nest soon after the start");
         float nearest=1e9f,farthest=0;

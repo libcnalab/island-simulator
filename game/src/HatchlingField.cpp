@@ -42,7 +42,7 @@ void HatchlingField::Update(const float deltaSeconds) noexcept {
     const float dt=std::isfinite(deltaSeconds)?std::clamp(deltaSeconds,0.0f,0.1f):0.0f;
     if(dt<=0.0f||nests_.empty()) return;
     clock_+=dt;
-    if(clock_>=nextEmergence_) {
+    if(clock_>=nextEmergence_&&(nightness_<0||nightness_>0.5f)) {
         Emerge(static_cast<std::size_t>(clutches_)%nests_.size());
         nextEmergence_=clock_+EmergenceIntervalSeconds;
     }

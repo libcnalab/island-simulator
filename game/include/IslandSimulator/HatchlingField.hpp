@@ -1,4 +1,6 @@
 #pragma once
+#include <algorithm>
+#include <cmath>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -33,6 +35,10 @@ public:
     explicit HatchlingField(const IslandTerrain& terrain) noexcept:terrain_(terrain) {}
     void SetNests(std::span<const HatchlingNest> nests);
     void Update(float deltaSeconds) noexcept;
+    // How dark it is (0 by day .. 1 at night): once the game sets it, a clutch breaks out
+    // only after dark, as hatchlings do (the cool sand, and the moonlit sea to steer by);
+    // a clutch due by day waits for the night. Never set (the tests), any time will do.
+    void SetNightness(float nightness) noexcept {nightness_=std::isfinite(nightness)?std::clamp(nightness,0.0f,1.0f):0.0f;}
     [[nodiscard]] std::span<const Hatchling> Hatchlings() const noexcept {return hatchlings_;}
     [[nodiscard]] std::size_t NestCount() const noexcept {return nests_.size();}
     [[nodiscard]] std::uint32_t ClutchCount() const noexcept {return clutches_;}
@@ -44,6 +50,7 @@ private:
     std::vector<HatchlingNest> nests_;
     std::array<Hatchling,Capacity> hatchlings_{};
     float clock_=0,nextEmergence_=FirstEmergenceSeconds;
+    float nightness_=-1;   // unset: emerge at any hour
     std::uint32_t clutches_=0,reachedSea_=0;
 };
 }

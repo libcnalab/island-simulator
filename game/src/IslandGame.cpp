@@ -3293,6 +3293,9 @@ namespace island
                &&streamDrift_.Adopt(courseDistance,lateral,landing.variant))
                 canopyLeafFall_.Remove(landing.slot);
         }
+        // the clutches break out after dark (the turtle-nest QA view keeps its daytime clutch)
+        if (viewpoint_ != FixedViewpoint::TurtleNestDetail)
+            hatchlings_.SetNightness(1.0f - std::clamp((sun_light::Current().lighting.sunElevationDegrees + 2.0f) / 10.0f, 0.0f, 1.0f));
         hatchlings_.Update(deltaSeconds);
         cascadeMist_.Update(deltaSeconds,seaForageSeconds_);
         wetlandMist_.Update(deltaSeconds,seaForageSeconds_);
