@@ -1,3 +1,4 @@
+#include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/SpiderRenderer.hpp"
 #include "IslandSimulator/SpiderMesh.hpp"
 #include "IslandSimulator/OpaqueImageLoader.hpp"
@@ -67,7 +68,9 @@ SpiderRenderer::SpiderRenderer(GraphicsDevice& device,const CanopyLightField& ca
     effect_->setVertexColorEnabledProperty(true);effect_->setLightingEnabledProperty(false);
     effect_->setTextureEnabledProperty(false);effect_->setFogEnabledProperty(true);
     effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
-    effect_->setFogStartProperty(12);effect_->setFogEndProperty(18);
+    // The land's own fog; spiders fully fogged from 18 m showed as pale blue dots on the dark
+    // floor out to their 24 m range. The end of the range is now a shrink.
+    effect_->setFogStartProperty(250);effect_->setFogEndProperty(660);
 }
 SpiderRenderer::~SpiderRenderer()=default;
 void SpiderRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector3& camera,std::span<const SpiderState> spiders) {
@@ -88,6 +91,7 @@ void SpiderRenderer::Draw(const Matrix& view,const Matrix& projection,const Vect
         const auto distance=candidate.first;
         const auto& spider=*candidate.second;
         const auto& pose=spider.pose;
+        const std::size_t firstTextured=vertices_.size(),firstSolid=solid_.size();
         const auto mesh=BuildSpiderMesh(pose.legs,distance<5*5);
         for(const auto& vertex:mesh.vertices) {
             const auto p=Point(pose.ToWorld(vertex.position));
@@ -101,6 +105,9 @@ void SpiderRenderer::Draw(const Matrix& view,const Matrix& projection,const Vect
                 ||vertex.material==SpiderMaterial::Hair?solid_:vertices_;
             destination.emplace_back(p,Color(channel(color.getRProperty(),tint.red),channel(color.getGProperty(),tint.green),channel(color.getBProperty(),tint.blue)),Vector2(vertex.u,vertex.v));
         }
+        const float shrink=vegetation_fade::FarShrink(std::sqrt(distance),24.0f);
+        vegetation_fade::ShrinkAbout(vertices_,firstTextured,spider.x,spider.y,spider.z,shrink);
+        vegetation_fade::ShrinkAbout(solid_,firstSolid,spider.x,spider.y,spider.z,shrink);
         ++visible_;
     }
     if(vertices_.empty())return;

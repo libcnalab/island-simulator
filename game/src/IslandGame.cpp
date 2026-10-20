@@ -2309,7 +2309,9 @@ namespace island
             MirrorRuntimeDiagnosticToPlatformLog(probe.str());
         }
         std::cout << "island-simulator: deer, goats, boars, the bear and the resident share the land's fog and shrink away "
-                     "over the last 12 % of their range instead of paling to the fog colour before they vanish\n";
+                     "over the last 12 % of their range instead of paling to the fog colour before they vanish; "
+                     "so do spiders, crabs, hermit and coconut crabs, their burrows, crocodiles and flower patches, "
+                     "and the small animals keep the land's fog\n";
         std::cout << "island-simulator: ecological links: " << deer_->DrinkerCount() << " deer walk to the stream bank to drink and "
                   << goats_->DrinkerCount() << " goats to the rain-filled basin on their slope; "
                   << boarHerd_.WallowerCount() << " boars wallow at the bank and carry the mud on their legs and bellies; "

@@ -54,6 +54,21 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 214 (2026-10-20) — spiders, crabs, crocodiles and flower patches likewise
+
+The same early-fog fade sat on the smaller creatures. Spiders were fully fog-coloured from
+18 m but drawn to 24 m, so the last six metres showed pale blue dots on the dark forest
+floor; crabs fogged from 58 m, crocodiles from 135 m and the small-fauna batch (geckos,
+skinks, frogs, rodents, insects, butterflies and the flower patches) from 42 m. All now use
+the land's fog (250-660 m). Spiders (over the last 22 % of their 24 m), crabs, hermit and
+coconut crabs and their burrows (22 %), crocodiles (12 %) and the flower patches (22 %)
+shrink about their feet at the end of their range; the small animals, a pixel or two at
+50 m on native, keep their plain cull. Startup line of pass 213 extended ("so do spiders,
+crabs, hermit and coconut crabs, their burrows, crocodiles and flower patches, and the small
+animals keep the land's fog"), pinned. Native `spiders`, `spiders-bright`, `hermit-crabs`,
+`coconut-crabs` and `wetland` pass (0 to 1.9 % of pixels changed by 20 levels or more against
+captures up to ten hours older).
+
 ## Loop pass 213 (2026-10-20) — land animals no longer pale into ghosts before they vanish
 
 The flight audit noted that deer, goats, the bear and the resident fogged to the fog

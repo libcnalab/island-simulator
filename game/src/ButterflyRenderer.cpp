@@ -1,3 +1,4 @@
+#include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/ButterflyRenderer.hpp"
 
@@ -1870,8 +1871,10 @@ namespace island
         effect_->setLightingEnabledProperty(false);
         effect_->setFogEnabledProperty(true);
         effect_->setFogColorProperty(Vector3(environment::FogColorRed, environment::FogColorGreen, environment::FogColorBlue));
-        effect_->setFogStartProperty(42.0f);
-        effect_->setFogEndProperty(82.0f);
+        // The land's own fog; the small animals are a pixel or two at the end of their range,
+        // and the larger flower patches shrink away there instead of paling.
+        effect_->setFogStartProperty(250.0f);
+        effect_->setFogEndProperty(660.0f);
         stagingVertices_.reserve(static_cast<std::size_t>(MaximumVertexCount));
         std::cout << ButterflyDiagnostic << '\n';
         std::cout << ButterflyAnatomyDiagnostic << '\n';
@@ -1961,7 +1964,10 @@ namespace island
             if (Vector3::DistanceSquared(centre, cameraPosition)
                     <= maximumDistance_ * maximumDistance_
                 && frustum.Intersects(BoundingSphere(centre, patch.radius + .5f))) {
+                const std::size_t first = stagingVertices_.size();
                 AppendFlowerPatch(stagingVertices_, patch, index);
+                vegetation_fade::ShrinkAbout(stagingVertices_, first, patch.x, patch.y, patch.z,
+                    vegetation_fade::FarShrink(Vector3::Distance(centre, cameraPosition), maximumDistance_));
             }
         }
         for (const GeckoState& gecko : geckos) {

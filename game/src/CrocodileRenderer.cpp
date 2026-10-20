@@ -1,3 +1,4 @@
+#include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/CrocodileRenderer.hpp"
 
 #include "IslandSimulator/EnvironmentLighting.hpp"
@@ -436,8 +437,9 @@ namespace island
         effect_->setFogEnabledProperty(true);
         effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,
                                               environment::FogColorBlue));
-        effect_->setFogStartProperty(135.0f);
-        effect_->setFogEndProperty(260.0f);
+        // The land's own fog; the end of the range is a shrink, not a fade to the fog colour.
+        effect_->setFogStartProperty(250.0f);
+        effect_->setFogEndProperty(660.0f);
         stagingVertices_.reserve(MaximumVertexCount);
         std::cout<<FormDiagnostic<<'\n'<<DetailDiagnostic<<'\n'<<ArmorDiagnostic<<'\n'
                  <<SkinDiagnostic<<'\n'<<SurfaceDiagnostic<<'\n'<<AnatomyDiagnostic<<'\n';
@@ -468,6 +470,8 @@ namespace island
             } else {AppendFarCrocodile(stagingVertices_,crocodile);++visibleFarCount_;}
             if(stagingVertices_.size()-first>MaximumVerticesPerCrocodile)
                 throw std::logic_error("One crocodile exceeded its vertex budget");
+            vegetation_fade::ShrinkAbout(stagingVertices_,first,crocodile.x,crocodile.y,crocodile.z,
+                vegetation_fade::FarShrink(std::sqrt(distanceSquared),maximumDistance_,vegetation_fade::TreeShrinkFraction));
             ++visibleCount_;
         }
         if(stagingVertices_.empty())return;

@@ -1,3 +1,4 @@
+#include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/CrabRenderer.hpp"
 
@@ -1138,8 +1139,9 @@ namespace island
         effect_->setLightingEnabledProperty(false);
         effect_->setFogEnabledProperty(true);
         effect_->setFogColorProperty(Vector3(environment::FogColorRed, environment::FogColorGreen, environment::FogColorBlue));
-        effect_->setFogStartProperty(58.0f);
-        effect_->setFogEndProperty(105.0f);
+        // The land's own fog; the end of the range is a shrink, not a fade to the fog colour.
+        effect_->setFogStartProperty(250.0f);
+        effect_->setFogEndProperty(660.0f);
         stagingVertices_.reserve(static_cast<std::size_t>(MaximumVertexCount));
         std::cout << CrabDiagnostic << '\n';
         MirrorRuntimeDiagnosticToPlatformLog(CrabDiagnostic);
@@ -1192,12 +1194,20 @@ namespace island
         visibleCoconutCrabCount_ = 0;
         drawCallCount_ = 0;
         const BoundingFrustum frustum(view * projection);
+        // Every crab, and every burrow, shrinks into the sand over the end of the range.
+        const auto shrinkFrom = [&](const std::size_t first, const float x, const float y, const float z,
+                                    const Vector3& centre) {
+            vegetation_fade::ShrinkAbout(stagingVertices_, first, x, y, z, vegetation_fade::FarShrink(
+                Vector3::Distance(centre, cameraPosition), maximumDistance_));
+        };
         for (const CrabBurrow& burrow : burrows) {
             const Vector3 centre(burrow.x, burrow.y, burrow.z);
             if (Vector3::DistanceSquared(centre, cameraPosition)
                     <= maximumDistance_ * maximumDistance_
                 && frustum.Intersects(BoundingSphere(centre, burrow.radius * 1.6f))) {
+                const std::size_t first = stagingVertices_.size();
                 AppendBurrow(stagingVertices_, burrow);
+                shrinkFrom(first, burrow.x, burrow.y, burrow.z, centre);
             }
         }
         for (const CrabState& crab : crabs) {
@@ -1213,6 +1223,7 @@ namespace island
                 if (stagingVertices_.size() - firstVertex != NearCrabVertexCount) {
                     throw std::logic_error("Near crab geometry violated its exact vertex budget");
                 }
+                shrinkFrom(firstVertex, crab.x, crab.y, crab.z, centre);
                 ++visibleNearCrabCount_;
             } else {
                 const std::size_t firstVertex = stagingVertices_.size();
@@ -1220,6 +1231,7 @@ namespace island
                 if (stagingVertices_.size() - firstVertex != FarCrabVertexCount) {
                     throw std::logic_error("Far crab geometry violated its exact vertex budget");
                 }
+                shrinkFrom(firstVertex, crab.x, crab.y, crab.z, centre);
                 ++visibleFarCrabCount_;
             }
             ++visibleCrabCount_;
@@ -1237,6 +1249,7 @@ namespace island
                 throw std::logic_error(
                     "Hermit crab geometry violated its exact vertex budget");
             }
+            shrinkFrom(firstVertex, crab.x, crab.y, crab.z, centre);
             ++visibleHermitCrabCount_;
         }
         for (const CoconutCrabState& crab : coconutCrabs) {
@@ -1252,6 +1265,7 @@ namespace island
                 throw std::logic_error(
                     "Coconut crab geometry violated its exact vertex budget");
             }
+            shrinkFrom(firstVertex, crab.x, crab.y, crab.z, centre);
             ++visibleCoconutCrabCount_;
         }
         if (stagingVertices_.empty()) return;
