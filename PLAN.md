@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 169 (2026-10-20) — a goat flicks an ear
+
+A goat's ears sat still through flies and all. `GoatState::earFlick` (magnitude 0..1, its
+sign the ear) now carries the flick: every `EarFlickPeriodSeconds` (4.4 s, plus a little
+per goat, the first flicks staggered) one ear flicks back at a fly for `EarFlickSeconds`
+(0.3 s) under a sine and settles, the ears taking turns; the flicks are counted
+(`EarFlickCount()`, `EarFlickingCount()`). `BuildGoatMesh` takes the flick as a fifth
+argument and swings that ear's pinna back 16 cm and down 8 cm at the tip about its root
+on the same vertices. The goats report line gains "and flicks an ear back at a fly now and
+then, the ears taking turns" (pinned). GoatHerdTests: within twenty seconds every goat has
+flicked an ear fully, both ears seen across the herd, each flick settling, and the mesh
+with an ear flicked differs from the still mesh of the same pose in that ear's vertices
+alone. Native `goats` passes.
+
 ## Loop pass 168 (2026-10-20) — an octopus jets
 
 An octopus set off swimming, or fled for its den, with the same lazy mantle pulse.

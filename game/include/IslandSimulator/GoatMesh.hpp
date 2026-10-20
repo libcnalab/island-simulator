@@ -14,5 +14,6 @@ struct GoatMesh {
     std::vector<GoatVertex> vertices;
 };
 // tailSwing (-1..1) swings the short tail to one side at its tip.
-[[nodiscard]] GoatMesh BuildGoatMesh(const GoatGroundPose& pose,float grazing,bool detailed,float tailSwing=0);
+// earFlick: magnitude 0..1 one ear flicked back and down about its root, its sign the ear.
+[[nodiscard]] GoatMesh BuildGoatMesh(const GoatGroundPose& pose,float grazing,bool detailed,float tailSwing=0,float earFlick=0);
 }

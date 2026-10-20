@@ -230,6 +230,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 166: the shark on patrol drops its jaw in a gape every several seconds, oftener investigating a breach (`SharkState::jawOpen`, `SharkPatrol::GapeCount`) (PLAN "Loop pass 166").
 - Pass 167: every fourth surfacing after the leap's is a dolphin spy-hop, head-up out of the water (`DolphinBehavior::SpyHop`, `DolphinPod::SpyHopCount`) (PLAN "Loop pass 167").
 - Pass 168: setting out to swim or startled for its den, an octopus jets, mantle drawn in and arms straightened (`OctopusState::jet`, `OctopusGroup::JetCount`) (PLAN "Loop pass 168").
+- Pass 169: a goat flicks an ear back at a fly now and then, the ears taking turns (`GoatState::earFlick`, `BuildGoatMesh` ear flick) (PLAN "Loop pass 169").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

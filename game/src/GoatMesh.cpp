@@ -171,15 +171,16 @@ struct Builder {
                 make(side*.022f+radiusX*std::cos(b),y+radiusY*std::sin(b)));
         }
     }
-    void Ear(float side,bool detailed) {
+    void Ear(float side,bool detailed,float flick=0) {
         // Thin cupped pinna: a recessed forward face, furred back and closed rim.
-        // Skin is part of the surface, never a coplanar overlay.
+        // Skin is part of the surface, never a coplanar overlay. Flicked, the pinna swings
+        // back and down about its root by the flick amount.
         constexpr std::array<float,7> widths{.014f,.030f,.038f,.034f,.026f,.014f,.002f};
         const int columns=detailed?5:3;
         const auto point=[&](int row,int column,bool front) {
             const float t=static_cast<float>(row)/6,q=2.0f*column/(columns-1)-1;
-            return GoatPoint{side*(.102f+.22f*t),1.095f+.025f*std::sin(t*std::numbers::pi_v<float>)-.045f*t+widths[row]*q,
-                .44f-.02f*t+(front?.006f:-.006f)+.018f*q*q};
+            return GoatPoint{side*(.102f+.22f*t*(1-.25f*flick)),1.095f+.025f*std::sin(t*std::numbers::pi_v<float>)-.045f*t-.08f*t*flick+widths[row]*q,
+                .44f-.02f*t-.16f*t*flick+(front?.006f:-.006f)+.018f*q*q};
         };
         const auto vertex=[&](int row,int column,bool front,GoatMaterial material) {
             const auto longitudinal=Sub(point(std::min(row+1,6),column,front),point(std::max(row-1,0),column,front));
@@ -209,9 +210,10 @@ struct Builder {
     }
 };
 }
-GoatMesh BuildGoatMesh(const GoatGroundPose& pose,float grazing,bool detailed,float tailSwing) {
-    if(!std::isfinite(grazing)||!std::isfinite(pose.bodyBob)||!std::isfinite(tailSwing))throw std::invalid_argument("Invalid goat mesh pose");
+GoatMesh BuildGoatMesh(const GoatGroundPose& pose,float grazing,bool detailed,float tailSwing,float earFlick) {
+    if(!std::isfinite(grazing)||!std::isfinite(pose.bodyBob)||!std::isfinite(tailSwing)||!std::isfinite(earFlick))throw std::invalid_argument("Invalid goat mesh pose");
     tailSwing=std::clamp(tailSwing,-1.0f,1.0f);
+    earFlick=std::clamp(earFlick,-1.0f,1.0f);
     for(const auto& leg:pose.legs)
         if(!Finite(leg.root)||!Finite(leg.knee)||!Finite(leg.hoof)||leg.reachLimited
             ||!Finite(leg.soleNormal)||std::abs(Dot(leg.soleNormal,leg.soleNormal)-1)>.001f||leg.soleNormal.y<.5f)
@@ -286,7 +288,7 @@ GoatMesh BuildGoatMesh(const GoatGroundPose& pose,float grazing,bool detailed,fl
             {{side*.090f,1.39f,.30f},.025f},{{side*.11f,1.45f,.20f},.018f},
             {{side*.13f,1.46f,.10f},.012f},{{side*.15f,1.42f,.015f},.007f},{{side*.16f,1.37f,-.03f},.002f}}};
         b.Sweep(horn,detailed?8:5,GoatMaterial::Horn,Attachment::Head);
-        b.part=GoatPart::Ear;b.Ear(side,detailed);
+        b.part=GoatPart::Ear;b.Ear(side,detailed,earFlick*side>0?std::abs(earFlick):0.0f);
         if(detailed) {
             b.part=GoatPart::Eye;b.Eye(side);
         }

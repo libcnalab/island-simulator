@@ -246,6 +246,38 @@ int main() {
             }
         }
         check(stillMesh.vertices.size()==swungMesh.vertices.size()&&moved>0&&onlyTail&&furthest>.1f,"the tail swing does not move the tail alone");
+        // The ear flick: within twenty seconds every goat has flicked an ear, both ears seen
+        // across the herd, each flick settling; the mesh with an ear flicked differs from the
+        // still mesh in that ear's vertices alone.
+        std::array<float,GoatHabitat::Count> flickPeak{}; bool leftEar=false,rightEar=false,settled=false;
+        for(int frame=0;frame<400;++frame) {
+            flickers.Update(.05f,{1000,0,1000});
+            for(std::size_t i=0;i<GoatHabitat::Count;++i) {
+                const float flick=flickers.Goats()[i].earFlick;
+                flickPeak[i]=std::max(flickPeak[i],std::abs(flick));
+                if(flick>.9f) rightEar=true;
+                if(flick<-.9f) leftEar=true;
+                if(flickPeak[i]>.9f&&flick==0) settled=true;
+            }
+        }
+        bool everyGoat=true; for(float peak:flickPeak) everyGoat=everyGoat&&peak>.9f;
+        check(flickers.EarFlickCount()>=GoatHabitat::Count&&everyGoat&&leftEar&&rightEar&&settled,"the goats do not flick their ears in turn and settle them");
+        // Both meshes from the goat's pose of this moment (the herd has moved on since the
+        // tail meshes were built).
+        const auto earStill=BuildGoatMesh(subject.pose,subject.grazingPose,true,0.0f,0.0f);
+        const auto flickedMesh=BuildGoatMesh(subject.pose,subject.grazingPose,true,0.0f,1.0f);
+        std::size_t earMoved=0; bool onlyEar=true,onlyRight=true;
+        for(std::size_t v=0;v<earStill.vertices.size()&&v<flickedMesh.vertices.size();++v) {
+            const float dx=flickedMesh.vertices[v].position.x-earStill.vertices[v].position.x;
+            const float dy=flickedMesh.vertices[v].position.y-earStill.vertices[v].position.y;
+            const float dz=flickedMesh.vertices[v].position.z-earStill.vertices[v].position.z;
+            if(std::abs(dx)+std::abs(dy)+std::abs(dz)>1e-4f) {
+                ++earMoved;
+                if(earStill.vertices[v].part!=GoatPart::Ear) onlyEar=false;
+                if(earStill.vertices[v].position.x<0) onlyRight=false;
+            }
+        }
+        check(earStill.vertices.size()==flickedMesh.vertices.size()&&earMoved>0&&onlyEar&&onlyRight,"the ear flick does not move the one ear alone");
     }
     const std::array<CircularObstacle,1> blocked{{{0,0,400}}};
     bool rejected=false;

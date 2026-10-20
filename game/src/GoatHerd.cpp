@@ -327,13 +327,22 @@ void GoatHerd::Step(std::size_t index,float dt,GoatPoint observer,bool observerV
     // The tail: every few seconds (a little per goat) the short tail flicks side to side,
     // two beats in well under a second, and hangs still between flicks.
     const float wagPeriod=WagPeriodSeconds+.9f*static_cast<float>(index%4U);
-    if(!intent.wagSeeded) { intent.wagSeeded=true; intent.wagClock=WagSeconds+1.3f*static_cast<float>(index); }
+    if(!intent.wagSeeded) { intent.wagSeeded=true; intent.wagClock=WagSeconds+1.3f*static_cast<float>(index); intent.earClock=.9f*static_cast<float>(index); }
     intent.wagClock+=dt;
     if(intent.wagClock>=wagPeriod) intent.wagClock-=wagPeriod;
     const bool wagging=intent.wagClock<WagSeconds;
     if(wagging&&!intent.wagging) ++wags_;
     intent.wagging=wagging;
     state.tailSwing=wagging?std::sin(intent.wagClock/WagSeconds*Pi)*std::sin(intent.wagClock*Tau*WagBeats/WagSeconds):0.0f;
+    // The ears: every few seconds (a little per goat) one ear flicks back at a fly and
+    // settles again, the ears taking turns.
+    intent.earClock+=dt;
+    const float earPeriod=EarFlickPeriodSeconds+.7f*static_cast<float>(index%3U);
+    if(intent.earClock>=earPeriod) { intent.earClock=0; intent.earSide=-intent.earSide; }
+    const bool earFlicking=intent.earClock>=1.1f&&intent.earClock<1.1f+EarFlickSeconds;
+    if(earFlicking&&!intent.earFlicking) ++earFlicks_;
+    intent.earFlicking=earFlicking;
+    state.earFlick=(earFlicking?std::sin((intent.earClock-1.1f)/EarFlickSeconds*Pi):0.0f)*intent.earSide;
     if(state.speed<=.0001f) { state.speed=0;return; }
     const float heading=Wrap(state.heading+std::clamp(Wrap(intent.targetHeading-state.heading),-1.8f*dt,1.8f*dt));
     bool waitingForStep=false;
@@ -369,6 +378,12 @@ void GoatHerd::NoteDisturbance(float x,float z) noexcept {
     if(!std::isfinite(x)||!std::isfinite(z)) return;
     disturbanceX_=x;disturbanceZ_=z;disturbanceSeconds_=StartleSeconds;
 }
+std::size_t GoatHerd::EarFlickingCount() const noexcept {
+    std::size_t count=0;
+    for(const auto& intent:intents_) count+=intent.earFlicking?1U:0U;
+    return count;
+}
+
 std::size_t GoatHerd::WaggingCount() const noexcept {
     std::size_t count=0;
     for(const auto& intent:intents_) count+=intent.wagging?1U:0U;
