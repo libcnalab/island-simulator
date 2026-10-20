@@ -1245,16 +1245,38 @@ void main()
                 return geometry;
             }
             if (variant == 2) {
-                // One bare human foot: heel, arch, ball and five toes. Each print is its own
-                // placement on its own ground height, so a line of them follows a sloping beach.
-                appendFlatQuad(0.0f, 0.0f, 0.058f, 0.150f, 0.0f, pressedGround);
-                appendFlatQuad(0.0f, -0.095f, 0.032f, 0.042f, 0.0f, printFloor);      // heel
-                appendFlatQuad(0.012f, -0.015f, 0.024f, 0.048f, 0.0f, printFloor);    // arch, outer edge
-                appendFlatQuad(0.0f, 0.055f, 0.042f, 0.040f, 0.0f, printFloor);       // ball
+                // One bare human foot in dry sand: a shallow hollow only a little darker than
+                // the sand around it, inside a faintly lighter heaped rim, all in rounded
+                // outlines. (The wet-mud colours of the hoof prints read as dark stamps here.)
+                // Each print is its own placement on its own ground height, so a line of them
+                // follows a sloping beach.
+                const auto appendFlatEllipse = [&geometry](const float centreX, const float centreZ,
+                                                           const float radiusX, const float radiusZ,
+                                                           const float lift, const Color& color) {
+                    constexpr int segments = 10;
+                    const auto centre = static_cast<std::uint16_t>(geometry.vertices.size());
+                    geometry.vertices.emplace_back(Vector3(centreX, lift, centreZ), color);
+                    for (int i = 0; i < segments; ++i) {
+                        const float a = 2.0f * std::numbers::pi_v<float> * static_cast<float>(i) / segments;
+                        geometry.vertices.emplace_back(
+                            Vector3(centreX + std::cos(a) * radiusX, lift, centreZ + std::sin(a) * radiusZ), color);
+                    }
+                    for (int i = 0; i < segments; ++i) {
+                        geometry.indices.insert(geometry.indices.end(),
+                            {centre, static_cast<std::uint16_t>(centre + 1 + (i + 1) % segments),
+                             static_cast<std::uint16_t>(centre + 1 + i)});
+                    }
+                };
+                const Color heapedRim(122, 116, 85, 255);
+                const Color hollow(101, 94, 67, 255);
+                appendFlatEllipse(0.0f, 0.0f, 0.064f, 0.158f, 0.0070f, heapedRim);
+                appendFlatEllipse(0.0f, -0.092f, 0.034f, 0.046f, 0.0080f, hollow);     // heel
+                appendFlatEllipse(0.013f, -0.018f, 0.022f, 0.050f, 0.0080f, hollow);   // arch, outer edge
+                appendFlatEllipse(0.0f, 0.055f, 0.044f, 0.040f, 0.0080f, hollow);      // ball
                 for (int toe = 0; toe < 5; ++toe) {
                     const float t = static_cast<float>(toe);
-                    appendFlatQuad(-0.036f + t * 0.018f, 0.114f - t * 0.007f,
-                                   toe == 0 ? 0.014f : 0.009f, toe == 0 ? 0.017f : 0.012f, 0.0f, printFloor);
+                    appendFlatEllipse(-0.036f + t * 0.018f, 0.114f - t * 0.007f,
+                                      toe == 0 ? 0.013f : 0.009f, toe == 0 ? 0.016f : 0.011f, 0.0085f, hollow);
                 }
                 return geometry;
             }
@@ -1648,7 +1670,7 @@ void main()
                       << " boar track lines press into stream-bank mud and wet sand\n";
             if (!extraTracks.empty())
                 std::cout << "island-simulator: " << extraTracks.size()
-                          << " bare footprints lead along the sand from the jetty foot past the canoe\n";
+                          << " bare footprints lead along the sand from the jetty foot past the canoe, shallow rounded hollows a little darker than the dry sand\n";
         }
         std::cout << "island-simulator: " << totalFallenCoconutCount_
                   << " fallen coconuts rest under the bearing palms\n";

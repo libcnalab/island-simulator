@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 222 (2026-10-20) — the resident's footprints read as prints in dry sand
+
+The resident's bare footprints from the jetty along the beach used the hoof prints'
+wet-mud colours, a rim of (78, 62, 42) around a floor of (38, 30, 20), in rectangles: on the
+dry sand of the `jetty` view, which renders at about (108, 104, 76) there, they read as a
+line of near-black triangular stamps. Each print is now built from rounded ellipses in sand
+tones: a faintly heaped rim (122, 116, 85) about 8 % under the sand and a shallow hollow
+(101, 94, 67) for the heel, the outer arch, the ball and five toes. In the native `jetty`
+capture the darkest pixel of the print area went from (32, 25, 17) to (84, 80, 58) against
+the sand's (108, 104, 76), and the line reads as pressed hollows. The deer's and boar's prints
+keep their wet-mud colours (mud and wet sand). The startup line adds "shallow rounded hollows
+a little darker than the dry sand", pinned. Native `jetty` passes.
+
 ## Loop pass 221 (2026-10-20) — a second flight crash closed: the falling leaves
 
 After the operator's crash ("The data is not the correct size for this VertexBuffer", the

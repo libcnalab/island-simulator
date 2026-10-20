@@ -996,7 +996,7 @@ def main():
                 raise RuntimeError("current resident jetty look-out is missing; check for a stale executable")
             if "resident tour visits 2 landmark(s): the jetty foot and the lookout's ramp foot join the campfire, path and clearing calls" not in diagnostics:
                 raise RuntimeError("current resident jetty call is missing; check for a stale executable")
-            if "bare footprints lead along the sand from the jetty foot past the canoe" not in diagnostics:
+            if "bare footprints lead along the sand from the jetty foot past the canoe, shallow rounded hollows a little darker than the dry sand" not in diagnostics:
                 raise RuntimeError("current resident footprints are missing; check for a stale executable")
             if "a falling coconut lands with a positional thud heard within thirty metres" not in diagnostics:
                 raise RuntimeError("current coconut thud is missing; check for a stale executable")
