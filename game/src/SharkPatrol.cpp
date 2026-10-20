@@ -138,6 +138,16 @@ namespace island
 #endif
     }
 
+    void SharkPatrol::NoteBreach(const float x, const float z) noexcept
+    {
+        if (!std::isfinite(x) || !std::isfinite(z) || !state_.present) return;
+        if (std::hypot(x - state_.x, z - state_.z) > InterestDistance) return;
+        if (interestSeconds_ <= 0.0f) ++investigations_;
+        interestX_ = x;
+        interestZ_ = z;
+        interestSeconds_ = InterestSeconds;
+    }
+
     void SharkPatrol::UpdateMotion(const float deltaSeconds) noexcept
     {
         if (deltaSeconds <= 0.0f) {
@@ -148,6 +158,18 @@ namespace island
         routeAngle_ = WrapAngle(routeAngle_ + static_cast<float>(direction_)
             * 1.05f / routeRadius * deltaSeconds);
         ResolveRouteTarget();
+        // A fish's breach draws the shark that way for a while: the breach is the target
+        // until the shark is within reach of it, the depth it keeps to allowing, or the
+        // interest has run out; then the patrol's own target again.
+        if (interestSeconds_ > 0.0f) {
+            interestSeconds_ = std::max(0.0f, interestSeconds_ - deltaSeconds);
+            if (std::hypot(interestX_ - state_.x, interestZ_ - state_.z) < InterestReach) {
+                interestSeconds_ = 0.0f;
+            } else {
+                state_.targetX = interestX_;
+                state_.targetZ = interestZ_;
+            }
+        }
 
         const float toTargetX = state_.targetX - state_.x;
         const float toTargetZ = state_.targetZ - state_.z;

@@ -44,6 +44,15 @@ namespace island
             return presenceCycleCount_;
         }
 
+        /** @brief A fish breaking the surface this frame: within InterestDistance of the
+         *  present shark it draws the shark that way for InterestSeconds (or until it is
+         *  within InterestReach), after which the patrol goes on. */
+        void NoteBreach(float x, float z) noexcept;
+        [[nodiscard]] std::uint32_t InvestigationCount() const noexcept { return investigations_; }
+        [[nodiscard]] bool Investigating() const noexcept { return interestSeconds_ > 0.0f; }
+        static constexpr float InterestDistance = 60.0f;
+        static constexpr float InterestSeconds = 12.0f;
+        static constexpr float InterestReach = 10.0f;
     private:
         void ResolveRouteTarget() noexcept;
         void UpdateMotion(float deltaSeconds) noexcept;
@@ -60,5 +69,7 @@ namespace island
         std::uint64_t frameIndex_ = 0U;
         std::uint32_t presenceCycleCount_ = 0U;
         int direction_ = 1;
+        float interestX_ = 0.0f, interestZ_ = 0.0f, interestSeconds_ = 0.0f;
+        std::uint32_t investigations_ = 0U;
     };
 }

@@ -7998,6 +7998,33 @@ int main()
     }
 
     {
+        // A fish's breach near the present shark draws it that way for a while; one far off
+        // does not, and the patrol resumes once the interest has run out.
+        const island::IslandTerrain terrain;
+        island::SharkPatrol shark(terrain);
+        const auto& state = shark.State();
+        Check(state.present, "the shark starts present for the breach check");
+        const float farX = state.x + 150.0f, farZ = state.z;
+        shark.NoteBreach(farX, farZ);
+        Check(shark.InvestigationCount() == 0U && !shark.Investigating(), "a breach a hundred and fifty metres off draws no shark");
+        // A breach off the shark's bow, thirty metres on.
+        const float breachX = state.x + std::cos(state.headingRadians) * 30.0f;
+        const float breachZ = state.z + std::sin(state.headingRadians) * 30.0f;
+        const float observerX = state.x + 20.0f, observerZ = state.z;
+        shark.NoteBreach(breachX, breachZ);
+        Check(shark.InvestigationCount() == 1U && shark.Investigating(), "a breach thirty metres off draws the shark");
+        const float first = std::hypot(breachX - state.x, breachZ - state.z);
+        float nearest = first;
+        for (int step = 0; step < 200; ++step) {
+            shark.Update(0.05f, observerX, 0.0f, observerZ);
+            nearest = std::min(nearest, std::hypot(breachX - state.x, breachZ - state.z));
+        }
+        Check(nearest < first - 8.0f, "the shark closes eight metres and more on the breach within ten seconds");
+        for (int step = 0; step < 300; ++step) shark.Update(0.05f, observerX, 0.0f, observerZ);
+        Check(!shark.Investigating(), "the interest runs out within twenty-five seconds and the patrol goes on");
+    }
+
+    {
         // The shark near the turtles: a surfacing turtle dives at once and the turtles draw
         // away from it; the shark far off changes nothing.
         const island::IslandTerrain terrain;

@@ -2395,6 +2395,7 @@ namespace island
                   << " agents den, crawl, forage, and swim in reef and rocky shallows; one lying still takes the sand's tones over a few seconds and flashes back to its own colours when it moves or is startled\n"
                   << "island-simulator: sea turtles " << seaTurtleGroup_.Turtles().size()
                   << " agents in bounded habitat routes, three based in the sheltered western bay; the shark within eighteen metres sends a surfacing turtle under and the rest away from it\n"
+                  << "island-simulator: a fish breaking the surface within sixty metres draws the present shark that way for a few seconds before it takes up its patrol again\n"
                   << "island-simulator: one occasional non-hostile offshore shark patrol\n"
                   << "island-simulator: dolphins " << dolphinPod_.Dolphins().size()
                   << " agents in a peaceful offshore cruise, surface, and dive pod; a dolphin within twenty-eight metres of the shark leaves its route to keep its berth\n"
@@ -3089,6 +3090,11 @@ namespace island
             fishSchools_.SetThreat(shark.x, shark.y, shark.z, shark.present && shark.visible);
         }
         fishSchools_.Update(deltaSeconds, cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
+        // A fish breaking the surface draws the shark that way.
+        if (fishSchools_.LastBreach().count != notedSharkBreach_) {
+            notedSharkBreach_ = fishSchools_.LastBreach().count;
+            sharkPatrol_.NoteBreach(fishSchools_.LastBreach().x, fishSchools_.LastBreach().z);
+        }
         if (viewpoint_ == FixedViewpoint::FishDetail) {
             // Follow translation only so a close CPU-rendered audit retains the subject while
             // still exposing its live heading, banking, tail bend and school movement.

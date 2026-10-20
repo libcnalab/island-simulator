@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 99 (2026-10-20) — a fish breach draws the shark
+
+The shark patrolled its offshore ring whatever broke the surface near it. `SharkPatrol::
+NoteBreach(x,z)`, fed by the game from each new fish breach, gives the present shark an
+interest: a breach within 60 m (`InterestDistance`) becomes its target for twelve seconds
+(`InterestSeconds`) or until it is within 10 m of it (`InterestReach`), the depth it keeps
+to still allowing, after which the patrol's own target returns; `InvestigationCount()` and
+`Investigating()` expose it. The startup report gains "a fish breaking the surface within
+sixty metres draws the present shark that way for a few seconds before it takes up its
+patrol again", pinned by the native capture tool. Core checks: a breach a hundred and fifty
+metres off draws no shark; one thirty metres off its bow draws it, the shark closes eight
+metres and more within ten seconds, and the interest has run out within twenty-five.
+Native `shark` passes.
+
 ## Loop pass 98 (2026-10-20) — the turtles dive from the shark
 
 The sea turtles surfaced and cruised through the shark's patrol untroubled. `SeaTurtleGroup::
