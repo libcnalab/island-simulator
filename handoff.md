@@ -197,6 +197,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 133: a fish rolling through a turn flashes silver along its flanks, brightest parting from the shark (`FishState::flash`) (PLAN "Loop pass 133").
 - Pass 134: a dolphin's leap comes down in a splash: the sea's foam ring and the positional splash at the re-entry (`DolphinPod::Splash`) (PLAN "Loop pass 134").
 - Pass 135: the shark's dorsal fin riding just under the surface cuts a foam wake that spreads and fades behind it (`FinWakeField`) (PLAN "Loop pass 135").
+- Pass 136: a butterfly at rest in the sun basks with open wings and closes them under a cloud's shadow (`ButterflyMeadow::SetCloudClock`, `BaskingCount`) (PLAN "Loop pass 136").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

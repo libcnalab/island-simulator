@@ -94,6 +94,12 @@ namespace island
          *  resident): a butterfly scatters from the nearest of them as from the walker. */
         void SetWalkers(std::span<const GrassWalker> walkers) noexcept { walkers_ = walkers; }
         [[nodiscard]] std::uint32_t ScatterCount() const noexcept { return scatters_; }
+        /** @brief The cumulus clock: a butterfly at rest in the sun (cloud cover at or under
+         *  SunCover) basks with its wings held open, pumping slowly; under a cloud's shadow
+         *  (cover over ShadeCover) it closes them. */
+        void SetCloudClock(float seconds) noexcept { cloudClock_ = seconds; }
+        [[nodiscard]] std::size_t BaskingCount() const noexcept;
+        static constexpr float SunCover = 0.25f, ShadeCover = 0.5f;
         static constexpr float FermentSeconds = 20.0f;
         static constexpr float FruitHoverHeight = 0.22f;
         /** @brief The agent's current nectar target and its hover height above the ground. */
@@ -135,6 +141,7 @@ namespace island
         std::span<const FallingFruit> lyingFruit_;
         std::uint32_t fruitVisits_ = 0U;
         std::span<const GrassWalker> walkers_;
+        float cloudClock_ = 0.0f;
         std::uint32_t scatters_ = 0U;
         [[nodiscard]] bool FindFermentingFruit(const Agent& agent, NectarSite& site) const noexcept;
 

@@ -2987,6 +2987,41 @@ int main()
               && butterflies.FlowerPatches().size()
                   == island::ButterflyMeadow::HabitatCount,
           "butterfly simulation exposes the intended bounded population and habitats");
+    {
+        // Basking: with the cumulus clock set to a sunny moment over the first habitat, a
+        // resting butterfly there opens its wings flat within a few seconds; set to a moment
+        // under a cloud's shadow, it closes them again.
+        island::ButterflyMeadow basking(terrain);
+        const auto& patch = basking.FlowerPatches()[0];
+        float sunny = -1.0f, shaded = -1.0f;
+        for (float t = 0.0f; t < 1200.0f && (sunny < 0.0f || shaded < 0.0f); t += 0.5f) {
+            const float cover = island::CloudShadow::Cover(patch.x, patch.z, t);
+            if (sunny < 0.0f && cover <= 0.05f) sunny = t;
+            if (shaded < 0.0f && cover >= 0.8f) shaded = t;
+        }
+        Check(sunny >= 0.0f && shaded >= 0.0f, "the cumulus clock has a sunny and a shaded moment over the first butterfly habitat");
+        const auto resting = [&](std::size_t habitat) {
+            for (std::size_t i = habitat * 6U; i < habitat * 6U + 6U && i < basking.Butterflies().size(); ++i)
+                if (basking.Butterflies()[i].behavior == island::ButterflyBehavior::Rest) return static_cast<int>(i);
+            return -1;
+        };
+        basking.SetCloudClock(sunny);
+        bool opened = false;
+        for (int step = 0; step < 600 && !opened; ++step) {
+            basking.Update(0.05f, patch.x + 8.0f, patch.y + 1.6f, patch.z);
+            const int index = resting(0);
+            if (index >= 0 && basking.Butterflies()[static_cast<std::size_t>(index)].wingFold < 0.3f) opened = true;
+        }
+        Check(opened && basking.BaskingCount() >= 1U, "a butterfly resting in the sun opens its wings to bask");
+        basking.SetCloudClock(shaded);
+        bool closed = false;
+        for (int step = 0; step < 600 && !closed; ++step) {
+            basking.Update(0.05f, patch.x + 8.0f, patch.y + 1.6f, patch.z);
+            const int index = resting(0);
+            if (index >= 0 && basking.Butterflies()[static_cast<std::size_t>(index)].wingFold > 0.7f) closed = true;
+        }
+        Check(closed, "under a cloud's shadow a resting butterfly closes its wings");
+    }
     for (std::size_t patchIndex = 0;
          patchIndex < butterflies.FlowerPatches().size(); ++patchIndex) {
         const auto& patch = butterflies.FlowerPatches()[patchIndex];

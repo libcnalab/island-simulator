@@ -2557,6 +2557,7 @@ namespace island
                   << "island-simulator: wetland mist: " << wetlandMist_.Puffs().size() << " low puffs over the seasonal wetland wrap back in at its windward edge as the wind carries them out\n"
                   << "island-simulator: a boar trotting off, a deer bounding or a goat sidestepping on dry sand or bare soil kicks up puffs of earth behind its hooves, gone within the second\n"
                   << "island-simulator: prints on the wet sand at the water's edge are taken back by the swash within a minute, those higher up the beach over four\n"
+                  << "island-simulator: a butterfly at rest in the sun basks with its wings held open, pumping slowly, and closes them when a cloud's shadow passes over\n"
                   << "island-simulator: at the campfire the resident crouches to tend the fire, hands to the flames, and stands again to walk on\n"
                   << "island-simulator: monkey tree routes reject isolated canopy and mangroves\n"
                   << "island-simulator: monkeys walk to fruit lying under the crowns and eat it, idling over the spot\n"
@@ -3001,6 +3002,7 @@ namespace island
         butterflyMeadow_.SetLyingFruit(fallingFruit_.Fruit());
         const std::array<GrassWalker, GrassWalkers::Slots> butterflyWalkers = GatherWalkers(butterflyObserver.X, butterflyObserver.Z);
         butterflyMeadow_.SetWalkers(butterflyWalkers);
+        butterflyMeadow_.SetCloudClock(seaForageSeconds_);
         butterflyMeadow_.Update(deltaSeconds,butterflyObserver.X,butterflyObserver.Y,
             butterflyObserver.Z);
         if(viewpoint_==FixedViewpoint::ButterflyDetail) {

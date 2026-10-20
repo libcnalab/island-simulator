@@ -1,5 +1,6 @@
 #include "IslandSimulator/ButterflyMeadow.hpp"
 
+#include "IslandSimulator/CloudShadow.hpp"
 #include "IslandSimulator/FallingFruitField.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/JungleLayout.hpp"
@@ -180,6 +181,15 @@ namespace island
             agent.state.y = terrainHeight + agent.baseAltitude;
             agent.state.wingFold = 0.35f + 0.30f * std::sin(agent.wingPhase);
         }
+    }
+
+    std::size_t ButterflyMeadow::BaskingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_)
+            count += agent.state.behavior == ButterflyBehavior::Rest && agent.state.wingFold < 0.3f
+                && CloudShadow::Cover(agent.state.x, agent.state.z, cloudClock_) <= SunCover ? 1U : 0U;
+        return count;
     }
 
     bool ButterflyMeadow::IsValidHabitat(
@@ -407,12 +417,20 @@ namespace island
         const float wingRate = agent.state.behavior == ButterflyBehavior::Rest
             ? 1.2f : (agent.state.behavior == ButterflyBehavior::NectarHover ? 24.0f : 31.0f);
         agent.wingPhase = std::fmod(agent.wingPhase + deltaSeconds * wingRate, TwoPi);
+        // At rest in the sun the butterfly basks, wings held open and pumping slowly; under
+        // a cloud's shadow (or between) it closes them. The resting change is gentle.
         float wingTarget = 0.86f + std::sin(agent.wingPhase) * 0.05f;
+        float wingRateLimit = 12.0f;
         if (agent.state.behavior != ButterflyBehavior::Rest) {
             wingTarget = 0.12f + (0.5f + 0.5f * std::sin(agent.wingPhase)) * 0.78f;
+        } else {
+            const float cover = CloudShadow::Cover(agent.state.x, agent.state.z, cloudClock_);
+            const float sun = 1.0f - std::clamp((cover - SunCover) / (ShadeCover - SunCover), 0.0f, 1.0f);
+            wingTarget = std::lerp(wingTarget, 0.10f + 0.06f * std::sin(agent.wingPhase), sun);
+            wingRateLimit = 1.5f;
         }
         agent.state.wingFold += std::clamp(
-            wingTarget - agent.state.wingFold, -deltaSeconds * 12.0f, deltaSeconds * 12.0f);
+            wingTarget - agent.state.wingFold, -deltaSeconds * wingRateLimit, deltaSeconds * wingRateLimit);
         agent.state.wingFold = std::clamp(agent.state.wingFold, 0.0f, 1.0f);
     }
 

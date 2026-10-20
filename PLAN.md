@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 136 (2026-10-20) — butterflies bask in the sun
+
+A butterfly at rest held its wings closed whatever the light. `ButterflyMeadow` now reads
+the cumulus clock (`SetCloudClock`, the gust-front clock the skinks use): at rest with the
+cloud cover at or under `SunCover` (0.25) the wings are held open and flat (fold 0.10,
+pumping slowly ±0.06), under a cloud's shadow (cover over `ShadeCover` 0.5) they close to
+the old 0.86, blended between, and the resting change is gentle (1.5/s) where flight's wing
+beat stays fast. `BaskingCount()` reports the butterflies basking open in the sun. The game
+passes the clock before each update. General report line: "a butterfly at rest in the sun
+basks with its wings held open, pumping slowly, and closes them when a cloud's shadow
+passes over" (pinned). Core checks: with the cumulus clock set to a sunny moment over the
+first habitat a resting butterfly there opens its wings to bask, and set to a shaded
+moment it closes them again. Native `butterflies` passes.
+
 ## Loop pass 135 (2026-10-20) — the shark's fin cuts a wake
 
 Nine seconds in every forty-six the patrol rides just under the surface so the dorsal fin
