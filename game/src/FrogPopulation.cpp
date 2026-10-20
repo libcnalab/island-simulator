@@ -113,6 +113,13 @@ namespace island
             && std::hypot(x - home.x, z - home.z) <= home.radius;
     }
 
+    std::size_t FrogPopulation::BlinkingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.blinking ? 1U : 0U;
+        return count;
+    }
+
     void FrogPopulation::NoteCall(const std::size_t index) noexcept
     {
         if (index >= agents_.size()) return;
@@ -219,7 +226,24 @@ namespace island
 
         agent.state.breathPhase = std::fmod(agent.state.breathPhase
             + deltaSeconds * 1.45f, TwoPi);
-        if (agent.state.behavior == FrogBehavior::Rest) {
+        // The blink: resting, a second and a half in and every seven seconds or so after
+        // (a little per frog), the eyes are drawn down into the head for a quarter second.
+        const bool resting = agent.state.behavior == FrogBehavior::Rest;
+        if (resting) {
+            agent.blinkClock += deltaSeconds;
+            const float period = BlinkPeriodSeconds + .6f * static_cast<float>(agent.transitions % 4U);
+            if (agent.blinkClock >= BlinkDelaySeconds + period) agent.blinkClock = BlinkDelaySeconds;
+        } else {
+            agent.blinkClock = 0.0f;
+        }
+        const float sinceDelay = agent.blinkClock - BlinkDelaySeconds;
+        const bool blinking = resting && sinceDelay >= 0.0f
+            && std::fmod(sinceDelay, BlinkPeriodSeconds + .6f * static_cast<float>(agent.transitions % 4U)) < BlinkSeconds;
+        if (blinking && !agent.blinking) ++blinks_;
+        agent.blinking = blinking;
+        agent.state.blink += std::clamp((blinking ? 1.0f : 0.0f) - agent.state.blink,
+            -deltaSeconds * 8.0f, deltaSeconds * 12.0f);
+        if (resting) {
             agent.state.y = agent.groundY + .045f;
             return;
         }

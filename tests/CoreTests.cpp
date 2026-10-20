@@ -3529,6 +3529,27 @@ int main()
         for(int step=0;step<20;++step) callers.Update(0.05f,first.x+10.0f,first.y+1.6f,first.z);
         Check(callers.Frogs()[0].throat<0.05f,"the throat falls slack within a second of the call's end");
     }
+    {
+        // The blink: among the frogs watched from ten metres, within half a minute at least
+        // two blinks begin, a blink closing fully and the eyes up again within half a second;
+        // no hopping frog blinks.
+        island::FrogPopulation blinkers(terrain);
+        const auto first=blinkers.Frogs()[0];
+        float peak=0.0f; bool settled=false,hopBlink=false; int longest=0,run=0;
+        for(int step=0;step<600;++step) {
+            blinkers.Update(0.05f,first.x+10.0f,first.y+1.6f,first.z);
+            bool anyClosed=false;
+            for(const auto& frog:blinkers.Frogs()) {
+                if(frog.simulationTier!=island::WildlifeSimulationTier::Full) continue;   // the throttled tiers hold a blink over their skipped frames
+                peak=std::max(peak,frog.blink);
+                if(frog.blink>0.9f) anyClosed=true;
+                if(frog.behavior==island::FrogBehavior::Hop&&frog.hopPhase>0.3f&&frog.blink>0.5f) hopBlink=true;
+            }
+            run=anyClosed?run+1:0; longest=std::max(longest,run);
+            if(peak>0.9f&&!anyClosed) settled=true;
+        }
+        Check(blinkers.BlinkCount()>=2U&&peak>0.9f&&settled&&longest<=10&&!hopBlink,"a resting frog blinks for a moment and the eyes come up again");
+    }
     for(std::size_t index=0;index<frogs.Frogs().size();++index) {
         const auto& frog=frogs.Frogs()[index];
         const auto& repeated=repeatedFrogs.Frogs()[index];

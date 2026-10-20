@@ -54,6 +54,21 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 160 (2026-10-20) — a frog blinks
+
+A resting frog's eyes never moved. `FrogState::blink` (0..1) now carries the blink:
+`BlinkDelaySeconds` (1.5 s) into a rest and every `BlinkPeriodSeconds` (7 s, plus a little
+per frog) after, the eyes are drawn down into the head for `BlinkSeconds` (0.25 s), closing
+at 12/s and rising at 8/s (frogs blink by retracting the eyes); a hop or flight holds them
+up, and the blinks are counted (`BlinkCount()`, `BlinkingCount()`). In the renderer each
+eye, with its iris, pupil and glint, sinks 8 % of a unit into the head by the blink. The
+frogs report line gains "a resting frog blinks, its eyes drawn down into its head for a
+moment every seven seconds or so" (pinned). Core check: among the fully simulated frogs
+watched from ten metres at least two blinks begin within half a minute, each closing fully
+and up again within half a second, and no hopping frog blinks (the throttled tiers hold a
+blink over their skipped frames, so the check is confined to the full tier). Native `frogs`
+passes.
+
 ## Loop pass 159 (2026-10-20) — a butterfly uncurls its proboscis
 
 A butterfly hovering at a blossom fed with nothing to feed through. `ButterflyState::proboscis`

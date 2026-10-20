@@ -2494,7 +2494,8 @@ namespace island
                   << " agents rest, hop, and retreat beside the stream and wetland; two keep the banks of the cascade's plunge pool, "
                      "and one of those fleeing the walker leaps into the pool, swims under, surfaces and makes back for its bank; "
                      "its splash scatters the fish holding in the pool to the deep; "
-                     "a calling frog's throat swells and pulses under its chin through the call\n"
+                     "a calling frog's throat swells and pulses under its chin through the call; "
+                     "a resting frog blinks, its eyes drawn down into its head for a moment every seven seconds or so\n"
                   << "island-simulator: field mice " << RodentPopulation::MouseCount
                   << " and rats " << RodentPopulation::RatCount
                   << " forage, scurry, and hide in bounded inland edge habitats\n"

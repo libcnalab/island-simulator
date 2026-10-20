@@ -823,8 +823,11 @@ namespace island
             }
 
             for (const float side : {-1.0f, 1.0f}) {
+                // Blinking, the eye is drawn down into the head by the blink amount, the
+                // iris, pupil and glint going with it.
                 const Vector3 eyeCentre = head + forward * (.045f * scale)
-                    + right * (side * .195f * scale) + up * (.115f * scale);
+                    + right * (side * .195f * scale)
+                    + up * ((.115f - .080f * std::clamp(frog.blink, 0.0f, 1.0f)) * scale);
                 AppendGeckoDiamond(vertices, eyeCentre, right, up, forward,
                                    .060f * scale, .058f * scale, .046f * scale, back, flank);
                 const Vector3 irisCentre = eyeCentre + right * (side * .052f * scale)
