@@ -8086,6 +8086,21 @@ int main()
             Check(scared.ScatterCount()>=1U&&after.behavior==island::ButterflyBehavior::Flutter&&std::abs(away)<1.2f,
                   "a butterfly scatters away from a passing animal");
         }
+        // A dove foraging on the ground flushes from a passing animal: the seeded ground dove,
+        // with a body two metres off and no walker about, departs at once.
+        {
+            island::BirdFlock doves(terrain);
+            // The ground dove is seeded when the perches are installed.
+            const std::vector<island::BirdPerchSite> doveSites{{20.0f,terrain.Height(20.0f,20.0f)+2.0f,20.0f,0.3f,island::BirdPerchKind::Wreck}};
+            doves.SetPerchSites(doveSites);
+            const auto dove=doves.Birds()[14U];
+            Check(dove.behavior==island::BirdBehavior::GroundForage,"a dove starts foraging on the ground");
+            const std::vector<island::GrassWalker> bodies{{dove.x+2.0f,dove.z,0.6f,1.0f}};
+            doves.SetWalkers(bodies);
+            doves.Update(0.05f,std::numeric_limits<float>::quiet_NaN(),0.0f,0.0f);
+            Check(doves.GroundFlushCount()==1U&&doves.Birds()[14U].behavior==island::BirdBehavior::GroundDepart,
+                  "a dove on the ground flushes from a passing animal");
+        }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls
         // on a little before it rests; resting fruit sit on the ground and keep still.

@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "IslandSimulator/BirdPerchLayout.hpp"
+#include "IslandSimulator/GrassWalkers.hpp"
 #include "IslandSimulator/WildlifeSimulation.hpp"
 
 namespace island
@@ -130,6 +131,11 @@ namespace island
          *  the air and crosses to it. */
         void SetLyingFruit(std::span<const FallingFruit> fruit) noexcept { lyingFruit_ = fruit; }
         [[nodiscard]] std::uint32_t FruitLandingCount() const noexcept { return fruitLandings_; }
+        /** @brief Other bodies on the ground this frame (the herds, the bear, the resident): a
+         *  dove foraging on the ground flushes from one within GroundFlushDistance. */
+        void SetWalkers(std::span<const GrassWalker> walkers) noexcept { walkers_ = walkers; }
+        [[nodiscard]] std::uint32_t GroundFlushCount() const noexcept { return groundFlushes_; }
+        static constexpr float GroundFlushDistance = 4.0f;
         static constexpr float FruitLandingRange = 240.0f;
         [[nodiscard]] std::uint32_t FlushCount() const noexcept { return flushCount_; }
         // A perched bird leaves when the observer comes this close, or a thud lands this near.
@@ -217,6 +223,8 @@ namespace island
         std::uint32_t flushCount_ = 0U;
         std::span<const FallingFruit> lyingFruit_;
         std::uint32_t fruitLandings_ = 0U;
+        std::span<const GrassWalker> walkers_;
+        std::uint32_t groundFlushes_ = 0U;
         [[nodiscard]] bool FindFruitLanding(const Agent& agent, float& x, float& z) const noexcept;
         int fullSimulationCount_ = 0;
         int reducedSimulationCount_ = 0;

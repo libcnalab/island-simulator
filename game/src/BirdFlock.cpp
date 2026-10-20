@@ -327,6 +327,20 @@ namespace island
                 break;
             }
 
+            if (agent.state.behavior == BirdBehavior::GroundForage) {
+                // A dove on the ground flushes from an animal or the resident walking up to it,
+                // as it would from the walker.
+                for (const GrassWalker& body : walkers_) {
+                    if (body.strength <= 0.0f || !std::isfinite(body.x) || !std::isfinite(body.z)) continue;
+                    if (std::hypot(agent.state.x - body.x, agent.state.z - body.z) < GroundFlushDistance) {
+                        agent.state.behavior = BirdBehavior::GroundDepart;
+                        agent.behaviorSeconds = 0.0f;
+                        agent.state.headBob = 0.0f;
+                        ++groundFlushes_;
+                        break;
+                    }
+                }
+            }
             if (agent.state.behavior == BirdBehavior::Perched) {
                 // A perched bird flushes: the walker too close, or a thud within earshot.
                 const float horizontal = std::hypot(deltaX, deltaZ);

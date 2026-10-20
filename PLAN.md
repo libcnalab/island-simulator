@@ -54,6 +54,16 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 55 (2026-10-20) — a dove on the ground flushes from the animals
+
+A fruit dove walking the ground ignored a boar walking up to it. `BirdFlock::SetWalkers`
+takes the shared bodies and a ground-foraging dove within 4 m of one departs at once (the
+ordinary `GroundDepart`), counted by `GroundFlushCount()`. The dove diagnostic gains "a dove
+on the ground flushes from a passing animal or the resident", pinned by the native capture
+tool. Core check: the seeded ground dove (seeded when the perches are installed, which the
+first draft of the test skipped) departs on the first update with a body two metres off and
+no walker about. Native `ground-doves` passes.
+
 ## Loop pass 54 (2026-10-20) — the butterflies scatter from the animals
 
 The butterflies scattered from the walker only; a deer could walk through a meadow of them.
