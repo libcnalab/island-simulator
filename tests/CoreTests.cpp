@@ -7632,6 +7632,15 @@ int main()
               "the coconut's landing is counted where it struck the ground");
         Check(highest>monkey.selectedTree.y+3.0f,"the fruit starts up in the crown");
         Check(landed,"the fruit lands on the ground under the tree and lies there");
+        // The fronts cross the open sea as well as the land (the ocean's cat's paws read the
+        // same field): strength over the lagoon and far offshore peaks within three spacings
+        // (the across-wind envelope drifts slowly, so one spacing can pass a point weakly).
+        float seaPeak=0,offshorePeak=0;
+        for(float t=0;t<3.0f*island::WindGust::FrontSpacing/island::WindGust::FrontSpeed;t+=0.25f) {
+            seaPeak=std::max(seaPeak,island::WindGust::Strength(0.0f,-230.0f,t));
+            offshorePeak=std::max(offshorePeak,island::WindGust::Strength(400.0f,120.0f,t));
+        }
+        Check(seaPeak>0.8f&&offshorePeak>0.8f,"gust fronts cross the lagoon and the open sea within three spacings");
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls
         // on a little before it rests; resting fruit sit on the ground and keep still.
         Check(field.LastRollDistance()>0.08f&&field.LastRollDistance()<4.0f,"a fruit rolls a bounded distance from where it struck before it rests");

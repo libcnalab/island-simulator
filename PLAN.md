@@ -46,6 +46,30 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Portable evidence for loop passes 1–14 (2026-10-20, Web package of 2026-10-19 23:30)
+
+Chrome software scopes against the Web package built after loop pass 14: `birds`, `boars`,
+`monkeys`, `hut`, `grass-motion`, `butterflies`, `cliffs` passed in the first batch; `palms`
+timed out there (overlapping a native test run) and passed alone at 00:35; `terrain` exceeded
+its limit three times (600 s twice, 1200 s once at 00:56) with the machine's load average
+between 16 and 21 from other agents, so it is `[!]` blocked by load, not by a defect: its
+evidence directories hold the first eight captures each time. Retry `terrain` with
+`--timeout 1200` when the load is under 8. Loop passes 15–27 are not yet in a Web package;
+the next Web build and Android assemble cover them together.
+
+## Loop pass 27 (2026-10-20) — cat's paws on the sea
+
+The sea took no notice of the fronts that leaned every blade ashore. The ocean fragment
+shader now includes the shared `WindGust::Shader` and, after the cumulus shadow, darkens the
+water by 10 % plus a 7 % fine ripple texture (two crossed carriers at 7 rad/s) inside the
+gust band, so a darker streak of cat's-paw ripples races downwind over lagoon and open sea
+alike, in step with the grass, palms, plume and breeze swell. Diagnostic "passing gust fronts
+darken the sea in racing bands of fine cat's-paw ripples" is printed with the ocean's report
+and pinned by the native capture tool. Core check: the field peaks above 0.8 both over the
+lagoon and 400 m offshore within three spacings (the across-wind envelope drifts slowly, so
+one spacing can pass a point weakly; the first draft's one-spacing 0.9 rule failed on that).
+Native `shipwreck-wide` passes.
+
 ## Loop pass 26 (2026-10-20) — the gust front lays the campfire plume over
 
 The smoke drifted west on the trade wind at one fixed lean while the grass beside the fire

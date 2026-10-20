@@ -87,6 +87,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 24: a fallen fruit bounces off its strike and rolls downhill to rest (PLAN "Loop pass 24").
 - Pass 25: the fruit doves cross to the fallen fruit and forage around it (PLAN "Loop pass 25").
 - Pass 26: the gust front lays the campfire plume over and tears it (PLAN "Loop pass 26").
+- Pass 27: gust fronts race over the sea as darker cat's-paw bands (PLAN "Loop pass 27").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

@@ -8,6 +8,7 @@
 #include "IslandSimulator/OceanWaveSpectrum.hpp"
 #include "IslandSimulator/ProceduralMeshValidation.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
+#include "IslandSimulator/WindGust.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -66,6 +67,8 @@ namespace island
             "island-simulator: aerial ocean progressively suppresses close ripple cells without changing swimming-height detail";
         constexpr const char* GrazingRuffleDiagnostic =
             "island-simulator: swimming-height ocean reuses filtered ripple cells for restrained grazing reflection ruffles";
+        constexpr const char* GustCatsPawDiagnostic =
+            "island-simulator: passing gust fronts darken the sea in racing bands of fine cat's-paw ripples";
         constexpr const char* CloudShadowDiagnostic =
             "island-simulator: open sea carries drifting cumulus shadow patches beyond the lagoon";
         constexpr const char* RippleIrregularityDiagnostic =
@@ -385,6 +388,12 @@ void main()
     // the cloud itself still lights from above.
     float cloudShade = cloudShadow(vWorld.xz, offshore, uTime);
     water *= 1.0 - 0.30 * cloudShade;
+    // Cat's paws: the gust front that leans the grass ashore roughens the water into a
+    // darker band of fine ripples racing downwind, over the open sea and the lagoon alike.
+    float gustBand = windGust(vWorld.xz, uTime);
+    float catsPaw = 0.5 + 0.5 * sin(dot(vWorld.xz, vec2(5.1, 2.3)) - uTime * 7.0
+        + sin(dot(vWorld.xz, vec2(1.7, -2.9)) + uTime * 2.4) * 1.3);
+    water *= 1.0 - gustBand * (0.10 + 0.07 * catsPaw);
 
     float distanceFog = smoothstep(300.0, 760.0, distanceToCamera);
     float grazingHaze = smoothstep(0.45, 0.88, 1.0 - viewFacing)
@@ -407,10 +416,10 @@ void main()
         {
             if (embedded) {
                 return std::string("#version 300 es\nprecision highp float;\n")
-                    + environment::FogShaderDefinition + body;
+                    + environment::FogShaderDefinition + WindGust::Shader + body;
             }
             return std::string("#version 330 core\n")
-                + environment::FogShaderDefinition + body;
+                + environment::FogShaderDefinition + WindGust::Shader + body;
         }
 
         [[nodiscard]] CNA::Graphics::ShaderPackageEXT CreateShaderPackage()
@@ -505,6 +514,7 @@ void main()
                       << GrazingRuffleDiagnostic << '\n'
                       << RippleIrregularityDiagnostic << '\n'
                       << CloudShadowDiagnostic << '\n'
+                      << GustCatsPawDiagnostic << '\n'
                       << "island-simulator: ocean shoreline foam uses broken continuity mask\n";
             MirrorRuntimeDiagnosticToPlatformLog(
                 "island-simulator: ocean sunward ripple crests reuse analytic slope field");
@@ -521,6 +531,7 @@ void main()
             MirrorRuntimeDiagnosticToPlatformLog(GrazingRuffleDiagnostic);
             MirrorRuntimeDiagnosticToPlatformLog(RippleIrregularityDiagnostic);
             MirrorRuntimeDiagnosticToPlatformLog(CloudShadowDiagnostic);
+            MirrorRuntimeDiagnosticToPlatformLog(GustCatsPawDiagnostic);
         } else {
             std::cerr << "island-simulator: ocean stock-effect fallback: " << fallbackReason_
                       << '\n';
