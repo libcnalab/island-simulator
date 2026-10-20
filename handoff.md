@@ -203,6 +203,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 139: a basking skink in the sun displays with bouts of push-ups, the front body lifted about the hips (`SkinkState::pushUp`) (PLAN "Loop pass 139").
 - Pass 140: a stalking gecko wags its tail, the tip swaying wide and fast until the lunge (`GeckoState::tailWag`) (PLAN "Loop pass 140").
 - Pass 141: the fish, stingrays, sea turtles and the shark cast soft shadows on the sandy seabed (`SeabedShadowProjection`, `SeabedShadowRenderer`) (PLAN "Loop pass 141").
+- Pass 142: at the jetty-foot pause the resident casts a line, rod in the right hand and a float past the deck's end (`ResidentMotion::SetFishingSpot`, `ResidentState::fishing`) (PLAN "Loop pass 142").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

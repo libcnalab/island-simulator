@@ -422,6 +422,9 @@ namespace island
             residentFacings.push_back({-lookoutPlacement_->dirX,0.0f,-lookoutPlacement_->dirZ});
         }
         resident_=std::make_unique<ResidentMotion>(terrain_,wildlifeObstacles,residentLandmarks,residentFacings);
+        // The jetty-foot call is a fishing pause: the rod comes out there.
+        if(jettyPlacement_) resident_->SetFishingSpot(jettyPlacement_->rootX-jettyPlacement_->dirX*3.0f,
+            jettyPlacement_->rootZ-jettyPlacement_->dirZ*3.0f);
         std::cout<<"island-simulator: resident tour visits "<<resident_->Route().LandmarkCount()
                  <<" landmark(s): the jetty foot and the lookout's ramp foot join the campfire, path and clearing calls; "
                  <<"at the jetty foot the resident turns to look out along the deck to sea; at the lookout's ramp foot the resident looks up the ramp at the platform; "
@@ -2564,6 +2567,7 @@ namespace island
                   << "island-simulator: prints on the wet sand at the water's edge are taken back by the swash within a minute, those higher up the beach over four\n"
                   << "island-simulator: a butterfly at rest in the sun basks with its wings held open, pumping slowly, and closes them when a cloud's shadow passes over\n"
                   << "island-simulator: at the campfire the resident crouches to tend the fire, hands to the flames, and stands again to walk on\n"
+                  << "island-simulator: at the jetty foot the resident casts a line, the rod held out in the right hand and the float riding the shallows past the deck's end, and takes it in to walk on\n"
                   << "island-simulator: monkey tree routes reject isolated canopy and mangroves\n"
                   << "island-simulator: monkeys walk to fruit lying under the crowns and eat it, idling over the spot\n"
                   << "island-simulator: boars forage for the fallen fruit and coconuts before the trunk bases and eat them where they lie\n"

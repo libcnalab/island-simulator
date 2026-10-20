@@ -331,6 +331,21 @@ void BuildHuman(std::vector<VertexPositionColorTexture>& vertices,const Resident
     mesh.Tube(lowerLip,mouth+right*.024f-up*.004f,.0038f,.0034f,Material::Lip,8);
     mesh.Ellipsoid(head-up*.102f+forward*.061f,right,up,forward,.038f,.022f,.025f,Material::Skin,10,6);
 
+    // Fishing: a cane rod out of the right hand, a line from its tip to a float riding
+    // the shallows past the deck's end, the whole drawn out by the fishing amount.
+    if(state.fishing>.02f) {
+        const float out=std::clamp(state.fishing,0.0f,1.0f);
+        const Vector3 wrist=Point(pose.wrists[1]);
+        const Vector3 rodDirection=SafeUnit(forward*.85f+up*.42f);
+        const Vector3 rodBase=wrist-rodDirection*.22f;
+        const Vector3 rodTip=wrist+rodDirection*(1.75f*out);
+        mesh.Tube(rodBase,rodTip,.013f,.005f,Material::Fibre,8);
+        const Vector3 floatPosition(state.x+forward.X*(16.0f*out),.03f,state.z+forward.Z*(16.0f*out));
+        const Vector3 lineMid=Lerp(rodTip,floatPosition,.5f)-up*(.9f*out);
+        mesh.Tube(rodTip,lineMid,.0025f,.0025f,Material::Hair,4);
+        mesh.Tube(lineMid,floatPosition,.0025f,.0025f,Material::Hair,4);
+        mesh.Ellipsoid(floatPosition,right,up,forward,.032f,.045f,.032f,Material::Lip,8,5);
+    }
     for(std::size_t side=0;side<2;++side) {
         const Vector3 shoulder=Point(pose.shoulders[side]),elbow=Point(pose.elbows[side]),wrist=Point(pose.wrists[side]);
         const float sideSign=side==0?-1.0f:1.0f;

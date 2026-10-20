@@ -10091,6 +10091,25 @@ int main()
                 }
             }
             Check(atLookout && facedUp, "the resident pauses at the lookout's ramp foot within half an hour and looks up the ramp");
+            // Fishing: with the jetty foot set as the fishing spot the rod comes out at that
+            // pause (the right hand forward) and stays in at the lookout's.
+            island::ResidentMotion angler(terrain, {}, landmarks, facings);
+            angler.SetFishingSpot(landmarks[0].x, landmarks[0].z);
+            bool fished = false, rodAtLookout = false, handForward = false;
+            for (int step = 0; step < 36000 && !fished; ++step) {
+                angler.Update(0.05f, {1000.0f, 0.0f, 1000.0f});
+                const auto& state = angler.State();
+                const bool atJetty = std::hypot(state.x - landmarks[0].x, state.z - landmarks[0].z) < island::ResidentMotion::FishingReach;
+                const bool atTower = std::hypot(state.x - landmarks[1].x, state.z - landmarks[1].z) < 2.5f;
+                if (atTower && state.fishing > 0.1f) rodAtLookout = true;
+                if (atJetty && angler.Fishing() && state.fishing > 0.95f) {
+                    fished = true;
+                    const float forwardX = std::sin(state.pose.heading), forwardZ = std::cos(state.pose.heading);
+                    const auto& wrist = state.pose.wrists[1];
+                    handForward = (wrist.x - state.x) * forwardX + (wrist.z - state.z) * forwardZ > 0.25f;
+                }
+            }
+            Check(fished && handForward && !rodAtLookout, "the resident fishes at the jetty foot, the right hand forward, and not at the lookout");
         }
     }
 

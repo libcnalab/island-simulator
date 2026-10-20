@@ -27,6 +27,9 @@ enum class ResidentMode {Walking,Pausing,Turning,Yielding};
 struct ResidentState {
     float x=0,y=0,z=0,heading=0,speed=0,phase=0;
     float distanceTravelled=0;
+    // 0..1 fishing: at the jetty-foot pause the rod is held out in the right hand with a line
+    // to a float riding the shallows past the deck's end; eased in and out with the pause.
+    float fishing=0;
     std::size_t nextPoint=1,completedLaps=0,pauseCount=0,rejectedMoves=0;
     ResidentMode mode=ResidentMode::Pausing;
     ResidentPose pose;
@@ -53,6 +56,10 @@ public:
     // QA: holds the resident fully crouched for a still capture.
     void PreviewCrouch();
     static constexpr float CrouchDrop=.36f,CrouchInRate=1.0f,CrouchOutRate=1.4f;
+    // The fishing spot: a pause with a view within FishingReach of it is a fishing pause.
+    void SetFishingSpot(float x,float z) noexcept;
+    [[nodiscard]] bool Fishing()const noexcept {return fishing_;}
+    static constexpr float FishingReach=6.0f,FishingInRate=1.2f,FishingOutRate=2.5f;
     [[nodiscard]] const ResidentRoute& Route()const noexcept {return route_;}
     [[nodiscard]] const RenderedTerrainSurface& Ground()const noexcept {return ground_;}
 private:
@@ -75,6 +82,7 @@ private:
     float pauseRemaining_=3;
     float wave_=0,waveClock_=0;
     float crouch_=0,crouchTarget_=0;
+    float fishSpotX_=0,fishSpotZ_=0;bool fishSpotValid_=false,fishing_=false;
     float pauseFaceX_=0,pauseFaceZ_=0;bool pauseFacing_=false;
 };
 }

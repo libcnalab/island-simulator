@@ -54,6 +54,23 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 142 (2026-10-20) — the resident fishes from the jetty foot
+
+At the jetty-foot call (pass 31) the resident stood looking out along the deck with empty
+hands. `ResidentMotion::SetFishingSpot` (the game gives the jetty-foot landmark) makes a
+pause with a view within `FishingReach` (6 m, the route's nearest safe pause point lies
+about 4.7 m from the landmark) a fishing pause: `ResidentState::fishing` eases in at 1.2/s
+and out at 2.5/s with the pause (`Fishing()` reports it), and `FitPose` carries the right
+arm forward by 0.95 rad × fishing (the crouch's reach and the wave composed with it) and
+refits on a change. The renderer draws a cane rod out of the right hand (1.75 m, drawn
+out by the amount), a line in two segments sagging to a float 16 m ahead on the water
+past the deck's end, and the float itself (a small red-and-cream ellipsoid). General
+report line: "at the jetty foot the resident casts a line, the rod held out in the right
+hand and the float riding the shallows past the deck's end, and takes it in to walk on"
+(pinned). Core checks extend the landmark test: with the jetty foot set as the fishing
+spot the rod comes out at that pause with the right hand forward, and stays in at the
+lookout's. Native `jetty` passes.
+
 ## Loop pass 141 (2026-10-20) — shadows on the seabed
 
 The flying birds cast shadows on the ground (pass 59's bird shadows) but the swimming

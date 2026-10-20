@@ -1328,6 +1328,8 @@ def main():
                 raise RuntimeError("current gecko tail wag is missing; check for a stale executable")
             if "cast soft shadows on the sandy seabed below them, projected along the fixed sun" not in diagnostics:
                 raise RuntimeError("current seabed shadows are missing; check for a stale executable")
+            if "at the jetty foot the resident casts a line, the rod held out in the right hand" not in diagnostics:
+                raise RuntimeError("current resident fishing is missing; check for a stale executable")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:
                 raise RuntimeError("resident tending capture did not hold the crouch")
             if args.viewpoint == "bear-lying" and "bear QA camera frames the bear lying at rest on folded legs" not in diagnostics:
