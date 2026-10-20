@@ -136,6 +136,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 73: a frightened beach crab near its colony's burrow bolts down the hole and comes up once the beach is clear (PLAN "Loop pass 73").
 - Pass 74: a parrot perched on a fruiting lobe feeds there in bouts and stays twice as long (PLAN "Loop pass 74").
 - Pass 75: a hermit crab still pressed after its retreat pulls into its shell until the beach is clear (PLAN "Loop pass 75").
+- Pass 76: at a gust front the crowns let go leaves that spiral down, drift downwind and lie on the floor (PLAN "Loop pass 76").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

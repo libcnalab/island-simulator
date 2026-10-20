@@ -54,6 +54,24 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 76 (2026-10-20) — the crowns shed leaves at a gust front
+
+Leaves drifted on the stream and lay on the floor, but none ever fell. `CanopyLeafFallField`
+(new, `game/src/CanopyLeafFallField.cpp`) gives the jungle crowns leaf fall on the shared
+wind clock: for crowns within 60 m of the viewer, the arrival of a gust front (the same
+front-and-draw rule the palms use for their coconuts, chance 0.4 per crown per front) lets
+a leaf go from six to nine metres up the crown; it descends at 0.55 m/s, is carried downwind
+at 0.9 m/s, rocks side to side and turns at 2.4 rad/s, lands on the floor (or the water) and
+lies there forty seconds before it is gone; 48 leaves at most, the longest-lying replaced
+first; mostly brown and yellow, now and then a green one. The leaves are `DriftingLeaf`
+records, so the stream's leaf renderer draws them with a second call made before the
+stream's own leaves (whose counts the renderer keeps reporting). The startup report gains
+"at a gust front the crowns let go leaves that spiral down through the shade, drift
+downwind and lie on the floor a while", pinned by the native capture tool. Core checks: a
+front has a crown near the observer let go a leaf from up in the crown within four minutes;
+it descends, drifts downwind and turns; it lands and lies; and it is gone after its rest.
+Native `fruit` passes.
+
 ## Loop pass 75 (2026-10-20) — hermit crabs pull into their shells
 
 A pressed hermit crab only ran. `HermitCrabBehavior::Withdraw` follows a retreat that ends

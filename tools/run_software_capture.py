@@ -1191,6 +1191,8 @@ def main():
                 raise RuntimeError("current parrot feeding perch is missing; check for a stale executable")
             if "pulls into its shell until the beach is clear" not in diagnostics:
                 raise RuntimeError("current hermit-crab shell withdrawal is missing; check for a stale executable")
+            if "the crowns let go leaves that spiral down through the shade" not in diagnostics:
+                raise RuntimeError("current canopy leaf fall is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

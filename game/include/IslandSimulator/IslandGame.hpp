@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "IslandSimulator/BenchmarkTraversalRoute.hpp"
+#include "IslandSimulator/CanopyLeafFallField.hpp"
 #include "IslandSimulator/BearMotion.hpp"
 #include "IslandSimulator/BearRenderer.hpp"
 #include "IslandSimulator/BirdFlock.hpp"
@@ -471,6 +472,7 @@ namespace island
         FallingFruitField fallingFruit_{terrain_};
         std::unique_ptr<FallingFruitRenderer> fallingFruitRenderer_;
         StreamDriftField streamDrift_{terrain_};
+        CanopyLeafFallField canopyLeafFall_{terrain_};
         std::unique_ptr<StreamDriftRenderer> streamDriftRenderer_;
         StreamFishField streamFish_{terrain_};
         std::unique_ptr<StreamFishRenderer> streamFishRenderer_;

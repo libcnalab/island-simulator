@@ -53,6 +53,7 @@
 #include "IslandSimulator/CloudShadow.hpp"
 #include "IslandSimulator/CascadeMistField.hpp"
 #include "IslandSimulator/CanopyShafts.hpp"
+#include "IslandSimulator/CanopyLeafFallField.hpp"
 #include "IslandSimulator/FootprintTrail.hpp"
 #include "IslandSimulator/RootingDustField.hpp"
 #include "IslandSimulator/ShellDragTrail.hpp"
@@ -7612,6 +7613,57 @@ int main()
         startled.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
         Check(startled.Birds()[0].behavior == island::BirdBehavior::Depart && startled.FlushCount() == 1U,
               "a thud 12 m off flushes the perched bird with no walker about");
+    }
+
+    {
+        // At a gust front a crown near the observer lets go a leaf: it starts in the crown,
+        // descends steadily, drifts downwind and turns as it falls, lands on the floor and
+        // lies there, and is gone after its rest.
+        const island::IslandTerrain terrain;
+        const island::JungleLayout jungle(terrain);
+        island::CanopyLeafFallField leaves(terrain);
+        leaves.SetCrowns(jungle.Canopy());
+        Check(!jungle.Canopy().empty(), "the jungle has crowns to shed leaves");
+        const auto& crown = jungle.Canopy().front();
+        float seconds = 0.0f;
+        bool released = false, startedHigh = false, fellAndDrifted = false, turned = false;
+        float firstY = 0.0f, firstX = 0.0f, firstYaw = 0.0f;
+        std::size_t slot = island::CanopyLeafFallField::Capacity;
+        for (int step = 0; step < 4800 && !fellAndDrifted; ++step) {
+            seconds += 0.05f;
+            leaves.Update(seconds, 0.05f, crown.x, crown.z);
+            if (!released && leaves.ReleaseCount() >= 1U) {
+                released = true;
+                for (std::size_t i = 0; i < leaves.Leaves().size(); ++i)
+                    if (leaves.Leaves()[i].active) { slot = i; break; }
+                const auto& leaf = leaves.Leaves()[slot];
+                firstY = leaf.y; firstX = leaf.x; firstYaw = leaf.yawRadians;
+                startedHigh = leaf.y > terrain.Height(leaf.x, leaf.z) + 2.5f;
+            } else if (released) {
+                const auto& leaf = leaves.Leaves()[slot];
+                if (std::abs(leaf.yawRadians - firstYaw) > 0.3f) turned = true;
+                if (leaf.active && leaf.y < firstY - 1.5f && leaf.x < firstX - 1.0f && leaves.FallingCount() >= 1U)
+                    fellAndDrifted = true;
+            }
+        }
+        Check(released && startedHigh, "a gust front has a crown near the observer let go a leaf from up in the crown within four minutes");
+        Check(fellAndDrifted && turned, "the shed leaf descends, drifts downwind and turns as it falls");
+        bool landed = false;
+        for (int step = 0; step < 2400 && !landed; ++step) {
+            seconds += 0.05f;
+            leaves.Update(seconds, 0.05f, crown.x, crown.z);
+            const auto& leaf = leaves.Leaves()[slot];
+            landed = leaf.active && leaf.speed == 0.0f
+                && std::abs(leaf.y - (std::max(terrain.Height(leaf.x, leaf.z), 0.0f) + 0.03f)) < 0.001f;
+        }
+        Check(landed, "the shed leaf lands on the floor and lies there");
+        bool gone = false;
+        for (int step = 0; step < 1000 && !gone; ++step) {
+            seconds += 0.05f;
+            leaves.Update(seconds, 0.05f, 1000.0f, 1000.0f);
+            gone = !leaves.Leaves()[slot].active;
+        }
+        Check(gone, "a lying leaf is gone after its rest");
     }
 
     {

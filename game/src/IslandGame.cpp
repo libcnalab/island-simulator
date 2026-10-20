@@ -362,6 +362,7 @@ namespace island
         }
         surfSpray_.SetRocks(naturalPropLayout_.Rocks());
         butterflyMeadow_.SetFlowerBushes(jungleLayout_.Bushes());
+        canopyLeafFall_.SetCrowns(jungleLayout_.Canopy());
         bridgePlacement_=BridgeLayout::FindInWorld(terrain_,StreamCourse(terrain_));
         helicopterPlacement_=HelicopterLayout::FindInWorld(terrain_,jungleLayout_,worldObstacles);
         if(!helicopterPlacement_)throw std::runtime_error("No valid central helicopter site");
@@ -2278,6 +2279,7 @@ namespace island
                   << "island-simulator: fruit doves coo in low slow phrases and thrust their heads as they walk; parrots keep their squawk and a pigeon-grey dove joins the green ones\n"
                   << "island-simulator: every fourth ground visit a fruit dove comes down to the plunge pool's bank to bathe, flicking its wings and dipping in bouts\n"
                   << "island-simulator: a parrot perched on a fruiting lobe of the crown feeds there in bouts, reaching to the fruit, and stays twice as long\n"
+                  << "island-simulator: at a gust front the crowns let go leaves that spiral down through the shade, drift downwind and lie on the floor a while\n"
                   << "island-simulator: fruit bats " << fruitBatColony_.Bats().size()
                   << " agents use six inland canopy roosts with four hanging and two bounded daytime flights\n"
                   << "island-simulator: clearing butterflies "
@@ -2652,6 +2654,7 @@ namespace island
         }
         fallingFruit_.Update(deltaSeconds, monkeyTroop_.Monkeys());
         streamDrift_.Update(deltaSeconds);
+        canopyLeafFall_.Update(seaForageSeconds_,deltaSeconds,cameraPosition_.X,cameraPosition_.Z);
         hatchlings_.Update(deltaSeconds);
         cascadeMist_.Update(deltaSeconds,seaForageSeconds_);
         surfSpray_.Update(deltaSeconds,seaForageSeconds_,cameraPosition_.X,cameraPosition_.Z);
@@ -4539,6 +4542,9 @@ namespace island
             GpuDiagnosticScope gpuPass("stream-water");
             streamFishRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,streamFish_.Fish());
             streamWaterRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,timeSeconds);
+            // The crowns' shed leaves share the stream's leaf renderer; the stream's own
+            // leaves draw last so the renderer's counts stay the stream's.
+            streamDriftRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,canopyLeafFall_.Leaves());
             streamDriftRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,streamDrift_.Leaves());
             cascadeMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,cascadeMist_.Puffs());
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,rootingDust_.Puffs());
