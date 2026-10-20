@@ -170,6 +170,13 @@ namespace island
         pendingPlipSeconds_ = 0.8f;
     }
 
+    void Soundscape::NoteMonkeyAlarm(const float x, const float y, const float z) noexcept
+    {
+        if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) return;
+        pendingAlarm_ = {true, x, y, z, 0U};
+        pendingAlarmSeconds_ = 1.2f;
+    }
+
     void Soundscape::SetStreamCascade(const float x, const float z) noexcept
     {
         if (std::isfinite(x) && std::isfinite(z)) streamCascade_ = {x, z, true};
@@ -1179,6 +1186,20 @@ namespace island
                 pendingPlip_.available = false;
             } else if (pendingPlipSeconds_ <= 0.0f || falloff <= 0.02f) {
                 pendingPlip_.available = false;
+            }
+        }
+        // A monkey's alarm as it breaks into flight: the troop's second phrase, loud and
+        // pitched up, heard within about forty metres, dropped if the slot stays busy.
+        if (pendingAlarm_.available) {
+            pendingAlarmSeconds_ -= safeDelta;
+            const float distance = std::hypot(std::hypot(pendingAlarm_.x - listenerState.x,
+                pendingAlarm_.z - listenerState.z), pendingAlarm_.y - listenerState.y);
+            const float falloff = 1.0f - std::clamp((distance - 6.0f) / 36.0f, 0.0f, 1.0f);
+            if (wildlifeSlotAvailable && wildlifeCall.type == WildlifeCallType::None && falloff > 0.02f) {
+                wildlifeCall = {WildlifeCallType::Monkey, 1U, 0.55f * falloff, 0.35f, pendingAlarm_};
+                pendingAlarm_.available = false;
+            } else if (pendingAlarmSeconds_ <= 0.0f || falloff <= 0.02f) {
+                pendingAlarm_.available = false;
             }
         }
         // A coconut's landing is a short, close thud: heard within about thirty metres.

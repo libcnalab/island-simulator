@@ -588,6 +588,8 @@ namespace island
             && !agent.state.treeReleasing) {
             EnterState(agent, MonkeyBehavior::RunAway);
             ChooseEscapeTarget(agent, observerX, observerZ);
+            lastFlee_ = {agent.state.x, agent.state.y, agent.state.z, true};
+            ++fleeCount_;
         }
 
         float desiredHeadLook = 0.0f;

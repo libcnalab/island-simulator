@@ -4632,6 +4632,15 @@ int main()
               && retreatingMonkeys.Monkeys().front().behavior
                   == island::MonkeyBehavior::RunAway,
           "a close observer exercises the monkey's bounded retreat turn");
+    // The flight is noted where it began, so the soundscape can give the alarm there.
+    Check(retreatingMonkeys.FleeCount() >= 1U && retreatingMonkeys.LastFlee().valid
+              && std::isfinite(retreatingMonkeys.LastFlee().x) && std::isfinite(retreatingMonkeys.LastFlee().z)
+              && std::hypot(retreatingMonkeys.LastFlee().x - retreatingMonkeys.Monkeys().front().x,
+                            retreatingMonkeys.LastFlee().z - retreatingMonkeys.Monkeys().front().z) < 30.0f,
+          "a monkey's flight from the walker is noted where it broke into it");
+    island::MonkeyTroop calmMonkeys(terrain);
+    for (int frame = 0; frame < 60; ++frame) calmMonkeys.Update(1.0f / 30.0f, 1000.0f, 0.0f, 1000.0f, 0.0f);
+    Check(calmMonkeys.FleeCount() == 0U, "with the walker far off no monkey breaks into flight");
 
     bool observedMonkeyIdle = false;
     bool observedMonkeyObserve = false;

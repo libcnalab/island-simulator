@@ -94,6 +94,11 @@ namespace island
         /** @brief Indices into that span the monkeys ate during the last update. */
         [[nodiscard]] std::span<const std::size_t> EatenFruit() const noexcept { return eatenFruit_; }
         [[nodiscard]] std::uint32_t EatCount() const noexcept { return eatCount_; }
+        /** @brief The last monkey that broke into flight from the walker, where it was; the
+         *  soundscape gives the alarm call there. */
+        struct MonkeyFlee { float x = 0.0f, y = 0.0f, z = 0.0f; bool valid = false; };
+        [[nodiscard]] const MonkeyFlee& LastFlee() const noexcept { return lastFlee_; }
+        [[nodiscard]] std::uint32_t FleeCount() const noexcept { return fleeCount_; }
         void SetClimbingEnabled(bool enabled) noexcept { climbingEnabled_=enabled; }
         [[nodiscard]] static bool IsClosedCanopyTree(
             std::span<const CanopyPlacement> trees, std::size_t index) noexcept;
@@ -138,6 +143,8 @@ namespace island
         std::span<const FallingFruit> lyingFruit_;
         std::vector<std::size_t> eatenFruit_;
         std::uint32_t eatCount_ = 0U;
+        MonkeyFlee lastFlee_;
+        std::uint32_t fleeCount_ = 0U;
         [[nodiscard]] bool ChooseTreeTarget(Agent& agent) noexcept;
         void ChooseEscapeTarget(Agent& agent, float observerX, float observerZ) noexcept;
         [[nodiscard]] bool TryMove(Agent& agent, float headingRadians,

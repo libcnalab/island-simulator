@@ -106,6 +106,9 @@ namespace island
         /** @brief A fish breaking the surface: the splash clip, small, quick and high, heard
          *  within about twenty-five metres. */
         void NoteFishBreach(float x, float y, float z) noexcept;
+        /** @brief A monkey breaking into flight from the walker: its alarm call, the troop's
+         *  second phrase pitched up and loud, heard within about forty metres. */
+        void NoteMonkeyAlarm(float x, float y, float z) noexcept;
 
         /** @brief Supplies the sampled portal elevation for underground acoustic zoning. */
         void SetBunkerSource(float entranceGroundY) noexcept;
@@ -265,6 +268,8 @@ namespace island
         float pendingSplashSeconds_ = 0.0f;
         WildlifeAudioSource pendingPlip_;
         float pendingPlipSeconds_ = 0.0f;
+        WildlifeAudioSource pendingAlarm_;
+        float pendingAlarmSeconds_ = 0.0f;
         WildlifeAudioSource pendingThud_;
         float pendingThudSeconds_ = 0.0f;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>

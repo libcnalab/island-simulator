@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 86 (2026-10-20) — a fleeing monkey gives the alarm
+
+A monkey the walker closed on broke into flight in silence. The troop now notes each break
+into flight (`MonkeyTroop::LastFlee`, `FleeCount`: the monkey's position as the walker came
+within 7.5 m and it was not mid-release from a tree), and the game hands it to the
+soundscape's new `NoteMonkeyAlarm`: the troop's second contact phrase, loud (0.55 at the
+source) and pitched up (+0.35), placed where the monkey was and heard within about forty
+metres, dropped if the shared wildlife call slot stays busy for over a second. The startup
+report gains "a monkey the walker closes on gives an alarm call as it breaks into flight,
+the troop's second phrase pitched up and heard within forty metres", pinned by the native
+capture tool. Core checks: the close-observer retreat test's monkey has its flight noted
+within thirty metres of where it now is, and a troop with the walker far off notes none.
+Native `monkey-tree` passes.
+
 ## Loop pass 85 (2026-10-20) — a coconut crab climbs a palm
 
 The coconut crabs worked the nuts on the ground but never climbed, which is the thing a

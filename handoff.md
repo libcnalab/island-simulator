@@ -146,6 +146,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 83: a basking skink a cloud's shadow covers gets up and forages, and basks only in the sun (PLAN "Loop pass 83").
 - Pass 84: a cicada falls silent when the walker or an animal comes within seven metres and starts up again once they have gone; spiders-bright capture restored (PLAN "Loop pass 84").
 - Pass 85: every fourth forage without a coconut a crab climbs a living palm trunk, pauses near three metres up and comes down (PLAN "Loop pass 85").
+- Pass 86: a monkey the walker closes on gives an alarm call as it breaks into flight (PLAN "Loop pass 86").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted
