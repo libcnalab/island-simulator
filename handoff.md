@@ -30,20 +30,22 @@ Operator instruction: implement all twenty items below, then continue indefinite
 here as done with their `PLAN.md` evidence reference.
 
 1. [x] Directional sun shadows (`SunShadowMap`, PLAN "Latest lighting pass — directional sun shadow
-   map"); animals/structures/water as receivers remain a later pass.
+   map"); the wreck, hut, props, jetty, bridge, lookout and helicopter receive it since loop
+   passes 216-218, a with/without comparison is pass 205, the animals read a CPU sun-shade field,
+   and water receiving was measured and dropped (pass 219).
 2. [x] Mid-distance hillside grain (PLAN "Latest hillside pass — mid-distance tussock grain").
 3. [x] Wreck scour bar (PLAN "Latest wreck-grounding pass — sand scour bar against the hull").
 4. [x] Sand streak audit (PLAN "Latest beach-streak audit — seabed ripples confined below the waterline").
 5. [x] Cumulus layers and sea cloud shadows (PLAN "Latest sky pass — fringed cumulus layers and cloud shadows on the sea").
 6. [x] Stream cascade and plunge pool (PLAN "Latest stream pass — a small cascade and plunge pool", `cascade` viewpoint).
 7. [x] Bird identity: dove coos, pigeon walk, grey dove (PLAN "Latest bird-identity pass").
-8. [x] Ecological links (PLAN "Latest ecology pass"); goats have the behaviour but no goat range reaches the stream.
+8. [x] Ecological links (PLAN "Latest ecology pass"); the goats drink at a rain-filled basin on their slope since loop pass 203.
 9. [x] Herd cohesion and sentinels (PLAN "Latest herd pass — cohesion and sentinels").
 10. [x] Tracks (PLAN "Latest ground-sign pass — deer and boar track lines", `tracks` viewpoint).
 11. [x] Sea from within (PLAN "Latest sea-from-within pass — leaping dolphins, a surface fin and parting schools").
 12. [x] Signs of the resident at the hut (PLAN "Latest occupation pass"); the canoe moves to item 13.
 13. [x] Jetty and dugout canoe (PLAN "Latest landing pass — the resident's jetty and dugout canoe", `jetty` viewpoint).
-14. [x] Rope bridge over the stream (PLAN "Latest crossing pass", `bridge` viewpoint); a tree lookout platform remains a loop candidate.
+14. [x] Rope bridge over the stream (PLAN "Latest crossing pass", `bridge` viewpoint); the walkable lookout tower followed in the loop (08a7a42, `lookout` viewpoint).
 15. [x] Lianas and aerial roots (PLAN "Latest canopy-interior pass").
 16. [x] Flowering shrubs and banana stools (PLAN "Latest understory-colour pass").
 17. [x] Fruit in crowns and fallen coconuts (PLAN "Latest harvest pass", `fruit` viewpoint).
