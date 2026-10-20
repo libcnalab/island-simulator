@@ -54,6 +54,7 @@
 #include "IslandSimulator/WetlandMistField.hpp"
 #include "IslandSimulator/HoofDustField.hpp"
 #include "IslandSimulator/FinWakeField.hpp"
+#include "IslandSimulator/TurtleGrazeField.hpp"
 #include "IslandSimulator/StreamFishField.hpp"
 #include "IslandSimulator/HatchlingField.hpp"
 #include "IslandSimulator/BirdShadowProjection.hpp"
@@ -3801,6 +3802,31 @@ int main()
     Check(seaTurtles.Turtles().size() == island::SeaTurtleGroup::TurtleCount
               && seaTurtles.Homes().size() == island::SeaTurtleGroup::TurtleCount,
           "sea-turtle simulation exposes the intended small bounded population");
+    {
+        // Grazing: within a minute a turtle foraging low over the bottom dips its head in
+        // bites, each noted at its beak on the bottom; the sand field raises a puff at a bite
+        // that settles within two seconds.
+        island::SeaTurtleGroup grazers(terrain);
+        const auto first = grazers.Turtles()[0];
+        float deepest = 0.0f; bool near = true;
+        for (int step = 0; step < 1200 && grazers.BiteCount() < 2U; ++step) {
+            grazers.Update(0.05f, first.x + 10.0f, 0.0f, first.z);
+            for (const auto& turtle : grazers.Turtles()) deepest = std::max(deepest, turtle.graze);
+            if (grazers.BiteCount() >= 1U) {
+                const auto& bite = grazers.LastBite();
+                bool close = false;
+                for (const auto& turtle : grazers.Turtles())
+                    if (std::hypot(turtle.x - bite.x, turtle.z - bite.z) < 1.5f * turtle.scale + 0.5f) close = true;
+                if (!close || std::abs(bite.y - terrain.Height(bite.x, bite.z)) > 0.01f) near = false;
+            }
+        }
+        Check(grazers.BiteCount() >= 2U && deepest > 0.9f && near, "a turtle foraging low over the bottom dips its head in bites noted at its beak on the bottom");
+        island::TurtleGrazeField sand;
+        sand.Update(0.05f, grazers.LastBite());
+        Check(sand.ActiveCount() == 1U && sand.BiteCount() == grazers.BiteCount(), "a bite raises a puff of sand");
+        for (int step = 0; step < 40; ++step) sand.Update(0.05f, grazers.LastBite());
+        Check(sand.ActiveCount() == 0U, "the stirred sand settles within two seconds");
+    }
     std::size_t shelteredBayTurtleHomes = 0;
     for (std::size_t index = 0; index < seaTurtles.Turtles().size(); ++index) {
         const island::SeaTurtleState& turtle = seaTurtles.Turtles()[index];

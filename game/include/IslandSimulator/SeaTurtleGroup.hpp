@@ -30,6 +30,8 @@ namespace island
         float bankRadians = 0.0f;
         float speed = 0.0f;
         float flipperStroke = 0.0f;
+        /** @brief 0..1 the head dipped to the bottom in a grazing bite. */
+        float graze = 0.0f;
         float scale = 1.0f;
         SeaTurtleBehavior behavior = SeaTurtleBehavior::Cruise;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
@@ -64,6 +66,13 @@ namespace island
          *  which way it faced, its scale, counted so a breath is noted once. */
         struct Breath { float x = 0.0f, z = 0.0f, headingRadians = 0.0f, scale = 1.0f; std::uint32_t count = 0; };
         [[nodiscard]] const Breath& LastBreath() const noexcept { return breath_; }
+        /** @brief The last grazing bite: a turtle foraging low over the bottom dips its head
+         *  to it every BiteSeconds; the bite is noted at the beak, on the bottom, counted so
+         *  the sand it stirs rises once. */
+        struct Bite { float x = 0.0f, y = 0.0f, z = 0.0f, scale = 1.0f; std::uint32_t count = 0U; };
+        [[nodiscard]] const Bite& LastBite() const noexcept { return bite_; }
+        [[nodiscard]] std::uint32_t BiteCount() const noexcept { return bite_.count; }
+        static constexpr float BiteSeconds = 2.4f, BiteDipSeconds = 0.9f, GrazeHeight = 1.2f;
         /** @brief The shark this frame (while present): a turtle within ThreatDistance of it
          *  turns away as from the swimmer, a surfacing one dives, and both swim on faster
          *  until it is clear. */
@@ -91,6 +100,8 @@ namespace island
             float flipperPhase = 0.0f;
             float accumulatedSeconds = 0.0f;
             std::uint32_t transitionCount = 0U;
+            float grazeClock = 0.0f;
+            bool bitten = false;
         };
 
         void InitializeAgent(std::size_t index);
@@ -112,6 +123,7 @@ namespace island
         float threatX_ = 0.0f, threatZ_ = 0.0f;
         bool threatValid_ = false;
         std::uint32_t threatDives_ = 0U;
+        Bite bite_;
         int fullSimulationCount_ = 0;
         int reducedSimulationCount_ = 0;
         int dormantSimulationCount_ = 0;

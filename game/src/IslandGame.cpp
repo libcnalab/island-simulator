@@ -2539,7 +2539,8 @@ namespace island
                   << "island-simulator: octopuses " << octopusGroup_.Octopuses().size()
                   << " agents den, crawl, forage, and swim in reef and rocky shallows; one lying still takes the sand's tones over a few seconds and flashes back to its own colours when it moves or is startled\n"
                   << "island-simulator: sea turtles " << seaTurtleGroup_.Turtles().size()
-                  << " agents in bounded habitat routes, three based in the sheltered western bay; the shark within eighteen metres sends a surfacing turtle under and the rest away from it\n"
+                  << " agents in bounded habitat routes, three based in the sheltered western bay; the shark within eighteen metres sends a surfacing turtle under and the rest away from it; "
+                  << "a turtle foraging low over the bottom dips its head to graze, a puff of sand rising at each bite\n"
                   << "island-simulator: a fish breaking the surface within sixty metres draws the present shark that way for a few seconds before it takes up its patrol again\n"
                   << "island-simulator: one occasional non-hostile offshore shark patrol\n"
                   << "island-simulator: dolphins " << dolphinPod_.Dolphins().size()
@@ -3421,6 +3422,7 @@ namespace island
         seaTurtleGroup_.Update(
             deltaSeconds, cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
         turtleBreaths_.Update(deltaSeconds,seaForageSeconds_,seaTurtleGroup_.LastBreath());
+        turtleGraze_.Update(deltaSeconds,seaTurtleGroup_.LastBite());
         if (viewpoint_ == FixedViewpoint::SeaTurtleDetail) {
             // Follow translation only. A CPU-rendered 60-frame audit spans enough simulation
             // time for the close subject to leave an otherwise fixed camera.
@@ -5023,6 +5025,7 @@ namespace island
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,hoofDust_.Puffs());
             stingraySandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,stingraySand_.Puffs());
             stingraySandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,stingrayFlickSand_.Puffs());
+            stingraySandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,turtleGraze_.Puffs());
             blownSandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,blownSand_.Puffs());
             finWakeRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,finWake_.Puffs());
             octopusInkRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,octopusInk_.Puffs());

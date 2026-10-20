@@ -349,6 +349,15 @@ namespace island
                                    plastron[Rows][c0], ToneColor(palette.underside, 0.9f), bodyInside);
             }
 
+            // Grazing, the head dips at the neck toward the bottom: the head's points pivot
+            // about the neck base by the graze amount.
+            const float dip = std::clamp(turtle.graze, 0.0f, 1.0f) * 0.55f;
+            const auto headLocal = [&](const float x, const float y, const float z) {
+                constexpr float neckY = 0.02f, neckZ = 0.39f;
+                const float dy = y - neckY, dz = z - neckZ;
+                return local(x, neckY + dy * std::cos(dip) - dz * std::sin(dip),
+                             neckZ + dz * std::cos(dip) + dy * std::sin(dip));
+            };
             // Neck, head and beaked snout: seven rounded rings, split beak points and a neck cap.
             constexpr int HeadSegments = NearTurtleBudget::HeadSegments;
             struct Ring { float y, z, radiusX, radiusY; };
@@ -363,12 +372,12 @@ namespace island
                 for (int segment = 0; segment < HeadSegments; ++segment) {
                     const float angle = (static_cast<float>(segment) + 0.5f) * 2.0f
                         * std::numbers::pi_v<float> / static_cast<float>(HeadSegments);
-                    head[r][static_cast<std::size_t>(segment)] = local(
+                    head[r][static_cast<std::size_t>(segment)] = headLocal(
                         std::cos(angle) * rings[r].radiusX, rings[r].y + std::sin(angle) * rings[r].radiusY,
                         rings[r].z);
                 }
             }
-            const auto headInside = [&](const std::size_t r) { return local(0.0f, rings[r].y, rings[r].z); };
+            const auto headInside = [&](const std::size_t r) { return headLocal(0.0f, rings[r].y, rings[r].z); };
             for (std::size_t r = 0; r + 1 < rings.size(); ++r) {
                 for (int segment = 0; segment < HeadSegments; ++segment) {
                     const auto s0 = static_cast<std::size_t>(segment);
@@ -386,9 +395,9 @@ namespace island
                     AddOutwardTriangle(vertices, head[r][s0], head[r + 1][s1], head[r][s1], color, inside);
                 }
             }
-            const Vector3 noseUpper = local(0.0f, 0.024f, 0.835f);
-            const Vector3 noseLower = local(0.0f, -0.025f, 0.820f);
-            const Vector3 neckBase = local(0.0f, 0.02f, 0.39f);
+            const Vector3 noseUpper = headLocal(0.0f, 0.024f, 0.835f);
+            const Vector3 noseLower = headLocal(0.0f, -0.025f, 0.820f);
+            const Vector3 neckBase = headLocal(0.0f, 0.02f, 0.39f);
             for (int segment = 0; segment < HeadSegments; ++segment) {
                 const auto s0 = static_cast<std::size_t>(segment);
                 const auto s1 = static_cast<std::size_t>((segment + 1) % HeadSegments);
@@ -405,10 +414,10 @@ namespace island
             const Color eyeShine(119, 137, 127, 255);
             for (int sideIndex = -1; sideIndex <= 1; sideIndex += 2) {
                 const float side = static_cast<float>(sideIndex);
-                const Vector3 eTop = local(side * 0.122f, 0.095f, 0.644f);
-                const Vector3 eFront = local(side * 0.124f, 0.069f, 0.672f);
-                const Vector3 eBottom = local(side * 0.124f, 0.043f, 0.641f);
-                const Vector3 eRear = local(side * 0.122f, 0.067f, 0.613f);
+                const Vector3 eTop = headLocal(side * 0.122f, 0.095f, 0.644f);
+                const Vector3 eFront = headLocal(side * 0.124f, 0.069f, 0.672f);
+                const Vector3 eBottom = headLocal(side * 0.124f, 0.043f, 0.641f);
+                const Vector3 eRear = headLocal(side * 0.122f, 0.067f, 0.613f);
                 if (side > 0.0f) {
                     AddTriangle(vertices, eTop, eBottom, eFront, eye);
                     AddTriangle(vertices, eTop, eRear, eBottom, eye);
@@ -416,18 +425,18 @@ namespace island
                     AddTriangle(vertices, eTop, eFront, eBottom, eye);
                     AddTriangle(vertices, eTop, eBottom, eRear, eye);
                 }
-                const Vector3 h0 = local(side * 0.126f, 0.084f, 0.644f);
-                const Vector3 h1 = local(side * 0.127f, 0.070f, 0.657f);
-                const Vector3 h2 = local(side * 0.127f, 0.069f, 0.632f);
+                const Vector3 h0 = headLocal(side * 0.126f, 0.084f, 0.644f);
+                const Vector3 h1 = headLocal(side * 0.127f, 0.070f, 0.657f);
+                const Vector3 h2 = headLocal(side * 0.127f, 0.069f, 0.632f);
                 AddTriangle(vertices, h0, side > 0.0f ? h2 : h1, side > 0.0f ? h1 : h2, eyeShine);
-                const Vector3 n0 = local(side * 0.046f, 0.025f, 0.802f);
-                const Vector3 n1 = local(side * 0.061f, 0.010f, 0.784f);
-                const Vector3 n2 = local(side * 0.038f, 0.008f, 0.808f);
+                const Vector3 n0 = headLocal(side * 0.046f, 0.025f, 0.802f);
+                const Vector3 n1 = headLocal(side * 0.061f, 0.010f, 0.784f);
+                const Vector3 n2 = headLocal(side * 0.038f, 0.008f, 0.808f);
                 AddTriangle(vertices, n0, side > 0.0f ? n2 : n1,
                             side > 0.0f ? n1 : n2, eye);
-                const Vector3 m0 = local(side * 0.071f, -0.018f, 0.780f);
-                const Vector3 m1 = local(side * 0.090f, -0.022f, 0.720f);
-                const Vector3 m2 = local(side * 0.067f, -0.030f, 0.768f);
+                const Vector3 m0 = headLocal(side * 0.071f, -0.018f, 0.780f);
+                const Vector3 m1 = headLocal(side * 0.090f, -0.022f, 0.720f);
+                const Vector3 m2 = headLocal(side * 0.067f, -0.030f, 0.768f);
                 AddTriangle(vertices, m0, side > 0.0f ? m2 : m1,
                             side > 0.0f ? m1 : m2, eye);
             }

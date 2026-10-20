@@ -54,6 +54,22 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 145 (2026-10-20) — a turtle grazes the bottom
+
+A foraging turtle hung low over the sand with its head level. `SeaTurtleState::graze`
+(0..1) now carries the grazing bite: foraging within `GrazeHeight` (1.2 m) of the bottom
+the head dips in a 0.9 s sine every `BiteSeconds` (2.4 s), followed at 4/s, and each bite
+is noted at the beak, on the bottom, as `SeaTurtleGroup::Bite` (`LastBite()`,
+`BiteCount()`); cruising or surfacing lets the head come up at 3/s. The near turtle's
+head, beak, neck cap, eyes, nostrils and mouth creases all pivot about the neck base
+(0.02, 0.39) by 0.55 rad × graze toward the bottom. New `TurtleGrazeField` raises a puff
+of sand at each new bite (0.16 × scale, rising a little, swelling and settling within
+1.8 s), drawn by the stingrays' sand renderer. The sea turtles report line gains "a turtle
+foraging low over the bottom dips its head to graze, a puff of sand rising at each bite"
+(pinned). Core checks: within a minute a turtle foraging low over the bottom dips its head
+in bites noted at its beak on the bottom; a bite raises a puff of sand that settles within
+two seconds. Native `turtles` passes.
+
 ## Loop pass 144 (2026-10-20) — hoofbeats
 
 A boar trotting off from the walker or the bear, and a deer bounding away, went in

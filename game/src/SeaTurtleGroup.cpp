@@ -308,6 +308,27 @@ namespace island
         agent.flipperPhase = std::fmod(
             agent.flipperPhase + deltaSeconds * flipperRate, TwoPi);
         agent.state.flipperStroke = std::sin(agent.flipperPhase);
+        // Grazing: foraging low over the bottom the head dips to it in a bite every couple
+        // of seconds, each noted at the beak, on the bottom, for the sand it stirs.
+        const bool grazing = agent.state.behavior == SeaTurtleBehavior::Forage
+            && agent.state.y - terrain_.Height(agent.state.x, agent.state.z) < GrazeHeight;
+        if (grazing) {
+            agent.grazeClock += deltaSeconds;
+            const float cycle = std::fmod(agent.grazeClock, BiteSeconds);
+            const float want = cycle < BiteDipSeconds ? std::sin(cycle / BiteDipSeconds * 3.14159265f) : 0.0f;
+            if (want > 0.95f && !agent.bitten) {
+                agent.bitten = true;
+                const float beakX = agent.state.x + std::cos(agent.state.headingRadians) * 0.8f * agent.state.scale;
+                const float beakZ = agent.state.z + std::sin(agent.state.headingRadians) * 0.8f * agent.state.scale;
+                bite_ = {beakX, terrain_.Height(beakX, beakZ), beakZ, agent.state.scale, bite_.count + 1U};
+            }
+            if (cycle >= BiteDipSeconds) agent.bitten = false;
+            agent.state.graze += std::clamp(want - agent.state.graze, -deltaSeconds * 4.0f, deltaSeconds * 4.0f);
+        } else {
+            agent.grazeClock = 0.0f;
+            agent.bitten = false;
+            agent.state.graze = std::max(0.0f, agent.state.graze - deltaSeconds * 3.0f);
+        }
     }
 
     void SeaTurtleGroup::SetThreat(const float x, const float z, const bool valid) noexcept
