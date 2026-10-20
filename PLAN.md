@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 208 (2026-10-20) — the supervisor fixture's load flake was a marker race
+
+`IslandGpuQualificationSupervisorTests`, long recorded as load-sensitive (pass 204 and earlier
+handoff entries), was reproduced: six copies at once failed 2 of 18 runs, each time in a
+different case, with the supervisor returning 1 where 0 or 4 was expected. A return of 1 is
+the workload's own exit status: the synthetic game polled for its child's pid marker with
+`exists()` and then parsed it, but `Path.write_text` creates the file before it writes, so
+under load the game read an empty file, failed `int('')` and exited 1. The same pattern sat in
+three more fixture markers (the game's own start marker, the forked grandchild's marker and
+the launcher pid file). Every one is now written to a `.part` file and renamed into place.
+After the fix: 0 failures in 36 runs at six copies at once and 0 in 30 at ten at once, under a
+machine load of 11 to 14. The supervisor itself is unchanged; no timeout was widened.
+
 ## Loop pass 207 (2026-10-20) — the large objects keep a shadow beyond the map
 
 With the sun shadow map on, the wreck's, hut's and helicopter's projected mass shadows in the
@@ -135,8 +148,8 @@ which lies on coastal rock); the visible inventory now carries the walker's own 
 twice: `IslandGpuQualificationSupervisorTests` failed under a machine load of 21 on 16
 cores (other sessions) and passes alone every time (five runs). It drives a stub game, not
 this build, with sub-second supervision timeouts, and fails the same way when two copies of
-it run at once, so it is load-sensitive rather than a regression of this pass; a loop pass
-could widen its timeouts.
+it run at once, so it is load-sensitive rather than a regression of this pass (pass 208
+found and fixed the cause, a fixture marker race).
 
 ## Loop pass 203 (2026-10-20) — the goats drink at a rain-filled basin
 

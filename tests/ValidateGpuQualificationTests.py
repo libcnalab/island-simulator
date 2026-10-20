@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Exercise the incident supervisor with synthetic journal data and CPU-only child processes."""
+"""Exercise the incident supervisor with synthetic journal data and CPU-only child processes.
+
+Every marker a fixture process writes for another process to poll is written to a ``.part``
+file and renamed into place: ``Path.write_text`` creates the file before it writes, and under
+machine load a poller saw the empty file, failed to parse it and exited with status 1, which
+the supervisor then reported as the workload's own failure.
+"""
 
 from __future__ import annotations
 
@@ -78,7 +84,8 @@ class QualificationTests(unittest.TestCase):
         child_marker = self.root / "child.json"
         child_code = ("import os,signal,time; from pathlib import Path; "
                       "signal.signal(signal.SIGTERM, signal.SIG_IGN); "
-                      f"Path({str(child_marker)!r}).write_text(os.readlink('/proc/self')); "
+                      f"Path({str(child_marker) + '.part'!r}).write_text(os.readlink('/proc/self')); "
+                      f"os.replace({str(child_marker) + '.part'!r}, {str(child_marker)!r}); "
                       "time.sleep(30)")
         self.game.write_text(
             f"#!{sys.executable}\n"
@@ -88,8 +95,9 @@ class QualificationTests(unittest.TestCase):
             f"child = subprocess.Popen([sys.executable, '-c', {child_code!r}], "
             f"start_new_session={detached!r})\n"
             f"while not Path({str(child_marker)!r}).exists(): time.sleep(0.001)\n"
-            f"Path({str(self.marker)!r}).write_text(json.dumps({{'parent': int(os.readlink('/proc/self')), "
+            f"Path({str(self.marker) + '.part'!r}).write_text(json.dumps({{'parent': int(os.readlink('/proc/self')), "
             f"'child': int(Path({str(child_marker)!r}).read_text()), 'argv': sys.argv}}))\n"
+            f"os.replace({str(self.marker) + '.part'!r}, {str(self.marker)!r})\n"
             f"print({diagnostic!r}, flush=True)\n"
             + ("time.sleep(30)\n" if persistent else "" if orphan else "child.kill()\nchild.wait()\n")
             + f"sys.exit({exit_code})\n", encoding="utf-8")
@@ -165,8 +173,9 @@ class QualificationTests(unittest.TestCase):
             "    os.setsid()\n"
             "    if os.fork() != 0: os._exit(0)\n"
             "    signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
-            f"    Path({str(self.marker)!r}).write_text(json.dumps({{'parent': parent, "
+            f"    Path({str(self.marker) + '.part'!r}).write_text(json.dumps({{'parent': parent, "
             "'child': int(os.readlink('/proc/self'))}))\n"
+            f"    os.replace({str(self.marker) + '.part'!r}, {str(self.marker)!r})\n"
             "    time.sleep(30)\n"
             "    os._exit(0)\n"
             "os.waitpid(child, 0)\n"
@@ -178,10 +187,11 @@ class QualificationTests(unittest.TestCase):
     def test_supervisor_sigkill_stops_detached_descendants(self):
         self.write_game(persistent=True, detached=True)
         launcher_file = self.root / "launcher.pid"
-        code = ("import subprocess,time; from pathlib import Path; "
+        code = ("import os,subprocess,time; from pathlib import Path; "
                 f"p=subprocess.Popen({GPU.contained_command([str(self.game)])!r}, "
                 "start_new_session=True); "
-                f"Path({str(launcher_file)!r}).write_text(str(p.pid)); p.wait()")
+                f"Path({str(launcher_file) + '.part'!r}).write_text(str(p.pid)); "
+                f"os.replace({str(launcher_file) + '.part'!r}, {str(launcher_file)!r}); p.wait()")
         supervisor = subprocess.Popen([sys.executable, "-c", code], start_new_session=True,
                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         try:
