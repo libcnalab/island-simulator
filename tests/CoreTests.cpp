@@ -58,6 +58,7 @@
 #include "IslandSimulator/DragonflyDipField.hpp"
 #include "IslandSimulator/CrocodileWakeField.hpp"
 #include "IslandSimulator/MudFleckField.hpp"
+#include "IslandSimulator/BeetlePopulation.hpp"
 #include "IslandSimulator/StreamFishField.hpp"
 #include "IslandSimulator/HatchlingField.hpp"
 #include "IslandSimulator/BirdShadowProjection.hpp"
@@ -3524,6 +3525,24 @@ int main()
                             escapedDragonfly.z-initialReactiveDragonfly.z)>.25f,
           "a nearby observer prompts a short dragonfly escape dart");
 
+    {
+        // The beetles' elytra fan: among the beetles of the first colony watched from six
+        // metres, within twenty seconds a resting beetle lifts its wing cases fully and
+        // lowers them again as it forages on; one hidden never lifts them.
+        island::BeetlePopulation beetles(terrain);
+        const auto& colony=beetles.Homes()[0];
+        float lifted=0.0f; bool lowered=false,hiddenLift=false;
+        for(int step=0;step<400;++step) {
+            beetles.Update(0.05f,colony.x+6.0f,terrain.Height(colony.x,colony.z)+1.0f,colony.z);
+            for(std::size_t i=0;i<island::BeetlePopulation::PerColony;++i) {
+                const auto& beetle=beetles.Beetles()[i];
+                lifted=std::max(lifted,beetle.elytraLift);
+                if(lifted>0.9f&&beetle.behavior==island::BeetleBehavior::Forage&&beetle.elytraLift<0.05f) lowered=true;
+            }
+            for(const auto& beetle:beetles.Beetles()) if(beetle.visibility<0.3f&&beetle.elytraLift>0.1f) hiddenLift=true;
+        }
+        Check(beetles.FanCount()>=1U&&lifted>0.9f&&lowered&&!hiddenLift,"a resting beetle lifts its wing cases and lowers them to forage on");
+    }
     island::FrogPopulation frogs(terrain);
     island::FrogPopulation repeatedFrogs(terrain);
     island::FrogPopulation invalidInputFrogs(terrain);

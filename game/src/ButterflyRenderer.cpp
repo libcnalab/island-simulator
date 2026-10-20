@@ -1264,9 +1264,15 @@ namespace island
                 {{.08f, .24f, .33f, .35f, .28f, .08f}};
             constexpr std::array<float, 6> ElytronHeights =
                 {{.07f, .22f, .36f, .40f, .29f, .07f}};
+            // Fanning, each wing case hinges up and out about the midline by the lift, its
+            // striae turning with it; the same vertices either way.
+            const float lift = std::clamp(beetle.elytraLift, 0.0f, 1.0f) * .85f;
             for (const float side : {-1.0f, 1.0f}) {
-                const Vector3 elytron = abdomen + right * (side * .265f * unit);
-                AppendBeetleLoft(vertices, elytron, right, dorsal, forward,
+                const Vector3 caseRight = right * std::cos(lift) + dorsal * (side * std::sin(lift));
+                const Vector3 caseDorsal = dorsal * std::cos(lift) - right * (side * std::sin(lift));
+                const Vector3 hinge = abdomen + dorsal * (.30f * unit);
+                const Vector3 elytron = hinge + caseRight * (side * .265f * unit) - caseDorsal * (.30f * unit);
+                AppendBeetleLoft(vertices, elytron, caseRight, caseDorsal, forward,
                     ElytronStations, ElytronWidths, ElytronHeights, unit,
                     side < 0.0f ? shell : shellLight,
                     Color::Lerp(shell, underside, .28f), underside);
@@ -1275,10 +1281,10 @@ namespace island
                 // relying on a texture or a second material.
                 for (int groove = 0; groove < 3; ++groove) {
                     const float lateral = side * (.12f + .13f * groove) * unit;
-                    const Vector3 rear = abdomen + right * lateral
-                        - forward * (.68f * unit) + dorsal * (.38f * unit);
-                    const Vector3 front = abdomen + right * lateral
-                        + forward * (.49f * unit) + dorsal * (.39f * unit);
+                    const Vector3 rear = hinge + caseRight * lateral
+                        - forward * (.68f * unit) + caseDorsal * (.08f * unit);
+                    const Vector3 front = hinge + caseRight * lateral
+                        + forward * (.49f * unit) + caseDorsal * (.09f * unit);
                     AppendGeckoTube(vertices, rear, front, .018f * unit,
                                     .012f * unit, ridge, 5);
                 }

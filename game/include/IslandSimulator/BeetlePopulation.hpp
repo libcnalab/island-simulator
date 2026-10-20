@@ -18,6 +18,9 @@ namespace island
         float x = 0.0f, y = 0.0f, z = 0.0f;
         float normalX = 0.0f, normalY = 1.0f, normalZ = 0.0f;
         float headingRadians = 0.0f, gaitPhase = 0.0f, visibility = 1.0f, scale = 1.0f;
+        /** @brief 0..1 the wing cases lifted: a beetle at rest in the open raises its elytra
+         *  a crack, hinged at the midline, and holds them up until it moves on or hides. */
+        float elytraLift = 0.0f;
         BeetleBehavior behavior = BeetleBehavior::Rest;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
         std::uint8_t colorVariant = 0U;
@@ -34,6 +37,11 @@ namespace island
         static constexpr std::size_t Count = ColonyCount * PerColony;
         static constexpr float FullSimulationDistance = 22.0f;
         static constexpr float ReducedSimulationDistance = 48.0f;
+        /** @brief Elytra fans begun (a rest FanDelaySeconds in, the beetle in the open) and
+         *  the beetles holding their wing cases up this moment. */
+        [[nodiscard]] std::uint32_t FanCount() const noexcept { return fans_; }
+        [[nodiscard]] std::size_t FanningCount() const noexcept;
+        static constexpr float FanDelaySeconds = 0.25f, FanLiftRate = 5.0f, FanLowerRate = 4.0f;
 
         explicit BeetlePopulation(const IslandTerrain& terrain);
         void Update(float deltaSeconds, float observerX, float observerY,
@@ -56,6 +64,8 @@ namespace island
             float angle = 0.0f, radius = 0.0f, behaviorSeconds = 0.0f;
             float accumulatedSeconds = 0.0f;
             std::uint32_t transitions = 0U;
+            float restSeconds = 0.0f;     // time into the current rest
+            bool fanning = false;
         };
 
         void Place(Agent&) noexcept;
@@ -67,5 +77,6 @@ namespace island
         std::array<Agent, Count> agents_{};
         std::array<BeetleState, Count> states_{};
         std::uint64_t frameIndex_ = 0U;
+        std::uint32_t fans_ = 0U;
     };
 }

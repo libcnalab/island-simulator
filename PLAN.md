@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 163 (2026-10-20) — a beetle lifts its wing cases
+
+A beetle at rest sat sealed. `BeetleState::elytraLift` (0..1) now carries the fan: a rest
+`FanDelaySeconds` (0.25 s) in, the beetle in the open, lifts its wing cases at `FanLiftRate`
+(5/s) and holds them up until it forages on or hides, lowering them at `FanLowerRate`
+(4/s); the fans are counted (`FanCount()`, `FanningCount()`). In the renderer each
+elytron, with its three striae, hinges up and out about the midline by up to 0.85 rad on
+the same vertices, so the beetle's exact vertex budget holds. The beetles report line gains
+"a beetle at rest in the open lifts its wing cases a crack and holds them up until it moves
+on" (pinned). Core check: among the first colony's beetles watched from six metres a
+resting beetle lifts its wing cases fully within twenty seconds and lowers them to forage
+on, and no hidden beetle lifts them. Native `beetles` passes.
+
 ## Loop pass 162 (2026-10-20) — a ground spider rears at the walker
 
 A ground spider only crawled or retreated. `SpiderState::display` (0..1) now carries the

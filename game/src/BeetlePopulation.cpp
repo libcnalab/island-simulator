@@ -91,6 +91,13 @@ namespace island
         }
     }
 
+    std::size_t BeetlePopulation::FanningCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.fanning ? 1U : 0U;
+        return count;
+    }
+
     void BeetlePopulation::UpdateAgent(Agent& agent, const float deltaSeconds,
                                        const float observerX, const float observerZ,
                                        const bool observerValid) noexcept
@@ -121,6 +128,15 @@ namespace island
             ? 1.6f : 2.6f);
         agent.state.visibility += std::clamp(targetVisibility - agent.state.visibility,
                                              -visibilityStep, visibilityStep);
+        // The elytra fan: a rest a quarter second in, the beetle in the open, lifts the
+        // wing cases a crack and holds them up until it forages on or hides.
+        const bool resting = agent.state.behavior == BeetleBehavior::Rest && agent.state.visibility > .5f;
+        agent.restSeconds = resting ? agent.restSeconds + deltaSeconds : 0.0f;
+        const bool fanning = resting && agent.restSeconds >= FanDelaySeconds;
+        if (fanning && !agent.fanning) ++fans_;
+        agent.fanning = fanning;
+        agent.state.elytraLift += std::clamp((fanning ? 1.0f : 0.0f) - agent.state.elytraLift,
+                                             -deltaSeconds * FanLowerRate, deltaSeconds * FanLiftRate);
         if (agent.state.behavior != BeetleBehavior::Forage) return;
 
         const BeetleHome& home = homes_[agent.colony];

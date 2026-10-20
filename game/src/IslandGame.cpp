@@ -2511,7 +2511,8 @@ namespace island
                   << " agents resting, calling, and making short flights from real broadleaf trunks; "
                      "a cicada falls silent when the walker or an animal comes within seven metres and starts up again once they have gone\n"
                   << "island-simulator: beetles " << BeetlePopulation::Count
-                  << " agents resting, foraging, and hiding in three inland leaf-litter colonies\n"
+                  << " agents resting, foraging, and hiding in three inland leaf-litter colonies; "
+                  << "a beetle at rest in the open lifts its wing cases a crack and holds them up until it moves on\n"
                   << "island-simulator: beach crabs " << crabColony_.Crabs().size()
                   << " agents in deterministic sand-and-debris-constrained colonies; every other bout works the wrack line and feeds among the strandings; "
                      "the resident's walk along the beach scatters them as the player's does; "
