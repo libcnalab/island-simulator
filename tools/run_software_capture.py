@@ -1213,6 +1213,8 @@ def main():
                 raise RuntimeError("current coconut-crab palm climb is missing; check for a stale executable")
             if "a monkey the walker closes on gives an alarm call as it breaks into flight" not in diagnostics:
                 raise RuntimeError("current monkey alarm call is missing; check for a stale executable")
+            if "one lying still takes the sand's tones over a few seconds and flashes back to its own colours" not in diagnostics:
+                raise RuntimeError("current octopus camouflage is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

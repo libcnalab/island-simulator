@@ -8714,6 +8714,19 @@ int main()
             for(int step=0;step<70;++step) ink.Update(0.05f,octopuses.LastInk());
             Check(ink.ActiveCount()==0U,"the ink thins away within three seconds");
         }
+        // Camouflage: an octopus lying still in its den takes the sand's tones within a few
+        // seconds; startled into the open it flashes back to its own colours at once.
+        {
+            island::OctopusGroup hidden(terrain);
+            const auto& denned=hidden.Octopuses()[2];
+            Check(denned.behavior==island::OctopusBehavior::Den&&denned.camouflageAmount==0.0f,"the third octopus starts in its den in its own colours");
+            const float farX=denned.x+60.0f;
+            for(int step=0;step<140;++step) hidden.Update(0.05f,farX,denned.y,denned.z);
+            Check(denned.camouflageAmount>.9f&&hidden.CamouflagedCount()>=1U,"an octopus lying still in its den is matched to the sand within seven seconds");
+            hidden.Update(0.05f,denned.x+1.0f,denned.y,denned.z);
+            for(int step=0;step<12;++step) hidden.Update(0.05f,denned.x+1.0f,denned.y,denned.z);
+            Check(denned.camouflageAmount<.05f,"a startled octopus flashes back to its own colours within a second");
+        }
         // A crocodile on the bank slides into the water when the walker comes near: the entry
         // is noted once, at a point at the water's edge, within a minute.
         {

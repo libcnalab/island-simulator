@@ -2385,7 +2385,7 @@ namespace island
                   << "island-simulator: stingrays " << stingrayGroup_.Stingrays().size()
                   << " agents glide, forage, and settle over shallow sandy seabed\n"
                   << "island-simulator: octopuses " << octopusGroup_.Octopuses().size()
-                  << " agents den, crawl, forage, and swim in reef and rocky shallows\n"
+                  << " agents den, crawl, forage, and swim in reef and rocky shallows; one lying still takes the sand's tones over a few seconds and flashes back to its own colours when it moves or is startled\n"
                   << "island-simulator: sea turtles " << seaTurtleGroup_.Turtles().size()
                   << " agents in bounded habitat routes, three based in the sheltered western bay\n"
                   << "island-simulator: one occasional non-hostile offshore shark patrol\n"

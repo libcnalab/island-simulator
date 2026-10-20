@@ -54,6 +54,22 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 87 (2026-10-20) — the octopus matches the sand
+
+An octopus lying in its den or at a forage kept its own rust and umber whatever it lay on.
+`OctopusState::camouflageAmount` rises over four seconds (`CamouflageSeconds`) while the
+animal lies still (den or forage, speed under 0.03 m/s, no walker within the ink range) and
+falls in 0.4 s (`FlashSeconds`) the moment it crawls, swims or is startled, and the octopus
+renderer draws the palette matched to the seabed by that amount: mantle, highlight, shadow
+and arms taken 82 % of the way to the sand's pale grain and its shade, the suckers half way,
+the eye and iris left as they are, in both the near and the far forms. `CamouflagedCount()`
+exposes it. The startup report's octopus line gains "one lying still takes the sand's tones
+over a few seconds and flashes back to its own colours when it moves or is startled",
+pinned by the native capture tool. Core checks: the third octopus, denned at the start in
+its own colours, is matched to the sand within seven seconds with the walker far off, and
+flashes back within a second of the walker coming within a metre. Native `octopuses`
+passes.
+
 ## Loop pass 86 (2026-10-20) — a fleeing monkey gives the alarm
 
 A monkey the walker closed on broke into flight in silence. The troop now notes each break

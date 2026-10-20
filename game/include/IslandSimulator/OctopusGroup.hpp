@@ -16,6 +16,10 @@ namespace island
     {
         float x=0.0f,y=0.0f,z=0.0f,headingRadians=0.0f,speed=0.0f;
         float mantlePulse=0.0f,armWave=0.0f,hideAmount=0.0f,scale=1.0f;
+        /** @brief 0..1 matched to the seabed: an octopus lying still in its den or at a
+         *  forage takes the sand's tones over a few seconds and flashes back to its own
+         *  colours the moment it moves or is startled. */
+        float camouflageAmount=0.0f;
         OctopusBehavior behavior=OctopusBehavior::Den;
         WildlifeSimulationTier simulationTier=WildlifeSimulationTier::Dormant;
         std::uint8_t colorVariant=0U;
@@ -29,6 +33,8 @@ namespace island
         static constexpr std::size_t Count=4U;
         static constexpr float MinimumShoreDistance=-38.0f,MaximumShoreDistance=-7.0f;
         static constexpr float FullSimulationDistance=110.0f,ReducedSimulationDistance=280.0f;
+        static constexpr float CamouflageSeconds=4.0f,FlashSeconds=0.4f,StillSpeed=0.03f;
+        [[nodiscard]] std::size_t CamouflagedCount() const noexcept;
         explicit OctopusGroup(const IslandTerrain& terrain);
         void Update(float deltaSeconds,float observerX,float observerY,float observerZ)noexcept;
         [[nodiscard]] std::span<const OctopusState> Octopuses()const noexcept{return states_;}
