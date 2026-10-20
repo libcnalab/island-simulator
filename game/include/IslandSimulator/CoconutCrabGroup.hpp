@@ -60,6 +60,12 @@ namespace island
         [[nodiscard]] std::span<const std::size_t> EatenCoconuts() const noexcept { return eaten_; }
         [[nodiscard]] std::uint32_t WorkCount() const noexcept { return works_; }
         static constexpr float WorkSeconds = 18.0f;
+        /** @brief The last knock of a working crab's claws on the shell: where, counted so the
+         *  soundscape gives each knock once; one every KnockPeriodSeconds of the work. */
+        struct Knock { float x = 0.0f, y = 0.0f, z = 0.0f; std::uint32_t count = 0U; };
+        [[nodiscard]] const Knock& LastKnock() const noexcept { return knock_; }
+        [[nodiscard]] std::uint32_t KnockCount() const noexcept { return knock_.count; }
+        static constexpr float KnockPeriodSeconds = 2.2f;
         /** @brief The palms: every fourth forage of a crab with a living trunk in its range is
          *  a climb: the walk to the trunk, up it at ClimbSpeed to ClimbHeight, a pause, and
          *  down again. A climbing crab is on the trunk, not the ground. */
@@ -86,6 +92,7 @@ namespace island
             std::uint32_t transitions = 0U;
             int nutTarget = -1;
             float workSeconds = 0.0f;
+            float knockClock = 0.0f;     // time since the claws' last knock on the shell
             int trunkTarget = -1;        // index into the palms while walking to one
             float climbY = 0.0f;         // height up the trunk
             float climbPause = 0.0f;     // remaining pause at the top
@@ -106,6 +113,7 @@ namespace island
         std::span<const FallingFruit> lyingFruit_;
         std::vector<std::size_t> eaten_;
         std::uint32_t works_ = 0U;
+        Knock knock_;
         std::span<const PalmPlacement> palms_;
         std::uint32_t climbs_ = 0U;
         int fullCount_ = 0, reducedCount_ = 0, dormantCount_ = 0;

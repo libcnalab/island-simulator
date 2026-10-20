@@ -553,6 +553,7 @@ namespace island
         std::uint32_t notedFrogDives_ = 0U;
         int notedFrogCalls_ = 0;
         std::uint32_t notedBoarRetreats_ = 0U;
+        std::uint32_t notedClawKnocks_ = 0U;
         std::uint32_t notedDeerBolts_ = 0U;
         std::uint32_t notedSharkBreach_ = 0U;
         bool goatSentinelWasAlert_ = false;

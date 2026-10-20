@@ -1725,6 +1725,32 @@ namespace island
         return Quantize(samples, deer ? .5f : .6f);
     }
 
+    AmbientLoop GenerateClawKnock()
+    {
+        // A coconut crab's claws on a shell: two hard short clicks a tenth of a second apart,
+        // each a burst of bright noise over a woody ring that dies within a few hundredths.
+        constexpr std::size_t frames = static_cast<std::size_t>(AmbientSampleRate * 0.35f);
+        std::vector<float> samples(frames, 0.0f);
+        DeterministicNoise noise(0x5c3a9e17U);
+        float low = 0.0f;
+        for (std::size_t i = 0; i < frames; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            const float raw = noise.Next();
+            low += 0.45f * (raw - low);
+            float value = 0.0f;
+            for (const float at : {0.02f, 0.13f}) {
+                const float since = t - at;
+                if (since < 0.0f) continue;
+                const float hit = std::exp(-since * 55.0f);
+                const float ring = std::sin(2.0f * std::numbers::pi_v<float> * 920.0f * since)
+                    * std::exp(-since * 38.0f) * 0.45f;
+                value += hit * (raw - low) * 0.9f + ring * SmoothStep(0.0f, 0.002f, since);
+            }
+            samples[i] = value * (1.0f - SmoothStep(0.30f, 0.35f, t));
+        }
+        return Quantize(samples, .55f);
+    }
+
     AmbientLoop GenerateWingClap(const std::uint8_t variant)
     {
         // A flushing bird's wing clap: six quick beats of air in half a second, each a

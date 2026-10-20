@@ -54,6 +54,22 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 179 (2026-10-20) — a coconut crab's claws knock on the shell
+
+A crab working a coconut did it in silence. `CoconutCrabGroup::Knock` now notes a knock of
+the claws on the shell every `KnockPeriodSeconds` (2.2 s) of the work (`LastKnock()`,
+`KnockCount()`), and the game hands each to the soundscape (`NoteClawKnock`), which gives it
+as a positional one-shot of a new `WildlifeCallType::ClawKnock` within the shared wildlife
+slot: an original `GenerateClawKnock` sound, 0.35 s of two hard short clicks a tenth of a
+second apart, each a burst of bright noise over a 920 Hz woody ring dying within a few
+hundredths, heard within about fifteen metres (`PlayedClawKnockCount()`), dropped after
+half a second if the slot stays busy (the next knock follows). The coconut crabs report
+line gains "the claws knocking on the shell every couple of seconds, an original double
+click heard within fifteen metres" (pinned). Core check: the knock PCM is deterministic at
+22050 Hz and 0.35 s, with a second hit past a fifth of full scale a tenth of a second after
+the first, quiet between, and silence after a third of a second. Native `coconut-crabs`
+passes.
+
 ## Loop pass 178 (2026-10-20) — a fly lands on the fruit
 
 Flies at fermenting fruit only hung over it. `FlyState::landed` (0..1) and `rubPhase` now

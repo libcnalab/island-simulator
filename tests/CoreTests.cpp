@@ -10008,6 +10008,23 @@ int main()
         {
             // The hoofbeats PCM: deterministic, two variants, 1.4 s, silent at both ends, low
             // (few zero crossings) and in distinct beats (quiet gaps between).
+            {
+                // The claw knock: an original 0.35 s double click, deterministic, bounded, with
+                // its two hits a tenth of a second apart and silence between and after.
+                const auto knock=island::GenerateClawKnock();
+                Check(knock.sampleRate==22050&&knock.samples.size()==static_cast<std::size_t>(22050*0.35f)&&knock.samples==island::GenerateClawKnock().samples,
+                      "the claw knock is not deterministic at its length");
+                float peak=0.0f,secondHit=0.0f,between=0.0f,tail=0.0f;
+                for(std::size_t i=0;i<knock.samples.size();++i) {
+                    const float t=static_cast<float>(i)/static_cast<float>(knock.sampleRate);
+                    const float a=static_cast<float>(std::abs(static_cast<int>(knock.samples[i])))/32767.0f;
+                    peak=std::max(peak,a);
+                    if(t>0.13f&&t<0.16f) secondHit=std::max(secondHit,a);
+                    if(t>0.09f&&t<0.125f) between=std::max(between,a);
+                    if(t>0.33f) tail=std::max(tail,a);
+                }
+                Check(peak>0.3f&&peak<=1.0f&&secondHit>0.2f&&between<peak*0.3f&&tail<0.05f,"the claw knock is not two short clicks with quiet between and after");
+            }
             const auto boar=island::GenerateHoofbeats(0),deer=island::GenerateHoofbeats(1);
             const std::size_t frames=static_cast<std::size_t>(22050*1.4f);
             int crossings=0,quietRuns=0;bool quiet=false;

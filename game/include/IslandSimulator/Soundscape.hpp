@@ -134,6 +134,9 @@ namespace island
          *  about twenty metres. */
         void NoteHoofbeats(float x, float y, float z, std::uint8_t variant) noexcept;
         [[nodiscard]] int PlayedHoofbeatCount() const noexcept { return playedHoofbeatCount_; }
+        /** @brief A coconut crab's claws knocking on a shell: heard within about fifteen metres. */
+        void NoteClawKnock(float x, float y, float z) noexcept;
+        [[nodiscard]] int PlayedClawKnockCount() const noexcept { return playedClawKnockCount_; }
         [[nodiscard]] int PlayedCrocodileHissCount() const noexcept { return playedCrocodileHissCount_; }
         [[nodiscard]] int PlayedWingClapCount() const noexcept { return playedWingClapCount_; }
         [[nodiscard]] int PlayedResidentWhistleCount() const noexcept { return playedResidentWhistleCount_; }
@@ -309,6 +312,7 @@ namespace island
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> crocodileHissEffects_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> birdChatterEffects_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> hoofbeatEffects_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> clawKnockEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> coconutThudEffect_;
         WildlifeAudioSource pendingSplash_;
         float pendingSplashSeconds_ = 0.0f;
@@ -338,6 +342,9 @@ namespace island
         float pendingHoofbeatSeconds_ = 0.0f;
         std::uint8_t pendingHoofbeatVariant_ = 0U;
         int playedHoofbeatCount_ = 0;
+        WildlifeAudioSource pendingClawKnock_;
+        float pendingClawKnockSeconds_ = 0.0f;
+        int playedClawKnockCount_ = 0;
         int playedResidentWhistleCount_ = 0;
         WildlifeAudioSource pendingThud_;
         float pendingThudSeconds_ = 0.0f;

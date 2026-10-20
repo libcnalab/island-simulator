@@ -2529,7 +2529,7 @@ namespace island
                   << "one paused on the sand feeds, its small claw picking at the sand and lifting to its mouth\n"
                   << "island-simulator: coconut crabs " << coconutCrabGroup_.Crabs().size()
                   << " agents in deterministic coastal palm-zone habitats; "
-                  << "a foraging crab walks to a coconut lying in its range and works it with its claws until it is gone; "
+                  << "a foraging crab walks to a coconut lying in its range and works it with its claws until it is gone, the claws knocking on the shell every couple of seconds, an original double click heard within fifteen metres; "
                      "every fourth forage without one is a climb up a living palm trunk, a pause near three metres up, and the way down\n"
                   << "island-simulator: an ant trail whose food end lies near a fallen fruit bends to it and the carriers come back from the fruit\n"
                   << "island-simulator: the grass bends under the nearest six animals and the resident as they pass, not only under the walker\n"
@@ -3207,6 +3207,12 @@ namespace island
             viewpoint_ == FixedViewpoint::CoconutCrabDetail ? 0.0f : deltaSeconds,
             coconutCrabObserver.X, coconutCrabObserver.Y, coconutCrabObserver.Z);
         for (const std::size_t eaten : coconutCrabGroup_.EatenCoconuts()) fallingFruit_.Consume(eaten);
+        // A crab working a coconut: its claws knock on the shell.
+        if (soundscape_ && coconutCrabGroup_.KnockCount() != notedClawKnocks_) {
+            notedClawKnocks_ = coconutCrabGroup_.KnockCount();
+            const auto& knock = coconutCrabGroup_.LastKnock();
+            soundscape_->NoteClawKnock(knock.x, knock.y, knock.z);
+        }
         if (viewpoint_ == FixedViewpoint::CrabDetail) {
             const CrabState& subject = crabColony_.Crabs()[crabViewSubject_];
             cameraPosition_ += Vector3(subject.x - previousCrabSubject.x,

@@ -253,7 +253,7 @@ namespace island
         if (agent.state.behavior == CoconutCrabBehavior::Forage && agent.nutTarget >= 0) {
             if (static_cast<std::size_t>(agent.nutTarget) >= lyingFruit_.size()
                 || !lyingFruit_[static_cast<std::size_t>(agent.nutTarget)].active) {
-                agent.nutTarget = -1; agent.state.working = false;
+                agent.nutTarget = -1; agent.state.working = false; agent.knockClock = 0.0f;
             } else {
                 const FallingFruit& nut = lyingFruit_[static_cast<std::size_t>(agent.nutTarget)];
                 const float distance = std::hypot(nut.x - agent.state.x, nut.z - agent.state.z);
@@ -265,6 +265,12 @@ namespace island
                 } else {
                     agent.state.working = true;
                     agent.workSeconds += deltaSeconds;
+                    // Every couple of seconds of the work the claws knock on the shell.
+                    agent.knockClock += deltaSeconds;
+                    if (agent.knockClock >= KnockPeriodSeconds) {
+                        agent.knockClock = 0.0f;
+                        knock_ = {agent.state.x, agent.state.y + 0.2f, agent.state.z, knock_.count + 1U};
+                    }
                     if (agent.workSeconds >= WorkSeconds) {
                         eaten_.push_back(static_cast<std::size_t>(agent.nutTarget));
                         ++works_;

@@ -342,7 +342,8 @@ namespace island
         WingClap,
         Crocodile,
         Chatter,
-        Hoofbeats
+        Hoofbeats,
+        ClawKnock
     };
 
     /** @brief Nearest currently eligible world-space source for one wildlife species. */
@@ -542,6 +543,9 @@ namespace island
     /** @brief Original hoofbeats of an animal trotting off: a drumming of dull thuds, 1.4 s;
      *  variant 0 a boar's heavy trot, 1 a deer's lighter bounds. */
     [[nodiscard]] AmbientLoop GenerateHoofbeats(std::uint8_t variant);
+    /** @brief Original knock of a coconut crab's claws on a shell: two hard short clicks with
+     *  a woody ring, 0.35 s. */
+    [[nodiscard]] AmbientLoop GenerateClawKnock();
     [[nodiscard]] float SnakeHissVolume(float distance) noexcept;
 
     struct SnakeHissRequest

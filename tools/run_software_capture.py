@@ -1402,6 +1402,8 @@ def main():
                 raise RuntimeError("current resident stretch is missing; check for a stale executable")
             if "a fly at the fruit sets down on it every other hover, wings still, and rubs its forelegs" not in diagnostics:
                 raise RuntimeError("current fly landing is missing; check for a stale executable")
+            if "the claws knocking on the shell every couple of seconds, an original double click heard within fifteen metres" not in diagnostics:
+                raise RuntimeError("current claw knock is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:
