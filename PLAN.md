@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 93 (2026-10-20) — the frog's splash scatters the pool fish
+
+The pool fish scattered from the walker but not from the frog that leapt in among them.
+`StreamFishField::NoteSplash(x,z)` keeps a splash for three seconds (`SplashSeconds`);
+within the scatter reach of the deep station it counts as the walker there, so the fish
+make for the deep and hold until it has passed, then drift back; splash-caused scatters are
+counted apart (`SplashScatterCount`). The frogs note where a dive happened (`LastDive`),
+and the game hands each new dive to the fish. The startup report's frog line gains "its
+splash scatters the fish holding in the pool to the deep", pinned by the native capture
+tool. Core checks: a splash at the deep station with no walker about scatters the fish,
+which make for the deep and come back out once it has passed; a splash sixty metres off
+scatters none. Native `cascade` passes.
+
 ## Loop pass 92 (2026-10-20) — a pool frog dives from the walker
 
 The two frogs on the plunge pool's banks fled the walker along the bank like the stream

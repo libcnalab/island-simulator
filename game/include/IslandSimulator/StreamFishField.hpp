@@ -41,6 +41,11 @@ public:
     [[nodiscard]] std::span<const StreamFish> Fish() const noexcept {return fish_;}
     [[nodiscard]] const StreamCourse& Course() const noexcept {return course_;}
     [[nodiscard]] std::uint32_t ScatterCount() const noexcept {return scatters_;}
+    /** @brief A splash in the pool (a frog's dive): the fish scatter to the deep as from the
+     *  walker and hold there SplashSeconds before they drift back. */
+    void NoteSplash(float x,float z) noexcept;
+    [[nodiscard]] std::uint32_t SplashScatterCount() const noexcept {return splashScatters_;}
+    static constexpr float SplashSeconds=3.0f;
     [[nodiscard]] std::uint32_t DartCount() const noexcept {return darts_;}
     // The pool's course-distance span and its deepest station's distance.
     [[nodiscard]] float PoolStart() const noexcept {return poolStart_;}
@@ -55,5 +60,7 @@ private:
     std::uint32_t scatters_=0,darts_=0,rises_=0;
     std::span<const DriftingLeaf> leaves_;
     bool wasNear_=false;
+    float splashX_=0,splashZ_=0,splashSeconds_=0;
+    std::uint32_t splashScatters_=0;
 };
 }

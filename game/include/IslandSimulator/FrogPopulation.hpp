@@ -45,6 +45,8 @@ namespace island
         static constexpr float DiveDepth = 0.12f;
         [[nodiscard]] float PoolWaterHeight() const noexcept { return poolWater_; }
         [[nodiscard]] std::uint32_t DiveCount() const noexcept { return dives_; }
+        struct FrogDive { float x = 0.0f, z = 0.0f; bool valid = false; };
+        [[nodiscard]] const FrogDive& LastDive() const noexcept { return lastDive_; }
 
         explicit FrogPopulation(const IslandTerrain& terrain);
         void Update(float deltaSeconds, float observerX, float observerY,
@@ -82,6 +84,7 @@ namespace island
         float poolX_ = 0.0f, poolZ_ = 0.0f, poolAcrossX_ = 0.0f, poolAcrossZ_ = 1.0f;
         float poolWater_ = 0.0f, poolHalfWidth_ = 1.0f;
         std::uint32_t dives_ = 0U;
+        FrogDive lastDive_;
         int fullCount_ = 0, reducedCount_ = 0, dormantCount_ = 0;
     };
 }

@@ -2348,7 +2348,8 @@ namespace island
                   << " agents in three stream and wetland habitats\n"
                   << "island-simulator: frogs " << frogPopulation_.Frogs().size()
                   << " agents rest, hop, and retreat beside the stream and wetland; two keep the banks of the cascade's plunge pool, "
-                     "and one of those fleeing the walker leaps into the pool, swims under, surfaces and makes back for its bank\n"
+                     "and one of those fleeing the walker leaps into the pool, swims under, surfaces and makes back for its bank; "
+                     "its splash scatters the fish holding in the pool to the deep\n"
                   << "island-simulator: field mice " << RodentPopulation::MouseCount
                   << " and rats " << RodentPopulation::RatCount
                   << " forage, scurry, and hide in bounded inland edge habitats\n"
@@ -2872,6 +2873,12 @@ namespace island
         }
         frogPopulation_.Update(viewpoint_ == FixedViewpoint::FrogDetail ? 0.0f : deltaSeconds,
                                frogObserver.X, frogObserver.Y, frogObserver.Z);
+        // A frog's dive into the plunge pool scatters the fish holding there.
+        if (frogPopulation_.DiveCount() != notedFrogDives_) {
+            notedFrogDives_ = frogPopulation_.DiveCount();
+            const auto& dive = frogPopulation_.LastDive();
+            if (dive.valid) streamFish_.NoteSplash(dive.x, dive.z);
+        }
         Vector3 rodentObserver = cameraPosition_;
         if (viewpoint_ == FixedViewpoint::MouseDetail
             || viewpoint_ == FixedViewpoint::RatDetail) {

@@ -8341,6 +8341,27 @@ int main()
         Check(allInPool&&pool.DartCount()>=3U,"the fish dart now and then and stay in the pool");
         float deepX=0,deepY=0,deepZ=0,deepHeading=0;
         Check(pool.Place(pool.DeepDistance(),0.0f,0.1f,deepX,deepY,deepZ,deepHeading),"the pool's deep station resolves");
+        {
+            // A splash in the pool with no walker about scatters the fish to the deep as the
+            // walker does, and they drift back once it has passed.
+            island::StreamFishField splashed(terrain);
+            for(int step=0;step<200;++step) splashed.Update(0.05f,1000.0f,1000.0f);
+            const auto before=splashed.ScatterCount();
+            splashed.NoteSplash(deepX,deepZ);
+            splashed.Update(0.05f,1000.0f,1000.0f);
+            Check(splashed.ScatterCount()==before+1U&&splashed.SplashScatterCount()==1U,"a splash in the pool scatters the fish");
+            bool hiding=false;
+            for(const auto& f:splashed.Fish()) if(f.active&&f.hiding) hiding=true;
+            Check(hiding,"the splashed fish make for the deep");
+            for(int step=0;step<200;++step) splashed.Update(0.05f,1000.0f,1000.0f);
+            bool allHiding=true;
+            for(const auto& f:splashed.Fish()) if(f.active&&!f.hiding) allHiding=false;
+            Check(!allHiding,"with the splash passed the fish come back out");
+            island::StreamFishField farSplash(terrain);
+            farSplash.NoteSplash(deepX+60.0f,deepZ);
+            farSplash.Update(0.05f,1000.0f,1000.0f);
+            Check(farSplash.SplashScatterCount()==0U,"a splash sixty metres off scatters no pool fish");
+        }
         float spreadBefore=0; for(const auto& f:pool.Fish()) spreadBefore+=std::abs(f.distance-pool.DeepDistance());
         for(int step=0;step<120;++step) pool.Update(0.05f,deepX+1.5f,deepZ);
         float spreadAfter=0; bool allHiding=true; for(const auto& f:pool.Fish()) { spreadAfter+=std::abs(f.distance-pool.DeepDistance()); allHiding=allHiding&&f.hiding; }

@@ -43,15 +43,25 @@ bool StreamFishField::Place(const float distance,const float lateral,const float
     return true;
 }
 
+void StreamFishField::NoteSplash(const float x,const float z) noexcept {
+    if(!std::isfinite(x)||!std::isfinite(z)) return;
+    splashX_=x;splashZ_=z;splashSeconds_=SplashSeconds;
+}
+
 void StreamFishField::Update(const float deltaSeconds,const float observerX,const float observerZ) noexcept {
     const float dt=std::isfinite(deltaSeconds)?std::clamp(deltaSeconds,0.0f,0.1f):0.0f;
     if(dt<=0.0f) return;
-    // The walker near the pool: measured against the deep station, the pool's middle.
+    // The walker near the pool: measured against the deep station, the pool's middle. A
+    // splash in the pool (a frog's dive) counts as the walker there for SplashSeconds.
     float deepX=0,deepY=0,deepZ=0,deepHeading=0;
     const bool placed=Place(deepDistance_,0.0f,0.1f,deepX,deepY,deepZ,deepHeading);
-    const bool near=placed&&std::isfinite(observerX)&&std::isfinite(observerZ)
-        &&std::hypot(observerX-deepX,observerZ-deepZ)<ScatterDistance+(poolEnd_-poolStart_)*0.5f;
-    if(near&&!wasNear_) ++scatters_;
+    const float reach=ScatterDistance+(poolEnd_-poolStart_)*0.5f;
+    const bool walkerNear=placed&&std::isfinite(observerX)&&std::isfinite(observerZ)
+        &&std::hypot(observerX-deepX,observerZ-deepZ)<reach;
+    const bool splashed=placed&&splashSeconds_>0.0f&&std::hypot(splashX_-deepX,splashZ_-deepZ)<reach;
+    splashSeconds_=std::max(0.0f,splashSeconds_-dt);
+    const bool near=walkerNear||splashed;
+    if(near&&!wasNear_) {++scatters_;if(splashed&&!walkerNear) ++splashScatters_;}
     wasNear_=near;
     for(StreamFish& fish:fish_) {
         if(!fish.active) continue;

@@ -1225,6 +1225,8 @@ def main():
                 raise RuntimeError("current bird snake flush is missing; check for a stale executable")
             if "fleeing the walker leaps into the pool, swims under, surfaces and makes back for its bank" not in diagnostics:
                 raise RuntimeError("current pool-frog dive is missing; check for a stale executable")
+            if "its splash scatters the fish holding in the pool to the deep" not in diagnostics:
+                raise RuntimeError("current frog-splash fish scatter is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

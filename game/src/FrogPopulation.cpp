@@ -247,6 +247,7 @@ namespace island
             agent.state.submerged = 0.0f;
             agent.state.y = poolWater_ + .02f;
             ++dives_;
+            lastDive_ = {agent.state.x, agent.state.z, true};
             return;
         }
         agent.groundY = terrain_.Height(agent.state.x, agent.state.z);
