@@ -103,6 +103,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 40: the walker's bare feet leave a fading trail of prints in the sand (PLAN "Loop pass 40").
 - Pass 41: rooting boars throw up puffs of soil at the snout (PLAN "Loop pass 41").
 - Pass 42: the hermit crabs drag thin fading lines in the sand (PLAN "Loop pass 42").
+- Pass 43: now and then a fish breaks the surface over a school (PLAN "Loop pass 43").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

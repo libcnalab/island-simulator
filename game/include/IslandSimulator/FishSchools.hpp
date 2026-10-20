@@ -57,6 +57,12 @@ namespace island
 
         [[nodiscard]] std::span<const FishState> Fish() const noexcept;
         [[nodiscard]] std::span<const FishSchoolState> Schools() const noexcept;
+        /** @brief The last fish to break the surface over a fully simulated school: the
+         *  ring's point and age, counted so a breach is noted once. */
+        struct FishBreach { float x = 0.0f, z = 0.0f, ageSeconds = 0.0f; std::uint32_t count = 0; bool valid = false; };
+        [[nodiscard]] const FishBreach& LastBreach() const noexcept { return breach_; }
+        static constexpr float BreachSeconds = 2.2f;
+        static constexpr float BreachIntervalSeconds = 14.0f;
         [[nodiscard]] int FullSimulationCount() const noexcept { return fullSimulationCount_; }
         [[nodiscard]] int ReducedSimulationCount() const noexcept {
             return reducedSimulationCount_;
@@ -87,6 +93,7 @@ namespace island
             float centreY = 0.0f;
             float centreZ = 0.0f;
             float accumulatedSeconds = 0.0f;
+            float nextBreachSeconds = 6.0f;
             int direction = 1;
             WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
         };
@@ -99,6 +106,7 @@ namespace island
 
         const IslandTerrain& terrain_;
         std::vector<School> schools_;
+        FishBreach breach_;
         std::vector<Agent> agents_;
         std::vector<FishState> states_;
         std::vector<FishSchoolState> schoolStates_;

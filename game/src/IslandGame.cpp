@@ -4419,6 +4419,7 @@ namespace island
                 notedDiveCount_ = birdFlock_.DiveCount();
                 soundscape_->NoteBirdSplash(diveSplash.x, 0.0f, diveSplash.z);
             }
+            const FishSchools::FishBreach& fishBreach = fishSchools_.LastBreach();
             oceanRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
                                  timeSeconds, oceanPlayer.x, oceanPlayer.z,
                                  waterRippleModel_.Intensity(), waterRippleModel_.Phase(),
@@ -4429,7 +4430,9 @@ namespace island
                                  jettyPlacement_ ? jettyPlacement_->rootX : 0.0f,
                                  jettyPlacement_ ? jettyPlacement_->rootZ : 0.0f,
                                  jettyPlacement_ ? jettyPlacement_->dirX : 0.0f,
-                                 jettyPlacement_ ? jettyPlacement_->dirZ : 0.0f);
+                                 jettyPlacement_ ? jettyPlacement_->dirZ : 0.0f,
+                                 fishBreach.x, fishBreach.z,
+                                 fishBreach.valid ? fishBreach.ageSeconds / FishSchools::BreachSeconds : -1.0f);
         }
         {
             GpuDiagnosticScope gpuPass("shoreline");
@@ -4466,7 +4469,11 @@ namespace island
             underwaterEffect_->Draw(cameraDepth, waterViewModel_.Intensity(), bubbleBurst_, timeSeconds,
                                     cameraView_, viewport.getWidthProperty(), viewport.getHeightProperty());
             // Under the canopy, and only with the sun out, the view carries the sun's shafts.
-            const float shaftStrength = cameraDepth > 0.03f || IsDebugFreeCameraActive() || !std::isfinite(eye.X) || !std::isfinite(eye.Z)
+            // Only a camera over land reads the light field (over the sea it reads as fully
+            // occluded, which would veil the whole sea view in shafts).
+            const bool overLand = std::isfinite(eye.X) && std::isfinite(eye.Z)
+                && terrain_.Height(eye.X, eye.Z) > 0.0f && terrain_.SignedShoreDistance(eye.X, eye.Z) > 5.0f;
+            const float shaftStrength = cameraDepth > 0.03f || IsDebugFreeCameraActive() || !overLand
                 ? 0.0f : CanopyShafts::Strength(canopyLightField_.Sample(eye.X, eye.Z), CloudShadow::Cover(eye.X, eye.Z, timeSeconds));
             canopyShafts_->Draw(shaftStrength, timeSeconds, cameraView_, viewport.getWidthProperty(), viewport.getHeightProperty());
         }

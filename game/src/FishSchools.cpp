@@ -168,6 +168,10 @@ namespace island
         const float safeDelta = std::isfinite(deltaSeconds)
             ? std::clamp(deltaSeconds, 0.0f, 0.1f) : 0.0f;
         elapsedSeconds_ += safeDelta;
+        if (breach_.valid) {
+            breach_.ageSeconds += safeDelta;
+            if (breach_.ageSeconds > BreachSeconds) breach_.valid = false;
+        }
         ++frameIndex_;
         observerValid_ = std::isfinite(observerX) && std::isfinite(observerY)
             && std::isfinite(observerZ);
@@ -243,6 +247,17 @@ namespace island
             return;
         }
         School& school = schools_[schoolIndex];
+        // Now and then a fish breaks the surface over a school the swimmer can see: a small
+        // ring on the water where the school is, a little off its centre.
+        if (school.simulationTier == WildlifeSimulationTier::Full) {
+            school.nextBreachSeconds -= deltaSeconds;
+            if (school.nextBreachSeconds <= 0.0f) {
+                const float swing = static_cast<float>((breach_.count * 7U + schoolIndex * 3U) % 8U) * 0.785f;
+                breach_ = {school.centreX + std::cos(swing) * 0.7f, school.centreZ + std::sin(swing) * 0.7f,
+                           0.0f, breach_.count + 1U, true};
+                school.nextBreachSeconds = BreachIntervalSeconds + static_cast<float>((schoolIndex * 5U + breach_.count) % 9U);
+            }
+        }
         const float routeRadius = std::max(1.0f, std::hypot(school.centreX, school.centreZ));
         const float oldAngle = school.routeAngle;
         const float angleStep = static_cast<float>(school.direction) * school.routeSpeed

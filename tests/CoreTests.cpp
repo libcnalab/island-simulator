@@ -7899,6 +7899,26 @@ int main()
             for(int step=0;step<1000;++step) drags.Update(0.1f,crabs);
             Check(drags.ActiveCount()==0U,"the sand levels the drag lines within their life");
         }
+        // Fish breaking the surface: with the observer over a school (full simulation) a
+        // breach is noted within a minute, on the water within two metres of a school's
+        // centre, and the ring ages out within its seconds.
+        {
+            island::FishSchools breachers(terrain);
+            const auto first=breachers.Schools()[0];
+            bool nearSchool=false;std::uint32_t seen=0;
+            for(int step=0;step<1200;++step) {
+                breachers.Update(0.05f,first.centreX,first.centreY+3.0f,first.centreZ);
+                const auto& breach=breachers.LastBreach();
+                if(breach.valid&&breach.count!=seen) {
+                    seen=breach.count;
+                    for(const auto& school:breachers.Schools())
+                        if(std::hypot(school.centreX-breach.x,school.centreZ-breach.z)<2.0f&&terrain.Height(breach.x,breach.z)<0.0f) nearSchool=true;
+                }
+            }
+            Check(seen>=1U&&nearSchool,"a fish breaks the surface over a nearby school within a minute");
+            for(int step=0;step<80;++step) breachers.Update(0.05f,1000.0f,0.0f,1000.0f);
+            Check(!breachers.LastBreach().valid||breachers.LastBreach().ageSeconds<=island::FishSchools::BreachSeconds,"a breach ring ages out");
+        }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls
         // on a little before it rests; resting fruit sit on the ground and keep still.

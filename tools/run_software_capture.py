@@ -1125,6 +1125,8 @@ def main():
                 raise RuntimeError("current rooting dust is missing; check for a stale executable")
             if "the hermit crabs drag thin lines in the sand behind their shells that the sand levels within minutes" not in diagnostics:
                 raise RuntimeError("current hermit drag lines are missing; check for a stale executable")
+            if "now and then a fish breaks the surface over a school in a brief fleck and ring" not in diagnostics:
+                raise RuntimeError("current fish breaches are missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

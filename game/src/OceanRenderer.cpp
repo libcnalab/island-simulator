@@ -70,6 +70,8 @@ namespace island
             "island-simulator: swimming-height ocean reuses filtered ripple cells for restrained grazing reflection ruffles";
         constexpr const char* GustCatsPawDiagnostic =
             "island-simulator: passing gust fronts darken the sea in racing bands of fine cat's-paw ripples";
+        constexpr const char* FishBreachDiagnostic =
+            "island-simulator: now and then a fish breaks the surface over a school in a brief fleck and ring";
         constexpr const char* CloudShadowDiagnostic =
             "island-simulator: open sea carries drifting cumulus shadow patches beyond the lagoon";
         constexpr const char* RippleIrregularityDiagnostic =
@@ -127,6 +129,7 @@ uniform float uPlayerRipplePhase;
 uniform float uPlayerSplashIntensity;
 uniform float uPlayerSplashPhase;
 uniform vec3 uBirdSplash;   // strike point x, z and ring phase 0..1 (negative: none)
+uniform vec3 uFishSplash;   // a fish breaking the surface: point x, z and ring phase (negative: none)
 uniform vec4 uJettyLine;    // deck root x, z and unit direction out to sea (zero: no jetty)
 uniform vec4 uCoastalOptics;
 uniform vec4 uSurfaceAppearance;
@@ -355,6 +358,14 @@ void main()
         float ring = playerSplashBand(strikeOffset * 0.55, uBirdSplash.z);
         foam = max(foam, max(plume * 0.9, ring * 0.7));
     }
+    if (uFishSplash.z >= 0.0 && uFishSplash.z <= 1.0) {
+        // A fish breaking the surface: a brief fleck and a ring half a swimmer's size.
+        vec2 fishOffset = vWorld.xz - uFishSplash.xy;
+        float fleck = (1.0 - smoothstep(0.0, 0.25, length(fishOffset)))
+            * (1.0 - smoothstep(0.0, 0.25, uFishSplash.z));
+        float fishRing = playerSplashBand(fishOffset * 1.6, uFishSplash.z);
+        foam = max(foam, max(fleck * 0.8, fishRing * 0.5));
+    }
     foam = clamp(foam, 0.0, 0.86);
     water = mix(water, vec3(0.82, 0.94, 0.91), foam);
 
@@ -489,6 +500,7 @@ void main()
                       << RippleIrregularityDiagnostic << '\n'
                       << CloudShadowDiagnostic << '\n'
                       << GustCatsPawDiagnostic << '\n'
+                      << FishBreachDiagnostic << '\n'
                       << "island-simulator: ocean shoreline foam uses broken continuity mask\n";
             MirrorRuntimeDiagnosticToPlatformLog(
                 "island-simulator: ocean sunward ripple crests reuse analytic slope field");
@@ -506,6 +518,7 @@ void main()
             MirrorRuntimeDiagnosticToPlatformLog(RippleIrregularityDiagnostic);
             MirrorRuntimeDiagnosticToPlatformLog(CloudShadowDiagnostic);
             MirrorRuntimeDiagnosticToPlatformLog(GustCatsPawDiagnostic);
+            MirrorRuntimeDiagnosticToPlatformLog(FishBreachDiagnostic);
         } else {
             std::cerr << "island-simulator: ocean stock-effect fallback: " << fallbackReason_
                       << '\n';
@@ -577,7 +590,9 @@ void main()
                              const float birdSplashX, const float birdSplashZ,
                              const float birdSplashPhase,
                              const float jettyRootX, const float jettyRootZ,
-                             const float jettyDirX, const float jettyDirZ)
+                             const float jettyDirX, const float jettyDirZ,
+                             const float fishSplashX, const float fishSplashZ,
+                             const float fishSplashPhase)
     {
         device_.setRasterizerStateProperty(RasterizerState::CullNone);
         device_.setBlendStateProperty(BlendState::AlphaBlend);
@@ -608,6 +623,10 @@ void main()
                 std::isfinite(birdSplashX) ? birdSplashX : 0.0f,
                 std::isfinite(birdSplashZ) ? birdSplashZ : 0.0f,
                 std::isfinite(birdSplashPhase) ? birdSplashPhase : -1.0f);
+            customEffect_->SetUniformVec3("uFishSplash",
+                std::isfinite(fishSplashX) ? fishSplashX : 0.0f,
+                std::isfinite(fishSplashZ) ? fishSplashZ : 0.0f,
+                std::isfinite(fishSplashPhase) ? fishSplashPhase : -1.0f);
             customEffect_->SetUniformFloat(
                 "uPlayerRippleIntensity",
                 std::isfinite(playerRippleIntensity)

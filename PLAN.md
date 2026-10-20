@@ -46,6 +46,21 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 43 (2026-10-20) — fish break the surface
+
+The schools swam under an unbroken surface. `FishSchools` now carries a `FishBreach` (point,
+age, count): every fully simulated school counts down 6 s at first and then 14 s plus a
+school-dependent few, and when it is due a breach is noted 0.7 m off the school's centre on
+a swinging bearing; the breach ages out after 2.2 s. The ocean shader takes a second splash
+uniform, `uFishSplash`, and draws a brief fleck within 25 cm of the point and a ring at 1.6
+times the swimmer's band scale (about half a swimmer's ring) at half the foam weight; the
+game passes the breach's point and phase alongside the seabird's. The ocean report gains
+"now and then a fish breaks the surface over a school in a brief fleck and ring", pinned by
+the native capture tool. Core checks: with the observer over a school a breach is noted
+within a minute on the water within 2 m of a school's centre, and a ring ages out. The
+`fish` capture failed its luminance rule on the first run, which traced to pass 39's shafts
+over the sea (fixed there); native `fish` passes after.
+
 ## Loop pass 42 (2026-10-20) — the hermit crabs' drag lines
 
 The hermit crabs crossed the sheltered sand and left it unmarked. A core `ShellDragTrail`
@@ -103,7 +118,9 @@ in the free camera. Diagnostic "under the canopy the view carries slow sun shaft
 to the sun, gone in the open and under a cloud" is pinned by the native capture tool. Core
 check: the rule gives 1 under a dense crown in the sun, 0 in the open, under 0.2 beneath a
 cloud and about a half midway. Native `jungle` passes (the `canopy` viewpoint is the LOD
-inspection mode, not a scene).
+inspection mode, not a scene). Loop pass 43 found the pass veiling the `fish` view: over the
+sea the light field reads as fully occluded, so the camera must be over land more than 5 m
+from the shore for the shafts to draw at all.
 
 ## Loop pass 38 (2026-10-20) — spray at the cascade's foot
 
