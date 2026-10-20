@@ -106,8 +106,10 @@ namespace island
         [[nodiscard]] int VisibleStructureShadowCount() const noexcept {
             return visibleStructureShadowCount_;
         }
-        /** The projected wreck/hut/helicopter footprints are redundant once a sun shadow map casts them. */
-        void SetStructureShadowsEnabled(bool enabled) noexcept { structureShadowsEnabled_ = enabled; }
+        /** With a sun shadow map casting the wreck, hut and helicopter, their projected mass
+         *  shadows only take over where the map's own shadows fade out (sun_shadow_fade),
+         *  vertex by vertex, so far structures keep a shadow and near ones are not doubled. */
+        void SetSunShadowMapActive(bool active) noexcept { sunShadowMapActive_ = active; }
 
     private:
         enum class StaticShadowKind : std::uint8_t
@@ -154,7 +156,7 @@ namespace island
         int visibleWoodShadowCount_ = 0;
         int visibleHutShadowCount_ = 0;
         int visibleStructureShadowCount_ = 0;
-        bool structureShadowsEnabled_ = true;
+        bool sunShadowMapActive_ = false;
         int visiblePlayerShadowCount_ = 0;
         int visibleMonkeyShadowCount_ = 0;
         int visibleBoarShadowCount_ = 0;

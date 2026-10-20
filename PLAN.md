@@ -54,6 +54,23 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 207 (2026-10-20) — the large objects keep a shadow beyond the map
+
+With the sun shadow map on, the wreck's, hut's and helicopter's projected mass shadows in the
+contact batch were switched off outright, so beyond the map's far fade (pass 206) those
+three cast no shadow at all; seen from the beach or from the air they floated. They now stay
+on under the map and take, vertex by vertex, the share of the shadow the map has faded out
+there (`1 - sun_shadow_fade::Strength`, the same function the core check sweeps), so a near
+structure is shadowed once, by the map, and a far one by its projected patch, with no seam
+or pop as the camera moves between. A patch wholly inside the map's full-strength region is
+dropped from the batch. `SetStructureShadowsEnabled(false)` became `SetSunShadowMapActive(true)`;
+the inventory reads "contact-batch mass shadows N (only where the sun shadow map's shadows
+fade out)" and the startup line adds "beyond that the wreck, hut and helicopter keep their
+projected mass shadows, cross-faded vertex by vertex with the map's", pinned. Native
+`shipwreck-wide` now draws the wreck's patch (1, where the previous capture had 0); it is a
+low-alpha patch and from that view falls mostly behind the hull, so the frame changes very
+little. `hut` and `helicopter-approach` draw none (both structures inside the map). Pass.
+
 ## Loop pass 206 (2026-10-20) — the far end of the sun shadows moves with the camera
 
 The operator flew through the island and saw the scene change "like stripes". Pass 7c039b7

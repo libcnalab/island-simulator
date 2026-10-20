@@ -2369,7 +2369,7 @@ namespace island
             constexpr int sunShadowResolution = 2048;
 #endif
             sunShadowMap_ = std::make_unique<SunShadowMap>(device, sunShadowResolution);
-            contactShadowRenderer_->SetStructureShadowsEnabled(false);
+            contactShadowRenderer_->SetSunShadowMapActive(true);
             std::cout << "island-simulator: sun shadow map " << sunShadowResolution
                       << " px covers " << static_cast<int>(2.0f * SunShadowMap::Radius)
                       << " m around the camera; trees, palms, snags, bushes, hut, wreck and "
@@ -2377,7 +2377,8 @@ namespace island
                          "they fade out " << static_cast<int>(sun_shadow_fade::FarFadeStart) << "-"
                       << static_cast<int>(sun_shadow_fade::FarFadeEnd)
                       << " m from the viewer in the sun's view, moving with the camera rather than "
-                         "with the map's 8 m re-centring\n";
+                         "with the map's 8 m re-centring; beyond that the wreck, hut and helicopter keep "
+                         "their projected mass shadows, cross-faded vertex by vertex with the map's\n";
             MirrorRuntimeDiagnosticToPlatformLog(
                 "island-simulator: sun shadow map casts directional tree and structure shadows");
         } catch (const std::exception& error) {
@@ -5766,7 +5767,7 @@ namespace island
                       << contactShadowRenderer_->DrawCallCount()
                       << " draw, contact-batch mass shadows "
                       << contactShadowRenderer_->VisibleStructureShadowCount()
-                      << (sunShadowMap_ ? " (off: the sun shadow map casts the large objects)" : "")
+                      << (sunShadowMap_ ? " (only where the sun shadow map's shadows fade out)" : "")
                       << "; sun shadow map " << (sunShadowMap_ ? sunShadowMap_->RenderCount() : 0)
                       << " renders, " << (sunShadowMap_ ? sunShadowMap_->LastCasterCount() : 0) << " casters"
                       << "; coastal contact shadows " << contactShadowRenderer_->VisibleCoastalShadowCount()

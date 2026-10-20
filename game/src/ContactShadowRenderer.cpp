@@ -10,6 +10,7 @@
 #include <stdexcept>
 
 #include "IslandSimulator/EnvironmentLighting.hpp"
+#include "IslandSimulator/SunShadowFade.hpp"
 #include "IslandSimulator/ContactShadowPatch.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/JungleLayout.hpp"
@@ -435,18 +436,34 @@ namespace island
             const float shadowDirectionZ = -environment::SunDirectionZ / horizontalSunLength;
 
             for (const StaticShadow& shadow : staticShadows_) {
-                if (shadow.kind == StaticShadowKind::Structure && !structureShadowsEnabled_) continue;
+                // A structure's mass shadow under an active sun shadow map takes the share of
+                // the shadow the map has faded out at each of its vertices.
+                const bool beyondMapOnly = shadow.kind == StaticShadowKind::Structure && sunShadowMapActive_;
                 float fade = 0.0f;
                 if (!IsVisible(frustum, cameraPosition,
                                shadow.centre.X, shadow.centre.Y, shadow.centre.Z,
                                shadow.radius, shadow.maximumDistance, fade)) {
                     continue;
                 }
+                const std::size_t firstStaged = stagingVertices_.size();
+                bool anyShare = !beyondMapOnly;
                 for (std::size_t vertexIndex = 0; vertexIndex < shadow.vertexCount; ++vertexIndex) {
                     const VertexPositionColor& source = staticVertices_[
                         shadow.firstVertex + vertexIndex];
+                    float share = 1.0f;
+                    if (beyondMapOnly) {
+                        share = 1.0f - sun_shadow_fade::Strength(source.Position.X, source.Position.Y, source.Position.Z,
+                                                                 cameraPosition.X, cameraPosition.Z,
+                                                                 environment::SunDirectionX, environment::SunDirectionY,
+                                                                 environment::SunDirectionZ);
+                        anyShare = anyShare || share > 0.01f;
+                    }
                     stagingVertices_.emplace_back(source.Position,
-                        Color(0, 0, 0, static_cast<int>(FadedAlpha(source.Color.getAProperty(), fade))));
+                        Color(0, 0, 0, static_cast<int>(FadedAlpha(source.Color.getAProperty(), fade * share))));
+                }
+                if (!anyShare) {
+                    stagingVertices_.resize(firstStaged);   // wholly inside the map's shadows
+                    continue;
                 }
                 switch (shadow.kind) {
                 case StaticShadowKind::Palm:
