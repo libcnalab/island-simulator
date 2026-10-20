@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 248 (2026-10-20) — a scops owl in the night
+
+The night chorus (Loop pass 232) had crickets and frogs but no night bird. A procedural scops
+owl call (three soft whistled toots near 1.05 kHz, each a fifth of a second with a breath of its
+octave, about 2.4 s apart) now plays through the wildlife voice, positional, from the trees
+22-39 m round the listener and 8 m up at a bearing that turns call by call, every 24-44 s
+once it is properly dark (and not while swimming), when the wildlife voice is free; the night's
+quieting of the day birds leaves it alone. Core check: the call is three toots. Not yet heard
+by a person (the captures run without sound); the suite passes.
+
 ## Loop pass 247 (2026-10-20) — squelching steps on soaked ground
 
 After a soaking the walker's steps on bare soil still sounded dry. The footstep ground now

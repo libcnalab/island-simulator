@@ -286,7 +286,9 @@ namespace island
         bool engineRunning_ = false, engineRiding_ = false, enginePlaying_ = false;
         float listenerX_ = 0.0f, listenerZ_ = 0.0f;
         float engineRpm_ = 1400.0f, engineLoad_ = 0.0f, engineX_ = 0.0f, engineY_ = 0.0f, engineZ_ = 0.0f;
-        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> rainEffect_, nightChorusEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> rainEffect_, nightChorusEffect_, owlEffect_;
+        float owlSeconds_ = 12.0f;
+        std::uint32_t owlCalls_ = 0;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> nightChorusInstance_;
         float nightness_ = 0.0f, weatherWind_ = 1.0f;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> rainInstance_;

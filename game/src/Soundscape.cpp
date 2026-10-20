@@ -484,6 +484,8 @@ namespace island
             tyreInstance_->setIsLoopedProperty(true);
             impactEffect_ = CreateOneShotSoundEffect(GenerateQuadImpact());
             impactEffect_->setNameProperty("Procedural quad impact");
+            owlEffect_ = CreateOneShotSoundEffect(GenerateScopsOwlCall());
+            owlEffect_->setNameProperty("Procedural scops owl");
             nightChorusEffect_ = CreateLoopedSoundEffect(GenerateNightChorusLoop());
             nightChorusEffect_->setNameProperty("Procedural night chorus of crickets and tree frogs");
             nightChorusInstance_ = std::make_unique<SoundEffectInstance>(nightChorusEffect_->CreateInstance());
@@ -1589,6 +1591,18 @@ namespace island
                 pendingThud_.available = false;
             }
         }
+        // A scops owl in the trees somewhere round the listener, now and then through the night.
+        owlSeconds_ = std::max(0.0f, owlSeconds_ - safeDelta);
+        if (nightness_ > 0.7f && owlEffect_ && !swimming && wildlifeSlotAvailable
+            && wildlifeCall.type == WildlifeCallType::None && owlSeconds_ <= 0.0f) {
+            const float bearing = static_cast<float>((owlCalls_ * 2654435761U) % 6283U) / 1000.0f;
+            const float distance = 22.0f + static_cast<float>((owlCalls_ * 40503U) % 18U);
+            wildlifeCall = {WildlifeCallType::Owl, 0U, 0.34f, static_cast<float>(owlCalls_ % 3U) * 0.02f - 0.02f,
+                {true, listenerState.x + std::cos(bearing) * distance, listenerState.y + 8.0f,
+                 listenerState.z + std::sin(bearing) * distance, 0U}};
+            owlSeconds_ = 24.0f + static_cast<float>((owlCalls_ * 7919U) % 21U);
+            ++owlCalls_;
+        }
         // By night the birds, the monkeys and the cicadas are quiet (the frogs are not).
         if (nightness_ > 0.0f && (wildlifeCall.type == WildlifeCallType::Bird || wildlifeCall.type == WildlifeCallType::Monkey
                                   || wildlifeCall.type == WildlifeCallType::Cicada)) {
@@ -1653,6 +1667,8 @@ namespace island
             wildlifeEffect = birdSplashEffect_.get();
         } else if (wildlifeCall.type == WildlifeCallType::Thud) {
             wildlifeEffect = coconutThudEffect_.get();
+        } else if (wildlifeCall.type == WildlifeCallType::Owl) {
+            wildlifeEffect = owlEffect_.get();
         }
         if (!wildlifeEffect) {
             return;
@@ -1716,7 +1732,8 @@ namespace island
                 :wildlifeCall.type==WildlifeCallType::Hoofbeats?1.45f
                 :wildlifeCall.type==WildlifeCallType::ClawKnock?.40f
                 :wildlifeCall.type==WildlifeCallType::Splash?.75f
-                :wildlifeCall.type==WildlifeCallType::Thud?.50f:1.50f;
+                :wildlifeCall.type==WildlifeCallType::Thud?.50f
+                :wildlifeCall.type==WildlifeCallType::Owl?5.60f:1.50f;
             if (wildlifeCall.type == WildlifeCallType::Bird) {
                 ++playedBirdCallCount_;
                 if (playedBirdCallCount_ == 1) {

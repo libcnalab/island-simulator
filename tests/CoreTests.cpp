@@ -6988,6 +6988,21 @@ int main()
         Check(chorus.sampleRate > 0 && chorus.samples.size() == static_cast<std::size_t>(chorus.sampleRate) * 8U
                   && chorusEnergy / static_cast<double>(chorus.samples.size()) > 1.0e5 && chorusHigh > chorusEnergy * 0.3,
               "the night chorus is an audible eight-second loop with its crickets high in the treble");
+        // The scops owl: three soft toots, each a fifth of a second, a couple of seconds apart.
+        {
+            const auto owl = island::GenerateScopsOwlCall();
+            int toots = 0;
+            bool inToot = false;
+            const std::size_t window = static_cast<std::size_t>(owl.sampleRate / 100);
+            for (std::size_t i = 0; i + window < owl.samples.size(); i += window) {
+                int peak = 0;
+                for (std::size_t k = 0; k < window; ++k) peak = std::max(peak, std::abs(static_cast<int>(owl.samples[i + k])));
+                const bool loud = peak > 4000;
+                if (loud && !inToot) ++toots;
+                inToot = loud;
+            }
+            Check(owl.sampleRate > 0 && toots == 3, "the scops owl calls three soft toots");
+        }
         const auto tyres = island::GenerateTyreRollLoop();
         std::int64_t tyreEnergy = 0;
         for (const auto sample : tyres.samples) tyreEnergy += std::abs(static_cast<int>(sample));

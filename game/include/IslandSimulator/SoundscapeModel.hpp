@@ -78,6 +78,8 @@ namespace island
      *  in the treble) and a few tree frogs calling in bouts, over a faint night air; an
      *  eight-second seamless loop. */
     [[nodiscard]] AmbientLoop GenerateNightChorusLoop();
+    /** @brief A scops owl in the dark: three soft whistled toots, a couple of seconds apart. */
+    [[nodiscard]] AmbientLoop GenerateScopsOwlCall();
 
     /** @brief Generates one four-second stronger-wave wash for sparse shoreline accents. */
     [[nodiscard]] AmbientLoop GenerateWaveAccent();
@@ -361,7 +363,8 @@ namespace island
         Crocodile,
         Chatter,
         Hoofbeats,
-        ClawKnock
+        ClawKnock,
+        Owl
     };
 
     /** @brief Nearest currently eligible world-space source for one wildlife species. */

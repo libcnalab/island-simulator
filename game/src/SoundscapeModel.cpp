@@ -518,6 +518,29 @@ namespace island
         return Quantize(samples, near ? 0.92f : 0.75f);
     }
 
+    AmbientLoop GenerateScopsOwlCall()
+    {
+        constexpr float seconds = 5.6f;
+        const auto frameCount = static_cast<std::size_t>(AmbientSampleRate * seconds);
+        std::vector<float> samples(frameCount, 0.0f);
+        constexpr float Tau = 2.0f * std::numbers::pi_v<float>;
+        // each toot a pure low whistle near 1.05 kHz, swelling and dying in a fifth of a second,
+        // with a breath of its octave; the second a touch lower, the third a touch softer
+        const std::array<std::array<float, 3>, 3> toots{{{0.15f, 1060.0f, 1.0f}, {2.55f, 1040.0f, 0.95f}, {4.95f, 1055.0f, 0.8f}}};
+        for (const auto& toot : toots) {
+            const auto first = static_cast<std::size_t>(toot[0] * AmbientSampleRate);
+            const auto length = static_cast<std::size_t>(0.21f * AmbientSampleRate);
+            for (std::size_t k = 0; k < length && first + k < frameCount; ++k) {
+                const float u = static_cast<float>(k) / static_cast<float>(length);
+                const float t = static_cast<float>(k) / static_cast<float>(AmbientSampleRate);
+                const float envelope = std::sin(std::numbers::pi_v<float> * std::pow(u, 0.7f));
+                const float f = toot[1] * (1.0f - 0.03f * u);
+                samples[first + k] += toot[2] * envelope * (std::sin(Tau * f * t) + 0.12f * std::sin(Tau * 2.0f * f * t));
+            }
+        }
+        return Quantize(samples, 0.6f);
+    }
+
     AmbientLoop GenerateNightChorusLoop()
     {
         constexpr int loopSeconds = 8;
