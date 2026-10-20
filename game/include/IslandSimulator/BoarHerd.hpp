@@ -25,6 +25,9 @@ namespace island
         float speed = 0.0f;
         float gaitPhase = 0.0f;
         float rootingPose = 0.0f;
+        /** @brief -1..1 the snout's sideways work: rooting with the snout down, the disc and
+         *  nostrils swing side to side; still with the head up. */
+        float snoutSway = 0.0f;
         /** @brief 0..1 wet mud on the legs and belly from the last wallow; dries off slowly. */
         float mudAmount = 0.0f;
         /** @brief 0..1 lying down: a rest a second and a half in settles the boar onto folded
@@ -112,6 +115,9 @@ namespace island
         [[nodiscard]] std::uint32_t ShakeCount() const noexcept { return shake_.count; }
         [[nodiscard]] std::size_t ShakingCount() const noexcept;
         static constexpr float ShakeSeconds = 1.3f, ShakeBeatRate = 17.0f;
+        /** @brief Boars working their snouts this moment (rooting, the snout down). */
+        [[nodiscard]] std::size_t SnoutingCount() const noexcept;
+        static constexpr float SnoutSwayRate = 5.0f;
 
     private:
         struct Agent
@@ -132,6 +138,7 @@ namespace island
             float restSeconds = 0.0f;       // time into the current undisturbed rest
             bool lying = false;
             bool wasWallowing = false;
+            float snoutPhase = 0.0f;        // the snout's side-to-side work while rooting
             float shakeSeconds = 0.0f;      // remainder of the shake on leaving the wallow
         };
         void ChooseRootingSite(Agent& agent) noexcept;

@@ -54,6 +54,17 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 183 (2026-10-20) — a rooting boar works its snout
+
+A boar with its snout among the roots held it dead still. `BoarState::snoutSway` (-1..1)
+now carries the work: with the rooting pose past 0.6 the snout swings side to side at
+`SnoutSwayRate` (5 rad/s), the sway scaled by the pose's last third and nothing with the
+head up; `SnoutingCount()` counts the boars at it. In the renderer the snout disc and the
+nostrils swing 3.5 cm aside with the sway, on the same vertices. The boars report line
+gains "a boar rooting with its snout down works the snout side to side" (pinned). Core
+check: within five minutes a boar with its snout down works it past eight tenths to either
+side while a boar with its head up holds the snout still. Native `boars` passes.
+
 ## Loop pass 182 (2026-10-20) — the bear flicks an ear
 
 The bear's ears sat fixed on its head. `BearState::earFlick` (0..1) and `earSide` (+1

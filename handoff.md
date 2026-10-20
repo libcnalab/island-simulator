@@ -244,6 +244,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 180: a goat at rest, undisturbed, chews its cud, the jaw and beard swinging side to side (`GoatState::chew`, `BuildGoatMesh` chew) (PLAN "Loop pass 180").
 - Pass 181: a deer at rest, undisturbed, chews its cud, the muzzle working side to side (`DeerState::chew`, `DeerHerd::ChewingCount`) (PLAN "Loop pass 181").
 - Pass 182: the bear flicks an ear back at a fly every few seconds, the ears taking turns (`BearState::earFlick`/`earSide`, `BearMotion::EarFlickCount`) (PLAN "Loop pass 182").
+- Pass 183: a boar rooting with its snout down works the snout side to side (`BoarState::snoutSway`, `BoarHerd::SnoutingCount`) (PLAN "Loop pass 183").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

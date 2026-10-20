@@ -256,6 +256,13 @@ namespace island
         return count;
     }
 
+    std::size_t BoarHerd::SnoutingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.state.rootingPose > 0.9f ? 1U : 0U;
+        return count;
+    }
+
     std::size_t BoarHerd::ShakingCount() const noexcept
     {
         std::size_t count = 0;
@@ -409,6 +416,10 @@ namespace island
         // dries off over a few minutes once it leaves.
         const float rootTarget = state.behavior == BoarBehavior::Forage || wallowing ? 1.0f : 0.0f;
         state.rootingPose += std::clamp(rootTarget - state.rootingPose, -dt * 1.8f, dt * 1.2f);
+        // Rooting with the snout down, the snout works side to side; head up, it is still.
+        const float snoutWork = std::clamp((state.rootingPose - 0.6f) / 0.3f, 0.0f, 1.0f);
+        if (snoutWork > 0.0f) agent.snoutPhase = std::fmod(agent.snoutPhase + dt * SnoutSwayRate, Tau);
+        state.snoutSway = std::sin(agent.snoutPhase) * snoutWork;
         state.mudAmount = wallowing ? std::min(1.0f, state.mudAmount + dt / 6.0f)
             : std::max(0.0f, state.mudAmount - dt / MudDrySeconds);
         // Out of the mud with the coat wet, the boar stands and shakes, side to side, for a

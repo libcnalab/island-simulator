@@ -2270,6 +2270,7 @@ namespace island
                   << goats_->DrinkerCount() << " goats walk to the stream bank to drink; "
                   << boarHerd_.WallowerCount() << " boars wallow at the bank and carry the mud on their legs and bellies; "
                   << "a boar stepping out of its wallow stands and shakes, the mud flying from its flanks; "
+                  << "a boar rooting with its snout down works the snout side to side; "
                   << "boars root at the nearest trunk base, monkeys favour fruiting crowns and linger to pick\n";
         std::cout << "island-simulator: herd behaviour: goats share their separated ranges and the "
                      "East deer pair walks back together; a sentinel lifts its head first and the others follow after 0.7 s; "

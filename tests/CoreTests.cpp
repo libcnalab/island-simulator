@@ -8102,6 +8102,21 @@ int main()
         Check(flecks.ShakeCount() == herd.ShakeCount() && flungAtOnce >= island::MudFleckField::FlecksPerShake
                   && highestFleck > 0.3f && highestFleck < 1.2f,
               "the shake flings a ring of mud flecks from the flanks that fall within the second");
+        // The snout: through those ten minutes a boar with its snout down works it to either
+        // side past eight tenths, and a boar with its head up holds the snout still.
+        {
+            island::BoarHerd rooters(terrain);
+            bool swayLeft = false, swayRight = false, headUpSway = false;
+            for (int step = 0; step < 6000 && !(swayLeft && swayRight); ++step) {
+                rooters.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
+                for (const auto& boar : rooters.Boars()) {
+                    if (boar.rootingPose > 0.9f && boar.snoutSway > 0.8f) swayRight = true;
+                    if (boar.rootingPose > 0.9f && boar.snoutSway < -0.8f) swayLeft = true;
+                    if (boar.rootingPose < 0.1f && std::abs(boar.snoutSway) > 0.01f) headUpSway = true;
+                }
+            }
+            Check(swayLeft && swayRight && !headUpSway, "a rooting boar does not work its snout side to side, or works it with the head up");
+        }
     }
 
     {

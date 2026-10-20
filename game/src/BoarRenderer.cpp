@@ -221,7 +221,9 @@ namespace island
                     static_cast<int>(std::lerp(static_cast<float>(base.getBProperty()),46.0f,weight)),255);};
             const auto fur=mudded(dryFur,boar.mudAmount*0.85f);
             mesh.Body(dryFur, dip, bob, boar.scale < 0.8f, sides, boar.mudAmount);
-            mesh.Ellipsoid(Vector3(0, 0.42f - dip + bob, BoarMuzzleZ(1.047f)), Vector3(0.114f, 0.09f, 0.0175f),
+            // Rooting, the snout disc and nostrils work side to side with the sway.
+            const float sway = std::clamp(boar.snoutSway, -1.0f, 1.0f) * 0.035f;
+            mesh.Ellipsoid(Vector3(sway, 0.42f - dip + bob, BoarMuzzleZ(1.047f)), Vector3(0.114f, 0.09f, 0.0175f),
                            Color(120, 86, 68), near ? 12 : 6, 4);
             for (int side : {-1, 1}) {
                 const float x = static_cast<float>(side);
@@ -318,7 +320,7 @@ namespace island
                     const auto eyeCentre=eyePoint(16);
                     mesh.Ellipsoid(eyeCentre+Vector3(x*.0025f,.004f,-.002f),
                                    Vector3(.0055f,.0065f,.0048f),Color(202,158,84),5,2);
-                    mesh.Ellipsoid(Vector3(x * 0.046f, 0.435f - dip + bob, BoarMuzzleZ(1.068f)),
+                    mesh.Ellipsoid(Vector3(x * 0.046f + sway, 0.435f - dip + bob, BoarMuzzleZ(1.068f)),
                                    Vector3(0.021f, 0.013f, 0.0063f), Color(17, 15, 13), 6, 3);
                     if (boar.scale > 0.8f) {
                         const Vector3 root(x * 0.125f, 0.375f - dip + bob, BoarMuzzleZ(0.91f));
