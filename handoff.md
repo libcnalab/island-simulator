@@ -67,7 +67,8 @@ level, so it is left out (at most a hidden joke switch, off by default, if the o
 - [~] Weather: clear, partly cloudy, overcast, showers, tropical thunderstorm (lightning and
       thunder), world-anchored rain around the camera, wet darkened ground, rain and thunder
       sounds (done, PLAN "Weather pass 1"; Y steps through them, `--weather` for captures);
-      still to do: morning mist, stronger gusts with the wind, rain rings on the water.
+      rain rings on the sea (Loop pass 226); still to do: morning mist, stronger gusts with the
+      wind.
 
 Operator request 2026-10-20 (the next task after the weather): ride a quad bike (ATV).
 - [x] F switches between walking and the ATV and back; a CNA avatar rides it (native desktop;
@@ -319,6 +320,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 226: rain rings on the sea, world-anchored, only over water deeper than 25 cm, and a `jetty-end` QA viewpoint (PLAN "Loop pass 226").
 - Pass 225: the campfire lights the night ground through the grade, warm orange instead of capped at the night's dark yellow-green; the quad's beam moved into the shared `LocalLightRenderer` (PLAN "Loop pass 225").
 - Pass 224: a `flight` QA viewpoint 40 m up; the sea's diamond lattice seen from the air (the ripple cells fading only from 28-85 m up) now fades by 10-32 m, and the seabed caustics are an irregular three-family net instead of an axis-aligned grid (PLAN "Loop pass 224").
 

@@ -203,6 +203,7 @@ namespace island
             case FixedViewpoint::FruitTreeDetail: return "fruit";
             case FixedViewpoint::StreamCascadeDetail: return "cascade";
             case FixedViewpoint::JettyDetail: return "jetty";
+            case FixedViewpoint::JettyEndDetail: return "jetty-end";
             case FixedViewpoint::FlightOverview: return "flight";
             case FixedViewpoint::BridgeDetail: return "bridge";
             case FixedViewpoint::LookoutDetail: return "lookout";
@@ -1566,6 +1567,16 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: flight QA camera looks out from forty metres over the forest behind the hut to the sea\n";
+        } else if (viewpoint_ == FixedViewpoint::JettyEndDetail) {
+            // Standing at the end of the jetty, looking out over the water (the rain's rings on
+            // the sea, the swell under the deck).
+            if(!jettyPlacement_) throw std::runtime_error("Jetty QA requires a valid site");
+            const auto& j=*jettyPlacement_;
+            const float along=JettyPlacement::Length-1.0f;
+            cameraPosition_=Vector3(j.rootX+j.dirX*along,j.DeckHeight(along)+PlayerMotion::EyeHeight,j.rootZ+j.dirZ*along);
+            yaw_=std::atan2(j.dirX+j.AcrossX()*0.35f,j.dirZ+j.AcrossZ()*0.35f);
+            pitch_=-0.32f;
+            std::cout<<"island-simulator: jetty-end QA camera looks out over the water from the end of the deck\n";
         } else if (viewpoint_ == FixedViewpoint::JettyDetail) {
             // Stand on the sand at the far end of the resident's footprints and look back along
             // them past the canoe to the deck and the mooring post.
@@ -2443,6 +2454,7 @@ namespace island
         underwaterEffect_ = std::make_unique<UnderwaterEffectRenderer>(device);
         timeOfDay_ = std::make_unique<TimeOfDayRenderer>(device);
         rain_ = std::make_unique<RainRenderer>(device);
+        rainRings_ = std::make_unique<RainRingRenderer>(device, terrain_);
         try {
             localLights_ = std::make_unique<LocalLightRenderer>(device);
             std::cout << "island-simulator: local lights at night (the campfire, the quad's headlights) lift the night grade "
@@ -5639,7 +5651,10 @@ namespace island
             const auto& weather = weather_now::Current();
             const bool underground = renderCameraPosition_.Y < terrain_.Height(renderCameraPosition_.X, renderCameraPosition_.Z) - 0.5f;
             if (!underground && renderCameraPosition_.Y > 0.0f)
+            {
                 rain_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, weather.rain, weather.wind, timeSeconds);
+                rainRings_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, weather.rain, timeSeconds);
+            }
             // The local lights (the campfire, the quad's headlights) light the ground through the
             // grade: each writes how strongly each pixel is lit into the frame's alpha, and the
             // grade lifts it there.

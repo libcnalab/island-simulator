@@ -98,6 +98,7 @@ namespace
         case FixedViewpoint::FruitTreeDetail: return "fruit";
         case FixedViewpoint::StreamCascadeDetail: return "cascade";
         case FixedViewpoint::JettyDetail: return "jetty";
+        case FixedViewpoint::JettyEndDetail: return "jetty-end";
         case FixedViewpoint::FlightOverview: return "flight";
         case FixedViewpoint::BridgeDetail: return "bridge";
         case FixedViewpoint::LookoutDetail: return "lookout";
@@ -366,6 +367,8 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::StreamCascadeDetail;
             } else if (name == "jetty") {
                 viewpoint = island::FixedViewpoint::JettyDetail;
+            } else if (name == "jetty-end") {
+                viewpoint = island::FixedViewpoint::JettyEndDetail;
             } else if (name == "flight") {
                 viewpoint = island::FixedViewpoint::FlightOverview;
             } else if (name == "quad") {

@@ -67,6 +67,7 @@
 #include "IslandSimulator/QuadBike.hpp"
 #include "IslandSimulator/ExhaustSmokeField.hpp"
 #include "IslandSimulator/QuadWheelTraces.hpp"
+#include "IslandSimulator/RainRings.hpp"
 #include "IslandSimulator/CrabBubbleField.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
 #include "IslandSimulator/CicadaColony.hpp"
@@ -6720,6 +6721,31 @@ int main()
               "overcast weakens the sun's shadows, hides its disc and dims the scene");
         Check(island::WeatherFromName("storm") == WeatherKind::Thunderstorm && !island::WeatherFromName("snow"),
               "the weather names parse, and there is no snow on a tropical island");
+    }
+    {
+        // Rain rings on the sea: world-anchored and repeatable, each inside its own cell,
+        // more cells striking in heavier rain, none in no rain.
+        int light = 0, heavy = 0, none = 0;
+        bool inside = true, repeat = true;
+        for (int cx = -20; cx < 20; ++cx) {
+            for (int cz = -20; cz < 20; ++cz) {
+                for (const double t : {3.0, 7.25, 11.5}) {
+                    const auto a = island::rain_rings::At(cx, cz, t, 0.25f), b = island::rain_rings::At(cx, cz, t, 1.0f);
+                    const auto c = island::rain_rings::At(cx, cz, t, 0.0f), again = island::rain_rings::At(cx, cz, t, 1.0f);
+                    light += a.active ? 1 : 0;
+                    heavy += b.active ? 1 : 0;
+                    none += c.active ? 1 : 0;
+                    repeat = repeat && again.active == b.active && again.x == b.x && again.progress == b.progress;
+                    if (b.active) {
+                        inside = inside && b.x >= cx * island::rain_rings::CellSize && b.x <= (cx + 1) * island::rain_rings::CellSize
+                            && b.z >= cz * island::rain_rings::CellSize && b.z <= (cz + 1) * island::rain_rings::CellSize
+                            && b.progress >= 0.0f && b.progress < 1.0f;
+                    }
+                }
+            }
+        }
+        Check(none == 0 && light > 0 && heavy > light * 3 && inside && repeat,
+              "rain rings stay in their cells, repeat, and grow many with the rain");
     }
     {
         // The quad bike (operator request 2026-10-20): settles on its springs, reaches a real

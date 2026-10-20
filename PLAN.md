@@ -233,6 +233,22 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 226 (2026-10-20) — rain rings on the sea
+
+Rain falling on the sea now dimples it: `rain_rings` (core, header-only) gives each cell of a
+fixed 0.55 m world grid its own period (1.2-2.4 s) and phase, a fresh strike point inside the
+cell every cycle, and a strike only in the share of cells the rain's strength allows; a ring
+spreads to 22 cm and fades in half a second. `RainRingRenderer` draws the rings within 13 m of
+the walker as thin pale circles (14 segments, at most 1400) on the wave surface (the shared
+spectrum's CPU reference, at the ocean shader's higher exposure scale), only over water deeper
+than 25 cm (not on the swash), alpha-blended with the rain before the night grade, never from
+under the sea. A new QA view `jetty-end` stands at the end of the jetty looking out over the
+water. Core check: rings stay in their cells, repeat, none without rain and many more in heavy
+rain than in light. `jetty-end --weather showers` shows the scattered rings; `flight` in a
+thunderstorm, `hut` and `dolphins` pass. (`dolphins --weather showers`, an underwater view in a
+grey shower, fails the capture validator's luminance-variation floor: a murky scene, not a
+rendering fault; the default view passes.)
+
 ## Loop pass 225 (2026-10-20) — the campfire lights the night through the grade
 
 At night the campfire's light on the ground was clipped: the terrain, grass and jungle shaders
