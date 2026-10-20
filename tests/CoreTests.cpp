@@ -3962,6 +3962,23 @@ int main()
             }
         }
         Check(grazers.BiteCount() >= 2U && deepest > 0.9f && near, "a turtle foraging low over the bottom dips its head in bites noted at its beak on the bottom");
+        // The eye rub: over the next two minutes a slow turtle draws a front flipper up to
+        // its eye at least twice, the rub to full and let down, the sides taking turns; a
+        // turtle moving fast never rubs.
+        {
+            float rubPeak = 0.0f; bool rubLeft = false, rubRight = false, letDown = false, fastRub = false;
+            for (int step = 0; step < 2400; ++step) {
+                grazers.Update(0.05f, first.x + 10.0f, 0.0f, first.z);
+                for (const auto& turtle : grazers.Turtles()) {
+                    rubPeak = std::max(rubPeak, turtle.scratch);
+                    if (turtle.scratch > 0.9f) { if (turtle.scratchSide < 0.0f) rubLeft = true; else rubRight = true; }
+                    if (rubPeak > 0.9f && turtle.scratch < 0.05f) letDown = true;
+                    if (turtle.speed > 0.6f && turtle.scratch > 0.5f) fastRub = true;
+                }
+            }
+            Check(grazers.ScratchCount() >= 2U && rubPeak > 0.9f && rubLeft && rubRight && letDown && !fastRub,
+                  "a slow turtle does not rub its eye with a front flipper in turn, or a fast one does");
+        }
         island::TurtleGrazeField sand;
         sand.Update(0.05f, grazers.LastBite());
         Check(sand.ActiveCount() == 1U && sand.BiteCount() == grazers.BiteCount(), "a bite raises a puff of sand");

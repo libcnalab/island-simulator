@@ -35,6 +35,10 @@ namespace island
         /** @brief 0..1 the blink: the eyes squeezed shut as the head breaks the surface for
          *  a breath, and a slow blink every dozen seconds or so otherwise. */
         float blink = 0.0f;
+        /** @brief 0..1 the rub: a turtle moving slow, not grazing, draws one front flipper
+         *  up to its head and rubs its eye for a couple of seconds; scratchSide (+1 right,
+         *  -1 left) is the flipper, the sides taking turns. */
+        float scratch = 0.0f, scratchSide = 1.0f;
         float scale = 1.0f;
         SeaTurtleBehavior behavior = SeaTurtleBehavior::Cruise;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
@@ -81,6 +85,11 @@ namespace island
         [[nodiscard]] std::uint32_t BlinkCount() const noexcept { return blinks_; }
         [[nodiscard]] std::size_t BlinkingCount() const noexcept;
         static constexpr float BlinkSeconds = 0.35f, BlinkPeriodSeconds = 12.0f;
+        /** @brief Eye rubs begun (a slow turtle every ScratchPeriodSeconds or so, each
+         *  ScratchSeconds) and the turtles mid-rub. */
+        [[nodiscard]] std::uint32_t ScratchCount() const noexcept { return scratches_; }
+        [[nodiscard]] std::size_t ScratchingCount() const noexcept;
+        static constexpr float ScratchSeconds = 2.0f, ScratchPeriodSeconds = 18.0f;
         /** @brief The shark this frame (while present): a turtle within ThreatDistance of it
          *  turns away as from the swimmer, a surfacing one dives, and both swim on faster
          *  until it is clear. */
@@ -111,6 +120,8 @@ namespace island
             float grazeClock = 0.0f;
             bool bitten = false;
             float blinkClock = 0.0f, blinkSeconds = 0.0f;
+            float scratchClock = 0.0f;
+            bool scratching = false;
             bool blinking = false;
         };
 
@@ -135,6 +146,7 @@ namespace island
         std::uint32_t threatDives_ = 0U;
         Bite bite_;
         std::uint32_t blinks_ = 0U;
+        std::uint32_t scratches_ = 0U;
         int fullSimulationCount_ = 0;
         int reducedSimulationCount_ = 0;
         int dormantSimulationCount_ = 0;

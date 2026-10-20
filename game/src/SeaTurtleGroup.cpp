@@ -191,6 +191,13 @@ namespace island
 #endif
     }
 
+    std::size_t SeaTurtleGroup::ScratchingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.scratching ? 1U : 0U;
+        return count;
+    }
+
     std::size_t SeaTurtleGroup::BlinkingCount() const noexcept
     {
         std::size_t count = 0;
@@ -350,6 +357,18 @@ namespace island
         agent.blinkSeconds = std::max(0.0f, agent.blinkSeconds - deltaSeconds);
         agent.state.blink += std::clamp((blinking ? 1.0f : 0.0f) - agent.state.blink,
                                         -deltaSeconds * 8.0f, deltaSeconds * 12.0f);
+        // The eye rub: moving slow and not grazing, every eighteen seconds or so (a little
+        // per turtle) one front flipper comes up to the head and rubs the eye for a couple
+        // of seconds, the sides taking turns; picking up speed drops it.
+        const bool slow = agent.state.speed < 0.25f && agent.state.graze < 0.1f;
+        agent.scratchClock = slow ? agent.scratchClock + deltaSeconds : 0.0f;
+        const float scratchPeriod = ScratchPeriodSeconds + agent.state.scale * 3.0f;
+        if (agent.scratchClock >= scratchPeriod) agent.scratchClock = 0.0f;
+        const bool scratching = slow && agent.scratchClock >= 1.5f && agent.scratchClock < 1.5f + ScratchSeconds;
+        if (scratching && !agent.scratching) { ++scratches_; agent.state.scratchSide = -agent.state.scratchSide; }
+        agent.scratching = scratching;
+        agent.state.scratch += std::clamp((scratching ? 1.0f : 0.0f) - agent.state.scratch,
+                                          -deltaSeconds * 2.5f, deltaSeconds * 2.0f);
     }
 
     void SeaTurtleGroup::SetThreat(const float x, const float z, const bool valid) noexcept

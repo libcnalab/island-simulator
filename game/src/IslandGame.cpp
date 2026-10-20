@@ -2581,7 +2581,8 @@ namespace island
                   << "island-simulator: sea turtles " << seaTurtleGroup_.Turtles().size()
                   << " agents in bounded habitat routes, three based in the sheltered western bay; the shark within eighteen metres sends a surfacing turtle under and the rest away from it; "
                   << "a turtle foraging low over the bottom dips its head to graze, a puff of sand rising at each bite; "
-                  << "a turtle squeezes its eyes shut as its head breaks the surface for a breath, and blinks slowly every dozen seconds under\n"
+                  << "a turtle squeezes its eyes shut as its head breaks the surface for a breath, and blinks slowly every dozen seconds under; "
+                  << "a turtle moving slow draws a front flipper up to rub its eye every twenty seconds or so, the flippers taking turns\n"
                   << "island-simulator: a fish breaking the surface within sixty metres draws the present shark that way for a few seconds before it takes up its patrol again\n"
                   << "island-simulator: one occasional non-hostile offshore shark patrol\n"
                   << "island-simulator: dolphins " << dolphinPod_.Dolphins().size()

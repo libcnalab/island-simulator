@@ -502,8 +502,17 @@ namespace island
             };
             for (int sideIndex = -1; sideIndex <= 1; sideIndex += 2) {
                 const float side = static_cast<float>(sideIndex);
+                // Rubbing its eye, the one front flipper folds in and up to the head by the
+                // rub amount, most at its tip; the same samples either way.
+                const float lift = (side == (turtle.scratchSide < 0.0f ? -1.0f : 1.0f) ? std::clamp(turtle.scratch, 0.0f, 1.0f) : 0.0f);
                 appendPaddle(side, NearTurtleBudget::FrontSamples,
-                    [stroke](const float s, const float t, float& w) { return FrontFlipper(s, t, stroke, w); }, 0.9f);
+                    [stroke, lift](const float s, const float t, float& w) {
+                        FlipperPoint p = FrontFlipper(s, t, stroke * (1.0f - lift), w);
+                        p.x -= s * lift * 0.85f * t;
+                        p.y += lift * 0.12f * t;
+                        p.z += lift * 0.35f * t;
+                        return p;
+                    }, 0.9f);
                 appendPaddle(side, NearTurtleBudget::RearSamples,
                     [stroke](const float s, const float t, float& w) { return RearFlipper(s, t, -stroke * 0.6f, w); }, 0.88f);
             }

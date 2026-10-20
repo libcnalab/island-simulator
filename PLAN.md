@@ -54,6 +54,21 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 191 (2026-10-20) — a turtle rubs its eye
+
+A sea turtle moving slow never touched its face. `SeaTurtleState::scratch` (0..1) and
+`scratchSide` (+1 right, -1 left) now carry the rub: moving slow (under 0.25 m/s) and not
+grazing, a second and a half into every `ScratchPeriodSeconds` (18 s, plus 3 s per unit of
+scale) one front flipper comes up to the head and rubs the eye for `ScratchSeconds` (2 s),
+rising at 2/s and let down at 2.5/s, the sides taking turns; picking up speed drops it,
+and the rubs are counted (`ScratchCount()`, `ScratchingCount()`). In the near renderer the
+rubbing flipper's samples fold in 85 % of their reach, up 12 % and forward 35 % toward the
+head, its stroke stilled, on the same samples. The turtles report line gains "a turtle
+moving slow draws a front flipper up to rub its eye every twenty seconds or so, the
+flippers taking turns" (pinned). Core check: over two minutes a slow turtle rubs an eye at
+least twice, both sides seen, each to full and let down, and no fast turtle rubs. Native
+`turtles` passes.
+
 ## Loop pass 190 (2026-10-20) — an octopus probes with an arm
 
 A foraging octopus sat with all eight arms curled alike. `OctopusState::probe` (0..1) and
