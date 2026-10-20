@@ -233,6 +233,14 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 253 (2026-10-20) — coconut crabs keep to the night
+
+Coconut crabs are nocturnal; here they foraged the same day and night. `CoconutCrabGroup` takes
+the darkness (`SetNightness`; never set in the tests, which keeps day and night alike): by day a
+rest runs ten times as long (18-30 s) between forays, and after dark a forage round runs up to
+twice as long. Core check: over ten minutes with no observer the crabs rest in more than 60 % of
+the samples by day and in under half as many by night. `coconut-crabs` (a held QA view) passes.
+
 ## Loop pass 252 (2026-10-20) — a storm's surf
 
 With the sea running higher in a storm (Loop pass 245) the surf bed still played as on a calm

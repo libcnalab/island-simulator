@@ -1,4 +1,6 @@
 #pragma once
+#include <algorithm>
+#include <cmath>
 
 #include "IslandSimulator/WildlifeSimulation.hpp"
 
@@ -45,6 +47,10 @@ namespace island
         static constexpr float ReducedSimulationDistance = 185.0f;
 
         explicit CoconutCrabGroup(const IslandTerrain& terrain);
+        /** @brief How dark it is (0 by day .. 1 at night): coconut crabs are nocturnal, so once
+         *  set they rest out the day in long spells and forage on longer rounds after dark.
+         *  Never set (the tests), the day and the night are alike. */
+        void SetNightness(float nightness) noexcept { nightness_ = std::isfinite(nightness) ? std::clamp(nightness, 0.0f, 1.0f) : -1.0f; }
         void Update(float deltaSeconds, float observerX, float observerY,
                     float observerZ) noexcept;
         [[nodiscard]] std::span<const CoconutCrabState> Crabs() const noexcept {
@@ -82,6 +88,7 @@ namespace island
         [[nodiscard]] int DormantSimulationCount() const noexcept { return dormantCount_; }
 
     private:
+        float nightness_ = -1.0f;   // unset: day and night alike
         struct Agent
         {
             CoconutCrabState state;

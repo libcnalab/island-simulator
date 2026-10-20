@@ -3918,6 +3918,24 @@ int main()
         }
     }
 
+    {
+        // Nocturnal: over ten minutes with no observer the crabs spend far more of their time
+        // resting by day than by night.
+        island::CoconutCrabGroup day(terrain), night(terrain);
+        day.SetNightness(0.0f);
+        night.SetNightness(1.0f);
+        int dayRest = 0, nightRest = 0, samples = 0;
+        for (int step = 0; step < 30 * 600; ++step) {
+            day.Update(1.0f / 30.0f, 900.0f, 0.0f, 900.0f);
+            night.Update(1.0f / 30.0f, 900.0f, 0.0f, 900.0f);
+            if (step % 30 != 0) continue;
+            for (const auto& crab : day.Crabs()) dayRest += crab.behavior == island::CoconutCrabBehavior::Rest ? 1 : 0;
+            for (const auto& crab : night.Crabs()) nightRest += crab.behavior == island::CoconutCrabBehavior::Rest ? 1 : 0;
+            samples += static_cast<int>(day.Crabs().size());
+        }
+        Check(dayRest > samples * 6 / 10 && nightRest < dayRest / 2,
+              "coconut crabs rest out the day and forage through the night");
+    }
     island::CoconutCrabGroup coconutCrabs(terrain);
     island::CoconutCrabGroup repeatedCoconutCrabs(terrain);
     island::CoconutCrabGroup invalidInputCoconutCrabs(terrain);

@@ -216,12 +216,16 @@ namespace island
                 // Every fourth forage without one is a climb: the walk to a trunk and up it.
                 if (ChooseNut(agent)) agent.behaviorSeconds += 60.0f;
                 else if (agent.transitions % 4U == 1U && ChooseTrunk(agent)) agent.behaviorSeconds += 40.0f;
+                // after dark the rounds run longer
+                if (nightness_ >= 0.0f) agent.behaviorSeconds *= 1.0f + nightness_;
             } else {
                 agent.nutTarget = -1;
                 agent.trunkTarget = -1;
                 agent.state.working = false;
                 agent.state.behavior = CoconutCrabBehavior::Rest;
                 agent.behaviorSeconds = 1.8f + static_cast<float>(agent.transitions % 3U) * .60f;
+                // by day a nocturnal crab rests out long spells
+                if (nightness_ >= 0.0f) agent.behaviorSeconds *= 1.0f + 9.0f * (1.0f - nightness_);
             }
         }
         // On the way to a trunk: steer to the stand at its foot; there, the climb begins.
