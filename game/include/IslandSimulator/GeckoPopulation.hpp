@@ -35,6 +35,11 @@ namespace island
          *  gecko creeps on a fly, and stills again after the lunge or when the hunt ends. */
         float tailWag = 0.0f;
         float tailWagPhase = 0.0f;
+        /** @brief 0..1 the eye lick: a resting gecko's tongue out of the snout and drawn
+         *  over one eye to clean it for half a second every ten seconds or so; lickSide
+         *  (+1 right, -1 left) is the eye, alternating lick by lick. */
+        float eyeLick = 0.0f;
+        float lickSide = 1.0f;
         float scale = 1.0f;
         GeckoBehavior behavior = GeckoBehavior::Rest;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
@@ -81,6 +86,11 @@ namespace island
         /** @brief Geckos wagging the tail this moment (those stalking). */
         [[nodiscard]] std::size_t WaggingCount() const noexcept;
         static constexpr float TailWagRate = 9.0f;
+        /** @brief Eye licks begun (a resting, simulated gecko every LickPeriodSeconds or so,
+         *  for LickSeconds) and the geckos mid-lick. */
+        [[nodiscard]] std::uint32_t LickCount() const noexcept { return licks_; }
+        [[nodiscard]] std::size_t LickingCount() const noexcept;
+        static constexpr float LickSeconds = 0.5f, LickPeriodSeconds = 11.0f;
 
         [[nodiscard]] std::span<const GeckoState> Geckos() const noexcept { return states_; }
         [[nodiscard]] std::span<const GeckoHome> Homes() const noexcept { return homes_; }
@@ -98,6 +108,8 @@ namespace island
             std::uint32_t transitionCount = 0U;
             float huntCooldown = 0.0f;
             int prey = -1;                 // index into the flies while stalking; -1 for none
+            float lickClock = 0.0f;        // time into the eye-lick cycle
+            bool licking = false;
         };
 
         void Initialize(std::size_t index);
@@ -117,6 +129,7 @@ namespace island
         std::uint32_t walkerScatters_ = 0U;
         std::span<const FlyState> flies_;
         std::uint32_t lunges_ = 0U;
+        std::uint32_t licks_ = 0U;
         GeckoLunge lastLunge_;
     };
 }

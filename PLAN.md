@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 156 (2026-10-20) — a gecko licks its eye
+
+A resting gecko did nothing with its lidless eyes. `GeckoState::eyeLick` (0..1) and
+`lickSide` (+1 right, -1 left) now carry the lick: a second into each rest, and again every
+`LickPeriodSeconds` (11 s, plus a little per gecko) of a long rest, the tongue comes out of
+the snout and over one eye for `LickSeconds` (0.5 s), rising at 8/s and gone at 6/s, the
+eyes taking turns lick by lick; the licks are counted (`LickCount()`, `LickingCount()`).
+In the near renderer a pink tongue tube with a rounded tip curls from the snout up over the
+licked eye by the lick amount. The geckos report line gains "a resting gecko licks an eye
+clean with its tongue every ten seconds or so, the eyes taking turns" (pinned). Core check:
+resting through the hunt cooldown the gecko licks at least twice in half a minute, each to
+full and gone, both eyes. Native `geckos` passes.
+
 ## Loop pass 155 (2026-10-20) — a hermit crab feeds
 
 A hermit crab paused on the sand merely stood. `HermitCrabState::feedAmount` (0..1) and

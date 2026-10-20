@@ -2481,7 +2481,8 @@ namespace island
                      "they scatter from a passing animal or the resident as from the walker\n"
                   << "island-simulator: geckos " << geckoPopulation_.Geckos().size()
                   << " agents in deterministic inland rest, flee, and hide habitats; a resting gecko with a fly hanging low within reach stalks it and lunges, and the flies dart from the snap; "
-                  << "a stalking gecko wags its tail, the tip swaying wide and fast until the lunge\n"
+                  << "a stalking gecko wags its tail, the tip swaying wide and fast until the lunge; "
+                  << "a resting gecko licks an eye clean with its tongue every ten seconds or so, the eyes taking turns\n"
                   << "island-simulator: skinks " << skinkPopulation_.Skinks().size()
                   << " agents in deterministic open-ground bask, forage, and flee habitats; a basking skink a cloud's shadow covers gets up and forages, and lies down to bask only in the sun; "
                   << "a basking skink in the sun displays with a bout of push-ups, the front body lifted on straightened forelegs, a second and a half into the bask and every eight seconds or so after\n"

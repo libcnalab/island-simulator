@@ -8400,6 +8400,19 @@ int main()
         Check(geckos.Geckos()[0].tailWag < 0.2f, "the wag stills within a second of the lunge");
         for (int step = 0; step < 200; ++step) geckos.Update(0.05f, home.x + 12.0f, terrain.Height(home.x, home.z) + 1.0f, home.z);
         Check(geckos.LungeCount() == 1U, "a gecko does not hunt again within the cooldown");
+        // The eye lick: resting on through the cooldown, within half a minute the gecko licks
+        // an eye at least twice, each lick to full and gone again, the eyes taking turns.
+        const std::uint32_t licksBefore = geckos.LickCount();
+        float lickPeak = 0.0f; bool lickSettled = false, leftEye = false, rightEye = false;
+        for (int step = 0; step < 600; ++step) {
+            geckos.Update(0.05f, home.x + 12.0f, terrain.Height(home.x, home.z) + 1.0f, home.z);
+            const auto& gecko = geckos.Geckos()[0];
+            lickPeak = std::max(lickPeak, gecko.eyeLick);
+            if (gecko.eyeLick > 0.9f) { if (gecko.lickSide < 0.0f) leftEye = true; else rightEye = true; }
+            if (lickPeak > 0.9f && gecko.eyeLick < 0.05f) lickSettled = true;
+        }
+        Check(geckos.LickCount() >= licksBefore + 2U && lickPeak > 0.9f && lickSettled && leftEye && rightEye,
+              "a resting gecko licks its eyes clean in turn every ten seconds or so");
         island::FlySwarms swarm(terrain);
         const auto& fly = swarm.Flies()[0];
         swarm.NoteLunge(fly.x, fly.z);

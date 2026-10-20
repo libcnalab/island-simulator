@@ -467,6 +467,17 @@ namespace island
                 AddDoubleSidedTriangle(vertices,pupilCentre+up*(.010f*scale),
                     pupilCentre-forward*(.011f*scale)-up*(.008f*scale),
                     pupilCentre+forward*(.011f*scale)-up*(.008f*scale),pupil);
+                // Licking, the tongue comes out of the snout and curls up over this eye by
+                // the lick amount, a pink tube ending in a rounded tip.
+                const float lick=(sideSign==(gecko.lickSide<0.0f?-1.0f:1.0f))?std::clamp(gecko.eyeLick,0.0f,1.0f):0.0f;
+                if(lick>0.02f) {
+                    const Color tongue(214,118,122,255);
+                    const Vector3 snout=head+forward*(.178f*scale)-up*(.006f*scale);
+                    const Vector3 overEye=eyeCentre+forward*(.022f*scale)+right*(sideSign*.012f*scale)+up*(.016f*scale);
+                    const Vector3 tip=snout+(overEye-snout)*lick+up*(.030f*scale*lick*(1.0f-lick));
+                    AppendGeckoTube(vertices,snout,tip,.009f*scale,.006f*scale,tongue);
+                    AppendGeckoDiamond(vertices,tip,right,up,forward,.008f*scale,.006f*scale,.008f*scale,tongue,tongue);
+                }
             }
             for(int spot=0;spot<6;++spot) {
                 const float z=(-.155f+static_cast<float>(spot)*.062f)*scale;

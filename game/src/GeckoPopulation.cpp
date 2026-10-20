@@ -92,6 +92,13 @@ namespace island
             && std::hypot(x - home.x, z - home.z) <= home.radius;
     }
 
+    std::size_t GeckoPopulation::LickingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.licking ? 1U : 0U;
+        return count;
+    }
+
     std::size_t GeckoPopulation::WaggingCount() const noexcept
     {
         std::size_t count = 0;
@@ -243,6 +250,17 @@ namespace island
             -deltaSeconds * 4.0f, deltaSeconds * 3.0f);
         if (agent.state.tailWag > 0.01f)
             agent.state.tailWagPhase = std::fmod(agent.state.tailWagPhase + deltaSeconds * TailWagRate, 6.2831853f);
+        // The eye lick: resting, every eleven seconds or so (a little per gecko) the tongue
+        // comes out and over one eye for half a second, the eyes taking turns.
+        const bool resting = agent.state.behavior == GeckoBehavior::Rest;
+        const float lickPeriod = LickPeriodSeconds + static_cast<float>(agent.transitionCount % 3U);
+        agent.lickClock = resting ? agent.lickClock + deltaSeconds : 0.0f;
+        if (agent.lickClock >= lickPeriod) agent.lickClock = 0.0f;
+        const bool licking = resting && agent.lickClock >= 1.0f && agent.lickClock < 1.0f + LickSeconds;
+        if (licking && !agent.licking) { ++licks_; agent.state.lickSide = -agent.state.lickSide; }
+        agent.licking = licking;
+        agent.state.eyeLick += std::clamp((licking ? 1.0f : 0.0f) - agent.state.eyeLick,
+            -deltaSeconds * 6.0f, deltaSeconds * 8.0f);
         const float visibilityTarget = agent.state.behavior == GeckoBehavior::Hidden ? 0.0f : 1.0f;
         agent.state.visibility += std::clamp(visibilityTarget - agent.state.visibility,
             -deltaSeconds * 3.8f, deltaSeconds * 2.6f);
