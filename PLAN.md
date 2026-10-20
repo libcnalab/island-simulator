@@ -46,6 +46,21 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 34 (2026-10-20) — the hut yard's hung fish and net swing
+
+The split fish on the drying rack and the net on its frame hung rigid while the grass round
+the hut leaned to every front. The hut mesh builder now tags the fish (40) and the net's
+cords and rows (48) in the colour alpha the material shader already carries as its material
+tag (both read as plain timber in the fragment shader, as 64 did), and records the bar and
+rail heights in world y. The hut vertex shader takes `uGust` (the gust strength at the hut on
+the render clock), `uSeconds` and `uHangTop`: a tagged vertex swings by how far it hangs
+below its pivot (0.37 m for the fish, 0.9 m for the net), a light 1.2 cm sway in the breeze
+plus up to 9 cm laid over downwind and a 3 cm sideways shiver in a gust front, with per-piece
+phases from the vertex colour. `HutRenderer::Draw` takes the render seconds (the game passes
+`timeSeconds`); the BasicEffect fallback ignores it. The yard diagnostic gains "the hung fish
+and the net swing in the breeze and lay over in a gust front", pinned by the native capture
+tool. Native `hut` passes; the effect is shader-only and has no CPU test beyond the pin.
+
 ## Loop pass 33 (2026-10-20) — turtle hatchlings scramble to the surf
 
 The two turtle nests were disturbed sand with tracks and nothing ever came out of them. A
@@ -150,9 +165,10 @@ Chrome software scopes against the Web package built after loop pass 14: `birds`
 timed out there (overlapping a native test run) and passed alone at 00:35; `terrain` exceeded
 its limit three times (600 s twice, 1200 s once at 00:56) with the machine's load average
 between 16 and 21 from other agents, and a fourth time (1200 s, started 01:21 at load 7
-that rose to 23 while it ran), so it is `[!]` blocked by load, not by a defect: its evidence
-directories hold the first captures each time. Retry `terrain` with `--timeout 1200` when
-the load stays under 8 for the whole run. Loop passes 15–27 are not yet in a Web package;
+that rose to 23 while it ran), and a fifth (1200 s, started 02:03 at load 7 that rose to
+18), so it is `[!]` blocked by load, not by a defect: its evidence directories hold the
+first captures each time. Retry `terrain` with `--timeout 1200` only when the load stays
+under 8 for the whole run; the other agents' load has not allowed that tonight. Loop passes 15–27 are not yet in a Web package;
 the next Web build and Android assemble cover them together.
 
 ## Loop pass 27 (2026-10-20) — cat's paws on the sea

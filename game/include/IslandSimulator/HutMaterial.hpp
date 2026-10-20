@@ -5,12 +5,29 @@ layout(location=0) in vec3 aPosition;
 layout(location=1) in vec4 aColor;
 layout(location=2) in vec2 aTextureCoordinate;
 uniform mat4 uViewProjection;
+uniform float uGust;      // gust front strength at the hut, 0..1
+uniform float uSeconds;
+uniform vec2 uHangTop;    // world y of the fish bar and of the net rail
 out vec3 vWorld;
 out vec4 vColor;
 out vec2 vGrain;
 void main() {
-    vWorld=aPosition; vColor=aColor; vGrain=aTextureCoordinate;
-    gl_Position=uViewProjection*vec4(aPosition,1.0);
+    vec3 world=aPosition;
+    float tag=aColor.a*255.0;
+    if(tag>36.0&&tag<52.0){
+        // The hung things in the yard: the split fish (tag 40) hang 0.37 m from their bar,
+        // the net (tag 48) 0.9 m from its rail. The further below the pivot, the more they
+        // swing: a light sway in the breeze, laid over downwind (toward -x, with the
+        // fronts) and shivering sideways while a gust front passes.
+        bool fish=tag<44.0;
+        float pivot=fish?uHangTop.x:uHangTop.y;
+        float hang=clamp((pivot-aPosition.y)/(fish?0.37:0.9),0.0,1.0);
+        float swing=0.5+0.5*sin(uSeconds*(fish?2.6:1.9)+aPosition.z*3.0+aColor.r*7.0);
+        world.x-=hang*(0.012+uGust*0.09)*(0.4+0.6*swing);
+        world.z+=hang*uGust*0.03*sin(uSeconds*3.1+aPosition.x*2.0+aColor.g*5.0);
+    }
+    vWorld=world; vColor=aColor; vGrain=aTextureCoordinate;
+    gl_Position=uViewProjection*vec4(world,1.0);
     gl_Position.z=2.0*gl_Position.z-gl_Position.w;
 }
 )";

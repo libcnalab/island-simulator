@@ -11,8 +11,9 @@ class HutRenderer final {
 public:
     HutRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice&,const HutPlacement&);
     ~HutRenderer();
+    // seconds: the render clock the gust fronts run on; the yard's hung fish and net swing.
     void Draw(const Microsoft::Xna::Framework::Matrix&,const Microsoft::Xna::Framework::Matrix&,
-              const Microsoft::Xna::Framework::Vector3&);
+              const Microsoft::Xna::Framework::Vector3&,float seconds=0.0f);
     /** Renders the hut into the bound fixed-sun shadow map. */
     void DrawSunShadow(SunShadowMap& map);
     [[nodiscard]] int DrawCallCount() const noexcept { return drawCalls_; }
@@ -27,6 +28,7 @@ private:
     Microsoft::Xna::Framework::Vector3 thatchMean_;
     Microsoft::Xna::Framework::BoundingBox bounds_;
     Microsoft::Xna::Framework::Vector3 centre_;
+    float fishBarY_=0,netRailY_=0;
     int triangles_=0,drawCalls_=0;
 };
 }

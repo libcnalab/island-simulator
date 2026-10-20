@@ -2,6 +2,7 @@
 #include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/HutThatch.hpp"
 #include "IslandSimulator/HutMaterial.hpp"
+#include "IslandSimulator/WindGust.hpp"
 #include "IslandSimulator/OpaqueImageLoader.hpp"
 #include "Microsoft/Xna/Framework/Graphics/Texture2D.hpp"
 #include "Microsoft/Xna/Framework/Graphics/SurfaceFormat.hpp"
@@ -42,6 +43,7 @@ HutRenderer::HutRenderer(GraphicsDevice& device,const HutPlacement& hut)
     std::vector<VertexPositionColorTexture> mesh;
     Vector3 grainOrigin,grainAcross,grainAlong;
     int materialTag=64;
+    int hangTag=0;   // 40 for the hung fish, 48 for the net: the material shader swings these
     const float c=std::cos(hut.yawRadians),s=std::sin(hut.yawRadians);
     const auto world=[&](Vector3 p) { return Vector3(hut.x+c*p.X+s*p.Z,hut.floorY+p.Y,hut.z-s*p.X+c*p.Z); };
     const auto quad=[&](Vector3 a,Vector3 b,Vector3 d,Vector3 e,Vector3 pigment) {
@@ -50,7 +52,7 @@ HutRenderer::HutRenderer(GraphicsDevice& device,const HutPlacement& hut)
         Vector3 normal=Vector3::Cross(b-a,d-a); normal.Normalize();
         const float light=0.48f+0.52f*std::max(0.0f,Vector3::Dot(normal,
             Vector3(environment::SunDirectionX,environment::SunDirectionY,environment::SunDirectionZ)));
-        const Color color(static_cast<int>(pigment.X*light),static_cast<int>(pigment.Y*light),static_cast<int>(pigment.Z*light),materialTag);
+        const Color color(static_cast<int>(pigment.X*light),static_cast<int>(pigment.Y*light),static_cast<int>(pigment.Z*light),hangTag?hangTag:materialTag);
         for(const auto p:local) {
             const float phase=materialTag==128?0:Vector3::Dot(grainOrigin,Vector3(0.37f,0.19f,0.53f));
             Vector2 uv(Vector3::Dot(p-grainOrigin,grainAcross)+phase,
@@ -299,6 +301,7 @@ HutRenderer::HutRenderer(GraphicsDevice& device,const HutPlacement& hut)
         beam(g+Vector3(0,-0.05f,0.7f),g+Vector3(0,1.55f,0.7f),0.07f,0.07f,pole);
         beam(g+Vector3(0,1.5f,-0.78f),g+Vector3(0,1.5f,0.78f),0.05f,0.05f,pole);
         materialTag=64; grainAcross={1,0,0}; grainAlong={0,1,0};
+        hangTag=40; fishBarY_=hut.floorY+g.Y+1.47f;
         for(int fish=0;fish<4;++fish) {
             const float z=-0.5f+static_cast<float>(fish)*0.33f;
             const float lean=(fish%2==0?0.02f:-0.02f);
@@ -311,6 +314,7 @@ HutRenderer::HutRenderer(GraphicsDevice& device,const HutPlacement& hut)
     }
     {
         // Coconut pile: a small heap of husked nuts beside the steps.
+        hangTag=0;
         const Vector3 g=yardLocal(1);
         materialTag=64; grainAcross={1,0,0}; grainAlong={0,0,1};
         constexpr std::array<std::array<float,3>,7> nuts{{{0,0.09f,0},{0.2f,0.09f,0.05f},{-0.19f,0.09f,0.08f},
@@ -335,6 +339,7 @@ HutRenderer::HutRenderer(GraphicsDevice& device,const HutPlacement& hut)
         beam(g+Vector3(0,-0.05f,0.95f),g+Vector3(0,1.35f,0.95f),0.07f,0.07f,pole);
         beam(g+Vector3(0,1.28f,-1.0f),g+Vector3(0,1.28f,1.0f),0.05f,0.05f,pole);
         beam(g+Vector3(0,0.36f,-1.0f),g+Vector3(0,0.36f,1.0f),0.04f,0.04f,pole);
+        hangTag=48; netRailY_=hut.floorY+g.Y+1.27f;
         for(int strand=0;strand<8;++strand) {
             const float z=-0.84f+static_cast<float>(strand)*0.24f;
             beam(g+Vector3(0.02f,1.27f,z),g+Vector3(0.02f+0.03f*std::sin(static_cast<float>(strand)*1.7f),0.38f,z+0.03f),0.014f,0.014f,cord);
@@ -346,6 +351,7 @@ HutRenderer::HutRenderer(GraphicsDevice& device,const HutPlacement& hut)
     }
     {
         // Woven basket: an open eight-sided tub with a darker rim band.
+        hangTag=0;
         const Vector3 g=yardLocal(3);
         materialTag=64; grainAcross={1,0,0}; grainAlong={0,1,0}; grainOrigin=g;
         constexpr int sides=8;
@@ -415,7 +421,7 @@ HutRenderer::HutRenderer(GraphicsDevice& device,const HutPlacement& hut)
         std::cout<<timberMessage<<'\n'; MirrorRuntimeDiagnosticToPlatformLog(timberMessage);
         const char* facadeMessage="island-simulator: hut four-pane muted glazing and braced plank door";
         std::cout<<facadeMessage<<'\n'; MirrorRuntimeDiagnosticToPlatformLog(facadeMessage);
-        const char* yardMessage="island-simulator: hut yard shows the resident's fish-drying rack, coconut pile, net frame and woven basket";
+        const char* yardMessage="island-simulator: hut yard shows the resident's fish-drying rack, coconut pile, net frame and woven basket; the hung fish and the net swing in the breeze and lay over in a gust front";
         std::cout<<yardMessage<<'\n'; MirrorRuntimeDiagnosticToPlatformLog(yardMessage);
         std::cout<<"island-simulator: hut yard ground offsets";
         for(const auto& site:hut.yard) std::cout<<' '<<(site.groundY-hut.floorY);
@@ -451,7 +457,7 @@ void HutRenderer::DrawSunShadow(SunShadowMap& map) {
     device_.DrawPrimitives(PrimitiveType::TriangleList,0,triangles_);
     map.CountCasters(1);
 }
-void HutRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector3& camera) {
+void HutRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector3& camera,const float seconds) {
     drawCalls_=0;
     if((centre_-camera).LengthSquared()>300*300 || BoundingFrustum(view*projection).Contains(bounds_)==ContainmentType::Disjoint) return;
     device_.setRasterizerStateProperty(RasterizerState::CullNone);
@@ -465,6 +471,9 @@ void HutRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector3
         material_->SetUniformVec3("uThatchMean",thatchMean_.X,thatchMean_.Y,thatchMean_.Z);
         material_->SetUniformVec3("uCameraPosition",camera.X,camera.Y,camera.Z);
         material_->SetUniformVec3("uHutCentre",centre_.X,centre_.Y,centre_.Z);
+        material_->SetUniformFloat("uGust",std::isfinite(seconds)?WindGust::Strength(centre_.X,centre_.Z,seconds):0.0f);
+        material_->SetUniformFloat("uSeconds",std::isfinite(seconds)?seconds:0.0f);
+        material_->SetUniformVec2("uHangTop",fishBarY_,netRailY_);
     } else {
         effect_->setWorldProperty(Matrix::getIdentityProperty()); effect_->setViewProperty(view); effect_->setProjectionProperty(projection); effect_->Apply();
     }

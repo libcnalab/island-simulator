@@ -1107,6 +1107,8 @@ def main():
                 raise RuntimeError("current fish rise is missing; check for a stale executable")
             if "turtle hatchlings break out of the nests in clutches and scramble down the sand to the surf" not in diagnostics:
                 raise RuntimeError("current turtle hatchlings are missing; check for a stale executable")
+            if "the hung fish and the net swing in the breeze and lay over in a gust front" not in diagnostics:
+                raise RuntimeError("current hut yard sway is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

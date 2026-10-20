@@ -4246,7 +4246,7 @@ namespace island
         }
         if(hutRenderer_) {
             GpuDiagnosticScope gpuPass("hut");
-            hutRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
+            hutRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,timeSeconds);
         }
         {
             GpuDiagnosticScope gpuPass("helicopter");
