@@ -205,6 +205,7 @@ namespace island
             case FixedViewpoint::CoconutCrabDetail: return "coconut-crabs";
             case FixedViewpoint::CrocodileDetail: return "crocodiles";
             case FixedViewpoint::BoarDetail: return "boars";
+            case FixedViewpoint::BoarLyingDetail: return "boar-lying";
             case FixedViewpoint::GoatDetail: return "goats";
             case FixedViewpoint::DeerDetail: return "deer";
             case FixedViewpoint::DeerBeddedDetail: return "deer-bedded";
@@ -1700,17 +1701,25 @@ namespace island
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<(bedded?"island-simulator: deer QA camera frames one antlered clearing animal bedded down broadside\n"
                               :"island-simulator: deer QA camera frames one antlered clearing animal broadside\n");
-        } else if (viewpoint_ == FixedViewpoint::BoarDetail) {
-            const auto& boar = boarHerd_.Boars().front();
+        } else if (viewpoint_ == FixedViewpoint::BoarDetail || viewpoint_ == FixedViewpoint::BoarLyingDetail) {
+            // The lying view holds the second boar down at rest, framed lower and nearer.
+            const bool lying = viewpoint_ == FixedViewpoint::BoarLyingDetail;
+            if (lying) boarHerd_.PreviewLie(1U);
+            const auto& boar = lying ? boarHerd_.Boars()[1U] : boarHerd_.Boars().front();
             // Telephoto inspection outside the 6m retreat trigger; habitat stays unchanged.
             const float c=std::cos(boar.headingRadians),s=std::sin(boar.headingRadians);
-            const float x = boar.x + c*2.8f + s*6.6f;
-            const float z = boar.z + s*2.8f - c*6.6f;
-            cameraPosition_ = Vector3(x, std::max(terrain_.Height(x,z)+0.4f,boar.y+2.4f), z);
-            const Vector3 direction = Vector3(boar.x, boar.y + 0.5f, boar.z) - cameraPosition_;
+            // The lying body sits low in the grass, so that view looks down from nearer and higher.
+            const float reach = lying ? 4.2f : 6.6f;
+            // (the lying boar is viewed from its other flank, clear of the understory there).
+            const float side = lying ? -1.0f : 1.0f;
+            const float x = boar.x + c*(lying?1.6f:2.8f) + s*reach*side;
+            const float z = boar.z + s*(lying?1.6f:2.8f) - c*reach*side;
+            cameraPosition_ = Vector3(x, std::max(terrain_.Height(x,z)+0.4f,boar.y+(lying?2.3f:2.4f)), z);
+            const Vector3 direction = Vector3(boar.x, boar.y + (lying?0.3f:0.5f), boar.z) - cameraPosition_;
             yaw_ = std::atan2(direction.X, direction.Z);
             pitch_ = std::atan2(direction.Y, std::hypot(direction.X, direction.Z));
-            std::cout << "island-simulator: boar QA camera frames and follows non-hostile inland wildlife\n";
+            std::cout << (lying ? "island-simulator: boar QA camera frames one resting boar lying on folded legs\n"
+                                : "island-simulator: boar QA camera frames and follows non-hostile inland wildlife\n");
         } else if (viewpoint_ == FixedViewpoint::CrabDetail
                    && crabColony_.Crabs().size() > 2U) {
             const auto crabs=crabColony_.Crabs();
@@ -2192,7 +2201,7 @@ namespace island
         std::cout << "island-simulator: deer " << deer_->Deer().size()
                   << " agents graze and walk in two inland clearings and the stream valley and retreat non-aggressively\n";
         std::cout << "island-simulator: boars " << boarHerd_.Boars().size()
-                  << " agents in moist non-channel interior habitat\n";
+                  << " agents in moist non-channel interior habitat; a rest a second and a half in settles a boar onto folded legs, body on the ground, for a longer lie, and an alarm has it up within half a second\n";
         std::cout << "island-simulator: ecological links: " << deer_->DrinkerCount() << " deer and "
                   << goats_->DrinkerCount() << " goats walk to the stream bank to drink; "
                   << boarHerd_.WallowerCount() << " boars wallow at the bank and carry the mud on their legs and bellies; "
@@ -3084,10 +3093,12 @@ namespace island
         }
         boarHerd_.SetLyingFruit(fallingFruit_.Fruit());
         boarHerd_.SetBear(bear_->State().x, bear_->State().z, true);
+        if (viewpoint_ == FixedViewpoint::BoarLyingDetail) boarHerd_.PreviewLie(1U);
         if (UsesBoarCaptureClock())
             boarHerd_.Update(deltaSeconds, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
         else
-            boarHerd_.Update(deltaSeconds, cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
+            boarHerd_.Update(viewpoint_ == FixedViewpoint::BoarLyingDetail ? 0.0f : deltaSeconds,
+                             cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
         for (const std::size_t eaten : boarHerd_.EatenFruit()) fallingFruit_.Consume(eaten);
         // A boar the bear sends off gives the alarm grunt.
         if (soundscape_ && boarHerd_.BearRetreatCount() != notedBearRetreats_) {
@@ -4080,7 +4091,7 @@ namespace island
                                            renderCameraPosition_ + forward,
                                            Vector3::Up);
         cameraProjection_ = Matrix::CreatePerspectiveFieldOfView(
-            (viewpoint_==FixedViewpoint::BoarDetail||viewpoint_==FixedViewpoint::GoatDetail
+            (viewpoint_==FixedViewpoint::BoarDetail||viewpoint_==FixedViewpoint::BoarLyingDetail||viewpoint_==FixedViewpoint::GoatDetail
                 ||viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail
                 ||viewpoint_==FixedViewpoint::ResidentDetail||viewpoint_==FixedViewpoint::BearDetail
                 ||viewpoint_==FixedViewpoint::MouseDetail||viewpoint_==FixedViewpoint::RatDetail

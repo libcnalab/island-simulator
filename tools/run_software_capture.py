@@ -593,7 +593,7 @@ def run_monitored_capture(command, root, environment, evidence, journal, baselin
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("build", type=Path)
-    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "bridge", "lookout", "log", "hut", "hut-material", "helicopter", "helicopter-inside", "resident", "bear", "boars", "goats", "deer", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "ground-doves", "bird-preen"}))
+    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "bridge", "lookout", "log", "hut", "hut-material", "helicopter", "helicopter-inside", "resident", "bear", "boars", "boar-lying", "goats", "deer", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "ground-doves", "bird-preen"}))
     parser.add_argument("--canopy-lod-inspection", nargs=3, metavar=("X_MM", "Z_MM", "TIER"))
     parser.add_argument("--missing-leaf", action="store_true",
                         help="test only the leaf-image fallback using a read-only namespace overlay")
@@ -1282,6 +1282,10 @@ def main():
                 raise RuntimeError("current bird preening is missing; check for a stale executable")
             if "a basking crocodile gapes, holding its jaws open for fourteen seconds" not in diagnostics:
                 raise RuntimeError("current crocodile gape is missing; check for a stale executable")
+            if "a rest a second and a half in settles a boar onto folded legs" not in diagnostics:
+                raise RuntimeError("current boar lie-down is missing; check for a stale executable")
+            if args.viewpoint == "boar-lying" and "boar QA camera frames one resting boar lying on folded legs" not in diagnostics:
+                raise RuntimeError("boar lying capture did not hold the boar down")
             if args.viewpoint == "bird-preen" and "bird QA camera frames one perched bird preening" not in diagnostics:
                 raise RuntimeError("bird preen capture did not hold the perched bird mid-preen")
             if args.viewpoint == "bird-preen" and not re.search(r"bird preen proof: bird 0 behavior=2 preen=1 preening=1 near=[1-9]", diagnostics):

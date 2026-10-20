@@ -27,6 +27,9 @@ namespace island
         float rootingPose = 0.0f;
         /** @brief 0..1 wet mud on the legs and belly from the last wallow; dries off slowly. */
         float mudAmount = 0.0f;
+        /** @brief 0..1 lying down: a rest a second and a half in settles the boar onto folded
+         *  legs, body on the ground; it is on its feet again within half a second of an alarm. */
+        float lieAmount = 0.0f;
         /** @brief True while the boar stands on the stream's drainage ground for its wallow trip. */
         bool inChannel = false;
         float scale = 1.0f;
@@ -80,6 +83,19 @@ namespace island
         [[nodiscard]] std::uint32_t EatCount() const noexcept { return eatCount_; }
         static constexpr float WallowSeconds = 14.0f;
         static constexpr float MudDrySeconds = 150.0f;
+        /** @brief Lie-downs begun: a rest LieDelaySeconds in, undisturbed, settles the boar
+         *  onto folded legs and lengthens the rest by LieBonusSeconds; an alert at the walker
+         *  or the bear, or the next forage, has it up at RiseRate. */
+        [[nodiscard]] std::uint32_t LieCount() const noexcept { return lies_; }
+        [[nodiscard]] std::size_t LyingCount() const noexcept;
+        [[nodiscard]] bool Lying(std::size_t index) const noexcept
+        {
+            return index < agents_.size() && agents_[index].lying;
+        }
+        /** @brief QA: holds one boar lying at rest for a still capture. */
+        void PreviewLie(std::size_t index) noexcept;
+        static constexpr float LieDelaySeconds = 1.5f, LieBonusSeconds = 8.0f;
+        static constexpr float LieDownRate = 0.7f, RiseRate = 2.0f;
 
     private:
         struct Agent
@@ -97,6 +113,8 @@ namespace island
             float wallowX = 0.0f, wallowZ = 0.0f, faceX = 0.0f, faceZ = 0.0f;
             bool hasWallow = false;
             bool inCorridor = false;        // still on drainage ground after the wallow ended
+            float restSeconds = 0.0f;       // time into the current undisturbed rest
+            bool lying = false;
         };
         void ChooseRootingSite(Agent& agent) noexcept;
         bool ChooseFruitTarget(Agent& agent) noexcept;
@@ -117,5 +135,6 @@ namespace island
         bool bearValid_ = false;
         std::uint32_t bearRetreats_ = 0;
         std::size_t lastBearRetreat_ = 0;
+        std::uint32_t lies_ = 0;
     };
 }

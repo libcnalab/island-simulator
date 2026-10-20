@@ -37,6 +37,7 @@ namespace island
             || !std::isfinite(state.headingRadians) || !std::isfinite(state.gaitPhase)
             || !std::isfinite(state.speed) || state.speed < 0.0f
             || !std::isfinite(state.scale) || state.scale <= 0.0f || state.scale > 2.0f
+            || !std::isfinite(state.lieAmount)
             || std::abs(state.x) > TerrainMeshLayout::Extent - 4.0f
             || std::abs(state.z) > TerrainMeshLayout::Extent - 4.0f) {
             throw std::invalid_argument("Invalid boar rendered-terrain contact state");
@@ -75,6 +76,44 @@ namespace island
             result.legs[index] = EvaluateBoarLeg(state.gaitPhase, movement, result.bodyBob,
                                                   front, left, ground);
             result.legs[index].reachLimited |= !bracketed;
+        }
+        // Lying: the body settles onto the ground and the legs fold under it, the fore
+        // cannons lying back along the ground from knees set forward, the hind legs tucked
+        // with the hooves brought forward under the belly; the standing chain and the folded
+        // one blend by the lie amount.
+        const float lie = std::clamp(state.lieAmount, 0.0f, 1.0f);
+        if (lie > 0.0f) {
+            const float drop = lie * 0.24f * state.scale;
+            result.origin.y -= drop;
+            result.bodyBob *= 1.0f - lie;
+            const auto mix = [lie](const BoarJoint& a, const BoarJoint& b) {
+                return BoarJoint{std::lerp(a.x, b.x, lie), std::lerp(a.y, b.y, lie), std::lerp(a.z, b.z, lie)};
+            };
+            for (std::size_t index = 0; index < result.legs.size(); ++index) {
+                const bool front = index % 2 == 1;
+                BoarLegPose& leg = result.legs[index];
+                const BoarJoint root = leg.root;
+                const float hoofX = root.x * 1.15f, hoofZ = front ? root.z - 0.18f : root.z + 0.36f;
+                // The ground under the folded hoof's own spot, solved along body-up as the
+                // standing hooves are, with the body already lowered.
+                const auto residual = [&](float localHeight) {
+                    const auto sole = result.ToWorld({hoofX, localHeight, hoofZ});
+                    return sole.y - surface.Sample(sole.x, sole.z).height;
+                };
+                float low = -0.5f, high = 1.0f;
+                for (int iteration = 0; iteration < 18; ++iteration) {
+                    const float middle = (low + high) * 0.5f;
+                    if (residual(middle) < 0.0f) low = middle;
+                    else high = middle;
+                }
+                const float ground = (low + high) * 0.5f;
+                result.groundHeights[index] = std::lerp(result.groundHeights[index], ground, lie);
+                const BoarJoint knee{root.x * 1.08f, ground + 0.11f, root.z + (front ? 0.14f : 0.10f)};
+                const BoarJoint hoof{hoofX, ground + BoarLegPose::HoofHeight, hoofZ};
+                leg.knee = mix(leg.knee, knee);
+                leg.hoof = mix(leg.hoof, hoof);
+                leg.stance = true;
+            }
         }
         return result;
     }

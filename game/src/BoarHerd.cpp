@@ -249,6 +249,27 @@ namespace island
         }
     }
 
+    std::size_t BoarHerd::LyingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.lying ? 1U : 0U;
+        return count;
+    }
+
+    void BoarHerd::PreviewLie(const std::size_t index) noexcept
+    {
+        if (index >= agents_.size()) return;
+        Agent& agent = agents_[index];
+        agent.state.behavior = BoarBehavior::Rest;
+        agent.state.speed = 0.0f;
+        agent.state.rootingPose = 0.0f;
+        agent.state.lieAmount = 1.0f;
+        agent.remainingSeconds = 30.0f;
+        agent.restSeconds = LieDelaySeconds + 1.0f;
+        agent.lying = true;
+        states_[index] = agent.state;
+    }
+
     void BoarHerd::Step(Agent& agent, const float dt, const float observerX,
                        const float observerZ, const bool observerValid) noexcept
     {
@@ -357,6 +378,19 @@ namespace island
             state.speed = 0.0f;
             agent.targetHeading = Wrap(state.headingRadians + 1.1f);
         }
+        // A rest a second and a half in, undisturbed, settles the boar onto folded legs for a
+        // longer lie (the rest gains LieBonusSeconds); an alert at the walker or the bear, or
+        // the next forage or wander, has it on its feet again within half a second.
+        const bool resting = state.behavior == BoarBehavior::Rest && !alertFacing;
+        agent.restSeconds = resting ? agent.restSeconds + dt : 0.0f;
+        const bool shouldLie = resting && agent.restSeconds > LieDelaySeconds;
+        if (shouldLie && !agent.lying) {
+            ++lies_;
+            agent.remainingSeconds += LieBonusSeconds;
+        }
+        agent.lying = shouldLie;
+        state.lieAmount += std::clamp((agent.lying ? 1.0f : 0.0f) - state.lieAmount,
+                                      -dt * RiseRate, dt * LieDownRate);
         state.y = terrain_.Height(state.x, state.z);
         state.inChannel = agent.inCorridor;
         // In the mud the boar drops its snout like rooting; the coat wets while it stays and

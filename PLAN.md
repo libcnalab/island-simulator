@@ -54,6 +54,31 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 119 (2026-10-20) — a resting boar lies down
+
+A resting boar stood through every rest. `BoarState::lieAmount` (0..1) now carries a
+lie-down: a rest a second and a half in, undisturbed (`restSeconds` past `LieDelaySeconds`
+with no alert facing), settles the boar onto folded legs at 0.7/s and lengthens that rest
+by `LieBonusSeconds` (8 s); an alert at the walker or the bear, the next forage, wander or
+wallow has it up at 2.0/s, within half a second. `LieCount()` counts lie-downs begun,
+`LyingCount()` and `Lying(index)` the boars down. `FitBoarGroundPose` renders it: the body
+origin settles 0.24 m (scaled) and the gait bob fades; each leg's knee and hoof blend from
+the standing chain to a folded one — the fore knees set forward with the cannons lying back
+along the ground, the hind legs tucked with the hooves brought forward under the belly —
+with the ground under each folded hoof solved along body-up as the standing hooves are, so
+the hooves rest on the terrain whatever the slope. A QA viewpoint `boar-lying`
+(`BoarLyingDetail`, `PreviewLie(1)` applied each frame with the herd frozen) frames the
+second boar down at rest from its clear flank, nearer and higher than `boars` (the lying
+body sits low in the grass); the capture tool accepts it with the boars' close-detail
+profile and requires the lying camera line. The boars report line gains "a rest a second
+and a half in settles a boar onto folded legs, body on the ground, for a longer lie, and an
+alarm has it up within half a second" (pinned). Core checks: the second boar lies down at
+rest within two minutes, and the walker at ten metres has it on its feet within half a
+second; boar pose checks: a lying boar's body settles about a quarter metre lower, its
+hooves rest on the ground and its knees fold below the standing knees (world heights).
+Native `boar-lying` passes (luminance deviation 40.2; the boar lies with folded legs under
+a bush, head up).
+
 ## Loop pass 118 (2026-10-20) — a basking crocodile gapes
 
 A crocodile on the bank lay with its jaws all but closed (a slow 0..0.14 breathing sway),

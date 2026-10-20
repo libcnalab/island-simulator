@@ -322,6 +322,25 @@ int main()
         }
         before = after;
     }
+    // Lying: the fitted pose settles the body about a quarter metre lower and brings the
+    // hooves to the ground under folded legs; the standing fit is untouched at zero.
+    {
+        BoarState standing;
+        standing.headingRadians = 0.8f;
+        BoarState lying = standing;
+        lying.lieAmount = 1.0f;
+        const auto stood = FitBoarGroundPose(terrain, surface, standing);
+        const auto lain = FitBoarGroundPose(terrain, surface, lying);
+        check(stood.origin.y - lain.origin.y > 0.2f && stood.origin.y - lain.origin.y < 0.3f,
+              "a lying boar's body settles about a quarter metre lower");
+        for (std::size_t foot = 0; foot < 4; ++foot) {
+            const auto hoof = lain.ToWorld(lain.legs[foot].hoof);
+            check(std::abs(hoof.y - surface.Sample(hoof.x, hoof.z).height) < 0.12f,
+                  "a lying boar's hooves rest on the ground");
+            check(lain.ToWorld(lain.legs[foot].knee).y < stood.ToWorld(stood.legs[foot].knee).y - 0.08f,
+                  "a lying boar's knees fold below the standing knees");
+        }
+    }
     for (int field = 0; field < 5; ++field) {
         BoarState bad;
         if (field == 0) bad.x = nan;

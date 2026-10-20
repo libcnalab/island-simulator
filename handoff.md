@@ -180,6 +180,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 116: a deer resting in the shade beds down onto folded legs (`bedAmount`, `deer-bedded` QA viewpoint) and is up within half a second of an alarm (PLAN "Loop pass 116").
 - Pass 117: a perched bird preens, the head turned back into one wing for 2.6 s every 11 s or so (`preenAmount`, `bird-preen` QA viewpoint) (PLAN "Loop pass 117").
 - Pass 118: a basking crocodile gapes, holding its jaws open for 14 s a few seconds into each lie-up on the bank (PLAN "Loop pass 118").
+- Pass 119: a resting boar lies down onto folded legs a second and a half into an undisturbed rest and is up within half a second of an alarm (`lieAmount`, `boar-lying` QA viewpoint) (PLAN "Loop pass 119").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

@@ -9351,6 +9351,26 @@ int main()
             for(int step=0;step<40;++step) herd.Update(0.05f,sow.x+40.0f,sow.y+1.5f,sow.z);
             Check(herd.BearRetreatCount()>=1U&&herd.Boars()[0].behavior==island::BoarBehavior::Retreat,"a boar trots away from the bear");
         }
+        // A resting boar lies down: a second and a half into an undisturbed rest the boar
+        // settles onto folded legs (and the rest is lengthened for it); the walker at ten
+        // metres has it on its feet within half a second.
+        {
+            island::BoarHerd herd(terrain);
+            const auto sow=herd.Boars()[1];
+            bool lay=false,atRest=false;
+            for(int step=0;step<2400&&!lay;++step) {
+                herd.Update(0.05f,sow.x+40.0f,sow.y+1.5f,sow.z);
+                if(herd.Boars()[1].lieAmount>0.9f) {lay=true;atRest=herd.Boars()[1].behavior==island::BoarBehavior::Rest;}
+            }
+            Check(lay&&atRest&&herd.LieCount()>=1U&&herd.LyingCount()>=1U,"a resting boar lies down within two minutes, at rest");
+            const auto lying=herd.Boars()[1];
+            bool up=false;
+            for(int step=0;step<12&&!up;++step) {
+                herd.Update(0.05f,lying.x+10.0f,lying.y+1.5f,lying.z);
+                up=herd.Boars()[1].lieAmount<0.2f&&!herd.Lying(1);
+            }
+            Check(up,"the walker at ten metres has the lying boar on its feet within half a second");
+        }
         // The hut's roof ridge is a perch: it stands on the ridge cap above the hut, near the
         // veranda end, well clear of the ground, and the flock accepts it as a site.
         {

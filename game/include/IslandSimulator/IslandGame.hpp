@@ -226,6 +226,7 @@ namespace island
         CoconutCrabDetail,
         CrocodileDetail,
         BoarDetail,
+        BoarLyingDetail,
         GoatDetail,
         DeerDetail,
         DeerBeddedDetail,
