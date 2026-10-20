@@ -5764,6 +5764,9 @@ namespace island
                 timeOfDay_->DrawRainbow(cameraView_, cameraProjection_, renderCameraPosition_, light,
                                         TimeOfDayRenderer::RainbowStrength(light, weather.rain));
             timeOfDay_->DrawFlash(weather.flash);
+            if (!underground)
+                timeOfDay_->DrawBolt(cameraView_, cameraProjection_, renderCameraPosition_, weather.strikes,
+                                     weather.lastStrikeDistance, weather.flash);
             // the surf glitters blue on dark nights, less under a bright moon
             if (!underground) {
                 const float dark = 1.0f - std::clamp((light.sunElevationDegrees + 6.0f) / 8.0f, 0.0f, 1.0f);

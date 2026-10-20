@@ -1177,7 +1177,8 @@ void main()
             vec3 skyMirror = vec3(0.52, 0.62, 0.72) * (0.55 + 0.45 * vGroundLight);
             vec3 waterOverSoil = color * vec3(0.52, 0.55, 0.58);
             vec3 halfway = normalize(normalize(uToSun) + toEye);
-            float glint = pow(max(halfway.y, 0.0), 260.0) * sunShadowVisibility(vWorld) * 2.2;
+            // the sun's glint only as strong as the direct sun is (the clouds hide it in a storm)
+            float glint = pow(max(halfway.y, 0.0), 900.0) * sunShadowVisibility(vWorld) * uSunShadowParams.x * 1.4;
             color = mix(color, mix(waterOverSoil, skyMirror, fresnel) + vec3(glint), puddle * 0.92);
         }
     }

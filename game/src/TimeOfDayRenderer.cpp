@@ -29,6 +29,8 @@ namespace island
         constexpr int MoonSegments = 40;
         constexpr int RainbowSegments = 72, RainbowBands = 7;
         constexpr int RainbowVertexCapacity = RainbowSegments * RainbowBands * 6 * 2;
+        constexpr int BoltSegments = 14, BoltBranches = 2, BoltBranchSegments = 6;
+        constexpr int BoltVertexCapacity = (BoltSegments + BoltBranches * BoltBranchSegments) * 6 * 2;
         constexpr std::array<float, 6> MoonRings{0.0f, 0.3f, 0.55f, 0.75f, 0.9f, 1.0f};
         constexpr int GlowSegments = 32;
         constexpr int MoonVertexCapacity = (static_cast<int>(MoonRings.size()) - 1) * MoonSegments * 6
@@ -125,6 +127,9 @@ namespace island
         rainbow_ = std::make_unique<DynamicVertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(),
                                                          RainbowVertexCapacity, BufferUsage::WriteOnly);
         rainbowStaging_.reserve(static_cast<std::size_t>(RainbowVertexCapacity));
+        bolt_ = std::make_unique<DynamicVertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(), BoltVertexCapacity,
+                                                      BufferUsage::WriteOnly);
+        boltStaging_.reserve(static_cast<std::size_t>(BoltVertexCapacity));
         const std::string message = "island-simulator: night sky: " + std::to_string(StarCount)
             + " stars and a phased moon over the graded sky; the scene is graded by the hour (golden hours, a dark blue night)";
         std::cout << message << '\n';
@@ -256,6 +261,86 @@ namespace island
         skyEffect_->setDiffuseColorProperty(Vector3(1.0f, 1.0f, 1.0f));
         skyEffect_->Apply();
         device_.DrawPrimitives(PrimitiveType::TriangleList, 0, static_cast<int>(rainbowStaging_.size() / 3));
+        ++drawCalls_;
+    }
+
+    void TimeOfDayRenderer::DrawBolt(const Matrix& view, const Matrix& projection, const Vector3& camera,
+                                     const std::uint32_t strike, const float distance, const float flash)
+    {
+        if (!(flash > 0.05f) || !std::isfinite(distance)) return;
+        const auto hash = [strike](const std::uint32_t salt) {
+            std::uint32_t h = strike * 0x9e3779b9U ^ salt * 0x85ebca6bU;
+            h ^= h >> 16; h *= 0x7feb352dU; h ^= h >> 15; h *= 0x846ca68bU; h ^= h >> 16;
+            return static_cast<float>(h & 0xffffffU) / 16777215.0f;
+        };
+        constexpr float SkyDistance = MoonDistance;
+        const float bearing = hash(1U) * 6.2831853f;
+        // the cloud base about 1.4 km up at the strike's distance, seen from here
+        const float top = std::atan2(1400.0f, std::max(distance, 300.0f));
+        const auto direction = [&](const float azimuth, const float elevation) {
+            return Vector3(std::cos(elevation) * std::cos(azimuth), std::sin(elevation), std::cos(elevation) * std::sin(azimuth))
+                * SkyDistance;
+        };
+        // a nearer bolt is thicker on the sky
+        const float width = SkyDistance * std::clamp(3.0f / std::max(distance, 300.0f), 0.0012f, 0.006f);
+        const float brightness = std::clamp(flash * (1.3f - distance / 5200.0f), 0.0f, 1.0f);
+        boltStaging_.clear();
+        const auto segment = [&](const Vector3& a, const Vector3& b, const float thickness, const float glow) {
+            Vector3 across = Vector3::Cross(Vector3::Normalize(a), b - a);
+            if (across.LengthSquared() < 1e-6f) return;
+            across = Vector3::Normalize(across) * thickness;
+            const auto c = [](float x) { return static_cast<int>(std::lround(std::clamp(x, 0.0f, 1.0f) * 255.0f)); };
+            // a white core in a violet halo three times as wide
+            const Color core(c(glow), c(glow), c(glow), 255), halo(c(glow * 0.30f), c(glow * 0.28f), c(glow * 0.55f), 255),
+                rim(0, 0, 0, 0);
+            const std::array<std::pair<float, std::pair<Color, Color>>, 2> layers{{{3.0f, {halo, rim}}, {1.0f, {core, core}}}};
+            for (const auto& [scale, colours] : layers) {
+                const Vector3 w = across * scale;
+                boltStaging_.emplace_back(a - w, colours.second); boltStaging_.emplace_back(a, colours.first);
+                boltStaging_.emplace_back(b, colours.first);
+                boltStaging_.emplace_back(a + w, colours.second); boltStaging_.emplace_back(b + w, colours.second);
+                boltStaging_.emplace_back(b, colours.first);
+                (void)rim;
+            }
+        };
+        // the main channel: down from the cloud base in jagged steps to the horizon
+        std::array<Vector3, BoltSegments + 1> path{};
+        float azimuth = bearing;
+        for (int i = 0; i <= BoltSegments; ++i) {
+            const float t = static_cast<float>(i) / BoltSegments;
+            if (i > 0) azimuth += (hash(10U + static_cast<std::uint32_t>(i)) - 0.5f) * top * 0.16f;
+            path[static_cast<std::size_t>(i)] = direction(azimuth, top * (1.0f - t) - 0.002f);
+        }
+        for (int i = 0; i < BoltSegments; ++i)
+            segment(path[static_cast<std::size_t>(i)], path[static_cast<std::size_t>(i + 1)], width, brightness);
+        // a branch or two forking off the upper half, thinner and dimmer
+        for (int b = 0; b < BoltBranches; ++b) {
+            const int from = 2 + static_cast<int>(hash(40U + static_cast<std::uint32_t>(b)) * (BoltSegments / 2));
+            const float side = hash(50U + static_cast<std::uint32_t>(b)) < 0.5f ? -1.0f : 1.0f;
+            Vector3 previous = path[static_cast<std::size_t>(from)];
+            float branchAzimuth = std::atan2(previous.Z, previous.X);
+            float elevation = std::asin(std::clamp(previous.Y / SkyDistance, -1.0f, 1.0f));
+            for (int i = 0; i < BoltBranchSegments; ++i) {
+                branchAzimuth += side * top * (0.035f + 0.03f * hash(60U + static_cast<std::uint32_t>(b * 10 + i)));
+                elevation -= top * (0.035f + 0.03f * hash(80U + static_cast<std::uint32_t>(b * 10 + i)));
+                const Vector3 next = direction(branchAzimuth, std::max(elevation, 0.0f));
+                segment(previous, next, width * 0.5f, brightness * (0.6f - 0.07f * static_cast<float>(i)));
+                previous = next;
+            }
+        }
+        if (boltStaging_.empty()) return;
+        device_.setRasterizerStateProperty(RasterizerState::CullNone);
+        device_.setBlendStateProperty(BlendState::Additive);
+        device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
+        bolt_->SetData(boltStaging_.data(), 0, static_cast<int>(boltStaging_.size()), SetDataOptions::Discard);
+        device_.SetVertexBuffer(bolt_.get());
+        device_.setIndicesProperty(nullptr);
+        skyEffect_->setWorldProperty(Matrix::CreateTranslation(camera));
+        skyEffect_->setViewProperty(view);
+        skyEffect_->setProjectionProperty(projection);
+        skyEffect_->setDiffuseColorProperty(Vector3(1.0f, 1.0f, 1.0f));
+        skyEffect_->Apply();
+        device_.DrawPrimitives(PrimitiveType::TriangleList, 0, static_cast<int>(boltStaging_.size() / 3));
         ++drawCalls_;
     }
 

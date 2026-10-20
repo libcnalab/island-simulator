@@ -233,6 +233,24 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 250 (2026-10-20) — the lightning bolt, and the puddles' glint
+
+A strike flashed the whole scene but no bolt was seen. `TimeOfDayRenderer::DrawBolt` now draws,
+while a strike's flash lasts, its channel on the sky: from the cloud base (1.4 km up at the
+strike's distance) down to the horizon in fourteen jagged steps at a bearing that follows from
+the strike's number, with two thinner, dimmer branches forking off its upper half; a white core
+in a violet halo three times as wide, thicker and brighter the nearer the strike (400-4000 m),
+additive after the grade, depth-read so the island stands in front. A probe build holding one
+bolt on in `overview` in a thunderstorm showed the jagged channel and its branch dropping out of
+the cloud deck behind the island; the probe was removed.
+
+The same stormy captures showed the hut's clearing white from the air: the puddles' sun glint
+(Loop pass 233) ignored the overcast, and from 40 m up a flat water mirror reflects the sun
+over metres of it. The glint now scales with the direct sun (the shadow strength, which the
+clouds take down to 15 % in a storm) and is narrower (exponent 900); from the air the puddles
+read as dark water. (`jetty-end` in a thunderstorm fails the capture validator's colour-bin
+floor: grey rain over grey water, a murky scene, not a rendering fault.)
+
 ## Loop pass 249 (2026-10-20) — rain-wet trees
 
 The rain wetted the ground (darker soil, puddles) but not the trees. The jungle shader now takes
