@@ -1,5 +1,6 @@
 #include "IslandSimulator/ButterflyMeadow.hpp"
 
+#include "IslandSimulator/FallingFruitField.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/JungleLayout.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
@@ -97,6 +98,30 @@ namespace island
         std::size_t count = 0;
         for (const auto& sites : bushSites_) count += sites.size();
         return count;
+    }
+
+    // The nearest fruit that has lain long enough to ferment, within the habitat's excursion
+    // reach and on ground the butterfly may hover over; coconuts never draw them.
+    bool ButterflyMeadow::FindFermentingFruit(const Agent& agent, NectarSite& site) const noexcept
+    {
+        float best = std::numeric_limits<float>::max();
+        bool found = false;
+        for (const FallingFruit& fruit : lyingFruit_) {
+            if (!fruit.active || fruit.restSeconds < FermentSeconds
+                || fruit.variant == FallingFruitField::CoconutVariant) continue;
+            const float fromHome = std::hypot(fruit.x - agent.home.x, fruit.z - agent.home.z);
+            if (fromHome > agent.home.radius + BushExcursionReach) continue;
+            const float distance = std::hypot(fruit.x - agent.state.x, fruit.z - agent.state.z);
+            if (distance >= best) continue;
+            // Fruit lies under the crowns, on forest floor the clearing rule would refuse;
+            // the hover there only needs inland, gentle ground.
+            const TerrainSample sample = terrain_.Sample(fruit.x, fruit.z);
+            if (sample.signedShoreDistance < MinimumInlandDistance || sample.slopeRadians >= 0.48f) continue;
+            best = distance;
+            site = {fruit.x, fruit.z, FruitHoverHeight};
+            found = true;
+        }
+        return found;
     }
 
     bool ButterflyMeadow::NectarTarget(const std::size_t index, float& x, float& z, float& height) const noexcept
@@ -261,8 +286,15 @@ namespace island
                         // a few metres is an excursion: keep fluttering toward it first.
                         const std::size_t index = static_cast<std::size_t>(&agent - agents_.data());
                         const auto& sites = bushSites_[index / 6U];
-                        if (!sites.empty() && agent.transitionCount % 2U == 1U) {
-                            const NectarSite& site = sites[(index + agent.transitionCount / 2U) % sites.size()];
+                        NectarSite fruitSite;
+                        const bool toFruit = agent.transitionCount % 4U == 0U && FindFermentingFruit(agent, fruitSite);
+                        if (toFruit) ++fruitVisits_;
+                        if (toFruit || (!sites.empty() && agent.transitionCount % 2U == 1U)) {
+                            // Fermenting fruit on the ground takes every other ground-patch
+                            // visit (the nectar decisions fall on even counts): a trip down to
+                            // it, hovering low over the fruit.
+                            const NectarSite& site = toFruit ? fruitSite
+                                : sites[(index + agent.transitionCount / 2U) % sites.size()];
                             const float toward = std::atan2(agent.state.z - site.z, agent.state.x - site.x);
                             agent.nectarX = site.x + std::cos(toward) * 0.45f;
                             agent.nectarZ = site.z + std::sin(toward) * 0.45f;

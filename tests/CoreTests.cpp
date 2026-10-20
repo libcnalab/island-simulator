@@ -7596,6 +7596,33 @@ int main()
             rooted=rooters.EatCount();
         }
         Check(rooted>=1U&&mast.ConsumedCount()>=1U,"a boar roots its way to a lying fruit within twenty minutes and eats it");
+        // Butterflies come down to fruit that has lain fermenting: fruit shaken down eight
+        // metres from the first habitat draws a butterfly to hover low over it.
+        island::ButterflyMeadow drinkers(terrain);
+        const auto habitat=drinkers.Homes()[0];
+        island::FallingFruitField windfall(terrain);
+        island::MonkeyState dropper=monkey;
+        dropper.selectedTree={habitat.x+8.0f,terrain.Height(habitat.x+8.0f,habitat.z),habitat.z,0.4f,1.0f,2U};
+        std::vector<island::MonkeyState> droppers{dropper};
+        for(int step=0;step<800;++step) windfall.Update(0.05f,droppers);
+        std::size_t fermenting=0;
+        for(const auto& f:windfall.Fruit()) if(f.active&&f.restSeconds>=island::ButterflyMeadow::FermentSeconds) ++fermenting;
+        Check(fermenting>=1U,"fruit has lain fermenting beside the butterfly habitat");
+        // The fruit a visit was decided on may have rotted away by the time of the hover,
+        // so the check is the hover itself: low over the target, at the fruit's height.
+        bool fedOnFruit=false;
+        for(int step=0;step<7200&&!fedOnFruit;++step) {
+            drinkers.SetLyingFruit(windfall.Fruit());
+            drinkers.Update(0.05f,std::numeric_limits<float>::quiet_NaN(),0.0f,0.0f);
+            windfall.Update(0.05f,droppers);
+            for(std::size_t index=0;index<6U;++index) {
+                const auto& fly=drinkers.Butterflies()[index];
+                float x=0.0f,z=0.0f,height=0.0f;
+                if(fly.behavior!=island::ButterflyBehavior::NectarHover||!drinkers.NectarTarget(index,x,z,height)) continue;
+                if(height<=island::ButterflyMeadow::FruitHoverHeight+0.01f&&std::hypot(fly.x-x,fly.z-z)<1.5f) fedOnFruit=true;
+            }
+        }
+        Check(drinkers.FruitVisitCount()>=1U&&fedOnFruit,"a butterfly hovers low over the fermenting fruit within six minutes");
     }
 
     {

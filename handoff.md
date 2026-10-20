@@ -81,6 +81,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 18: the boars forage for the fallen fruit and coconuts before the trunk bases (PLAN "Loop pass 18").
 - Pass 19: a coconut's thud startles the deer and goats within 30 m (PLAN "Loop pass 19").
 - Pass 20: perched birds flush from a close walker or a nearby thud (PLAN "Loop pass 20").
+- Pass 21: butterflies come down to feed on the fermenting fruit (PLAN "Loop pass 21").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

@@ -2223,7 +2223,8 @@ namespace island
                   << butterflyMeadow_.Butterflies().size()
                   << " agents in deterministic low-altitude habitats; "
                   << butterflyMeadow_.FlowerBushCount()
-                  << " flowering bushes within reach of the habitats draw alternate nectar excursions at blossom height\n"
+                  << " flowering bushes within reach of the habitats draw alternate nectar excursions at blossom height; "
+                     "fruit that has lain fermenting for 20 s draws them down to feed low over it\n"
                   << "island-simulator: geckos " << geckoPopulation_.Geckos().size()
                   << " agents in deterministic inland rest, flee, and hide habitats\n"
                   << "island-simulator: skinks " << skinkPopulation_.Skinks().size()
@@ -2603,6 +2604,7 @@ namespace island
             const ButterflyState& subject=butterflyMeadow_.Butterflies()[2U];
             butterflyObserver=Vector3(subject.x,subject.y+18.0f,subject.z);
         }
+        butterflyMeadow_.SetLyingFruit(fallingFruit_.Fruit());
         butterflyMeadow_.Update(deltaSeconds,butterflyObserver.X,butterflyObserver.Y,
             butterflyObserver.Z);
         if(viewpoint_==FixedViewpoint::ButterflyDetail) {

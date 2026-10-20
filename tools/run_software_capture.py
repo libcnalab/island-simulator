@@ -953,6 +953,8 @@ def main():
                 raise RuntimeError("current underwater effect pass is missing; check for a stale executable")
             if "shaded forest floor carries drifting leaf-gap sun flecks" not in diagnostics:
                 raise RuntimeError("current dappled forest floor is missing; check for a stale executable")
+            if "fruit that has lain fermenting for 20 s draws them down to feed low over it" not in diagnostics:
+                raise RuntimeError("current butterfly fruit feeding is missing; check for a stale executable")
             if "flowering bushes within reach of the habitats draw alternate nectar excursions at blossom height" not in diagnostics:
                 raise RuntimeError("current butterfly nectar bushes are missing; check for a stale executable")
             if "seabirds break from their high orbits to circle low over the fish school of the moment" not in diagnostics:

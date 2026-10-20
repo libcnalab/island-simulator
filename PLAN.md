@@ -46,6 +46,23 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 21 (2026-10-20) — the butterflies come down to the fermenting fruit
+
+The clearing butterflies alternated the ground patch and the flowering bushes; the fruit
+rotting under the crowns a few metres off was nothing to them. The meadow now reads the fruit
+span (`ButterflyMeadow::SetLyingFruit`) and every other ground-patch nectar decision (the
+nectar decisions fall on even transition counts, so the rule is count % 4 == 0; the % 4 == 3
+first draft never fired) looks for the nearest non-coconut fruit that has lain 20 s or more
+within the habitat's excursion reach on inland, gentle ground (`FindFermentingFruit`; the
+clearing-surface rule is not applied because the fruit lies on forest floor). The visit uses
+the bush excursion machinery, with the hover 0.22 m over the fruit instead of blossom height,
+and counts in `FruitVisitCount()`. The butterfly diagnostic gains "fruit that has lain
+fermenting for 20 s draws them down to feed low over it", pinned by the native capture tool.
+Core check: fruit shaken down eight metres from the first habitat is visited within six
+minutes, the butterfly hovering within 1.5 m of a target at the fruit height (the fruit
+itself may have rotted away by then, so the hover is the evidence). Native `butterflies`
+passes.
+
 ## Loop pass 20 (2026-10-20) — perched birds flush
 
 A bird on a perch sat out its eight to fourteen seconds whatever happened beside it: the walker

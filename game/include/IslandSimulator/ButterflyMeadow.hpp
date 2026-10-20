@@ -12,6 +12,7 @@ namespace island
 {
     class IslandTerrain;
     struct BushPlacement;
+    struct FallingFruit;
 
     /** @brief Compact low-altitude activity states for clearing butterflies. */
     enum class ButterflyBehavior : std::uint8_t
@@ -84,6 +85,12 @@ namespace island
          *  nectar sites the butterflies alternate with their ground patch. */
         void SetFlowerBushes(std::span<const BushPlacement> bushes);
         [[nodiscard]] std::size_t FlowerBushCount() const noexcept;
+        /** @brief Fruit lying on the ground this frame; once it has lain FermentSeconds a
+         *  butterfly's nectar visit may go down to feed on it instead. */
+        void SetLyingFruit(std::span<const FallingFruit> fruit) noexcept { lyingFruit_ = fruit; }
+        [[nodiscard]] std::uint32_t FruitVisitCount() const noexcept { return fruitVisits_; }
+        static constexpr float FermentSeconds = 20.0f;
+        static constexpr float FruitHoverHeight = 0.22f;
         /** @brief The agent's current nectar target and its hover height above the ground. */
         [[nodiscard]] bool NectarTarget(std::size_t index, float& x, float& z, float& height) const noexcept;
         [[nodiscard]] int FullSimulationCount() const noexcept { return fullSimulationCount_; }
@@ -120,6 +127,9 @@ namespace island
         };
         struct NectarSite { float x = 0.0f, z = 0.0f, height = 0.34f; };
         std::array<std::vector<NectarSite>, HabitatCount> bushSites_{};
+        std::span<const FallingFruit> lyingFruit_;
+        std::uint32_t fruitVisits_ = 0U;
+        [[nodiscard]] bool FindFermentingFruit(const Agent& agent, NectarSite& site) const noexcept;
 
         void InitializeAgent(std::size_t index);
         void UpdateAgent(Agent& agent, float deltaSeconds,
