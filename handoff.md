@@ -250,6 +250,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 186: a mouse or rat sweeps its whiskers with each sniff, fully on the forage and a little at rest (`RodentState::whiskerTwitch`, `RodentPopulation::WhiskingCount`) (PLAN "Loop pass 186").
 - Pass 187: every other surfacing a dolphin slaps its tail, the flukes raised and brought down with a splash (`DolphinState::tailSlap`, `DolphinPod::TailSlapCount`) (PLAN "Loop pass 187").
 - Pass 188: a seabird lifting off its raft shakes the water from its feathers (`BirdFlock::WaterShakeCount`, the ruffle in flight) (PLAN "Loop pass 188").
+- Pass 189: a school holding in the shade fans its pectoral fins to hover, folding them back as it moves on (`FishState::finFan`/`finPhase`, `FishSchools::FanningCount`) (PLAN "Loop pass 189").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

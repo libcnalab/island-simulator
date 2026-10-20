@@ -174,6 +174,13 @@ namespace island
         if (shelterValid_) { shelterX_ = x; shelterZ_ = z; }
     }
 
+    std::size_t FishSchools::FanningCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.state.finFan > 0.5f ? 1U : 0U;
+        return count;
+    }
+
     std::size_t FishSchools::ShelteringCount() const noexcept
     {
         std::size_t count = 0;
@@ -434,6 +441,12 @@ namespace island
             agent.bodyPhase = std::fmod(agent.bodyPhase
                                         + agent.bodySpeed * speedScale * deltaSeconds, TwoPi);
             agent.state.bodyWave = std::sin(agent.bodyPhase);
+            // Holding in the shade, the fish fans its pectoral fins to hover; moving on,
+            // they fold back.
+            agent.state.finFan += std::clamp((school.sheltering ? 1.0f : 0.0f) - agent.state.finFan,
+                                             -2.0f * deltaSeconds, 1.5f * deltaSeconds);
+            if (agent.state.finFan > 0.01f)
+                agent.state.finPhase = std::fmod(agent.state.finPhase + FinFanRate * deltaSeconds, TwoPi);
         }
     }
 

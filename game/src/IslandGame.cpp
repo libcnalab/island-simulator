@@ -2568,7 +2568,8 @@ namespace island
                   << "a crocodile under way in the water folds its legs back along its flanks and swims on its tail\n"
                   << "island-simulator: fish " << fishSchools_.Fish().size()
                   << " agents in " << FishSchools::SchoolCount
-                  << " distance-throttled shallow-water schools; a fish rolling through a turn flashes silver along its flanks, brightest parting from the shark\n"
+                  << " distance-throttled shallow-water schools; a fish rolling through a turn flashes silver along its flanks, brightest parting from the shark; "
+                  << "a school holding in the shade fans its pectoral fins to hover, folding them back as it moves on\n"
                   << "island-simulator: stingrays " << stingrayGroup_.Stingrays().size()
                   << " agents glide, forage, and settle over shallow sandy seabed; the shark passing within nine metres turns them away and bursts a settled one from the sand; "
                   << "a settled ray two seconds in flicks sand over its back and lies half-buried in the sand's tones until it moves; "

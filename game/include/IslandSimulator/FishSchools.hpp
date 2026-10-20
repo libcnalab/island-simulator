@@ -26,6 +26,9 @@ namespace island
          *  light, brightest in a hard turn (parting from the shark), gone within a third of
          *  a second after it straightens. */
         float flash = 0.0f;
+        /** @brief 0..1 the pectoral fan: a fish of a school holding in the shade fans its
+         *  pectoral fins to hover, finPhase carrying the fan; folded back on the move. */
+        float finFan = 0.0f, finPhase = 0.0f;
         float scale = 1.0f;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
         std::uint8_t schoolIndex = 0U;
@@ -85,6 +88,9 @@ namespace island
         static constexpr float ShelterApproachSpeed = 1.5f;
         /** @brief Water this deep is where a shelter point is placed (the schools' seabed minimum and a little). */
         static constexpr float ShelterDepth = 0.95f;
+        /** @brief Fish fanning their pectoral fins this moment (the fan past half). */
+        [[nodiscard]] std::size_t FanningCount() const noexcept;
+        static constexpr float FinFanRate = 4.0f;
         [[nodiscard]] int FullSimulationCount() const noexcept { return fullSimulationCount_; }
         [[nodiscard]] int ReducedSimulationCount() const noexcept {
             return reducedSimulationCount_;

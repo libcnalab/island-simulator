@@ -406,14 +406,24 @@ namespace island
             AppendClosedPolygon(vertices, dorsal, axes.right * (0.010f * scale),
                                 palette.fin, palette.back);
 
+            // Fanning, each pectoral spreads out from its root and sweeps fore and aft with
+            // the fan's phase; the same six points either way.
+            const float fan = std::clamp(fish.finFan, 0.0f, 1.0f);
+            const float spread = fan * (.25f + .25f * std::sin(fish.finPhase));
+            const float sweep = fan * .05f * std::cos(fish.finPhase);
             for (const float side : {-1.0f, 1.0f}) {
+                const auto pect = [&](const float x, const float y, const float z) {
+                    const float out = (x - .145f) / .075f;   // 0 at the root, 1 at the fin's widest
+                    return LocalPoint(centre, axes, side * x * widthScale * (1.0f + spread * out),
+                                      y * heightScale, z * lengthScale + sweep * out, scale);
+                };
                 const std::array pectoral{
-                    LocalPoint(centre,axes,side*.145f*widthScale,-.015f*heightScale,.13f*lengthScale,scale),
-                    LocalPoint(centre,axes,side*.175f*widthScale,-.038f*heightScale,.035f*lengthScale,scale),
-                    LocalPoint(centre,axes,side*.22f*widthScale,-.058f*heightScale,-.06f*lengthScale,scale),
-                    LocalPoint(centre,axes,side*.205f*widthScale,-.064f*heightScale,-.115f*lengthScale,scale),
-                    LocalPoint(centre,axes,side*.17f*widthScale,-.055f*heightScale,-.16f*lengthScale,scale),
-                    LocalPoint(centre,axes,side*.125f*widthScale,-.048f*heightScale,-.19f*lengthScale,scale)};
+                    pect(.145f,-.015f,.13f),
+                    pect(.175f,-.038f,.035f),
+                    pect(.22f,-.058f,-.06f),
+                    pect(.205f,-.064f,-.115f),
+                    pect(.17f,-.055f,-.16f),
+                    pect(.125f,-.048f,-.19f)};
                 AppendClosedPolygon(vertices, pectoral, axes.up * (0.007f * scale),
                                     palette.fin, palette.back);
             }

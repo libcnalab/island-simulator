@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 189 (2026-10-20) — a holding school fans its pectoral fins
+
+A school holding in the jetty's shade hung with its fins as on the move.
+`FishState::finFan` (0..1) and `finPhase` now carry the fan: while its school shelters each
+fish fans its pectoral fins at `FinFanRate` (4 rad/s) to hover, the fan rising at 1.5/s and
+folding back at 2/s as the school moves on; `FanningCount()` counts the fish fanning. In
+the renderer each pectoral spreads out from its root by up to half its width and sweeps
+fore and aft with the phase, on the same six points, so the fish's fixed vertex budget
+holds. The fish report line gains "a school holding in the shade fans its pectoral fins to
+hover, folding them back as it moves on" (pinned). Core checks: a holding school's fish
+have the fan at full with its phase advancing, and on its way the fins are folded. Native
+`fish` passes.
+
 ## Loop pass 188 (2026-10-20) — a seabird shakes the water off
 
 A seabird climbed off its raft as sleek as it had sat. As the raft's `raftSeconds` run out

@@ -8901,6 +8901,13 @@ int main()
             if (step > 100 && std::hypot(school.centreX - shelterX, school.centreZ - shelterZ) > 0.5f) held = false;
         }
         Check(held && schools.ShelteringCount() >= 1U, "the school eases to the shelter point and holds there for the hold's length");
+        // Holding, the school's fish fan their pectorals, the fan at full with its phase
+        // advancing.
+        {
+            float fanPeak = 0.0f, fanPhase = 0.0f;
+            for (const auto& fish : schools.Fish()) { fanPeak = std::max(fanPeak, fish.finFan); if (fish.finFan > 0.9f) fanPhase = std::max(fanPhase, fish.finPhase); }
+            Check(fanPeak > 0.9f && fanPhase > 0.5f && schools.FanningCount() >= 1U, "a holding school's fish do not fan their pectoral fins");
+        }
         for (int step = 0; step < 60; ++step) schools.Update(0.05f, start.centreX, 0.0f, start.centreZ);
         const island::FishSchoolState released = schools.Schools()[0];
         bool movedOn = false;
@@ -8910,6 +8917,12 @@ int main()
             movedOn = std::hypot(school.centreX - released.centreX, school.centreZ - released.centreZ) > 2.0f;
         }
         Check(movedOn && schools.ShelterCount() == 1U, "after the hold the school goes on its way and does not turn in again at once");
+        // On its way, the fins fold back.
+        {
+            float fanLeft = 0.0f;
+            for (const auto& fish : schools.Fish()) fanLeft = std::max(fanLeft, fish.finFan);
+            Check(fanLeft < 0.2f && schools.FanningCount() == 0U, "a school on its way keeps its pectoral fins fanned");
+        }
         bool fishFollow = true;
         for (const auto& fish : schools.Fish())
             if (fish.schoolIndex == 0U && !std::isfinite(fish.x + fish.y + fish.z)) fishFollow = false;

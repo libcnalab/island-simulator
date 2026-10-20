@@ -1422,6 +1422,8 @@ def main():
                 raise RuntimeError("current dolphin tail slap is missing; check for a stale executable")
             if "lifting off, it shakes the water from its feathers" not in diagnostics:
                 raise RuntimeError("current seabird water shake is missing; check for a stale executable")
+            if "a school holding in the shade fans its pectoral fins to hover, folding them back as it moves on" not in diagnostics:
+                raise RuntimeError("current fish pectoral fan is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:
