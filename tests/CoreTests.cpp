@@ -7676,6 +7676,20 @@ int main()
         startled.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
         Check(startled.Birds()[0].behavior == island::BirdBehavior::Depart && startled.FlushCount() == 1U,
               "a thud 12 m off flushes the perched bird with no walker about");
+        // A snake's head up at the perch flushes the bird; one on the ground five metres
+        // below does not.
+        island::BirdFlock coiled(terrain);
+        coiled.SetPerchSites(sites);
+        std::vector<island::SnakeState> snakes(1);
+        for (auto& point : snakes[0].body) point = {perchX + 1.5f, sites[0].y - 5.0f, perchZ};
+        coiled.SetSnakes(snakes);
+        coiled.Update(0.05f, perchX + 25.0f, sites[0].y, perchZ);
+        Check(coiled.Birds()[0].behavior == island::BirdBehavior::Perched && coiled.SnakeFlushCount() == 0U,
+              "a snake on the ground five metres below the perch leaves the bird sitting");
+        for (auto& point : snakes[0].body) point = {perchX + 1.5f, sites[0].y, perchZ};
+        coiled.Update(0.05f, perchX + 25.0f, sites[0].y, perchZ);
+        Check(coiled.Birds()[0].behavior == island::BirdBehavior::Depart && coiled.SnakeFlushCount() == 1U,
+              "a snake's head up at the perch flushes the bird");
     }
 
     {

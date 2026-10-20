@@ -151,6 +151,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 88: a bolting deer flags its tail up and a grazing or resting deer flicks it every few seconds (PLAN "Loop pass 88").
 - Pass 89: the resident's pause at the campfire tends the fire, its tongues and plume standing taller while they stay (PLAN "Loop pass 89").
 - Pass 90: a snake's head within four metres of a monkey sends it off with the alarm (PLAN "Loop pass 90").
+- Pass 91: a snake's head come within three metres of a perched bird flushes it (PLAN "Loop pass 91").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

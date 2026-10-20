@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "IslandSimulator/BirdPerchLayout.hpp"
+#include "IslandSimulator/SnakePopulation.hpp"
 #include "IslandSimulator/GrassWalkers.hpp"
 #include "IslandSimulator/WildlifeSimulation.hpp"
 
@@ -143,6 +144,11 @@ namespace island
         [[nodiscard]] std::uint32_t RaftCount() const noexcept { return raftCount_; }
         /** @brief A sudden sound at a point; perched birds near it flush within the second. */
         void NoteDisturbance(float x, float z) noexcept;
+        /** @brief The snakes this frame: a snake's head within SnakeFlushDistance of a perched
+         *  bird, at its height, flushes it as the walker does. */
+        void SetSnakes(std::span<const SnakeState> snakes) noexcept { snakes_ = snakes; }
+        [[nodiscard]] std::uint32_t SnakeFlushCount() const noexcept { return snakeFlushes_; }
+        static constexpr float SnakeFlushDistance = 3.0f;
         /** @brief Fruit lying on the ground this frame; a fruit dove's ground visit lands
          *  beside the nearest one within FruitLandingRange when there is any. The doves'
          *  routes ring the island, so the range is the island: a dove sees the fruit from
@@ -264,6 +270,8 @@ namespace island
         std::uint32_t feeds_ = 0U;
         float disturbanceX_ = 0.0f, disturbanceZ_ = 0.0f, disturbanceSeconds_ = 0.0f;
         std::uint32_t flushCount_ = 0U;
+        std::span<const SnakeState> snakes_;
+        std::uint32_t snakeFlushes_ = 0U;
         std::span<const FallingFruit> lyingFruit_;
         std::uint32_t fruitLandings_ = 0U;
         std::span<const GrassWalker> walkers_;

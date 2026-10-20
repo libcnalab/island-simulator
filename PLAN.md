@@ -54,6 +54,17 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 91 (2026-10-20) — a snake at the perch flushes the bird
+
+A tree snake could climb to a perch and the bird on it sat on. The bird flock now takes the
+snakes each frame (`BirdFlock::SetSnakes`): a snake's head within 3 m of a perched bird
+(`SnakeFlushDistance`) and within four metres of its height flushes it as the walker and
+the coconut's thud do, counted by `SnakeFlushCount()` as well as the flush count. The
+startup report gains "a snake's head come within three metres of a perched bird flushes it
+as the walker does", pinned by the native capture tool. Core checks: a snake on the ground
+five metres below the perch leaves the bird sitting; its head up at the perch sends the
+bird off at once. Native `tree-snakes` passes.
+
 ## Loop pass 90 (2026-10-20) — a monkey flees a snake with the alarm
 
 The monkeys shared the stand with the ground and tree snakes without a glance. The troop

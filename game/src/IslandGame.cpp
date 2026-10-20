@@ -2329,6 +2329,7 @@ namespace island
                   << "island-simulator: a bird settling on a branch and a monkey moving through a crown shake a leaf loose\n"
                   << "island-simulator: a monkey the walker closes on gives an alarm call as it breaks into flight, the troop's second phrase pitched up and heard within forty metres\n"
                   << "island-simulator: a snake's head within four metres of a monkey sends it off with the alarm as the walker does\n"
+                  << "island-simulator: a snake's head come within three metres of a perched bird flushes it as the walker does\n"
                   << "island-simulator: fruit bats " << fruitBatColony_.Bats().size()
                   << " agents use six inland canopy roosts with four hanging and two bounded daytime flights; "
                      "a roosting bat's stir in its crown lets a fruit drop and a leaf come loose\n"
@@ -2756,6 +2757,7 @@ namespace island
         birdFlock_.SetLyingFruit(fallingFruit_.Fruit());
         const std::array<GrassWalker, GrassWalkers::Slots> birdWalkers = GatherWalkers(cameraPosition_.X, cameraPosition_.Z);
         birdFlock_.SetWalkers(birdWalkers);
+        birdFlock_.SetSnakes(snakes_->Snakes());
         birdFlock_.Update((viewpoint_ == FixedViewpoint::BirdDetail
                               || viewpoint_ == FixedViewpoint::GroundDoveDetail)
                                  ? 0.0f : deltaSeconds,

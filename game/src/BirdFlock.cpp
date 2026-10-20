@@ -347,10 +347,19 @@ namespace island
                 const bool crowded = std::isfinite(horizontal) && horizontal < FlushDistance;
                 const bool thudded = disturbanceSeconds_ > 0.0f && std::hypot(
                     agent.state.x - disturbanceX_, agent.state.z - disturbanceZ_) < DisturbanceDistance;
-                if (crowded || thudded) {
+                // A snake's head come up to the perch, at the bird's height, flushes it too.
+                bool snaked = false;
+                for (const SnakeState& snake : snakes_) {
+                    const SnakePoint& head = snake.body.front();
+                    if (!std::isfinite(head.x) || !std::isfinite(head.y) || !std::isfinite(head.z)) continue;
+                    if (std::hypot(agent.state.x - head.x, agent.state.z - head.z) < SnakeFlushDistance
+                        && std::abs(agent.state.y - head.y) < 4.0f) { snaked = true; break; }
+                }
+                if (crowded || thudded || snaked) {
                     agent.state.behavior = BirdBehavior::Depart;
                     agent.behaviorSeconds = 0.0f;
                     ++flushCount_;
+                    if (snaked) ++snakeFlushes_;
                 }
             }
             agent.accumulatedSeconds += safeDelta;
