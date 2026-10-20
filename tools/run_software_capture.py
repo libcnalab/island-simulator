@@ -1259,6 +1259,8 @@ def main():
                 raise RuntimeError("current stream leaf adoption is missing; check for a stale executable")
             if "one that drifts onto rising sand washes up and lies on the strand" not in diagnostics:
                 raise RuntimeError("current stream leaf beaching is missing; check for a stale executable")
+            if "one coming alert on its bank hisses at the walker" not in diagnostics:
+                raise RuntimeError("current crocodile hiss is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

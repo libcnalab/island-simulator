@@ -54,6 +54,22 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 110 (2026-10-20) — the crocodile hisses at the walker
+
+A crocodile came alert on its bank at the walker in silence. Coming alert (the walker inside
+24 m, the animal out of the water) it now hisses once per alert (`CrocodileGroup::LastHiss`,
+placed at its jaws) and gapes for 1.6 s (`HissSeconds`, the jaw target held at 0.62);
+`GenerateCrocodileHiss(variant)` is an original low open-jawed breath (1.2 s of heavily
+filtered noise swelling and dying away; the second variant with a 23 Hz growl under it),
+carried by `WildlifeCallType::Crocodile` through the shared wildlife slot (1.25 s), queued by
+`Soundscape::NoteCrocodileHiss`, heard within about thirty metres and dropped if the slot
+stays busy a second and a half. The startup report's crocodile line gains "one coming alert
+on its bank hisses at the walker, an original low open-jawed breath heard within thirty
+metres", pinned by the native capture tool. Core checks: the walker forty metres off draws
+no hiss; at twenty metres the crocodiles coming alert hiss at their jaws and gape, and no
+hiss is given again while the walker stays; the hiss PCM is deterministic, two variants,
+1.2 s, silent at both ends, loud in its middle and low in pitch. Native `crocodiles` passes.
+
 ## Loop pass 109 (2026-10-20) — stream leaves wash up on the strand
 
 A leaf out of the mouth drifted the lagoon for seventy-five seconds and then simply

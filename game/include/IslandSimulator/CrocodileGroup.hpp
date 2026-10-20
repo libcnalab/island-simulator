@@ -53,6 +53,11 @@ public:
      *  the ring's age, counted so an entry is noted once. */
     struct Entry { float x=0,z=0,ageSeconds=0; std::uint32_t count=0; bool valid=false; };
     [[nodiscard]] const Entry& LastEntry()const noexcept{return entry_;}
+    /** @brief The last crocodile to come alert on the bank at the walker: where its head is,
+     *  counted so the hiss is given once per alert; its jaw gapes while it hisses. */
+    struct Hiss { float x=0,y=0,z=0; std::uint32_t count=0; bool valid=false; };
+    [[nodiscard]] const Hiss& LastHiss()const noexcept{return hiss_;}
+    static constexpr float HissSeconds=1.6f;
     static constexpr float EntrySeconds=2.6f;
     [[nodiscard]] std::span<const CrocodileHome> Homes()const noexcept{return homes_;}
     [[nodiscard]] int FullSimulationCount()const noexcept{return fullCount_;}
@@ -68,6 +73,8 @@ private:
         float accumulatedSeconds=0;
         float phaseOffset=0;
         std::uint32_t transitions=0;
+        bool wasAlert=false;
+        float hissSeconds=0;
     };
     [[nodiscard]] std::pair<float,float> FindAnchor(float lateral,float targetShore,
                                                     bool requireDry)const;
@@ -83,6 +90,7 @@ private:
     float elapsedSeconds_=0;
     std::uint64_t frameIndex_=0;
     Entry entry_;
+    Hiss hiss_;
     int fullCount_=0,reducedCount_=0,dormantCount_=0;
 };
 

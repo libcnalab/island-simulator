@@ -9122,6 +9122,40 @@ int main()
             for(int step=0;step<12;++step) hidden.Update(0.05f,denned.x+1.0f,denned.y,denned.z);
             Check(denned.camouflageAmount<.05f,"a startled octopus flashes back to its own colours within a second");
         }
+        // A crocodile on the bank coming alert at the walker hisses once, at its jaws, and gapes
+        // while it does; the hiss is not given again while the walker stays, and the walker
+        // far off gives none.
+        {
+            island::CrocodileGroup wary(terrain);
+            std::size_t basking=island::CrocodileGroup::CrocodileCount;
+            for(std::size_t i=0;i<wary.Crocodiles().size();++i) if(wary.Crocodiles()[i].behavior==island::CrocodileBehavior::Bask&&wary.Crocodiles()[i].submerged<.2f) { basking=i; break; }
+            Check(basking<island::CrocodileGroup::CrocodileCount,"a crocodile starts basking on the bank for the hiss check");
+            const auto lie=wary.Crocodiles()[basking];
+            for(int step=0;step<20;++step) wary.Update(0.05f,lie.x+40.0f,lie.y+1.6f,lie.z);
+            Check(wary.LastHiss().count==0U,"the walker forty metres off draws no hiss");
+            for(int step=0;step<20;++step) wary.Update(0.05f,lie.x+20.0f,lie.y+1.6f,lie.z);
+            const std::uint32_t noted=wary.LastHiss().count;
+            bool atJaws=false;
+            for(const auto& croc:wary.Crocodiles()) if(std::hypot(wary.LastHiss().x-croc.x,wary.LastHiss().z-croc.z)<2.0f) atJaws=true;
+            Check(noted>=1U&&noted<=island::CrocodileGroup::CrocodileCount&&wary.LastHiss().valid&&atJaws,
+                  "a crocodile coming alert at the walker twenty metres off hisses, at its jaws");
+            Check(wary.Crocodiles()[basking].jawOpen>.2f,"the hissing crocodile gapes");
+            for(int step=0;step<100;++step) wary.Update(0.05f,lie.x+20.0f,lie.y+1.6f,lie.z);
+            Check(wary.LastHiss().count==noted,"the hiss is not given again while the walker stays");
+        }
+        {
+            // The crocodile's hiss PCM: deterministic, two variants, 1.2 s, silent at both
+            // ends, low (few zero crossings) and loud in its middle.
+            const auto hissA=island::GenerateCrocodileHiss(0),hissB=island::GenerateCrocodileHiss(1);
+            const std::size_t frames=static_cast<std::size_t>(22050*1.2f);
+            int crossings=0;int peak=0;
+            for(std::size_t i=8820;i<17640;++i) { if((hissA.samples[i]>=0)!=(hissA.samples[i-1]>=0)) ++crossings; peak=std::max(peak,std::abs(static_cast<int>(hissA.samples[i]))); }
+            Check(hissA.sampleRate==22050&&hissA.samples.size()==frames&&hissB.samples.size()==frames
+                &&hissA.samples!=hissB.samples&&hissA.samples==island::GenerateCrocodileHiss(0).samples
+                &&hissA.samples.front()==0&&hissA.samples.back()==0&&hissB.samples.front()==0&&hissB.samples.back()==0,
+                "crocodile hiss PCM is deterministic, two variants, 1.2 s and silent at endpoints");
+            Check(peak>5000&&crossings<3200,"the crocodile's hiss is loud in its middle and low in pitch");
+        }
         // A crocodile on the bank slides into the water when the walker comes near: the entry
         // is noted once, at a point at the water's edge, within a minute.
         {

@@ -2394,7 +2394,7 @@ namespace island
                   << "island-simulator: the boars stand off from the bear and trot away when it comes close, as from the walker\n"
                   << "island-simulator: the hut's roof ridge is a perch for the birds\n"
                   << "island-simulator: crocodiles " << crocodileGroup_.Crocodiles().size()
-                  << " agents bask, crawl, swim, and retreat within the stream estuary\n"
+                  << " agents bask, crawl, swim, and retreat within the stream estuary; one coming alert on its bank hisses at the walker, an original low open-jawed breath heard within thirty metres\n"
                   << "island-simulator: fish " << fishSchools_.Fish().size()
                   << " agents in " << FishSchools::SchoolCount
                   << " distance-throttled shallow-water schools\n"
@@ -3009,6 +3009,12 @@ namespace island
                                       previousCrocodile.z);
         crocodileGroup_.Update(deltaSeconds,crocodileObserver.X,crocodileObserver.Y,
                                crocodileObserver.Z);
+        // A crocodile coming alert on its bank hisses at the walker.
+        if(soundscape_&&crocodileGroup_.LastHiss().count!=notedCrocHisses_) {
+            notedCrocHisses_=crocodileGroup_.LastHiss().count;
+            const auto& hiss=crocodileGroup_.LastHiss();
+            if(hiss.valid) soundscape_->NoteCrocodileHiss(hiss.x,hiss.y,hiss.z);
+        }
         if(viewpoint_==FixedViewpoint::CrocodileDetail) {
             const CrocodileState& subject=crocodileGroup_.Crocodiles()[2U];
             cameraPosition_+=Vector3(subject.x-previousCrocodile.x,

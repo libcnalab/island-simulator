@@ -153,6 +153,14 @@ void CrocodileGroup::UpdateAgent(Agent& agent,float dt,float observerX,float obs
         agent.behaviorSeconds=7.0f;
     } else if(observerDistance<AlertDistance) {
         // Lie still and face the approaching player; the basking cycle resumes once they leave.
+        // Coming alert on the bank, the crocodile hisses, its jaw gaping while it does.
+        if(!agent.wasAlert&&agent.state.submerged<.2f) {
+            agent.hissSeconds=HissSeconds;
+            hiss_={agent.state.x+std::cos(agent.state.headingRadians)*1.2f*agent.state.scale,
+                   agent.state.y+.25f*agent.state.scale,
+                   agent.state.z+std::sin(agent.state.headingRadians)*1.2f*agent.state.scale,
+                   hiss_.count+1U,true};
+        }
         agent.state.behavior=CrocodileBehavior::Bask;
         agent.behaviorSeconds=std::max(agent.behaviorSeconds,.5f);
         alertFacing=true;
@@ -222,7 +230,9 @@ void CrocodileGroup::UpdateAgent(Agent& agent,float dt,float observerX,float obs
                               -dt*.55f,dt*.55f);
     agent.state.gaitPhase=std::fmod(agent.state.gaitPhase+dt*(1.1f+agent.state.speed*2.2f),Tau);
     agent.state.bodyWave=std::sin(agent.state.gaitPhase)*(.10f+.18f*agent.state.submerged);
-    const float jawTarget=agent.state.behavior==CrocodileBehavior::Bask
+    agent.wasAlert=alertFacing;
+    agent.hissSeconds=std::max(0.0f,agent.hissSeconds-dt);
+    const float jawTarget=agent.hissSeconds>0.0f?.62f:agent.state.behavior==CrocodileBehavior::Bask
         ?(.5f+.5f*std::sin(elapsedSeconds_*.12f+agent.phaseOffset))*.14f:0.0f;
     agent.state.jawOpen+=std::clamp(jawTarget-agent.state.jawOpen,-dt*.18f,dt*.18f);
 }

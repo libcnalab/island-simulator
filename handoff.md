@@ -171,6 +171,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 107: a flushing bird lets a pale feather go that rocks down slower than a leaf (PLAN "Loop pass 107").
 - Pass 108: a leaf or feather that comes down on the stream is taken by the current and drifts away (PLAN "Loop pass 108").
 - Pass 109: a stream leaf drifting onto rising sand washes up and lies on the strand (PLAN "Loop pass 109").
+- Pass 110: a crocodile coming alert on its bank hisses at the walker and gapes (PLAN "Loop pass 110").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

@@ -1650,6 +1650,30 @@ namespace island
         return {};
     }
 
+    AmbientLoop GenerateCrocodileHiss(const std::uint8_t variant)
+    {
+        // A crocodile's hiss: a long low breath forced through the open jaws, heavier and
+        // slower than a snake's, swelling and dying away; the second variant with a growl
+        // of slow pulses under it.
+        constexpr std::size_t frames = static_cast<std::size_t>(AmbientSampleRate * 1.2f);
+        std::vector<float> samples(frames, 0.0f);
+        const bool growl = (variant & 1U) != 0U;
+        DeterministicNoise noise(0x1c70c0d1U + static_cast<std::uint32_t>(growl) * 2029U);
+        float low = 0.0f, lower = 0.0f, slowest = 0.0f;
+        for (std::size_t i = 0; i < frames; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            const float raw = noise.Next();
+            low += 0.06f * (raw - low);
+            lower += 0.012f * (low - lower);
+            slowest += 0.004f * (lower - slowest);
+            const float u = t / 1.2f;
+            const float envelope = SmoothStep(0.0f, 0.16f, u) * (1.0f - SmoothStep(0.62f, 1.0f, u));
+            const float pulse = growl ? .72f + .28f * std::sin(2.0f * std::numbers::pi_v<float> * 23.0f * t) : 1.0f;
+            samples[i] = envelope * pulse * ((low - lower) * 2.4f + (lower - slowest) * 2.0f + (raw - low) * 0.18f);
+        }
+        return Quantize(samples, .6f);
+    }
+
     AmbientLoop GenerateWingClap(const std::uint8_t variant)
     {
         // A flushing bird's wing clap: six quick beats of air in half a second, each a
