@@ -106,6 +106,7 @@
 #include "IslandSimulator/CanopyShaftRenderer.hpp"
 #include "IslandSimulator/FootprintTrailRenderer.hpp"
 #include "IslandSimulator/RootingDustRenderer.hpp"
+#include "IslandSimulator/ShellDragRenderer.hpp"
 #include "IslandSimulator/HelicopterLayout.hpp"
 #include "IslandSimulator/HelicopterRenderer.hpp"
 #include "IslandSimulator/ShorelineRenderer.hpp"
@@ -474,6 +475,8 @@ namespace island
         std::unique_ptr<FootprintTrailRenderer> footprintRenderer_;
         RootingDustField rootingDust_{terrain_};
         std::unique_ptr<RootingDustRenderer> rootingDustRenderer_;
+        ShellDragTrail shellDrags_;
+        std::unique_ptr<ShellDragRenderer> shellDragRenderer_;
         float lastSubmergedDepth_ = 0.0f, bubbleBurst_ = 0.0f;
         float seaForageSeconds_ = 0.0f;
         std::uint32_t notedDiveCount_ = 0U;

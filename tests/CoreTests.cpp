@@ -44,6 +44,7 @@
 #include "IslandSimulator/CanopyShafts.hpp"
 #include "IslandSimulator/FootprintTrail.hpp"
 #include "IslandSimulator/RootingDustField.hpp"
+#include "IslandSimulator/ShellDragTrail.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
@@ -7876,6 +7877,27 @@ int main()
             const std::uint32_t before=dust.ReleaseCount();
             for(int step=0;step<60;++step) dust.Update(0.05f,0.0f,boars);
             Check(dust.ReleaseCount()==before&&dust.ActiveCount()==0U,"a walking boar throws no dust and the old puffs clear");
+        }
+        // The hermit crabs' drag lines: a foraging crab crossing two metres of sand leaves a
+        // chain of short segments along its path; a paused crab leaves none; lines fade.
+        {
+            island::ShellDragTrail drags;
+            island::HermitCrabState crab{};
+            crab.behavior=island::HermitCrabBehavior::Forage;crab.speed=0.05f;crab.simulationTier=island::WildlifeSimulationTier::Full;
+            crab.x=10.0f;crab.z=5.0f;
+            std::vector<island::HermitCrabState> crabs{crab};
+            for(int step=0;step<400;++step) { crabs[0].x+=0.005f; drags.Update(0.05f,crabs); }
+            bool onPath=true;
+            for(const auto& segment:drags.Segments()) if(segment.active) {
+                if(std::abs(segment.z0-5.0f)>0.001f||std::abs(segment.z1-5.0f)>0.001f||segment.x0<9.99f||segment.x1>12.01f||segment.x1<=segment.x0) onPath=false;
+            }
+            Check(drags.LaidCount()>=22U&&drags.LaidCount()<=26U&&onPath,"a foraging hermit crab lays a chain of drag segments along its path");
+            crabs[0].behavior=island::HermitCrabBehavior::Pause;crabs[0].speed=0.0f;
+            const std::uint32_t before=drags.LaidCount();
+            for(int step=0;step<100;++step) drags.Update(0.05f,crabs);
+            Check(drags.LaidCount()==before,"a paused crab drags no line");
+            for(int step=0;step<1000;++step) drags.Update(0.1f,crabs);
+            Check(drags.ActiveCount()==0U,"the sand levels the drag lines within their life");
         }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls

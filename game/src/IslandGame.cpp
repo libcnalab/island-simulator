@@ -2158,6 +2158,7 @@ namespace island
         canopyShafts_ = std::make_unique<CanopyShaftRenderer>(device);
         footprintRenderer_ = std::make_unique<FootprintTrailRenderer>(device, terrain_);
         rootingDustRenderer_ = std::make_unique<RootingDustRenderer>(device);
+        shellDragRenderer_ = std::make_unique<ShellDragRenderer>(device, terrain_);
         worldDebugRenderer_ = std::make_unique<WorldDebugRenderer>(device, terrain_);
         if (viewpoint_ == FixedViewpoint::GroundContactDetail) {
             constexpr float contactZ = 45.0f;
@@ -2752,6 +2753,7 @@ namespace island
         hermitCrabGroup_.Update(
             viewpoint_ == FixedViewpoint::HermitCrabDetail ? 0.0f : deltaSeconds,
             hermitCrabObserver.X, hermitCrabObserver.Y, hermitCrabObserver.Z);
+        shellDrags_.Update(deltaSeconds, hermitCrabGroup_.Crabs());
         Vector3 coconutCrabObserver = cameraPosition_;
         if (viewpoint_ == FixedViewpoint::CoconutCrabDetail) {
             const auto& crab = coconutCrabGroup_.Crabs()[2U];
@@ -4237,6 +4239,7 @@ namespace island
             bearRenderer_->DrawShadow(cameraView_,cameraProjection_,renderCameraPosition_,bear_->State());
             birdShadowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,birdFlock_.Birds());
             footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,footprints_.Prints());
+            shellDragRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,shellDrags_.Segments());
         }
 
         {

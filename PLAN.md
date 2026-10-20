@@ -46,6 +46,20 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 42 (2026-10-20) — the hermit crabs' drag lines
+
+The hermit crabs crossed the sheltered sand and left it unmarked. A core `ShellDragTrail`
+tracks each of the ten crabs: while a crab is not pausing, moves faster than 1.5 cm/s and
+is simulated, every 8 cm of travel lays a segment from its last point to its new one (a
+jump over a metre resets the tracker instead); 200 segments cycle, the oldest giving way,
+and each fades over ninety seconds. `ShellDragRenderer` draws a segment as a 2.2 cm wide
+terrain-conforming dark ribbon, alpha 64 fresh within 20 m, after the walker's prints in
+the contact-shadow pass. Diagnostic "the hermit crabs drag thin lines in the sand behind
+their shells that the sand levels within minutes" is pinned by the native capture tool.
+Core checks: a foraging crab crossing two metres lays 22–26 segments end to end along its
+path; a paused crab lays none; the lines are gone after their life. Native `hermit-crabs`
+passes.
+
 ## Loop pass 41 (2026-10-20) — the boars' rooting throws up soil
 
 A boar stood with its snout among the roots (pass 8) and the ground stayed still. A core

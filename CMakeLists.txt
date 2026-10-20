@@ -96,6 +96,7 @@ add_library(island_core STATIC
     game/src/CascadeMistField.cpp
     game/src/FootprintTrail.cpp
     game/src/RootingDustField.cpp
+    game/src/ShellDragTrail.cpp
     game/src/HelicopterLayout.cpp
     game/src/GoatHabitat.cpp
     game/src/SpiderHabitat.cpp
@@ -716,6 +717,7 @@ if(ISLAND_BUILD_GAME)
         game/src/CanopyShaftRenderer.cpp
         game/src/FootprintTrailRenderer.cpp
         game/src/RootingDustRenderer.cpp
+        game/src/ShellDragRenderer.cpp
         game/src/UnderwaterEffectRenderer.cpp
         game/src/HelicopterRenderer.cpp
         game/src/ShorelineRenderer.cpp
