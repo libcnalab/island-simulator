@@ -1135,6 +1135,8 @@ def main():
                 raise RuntimeError("current coconut crab feeding is missing; check for a stale executable")
             if "at the campfire the resident stands facing the fire" not in diagnostics:
                 raise RuntimeError("current resident campfire facing is missing; check for a stale executable")
+            if "an ant trail whose food end lies near a fallen fruit bends to it and the carriers come back from the fruit" not in diagnostics:
+                raise RuntimeError("current ant fruit trails are missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

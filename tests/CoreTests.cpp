@@ -12,6 +12,7 @@
 #include "IslandSimulator/FrogPopulation.hpp"
 #include "IslandSimulator/HermitCrabGroup.hpp"
 #include "IslandSimulator/CoconutCrabGroup.hpp"
+#include "IslandSimulator/AntTrails.hpp"
 #include "IslandSimulator/CrabColony.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
 #include "IslandSimulator/CoastalWindResponse.hpp"
@@ -47,7 +48,6 @@
 #include "IslandSimulator/ShellDragTrail.hpp"
 #include "IslandSimulator/SurfSprayField.hpp"
 #include "IslandSimulator/DolphinBlowField.hpp"
-#include "IslandSimulator/CoconutCrabGroup.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
@@ -7987,6 +7987,31 @@ int main()
                 nuts.Update(0.05f,{});
             }
             Check(crabs.WorkCount()>=1U&&worked&&nuts.ConsumedCount()>=1U,"a coconut crab walks to the nut, works it with raised claws and finishes it within ten minutes");
+        }
+        // Ant trails to fallen fruit: a fruit lying two metres past a ground trail's food end
+        // bends the trail to it, an ant reaches the fruit within a minute, and with the fruit
+        // gone the trail returns to its line.
+        {
+            const island::JungleLayout antJungle(terrain);
+            island::AntTrails ants(terrain,antJungle);
+            std::size_t groundTrail=island::AntTrails::TrailCount;
+            float endX=0,endZ=0;
+            for(std::size_t t=0;t<island::AntTrails::TrailCount&&groundTrail==island::AntTrails::TrailCount;++t)
+                if(ants.FoodEnd(t,endX,endZ)) groundTrail=t;
+            Check(groundTrail<island::AntTrails::TrailCount,"a ground ant trail has a food end");
+            const float lineX=endX,lineZ=endZ;
+            island::FallingFruit fruit{};fruit.x=endX+2.0f;fruit.z=endZ;fruit.y=terrain.Height(fruit.x,fruit.z);fruit.restSeconds=5.0f;fruit.variant=2U;fruit.active=true;
+            std::vector<island::FallingFruit> lying{fruit};
+            ants.SetLyingFruit(lying);
+            Check(ants.FoodTrailCount()==1U&&ants.FoodEnd(groundTrail,endX,endZ)&&std::hypot(endX-fruit.x,endZ-fruit.z)<0.01f,"the trail's food end moves to the fruit");
+            bool reached=false;
+            for(int step=0;step<1200&&!reached;++step) {
+                ants.Update(0.05f,fruit.x,fruit.y+1.0f,fruit.z);
+                for(const auto& ant:ants.Ants()) if(ant.trailIndex==groundTrail&&std::hypot(ant.x-fruit.x,ant.z-fruit.z)<0.4f) reached=true;
+            }
+            Check(reached,"an ant reaches the fruit within a minute");
+            ants.SetLyingFruit({});
+            Check(ants.FoodTrailCount()==0U&&ants.FoodEnd(groundTrail,endX,endZ)&&std::hypot(endX-lineX,endZ-lineZ)<0.01f,"with the fruit gone the trail returns to its line");
         }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls

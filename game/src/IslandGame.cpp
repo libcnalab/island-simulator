@@ -2283,6 +2283,7 @@ namespace island
                   << "island-simulator: coconut crabs " << coconutCrabGroup_.Crabs().size()
                   << " agents in deterministic coastal palm-zone habitats; "
                   << "a foraging crab walks to a coconut lying in its range and works it with its claws until it is gone\n"
+                  << "island-simulator: an ant trail whose food end lies near a fallen fruit bends to it and the carriers come back from the fruit\n"
                   << "island-simulator: crocodiles " << crocodileGroup_.Crocodiles().size()
                   << " agents bask, crawl, swim, and retreat within the stream estuary\n"
                   << "island-simulator: fish " << fishSchools_.Fish().size()
@@ -2727,6 +2728,7 @@ namespace island
             const auto& ant=antTrails_.Ants()[5U];
             antObserver=Vector3(ant.x,ant.y+10.0f,ant.z);
         }
+        antTrails_.SetLyingFruit(fallingFruit_.Fruit());
         antTrails_.Update(viewpoint_==FixedViewpoint::AntDetail?0.0f:deltaSeconds,
                           antObserver.X,antObserver.Y,antObserver.Z);
         Vector3 cicadaObserver = cameraPosition_;

@@ -46,6 +46,21 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 48 (2026-10-20) — the ant trails bend to the fallen fruit
+
+The four ant trails ran their authored lines whatever lay beside them. `AntTrails` now keeps
+a working line per trail (the authored one by default) and reads the fruit span each frame
+(`SetLyingFruit`): for a ground trail, a resting, non-rolling, non-coconut fruit within 5 m
+of the far (food) end bends the line, which keeps its near (nest) end and runs to the fruit,
+the ants' progress scaled to the new length; with the fruit gone the line returns. The
+`Carry` ants come back from the fruit as before. `FoodTrailCount()` and `FoodEnd()` expose
+it. Diagnostic "an ant trail whose food end lies near a fallen fruit bends to it and the
+carriers come back from the fruit" is printed in the startup report and pinned by the native
+capture tool. Core checks: a fruit two metres past a ground trail's food end moves that end
+to the fruit, an ant reaches the fruit within a minute, and the line returns when the fruit
+is gone. Native `ants` passes. (The staged script tripped on a duplicate include that pass 46
+had added to the core tests; the duplicate is gone.)
+
 ## Loop pass 47 (2026-10-20) — the resident faces the fire
 
 Pass 31 gave the landmark pauses a facing; the campfire call, the tour's first and last

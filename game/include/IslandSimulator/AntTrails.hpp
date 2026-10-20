@@ -11,6 +11,7 @@ namespace island
 {
     class IslandTerrain;
     class JungleLayout;
+    struct FallingFruit;
 
     enum class AntBehavior : std::uint8_t { Walk, Carry, Pause };
 
@@ -51,6 +52,14 @@ namespace island
         {
             return trails_;
         }
+        /** @brief Fruit lying on the ground this frame: a ground trail whose food end lies
+         *  within FoodReach of a resting fruit bends to it, and the carriers come back from
+         *  the fruit; with the fruit gone the trail returns to its line. */
+        void SetLyingFruit(std::span<const FallingFruit> fruit) noexcept;
+        [[nodiscard]] std::size_t FoodTrailCount() const noexcept;
+        /** @brief The far (food) end of a trail as the ants walk it now. */
+        [[nodiscard]] bool FoodEnd(std::size_t trail, float& x, float& z) const noexcept;
+        static constexpr float FoodReach = 5.0f;
 
     private:
         struct Agent
@@ -68,6 +77,11 @@ namespace island
         const IslandTerrain& terrain_;
         std::array<AntTrailHome, TrailCount> trails_{};
         std::array<float, TrailCount> trailAngles_{};
+        // The line the ants walk now: the authored one, or one bent to a fruit.
+        struct Line { float x = 0.0f, z = 0.0f, angle = 0.0f, halfLength = 0.0f; bool food = false; };
+        std::array<Line, TrailCount> lines_{};
+        bool linesReady_ = false;
+        void RefreshLines() noexcept;
         std::array<float, TrailCount> trunkScales_{};
         std::array<std::uint8_t, TrailCount> trunkVariants_{};
         std::array<Agent, Count> agents_{};

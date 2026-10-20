@@ -108,6 +108,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 45: a surfacing dolphin blows a puff of spray from the blowhole (PLAN "Loop pass 45").
 - Pass 46: coconut crabs walk to lying coconuts and work them with their claws (PLAN "Loop pass 46").
 - Pass 47: the resident stands facing the fire at the campfire pause (PLAN "Loop pass 47").
+- Pass 48: an ant trail bends to a fruit lying near its food end (PLAN "Loop pass 48").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

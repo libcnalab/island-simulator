@@ -1,4 +1,5 @@
 #include "IslandSimulator/AntTrails.hpp"
+#include "IslandSimulator/FallingFruitField.hpp"
 
 #include "IslandSimulator/CanopyProfile.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
@@ -77,6 +78,62 @@ namespace island
         Place(agent);
     }
 
+    void AntTrails::RefreshLines() noexcept
+    {
+        for (std::size_t trail = 0; trail < TrailCount; ++trail) {
+            if (lines_[trail].food) continue;
+            lines_[trail] = {trails_[trail].x, trails_[trail].z, trailAngles_[trail], trails_[trail].halfLength, false};
+        }
+        linesReady_ = true;
+    }
+
+    void AntTrails::SetLyingFruit(const std::span<const FallingFruit> fruit) noexcept
+    {
+        if (!linesReady_) RefreshLines();
+        for (std::size_t trail = 0; trail < TrailCount; ++trail) {
+            if (trails_[trail].onTrunk) continue;
+            // The authored line's near end stays the nest; the far end is the food.
+            const float c = std::cos(trailAngles_[trail]), s = std::sin(trailAngles_[trail]);
+            const float nestX = trails_[trail].x - c * trails_[trail].halfLength;
+            const float nestZ = trails_[trail].z - s * trails_[trail].halfLength;
+            const float foodX = trails_[trail].x + c * trails_[trail].halfLength;
+            const float foodZ = trails_[trail].z + s * trails_[trail].halfLength;
+            float best = FoodReach;
+            const FallingFruit* chosen = nullptr;
+            for (const FallingFruit& f : fruit) {
+                if (!f.active || f.restSeconds < 0.0f || f.rolling || f.afloat
+                    || f.variant == FallingFruitField::CoconutVariant) continue;
+                const float distance = std::hypot(f.x - foodX, f.z - foodZ);
+                if (distance < best) { best = distance; chosen = &f; }
+            }
+            if (chosen) {
+                const float dx = chosen->x - nestX, dz = chosen->z - nestZ;
+                const float length = std::max(std::hypot(dx, dz), 0.5f);
+                lines_[trail] = {(nestX + chosen->x) * 0.5f, (nestZ + chosen->z) * 0.5f,
+                                 std::atan2(dz, dx), length * 0.5f, true};
+            } else {
+                lines_[trail] = {trails_[trail].x, trails_[trail].z, trailAngles_[trail], trails_[trail].halfLength, false};
+            }
+        }
+    }
+
+    std::size_t AntTrails::FoodTrailCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const auto& line : lines_) count += line.food ? 1U : 0U;
+        return count;
+    }
+
+    bool AntTrails::FoodEnd(const std::size_t trail, float& x, float& z) const noexcept
+    {
+        if (trail >= TrailCount || trails_[trail].onTrunk) return false;
+        const Line& line = linesReady_ ? lines_[trail]
+            : Line{trails_[trail].x, trails_[trail].z, trailAngles_[trail], trails_[trail].halfLength, false};
+        x = line.x + std::cos(line.angle) * line.halfLength;
+        z = line.z + std::sin(line.angle) * line.halfLength;
+        return true;
+    }
+
     void AntTrails::Place(Agent& agent) noexcept
     {
         const std::size_t trailIndex = agent.state.trailIndex;
@@ -98,19 +155,21 @@ namespace island
             agent.state.forwardY = .995f * direction;
             agent.state.forwardZ = .10f * std::cos(spiral) * direction;
         } else {
-            const float angle = trailAngles_[trailIndex];
-            const float along = (path * 2.0f - 1.0f) * trail.halfLength;
+            if (!linesReady_) RefreshLines();
+            const Line& line = lines_[trailIndex];
+            const float angle = line.angle;
+            const float along = (path * 2.0f - 1.0f) * line.halfLength;
             const float side = std::sin(path * TwoPi + trailIndex * .81f) * .34f;
             const float c = std::cos(angle), s = std::sin(angle);
-            agent.state.x = trail.x + c * along - s * side;
-            agent.state.z = trail.z + s * along + c * side;
+            agent.state.x = line.x + c * along - s * side;
+            agent.state.z = line.z + s * along + c * side;
             const TerrainSample sample = terrain_.Sample(agent.state.x, agent.state.z);
             agent.state.y = sample.height + .014f * agent.state.scale;
             agent.state.normalX = sample.normal.x;
             agent.state.normalY = sample.normal.y;
             agent.state.normalZ = sample.normal.z;
             const float lateralDerivative = std::cos(path * TwoPi + trailIndex * .81f)
-                * .34f * TwoPi / (2.0f * trail.halfLength);
+                * .34f * TwoPi / (2.0f * line.halfLength);
             const float direction = agent.outward ? 1.0f : -1.0f;
             float fx = (c - s * lateralDerivative) * direction;
             float fz = (s + c * lateralDerivative) * direction;
@@ -157,7 +216,9 @@ namespace island
             return;
         }
         const auto& trail = trails_[agent.state.trailIndex];
-        agent.progress += agent.speed * deltaSeconds / (trail.halfLength*2.0f);
+        if (!linesReady_) RefreshLines();
+        const float halfLength = trail.onTrunk ? trail.halfLength : lines_[agent.state.trailIndex].halfLength;
+        agent.progress += agent.speed * deltaSeconds / (halfLength*2.0f);
         if (agent.progress >= 1.0f) {
             agent.progress -= 1.0f;
             agent.outward = !agent.outward;
