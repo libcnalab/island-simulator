@@ -1153,8 +1153,15 @@ namespace island
             constexpr std::array<float,6> AbdomenStations={{-.65f,-.42f,-.15f,.13f,.40f,.58f}};
             constexpr std::array<float,6> AbdomenWidths={{.12f,.26f,.37f,.44f,.42f,.20f}};
             constexpr std::array<float,6> AbdomenHeights={{.11f,.22f,.28f,.31f,.28f,.14f}};
+            // Calling, the abdomen swells and drums with the tymbals: its widths and
+            // heights pulse by up to six per cent on the same vertices.
+            const float drum = std::clamp(cicada.call, 0.0f, 1.0f)
+                * (0.5f + 0.5f * std::sin(cicada.tymbalPhase)) * .06f;
+            std::array<float,6> abdomenWidths = AbdomenWidths, abdomenHeights = AbdomenHeights;
+            for (float& width : abdomenWidths) width *= 1.0f + drum;
+            for (float& height : abdomenHeights) height *= 1.0f + drum;
             AppendGeckoLoft(vertices,abdomen,right,dorsal,forward,AbdomenStations,
-                AbdomenWidths,AbdomenHeights,unit,body,flank,
+                abdomenWidths,abdomenHeights,unit,body,flank,
                 Color::Lerp(body,Color(166,151,94),.18f));
             const Color marking=Color::Lerp(body,Color(32,29,20),.35f);
             AppendGeckoSpot(vertices,thorax+dorsal*(.47f*unit)+forward*(.04f*unit),
@@ -1178,8 +1185,10 @@ namespace island
             }
 
             for (const float side : {-1.0f, 1.0f}) {
+                // Perched and calling, the wings tremble with the drumming.
                 const float beat = cicada.behavior == CicadaBehavior::Flight
-                    ? std::sin(cicada.wingPhase) * .35f : .08f;
+                    ? std::sin(cicada.wingPhase) * .35f
+                    : .08f + std::clamp(cicada.call, 0.0f, 1.0f) * .045f * std::sin(cicada.tymbalPhase);
                 const Vector3 root=thorax+right*(side*.22f*unit)
                     +dorsal*(.31f*unit)-forward*(.02f*unit);
                 const Vector3 leading=root+right*(side*.24f*unit)

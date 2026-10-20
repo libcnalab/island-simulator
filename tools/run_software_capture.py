@@ -1372,6 +1372,8 @@ def main():
                 raise RuntimeError("current spider threat display is missing; check for a stale executable")
             if "a beetle at rest in the open lifts its wing cases a crack and holds them up until it moves on" not in diagnostics:
                 raise RuntimeError("current beetle elytra fan is missing; check for a stale executable")
+            if "a calling cicada's abdomen swells and drums with the call and its wings tremble" not in diagnostics:
+                raise RuntimeError("current cicada call pulse is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:

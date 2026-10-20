@@ -59,6 +59,7 @@
 #include "IslandSimulator/CrocodileWakeField.hpp"
 #include "IslandSimulator/MudFleckField.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
+#include "IslandSimulator/CicadaColony.hpp"
 #include "IslandSimulator/StreamFishField.hpp"
 #include "IslandSimulator/HatchlingField.hpp"
 #include "IslandSimulator/BirdShadowProjection.hpp"
@@ -3542,6 +3543,25 @@ int main()
             for(const auto& beetle:beetles.Beetles()) if(beetle.visibility<0.3f&&beetle.elytraLift>0.1f) hiddenLift=true;
         }
         Check(beetles.FanCount()>=1U&&lifted>0.9f&&lowered&&!hiddenLift,"a resting beetle lifts its wing cases and lowers them to forage on");
+    }
+    {
+        // The cicadas' call pulse: watched from twelve metres (fully simulated, beyond the
+        // hush range), within half a minute a calling cicada's envelope rises to full with
+        // its tymbals drumming on, and falls away again within a second of the call's end.
+        const island::JungleLayout cicadaJungle(terrain);
+        island::CicadaColony cicadas(cicadaJungle);
+        const auto& perch=cicadas.Homes()[0];
+        float peak=0.0f,drummed=0.0f; bool fell=false;
+        for(int step=0;step<600;++step) {
+            cicadas.Update(0.05f,perch.x+12.0f,perch.y,perch.z);
+            for(const auto& cicada:cicadas.Cicadas()) {
+                if(cicada.simulationTier!=island::WildlifeSimulationTier::Full) continue;
+                peak=std::max(peak,cicada.call);
+                if(cicada.call>0.9f) drummed=std::max(drummed,cicada.tymbalPhase);
+                if(peak>0.9f&&cicada.behavior==island::CicadaBehavior::Rest&&cicada.call<0.05f) fell=true;
+            }
+        }
+        Check(peak>0.9f&&drummed>1.0f&&fell,"a calling cicada's envelope rises with the tymbals drumming and falls away with the call");
     }
     island::FrogPopulation frogs(terrain);
     island::FrogPopulation repeatedFrogs(terrain);

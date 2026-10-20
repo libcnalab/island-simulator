@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 164 (2026-10-20) — a calling cicada drums
+
+A calling cicada looked no different from a resting one. `CicadaState::call` (0..1) and
+`tymbalPhase` now carry the call: the envelope rises at `CallRiseRate` (6/s) as a cicada
+starts to call and falls at `CallFallRate` (5/s) as it stops or is hushed, and the
+tymbals drum on at `TymbalRate` (38 rad/s) while it is up. In the renderer the abdomen's
+widths and heights pulse by up to six per cent with the drumming and the perched wings
+tremble by it, on the same vertices. The cicadas report line gains "a calling cicada's
+abdomen swells and drums with the call and its wings tremble" (pinned). Core check: watched
+from twelve metres (fully simulated, beyond the hush range) a cicada's envelope rises to
+full with the tymbals drumming on and falls away within a second of the call's end. Native
+`cicadas` passes.
+
 ## Loop pass 163 (2026-10-20) — a beetle lifts its wing cases
 
 A beetle at rest sat sealed. `BeetleState::elytraLift` (0..1) now carries the fan: a rest

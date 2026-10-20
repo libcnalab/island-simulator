@@ -165,6 +165,13 @@ namespace island
         agent.state.wingPhase = std::fmod(agent.state.wingPhase
             + deltaSeconds * (agent.state.behavior == CicadaBehavior::Flight ? 43.0f : 2.1f),
             TwoPi);
+        // The call's pulse: calling, the abdomen's tymbals drum, the envelope rising as the
+        // call begins and falling as it ends or is hushed.
+        const bool calling = agent.state.behavior == CicadaBehavior::Call;
+        agent.state.call += std::clamp((calling ? 1.0f : 0.0f) - agent.state.call,
+            -deltaSeconds * CallFallRate, deltaSeconds * CallRiseRate);
+        if (agent.state.call > 0.01f)
+            agent.state.tymbalPhase = std::fmod(agent.state.tymbalPhase + deltaSeconds * TymbalRate, TwoPi);
 
         if (agent.state.behavior == CicadaBehavior::Flight) {
             agent.flightProgress += deltaSeconds / (1.35f + 0.07f * (index % 4U));

@@ -20,6 +20,10 @@ namespace island
         float forwardX = 0.0f, forwardY = 1.0f, forwardZ = 0.0f;
         float normalX = 1.0f, normalY = 0.0f, normalZ = 0.0f;
         float wingPhase = 0.0f, scale = 1.0f;
+        /** @brief 0..1 the call's envelope, rising as a cicada starts to call and falling as
+         *  it stops or is hushed; tymbalPhase drums on while it is up. The renderer pulses
+         *  the abdomen and trembles the wings by them. */
+        float call = 0.0f, tymbalPhase = 0.0f;
         CicadaBehavior behavior = CicadaBehavior::Rest;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
         std::uint8_t colorVariant = 0U;
@@ -59,6 +63,7 @@ namespace island
         [[nodiscard]] std::size_t CallingCount() const noexcept;
         static constexpr float HushDistance = 7.0f;
         static constexpr float HushSeconds = 6.0f;
+        static constexpr float CallRiseRate = 6.0f, CallFallRate = 5.0f, TymbalRate = 38.0f;
 
     private:
         struct Agent

@@ -2509,7 +2509,8 @@ namespace island
                   << " agents in three soil trails and one real broadleaf-trunk trail\n"
                   << "island-simulator: cicadas " << CicadaColony::Count
                   << " agents resting, calling, and making short flights from real broadleaf trunks; "
-                     "a cicada falls silent when the walker or an animal comes within seven metres and starts up again once they have gone\n"
+                     "a cicada falls silent when the walker or an animal comes within seven metres and starts up again once they have gone; "
+                     "a calling cicada's abdomen swells and drums with the call and its wings tremble\n"
                   << "island-simulator: beetles " << BeetlePopulation::Count
                   << " agents resting, foraging, and hiding in three inland leaf-litter colonies; "
                   << "a beetle at rest in the open lifts its wing cases a crack and holds them up until it moves on\n"
