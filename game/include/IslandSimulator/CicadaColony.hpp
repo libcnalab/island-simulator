@@ -1,5 +1,6 @@
 #pragma once
 
+#include "IslandSimulator/GrassWalkers.hpp"
 #include "IslandSimulator/WildlifeSimulation.hpp"
 
 #include <array>
@@ -50,6 +51,14 @@ namespace island
         {
             return homes_;
         }
+        /** @brief Other bodies on the ground this frame (the herds, the bear, the resident):
+         *  a calling cicada falls silent when the walker or one of them comes within
+         *  HushDistance, and does not start up again while they linger. */
+        void SetWalkers(std::span<const GrassWalker> walkers) noexcept { walkers_ = walkers; }
+        [[nodiscard]] std::uint32_t HushCount() const noexcept { return hushes_; }
+        [[nodiscard]] std::size_t CallingCount() const noexcept;
+        static constexpr float HushDistance = 7.0f;
+        static constexpr float HushSeconds = 6.0f;
 
     private:
         struct Agent
@@ -68,5 +77,9 @@ namespace island
         std::array<Agent, Count> agents_{};
         std::array<CicadaState, Count> states_{};
         std::uint64_t frameIndex_ = 0U;
+        float observerX_ = 0.0f, observerZ_ = 0.0f;
+        bool observerValid_ = false;
+        std::span<const GrassWalker> walkers_;
+        std::uint32_t hushes_ = 0U;
     };
 }

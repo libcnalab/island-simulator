@@ -110,6 +110,9 @@ namespace island
             ? std::clamp(deltaSeconds, 0.0f, 0.1f) : 0.0f;
         const bool observerValid = std::isfinite(observerX) && std::isfinite(observerY)
             && std::isfinite(observerZ);
+        observerValid_ = observerValid;
+        observerX_ = observerX;
+        observerZ_ = observerZ;
         ++frameIndex_;
         for (std::size_t index = 0; index < Count; ++index) {
             Agent& agent = agents_[index];
@@ -129,11 +132,36 @@ namespace island
         }
     }
 
+    std::size_t CicadaColony::CallingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.state.behavior == CicadaBehavior::Call ? 1U : 0U;
+        return count;
+    }
+
     void CicadaColony::UpdateAgent(const std::size_t index, const float deltaSeconds) noexcept
     {
         Agent& agent = agents_[index];
         if (deltaSeconds <= 0.0f) return;
         agent.stateSeconds -= deltaSeconds;
+        // The walker or an animal close under the trunk: a calling cicada falls silent and
+        // a silent one waits until they have gone before it starts up again.
+        float threat = observerValid_
+            ? std::hypot(agent.state.x - observerX_, agent.state.z - observerZ_)
+            : std::numeric_limits<float>::infinity();
+        for (const GrassWalker& body : walkers_) {
+            if (body.strength <= 0.0f || !std::isfinite(body.x) || !std::isfinite(body.z)) continue;
+            threat = std::min(threat, std::hypot(agent.state.x - body.x, agent.state.z - body.z));
+        }
+        if (threat < HushDistance && agent.state.behavior != CicadaBehavior::Flight) {
+            if (agent.state.behavior == CicadaBehavior::Call) {
+                agent.state.behavior = CicadaBehavior::Rest;
+                agent.stateSeconds = HushSeconds;
+                ++hushes_;
+            } else {
+                agent.stateSeconds = std::max(agent.stateSeconds, 0.5f);
+            }
+        }
         agent.state.wingPhase = std::fmod(agent.state.wingPhase
             + deltaSeconds * (agent.state.behavior == CicadaBehavior::Flight ? 43.0f : 2.1f),
             TwoPi);

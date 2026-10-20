@@ -3,6 +3,7 @@
 #include "IslandSimulator/JungleLayout.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -71,6 +72,42 @@ try {
     for (const auto& cicada : colony.Cicadas()) {
         Check(std::isfinite(cicada.x) && std::isfinite(cicada.wingPhase),
               "invalid cicada input poisoned state");
+    }
+    {
+        // The hush: a calling cicada falls silent when the walker comes within seven metres,
+        // stays silent while the walker lingers, and starts up again once the walker has
+        // gone; a passing animal hushes it as the walker does.
+        island::CicadaColony hushed(jungle);
+        std::size_t caller = island::CicadaColony::Count;
+        for (int step = 0; step < 600 && caller == island::CicadaColony::Count; ++step) {
+            hushed.Update(0.05f, 1000.0f, 0.0f, 1000.0f);
+            for (std::size_t i = 0; i < island::CicadaColony::Count; ++i)
+                if (hushed.Cicadas()[i].behavior == island::CicadaBehavior::Call) caller = i;
+        }
+        Check(caller < island::CicadaColony::Count, "no cicada called with the walker far off");
+        const auto& voice = hushed.Cicadas()[caller];
+        hushed.Update(0.05f, voice.x + 3.0f, voice.y, voice.z);
+        Check(voice.behavior == island::CicadaBehavior::Rest && hushed.HushCount() >= 1U,
+              "a walker three metres off did not hush the calling cicada");
+        bool calledUnderWalker = false;
+        for (int step = 0; step < 240; ++step) {
+            hushed.Update(0.05f, voice.x + 3.0f, voice.y, voice.z);
+            if (voice.behavior == island::CicadaBehavior::Call) calledUnderWalker = true;
+        }
+        Check(!calledUnderWalker, "the cicada started calling again with the walker still close");
+        bool resumed = false;
+        for (int step = 0; step < 600 && !resumed; ++step) {
+            hushed.Update(0.05f, voice.x + 40.0f, voice.y, voice.z);
+            resumed = voice.behavior == island::CicadaBehavior::Call;
+        }
+        Check(resumed, "the cicada did not start up again within thirty seconds of the walker leaving");
+        const std::array<island::GrassWalker, 1> body{{{voice.x + 2.0f, voice.z, 0.6f, 1.0f}}};
+        const std::uint32_t before = hushed.HushCount();
+        hushed.SetWalkers(body);
+        // Forty metres off the colony runs at the reduced rate: give it a few frames.
+        for (int step = 0; step < 8; ++step) hushed.Update(0.05f, voice.x + 40.0f, voice.y, voice.z);
+        Check(hushed.HushCount() == before + 1U && voice.behavior == island::CicadaBehavior::Rest,
+              "a passing animal did not hush the calling cicada");
     }
     std::cout << "CicadaColonyTests: 12 deterministic trunk cicadas passed\n";
     return 0;

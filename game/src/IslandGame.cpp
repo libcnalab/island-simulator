@@ -1605,10 +1605,18 @@ namespace island
                         const float rx=candidate.x+environment::SunDirectionX*s,rz=candidate.z+environment::SunDirectionZ*s;
                         return std::hypot(rx-cx,rz-cz)<crownRadius;
                     };
+                    // Every layer the shadow pass draws: crowns, palm heads, standing snags,
+                    // the understory and the bushes, each as a disc at its body's height.
                     for(const auto& tree:jungleLayout_.Canopy())
                         if(shades(tree.x,tree.z,tree.y+7.0f*tree.scale,3.2f*tree.scale)) ++casters;
                     for(const auto& palm:vegetationLayout_.Palms())
                         if(shades(palm.x,palm.z,palm.y+9.0f*palm.scale,2.6f*palm.scale)) ++casters;
+                    for(const auto& snag:jungleLayout_.StandingSnags())
+                        if(shades(snag.x,snag.z,snag.y+3.0f*snag.scale,0.6f*snag.scale)) ++casters;
+                    for(const auto& plant:jungleLayout_.Understory())
+                        if(shades(plant.x,plant.z,plant.y+2.2f*plant.scale,1.5f*plant.scale)) ++casters;
+                    for(const auto& bush:jungleLayout_.Bushes())
+                        if(shades(bush.x,bush.z,bush.y+0.9f*bush.scale,1.1f*bush.scale)) ++casters;
                     const float transmission=canopyLightField_.SampleReceiver(
                         candidate.x,candidate.y+.04f,candidate.z,candidate.y)*(1.0f-.85f*cover)
                         /(1.0f+static_cast<float>(casters));
@@ -2344,7 +2352,8 @@ namespace island
                   << "island-simulator: ants " << AntTrails::Count
                   << " agents in three soil trails and one real broadleaf-trunk trail\n"
                   << "island-simulator: cicadas " << CicadaColony::Count
-                  << " agents resting, calling, and making short flights from real broadleaf trunks\n"
+                  << " agents resting, calling, and making short flights from real broadleaf trunks; "
+                     "a cicada falls silent when the walker or an animal comes within seven metres and starts up again once they have gone\n"
                   << "island-simulator: beetles " << BeetlePopulation::Count
                   << " agents resting, foraging, and hiding in three inland leaf-litter colonies\n"
                   << "island-simulator: beach crabs " << crabColony_.Crabs().size()
@@ -2882,6 +2891,7 @@ namespace island
             const auto& cicada = cicadaColony_.Cicadas()[1U];
             cicadaObserver = Vector3(cicada.x, cicada.y + 20.0f, cicada.z);
         }
+        cicadaColony_.SetWalkers(smallFaunaWalkers);
         cicadaColony_.Update(viewpoint_ == FixedViewpoint::CicadaDetail ? 0.0f : deltaSeconds,
                              cicadaObserver.X, cicadaObserver.Y, cicadaObserver.Z);
         Vector3 beetleObserver = cameraPosition_;

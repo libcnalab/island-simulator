@@ -54,6 +54,29 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 84 (2026-10-20) — the cicadas fall silent near a walker
+
+The cicadas called on whoever stood under the trunk. `CicadaColony` now keeps the observer
+and takes the ground walkers (`SetWalkers`, the herds, the bear and the resident as the
+other small fauna do): a calling cicada with the walker or an animal within 7 m
+(`HushDistance`) falls silent (`Rest` for `HushSeconds`, six seconds, counted by
+`HushCount`), a silent one does not start up again while they linger (its rest is held at
+half a second at least), and a cicada in flight is left alone; once they have gone the
+ordinary rest-call cycle resumes, so a walk through the stand is a wave of silence that
+closes behind. The soundscape's cicada scheduler follows the behaviour, so the buzz goes
+with it. The startup report's cicada line gains "a cicada falls silent when the walker or an
+animal comes within seven metres and starts up again once they have gone", pinned by the
+native capture tool. Cicada colony checks: a walker three metres off hushes a calling
+cicada at once; it stays silent while the walker lingers; it starts up again within thirty
+seconds of the walker leaving; and a passing animal hushes it as the walker does (at the
+reduced rate, within a few frames). Native `cicadas` passes.
+
+**`spiders-bright` resolved:** with the sun-line proxy widened to every layer the shadow
+pass draws (crowns, palm heads, standing snags, the understory and the bushes, each a disc
+at its body's height), the selector leaves spider 0 (two casters) and takes spider 2 on open
+ground at (−9.2, 5.5, −97.7); the capture passes with luminance deviation 17.4 (gate 10,
+mean 35 against 28 before). The `[!]` in the sweep note above is lifted.
+
 ## Loop pass 83 (2026-10-20) — skinks bask in the sun and leave a cloud's shade
 
 The cumulus shadows drift over the land since pass 37, but the skinks basked on regardless.
@@ -87,8 +110,8 @@ transmission dimmed by the cumulus cover and by crowns or palm heads on its line
 (printed as `transmission=` with `cover=` and `casters=`, the tool's argmax contract kept),
 and the spider lighting proof prints "spider QA spot position=… shore-distance=… slope=…
 cloud-cover=… sun-shadow-casters=…". The cause of the uniform shade is not yet pinned
-down; `spiders-bright` is recorded `[!]` until a CPU-side sun-shadow query exists to pick
-a sunlit subject.
+down at that point; the resolution is in pass 84 (the proxy widened to the understory and
+bushes picks a sunlit subject).
 
 ## Loop pass 82 (2026-10-20) — a gecko stalks and snaps at the flies
 
