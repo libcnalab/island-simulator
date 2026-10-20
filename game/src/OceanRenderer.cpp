@@ -86,6 +86,7 @@ layout(location = 2) in vec2 aWaterData;
 
 uniform mat4 uViewProjection;
 uniform float uTime;
+uniform float uSeaState;   // the weather's sea: 1 the trade wind, more in a storm (unset reads as 1)
 
 out vec3 vWorld;
 out vec3 vVertexTint;
@@ -105,7 +106,7 @@ void main()
 {
     vec3 world = aPosition;
     float windExposure=coastalWindExposure(world.xz,aWaterData.y);
-    world.y += oceanHeight(world.xz, uTime)*mix(.78,1.22,windExposure);
+    world.y += oceanHeight(world.xz, uTime)*mix(.78,1.22,windExposure)*max(uSeaState,1.0);
     vWorld = world;
     vVertexTint = aColor.rgb;
     vBedHeight = aWaterData.x;
@@ -126,6 +127,7 @@ in float vShoreDistance;
 uniform vec3 uCameraPosition;
 uniform vec3 uToSun;
 uniform float uTime;
+uniform float uSeaState;   // the weather's sea: 1 the trade wind, more in a storm (unset reads as 1)
 uniform vec2 uPlayerWaterPosition;
 uniform float uPlayerRippleIntensity;
 uniform float uPlayerRipplePhase;
@@ -186,7 +188,7 @@ void main()
         * (1.0 - smoothstep(uSurfaceAppearance.y, uSurfaceAppearance.z, waterDepth));
     float contactCoverage = smoothstep(0.0, uCoastalOptics.z, waterDepth);
     float windExposure=coastalWindExposure(vWorld.xz,vShoreDistance);
-    float waveScale=mix(.78,1.22,windExposure);
+    float waveScale=mix(.78,1.22,windExposure)*max(uSeaState,1.0);
     vec4 waveSlopes = oceanSlopes(vWorld.xz, uTime, dFdx(vWorld.xz), dFdy(vWorld.xz));
     vec2 slope = waveSlopes.xy*waveScale;
     vec2 surfaceSlope = slope + waveSlopes.zw*waveScale;
@@ -636,6 +638,7 @@ void main()
                 customEffect_->SetUniformVec4("uGustClock", gusts.travelled, gusts.spacing, gusts.floor, gusts.live ? 1.0f : 0.0f);
             }
             customEffect_->SetUniformFloat("uCloudCoverage", weather_now::Current().cloudCover);
+            customEffect_->SetUniformFloat("uSeaState", weather_now::SeaState());
             customEffect_->SetUniformFloat("uSeabedExtent", TerrainMeshLayout::Extent);
             customEffect_->SetUniformVec4("uCoastalOptics", CoastalWaterOptics::ExtinctionPerMetre,
                 CoastalWaterOptics::LagoonDecayPerMetre, CoastalWaterOptics::ContactFadeDepth,

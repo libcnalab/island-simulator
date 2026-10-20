@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 245 (2026-10-20) — a storm's sea and wind
+
+A thunderstorm brought rain, lightning and faster gust fronts but the same gentle sea and the
+same breeze sound. `weather_now::SeaState` (1 in the trade wind and below, rising to 1.7 at a
+storm's wind of 2) now scales the ocean's wave heights and slopes in its shader (`uSeaState`,
+read as at least 1 so an unset uniform keeps the old sea) and the CPU wave height the rain
+rings ride on; and the soundscape's breeze loop swells with the weather's wind
+(`Soundscape::SetWind`: 1 + 0.55 (wind - 1), within 0.6-1.6: unchanged at the trade wind's
+1.0, a little softer in clear weather's 0.8, 1.55 times in a storm's 2). Core check: the sea runs 1.7 times as high in a storm's wind and never below the
+trade wind's. The day's `jetty` is identical; `water` and `flight` in a thunderstorm pass.
+
 ## Loop pass 244 (2026-10-20) — the hatchlings run at night
 
 Sea turtle hatchlings break out of the sand at night, when it has cooled and the moonlit sea

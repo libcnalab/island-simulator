@@ -2,6 +2,7 @@
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/OceanWaveSpectrum.hpp"
 #include "IslandSimulator/RainRings.hpp"
+#include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "Microsoft/Xna/Framework/Color.hpp"
 #include "Microsoft/Xna/Framework/Graphics/BasicEffect.hpp"
@@ -75,7 +76,7 @@ namespace island
                 if (alpha < 3) continue;
                 // the ocean shader scales the waves by 0.78-1.22 with the shore's exposure: ride
                 // on the higher of the two
-                const float wave = SampleOceanWaves(ring.x, ring.z, seconds).height;
+                const float wave = SampleOceanWaves(ring.x, ring.z, seconds).height * weather_now::SeaState();
                 const float y = std::max(wave * 0.78f, wave * 1.22f) + 0.025f;
                 const Color pale(alpha * 222 / 255, alpha * 230 / 255, alpha * 236 / 255, alpha);
                 for (int s = 0; s < Segments; ++s) {

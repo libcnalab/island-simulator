@@ -6755,6 +6755,19 @@ int main()
               "overcast weakens the sun's shadows, hides its disc and dims the scene");
         Check(island::WeatherFromName("storm") == WeatherKind::Thunderstorm && !island::WeatherFromName("snow"),
               "the weather names parse, and there is no snow on a tropical island");
+        {
+            // The sea runs higher with the storm's wind (and never lower than the trade wind's).
+            const auto saved = island::weather_now::Current();
+            island::WeatherState calm, storm;
+            calm.wind = 0.8f;
+            storm.wind = 2.0f;
+            island::weather_now::Set(calm);
+            const float calmSea = island::weather_now::SeaState();
+            island::weather_now::Set(storm);
+            const float stormSea = island::weather_now::SeaState();
+            island::weather_now::Set(saved);
+            Check(calmSea == 1.0f && std::abs(stormSea - 1.7f) < 1e-4f, "the sea runs 1.7 times as high in a storm's wind, never below the trade wind's");
+        }
     }
     {
         // Fireflies: none by day or in the rain; at night some flash at any moment, low over

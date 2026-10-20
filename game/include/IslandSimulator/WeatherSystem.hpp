@@ -1,4 +1,6 @@
 #pragma once
+#include <algorithm>
+#include <cmath>
 
 #include "IslandSimulator/DayNightCycle.hpp"
 #include <cstdint>
@@ -46,6 +48,13 @@ namespace island
         /** @brief A weather asked for on the command line (--weather); none when empty. */
         void SetRequested(std::optional<WeatherKind> kind) noexcept;
         [[nodiscard]] std::optional<WeatherKind> Requested() noexcept;
+        /** @brief How high the sea runs with this weather's wind: 1 in the trade wind (and below),
+         *  up to 1.7 in a storm's; the waves' heights and slopes scale by it. */
+        [[nodiscard]] inline float SeaState() noexcept
+        {
+            const float wind = Current().wind;
+            return 1.0f + 0.7f * std::clamp(std::isfinite(wind) ? wind - 1.0f : 0.0f, 0.0f, 1.0f);
+        }
     }
 
     class WeatherSystem final

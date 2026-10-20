@@ -3143,6 +3143,7 @@ namespace island
             sun_light::Set(light);
             if (soundscape_) {
                 soundscape_->SetWeather(weather_.State().rain, weather_.State().strikes, weather_.State().lastStrikeDistance);
+                soundscape_->SetWind(weather_.State().wind);
                 soundscape_->SetNightness(1.0f - std::clamp((light.sunElevationDegrees + 2.0f) / 10.0f, 0.0f, 1.0f));
             }
             // the birds go to roost at dusk; the fruit bats come out

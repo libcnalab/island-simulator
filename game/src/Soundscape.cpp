@@ -1864,8 +1864,9 @@ namespace island
             const float enclosureSurf=std::lerp(1.0f,.08f,bunkerPresence_);
             surfInstance_->setVolumeProperty(model_.Mix().surfVolume
                 *underwaterAudio_.surfGain*enclosureSurf*gain);
-            breezeInstance_->setVolumeProperty(model_.Mix().breezeVolume
-                *underwaterAudio_.airGain*enclosureAir*gain);
+            breezeInstance_->setVolumeProperty(std::min(1.0f, model_.Mix().breezeVolume
+                *std::clamp(1.0f+0.55f*(weatherWind_-1.0f),0.6f,1.6f)
+                *underwaterAudio_.airGain*enclosureAir*gain));
             if (rainInstance_) rainInstance_->setVolumeProperty(std::clamp(weatherRain_, 0.0f, 1.0f) * 0.62f
                 *underwaterAudio_.airGain*enclosureAir*gain);
             jungleInstance_->setVolumeProperty(model_.Mix().jungleVolume*(1.0f-0.55f*nightness_)
