@@ -49,6 +49,7 @@
 #include "IslandSimulator/StreamCourse.hpp"
 #include "IslandSimulator/StreamCourse.hpp"
 #include "IslandSimulator/StreamDriftField.hpp"
+#include "IslandSimulator/SunShadeField.hpp"
 #include "IslandSimulator/StreamFishField.hpp"
 #include "IslandSimulator/HatchlingField.hpp"
 #include "IslandSimulator/BirdShadowProjection.hpp"
@@ -4322,6 +4323,38 @@ int main()
     const island::VegetationLayout vegetation(terrain);
     const island::JungleLayout jungle(terrain);
     const island::CanopyLightField canopyLight(terrain, island::MakeCanopyOccluders(jungle.Canopy()));
+    {
+        // The sun shade field: the jungle's solid casters land their shadows down the sun
+        // line; a receiver standing in one is darkened through the canopy light field's
+        // receiver sample while the ground sample stays untouched.
+        island::SunShadeField shade(terrain, jungle);
+        Check(shade.CasterCount() >= jungle.StandingSnags().size()
+                  && shade.CasterCount() <= jungle.StandingSnags().size() + jungle.Understory().size() + jungle.Bushes().size(),
+              "the sun shade field bakes the jungle's snags, understory and bushes");
+        const float slopeX = island::environment::SunDirectionX / island::environment::SunDirectionY;
+        const float slopeZ = island::environment::SunDirectionZ / island::environment::SunDirectionY;
+        const float groundY = terrain.Height(0.0f, 0.0f);
+        const float before = shade.Cover(-slopeX * 5.0f, -slopeZ * 5.0f);
+        shade.AddDisc(0.0f, groundY + 5.0f, 0.0f, 3.0f, 1.0f);
+        const float landX = -slopeX * 5.0f, landZ = -slopeZ * 5.0f;
+        Check(shade.Cover(landX, landZ) > 0.9f && shade.Cover(landX, landZ) >= before,
+              "a disc five metres up shades the ground where its sun line lands");
+        Check(shade.Cover(landX + 12.0f, landZ + 12.0f) < 0.6f || before > 0.5f,
+              "the disc's shadow stays within its reach");
+        Check(shade.Cover(-290.0f, -290.0f) == 0.0f && shade.Cover(1.0e9f, 0.0f) == 0.0f,
+              "open sea and points off the grid carry no shade");
+        Check(shade.CoverAt(0.0f, groundY + 2.5f, 0.0f, groundY) > 0.9f,
+              "a receiver under the disc reads its shade through its own sun line");
+        island::CanopyLightField lit(terrain, {}, 64);
+        const float open = lit.SampleReceiver(landX, groundY + 0.5f, landZ, groundY);
+        Check(open > 0.99f, "with no crowns and no shade field the receiver is fully lit");
+        lit.SetSunShade(&shade);
+        const float shaded = lit.SampleReceiver(landX, groundY + 0.5f, landZ, groundY);
+        Check(shaded < 0.45f && shaded > 0.2f, "with the shade field set a receiver in the disc's shadow darkens by the shade depth");
+        Check(lit.Sample(landX, landZ) > 0.99f, "the ground sample ignores the solid casters' shade");
+        lit.SetSunShade(nullptr);
+        Check(lit.SampleReceiver(landX, groundY + 0.5f, landZ, groundY) > 0.99f, "clearing the shade field restores the open reading");
+    }
     const island::GroundCoverField groundCover;
     const island::NaturalPropLayout props(terrain, vegetation, jungle);
     std::vector<island::CrabHabitatCue> crabDebrisCues;

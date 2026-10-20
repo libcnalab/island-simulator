@@ -54,6 +54,34 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 114 (2026-10-20) — animals lit by the sun's solid casters
+
+The sun shadow map darkened the ground under a snag, a fern, a bush, the hut, the lookout
+and the helicopter, but a goat or boar standing in that shadow was lit only by the porous
+canopy light field (crowns and palm heads), so a body in a trunk's or a wall's shadow stayed
+in full sun on dark ground. New `SunShadeField` (CPU, one-metre grid over ±300 m, no GPU
+resources): the jungle's standing snags, understory and bushes are baked as the same discs
+at body height the sunlit-subject selectors count (snag 3 m × 0.6 m, understory 2.2 m ×
+1.5 m, bush 0.9 m × 1.1 m, scaled), each shadow rasterised down the fixed sun line onto the
+terrain (`AddDisc` lands the disc's centre on the ground, refines once with the ground
+there, then tests each cell's own sun line); the game adds the hut (floor + 1.6 m, 2.7 m),
+the lookout platform and the helicopter fuselage as structure discs (shade 0.85). The field
+is read only through `CanopyLightField::SampleReceiver` (`SetSunShade`, depth 0.65): the
+animal renderers that tint by the receiver sample (goats, deer, boars, monkeys, bears,
+snakes, spiders, the resident) now darken in those shadows, while `Sample` — the ground
+classifier's input — is untouched, so turf and ground-cover placement do not move. Startup
+report: "the animals' lighting reads the sun's solid casters: 2331 snag, understory, bush
+and structure shadows darken a body standing in them by up to 65 percent; the ground keeps
+its porous canopy reading" (pinned by the native capture tool) and the general line "a body
+standing in a snag's, a plant's or a structure's sun shadow is lit as the ground there is".
+Core checks: the field bakes the jungle's casters; a disc five metres up shades the ground
+where its sun line lands and nothing twelve metres off; open sea and off-grid points carry
+no shade; a receiver under the disc reads it through its own sun line; a 64-texel canopy
+field with no crowns reads 1.0, 0.35 with the field set in the disc's shadow, 1.0 for the
+ground sample and 1.0 again once cleared. Native `goats` (luminance deviation 56.7) and
+`spiders-bright` (subject 5 now that the selector's receiver sample carries the shade;
+17.5) pass.
+
 ## Loop pass 113 (2026-10-20) — a perched bird flushes from a passing animal
 
 A perched bird flushed from the walker, a coconut's thud and a snake, but sat on while the

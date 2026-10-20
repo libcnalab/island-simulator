@@ -10,6 +10,7 @@
 
 namespace island
 {
+    class SunShadeField;
     struct CanopyLightTint { float red, green, blue; };
     // Dense tropical shade still receives a broad blue-sky hemisphere.  The former floor
     // was dark enough that overlapping crowns became near-black oval stains on open slopes,
@@ -66,10 +67,17 @@ namespace island
         [[nodiscard]] float SampleReceiverFootprint(float x, float y, float z, float groundHeight,
                                                    float radius) const noexcept;
         [[nodiscard]] static float TexelCoordinate(int index, int resolution) noexcept;
+        /** @brief The solid casters' shade (snags, understory, bushes, structures) that the
+         *  receiver samples also read, darkening a body in a trunk's or a wall's shadow as the
+         *  sun shadow map darkens the ground there; the ground sample is untouched, so the
+         *  ground-cover classifier keeps its porous-canopy reading. Null clears it. */
+        void SetSunShade(const SunShadeField* shade) noexcept { sunShade_ = shade; }
+        static constexpr float SunShadeDepth = 0.65f;
 
     private:
         int resolution_;
         TerrainNormal toSun_;
         std::vector<std::uint8_t> texels_;
+        const SunShadeField* sunShade_ = nullptr;
     };
 }

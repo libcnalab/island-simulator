@@ -292,6 +292,7 @@ namespace island
           naturalPropLayout_(terrain_, vegetationLayout_, jungleLayout_),
           shipwreckLayout_(terrain_),
           birdPerchLayout_(terrain_, jungleLayout_, naturalPropLayout_, shipwreckLayout_),
+          sunShade_(terrain_,jungleLayout_),
           cameraPosition_(VegetationLayout::PlayerSpawnX, 3.0f,
                           VegetationLayout::PlayerSpawnZ),
           renderCameraPosition_(cameraPosition_),
@@ -373,6 +374,17 @@ namespace island
         bridgePlacement_=BridgeLayout::FindInWorld(terrain_,StreamCourse(terrain_));
         helicopterPlacement_=HelicopterLayout::FindInWorld(terrain_,jungleLayout_,worldObstacles);
         if(!helicopterPlacement_)throw std::runtime_error("No valid central helicopter site");
+        // The animals' lighting reads the solid casters the sun shadow map draws: the jungle's
+        // snags, understory and bushes (baked with the field) and the structures, so a goat
+        // under the hut's eave or a boar behind a trunk darkens as the ground there does.
+        sunShade_.AddDisc(hutPlacement_->x,hutPlacement_->floorY+1.6f,hutPlacement_->z,2.7f,SunShadeField::StructureShade);
+        if(lookoutPlacement_) sunShade_.AddDisc(lookoutPlacement_->x,lookoutPlacement_->platformY+0.3f,lookoutPlacement_->z,
+            LookoutPlacement::Half*1.4f,SunShadeField::StructureShade);
+        sunShade_.AddDisc(helicopterPlacement_->x,helicopterPlacement_->floorY+1.0f,helicopterPlacement_->z,2.2f,SunShadeField::StructureShade);
+        canopyLightField_.SetSunShade(&sunShade_);
+        std::cout<<"island-simulator: the animals' lighting reads the sun's solid casters: "<<sunShade_.CasterCount()
+                 <<" snag, understory, bush and structure shadows darken a body standing in them by up to "
+                 <<static_cast<int>(CanopyLightField::SunShadeDepth*100.0f+0.5f)<<" percent; the ground keeps its porous canopy reading\n";
         worldCollisionGrid_.Reset(worldObstacles);
         playerMotion_.SetHelicopter(&*helicopterPlacement_);
         if(jettyPlacement_) playerMotion_.SetJetty(&*jettyPlacement_);
@@ -2325,6 +2337,7 @@ namespace island
                   << "island-simulator: a seabird's strike brings the others on their routes within a hundred and twenty metres in to hunt the same school\n"
                   << "island-simulator: a dolphin's leap brings the seabirds on their routes within a hundred and sixty metres in to hunt the school of the moment\n"
                   << "island-simulator: a perched bird flushes from the resident or an animal walking up under its perch as from the walker\n"
+                  << "island-simulator: a body standing in a snag's, a plant's or a structure's sun shadow is lit as the ground there is\n"
                   << "island-simulator: a fish school passing the jetty turns in and holds off the end of the deck, in its shade, a while before going on\n"
                   << "island-simulator: a school parts around the shark passing through it at seven metres, as around the swimmer at three\n"
                   << "island-simulator: a falling coconut lands with a positional thud heard within thirty metres\n"

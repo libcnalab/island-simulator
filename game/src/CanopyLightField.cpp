@@ -1,6 +1,7 @@
 #include "IslandSimulator/CanopyLightField.hpp"
 #include "IslandSimulator/CanopyProfile.hpp"
 #include "IslandSimulator/PrevailingWind.hpp"
+#include "IslandSimulator/SunShadeField.hpp"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -239,7 +240,9 @@ namespace island
     {
         if (!std::isfinite(y) || !std::isfinite(groundHeight)) return 1.0f;
         const float height = std::max(0.0f, y - groundHeight);
-        return Sample(x - toSun_.x / toSun_.y * height, z - toSun_.z / toSun_.y * height);
+        const float porous = Sample(x - toSun_.x / toSun_.y * height, z - toSun_.z / toSun_.y * height);
+        if (sunShade_ == nullptr) return porous;
+        return porous * (1.0f - SunShadeDepth * sunShade_->CoverAt(x, y, z, groundHeight));
     }
 
     float CanopyLightField::SampleReceiverFootprint(const float x, const float y, const float z,

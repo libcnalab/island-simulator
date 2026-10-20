@@ -1267,6 +1267,8 @@ def main():
                 raise RuntimeError("current resident lookout call is missing; check for a stale executable")
             if "a perched bird flushes from the resident or an animal walking up under its perch" not in diagnostics:
                 raise RuntimeError("current perched walker flush is missing; check for a stale executable")
+            if "the animals' lighting reads the sun's solid casters" not in diagnostics:
+                raise RuntimeError("current sun shade field is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

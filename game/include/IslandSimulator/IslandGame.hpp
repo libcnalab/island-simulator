@@ -14,6 +14,7 @@
 #include "IslandSimulator/BearRenderer.hpp"
 #include "IslandSimulator/BirdFlock.hpp"
 #include "IslandSimulator/BirdPerchLayout.hpp"
+#include "IslandSimulator/SunShadeField.hpp"
 #include "IslandSimulator/BirdRenderer.hpp"
 #include "IslandSimulator/SnakeRenderer.hpp"
 #include "IslandSimulator/ButterflyMeadow.hpp"
@@ -394,6 +395,7 @@ namespace island
         NaturalPropLayout naturalPropLayout_;
         ShipwreckLayout shipwreckLayout_;
         BirdPerchLayout birdPerchLayout_;
+        SunShadeField sunShade_;
         std::optional<HutPlacement> hutPlacement_;
         std::optional<JettyPlacement> jettyPlacement_;
         std::optional<BridgePlacement> bridgePlacement_;
