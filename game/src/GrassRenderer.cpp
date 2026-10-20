@@ -1,3 +1,4 @@
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/GrassRenderer.hpp"
 #include "IslandSimulator/WindGust.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
@@ -1046,8 +1047,8 @@ void main()
             customEffect_->SetUniformVec4("uGrassLodBands", GrassLod::NearOnlyDistance,
                 GrassLod::MiddleOnlyStartDistance, GrassLod::MiddleOnlyEndDistance, GrassLod::FarOnlyDistance);
             customEffect_->SetUniformVec3(
-                "uToSun", environment::SunDirectionX, environment::SunDirectionY,
-                environment::SunDirectionZ);
+                "uToSun", sun_light::UniformDirection().x, sun_light::UniformDirection().y,
+                sun_light::UniformDirection().z);
             customEffect_->SetUniformVec2(
                 "uPlayerPosition",
                 std::isfinite(playerPosition.X) ? playerPosition.X : cameraPosition.X,

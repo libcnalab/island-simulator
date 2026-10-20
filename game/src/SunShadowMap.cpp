@@ -1,4 +1,5 @@
 #include "IslandSimulator/SunShadowMap.hpp"
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/CloudShadow.hpp"
 #include "CNA/Graphics/ShaderCodeEXT.hpp"
@@ -42,7 +43,7 @@ float sunShadowUnpack(vec4 c) {
 }
 float sunShadowVisibility(vec3 world) {
     float clouds = 1.0 - uCloudShade.x * cloudCover(world.xz, uCloudShade.y);
-    if (uSunShadowParams.x < 0.5) return clouds;
+    if (uSunShadowParams.x <= 0.0) return clouds;   // x: the hour's shadow strength (none at night)
     vec4 p = uSunShadowMatrix * vec4(world, 1.0);
     vec2 uv = p.xy * 0.5 + 0.5;
     float depth = p.z - uSunShadowParams.y;
@@ -84,7 +85,8 @@ float sunShadowVisibility(vec3 world) {
     // so the end of the shadows never jumps with the map's 8 m re-centring (SunShadowFade.hpp).
     vec2 fromViewer = (p.xy - uSunShadowViewer.xy) * (p.xy - uSunShadowViewer.xy);
     float farFade = smoothstep(uSunShadowViewer.z, uSunShadowViewer.w, sqrt(sqrt(dot(fromViewer, fromViewer))));
-    return clouds * mix(1.0, lit, smoothstep(0.0, )" + std::to_string(sun_shadow_fade::EdgeBand) + R"(, edge) * (1.0 - farFade));
+    return clouds * mix(1.0, lit, smoothstep(0.0, )" + std::to_string(sun_shadow_fade::EdgeBand) + R"(, edge) * (1.0 - farFade)
+                        * uSunShadowParams.x);
 }
 )";
 
@@ -129,12 +131,16 @@ void main() {
         if (!std::isfinite(camera.X) || !std::isfinite(camera.Z)) return false;
         viewer_ = camera;
         const Vector3 anchor(sun_shadow_fade::AnchorOf(camera.X), 0.0f, sun_shadow_fade::AnchorOf(camera.Z));
-        if (hasAnchor_ && anchor.X == anchor_.X && anchor.Z == anchor_.Z) return false;
+        // The light follows the day: the map re-renders when the camera leaves its cell or when
+        // the shading direction has turned a quarter of a degree since the last render.
+        const auto shading = sun_light::Current().shading;
+        Vector3 toSun(shading.x, shading.y, shading.z);
+        toSun.Normalize();
+        const bool sunMoved = !hasAnchor_ || Vector3::Dot(toSun, lightDirection_) < 0.99999048f;   // cos(0.25 deg)
+        if (hasAnchor_ && anchor.X == anchor_.X && anchor.Z == anchor_.Z && !sunMoved) return false;
         anchor_ = anchor;
         hasAnchor_ = true;
-        Vector3 toSun(environment::SunDirectionX, environment::SunDirectionY,
-                      environment::SunDirectionZ);
-        toSun.Normalize();
+        lightDirection_ = toSun;
         const Vector3 target(anchor.X, sun_shadow_fade::TargetHeight, anchor.Z);
         const Vector3 eye = target + toSun * EyeDistance;
         const Matrix view = Matrix::CreateLookAt(eye, target, Vector3::Up);
@@ -196,10 +202,11 @@ void main() {
         device_.getSamplerStatesProperty()[TextureUnit] = SamplerState::PointClamp;
         effect.SetTexture(TextureUnit, *target_);
         effect.SetUniformInt("uSunShadowMap", TextureUnit);
-        effect.SetUniformVec4("uSunShadowParams", 1.0f, DepthBias,
+        effect.SetUniformVec4("uSunShadowParams", sun_light::Current().lighting.shadowStrength, DepthBias,
                               1.0f / static_cast<float>(resolution_),
                               static_cast<float>(resolution_));
-        effect.SetUniformVec4("uCloudShade", CloudShadow::LandStrength, cloudClock, 0.0f, 0.0f);
+        effect.SetUniformVec4("uCloudShade", CloudShadow::LandStrength * sun_light::Current().lighting.sunVisibility,
+                              cloudClock, 0.0f, 0.0f);   // a cloud only dims sunlight
         // The viewer's column at the light's target height, in the light's clip space: the far
         // fade is measured from it, so it follows the camera continuously between re-renders.
         const Vector3 viewer = Vector3::Transform(
@@ -211,7 +218,8 @@ void main() {
     void SunShadowMap::BindDisabled(ShaderEffect& effect)
     {
         effect.SetUniformVec4("uSunShadowParams", 0.0f, 0.0f, 0.0f, 1.0f);
-        effect.SetUniformVec4("uCloudShade", CloudShadow::LandStrength, cloudClock, 0.0f, 0.0f);
+        effect.SetUniformVec4("uCloudShade", CloudShadow::LandStrength * sun_light::Current().lighting.sunVisibility,
+                              cloudClock, 0.0f, 0.0f);   // a cloud only dims sunlight
     }
 
     std::unique_ptr<ShaderEffect> SunShadowMap::CreateCasterEffect(const char* vertexBody,

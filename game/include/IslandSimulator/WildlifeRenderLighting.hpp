@@ -11,7 +11,8 @@
 
 namespace island::wildlife_render
 {
-    inline const Microsoft::Xna::Framework::Vector3 FixedSunDirection =
+    // Set each frame from sun_light (the day/night shading direction); named for its history.
+    inline Microsoft::Xna::Framework::Vector3 FixedSunDirection =
         Microsoft::Xna::Framework::Vector3::Normalize(
             Microsoft::Xna::Framework::Vector3(
                 environment::SunDirectionX, environment::SunDirectionY,

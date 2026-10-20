@@ -1,3 +1,5 @@
+#include "IslandSimulator/WildlifeRenderLighting.hpp"
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/SlopeScrubLayout.hpp"
 #include "IslandSimulator/IslandGame.hpp"
 #include "IslandSimulator/BridgeLayout.hpp"
@@ -26,6 +28,7 @@
 #include <array>
 #include <chrono>
 #include <cmath>
+#include <cstdio>
 #include <cstdint>
 #include <fstream>
 #include <iomanip>
@@ -2432,6 +2435,30 @@ namespace island
         touchOverlay_ = std::make_unique<TouchOverlay>(device);
         waterViewOverlay_ = std::make_unique<WaterViewOverlay>(device);
         underwaterEffect_ = std::make_unique<UnderwaterEffectRenderer>(device);
+        timeOfDay_ = std::make_unique<TimeOfDayRenderer>(device);
+        {
+            // The clock: 24 game hours in 24 real minutes from 14:00 (the former fixed sun's
+            // hour), or from --time-of-day; held still for the fixed QA views and smoke runs so
+            // their frames stay comparable.
+            const float requested = day_night_options::RequestedHour();
+            if (requested >= 0.0f) dayNight_.SetHour(requested);
+            dayNight_.SetFrozen(viewpoint_ != FixedViewpoint::None || smokeTest_);
+            sun_light::Set(dayNight_.Lighting());
+            const auto shading = sun_light::Current().shading;
+            wildlife_render::FixedSunDirection = Vector3(shading.x, shading.y, shading.z);
+            const auto clockText = [](const float hour) {
+                const int minutes = static_cast<int>(std::lround(hour * 60.0f)) % (24 * 60);
+                char text[16];
+                std::snprintf(text, sizeof text, "%02d:%02d", minutes / 60, minutes % 60);
+                return std::string(text);
+            };
+            std::cout << "island-simulator: day and night: 24 game hours pass in "
+                      << static_cast<int>(DayNightCycle::SecondsPerDay / 60.0f) << " real minutes from "
+                      << clockText(dayNight_.Hour()) << "; the sun rises in the east at 06:00 and sets at 18:00 "
+                         "over a short tropical dusk, the moon turns through its phases every "
+                      << static_cast<int>(DayNightCycle::LunarDays) << " days; press T to move the clock an hour on"
+                      << (dayNight_.Frozen() ? "; held still for this QA view" : "") << '\n';
+        }
         std::cout << "island-simulator: screen-space canopy sun shafts are off; the light under the crowns comes from the shade field and the drifting leaf-gap flecks\n";
         footprintRenderer_ = std::make_unique<FootprintTrailRenderer>(device, terrain_);
         if (goats_->WaterholeSite().valid)
@@ -2947,6 +2974,19 @@ namespace island
         }
         fullscreenToggleWasDown_ = fullscreenDown;
 #endif
+        {
+            // T moves the clock an hour on (for seeing the night without waiting).
+            const bool timeKeyDown = frameKeyboard.IsKeyDown(Keys::T);
+            if (timeKeyDown && !timeKeyWasDown_) {
+                dayNight_.SetHour(dayNight_.Hour() + 1.0f);
+                std::cout << "island-simulator: the clock moves on to hour " << static_cast<int>(dayNight_.Hour()) << '\n';
+            }
+            timeKeyWasDown_ = timeKeyDown;
+            dayNight_.Advance(deltaSeconds);
+            sun_light::Set(dayNight_.Lighting());
+            const auto shading = sun_light::Current().shading;
+            wildlife_render::FixedSunDirection = Vector3(shading.x, shading.y, shading.z);
+        }
         const bool debugOverlayToggleDown = frameKeyboard.IsKeyDown(Keys::F1);
         if (debugOverlayToggleDown && !debugOverlayToggleWasDown_) {
             debugOverlayVisible_ = !debugOverlayVisible_;
@@ -5216,6 +5256,14 @@ namespace island
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,dragonflyDips_.Puffs());
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,crabBubbles_.Puffs());
             turtleBreathRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,turtleBreaths_.Puffs());
+        }
+        {
+            // The hour: the scene graded (golden hours, a dark blue night), then the stars and
+            // the moon; the campfire's flames after it keep their own light.
+            GpuDiagnosticScope gpuPass("time-of-day");
+            const auto& light = sun_light::Current().lighting;
+            timeOfDay_->DrawGrade(light);
+            timeOfDay_->DrawNightSky(cameraView_, cameraProjection_, renderCameraPosition_, light);
         }
         {
             GpuDiagnosticScope gpuPass("campfire-effects");

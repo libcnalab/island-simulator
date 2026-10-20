@@ -1,3 +1,4 @@
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/SkyRenderer.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "IslandSimulator/SkyCloudDrift.hpp"
@@ -68,6 +69,10 @@ in vec3 vDirection;
 
 uniform vec3 uSunDirection;
 uniform float uCloudDriftRadians;
+// The hour's sky (DayNightCycle): the horizon and zenith colours relative to the daytime ones,
+// already divided by the scene grade the frame is multiplied by afterwards; w: the sun's visibility.
+uniform vec4 uSkyHorizonScale;
+uniform vec3 uSkyZenithScale;
 
 out vec4 fragColor;
 
@@ -158,16 +163,16 @@ void main()
     float verticalBlend = pow(elevation, 0.58);
     // The horizon haze is the same colour every renderer fogs toward, so distant terrain,
     // water and islets dissolve into the sky instead of standing in front of it.
-    vec3 hazeColor = islandAtmosphereFog;
-    vec3 horizon = vec3(0.70, 0.86, 0.92);
-    vec3 zenith = vec3(0.12, 0.42, 0.74);
+    vec3 hazeColor = islandAtmosphereFog * uSkyHorizonScale.xyz;
+    vec3 horizon = vec3(0.70, 0.86, 0.92) * uSkyHorizonScale.xyz;
+    vec3 zenith = vec3(0.12, 0.42, 0.74) * uSkyZenithScale;
     vec3 color = mix(horizon, zenith, verticalBlend);
     float haze = exp(-max(direction.y, 0.0) * 9.0);
     color = mix(color, hazeColor, haze * 0.96);
     float belowHorizon = 1.0 - smoothstep(-0.08, -0.015, direction.y);
-    color = mix(color, vec3(0.80, 0.86, 0.88), belowHorizon * 0.5);
+    color = mix(color, vec3(0.80, 0.86, 0.88) * uSkyHorizonScale.xyz, belowHorizon * 0.5);
 
-    float sunDot = max(dot(direction, sun), 0.0);
+    float sunDot = max(dot(direction, sun), 0.0) * step(0.0, uSkyHorizonScale.w) * min(uSkyHorizonScale.w * 4.0, 1.0);
     float glow = pow(sunDot, 5.0);
     float halo = pow(sunDot, 38.0);
     float innerHalo = pow(sunDot, 240.0);
@@ -391,11 +396,22 @@ void main()
             customEffect_->SetUniformMat4("uViewProjection", viewProjection);
             customEffect_->SetUniformVec3("uCameraPosition", cameraPosition.X,
                                           cameraPosition.Y, cameraPosition.Z);
-            const Vector3 sun = Vector3::Normalize(Vector3(
-                environment::SunDirectionX,
-                environment::SunDirectionY,
-                environment::SunDirectionZ));
+            // The true sun (it sets below the horizon); the colours by the hour.
+            const auto& light = sun_light::Current().lighting;
+            const Vector3 sun = Vector3::Normalize(Vector3(light.toSun.x, light.toSun.y, light.toSun.z));
             customEffect_->SetUniformVec3("uSunDirection", sun.X, sun.Y, sun.Z);
+            const auto day = DayNightCycle::LightingAt(DayNightCycle::DefaultHour, 2.0f);
+            const auto ratio = [](const float target, const float daytime, const float grade) {
+                return target / std::max(daytime, 1e-3f) / std::max(grade, 0.02f);
+            };
+            customEffect_->SetUniformVec4("uSkyHorizonScale",
+                ratio(light.skyHorizon.x, day.skyHorizon.x, light.grade.x),
+                ratio(light.skyHorizon.y, day.skyHorizon.y, light.grade.y),
+                ratio(light.skyHorizon.z, day.skyHorizon.z, light.grade.z), light.sunVisibility);
+            customEffect_->SetUniformVec3("uSkyZenithScale",
+                ratio(light.skyZenith.x, day.skyZenith.x, light.grade.x),
+                ratio(light.skyZenith.y, day.skyZenith.y, light.grade.y),
+                ratio(light.skyZenith.z, day.skyZenith.z, light.grade.z));
             customEffect_->SetUniformFloat("uCloudDriftRadians",sky_cloud::DriftAngle(timeSeconds));
         } else {
             fallbackEffect_->setWorldProperty(Matrix::CreateScale(SkyRadius)

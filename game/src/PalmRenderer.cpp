@@ -1,3 +1,4 @@
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/PalmRenderer.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
@@ -1288,8 +1289,8 @@ void main()
             customEffect_->SetUniformVec3("uCameraPosition", cameraPosition.X,
                                           cameraPosition.Y, cameraPosition.Z);
             customEffect_->SetUniformVec3(
-                "uToSun", environment::SunDirectionX, environment::SunDirectionY,
-                environment::SunDirectionZ);
+                "uToSun", sun_light::UniformDirection().x, sun_light::UniformDirection().y,
+                sun_light::UniformDirection().z);
             customEffect_->SetUniformFloat("uTime", timeSeconds);
             if (sunShadow_) sunShadow_->Bind(*customEffect_);
             else SunShadowMap::BindDisabled(*customEffect_);

@@ -136,6 +136,10 @@ void main(){
         alpha*=.74+.26*noise(vec2(p.x*8.0+t*.13,p.y*11.0-t*.31)+pigment.r*17.0);
         color=mix(mix(vec3(.24,.225,.20),vec3(.37,.35,.31),cloud),
             vec3(.25,.27,.27),altitude*.52);
+        // Drawn after the night grade: the smoke takes the hour's darkness itself, glowing
+        // a little orange low down where the flames light it at night.
+        vec3 nightGrade=1.0/max(uCampfireNight.xyz,vec3(1.0));
+        color*=mix(nightGrade,vec3(1.0,.62,.32),(1.0-smoothstep(.0,.35,altitude))*uCampfireNight.w*.4);
     }else{alpha=(1.0-smoothstep(.05,.8,length(uv*2.0-1.0)))*life*.85;color=vec3(1,.45,.04);}
     fragColor=vec4(color*alpha,alpha);
 }

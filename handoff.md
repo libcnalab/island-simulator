@@ -57,12 +57,13 @@ Operator request 2026-10-20 (added to the task, takes priority in the loop): a d
 with the moon, 24 game hours in about 24 real minutes; then weather: sometimes rain, a storm, or
 other weather. Snow was asked about and judged physically impossible on a tropical island at sea
 level, so it is left out (at most a hidden joke switch, off by default, if the operator asks).
-- [ ] Day/night clock (24 h per 24 min), sun arc east to west with a short tropical twilight,
-      moon with phases over the days, stars at night.
-- [ ] Time-of-day light: golden hours, moonlit blue night, shadows fading at low sun and at
-      night, campfire and hut window glowing at night.
-- [ ] The moving sun in the real-time shaders and the sun shadow map (geometry with lighting
-      baked at build time keeps the fixed sun; to be listed).
+- [x] Day/night clock (24 h per 24 min), sun arc east to west with a short tropical twilight,
+      moon with phases over the days, stars at night (PLAN "Day/night pass 1"; T moves an hour on,
+      `--time-of-day` for captures, QA views held at 14:00).
+- [~] Time-of-day light: golden hours, moonlit blue night, shadows fading at low sun and at
+      night, campfire glowing at night (done, Day/night pass 1); the hut window glow is still to do.
+- [x] The moving sun in the real-time shaders and the sun shadow map; geometry with lighting
+      baked at build time keeps the 14:00 sun (listed in PLAN "Day/night pass 1").
 - [ ] Weather: clear, partly cloudy, overcast, showers, tropical thunderstorm (lightning and
       thunder), morning mist; world-anchored rain around the camera (no screen overlays), wet
       darkened ground, stronger gusts, rain and thunder sounds.

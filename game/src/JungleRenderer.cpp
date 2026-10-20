@@ -1,3 +1,4 @@
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/JungleRenderer.hpp"
 #include "IslandSimulator/WindGust.hpp"
@@ -2817,8 +2818,8 @@ void main()
             customEffect_->SetUniformVec3("uCameraPosition", cameraPosition.X,
                                           cameraPosition.Y, cameraPosition.Z);
             customEffect_->SetUniformVec3(
-                "uToSun", environment::SunDirectionX, environment::SunDirectionY,
-                environment::SunDirectionZ);
+                "uToSun", sun_light::UniformDirection().x, sun_light::UniformDirection().y,
+                sun_light::UniformDirection().z);
             customEffect_->SetUniformFloat("uTime", timeSeconds);
             for (std::size_t slot = 0; slot < GrassWalkers::Slots; ++slot) {
                 const GrassWalker body = slot < walkers.size() ? walkers[slot] : GrassWalker{};

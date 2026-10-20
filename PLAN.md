@@ -54,6 +54,46 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Day/night pass 1 (2026-10-20) — the island's clock, the moving sun, the night and the moon
+
+Operator request: day and night with the moon, 24 game hours in about 24 minutes, then weather.
+A core `DayNightCycle` keeps the clock (1440 real seconds a day) and gives the light of any
+hour: the sun on an equinox path whose latitude (17.94 degrees) and east axis (8.99 degrees)
+are fitted so that at 14:00 it stands exactly where the former fixed sun did (the core check
+compares it to `environment::SunDirection` within 0.001), rising at 06:00 and setting at 18:00;
+a moon that trails the sun by its phase through an 8-day lunar month (full opposite the sun);
+the scene grade (full day above 20 degrees, a golden hour, a rose-violet dusk to -6, a dark
+blue night lifted by the moon), the sky's zenith and horizon colours, the shadow strength and
+the stars. Core checks: the fit, sunrise and sunset at six, the noon height, daylight at
+14:00, a dark starry midnight, the full moon high at midnight, under 4 % change per game minute
+(3.3 % at the dusk), 24 real minutes to a day, a held clock.
+
+In the game the clock runs from 14:00, or from `--time-of-day`, and is held still for every
+fixed QA view and smoke run, so every existing capture is unchanged at 14:00 (`hut` 0.12 % of
+pixels by 20 levels, the wind; `campfire` 0 %). T moves it an hour on. Each frame `sun_light`
+publishes the hour: the eight `uToSun` uploads (terrain, grass, jungle, palms, props, wreck,
+cave, ocean), the monkeys' skinning shader and the animals' shared CPU light direction take
+its shading direction (the sun by day, the moon by night, blended through the dusk, never
+under 15 degrees so no shadow term divides by a vanishing sun height; scaled to the former
+constant's length so 14:00 uploads it exactly); the sun shadow map follows it, re-rendering
+when it has turned a quarter of a degree, its shadows scaled by the hour's strength (none at
+night) and the cumulus shade only dimming sunlight. A new `TimeOfDayRenderer` multiplies the
+drawn scene by the grade (a blend-factor multiply, skipped at full day) before the campfire's
+flames, then draws 1100 stars and a phased moon (lit on the side facing the sun, pale by day,
+faded through its rising, with a halo) depth-tested behind the land. The sky shader takes the
+hour's zenith and horizon (divided by the grade it is multiplied by afterwards) and hides the
+sun's disc as it sets. The campfire's light now survives the grade and at night lights the
+ground's own colours warm instead of adding a flat glow; its smoke, drawn after the grade,
+takes the hour's darkness and a low orange glow. Captures take `--time-of-day`; a reviewed
+`night-scene` validation profile applies only to an explicit hour with the sun 4 degrees or
+more below the horizon (18:18-05:42) and still fails a black or featureless frame (unit test).
+Native `hut` at 14:00, 17:00 (long shadows), 18:24 (dusk), 21:00, 00:00 and 19:00, `flight` at
+21:00 (a moonlit sea) and 05:48 (dawn), and `campfire` at 14:00 and 21:00 pass. Still on the
+fixed 14:00 sun: lighting baked into geometry at build time (terrain vertex colours, the hut,
+jetty, bridge, lookout, helicopter, wreck, campfire stones, twigs, the canopy light field,
+the static contact shadows); hidden at night, but at the golden hours their shading faces the
+afternoon. Next: weather.
+
 ## Loop pass 224 (2026-10-20) — a flight view, and the sea's lattice from the air removed
 
 The operator mostly flies, but no capture looked at the island from the air. A new `flight`

@@ -1,3 +1,4 @@
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/MonkeyRenderer.hpp"
 #include "IslandSimulator/CanopyLightField.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
@@ -1161,8 +1162,8 @@ namespace island
         paletteEffect_->SetUniformMat4("uView", viewValues);
         paletteEffect_->SetUniformMat4("uViewProjection", viewProjectionValues);
         paletteEffect_->SetUniformVec3("uCameraPosition", cameraPosition.X, cameraPosition.Y, cameraPosition.Z);
-        paletteEffect_->SetUniformVec3("uSunDirection", environment::SunDirectionX,
-                                      environment::SunDirectionY, environment::SunDirectionZ);
+        paletteEffect_->SetUniformVec3("uSunDirection", sun_light::UniformDirection().x,
+                                      sun_light::UniformDirection().y, sun_light::UniformDirection().z);
         paletteEffect_->SetUniformVec3("uFogColor", environment::FogColorRed,
                                       environment::FogColorGreen, environment::FogColorBlue);
         // Keep SkinnedEffect only as the authored material state; never apply its 72-bone program.

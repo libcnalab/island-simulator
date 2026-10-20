@@ -68,4 +68,33 @@ namespace island
         float day_ = 0.0f;
         bool frozen_ = false;
     };
+
+    /**
+     * The light of the current frame, shared by the renderers (set once per frame by the game
+     * from its clock). Surfaces are shaded from the `shading` direction: the sun by day, the
+     * moon by night, blended through the dusk and never lower than 15 degrees, so no shadow
+     * or slope term divides by a vanishing sun height near the horizon.
+     */
+    /** @brief A start hour asked for on the command line (--time-of-day); negative: none. */
+    namespace day_night_options
+    {
+        void SetRequestedHour(float hour) noexcept;
+        [[nodiscard]] float RequestedHour() noexcept;
+    }
+
+    namespace sun_light
+    {
+        inline constexpr float MinimumShadingElevationDegrees = 15.0f;
+        struct State
+        {
+            DayLighting lighting;
+            DayVec3 shading;
+        };
+        [[nodiscard]] DayVec3 ShadingDirection(const DayLighting& lighting) noexcept;
+        [[nodiscard]] const State& Current() noexcept;
+        void Set(const DayLighting& lighting) noexcept;
+        /** @brief The shading direction scaled to the former constant's length, so at 14:00 the
+         *  uploaded uniform equals environment::SunDirection exactly. */
+        [[nodiscard]] DayVec3 UniformDirection() noexcept;
+    }
 }

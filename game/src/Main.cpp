@@ -1,5 +1,6 @@
 #include "CNA/Platform/Entrypoint.hpp"
 
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/IslandGame.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
@@ -10,6 +11,7 @@
 #include <exception>
 #include <charconv>
 #include <iostream>
+#include <cstdlib>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -187,6 +189,8 @@ int main(const int argc, char* argv[])
             inputDiagnostics = true;
         } else if (argument == "--no-user-settings") {
             noUserSettings = true;
+        } else if (argument == "--time-of-day" && index + 1 < argc) {
+            island::day_night_options::SetRequestedHour(std::strtof(argv[++index], nullptr));
         } else if (argument == "--no-sun-shadows") {
             island::SunShadowMap::SetQaDisabled(true);
         } else if (argument == "--overview") {

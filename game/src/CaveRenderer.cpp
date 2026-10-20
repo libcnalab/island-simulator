@@ -1,3 +1,4 @@
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/CaveRenderer.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/OpaqueImageLoader.hpp"
@@ -495,8 +496,8 @@ void CaveRenderer::Draw(const Matrix& view,const Matrix& projection) {
     if(!reported){std::cout<<"island-simulator: cave rock first visible draw\n";reported=true;}
     float matrix[16];(view*projection).ToColumnMajor(matrix);
     effect_->Apply();effect_->SetUniformMat4("uViewProjection",matrix);
-    effect_->SetUniformVec3("uToSun",environment::SunDirectionX,environment::SunDirectionY,
-                            environment::SunDirectionZ);
+    effect_->SetUniformVec3("uToSun",sun_light::UniformDirection().x,sun_light::UniformDirection().y,
+                            sun_light::UniformDirection().z);
     device_.getSamplerStatesProperty()[0]=SamplerState::LinearClamp;
     effect_->SetTexture(0,*rockTexture_);effect_->SetUniformInt("uRockTexture",0);
     effect_->SetUniformVec3("uRockMean",rockMean_[0],rockMean_[1],rockMean_[2]);

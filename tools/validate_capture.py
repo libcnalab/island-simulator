@@ -19,11 +19,21 @@ MINIMUM_HEIGHT = 360
 MINIMUM_LUMINANCE_DEVIATION = 18.0
 MINIMUM_QUANTIZED_COLOR_BINS = 64
 MINIMUM_SPATIAL_CONTRAST = 30.0
-PROFILES = ("scene", "shaded-detail", "close-natural-detail", "dark-cave-detail")
+PROFILES = ("scene", "shaded-detail", "close-natural-detail", "dark-cave-detail", "night-scene")
+
+# The game hours of the night (the clock's dark between the dusk and the dawn), when a capture
+# asks for one with --time-of-day: reviewed on 2026-10-20 as a dark blue moonlit scene.
+NIGHT_HOURS = ((18.3, 24.0), (0.0, 5.7))   # the sun 4 degrees and more below the horizon
 
 
-def profile_for_viewpoint(viewpoint: str) -> str:
+def is_night_hour(hour: float | None) -> bool:
+    return hour is not None and any(start <= hour % 24.0 < end for start, end in NIGHT_HOURS)
+
+
+def profile_for_viewpoint(viewpoint: str, hour: float | None = None) -> str:
     """Return only explicitly reviewed profiles; never infer an exception from failed pixels."""
+    if is_night_hour(hour):
+        return "night-scene"
     if viewpoint == "litter":
         return "shaded-detail"
     if viewpoint == "cave-back":
@@ -36,12 +46,18 @@ def profile_for_viewpoint(viewpoint: str) -> str:
 def profile_for_arguments(arguments: list[str]) -> str:
     """Match the game's last explicit camera selection, including --overview."""
     viewpoint = ""
+    hour = None
     for index, argument in enumerate(arguments):
         if argument == "--overview":
             viewpoint = "overview"
         elif argument == "--viewpoint" and index + 1 < len(arguments):
             viewpoint = arguments[index + 1]
-    return profile_for_viewpoint(viewpoint)
+        elif argument == "--time-of-day" and index + 1 < len(arguments):
+            try:
+                hour = float(arguments[index + 1])
+            except ValueError:
+                hour = None
+    return profile_for_viewpoint(viewpoint, hour)
 
 
 class CaptureError(ValueError):
@@ -218,14 +234,15 @@ def validate_capture(image: PpmImage, expected_width: int | None = None,
     # Shaded close-ups must retain at least 25% relative variation and a hard noise
     # floor. This is stricter for bright/washed-out pictures, not a blanket bypass.
     minimum_deviation = (2.5 if profile == "dark-cave-detail"
+                         else 3.0 if profile == "night-scene"
                          else max(12.0, metrics["luminanceMean"] * 0.25)
                          if profile == "shaded-detail"
                          else max(10.0, metrics["luminanceMean"] * 0.20)
                          if profile == "close-natural-detail"
                          else MINIMUM_LUMINANCE_DEVIATION)
-    minimum_color_bins = (6 if profile == "dark-cave-detail" else 40
+    minimum_color_bins = (6 if profile == "dark-cave-detail" else 10 if profile == "night-scene" else 40
                           if profile == "close-natural-detail" else MINIMUM_QUANTIZED_COLOR_BINS)
-    minimum_spatial_contrast = (8.0 if profile == "dark-cave-detail" else 15.0
+    minimum_spatial_contrast = (8.0 if profile in ("dark-cave-detail", "night-scene") else 15.0
                                 if profile == "close-natural-detail" else MINIMUM_SPATIAL_CONTRAST)
     errors: list[str] = []
     if image.width < MINIMUM_WIDTH or image.height < MINIMUM_HEIGHT:
@@ -243,9 +260,10 @@ def validate_capture(image: PpmImage, expected_width: int | None = None,
         errors.append("capture has too few quantized colour bins")
     if metrics["spatialContrast"] < minimum_spatial_contrast:
         errors.append("capture has insufficient large-scale spatial contrast")
-    if not 24.0 <= metrics["luminanceMean"] <= 232.0:
+    minimum_mean = 6.0 if profile == "night-scene" else 24.0
+    if not minimum_mean <= metrics["luminanceMean"] <= 232.0:
         errors.append("capture mean luminance is outside the usable presentation range")
-    if metrics["darkPixelFraction"] > 0.92:
+    if metrics["darkPixelFraction"] > (0.995 if profile == "night-scene" else 0.92):
         errors.append("capture is overwhelmingly dark")
     if metrics["brightPixelFraction"] > 0.92:
         errors.append("capture is overwhelmingly bright")

@@ -1,3 +1,4 @@
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/NaturalPropRenderer.hpp"
@@ -2192,8 +2193,8 @@ void main()
             customEffect_->SetUniformVec3("uCameraPosition", cameraPosition.X,
                                           cameraPosition.Y, cameraPosition.Z);
             customEffect_->SetUniformVec3(
-                "uToSun", environment::SunDirectionX, environment::SunDirectionY,
-                environment::SunDirectionZ);
+                "uToSun", sun_light::UniformDirection().x, sun_light::UniformDirection().y,
+                sun_light::UniformDirection().z);
         } else {
             fallbackEffect_->setViewProperty(view);
             fallbackEffect_->setProjectionProperty(projection);

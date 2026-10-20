@@ -79,6 +79,26 @@ class CaptureValidatorTests(unittest.TestCase):
                     self.assertFalse(validate_capture(
                         image, profile="close-natural-detail")["valid"])
 
+    def test_night_profile_only_for_an_explicit_night_hour(self):
+        # The night profile follows an explicit --time-of-day in the dark hours; a black or
+        # featureless frame still fails it.
+        self.assertEqual(profile_for_arguments(["--viewpoint", "hut", "--time-of-day", "21"]), "night-scene")
+        self.assertEqual(profile_for_arguments(["--viewpoint", "hut", "--time-of-day", "2.5"]), "night-scene")
+        self.assertEqual(profile_for_arguments(["--viewpoint", "hut", "--time-of-day", "14"]), "scene")
+        self.assertEqual(profile_for_arguments(["--viewpoint", "hut"]), "scene")
+        self.assertEqual(profile_for_viewpoint("hut", 21.0), "night-scene")
+        image = PpmImage(640, 360, b"")
+        metrics = {"luminanceMean": 14.0, "luminanceStandardDeviation": 4.5,
+                   "quantizedColorBins": 29, "spatialContrast": 22.0,
+                   "darkPixelFraction": 0.84, "brightPixelFraction": 0.0}
+        with patch("tools.validate_capture.analyze_capture", return_value=metrics):
+            self.assertFalse(validate_capture(image)["valid"])
+            self.assertTrue(validate_capture(image, profile="night-scene")["valid"])
+            metrics.update(luminanceMean=2.0, darkPixelFraction=1.0)
+            self.assertFalse(validate_capture(image, profile="night-scene")["valid"])
+            metrics.update(luminanceMean=14.0, darkPixelFraction=0.84, luminanceStandardDeviation=1.0)
+            self.assertFalse(validate_capture(image, profile="night-scene")["valid"])
+
     def test_shaded_profile_preserves_other_failure_gates(self):
         image = PpmImage(640, 360, b"")
         good = {"luminanceMean": 50.0, "luminanceStandardDeviation": 15.0,

@@ -60,6 +60,69 @@ namespace island
         }
     }
 
+    namespace day_night_options
+    {
+        namespace { float requestedHour = -1.0f; }
+        void SetRequestedHour(const float hour) noexcept
+        {
+            requestedHour = std::isfinite(hour) ? std::fmod(std::fmod(hour, 24.0f) + 24.0f, 24.0f) : -1.0f;
+        }
+        float RequestedHour() noexcept { return requestedHour; }
+    }
+
+    namespace sun_light
+    {
+        namespace
+        {
+            [[nodiscard]] DayVec3 RaisedTo(const DayVec3& d, const float minimumDegrees) noexcept
+            {
+                const float horizontal = std::hypot(d.x, d.z);
+                if (horizontal < 1e-5f) return {0.0f, 1.0f, 0.0f};
+                const float elevation = std::max(std::asin(std::clamp(d.y, -1.0f, 1.0f)), Radians(minimumDegrees));
+                return {d.x / horizontal * std::cos(elevation), std::sin(elevation), d.z / horizontal * std::cos(elevation)};
+            }
+            State& Mutable() noexcept
+            {
+                static State state{DayNightCycle::LightingAt(DayNightCycle::DefaultHour, 2.0f), {}};
+                static bool initialised = false;
+                if (!initialised) {
+                    state.shading = ShadingDirection(state.lighting);
+                    initialised = true;
+                }
+                return state;
+            }
+        }
+
+        DayVec3 ShadingDirection(const DayLighting& lighting) noexcept
+        {
+            const DayVec3 sun = RaisedTo(lighting.toSun, MinimumShadingElevationDegrees);
+            const DayVec3 moon = RaisedTo(lighting.toMoon, MinimumShadingElevationDegrees);
+            const float sunWeight = Smooth(-6.0f, 2.0f, lighting.sunElevationDegrees);
+            DayVec3 d = Mix(moon, sun, sunWeight);
+            const float length = std::sqrt(d.x * d.x + d.y * d.y + d.z * d.z);
+            if (length < 1e-5f) return sun;
+            return {d.x / length, d.y / length, d.z / length};
+        }
+
+        const State& Current() noexcept { return Mutable(); }
+
+        void Set(const DayLighting& lighting) noexcept
+        {
+            State& state = Mutable();
+            state.lighting = lighting;
+            state.shading = ShadingDirection(lighting);
+        }
+
+        DayVec3 UniformDirection() noexcept
+        {
+            const float former = std::sqrt(environment::SunDirectionX * environment::SunDirectionX
+                + environment::SunDirectionY * environment::SunDirectionY
+                + environment::SunDirectionZ * environment::SunDirectionZ);
+            const DayVec3 d = Mutable().shading;
+            return {d.x * former, d.y * former, d.z * former};
+        }
+    }
+
     DayNightCycle::DayNightCycle(const float startHour, const float startDay) noexcept
         : day_(std::max(startDay, 0.0f))
     {
@@ -120,8 +183,9 @@ namespace island
         const DayVec3 daylight{1.0f, 1.0f, 1.0f};
         const DayVec3 golden{1.0f, 0.83f, 0.64f};
         const DayVec3 dusk{0.46f, 0.38f, 0.50f};
-        const DayVec3 night{0.085f, 0.11f, 0.20f};
-        const DayVec3 moonlit{0.07f, 0.09f, 0.14f};
+        // A game night: dark and blue, but the land still reads; the moon lifts it further.
+        const DayVec3 night{0.13f, 0.165f, 0.29f};
+        const DayVec3 moonlit{0.10f, 0.12f, 0.18f};
         DayVec3 grade;
         if (e >= 20.0f) grade = daylight;
         else if (e >= 2.0f) grade = Mix(golden, daylight, Smooth(2.0f, 20.0f, e));

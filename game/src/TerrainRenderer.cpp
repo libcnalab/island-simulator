@@ -1,3 +1,4 @@
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/TerrainRenderer.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
@@ -1574,8 +1575,8 @@ void main()
             materialEffect_->SetUniformVec3("uCameraPosition", cameraPosition.X,
                                             cameraPosition.Y, cameraPosition.Z);
             materialEffect_->SetUniformVec3(
-                "uToSun", environment::SunDirectionX, environment::SunDirectionY,
-                environment::SunDirectionZ);
+                "uToSun", sun_light::UniformDirection().x, sun_light::UniformDirection().y,
+                sun_light::UniformDirection().z);
             materialEffect_->SetUniformVec2("uSandWind", wind::DirectionX, wind::DirectionZ);
             materialEffect_->SetUniformVec4(
                 "uPrimaryPathShape", VegetationLayout::PrimaryPathBaseX,

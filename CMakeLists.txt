@@ -687,6 +687,7 @@ if(ISLAND_BUILD_GAME)
         game/src/ContactShadowRenderer.cpp
         game/src/SunShadowMap.cpp
         game/src/StructureShadowReceiver.cpp
+        game/src/TimeOfDayRenderer.cpp
         game/src/CrabRenderer.cpp
         game/src/CrocodileRenderer.cpp
         game/src/BoarRenderer.cpp

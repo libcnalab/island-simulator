@@ -595,6 +595,8 @@ def main():
     parser.add_argument("build", type=Path)
     parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "flight", "bridge", "lookout", "log", "hut", "hut-material", "helicopter", "helicopter-inside", "resident", "resident-tending", "resident-fishing", "bear", "bear-lying", "boars", "boar-lying", "goats", "goat-lying", "deer", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "monkey-scratch", "ground-doves", "bird-preen", "stingray-buried"}))
     parser.add_argument("--canopy-lod-inspection", nargs=3, metavar=("X_MM", "Z_MM", "TIER"))
+    parser.add_argument("--time-of-day", type=float, default=None,
+                        help="QA: the game hour to hold the clock at (default: the 14:00 the views were made at)")
     parser.add_argument("--no-sun-shadows", action="store_true",
                         help="QA comparison: run without the sun shadow map (contact footprints only)")
     parser.add_argument("--missing-leaf", action="store_true",
@@ -612,14 +614,16 @@ def main():
     journal = Journal()
     baseline = journal.latest()  # Refuse an empty/inaccessible kernel journal before launch.
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
-    evidence = build / "software-captures" / (f"{stamp}-{args.viewpoint}" + ("-no-sun-shadows" if args.no_sun_shadows else ""))
+    evidence = build / "software-captures" / (f"{stamp}-{args.viewpoint}" + ("-no-sun-shadows" if args.no_sun_shadows else "")
+                                              + (f"-t{args.time_of_day:05.2f}" if args.time_of_day is not None else ""))
     evidence.mkdir(parents=True)
     capture = evidence / "capture.ppm"
     platform = dependency / "tools/platform"
     command = [str(platform / "wayland_test_server.sh"), "--compositor", "weston", "--renderer", "pixman",
                str(platform / "run_gpu_tests_private.sh"), "--inside-private-compositor", "exec",
                str(build / "island-simulator"), "--capture", str(capture), "--viewpoint", args.viewpoint,
-               "--no-user-settings", *inspection, *(["--no-sun-shadows"] if args.no_sun_shadows else [])]
+               "--no-user-settings", *inspection, *(["--no-sun-shadows"] if args.no_sun_shadows else []),
+               *(["--time-of-day", str(args.time_of_day)] if args.time_of_day is not None else [])]
     scope = "single-tree frozen LOD inspection only" if inspection else "software visual validation only"
     # Exercise title-relative content loading from an unrelated, build-owned working directory.
     metadata = {"scope": scope, "command": command, "cwd": str(evidence), "kernel_before": baseline}
@@ -1149,6 +1153,10 @@ def main():
                 raise RuntimeError("a structure's sun shadow receiver failed to build")
             if "the rocks, logs, driftwood, beach details and the wreck receive the sun shadows and the cumulus shade with the ground around them" not in diagnostics:
                 raise RuntimeError("current prop and wreck sun-shadow receiving is missing; check for a stale executable")
+            if not re.search(r"day and night: 24 game hours pass in 24 real minutes from \d\d:\d\d; the sun rises in the east at 06:00 and sets at 18:00", diagnostics):
+                raise RuntimeError("current day/night clock is missing; check for a stale executable")
+            if "night sky: 1100 stars and a phased moon over the graded sky" not in diagnostics:
+                raise RuntimeError("current night sky is missing; check for a stale executable")
             if "the hut receives the sun shadows: its eaves shade its walls and the trees' shadows and the cumulus shade fall across it" not in diagnostics:
                 raise RuntimeError("current hut sun-shadow receiving is missing; check for a stale executable")
             if "the abandoned helicopter is weathered: earthy grime low on the body, a patchy damp-green film on its upward faces and rust low on bare metal" not in diagnostics:
@@ -1935,7 +1943,7 @@ def main():
                     if validation.returncode:
                         raise RuntimeError(f"monkey-tree stage {stage['stage']} image validation failed")
             validation = subprocess.run([sys.executable, str(root / "tools/validate_capture.py"),
-                                         str(capture), "--profile", profile_for_viewpoint(args.viewpoint),
+                                         str(capture), "--profile", profile_for_viewpoint(args.viewpoint, args.time_of_day),
                                          "--output", str(evidence / "validation.json")],
                                         check=False, timeout=15)
             if validation.returncode:

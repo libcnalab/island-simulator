@@ -81,6 +81,7 @@ namespace island {
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::RenderTarget2D> target_;
         Microsoft::Xna::Framework::Matrix lightViewProjection_;
         Microsoft::Xna::Framework::Vector3 anchor_;
+        Microsoft::Xna::Framework::Vector3 lightDirection_;   // the shading direction the map was rendered from
         Microsoft::Xna::Framework::Vector3 viewer_;   // this frame's camera, for the far fade
         Microsoft::Xna::Framework::Graphics::Viewport savedViewport_;
         bool hasAnchor_ = false;

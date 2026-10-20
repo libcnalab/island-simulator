@@ -1,3 +1,4 @@
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/ShipwreckRenderer.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
 
@@ -1237,8 +1238,8 @@ void main()
             agedWoodEffect_->SetUniformVec3("uWoodMean", woodMean_.X,
                                             woodMean_.Y, woodMean_.Z);
             agedWoodEffect_->SetUniformVec3(
-                "uToSun", environment::SunDirectionX, environment::SunDirectionY,
-                environment::SunDirectionZ);
+                "uToSun", sun_light::UniformDirection().x, sun_light::UniformDirection().y,
+                sun_light::UniformDirection().z);
         } else {
             fallbackEffect_->setWorldProperty(Matrix::getIdentityProperty());
             fallbackEffect_->setViewProperty(view);

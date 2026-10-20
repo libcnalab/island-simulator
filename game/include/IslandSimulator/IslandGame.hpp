@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include "IslandSimulator/TimeOfDayRenderer.hpp"
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/BenchmarkTraversalRoute.hpp"
 #include "IslandSimulator/CanopyLeafFallField.hpp"
 #include "IslandSimulator/BearMotion.hpp"
@@ -510,6 +512,9 @@ namespace island
         std::unique_ptr<CascadeMistRenderer> cascadeMistRenderer_;
         std::unique_ptr<CascadeMistRenderer> wetlandMistRenderer_;
         std::unique_ptr<UnderwaterEffectRenderer> underwaterEffect_;
+        std::unique_ptr<TimeOfDayRenderer> timeOfDay_;
+        DayNightCycle dayNight_{};
+        bool timeKeyWasDown_ = false;
         FootprintTrail footprints_;
         // The deer's and the boars' cloven prints on wet sand and the stream's mud.
         std::array<FootprintTrail,DeerHerd::Count> deerPrints_{};
