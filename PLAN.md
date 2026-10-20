@@ -54,6 +54,18 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 62 (2026-10-20) — the startled octopus inks
+
+An octopus caught in the open by the swimmer went to its den in silence. `OctopusGroup`
+notes an `InkEvent` (the octopus's point and scale, counted) the moment the swimmer inside
+2.7 m sends an octopus that is not already denned into its den. A core `OctopusInkField`
+raises four puffs in a tight ring where it was, rising a little, spreading and thinning
+over three seconds, as `DustPuff`s drawn by a third rooting-dust renderer instance in ink
+(22, 18, 34) with its own line, "an octopus startled from the open jets for its den behind a
+cloud of ink", pinned by the native capture tool. Core checks: the first octopus starts in
+the open; the swimmer a metre off sends it to its den with one inking noted where it was; a
+cloud of four forms there and thins away within three seconds. Native `octopuses` passes.
+
 ## Loop pass 61 (2026-10-20) — the resident raises a hand
 
 The resident stopped for a player who came close and stood with both arms at the sides.

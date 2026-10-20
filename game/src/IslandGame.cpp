@@ -2172,6 +2172,8 @@ namespace island
             "island-simulator: a dolphin breaking the surface blows a puff of spray from the blowhole");
         stingraySandRenderer_ = std::make_unique<RootingDustRenderer>(device,
             "island-simulator: a settled stingray bursts out of the sand in a puff when the swimmer comes near", 196, 178, 140);
+        octopusInkRenderer_ = std::make_unique<RootingDustRenderer>(device,
+            "island-simulator: an octopus startled from the open jets for its den behind a cloud of ink", 22, 18, 34);
         worldDebugRenderer_ = std::make_unique<WorldDebugRenderer>(device, terrain_);
         if (viewpoint_ == FixedViewpoint::GroundContactDetail) {
             constexpr float contactZ = 45.0f;
@@ -2952,6 +2954,7 @@ namespace island
         }
         const auto previousOctopus=octopusGroup_.Octopuses().front();
         octopusGroup_.Update(viewpoint_==FixedViewpoint::OctopusDetail?0.0f:deltaSeconds,cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z);
+        octopusInk_.Update(deltaSeconds,octopusGroup_.LastInk());
         if(viewpoint_==FixedViewpoint::OctopusDetail){const auto& o=octopusGroup_.Octopuses().front();cameraPosition_+=Vector3(o.x-previousOctopus.x,o.y-previousOctopus.y,o.z-previousOctopus.z);}
         const SeaTurtleState previousTurtleSubject = seaTurtleGroup_.Turtles()[2U];
         seaTurtleGroup_.Update(
@@ -4505,6 +4508,7 @@ namespace island
             cascadeMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,cascadeMist_.Puffs());
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,rootingDust_.Puffs());
             stingraySandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,stingraySand_.Puffs());
+            octopusInkRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,octopusInk_.Puffs());
             surfSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,surfSpray_.Puffs());
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,dolphinBlows_.Puffs());
         }

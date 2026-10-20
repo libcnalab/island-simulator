@@ -1163,6 +1163,8 @@ def main():
                 raise RuntimeError("current deer ear turn is missing; check for a stale executable")
             if "the resident raises a hand to a player who stops close by" not in diagnostics:
                 raise RuntimeError("current resident wave is missing; check for a stale executable")
+            if "an octopus startled from the open jets for its den behind a cloud of ink" not in diagnostics:
+                raise RuntimeError("current octopus ink is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

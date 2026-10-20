@@ -33,6 +33,10 @@ namespace island
         void Update(float deltaSeconds,float observerX,float observerY,float observerZ)noexcept;
         [[nodiscard]] std::span<const OctopusState> Octopuses()const noexcept{return states_;}
         [[nodiscard]] std::span<const OctopusDen> Dens()const noexcept{return dens_;}
+    /** @brief The last octopus startled out of the open into its den by the swimmer: where it
+     *  was, counted so an inking is noted once. */
+    struct InkEvent { float x=0.0f,y=0.0f,z=0.0f,scale=1.0f; std::uint32_t count=0; };
+    [[nodiscard]] const InkEvent& LastInk()const noexcept{return ink_;}
         [[nodiscard]] int FullSimulationCount()const noexcept{return fullCount_;}
         [[nodiscard]] int ReducedSimulationCount()const noexcept{return reducedCount_;}
         [[nodiscard]] int DormantSimulationCount()const noexcept{return dormantCount_;}
@@ -44,5 +48,6 @@ namespace island
         [[nodiscard]] float DesiredHeight(const Agent&)const noexcept;
         const IslandTerrain& terrain_;std::vector<Agent> agents_;std::vector<OctopusState> states_;std::vector<OctopusDen> dens_;
         float elapsedSeconds_=0;std::uint64_t frameIndex_=0;int fullCount_=0,reducedCount_=0,dormantCount_=0;
+        InkEvent ink_;
     };
 }

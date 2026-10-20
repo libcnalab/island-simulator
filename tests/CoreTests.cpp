@@ -17,6 +17,7 @@
 #include "IslandSimulator/GrassWalkers.hpp"
 #include "IslandSimulator/RodentPopulation.hpp"
 #include "IslandSimulator/ForestTwigLayout.hpp"
+#include "IslandSimulator/OctopusInkField.hpp"
 #include "IslandSimulator/CrabColony.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
 #include "IslandSimulator/CoastalWindResponse.hpp"
@@ -8155,6 +8156,24 @@ int main()
                 if(same&&(twig.x!=repeat.Twigs()[i].x||twig.z!=repeat.Twigs()[i].z)) same=false;
             }
             Check(twigs.Twigs().size()>=60U&&floor&&nearTrunk&&same,"fallen twigs lie on the forest floor near the trunks, deterministically");
+        }
+        // An octopus in the open startled by the swimmer inks: the swimmer a metre from the
+        // foraging octopus sends it to its den and notes an inking where it was; a cloud of
+        // four puffs forms there and thins away within three seconds.
+        {
+            island::OctopusGroup octopuses(terrain);
+            const auto open=octopuses.Octopuses()[0];
+            Check(open.behavior!=island::OctopusBehavior::Den,"the first octopus starts in the open");
+            for(int step=0;step<4;++step) octopuses.Update(0.05f,open.x+1.0f,open.y,open.z);
+            Check(octopuses.LastInk().count==1U&&std::hypot(octopuses.LastInk().x-open.x,octopuses.LastInk().z-open.z)<0.5f
+                  &&octopuses.Octopuses()[0].behavior==island::OctopusBehavior::Den,"the startled octopus jets for its den and inks once");
+            island::OctopusInkField ink;
+            ink.Update(0.05f,octopuses.LastInk());
+            bool clouded=true;
+            for(const auto& puff:ink.Puffs()) if(puff.active&&std::hypot(puff.x-open.x,puff.z-open.z)>0.6f) clouded=false;
+            Check(ink.ActiveCount()==island::OctopusInkField::PuffsPerCloud&&clouded,"a cloud of ink forms where the octopus was");
+            for(int step=0;step<70;++step) ink.Update(0.05f,octopuses.LastInk());
+            Check(ink.ActiveCount()==0U,"the ink thins away within three seconds");
         }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls

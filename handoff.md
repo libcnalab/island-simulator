@@ -122,6 +122,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 59: fallen twigs lie scattered on the forest floor under the crowns (PLAN "Loop pass 59").
 - Pass 60: an alert deer swings both ears toward the watcher (PLAN "Loop pass 60").
 - Pass 61: the resident raises a hand to a player who stops close by (PLAN "Loop pass 61").
+- Pass 62: a startled octopus jets for its den behind a cloud of ink (PLAN "Loop pass 62").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted
