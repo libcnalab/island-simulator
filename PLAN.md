@@ -46,6 +46,26 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Portable evidence for loop passes 15–38 (2026-10-20, Web package of 02:42)
+
+The Web package rebuilt after loop pass 38 (with the premultiplied mist fix) passed all eight
+Chrome software scopes run against it between 02:45 and 03:33 under the other agents' load:
+`birds`, `boars`, `monkeys`, `hut`, `palms`, `grass-motion`, `butterflies`, `cliffs` (evidence
+`build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
+by load as recorded above. Loop passes 39 onward are not yet in a Web package.
+
+## Loop pass 49 (2026-10-20) — dragonflies over the plunge pool
+
+The dragonflies kept the wetland and two stream reaches; the cascade's pool, the wettest
+place on the island after pass 6, had none. `DragonflySwarm` grows to four habitats and
+twelve animals: the fourth habitat is the stream course's pool station, found at
+construction, with an 8.5 m range (the core tests hold every range between 8.5 and 10.5 m,
+which a first draft at 6.5 m tripped), and its three dragonflies hover, patrol and dart
+over the pool like the others. The renderer's line becomes "twelve stream, plunge-pool and
+wetland dragonflies hover, patrol, and dart in the shared butterfly batch" (pinned by the
+native capture tool, whose visible-count rule now reads of twelve). Core check: the last
+three homes sit on the pool station with the pool range. Native `dragonflies` passes.
+
 ## Loop pass 48 (2026-10-20) — the ant trails bend to the fallen fruit
 
 The four ant trails ran their authored lines whatever lay beside them. `AntTrails` now keeps

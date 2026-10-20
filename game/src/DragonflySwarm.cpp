@@ -3,6 +3,7 @@
 #include "IslandSimulator/IslandEnvironmentField.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/StreamRoute.hpp"
+#include "IslandSimulator/StreamCourse.hpp"
 
 #include <algorithm>
 #include <array>
@@ -18,16 +19,19 @@ struct Habitat {float x,z,radius;};
 const std::array<Habitat,DragonflySwarm::HabitatCount> Habitats={{
     {IslandEnvironmentField::SeasonalWetlandX,IslandEnvironmentField::SeasonalWetlandZ,10.5f},
     {-103.0f,StreamRoute::CentreZ(-103.0f),8.5f},
-    {-137.0f,StreamRoute::CentreZ(-137.0f),9.0f}}};
+    {-137.0f,StreamRoute::CentreZ(-137.0f),9.0f},
+    {0.0f,0.0f,DragonflySwarm::PoolHabitatRadius}}};   // the plunge pool, placed at construction
 float Wrap(float a)noexcept{while(a>Pi)a-=TwoPi;while(a<-Pi)a+=TwoPi;return a;}
 float MoveAngle(float a,float b,float step)noexcept{return Wrap(a+std::clamp(Wrap(b-a),-step,step));}
 }
 
 DragonflySwarm::DragonflySwarm(const IslandTerrain& terrain):terrain_(terrain){
+    const StreamCourse course(terrain);
+    poolX_=course.PoolStation().x;poolZ_=course.PoolStation().z;
     for(std::size_t i=0;i<Count;++i){Initialize(i);states_[i]=agents_[i].state;homes_[i]=agents_[i].home;}
 }
 void DragonflySwarm::Initialize(std::size_t i){
-    auto& a=agents_[i];const auto& h=Habitats[i/3];a.home={h.x,h.z,h.radius};
+    auto& a=agents_[i];const Habitat h=i/3==HabitatCount-1?Habitat{poolX_,poolZ_,PoolHabitatRadius}:Habitats[i/3];a.home={h.x,h.z,h.radius};
     float angle=.41f+static_cast<float>(i)*2.39996323f,radius=1.2f+static_cast<float>(i%3)*1.15f;
     a.state.x=h.x+std::cos(angle)*radius;a.state.z=h.z+std::sin(angle)*radius;
     for(int n=0;n<8&&!Valid(a.state.x,a.state.z,a.home);++n){radius*=.72f;a.state.x=h.x+std::cos(angle)*radius;a.state.z=h.z+std::sin(angle)*radius;}

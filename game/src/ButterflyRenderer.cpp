@@ -80,7 +80,7 @@ namespace island
         constexpr std::string_view SkinkSolidDiagnostic =
             "island-simulator: skinks use solid tapered leg, toe, and five-section tail volumes with surface-set highlighted eyes";
         constexpr std::string_view DragonflyDiagnostic=
-            "island-simulator: nine stream and wetland dragonflies hover, patrol, and dart in the shared butterfly batch";
+            "island-simulator: twelve stream, plunge-pool and wetland dragonflies hover, patrol, and dart in the shared butterfly batch";
         constexpr std::string_view DragonflyAnatomyDiagnostic=
             "island-simulator: near dragonflies use connected tapered abdominal segments, rounded heads, fitted compound eyes, solid jointed legs, and subdued veined wings";
         constexpr std::string_view FrogDiagnostic =

@@ -3170,7 +3170,7 @@ int main()
     island::DragonflySwarm invalidInputDragonflies(terrain);
     Check(dragonflies.Dragonflies().size()==island::DragonflySwarm::Count
               &&dragonflies.Homes().size()==island::DragonflySwarm::Count,
-          "dragonfly simulation exposes nine bounded wet-habitat animals");
+          "dragonfly simulation exposes twelve bounded wet-habitat animals");
     for(std::size_t index=0;index<dragonflies.Dragonflies().size();++index) {
         const auto& dragonfly=dragonflies.Dragonflies()[index];
         const auto& repeated=repeatedDragonflies.Dragonflies()[index];
@@ -8012,6 +8012,18 @@ int main()
             Check(reached,"an ant reaches the fruit within a minute");
             ants.SetLyingFruit({});
             Check(ants.FoodTrailCount()==0U&&ants.FoodEnd(groundTrail,endX,endZ)&&std::hypot(endX-lineX,endZ-lineZ)<0.01f,"with the fruit gone the trail returns to its line");
+        }
+        // The plunge pool has its own dragonflies: the last three homes sit on the pool.
+        {
+            island::DragonflySwarm poolFlies(terrain);
+            const island::StreamCourse poolCourse(terrain);
+            const auto& pool=poolCourse.PoolStation();
+            bool onPool=true;
+            for(std::size_t i=island::DragonflySwarm::Count-3;i<island::DragonflySwarm::Count;++i) {
+                const auto& home=poolFlies.Homes()[i];
+                if(std::hypot(home.x-pool.x,home.z-pool.z)>0.01f||home.radius!=island::DragonflySwarm::PoolHabitatRadius) onPool=false;
+            }
+            Check(onPool,"three dragonflies have the plunge pool for their habitat");
         }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls

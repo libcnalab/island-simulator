@@ -24,7 +24,10 @@ struct DragonflyHome { float x=0,z=0,radius=0; };
 /** Nine deterministic stream/wetland dragonflies with hover, patrol and short dart states. */
 class DragonflySwarm final {
 public:
-    static constexpr std::size_t Count=9,HabitatCount=3;
+    // Three dragonflies to a habitat: the wetland, two stream reaches, and the cascade's
+    // plunge pool (found from the stream course at construction).
+    static constexpr std::size_t Count=12,HabitatCount=4;
+    static constexpr float PoolHabitatRadius=8.5f;   // the compact-range rule the core tests hold
     static constexpr float FullSimulationDistance=55,ReducedSimulationDistance=130;
     explicit DragonflySwarm(const IslandTerrain&);
     void Update(float deltaSeconds,float observerX,float observerY,float observerZ) noexcept;
@@ -44,5 +47,6 @@ private:
     std::array<DragonflyState,Count> states_{};
     std::array<DragonflyHome,Count> homes_{};
     std::uint64_t frame_=0;int fullCount_=0,reducedCount_=0,dormantCount_=0;
+    float poolX_=0,poolZ_=0;
 };
 }
