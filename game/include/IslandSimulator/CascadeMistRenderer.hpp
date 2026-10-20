@@ -24,6 +24,9 @@ public:
               const Microsoft::Xna::Framework::Matrix& projection,
               const Microsoft::Xna::Framework::Vector3& camera,
               std::span<const MistPuff> puffs);
+    // Far puffs (a whale's blow offshore): fade out from `start` over `length` metres instead
+    // of the near spray's 40 + 20, and drawn this much denser.
+    void SetRange(float start,float length,float density=1.0f) noexcept {fadeStart_=start;fadeLength_=length;densityScale_=density;}
     [[nodiscard]] int DrawCallCount() const noexcept {return drawCalls_;}
     [[nodiscard]] int VisibleCount() const noexcept {return visible_;}
 private:
@@ -32,6 +35,7 @@ private:
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> vertices_;
     std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> staging_;
     std::size_t capacity_=CascadeMistField::Capacity;
+    float fadeStart_=40.0f,fadeLength_=20.0f,densityScale_=1.0f;
     int drawCalls_=0,visible_=0;
 };
 }

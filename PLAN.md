@@ -233,6 +233,24 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 264 (2026-10-20) — whales offshore
+
+Life on the open sea beyond the reef. A core `WhalePod` (a function of the clock, deterministic)
+brings a humpback to the surface every 35-85 s somewhere 330-620 m out, swimming along the
+coast at 1.6 m/s through a nine-second roll: it blows first (six mist puffs that stand up five
+metres within a second, then spread, drift downwind and thin away over about five seconds),
+then rolls its back up through the swell and under again, and one roll in three raises its
+flukes as it sounds. `WhaleRenderer` draws the back as a 12 m half-ellipsoid with a pale belly
+line and the small dorsal fin two-thirds back, the crest of the arc sliding toward the tail as
+it goes down, and the broad flukes (dark above, pale beneath) with the tail stock; shaded by the
+hour's light and hazed toward the fog colour with the distance, drawn before the sea so the
+water covers what lies under it. The blow uses the cascade's mist renderer, which now takes a
+far range (700 + 200 m) and a density for it. A probe build holding a back and a fluking whale
+330-360 m in front of `jetty-end` showed both at the right scale, dark grey-blue on the far sea
+(a first build drew them black; they are now lighter and hazed); the probe was removed. Core
+check: in ten minutes 7-16 surfacings, all 320-640 m out, each blow standing up over 4 m and
+gone within six seconds. `jetty-end`, `dolphins` and `overview` pass.
+
 ## Loop pass 263 (2026-10-20) — the hermit crabs keep to the night
 
 Hermit crabs forage mostly at night. `HermitCrabGroup` takes the darkness (`SetNightness`; never

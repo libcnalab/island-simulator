@@ -38,13 +38,14 @@ void CascadeMistRenderer::Draw(const Matrix& view,const Matrix& projection,const
         const Vector3 centre(puff.x,puff.y,puff.z);
         Vector3 toCamera=camera-centre;
         const float distance=toCamera.Length();
-        if(distance>60.0f||distance<0.05f) continue;
+        if(distance>fadeStart_+fadeLength_||distance<0.05f) continue;
         toCamera/=distance;
         // A camera-facing fan: right and up from the view direction.
         Vector3 right=Vector3::Cross(Vector3::Up,toCamera);
         if(right.LengthSquared()<1e-6f) right=Vector3::Right; else right.Normalize();
         Vector3 up=Vector3::Cross(toCamera,right);up.Normalize();
-        const int alpha=static_cast<int>(std::lround(58.0f*puff.density*(1.0f-std::clamp((distance-40.0f)/20.0f,0.0f,1.0f))));
+        const int alpha=static_cast<int>(std::lround(std::min(255.0f,58.0f*densityScale_*puff.density
+            *(1.0f-std::clamp((distance-fadeStart_)/fadeLength_,0.0f,1.0f)))));
         if(alpha<2) continue;
         // The blend state takes premultiplied colour: the rim is clear black, the core the
         // pale spray scaled by its own alpha, or the fan reads as a solid white disc.

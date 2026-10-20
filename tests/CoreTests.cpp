@@ -70,6 +70,7 @@
 #include "IslandSimulator/RainRings.hpp"
 #include "IslandSimulator/FireflySwarm.hpp"
 #include "IslandSimulator/MorningMistField.hpp"
+#include "IslandSimulator/WhalePod.hpp"
 #include "IslandSimulator/ShootingStars.hpp"
 #include "IslandSimulator/CrabBubbleField.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
@@ -6899,6 +6900,33 @@ int main()
                 if (!m.visible && started >= 0.0) { shortLived = shortLived && t - started < 0.8; started = -1.0; }
             }
             Check(streaks >= 6 && streaks <= 13 && shortLived && inSky, "about one shooting star a minute, each under a second, high in the sky");
+        }
+        // Whales offshore: a surfacing every 35-85 s, 330-620 m out, its blow standing up
+        // several metres and gone within six seconds.
+        {
+            island::WhalePod whales;
+            int surfacings = 0;
+            bool farOut = true, blowRose = false, blowGone = true;
+            bool was = false;
+            float sinceStart = 0.0f;
+            for (int step = 0; step < 60 * 600; ++step) {
+                whales.Update(1.0f / 60.0f, 1.0f, 0.0f);
+                const auto& w = whales.Surfacing();
+                if (w.active && !was) {
+                    ++surfacings;
+                    const float r = std::hypot(w.x, w.z);
+                    farOut = farOut && r > 320.0f && r < 640.0f;
+                    sinceStart = 0.0f;
+                }
+                was = w.active;
+                sinceStart += 1.0f / 60.0f;
+                for (const auto& puff : whales.Blow()) {
+                    if (puff.active && puff.y > 4.0f) blowRose = true;
+                    if (puff.active && sinceStart > 6.0f && surfacings > 0) blowGone = false;
+                }
+            }
+            Check(surfacings >= 7 && surfacings <= 16 && farOut && blowRose && blowGone,
+                  "whales surface every minute or so far offshore, their blows standing up and thinning away");
         }
         // Rain rings on the sea: world-anchored and repeatable, each inside its own cell,
         // more cells striking in heavier rain, none in no rain.

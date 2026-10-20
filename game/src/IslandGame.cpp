@@ -2459,6 +2459,10 @@ namespace island
         fireflies_ = std::make_unique<FireflySwarm>(terrain_);
         fireflyRenderer_ = std::make_unique<FireflyRenderer>(device);
         morningMist_ = std::make_unique<MorningMistField>(terrain_);
+        whaleRenderer_ = std::make_unique<WhaleRenderer>(device);
+        whaleBlowRenderer_ = std::make_unique<CascadeMistRenderer>(device,
+            "island-simulator: a humpback's blow stands up five metres far offshore, drifts downwind and thins away", WhalePod::PuffCount);
+        whaleBlowRenderer_->SetRange(700.0f, 200.0f, 2.2f);
         mistBankRenderer_ = std::make_unique<MistBankRenderer>(device, MorningMistField::MaximumSites);
         std::cout << "island-simulator: morning mist: " << morningMist_->SiteCount() << " sites on the low damp ground\n";
         try {
@@ -3190,6 +3194,7 @@ namespace island
             UpdateCamera(deltaSeconds);
         }
         UpdateQuad(deltaSeconds);
+        whales_.Update(deltaSeconds, wind::DirectionX, wind::DirectionZ);
         if (morningMist_)
             morningMist_->Update(deltaSeconds, MorningMistField::Thickness(dayNight_.Hour(), weather_now::Current().wind,
                                                                            weather_now::Current().rain),
@@ -5629,6 +5634,7 @@ namespace island
 
         {
             GpuDiagnosticScope gpuPass("dolphins");
+            if (whaleRenderer_) whaleRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, whales_.Surfacing());
             dolphinRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,
                 dolphinPod_.Dolphins(),timeSeconds);
         }
@@ -5712,6 +5718,7 @@ namespace island
             octopusInkRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,octopusInk_.Puffs());
             surfSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,surfSpray_.Puffs());
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,dolphinBlows_.Puffs());
+            if (whaleBlowRenderer_) whaleBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,whales_.Blow());
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,dragonflyDips_.Puffs());
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,crabBubbles_.Puffs());
             turtleBreathRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,turtleBreaths_.Puffs());
