@@ -10,7 +10,7 @@
 namespace island {
 class IslandTerrain;
 
-enum class DragonflyBehavior : std::uint8_t { Hover, Patrol, Dart };
+enum class DragonflyBehavior : std::uint8_t { Hover, Patrol, Dart, Perch };
 
 struct DragonflyState {
     float x=0,y=0,z=0,headingRadians=0,speed=0,wingPhase=0,bankRadians=0,scale=1;
@@ -29,6 +29,11 @@ public:
     static constexpr std::size_t Count=12,HabitatCount=4;
     static constexpr float PoolHabitatRadius=8.5f;   // the compact-range rule the core tests hold
     static constexpr float FullSimulationDistance=55,ReducedSimulationDistance=130;
+    // One patrol in three ends on a perch: a stem's top at PerchHeight, the wings held still
+    // for a few seconds, then off again. The walker's approach breaks it as any hover.
+    static constexpr float PerchHeight=0.5f,PerchSeconds=4.0f;
+    [[nodiscard]] std::uint32_t PerchCount()const noexcept{return perches_;}
+    [[nodiscard]] std::size_t PerchedCount()const noexcept;
     explicit DragonflySwarm(const IslandTerrain&);
     void Update(float deltaSeconds,float observerX,float observerY,float observerZ) noexcept;
     [[nodiscard]] std::span<const DragonflyState> Dragonflies()const noexcept{return states_;}
@@ -44,6 +49,7 @@ private:
     [[nodiscard]] bool Valid(float,float,const DragonflyHome&)const noexcept;
     const IslandTerrain& terrain_;
     std::array<Agent,Count> agents_{};
+    std::uint32_t perches_=0;
     std::array<DragonflyState,Count> states_{};
     std::array<DragonflyHome,Count> homes_{};
     std::uint64_t frame_=0;int fullCount_=0,reducedCount_=0,dormantCount_=0;

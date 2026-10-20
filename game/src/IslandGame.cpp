@@ -2345,7 +2345,7 @@ namespace island
                   << "island-simulator: skinks " << skinkPopulation_.Skinks().size()
                   << " agents in deterministic open-ground bask, forage, and flee habitats; a basking skink a cloud's shadow covers gets up and forages, and lies down to bask only in the sun\n"
                   << "island-simulator: dragonflies " << dragonflySwarm_.Dragonflies().size()
-                  << " agents in three stream and wetland habitats\n"
+                  << " agents in three stream and wetland habitats; one patrol in three ends on a perch, a stem's top at half a metre, the wings held still a few seconds\n"
                   << "island-simulator: frogs " << frogPopulation_.Frogs().size()
                   << " agents rest, hop, and retreat beside the stream and wetland; two keep the banks of the cascade's plunge pool, "
                      "and one of those fleeing the walker leaps into the pool, swims under, surfaces and makes back for its bank; "

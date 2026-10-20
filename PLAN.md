@@ -54,6 +54,21 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 94 (2026-10-20) — dragonflies perch with still wings
+
+The dragonflies hovered, patrolled and darted without ever landing. `DragonflyBehavior::Perch`
+ends one patrol in three: the dragonfly settles onto a stem's top at half a metre
+(`PerchHeight`, inside the habitat's airborne band), its speed falls to nothing, its
+heading holds and its wing phase is set to zero and frozen so the wings lie level, for four
+to eight seconds (`PerchSeconds` plus a little per bout), then it hovers off; the walker's
+approach breaks a perch as it does a hover. `PerchCount()` and `PerchedCount()` expose it.
+The startup report's dragonfly line gains "one patrol in three ends on a perch, a stem's
+top at half a metre, the wings held still a few seconds", pinned by the native capture
+tool. Core checks: a habitat dragonfly perches still with level wings at the perch height
+within three minutes and is off again within twelve seconds; the long-session airborne
+band and determinism checks hold. The pass-93 suite run had the known load flake of the
+GPU qualification supervisor test, which passed alone. Native `dragonflies` passes.
+
 ## Loop pass 93 (2026-10-20) — the frog's splash scatters the pool fish
 
 The pool fish scattered from the walker but not from the frog that leapt in among them.

@@ -64,21 +64,29 @@ void DragonflySwarm::Update(float dt,float ox,float oy,float oz)noexcept{
         if((frame_+i)%divisor==0){UpdateAgent(a,std::min(a.accumulated,.5f),ox,oz,observer);a.accumulated=0;}states_[i]=a.state;}
     assert(fullCount_+reducedCount_+dormantCount_==static_cast<int>(Count));
 }
+std::size_t DragonflySwarm::PerchedCount()const noexcept{std::size_t count=0;for(const auto& a:agents_)count+=a.state.behavior==DragonflyBehavior::Perch?1U:0U;return count;}
 void DragonflySwarm::UpdateAgent(Agent& a,float dt,float ox,float oz,bool observer)noexcept{
     if(dt<=0)return;
     const float d=observer?std::hypot(a.state.x-ox,a.state.z-oz):9999;
     if(d<2.8f&&a.state.behavior!=DragonflyBehavior::Dart){a.state.behavior=DragonflyBehavior::Dart;a.seconds=.85f;a.state.headingRadians=std::atan2(a.state.z-oz,a.state.x-ox);}
-    else if((a.seconds-=dt)<=0){++a.transitions;if(a.state.behavior==DragonflyBehavior::Dart){a.state.behavior=DragonflyBehavior::Hover;a.seconds=1.1f+.25f*(a.transitions%4);}else if(a.state.behavior==DragonflyBehavior::Hover){a.state.behavior=DragonflyBehavior::Patrol;a.seconds=4.2f+.6f*(a.transitions%5);}else{a.state.behavior=a.transitions%3==0?DragonflyBehavior::Hover:DragonflyBehavior::Dart;a.seconds=a.state.behavior==DragonflyBehavior::Hover?1.4f:.75f;}}
+    else if((a.seconds-=dt)<=0){++a.transitions;if(a.state.behavior==DragonflyBehavior::Dart){a.state.behavior=DragonflyBehavior::Hover;a.seconds=1.1f+.25f*(a.transitions%4);}else if(a.state.behavior==DragonflyBehavior::Hover){a.state.behavior=DragonflyBehavior::Patrol;a.seconds=4.2f+.6f*(a.transitions%5);}else if(a.state.behavior==DragonflyBehavior::Perch){a.state.behavior=DragonflyBehavior::Hover;a.seconds=1.4f;}
+    else{a.state.behavior=a.transitions%3==0?DragonflyBehavior::Hover:(a.transitions%3==1?DragonflyBehavior::Perch:DragonflyBehavior::Dart);
+        a.seconds=a.state.behavior==DragonflyBehavior::Hover?1.4f:(a.state.behavior==DragonflyBehavior::Perch?PerchSeconds+.9f*(a.transitions%5):.75f);
+        if(a.state.behavior==DragonflyBehavior::Perch){++perches_;a.state.wingPhase=0;}}}
     a.turnA=std::fmod(a.turnA+dt*1.03f,TwoPi);a.turnB=std::fmod(a.turnB+dt*.37f,TwoPi);a.vertical=std::fmod(a.vertical+dt*2.3f,TwoPi);
-    const float target=a.state.behavior==DragonflyBehavior::Hover?.05f:(a.state.behavior==DragonflyBehavior::Dart?2.8f:1.05f);
+    const bool perched=a.state.behavior==DragonflyBehavior::Perch;
+    const float target=a.state.behavior==DragonflyBehavior::Hover?.05f:(a.state.behavior==DragonflyBehavior::Dart?2.8f:(perched?0.0f:1.05f));
     a.state.speed+=std::clamp(target-a.state.speed,-dt*5.0f,dt*8.0f);
     const float home=std::hypot(a.state.x-a.home.x,a.state.z-a.home.z);
     if(home>a.home.radius*.72f)a.state.headingRadians=MoveAngle(a.state.headingRadians,std::atan2(a.home.z-a.state.z,a.home.x-a.state.x),dt*3.4f);
-    else if(a.state.behavior!=DragonflyBehavior::Hover)a.state.headingRadians=Wrap(a.state.headingRadians+dt*(std::sin(a.turnA)*1.25f+std::sin(a.turnB)*.42f));
+    else if(a.state.behavior!=DragonflyBehavior::Hover&&!perched)a.state.headingRadians=Wrap(a.state.headingRadians+dt*(std::sin(a.turnA)*1.25f+std::sin(a.turnB)*.42f));
     const float nx=a.state.x+std::cos(a.state.headingRadians)*a.state.speed*dt,nz=a.state.z+std::sin(a.state.headingRadians)*a.state.speed*dt;
     if(Valid(nx,nz,a.home)){a.state.x=nx;a.state.z=nz;}else a.state.headingRadians=std::atan2(a.home.z-a.state.z,a.home.x-a.state.x);
-    const float ground=terrain_.Height(a.state.x,a.state.z);const float targetY=ground+a.altitude+std::sin(a.vertical)*(a.state.behavior==DragonflyBehavior::Hover?.06f:.20f);
-    a.state.y+=std::clamp(targetY-a.state.y,-dt*1.8f,dt*1.8f);a.state.wingPhase=std::fmod(a.state.wingPhase+dt*55.0f,TwoPi);
+    const float ground=terrain_.Height(a.state.x,a.state.z);
+    // Perched, the dragonfly settles onto a stem's top and holds its wings still.
+    const float targetY=perched?ground+PerchHeight:ground+a.altitude+std::sin(a.vertical)*(a.state.behavior==DragonflyBehavior::Hover?.06f:.20f);
+    a.state.y+=std::clamp(targetY-a.state.y,-dt*1.8f,dt*1.8f);
+    if(!perched)a.state.wingPhase=std::fmod(a.state.wingPhase+dt*55.0f,TwoPi);
     a.state.bankRadians=std::clamp(std::sin(a.turnA)*.16f*(a.state.speed/1.05f),-.34f,.34f);
 }
 }

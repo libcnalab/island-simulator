@@ -3259,6 +3259,30 @@ int main()
     }
     Check(observedDragonflyHover&&observedDragonflyPatrol&&observedDragonflyDart,
           "dragonflies complete hover, patrol, and dart activity states");
+    {
+        // A perch: one patrol in three ends with the dragonfly settled on a stem's top at
+        // half a metre, still, wings held level, and off again within ten seconds.
+        island::DragonflySwarm perchers(terrain);
+        const auto first=perchers.Dragonflies()[0];
+        bool perched=false;int perchedSteps=0;std::size_t percher=3;
+        for(int step=0;step<3600&&!perched;++step) {
+            perchers.Update(0.05f,first.x+12.0f,first.y+1.0f,first.z);
+            for(std::size_t i=0;i<3;++i) {
+                const auto& fly=perchers.Dragonflies()[i];
+                if(fly.behavior!=island::DragonflyBehavior::Perch) continue;
+                const float lift=fly.y-terrain.Height(fly.x,fly.z);
+                if(fly.speed<.05f&&fly.wingPhase==0.0f&&std::abs(lift-island::DragonflySwarm::PerchHeight)<.03f) {++perchedSteps;percher=i;}
+                if(perchedSteps>=10) perched=true;
+            }
+        }
+        Check(perched&&perchers.PerchCount()>=1U,"a habitat dragonfly perches on a stem's top, still and wings level, within three minutes");
+        bool off=false;
+        for(int step=0;step<240&&!off&&percher<3;++step) {
+            perchers.Update(0.05f,first.x+12.0f,first.y+1.0f,first.z);
+            off=perchers.Dragonflies()[percher].behavior!=island::DragonflyBehavior::Perch;
+        }
+        Check(off,"the perched dragonfly is off again within twelve seconds");
+    }
     Check(dragonflies.FullSimulationCount()+dragonflies.ReducedSimulationCount()
                   +dragonflies.DormantSimulationCount()
               ==static_cast<int>(island::DragonflySwarm::Count),
