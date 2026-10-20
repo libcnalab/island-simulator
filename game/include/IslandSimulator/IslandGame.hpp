@@ -507,7 +507,6 @@ namespace island
         std::unique_ptr<CascadeMistRenderer> cascadeMistRenderer_;
         std::unique_ptr<CascadeMistRenderer> wetlandMistRenderer_;
         std::unique_ptr<UnderwaterEffectRenderer> underwaterEffect_;
-        std::unique_ptr<CanopyShaftRenderer> canopyShafts_;
         FootprintTrail footprints_;
         // The deer's and the boars' cloven prints on wet sand and the stream's mud.
         std::array<FootprintTrail,DeerHerd::Count> deerPrints_{};

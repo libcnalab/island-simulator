@@ -54,6 +54,25 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Fix pass (2026-10-20) — a flight crash, and the stripes in flight
+
+Two operator reports from a native flight. **The crash** ("The data is not the correct size
+for this VertexBuffer"): the blown-sand field (loop 122) holds up to 48 puffs and over a
+beach in a gust it fills (a core check now measures the peak at 48 of 48), but it was drawn
+by a `RootingDustRenderer` whose buffer held the dust default of 18, so 19 puffs within the
+40 m draw range overflowed the upload. The renderer now takes a capacity (blown sand passes
+`BlownSandField::Capacity`), and it, the mist renderer and the small-fauna batch all stop at
+their buffer instead of overflowing (the batch drops trailing triangles with a one-time
+warning). **The stripes**: the screen-space canopy sun shafts (9de4885) were locked to the
+screen, not the world, and switched on and off with the light at the camera, so a flight
+between crowns swept the whole view into flickering stripes; they are no longer drawn (a
+startup line says so, pinned, and the tool fails if the old shafts line returns). The sun
+shadow map is also steadied: its light matrix is snapped to whole texels so each 8 m
+re-centre keeps one world-anchored texel grid (edges no longer crawl in flight), and the
+receivers apply a receiver-plane depth bias from the screen-space derivatives so crowns,
+fronds and banks sloped to the sun stop shadowing themselves in bands. Native `stream`,
+`deer` and the suite pass.
+
 ## Loop pass 200 (2026-10-20) — a deer tosses its head
 
 A deer came up from its graze with the head simply rising. `DeerState::headToss` (0..1)

@@ -42,8 +42,19 @@ float sunShadowVisibility(vec3 world) {
     vec2 uv = p.xy * 0.5 + 0.5;
     float depth = p.z - uSunShadowParams.y;
     float edge = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
-    if (edge <= 0.0 || depth <= 0.0 || depth >= 1.0) return clouds;
     uv.y = mix(uv.y, 1.0 - uv.y, uRtFlipV.w);
+    // Receiver-plane depth bias: the surface's own depth slope across the map, from the
+    // screen-space derivatives (taken here, in uniform control flow), extrapolates the
+    // receiver's depth to every filter tap. A surface sloped to the sun (a crown, a frond,
+    // a bank) then no longer shadows itself in bands that a constant bias cannot cover.
+    vec2 duvdx = dFdx(uv), duvdy = dFdy(uv);
+    float dzdx = dFdx(p.z), dzdy = dFdy(p.z);
+    float det = duvdx.x * duvdy.y - duvdx.y * duvdy.x;
+    vec2 dzduv = abs(det) > 1e-14
+        ? vec2(duvdy.y * dzdx - duvdx.y * dzdy, duvdx.x * dzdy - duvdy.x * dzdx) / det
+        : vec2(0.0);
+    dzduv = clamp(dzduv, vec2(-6.0), vec2(6.0));
+    if (edge <= 0.0 || depth <= 0.0 || depth >= 1.0) return clouds;
     float texel = uSunShadowParams.z;
     vec2 st = uv * uSunShadowParams.w - 0.5;
     vec2 f = fract(st);
@@ -58,7 +69,8 @@ float sunShadowVisibility(vec3 world) {
             float wx = (x == -1) ? (1.0 - f.x) : (x == 2) ? f.x : 1.0;
             float w = wx * wy;
             vec2 tap = base + vec2(float(x), float(y)) * texel;
-            lit += w * step(depth, sunShadowUnpack(texture(uSunShadowMap, tap)));
+            float tapDepth = depth + max(dot(dzduv, tap - uv), 0.0);
+            lit += w * step(tapDepth, sunShadowUnpack(texture(uSunShadowMap, tap)));
             weightSum += w;
         }
     }
@@ -120,6 +132,15 @@ void main() {
         const Matrix projection = Matrix::CreateOrthographic(2.0f * Radius, 2.0f * Radius,
                                                              1.0f, DepthRange);
         lightViewProjection_ = view * projection;
+        // Texel snapping: the light's rotation never changes, so shifting the map by whole
+        // texels keeps one world-anchored texel grid across every re-render; without it each
+        // 8 m re-centre moved the grid by a fraction of a texel and the shadow edges (and any
+        // self-shadow banding) crawled as the camera flew.
+        const Vector3 origin = Vector3::Transform(Vector3::Zero, lightViewProjection_);
+        const float half = 0.5f * static_cast<float>(resolution_);
+        const float dx = (std::round(origin.X * half) - origin.X * half) / half;
+        const float dy = (std::round(origin.Y * half) - origin.Y * half) / half;
+        lightViewProjection_ = lightViewProjection_ * Matrix::CreateTranslation(dx, dy, 0.0f);
         return true;
     }
 

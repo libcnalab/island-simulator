@@ -16,12 +16,14 @@ using namespace Microsoft::Xna::Framework;
 using namespace Microsoft::Xna::Framework::Graphics;
 
 namespace island {
-RootingDustRenderer::RootingDustRenderer(GraphicsDevice& device,const char* message,const int red,const int green,const int blue)
+RootingDustRenderer::RootingDustRenderer(GraphicsDevice& device,const char* message,const int red,const int green,const int blue,
+                                         const std::size_t capacity)
     :device_(device),effect_(std::make_unique<BasicEffect>(device)),
      vertices_(std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),
-        VerticesPerPuff*static_cast<int>(RootingDustField::Capacity),BufferUsage::WriteOnly))
+        VerticesPerPuff*static_cast<int>(std::max<std::size_t>(capacity,1)),BufferUsage::WriteOnly)),
+     capacity_(std::max<std::size_t>(capacity,1))
 {
-    staging_.reserve(static_cast<std::size_t>(VerticesPerPuff)*RootingDustField::Capacity);
+    staging_.reserve(static_cast<std::size_t>(VerticesPerPuff)*capacity_);
     effect_->setVertexColorEnabledProperty(true);effect_->setLightingEnabledProperty(false);
     red_=std::clamp(red,0,255);green_=std::clamp(green,0,255);blue_=std::clamp(blue,0,255);
     if(!message) message="island-simulator: rooting boars throw up small puffs of soil at the snout that drift off on the breeze";
@@ -33,6 +35,7 @@ void RootingDustRenderer::Draw(const Matrix& view,const Matrix& projection,const
     drawCalls_=0;visible_=0;
     staging_.clear();
     for(const auto& puff:puffs) {
+        if(static_cast<std::size_t>(visible_)>=capacity_) break;   // never past the buffer
         if(!puff.active||puff.density<=0.03f||!std::isfinite(puff.x)||!std::isfinite(puff.y)||!std::isfinite(puff.z)) continue;
         const Vector3 centre(puff.x,puff.y,puff.z);
         Vector3 toCamera=camera-centre;

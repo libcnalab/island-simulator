@@ -2347,7 +2347,7 @@ namespace island
         touchOverlay_ = std::make_unique<TouchOverlay>(device);
         waterViewOverlay_ = std::make_unique<WaterViewOverlay>(device);
         underwaterEffect_ = std::make_unique<UnderwaterEffectRenderer>(device);
-        canopyShafts_ = std::make_unique<CanopyShaftRenderer>(device);
+        std::cout << "island-simulator: screen-space canopy sun shafts are off; the light under the crowns comes from the shade field and the drifting leaf-gap flecks\n";
         footprintRenderer_ = std::make_unique<FootprintTrailRenderer>(device, terrain_);
         rootingDustRenderer_ = std::make_unique<RootingDustRenderer>(device);
         shellDragRenderer_ = std::make_unique<ShellDragRenderer>(device, terrain_);
@@ -2362,8 +2362,9 @@ namespace island
             "island-simulator: a dolphin breaking the surface blows a puff of spray from the blowhole");
         stingraySandRenderer_ = std::make_unique<RootingDustRenderer>(device,
             "island-simulator: a settled stingray bursts out of the sand in a puff when the swimmer comes near", 196, 178, 140);
+        // Blown sand holds up to BlownSandField::Capacity puffs, more than the dust default.
         blownSandRenderer_ = std::make_unique<RootingDustRenderer>(device,
-            "island-simulator: a gust front passing the windward beaches streams pale sand off the dry crests downwind, a hand's height and gone within two seconds", 221, 208, 172);
+            "island-simulator: a gust front passing the windward beaches streams pale sand off the dry crests downwind, a hand's height and gone within two seconds", 221, 208, 172,BlownSandField::Capacity);
         finWakeRenderer_ = std::make_unique<RootingDustRenderer>(device,
             "island-simulator: the shark's dorsal fin riding just under the surface cuts a foam wake that spreads and fades on the water behind it within three seconds", 236, 244, 248);
         std::cout << "island-simulator: blown sand: " << blownSand_.Sources().size()
@@ -5122,14 +5123,10 @@ namespace island
             const float cameraDepth = overSea && eye.Y < 0.0f ? -eye.Y : 0.0f;
             underwaterEffect_->Draw(cameraDepth, waterViewModel_.Intensity(), bubbleBurst_, timeSeconds,
                                     cameraView_, viewport.getWidthProperty(), viewport.getHeightProperty());
-            // Under the canopy, and only with the sun out, the view carries the sun's shafts.
-            // Only a camera over land reads the light field (over the sea it reads as fully
-            // occluded, which would veil the whole sea view in shafts).
-            const bool overLand = std::isfinite(eye.X) && std::isfinite(eye.Z)
-                && terrain_.Height(eye.X, eye.Z) > 0.0f && terrain_.SignedShoreDistance(eye.X, eye.Z) > 5.0f;
-            const float shaftStrength = cameraDepth > 0.03f || IsDebugFreeCameraActive() || !overLand
-                ? 0.0f : CanopyShafts::Strength(canopyLightField_.Sample(eye.X, eye.Z), CloudShadow::Cover(eye.X, eye.Z, timeSeconds));
-            canopyShafts_->Draw(shaftStrength, timeSeconds, cameraView_, viewport.getWidthProperty(), viewport.getHeightProperty());
+            // The screen-space canopy sun shafts (2026-10-20) are no longer drawn: locked to the
+            // screen rather than the world, and switching on and off with the light at the
+            // camera, they swept the whole view into flickering stripes in flight (operator
+            // report). A world-anchored replacement would need volumes under real crown gaps.
         }
 
         if (locomotionModeNoticeSeconds_ > 0.0f) {

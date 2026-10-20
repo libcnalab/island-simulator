@@ -9593,6 +9593,17 @@ int main()
         {
             island::BlownSandField sand(terrain);
             Check(sand.Sources().size()>=20U,"the windward beaches give the blown sand its sources");
+            {
+                // Regression (2026-10-20 crash): over a beach in a gust the field holds more
+                // puffs than the dust renderer's old 18-puff buffer, so the renderer drawing it
+                // must be sized for BlownSandField::Capacity.
+                island::BlownSandField busy(terrain);
+                const auto at=busy.Sources()[0];
+                std::size_t peak=0U;
+                for(int step=0;step<1800;++step) { busy.Update(0.05f,step*0.05f,at.x,at.z); peak=std::max(peak,busy.ActiveCount()); }
+                std::cout<<"blown sand peak active puffs "<<peak<<" of "<<island::BlownSandField::Capacity<<"\n";
+                Check(peak<=island::BlownSandField::Capacity,"the blown sand field stays within its capacity");
+            }
             bool allDry=true;
             for(const auto& source:sand.Sources()) {
                 const auto sample=terrain.Sample(source.x,source.z);

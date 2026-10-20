@@ -1122,8 +1122,10 @@ def main():
                 raise RuntimeError("current land cloud shadows are missing; check for a stale executable")
             if "a mist of spray hangs at the cascade's foot, rising and drifting on the breeze and laid over by the gust fronts" not in diagnostics:
                 raise RuntimeError("current cascade mist is missing; check for a stale executable")
-            if "under the canopy the view carries slow sun shafts leaning to the sun, gone in the open and under a cloud" not in diagnostics:
-                raise RuntimeError("current canopy sun shafts are missing; check for a stale executable")
+            if "screen-space canopy sun shafts are off" not in diagnostics:
+                raise RuntimeError("current canopy shaft removal is missing; check for a stale executable")
+            if "under the canopy the view carries slow sun shafts" in diagnostics:
+                raise RuntimeError("the screen-space canopy sun shafts are still drawn; check for a stale executable")
             if "the walker's bare feet leave a trail of prints in the sand that the sand takes back over four minutes" not in diagnostics:
                 raise RuntimeError("current walker footprints are missing; check for a stale executable")
             if "rooting boars throw up small puffs of soil at the snout that drift off on the breeze" not in diagnostics:

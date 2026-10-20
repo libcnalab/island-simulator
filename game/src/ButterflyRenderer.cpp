@@ -2069,6 +2069,17 @@ namespace island
         }
         if (stagingVertices_.empty()) return;
 
+        // A crowded close view may exceed the summed budget; drop whole trailing triangles
+        // (the farthest animals are appended last) rather than overflowing the buffer.
+        if (stagingVertices_.size() > static_cast<std::size_t>(MaximumVertexCount)) {
+            static bool reported = false;
+            if (!reported) {
+                std::cerr << "island-simulator: warning: small-fauna batch over its vertex budget; "
+                             "trailing geometry dropped for the frame\n";
+                reported = true;
+            }
+            stagingVertices_.resize(static_cast<std::size_t>(MaximumVertexCount) / 3U * 3U);
+        }
         device_.setRasterizerStateProperty(RasterizerState::CullNone);
         device_.setBlendStateProperty(BlendState::Opaque);
         device_.setDepthStencilStateProperty(DepthStencilState::Default);

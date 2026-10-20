@@ -1,4 +1,5 @@
 #pragma once
+#include <cstddef>
 #include "IslandSimulator/RootingDustField.hpp"
 #include "Microsoft/Xna/Framework/Matrix.hpp"
 #include "Microsoft/Xna/Framework/Vector3.hpp"
@@ -17,8 +18,10 @@ public:
     static constexpr int Segments=8,VerticesPerPuff=Segments*3;
     // message: the startup diagnostic this instance prints (the boars' by default); red, green,
     // blue: the puff colour (earth brown by default; the stingrays' sand shares the renderer).
+    // capacity: the most puffs one Draw may upload (the field's own capacity); any beyond it
+    // are left out of the frame rather than overflowing the vertex buffer.
     explicit RootingDustRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,const char* message=nullptr,
-                                 int red=118,int green=92,int blue=62);
+                                 int red=118,int green=92,int blue=62,std::size_t capacity=18);
     void Draw(const Microsoft::Xna::Framework::Matrix& view,
               const Microsoft::Xna::Framework::Matrix& projection,
               const Microsoft::Xna::Framework::Vector3& camera,
@@ -32,5 +35,6 @@ private:
     std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> staging_;
     int drawCalls_=0,visible_=0;
     int red_=118,green_=92,blue_=62;
+    std::size_t capacity_=18;
 };
 }

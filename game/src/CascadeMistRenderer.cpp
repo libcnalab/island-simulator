@@ -32,6 +32,7 @@ void CascadeMistRenderer::Draw(const Matrix& view,const Matrix& projection,const
     drawCalls_=0;visible_=0;
     staging_.clear();
     for(const auto& puff:puffs) {
+        if(static_cast<std::size_t>(visible_)>=CascadeMistField::Capacity) break;   // never past the buffer
         if(!puff.active||puff.density<=0.02f||!std::isfinite(puff.x)||!std::isfinite(puff.y)||!std::isfinite(puff.z)) continue;
         const Vector3 centre(puff.x,puff.y,puff.z);
         Vector3 toCamera=camera-centre;
