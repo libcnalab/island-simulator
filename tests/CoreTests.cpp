@@ -8542,7 +8542,7 @@ int main()
         const auto& course=drift.Course();
         const auto afloat=[&](const island::DriftingLeaf& leaf){
             if(!leaf.active||!std::isfinite(leaf.x)||!std::isfinite(leaf.y)||!std::isfinite(leaf.z)) return false;
-            if(leaf.atSea) return true;   // out of the mouth, on the lagoon, checked separately
+            if(leaf.atSea||leaf.beached) return true;   // on the lagoon or washed up, checked separately
             float best=1e9f; const island::StreamStation* nearest=nullptr;
             for(std::size_t i=0;i<course.Count();++i) { const float d=std::hypot(course.Station(i).x-leaf.x,course.Station(i).z-leaf.z); if(d<best) { best=d; nearest=&course.Station(i); } }
             return nearest&&best<=nearest->halfWidth*1.2f+0.3f&&std::abs(leaf.y-nearest->water-island::StreamDriftField::SurfaceLift)<0.45f;
@@ -8570,6 +8570,18 @@ int main()
                 if(std::abs(leaf.y)>0.06f) onSurface=false;
             }
             Check(drift.SeaCount()>=1U&&seaLeaf&&downwind&&onSurface,"leaves out of the mouth drift on the lagoon downwind at the surface");
+        }
+        {
+            // A leaf on the lagoon drifting onto rising sand washes up and lies on the strand
+            // a while: with the drift run long enough for the sea leaves to meet the shore,
+            // beached leaves lie at sand height out of the water, never afloat and beached at once.
+            island::StreamDriftField washed(terrain);
+            bool lying=true;
+            for(int step=0;step<24000&&washed.BeachedCount()==0U;++step) washed.Update(0.05f);
+            for(const auto& leaf:washed.Leaves()) if(leaf.active&&leaf.beached) {
+                if(leaf.atSea||terrain.Height(leaf.x,leaf.z)<0.0f||std::abs(leaf.y-terrain.Height(leaf.x,leaf.z)-0.02f)>0.001f) lying=false;
+            }
+            Check(washed.BeachedCount()>=1U&&lying,"a leaf drifting onto rising sand washes up and lies on the strand at sand height");
         }
         {
             // A point on the water is located on the course; one fifty metres off is not. A

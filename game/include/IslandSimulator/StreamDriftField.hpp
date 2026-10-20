@@ -19,6 +19,8 @@ struct DriftingLeaf {
     bool active=false;
     bool atSea=false;       // carried out of the mouth, drifting on the lagoon
     float seaSeconds=0;
+    bool beached=false;     // washed up on the strand, lying on the sand
+    float beachSeconds=0;
 };
 
 // Leaves drifting down the stream on the current: slow on the ordinary reach, hurried over
@@ -30,6 +32,9 @@ public:
     static constexpr float ReachSpeed=0.32f,LipSpeed=1.1f,DropSpeed=1.8f,PoolSpeed=0.12f;
     // Out of the mouth a leaf drifts on the lagoon downwind for a while before it is lost.
     static constexpr float SeaDriftSpeed=0.2f,SeaSeconds=75.0f;
+    // A leaf on the lagoon that drifts onto rising sand washes up and lies there a while.
+    static constexpr float BeachSeconds=120.0f;
+    [[nodiscard]] std::uint32_t BeachedCount() const noexcept {return beached_;}
     static constexpr float LipRun=4.0f;       // metres above the lip where the water hurries
     static constexpr float SurfaceLift=0.02f;
     explicit StreamDriftField(const IslandTerrain& terrain);
@@ -49,8 +54,9 @@ public:
     [[nodiscard]] bool Surface(float distance,float lateral,float& x,float& y,float& z,float& headingRadians) const noexcept;
 private:
     void Launch(std::size_t index,float distance) noexcept;
+    const IslandTerrain& terrain_;
     StreamCourse course_;
     std::array<DriftingLeaf,Capacity> leaves_{};
-    std::uint32_t passes_=0,launches_=0,adoptions_=0;
+    std::uint32_t passes_=0,launches_=0,adoptions_=0,beached_=0;
 };
 }

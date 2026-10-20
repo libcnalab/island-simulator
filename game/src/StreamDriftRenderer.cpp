@@ -25,7 +25,7 @@ StreamDriftRenderer::StreamDriftRenderer(GraphicsDevice& device)
     effect_->setFogEnabledProperty(true);
     effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
     effect_->setFogStartProperty(300.0f);effect_->setFogEndProperty(760.0f);
-    const char* message="island-simulator: leaves drift down the stream on the current, hurry over the cascade lip, idle in the pool and go out to sea; out of the mouth they drift on across the lagoon downwind";
+    const char* message="island-simulator: leaves drift down the stream on the current, hurry over the cascade lip, idle in the pool and go out to sea; out of the mouth they drift on across the lagoon downwind, and one that drifts onto rising sand washes up and lies on the strand";
     std::cout<<message<<'\n';MirrorRuntimeDiagnosticToPlatformLog(message);
 }
 

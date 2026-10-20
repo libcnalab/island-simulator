@@ -3,7 +3,7 @@
 #include <cmath>
 
 namespace island {
-StreamDriftField::StreamDriftField(const IslandTerrain& terrain):course_(terrain) {
+StreamDriftField::StreamDriftField(const IslandTerrain& terrain):terrain_(terrain),course_(terrain) {
     const float length=course_.Station(course_.Count()-1).distance;
     for(std::size_t i=0;i<Capacity;++i) {
         // Spread along the whole course so the stream is never empty of them.
@@ -56,7 +56,7 @@ std::size_t StreamDriftField::SeaCount() const noexcept {
 void StreamDriftField::Launch(const std::size_t index,const float distance) noexcept {
     DriftingLeaf& leaf=leaves_[index];
     ++launches_;
-    leaf.atSea=false;leaf.seaSeconds=0;
+    leaf.atSea=false;leaf.seaSeconds=0;leaf.beached=false;leaf.beachSeconds=0;
     leaf.distance=distance;
     leaf.lateral=-0.8f+1.6f*static_cast<float>((launches_*7U+index*3U)%11U)/10.0f;
     leaf.spin=static_cast<float>((launches_*5U+index)%13U)*0.48f;
@@ -95,13 +95,26 @@ void StreamDriftField::Update(const float deltaSeconds) noexcept {
     for(std::size_t index=0;index<leaves_.size();++index) {
         DriftingLeaf& leaf=leaves_[index];
         if(!leaf.active) { Launch(index,1.0f); continue; }
+        if(leaf.beached) {
+            // Washed up: it lies on the sand a while, then a new leaf enters near the source.
+            leaf.beachSeconds+=dt;
+            if(leaf.beachSeconds>=BeachSeconds) Launch(index,1.0f+static_cast<float>(launches_%5U)*0.6f);
+            continue;
+        }
         if(leaf.atSea) {
-            // On the lagoon: downwind with a slow set and a bob, until it is lost.
+            // On the lagoon: downwind with a slow set and a bob, until it is lost or washes
+            // up where the sand rises above the water.
             leaf.seaSeconds+=dt;
             leaf.x-=SeaDriftSpeed*dt;
             leaf.z+=0.05f*std::sin(leaf.seaSeconds*0.4f+leaf.spin)*dt;
             leaf.y=0.02f+0.02f*std::sin(leaf.seaSeconds*1.7f+leaf.spin);
             leaf.spin+=0.15f*dt;leaf.yawRadians+=0.15f*dt;
+            const float sand=terrain_.Height(leaf.x,leaf.z);
+            if(std::isfinite(sand)&&sand>=0.0f) {
+                leaf.atSea=false;leaf.beached=true;leaf.beachSeconds=0;leaf.y=sand+0.02f;
+                ++beached_;
+                continue;
+            }
             if(leaf.seaSeconds>=SeaSeconds||!std::isfinite(leaf.x)) Launch(index,1.0f+static_cast<float>(launches_%5U)*0.6f);
             continue;
         }

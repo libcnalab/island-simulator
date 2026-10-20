@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 109 (2026-10-20) — stream leaves wash up on the strand
+
+A leaf out of the mouth drifted the lagoon for seventy-five seconds and then simply
+vanished, even where its drift carried it onto the sand. The drift field now keeps the
+terrain: a leaf on the lagoon that drifts onto ground at or above the waterline washes up
+(`beached`, counted by `BeachedCount()`): it lies on the sand two centimetres up for two
+minutes (`BeachSeconds`), the leaf renderer drawing it there among the strandings, and then
+a new leaf enters near the source as before. The stream's drift diagnostic gains "and one
+that drifts onto rising sand washes up and lies on the strand", pinned by the native
+capture tool. Core checks: run until a sea leaf meets the shore, the beached leaves lie at
+sand height out of the water and are never afloat and beached at once; the earlier
+afloat-in-the-banks rule treats a beached leaf like one at sea. Native `stream` passes.
+
 ## Loop pass 108 (2026-10-20) — a leaf that lands on the stream drifts away with it
 
 A crown's leaf or a bird's feather that came down over the stream lay on the water as on
