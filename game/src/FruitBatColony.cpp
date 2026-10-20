@@ -79,6 +79,7 @@ namespace island
                 agent.state.speed = agent.orbitRadius * agent.orbitSpeed;
                 agent.state.hangAmount = 0.0f;
                 agent.state.wingPose = std::sin(agent.flapPhase + .8f);
+                agent.airborne = 1.0f;
             }
             states_[index] = agent.state;
         }
@@ -88,6 +89,13 @@ namespace island
     {
         std::size_t count = 0;
         for (const Agent& agent : agents_) count += agent.stretching ? 1U : 0U;
+        return count;
+    }
+
+    std::size_t FruitBatColony::FlyingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.state.behavior == FruitBatBehavior::DayFlight ? 1U : 0U;
         return count;
     }
 
@@ -124,12 +132,33 @@ namespace island
             if (boundedDelta > 0.0f && frameIndex_ % divisor == index % divisor) {
                 const float step = boundedDelta * static_cast<float>(divisor);
                 agent.accumulatedSeconds += step;
+                // By day two bats are out on their rounds; from dusk the whole colony is.
+                const bool out = index < MaximumDayFlights || nightness_ > 0.55f;
+                agent.airborne = std::clamp(agent.airborne + (out ? step : -step) / 3.5f, 0.0f, 1.0f);
+                if (agent.airborne > 0.0f && agent.state.behavior != FruitBatBehavior::DayFlight) {
+                    agent.state.behavior = FruitBatBehavior::DayFlight;
+                    agent.state.hangAmount = 0.0f;
+                } else if (agent.airborne <= 0.0f && agent.state.behavior == FruitBatBehavior::DayFlight) {
+                    agent.state.behavior = FruitBatBehavior::Roost;
+                    agent.state.x = agent.roost.x;
+                    agent.state.y = agent.roost.y - .38f * agent.state.scale;
+                    agent.state.z = agent.roost.z;
+                    agent.state.headingRadians = agent.roost.headingRadians;
+                    agent.state.hangAmount = 1.0f;
+                }
                 if (agent.state.behavior == FruitBatBehavior::DayFlight) {
+                    // the night's rounds go wider, to the fruiting crowns further off
+                    const float radius = agent.orbitRadius * (1.0f + 1.6f * nightness_);
                     const float angle = agent.orbitPhase + agent.accumulatedSeconds * agent.orbitSpeed;
-                    agent.state.x = agent.roost.x + std::cos(angle) * agent.orbitRadius;
-                    agent.state.z = agent.roost.z + std::sin(angle) * agent.orbitRadius;
-                    agent.state.y = agent.roost.y + 3.2f
+                    const float orbitX = agent.roost.x + std::cos(angle) * radius;
+                    const float orbitZ = agent.roost.z + std::sin(angle) * radius;
+                    const float orbitY = agent.roost.y + 3.2f
                         + .7f * std::sin(angle * 1.7f + static_cast<float>(index));
+                    // taking off or settling: drawn along a smooth path between the hang and the round
+                    const float a = agent.airborne * agent.airborne * (3.0f - 2.0f * agent.airborne);
+                    agent.state.x = agent.roost.x + (orbitX - agent.roost.x) * a;
+                    agent.state.z = agent.roost.z + (orbitZ - agent.roost.z) * a;
+                    agent.state.y = agent.roost.y - .38f * agent.state.scale + (orbitY - agent.roost.y + .38f * agent.state.scale) * a;
                     agent.state.headingRadians = angle + std::numbers::pi_v<float> * .5f;
                     agent.state.wingPose = std::sin(
                         agent.flapPhase + agent.accumulatedSeconds * 5.8f);

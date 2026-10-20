@@ -94,5 +94,13 @@ int main()
         require(stretchers.StretchCount()>=2&&stretchPeak>0.9f&&leftWing&&rightWing&&folded&&!flyingStretch,
             "a hanging fruit bat does not stretch its wings in turn and fold them again");
     }
+    // From dusk the whole colony is out on its rounds; by day the four go back to hang.
+    island::FruitBatColony night(terrain,jungle.Canopy());
+    night.SetNightness(1.0f);
+    for(int frame=0;frame<60*10;++frame) night.Update(1.0f/60.0f,0.0f,20.0f,0.0f);
+    require(night.FlyingCount()==island::FruitBatColony::Count,"the fruit bats did not all come out at night");
+    night.SetNightness(0.0f);
+    for(int frame=0;frame<60*10;++frame) night.Update(1.0f/60.0f,0.0f,20.0f,0.0f);
+    require(night.FlyingCount()==island::FruitBatColony::MaximumDayFlights,"the fruit bats did not go back to the roost by day");
     std::cout<<"Fruit bats: six deterministic inland roosts, four hanging and two bounded daytime flights\n";
 }

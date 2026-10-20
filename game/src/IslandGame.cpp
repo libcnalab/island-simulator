@@ -3145,6 +3145,10 @@ namespace island
                 soundscape_->SetWeather(weather_.State().rain, weather_.State().strikes, weather_.State().lastStrikeDistance);
                 soundscape_->SetNightness(1.0f - std::clamp((light.sunElevationDegrees + 2.0f) / 10.0f, 0.0f, 1.0f));
             }
+            // the birds go to roost at dusk; the fruit bats come out
+            const float dark = 1.0f - std::clamp((light.sunElevationDegrees + 2.0f) / 10.0f, 0.0f, 1.0f);
+            birdFlock_.SetNightness(dark);
+            fruitBatColony_.SetNightness(dark);
             const auto shading = sun_light::Current().shading;
             wildlife_render::FixedSunDirection = Vector3(shading.x, shading.y, shading.z);
         }

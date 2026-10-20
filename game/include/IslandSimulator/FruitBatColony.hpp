@@ -1,4 +1,6 @@
 #pragma once
+#include <algorithm>
+#include <cmath>
 
 #include <cstddef>
 #include <cstdint>
@@ -73,6 +75,10 @@ namespace island
 
         void Update(float deltaSeconds, float observerX, float observerY,
                     float observerZ) noexcept;
+        /** @brief How dark it is (0 by day .. 1 at night): from dusk the whole colony leaves the
+         *  roost to forage on wider rounds, taking off and settling back over a few seconds. */
+        void SetNightness(float nightness) noexcept { nightness_ = std::isfinite(nightness) ? std::clamp(nightness, 0.0f, 1.0f) : 0.0f; }
+        [[nodiscard]] std::size_t FlyingCount() const noexcept;
 
         [[nodiscard]] std::span<const FruitBatState> Bats() const noexcept { return states_; }
         [[nodiscard]] std::span<const FruitBatRoost> Roosts() const noexcept { return roosts_; }
@@ -92,7 +98,9 @@ namespace island
             float accumulatedSeconds = 0.0f;
             bool fanning = false;
             bool stretching = false;
+            float airborne = 0.0f;   // 0 hanging at the roost .. 1 on its round
         };
+        float nightness_ = 0.0f;
 
         std::vector<Agent> agents_;
         std::vector<FruitBatState> states_;

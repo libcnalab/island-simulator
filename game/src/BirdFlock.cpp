@@ -403,7 +403,7 @@ namespace island
             if ((frameIndex_ + index) % divisor == 0U) {
                 const bool wasFlying = agent.state.behavior == BirdBehavior::Fly;
                 UpdateAgent(agent, std::min(agent.accumulatedSeconds, 0.5f),
-                            activePerching < 2);
+                            activePerching < 2 || nightness_ > 0.6f);
                 const bool isFlying = agent.state.behavior == BirdBehavior::Fly;
                 if (wasFlying && !isFlying) {
                     ++activePerching;
@@ -451,11 +451,12 @@ namespace island
             return;
         }
         const bool perchEligible = agent.state.family != BirdPathFamily::High;
+        const bool roosting = nightness_ > 0.6f;
         if (agent.state.behavior == BirdBehavior::Fly && perchEligible
             && allowNewPerch && !perchSites_.empty()
-            && elapsedSeconds_ >= agent.nextPerchSeconds) {
+            && (elapsedSeconds_ >= agent.nextPerchSeconds || roosting)) {
             agent.bathing = false;
-            if (agent.state.species == BirdSpecies::FruitDove && bathValid_
+            if (!roosting && agent.state.species == BirdSpecies::FruitDove && bathValid_
                 && agent.perchCycle % 4U == 1U) {
                 // Every fourth ground visit is a bathe: the dove crosses to the plunge pool's
                 // bank and stands at the water's edge.
@@ -469,7 +470,7 @@ namespace island
                 UpdateGroundDove(agent, deltaSeconds);
                 return;
             }
-            if (agent.state.species == BirdSpecies::FruitDove
+            if (!roosting && agent.state.species == BirdSpecies::FruitDove
                 && agent.perchCycle % 2U == 0U) {
                 // Fruit on the ground within range settles the question of where to land.
                 float fruitX = 0.0f, fruitZ = 0.0f;
@@ -522,6 +523,14 @@ namespace island
                     : site.kind != BirdPerchKind::Branch;
                 if (!suitable) {
                     continue;
+                }
+                // At night each bird takes a perch of its own for the night.
+                if (roosting) {
+                    bool taken = false;
+                    for (const Agent& other : agents_)
+                        taken = taken || (&other != &agent && other.state.perchSiteIndex == index
+                            && (other.state.behavior == BirdBehavior::Perched || other.state.behavior == BirdBehavior::Approach));
+                    if (taken) continue;
                 }
                 const float dx = site.x - agent.state.x;
                 const float dy = site.y - agent.state.y;
@@ -971,7 +980,7 @@ namespace island
                 static_cast<float>(agent.index) * 1.7f
                     + static_cast<float>(agent.perchCycle) * 1.3f,
                 6.0f)) * (atFruit ? 2.0f : 1.0f);
-            if (agent.behaviorSeconds >= duration) {
+            if (agent.behaviorSeconds >= duration && nightness_ <= 0.6f) {
                 agent.state.behavior = BirdBehavior::Depart;
                 agent.behaviorSeconds = 0.0f;
                 agent.state.headBob = 0.0f;

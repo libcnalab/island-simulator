@@ -1,4 +1,6 @@
 #pragma once
+#include <algorithm>
+#include <cmath>
 
 #include <array>
 #include <cstddef>
@@ -172,6 +174,10 @@ namespace island
         static constexpr float DolphinJoinDistance = 160.0f;
         /** @brief A sudden sound at a point; perched birds near it flush within the second. */
         void NoteDisturbance(float x, float z) noexcept;
+        /** @brief How dark it is (0 by day .. 1 at night): from dusk every bird that perches
+         *  goes to a perch of its own and stays there until dawn (the doves leave the ground);
+         *  a disturbance still flushes them. */
+        void SetNightness(float nightness) noexcept { nightness_ = std::isfinite(nightness) ? std::clamp(nightness, 0.0f, 1.0f) : 0.0f; }
         /** @brief The snakes this frame: a snake's head within SnakeFlushDistance of a perched
          *  bird, at its height, flushes it as the walker does. */
         void SetSnakes(std::span<const SnakeState> snakes) noexcept { snakes_ = snakes; }
@@ -284,6 +290,7 @@ namespace island
         }
 
     private:
+        float nightness_ = 0.0f;
         struct Agent
         {
             BirdState state;

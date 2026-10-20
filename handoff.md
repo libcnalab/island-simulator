@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 237: the wildlife keeps the clock: at dusk the birds go to roost a perch apiece until dawn and the fruit bats leave their roost to forage on wider rounds (PLAN "Loop pass 237").
 - Pass 236: the soft pinkish smears on the hillsides end at crisp outcrop lips, and leaf humus and moss gather under the crowns rather than staining the open turf (PLAN "Loop pass 236").
 - Pass 235: morning mist lies in banks over the stream's valley, the wetland and the coastal flats at first light and burns off by mid-morning (PLAN "Loop pass 235").
 - Pass 234: the gust fronts follow the weather's wind: in a storm they sweep the island about every eight seconds, faster and fuller, on a live clock that never jumps (PLAN "Loop pass 234").

@@ -2905,6 +2905,26 @@ int main()
     bool observedGroundDoveApproach = false;
     bool observedGroundDoveForage = false;
     bool observedGroundDoveDeparture = false;
+    {
+        // At night every bird that perches goes to a perch of its own and stays until dawn.
+        island::BirdFlock roosting(terrain);
+        roosting.SetPerchSites(testPerches);
+        roosting.SetNightness(1.0f);
+        for (int frame = 0; frame < 30 * 240; ++frame) roosting.Update(1.0f / 30.0f, 0.0f, 15.0f, 0.0f);
+        std::vector<std::size_t> perchedEarly;
+        std::vector<int> perSite(testPerches.size(), 0);
+        for (std::size_t i = 0; i < roosting.Birds().size(); ++i) {
+            const auto& bird = roosting.Birds()[i];
+            if (bird.behavior != island::BirdBehavior::Perched) continue;
+            perchedEarly.push_back(i);
+            if (bird.perchSiteIndex < perSite.size()) ++perSite[bird.perchSiteIndex];
+        }
+        for (int frame = 0; frame < 30 * 120; ++frame) roosting.Update(1.0f / 30.0f, 0.0f, 15.0f, 0.0f);
+        bool stayed = true;
+        for (const std::size_t i : perchedEarly) stayed = stayed && roosting.Birds()[i].behavior == island::BirdBehavior::Perched;
+        const bool alone = std::all_of(perSite.begin(), perSite.end(), [](int n) { return n <= 1; });
+        Check(perchedEarly.size() >= 4U && stayed && alone, "at night the birds roost a perch apiece and stay until dawn");
+    }
     constexpr int birdSimulationFrames = 36000;
     for (int frame = 0; frame < birdSimulationFrames; ++frame) {
         birds.Update(1.0f / 30.0f, 0.0f, 15.0f, 0.0f);

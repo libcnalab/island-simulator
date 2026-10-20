@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 237 (2026-10-20) — birds roost at night, the fruit bats come out
+
+With the day and night turning, the birds still flew their rounds all night and the fruit bats
+kept to their daytime pattern (two out, four hanging). The game now passes the darkness (0 with
+the sun 8 degrees up .. 1 from 2 degrees below the horizon) to both. `BirdFlock::SetNightness`:
+from dusk every bird that perches heads for a perch at once (the two-at-a-time perching limit
+lifted, the doves leaving the ground and the bathing pool), each to a perch no other bird holds
+or is approaching, and stays there until dawn (a disturbance still flushes it); the high-route
+seabirds keep flying. `FruitBatColony::SetNightness`: from dusk the whole colony leaves the
+roost to forage on rounds up to 2.6 times as wide, each bat taking off (and, at dawn, settling
+back to its hang) along a smooth path over 3.5 s. Checks: at night at least four birds roost a
+perch apiece and stay put for two more minutes; the whole colony is out at night and back to
+two by day. Fixed QA views (`birds`, `bats`) hold their animals still and are unchanged.
+
 ## Loop pass 236 (2026-10-20) — hillside stains become outcrops
 
 The `east` hill's soft pinkish-brown smears (the last of the handoff's hillside critique) are
