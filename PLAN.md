@@ -233,6 +233,13 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 252 (2026-10-20) — a storm's surf
+
+With the sea running higher in a storm (Loop pass 245) the surf bed still played as on a calm
+day. Its volume now follows the weather's wind as the breeze does: 1 + 0.45 (wind - 1), within
+0.85-1.45 (unchanged at the trade wind's 1.0, a touch softer in clear weather, 1.45 times in a
+storm's 2). Not yet heard by a person; the suite passes.
+
 ## Loop pass 251 (2026-10-20) — no sunlight after sunset
 
 A dusk capture (`jetty-end` at 18:06, the sun just set) still showed the seabed's caustic net
