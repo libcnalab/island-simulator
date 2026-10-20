@@ -10293,6 +10293,21 @@ int main()
         }
         Check(lowered, "with the walker gone the tail comes down");
         Check(flicked && settled, "a grazing or resting deer flicks its tail half up and lets it hang again");
+        // The ears: watched from sixty metres (fully simulated, not alerted), over the next
+        // fifteen seconds the deer twitches an ear at least twice, each twitch rising to
+        // full and settling, the ears taking turns.
+        const std::uint32_t twitchesBefore = herd.EarTwitchCount();
+        float earPeak = 0.0f; bool earSettled = false, leftEar = false, rightEar = false;
+        for (int step = 0; step < 300; ++step) {
+            const auto watched = herd.Deer()[2];
+            herd.Update(0.05f, watched.x + 60.0f, watched.y + 1.6f, watched.z);
+            const auto& deer = herd.Deer()[2];
+            earPeak = std::max(earPeak, deer.earTwitch);
+            if (deer.earTwitch > 0.9f) { if (deer.earSide < 0.0f) leftEar = true; else rightEar = true; }
+            if (earPeak > 0.9f && deer.earTwitch < 0.05f) earSettled = true;
+        }
+        Check(herd.EarTwitchCount() >= twitchesBefore + 2U && earPeak > 0.9f && earSettled && leftEar && rightEar,
+              "a deer twitches one ear back and out every few seconds, the ears taking turns");
     }
 
     {

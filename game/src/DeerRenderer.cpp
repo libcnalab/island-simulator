@@ -335,19 +335,23 @@ namespace island
             for (const float sideSign : {-1.0f, 1.0f}) {
                 const Vector3 earRoot = head - earForward * (.07f * scale)
                     + earRight * (sideSign * .105f * scale) + up * (.13f * scale);
-                const Vector3 earTip = earRoot - earForward * (.075f * scale)
-                    + earRight * (sideSign * .16f * scale) + up * (.23f * scale);
-                const Vector3 earFront=earRoot+earForward*(.105f*scale)
-                    +earRight*(sideSign*.018f*scale);
-                const Vector3 earBack=earRoot-earForward*(.070f*scale)
-                    -earRight*(sideSign*.014f*scale);
+                // The twitch: the one ear swings back and out about its root by the amount.
+                const float twist = (sideSign == deer.earSide ? std::clamp(deer.earTwitch, 0.0f, 1.0f) : 0.0f) * 0.8f;
+                const Vector3 twitchForward = earForward * std::cos(twist) + earRight * (sideSign * std::sin(twist));
+                const Vector3 twitchRight = earRight * std::cos(twist) - earForward * (sideSign * std::sin(twist));
+                const Vector3 earTip = earRoot - twitchForward * (.075f * scale)
+                    + twitchRight * (sideSign * .16f * scale) + up * (.23f * scale);
+                const Vector3 earFront=earRoot+twitchForward*(.105f*scale)
+                    +twitchRight*(sideSign*.018f*scale);
+                const Vector3 earBack=earRoot-twitchForward*(.070f*scale)
+                    -twitchRight*(sideSign*.014f*scale);
                 const Color earOuter=Lit(Color::Lerp(coat,dark,.22f),up,transmission);
                 Triangle(out,earBack,earTip,earFront,earOuter);
                 Triangle(out,earFront,earTip,earBack,earOuter);
                 const Vector3 innerRoot=Vector3::Lerp(earBack,earFront,.52f)+up*(.018f*scale);
                 const Vector3 innerTip=Vector3::Lerp(earRoot,earTip,.78f);
-                Triangle(out,innerRoot-earRight*(sideSign*.022f*scale),innerTip,
-                         innerRoot+earRight*(sideSign*.022f*scale),Lit(pale,up,transmission));
+                Triangle(out,innerRoot-twitchRight*(sideSign*.022f*scale),innerTip,
+                         innerRoot+twitchRight*(sideSign*.022f*scale),Lit(pale,up,transmission));
                 if (near) {
                     const Vector3 eyeCentre = head + earForward * (.12f * scale)
                         + earRight * (sideSign * .148f * scale) + up * (.030f * scale);

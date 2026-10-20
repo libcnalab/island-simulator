@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 151 (2026-10-20) — a deer twitches an ear
+
+A deer's ears only swung together toward the walker. `DeerState::earTwitch` (0..1) and
+`earSide` (-1 or 1) now carry the twitch: every `EarTwitchPeriodSeconds` (3.1 s, plus 0.7 s
+per deer) a deer not bolting swings one ear back and out at a fly for `EarTwitchSeconds`
+(0.35 s), rising at 10/s and settling at 8/s, the ears taking turns; a bolting deer holds
+both forward. The twitches are counted (`EarTwitchCount()`, `TwitchingCount()`). In the
+renderer the twitched ear's tip, front and back pivot about the ear root by up to 0.8 rad
+(the eyes stay). The deer report line gains "every few seconds a deer twitches one ear back
+and out at a fly, the ears taking turns" (pinned). Core check: a deer watched from sixty
+metres (fully simulated, not alerted) twitches an ear at least twice in fifteen seconds,
+each to full and settled, on both sides. Native `deer` passes.
+
 ## Loop pass 150 (2026-10-20) — a goat flicks its tail
 
 A goat's short tail stood still whatever it did. `GoatState::tailSwing` (-1..1) now carries

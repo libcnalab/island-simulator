@@ -2255,7 +2255,8 @@ namespace island
                   << "a rest two seconds in, undisturbed, settles a goat onto folded legs for a longer lie, and the walker's approach has it up at once; "
                   << "every few seconds a goat flicks its short tail side to side, two beats and still again\n";
         std::cout << "island-simulator: deer " << deer_->Deer().size()
-                  << " agents graze and walk in two inland clearings and the stream valley and retreat non-aggressively\n";
+                  << " agents graze and walk in two inland clearings and the stream valley and retreat non-aggressively; "
+                  << "every few seconds a deer twitches one ear back and out at a fly, the ears taking turns\n";
         std::cout << "island-simulator: boars " << boarHerd_.Boars().size()
                   << " agents in moist non-channel interior habitat; a rest a second and a half in settles a boar onto folded legs, body on the ground, for a longer lie, and an alarm has it up within half a second\n";
         std::cout << "island-simulator: ecological links: " << deer_->DrinkerCount() << " deer and "

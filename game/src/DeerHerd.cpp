@@ -208,6 +208,13 @@ namespace island
         }
     }
 
+    std::size_t DeerHerd::TwitchingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.twitching ? 1U : 0U;
+        return count;
+    }
+
     void DeerHerd::PreviewBed(const std::size_t index) noexcept
     {
         if (index >= Count) return;
@@ -374,6 +381,18 @@ namespace island
             : stillness && agent.flickClock < FlickSeconds ? 0.55f : 0.0f;
         agent.state.tailRaise += std::clamp(targetTail - agent.state.tailRaise,
             -6.0f * deltaSeconds, 8.0f * deltaSeconds);
+        // The ears: every few seconds a deer not bolting swings one ear back and out at a
+        // fly and lets it settle, the ears taking turns; a bolting deer holds both forward.
+        agent.earClock += deltaSeconds;
+        const float earPeriod = EarTwitchPeriodSeconds
+            + 0.7f * static_cast<float>(static_cast<int>(std::abs(agent.home.z)) % 3);
+        if (agent.earClock >= earPeriod) { agent.earClock = 0.0f; agent.state.earSide = -agent.state.earSide; }
+        const bool twitching = agent.earClock < EarTwitchSeconds
+            && agent.state.behavior != DeerBehavior::Retreat;
+        if (twitching && !agent.twitching) ++earTwitches_;
+        agent.twitching = twitching;
+        agent.state.earTwitch += std::clamp((twitching ? 1.0f : 0.0f) - agent.state.earTwitch,
+            -8.0f * deltaSeconds, 10.0f * deltaSeconds);
         const float nextX = agent.state.x
             + std::cos(agent.state.headingRadians) * agent.state.speed * deltaSeconds;
         const float nextZ = agent.state.z

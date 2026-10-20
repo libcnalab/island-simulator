@@ -1346,6 +1346,8 @@ def main():
                 raise RuntimeError("current boar shake is missing; check for a stale executable")
             if "every few seconds a goat flicks its short tail side to side, two beats and still again" not in diagnostics:
                 raise RuntimeError("current goat tail flick is missing; check for a stale executable")
+            if "every few seconds a deer twitches one ear back and out at a fly, the ears taking turns" not in diagnostics:
+                raise RuntimeError("current deer ear twitch is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:

@@ -22,6 +22,11 @@ namespace island
         /** @brief 0..1 the tail raised: flagged up at a bolt, half up in the flick a grazing
          *  or resting deer gives every few seconds, hanging otherwise. */
         float tailRaise = 0.0f;
+        /** @brief 0..1 the ear twitch: every few seconds a deer not bolting swings one ear
+         *  back and out at a fly and lets it settle, the other ear still; earSide (-1 or 1)
+         *  is the ear, alternating twitch by twitch. */
+        float earTwitch = 0.0f;
+        float earSide = 1.0f;
         /** @brief 0..1 bedded down: the body lowered onto folded legs for a rest taken in
          *  the shade, rising over a second and a half; back on its feet within half a
          *  second of any other behaviour (an alarm, a bolt, the next graze). */
@@ -52,6 +57,9 @@ namespace island
         // The tail flick's bout and the period between flicks (plus a little per deer).
         static constexpr float FlickSeconds = 0.45f;
         static constexpr float FlickPeriodSeconds = 4.0f;
+        // The ear twitch's bout and the period between twitches (plus a little per deer).
+        static constexpr float EarTwitchSeconds = 0.35f;
+        static constexpr float EarTwitchPeriodSeconds = 3.1f;
         static constexpr float StartleSeconds = 6.0f;
         // A clearing pair drifting further apart than this walks back together.
         static constexpr float CohesionDistance = 9.0f;
@@ -82,6 +90,9 @@ namespace island
          *  hoofbeats drum where it goes. */
         [[nodiscard]] std::uint32_t BoltCount() const noexcept { return bolts_; }
         [[nodiscard]] std::size_t LastBoltIndex() const noexcept { return lastBolt_; }
+        /** @brief Ear twitches begun, and the deer mid-twitch. */
+        [[nodiscard]] std::uint32_t EarTwitchCount() const noexcept { return earTwitches_; }
+        [[nodiscard]] std::size_t TwitchingCount() const noexcept;
         /** @brief The deer is lying up (a shade rest in progress). */
         [[nodiscard]] bool Bedded(std::size_t index) const noexcept
         {
@@ -111,6 +122,8 @@ namespace island
             float drinkX = 0.0f, drinkZ = 0.0f, faceX = 0.0f, faceZ = 0.0f;
             bool hasDrink = false;
             float flickClock = 0.0f;
+            float earClock = 1.0f;
+            bool twitching = false;
             // The shade a sunlit rest walks to; valid while seekingShade.
             float shadeX = 0.0f, shadeZ = 0.0f;
             bool seekingShade = false;
@@ -135,5 +148,6 @@ namespace island
         std::uint32_t shadeRests_ = 0U;
         std::uint32_t bolts_ = 0U;
         std::size_t lastBolt_ = 0U;
+        std::uint32_t earTwitches_ = 0U;
     };
 }
