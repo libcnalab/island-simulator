@@ -2252,7 +2252,8 @@ namespace island
                   << spiderWebRenderer_->SiteCount()<<" qualified sites in one bounded translucent batch\n";
         std::cout << "island-simulator: goats " << goats_->Goats().size()
                   << " agents on shared-field dry open slopes, terrain-fitted limbs, directional fur material; "
-                  << "a rest two seconds in, undisturbed, settles a goat onto folded legs for a longer lie, and the walker's approach has it up at once\n";
+                  << "a rest two seconds in, undisturbed, settles a goat onto folded legs for a longer lie, and the walker's approach has it up at once; "
+                  << "every few seconds a goat flicks its short tail side to side, two beats and still again\n";
         std::cout << "island-simulator: deer " << deer_->Deer().size()
                   << " agents graze and walk in two inland clearings and the stream valley and retreat non-aggressively\n";
         std::cout << "island-simulator: boars " << boarHerd_.Boars().size()

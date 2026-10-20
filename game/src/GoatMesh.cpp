@@ -209,8 +209,9 @@ struct Builder {
     }
 };
 }
-GoatMesh BuildGoatMesh(const GoatGroundPose& pose,float grazing,bool detailed) {
-    if(!std::isfinite(grazing)||!std::isfinite(pose.bodyBob))throw std::invalid_argument("Invalid goat mesh pose");
+GoatMesh BuildGoatMesh(const GoatGroundPose& pose,float grazing,bool detailed,float tailSwing) {
+    if(!std::isfinite(grazing)||!std::isfinite(pose.bodyBob)||!std::isfinite(tailSwing))throw std::invalid_argument("Invalid goat mesh pose");
+    tailSwing=std::clamp(tailSwing,-1.0f,1.0f);
     for(const auto& leg:pose.legs)
         if(!Finite(leg.root)||!Finite(leg.knee)||!Finite(leg.hoof)||leg.reachLimited
             ||!Finite(leg.soleNormal)||std::abs(Dot(leg.soleNormal,leg.soleNormal)-1)>.001f||leg.soleNormal.y<.5f)
@@ -293,8 +294,9 @@ GoatMesh BuildGoatMesh(const GoatGroundPose& pose,float grazing,bool detailed) {
     const std::array<Tube,4> beard{{{{0,.83f,.68f},.046f},{{0,.74f,.68f},.04f},
         {{0,.65f,.65f},.025f},{{0,.59f,.62f},.003f}}};
     b.part=GoatPart::Beard;b.Sweep(beard,detailed?8:5,GoatMaterial::Coat,Attachment::Head);
-    const std::array<Tube,4> tail{{{{0,.88f,-.52f},.042f},{{0,.94f,-.61f},.035f},
-        {{0,1.0f,-.68f},.024f},{{0,1.015f,-.73f},.004f}}};
+    // The flick swings the tail from its root, the tip out to a side by the swing.
+    const std::array<Tube,4> tail{{{{0,.88f,-.52f},.042f},{{tailSwing*.055f,.94f,-.61f},.035f},
+        {{tailSwing*.11f,1.0f,-.68f},.024f},{{tailSwing*.15f,1.015f,-.73f},.004f}}};
     b.part=GoatPart::Tail;b.Sweep(tail,detailed?8:5,GoatMaterial::Coat,Attachment::Body);
     const std::array<Ring,3> nose{{{.770f,.851f,.058f,.042f},{.782f,.851f,.063f,.044f},{.788f,.851f,.045f,.033f}}};
     b.part=GoatPart::Nose;b.Loft(nose,detailed?10:6,GoatMaterial::Nose,Attachment::Head);

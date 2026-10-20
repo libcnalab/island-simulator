@@ -10,6 +10,9 @@ struct GoatState {
     // 0..1 lying down: a rest two seconds in, undisturbed, settles the goat onto folded legs,
     // body on the ground (the pose carries it); the walker's approach has it up at once.
     float lieAmount=0;
+    // -1..1 the short tail swung to one side: every few seconds a goat flicks it side to
+    // side, two beats in well under a second, still between flicks.
+    float tailSwing=0;
     GoatBehavior behavior=GoatBehavior::Graze;
     GoatGroundPose pose{}; // Authoritative planted-foot pose shared with rendering.
     bool operator==(const GoatState&) const = default;
@@ -54,6 +57,11 @@ public:
     // QA: holds one goat lying at rest for a still capture.
     void PreviewLie(std::size_t index);
     static constexpr float LieDelaySeconds=2.0f,LieBonusSeconds=8.0f,LieDownRate=.7f,RiseRate=2.0f;
+    // Tail flicks begun, and the goats mid-flick: every WagPeriodSeconds (a little per goat)
+    // the tail swings side to side WagBeats times over WagSeconds.
+    [[nodiscard]] std::uint32_t WagCount() const noexcept {return wags_;}
+    [[nodiscard]] std::size_t WaggingCount() const noexcept;
+    static constexpr float WagPeriodSeconds=6.5f,WagSeconds=0.7f,WagBeats=2.0f;
 private:
     void FindDrinkingPoint(std::size_t index) noexcept;
     void Step(std::size_t index,float dt,GoatPoint observer,bool observerValid);
@@ -73,11 +81,13 @@ private:
         float drinkX=0,drinkZ=0,faceX=0,faceZ=0; bool hasDrink=false;
         int partner=-1; float sparClock=0;
         float restSeconds=0; bool lying=false;   // time into the undisturbed rest, and down
+        float wagClock=0; bool wagging=false,wagSeeded=false; // time into the tail-flick cycle, mid-flick, and seeded
     };
     std::array<Intent,GoatHabitat::Count> intents_{};
     float sentinelAlertSeconds_=0;
     float disturbanceX_=0,disturbanceZ_=0,disturbanceSeconds_=0;
     std::uint32_t spars_=0;
     std::uint32_t lies_=0;
+    std::uint32_t wags_=0;
 };
 }

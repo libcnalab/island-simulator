@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 150 (2026-10-20) — a goat flicks its tail
+
+A goat's short tail stood still whatever it did. `GoatState::tailSwing` (-1..1) now carries
+the flick: every `WagPeriodSeconds` (6.5 s, plus 0.9 s per goat, the first flicks staggered)
+the tail swings side to side `WagBeats` (two) times over `WagSeconds` (0.7 s) under a sine
+envelope and hangs still between; the flicks are counted (`WagCount()`, `WaggingCount()`).
+`BuildGoatMesh` takes the swing as a fourth argument and carries it to the tail's tip (up to
+15 cm aside), nothing else moving. The goats report line gains "every few seconds a goat
+flicks its short tail side to side, two beats and still again" (pinned). GoatHerdTests:
+within twenty seconds every goat has flicked to both sides and hung still between, and the
+mesh with the tail swung differs from the still mesh in tail vertices alone, the tip over a
+decimetre aside. Native `goats` passes.
+
 ## Loop pass 149 (2026-10-20) — a boar shakes the mud off
 
 A boar stepping out of its wallow walked off dripping. `BoarState::shake` (0..1) and

@@ -215,6 +215,38 @@ int main() {
         for(int frame=0;frame<12&&!up;++frame) { liers.Update(.05f,{lying.x+10,lying.y+1.6f,lying.z}); up=liers.Goats()[1].lieAmount<.2f&&!liers.Lying(1); }
         check(up,"the walker at ten metres does not get the lying goat up within half a second");
     }
+    {
+        // The tail flick: within twenty seconds every goat has flicked its tail, the swing
+        // reaching both sides, and hangs still between flicks; the mesh carries the swing to
+        // the tail's tip and nowhere else.
+        GoatHerd flickers(terrain,jungle,occupied);
+        std::array<float,GoatHabitat::Count> left{},right{}; std::array<bool,GoatHabitat::Count> still{};
+        for(int frame=0;frame<400;++frame) {
+            flickers.Update(.05f,{1000,0,1000});
+            for(std::size_t i=0;i<GoatHabitat::Count;++i) {
+                const float swing=flickers.Goats()[i].tailSwing;
+                left[i]=std::min(left[i],swing);right[i]=std::max(right[i],swing);
+                if(swing==0&&flickers.WagCount()>0) still[i]=true;
+            }
+        }
+        bool all=true;
+        for(std::size_t i=0;i<GoatHabitat::Count;++i) all=all&&left[i]<-.6f&&right[i]>.6f&&still[i];
+        check(flickers.WagCount()>=GoatHabitat::Count&&all,"the goats do not flick their tails side to side and hang them still between");
+        const auto& subject=flickers.Goats()[0];
+        const auto stillMesh=BuildGoatMesh(subject.pose,subject.grazingPose,true,0.0f);
+        const auto swungMesh=BuildGoatMesh(subject.pose,subject.grazingPose,true,1.0f);
+        std::size_t moved=0; float furthest=0; bool onlyTail=true;
+        for(std::size_t v=0;v<stillMesh.vertices.size()&&v<swungMesh.vertices.size();++v) {
+            const float dx=swungMesh.vertices[v].position.x-stillMesh.vertices[v].position.x;
+            const float dy=swungMesh.vertices[v].position.y-stillMesh.vertices[v].position.y;
+            const float dz=swungMesh.vertices[v].position.z-stillMesh.vertices[v].position.z;
+            if(std::abs(dx)+std::abs(dy)+std::abs(dz)>1e-4f) {
+                ++moved; furthest=std::max(furthest,std::abs(dx));
+                if(stillMesh.vertices[v].part!=GoatPart::Tail) onlyTail=false;
+            }
+        }
+        check(stillMesh.vertices.size()==swungMesh.vertices.size()&&moved>0&&onlyTail&&furthest>.1f,"the tail swing does not move the tail alone");
+    }
     const std::array<CircularObstacle,1> blocked{{{0,0,400}}};
     bool rejected=false;
     try { GoatHerd impossible(terrain,jungle,blocked); } catch(const std::runtime_error&) { rejected=true; }

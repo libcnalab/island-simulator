@@ -324,6 +324,16 @@ void GoatHerd::Step(std::size_t index,float dt,GoatPoint observer,bool observerV
     if(shouldLie&&!intent.lying) {++lies_;intent.remaining+=LieBonusSeconds;}
     intent.lying=shouldLie;
     state.lieAmount+=std::clamp((intent.lying?1.0f:0.0f)-state.lieAmount,-dt*RiseRate,dt*LieDownRate);
+    // The tail: every few seconds (a little per goat) the short tail flicks side to side,
+    // two beats in well under a second, and hangs still between flicks.
+    const float wagPeriod=WagPeriodSeconds+.9f*static_cast<float>(index%4U);
+    if(!intent.wagSeeded) { intent.wagSeeded=true; intent.wagClock=WagSeconds+1.3f*static_cast<float>(index); }
+    intent.wagClock+=dt;
+    if(intent.wagClock>=wagPeriod) intent.wagClock-=wagPeriod;
+    const bool wagging=intent.wagClock<WagSeconds;
+    if(wagging&&!intent.wagging) ++wags_;
+    intent.wagging=wagging;
+    state.tailSwing=wagging?std::sin(intent.wagClock/WagSeconds*Pi)*std::sin(intent.wagClock*Tau*WagBeats/WagSeconds):0.0f;
     if(state.speed<=.0001f) { state.speed=0;return; }
     const float heading=Wrap(state.heading+std::clamp(Wrap(intent.targetHeading-state.heading),-1.8f*dt,1.8f*dt));
     bool waitingForStep=false;
@@ -359,6 +369,12 @@ void GoatHerd::NoteDisturbance(float x,float z) noexcept {
     if(!std::isfinite(x)||!std::isfinite(z)) return;
     disturbanceX_=x;disturbanceZ_=z;disturbanceSeconds_=StartleSeconds;
 }
+std::size_t GoatHerd::WaggingCount() const noexcept {
+    std::size_t count=0;
+    for(const auto& intent:intents_) count+=intent.wagging?1U:0U;
+    return count;
+}
+
 std::size_t GoatHerd::LyingCount() const noexcept {
     std::size_t count=0;
     for(const auto& intent:intents_) count+=intent.lying?1U:0U;

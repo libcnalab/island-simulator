@@ -13,5 +13,6 @@ struct GoatMesh {
     static constexpr std::size_t MaximumVertices=8192;
     std::vector<GoatVertex> vertices;
 };
-[[nodiscard]] GoatMesh BuildGoatMesh(const GoatGroundPose& pose,float grazing,bool detailed);
+// tailSwing (-1..1) swings the short tail to one side at its tip.
+[[nodiscard]] GoatMesh BuildGoatMesh(const GoatGroundPose& pose,float grazing,bool detailed,float tailSwing=0);
 }
