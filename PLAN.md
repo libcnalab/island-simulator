@@ -54,6 +54,18 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 200 (2026-10-20) — a deer tosses its head
+
+A deer came up from its graze with the head simply rising. `DeerState::headToss` (0..1)
+now carries the toss: as the graze amount falls through a half the deer throws its head up
+and forward for `TossSeconds` (0.4 s), rising at 10/s and settling at 6/s; the tosses are
+counted (`TossCount()`, `TossingCount()`). In the renderer the head moves 8.5 % of the
+scale up and 3.5 % forward by the toss, on the same vertices. The deer report line gains
+"coming up from a graze a deer tosses its head" (pinned). Core check: watched from sixty
+metres (fully simulated; a dormant deer's updates come seconds apart and would step over
+the brief toss) a deer coming up from a graze tosses its head to full and settles it, and
+no grazing deer's head is tossed. Native `deer` passes.
+
 ## Loop pass 199 (2026-10-20) — a resting spider grooms a leg
 
 A ground spider at rest held all eight legs planted. `SpiderState::groom` (0..1) and

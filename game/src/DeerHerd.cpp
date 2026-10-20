@@ -208,6 +208,13 @@ namespace island
         }
     }
 
+    std::size_t DeerHerd::TossingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.tossSeconds > 0.0f ? 1U : 0U;
+        return count;
+    }
+
     std::size_t DeerHerd::ChewingCount() const noexcept
     {
         std::size_t count = 0;
@@ -426,6 +433,14 @@ namespace island
         agent.cud += std::clamp((ruminating ? 1.0f : 0.0f) - agent.cud, -2.0f * deltaSeconds, 1.0f * deltaSeconds);
         if (agent.cud > 0.01f) agent.chewPhase = std::fmod(agent.chewPhase + deltaSeconds * ChewRate, TwoPi);
         agent.state.chew = std::sin(agent.chewPhase) * agent.cud;
+        // The head toss: as the deer comes up from a graze (its graze amount falling through
+        // a half) it throws its head up and forward for a moment and settles it.
+        const bool grazingNow = agent.state.grazeAmount > 0.5f;
+        if (agent.wasGrazing && !grazingNow) { agent.tossSeconds = TossSeconds; ++tosses_; }
+        agent.wasGrazing = grazingNow;
+        agent.tossSeconds = std::max(0.0f, agent.tossSeconds - deltaSeconds);
+        agent.state.headToss += std::clamp((agent.tossSeconds > 0.0f ? 1.0f : 0.0f) - agent.state.headToss,
+            -6.0f * deltaSeconds, 10.0f * deltaSeconds);
         const float nextX = agent.state.x
             + std::cos(agent.state.headingRadians) * agent.state.speed * deltaSeconds;
         const float nextZ = agent.state.z

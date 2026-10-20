@@ -10847,6 +10847,27 @@ int main()
                 }
             }
             Check(chewLeft && chewRight && !walkingChew, "a resting deer does not chew its cud, or chews on the move");
+            // The head toss: through those minutes a deer coming up from a graze tosses its
+            // head to full within half a second of the graze's end and settles it within a
+            // second; a grazing deer's head is not tossed.
+            {
+                std::uint32_t tossesBefore = stampers.TossCount();
+                float tossPeak = 0.0f, grazingToss = 0.0f; bool tossSettled = false;
+                // Watched from sixty metres (fully simulated, not alerted): a dormant deer's
+                // updates come seconds apart and would step over the brief toss.
+                for (int step = 0; step < 2400; ++step) {
+                    const auto watched = stampers.Deer()[2];
+                    stampers.Update(0.05f, watched.x + 60.0f, watched.y + 1.6f, watched.z);
+                    for (const auto& deer : stampers.Deer()) {
+                        if (deer.simulationTier != island::WildlifeSimulationTier::Full) continue;
+                        tossPeak = std::max(tossPeak, deer.headToss);
+                        if (deer.grazeAmount > 0.9f) grazingToss = std::max(grazingToss, deer.headToss);
+                        if (tossPeak > 0.9f && deer.headToss < 0.05f) tossSettled = true;
+                    }
+                }
+                Check(stampers.TossCount() >= tossesBefore + 1U && tossPeak > 0.9f && tossSettled && grazingToss < 0.5f,
+                      "a deer coming up from a graze does not toss its head and settle it");
+            }
         }
     }
 

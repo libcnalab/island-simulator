@@ -261,6 +261,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 197: a crab feeding among the strandings blows a small bubble from its mouth every couple of seconds (`CrabState::feeding`, `CrabBubbleField`) (PLAN "Loop pass 197").
 - Pass 198: two ants meeting head to head on the trail pause to touch antennae (`AntTrails::MeetCount`) (PLAN "Loop pass 198").
 - Pass 199: a ground spider at rest draws a front leg in and works it through its mouthparts, the legs taking turns (`SpiderState::groom`/`groomLeg`, `SpiderColony::GroomCount`) (PLAN "Loop pass 199").
+- Pass 200: coming up from a graze a deer tosses its head (`DeerState::headToss`, `DeerHerd::TossCount`) (PLAN "Loop pass 200").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

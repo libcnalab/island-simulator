@@ -1444,6 +1444,8 @@ def main():
                 raise RuntimeError("current ant meeting is missing; check for a stale executable")
             if "a ground spider at rest draws a front leg in and works it through its mouthparts every dozen seconds or so, the legs taking turns" not in diagnostics:
                 raise RuntimeError("current spider grooming is missing; check for a stale executable")
+            if "coming up from a graze a deer tosses its head" not in diagnostics:
+                raise RuntimeError("current deer head toss is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:

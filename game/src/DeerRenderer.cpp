@@ -307,8 +307,10 @@ namespace island
             const std::array<float,5> neckRadii{{.245f*scale,.225f*scale,.185f*scale,
                                                  .155f*scale,.132f*scale}};
             LoftTube(out,neckStations,neckRadii,right,coat,transmission,near?10:7,.24f);
-            const Vector3 head = neckTop + forward * (.22f * scale)
-                + up * ((.045f - .105f * graze) * scale);
+            // Tossed, the head is thrown up and forward a little for a moment.
+            const float toss = std::clamp(deer.headToss, 0.0f, 1.0f);
+            const Vector3 head = neckTop + forward * ((.22f + .035f * toss) * scale)
+                + up * ((.045f - .105f * graze + .085f * toss) * scale);
             Ellipsoid(out, head, right, up, forward, .155f * scale, .19f * scale,
                       .29f * scale, coat, transmission, near ? 8 : 3, near ? 18 : 7, .22f);
             // Chewing the cud, the muzzle works side to side and drops a little.
