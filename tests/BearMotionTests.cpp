@@ -239,5 +239,12 @@ int main() {
     try {const std::array blocked{CircularObstacle{0,0,400}};BearMotion impossible(terrain,blocked);}
     catch(const std::runtime_error&){refused=true;}
     Check(refused,"bear silently invents a habitat in a fully blocked world");
+    {
+        // After dark the bear lies up within two minutes (no walker about).
+        BearMotion sleepy(terrain,solids);
+        sleepy.SetNightness(1.0f);
+        for(int step=0;step<20*120;++step) sleepy.Update(.05f,BearPoint{NAN,NAN,NAN});
+        Check(sleepy.State().behavior==BearBehavior::Rest&&sleepy.Lying(),"after dark the bear should be lying up");
+    }
     std::cout<<"Bear deterministic habitat, planted paws, behavior and withdrawal tests passed\n";
 }

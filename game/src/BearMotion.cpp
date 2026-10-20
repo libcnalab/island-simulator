@@ -232,6 +232,11 @@ void BearMotion::Step(float seconds,BearPoint observer,bool observerValid) {
         // Stop and face the approaching player; roaming resumes once they leave.
         state_.behavior=BearBehavior::Idle;remaining_=std::max(remaining_,.5f);
         targetHeading_=std::atan2(observer.x-state_.x,observer.z-state_.z);alertFacing=true;
+    } else if(remaining_<=0&&nightness_>.6f) {
+        // After dark: lie up where it is until morning.
+        state_.behavior=BearBehavior::Rest;
+        remaining_=30+UnitRandom(++decisions_*92821U+0x4b1dU)*10;
+        fruitTarget_=-1;eatSeconds_=0;
     } else if(remaining_<=0) {
         const float choice=UnitRandom(++decisions_*92821U+0x4b1dU);
         state_.behavior=choice<.18f?BearBehavior::Rest:choice<.40f?BearBehavior::Forage:

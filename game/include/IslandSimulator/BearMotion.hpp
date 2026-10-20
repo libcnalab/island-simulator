@@ -1,4 +1,6 @@
 #pragma once
+#include <algorithm>
+#include <cmath>
 
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include "IslandSimulator/WorldCollisionGrid.hpp"
@@ -58,6 +60,9 @@ public:
     void Update(float seconds,BearPoint observer);
     /** @brief Fruit and coconuts lying on the ground this frame; a forage may walk to one. */
     void SetLyingFruit(std::span<const FallingFruit> fruit) noexcept {lyingFruit_=fruit;}
+    /** @brief How dark it is (0 by day .. 1 at night): after dark the bear, once its present
+     *  activity runs out, lies up where it is until morning (the walker still rouses it). */
+    void SetNightness(float nightness) noexcept {nightness_=std::isfinite(nightness)?std::clamp(nightness,0.0f,1.0f):0.0f;}
     /** @brief Indices into that span the bear finished during the last update. */
     [[nodiscard]] std::span<const std::size_t> EatenFruit() const noexcept {return eaten_;}
     [[nodiscard]] std::uint32_t EatCount() const noexcept {return eats_;}
@@ -89,6 +94,7 @@ public:
     [[nodiscard]] bool IsValidPosition(float x,float z)const noexcept;
     [[nodiscard]] const RenderedTerrainSurface& Ground()const noexcept{return ground_;}
 private:
+    float nightness_=0;
     struct Foot {BearPoint position{},start{},target{};float progress=1,duration=.34f;bool swinging=false;};
     [[nodiscard]] bool AcceptsGround(float x,float z)const noexcept;
     [[nodiscard]] BearPose BodyFrame(const BearState& state)const;

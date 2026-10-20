@@ -233,6 +233,14 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 241 (2026-10-20) — the bear lies up at night
+
+The bear was the last land animal roaming all night. `BearMotion::SetNightness`: after dark,
+as its present activity runs out, it rests where it is for 30-40 s at a time and so lies down
+once settled (its existing lie-down), until morning; the walker within its alert range still
+rouses it. Bear check: after dark, with no walker about, it is lying up within two minutes.
+`bear` (by day) passes.
+
 ## Loop pass 240 (2026-10-20) — the herds bed down at night
 
 The deer, goats and boars grazed and wandered all night. Each herd now takes the darkness too

@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 241: after dark the bear lies up until morning too (PLAN "Loop pass 241").
 - Pass 240: after dark the deer bed down, the goats lie down and the boars rest until morning (PLAN "Loop pass 240").
 - Pass 239: after dark the monkey troop settles to rest instead of wandering until morning (PLAN "Loop pass 239").
 - Pass 238: the resident keeps the fire through the night: arriving at the pit after dark they stay crouched tending it until dawn, then walk on (PLAN "Loop pass 238").
