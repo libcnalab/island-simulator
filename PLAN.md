@@ -54,6 +54,17 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 100 (2026-10-20) — a seabird's strike gathers the others
+
+Each seabird left its high route for the school at its own time, so the hunts were lone.
+Now a strike (the dive splash, within its first second) within 120 m (`JoinDistance`) of a
+seabird on its route, with a school in play, sets that bird's hunt timer to zero so it comes
+in at once; `HuntJoinCount()` counts the joins. The birds gather over a school one of them
+has found, as a feeding flock does. The startup report gains "a seabird's strike brings the
+others on their routes within a hundred and twenty metres in to hunt the same school",
+pinned by the native capture tool. Core check (in the seabird block): within ten seconds of
+the first strike another seabird has joined and two are hunting. Native `birds` passes.
+
 ## Loop pass 99 (2026-10-20) — a fish breach draws the shark
 
 The shark patrolled its offshore ring whatever broke the surface near it. `SharkPatrol::

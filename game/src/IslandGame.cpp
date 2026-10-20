@@ -2311,6 +2311,7 @@ namespace island
                   << "island-simulator: seabirds break from their high orbits to circle low over the fish school of the moment\n"
                   << "island-simulator: circling seabirds plunge-dive every nine seconds and each strike raises a foam ring on the water and a positional splash\n"
                   << "island-simulator: a seabird done hunting settles onto the sea and rafts there with folded wings, head to wind, before climbing back to its route\n"
+                  << "island-simulator: a seabird's strike brings the others on their routes within a hundred and twenty metres in to hunt the same school\n"
                   << "island-simulator: a fish school passing the jetty turns in and holds off the end of the deck, in its shade, a while before going on\n"
                   << "island-simulator: a school parts around the shark passing through it at seven metres, as around the swimmer at three\n"
                   << "island-simulator: a falling coconut lands with a positional thud heard within thirty metres\n"

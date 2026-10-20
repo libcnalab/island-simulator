@@ -161,6 +161,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Portable evidence: Web package of 2026-10-20 08:29 (pass 86); twelve Chrome scopes passed (PLAN "Portable evidence for loop passes 39–86").
 - Pass 98: the shark within eighteen metres sends a surfacing turtle under and the rest away from it (PLAN "Loop pass 98").
 - Pass 99: a fish breaking the surface within sixty metres draws the present shark that way for a few seconds (PLAN "Loop pass 99").
+- Pass 100: a seabird's strike brings the others within a hundred and twenty metres in to hunt the same school (PLAN "Loop pass 100").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

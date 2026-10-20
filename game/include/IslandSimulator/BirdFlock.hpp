@@ -142,6 +142,11 @@ namespace island
         /** @brief Seabirds sitting on the water after a hunt. */
         [[nodiscard]] std::size_t RaftingCount() const noexcept;
         [[nodiscard]] std::uint32_t RaftCount() const noexcept { return raftCount_; }
+        /** @brief A seabird's strike within JoinDistance of another on its high route brings
+         *  that one in to hunt at once instead of at its own time: the birds gather over a
+         *  school one has found. */
+        [[nodiscard]] std::uint32_t HuntJoinCount() const noexcept { return huntJoins_; }
+        static constexpr float JoinDistance = 120.0f;
         /** @brief A sudden sound at a point; perched birds near it flush within the second. */
         void NoteDisturbance(float x, float z) noexcept;
         /** @brief The snakes this frame: a snake's head within SnakeFlushDistance of a perched
@@ -264,6 +269,7 @@ namespace island
         std::uint32_t landings_ = 0U;
         std::uint32_t diveCount_ = 0U;
         std::uint32_t raftCount_ = 0U;
+        std::uint32_t huntJoins_ = 0U;
         float bathX_ = 0.0f, bathZ_ = 0.0f;
         bool bathValid_ = false;
         std::uint32_t baths_ = 0U;

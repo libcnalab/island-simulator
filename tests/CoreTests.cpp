@@ -7669,6 +7669,13 @@ int main()
                 && std::hypot(splash.x - forageX, splash.z - forageZ) < 24.0f;
         }
         Check(struck && flock.DiveCount() >= 1U, "a circling seabird plunges and strikes the water near the school within a minute");
+        // The strike brings the other seabirds within the joining distance in to the hunt.
+        bool gathered = false;
+        for (int step = 0; step < 200 && !gathered; ++step) {
+            flock.Update(0.05f, forageX, 2.0f, forageZ);
+            gathered = flock.HuntJoinCount() >= 1U && flock.HuntingCount() >= 2U;
+        }
+        Check(gathered, "a seabird's strike brings another in to hunt the same school within ten seconds");
         // The hunt runs its course over deep water and the bird settles onto the sea: wings
         // folded (the perch pose), sitting at the surface, drifting downwind.
         bool rafted = false;

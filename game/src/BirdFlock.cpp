@@ -578,11 +578,22 @@ namespace island
                 }
             } else if (agent.raftSeconds > 0.0f) {
                 agent.raftSeconds = std::max(0.0f, agent.raftSeconds - deltaSeconds);
-            } else if ((agent.nextHuntSeconds -= deltaSeconds) <= 0.0f && forageValid_) {
-                agent.huntSeconds = HuntSeconds;
-                agent.nextHuntSeconds = HuntIntervalSeconds;
-                agent.nextDiveSeconds = DiveIntervalSeconds * 0.6f;
-                agent.diveSeconds = 0.0f;
+            } else {
+                agent.nextHuntSeconds -= deltaSeconds;
+                // Another bird's strike just now, within the joining distance: this one
+                // comes in to hunt at once rather than at its own time.
+                const bool drawnIn = forageValid_ && diveSplash_.valid && diveSplash_.ageSeconds < 1.0f
+                    && std::hypot(agent.state.x - diveSplash_.x, agent.state.z - diveSplash_.z) < JoinDistance;
+                if (drawnIn && agent.nextHuntSeconds > 0.0f) {
+                    agent.nextHuntSeconds = 0.0f;
+                    ++huntJoins_;
+                }
+                if (agent.nextHuntSeconds <= 0.0f && forageValid_) {
+                    agent.huntSeconds = HuntSeconds;
+                    agent.nextHuntSeconds = HuntIntervalSeconds;
+                    agent.nextDiveSeconds = DiveIntervalSeconds * 0.6f;
+                    agent.diveSeconds = 0.0f;
+                }
             }
         }
         const bool rafting = agent.raftSeconds > 0.0f;
