@@ -197,6 +197,14 @@ namespace island
         ++crocHissCount_;
     }
 
+    void Soundscape::NoteBirdChatter(const float x, const float y, const float z) noexcept
+    {
+        if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) return;
+        pendingChatter_ = {true, x, y, z, 0U};
+        pendingChatterSeconds_ = 1.0f;
+        ++chatterCount_;
+    }
+
     void Soundscape::NoteWingClap(const float x, const float y, const float z) noexcept
     {
         if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) return;
@@ -448,6 +456,10 @@ namespace island
                 crocodileHissEffects_[i] = CreateOneShotSoundEffect(GenerateCrocodileHiss(static_cast<std::uint8_t>(i)));
                 crocodileHissEffects_[i]->setNameProperty("Original procedural crocodile hiss " + std::to_string(i));
             }
+            for (std::size_t i = 0; i < birdChatterEffects_.size(); ++i) {
+                birdChatterEffects_[i] = CreateOneShotSoundEffect(GenerateBirdChatter(static_cast<std::uint8_t>(i)));
+                birdChatterEffects_[i]->setNameProperty("Original procedural bird alarm chatter " + std::to_string(i));
+            }
             coconutThudEffect_ = CreateOneShotSoundEffect(GenerateCoconutThud());
             coconutThudEffect_->setNameProperty("Procedural coconut thud");
             monkeyCallEffect_ = CreateOneShotSoundEffect(GenerateMonkeyCall());
@@ -655,6 +667,7 @@ namespace island
             for (auto& effect : residentWhistleEffects_) effect.reset();
             for (auto& effect : wingClapEffects_) effect.reset();
             for (auto& effect : crocodileHissEffects_) effect.reset();
+            for (auto& effect : birdChatterEffects_) effect.reset();
             coconutThudEffect_.reset();
             birdCallAlternateEffect_.reset();
             birdCallEffect_.reset();
@@ -1349,6 +1362,20 @@ namespace island
                 pendingCrocHiss_.available = false;
             }
         }
+        // A bird's alarm chatter over a snake: sharp and quick, heard within about
+        // twenty-five metres, dropped if the slot stays busy for a second.
+        if (pendingChatter_.available) {
+            pendingChatterSeconds_ -= safeDelta;
+            const float distance = std::hypot(std::hypot(pendingChatter_.x - listenerState.x,
+                pendingChatter_.z - listenerState.z), pendingChatter_.y - listenerState.y);
+            const float falloff = 1.0f - std::clamp((distance - 3.0f) / 22.0f, 0.0f, 1.0f);
+            if (wildlifeSlotAvailable && wildlifeCall.type == WildlifeCallType::None && falloff > 0.02f) {
+                wildlifeCall = {WildlifeCallType::Chatter, static_cast<std::uint8_t>(chatterCount_ % 2U), 0.5f * falloff, 0.05f, pendingChatter_};
+                pendingChatter_.available = false;
+            } else if (pendingChatterSeconds_ <= 0.0f || falloff <= 0.02f) {
+                pendingChatter_.available = false;
+            }
+        }
         // A coconut's landing is a short, close thud: heard within about thirty metres.
         if (pendingThud_.available) {
             pendingThudSeconds_ -= safeDelta;
@@ -1410,6 +1437,8 @@ namespace island
             wildlifeEffect = wingClapEffects_.at(wildlifeCall.variant).get();
         } else if (wildlifeCall.type == WildlifeCallType::Crocodile) {
             wildlifeEffect = crocodileHissEffects_.at(wildlifeCall.variant).get();
+        } else if (wildlifeCall.type == WildlifeCallType::Chatter) {
+            wildlifeEffect = birdChatterEffects_.at(wildlifeCall.variant).get();
         } else if (wildlifeCall.type == WildlifeCallType::Splash) {
             wildlifeEffect = birdSplashEffect_.get();
         } else if (wildlifeCall.type == WildlifeCallType::Thud) {
@@ -1473,6 +1502,7 @@ namespace island
                 :wildlifeCall.type==WildlifeCallType::Resident?1.45f
                 :wildlifeCall.type==WildlifeCallType::WingClap?.55f
                 :wildlifeCall.type==WildlifeCallType::Crocodile?1.25f
+                :wildlifeCall.type==WildlifeCallType::Chatter?1.05f
                 :wildlifeCall.type==WildlifeCallType::Splash?.75f
                 :wildlifeCall.type==WildlifeCallType::Thud?.50f:1.50f;
             if (wildlifeCall.type == WildlifeCallType::Bird) {
@@ -1519,6 +1549,11 @@ namespace island
                 ++playedCrocodileHissCount_;
                 if (playedCrocodileHissCount_ == 1) {
                     std::cout << "island-simulator: first positional crocodile hiss played\n" << std::flush;
+                }
+            } else if(wildlifeCall.type==WildlifeCallType::Chatter) {
+                ++playedBirdChatterCount_;
+                if (playedBirdChatterCount_ == 1) {
+                    std::cout << "island-simulator: first positional bird alarm chatter played\n" << std::flush;
                 }
             } else if(wildlifeCall.type==WildlifeCallType::Goat) {
                 ++playedGoatCallCount_;
@@ -1676,6 +1711,7 @@ namespace island
         for (auto& effect : residentWhistleEffects_) effect.reset();
         for (auto& effect : wingClapEffects_) effect.reset();
         for (auto& effect : crocodileHissEffects_) effect.reset();
+        for (auto& effect : birdChatterEffects_) effect.reset();
         coconutThudEffect_.reset();
         birdCallAlternateEffect_.reset();
         birdCallEffect_.reset();

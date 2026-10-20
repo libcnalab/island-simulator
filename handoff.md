@@ -184,6 +184,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 120: a settled stingray flicks sand over its back two seconds in and lies half-buried in the sand's tones until it moves (`buryAmount`, `stingray-buried` QA viewpoint) (PLAN "Loop pass 120").
 - Pass 121: the deer and the boars press cloven hoofprints into wet sand, the stream's mud and the drinking bank as they walk (`FootprintTrail` kinds and strides) (PLAN "Loop pass 121").
 - Pass 122: a gust front passing the windward beaches streams pale sand off the dry crests downwind (`BlownSandField`, 147 sources) (PLAN "Loop pass 122").
+- Pass 123: a bird flushed by a snake mobs it, circling low over its head for 8 s and chattering the alarm (`GenerateBirdChatter`, `WildlifeCallType::Chatter`) (PLAN "Loop pass 123").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

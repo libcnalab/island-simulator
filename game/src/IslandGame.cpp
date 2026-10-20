@@ -2396,6 +2396,7 @@ namespace island
                   << "island-simulator: a perched bird flushes from the resident or an animal walking up under its perch as from the walker\n"
                   << "island-simulator: a perched bird preens between its looks around, the head turned back into one wing for a few seconds every eleven seconds or so\n"
                   << "island-simulator: the deer and the boars press cloven prints into wet sand and the stream's mud as they walk, two toes a stride apart that the ground takes back over four minutes\n"
+                  << "island-simulator: a bird flushed by a snake mobs it, circling low over its head for eight seconds and chattering the alarm, an original run of sharp chirps heard within twenty-five metres\n"
                   << "island-simulator: a body standing in a snag's, a plant's or a structure's sun shadow is lit as the ground there is\n"
                   << "island-simulator: a fish school passing the jetty turns in and holds off the end of the deck, in its shade, a while before going on\n"
                   << "island-simulator: a school parts around the shark passing through it at seven metres, as around the swimmer at three\n"
@@ -2892,6 +2893,12 @@ namespace island
                           viewpoint_ == FixedViewpoint::BirdPreenDetail ? 1.0e4f : cameraPosition_.Z);
         // A bird settling on a branch, and a monkey moving through a crown every few
         // seconds, shake a leaf loose.
+        // A bird mobbing a snake chatters the alarm over it every couple of seconds.
+        if (soundscape_ && birdFlock_.LastMob().count != notedBirdMobs_) {
+            notedBirdMobs_ = birdFlock_.LastMob().count;
+            const BirdFlock::BirdMob& mob = birdFlock_.LastMob();
+            if (mob.valid) soundscape_->NoteBirdChatter(mob.x, mob.y + 1.5f, mob.z);
+        }
         // A bird flushing, from a perch or the ground, claps its wings where it was.
         if (soundscape_ && birdFlock_.AnyFlushCount() != notedFlushes_) {
             notedFlushes_ = birdFlock_.AnyFlushCount();

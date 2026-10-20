@@ -354,11 +354,16 @@ namespace island
                     agent.state.x - disturbanceX_, agent.state.z - disturbanceZ_) < DisturbanceDistance;
                 // A snake's head come up to the perch, at the bird's height, flushes it too.
                 bool snaked = false;
+                float snakeX = 0.0f, snakeY = 0.0f, snakeZ = 0.0f;
                 for (const SnakeState& snake : snakes_) {
                     const SnakePoint& head = snake.body.front();
                     if (!std::isfinite(head.x) || !std::isfinite(head.y) || !std::isfinite(head.z)) continue;
                     if (std::hypot(agent.state.x - head.x, agent.state.z - head.z) < SnakeFlushDistance
-                        && std::abs(agent.state.y - head.y) < 4.0f) { snaked = true; break; }
+                        && std::abs(agent.state.y - head.y) < 4.0f) {
+                        snaked = true;
+                        snakeX = head.x; snakeY = head.y; snakeZ = head.z;
+                        break;
+                    }
                 }
                 // The resident or an animal walking up under the perch flushes the bird as
                 // the walker does.
@@ -373,7 +378,15 @@ namespace island
                     agent.state.preenAmount = 0.0f;
                     agent.preening = false;
                     ++flushCount_;
-                    if (snaked) ++snakeFlushes_;
+                    if (snaked) {
+                        // Flushed by a snake, the bird mobs it: it circles low over the head,
+                        // chattering, before it takes its route.
+                        ++snakeFlushes_;
+                        ++mobs_;
+                        agent.mobSeconds = MobSeconds;
+                        agent.mobX = snakeX; agent.mobY = snakeY; agent.mobZ = snakeZ;
+                        agent.mobChatter = MobChatterSeconds;
+                    }
                     if (walked && !crowded && !thudded && !snaked) ++walkerFlushes_;
                     lastFlush_ = {agent.state.x, agent.state.y, agent.state.z, true};
                 }
@@ -568,6 +581,14 @@ namespace island
         dolphinLeapZ_ = z;
         dolphinLeapAge_ = 0.0f;
         dolphinLeapValid_ = true;
+    }
+
+    std::size_t BirdFlock::MobbingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_)
+            count += agent.mobSeconds > 0.0f && agent.state.behavior == BirdBehavior::Depart ? 1U : 0U;
+        return count;
     }
 
     std::size_t BirdFlock::PreeningCount() const noexcept
@@ -882,6 +903,34 @@ namespace island
             return;
         }
 
+        // Mobbing a snake: the flushed bird circles low over the snake's head, chattering
+        // every couple of seconds, and the departure clock waits until it is done.
+        if (agent.mobSeconds > 0.0f) {
+            agent.mobSeconds -= deltaSeconds;
+            agent.mobChatter += deltaSeconds;
+            if (agent.mobChatter >= MobChatterSeconds) {
+                agent.mobChatter = 0.0f;
+                lastMob_ = {agent.mobX, agent.mobY, agent.mobZ, lastMob_.count + 1U, true};
+            }
+            const float around = std::atan2(agent.state.z - agent.mobZ, agent.state.x - agent.mobX);
+            const float targetX = agent.mobX + std::cos(around + 0.9f) * MobRadius;
+            const float targetZ = agent.mobZ + std::sin(around + 0.9f) * MobRadius;
+            agent.state.headingRadians = LerpAngle(agent.state.headingRadians,
+                std::atan2(targetZ - agent.state.z, targetX - agent.state.x), deltaSeconds * 4.0f);
+            agent.state.speed = 4.2f;
+            agent.state.x += std::cos(agent.state.headingRadians) * agent.state.speed * deltaSeconds;
+            agent.state.z += std::sin(agent.state.headingRadians) * agent.state.speed * deltaSeconds;
+            const float wantY = std::max(agent.mobY + MobHeight,
+                                         terrain_.Height(agent.state.x, agent.state.z) + 1.2f);
+            agent.state.y += std::clamp(wantY - agent.state.y, -2.0f * deltaSeconds, 2.0f * deltaSeconds);
+            agent.flapPhase = std::fmod(agent.flapPhase + agent.flapSpeed * 1.3f * deltaSeconds, TwoPi);
+            agent.state.wingPose = std::sin(agent.flapPhase) * 0.9f;
+            agent.state.bankRadians = std::min(0.3f, agent.state.bankRadians + deltaSeconds * 0.6f);
+            agent.state.glideAmount = 0.0f;
+            agent.state.perchAmount = std::max(0.0f, 1.0f - agent.behaviorSeconds / 1.1f);
+            agent.behaviorSeconds = std::min(agent.behaviorSeconds, 3.0f);
+            return;
+        }
         agent.state.headingRadians = LerpAngle(
             agent.state.headingRadians, site.headingRadians, deltaSeconds * 0.8f);
         agent.state.speed = 8.2f;

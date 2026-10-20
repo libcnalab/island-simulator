@@ -54,6 +54,29 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 123 (2026-10-20) — birds mob a snake
+
+A bird flushed by a snake's head at its perch (pass 91) simply left. It now mobs the
+snake: the flush records the head, and for `MobSeconds` (8 s) the departing bird circles
+low over it at `MobRadius` 2.4 m and `MobHeight` 2.2 m (aiming a little ahead on the
+circle each update, speed 4.2 m/s, fast wingbeats, banked), the departure clock held
+until the mob is over, when it takes its route as before; every `MobChatterSeconds` (2 s)
+`LastMob()` notes a chatter at the snake (counted), and `MobCount()` / `MobbingCount()`
+report the mobs begun and the birds mid-mob. A walker's, a thud's or a crowding flush
+does not mob. The soundscape gains the alarm chatter: `GenerateBirdChatter` (two
+variants, 1 s: a run of seven or nine sharp downward-sweeping chirps at 2.7 or 3.3 kHz with
+quiet gaps), `WildlifeCallType::Chatter`, `NoteBirdChatter` (pending a second, heard
+within about twenty-five metres, pitch +0.05, 1.05 s slot), effects created and reset
+with the other one-shots, and the first-played line "first positional bird alarm chatter
+played". The game notes each chatter at the snake's head plus 1.5 m. General report line:
+"a bird flushed by a snake mobs it, circling low over its head for eight seconds and
+chattering the alarm, an original run of sharp chirps heard within twenty-five metres"
+(pinned). Core checks extend the snake-flush test: the flushed bird begins mobbing; four
+seconds on it is still circling within six metres of the snake and has chattered once or
+twice, at the snake; ten seconds on the mob is over and the bird flies its route; a
+walker's flush mobs nothing; the chatter PCM is deterministic, two variants, 1 s, silent at
+the ends, high and in distinct chirps. Native `birds` passes (luminance deviation 43.7).
+
 ## Loop pass 122 (2026-10-20) — blown sand in a gust front
 
 The gust fronts leaned the palms, the grass and the hung fish, but the dry beaches lay

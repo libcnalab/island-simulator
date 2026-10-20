@@ -340,7 +340,8 @@ namespace island
         Deer,
         Resident,
         WingClap,
-        Crocodile
+        Crocodile,
+        Chatter
     };
 
     /** @brief Nearest currently eligible world-space source for one wildlife species. */
@@ -535,6 +536,8 @@ namespace island
     [[nodiscard]] AmbientLoop GenerateWingClap(std::uint8_t variant);
     /** @brief Original crocodile hiss: a long, low, open-jawed breath of air, 1.2 seconds. */
     [[nodiscard]] AmbientLoop GenerateCrocodileHiss(std::uint8_t variant);
+    /** @brief Original bird alarm chatter: a run of sharp quick chirps over a snake, one second. */
+    [[nodiscard]] AmbientLoop GenerateBirdChatter(std::uint8_t variant);
     [[nodiscard]] float SnakeHissVolume(float distance) noexcept;
 
     struct SnakeHissRequest

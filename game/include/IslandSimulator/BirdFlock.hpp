@@ -165,6 +165,15 @@ namespace island
         [[nodiscard]] std::uint32_t SnakeFlushCount() const noexcept { return snakeFlushes_; }
         /** @brief Perched flushes from the resident or an animal walking up under the perch. */
         [[nodiscard]] std::uint32_t WalkerFlushCount() const noexcept { return walkerFlushes_; }
+        /** @brief Mobbing: a bird flushed by a snake does not simply leave; for MobSeconds it
+         *  circles low over the snake's head at MobRadius, chattering the alarm every
+         *  MobChatterSeconds (LastMob counts the chatters, at the snake), before it takes
+         *  its route. */
+        [[nodiscard]] std::uint32_t MobCount() const noexcept { return mobs_; }
+        [[nodiscard]] std::size_t MobbingCount() const noexcept;
+        struct BirdMob { float x = 0.0f, y = 0.0f, z = 0.0f; std::uint32_t count = 0U; bool valid = false; };
+        [[nodiscard]] const BirdMob& LastMob() const noexcept { return lastMob_; }
+        static constexpr float MobSeconds = 8.0f, MobRadius = 2.4f, MobHeight = 2.2f, MobChatterSeconds = 2.0f;
         /** @brief Preening bouts begun: a perched bird, between feeding bouts and after its
          *  first second on the perch, turns its head back into one wing for PreenBoutSeconds
          *  about every PreenPeriodSeconds, the wings alternating. A departure or flush drops it. */
@@ -271,6 +280,9 @@ namespace island
             bool bathing = false;           // this ground visit is a bathe at the pool bank
             bool feeding = false;           // in a feeding bout on a fruiting perch
             bool preening = false;          // in a preening bout on the perch
+            float mobSeconds = 0.0f;        // remaining circling over a snake; 0 when not mobbing
+            float mobX = 0.0f, mobY = 0.0f, mobZ = 0.0f;
+            float mobChatter = 0.0f;
             std::size_t index = 0U;
         };
 
@@ -311,6 +323,8 @@ namespace island
         std::uint32_t snakeFlushes_ = 0U;
         std::uint32_t walkerFlushes_ = 0U;
         std::uint32_t preens_ = 0U;
+        std::uint32_t mobs_ = 0U;
+        BirdMob lastMob_;
         std::span<const FallingFruit> lyingFruit_;
         std::uint32_t fruitLandings_ = 0U;
         std::span<const GrassWalker> walkers_;

@@ -1674,6 +1674,28 @@ namespace island
         return Quantize(samples, .6f);
     }
 
+    AmbientLoop GenerateBirdChatter(const std::uint8_t variant)
+    {
+        // A bird's alarm chatter over a snake: a run of sharp quick chirps, each a short
+        // downward sweep of tone, seven in the second; the second variant higher and faster.
+        constexpr std::size_t frames = static_cast<std::size_t>(AmbientSampleRate * 1.0f);
+        std::vector<float> samples(frames, 0.0f);
+        const bool high = (variant & 1U) != 0U;
+        const float chirpHertz = high ? 9.0f : 7.0f;
+        const float baseTone = high ? 3300.0f : 2700.0f;
+        float phase = 0.0f;
+        for (std::size_t i = 0; i < frames; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            const float cycle = std::fmod(t * chirpHertz, 1.0f);
+            const float chirp = SmoothStep(0.0f, 0.08f, cycle) * (1.0f - SmoothStep(0.30f, 0.46f, cycle));
+            const float tone = baseTone * (1.0f - 0.22f * cycle);
+            phase += 2.0f * std::numbers::pi_v<float> * tone / static_cast<float>(AmbientSampleRate);
+            const float fade = SmoothStep(0.0f, 0.03f, t) * (1.0f - SmoothStep(0.85f, 1.0f, t));
+            samples[i] = fade * chirp * (std::sin(phase) * 0.8f + std::sin(2.0f * phase) * 0.2f);
+        }
+        return Quantize(samples, .5f);
+    }
+
     AmbientLoop GenerateWingClap(const std::uint8_t variant)
     {
         // A flushing bird's wing clap: six quick beats of air in half a second, each a

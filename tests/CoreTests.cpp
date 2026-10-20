@@ -7940,6 +7940,26 @@ int main()
         coiled.Update(0.05f, perchX + 25.0f, sites[0].y, perchZ);
         Check(coiled.Birds()[0].behavior == island::BirdBehavior::Depart && coiled.SnakeFlushCount() == 1U,
               "a snake's head up at the perch flushes the bird");
+        // ...and mobs it: for the next eight seconds the bird stays a few metres over the
+        // snake's head, chattering every couple of seconds, and only then takes its route.
+        Check(coiled.MobCount() == 1U && coiled.MobbingCount() == 1U, "the snake-flushed bird begins mobbing the snake");
+        float farthest = 0.0f;
+        std::uint32_t chattersAtFour = 0U;
+        for (int step = 0; step < 80; ++step) {
+            coiled.Update(0.05f, perchX + 25.0f, sites[0].y, perchZ);
+            const auto& bird = coiled.Birds()[0];
+            farthest = std::max(farthest, std::hypot(bird.x - (perchX + 1.5f), bird.z - perchZ));
+            if (step == 79) chattersAtFour = coiled.LastMob().count;
+        }
+        Check(coiled.Birds()[0].behavior == island::BirdBehavior::Depart && coiled.MobbingCount() == 1U && farthest < 6.0f,
+              "four seconds on the bird is still circling within six metres of the snake");
+        Check(chattersAtFour >= 1U && chattersAtFour <= 3U && coiled.LastMob().valid
+                  && std::hypot(coiled.LastMob().x - (perchX + 1.5f), coiled.LastMob().z - perchZ) < 0.1f,
+              "the mobbing bird has chattered once or twice, at the snake");
+        for (int step = 0; step < 120; ++step) coiled.Update(0.05f, perchX + 25.0f, sites[0].y, perchZ);
+        Check(coiled.MobbingCount() == 0U && coiled.Birds()[0].behavior == island::BirdBehavior::Fly,
+              "ten seconds on the mobbing is over and the bird is flying its route");
+        Check(underfoot.MobCount() == 0U, "a walker's flush sends the bird straight off, no mobbing");
     }
 
     {
@@ -9348,6 +9368,24 @@ int main()
                 &&hissA.samples.front()==0&&hissA.samples.back()==0&&hissB.samples.front()==0&&hissB.samples.back()==0,
                 "crocodile hiss PCM is deterministic, two variants, 1.2 s and silent at endpoints");
             Check(peak>5000&&crossings<3200,"the crocodile's hiss is loud in its middle and low in pitch");
+        }
+        {
+            // The bird alarm chatter PCM: deterministic, two variants, 1.0 s, silent at both
+            // ends, high (many zero crossings) and in distinct chirps (quiet gaps between).
+            const auto chatterA=island::GenerateBirdChatter(0),chatterB=island::GenerateBirdChatter(1);
+            const std::size_t frames=static_cast<std::size_t>(22050*1.0f);
+            int crossings=0,quietRuns=0;bool quiet=false;
+            for(std::size_t i=2205;i<19845;++i) {
+                if((chatterA.samples[i]>=0)!=(chatterA.samples[i-1]>=0)) ++crossings;
+                const bool silent=std::abs(static_cast<int>(chatterA.samples[i]))<40;
+                if(silent&&!quiet) ++quietRuns;
+                quiet=silent;
+            }
+            Check(chatterA.sampleRate==22050&&chatterA.samples.size()==frames&&chatterB.samples.size()==frames
+                &&chatterA.samples!=chatterB.samples&&chatterA.samples==island::GenerateBirdChatter(0).samples
+                &&chatterA.samples.front()==0&&chatterA.samples.back()==0&&chatterB.samples.front()==0&&chatterB.samples.back()==0,
+                "bird chatter PCM is deterministic, two variants, 1 s and silent at endpoints");
+            Check(crossings>1500&&quietRuns>=5,"the bird chatter is high and comes in distinct chirps");
         }
         // A crocodile on the bank slides into the water when the walker comes near: the entry
         // is noted once, at a point at the water's edge, within a minute.

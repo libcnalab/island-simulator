@@ -126,6 +126,10 @@ namespace island
         /** @brief A crocodile coming alert on its bank at the walker: its hiss, at its jaws,
          *  heard within about thirty metres. */
         void NoteCrocodileHiss(float x, float y, float z) noexcept;
+        /** @brief A bird mobbing a snake: its alarm chatter over the snake, heard within
+         *  about twenty-five metres. */
+        void NoteBirdChatter(float x, float y, float z) noexcept;
+        [[nodiscard]] int PlayedBirdChatterCount() const noexcept { return playedBirdChatterCount_; }
         [[nodiscard]] int PlayedCrocodileHissCount() const noexcept { return playedCrocodileHissCount_; }
         [[nodiscard]] int PlayedWingClapCount() const noexcept { return playedWingClapCount_; }
         [[nodiscard]] int PlayedResidentWhistleCount() const noexcept { return playedResidentWhistleCount_; }
@@ -296,6 +300,7 @@ namespace island
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> residentWhistleEffects_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> wingClapEffects_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> crocodileHissEffects_;
+        std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> birdChatterEffects_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> coconutThudEffect_;
         WildlifeAudioSource pendingSplash_;
         float pendingSplashSeconds_ = 0.0f;
@@ -317,6 +322,10 @@ namespace island
         float pendingCrocHissSeconds_ = 0.0f;
         std::uint32_t crocHissCount_ = 0U;
         int playedCrocodileHissCount_ = 0;
+        WildlifeAudioSource pendingChatter_;
+        float pendingChatterSeconds_ = 0.0f;
+        std::uint32_t chatterCount_ = 0U;
+        int playedBirdChatterCount_ = 0;
         int playedResidentWhistleCount_ = 0;
         WildlifeAudioSource pendingThud_;
         float pendingThudSeconds_ = 0.0f;
