@@ -35,6 +35,7 @@
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/WreckScourPatch.hpp"
 #include "IslandSimulator/StreamCourse.hpp"
+#include "IslandSimulator/StreamDriftField.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
@@ -7641,6 +7642,33 @@ int main()
             offshorePeak=std::max(offshorePeak,island::WindGust::Strength(400.0f,120.0f,t));
         }
         Check(seaPeak>0.8f&&offshorePeak>0.8f,"gust fronts cross the lagoon and the open sea within three spacings");
+    {
+        // Leaves drift down the stream: every leaf floats on the channel's water inside its
+        // banks, the current hurries them over the cascade and slackens in the pool, and over
+        // ten minutes leaves reach the sea and are replaced near the source.
+        const island::IslandTerrain terrain;
+        island::StreamDriftField drift(terrain);
+        const auto& course=drift.Course();
+        const auto afloat=[&](const island::DriftingLeaf& leaf){
+            if(!leaf.active||!std::isfinite(leaf.x)||!std::isfinite(leaf.y)||!std::isfinite(leaf.z)) return false;
+            float best=1e9f; const island::StreamStation* nearest=nullptr;
+            for(std::size_t i=0;i<course.Count();++i) { const float d=std::hypot(course.Station(i).x-leaf.x,course.Station(i).z-leaf.z); if(d<best) { best=d; nearest=&course.Station(i); } }
+            return nearest&&best<=nearest->halfWidth*1.2f+0.3f&&std::abs(leaf.y-nearest->water-island::StreamDriftField::SurfaceLift)<0.45f;
+        };
+        bool allAfloat=true;
+        for(const auto& leaf:drift.Leaves()) allAfloat=allAfloat&&afloat(leaf);
+        Check(allAfloat,"every drifting leaf starts afloat inside the stream banks");
+        const float lipDistance=course.Station(course.CascadeIndex()).distance;
+        Check(drift.SpeedAt(lipDistance-20.0f)==island::StreamDriftField::ReachSpeed
+              &&drift.SpeedAt(lipDistance+0.2f)>drift.SpeedAt(lipDistance-20.0f)*3.0f
+              &&drift.SpeedAt(course.PoolStation().distance)<drift.SpeedAt(lipDistance-20.0f),
+              "the current hurries over the cascade and slackens in the pool");
+        for(int step=0;step<12000;++step) {
+            drift.Update(0.05f);
+            if(step%600==0) for(const auto& leaf:drift.Leaves()) allAfloat=allAfloat&&afloat(leaf);
+        }
+        Check(allAfloat&&drift.PassCount()>=1U,"leaves stay afloat in the channel and some reach the sea within ten minutes");
+    }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls
         // on a little before it rests; resting fruit sit on the ground and keep still.
         Check(field.LastRollDistance()>0.08f&&field.LastRollDistance()<4.0f,"a fruit rolls a bounded distance from where it struck before it rests");

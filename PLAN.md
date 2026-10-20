@@ -46,6 +46,25 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 28 (2026-10-20) — leaves drift down the stream
+
+The stream's surface carried nothing, so its current was only implied by the shader. A new
+core `StreamDriftField` keeps fourteen leaves on the course (its own `StreamCourse` copy):
+each has a distance along the course and a lateral fraction of the channel half-width
+(`Surface` resolves both to the water level between stations plus 2 cm, heading along the
+reach), and `SpeedAt` gives the current: 0.32 m/s on the reach, ramping to 1.1 m/s over the
+last 4 m above the cascade lip, 1.8 m/s through the drop, slackening to 0.12 m/s in the
+plunge pool and back to the reach speed below it. Leaves wander across the channel and spin,
+both faster in quick water; one that passes the last station is counted (`PassCount`) and a
+new leaf enters near the source. `StreamDriftRenderer` draws each as a two-lobe pointed leaf
+(green, brown or yellow) in one dynamic vertex-coloured draw right after the stream water,
+outside the tracked scene draw count like the fruit. Diagnostic "leaves drift down the
+stream on the current, hurry over the cascade lip, idle in the pool and go out to sea" is
+pinned by the native capture tool. Core checks: every leaf starts afloat inside the banks at
+the water level; the current over the lip is more than three times the reach speed and the
+pool slower than the reach; over ten simulated minutes the leaves stay afloat and at least
+one reaches the sea. Native `cascade` passes.
+
 ## Portable evidence for loop passes 1–14 (2026-10-20, Web package of 2026-10-19 23:30)
 
 Chrome software scopes against the Web package built after loop pass 14: `birds`, `boars`,

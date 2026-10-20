@@ -1095,6 +1095,8 @@ def main():
                 raise RuntimeError("current sea cloud shadows are missing; check for a stale executable")
             if "passing gust fronts darken the sea in racing bands of fine cat's-paw ripples" not in diagnostics:
                 raise RuntimeError("current sea cat's paws are missing; check for a stale executable")
+            if "leaves drift down the stream on the current, hurry over the cascade lip, idle in the pool and go out to sea" not in diagnostics:
+                raise RuntimeError("current stream drift is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

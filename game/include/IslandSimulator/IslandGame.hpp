@@ -96,6 +96,7 @@
 #include "IslandSimulator/BridgeRenderer.hpp"
 #include "IslandSimulator/LookoutRenderer.hpp"
 #include "IslandSimulator/FallingFruitRenderer.hpp"
+#include "IslandSimulator/StreamDriftRenderer.hpp"
 #include "IslandSimulator/JettyRenderer.hpp"
 #include "IslandSimulator/UnderwaterEffectRenderer.hpp"
 #include "IslandSimulator/HelicopterLayout.hpp"
@@ -451,6 +452,8 @@ namespace island
         std::unique_ptr<LookoutRenderer> lookoutRenderer_;
         FallingFruitField fallingFruit_{terrain_};
         std::unique_ptr<FallingFruitRenderer> fallingFruitRenderer_;
+        StreamDriftField streamDrift_{terrain_};
+        std::unique_ptr<StreamDriftRenderer> streamDriftRenderer_;
         std::unique_ptr<UnderwaterEffectRenderer> underwaterEffect_;
         float lastSubmergedDepth_ = 0.0f, bubbleBurst_ = 0.0f;
         float seaForageSeconds_ = 0.0f;
