@@ -1078,11 +1078,15 @@ namespace island
                 AddDoubleSidedTriangle(vertices,eyeCentre+up*(.052f*unit),
                     eyeCentre+forward*(.025f*unit),
                     eyeCentre+right*(side*.018f*unit),eyeGlint);
+                // Sweeping, each antenna swings out and in and nods with the sweep.
+                const float sweep=std::clamp(ant.antennaSweep,0.0f,1.0f);
+                const float swing=sweep*std::sin(ant.sweepPhase+side*1.2f);
+                const float nod=sweep*std::cos(ant.sweepPhase*1.3f+side);
                 const Vector3 root=head+forward*(.27f*unit)+right*(side*.16f*unit);
-                const Vector3 elbow=root+forward*(.43f*unit)+right*(side*.24f*unit)
-                    +up*(.12f*unit);
-                const Vector3 tip=elbow+forward*(.34f*unit)+right*(side*.25f*unit)
-                    -up*(.08f*unit);
+                const Vector3 elbow=root+forward*((.43f-.06f*std::abs(swing))*unit)+right*(side*(.24f+.10f*swing)*unit)
+                    +up*((.12f+.06f*nod)*unit);
+                const Vector3 tip=elbow+forward*((.34f-.05f*std::abs(swing))*unit)+right*(side*(.25f+.12f*swing)*unit)
+                    -up*((.08f-.05f*nod)*unit);
                 AppendGeckoTube(vertices,root,elbow,.032f*unit,.022f*unit,leg,5);
                 AppendGeckoTube(vertices,elbow,tip,.022f*unit,.009f*unit,leg,5);
 

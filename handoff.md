@@ -236,6 +236,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 172: a turtle squeezes its eyes shut as its head breaks the surface for a breath, and blinks slowly under (`SeaTurtleState::blink`, `SeaTurtleGroup::BlinkCount`) (PLAN "Loop pass 172").
 - Pass 173: a settled ray breathes with a slow wave running back along each wing's edge (`StingrayState::marginRipple`/`ripplePhase`) (PLAN "Loop pass 173").
 - Pass 174: a hanging bat stretches one wing out and down now and then, the wings taking turns (`FruitBatState::stretch`/`stretchSide`, `FruitBatColony::StretchCount`) (PLAN "Loop pass 174").
+- Pass 175: an ant pausing on the trail sweeps its antennae, feeling the way ahead (`AntState::antennaSweep`/`sweepPhase`, `AntTrails::SweepCount`) (PLAN "Loop pass 175").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 175 (2026-10-20) — an ant sweeps its antennae
+
+An ant pausing on the trail stood with its antennae fixed. `AntState::antennaSweep` (0..1)
+and `sweepPhase` now carry the sweep: pausing, the ant feels the way ahead, the sweep
+rising at 10/s with its phase advancing at `SweepRate` (11 rad/s), and settling at 6/s as
+it walks on; the sweeps are counted (`SweepCount()`, `SweepingCount()`). In the renderer
+each antenna swings out and in and nods with the sweep, on the same vertices, so the ants'
+exact vertex budgets hold. The ants report line gains "an ant pausing on the trail sweeps
+its antennae, feeling the way ahead" (pinned). Core check: watched from six metres a
+pausing ant of the first trail sweeps at full with the sweep advancing within half a
+minute. Native `ants` passes, after a misplaced first edit (the beetle's antennae share the
+ant's wording) was reverted.
+
 ## Loop pass 174 (2026-10-20) — a hanging bat stretches a wing
 
 A roosting bat only fanned both wings together. `FruitBatState::stretch` (0..1) and

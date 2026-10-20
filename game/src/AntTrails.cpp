@@ -207,10 +207,26 @@ namespace island
         }
     }
 
+    std::size_t AntTrails::SweepingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.sweeping ? 1U : 0U;
+        return count;
+    }
+
     void AntTrails::UpdateAgent(Agent& agent, const float deltaSeconds) noexcept
     {
         if (deltaSeconds <= 0.0f) return;
-        if (agent.pauseSeconds > 0.0f) {
+        // Pausing, the ant sweeps its antennae, feeling the trail ahead; walking on, they
+        // settle to their set.
+        const bool pausing = agent.pauseSeconds > 0.0f;
+        if (pausing && !agent.sweeping) ++sweeps_;
+        agent.sweeping = pausing;
+        agent.state.antennaSweep += std::clamp((pausing ? 1.0f : 0.0f) - agent.state.antennaSweep,
+                                               -deltaSeconds * 6.0f, deltaSeconds * 10.0f);
+        if (agent.state.antennaSweep > 0.01f)
+            agent.state.sweepPhase = std::fmod(agent.state.sweepPhase + deltaSeconds * SweepRate, TwoPi);
+        if (pausing) {
             agent.pauseSeconds = std::max(0.0f,agent.pauseSeconds-deltaSeconds);
             agent.state.behavior = AntBehavior::Pause;
             return;

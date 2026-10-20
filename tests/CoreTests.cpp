@@ -9636,6 +9636,21 @@ int main()
             Check(reached,"an ant reaches the fruit within a minute");
             ants.SetLyingFruit({});
             Check(ants.FoodTrailCount()==0U&&ants.FoodEnd(groundTrail,endX,endZ)&&std::hypot(endX-lineX,endZ-lineZ)<0.01f,"with the fruit gone the trail returns to its line");
+            // The antennae sweep: watched from six metres, within half a minute a pausing ant
+            // of the first trail sweeps its antennae at full with the sweep advancing, and a
+            // walking ant's antennae lie at their set.
+            island::AntTrails sweepers(terrain,antJungle);
+            const auto& firstTrail=sweepers.Trails()[0];
+            float sweepPeak=0.0f,swept=0.0f;
+            for(int step=0;step<600;++step) {
+                sweepers.Update(0.05f,firstTrail.x+6.0f,firstTrail.y+1.0f,firstTrail.z);
+                for(const auto& ant:sweepers.Ants()) {
+                    if(ant.simulationTier!=island::WildlifeSimulationTier::Full||ant.behavior!=island::AntBehavior::Pause) continue;
+                    sweepPeak=std::max(sweepPeak,ant.antennaSweep);
+                    if(ant.antennaSweep>0.9f) swept=std::max(swept,ant.sweepPhase);
+                }
+            }
+            Check(sweepers.SweepCount()>=1U&&sweepPeak>0.9f&&swept>1.0f,"a pausing ant does not sweep its antennae");
         }
         // The plunge pool has its own dragonflies: the last three homes sit on the pool.
         {

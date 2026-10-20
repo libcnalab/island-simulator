@@ -2509,7 +2509,7 @@ namespace island
                   << "island-simulator: flies " << FlySwarms::Count
                   << " agents in four close-range inland organic-ground swarms; a swarm with fermenting fruit lying within ten metres shifts over it and hangs low there\n"
                   << "island-simulator: ants " << AntTrails::Count
-                  << " agents in three soil trails and one real broadleaf-trunk trail\n"
+                  << " agents in three soil trails and one real broadleaf-trunk trail; an ant pausing on the trail sweeps its antennae, feeling the way ahead\n"
                   << "island-simulator: cicadas " << CicadaColony::Count
                   << " agents resting, calling, and making short flights from real broadleaf trunks; "
                      "a cicada falls silent when the walker or an animal comes within seven metres and starts up again once they have gone; "

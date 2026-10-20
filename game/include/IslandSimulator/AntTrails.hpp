@@ -21,6 +21,9 @@ namespace island
         float forwardX = 1.0f, forwardY = 0.0f, forwardZ = 0.0f;
         float normalX = 0.0f, normalY = 1.0f, normalZ = 0.0f;
         float gaitPhase = 0.0f, scale = 1.0f;
+        /** @brief 0..1 the antennae sweeping: an ant pausing on the trail feels the way ahead,
+         *  sweepPhase carrying the sweep; walking on, the antennae settle to their set. */
+        float antennaSweep = 0.0f, sweepPhase = 0.0f;
         AntBehavior behavior = AntBehavior::Walk;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
         std::uint8_t colorVariant = 0U;
@@ -60,6 +63,10 @@ namespace island
         /** @brief The far (food) end of a trail as the ants walk it now. */
         [[nodiscard]] bool FoodEnd(std::size_t trail, float& x, float& z) const noexcept;
         static constexpr float FoodReach = 5.0f;
+        /** @brief Antennae sweeps begun (one per pause on the trail) and the ants sweeping. */
+        [[nodiscard]] std::uint32_t SweepCount() const noexcept { return sweeps_; }
+        [[nodiscard]] std::size_t SweepingCount() const noexcept;
+        static constexpr float SweepRate = 11.0f;
 
     private:
         struct Agent
@@ -68,6 +75,7 @@ namespace island
             float progress = 0.0f, speed = 0.0f, pauseSeconds = 0.0f;
             float accumulatedSeconds = 0.0f;
             bool outward = true;
+            bool sweeping = false;
         };
 
         void Initialize(std::size_t index);
@@ -87,5 +95,6 @@ namespace island
         std::array<Agent, Count> agents_{};
         std::array<AntState, Count> states_{};
         std::uint64_t frameIndex_ = 0U;
+        std::uint32_t sweeps_ = 0U;
     };
 }
