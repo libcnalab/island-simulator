@@ -46,6 +46,7 @@
 #include "IslandSimulator/RootingDustField.hpp"
 #include "IslandSimulator/ShellDragTrail.hpp"
 #include "IslandSimulator/SurfSprayField.hpp"
+#include "IslandSimulator/DolphinBlowField.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
@@ -7943,6 +7944,26 @@ int main()
             const std::uint32_t before=spray.BurstCount();
             for(int step=0;step<1200;++step) spray.Update(0.05f,60.0f+static_cast<float>(step)*0.05f,1000.0f,1000.0f);
             Check(spray.BurstCount()==before,"a rock far from the observer throws no spray");
+        }
+        // The dolphins' blows: a dolphin rising through the surface blows once from the
+        // blowhole, not again within two seconds, and one that stays below blows nothing.
+        {
+            island::DolphinBlowField blows;
+            island::DolphinState rising{};rising.x=50.0f;rising.z=-200.0f;rising.y=-1.0f;rising.headingRadians=0.0f;rising.scale=1.0f;
+            rising.behavior=island::DolphinBehavior::Surface;rising.simulationTier=island::WildlifeSimulationTier::Full;
+            island::DolphinState deep=rising;deep.y=-2.0f;
+            std::vector<island::DolphinState> pod{rising,deep};
+            bool atBlowhole=true;
+            for(int step=0;step<40;++step) {
+                pod[0].y=-1.0f+static_cast<float>(step)*0.05f;   // breaks the surface at step 17
+                blows.Update(0.05f,0.0f,pod);
+                for(const auto& puff:blows.Puffs()) if(puff.active&&std::hypot(puff.x-(pod[0].x+island::DolphinBlowField::BlowholeAhead),puff.z-pod[0].z)>0.6f) atBlowhole=false;
+            }
+            Check(blows.BlowCount()==1U&&atBlowhole,"a dolphin breaking the surface blows once from the blowhole");
+            pod[0].y=-1.0f;blows.Update(0.05f,0.0f,pod);pod[0].y=0.2f;blows.Update(0.05f,0.0f,pod);
+            Check(blows.BlowCount()==1U,"a second surfacing within two seconds blows nothing more");
+            for(int step=0;step<60;++step) blows.Update(0.05f,0.0f,pod);
+            Check(blows.ActiveCount()==0U,"a blow is gone within the second");
         }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls

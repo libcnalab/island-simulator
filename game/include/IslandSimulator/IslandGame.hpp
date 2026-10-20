@@ -108,6 +108,7 @@
 #include "IslandSimulator/RootingDustRenderer.hpp"
 #include "IslandSimulator/ShellDragRenderer.hpp"
 #include "IslandSimulator/SurfSprayField.hpp"
+#include "IslandSimulator/DolphinBlowField.hpp"
 #include "IslandSimulator/HelicopterLayout.hpp"
 #include "IslandSimulator/HelicopterRenderer.hpp"
 #include "IslandSimulator/ShorelineRenderer.hpp"
@@ -480,6 +481,8 @@ namespace island
         std::unique_ptr<ShellDragRenderer> shellDragRenderer_;
         SurfSprayField surfSpray_{terrain_};
         std::unique_ptr<CascadeMistRenderer> surfSprayRenderer_;
+        DolphinBlowField dolphinBlows_;
+        std::unique_ptr<CascadeMistRenderer> dolphinBlowRenderer_;
         float lastSubmergedDepth_ = 0.0f, bubbleBurst_ = 0.0f;
         float seaForageSeconds_ = 0.0f;
         std::uint32_t notedDiveCount_ = 0U;

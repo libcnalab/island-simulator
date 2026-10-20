@@ -46,6 +46,18 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 45 (2026-10-20) — the dolphins' blows
+
+A dolphin's back broke the surface in silence and dry. A core `DolphinBlowField` watches the
+pod: when a simulated dolphin rises through −0.15 m from below, and not within two seconds of
+its last blow, one puff of spray stands up from the blowhole (0.8 m ahead of its centre and
+0.25 m up, scaled), rises at 1.2 m/s slowing, drifts downwind (faster in a gust), swells and is
+gone in 0.9 s. The puffs are `MistPuff`s drawn by a third instance of the cascade's mist
+renderer with its own line, "a dolphin breaking the surface blows a puff of spray from the
+blowhole", pinned by the native capture tool. Core checks: a dolphin rising through the
+surface blows once at the blowhole; a second surfacing within two seconds blows nothing
+more; a blow is gone within the second. Native `dolphins` passes.
+
 ## Loop pass 44 (2026-10-20) — spray off the offshore rocks
 
 The breakers foamed round the offshore rocks and threw nothing up them. A core
