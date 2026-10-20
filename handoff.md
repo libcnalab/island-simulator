@@ -89,6 +89,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 26: the gust front lays the campfire plume over and tears it (PLAN "Loop pass 26").
 - Pass 27: gust fronts race over the sea as darker cat's-paw bands (PLAN "Loop pass 27").
 - Pass 28: leaves drift down the stream on the current, over the cascade and out to sea (PLAN "Loop pass 28").
+- Pass 29: gust fronts drive pale sand streamers along the dry beach (PLAN "Loop pass 29").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

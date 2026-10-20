@@ -969,6 +969,8 @@ def main():
                 raise RuntimeError("current seabird hunting is missing; check for a stale executable")
             if "beaches carry a broken high-tide wrack line of stranded weed, twigs and shell" not in diagnostics:
                 raise RuntimeError("current wrack line is missing; check for a stale executable")
+            if "gust fronts drive pale sand streamers racing along the dry beach" not in diagnostics:
+                raise RuntimeError("current sand streamers are missing; check for a stale executable")
             if "gust fronts sweep the grass, crowns and fronds downwind together" not in diagnostics:
                 raise RuntimeError("current gust fronts are missing; check for a stale executable")
             if "boars wallow at the bank and carry the mud on their legs and bellies" not in diagnostics:

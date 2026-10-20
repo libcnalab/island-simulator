@@ -46,6 +46,20 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 29 (2026-10-20) — sand streamers in the gust front
+
+The dry beach lay still while a front leaned the grass behind it and darkened the sea in
+front. The terrain material now includes the shared `WindGust::Shader` and, before the wrack
+line, lifts the exposed dry sand (more than 1.4 m inland, above 0.10 m, within 90 m) into
+pale ribbons inside the gust band: a carrier racing downwind at 9 rad/s (toward −x with the
+fronts) along a meandering phase, confined to a few lanes by a value-noise mask, brightening
+the sand by up to 18 % at 55 % of the band strength. The fronts' clock is a new unwrapped
+`uWindSeconds` uniform (the sea clock `uSeaSeconds` wraps at 628 s, which would have shifted
+these fronts 24 m off the grass's after five minutes). Diagnostic "gust fronts drive pale
+sand streamers racing along the dry beach" is printed with the terrain's report and pinned
+by the native capture tool. Core check: the field peaks above 0.8 on both the east and west
+beaches within three spacings. Native `beach` passes.
+
 ## Loop pass 28 (2026-10-20) — leaves drift down the stream
 
 The stream's surface carried nothing, so its current was only implied by the shader. A new
@@ -71,9 +85,10 @@ Chrome software scopes against the Web package built after loop pass 14: `birds`
 `monkeys`, `hut`, `grass-motion`, `butterflies`, `cliffs` passed in the first batch; `palms`
 timed out there (overlapping a native test run) and passed alone at 00:35; `terrain` exceeded
 its limit three times (600 s twice, 1200 s once at 00:56) with the machine's load average
-between 16 and 21 from other agents, so it is `[!]` blocked by load, not by a defect: its
-evidence directories hold the first eight captures each time. Retry `terrain` with
-`--timeout 1200` when the load is under 8. Loop passes 15–27 are not yet in a Web package;
+between 16 and 21 from other agents, and a fourth time (1200 s, started 01:21 at load 7
+that rose to 23 while it ran), so it is `[!]` blocked by load, not by a defect: its evidence
+directories hold the first captures each time. Retry `terrain` with `--timeout 1200` when
+the load stays under 8 for the whole run. Loop passes 15–27 are not yet in a Web package;
 the next Web build and Android assemble cover them together.
 
 ## Loop pass 27 (2026-10-20) — cat's paws on the sea

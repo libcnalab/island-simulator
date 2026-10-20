@@ -3,6 +3,7 @@
 #include "IslandSimulator/CoastalMaterial.hpp"
 #include "IslandSimulator/StreamBedPatch.hpp"
 #include "IslandSimulator/WrackLine.hpp"
+#include "IslandSimulator/WindGust.hpp"
 #include "IslandSimulator/WreckScourPatch.hpp"
 #include "IslandSimulator/CaveGroundPatch.hpp"
 #include "IslandSimulator/CampfireLighting.hpp"
@@ -101,6 +102,8 @@ namespace island
             "island-simulator: low coastal cliffs retain salt-worn mineral colour, distance-stable macro strata, drainage streaks, and cool open-sky fill";
         constexpr std::string_view RippleTrainDiagnostic =
             "island-simulator: seabed ripples stay below the waterline in short near trains and beach flecks fade with the ground footprint";
+        constexpr std::string_view SandStreamerDiagnostic =
+            "island-simulator: gust fronts drive pale sand streamers racing along the dry beach";
         constexpr std::string_view WrackLineDiagnostic =
             "island-simulator: beaches carry a broken high-tide wrack line of stranded weed, twigs and shell";
         constexpr std::string_view DappleFleckDiagnostic =
@@ -159,6 +162,7 @@ uniform vec3 uCameraPosition;
 uniform vec3 uToSun;
 uniform vec2 uSandWind;
 uniform float uSeaSeconds;
+uniform float uWindSeconds;
 uniform vec4 uPrimaryPathShape;
 uniform vec2 uPrimaryPathZRange;
 uniform vec3 uEastClearing;
@@ -439,6 +443,20 @@ void main()
         float drySubstrate = sand
             * (1.0 - smoothstep(18.0, 58.0, distanceToCamera))
             * smoothstep(1.4, 4.8, signedShoreDistance) * fleckVisibility;
+
+        // Sand streamers: a passing gust front lifts the dry upper beach into pale ribbons
+        // of blown sand racing downwind (toward -x, with the fronts) in a few lanes, gone
+        // as the front passes; the wet sand and the water's edge hold their grains.
+        float sandGust = windGust(p, uWindSeconds) * sand
+            * smoothstep(1.4, 6.0, signedShoreDistance) * smoothstep(0.10, 0.30, vWorld.y)
+            * (1.0 - smoothstep(30.0, 90.0, distanceToCamera));
+        if (sandGust > 0.0) {
+            float streamerPhase = p.x * 1.9 + sin(p.y * 0.8) * 1.3 + uWindSeconds * 9.0;
+            float lane = valueNoise(vec2(p.y * 0.9, p.x * 0.08) + vec2(7.1, 3.3));
+            float streamer = smoothstep(0.55, 0.95, 0.5 + 0.5 * sin(streamerPhase))
+                * smoothstep(0.52, 0.80, lane);
+            color = mix(color, color * 1.18 + vec3(0.05, 0.045, 0.03), streamer * sandGust * 0.55);
+        }
 
         // The wrack line: the last high tide's strandings along the upper beach, a band a
         // few metres inland that the broad fields break into drifts and gaps. Dark weed
@@ -1114,7 +1132,7 @@ void main()
             if (embedded) {
                 return std::string("#version 300 es\nprecision highp float;\nprecision highp int;\n")
                     + environment::FogShaderDefinition
-                    + WrackLine::Shader
+                    + WrackLine::Shader + WindGust::Shader
                     + (canopy ? CanopyLighting::Shader : "")
                     + (canopy ? IslandEnvironmentField::InlandShader : "")
                     + (canopy ? GroundCover::Shader() : std::string())
@@ -1123,7 +1141,7 @@ void main()
                     + (canopy ? std::string(CampfireLighting::Shader) + SunShadowMap::ReceiverShader : std::string()) + body;
             }
             return std::string("#version 330 core\n") + environment::FogShaderDefinition
-                + WrackLine::Shader
+                + WrackLine::Shader + WindGust::Shader
                 + (canopy ? CanopyLighting::Shader : "")
                 + (canopy ? IslandEnvironmentField::InlandShader : "")
                 + (canopy ? GroundCover::Shader() : std::string())
@@ -1280,6 +1298,8 @@ void main()
                     MirrorRuntimeDiagnosticToPlatformLog(DappleFleckDiagnostic);
                     std::cout << WrackLineDiagnostic << '\n';
                     MirrorRuntimeDiagnosticToPlatformLog(WrackLineDiagnostic);
+                    std::cout << SandStreamerDiagnostic << '\n';
+                    MirrorRuntimeDiagnosticToPlatformLog(SandStreamerDiagnostic);
                     std::cout << RippleTrainDiagnostic << '\n';
                     MirrorRuntimeDiagnosticToPlatformLog(RippleTrainDiagnostic);
                 } else {
@@ -1524,6 +1544,8 @@ void main()
             materialEffect_->Apply();
             CampfireLighting::Bind(*materialEffect_,seconds);
             materialEffect_->SetUniformFloat("uSeaSeconds",std::isfinite(seconds)?std::remainder(seconds,628.31853f):0.0f);
+            // The gust fronts must sit where the grass and sea put them, so their clock is not wrapped.
+            materialEffect_->SetUniformFloat("uWindSeconds",std::isfinite(seconds)?seconds:0.0f);
             canopyLighting_.Bind(*materialEffect_);
             forestFloor_->Bind(*materialEffect_);
             if (sunShadow_) sunShadow_->Bind(*materialEffect_);

@@ -7642,6 +7642,15 @@ int main()
             offshorePeak=std::max(offshorePeak,island::WindGust::Strength(400.0f,120.0f,t));
         }
         Check(seaPeak>0.8f&&offshorePeak>0.8f,"gust fronts cross the lagoon and the open sea within three spacings");
+        // And the beaches, where the terrain material lifts sand streamers in the band: the
+        // field peaks on the dry sand a few metres inland on the east and west shores.
+        float eastBeach=0,westBeach=0;
+        const float eastShore=terrain.ShoreRadius(0.0f)-3.0f,westShore=terrain.ShoreRadius(3.14159f)-3.0f;
+        for(float t=0;t<3.0f*island::WindGust::FrontSpacing/island::WindGust::FrontSpeed;t+=0.25f) {
+            eastBeach=std::max(eastBeach,island::WindGust::Strength(eastShore,0.0f,t));
+            westBeach=std::max(westBeach,island::WindGust::Strength(-westShore,0.0f,t));
+        }
+        Check(eastBeach>0.8f&&westBeach>0.8f,"gust fronts cross both beaches within three spacings");
     {
         // Leaves drift down the stream: every leaf floats on the channel's water inside its
         // banks, the current hurries them over the cascade and slackens in the pool, and over
