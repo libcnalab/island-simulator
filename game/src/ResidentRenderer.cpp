@@ -336,12 +336,12 @@ void BuildHuman(std::vector<VertexPositionColorTexture>& vertices,const Resident
     if(state.fishing>.02f) {
         const float out=std::clamp(state.fishing,0.0f,1.0f);
         const Vector3 wrist=Point(pose.wrists[1]);
-        const Vector3 rodDirection=SafeUnit(forward*.85f+up*.42f);
+        const Vector3 rodDirection=SafeUnit(forward*.85f+up*(.42f+.55f*state.rodLift));
         const Vector3 rodBase=wrist-rodDirection*.22f;
         const Vector3 rodTip=wrist+rodDirection*(1.75f*out);
         mesh.Tube(rodBase,rodTip,.013f,.005f,Material::Fibre,8);
-        const Vector3 floatPosition(state.x+forward.X*(16.0f*out),.03f,state.z+forward.Z*(16.0f*out));
-        const Vector3 lineMid=Lerp(rodTip,floatPosition,.5f)-up*(.9f*out);
+        const Vector3 floatPosition(state.x+forward.X*(16.0f*out),.03f+state.floatBob,state.z+forward.Z*(16.0f*out));
+        const Vector3 lineMid=Lerp(rodTip,floatPosition,.5f)-up*(.9f*out*(1.0f-.6f*state.rodLift));
         mesh.Tube(rodTip,lineMid,.0025f,.0025f,Material::Hair,4);
         mesh.Tube(lineMid,floatPosition,.0025f,.0025f,Material::Hair,4);
         mesh.Ellipsoid(floatPosition,right,up,forward,.032f,.045f,.032f,Material::Lip,8,5);

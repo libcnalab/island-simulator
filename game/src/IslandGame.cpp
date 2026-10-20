@@ -143,6 +143,7 @@ namespace island
             case FixedViewpoint::CampfireWide: return "campfire-wide";
             case FixedViewpoint::ResidentDetail: return "resident";
             case FixedViewpoint::ResidentTendDetail: return "resident-tending";
+            case FixedViewpoint::ResidentFishDetail: return "resident-fishing";
             case FixedViewpoint::BearDetail: return "bear";
             case FixedViewpoint::BearLyingDetail: return "bear-lying";
             case FixedViewpoint::BeachPath: return "beach";
@@ -481,19 +482,26 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: campfire QA camera "<<(wide?"wide":"near")<<'\n';
-        } else if(viewpoint_==FixedViewpoint::ResidentDetail||viewpoint_==FixedViewpoint::ResidentTendDetail) {
-            // The tending view holds the resident crouched as at the fire, framed lower.
+        } else if(viewpoint_==FixedViewpoint::ResidentDetail||viewpoint_==FixedViewpoint::ResidentTendDetail
+                  ||viewpoint_==FixedViewpoint::ResidentFishDetail) {
+            // The tending view holds the resident crouched as at the fire, framed lower; the
+            // fishing view holds the rod out, framed from ahead and to the right so the rod
+            // and the line read.
             const bool tending=viewpoint_==FixedViewpoint::ResidentTendDetail;
+            const bool fishing=viewpoint_==FixedViewpoint::ResidentFishDetail;
             if(tending) resident_->PreviewCrouch();
+            if(fishing) resident_->PreviewFishing();
             const auto& subject=resident_->State();
             const Vector3 forward(std::sin(subject.heading),0,std::cos(subject.heading));
             const Vector3 right(std::cos(subject.heading),0,-std::sin(subject.heading));
-            cameraPosition_=Vector3(subject.x,subject.y+(tending?1.25f:1.58f),subject.z)+forward*2.65f+right*2.00f;
-            const Vector3 target(subject.x,subject.y+(tending?.72f:1.02f),subject.z);
+            cameraPosition_=Vector3(subject.x,subject.y+(tending?1.25f:fishing?1.45f:1.58f),subject.z)
+                +forward*(fishing?3.4f:2.65f)+right*(fishing?2.6f:2.00f);
+            const Vector3 target(subject.x+(fishing?forward.X*.9f:0.0f),subject.y+(tending?.72f:fishing?1.0f:1.02f),subject.z+(fishing?forward.Z*.9f:0.0f));
             const auto direction=target-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<(tending?"island-simulator: resident QA camera frames the resident crouched to tend the fire\n"
+                        :fishing?"island-simulator: resident QA camera frames the resident fishing, rod out and line to the float\n"
                                :"island-simulator: resident QA camera frames and follows one peaceful adult\n");
         } else if(viewpoint_==FixedViewpoint::BearDetail||viewpoint_==FixedViewpoint::BearLyingDetail) {
             // The lying view holds the bear down at rest, framed lower and nearer.
@@ -2568,6 +2576,7 @@ namespace island
                   << "island-simulator: a butterfly at rest in the sun basks with its wings held open, pumping slowly, and closes them when a cloud's shadow passes over\n"
                   << "island-simulator: at the campfire the resident crouches to tend the fire, hands to the flames, and stands again to walk on\n"
                   << "island-simulator: at the jetty foot the resident casts a line, the rod held out in the right hand and the float riding the shallows past the deck's end, and takes it in to walk on\n"
+                  << "island-simulator: the float rides the swell on its line, and every dozen seconds the resident lifts the rod to check it\n"
                   << "island-simulator: monkey tree routes reject isolated canopy and mangroves\n"
                   << "island-simulator: monkeys walk to fruit lying under the crowns and eat it, idling over the spot\n"
                   << "island-simulator: boars forage for the fallen fruit and coconuts before the trunk bases and eat them where they lie\n"
@@ -2836,7 +2845,9 @@ namespace island
         const auto previousResident=resident_->State();
         const auto& observer=playerMotion_.Position();
         if(viewpoint_==FixedViewpoint::ResidentTendDetail) resident_->PreviewCrouch();
-        resident_->Update(viewpoint_==FixedViewpoint::ResidentTendDetail?0.0f:deltaSeconds,{observer.x,observer.y,observer.z});
+        if(viewpoint_==FixedViewpoint::ResidentFishDetail) resident_->PreviewFishing();
+        resident_->Update(viewpoint_==FixedViewpoint::ResidentTendDetail||viewpoint_==FixedViewpoint::ResidentFishDetail?0.0f:deltaSeconds,
+            {observer.x,observer.y,observer.z});
         {
             // The resident's pause at the pit tends the fire: it builds up while they stay
             // and dies back once they walk on.
@@ -4229,7 +4240,7 @@ namespace island
         cameraProjection_ = Matrix::CreatePerspectiveFieldOfView(
             (viewpoint_==FixedViewpoint::BoarDetail||viewpoint_==FixedViewpoint::BoarLyingDetail||viewpoint_==FixedViewpoint::GoatDetail||viewpoint_==FixedViewpoint::GoatLyingDetail
                 ||viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail
-                ||viewpoint_==FixedViewpoint::ResidentDetail||viewpoint_==FixedViewpoint::ResidentTendDetail||viewpoint_==FixedViewpoint::BearDetail||viewpoint_==FixedViewpoint::BearLyingDetail
+                ||viewpoint_==FixedViewpoint::ResidentDetail||viewpoint_==FixedViewpoint::ResidentTendDetail||viewpoint_==FixedViewpoint::ResidentFishDetail||viewpoint_==FixedViewpoint::BearDetail||viewpoint_==FixedViewpoint::BearLyingDetail
                 ||viewpoint_==FixedViewpoint::MouseDetail||viewpoint_==FixedViewpoint::RatDetail
                 ||viewpoint_==FixedViewpoint::FlyDetail||viewpoint_==FixedViewpoint::AntDetail
                 ||viewpoint_==FixedViewpoint::CicadaDetail

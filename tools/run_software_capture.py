@@ -593,7 +593,7 @@ def run_monitored_capture(command, root, environment, evidence, journal, baselin
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("build", type=Path)
-    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "bridge", "lookout", "log", "hut", "hut-material", "helicopter", "helicopter-inside", "resident", "resident-tending", "bear", "bear-lying", "boars", "boar-lying", "goats", "goat-lying", "deer", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "monkey-scratch", "ground-doves", "bird-preen", "stingray-buried"}))
+    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "bridge", "lookout", "log", "hut", "hut-material", "helicopter", "helicopter-inside", "resident", "resident-tending", "resident-fishing", "bear", "bear-lying", "boars", "boar-lying", "goats", "goat-lying", "deer", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "monkey-scratch", "ground-doves", "bird-preen", "stingray-buried"}))
     parser.add_argument("--canopy-lod-inspection", nargs=3, metavar=("X_MM", "Z_MM", "TIER"))
     parser.add_argument("--missing-leaf", action="store_true",
                         help="test only the leaf-image fallback using a read-only namespace overlay")
@@ -1330,6 +1330,10 @@ def main():
                 raise RuntimeError("current seabed shadows are missing; check for a stale executable")
             if "at the jetty foot the resident casts a line, the rod held out in the right hand" not in diagnostics:
                 raise RuntimeError("current resident fishing is missing; check for a stale executable")
+            if "the float rides the swell on its line, and every dozen seconds the resident lifts the rod" not in diagnostics:
+                raise RuntimeError("current fishing float bob is missing; check for a stale executable")
+            if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
+                raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:
                 raise RuntimeError("resident tending capture did not hold the crouch")
             if args.viewpoint == "bear-lying" and "bear QA camera frames the bear lying at rest on folded legs" not in diagnostics:

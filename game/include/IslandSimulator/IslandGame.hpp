@@ -169,6 +169,7 @@ namespace island
         CampfireWide,
         ResidentDetail,
         ResidentTendDetail,
+        ResidentFishDetail,
         BearDetail,
         BearLyingDetail,
         BeachPath,

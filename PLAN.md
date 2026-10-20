@@ -54,6 +54,22 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 143 (2026-10-20) — the float rides the swell
+
+The float of pass 142 sat fixed on the water and the rod never moved. `ResidentState::
+floatBob` and `rodLift` now carry the line's life: while fishing a clock runs and the float
+rises and falls with two slow sines (±4.5 cm and ±2 cm), and every `RodLiftPeriod` (12 s),
+nine seconds in, the rod is lifted for 0.8 s to check the line (a sine pulse); both stop
+with the fishing. The renderer takes the float's height from the bob and raises the rod's
+angle and tightens the line's sag with the lift. A QA viewpoint `resident-fishing`
+(`ResidentFishDetail`, `PreviewFishing()` each frame with the resident's update frozen)
+frames the resident from ahead and to the right, rod out and line to the float; the
+capture tool accepts it and requires the fishing camera line. General report line: "the
+float rides the swell on its line, and every dozen seconds the resident lifts the rod to
+check it" (pinned). Core checks extend the fishing test: through the rest of the jetty
+pause the float rides the swell and the rod is lifted once; the preview holds the rod out.
+Native `resident-fishing` passes.
+
 ## Loop pass 142 (2026-10-20) — the resident fishes from the jetty foot
 
 At the jetty-foot call (pass 31) the resident stood looking out along the deck with empty

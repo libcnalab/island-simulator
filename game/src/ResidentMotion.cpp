@@ -230,6 +230,11 @@ void ResidentMotion::SetFishingSpot(float x,float z) noexcept {
     fishSpotValid_=std::isfinite(x)&&std::isfinite(z);
     fishSpotX_=fishSpotValid_?x:0;fishSpotZ_=fishSpotValid_?z:0;
 }
+void ResidentMotion::PreviewFishing() {
+    fishing_=true;state_.fishing=1;fishClock_=1;state_.floatBob=.02f;state_.rodLift=0;
+    ResidentPose pose;
+    if(FitPose(state_.x,state_.z,state_.heading,0,pose))state_.pose=pose;
+}
 void ResidentMotion::PreviewCrouch() {
     crouch_=crouchTarget_=1;
     ResidentPose pose;
@@ -244,6 +249,12 @@ void ResidentMotion::Update(float seconds,ResidentPoint observer) {
         &&std::hypot(state_.x-fishSpotX_,state_.z-fishSpotZ_)<FishingReach;
     const float fishingBefore=state_.fishing;
     state_.fishing+=std::clamp((fishing_?1.0f:0.0f)-state_.fishing,-FishingOutRate*seconds,FishingInRate*seconds);
+    // The float rides the swell, and now and then the rod is lifted to check the line.
+    fishClock_=fishing_?fishClock_+seconds:0;
+    state_.floatBob=state_.fishing*(.045f*std::sin(fishClock_*1.3f)+.02f*std::sin(fishClock_*3.1f+.7f));
+    const float liftCycle=std::fmod(fishClock_,RodLiftPeriod);
+    state_.rodLift=fishing_&&liftCycle>=RodLiftAt&&liftCycle<RodLiftAt+RodLiftSeconds
+        ?std::sin((liftCycle-RodLiftAt)/RodLiftSeconds*std::numbers::pi_v<float>):0.0f;
     const float wantCrouch=state_.mode==ResidentMode::Pausing&&state_.speed<=.0001f?crouchTarget_:0.0f;
     const float before=crouch_;
     crouch_+=std::clamp(wantCrouch-crouch_,-CrouchOutRate*seconds,CrouchInRate*seconds);

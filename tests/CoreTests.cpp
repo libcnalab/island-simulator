@@ -10110,6 +10110,19 @@ int main()
                 }
             }
             Check(fished && handForward && !rodAtLookout, "the resident fishes at the jetty foot, the right hand forward, and not at the lookout");
+            // Through the rest of that pause the float rides the swell and the rod is lifted once.
+            float lowestBob = 1.0f, highestBob = -1.0f, lift = 0.0f;
+            for (int step = 0; step < 400 && angler.Fishing(); ++step) {
+                angler.Update(0.05f, {1000.0f, 0.0f, 1000.0f});
+                lowestBob = std::min(lowestBob, angler.State().floatBob);
+                highestBob = std::max(highestBob, angler.State().floatBob);
+                lift = std::max(lift, angler.State().rodLift);
+            }
+            Check(lowestBob < -0.02f && highestBob > 0.02f && lift > 0.9f, "the float rides the swell and the rod is lifted to check the line");
+            Check(angler.State().rodLift == 0.0f || angler.Fishing(), "the rod lift ends with the fishing");
+            island::ResidentMotion held(terrain, {});
+            held.PreviewFishing();
+            Check(held.State().fishing == 1.0f && held.Fishing(), "the fishing view's preview holds the rod out");
         }
     }
 
