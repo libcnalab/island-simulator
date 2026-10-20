@@ -1,5 +1,6 @@
 #include "IslandSimulator/SkinkPopulation.hpp"
 
+#include "IslandSimulator/CloudShadow.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/IslandEnvironmentField.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
@@ -125,6 +126,15 @@ namespace island
         assert(fullCount_ + reducedCount_ + dormantCount_ == static_cast<int>(Count));
     }
 
+    std::size_t SkinkPopulation::SunBaskingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_)
+            count += agent.state.behavior == SkinkBehavior::Bask
+                && CloudShadow::Cover(agent.state.x, agent.state.z, cloudClock_) <= SunCover ? 1U : 0U;
+        return count;
+    }
+
     void SkinkPopulation::UpdateAgent(Agent& agent, const float deltaSeconds,
                                       const float observerX, const float observerZ,
                                       const bool observerValid) noexcept
@@ -141,17 +151,28 @@ namespace island
             const float bodyDistance = std::hypot(agent.state.x - body.x, agent.state.z - body.z);
             if (bodyDistance < threatDistance) { threatDistance = bodyDistance; threatX = body.x; threatZ = body.z; walkerThreat = true; }
         }
+        // Sun and shade: the cover of the drifting cloud shadows over the skink's spot.
+        const float cover = CloudShadow::Cover(agent.state.x, agent.state.z, cloudClock_);
         if (threatDistance < 3.1f && agent.state.behavior != SkinkBehavior::Flee) {
             if (walkerThreat) ++walkerScatters_;
             agent.state.behavior = SkinkBehavior::Flee;
             agent.behaviorSeconds = 1.1f;
             agent.state.headingRadians = std::atan2(
                 agent.state.z - threatZ, agent.state.x - threatX);
+        } else if (agent.state.behavior == SkinkBehavior::Bask && cover > ShadeCover) {
+            // A cloud's shadow over a basking skink: it gets up and forages on.
+            agent.state.behavior = SkinkBehavior::Forage;
+            agent.behaviorSeconds = 2.8f;
+            ++shadeRouses_;
         } else if ((agent.behaviorSeconds -= deltaSeconds) <= 0.0f) {
             ++agent.transitions;
             if (agent.state.behavior == SkinkBehavior::Bask) {
                 agent.state.behavior = SkinkBehavior::Forage;
                 agent.behaviorSeconds = 2.8f + static_cast<float>(agent.transitions % 4U) * .7f;
+            } else if (cover > SunCover) {
+                // Not a spot to bask in: keep foraging and look again shortly.
+                agent.state.behavior = SkinkBehavior::Forage;
+                agent.behaviorSeconds = 1.2f;
             } else {
                 agent.state.behavior = SkinkBehavior::Bask;
                 agent.behaviorSeconds = 4.0f + static_cast<float>(agent.transitions % 5U) * 1.0f;

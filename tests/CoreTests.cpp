@@ -7678,6 +7678,41 @@ int main()
     }
 
     {
+        // The cloud shadows and the skinks: a basking skink that a cloud's shadow covers gets
+        // up and forages; a skink lies down to bask only where the ground is in the sun.
+        const island::IslandTerrain terrain;
+        island::SkinkPopulation skinks(terrain);
+        const island::SkinkState start = skinks.Skinks()[1];   // index 1 starts basking
+        Check(start.behavior == island::SkinkBehavior::Bask, "the second skink starts basking");
+        float shadeClock = -1.0f, sunClock = -1.0f;
+        for (float t = 0.0f; t < 3600.0f && (shadeClock < 0.0f || sunClock < 0.0f); t += 0.5f) {
+            const float cover = island::CloudShadow::Cover(start.x, start.z, t);
+            if (shadeClock < 0.0f && cover > 0.9f) shadeClock = t;
+            if (sunClock < 0.0f && cover < 0.02f) sunClock = t;
+        }
+        Check(shadeClock >= 0.0f && sunClock >= 0.0f, "the cloud field both covers and clears the skink's spot within an hour");
+        skinks.SetCloudClock(shadeClock);
+        skinks.Update(0.05f, start.x + 12.0f, start.y + 1.0f, start.z);
+        Check(skinks.Skinks()[1].behavior == island::SkinkBehavior::Forage && skinks.ShadeRouseCount() >= 1U,
+              "a cloud's shadow over a basking skink has it up and foraging at once");
+        bool baskedInShade = false;
+        for (int step = 0; step < 600; ++step) {
+            skinks.Update(0.05f, start.x + 12.0f, start.y + 1.0f, start.z);
+            const auto& skink = skinks.Skinks()[1];
+            if (skink.behavior == island::SkinkBehavior::Bask
+                && island::CloudShadow::Cover(skink.x, skink.z, shadeClock) > island::SkinkPopulation::SunCover) baskedInShade = true;
+        }
+        Check(!baskedInShade, "under the cloud the skink keeps foraging and never lies down in the shade");
+        skinks.SetCloudClock(sunClock);
+        bool baskedInSun = false;
+        for (int step = 0; step < 600 && !baskedInSun; ++step) {
+            skinks.Update(0.05f, start.x + 12.0f, start.y + 1.0f, start.z);
+            baskedInSun = skinks.Skinks()[1].behavior == island::SkinkBehavior::Bask && skinks.SunBaskingCount() >= 1U;
+        }
+        Check(baskedInSun, "with the sun back on its ground the skink lies down to bask within half a minute");
+    }
+
+    {
         // A fly hanging low within reach of a resting gecko: the gecko stalks it, lunges from
         // the last span and rests; the flies dart from the snap.
         const island::IslandTerrain terrain;

@@ -1593,11 +1593,28 @@ namespace island
                 float brightest=-1;
                 for(std::size_t i=0;i<spiders_->Spiders().size();++i) {
                     const auto& candidate=spiders_->Spiders()[i];
+                    // The sunlit score: the canopy's transmission to the body, dimmed by the
+                    // cumulus shadow over the spot at the capture's start and by every crown
+                    // or palm head that lies on the spot's line to the sun (the sun shadow
+                    // map's casters), so the bright view is framed on sunlit ground.
+                    const float cover=CloudShadow::Cover(candidate.x,candidate.z,0.0f);
+                    int casters=0;
+                    const auto shades=[&](const float cx,const float cz,const float crownY,const float crownRadius) {
+                        const float s=(crownY-candidate.y)/environment::SunDirectionY;
+                        if(s<=0.0f) return false;
+                        const float rx=candidate.x+environment::SunDirectionX*s,rz=candidate.z+environment::SunDirectionZ*s;
+                        return std::hypot(rx-cx,rz-cz)<crownRadius;
+                    };
+                    for(const auto& tree:jungleLayout_.Canopy())
+                        if(shades(tree.x,tree.z,tree.y+7.0f*tree.scale,3.2f*tree.scale)) ++casters;
+                    for(const auto& palm:vegetationLayout_.Palms())
+                        if(shades(palm.x,palm.z,palm.y+9.0f*palm.scale,2.6f*palm.scale)) ++casters;
                     const float transmission=canopyLightField_.SampleReceiver(
-                        candidate.x,candidate.y+.04f,candidate.z,candidate.y);
+                        candidate.x,candidate.y+.04f,candidate.z,candidate.y)*(1.0f-.85f*cover)
+                        /(1.0f+static_cast<float>(casters));
                     std::ostringstream row;row.precision(9);
                     row << "island-simulator: spider habitat candidate=" << i
-                        << " transmission=" << transmission;
+                        << " transmission=" << transmission << " cover=" << cover << " casters=" << casters;
                     std::cout << row.str() << std::endl;MirrorRuntimeDiagnosticToPlatformLog(row.str());
                     if(transmission>brightest) {brightest=transmission;spiderViewSubject_=i;}
                 }
@@ -2314,7 +2331,7 @@ namespace island
                   << "island-simulator: geckos " << geckoPopulation_.Geckos().size()
                   << " agents in deterministic inland rest, flee, and hide habitats; a resting gecko with a fly hanging low within reach stalks it and lunges, and the flies dart from the snap\n"
                   << "island-simulator: skinks " << skinkPopulation_.Skinks().size()
-                  << " agents in deterministic open-ground bask, forage, and flee habitats\n"
+                  << " agents in deterministic open-ground bask, forage, and flee habitats; a basking skink a cloud's shadow covers gets up and forages, and lies down to bask only in the sun\n"
                   << "island-simulator: dragonflies " << dragonflySwarm_.Dragonflies().size()
                   << " agents in three stream and wetland habitats\n"
                   << "island-simulator: frogs " << frogPopulation_.Frogs().size()
@@ -2815,6 +2832,7 @@ namespace island
             skinkObserver = Vector3(skink.x, skink.y + 18.0f, skink.z);
         }
         skinkPopulation_.SetWalkers(smallFaunaWalkers);
+        skinkPopulation_.SetCloudClock(seaForageSeconds_);
         skinkPopulation_.Update(viewpoint_ == FixedViewpoint::SkinkDetail ? 0.0f : deltaSeconds,
                                 skinkObserver.X, skinkObserver.Y, skinkObserver.Z);
         Vector3 dragonflyObserver=cameraPosition_;
@@ -5298,6 +5316,13 @@ namespace island
                 << " body-transmission=" << bodyTransmission
                 << " body-tint=" << tint.red << ',' << tint.green << ',' << tint.blue;
             std::cout << lighting.str() << std::endl;MirrorRuntimeDiagnosticToPlatformLog(lighting.str());
+            const auto spot=terrain_.Sample(subject.x,subject.z);
+            std::ostringstream where;where.precision(6);
+            where << "island-simulator: spider QA spot position=" << subject.x << ',' << subject.y << ',' << subject.z
+                << " shore-distance=" << spot.signedShoreDistance << " slope=" << spot.slopeRadians
+                << " cloud-cover=" << CloudShadow::Cover(subject.x,subject.z,timeSeconds)
+                << " sun-shadow-casters=" << (sunShadowMap_?sunShadowMap_->LastCasterCount():0);
+            std::cout << where.str() << std::endl;MirrorRuntimeDiagnosticToPlatformLog(where.str());
         }
         if(viewpoint_==FixedViewpoint::SpiderWebDetail&&drawnFrames_==1U) {
             std::ostringstream report;

@@ -41,6 +41,14 @@ namespace island
          *  the nearest of them frightens an animal as the walker does. */
         void SetWalkers(std::span<const GrassWalker> walkers) noexcept { walkers_ = walkers; }
         [[nodiscard]] std::uint32_t WalkerScatterCount() const noexcept { return walkerScatters_; }
+        /** @brief The cloud-shadow clock (the shared sky drift): a basking skink that a cloud's
+         *  shadow covers (cover over ShadeCover) gets up and forages, and a foraging skink lies
+         *  down to bask only where the cover is under SunCover. */
+        void SetCloudClock(float seconds) noexcept { cloudClock_ = seconds; }
+        [[nodiscard]] std::uint32_t ShadeRouseCount() const noexcept { return shadeRouses_; }
+        [[nodiscard]] std::size_t SunBaskingCount() const noexcept;
+        static constexpr float ShadeCover = 0.5f;
+        static constexpr float SunCover = 0.25f;
 
         [[nodiscard]] std::span<const SkinkState> Skinks() const noexcept { return states_; }
         [[nodiscard]] std::span<const SkinkHome> Homes() const noexcept { return homes_; }
@@ -70,5 +78,7 @@ namespace island
         int fullCount_ = 0, reducedCount_ = 0, dormantCount_ = 0;
         std::span<const GrassWalker> walkers_;
         std::uint32_t walkerScatters_ = 0U;
+        float cloudClock_ = 0.0f;
+        std::uint32_t shadeRouses_ = 0U;
     };
 }

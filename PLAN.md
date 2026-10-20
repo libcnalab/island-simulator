@@ -54,6 +54,42 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 83 (2026-10-20) — skinks bask in the sun and leave a cloud's shade
+
+The cumulus shadows drift over the land since pass 37, but the skinks basked on regardless.
+`SkinkPopulation::SetCloudClock` hands them the sky's clock, and the CPU mirror
+`CloudShadow::Cover` over each skink's spot now shapes its day: a basking skink the cover
+rises over 0.5 on gets up at once and forages (`ShadeRouseCount`), and a foraging skink
+whose bout ends on ground with cover over 0.25 keeps foraging and looks again in a second
+instead of lying down; it basks only in the sun (`SunBaskingCount`). The startup report's
+skink line gains "a basking skink a cloud's shadow covers gets up and forages, and lies down
+to bask only in the sun", pinned by the native capture tool. Core checks: the cloud field
+both covers and clears the second skink's spot within an hour; a shadow over it has it up
+and foraging at once and it never lies down in the shade; with the sun back it basks within
+half a minute. Native `skinks` passes.
+
+### Capture sweep after the lighting passes (2026-10-20)
+
+The `geckos` failure in pass 82 showed that detail viewpoints not captured since the sun
+shadow map, cloud shade, sun shafts and sun flecks landed (10/19–10/20) can fail their
+luminance gates. A sweep of the eleven stale detail viewpoints with the pass-83 build:
+`skinks`, `rats`, `beetles`, `cicadas`, `bat-roost`, `snakes`, `snake-head`,
+`campfire-wide`, `monkey-climb` and `wetland` pass; **`spiders-bright` fails** (luminance
+deviation 8.1 against its close-natural-detail gate of 10; it passed with 12.8 on 10/14 and
+13.9 on 10/17). The frame is the same spot and framing as on 10/17 with the whole floor
+uniformly about 40 % darker. Facts gathered: the subject (spider 0) stands at
+(−15.2, 4.9, −138.6), 97 m inland on a gentle slope, cloud cover 0 at the capture clock, all
+1000 candidates report canopy transmission 1, and a crown/palm-on-the-sun-line proxy finds
+no caster over 698 of them including the subject, yet the sun shadow map (838 casters)
+leaves the spot in shade. Pulling the QA camera back and up made the deviation worse (7.6),
+so the framing was restored. The bright-view selector now scores each candidate by canopy
+transmission dimmed by the cumulus cover and by crowns or palm heads on its line to the sun
+(printed as `transmission=` with `cover=` and `casters=`, the tool's argmax contract kept),
+and the spider lighting proof prints "spider QA spot position=… shore-distance=… slope=…
+cloud-cover=… sun-shadow-casters=…". The cause of the uniform shade is not yet pinned
+down; `spiders-bright` is recorded `[!]` until a CPU-side sun-shadow query exists to pick
+a sunlit subject.
+
 ## Loop pass 82 (2026-10-20) — a gecko stalks and snaps at the flies
 
 The geckos rested, scurried and hid beside the fly swarms without ever noticing them. The
