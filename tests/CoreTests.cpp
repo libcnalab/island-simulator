@@ -3441,6 +3441,25 @@ int main()
     Check(frogs.Frogs().size()==island::FrogPopulation::Count
               &&frogs.Homes().size()==island::FrogPopulation::Count,
           "frog population and homes have exact deterministic counts");
+    {
+        // The call: a frog told it has called swells its throat within a quarter second,
+        // pulses it through the call's second and a half, and lets it fall slack within a
+        // second after; an index off the end is ignored.
+        island::FrogPopulation callers(terrain);
+        const auto first=callers.Frogs()[0];
+        callers.NoteCall(0);
+        callers.NoteCall(99);
+        float peak=0.0f,trough=1.0f,quarter=0.0f;
+        for(int step=0;step<28;++step) {
+            callers.Update(0.05f,first.x+10.0f,first.y+1.6f,first.z);
+            const float throat=callers.Frogs()[0].throat;
+            if(step==4) quarter=throat;
+            if(step>=4) { peak=std::max(peak,throat); trough=std::min(trough,throat); }
+        }
+        Check(callers.CallCount()==1U&&quarter>0.3f&&peak>0.9f&&trough<0.25f,"a calling frog's throat swells within a quarter second and pulses through the call");
+        for(int step=0;step<20;++step) callers.Update(0.05f,first.x+10.0f,first.y+1.6f,first.z);
+        Check(callers.Frogs()[0].throat<0.05f,"the throat falls slack within a second of the call's end");
+    }
     for(std::size_t index=0;index<frogs.Frogs().size();++index) {
         const auto& frog=frogs.Frogs()[index];
         const auto& repeated=repeatedFrogs.Frogs()[index];

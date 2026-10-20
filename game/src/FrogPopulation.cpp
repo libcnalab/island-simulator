@@ -113,6 +113,13 @@ namespace island
             && std::hypot(x - home.x, z - home.z) <= home.radius;
     }
 
+    void FrogPopulation::NoteCall(const std::size_t index) noexcept
+    {
+        if (index >= agents_.size()) return;
+        agents_[index].callSeconds = CallSeconds;
+        ++calls_;
+    }
+
     void FrogPopulation::Update(const float deltaSeconds, const float observerX,
                                 const float observerY, const float observerZ) noexcept
     {
@@ -142,6 +149,15 @@ namespace island
                 UpdateAgent(agent, std::min(agent.accumulatedSeconds, .5f),
                             observerX, observerZ, observerValid);
                 agent.accumulatedSeconds = 0.0f;
+            }
+            // The vocal sac through a call: three swells, then it falls slack.
+            if (agent.callSeconds > 0.0f) {
+                agent.callSeconds = std::max(0.0f, agent.callSeconds - safeDelta);
+                const float elapsed = CallSeconds - agent.callSeconds;
+                const float want = 0.55f + 0.45f * std::sin(elapsed * 13.5f - 1.5707963f);
+                agent.state.throat += std::clamp(want - agent.state.throat, -safeDelta * 9.0f, safeDelta * 9.0f);
+            } else {
+                agent.state.throat = std::max(0.0f, agent.state.throat - safeDelta * 4.0f);
             }
             states_[index] = agent.state;
         }

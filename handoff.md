@@ -199,6 +199,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 135: the shark's dorsal fin riding just under the surface cuts a foam wake that spreads and fades behind it (`FinWakeField`) (PLAN "Loop pass 135").
 - Pass 136: a butterfly at rest in the sun basks with open wings and closes them under a cloud's shadow (`ButterflyMeadow::SetCloudClock`, `BaskingCount`) (PLAN "Loop pass 136").
 - Pass 137: a beach crab paused in the open waves a claw, raised and swept for a couple of seconds (`CrabState::waveAmount`) (PLAN "Loop pass 137").
+- Pass 138: a calling frog's throat swells and pulses under its chin through the call (`Soundscape::ActiveFrogCall`, `FrogPopulation::NoteCall`, `FrogState::throat`) (PLAN "Loop pass 138").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

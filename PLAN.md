@@ -54,6 +54,21 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 138 (2026-10-20) — a calling frog's throat pulses
+
+The frogs' calls (the soundscape's scheduler picks an audible frog) sounded from a still
+body. `Soundscape::ActiveFrogCall()` now exposes the call last given with its animal
+index; when the played-call count rises the game tells the population (`NoteCall(index)`,
+counted by `CallCount()`), and `FrogState::throat` (0..1) swells and pulses for
+`CallSeconds` (1.4 s): three swells at 13.5 rad/s from slack to full, followed at 9/s,
+then falling slack at 4/s; an index off the end is ignored. The frog mesh adds the vocal
+sac: a pale three-station bulge under the chin whose widths and heights scale with the
+throat, skipped below 0.04. The frogs report line gains "a calling frog's throat swells
+and pulses under its chin through the call" (pinned). Core checks: a frog told it has
+called swells its throat within a quarter second, pulses it above 0.9 and below 0.25
+through the call, and lets it fall slack within a second after; an index off the end is
+ignored. Native `frogs` passes.
+
 ## Loop pass 137 (2026-10-20) — a crab waves a claw
 
 A beach crab paused in the open only opened and closed its claws. `CrabState` now carries a

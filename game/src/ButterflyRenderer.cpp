@@ -727,6 +727,17 @@ namespace island
             constexpr std::array<float, 4> HeadHeights = {{.10f, .16f, .14f, .07f}};
             AppendGeckoLoft(vertices, head, right, up, forward, HeadStations,
                             HeadWidths, HeadHeights, scale, back, flank, underside);
+            // The vocal sac: a pale bulge under the chin that swells with the call.
+            const float throat = std::clamp(frog.throat, 0.0f, 1.0f);
+            if (throat > 0.04f) {
+                const Vector3 sac = head - up * (.075f * scale) + forward * (.03f * scale);
+                constexpr std::array<float, 3> SacStations = {{-.07f, .0f, .07f}};
+                const std::array<float, 3> sacWidths = {{.06f * throat, .13f * throat, .06f * throat}};
+                const std::array<float, 3> sacHeights = {{.035f * throat, .085f * throat, .035f * throat}};
+                const Color sacColor = Color::Lerp(underside, Color(228, 214, 160, 255), .4f);
+                AppendGeckoLoft(vertices, sac, right, up, forward, SacStations,
+                                sacWidths, sacHeights, scale, sacColor, sacColor, sacColor);
+            }
 
             // Long folded hind legs and shorter forelegs preserve the characteristic
             // crouched silhouette; the hop phase extends both pairs without a skeleton.

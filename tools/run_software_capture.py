@@ -1320,6 +1320,8 @@ def main():
                 raise RuntimeError("current butterfly basking is missing; check for a stale executable")
             if "a crab paused in the open waves a claw, raised and swept up and down" not in diagnostics:
                 raise RuntimeError("current crab claw wave is missing; check for a stale executable")
+            if "a calling frog's throat swells and pulses under its chin through the call" not in diagnostics:
+                raise RuntimeError("current frog throat pulse is missing; check for a stale executable")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:
                 raise RuntimeError("resident tending capture did not hold the crouch")
             if args.viewpoint == "bear-lying" and "bear QA camera frames the bear lying at rest on folded legs" not in diagnostics:

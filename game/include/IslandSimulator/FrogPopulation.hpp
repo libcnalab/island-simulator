@@ -17,6 +17,8 @@ namespace island
     {
         float x = 0.0f, y = 0.0f, z = 0.0f;
         float headingRadians = 0.0f, hopPhase = 0.0f, breathPhase = 0.0f;
+        /** @brief 0..1 the vocal sac: swelling and pulsing under the chin through a call. */
+        float throat = 0.0f;
         float scale = 1.0f;
         /** @brief 0..1 under the pool's surface: a pool frog that leapt in from the walker. */
         float submerged = 0.0f;
@@ -47,6 +49,10 @@ namespace island
         [[nodiscard]] std::uint32_t DiveCount() const noexcept { return dives_; }
         struct FrogDive { float x = 0.0f, z = 0.0f; bool valid = false; };
         [[nodiscard]] const FrogDive& LastDive() const noexcept { return lastDive_; }
+        /** @brief A call given by this frog: its throat swells and pulses for CallSeconds. */
+        void NoteCall(std::size_t index) noexcept;
+        [[nodiscard]] std::uint32_t CallCount() const noexcept { return calls_; }
+        static constexpr float CallSeconds = 1.4f;
 
         explicit FrogPopulation(const IslandTerrain& terrain);
         void Update(float deltaSeconds, float observerX, float observerY,
@@ -70,6 +76,7 @@ namespace island
             bool poolFrog = false;        // keeps a bank of the plunge pool
             float diveSeconds = 0.0f;     // time under or on the surface in a dive
             bool surfaced = false;        // the dive's second half, floating
+            float callSeconds = 0.0f;     // remaining call; the throat pulses while it runs
         };
 
         void Initialize(std::size_t index);
@@ -85,6 +92,7 @@ namespace island
         float poolWater_ = 0.0f, poolHalfWidth_ = 1.0f;
         std::uint32_t dives_ = 0U;
         FrogDive lastDive_;
+        std::uint32_t calls_ = 0U;
         int fullCount_ = 0, reducedCount_ = 0, dormantCount_ = 0;
     };
 }

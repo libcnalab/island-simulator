@@ -540,6 +540,7 @@ namespace island
         std::uint32_t notedMonkeyFlees_ = 0U;
         float campfireTend_ = 0.0f;
         std::uint32_t notedFrogDives_ = 0U;
+        int notedFrogCalls_ = 0;
         std::uint32_t notedSharkBreach_ = 0U;
         bool goatSentinelWasAlert_ = false;
         std::uint32_t notedBearRetreats_ = 0U;

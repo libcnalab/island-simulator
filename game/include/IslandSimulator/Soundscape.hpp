@@ -185,6 +185,9 @@ namespace island
         [[nodiscard]] int PlayedSnakeHissCount() const noexcept { return playedSnakeHissCount_; }
         [[nodiscard]] int PlayedBearCallCount() const noexcept{return playedBearCallCount_;}
         [[nodiscard]] int PlayedFrogCallCount() const noexcept{return playedFrogCallCount_;}
+        /** @brief The frog call last given: its animal index tells the population whose
+         *  throat to swell. */
+        [[nodiscard]] const FrogCallRequest& ActiveFrogCall() const noexcept{return activeFrogCall_;}
         [[nodiscard]] int PlayedDeerSnortCount() const noexcept{return playedDeerSnortCount_;}
         [[nodiscard]] int PlayedCicadaCallCount() const noexcept{return playedCicadaCallCount_;}
         [[nodiscard]] int PlayedFlyBuzzCount() const noexcept{return playedFlyBuzzCount_;}
