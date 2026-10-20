@@ -54,6 +54,21 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 134 (2026-10-20) — a leaping dolphin's splash
+
+A dolphin's leap (pass 111 gave it to the seabirds) came down without a mark on the sea.
+`DolphinPod::Splash` now records where a leap ends — at the transition out of `Leap` the
+dolphin's position is the re-entry — counted once per leap (`SplashCount()`,
+`LastSplash()`), its age running for `SplashSeconds` (2.6 s). The game gives the sea's one
+foam ring to the most recent of the seabird's strike, the crocodile's entry and the
+dolphin's re-entry (the ring's position and age fraction chosen by the youngest), and
+notes a positional splash through the soundscape's existing splash voice at the re-entry.
+The dolphins report line gains "a leap comes down in a splash, the sea's foam ring and the
+positional splash where the dolphin re-enters" (pinned). Core checks extend the leap test:
+every finished leap is noted as a splash; a splash lies within a leap's travel of where the
+dolphin left the water and its ring is gone within three seconds. Native `dolphins`
+passes.
+
 ## Loop pass 133 (2026-10-20) — a turning fish flashes silver
 
 A school came round in its own flank colours. `FishState::flash` (0..1) now carries the

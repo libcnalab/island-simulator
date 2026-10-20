@@ -2525,7 +2525,8 @@ namespace island
                   << "island-simulator: a fish breaking the surface within sixty metres draws the present shark that way for a few seconds before it takes up its patrol again\n"
                   << "island-simulator: one occasional non-hostile offshore shark patrol\n"
                   << "island-simulator: dolphins " << dolphinPod_.Dolphins().size()
-                  << " agents in a peaceful offshore cruise, surface, and dive pod; a dolphin within twenty-eight metres of the shark leaves its route to keep its berth\n"
+                  << " agents in a peaceful offshore cruise, surface, and dive pod; a dolphin within twenty-eight metres of the shark leaves its route to keep its berth; "
+                  << "a leap comes down in a splash, the sea's foam ring and the positional splash where the dolphin re-enters\n"
                   << "island-simulator: sea from within: dolphins leap clear of the water on every fourth surfacing, "
                      "the shark shows its dorsal fin for nine seconds of each patrol, and fish schools part around the swimmer within three metres\n"
                   << "island-simulator: dolphin near/far geometry "
@@ -4923,10 +4924,26 @@ namespace island
             // A crocodile sliding into the water takes the seabird's splash ring when its
             // entry is the more recent of the two.
             const CrocodileGroup::Entry& crocEntry = crocodileGroup_.LastEntry();
-            const bool crocSplash = crocEntry.valid && (!diveSplash.valid || crocEntry.ageSeconds < diveSplash.ageSeconds);
+            // The sea's one foam ring goes to the most recent of the seabird's strike, the
+            // crocodile's entry and a dolphin's re-entry from its leap.
+            float ringX = diveSplash.x, ringZ = diveSplash.z;
+            float ringFraction = diveSplash.valid ? diveSplash.ageSeconds / BirdFlock::SplashSeconds : -1.0f;
+            if (crocEntry.valid && (ringFraction < 0.0f || crocEntry.ageSeconds / CrocodileGroup::EntrySeconds < ringFraction)) {
+                ringX = crocEntry.x; ringZ = crocEntry.z;
+                ringFraction = crocEntry.ageSeconds / CrocodileGroup::EntrySeconds;
+            }
+            const DolphinPod::Splash& dolphinSplash = dolphinPod_.LastSplash();
+            if (dolphinSplash.valid && (ringFraction < 0.0f || dolphinSplash.ageSeconds / DolphinPod::SplashSeconds < ringFraction)) {
+                ringX = dolphinSplash.x; ringZ = dolphinSplash.z;
+                ringFraction = dolphinSplash.ageSeconds / DolphinPod::SplashSeconds;
+            }
             if (soundscape_ && birdFlock_.DiveCount() != notedDiveCount_) {
                 notedDiveCount_ = birdFlock_.DiveCount();
                 soundscape_->NoteBirdSplash(diveSplash.x, 0.0f, diveSplash.z);
+            }
+            if (soundscape_ && dolphinPod_.SplashCount() != notedDolphinSplashes_) {
+                notedDolphinSplashes_ = dolphinPod_.SplashCount();
+                if (dolphinSplash.valid) soundscape_->NoteBirdSplash(dolphinSplash.x, 0.0f, dolphinSplash.z);
             }
             const FishSchools::FishBreach& fishBreach = fishSchools_.LastBreach();
             oceanRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
@@ -4934,9 +4951,7 @@ namespace island
                                  waterRippleModel_.Intensity(), waterRippleModel_.Phase(),
                                  waterRippleModel_.SplashIntensity(),
                                  waterRippleModel_.SplashPhase(),
-                                 crocSplash ? crocEntry.x : diveSplash.x, crocSplash ? crocEntry.z : diveSplash.z,
-                                 crocSplash ? crocEntry.ageSeconds / CrocodileGroup::EntrySeconds
-                                            : (diveSplash.valid ? diveSplash.ageSeconds / BirdFlock::SplashSeconds : -1.0f),
+                                 ringX, ringZ, ringFraction,
                                  jettyPlacement_ ? jettyPlacement_->rootX : 0.0f,
                                  jettyPlacement_ ? jettyPlacement_->rootZ : 0.0f,
                                  jettyPlacement_ ? jettyPlacement_->dirX : 0.0f,

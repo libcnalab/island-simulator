@@ -52,6 +52,13 @@ public:
   /** @brief Where the last leap began: the seabirds come to hunt where the pod is working. */
   struct Leap { float x = 0, z = 0; bool valid = false; };
   [[nodiscard]] const Leap& LastLeap() const noexcept { return lastLeap_; }
+  /** @brief Where the last leap came down: the re-entry raises the sea's foam ring and a
+   *  positional splash there; the ring's age runs for SplashSeconds, counted so the
+   *  splash is noted once. */
+  struct Splash { float x = 0, z = 0, ageSeconds = 1.0e9f; std::uint32_t count = 0; bool valid = false; };
+  [[nodiscard]] const Splash& LastSplash() const noexcept { return splash_; }
+  [[nodiscard]] std::uint32_t SplashCount() const noexcept { return splash_.count; }
+  static constexpr float SplashSeconds = 2.6f;
   /** @brief The shark this frame (while present): a dolphin within BerthDistance of it
    *  turns off its route to keep the berth, a little faster, until it is clear. */
   void SetThreat(float x, float z, bool valid) noexcept;
@@ -90,6 +97,7 @@ private:
   int fullCount_ = 0, reducedCount_ = 0, dormantCount_ = 0;
   std::uint32_t leapCount_ = 0;
   Leap lastLeap_;
+  Splash splash_;
   float threatX_ = 0, threatZ_ = 0;
   bool threatValid_ = false;
   std::uint32_t berths_ = 0;

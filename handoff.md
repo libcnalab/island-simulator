@@ -195,6 +195,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 131: prints on the wet sand at the water's edge are taken back by the swash within 45 s, those higher up over four minutes (`Footprint::life`) (PLAN "Loop pass 131").
 - Pass 132: at the campfire the resident crouches to tend the fire, hands to the flames (`ResidentMotion::SetCrouch`, `resident-tending` QA viewpoint) (PLAN "Loop pass 132").
 - Pass 133: a fish rolling through a turn flashes silver along its flanks, brightest parting from the shark (`FishState::flash`) (PLAN "Loop pass 133").
+- Pass 134: a dolphin's leap comes down in a splash: the sea's foam ring and the positional splash at the re-entry (`DolphinPod::Splash`) (PLAN "Loop pass 134").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

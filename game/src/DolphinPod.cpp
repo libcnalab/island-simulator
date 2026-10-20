@@ -111,6 +111,10 @@ void DolphinPod::Update(const float deltaSeconds, const float observerX,
   elapsedSeconds_ += delta;
   ++frameIndex_;
   fullCount_ = reducedCount_ = dormantCount_ = 0;
+  if (splash_.valid) {
+    splash_.ageSeconds += delta;
+    if (splash_.ageSeconds > SplashSeconds) splash_.valid = false;
+  }
   for (std::size_t i = 0; i < agents_.size(); ++i) {
     auto &agent = agents_[i];
     const float distance =
@@ -177,6 +181,9 @@ void DolphinPod::UpdateAgent(Agent &agent, const float delta) noexcept {
   agent.behaviorSeconds -= delta;
   if (agent.behaviorSeconds <= 0) {
     ++agent.transitionCount;
+    // A leap ending is the dolphin coming down: the splash is where it re-enters.
+    if (agent.state.behavior == DolphinBehavior::Leap)
+      splash_ = {agent.state.x, agent.state.z, 0.0f, splash_.count + 1U, true};
     if (agent.state.behavior == DolphinBehavior::Cruise)
       agent.state.behavior = agent.transitionCount % 3 == 0
                                  ? DolphinBehavior::Dive
