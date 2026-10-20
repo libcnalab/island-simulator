@@ -2338,6 +2338,8 @@ namespace island
             "island-simulator: a settled stingray bursts out of the sand in a puff when the swimmer comes near", 196, 178, 140);
         blownSandRenderer_ = std::make_unique<RootingDustRenderer>(device,
             "island-simulator: a gust front passing the windward beaches streams pale sand off the dry crests downwind, a hand's height and gone within two seconds", 221, 208, 172);
+        finWakeRenderer_ = std::make_unique<RootingDustRenderer>(device,
+            "island-simulator: the shark's dorsal fin riding just under the surface cuts a foam wake that spreads and fades on the water behind it within three seconds", 236, 244, 248);
         std::cout << "island-simulator: blown sand: " << blownSand_.Sources().size()
                   << " exposed dry-sand sources around the shore blow while a gust front passes them\n";
         octopusInkRenderer_ = std::make_unique<RootingDustRenderer>(device,
@@ -3389,6 +3391,7 @@ namespace island
         }
         const SharkState previousSharkSubject = sharkPatrol_.State();
         sharkPatrol_.Update(deltaSeconds, cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
+        finWake_.Update(deltaSeconds, sharkPatrol_.State());
         if (viewpoint_ == FixedViewpoint::SharkDetail) {
             // Keep the occasional close subject framed without freezing its live patrol pose.
             const SharkState& subject = sharkPatrol_.State();
@@ -4979,6 +4982,7 @@ namespace island
             stingraySandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,stingraySand_.Puffs());
             stingraySandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,stingrayFlickSand_.Puffs());
             blownSandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,blownSand_.Puffs());
+            finWakeRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,finWake_.Puffs());
             octopusInkRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,octopusInk_.Puffs());
             surfSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,surfSpray_.Puffs());
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,dolphinBlows_.Puffs());

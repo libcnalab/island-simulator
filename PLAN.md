@@ -54,6 +54,23 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 135 (2026-10-20) — the shark's fin cuts a wake
+
+Nine seconds in every forty-six the patrol rides just under the surface so the dorsal fin
+cuts the water, and the water showed nothing of it. New `FinWakeField` (CPU): while the
+shark is present, visible and riding above `CuttingDepth` (−1.05 m) a foam `DustPuff` is
+laid at the fin (0.15 × scale behind the head, on the surface) every 0.2 s, up to the
+rooting-dust capacity of eighteen (3.6 s of trail); a puff spreads on the water and thins
+over 3 s without rising, so the wake reads as a fading white line behind the fin; the
+shark cruising deep, hidden or away lays none. A fourth `RootingDustRenderer` draws the
+puffs in foam white (236,244,248) after the blown sand. Startup report: the renderer's
+"the shark's dorsal fin riding just under the surface cuts a foam wake that spreads and
+fades on the water behind it within three seconds" (pinned). Core checks: a synthetic
+shark riding at −0.85 m lays a puff every fifth of a second, on the surface behind the
+fin; cruising deep it lays none and the foam is gone within three and a half seconds; the
+real patrol's first seconds ride high enough to cut the water and lay a wake. Native
+`shark` passes.
+
 ## Loop pass 134 (2026-10-20) — a leaping dolphin's splash
 
 A dolphin's leap (pass 111 gave it to the seabirds) came down without a mark on the sea.

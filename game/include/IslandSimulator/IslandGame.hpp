@@ -117,6 +117,7 @@
 #include "IslandSimulator/BlownSandField.hpp"
 #include "IslandSimulator/WetlandMistField.hpp"
 #include "IslandSimulator/HoofDustField.hpp"
+#include "IslandSimulator/FinWakeField.hpp"
 #include "IslandSimulator/OctopusInkField.hpp"
 #include "IslandSimulator/TurtleBreathField.hpp"
 #include "IslandSimulator/HelicopterLayout.hpp"
@@ -506,6 +507,7 @@ namespace island
         std::unique_ptr<FootprintTrailRenderer> footprintRenderer_;
         RootingDustField rootingDust_{terrain_};
         HoofDustField hoofDust_{terrain_};
+        FinWakeField finWake_;
         std::vector<HoofDustRunner> hoofDustRunners_;
         BlownSandField blownSand_{terrain_};
         std::unique_ptr<RootingDustRenderer> rootingDustRenderer_;
@@ -522,6 +524,7 @@ namespace island
         StingraySandField stingrayFlickSand_;
         std::unique_ptr<RootingDustRenderer> stingraySandRenderer_;
         std::unique_ptr<RootingDustRenderer> blownSandRenderer_;
+        std::unique_ptr<RootingDustRenderer> finWakeRenderer_;
         OctopusInkField octopusInk_;
         std::unique_ptr<RootingDustRenderer> octopusInkRenderer_;
         TurtleBreathField turtleBreaths_;

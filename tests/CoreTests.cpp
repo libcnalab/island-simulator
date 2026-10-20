@@ -53,6 +53,7 @@
 #include "IslandSimulator/BlownSandField.hpp"
 #include "IslandSimulator/WetlandMistField.hpp"
 #include "IslandSimulator/HoofDustField.hpp"
+#include "IslandSimulator/FinWakeField.hpp"
 #include "IslandSimulator/StreamFishField.hpp"
 #include "IslandSimulator/HatchlingField.hpp"
 #include "IslandSimulator/BirdShadowProjection.hpp"
@@ -4244,6 +4245,35 @@ int main()
               && shark.State().targetX == repeatedShark.State().targetX
               && shark.State().targetZ == repeatedShark.State().targetZ,
           "shark patrol initialization is deterministic");
+    {
+        // The fin's wake: a shark riding just under the surface lays foam at the fin every
+        // fifth of a second, the puffs on the surface behind it, gone within three seconds
+        // once it dives; the patrol's own first nine seconds ride high enough to cut it.
+        island::FinWakeField wake;
+        island::SharkState rider;
+        rider.y = -0.85f; rider.scale = 2.8f;
+        for (int step = 0; step < 40; ++step) { rider.x += 2.0f * 0.05f; wake.Update(0.05f, rider); }
+        Check(wake.ReleaseCount() >= 8U && wake.ReleaseCount() <= 12U && wake.ActiveCount() >= 8U, "the riding shark lays a foam puff every fifth of a second");
+        bool behind = true, afloat = true;
+        for (const auto& puff : wake.Puffs()) if (puff.active) {
+            if (puff.x > rider.x) behind = false;
+            if (std::abs(puff.y) > 0.1f) afloat = false;
+        }
+        Check(behind && afloat, "the wake lies on the surface behind the fin");
+        rider.y = -2.4f;
+        const std::uint32_t laid = wake.ReleaseCount();
+        for (int step = 0; step < 70; ++step) { rider.x += 2.0f * 0.05f; wake.Update(0.05f, rider); }
+        Check(wake.ReleaseCount() == laid && wake.ActiveCount() == 0U, "a shark cruising deep cuts no wake and the foam is gone within three and a half seconds");
+        island::SharkPatrol patrol(terrain);
+        island::FinWakeField patrolWake;
+        bool cut = false;
+        for (int step = 0; step < 160; ++step) {
+            patrol.Update(0.05f, patrol.State().x + 20.0f, 0.0f, patrol.State().z);
+            patrolWake.Update(0.05f, patrol.State());
+            cut = cut || island::FinWakeField::Cutting(patrol.State());
+        }
+        Check(cut && patrolWake.ReleaseCount() >= 1U, "the patrol's first seconds ride high enough to cut the water and lay a wake");
+    }
     bool observedPresentShark = false;
     bool observedHiddenShark = false;
     bool observedSharkTailLeft = false;

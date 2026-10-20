@@ -1314,6 +1314,8 @@ def main():
                 raise RuntimeError("current fish turning flash is missing; check for a stale executable")
             if "a leap comes down in a splash, the sea's foam ring and the positional splash where the dolphin re-enters" not in diagnostics:
                 raise RuntimeError("current dolphin re-entry splash is missing; check for a stale executable")
+            if "the shark's dorsal fin riding just under the surface cuts a foam wake" not in diagnostics:
+                raise RuntimeError("current shark fin wake is missing; check for a stale executable")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:
                 raise RuntimeError("resident tending capture did not hold the crouch")
             if args.viewpoint == "bear-lying" and "bear QA camera frames the bear lying at rest on folded legs" not in diagnostics:
