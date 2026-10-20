@@ -979,6 +979,8 @@ def main():
                 raise RuntimeError("current coconut thud is missing; check for a stale executable")
             if "every other bout works the wrack line and feeds among the strandings" not in diagnostics:
                 raise RuntimeError("current crab wrack foraging is missing; check for a stale executable")
+            if "the resident's walk along the beach scatters them as the player's does" not in diagnostics:
+                raise RuntimeError("current crab resident scatter is missing; check for a stale executable")
             if "monkeys walk to fruit lying under the crowns and eat it, idling over the spot" not in diagnostics:
                 raise RuntimeError("current monkey fruit eating is missing; check for a stale executable")
             if "boars forage for the fallen fruit and coconuts before the trunk bases and eat them where they lie" not in diagnostics:

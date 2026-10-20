@@ -2245,7 +2245,8 @@ namespace island
                   << "island-simulator: beetles " << BeetlePopulation::Count
                   << " agents resting, foraging, and hiding in three inland leaf-litter colonies\n"
                   << "island-simulator: beach crabs " << crabColony_.Crabs().size()
-                  << " agents in deterministic sand-and-debris-constrained colonies; every other bout works the wrack line and feeds among the strandings\n"
+                  << " agents in deterministic sand-and-debris-constrained colonies; every other bout works the wrack line and feeds among the strandings; "
+                     "the resident's walk along the beach scatters them as the player's does\n"
                   << "island-simulator: hermit crabs " << hermitCrabGroup_.Crabs().size()
                   << " agents in deterministic sheltered-beach habitats\n"
                   << "island-simulator: coconut crabs " << coconutCrabGroup_.Crabs().size()
@@ -2703,6 +2704,7 @@ namespace island
             crabObserver=Vector3(previousCrabSubject.x,previousCrabSubject.y,previousCrabSubject.z)
                 +outward*18.0f+Vector3::Up*1.5f;
         }
+        crabColony_.SetWalker(resident_->State().x, resident_->State().z, true);
         crabColony_.Update(deltaSeconds, crabObserver.X, crabObserver.Y, crabObserver.Z);
         Vector3 hermitCrabObserver = cameraPosition_;
         if (viewpoint_ == FixedViewpoint::HermitCrabDetail) {

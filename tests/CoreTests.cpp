@@ -3765,6 +3765,26 @@ int main()
               && std::hypot(escapedCrab.x - initialReactiveCrab.x,
                             escapedCrab.z - initialReactiveCrab.z) > 0.5f,
           "a nearby observer provokes a visible non-hostile crab scuttle response");
+    {
+        // The resident walking the beach scatters the crabs too: with the observer 40 m off
+        // (near enough for full simulation) and the walker on the crab, it scuttles away
+        // from the walker; with the walker withdrawn it goes back to its bouts.
+        island::CrabColony walkedCrabs(terrain);
+        const island::CrabState startled = walkedCrabs.Crabs().front();
+        walkedCrabs.SetWalker(startled.x + 1.0f, startled.z, true);
+        for (int frame = 0; frame < 90; ++frame)
+            walkedCrabs.Update(1.0f / 60.0f, startled.x, startled.y + 1.5f, startled.z + 40.0f);
+        const island::CrabState& fled = walkedCrabs.Crabs().front();
+        Check(fled.behavior == island::CrabBehavior::Scuttle && fled.x < startled.x - 0.3f,
+              "the resident's walk beside a crab sends it scuttling away from the walker");
+        walkedCrabs.SetWalker(0.0f, 0.0f, false);
+        bool settled = false;
+        for (int frame = 0; frame < 600 && !settled; ++frame) {
+            walkedCrabs.Update(1.0f / 60.0f, startled.x, startled.y + 1.5f, startled.z + 40.0f);
+            settled = walkedCrabs.Crabs().front().behavior != island::CrabBehavior::Scuttle;
+        }
+        Check(settled, "with the walker gone the crab returns to its bouts");
+    }
 
     island::FishSchools fishSchools(terrain);
     island::FishSchools repeatedFishSchools(terrain);

@@ -205,6 +205,13 @@ namespace island
             && sample.slopeRadians < 0.38f && homeDistance <= home.radius;
     }
 
+    void CrabColony::SetWalker(const float x, const float z, const bool valid) noexcept
+    {
+        walkerValid_ = valid && std::isfinite(x) && std::isfinite(z);
+        walkerX_ = walkerValid_ ? x : 0.0f;
+        walkerZ_ = walkerValid_ ? z : 0.0f;
+    }
+
     void CrabColony::Update(const float deltaSeconds, const float observerX,
                             const float observerY, const float observerZ) noexcept
     {
@@ -265,14 +272,25 @@ namespace island
     {
         if (deltaSeconds <= 0.0f) return;
 
-        const float observerDistance = observerValid
+        float observerDistance = observerValid
             ? std::hypot(agent.state.x - observerX, agent.state.z - observerZ)
             : std::numeric_limits<float>::infinity();
-        if (observerDistance < 5.2f) {
+        // The resident walking the beach frightens the crabs as the player does: the nearer
+        // of the two is the one scattered from.
+        float threatX = observerX, threatZ = observerZ;
+        if (walkerValid_) {
+            const float walkerDistance = std::hypot(agent.state.x - walkerX_, agent.state.z - walkerZ_);
+            if (walkerDistance < observerDistance) {
+                observerDistance = walkerDistance;
+                threatX = walkerX_;
+                threatZ = walkerZ_;
+            }
+        }
+        if (observerDistance < ScuttleDistance) {
             agent.state.behavior = CrabBehavior::Scuttle;
             agent.behaviorSeconds = 1.5f;
-            float awayX = agent.state.x - observerX;
-            float awayZ = agent.state.z - observerZ;
+            float awayX = agent.state.x - threatX;
+            float awayZ = agent.state.z - threatZ;
             const float awayLength = std::hypot(awayX, awayZ);
             if (awayLength > 0.001f) {
                 awayX /= awayLength;

@@ -46,6 +46,19 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 22 (2026-10-20) — the resident's walk scatters the crabs
+
+The beach crabs scuttled only from the player; the resident's tour along the beach (pass 13's
+footprints run right through the colonies) walked among them untouched. `CrabColony::SetWalker`
+takes a second walker, set every frame from the resident's position, and each crab now
+scatters from whichever of the observer and the walker is nearer within the same 5.2 m
+(`ScuttleDistance`), away from that one. Activation tiers stay observer-relative, so the
+resident's walk animates crabs the player can see and costs nothing elsewhere. The crab
+diagnostic gains "the resident's walk along the beach scatters them as the player's does",
+pinned by the native capture tool. Core check: with the observer 40 m off and the walker one
+metre beside the first crab it scuttles away from the walker within 1.5 s; with the walker
+withdrawn it returns to its bouts within ten seconds. Native `crabs` passes.
+
 ## Loop pass 21 (2026-10-20) — the butterflies come down to the fermenting fruit
 
 The clearing butterflies alternated the ground patch and the flowering bushes; the fruit

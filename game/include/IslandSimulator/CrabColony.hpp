@@ -76,6 +76,10 @@ namespace island
         /** @brief Advances autonomous beach movement and observer-relative activation. */
         void Update(float deltaSeconds, float observerX, float observerY,
                     float observerZ) noexcept;
+        /** @brief A second walker on the beach (the resident); crabs scatter from whichever
+         *  of the observer and the walker is nearer. Activation stays observer-relative. */
+        void SetWalker(float x, float z, bool valid) noexcept;
+        static constexpr float ScuttleDistance = 5.2f;
 
         [[nodiscard]] std::span<const CrabState> Crabs() const noexcept;
         [[nodiscard]] std::span<const CrabHomeRange> Homes() const noexcept;
@@ -106,6 +110,8 @@ namespace island
         void UpdateAgent(Agent& agent, std::size_t index, float deltaSeconds,
                          float observerX, float observerZ,
                          bool observerValid) noexcept;
+        float walkerX_ = 0.0f, walkerZ_ = 0.0f;
+        bool walkerValid_ = false;
         [[nodiscard]] bool IsValidHabitat(float x, float z,
                                           const CrabHomeRange& home) const noexcept;
 
