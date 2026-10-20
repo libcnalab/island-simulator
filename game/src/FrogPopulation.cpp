@@ -60,9 +60,11 @@ namespace island
             const float length = std::max(std::hypot(dx, dz), 0.01f);
             poolX_ = pool.x; poolZ_ = pool.z;
             poolAcrossX_ = -dz / length; poolAcrossZ_ = dx / length;
+            poolWater_ = pool.water; poolHalfWidth_ = std::max(pool.halfWidth, 0.5f);
         }
         for (std::size_t index = 0; index < Count; ++index) {
             Initialize(index);
+            agents_[index].poolFrog = index >= Count - PoolFrogCount;
             states_[index] = agents_[index].state;
             homes_[index] = agents_[index].home;
         }
@@ -154,12 +156,43 @@ namespace island
         const float observerDistance = observerValid
             ? std::hypot(agent.state.x - observerX, agent.state.z - observerZ)
             : std::numeric_limits<float>::infinity();
+        // A pool frog in the water: under for DiveSeconds, drifting to the middle, then up
+        // to float SurfaceSeconds, then a hop back for its bank.
+        if (agent.state.behavior == FrogBehavior::Dive) {
+            agent.diveSeconds -= deltaSeconds;
+            agent.state.breathPhase = std::fmod(agent.state.breathPhase + deltaSeconds * 1.45f, TwoPi);
+            const float toMiddleX = poolX_ - agent.state.x, toMiddleZ = poolZ_ - agent.state.z;
+            const float toMiddle = std::hypot(toMiddleX, toMiddleZ);
+            if (!agent.surfaced && toMiddle > 0.3f) {
+                const float step = std::min(toMiddle, .35f * deltaSeconds);
+                agent.state.x += toMiddleX / toMiddle * step;
+                agent.state.z += toMiddleZ / toMiddle * step;
+            }
+            agent.state.submerged += std::clamp((agent.surfaced ? 0.0f : 1.0f) - agent.state.submerged,
+                                                -deltaSeconds * 2.5f, deltaSeconds * 4.0f);
+            agent.state.y = poolWater_ + .02f - (DiveDepth + .02f) * agent.state.submerged;
+            agent.state.hopPhase = 0.0f;
+            if (!agent.surfaced && agent.diveSeconds <= 0.0f) {
+                agent.surfaced = true;
+                agent.diveSeconds = SurfaceSeconds;
+            } else if (agent.surfaced && agent.diveSeconds <= 0.0f) {
+                // Back for the bank: a hop toward home, the water left behind.
+                agent.state.behavior = FrogBehavior::Hop;
+                agent.state.hopPhase = 0.0f;
+                agent.behaviorSeconds = .62f;
+                agent.state.submerged = 0.0f;
+                agent.state.headingRadians = std::atan2(agent.home.z - agent.state.z, agent.home.x - agent.state.x);
+            }
+            return;
+        }
         if (observerDistance < 2.8f && agent.state.behavior != FrogBehavior::Flee) {
             agent.state.behavior = FrogBehavior::Flee;
             agent.state.hopPhase = 0.0f;
             agent.behaviorSeconds = 1.5f;
-            agent.state.headingRadians = std::atan2(
-                agent.state.z - observerZ, agent.state.x - observerX);
+            // A pool frog makes for the water; the others leap away from the walker.
+            agent.state.headingRadians = agent.poolFrog
+                ? std::atan2(poolZ_ - agent.state.z, poolX_ - agent.state.x)
+                : std::atan2(agent.state.z - observerZ, agent.state.x - observerX);
         } else if (agent.state.behavior == FrogBehavior::Rest
                    && (agent.behaviorSeconds -= deltaSeconds) <= 0.0f) {
             ++agent.transitions;
@@ -193,12 +226,28 @@ namespace island
             + std::cos(agent.state.headingRadians) * speed * deltaSeconds;
         const float nextZ = agent.state.z
             + std::sin(agent.state.headingRadians) * speed * deltaSeconds;
-        if (IsValid(nextX, nextZ, agent.home)) {
+        // A pool frog fleeing for the water, or hopping back out of it, may cross the
+        // water's edge the bank rule would refuse.
+        const bool poolBound = agent.poolFrog
+            && (agent.state.behavior == FrogBehavior::Flee || !IsValid(agent.state.x, agent.state.z, agent.home));
+        if (IsValid(nextX, nextZ, agent.home) || poolBound) {
             agent.state.x = nextX;
             agent.state.z = nextZ;
         } else {
             agent.state.headingRadians = std::atan2(
                 agent.home.z - agent.state.z, agent.home.x - agent.state.x);
+        }
+        // The pool frog's flight ends in the water: within the pool's width of its middle
+        // it goes under.
+        if (agent.poolFrog && agent.state.behavior == FrogBehavior::Flee
+            && std::hypot(agent.state.x - poolX_, agent.state.z - poolZ_) < poolHalfWidth_ * .75f) {
+            agent.state.behavior = FrogBehavior::Dive;
+            agent.diveSeconds = DiveSeconds;
+            agent.surfaced = false;
+            agent.state.submerged = 0.0f;
+            agent.state.y = poolWater_ + .02f;
+            ++dives_;
+            return;
         }
         agent.groundY = terrain_.Height(agent.state.x, agent.state.z);
         const float arc = std::sin(Pi * agent.state.hopPhase);

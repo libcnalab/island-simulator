@@ -3340,6 +3340,37 @@ int main()
               &&std::hypot(reactiveFrogs.Frogs()[1U].x-initialReactiveFrog.x,
                             reactiveFrogs.Frogs()[1U].z-initialReactiveFrog.z)>.20f,
           "nearby observer triggers a visible bounded frog retreat");
+    {
+        // A pool frog fleeing the walker leaps into the pool and goes under, surfaces after
+        // its dive and hops back out onto a bank.
+        island::FrogPopulation divers(terrain);
+        const std::size_t poolFrog=island::FrogPopulation::Count-1U;
+        const auto start=divers.Frogs()[poolFrog];
+        bool under=false,up=false;
+        for(int frame=0;frame<900&&!up;++frame) {
+            divers.Update(1.0f/60.0f,start.x,start.y,start.z);
+            const auto& frog=divers.Frogs()[poolFrog];
+            if(frog.behavior==island::FrogBehavior::Dive&&frog.submerged>.9f
+               &&frog.y<divers.PoolWaterHeight()-.08f) under=true;
+            if(under&&frog.behavior==island::FrogBehavior::Dive&&frog.submerged<.1f
+               &&std::abs(frog.y-divers.PoolWaterHeight()-.02f)<.01f) up=true;
+        }
+        Check(under&&divers.DiveCount()>=1U,"a pool frog fleeing the walker leaps into the pool and swims under within fifteen seconds");
+        Check(up,"the frog surfaces after its dive and floats");
+        bool back=false;
+        for(int frame=0;frame<1200&&!back;++frame) {
+            divers.Update(1.0f/60.0f,start.x+40.0f,start.y,start.z);
+            const auto& frog=divers.Frogs()[poolFrog];
+            back=frog.behavior!=island::FrogBehavior::Dive&&frog.submerged==0.0f
+                &&std::abs(frog.y-terrain.Height(frog.x,frog.z)-.045f)<.001f
+                &&std::hypot(frog.x-divers.Homes()[poolFrog].x,frog.z-divers.Homes()[poolFrog].z)<=divers.Homes()[poolFrog].radius+.02f;
+        }
+        Check(back,"the frog hops back out of the pool onto its bank within twenty seconds");
+        island::FrogPopulation bankFrogs(terrain);
+        const auto streamFrog=bankFrogs.Frogs()[1U];
+        for(int frame=0;frame<300;++frame) bankFrogs.Update(1.0f/60.0f,streamFrog.x,streamFrog.y,streamFrog.z);
+        Check(bankFrogs.DiveCount()==0U,"a stream frog fleeing the walker does not dive");
+    }
 
     island::HermitCrabGroup hermitCrabs(terrain);
     island::HermitCrabGroup repeatedHermitCrabs(terrain);

@@ -11,13 +11,15 @@ namespace island
 {
     class IslandTerrain;
 
-    enum class FrogBehavior : std::uint8_t { Rest, Hop, Flee };
+    enum class FrogBehavior : std::uint8_t { Rest, Hop, Flee, Dive };
 
     struct FrogState
     {
         float x = 0.0f, y = 0.0f, z = 0.0f;
         float headingRadians = 0.0f, hopPhase = 0.0f, breathPhase = 0.0f;
         float scale = 1.0f;
+        /** @brief 0..1 under the pool's surface: a pool frog that leapt in from the walker. */
+        float submerged = 0.0f;
         FrogBehavior behavior = FrogBehavior::Rest;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
         std::uint8_t colorVariant = 0U;
@@ -36,6 +38,13 @@ namespace island
         static constexpr float PoolFrogRadius = 4.5f;
         static constexpr float FullSimulationDistance = 48.0f;
         static constexpr float ReducedSimulationDistance = 105.0f;
+        /** @brief A pool frog fleeing the walker leaps for the pool, swims under for
+         *  DiveSeconds, surfaces for SurfaceSeconds and makes back for its bank. */
+        static constexpr float DiveSeconds = 6.0f;
+        static constexpr float SurfaceSeconds = 2.0f;
+        static constexpr float DiveDepth = 0.12f;
+        [[nodiscard]] float PoolWaterHeight() const noexcept { return poolWater_; }
+        [[nodiscard]] std::uint32_t DiveCount() const noexcept { return dives_; }
 
         explicit FrogPopulation(const IslandTerrain& terrain);
         void Update(float deltaSeconds, float observerX, float observerY,
@@ -56,6 +65,9 @@ namespace island
             float behaviorSeconds = 0.0f;
             float accumulatedSeconds = 0.0f;
             std::uint32_t transitions = 0U;
+            bool poolFrog = false;        // keeps a bank of the plunge pool
+            float diveSeconds = 0.0f;     // time under or on the surface in a dive
+            bool surfaced = false;        // the dive's second half, floating
         };
 
         void Initialize(std::size_t index);
@@ -68,6 +80,8 @@ namespace island
         std::array<FrogHome, Count> homes_{};
         std::uint64_t frameIndex_ = 0U;
         float poolX_ = 0.0f, poolZ_ = 0.0f, poolAcrossX_ = 0.0f, poolAcrossZ_ = 1.0f;
+        float poolWater_ = 0.0f, poolHalfWidth_ = 1.0f;
+        std::uint32_t dives_ = 0U;
         int fullCount_ = 0, reducedCount_ = 0, dormantCount_ = 0;
     };
 }

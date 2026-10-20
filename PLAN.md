@@ -54,6 +54,22 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 92 (2026-10-20) — a pool frog dives from the walker
+
+The two frogs on the plunge pool's banks fled the walker along the bank like the stream
+frogs. Now a pool frog's flight makes for the water: its flee heading is to the pool's
+middle, the bank rule lets it cross the water's edge, and within three quarters of the pool's
+half width of the middle it goes under (`FrogBehavior::Dive`, `submerged` rising at 4/s to
+12 cm below the surface), drifts to the middle at 0.35 m/s for six seconds (`DiveSeconds`),
+comes up to float two seconds (`SurfaceSeconds`) and hops back for its bank (the bank rule
+waived until it is out of the water). The stream and wetland frogs flee as before.
+`DiveCount()` and `PoolWaterHeight()` expose it. The startup report's frog line gains "one
+of those fleeing the walker leaps into the pool, swims under, surfaces and makes back for its
+bank", pinned by the native capture tool. Core checks: the last frog (a pool frog) with the
+walker on it is under the pool within fifteen seconds, floats after its dive, and is back on
+its bank at ground height within twenty seconds; a stream frog never dives. Native `frogs`
+passes.
+
 ## Loop pass 91 (2026-10-20) — a snake at the perch flushes the bird
 
 A tree snake could climb to a perch and the bird on it sat on. The bird flock now takes the
