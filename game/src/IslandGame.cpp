@@ -2297,6 +2297,7 @@ namespace island
                   << "island-simulator: the grass bends under the nearest six animals and the resident as they pass, not only under the walker\n"
                   << "island-simulator: the bushes and understory are brushed aside by the same bodies as they pass\n"
                   << "island-simulator: mice, rats, geckos and skinks scatter from a passing animal or the resident as from the walker\n"
+                  << "island-simulator: an alert deer swings both ears toward the watcher\n"
                   << "island-simulator: crocodiles " << crocodileGroup_.Crocodiles().size()
                   << " agents bask, crawl, swim, and retreat within the stream estuary\n"
                   << "island-simulator: fish " << fishSchools_.Fish().size()

@@ -1159,6 +1159,8 @@ def main():
                 raise RuntimeError("current wallow scars are missing; check for a stale executable")
             if "fallen twigs lie scattered on the forest floor under the crowns" not in diagnostics:
                 raise RuntimeError("current forest twigs are missing; check for a stale executable")
+            if "an alert deer swings both ears toward the watcher" not in diagnostics:
+                raise RuntimeError("current deer ear turn is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

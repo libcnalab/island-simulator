@@ -1,4 +1,5 @@
 #include "IslandSimulator/DeerRenderer.hpp"
+#include "IslandSimulator/DeerHerd.hpp"
 
 #include "IslandSimulator/CanopyLightField.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
@@ -273,7 +274,7 @@ namespace island
         }
 
         void AppendDeer(std::vector<VertexPositionColor>& out, const DeerState& deer,
-                        const float transmission, const bool near)
+                        const float transmission, const bool near, const Vector3& watcher)
         {
             const std::array<Color, 3> coats = {{Color(151, 103, 58), Color(130, 82, 48),
                                                  Color(170, 121, 69)}};
@@ -314,30 +315,43 @@ namespace island
             Ellipsoid(out,nose,right,up,forward,.086f*scale,.058f*scale,.052f*scale,
                       dark,transmission,near?5:2,near?12:6);
             // Long pointed ears establish a deer rather than goat silhouette.
+            // An alert deer (standing, the watcher within its alert range) swings both ears
+            // toward the watcher; grazing or walking, they sit along the head.
+            Vector3 earForward = forward;
+            {
+                const Vector3 toWatcher(watcher.X - head.X, 0.0f, watcher.Z - head.Z);
+                const float watcherDistance = toWatcher.Length();
+                if (deer.behavior == DeerBehavior::Rest && std::isfinite(watcherDistance)
+                    && watcherDistance > 0.01f && watcherDistance < DeerHerd::SentinelAlertDistance) {
+                    earForward = forward * 0.35f + toWatcher * (0.65f / watcherDistance);
+                    earForward.Normalize();
+                }
+            }
+            const Vector3 earRight(-earForward.Z, 0.0f, earForward.X);
             for (const float sideSign : {-1.0f, 1.0f}) {
-                const Vector3 earRoot = head - forward * (.07f * scale)
-                    + right * (sideSign * .105f * scale) + up * (.13f * scale);
-                const Vector3 earTip = earRoot - forward * (.075f * scale)
-                    + right * (sideSign * .16f * scale) + up * (.23f * scale);
-                const Vector3 earFront=earRoot+forward*(.105f*scale)
-                    +right*(sideSign*.018f*scale);
-                const Vector3 earBack=earRoot-forward*(.070f*scale)
-                    -right*(sideSign*.014f*scale);
+                const Vector3 earRoot = head - earForward * (.07f * scale)
+                    + earRight * (sideSign * .105f * scale) + up * (.13f * scale);
+                const Vector3 earTip = earRoot - earForward * (.075f * scale)
+                    + earRight * (sideSign * .16f * scale) + up * (.23f * scale);
+                const Vector3 earFront=earRoot+earForward*(.105f*scale)
+                    +earRight*(sideSign*.018f*scale);
+                const Vector3 earBack=earRoot-earForward*(.070f*scale)
+                    -earRight*(sideSign*.014f*scale);
                 const Color earOuter=Lit(Color::Lerp(coat,dark,.22f),up,transmission);
                 Triangle(out,earBack,earTip,earFront,earOuter);
                 Triangle(out,earFront,earTip,earBack,earOuter);
                 const Vector3 innerRoot=Vector3::Lerp(earBack,earFront,.52f)+up*(.018f*scale);
                 const Vector3 innerTip=Vector3::Lerp(earRoot,earTip,.78f);
-                Triangle(out,innerRoot-right*(sideSign*.022f*scale),innerTip,
-                         innerRoot+right*(sideSign*.022f*scale),Lit(pale,up,transmission));
+                Triangle(out,innerRoot-earRight*(sideSign*.022f*scale),innerTip,
+                         innerRoot+earRight*(sideSign*.022f*scale),Lit(pale,up,transmission));
                 if (near) {
-                    const Vector3 eyeCentre = head + forward * (.12f * scale)
-                        + right * (sideSign * .148f * scale) + up * (.030f * scale);
-                    Ellipsoid(out, eyeCentre, right, up, forward, .022f * scale,
+                    const Vector3 eyeCentre = head + earForward * (.12f * scale)
+                        + earRight * (sideSign * .148f * scale) + up * (.030f * scale);
+                    Ellipsoid(out, eyeCentre, earRight, up, earForward, .022f * scale,
                               .026f * scale, .016f * scale, eye, transmission, 4, 10);
-                    const Vector3 glint=eyeCentre+forward*(.010f*scale)
-                        +right*(sideSign*.014f*scale)+up*(.008f*scale);
-                    Ellipsoid(out,glint,right,up,forward,.005f*scale,.006f*scale,
+                    const Vector3 glint=eyeCentre+earForward*(.010f*scale)
+                        +earRight*(sideSign*.014f*scale)+up*(.008f*scale);
+                    Ellipsoid(out,glint,earRight,up,earForward,.005f*scale,.006f*scale,
                               .004f*scale,Color(225,205,145),transmission,3,8);
                 }
             }
@@ -488,7 +502,7 @@ namespace island
                 || !frustum.Intersects(BoundingSphere(centre, 2.1f * animal.scale))) continue;
             const float transmission = canopy_.SampleReceiver(
                 animal.x, animal.y + 1.0f, animal.z, animal.y);
-            AppendDeer(staging_, animal, transmission, distanceSquared < 48.0f * 48.0f);
+            AppendDeer(staging_, animal, transmission, distanceSquared < 48.0f * 48.0f, camera);
             ++visibleCount_;
         }
         if (staging_.empty()) return;

@@ -54,6 +54,16 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 60 (2026-10-20) — an alert deer turns its ears to the watcher
+
+A deer standing alert kept its ears along its head. `AppendDeer` now takes the watcher's
+position: while the deer stands (`Rest`) with the watcher inside its sentinel range (24 m),
+both ears swing about the head toward the watcher, 65 % of the way from the head's forward
+to the line to the watcher, the ear geometry built on that axis and its own right; grazing
+or walking, the ears sit along the head as before. Diagnostic "an alert deer swings both ears
+toward the watcher" is printed in the startup report and pinned by the native capture tool.
+The pass is renderer-only over the tested alert behaviour. Native `deer` passes.
+
 ## Loop pass 59 (2026-10-20) — fallen twigs on the forest floor
 
 The close ground view showed bare litter between the plants. A core `ForestTwigLayout`
