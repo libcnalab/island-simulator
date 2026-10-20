@@ -10569,6 +10569,30 @@ int main()
         }
         Check(herd.EarTwitchCount() >= twitchesBefore + 2U && earPeak > 0.9f && earSettled && leftEar && rightEar,
               "a deer twitches one ear back and out every few seconds, the ears taking turns");
+        // The stamp: the walker standing twelve metres off has the deer alert, and within
+        // eight seconds it stamps a forefoot, the stamp to full and down again within a
+        // second; with the walker gone the deer grazes on without stamping.
+        {
+            island::DeerHerd stampers(terrain, {});
+            const auto watched = stampers.Deer()[2];
+            float stampPeak = 0.0f; int stampFrames = 0, longestStamp = 0; bool stampDown = false, alerted = false;
+            for (int step = 0; step < 160; ++step) {
+                stampers.Update(0.05f, watched.x + 12.0f, watched.y + 1.6f, watched.z);
+                const auto& deer = stampers.Deer()[2];
+                if (deer.behavior == island::DeerBehavior::Rest) alerted = true;
+                stampPeak = std::max(stampPeak, deer.stamp);
+                stampFrames = deer.stamp > 0.5f ? stampFrames + 1 : 0; longestStamp = std::max(longestStamp, stampFrames);
+                if (stampPeak > 0.9f && deer.stamp < 0.05f) stampDown = true;
+            }
+            Check(alerted && stampers.StampCount() >= 1U && stampPeak > 0.9f && longestStamp <= 20 && stampDown,
+                  "a deer standing alert at the walker stamps a forefoot and sets it down again");
+            float grazingStamp = 0.0f;
+            for (int step = 0; step < 200; ++step) {
+                stampers.Update(0.05f, 1000.0f, 0.0f, 1000.0f);
+                if (step > 20) grazingStamp = std::max(grazingStamp, stampers.Deer()[2].stamp);
+            }
+            Check(grazingStamp < 0.05f, "a deer with the walker gone keeps stamping");
+        }
     }
 
     {

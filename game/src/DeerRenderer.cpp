@@ -384,9 +384,11 @@ namespace island
                 const Vector3 foldedHock = foldedKnee - forward * ((hind ? .28f : .30f) * scale)
                     - up * ((hind ? .05f : .03f) * scale);
                 const Vector3 foldedHoof = foldedHock + forward * ((hind ? .30f : -.05f) * scale);
-                const Vector3 knee = Vector3::Lerp(standingKnee, foldedKnee, bed);
-                const Vector3 hock = Vector3::Lerp(standingHock, foldedHock, bed);
-                const Vector3 hoofPoint = Vector3::Lerp(standingHoof, foldedHoof, bed);
+                // Stamping, the left forefoot lifts, the knee and hock folding up with it.
+                const float lift = (leg == 0 ? std::clamp(deer.stamp, 0.0f, 1.0f) : 0.0f) * .14f * scale;
+                const Vector3 knee = Vector3::Lerp(standingKnee, foldedKnee, bed) + up * (lift * .35f) + forward * (lift * .2f);
+                const Vector3 hock = Vector3::Lerp(standingHock, foldedHock, bed) + up * (lift * .8f) - forward * (lift * .3f);
+                const Vector3 hoofPoint = Vector3::Lerp(standingHoof, foldedHoof, bed) - forward * (lift * .2f);
                 const float upperRootRadius = hind ? .142f : .128f;
                 const std::array<Vector3,4> upperLeg{{hip,Vector3::Lerp(hip,knee,.28f),
                     Vector3::Lerp(hip,knee,.62f),knee}};
@@ -395,9 +397,9 @@ namespace island
                 LoftTube(out,upperLeg,upperLegRadii,right,coat,transmission,near?9:7);
                 Tube(out, knee, hock, .064f * scale, .052f * scale, dark, transmission,
                      near ? 9 : 7);
-                Tube(out, hock, Vector3(hoofPoint.X, deer.y + .060f * scale, hoofPoint.Z),
+                Tube(out, hock, Vector3(hoofPoint.X, deer.y + .060f * scale + lift, hoofPoint.Z),
                      .052f * scale, .031f * scale, dark, transmission, near ? 9 : 7);
-                const Vector3 groundedHoof(hoofPoint.X, deer.y + .060f * scale, hoofPoint.Z);
+                const Vector3 groundedHoof(hoofPoint.X, deer.y + .060f * scale + lift, hoofPoint.Z);
                 for(const float toeSide:{-.018f,.018f}) {
                     const Vector3 offset=right*(toeSide*scale);
                     Tube(out,groundedHoof-forward*(.042f*scale)+offset,

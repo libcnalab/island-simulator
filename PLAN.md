@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 176 (2026-10-20) — an alert deer stamps
+
+A deer standing alert at the walker only stared. `DeerState::stamp` (0..1) now carries the
+stamp: standing alert (on its feet, not bedded) the deer lifts its left forefoot and stamps
+it down for `StampSeconds` (0.4 s) a second into every `StampPeriodSeconds` (3.5 s) of the
+stand, rising at 10/s and down at 8/s, a warning; grazing on, nothing. The stamps are
+counted (`StampCount()`, `StampingCount()`). In the renderer the left foreleg's knee and
+hock fold up with the hoof lifted 14 % of the scale, on the same vertices. The deer report
+line gains "a deer standing alert at the walker stamps a forefoot now and then" (pinned).
+Core checks: the walker twelve metres off has the deer alert and stamping within eight
+seconds, the stamp to full and down within a second; with the walker gone the deer grazes
+without stamping. Native `deer` passes.
+
 ## Loop pass 175 (2026-10-20) — an ant sweeps its antennae
 
 An ant pausing on the trail stood with its antennae fixed. `AntState::antennaSweep` (0..1)

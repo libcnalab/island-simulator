@@ -27,6 +27,9 @@ namespace island
          *  is the ear, alternating twitch by twitch. */
         float earTwitch = 0.0f;
         float earSide = 1.0f;
+        /** @brief 0..1 the stamp: a deer standing alert at the walker lifts its left forefoot
+         *  and stamps it down now and then, a warning; nothing while grazing or bedded. */
+        float stamp = 0.0f;
         /** @brief 0..1 bedded down: the body lowered onto folded legs for a rest taken in
          *  the shade, rising over a second and a half; back on its feet within half a
          *  second of any other behaviour (an alarm, a bolt, the next graze). */
@@ -60,6 +63,12 @@ namespace island
         // The ear twitch's bout and the period between twitches (plus a little per deer).
         static constexpr float EarTwitchSeconds = 0.35f;
         static constexpr float EarTwitchPeriodSeconds = 3.1f;
+        // The alert stamp's bout and the period between stamps while the deer stands alert.
+        static constexpr float StampSeconds = 0.4f;
+        static constexpr float StampPeriodSeconds = 3.5f;
+        /** @brief Stamps begun, and the deer mid-stamp. */
+        [[nodiscard]] std::uint32_t StampCount() const noexcept { return stamps_; }
+        [[nodiscard]] std::size_t StampingCount() const noexcept;
         static constexpr float StartleSeconds = 6.0f;
         // A clearing pair drifting further apart than this walks back together.
         static constexpr float CohesionDistance = 9.0f;
@@ -124,6 +133,8 @@ namespace island
             float flickClock = 0.0f;
             float earClock = 1.0f;
             bool twitching = false;
+            float stampClock = 0.0f;
+            bool stamping = false;
             // The shade a sunlit rest walks to; valid while seekingShade.
             float shadeX = 0.0f, shadeZ = 0.0f;
             bool seekingShade = false;
@@ -149,5 +160,6 @@ namespace island
         std::uint32_t bolts_ = 0U;
         std::size_t lastBolt_ = 0U;
         std::uint32_t earTwitches_ = 0U;
+        std::uint32_t stamps_ = 0U;
     };
 }

@@ -1396,6 +1396,8 @@ def main():
                 raise RuntimeError("current bat wing stretch is missing; check for a stale executable")
             if "an ant pausing on the trail sweeps its antennae, feeling the way ahead" not in diagnostics:
                 raise RuntimeError("current ant antennae sweep is missing; check for a stale executable")
+            if "a deer standing alert at the walker stamps a forefoot now and then" not in diagnostics:
+                raise RuntimeError("current deer stamp is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:

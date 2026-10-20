@@ -208,6 +208,13 @@ namespace island
         }
     }
 
+    std::size_t DeerHerd::StampingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.stamping ? 1U : 0U;
+        return count;
+    }
+
     std::size_t DeerHerd::TwitchingCount() const noexcept
     {
         std::size_t count = 0;
@@ -392,6 +399,17 @@ namespace island
         if (twitching && !agent.twitching) ++earTwitches_;
         agent.twitching = twitching;
         agent.state.earTwitch += std::clamp((twitching ? 1.0f : 0.0f) - agent.state.earTwitch,
+            -8.0f * deltaSeconds, 10.0f * deltaSeconds);
+        // The stamp: standing alert at the walker (on its feet, not bedded) the deer lifts
+        // its left forefoot and stamps it down every few seconds, a warning.
+        const bool standingAlert = alertFacing && agent.state.behavior == DeerBehavior::Rest
+            && agent.state.bedAmount < 0.2f;
+        agent.stampClock = standingAlert ? agent.stampClock + deltaSeconds : 0.0f;
+        if (agent.stampClock >= StampPeriodSeconds) agent.stampClock = 0.0f;
+        const bool stamping = standingAlert && agent.stampClock >= 1.0f && agent.stampClock < 1.0f + StampSeconds;
+        if (stamping && !agent.stamping) ++stamps_;
+        agent.stamping = stamping;
+        agent.state.stamp += std::clamp((stamping ? 1.0f : 0.0f) - agent.state.stamp,
             -8.0f * deltaSeconds, 10.0f * deltaSeconds);
         const float nextX = agent.state.x
             + std::cos(agent.state.headingRadians) * agent.state.speed * deltaSeconds;
