@@ -85,9 +85,19 @@ namespace island
             int primitiveCount = 0;
         };
 
+        // A cell's instances are grouped into its four quarters, each in its own hashed order,
+        // so the per-patch LOD tiers draw only the quarters' reachable instance ranges.
+        struct GrassBlock
+        {
+            int first = 0;
+            int count = 0;
+            float minX = 0.0f, minZ = 0.0f, maxX = 0.0f, maxZ = 0.0f;   // its anchors' extent
+        };
+
         struct GrassCell
         {
             std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> instances;
+            std::array<GrassBlock, 4> blocks{};
             std::vector<Microsoft::Xna::Framework::Matrix> fallbackTransforms;
             Microsoft::Xna::Framework::BoundingBox bounds;
             Microsoft::Xna::Framework::BoundingBox placementBounds;

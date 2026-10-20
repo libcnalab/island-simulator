@@ -54,6 +54,36 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 209 (2026-10-20) — grass changes detail per patch, not per 37.5 m cell
+
+A read-only audit of every camera-distance transition (after the operator's "everything
+changes like stripes" in flight) ranked the grass mesh tiers first. The tier was chosen per
+37.5 m cell by the cell centre's distance: a cell centred 70 m away put half its patches
+on the middle mesh (10 proxy blades, no turf), the nearest of them 51 m from the camera,
+inside full-size grass, so whole squares thinned together and adjacent cells at different
+mixes met along straight cell edges, sweeping past in flight. Now every patch carries its
+rank in its cell's hashed order as an instance attribute (the instance grew from 44 to 48
+bytes), and the vertex shader gives each tier's mesh the patch's own share by the patch's
+own distance: a patch of rank r leaves the near mesh at 78 - 16 r m and reaches the far
+mesh at 102 - 16 r m, both meshes scaled over +-2.5 m, so no patch pops and nothing nearer
+than 59.5 m leaves the near mesh. Each cell's instances are grouped by quarter, each quarter
+in hashed order, and `GrassLod::Ranges` gives the contiguous instance range each tier must
+draw for a quarter from its nearest and farthest anchors (clamped to the grass draw
+distance). The BasicEffect fallback keeps the old split.
+
+The core check covers every patch with weight in its tier's range (counts 1 to 333, cells
+0 to 183 m), keeps the weights in 0..1 summing to 1, bounds the morph at 0.3 % per cm, and
+contrasts the old split. The cost is vertex work: with the near mesh at 862 vertices, the
+middle 60 and far 42, the estimated grass vertices per frame go from 1.23 M to 1.61 M
+(`grass`), 0.84 M to 1.04 M (`hut`) and 0.62 M to 0.81 M (`ground`), and 32 to 47 instanced
+draws instead of about 10; without the quarters they were 2.03 M, 1.16 M and 1.14 M. Native
+`grass`, `hut` and `ground` pass; the near views are unchanged (0.45 % and 0.86 % of pixels
+differ by 20 levels or more, the wind). Startup: "grass mesh tiers change per patch at its
+own distance, morphing over 5 m, drawn by quarter-cell blocks instead of switching whole
+cells by their centre", pinned. Still open from the audit: the jungle floor's six hard
+radii between 30 and 70 m, the hard canopy and palm far culls, the canopy and palm near/far
+swaps and the beach-detail ring at 52 m.
+
 ## Loop pass 208 (2026-10-20) — the supervisor fixture's load flake was a marker race
 
 `IslandGpuQualificationSupervisorTests`, long recorded as load-sensitive (pass 204 and earlier

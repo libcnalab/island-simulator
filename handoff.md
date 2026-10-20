@@ -271,6 +271,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 206: the sun shadows fade on a rounded square around the viewer, 52-63 m in the sun's view, instead of on the shadow map's edge, which jumped 8 m at every re-centre in flight; core check 0.27 % largest change per 2 cm across 10 re-centres against 91 % before (PLAN "Loop pass 206").
 - Pass 207: the wreck, hut and helicopter keep their projected mass shadows beyond the sun shadow map, cross-faded vertex by vertex with the map's own fade instead of switched off (`shipwreck-wide` 1 mass shadow, `hut` 0) (PLAN "Loop pass 207").
 - Pass 208: the load-sensitive GPU qualification supervisor fixture failed because its stub processes read marker files half-written; all four markers are now written and renamed atomically (2/18 failures at six concurrent copies before, 0/66 after) (PLAN "Loop pass 208").
+- Pass 209: grass mesh tiers are chosen per patch by its own distance and rank, morphing over 5 m, drawn by quarter-cell ranges, instead of per 37.5 m cell by the cell centre (which thinned patches 51 m away in square blocks); about +25-30 % grass vertex work (PLAN "Loop pass 209").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

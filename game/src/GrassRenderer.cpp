@@ -98,9 +98,10 @@ namespace island
             float normalX;
             float normalZ;
             float biomeTint;
+            float lodRank;   // (index + 0.5) / count in the cell's hashed order; GrassLod
         };
 
-        static_assert(sizeof(GrassInstanceData) == 44U);
+        static_assert(sizeof(GrassInstanceData) == 48U);
 
         struct GrassSurfaceVertex
         {
@@ -158,6 +159,7 @@ namespace island
             GrassInstanceData instance;
             Matrix fallbackTransform;
             std::uint32_t lodOrder = 0U;
+            std::uint8_t block = 0U;   // the quarter of its cell
         };
 
         [[nodiscard]] std::uint32_t GrassLodOrder(std::uint32_t index) noexcept
@@ -179,12 +181,14 @@ layout(location = 5) in vec2 aBladeRoot;
 layout(location = 6) in vec4 aPlacement;
 layout(location = 7) in vec4 aVariation;
 layout(location = 8) in vec2 aSlope;
-layout(location = 9) in float aBiomeTint;
+layout(location = 9) in vec2 aTintRank;   // x: biome tint, y: the patch's LOD rank in its cell
 
 uniform mat4 uViewProjection;
 uniform float uTime;
 uniform vec3 uCameraPosition;
 uniform vec2 uGrassFadeRange;
+uniform vec4 uGrassLodBands;   // NearOnly, MiddleOnlyStart, MiddleOnlyEnd, FarOnly (GrassLod)
+uniform vec2 uGrassTier;       // x: the mesh tier this draw carries (0 near, 1 middle, 2 far), y: morph half width
 uniform vec2 uPlayerPosition;
 uniform float uPlayerInteractionStrength;
 uniform vec4 uWalkers[6];   // other bodies in the grass: x, z, radius squared, strength (0: none)
@@ -223,8 +227,16 @@ void main()
     float bladeRandom = fract(sin(aWindData.y * 91.73 + aVariation.w * 37.21 + 0.618)
                               * 43758.5453);
     float bladeStature = mix(grassMinimumStature, grassMaximumStature, bladeRandom);
-    float visibility = 1.0 - smoothstep(uGrassFadeRange.x, uGrassFadeRange.y,
-                                       length(aPlacement.xz - uCameraPosition.xz));
+    float patchDistance = length(aPlacement.xz - uCameraPosition.xz);
+    float visibility = 1.0 - smoothstep(uGrassFadeRange.x, uGrassFadeRange.y, patchDistance);
+    // Per-patch tiers (GrassLod::PatchWeights): this draw's mesh takes the patch's own share,
+    // so a patch morphs between meshes at its own distance rather than its whole cell's.
+    float nearAt = uGrassLodBands.y - aTintRank.y * (uGrassLodBands.y - uGrassLodBands.x);
+    float farAt = uGrassLodBands.w - aTintRank.y * (uGrassLodBands.w - uGrassLodBands.z);
+    float nearWeight = 1.0 - smoothstep(nearAt - uGrassTier.y, nearAt + uGrassTier.y, patchDistance);
+    float farWeight = smoothstep(farAt - uGrassTier.y, farAt + uGrassTier.y, patchDistance);
+    visibility *= uGrassTier.x < 0.5 ? nearWeight
+        : (uGrassTier.x < 1.5 ? clamp(1.0 - nearWeight - farWeight, 0.0, 1.0) : farWeight);
     vec3 base = aPlacement.xyz
         + tangentX * (localX * aVariation.y * visibility)
         + tangentZ * (localZ * aVariation.y * visibility);
@@ -289,8 +301,8 @@ void main()
     float bladeNormalZ = scaledNormal.x * yawSin + scaledNormal.z * yawCos;
     vBladeNormal = normalize(tangentX * bladeNormalX + tangentZ * bladeNormalZ
                              + surfaceNormal * scaledNormal.y);
-    float coolWeight = clamp((0.5 - aBiomeTint) * 2.0, 0.0, 1.0);
-    float warmWeight = clamp((aBiomeTint - 0.5) * 2.0, 0.0, 1.0);
+    float coolWeight = clamp((0.5 - aTintRank.x) * 2.0, 0.0, 1.0);
+    float warmWeight = clamp((aTintRank.x - 0.5) * 2.0, 0.0, 1.0);
     vec3 biomeColor = mix(vec3(1.0), vec3(0.82, 0.98, 0.91), coolWeight);
     biomeColor = mix(biomeColor, vec3(1.19, 1.045, 0.73), warmWeight);
     float colorShift = (aVariation.w - 0.5) * 0.12 + (bladeRandom - 0.5) * 0.075;
@@ -656,7 +668,7 @@ void main()
                           VertexElementUsage::TextureCoordinate, 2),
             VertexElement(32, VertexElementFormat::Vector2,
                           VertexElementUsage::TextureCoordinate, 3),
-            VertexElement(40, VertexElementFormat::Single,
+            VertexElement(40, VertexElementFormat::Vector2,
                           VertexElementUsage::TextureCoordinate, 4)};
         return declaration;
     }
@@ -850,6 +862,10 @@ void main()
         MirrorRuntimeDiagnosticToPlatformLog(inventory);
         std::cout << "island-simulator: measured grass mesh radius " << meshRadius_
                   << " m, height " << meshHeight_ << " m across all LODs and seed stems\n";
+        if (customShaderReady_)
+            std::cout << "island-simulator: grass mesh tiers change per patch at its own distance, morphing over "
+                      << static_cast<int>(2.0f * GrassLod::MorphHalfWidth)
+                      << " m, drawn by quarter-cell blocks instead of switching whole cells by their centre\n";
     }
 
     void GrassRenderer::CreateCells(const IslandTerrain& terrain, const GrassLayout& layout)
@@ -869,11 +885,19 @@ void main()
                 GrassInstanceData{
                     patch.x, patch.y, patch.z, patch.yawRadians,
                     patch.scale, patch.spreadScale, patch.windPhase, patch.colorVariation,
-                    sample.normal.x, sample.normal.z, patch.biomeTint},
+                    sample.normal.x, sample.normal.z, patch.biomeTint, 0.0f},
                 Matrix::CreateScale(patch.spreadScale, patch.scale, patch.spreadScale)
                     * Matrix::CreateRotationY(patch.yawRadians)
                     * Matrix::CreateTranslation(patch.x, patch.y, patch.z),
-                GrassLodOrder(placementIndex)});
+                GrassLodOrder(placementIndex),
+                [&] {
+                    constexpr float width = 2.0f * GrassVisibility::LayoutExtent / GrassVisibility::CellsPerAxis;
+                    const float u = (patch.x + GrassVisibility::LayoutExtent) / width;
+                    const float v = (patch.z + GrassVisibility::LayoutExtent) / width;
+                    const float column = std::clamp(std::floor(u), 0.0f, GrassVisibility::CellsPerAxis - 1.0f);
+                    const float row = std::clamp(std::floor(v), 0.0f, GrassVisibility::CellsPerAxis - 1.0f);
+                    return static_cast<std::uint8_t>((u - column >= 0.5f ? 1 : 0) + (v - row >= 0.5f ? 2 : 0));
+                }()});
             ++placementIndex;
 
             GrassCell& cell = cells_[index];
@@ -909,14 +933,34 @@ void main()
             if (entries[index].empty()) {
                 continue;
             }
+            // The fallback path splits the whole cell by its hashed order alone.
             std::ranges::sort(entries[index], {}, &CellBuildEntry::lodOrder);
-            std::vector<GrassInstanceData> instances;
-            instances.reserve(entries[index].size());
             GrassCell& cell = cells_[index];
             cell.fallbackTransforms.reserve(entries[index].size());
-            for (const CellBuildEntry& entry : entries[index]) {
-                instances.push_back(entry.instance);
-                cell.fallbackTransforms.push_back(entry.fallbackTransform);
+            for (const CellBuildEntry& entry : entries[index]) cell.fallbackTransforms.push_back(entry.fallbackTransform);
+            // The shader path: quarter by quarter, each quarter in hashed order, ranked within it.
+            std::ranges::stable_sort(entries[index], {}, &CellBuildEntry::block);
+            std::vector<GrassInstanceData> instances;
+            instances.reserve(entries[index].size());
+            for (std::size_t first = 0; first < entries[index].size();) {
+                std::size_t end = first;
+                const std::uint8_t quarter = entries[index][first].block;
+                while (end < entries[index].size() && entries[index][end].block == quarter) ++end;
+                GrassBlock& block = cell.blocks[quarter];
+                block.first = static_cast<int>(first);
+                block.count = static_cast<int>(end - first);
+                block.minX = block.maxX = entries[index][first].instance.x;
+                block.minZ = block.maxZ = entries[index][first].instance.z;
+                for (std::size_t i = first; i < end; ++i) {
+                    GrassInstanceData instance = entries[index][i].instance;
+                    instance.lodRank = (static_cast<float>(i - first) + 0.5f) / static_cast<float>(block.count);
+                    block.minX = std::min(block.minX, instance.x);
+                    block.maxX = std::max(block.maxX, instance.x);
+                    block.minZ = std::min(block.minZ, instance.z);
+                    block.maxZ = std::max(block.maxZ, instance.z);
+                    instances.push_back(instance);
+                }
+                first = end;
             }
             cells_[index].instances = std::make_unique<VertexBuffer>(
                 device_, InstanceDeclaration(), static_cast<int>(instances.size()),
@@ -993,6 +1037,8 @@ void main()
                                           cameraPosition.Y, cameraPosition.Z);
             customEffect_->SetUniformVec2("uGrassFadeRange",
                 GrassVisibility::FadeStart(maximumDrawDistance_), maximumDrawDistance_);
+            customEffect_->SetUniformVec4("uGrassLodBands", GrassLod::NearOnlyDistance,
+                GrassLod::MiddleOnlyStartDistance, GrassLod::MiddleOnlyEndDistance, GrassLod::FarOnlyDistance);
             customEffect_->SetUniformVec3(
                 "uToSun", environment::SunDirectionX, environment::SunDirectionY,
                 environment::SunDirectionZ);
@@ -1039,23 +1085,52 @@ void main()
             }
             ++visibleCellCount_;
             visiblePatchCount_ += cell.patchCount;
-            const GrassLodSplit split = GrassLod::Split(
-                cell.patchCount, std::sqrt(distanceSquared));
-            visibleNearPatchCount_ += split.nearCount;
-            visibleMiddlePatchCount_ += split.middleCount;
-            visibleFarPatchCount_ += split.farCount;
-            const int activeLodCount = (split.nearCount > 0 ? 1 : 0)
-                + (split.middleCount > 0 ? 1 : 0) + (split.farCount > 0 ? 1 : 0);
-            if (activeLodCount > 1) {
-                ++mixedLodCellCount_;
-            }
             if (customShaderReady_) {
-                DrawInstancedMesh(nearMesh_, cell, 0, split.nearCount);
-                DrawInstancedMesh(
-                    middleMesh_, cell, split.nearCount, split.middleCount);
-                DrawInstancedMesh(farMesh_, cell,
-                                  split.nearCount + split.middleCount, split.farCount);
+                // Each tier's draw covers the instances of each quarter that may carry weight
+                // in it anywhere in that quarter; the shader scales every patch by its own share.
+                bool nearUsed = false, middleUsed = false, farUsed = false;
+                const auto drawTier = [&](const GrassMesh& mesh, const float tier, const int begin, const int count) {
+                    if (count <= 0) return;
+                    customEffect_->SetUniformVec2("uGrassTier", tier, GrassLod::MorphHalfWidth);
+                    DrawInstancedMesh(mesh, cell, begin, count);
+                };
+                for (const GrassBlock& block : cell.blocks) {
+                    if (block.count <= 0) continue;
+                    const float nearest = std::sqrt(GrassVisibility::NearestDistanceSquared(
+                        cameraPosition.X, cameraPosition.Z, block.minX, block.minZ, block.maxX, block.maxZ));
+                    if (nearest > maximumDrawDistance_) continue;
+                    const float farX = std::max(std::abs(block.minX - cameraPosition.X), std::abs(block.maxX - cameraPosition.X));
+                    const float farZ = std::max(std::abs(block.minZ - cameraPosition.Z), std::abs(block.maxZ - cameraPosition.Z));
+                    // patches beyond the draw distance are scaled away, so no tier serves them
+                    const GrassLodRanges ranges = GrassLod::Ranges(block.count, nearest,
+                        std::min(std::sqrt(farX * farX + farZ * farZ), maximumDrawDistance_));
+                    const int nearCount = ranges.nearEnd - ranges.nearBegin;
+                    const int middleCount = ranges.middleEnd - ranges.middleBegin;
+                    const int farCount = ranges.farEnd - ranges.farBegin;
+                    visibleNearPatchCount_ += nearCount;
+                    visibleMiddlePatchCount_ += middleCount;
+                    visibleFarPatchCount_ += farCount;
+                    nearUsed = nearUsed || nearCount > 0;
+                    middleUsed = middleUsed || middleCount > 0;
+                    farUsed = farUsed || farCount > 0;
+                    drawTier(nearMesh_, 0.0f, block.first + ranges.nearBegin, nearCount);
+                    drawTier(middleMesh_, 1.0f, block.first + ranges.middleBegin, middleCount);
+                    drawTier(farMesh_, 2.0f, block.first + ranges.farBegin, farCount);
+                }
+                if ((nearUsed ? 1 : 0) + (middleUsed ? 1 : 0) + (farUsed ? 1 : 0) > 1) {
+                    ++mixedLodCellCount_;
+                }
             } else {
+                const GrassLodSplit split = GrassLod::Split(
+                    cell.patchCount, std::sqrt(distanceSquared));
+                visibleNearPatchCount_ += split.nearCount;
+                visibleMiddlePatchCount_ += split.middleCount;
+                visibleFarPatchCount_ += split.farCount;
+                const int activeLodCount = (split.nearCount > 0 ? 1 : 0)
+                    + (split.middleCount > 0 ? 1 : 0) + (split.farCount > 0 ? 1 : 0);
+                if (activeLodCount > 1) {
+                    ++mixedLodCellCount_;
+                }
                 DrawFallbackMesh(nearMesh_, cell, 0, split.nearCount);
                 DrawFallbackMesh(
                     middleMesh_, cell, split.nearCount, split.middleCount);

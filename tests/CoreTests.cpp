@@ -6468,6 +6468,66 @@ int main()
             }
         }
     }
+    {
+        // Per-patch grass tiers (loop pass 209): each patch morphs between meshes by its own
+        // distance, the weights stay continuous and complete, a cell's draw ranges cover every
+        // patch that carries weight in a tier, and nothing inside NearOnly - morph leaves the
+        // near mesh, where the old split by the cell centre drew patches 51 m away as middle.
+        using island::GrassLod;
+        bool complete = true, covered = true, continuous = true, nearHeld = true;
+        for (const int count : {1, 7, 64, 333}) {
+            for (float nearest = 0.0f; nearest <= 130.0f; nearest += 3.7f) {
+                for (const float span : {0.0f, 9.0f, 26.5f, 53.0f}) {
+                    const float farthest = nearest + span;
+                    const auto ranges = GrassLod::Ranges(count, nearest, farthest);
+                    for (int i = 0; i < count; ++i) {
+                        const float rank = (static_cast<float>(i) + 0.5f) / static_cast<float>(count);
+                        for (float d = nearest; d <= farthest; d += 0.5f) {
+                            const auto w = GrassLod::PatchWeights(rank, d);
+                            if (std::abs(w.nearWeight + w.middleWeight + w.farWeight - 1.0f) > 1e-4f
+                                || w.nearWeight < 0 || w.middleWeight < 0 || w.farWeight < 0) complete = false;
+                            if (w.nearWeight > 0 && (i < ranges.nearBegin || i >= ranges.nearEnd)) covered = false;
+                            if (w.middleWeight > 0 && (i < ranges.middleBegin || i >= ranges.middleEnd)) covered = false;
+                            if (w.farWeight > 0 && (i < ranges.farBegin || i >= ranges.farEnd)) covered = false;
+                        }
+                    }
+                }
+            }
+        }
+        float largestStep = 0.0f;
+        for (float rank = 0.005f; rank < 1.0f; rank += 0.01f) {
+            auto previous = GrassLod::PatchWeights(rank, 0.0f);
+            for (float d = 0.01f; d <= 130.0f; d += 0.01f) {
+                const auto w = GrassLod::PatchWeights(rank, d);
+                largestStep = std::max({largestStep, std::abs(w.nearWeight - previous.nearWeight),
+                                        std::abs(w.middleWeight - previous.middleWeight),
+                                        std::abs(w.farWeight - previous.farWeight)});
+                previous = w;
+            }
+            if (GrassLod::PatchWeights(rank, GrassLod::NearOnlyDistance - GrassLod::MorphHalfWidth).nearWeight != 1.0f)
+                nearHeld = false;
+        }
+        continuous = largestStep <= 0.01f;
+        // the old split: a 37.5 m cell centred 70 m away put a share of its patches, the
+        // nearest 51.25 m away, on the middle mesh
+        const auto oldCentre = GrassLod::Split(100, 70.0f);
+        bool newNear = true;
+        for (int i = 0; i < 100; ++i)
+            if (GrassLod::PatchWeights((static_cast<float>(i) + 0.5f) / 100.0f, 51.25f).nearWeight != 1.0f) newNear = false;
+        const auto close = GrassLod::Ranges(100, 10.0f, 50.0f);
+        const auto distant = GrassLod::Ranges(100, 105.0f, 130.0f);
+        Check(complete, "grass patch tier weights lie in 0..1 and sum to 1");
+        Check(covered, "a grass cell's tier draw ranges cover every patch with weight in that tier");
+        Check(continuous, "a grass patch morphs between tiers by at most 1 % per centimetre of distance");
+        Check(nearHeld, "no grass patch leaves the near mesh nearer than NearOnly minus the morph");
+        Check(oldCentre.middleCount > 0 && newNear,
+              "per-patch tiers keep near patches near where the cell-centre split thinned them");
+        Check(close.nearEnd == 100 && close.middleEnd == close.middleBegin && close.farEnd == close.farBegin
+                  && distant.nearEnd == distant.nearBegin,
+              "grass cells draw only the tiers their distances can reach");
+        std::cout << "grass per-patch tiers: largest morph step " << largestStep << " per cm; old cell split at 70 m drew "
+                  << oldCentre.middleCount << " of 100 patches as middle\n";
+    }
     const island::GrassLodSplit emptyGrassLod = island::GrassLod::Split(0, 82.0f);
     Check(emptyGrassLod.nearCount == 0 && emptyGrassLod.middleCount == 0
               && emptyGrassLod.farCount == 0,
