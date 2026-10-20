@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 
 #include <memory>
 #include <limits>
@@ -136,6 +137,10 @@ namespace island
         [[nodiscard]] int PlayedHoofbeatCount() const noexcept { return playedHoofbeatCount_; }
         /** @brief A coconut crab's claws knocking on a shell: heard within about fifteen metres. */
         void NoteClawKnock(float x, float y, float z) noexcept;
+        /** @brief The weather's sound: the rain's loudness and the lightning strikes so far
+         *  (a new strike's thunder follows after its distance over the speed of sound). */
+        void SetWeather(float rain, std::uint32_t strikes, float strikeDistance) noexcept;
+        [[nodiscard]] int PlayedThunderCount() const noexcept { return playedThunderCount_; }
         [[nodiscard]] int PlayedClawKnockCount() const noexcept { return playedClawKnockCount_; }
         [[nodiscard]] int PlayedCrocodileHissCount() const noexcept { return playedCrocodileHissCount_; }
         [[nodiscard]] int PlayedWingClapCount() const noexcept { return playedWingClapCount_; }
@@ -263,6 +268,15 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> campfireInstance_;
         bool campfirePlaybackActive_ = false;
         float campfirePresence_=0,campfireVolume_=0;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> rainEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> rainInstance_;
+        std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> thunderEffects_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> thunderInstance_;
+        float weatherRain_ = 0.0f;
+        std::uint32_t weatherStrikes_ = 0;
+        float pendingThunderSeconds_ = 0.0f, pendingThunderDistance_ = 0.0f;
+        bool thunderPending_ = false;
+        int playedThunderCount_ = 0;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> bunkerHumEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> bunkerHumInstance_;
         bool bunkerHumPlaybackActive_=false;

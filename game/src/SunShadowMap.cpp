@@ -1,3 +1,4 @@
+#include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
@@ -207,6 +208,7 @@ void main() {
                               static_cast<float>(resolution_));
         effect.SetUniformVec4("uCloudShade", CloudShadow::LandStrength * sun_light::Current().lighting.sunVisibility,
                               cloudClock, 0.0f, 0.0f);   // a cloud only dims sunlight
+        effect.SetUniformFloat("uCloudCoverage", weather_now::Current().cloudCover);
         // The viewer's column at the light's target height, in the light's clip space: the far
         // fade is measured from it, so it follows the camera continuously between re-renders.
         const Vector3 viewer = Vector3::Transform(
@@ -220,6 +222,7 @@ void main() {
         effect.SetUniformVec4("uSunShadowParams", 0.0f, 0.0f, 0.0f, 1.0f);
         effect.SetUniformVec4("uCloudShade", CloudShadow::LandStrength * sun_light::Current().lighting.sunVisibility,
                               cloudClock, 0.0f, 0.0f);   // a cloud only dims sunlight
+        effect.SetUniformFloat("uCloudCoverage", weather_now::Current().cloudCover);
     }
 
     std::unique_ptr<ShaderEffect> SunShadowMap::CreateCasterEffect(const char* vertexBody,

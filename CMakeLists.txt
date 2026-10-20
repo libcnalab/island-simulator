@@ -130,6 +130,7 @@ add_library(island_core STATIC
     game/src/GoatMesh.cpp
     game/src/JungleLayout.cpp
     game/src/DayNightCycle.cpp
+    game/src/WeatherSystem.cpp
     game/src/SlopeScrubLayout.cpp
     game/src/LeafBladeProfile.cpp
     game/src/UnderstoryLeafProfile.cpp
@@ -688,6 +689,7 @@ if(ISLAND_BUILD_GAME)
         game/src/SunShadowMap.cpp
         game/src/StructureShadowReceiver.cpp
         game/src/TimeOfDayRenderer.cpp
+        game/src/RainRenderer.cpp
         game/src/CrabRenderer.cpp
         game/src/CrocodileRenderer.cpp
         game/src/BoarRenderer.cpp

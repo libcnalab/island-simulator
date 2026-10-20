@@ -35,6 +35,8 @@ namespace island
         ~TimeOfDayRenderer();
 
         void DrawGrade(const DayLighting& light);
+        /** @brief A lightning flash over everything already drawn (0..1). */
+        void DrawFlash(float flash);
         void DrawNightSky(const Microsoft::Xna::Framework::Matrix& view,
                           const Microsoft::Xna::Framework::Matrix& projection,
                           const Microsoft::Xna::Framework::Vector3& camera, const DayLighting& light);

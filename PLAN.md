@@ -54,6 +54,37 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Weather pass 1 (2026-10-20) — clear, cloudy, overcast, showers and thunderstorms
+
+The second half of the operator's request. A core `WeatherSystem` chains spells of 1.5 to 5
+game hours (clear, partly cloudy, overcast, showers, thunderstorm) through a transition table
+in which fair weather clouds over and showers clear or build into a storm, never fair weather
+straight into a storm or back, from a seed (a run repeats), each spell eased into the next:
+cloud cover, rain (showers come and go within their spell), wind, ground wetness (soaked in
+about a minute of heavy rain, dry a few minutes after) and, in a storm, lightning every 5-22
+real seconds with the strike's distance for the thunder. Snow is deliberately absent (not
+possible on a tropical island at sea level; the operator asked). `ApplyTo` folds it into the
+hour's light: overcast weakens the sun's shadows (85 %), hides its disc, dims and greys the
+scene and turns the sky to a grey that keeps the hour's brightness, and hides the stars. Core
+checks: repeatable, spells bounded, no illegal jumps, twenty game days bring rain and a storm,
+the former partly cloudy weather changes nothing, a storm soaks the ground and strikes,
+overcast weakens shadows and dims, the names parse and there is no snow.
+
+In the game the weather starts partly cloudy and runs with the clock; the fixed QA views keep
+it unless `--weather` asks for one, so every existing capture is unchanged (`hut` 0.1 % by 20
+levels); Y steps through the weathers (after a thunderstorm the spells run on their own
+again). The shared cumulus shade takes a coverage uniform (unset it reads 0, the former
+quarter), so the cloud shadows on land and sea close up under overcast; the sky draws a grey
+cloud deck that closes with the cover and darkens in the rain; the terrain darkens by up to
+30 % where it is wet (on land only); rain falls as world-anchored streaks on a 1.2 m world grid
+around the walker (three drops a cell at full rain, 8.5 m/s, slanted with the wind, faded at
+the edges of a 26 m by 22 m volume, never in the cave, the bunker or under the sea) before the
+night grade; lightning adds a brief additive flash; the soundscape plays a procedural rain
+loop by the rain's strength and, after each strike's distance over the speed of sound, a near
+crack-and-roll or a distant roll of thunder. Native `hut` (partly cloudy, overcast, showers,
+thunderstorm) and `flight` (showers, and a thunderstorm at 21:00) pass. Not yet: stronger
+gust fronts with the wind, morning mist, rain rings on the water.
+
 ## Day/night pass 1 (2026-10-20) — the island's clock, the moving sun, the night and the moon
 
 Operator request: day and night with the moon, 24 game hours in about 24 minutes, then weather.

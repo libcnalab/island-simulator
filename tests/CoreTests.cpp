@@ -63,6 +63,7 @@
 #include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/SlopeScrubLayout.hpp"
 #include "IslandSimulator/DayNightCycle.hpp"
+#include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/CrabBubbleField.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
 #include "IslandSimulator/CicadaColony.hpp"
@@ -6651,6 +6652,71 @@ int main()
         Check(clock.Hour() == held, "a frozen clock holds its hour");
         std::cout << "day/night: latitude " << DayNightCycle::LatitudeDegrees() << " deg, east axis "
                   << DayNightCycle::EastAxisDegrees() << " deg, largest light step " << largestStep << " per game minute\n";
+    }
+    {
+        // The weather (operator request 2026-10-20): reproducible spells of 1.5-5 game hours
+        // following the transition table, eased; the former look is partly cloudy and changes
+        // nothing; rain wets the ground and it dries; a storm throws lightning; overcast weakens
+        // the sun's shadows and greys the scene.
+        using island::WeatherKind;
+        using island::WeatherSystem;
+        island::WeatherSystem a(1234U), b(1234U);
+        bool repeatable = true, spellsBounded = true, legal = true, sawRain = false, sawStorm = false;
+        WeatherKind previous = a.State().kind;
+        float spellHours = 0.0f;
+        for (int step = 0; step < 24 * 60 * 20; ++step) {   // twenty game days, one game minute a step
+            a.Advance(1.0f, 1.0f / 60.0f);
+            b.Advance(1.0f, 1.0f / 60.0f);
+            if (a.State().kind != b.State().kind || a.State().rain != b.State().rain) repeatable = false;
+            spellHours += 1.0f / 60.0f;
+            if (a.State().kind != previous) {
+                if (spellHours < WeatherSystem::MinimumSpellHours - 0.02f || spellHours > WeatherSystem::MaximumSpellHours + 0.02f)
+                    spellsBounded = false;
+                if ((previous == WeatherKind::Clear && a.State().kind == WeatherKind::Thunderstorm)
+                    || (previous == WeatherKind::Thunderstorm && a.State().kind == WeatherKind::Clear)) legal = false;
+                previous = a.State().kind;
+                spellHours = 0.0f;
+            }
+            sawRain = sawRain || a.State().rain > 0.3f;
+            sawStorm = sawStorm || a.State().kind == WeatherKind::Thunderstorm;
+        }
+        Check(repeatable, "the same seed repeats the same weather");
+        Check(spellsBounded, "weather spells last 1.5 to 5 game hours");
+        Check(legal, "fair weather never turns straight into a storm or back");
+        Check(sawRain && sawStorm, "twenty game days bring rain and a thunderstorm");
+        island::WeatherSystem wet(7U);
+        wet.Force(WeatherKind::PartlyCloudy);
+        auto day = island::DayNightCycle::LightingAt(14.0f, 2.0f);
+        auto same = day;
+        WeatherSystem::ApplyTo(same, wet.State());
+        Check(same.grade.x == day.grade.x && same.shadowStrength == day.shadowStrength && same.skyZenith.z == day.skyZenith.z,
+              "the former partly cloudy weather leaves the light unchanged");
+        wet.Force(WeatherKind::Showers);
+        wet.Release();
+        island::WeatherSystem storm(9U);
+        storm.Force(WeatherKind::Thunderstorm);
+        float soaked = 0.0f;
+        for (int s = 0; s < 120; ++s) { storm.Advance(1.0f, 0.0f); soaked = storm.State().wetness; }
+        std::uint32_t strikes = storm.State().strikes;
+        bool flashed = false;
+        for (int s = 0; s < 600; ++s) { storm.Advance(0.05f, 0.0f); flashed = flashed || storm.State().flash > 0.9f; }
+        Check(soaked > 0.95f && storm.State().strikes > strikes && flashed, "a storm soaks the ground and throws lightning");
+        storm.Force(WeatherKind::Clear);
+        storm.Release();
+        island::WeatherSystem drying(9U);
+        drying.Force(WeatherKind::Thunderstorm);
+        for (int s = 0; s < 120; ++s) drying.Advance(1.0f, 0.0f);
+        drying.Force(WeatherKind::Clear);
+        drying.Advance(1.0f, 0.0f);
+        Check(drying.State().wetness == 0.0f, "forcing clear weather leaves the ground dry");
+        island::WeatherSystem dryer(9U);
+        dryer.Force(WeatherKind::Overcast);
+        auto overcast = day;
+        WeatherSystem::ApplyTo(overcast, dryer.State());
+        Check(overcast.shadowStrength < 0.3f && overcast.grade.x < day.grade.x && overcast.sunVisibility < 0.3f,
+              "overcast weakens the sun's shadows, hides its disc and dims the scene");
+        Check(island::WeatherFromName("storm") == WeatherKind::Thunderstorm && !island::WeatherFromName("snow"),
+              "the weather names parse, and there is no snow on a tropical island");
     }
     const island::GrassLodSplit emptyGrassLod = island::GrassLod::Split(0, 82.0f);
     Check(emptyGrassLod.nearCount == 0 && emptyGrassLod.middleCount == 0

@@ -9,6 +9,9 @@ namespace island::CloudShadow {
 inline constexpr float DriftX=1.6f,DriftZ=0.35f;
 inline constexpr float LandStrength=0.38f;   // how much a cloud dims the sun on land
 inline constexpr const char* Shader=R"(
+// The weather's cloud coverage: 0 the fair-weather quarter (unset uniforms read 0), 1 overcast,
+// negative a clearer sky.
+uniform float uCloudCoverage;
 float cloudShadowHash(vec2 p)
 {
     vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -30,7 +33,8 @@ float cloudCover(vec2 position, float time)
     vec2 drift = position + vec2(1.6, 0.35) * time;
     float field = cloudShadowNoise(drift * 0.0062)
         + (cloudShadowNoise(drift * 0.0151 + 7.3) - 0.5) * 0.38;
-    return smoothstep(0.56, 0.70, field);
+    float shift = 0.42 * clamp(uCloudCoverage, -0.4, 1.0);
+    return smoothstep(0.56 - shift, 0.70 - shift, field);
 }
 )";
 // The same field on the CPU, for tests and anything that wants to know where the shade is.

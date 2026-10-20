@@ -136,6 +136,25 @@ namespace island
         gradeApplied_ = true;
     }
 
+    void TimeOfDayRenderer::DrawFlash(const float flash)
+    {
+        if (!(flash > 0.01f)) return;
+        device_.setRasterizerStateProperty(RasterizerState::CullNone);
+        device_.setBlendStateProperty(BlendState::Additive);
+        device_.setDepthStencilStateProperty(DepthStencilState::None);
+        device_.SetVertexBuffer(gradeTriangle_.get());
+        device_.setIndicesProperty(nullptr);
+        const float f = std::clamp(flash, 0.0f, 1.0f) * 0.42f;
+        gradeEffect_->setDiffuseColorProperty(Vector3(0.78f * f, 0.82f * f, 0.95f * f));
+        gradeEffect_->setWorldProperty(Matrix::getIdentityProperty());
+        gradeEffect_->setViewProperty(Matrix::getIdentityProperty());
+        gradeEffect_->setProjectionProperty(Matrix::getIdentityProperty());
+        gradeEffect_->Apply();
+        device_.DrawPrimitives(PrimitiveType::TriangleList, 0, 1);
+        gradeEffect_->setDiffuseColorProperty(Vector3(1.0f, 1.0f, 1.0f));
+        ++drawCalls_;
+    }
+
     void TimeOfDayRenderer::DrawNightSky(const Matrix& view, const Matrix& projection, const Vector3& camera,
                                          const DayLighting& light)
     {

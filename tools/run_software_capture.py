@@ -597,6 +597,8 @@ def main():
     parser.add_argument("--canopy-lod-inspection", nargs=3, metavar=("X_MM", "Z_MM", "TIER"))
     parser.add_argument("--time-of-day", type=float, default=None,
                         help="QA: the game hour to hold the clock at (default: the 14:00 the views were made at)")
+    parser.add_argument("--weather", choices=["clear", "partly-cloudy", "overcast", "showers", "thunderstorm"], default=None,
+                        help="QA: hold this weather (default: the partly cloudy sky the views were made in)")
     parser.add_argument("--game-day", type=int, default=None,
                         help="QA: the game day (the moon's phase follows it)")
     parser.add_argument("--no-sun-shadows", action="store_true",
@@ -618,7 +620,8 @@ def main():
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     evidence = build / "software-captures" / (f"{stamp}-{args.viewpoint}" + ("-no-sun-shadows" if args.no_sun_shadows else "")
                                               + (f"-t{args.time_of_day:05.2f}" if args.time_of_day is not None else "")
-                                              + (f"-d{args.game_day}" if args.game_day is not None else ""))
+                                              + (f"-d{args.game_day}" if args.game_day is not None else "")
+                                              + (f"-{args.weather}" if args.weather is not None else ""))
     evidence.mkdir(parents=True)
     capture = evidence / "capture.ppm"
     platform = dependency / "tools/platform"
@@ -627,7 +630,8 @@ def main():
                str(build / "island-simulator"), "--capture", str(capture), "--viewpoint", args.viewpoint,
                "--no-user-settings", *inspection, *(["--no-sun-shadows"] if args.no_sun_shadows else []),
                *(["--time-of-day", str(args.time_of_day)] if args.time_of_day is not None else []),
-               *(["--game-day", str(args.game_day)] if args.game_day is not None else [])]
+               *(["--game-day", str(args.game_day)] if args.game_day is not None else []),
+               *(["--weather", args.weather] if args.weather is not None else [])]
     scope = "single-tree frozen LOD inspection only" if inspection else "software visual validation only"
     # Exercise title-relative content loading from an unrelated, build-owned working directory.
     metadata = {"scope": scope, "command": command, "cwd": str(evidence), "kernel_before": baseline}
@@ -1159,6 +1163,10 @@ def main():
                 raise RuntimeError("current prop and wreck sun-shadow receiving is missing; check for a stale executable")
             if not re.search(r"day and night: 24 game hours pass in 24 real minutes from \d\d:\d\d; the sun rises in the east at 06:00 and sets at 18:00", diagnostics):
                 raise RuntimeError("current day/night clock is missing; check for a stale executable")
+            if not re.search(r"weather: spells of 1.5-5 game hours of clear, partly cloudy, overcast, showers and thunderstorms \(no snow on a tropical island\); now [a-z-]+", diagnostics):
+                raise RuntimeError("current weather is missing; check for a stale executable")
+            if "rain falls in world-anchored streaks around the walker" not in diagnostics:
+                raise RuntimeError("current rain is missing; check for a stale executable")
             if "night sky: 1100 stars and a phased moon over the graded sky" not in diagnostics:
                 raise RuntimeError("current night sky is missing; check for a stale executable")
             if "the hut receives the sun shadows: its eaves shade its walls and the trees' shadows and the cumulus shade fall across it" not in diagnostics:

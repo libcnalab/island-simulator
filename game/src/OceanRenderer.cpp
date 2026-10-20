@@ -1,3 +1,4 @@
+#include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/OceanRenderer.hpp"
 
@@ -619,6 +620,7 @@ void main()
                 "uToSun", sun_light::UniformDirection().x, sun_light::UniformDirection().y,
                 sun_light::UniformDirection().z);
             customEffect_->SetUniformFloat("uTime", timeSeconds);
+            customEffect_->SetUniformFloat("uCloudCoverage", weather_now::Current().cloudCover);
             customEffect_->SetUniformVec4("uCoastalOptics", CoastalWaterOptics::ExtinctionPerMetre,
                 CoastalWaterOptics::LagoonDecayPerMetre, CoastalWaterOptics::ContactFadeDepth,
                 CoastalWaterOptics::MaximumBodyOpacity);

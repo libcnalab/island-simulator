@@ -1,3 +1,4 @@
+#include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/SkyRenderer.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
@@ -73,6 +74,7 @@ uniform float uCloudDriftRadians;
 // already divided by the scene grade the frame is multiplied by afterwards; w: the sun's visibility.
 uniform vec4 uSkyHorizonScale;
 uniform vec3 uSkyZenithScale;
+uniform vec2 uWeatherSky;   // x: cloud cover (0 fair, 1 overcast), y: rain
 
 out vec4 fragColor;
 
@@ -200,6 +202,18 @@ void main()
     float awayFromSun = 1.0 - smoothstep(0.72, 0.96, sunDot);
     color = mix(color, vec3(0.90, 0.95, 0.96), wisps * awayFromSun * 0.14);
 
+    // A grey cloud deck under overcast and in the rain: broken at partial cover, closed at full,
+    // darker where it rains.
+    float deckCover = clamp(uWeatherSky.x, 0.0, 1.0);
+    if (deckCover > 0.0) {
+        float deck = 0.5 + 0.30 * sin(dot(cloudDirection.xz, vec2(5.0, 3.0)) * 1.3 + warp)
+            + 0.22 * sin(cloudDirection.y * 21.0 + cloudDirection.x * 9.0 - warp * 1.3)
+            + 0.12 * sin(dot(cloudDirection, vec3(17.0, 11.0, -13.0)));
+        float amount = smoothstep(1.05 - deckCover * 1.1, 1.30 - deckCover * 1.05, deck)
+            * smoothstep(-0.02, 0.08, direction.y);
+        vec3 deckColour = vec3(dot(horizon, vec3(0.3, 0.59, 0.11))) * mix(0.80, 0.58, clamp(uWeatherSky.y, 0.0, 1.0));
+        color = mix(color, deckColour, amount * 0.94);
+    }
     // Cumulus masses in azimuth/elevation space; nine low over the sea, two a little higher.
     float azimuth = atan(direction.z, direction.x) - uCloudDriftRadians;
     float skyElevation = asin(clamp(direction.y, -1.0, 1.0));
@@ -408,6 +422,8 @@ void main()
                 ratio(light.skyHorizon.x, day.skyHorizon.x, light.grade.x),
                 ratio(light.skyHorizon.y, day.skyHorizon.y, light.grade.y),
                 ratio(light.skyHorizon.z, day.skyHorizon.z, light.grade.z), light.sunVisibility);
+            customEffect_->SetUniformVec2("uWeatherSky", std::max(weather_now::Current().cloudCover, 0.0f),
+                                          weather_now::Current().rain);
             customEffect_->SetUniformVec3("uSkyZenithScale",
                 ratio(light.skyZenith.x, day.skyZenith.x, light.grade.x),
                 ratio(light.skyZenith.y, day.skyZenith.y, light.grade.y),

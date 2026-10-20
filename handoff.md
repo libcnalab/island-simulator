@@ -64,9 +64,17 @@ level, so it is left out (at most a hidden joke switch, off by default, if the o
       night, campfire glowing at night (done, Day/night pass 1); the hut window glow is still to do.
 - [x] The moving sun in the real-time shaders and the sun shadow map; geometry with lighting
       baked at build time keeps the 14:00 sun (listed in PLAN "Day/night pass 1").
-- [ ] Weather: clear, partly cloudy, overcast, showers, tropical thunderstorm (lightning and
-      thunder), morning mist; world-anchored rain around the camera (no screen overlays), wet
-      darkened ground, stronger gusts, rain and thunder sounds.
+- [~] Weather: clear, partly cloudy, overcast, showers, tropical thunderstorm (lightning and
+      thunder), world-anchored rain around the camera, wet darkened ground, rain and thunder
+      sounds (done, PLAN "Weather pass 1"; Y steps through them, `--weather` for captures);
+      still to do: morning mist, stronger gusts with the wind, rain rings on the water.
+
+Operator request 2026-10-20 (the next task after the weather): ride a quad bike (ATV).
+- [ ] A key switches between walking and the ATV and back; a driver avatar sits on it.
+- [ ] As realistic a model as possible (frame, bodywork, handlebars, four wheels with treaded tyres,
+      suspension), exhaust smoke, headlights by day and lighting the ground at night.
+- [ ] Drives over the island's terrain with suspension, can roll over; Backspace rights it.
+- [ ] Engine sound following the revs; a top speed of a real ATV (about 80 km/h).
 
 Loop log (propose → implement, continues until the operator stops the session):
 - Pass 1: dappled leaf-gap sun flecks on the shaded forest floor; `ground` view reclassified

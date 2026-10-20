@@ -1,5 +1,6 @@
 #include "CNA/Platform/Entrypoint.hpp"
 
+#include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/IslandGame.hpp"
@@ -189,6 +190,13 @@ int main(const int argc, char* argv[])
             inputDiagnostics = true;
         } else if (argument == "--no-user-settings") {
             noUserSettings = true;
+        } else if (argument == "--weather" && index + 1 < argc) {
+            const auto kind = island::WeatherFromName(argv[++index]);
+            if (!kind) {
+                std::cerr << "island-simulator: unknown --weather (clear, partly-cloudy, overcast, showers, thunderstorm)\n";
+                return 2;
+            }
+            island::weather_now::SetRequested(kind);
         } else if (argument == "--game-day" && index + 1 < argc) {
             island::day_night_options::SetRequestedDay(std::strtof(argv[++index], nullptr));
         } else if (argument == "--time-of-day" && index + 1 < argc) {

@@ -2436,6 +2436,7 @@ namespace island
         waterViewOverlay_ = std::make_unique<WaterViewOverlay>(device);
         underwaterEffect_ = std::make_unique<UnderwaterEffectRenderer>(device);
         timeOfDay_ = std::make_unique<TimeOfDayRenderer>(device);
+        rain_ = std::make_unique<RainRenderer>(device);
         {
             // The clock: 24 game hours in 24 real minutes from 14:00 (the former fixed sun's
             // hour), or from --time-of-day; held still for the fixed QA views and smoke runs so
@@ -2446,7 +2447,19 @@ namespace island
                 dayNight_ = DayNightCycle(requested >= 0.0f ? requested : DayNightCycle::DefaultHour, requestedDay);
             else if (requested >= 0.0f) dayNight_.SetHour(requested);
             dayNight_.SetFrozen(viewpoint_ != FixedViewpoint::None || smokeTest_);
-            sun_light::Set(dayNight_.Lighting());
+            // The weather: the fixed QA views keep the former partly cloudy sky unless one is
+            // asked for; play starts partly cloudy and lets the spells run.
+            if (const auto requestedWeather = weather_now::Requested()) weather_.Force(*requestedWeather);
+            else if (dayNight_.Frozen()) weather_.Force(WeatherKind::PartlyCloudy);
+            weather_now::Set(weather_.State());
+            {
+                auto light = dayNight_.Lighting();
+                WeatherSystem::ApplyTo(light, weather_.State());
+                sun_light::Set(light);
+            }
+            std::cout << "island-simulator: weather: spells of 1.5-5 game hours of clear, partly cloudy, overcast, showers "
+                         "and thunderstorms (no snow on a tropical island); now " << WeatherName(weather_.State().kind)
+                      << (weather_.Forced() ? ", held" : "") << "; press Y for the next weather\n";
             const auto shading = sun_light::Current().shading;
             wildlife_render::FixedSunDirection = Vector3(shading.x, shading.y, shading.z);
             const auto clockText = [](const float hour) {
@@ -2985,8 +2998,30 @@ namespace island
                 std::cout << "island-simulator: the clock moves on to hour " << static_cast<int>(dayNight_.Hour()) << '\n';
             }
             timeKeyWasDown_ = timeKeyDown;
+            // Y holds the next weather (after a thunderstorm it lets the spells run again).
+            const bool weatherKeyDown = frameKeyboard.IsKeyDown(Keys::Y);
+            if (weatherKeyDown && !weatherKeyWasDown_) {
+                if (weather_.Forced() && weather_.State().kind == WeatherKind::Thunderstorm) {
+                    weather_.Release();
+                    std::cout << "island-simulator: the weather runs on its own again\n";
+                } else {
+                    const auto next = static_cast<WeatherKind>((static_cast<int>(weather_.State().kind) + 1) % 5);
+                    weather_.Force(next);
+                    std::cout << "island-simulator: the weather is now " << WeatherName(next) << '\n';
+                }
+            }
+            weatherKeyWasDown_ = weatherKeyDown;
+            const float hoursBefore = dayNight_.Hour();
             dayNight_.Advance(deltaSeconds);
-            sun_light::Set(dayNight_.Lighting());
+            const float gameHours = dayNight_.Frozen() ? 0.0f
+                : std::fmod(dayNight_.Hour() - hoursBefore + 24.0f, 24.0f);
+            weather_.Advance(dayNight_.Frozen() && !weather_.Forced() ? 0.0f : deltaSeconds, gameHours);
+            weather_now::Set(weather_.State());
+            auto light = dayNight_.Lighting();
+            WeatherSystem::ApplyTo(light, weather_.State());
+            sun_light::Set(light);
+            if (soundscape_)
+                soundscape_->SetWeather(weather_.State().rain, weather_.State().strikes, weather_.State().lastStrikeDistance);
             const auto shading = sun_light::Current().shading;
             wildlife_render::FixedSunDirection = Vector3(shading.x, shading.y, shading.z);
         }
@@ -5265,8 +5300,15 @@ namespace island
             // the moon; the campfire's flames after it keep their own light.
             GpuDiagnosticScope gpuPass("time-of-day");
             const auto& light = sun_light::Current().lighting;
+            // The rain, before the grade so the night darkens it; not inside the hill (the cave,
+            // the bunker) or under the sea.
+            const auto& weather = weather_now::Current();
+            const bool underground = renderCameraPosition_.Y < terrain_.Height(renderCameraPosition_.X, renderCameraPosition_.Z) - 0.5f;
+            if (!underground && renderCameraPosition_.Y > 0.0f)
+                rain_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, weather.rain, weather.wind, timeSeconds);
             timeOfDay_->DrawGrade(light);
             timeOfDay_->DrawNightSky(cameraView_, cameraProjection_, renderCameraPosition_, light);
+            timeOfDay_->DrawFlash(weather.flash);
         }
         {
             GpuDiagnosticScope gpuPass("campfire-effects");

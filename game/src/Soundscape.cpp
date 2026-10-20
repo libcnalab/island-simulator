@@ -205,6 +205,19 @@ namespace island
         ++chatterCount_;
     }
 
+    void Soundscape::SetWeather(const float rain, const std::uint32_t strikes, const float strikeDistance) noexcept
+    {
+        weatherRain_ = std::isfinite(rain) ? std::clamp(rain, 0.0f, 1.0f) : 0.0f;
+        if (strikes != weatherStrikes_) {
+            if (strikes > weatherStrikes_ && std::isfinite(strikeDistance)) {
+                pendingThunderSeconds_ = std::max(strikeDistance, 0.0f) / 343.0f;
+                pendingThunderDistance_ = strikeDistance;
+                thunderPending_ = true;
+            }
+            weatherStrikes_ = strikes;
+        }
+    }
+
     void Soundscape::NoteClawKnock(const float x, const float y, const float z) noexcept
     {
         if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) return;
@@ -375,6 +388,14 @@ namespace island
             campfireEffect_->setNameProperty("Procedural wood fire crackling");
             campfireInstance_=std::make_unique<SoundEffectInstance>(campfireEffect_->CreateInstance());
             campfireInstance_->setIsLoopedProperty(true);
+            rainEffect_=CreateLoopedSoundEffect(GenerateRainLoop());
+            rainEffect_->setNameProperty("Procedural rain");
+            rainInstance_=std::make_unique<SoundEffectInstance>(rainEffect_->CreateInstance());
+            rainInstance_->setIsLoopedProperty(true);
+            for (std::size_t i = 0; i < thunderEffects_.size(); ++i) {
+                thunderEffects_[i] = CreateOneShotSoundEffect(GenerateThunder(static_cast<std::uint8_t>(i)));
+                thunderEffects_[i]->setNameProperty(i == 0 ? "Procedural near thunder" : "Procedural distant thunder");
+            }
             bunkerHumEffect_=CreateLoopedSoundEffect(GenerateBunkerHumLoop());
             bunkerHumEffect_->setNameProperty("Procedural underground electrical hum");
             bunkerHumInstance_=std::make_unique<SoundEffectInstance>(
@@ -542,6 +563,7 @@ namespace island
             surfInstance_->Play();
             breezeInstance_->Play();
             jungleInstance_->Play();
+            rainInstance_->Play();
             bunkerHumPlaybackActive_=!swimming&&bunkerPresence_>.015f;
             campfirePlaybackActive_=!bunkerHumPlaybackActive_&&!swimming&&campfirePresence_>.015f;
             streamPlaybackActive_ = !bunkerHumPlaybackActive_&&!campfirePlaybackActive_
@@ -733,6 +755,30 @@ namespace island
     {
         const float safeDelta = std::isfinite(deltaSeconds)
             ? std::clamp(deltaSeconds, 0.0f, 0.25f) : 0.0f;
+        // Thunder: the strike's sound arrives after its distance over the speed of sound.
+        if (thunderPending_) {
+            pendingThunderSeconds_ -= safeDelta;
+            if (pendingThunderSeconds_ <= 0.0f) {
+                thunderPending_ = false;
+                if (available_ && !muted_) {
+                    try {
+                        const bool nearStrike = pendingThunderDistance_ < 1300.0f;
+                        thunderInstance_ = std::make_unique<SoundEffectInstance>(
+                            thunderEffects_[nearStrike ? 0U : 1U]->CreateInstance());
+                        thunderInstance_->setVolumeProperty(std::clamp(1.15f - pendingThunderDistance_ / 4200.0f, 0.25f, 1.0f)
+                            * underwaterAudio_.airGain);
+                        thunderInstance_->setPitchProperty(nearStrike ? 0.0f : -0.2f);
+                        thunderInstance_->Play();
+                        if (++playedThunderCount_ == 1)
+                            std::cout << "island-simulator: first thunder played, " << static_cast<int>(pendingThunderDistance_)
+                                      << " m from the strike\n" << std::flush;
+                    } catch (const std::exception&) {
+                        thunderInstance_.reset();
+                    }
+                }
+            }
+        }
+
         waveSecondsRemaining_ = std::max(0.0f, waveSecondsRemaining_ - safeDelta);
         waterTransitionSecondsRemaining_ = std::max(
             0.0f, waterTransitionSecondsRemaining_ - safeDelta);
@@ -1710,6 +1756,8 @@ namespace island
             surfInstance_->setVolumeProperty(model_.Mix().surfVolume
                 *underwaterAudio_.surfGain*enclosureSurf*gain);
             breezeInstance_->setVolumeProperty(model_.Mix().breezeVolume
+                *underwaterAudio_.airGain*enclosureAir*gain);
+            if (rainInstance_) rainInstance_->setVolumeProperty(std::clamp(weatherRain_, 0.0f, 1.0f) * 0.62f
                 *underwaterAudio_.airGain*enclosureAir*gain);
             jungleInstance_->setVolumeProperty(model_.Mix().jungleVolume
                 *underwaterAudio_.airGain*enclosureAir*gain);

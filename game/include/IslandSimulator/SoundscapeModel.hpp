@@ -60,6 +60,10 @@ namespace island
 
     /** @brief Original seamless seventeen-second underground electrical-generator hum. */
     [[nodiscard]] AmbientLoop GenerateBunkerHumLoop();
+    /** @brief Rain: a broadband hiss over a patter of drops, looped (eight seconds). */
+    [[nodiscard]] AmbientLoop GenerateRainLoop();
+    /** @brief Thunder: variant 0 a near strike (a crack, then the roll), 1 a distant roll. */
+    [[nodiscard]] AmbientLoop GenerateThunder(std::uint8_t variant);
 
     /** @brief Generates one four-second stronger-wave wash for sparse shoreline accents. */
     [[nodiscard]] AmbientLoop GenerateWaveAccent();

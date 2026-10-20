@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include "IslandSimulator/RainRenderer.hpp"
+#include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/TimeOfDayRenderer.hpp"
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/BenchmarkTraversalRoute.hpp"
@@ -515,6 +517,9 @@ namespace island
         std::unique_ptr<TimeOfDayRenderer> timeOfDay_;
         DayNightCycle dayNight_{};
         bool timeKeyWasDown_ = false;
+        WeatherSystem weather_{};
+        std::unique_ptr<RainRenderer> rain_;
+        bool weatherKeyWasDown_ = false;
         FootprintTrail footprints_;
         // The deer's and the boars' cloven prints on wet sand and the stream's mud.
         std::array<FootprintTrail,DeerHerd::Count> deerPrints_{};

@@ -466,6 +466,58 @@ namespace island
         return Quantize(samples,.68f,true);
     }
 
+    AmbientLoop GenerateRainLoop()
+    {
+        constexpr int loopSeconds = 8;
+        constexpr std::size_t frameCount = static_cast<std::size_t>(AmbientSampleRate * loopSeconds);
+        const std::vector<float> noise = Noise(0x7a1e5eedU, frameCount);
+        const std::vector<float> soft = CircularSmooth(noise, 3U);
+        const std::vector<float> body = CircularSmooth(noise, 9U);
+        std::vector<float> samples(frameCount, 0.0f);
+        // the hiss: the noise above the soft band; the body: a duller wash under it
+        for (std::size_t i = 0; i < frameCount; ++i) samples[i] = (noise[i] - soft[i]) * 0.55f + body[i] * 0.9f;
+        // the patter: thousands of small drops striking leaves and ground, each a short click
+        DeterministicNoise drops(0x5d0c3a11U);
+        for (int drop = 0; drop < 5200; ++drop) {
+            const auto at = static_cast<std::size_t>((drops.Next() * 0.5f + 0.5f) * static_cast<float>(frameCount - 1U));
+            const float strength = 0.12f + 0.22f * (drops.Next() * 0.5f + 0.5f);
+            const float ring = 2600.0f + 2200.0f * (drops.Next() * 0.5f + 0.5f);
+            for (std::size_t k = 0; k < 90U; ++k) {
+                const float t = static_cast<float>(k) / static_cast<float>(AmbientSampleRate);
+                samples[(at + k) % frameCount] += strength * std::exp(-t * 520.0f)
+                    * std::sin(2.0f * std::numbers::pi_v<float> * ring * t);
+            }
+        }
+        return Quantize(samples, 0.62f, true);
+    }
+
+    AmbientLoop GenerateThunder(const std::uint8_t variant)
+    {
+        const bool near = (variant & 1U) == 0U;
+        constexpr float seconds = 7.0f;
+        const auto frameCount = static_cast<std::size_t>(AmbientSampleRate * seconds);
+        const std::vector<float> noise = Noise(near ? 0x7d0e1a11U : 0x7d0e1a12U, frameCount);
+        const std::vector<float> deep = CircularSmooth(noise, near ? 120U : 260U);
+        const std::vector<float> mid = CircularSmooth(noise, 30U);
+        std::vector<float> samples(frameCount, 0.0f);
+        // the roll: a few overlapping bursts, each swelling and dying as the sound arrives
+        // from farther along the bolt
+        const float bursts[4][2] = {{0.00f, 1.0f}, {0.55f, 0.75f}, {1.45f, 0.62f}, {2.60f, 0.42f}};
+        for (std::size_t i = 0; i < frameCount; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            float envelope = 0.0f;
+            for (const auto& burst : bursts) {
+                const float since = t - burst[0] - (near ? 0.0f : 0.35f);
+                if (since < 0.0f) continue;
+                envelope += burst[1] * (1.0f - std::exp(-since * 9.0f)) * std::exp(-since * (near ? 0.85f : 0.6f));
+            }
+            float value = deep[i] * 3.4f * envelope + mid[i] * (near ? 0.9f : 0.35f) * envelope;
+            if (near && t < 0.35f) value += (noise[i] - mid[i]) * 1.6f * std::exp(-t * 14.0f);   // the crack
+            samples[i] = value * (1.0f - std::clamp((t - seconds + 0.6f) / 0.6f, 0.0f, 1.0f));
+        }
+        return Quantize(samples, near ? 0.92f : 0.75f);
+    }
+
     AmbientLoop GenerateBunkerHumLoop()
     {
         constexpr int loopSeconds=17;

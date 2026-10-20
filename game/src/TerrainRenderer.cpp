@@ -1,3 +1,4 @@
+#include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/TerrainRenderer.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
@@ -161,6 +162,7 @@ uniform vec4 uBunkerFrame;
 
 uniform vec3 uCameraPosition;
 uniform vec3 uToSun;
+uniform float uWetness;   // 0..1 rain-wet ground (WeatherSystem)
 uniform vec2 uSandWind;
 uniform float uSeaSeconds;
 uniform float uWindSeconds;
@@ -1129,6 +1131,8 @@ void main()
     color=mix(color,apronStone,caveApron*.86);
     color=mix(color,caveStone,caveFloor);
     color=mix(color,closureStone,caveClosure);
+    // Rain-wet ground darkens on land (the sea's own colours are unchanged).
+    color *= 1.0 - 0.30 * clamp(uWetness, 0.0, 1.0) * smoothstep(0.10, 0.60, vWorld.y);
     color=applyCampfireLight(color,vWorld);
     float fog = smoothstep(260.0, 720.0, distanceToCamera);
     color = mix(color, islandAtmosphereFog, fog);
@@ -1578,6 +1582,7 @@ void main()
                 "uToSun", sun_light::UniformDirection().x, sun_light::UniformDirection().y,
                 sun_light::UniformDirection().z);
             materialEffect_->SetUniformVec2("uSandWind", wind::DirectionX, wind::DirectionZ);
+            materialEffect_->SetUniformFloat("uWetness", weather_now::Current().wetness);
             materialEffect_->SetUniformVec4(
                 "uPrimaryPathShape", VegetationLayout::PrimaryPathBaseX,
                 VegetationLayout::PrimaryPathAmplitude,
