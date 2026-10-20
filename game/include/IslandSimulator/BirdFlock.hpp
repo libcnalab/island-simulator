@@ -158,6 +158,8 @@ namespace island
          *  bird, at its height, flushes it as the walker does. */
         void SetSnakes(std::span<const SnakeState> snakes) noexcept { snakes_ = snakes; }
         [[nodiscard]] std::uint32_t SnakeFlushCount() const noexcept { return snakeFlushes_; }
+        /** @brief Perched flushes from the resident or an animal walking up under the perch. */
+        [[nodiscard]] std::uint32_t WalkerFlushCount() const noexcept { return walkerFlushes_; }
         static constexpr float SnakeFlushDistance = 3.0f;
         /** @brief Fruit lying on the ground this frame; a fruit dove's ground visit lands
          *  beside the nearest one within FruitLandingRange when there is any. The doves'
@@ -292,6 +294,7 @@ namespace island
         BirdFlush lastFlush_;
         std::span<const SnakeState> snakes_;
         std::uint32_t snakeFlushes_ = 0U;
+        std::uint32_t walkerFlushes_ = 0U;
         std::span<const FallingFruit> lyingFruit_;
         std::uint32_t fruitLandings_ = 0U;
         std::span<const GrassWalker> walkers_;

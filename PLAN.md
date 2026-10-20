@@ -54,6 +54,18 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 113 (2026-10-20) — a perched bird flushes from a passing animal
+
+A perched bird flushed from the walker, a coconut's thud and a snake, but sat on while the
+resident or a boar walked up under its perch. The perched flush now takes the ground
+walkers the flock already receives (the herds, the bear, the resident): a body within the
+flush distance (9 m) sends the bird off as the walker does, with the wing clap and the
+feather of passes 106 and 107; `WalkerFlushCount()` counts the flushes that only a walker
+caused. The startup report gains "a perched bird flushes from the resident or an animal
+walking up under its perch as from the walker", pinned by the native capture tool. Core
+checks: an animal twenty metres from the perch leaves the bird sitting; one walking up four
+metres off flushes it. Native `birds` passes.
+
 ## Loop pass 112 (2026-10-20) — the resident's tour calls at the lookout
 
 The lookout stood on the resident's island without the resident ever going near it. The

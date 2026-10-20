@@ -360,11 +360,19 @@ namespace island
                     if (std::hypot(agent.state.x - head.x, agent.state.z - head.z) < SnakeFlushDistance
                         && std::abs(agent.state.y - head.y) < 4.0f) { snaked = true; break; }
                 }
-                if (crowded || thudded || snaked) {
+                // The resident or an animal walking up under the perch flushes the bird as
+                // the walker does.
+                bool walked = false;
+                for (const GrassWalker& body : walkers_) {
+                    if (body.strength <= 0.0f || !std::isfinite(body.x) || !std::isfinite(body.z)) continue;
+                    if (std::hypot(agent.state.x - body.x, agent.state.z - body.z) < FlushDistance) { walked = true; break; }
+                }
+                if (crowded || thudded || snaked || walked) {
                     agent.state.behavior = BirdBehavior::Depart;
                     agent.behaviorSeconds = 0.0f;
                     ++flushCount_;
                     if (snaked) ++snakeFlushes_;
+                    if (walked && !crowded && !thudded && !snaked) ++walkerFlushes_;
                     lastFlush_ = {agent.state.x, agent.state.y, agent.state.z, true};
                 }
             }

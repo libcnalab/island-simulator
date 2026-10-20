@@ -7842,6 +7842,20 @@ int main()
         Check(sitting.LastFlush().valid && sitting.AnyFlushCount() == 1U
                   && std::hypot(sitting.LastFlush().x - perchX, sitting.LastFlush().z - perchZ) < 0.5f,
               "the flush is noted at the perch for the wing clap");
+        // The resident or an animal walking up under the perch flushes the bird as the walker
+        // does; one passing twenty metres off leaves it sitting.
+        island::BirdFlock underfoot(terrain);
+        underfoot.SetPerchSites(sites);
+        const std::array<island::GrassWalker, 1> farBody{{{perchX + 20.0f, perchZ, 0.6f, 1.0f}}};
+        underfoot.SetWalkers(farBody);
+        underfoot.Update(0.05f, perchX + 25.0f, sites[0].y, perchZ);
+        Check(underfoot.Birds()[0].behavior == island::BirdBehavior::Perched && underfoot.WalkerFlushCount() == 0U,
+              "an animal twenty metres off leaves the perched bird sitting");
+        const std::array<island::GrassWalker, 1> nearBody{{{perchX + 4.0f, perchZ, 0.6f, 1.0f}}};
+        underfoot.SetWalkers(nearBody);
+        underfoot.Update(0.05f, perchX + 25.0f, sites[0].y, perchZ);
+        Check(underfoot.Birds()[0].behavior == island::BirdBehavior::Depart && underfoot.WalkerFlushCount() == 1U && underfoot.FlushCount() == 1U,
+              "an animal walking up four metres from the perch flushes the bird");
         float climbed = sitting.Birds()[0].y;
         for (int step = 0; step < 70; ++step) { sitting.Update(0.05f, perchX + 6.0f, sites[0].y, perchZ); climbed = std::max(climbed, sitting.Birds()[0].y); }
         Check(sitting.Birds()[0].behavior == island::BirdBehavior::Fly && climbed > sites[0].y + 2.0f,
