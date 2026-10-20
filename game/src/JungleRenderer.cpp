@@ -1,6 +1,7 @@
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/JungleRenderer.hpp"
+#include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/WindGust.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/CampfireLighting.hpp"
@@ -250,6 +251,7 @@ in vec4 vLeaf;
 uniform vec3 uCameraPosition;
 uniform vec3 uToSun;
 uniform float uReceiveCanopyLight;
+uniform float uWetness;   // 0..1 rain-wet (WeatherSystem): leaves and bark darken and shine
 
 out vec4 fragColor;
 
@@ -370,6 +372,16 @@ void main()
     // already applied the same field to its direct and diffuse terms above.
     if (uReceiveCanopyLight > 0.5 && !wood) {
         litColor = applyCanopyLight(litColor, canopyGroundReceiver(vWorld, vGroundHeight, uToSun));
+    }
+    // Rain-wet leaves darken a little and take a glossy sheen of the sun; wet bark darkens more.
+    if (uWetness > 0.01 && (liveLeaf || wood)) {
+        vec3 toEye = normalize(uCameraPosition - vWorld);
+        vec3 wetNormal = dot(faceNormal, toEye) < 0.0 ? -faceNormal : faceNormal;
+        vec3 halfway = normalize(sunDirection + toEye);
+        float wet = clamp(uWetness, 0.0, 1.0);
+        float sheen = pow(max(dot(wetNormal, halfway), 0.0), liveLeaf ? 48.0 : 24.0);
+        litColor *= 1.0 - (wood ? 0.28 : 0.12) * wet;
+        litColor += vec3(0.20, 0.22, 0.24) * sheen * wet * 0.8 * sunShadowVisibility(vWorld);
     }
     litColor=applyCampfireLight(litColor,vWorld);
     vec3 color = mix(litColor, islandAtmosphereFog, fog);
@@ -2821,6 +2833,7 @@ void main()
                 "uToSun", sun_light::UniformDirection().x, sun_light::UniformDirection().y,
                 sun_light::UniformDirection().z);
             customEffect_->SetUniformFloat("uTime", timeSeconds);
+            customEffect_->SetUniformFloat("uWetness", weather_now::Current().wetness);
             {
                 const auto& gusts = WindGust::Live();
                 customEffect_->SetUniformVec4("uGustClock", gusts.travelled, gusts.spacing, gusts.floor, gusts.live ? 1.0f : 0.0f);

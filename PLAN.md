@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 249 (2026-10-20) — rain-wet trees
+
+The rain wetted the ground (darker soil, puddles) but not the trees. The jungle shader now takes
+the weather's wetness (`uWetness`): wet bark darkens by up to 28 % and wet leaves by 12 %, and
+both take a glossy sheen of the sun (a sharp highlight on the leaves, a broader one on the bark)
+where the sun shadow map lets it through, fading as they dry. Under an overcast or showery sky
+the sheen is slight (little sun), so a soaked forest mostly reads darker and deeper; when the
+sun comes out on the wet leaves it glints. `jungle --weather showers` shows the darker, wetter
+trunks and crowns; the dry `jungle` differs from before only within its own run-to-run noise
+(two captures of one build differ in 0.4-0.5 % of the pixels by 20 levels, as they already did
+before the live gust clock: a probe without it measured the same).
+
 ## Loop pass 248 (2026-10-20) — a scops owl in the night
 
 The night chorus (Loop pass 232) had crickets and frogs but no night bird. A procedural scops

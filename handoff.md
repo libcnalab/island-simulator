@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 249: rain-wet trees: bark darkens and leaves deepen when the weather has wet them, with a glossy sun sheen where the sun gets through (PLAN "Loop pass 249").
 - Pass 248: a scops owl calls from the trees round the listener every half minute or so through the night (PLAN "Loop pass 248"; not yet heard by a person).
 - Pass 247: on soaked ground the walker's steps on bare soil squelch and splash like the shallows' edge (PLAN "Loop pass 247"; not yet heard by a person).
 - Pass 246: a rainbow when the sun breaks through a shower easing off: the primary bow at 42 degrees opposite the sun and a fainter reversed secondary at 51 (PLAN "Loop pass 246").
