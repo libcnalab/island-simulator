@@ -1,6 +1,7 @@
 #include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/OceanRenderer.hpp"
+#include "IslandSimulator/TerrainMeshLayout.hpp"
 
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
@@ -135,6 +136,7 @@ uniform vec3 uFishSplash;   // a fish breaking the surface: point x, z and ring 
 uniform vec4 uJettyLine;    // deck root x, z and unit direction out to sea (zero: no jetty)
 uniform vec4 uCoastalOptics;
 uniform vec4 uSurfaceAppearance;
+uniform float uSeabedExtent;   // half the terrain mesh's square, where the seabed ends
 
 out vec4 fragColor;
 
@@ -403,6 +405,15 @@ void main()
     alpha = mix(alpha, 0.95, foam);
     alpha = mix(alpha, 0.96, fog);
     alpha *= contactCoverage;
+    // The seabed is drawn only within the terrain mesh's square. Where the eye's ray through
+    // this water comes down on the bed (seen from above, well beyond the surface point: from
+    // 45 m up, 9 m of water put the bed 40 m farther), the water closes over a bed nearing
+    // that square's edge, so no straight seam shows where the seabed stops.
+    vec3 bedRay = vWorld - uCameraPosition;
+    vec2 bedPoint = vWorld.xz;
+    if (bedRay.y < -0.01) bedPoint += bedRay.xz * min(waterDepth / -bedRay.y, 400.0 / max(length(bedRay.xz), 0.01));
+    float meshEdge = max(abs(bedPoint.x), abs(bedPoint.y));
+    alpha = mix(alpha, 1.0, smoothstep(uSeabedExtent - 45.0, uSeabedExtent - 2.0, meshEdge));
     // BlendState::AlphaBlend uses premultiplied colour, matching XNA semantics.
     fragColor = vec4(water * alpha, alpha);
 }
@@ -621,6 +632,7 @@ void main()
                 sun_light::UniformDirection().z);
             customEffect_->SetUniformFloat("uTime", timeSeconds);
             customEffect_->SetUniformFloat("uCloudCoverage", weather_now::Current().cloudCover);
+            customEffect_->SetUniformFloat("uSeabedExtent", TerrainMeshLayout::Extent);
             customEffect_->SetUniformVec4("uCoastalOptics", CoastalWaterOptics::ExtinctionPerMetre,
                 CoastalWaterOptics::LagoonDecayPerMetre, CoastalWaterOptics::ContactFadeDepth,
                 CoastalWaterOptics::MaximumBodyOpacity);

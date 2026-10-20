@@ -233,6 +233,23 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 227 (2026-10-20) — the straight seam across the sea from the air
+
+From the air (`flight`) a straight line crossed the sea, the light lagoon on one side and the
+deep blue on the other. With the water forced opaque in a probe build it vanished, so it was
+the seabed seen through the water; stripes painted on the seabed by x in another probe ended
+exactly at it, and terrain cell culling switched off changed nothing: it is the terrain mesh's
+square edge at x = -340 m, where the seabed stops. A first fade that closed the water over the
+last 58 m of that square by the surface point did not help, because the edge is seen through
+the water: from 45 m up at 12 degrees, 9 m of water put the bed 40 m beyond the surface point
+the eye looks through, and a probe painting the water red beyond 340 m showed the line 25
+pixels below the seam. The ocean shader now follows the eye's ray through each water pixel down
+by the water's depth to where it meets the bed (capped at 400 m) and raises the water's opacity
+to one as that bed point nears the square's edge (from 45 m to 2 m inside), so the seabed fades
+out under the water before it ends and the lagoon runs smoothly into the deep blue. Nothing
+changes near the island (`jetty` identical by 20 levels); `flight`, `water`, `reef`,
+`current`, `wet-sand` and `jetty-end` pass.
+
 ## Loop pass 226 (2026-10-20) — rain rings on the sea
 
 Rain falling on the sea now dimples it: `rain_rings` (core, header-only) gives each cell of a
@@ -284,9 +301,8 @@ The seabed caustics were two wavy line families on the world's x and z axes, a s
 irregular net of cells, and fade by footprint earlier (0.022-0.065 m per pixel instead of
 0.035-0.12). Native `flight`, `jetty`, `water`, `wet-sand`, `current` and `reef` pass; from
 swimming height the caustics read as an uneven net and the reef's ripple cells remain.
-Open: a straight seam across the sea about 140 m from the flight camera, where the 10.6 m
-ocean grid probably interpolates a reef drop-off along a row (not the seabed mesh's 340 m
-edge, which a trial closing the water over it showed).
+Open: a straight seam across the sea about 140 m from the flight camera (closed in Loop pass
+227: it was the seabed mesh's 340 m edge after all, seen through the water 40 m nearer).
 
 ## Loop pass 223 (2026-10-20) — coastal scrub on the banks every other plant left bare
 
