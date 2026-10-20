@@ -217,6 +217,22 @@ namespace island
     void AntTrails::UpdateAgent(Agent& agent, const float deltaSeconds) noexcept
     {
         if (deltaSeconds <= 0.0f) return;
+        // Meeting: two ants of a trail coming head to head within reach pause to touch
+        // antennae, once per passing (a cooldown keeps one meeting from repeating).
+        agent.meetCooldown = std::max(0.0f, agent.meetCooldown - deltaSeconds);
+        if (agent.meetCooldown <= 0.0f && agent.pauseSeconds <= 0.0f) {
+            const std::size_t self = static_cast<std::size_t>(&agent - agents_.data());
+            for (std::size_t j = 0; j < agents_.size(); ++j) {
+                const Agent& other = agents_[j];
+                if (j == self || other.state.trailIndex != agent.state.trailIndex || other.outward == agent.outward) continue;
+                if (std::hypot(other.state.x - agent.state.x, other.state.z - agent.state.z) < MeetReach) {
+                    agent.pauseSeconds = MeetSeconds;
+                    agent.meetCooldown = MeetCooldownSeconds;
+                    ++meets_;
+                    break;
+                }
+            }
+        }
         // Pausing, the ant sweeps its antennae, feeling the trail ahead; walking on, they
         // settle to their set.
         const bool pausing = agent.pauseSeconds > 0.0f;

@@ -54,6 +54,17 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 198 (2026-10-20) — ants meet head to head
+
+Ants walking a trail in opposite directions passed through each other without a pause.
+Two ants of one trail going opposite ways that come within `MeetReach` (3.5 cm) now pause
+`MeetSeconds` (0.3 s) to touch antennae, the pause carrying loop 175's antenna sweep, once
+per passing (a `MeetCooldownSeconds` of 3 s keeps one meeting from repeating); the
+meetings are counted (`MeetCount()`). The ants report line gains "two ants meeting head to
+head on the trail pause to touch antennae" (pinned). Core check: through a minute ants of
+the first trail meet, and at a meeting two of them are paused within reach of each other.
+Native `ants` passes.
+
 ## Loop pass 197 (2026-10-20) — a feeding crab blows bubbles
 
 A beach crab paused to feed among the strandings looked like any other paused crab.

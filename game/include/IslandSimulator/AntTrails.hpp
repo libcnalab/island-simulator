@@ -67,6 +67,10 @@ namespace island
         [[nodiscard]] std::uint32_t SweepCount() const noexcept { return sweeps_; }
         [[nodiscard]] std::size_t SweepingCount() const noexcept;
         static constexpr float SweepRate = 11.0f;
+        /** @brief Meetings: two ants of a trail coming head to head within MeetReach pause
+         *  MeetSeconds to touch antennae (the pause's sweep), once per passing. */
+        [[nodiscard]] std::uint32_t MeetCount() const noexcept { return meets_; }
+        static constexpr float MeetReach = 0.035f, MeetSeconds = 0.3f, MeetCooldownSeconds = 3.0f;
 
     private:
         struct Agent
@@ -76,6 +80,7 @@ namespace island
             float accumulatedSeconds = 0.0f;
             bool outward = true;
             bool sweeping = false;
+            float meetCooldown = 0.0f;   // keeps one passing from repeating its meeting
         };
 
         void Initialize(std::size_t index);
@@ -96,5 +101,6 @@ namespace island
         std::array<AntState, Count> states_{};
         std::uint64_t frameIndex_ = 0U;
         std::uint32_t sweeps_ = 0U;
+        std::uint32_t meets_ = 0U;
     };
 }

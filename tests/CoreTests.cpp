@@ -9844,6 +9844,18 @@ int main()
                 }
             }
             Check(sweepers.SweepCount()>=1U&&sweepPeak>0.9f&&swept>1.0f,"a pausing ant does not sweep its antennae");
+            // Meetings: through another minute ants of the first trail meet head to head,
+            // and at a meeting both are paused within reach of each other.
+            bool metPaused=false;
+            for(int step=0;step<1200&&!metPaused;++step) {
+                sweepers.Update(0.05f,firstTrail.x+6.0f,firstTrail.y+1.0f,firstTrail.z);
+                const auto ants=sweepers.Ants();
+                for(std::size_t a=0;a<island::AntTrails::PerTrail&&!metPaused;++a)
+                    for(std::size_t b=a+1;b<island::AntTrails::PerTrail;++b)
+                        if(ants[a].behavior==island::AntBehavior::Pause&&ants[b].behavior==island::AntBehavior::Pause
+                           &&std::hypot(ants[a].x-ants[b].x,ants[a].z-ants[b].z)<island::AntTrails::MeetReach*2.0f) { metPaused=true; break; }
+            }
+            Check(sweepers.MeetCount()>=1U&&metPaused,"ants meeting head to head on the trail do not pause together to touch antennae");
         }
         // The plunge pool has its own dragonflies: the last three homes sit on the pool.
         {

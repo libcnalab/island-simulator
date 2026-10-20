@@ -2518,7 +2518,8 @@ namespace island
                   << " agents in four close-range inland organic-ground swarms; a swarm with fermenting fruit lying within ten metres shifts over it and hangs low there; "
                   << "a fly at the fruit sets down on it every other hover, wings still, and rubs its forelegs\n"
                   << "island-simulator: ants " << AntTrails::Count
-                  << " agents in three soil trails and one real broadleaf-trunk trail; an ant pausing on the trail sweeps its antennae, feeling the way ahead\n"
+                  << " agents in three soil trails and one real broadleaf-trunk trail; an ant pausing on the trail sweeps its antennae, feeling the way ahead; "
+                  << "two ants meeting head to head on the trail pause to touch antennae\n"
                   << "island-simulator: cicadas " << CicadaColony::Count
                   << " agents resting, calling, and making short flights from real broadleaf trunks; "
                      "a cicada falls silent when the walker or an animal comes within seven metres and starts up again once they have gone; "
