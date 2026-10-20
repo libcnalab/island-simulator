@@ -1140,6 +1140,8 @@ def main():
                 raise RuntimeError("current small-animal fog is missing; check for a stale executable")
             if not re.search(r"grass mesh tiers change per patch at its own distance, morphing over \d+ m, drawn by quarter-cell blocks instead of switching whole cells by their centre", diagnostics):
                 raise RuntimeError("current per-patch grass tiers are missing; check for a stale executable")
+            if "the rocks, logs, driftwood, beach details and the wreck receive the sun shadows and the cumulus shade with the ground around them" not in diagnostics:
+                raise RuntimeError("current prop and wreck sun-shadow receiving is missing; check for a stale executable")
             if "the hut receives the sun shadows: its eaves shade its walls and the trees' shadows and the cumulus shade fall across it" not in diagnostics:
                 raise RuntimeError("current hut sun-shadow receiving is missing; check for a stale executable")
             if "the abandoned helicopter is weathered: earthy grime low on the body, a patchy damp-green film on its upward faces and rust low on bare metal" not in diagnostics:

@@ -1,3 +1,4 @@
+#include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/NaturalPropRenderer.hpp"
 
@@ -319,19 +320,24 @@ void main()
         float direct = max(dot(normal, normalize(uToSun)), 0.0);
         materialColor *= 0.55 + 0.43*direct + 0.13*max(normal.y, 0.0);
     }
+    // The sun shadow map and the cumulus shade, with the palms' cool shadow tint: a rock or a
+    // log in a tree's shadow is shaded with the ground around it.
+    materialColor *= mix(vec3(0.56, 0.60, 0.66), vec3(1.0), sunShadowVisibility(vWorld));
     vec3 color = mix(materialColor, islandAtmosphereFog, fog);
     fragColor = vec4(color, 1.0);
 }
 )";
 
-        [[nodiscard]] std::string ShaderSource(const bool embedded, const char* body)
+        [[nodiscard]] std::string ShaderSource(const bool embedded, const char* body,
+                                               const bool fragment = false)
         {
+            const std::string receiver = fragment ? SunShadowMap::ReceiverShader : std::string();
             if (embedded) {
                 return std::string("#version 300 es\nprecision highp float;\n")
-                    + environment::FogShaderDefinition + body;
+                    + environment::FogShaderDefinition + receiver + body;
             }
             return std::string("#version 330 core\n")
-                + environment::FogShaderDefinition + body;
+                + environment::FogShaderDefinition + receiver + body;
         }
 
         [[nodiscard]] CNA::Graphics::ShaderPackageEXT CreateShaderPackage()
@@ -344,13 +350,13 @@ void main()
                                   ShaderSource(true, VertexBody)),
                     ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslEs,
                                   CNA::ShaderStageEXT::Fragment, "main", "props/props.es.frag.glsl",
-                                  ShaderSource(true, FragmentBody)),
+                                  ShaderSource(true, FragmentBody, true)),
                     ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslDesktop,
                                   CNA::ShaderStageEXT::Vertex, "main", "props/props.desktop.vert.glsl",
                                   ShaderSource(false, VertexBody)),
                     ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslDesktop,
                                   CNA::ShaderStageEXT::Fragment, "main", "props/props.desktop.frag.glsl",
-                                  ShaderSource(false, FragmentBody)),
+                                  ShaderSource(false, FragmentBody, true)),
                 },
                 {CNA::ShaderStageEXT::Vertex, CNA::ShaderStageEXT::Fragment});
         }
@@ -2159,6 +2165,8 @@ void main()
             (view * projection).ToColumnMajor(viewProjection);
             customEffect_->Apply();
             customEffect_->SetUniformMat4("uViewProjection", viewProjection);
+            if (sunShadow_) sunShadow_->Bind(*customEffect_);
+            else SunShadowMap::BindDisabled(*customEffect_);
             customEffect_->SetUniformVec3("uCameraPosition", cameraPosition.X,
                                           cameraPosition.Y, cameraPosition.Z);
             customEffect_->SetUniformVec3(

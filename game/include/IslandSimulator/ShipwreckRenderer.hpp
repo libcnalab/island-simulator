@@ -43,6 +43,8 @@ namespace island
         [[nodiscard]] int DebrisCount() const noexcept { return debrisCount_; }
         /** Renders the wreck into the bound fixed-sun shadow map. */
         void DrawSunShadow(SunShadowMap& map);
+        /** The map the wreck's own surfaces receive (its decks and rails on its hull). */
+        void SetSunShadowMap(const SunShadowMap* map) noexcept { sunShadow_ = map; }
         [[nodiscard]] int DrawCallCount() const noexcept { return drawCallCount_; }
         [[nodiscard]] bool IsVisible() const noexcept { return visible_; }
         [[nodiscard]] bool UsesAgedWoodShader() const noexcept
@@ -54,6 +56,7 @@ namespace island
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> fallbackEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> agedWoodEffect_;
+        const SunShadowMap* sunShadow_ = nullptr;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> woodTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> vertices_;
         Microsoft::Xna::Framework::BoundingBox bounds_;

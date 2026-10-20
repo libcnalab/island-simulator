@@ -203,20 +203,24 @@ void main()
         * metal * detailFade * (1.0 - rust) * 0.085;
     materialColor += vec3(0.76, 0.78, 0.75) * ironSheen;
 
+    // The sun shadow map and the cumulus shade, with the palms' cool shadow tint.
+    materialColor *= mix(vec3(0.56, 0.60, 0.66), vec3(1.0), sunShadowVisibility(vWorld));
     float fog = smoothstep(190.0, 520.0, distanceToCamera);
     vec3 color = mix(materialColor, islandAtmosphereFog, fog);
     fragColor = vec4(color, 1.0);
 }
 )";
 
-        [[nodiscard]] std::string ShaderSource(const bool embedded, const char* body)
+        [[nodiscard]] std::string ShaderSource(const bool embedded, const char* body,
+                                               const bool fragment = false)
         {
+            const std::string receiver = fragment ? SunShadowMap::ReceiverShader : std::string();
             if (embedded) {
                 return std::string("#version 300 es\nprecision highp float;\n")
-                    + environment::FogShaderDefinition + body;
+                    + environment::FogShaderDefinition + receiver + body;
             }
             return std::string("#version 330 core\n")
-                + environment::FogShaderDefinition + body;
+                + environment::FogShaderDefinition + receiver + body;
         }
 
         [[nodiscard]] CNA::Graphics::ShaderPackageEXT CreateShaderPackage()
@@ -231,7 +235,7 @@ void main()
                     ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslEs,
                                   CNA::ShaderStageEXT::Fragment, "main",
                                   "shipwreck/shipwreck.es.frag.glsl",
-                                  ShaderSource(true, FragmentBody)),
+                                  ShaderSource(true, FragmentBody, true)),
                     ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslDesktop,
                                   CNA::ShaderStageEXT::Vertex, "main",
                                   "shipwreck/shipwreck.desktop.vert.glsl",
@@ -239,7 +243,7 @@ void main()
                     ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslDesktop,
                                   CNA::ShaderStageEXT::Fragment, "main",
                                   "shipwreck/shipwreck.desktop.frag.glsl",
-                                  ShaderSource(false, FragmentBody)),
+                                  ShaderSource(false, FragmentBody, true)),
                 },
                 {CNA::ShaderStageEXT::Vertex, CNA::ShaderStageEXT::Fragment});
         }
@@ -1218,6 +1222,8 @@ void main()
             (view * projection).ToColumnMajor(viewProjection);
             agedWoodEffect_->Apply();
             agedWoodEffect_->SetUniformMat4("uViewProjection", viewProjection);
+            if (sunShadow_) sunShadow_->Bind(*agedWoodEffect_);
+            else SunShadowMap::BindDisabled(*agedWoodEffect_);
             agedWoodEffect_->SetUniformVec3("uCameraPosition", cameraPosition.X,
                                             cameraPosition.Y, cameraPosition.Z);
             agedWoodEffect_->SetUniformVec3("uShipCentre", centre_.X, centre_.Y, centre_.Z);

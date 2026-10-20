@@ -54,6 +54,23 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 217 (2026-10-20) — rocks, logs, driftwood and the wreck receive them too
+
+The natural props (rocks, reef outcrops and habitat, logs, driftwood, shell and wrack
+clusters, fallen fronds and nuts, tracks) and the wreck draw through their own material
+shaders but did not receive the sun shadow map, so a log lying in a palm's shadow stayed
+fully lit inside a shaded patch of ground. Both fragment stages now include
+`SunShadowMap::ReceiverShader` (vertex stages unchanged) and end with the palms' cool shadow
+tint; IslandGame binds the map to them with the other receivers, and without a map they
+take the cumulus shade alone. In the native `log` view, set against a `--no-sun-shadows`
+capture of the same frame, the map darkens 13.1 % of the pixels by 12 levels or more, and
+the frond shadows now cross the fallen log continuously from the ground on either side; in
+`shipwreck-wide` the wreck lies beyond the shadows' 52-63 m fade and nothing changes (0 %).
+Startup: "the rocks, logs, driftwood, beach details and the wreck receive the sun shadows and
+the cumulus shade with the ground around them", pinned. Native `log` and `shipwreck-wide`
+pass with and without the map. Still not receiving: the jetty, bridge, lookout and
+helicopter (BasicEffect), the animals and the water.
+
 ## Loop pass 216 (2026-10-20) — the hut receives the sun shadows
 
 The shadow map's own notes left "animals, hut and wreck surfaces and water do not yet

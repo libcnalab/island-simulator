@@ -26,6 +26,8 @@ namespace Microsoft::Xna::Framework::Graphics
 
 namespace island
 {
+    class SunShadowMap;
+
     /** @brief Portable instanced rocks, wood, and small beach details with distance reduction. */
     class NaturalPropRenderer final
     {
@@ -94,8 +96,11 @@ namespace island
         }
         [[nodiscard]] int VisibleCellCount() const noexcept { return visibleCellCount_; }
         [[nodiscard]] int DrawCallCount() const noexcept { return drawCallCount_; }
+        /** The map the rocks, logs, driftwood and beach details receive. */
+        void SetSunShadowMap(const SunShadowMap* map) noexcept { sunShadow_ = map; }
 
     private:
+        const SunShadowMap* sunShadow_ = nullptr;
         struct PropMesh
         {
             std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> vertices;
