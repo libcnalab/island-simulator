@@ -341,6 +341,13 @@ namespace island
             birdPerchLayout_.AddSite(lookoutPlacement_->RailPerch());
         }
         birdFlock_.SetPerchSites(birdPerchLayout_.Sites());
+        {
+            // The turtle nests among the beach details are where the hatchlings break out.
+            std::vector<HatchlingNest> nests;
+            for (const auto& detail : naturalPropLayout_.BeachDetails())
+                if (detail.turtleNest) nests.push_back({detail.x, detail.z});
+            hatchlings_.SetNests(nests);
+        }
         butterflyMeadow_.SetFlowerBushes(jungleLayout_.Bushes());
         bridgePlacement_=BridgeLayout::FindInWorld(terrain_,StreamCourse(terrain_));
         helicopterPlacement_=HelicopterLayout::FindInWorld(terrain_,jungleLayout_,worldObstacles);
@@ -2109,6 +2116,7 @@ namespace island
         fallingFruitRenderer_=std::make_unique<FallingFruitRenderer>(device);
         streamDriftRenderer_=std::make_unique<StreamDriftRenderer>(device);
         streamFishRenderer_=std::make_unique<StreamFishRenderer>(device);
+        hatchlingRenderer_=std::make_unique<HatchlingRenderer>(device);
         fallingFruit_.SetPalms(vegetationLayout_.Palms());
         helicopterRenderer_=std::make_unique<HelicopterRenderer>(device,*helicopterPlacement_);
         palmRenderer_ = std::make_unique<PalmRenderer>(
@@ -2580,6 +2588,7 @@ namespace island
         }
         fallingFruit_.Update(deltaSeconds, monkeyTroop_.Monkeys());
         streamDrift_.Update(deltaSeconds);
+        hatchlings_.Update(deltaSeconds);
         streamFish_.SetLeaves(streamDrift_.Leaves());
         streamFish_.Update(deltaSeconds,playerMotion_.Position().x,playerMotion_.Position().z);
         fallingFruit_.UpdateCoconuts(seaForageSeconds_, cameraPosition_.X, cameraPosition_.Z);
@@ -4233,6 +4242,7 @@ namespace island
         if(fallingFruitRenderer_) {
             GpuDiagnosticScope gpuPass("falling-fruit");
             fallingFruitRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,fallingFruit_.Fruit());
+            hatchlingRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,hatchlings_.Hatchlings());
         }
         if(hutRenderer_) {
             GpuDiagnosticScope gpuPass("hut");

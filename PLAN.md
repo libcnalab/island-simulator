@@ -46,6 +46,25 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 33 (2026-10-20) — turtle hatchlings scramble to the surf
+
+The two turtle nests were disturbed sand with tracks and nothing ever came out of them. A
+core `HatchlingField` takes the nest positions from the beach details (set after the
+natural props are placed): on the first update (a software capture renders well under a
+second of simulated time, so the nest capture shows them), and every 140 s after, a clutch
+of twelve breaks
+out of the next nest in turn, each hatchling placed on a small ring round the nest on its
+own line a little off seaward, and scrambles at 0.18–0.26 m/s in bursts with a wobble about
+the seaward heading (the outward radial), the heading pulled back to seaward as it goes; at
+the first point where the ground is below sea level it is counted as reaching the surf,
+swims straight out at 0.45 m/s on the surface for 14 s and is gone. `HatchlingRenderer`
+draws each as a 5 cm domed shell over a paler rim with four paddling flippers, one dynamic
+draw after the fruit. Diagnostic "turtle hatchlings break out of the nests in clutches and
+scramble down the sand to the surf" is pinned by the native capture tool. Core checks on a
+nest six metres inside the east shore: a full clutch is out within ten seconds; over three
+minutes every scrambling hatchling stays on dry sand between the nest and the sea at ground
+height, and at least three reach the surf. Native `turtle-nest` passes.
+
 ## Loop pass 32 (2026-10-20) — the fish rise to the drifting leaves
 
 The pool fish and the drifting leaves shared the water without noticing each other. The fish

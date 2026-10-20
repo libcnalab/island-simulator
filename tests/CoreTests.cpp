@@ -37,6 +37,7 @@
 #include "IslandSimulator/StreamCourse.hpp"
 #include "IslandSimulator/StreamDriftField.hpp"
 #include "IslandSimulator/StreamFishField.hpp"
+#include "IslandSimulator/HatchlingField.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
@@ -7723,6 +7724,30 @@ int main()
         bool inPoolStill=true;
         for(const auto& f:pool.Fish()) inPoolStill=inPoolStill&&inPool(f);
         Check(pool.RiseCount()>=1U&&inPoolStill,"a fish rises to a leaf drifting over the pool within five minutes");
+    }
+    {
+        // Turtle hatchlings: a clutch breaks out of a nest on the dry east beach, every one of
+        // them scrambles seaward across the sand, and within three minutes some reach the surf
+        // and swim off; the sand between the nest and the sea is where they all are.
+        const island::IslandTerrain terrain;
+        island::HatchlingField hatchlings(terrain);
+        const float nestX=terrain.ShoreRadius(0.0f)-6.0f;
+        const std::vector<island::HatchlingNest> nests{{nestX,0.0f}};
+        hatchlings.SetNests(nests);
+        for(int step=0;step<200;++step) hatchlings.Update(0.05f);
+        Check(hatchlings.ClutchCount()==1U&&hatchlings.ActiveCount()==island::HatchlingField::ClutchSize,"a clutch breaks out of the nest soon after the start");
+        float nearest=1e9f,farthest=0;
+        for(const auto& h:hatchlings.Hatchlings()) if(h.active) { const float r=std::hypot(h.x,h.z); nearest=std::min(nearest,r); farthest=std::max(farthest,r); }
+        bool allSeaward=true;
+        for(int step=0;step<3600;++step) {
+            hatchlings.Update(0.05f);
+            for(const auto& h:hatchlings.Hatchlings()) if(h.active&&!h.swimming) {
+                const float r=std::hypot(h.x,h.z);
+                if(r<nestX-1.0f||terrain.Height(h.x,h.z)<=0.0f||std::abs(h.y-terrain.Height(h.x,h.z)-0.02f)>0.001f) allSeaward=false;
+            }
+        }
+        Check(allSeaward,"the hatchlings keep to the sand between the nest and the sea");
+        Check(hatchlings.ReachedSeaCount()>=3U,"some hatchlings reach the surf within three minutes");
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls
         // on a little before it rests; resting fruit sit on the ground and keep still.
