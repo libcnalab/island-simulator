@@ -54,6 +54,18 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 67 (2026-10-20) — the leaves drift on across the lagoon
+
+A leaf reaching the stream mouth vanished at the last station. `StreamDriftField` now
+carries it out: a leaf past the mouth is counted as before and goes `atSea`, drifting
+downwind (toward −x) at 0.2 m/s with a slow sideways set and a 2 cm bob at the surface,
+spinning slowly, for 75 s before it is lost and a new leaf enters near the source;
+`SeaCount()` reports those afloat on the lagoon. The drift diagnostic gains "out of the
+mouth they drift on across the lagoon downwind", pinned by the native capture tool. Core
+check: after the ten-minute run, leaves afloat on the lagoon are downwind of the mouth at
+the surface (the channel check skips them). Native `cascade` passes. (The staged script
+carried a stray pair from the mist field's constants and stopped before writing; removed.)
+
 ## Loop pass 66 (2026-10-20) — the turtle's breath
 
 A sea turtle came up for air and the surface showed nothing. `SeaTurtleGroup` notes a

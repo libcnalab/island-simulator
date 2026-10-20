@@ -1173,6 +1173,8 @@ def main():
                 raise RuntimeError("current bear fruit eating is missing; check for a stale executable")
             if "a sea turtle lifting its head through the surface breathes out a small puff of spray" not in diagnostics:
                 raise RuntimeError("current turtle breath is missing; check for a stale executable")
+            if "out of the mouth they drift on across the lagoon downwind" not in diagnostics:
+                raise RuntimeError("current lagoon leaf drift is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

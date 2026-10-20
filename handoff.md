@@ -127,6 +127,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 64: the deer keep seven metres clear of the campfire (PLAN "Loop pass 64").
 - Pass 65: the bear walks to lying fruit and coconuts and eats them (PLAN "Loop pass 65").
 - Pass 66: a surfacing sea turtle breathes out a small puff of spray (PLAN "Loop pass 66").
+- Pass 67: leaves out of the stream mouth drift on across the lagoon (PLAN "Loop pass 67").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

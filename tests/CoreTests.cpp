@@ -7698,6 +7698,7 @@ int main()
         const auto& course=drift.Course();
         const auto afloat=[&](const island::DriftingLeaf& leaf){
             if(!leaf.active||!std::isfinite(leaf.x)||!std::isfinite(leaf.y)||!std::isfinite(leaf.z)) return false;
+            if(leaf.atSea) return true;   // out of the mouth, on the lagoon, checked separately
             float best=1e9f; const island::StreamStation* nearest=nullptr;
             for(std::size_t i=0;i<course.Count();++i) { const float d=std::hypot(course.Station(i).x-leaf.x,course.Station(i).z-leaf.z); if(d<best) { best=d; nearest=&course.Station(i); } }
             return nearest&&best<=nearest->halfWidth*1.2f+0.3f&&std::abs(leaf.y-nearest->water-island::StreamDriftField::SurfaceLift)<0.45f;
@@ -7715,6 +7716,17 @@ int main()
             if(step%600==0) for(const auto& leaf:drift.Leaves()) allAfloat=allAfloat&&afloat(leaf);
         }
         Check(allAfloat&&drift.PassCount()>=1U,"leaves stay afloat in the channel and some reach the sea within ten minutes");
+        // Out of the mouth the leaves drift on across the lagoon downwind (toward -x) for a
+        // while, on the surface, before they are lost and replaced near the source.
+        {
+            bool seaLeaf=false,downwind=true,onSurface=true;
+            for(const auto& leaf:drift.Leaves()) if(leaf.active&&leaf.atSea) {
+                seaLeaf=true;
+                if(leaf.x>course.Station(course.Count()-1).x+0.5f) downwind=false;
+                if(std::abs(leaf.y)>0.06f) onSurface=false;
+            }
+            Check(drift.SeaCount()>=1U&&seaLeaf&&downwind&&onSurface,"leaves out of the mouth drift on the lagoon downwind at the surface");
+        }
     }
     {
         // Small fish in the plunge pool: all of them hold under the surface inside the pool's

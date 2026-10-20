@@ -47,9 +47,16 @@ bool StreamDriftField::Surface(const float distance,const float lateral,float& x
     return true;
 }
 
+std::size_t StreamDriftField::SeaCount() const noexcept {
+    std::size_t count=0;
+    for(const auto& leaf:leaves_) count+=leaf.active&&leaf.atSea?1U:0U;
+    return count;
+}
+
 void StreamDriftField::Launch(const std::size_t index,const float distance) noexcept {
     DriftingLeaf& leaf=leaves_[index];
     ++launches_;
+    leaf.atSea=false;leaf.seaSeconds=0;
     leaf.distance=distance;
     leaf.lateral=-0.8f+1.6f*static_cast<float>((launches_*7U+index*3U)%11U)/10.0f;
     leaf.spin=static_cast<float>((launches_*5U+index)%13U)*0.48f;
@@ -64,6 +71,16 @@ void StreamDriftField::Update(const float deltaSeconds) noexcept {
     for(std::size_t index=0;index<leaves_.size();++index) {
         DriftingLeaf& leaf=leaves_[index];
         if(!leaf.active) { Launch(index,1.0f); continue; }
+        if(leaf.atSea) {
+            // On the lagoon: downwind with a slow set and a bob, until it is lost.
+            leaf.seaSeconds+=dt;
+            leaf.x-=SeaDriftSpeed*dt;
+            leaf.z+=0.05f*std::sin(leaf.seaSeconds*0.4f+leaf.spin)*dt;
+            leaf.y=0.02f+0.02f*std::sin(leaf.seaSeconds*1.7f+leaf.spin);
+            leaf.spin+=0.15f*dt;leaf.yawRadians+=0.15f*dt;
+            if(leaf.seaSeconds>=SeaSeconds||!std::isfinite(leaf.x)) Launch(index,1.0f+static_cast<float>(launches_%5U)*0.6f);
+            continue;
+        }
         leaf.speed=SpeedAt(leaf.distance);
         leaf.distance+=leaf.speed*dt;
         // A slow wander across the channel and a slow spin, both faster in quick water.
@@ -72,9 +89,9 @@ void StreamDriftField::Update(const float deltaSeconds) noexcept {
         leaf.spin+=0.35f*stir*dt;
         float heading=0;
         if(!Surface(leaf.distance,leaf.lateral,leaf.x,leaf.y,leaf.z,heading)) {
-            // Out to sea: a new leaf comes in near the source.
+            // Out of the mouth: the leaf is counted and carries on across the lagoon.
             ++passes_;
-            Launch(index,1.0f+static_cast<float>(passes_%5U)*0.6f);
+            leaf.atSea=true;leaf.seaSeconds=0;leaf.y=0.02f;
             continue;
         }
         leaf.yawRadians=heading+leaf.spin;

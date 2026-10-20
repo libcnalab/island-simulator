@@ -17,6 +17,8 @@ struct DriftingLeaf {
     float speed=0;          // current along-course speed, for diagnostics and tests
     std::uint8_t variant=0; // 0 green, 1 brown, 2 yellow
     bool active=false;
+    bool atSea=false;       // carried out of the mouth, drifting on the lagoon
+    float seaSeconds=0;
 };
 
 // Leaves drifting down the stream on the current: slow on the ordinary reach, hurried over
@@ -26,12 +28,15 @@ class StreamDriftField final {
 public:
     static constexpr std::size_t Capacity=14;
     static constexpr float ReachSpeed=0.32f,LipSpeed=1.1f,DropSpeed=1.8f,PoolSpeed=0.12f;
+    // Out of the mouth a leaf drifts on the lagoon downwind for a while before it is lost.
+    static constexpr float SeaDriftSpeed=0.2f,SeaSeconds=75.0f;
     static constexpr float LipRun=4.0f;       // metres above the lip where the water hurries
     static constexpr float SurfaceLift=0.02f;
     explicit StreamDriftField(const IslandTerrain& terrain);
     void Update(float deltaSeconds) noexcept;
     [[nodiscard]] std::span<const DriftingLeaf> Leaves() const noexcept {return leaves_;}
     [[nodiscard]] std::uint32_t PassCount() const noexcept {return passes_;}
+    [[nodiscard]] std::size_t SeaCount() const noexcept;
     [[nodiscard]] const StreamCourse& Course() const noexcept {return course_;}
     // The surface speed of the current at a course distance.
     [[nodiscard]] float SpeedAt(float distance) const noexcept;
