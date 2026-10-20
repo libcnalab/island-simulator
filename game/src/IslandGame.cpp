@@ -2373,7 +2373,11 @@ namespace island
             std::cout << "island-simulator: sun shadow map " << sunShadowResolution
                       << " px covers " << static_cast<int>(2.0f * SunShadowMap::Radius)
                       << " m around the camera; trees, palms, snags, bushes, hut, wreck and "
-                         "helicopter cast directional shadows onto terrain, grass, plants and palms\n";
+                         "helicopter cast directional shadows onto terrain, grass, plants and palms; "
+                         "they fade out " << static_cast<int>(sun_shadow_fade::FarFadeStart) << "-"
+                      << static_cast<int>(sun_shadow_fade::FarFadeEnd)
+                      << " m from the viewer in the sun's view, moving with the camera rather than "
+                         "with the map's 8 m re-centring\n";
             MirrorRuntimeDiagnosticToPlatformLog(
                 "island-simulator: sun shadow map casts directional tree and structure shadows");
         } catch (const std::exception& error) {

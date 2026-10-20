@@ -1,5 +1,6 @@
 #pragma once
 
+#include "IslandSimulator/SunShadowFade.hpp"
 #include "Microsoft/Xna/Framework/Matrix.hpp"
 #include "Microsoft/Xna/Framework/Vector3.hpp"
 #include "Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp"
@@ -20,8 +21,8 @@ namespace island {
     class SunShadowMap final
     {
     public:
-        static constexpr float Radius = 72.0f;      // half-extent of the mapped square, metres
-        static constexpr float AnchorStep = 8.0f;   // camera cell that triggers a re-render
+        static constexpr float Radius = sun_shadow_fade::MapRadius;      // half-extent of the mapped square, metres
+        static constexpr float AnchorStep = sun_shadow_fade::AnchorStep; // camera cell that triggers a re-render
         static constexpr float EyeDistance = 160.0f; // light eye offset along the sun ray
         static constexpr float DepthRange = 330.0f;  // far plane of the orthographic light
         static constexpr float CasterMargin = 26.0f; // casters beyond the box still cast into it
@@ -80,6 +81,7 @@ namespace island {
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::RenderTarget2D> target_;
         Microsoft::Xna::Framework::Matrix lightViewProjection_;
         Microsoft::Xna::Framework::Vector3 anchor_;
+        Microsoft::Xna::Framework::Vector3 viewer_;   // this frame's camera, for the far fade
         Microsoft::Xna::Framework::Graphics::Viewport savedViewport_;
         bool hasAnchor_ = false;
         int renderCount_ = 0;

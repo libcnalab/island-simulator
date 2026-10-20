@@ -54,6 +54,31 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 206 (2026-10-20) — the far end of the sun shadows moves with the camera
+
+The operator flew through the island and saw the scene change "like stripes". Pass 7c039b7
+removed the screen-space canopy shafts and texel-snapped the map; this pass removes the last
+camera-quantised edge. The shadow map is a square in the sun's view, re-centred whenever the
+camera leaves its 8 m cell, and the shadows faded on that square's own edge, so at each
+re-centre the visible end of the tree shadows jumped 8 m: in flight, a band stepping over the
+ground. The shadows now fade on a rounded square (the 4-norm) in the sun's view around the
+viewer itself, 52 to 63 m out, and the map's edge keeps only a 2 % safety band. The viewer's
+point is the camera's column at the light's fixed 12 m target height, transformed by the
+current light matrix every frame, so it moves continuously. A static assert in the new
+graphics-free `SunShadowFade.hpp` keeps the fade inside the map's full-strength square for
+every viewer position in its cell (63 + 5.66 <= 72 - 2.88). A first version aimed the light at
+the ground under the camera's cell; that moved the fade's centre at each re-centre again
+(the core check caught it), so the target height stays fixed. The island rises only to 40 m,
+so nothing within 40 m of the viewer is faded at any height.
+
+The core check flies a viewer 2 cm per step along a 48 m line across 10 re-centres over a
+grid of receivers at 0, 12, 26 and 40 m: the largest change of any receiver's shadow share
+is 0.27 % per step, where the old square edge fade jumped 91 %; every receiver within 40 m
+keeps full strength. Startup: "they fade out 52-63 m from the viewer in the sun's view, moving
+with the camera rather than with the map's 8 m re-centring", pinned. Native `hut` and
+`lookout` pass with near shadows unchanged (0.7 % and 1.1 % of pixels differ by 20 levels or
+more from the previous captures, the moving grass and fronds).
+
 ## Loop pass 205 (2026-10-20) — the sun shadows with and without the map
 
 Backlog item 1 (the shadows of the large objects) rested on a caster counter, so this pass

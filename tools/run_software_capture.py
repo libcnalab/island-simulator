@@ -1128,6 +1128,8 @@ def main():
                 raise RuntimeError("current land cloud shadows are missing; check for a stale executable")
             if "a mist of spray hangs at the cascade's foot, rising and drifting on the breeze and laid over by the gust fronts" not in diagnostics:
                 raise RuntimeError("current cascade mist is missing; check for a stale executable")
+            if not re.search(r"they fade out \d+-\d+ m from the viewer in the sun's view, moving with the camera rather than with the map's 8 m re-centring", diagnostics):
+                raise RuntimeError("current sun shadow far fade is missing; check for a stale executable")
             if "screen-space canopy sun shafts are off" not in diagnostics:
                 raise RuntimeError("current canopy shaft removal is missing; check for a stale executable")
             if "under the canopy the view carries slow sun shafts" in diagnostics:

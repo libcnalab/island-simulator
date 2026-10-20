@@ -59,6 +59,7 @@
 #include "IslandSimulator/CrocodileWakeField.hpp"
 #include "IslandSimulator/MudFleckField.hpp"
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
+#include "IslandSimulator/SunShadowFade.hpp"
 #include "IslandSimulator/CrabBubbleField.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
 #include "IslandSimulator/CicadaColony.hpp"
@@ -11072,6 +11073,58 @@ int main()
         Check(seawardSubmerged,"wreck scour stays submerged on the seaward side");
         const float keel=ship.y-1.35f;
         Check(scour.SampleHeight(ship.x,ship.z)>keel,"scour sand rises above the buried keel");
+    }
+
+    {
+        // The sun shadows' far fade (loop pass 206): receivers keep a continuous share of the
+        // map's shadow while the viewer flies across many 8 m re-centres of the map, where the
+        // square edge fade it replaces jumped; and nothing near the viewer is faded at all.
+        namespace fade = island::sun_shadow_fade;
+        const float sx = island::environment::SunDirectionX, sy = island::environment::SunDirectionY,
+                    sz = island::environment::SunDirectionZ;
+        const float heights[] = {0.0f, 12.0f, 26.0f, 40.0f};   // the island rises to 40 m
+        struct Receiver { float x, h, z; };
+        std::vector<Receiver> receivers;
+        for (float x = -96.0f; x <= 96.0f; x += 6.0f)
+            for (float z = -96.0f; z <= 96.0f; z += 6.0f)
+                for (const float h : heights) receivers.push_back({x, h, z});
+        const auto oldSquare = [&](const Receiver& r, const float vx, const float vz) {
+            const auto o = fade::Offset(r.x, r.h, r.z, fade::AnchorOf(vx), fade::AnchorOf(vz), sx, sy, sz);
+            const float edge = (fade::MapRadius - std::max(std::abs(o.across), std::abs(o.up))) / (2.0f * fade::MapRadius);
+            return edge <= 0.0f ? 0.0f : fade::SmoothStep(0.0f, 0.06f, edge);
+        };
+        std::vector<float> previous(receivers.size()), previousOld(receivers.size());
+        float largestStep = 0.0f, largestOldStep = 0.0f;
+        bool nearFull = true;
+        int anchorChanges = 0;
+        float lastAnchorX = 0, lastAnchorZ = 0;
+        for (int step = 0; step <= 2000; ++step) {
+            // a 40 m by 26 m flight line, 2 cm per step
+            const float t = static_cast<float>(step) / 2000.0f;
+            const float vx = -20.0f + 40.0f * t, vz = -13.0f + 26.0f * t;
+            if (step > 0 && (fade::AnchorOf(vx) != lastAnchorX || fade::AnchorOf(vz) != lastAnchorZ)) ++anchorChanges;
+            lastAnchorX = fade::AnchorOf(vx);
+            lastAnchorZ = fade::AnchorOf(vz);
+            for (std::size_t i = 0; i < receivers.size(); ++i) {
+                const auto& r = receivers[i];
+                const float strength = fade::Strength(r.x, r.h, r.z, vx, vz, sx, sy, sz);
+                const float old = oldSquare(r, vx, vz);
+                if (step > 0) {
+                    largestStep = std::max(largestStep, std::abs(strength - previous[i]));
+                    largestOldStep = std::max(largestOldStep, std::abs(old - previousOld[i]));
+                }
+                previous[i] = strength;
+                previousOld[i] = old;
+                if (std::hypot(r.x - vx, r.z - vz) <= 40.0f && strength != 1.0f) nearFull = false;
+            }
+        }
+        Check(anchorChanges >= 6, "the sun shadow fade sweep crosses several of the map's re-centres");
+        Check(largestStep <= 0.01f,
+              "the sun shadows' far fade changes by at most 1 % per 2 cm of flight across the map's re-centres");
+        Check(largestOldStep > 0.5f, "the square edge fade it replaces jumped at a re-centre (the check discriminates)");
+        Check(nearFull, "the sun shadows keep full strength within 40 m of the viewer at every height of the island");
+        std::cout << "sun shadow far fade: largest step " << largestStep << " per 2 cm across " << anchorChanges
+                  << " re-centres (square edge fade: " << largestOldStep << ")\n";
     }
 
     if (failures != 0) {

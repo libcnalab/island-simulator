@@ -12,6 +12,7 @@
 #include "Microsoft/Xna/Framework/Graphics/SurfaceFormat.hpp"
 #include <cmath>
 #include <stdexcept>
+#include <string>
 
 using namespace Microsoft::Xna::Framework;
 using namespace Microsoft::Xna::Framework::Graphics;
@@ -35,6 +36,7 @@ uniform sampler2D uSunShadowMap;
 uniform vec4 uSunShadowParams;
 uniform vec4 uRtFlipV;
 uniform vec4 uCloudShade;   // x: how much a cloud dims the sun, y: the cloud clock
+uniform vec4 uSunShadowViewer; // xy: the viewer in the light's clip space, zw: the far fade's start and end
 float sunShadowUnpack(vec4 c) {
     return dot(c, vec4(1.0, 1.0 / 255.0, 1.0 / 65025.0, 1.0 / 16581375.0));
 }
@@ -78,7 +80,11 @@ float sunShadowVisibility(vec3 world) {
         }
     }
     lit /= max(weightSum, 0.0001);
-    return clouds * mix(1.0, lit, smoothstep(0.0, 0.06, edge));
+    // The far fade: a rounded square in the sun's view around the viewer, which moves with the camera,
+    // so the end of the shadows never jumps with the map's 8 m re-centring (SunShadowFade.hpp).
+    vec2 fromViewer = (p.xy - uSunShadowViewer.xy) * (p.xy - uSunShadowViewer.xy);
+    float farFade = smoothstep(uSunShadowViewer.z, uSunShadowViewer.w, sqrt(sqrt(dot(fromViewer, fromViewer))));
+    return clouds * mix(1.0, lit, smoothstep(0.0, )" + std::to_string(sun_shadow_fade::EdgeBand) + R"(, edge) * (1.0 - farFade));
 }
 )";
 
@@ -121,15 +127,15 @@ void main() {
     bool SunShadowMap::Prepare(const Vector3& camera)
     {
         if (!std::isfinite(camera.X) || !std::isfinite(camera.Z)) return false;
-        const Vector3 anchor(std::round(camera.X / AnchorStep) * AnchorStep, 0.0f,
-                             std::round(camera.Z / AnchorStep) * AnchorStep);
+        viewer_ = camera;
+        const Vector3 anchor(sun_shadow_fade::AnchorOf(camera.X), 0.0f, sun_shadow_fade::AnchorOf(camera.Z));
         if (hasAnchor_ && anchor.X == anchor_.X && anchor.Z == anchor_.Z) return false;
         anchor_ = anchor;
         hasAnchor_ = true;
         Vector3 toSun(environment::SunDirectionX, environment::SunDirectionY,
                       environment::SunDirectionZ);
         toSun.Normalize();
-        const Vector3 target(anchor.X, 12.0f, anchor.Z);
+        const Vector3 target(anchor.X, sun_shadow_fade::TargetHeight, anchor.Z);
         const Vector3 eye = target + toSun * EyeDistance;
         const Matrix view = Matrix::CreateLookAt(eye, target, Vector3::Up);
         const Matrix projection = Matrix::CreateOrthographic(2.0f * Radius, 2.0f * Radius,
@@ -194,6 +200,12 @@ void main() {
                               1.0f / static_cast<float>(resolution_),
                               static_cast<float>(resolution_));
         effect.SetUniformVec4("uCloudShade", CloudShadow::LandStrength, cloudClock, 0.0f, 0.0f);
+        // The viewer's column at the light's target height, in the light's clip space: the far
+        // fade is measured from it, so it follows the camera continuously between re-renders.
+        const Vector3 viewer = Vector3::Transform(
+            Vector3(viewer_.X, sun_shadow_fade::TargetHeight, viewer_.Z), lightViewProjection_);
+        effect.SetUniformVec4("uSunShadowViewer", viewer.X, viewer.Y,
+                              sun_shadow_fade::FarFadeStart / Radius, sun_shadow_fade::FarFadeEnd / Radius);
     }
 
     void SunShadowMap::BindDisabled(ShaderEffect& effect)
