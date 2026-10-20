@@ -1738,14 +1738,26 @@ namespace island
             std::cout << "island-simulator: butterfly QA camera follows one live near animal at its nectar patch\n";
         } else if (viewpoint_ == FixedViewpoint::GeckoDetail
                    && geckoPopulation_.Geckos().size() > 2U) {
-            const GeckoState& gecko=geckoPopulation_.Geckos()[2U];
+            // The subject is the gecko on the best-lit ground, so the close view keeps its
+            // contrast under the tree shadows and cloud shade the forest floor now carries.
+            float bestLight=-1.0f;
+            for(std::size_t i=0;i<geckoPopulation_.Geckos().size();++i) {
+                const GeckoState& candidate=geckoPopulation_.Geckos()[i];
+                const float light=canopyLightField_.Sample(candidate.x,candidate.z);
+                if(light>bestLight) {bestLight=light;geckoQaSubjectIndex_=i;}
+            }
+            const GeckoState& gecko=geckoPopulation_.Geckos()[geckoQaSubjectIndex_];
+            std::cout<<"island-simulator: gecko QA subject "<<geckoQaSubjectIndex_<<" on ground with canopy light "
+                <<bestLight<<" and cloud cover "<<CloudShadow::Cover(gecko.x,gecko.z,0.0f)<<"\n";
             const Vector3 forward(std::cos(gecko.headingRadians),0.0f,
                                   std::sin(gecko.headingRadians));
             const Vector3 side(-forward.Z,0.0f,forward.X);
-            const float cameraX=gecko.x-forward.X*.55f+side.X*.40f;
-            const float cameraZ=gecko.z-forward.Z*.55f+side.Z*.40f;
+            // Low and a little further back than before: the frame keeps the ground beyond
+            // the animal and the stand behind it, not only the bare floor under the camera.
+            const float cameraX=gecko.x-forward.X*.85f+side.X*.45f;
+            const float cameraZ=gecko.z-forward.Z*.85f+side.Z*.45f;
             cameraPosition_=Vector3(cameraX,
-                std::max(terrain_.Height(cameraX,cameraZ)+.40f,gecko.y+.37f),cameraZ);
+                std::max(terrain_.Height(cameraX,cameraZ)+.26f,gecko.y+.24f),cameraZ);
             const Vector3 target(gecko.x,gecko.y+.080f,gecko.z);
             const Vector3 direction=target-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
@@ -2300,7 +2312,7 @@ namespace island
                      "fruit that has lain fermenting for 20 s draws them down to feed low over it; "
                      "they scatter from a passing animal or the resident as from the walker\n"
                   << "island-simulator: geckos " << geckoPopulation_.Geckos().size()
-                  << " agents in deterministic inland rest, flee, and hide habitats\n"
+                  << " agents in deterministic inland rest, flee, and hide habitats; a resting gecko with a fly hanging low within reach stalks it and lunges, and the flies dart from the snap\n"
                   << "island-simulator: skinks " << skinkPopulation_.Skinks().size()
                   << " agents in deterministic open-ground bask, forage, and flee habitats\n"
                   << "island-simulator: dragonflies " << dragonflySwarm_.Dragonflies().size()
@@ -2769,19 +2781,26 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
         }
-        const GeckoState previousGeckoSubject=geckoPopulation_.Geckos()[2U];
+        const GeckoState previousGeckoSubject=geckoPopulation_.Geckos()[geckoQaSubjectIndex_];
         Vector3 geckoObserver=cameraPosition_;
         if(viewpoint_==FixedViewpoint::GeckoDetail) {
-            const GeckoState& gecko=geckoPopulation_.Geckos()[2U];
+            const GeckoState& gecko=geckoPopulation_.Geckos()[geckoQaSubjectIndex_];
             geckoObserver=Vector3(gecko.x,gecko.y+18.0f,gecko.z);
         }
         const std::array<GrassWalker, GrassWalkers::Slots> smallFaunaWalkers = GatherWalkers(cameraPosition_.X, cameraPosition_.Z);
         geckoPopulation_.SetWalkers(smallFaunaWalkers);
+        geckoPopulation_.SetFlies(flySwarms_.Flies());
         geckoPopulation_.Update(viewpoint_==FixedViewpoint::GeckoDetail?0.0f:deltaSeconds,
                                 geckoObserver.X,geckoObserver.Y,
                                 geckoObserver.Z);
+        // A gecko's snap scatters the flies it snapped at.
+        if(geckoPopulation_.LungeCount()!=notedGeckoLunges_) {
+            notedGeckoLunges_=geckoPopulation_.LungeCount();
+            const auto& lunge=geckoPopulation_.LastLunge();
+            if(lunge.valid) flySwarms_.NoteLunge(lunge.x,lunge.z);
+        }
         if(viewpoint_==FixedViewpoint::GeckoDetail) {
-            const GeckoState& gecko=geckoPopulation_.Geckos()[2U];
+            const GeckoState& gecko=geckoPopulation_.Geckos()[geckoQaSubjectIndex_];
             cameraPosition_+=Vector3(gecko.x-previousGeckoSubject.x,
                                      gecko.y-previousGeckoSubject.y,
                                      gecko.z-previousGeckoSubject.z);

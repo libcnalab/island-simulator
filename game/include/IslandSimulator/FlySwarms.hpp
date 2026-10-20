@@ -46,6 +46,10 @@ namespace island
         void SetLyingFruit(std::span<const FallingFruit> fruit) noexcept { lyingFruit_ = fruit; }
         [[nodiscard]] std::uint32_t FruitVisitCount() const noexcept { return fruitVisits_; }
         [[nodiscard]] std::size_t AtFruitCount() const noexcept;
+        /** @brief A gecko's snap at a point this frame: flies within LungeDartRange dart. */
+        void NoteLunge(float x, float z) noexcept;
+        [[nodiscard]] std::uint32_t LungeDartCount() const noexcept { return lungeDarts_; }
+        static constexpr float LungeDartRange = 1.0f;
         static constexpr float FruitRange = 10.0f;
         static constexpr float FermentSeconds = 20.0f;
         static constexpr float ShiftSpeed = 1.0f;
@@ -76,5 +80,9 @@ namespace island
         std::uint64_t frameIndex_ = 0U;
         std::span<const FallingFruit> lyingFruit_;
         std::uint32_t fruitVisits_ = 0U;
+        float lungeX_ = 0.0f, lungeZ_ = 0.0f;
+        std::uint64_t lungeFrame_ = 0U;
+        bool lungeValid_ = false;
+        std::uint32_t lungeDarts_ = 0U;
     };
 }

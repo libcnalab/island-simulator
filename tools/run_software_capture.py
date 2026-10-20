@@ -1203,6 +1203,8 @@ def main():
                 raise RuntimeError("current rodent fruit feeding is missing; check for a stale executable")
             if "a swarm with fermenting fruit lying within ten metres shifts over it and hangs low there" not in diagnostics:
                 raise RuntimeError("current fly fruit swarm is missing; check for a stale executable")
+            if "a resting gecko with a fly hanging low within reach stalks it and lunges, and the flies dart from the snap" not in diagnostics:
+                raise RuntimeError("current gecko fly hunt is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

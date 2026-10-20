@@ -54,6 +54,34 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 82 (2026-10-20) — a gecko stalks and snaps at the flies
+
+The geckos rested, scurried and hid beside the fly swarms without ever noticing them. The
+east-clearing gecko's range overlaps the east-clearing swarm (its home centre is five metres
+from the swarm's), so `GeckoPopulation::SetFlies` hands the geckos the flies each frame and
+a resting gecko with a fly hanging low (under 0.6 m) within 4.5 m on ground it accepts gets
+two new behaviours: `Stalk`, the slow approach at 0.35 m/s with the heading held on the fly
+(fourteen seconds at most, abandoned if the fly gets beyond one and a half ranges), and
+`Lunge` from the last span (0.45 m) at 1.8 m/s for 0.3 s, then a rest and a twenty-second
+cooldown. A threat interrupts a stalk as it does a rest. The lunge is noted (`LastLunge`,
+`LungeCount`) and the game passes it to the swarms (`FlySwarms::NoteLunge`): flies within a
+metre of the snap dart for half a second as from the walker's hand (`LungeDartCount`). The
+startup report's gecko line gains "a resting gecko with a fly hanging low within reach stalks
+it and lunges, and the flies dart from the snap", pinned by the native capture tool. Core
+checks: a gecko with a low fly 1.6 m off stalks it slowly and lunges from the last span
+within a minute, rests after, and does not hunt again within the cooldown; a snap among a
+swarm sends its flies darting.
+
+The `geckos` capture had not run since 2026-10-16 and failed its luminance gate (15.8
+against 18) under the tree shadows, cloud shade, sun shafts and sun flecks the floor has
+carried since then: the fixed subject (gecko 2) rests on uniformly shaded litter. The gecko
+QA camera now takes the gecko on the best-lit ground (`canopyLightField_.Sample` over the
+eight; the detail viewpoint's freeze and follow use the same `geckoQaSubjectIndex_`) and
+sits lower and further back (0.85 m behind, 0.45 m aside, 0.24–0.26 m up), so the frame
+keeps the ground beyond the animal and the stand behind it; it prints "gecko QA subject N
+on ground with canopy light L and cloud cover C". Native `geckos` passes (luminance
+deviation 37, the east-clearing gecko with the deer and the campfire behind).
+
 ## Loop pass 81 (2026-10-20) — fly swarms gather over fermenting fruit
 
 The four fly swarms hung over their own patches of organic ground whatever fell nearby.

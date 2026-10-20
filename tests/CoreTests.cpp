@@ -7678,6 +7678,43 @@ int main()
     }
 
     {
+        // A fly hanging low within reach of a resting gecko: the gecko stalks it, lunges from
+        // the last span and rests; the flies dart from the snap.
+        const island::IslandTerrain terrain;
+        island::GeckoPopulation geckos(terrain);
+        const island::GeckoHome& home = geckos.Homes()[0];
+        std::vector<island::FlyState> flies(1);
+        flies[0].x = home.x + 1.6f; flies[0].z = home.z;
+        flies[0].y = terrain.Height(flies[0].x, flies[0].z) + 0.3f;
+        geckos.SetFlies(flies);
+        bool stalked = false, lunged = false;
+        float lungeDistance = 100.0f;
+        for (int step = 0; step < 1200 && !lunged; ++step) {
+            geckos.Update(0.05f, home.x + 12.0f, terrain.Height(home.x, home.z) + 1.0f, home.z);
+            const auto& gecko = geckos.Geckos()[0];
+            if (gecko.behavior == island::GeckoBehavior::Stalk && gecko.speed > 0.2f && gecko.speed < 0.6f) stalked = true;
+            if (geckos.LungeCount() >= 1U) { lunged = true; lungeDistance = std::hypot(gecko.x - flies[0].x, gecko.z - flies[0].z); }
+        }
+        Check(stalked && lunged && lungeDistance < island::GeckoPopulation::LungeReach + 0.1f
+                  && geckos.LastLunge().valid && std::abs(geckos.LastLunge().x - flies[0].x) < 0.01f,
+              "a resting gecko stalks a low fly slowly and lunges from the last span within a minute");
+        bool rested = false;
+        for (int step = 0; step < 40 && !rested; ++step) {
+            geckos.Update(0.05f, home.x + 12.0f, terrain.Height(home.x, home.z) + 1.0f, home.z);
+            rested = geckos.Geckos()[0].behavior == island::GeckoBehavior::Rest;
+        }
+        Check(rested, "after the lunge the gecko rests");
+        for (int step = 0; step < 200; ++step) geckos.Update(0.05f, home.x + 12.0f, terrain.Height(home.x, home.z) + 1.0f, home.z);
+        Check(geckos.LungeCount() == 1U, "a gecko does not hunt again within the cooldown");
+        island::FlySwarms swarm(terrain);
+        const auto& fly = swarm.Flies()[0];
+        swarm.NoteLunge(fly.x, fly.z);
+        swarm.Update(0.05f, fly.x + 8.0f, fly.y, fly.z);
+        Check(swarm.LungeDartCount() >= 1U && swarm.Flies()[0].behavior == island::FlyBehavior::Dart,
+              "flies dart from a gecko's snap among them");
+    }
+
+    {
         // Fermenting fruit on a fly swarm's ground: the swarm shifts over it and hangs low
         // there; with the fruit gone it drifts back to its own ground and height. Fresh fruit
         // does not draw it.

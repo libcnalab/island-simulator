@@ -109,6 +109,15 @@ namespace island
         return found;
     }
 
+    void FlySwarms::NoteLunge(const float x, const float z) noexcept
+    {
+        if (!std::isfinite(x) || !std::isfinite(z)) return;
+        lungeX_ = x;
+        lungeZ_ = z;
+        lungeFrame_ = frameIndex_;
+        lungeValid_ = true;
+    }
+
     std::size_t FlySwarms::AtFruitCount() const noexcept
     {
         std::size_t count = 0;
@@ -142,7 +151,15 @@ namespace island
         const float distance = observerValid
             ? std::hypot(agent.state.x - observerX, agent.state.z - observerZ)
             : std::numeric_limits<float>::infinity();
-        if (distance < 1.2f && agent.state.behavior != FlyBehavior::Dart) {
+        // A gecko's snap just now scatters the flies around it as the walker's hand would.
+        const bool snapped = lungeValid_ && frameIndex_ <= lungeFrame_ + 20U
+            && std::hypot(agent.state.x - lungeX_, agent.state.z - lungeZ_) < LungeDartRange;
+        if (snapped && agent.state.behavior != FlyBehavior::Dart) {
+            agent.state.behavior = FlyBehavior::Dart;
+            agent.behaviorSeconds = .55f;
+            agent.angle = std::atan2(agent.state.z - lungeZ_, agent.state.x - lungeX_);
+            ++lungeDarts_;
+        } else if (distance < 1.2f && agent.state.behavior != FlyBehavior::Dart) {
             agent.state.behavior = FlyBehavior::Dart;
             agent.behaviorSeconds = .55f;
             agent.angle = std::atan2(agent.state.z - observerZ,

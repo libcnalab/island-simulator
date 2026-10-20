@@ -146,15 +146,70 @@ namespace island
             const float bodyDistance = std::hypot(agent.state.x - body.x, agent.state.z - body.z);
             if (bodyDistance < threatDistance) { threatDistance = bodyDistance; threatX = body.x; threatZ = body.z; walkerThreat = true; }
         }
-        if (threatDistance < 2.7f && agent.state.behavior == GeckoBehavior::Rest) {
+        const bool hunting = agent.state.behavior == GeckoBehavior::Stalk
+            || agent.state.behavior == GeckoBehavior::Lunge;
+        agent.huntCooldown = std::max(0.0f, agent.huntCooldown - deltaSeconds);
+        if (threatDistance < 2.7f
+            && (agent.state.behavior == GeckoBehavior::Rest || agent.state.behavior == GeckoBehavior::Stalk)) {
             if (walkerThreat) ++walkerScatters_;
             agent.state.behavior = GeckoBehavior::Scurry;
             agent.behaviorSeconds = .75f;
+            agent.prey = -1;
             agent.state.headingRadians = std::atan2(
                 agent.state.z - threatZ, agent.state.x - threatX);
-        } else {
+        } else if (hunting) {
+            // Stalking: the slow approach, the heading held on the fly; from the last span
+            // the lunge, then a rest. A fly gone from reach, or a stalk run out, ends it.
             agent.behaviorSeconds -= deltaSeconds;
-            if (agent.behaviorSeconds <= 0.0f) {
+            const bool preyValid = agent.prey >= 0 && static_cast<std::size_t>(agent.prey) < flies_.size();
+            const float preyDistance = preyValid
+                ? std::hypot(flies_[static_cast<std::size_t>(agent.prey)].x - agent.state.x,
+                             flies_[static_cast<std::size_t>(agent.prey)].z - agent.state.z)
+                : std::numeric_limits<float>::infinity();
+            if (preyValid) {
+                const FlyState& fly = flies_[static_cast<std::size_t>(agent.prey)];
+                agent.state.headingRadians = MoveAngle(agent.state.headingRadians,
+                    std::atan2(fly.z - agent.state.z, fly.x - agent.state.x), deltaSeconds * 4.0f);
+            }
+            if (agent.state.behavior == GeckoBehavior::Stalk) {
+                if (!preyValid || preyDistance > HuntRange * 1.5f || agent.behaviorSeconds <= 0.0f) {
+                    agent.state.behavior = GeckoBehavior::Rest;
+                    agent.behaviorSeconds = 4.0f;
+                    agent.huntCooldown = HuntCooldownSeconds * .4f;
+                    agent.prey = -1;
+                } else if (preyDistance < LungeReach) {
+                    agent.state.behavior = GeckoBehavior::Lunge;
+                    agent.behaviorSeconds = LungeSeconds;
+                    lastLunge_ = {flies_[static_cast<std::size_t>(agent.prey)].x,
+                                  flies_[static_cast<std::size_t>(agent.prey)].z, true};
+                    ++lunges_;
+                }
+            } else if (agent.behaviorSeconds <= 0.0f) {
+                agent.state.behavior = GeckoBehavior::Rest;
+                agent.behaviorSeconds = 4.0f;
+                agent.huntCooldown = HuntCooldownSeconds;
+                agent.prey = -1;
+            }
+        } else {
+            // A fly hanging low within reach of a resting gecko, on ground it accepts, is prey.
+            if (agent.state.behavior == GeckoBehavior::Rest && agent.huntCooldown <= 0.0f) {
+                float best = HuntRange;
+                for (std::size_t i = 0; i < flies_.size(); ++i) {
+                    const FlyState& fly = flies_[i];
+                    if (!std::isfinite(fly.x) || !std::isfinite(fly.z) || !std::isfinite(fly.y)) continue;
+                    const float flyDistance = std::hypot(fly.x - agent.state.x, fly.z - agent.state.z);
+                    if (flyDistance >= best || fly.y > terrain_.Height(fly.x, fly.z) + .6f
+                        || !ValidGround(fly.x, fly.z, agent.home)) continue;
+                    best = flyDistance;
+                    agent.prey = static_cast<int>(i);
+                }
+                if (agent.prey >= 0) {
+                    agent.state.behavior = GeckoBehavior::Stalk;
+                    agent.behaviorSeconds = StalkSeconds;
+                }
+            }
+            agent.behaviorSeconds -= deltaSeconds;
+            if (agent.state.behavior != GeckoBehavior::Stalk && agent.behaviorSeconds <= 0.0f) {
                 ++agent.transitionCount;
                 if (agent.state.behavior == GeckoBehavior::Scurry) {
                     agent.state.behavior = GeckoBehavior::Hidden;
@@ -178,11 +233,15 @@ namespace island
         agent.state.visibility += std::clamp(visibilityTarget - agent.state.visibility,
             -deltaSeconds * 3.8f, deltaSeconds * 2.6f);
         agent.state.visibility = std::clamp(agent.state.visibility, 0.0f, 1.0f);
-        const float targetSpeed = agent.state.behavior == GeckoBehavior::Scurry ? 1.35f : 0.0f;
+        const float targetSpeed = agent.state.behavior == GeckoBehavior::Scurry ? 1.35f
+            : agent.state.behavior == GeckoBehavior::Stalk ? StalkSpeed
+            : agent.state.behavior == GeckoBehavior::Lunge ? LungeSpeed : 0.0f;
         agent.state.speed += std::clamp(targetSpeed - agent.state.speed,
             -deltaSeconds * 4.0f, deltaSeconds * 6.0f);
 
-        if (agent.state.behavior == GeckoBehavior::Scurry) {
+        if (agent.state.behavior == GeckoBehavior::Scurry
+            || agent.state.behavior == GeckoBehavior::Stalk
+            || agent.state.behavior == GeckoBehavior::Lunge) {
             const float homeDistance = std::hypot(
                 agent.state.x - agent.home.x, agent.state.z - agent.home.z);
             if (homeDistance > agent.home.radius * .72f) {

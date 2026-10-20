@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IslandSimulator/WildlifeSimulation.hpp"
+#include "IslandSimulator/FlySwarms.hpp"
 #include "IslandSimulator/GrassWalkers.hpp"
 
 #include <array>
@@ -16,7 +17,9 @@ namespace island
     {
         Rest,
         Scurry,
-        Hidden
+        Hidden,
+        Stalk,
+        Lunge
     };
 
     struct GeckoState
@@ -57,6 +60,20 @@ namespace island
          *  the nearest of them frightens an animal as the walker does. */
         void SetWalkers(std::span<const GrassWalker> walkers) noexcept { walkers_ = walkers; }
         [[nodiscard]] std::uint32_t WalkerScatterCount() const noexcept { return walkerScatters_; }
+        /** @brief The flies this frame: a resting gecko with one hanging low within HuntRange
+         *  on ground it accepts stalks it at StalkSpeed and lunges from LungeReach, then
+         *  rests and does not hunt again for HuntCooldownSeconds. */
+        void SetFlies(std::span<const FlyState> flies) noexcept { flies_ = flies; }
+        struct GeckoLunge { float x = 0.0f, z = 0.0f; bool valid = false; };
+        [[nodiscard]] const GeckoLunge& LastLunge() const noexcept { return lastLunge_; }
+        [[nodiscard]] std::uint32_t LungeCount() const noexcept { return lunges_; }
+        static constexpr float HuntRange = 4.5f;
+        static constexpr float StalkSpeed = 0.35f;
+        static constexpr float LungeReach = 0.45f;
+        static constexpr float LungeSpeed = 1.8f;
+        static constexpr float LungeSeconds = 0.3f;
+        static constexpr float StalkSeconds = 14.0f;
+        static constexpr float HuntCooldownSeconds = 20.0f;
 
         [[nodiscard]] std::span<const GeckoState> Geckos() const noexcept { return states_; }
         [[nodiscard]] std::span<const GeckoHome> Homes() const noexcept { return homes_; }
@@ -72,6 +89,8 @@ namespace island
             float behaviorSeconds = 0.0f;
             float accumulatedSeconds = 0.0f;
             std::uint32_t transitionCount = 0U;
+            float huntCooldown = 0.0f;
+            int prey = -1;                 // index into the flies while stalking; -1 for none
         };
 
         void Initialize(std::size_t index);
@@ -89,5 +108,8 @@ namespace island
         int dormantSimulationCount_ = 0;
         std::span<const GrassWalker> walkers_;
         std::uint32_t walkerScatters_ = 0U;
+        std::span<const FlyState> flies_;
+        std::uint32_t lunges_ = 0U;
+        GeckoLunge lastLunge_;
     };
 }
