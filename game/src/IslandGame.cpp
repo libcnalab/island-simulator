@@ -4846,7 +4846,10 @@ namespace island
                                    sample.coastalRockiness, sample.beachSuitability,
                                    environment.moisture, environment.drainage)
             : 0.0f;
-        return turf >= 0.30f ? FootstepSurface::Grass : FootstepSurface::Soil;
+        if (turf >= 0.30f) return FootstepSurface::Grass;
+        // Soaked bare soil squelches and splashes underfoot like the shallows' edge.
+        if (weather_now::Current().wetness > 0.65f && sample.slopeRadians < 0.25f) return FootstepSurface::Shallows;
+        return FootstepSurface::Soil;
     }
 
     bool IslandGame::IsDebugFreeCameraActive() const noexcept

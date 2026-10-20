@@ -233,6 +233,14 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 247 (2026-10-20) — squelching steps on soaked ground
+
+After a soaking the walker's steps on bare soil still sounded dry. The footstep ground now
+reads the weather: where the ground is soaked (wetness above 0.65) a step on bare soil (not
+turf, not a steep slope) plays the shallows' squelching splash instead of the soil step; grass
+keeps its swish, sand, rock and the decks their own. Not yet heard by a person (the captures run
+without sound); the suite passes.
+
 ## Loop pass 246 (2026-10-20) — rainbows
 
 `TimeOfDayRenderer::DrawRainbow` draws, on the sky at the moon's distance round the point
