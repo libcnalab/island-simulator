@@ -2290,7 +2290,8 @@ namespace island
                   << "island-simulator: at a gust front the crowns let go leaves that spiral down through the shade, drift downwind and lie on the floor a while\n"
                   << "island-simulator: a bird settling on a branch and a monkey moving through a crown shake a leaf loose\n"
                   << "island-simulator: fruit bats " << fruitBatColony_.Bats().size()
-                  << " agents use six inland canopy roosts with four hanging and two bounded daytime flights\n"
+                  << " agents use six inland canopy roosts with four hanging and two bounded daytime flights; "
+                     "a roosting bat's stir in its crown lets a fruit drop and a leaf come loose\n"
                   << "island-simulator: clearing butterflies "
                   << butterflyMeadow_.Butterflies().size()
                   << " agents in deterministic low-altitude habitats; "
@@ -2729,6 +2730,23 @@ namespace island
                                    || viewpoint_ == FixedViewpoint::FruitBatRoostDetail)
                                   ? 0.0f : deltaSeconds,
                                cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
+        // A roosting bat stirs in its crown every so often: a fruit lets go from the crown
+        // and a leaf comes loose beside the bat.
+        for (std::size_t i = 0; i < fruitBatColony_.Bats().size() && i < batStirClock_.size(); ++i) {
+            const FruitBatState& bat = fruitBatColony_.Bats()[i];
+            if (bat.behavior != FruitBatBehavior::Roost || bat.simulationTier == WildlifeSimulationTier::Dormant) {
+                batStirClock_[i] = 0.0f;
+                continue;
+            }
+            batStirClock_[i] += deltaSeconds;
+            const float stirSeconds = 24.0f + static_cast<float>(i) * 3.5f;
+            if (batStirClock_[i] >= stirSeconds) {
+                batStirClock_[i] = 0.0f;
+                ++batStirs_;
+                fallingFruit_.DropFrom(fruitBatColony_.Roosts()[i].tree);
+                canopyLeafFall_.Shake(bat.x, bat.y + 0.5f, bat.z, static_cast<std::uint32_t>(i) * 7919U + batStirs_ * 15485863U);
+            }
+        }
         const ButterflyState previousButterflySubject=butterflyMeadow_.Butterflies()[2U];
         Vector3 butterflyObserver=cameraPosition_;
         if(viewpoint_==FixedViewpoint::ButterflyDetail) {

@@ -45,6 +45,7 @@ namespace island
                 tree.y + crownHeight * .56f,
                 tree.z + std::sin(tree.yawRadians + .7f) * .55f * tree.scale,
                 tree.yawRadians + std::numbers::pi_v<float>});
+            roosts_.back().tree = tree;
         }
         if (roosts_.size() != Count) {
             throw std::runtime_error("Unable to derive six separated fruit-bat canopy roosts");

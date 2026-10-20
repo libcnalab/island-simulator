@@ -24,6 +24,8 @@ namespace island
         float y = 0.0f;
         float z = 0.0f;
         float headingRadians = 0.0f;
+        /** @brief The crown the roost hangs in: a roosting bat lets its fruit drop. */
+        CanopyPlacement tree{};
     };
 
     struct FruitBatState

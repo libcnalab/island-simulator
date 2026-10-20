@@ -41,6 +41,9 @@ public:
     void Update(float deltaSeconds,std::span<const MonkeyState> monkeys) noexcept;
     // Palms shed in gusts near the observer; seconds is the world clock the gust field uses.
     void UpdateCoconuts(float seconds,float observerX,float observerZ) noexcept;
+    /** @brief A fruit let go from one of the crown's fruiting lobes, as a picking monkey's
+     *  falls: a roosting fruit bat's stir in the crown, or anything else that shakes it. */
+    void DropFrom(const CanopyPlacement& tree) noexcept;
     /** @brief Drops one nut from this palm's crown now (the gust path and the tests use it). */
     void ShakeCoconut(const PalmPlacement& palm,std::uint32_t seed) noexcept;
     /** @brief Coconuts that struck the shallows and later washed up on the sand. */

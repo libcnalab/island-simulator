@@ -54,6 +54,22 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 79 (2026-10-20) — a roosting bat's stir lets fruit drop
+
+The fruit bats hung in their roost crowns without touching them. Each `FruitBatRoost` now
+remembers the `CanopyPlacement` it hangs in, and the fruit field's drop is open to any crown:
+`FallingFruitField::DropFrom(tree)` (the picking monkey's `Drop` now calls it) lets a fruit
+go from one of the crown's fruiting lobes with the same lobe, roll and rest rules. In the
+game a roosting bat that is not dormant stirs every 24 s plus 3.5 s per bat: a fruit lets go
+from its crown and a leaf comes loose beside the bat (`CanopyLeafFallField::Shake`), so the
+ground fauna under the roosts (monkeys, boars, doves, crabs, the bear, the ants, the
+butterflies at fermenting fruit) get fruit from the bats as from the monkeys. The startup
+report's fruit-bat line gains "a roosting bat's stir in its crown lets a fruit drop and a
+leaf come loose", pinned by the native capture tool. Core checks: a crown handed to the
+fruit field lets one fruit go that starts up in that crown and comes down to lie within
+twenty seconds; a crown with no finite position lets none. Fruit-bat checks: each roost
+remembers the crown it hangs in, beside its trunk and above its foot. Native `bats` passes.
+
 ## Loop pass 78 (2026-10-20) — a fish school holds in the jetty's shade
 
 The schools circled their routes past the jetty as past any shore. `FishSchools::SetShelter`

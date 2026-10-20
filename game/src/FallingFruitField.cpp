@@ -65,8 +65,11 @@ void FallingFruitField::ShakeCoconut(const PalmPlacement& palm,const std::uint32
 }
 
 void FallingFruitField::Drop(const MonkeyState& monkey) noexcept {
-    const CanopyPlacement& tree=monkey.selectedTree;
-    if(!std::isfinite(tree.x)||!std::isfinite(tree.z)||tree.scale<=0) return;
+    DropFrom(monkey.selectedTree);
+}
+
+void FallingFruitField::DropFrom(const CanopyPlacement& tree) noexcept {
+    if(!std::isfinite(tree.x)||!std::isfinite(tree.z)||!std::isfinite(tree.y)||tree.scale<=0) return;
     FallingFruit* slot=FreeSlot();
     // One of the four fruiting lobes (the odd clusters), hung on its outer underside like
     // the crown geometry, then the instance scale, yaw and translation.

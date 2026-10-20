@@ -7678,6 +7678,29 @@ int main()
     }
 
     {
+        // A fruit lets go from any crown handed to the fruit field, as from a picking
+        // monkey's: it starts up in the crown and comes down to lie on the ground.
+        const island::IslandTerrain terrain;
+        island::FallingFruitField field(terrain);
+        const island::CanopyPlacement tree{40.0f, terrain.Height(40.0f, 40.0f), 40.0f, 0.4f, 1.0f, 2U};
+        field.DropFrom(tree);
+        Check(field.ActiveCount() == 1U && field.DropCount() == 1U, "a crown handed to the fruit field lets one fruit go");
+        const auto& fruit = field.Fruit()[0];
+        Check(fruit.active && fruit.y > tree.y + 1.0f && std::hypot(fruit.x - tree.x, fruit.z - tree.z) < 4.0f * tree.scale,
+              "the let-go fruit starts up in that crown");
+        const std::vector<island::MonkeyState> nobody;
+        bool lying = false;
+        for (int step = 0; step < 400 && !lying; ++step) {
+            field.Update(0.05f, nobody);
+            lying = fruit.active && fruit.restSeconds >= 0.0f && !fruit.rolling;
+        }
+        Check(lying, "the let-go fruit comes down and lies on the ground within twenty seconds");
+        island::FallingFruitField refused(terrain);
+        refused.DropFrom(island::CanopyPlacement{std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f, 0.0f, 1.0f, 0U});
+        Check(refused.ActiveCount() == 0U, "a crown with no finite position lets no fruit go");
+    }
+
+    {
         // A fish school passing a shelter turns in and holds there, then goes on and does not
         // turn in again for a while.
         const island::IslandTerrain terrain;

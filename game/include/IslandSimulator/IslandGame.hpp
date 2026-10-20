@@ -507,6 +507,8 @@ namespace island
         std::uint32_t notedDiveCount_ = 0U;
         std::uint32_t notedLandingCount_ = 0U;
         std::array<float, MonkeyTroop::MonkeyCount> monkeyShakeClock_{};
+        std::array<float, FruitBatColony::Count> batStirClock_{};
+        std::uint32_t batStirs_ = 0U;
         std::uint32_t monkeyShakes_ = 0U;
         std::uint32_t notedThudCount_ = 0U;
         std::uint32_t notedBreachCount_ = 0U;

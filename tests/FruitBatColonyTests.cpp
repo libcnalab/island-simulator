@@ -49,5 +49,12 @@ int main()
     colony.Update(NAN,NAN,NAN,NAN);
     require(colony.DormantSimulationCount()==static_cast<int>(island::FruitBatColony::Count),
         "fruit bats do not fail closed for invalid updates");
+    // Each roost remembers the crown it hangs in: the roost point sits beside that tree's
+    // trunk, up in its crown.
+    for(const auto& roost:colony.Roosts()) {
+        require(roost.tree.scale>0.0f&&std::hypot(roost.x-roost.tree.x,roost.z-roost.tree.z)<1.0f,
+            "a fruit-bat roost does not remember the crown it hangs in");
+        require(roost.y>roost.tree.y+2.0f,"a fruit-bat roost's crown is not above its tree's foot");
+    }
     std::cout<<"Fruit bats: six deterministic inland roosts, four hanging and two bounded daytime flights\n";
 }
