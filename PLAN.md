@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 185 (2026-10-20) — a swimming crocodile folds its legs
+
+A crocodile swam with its legs splayed as on the bank. `CrocodileState::legFold` (0..1)
+now carries the fold: under way in the water (submerged past 0.6, speed past 0.1 m/s) the
+legs fold back along the flanks at `LegFoldRate` (1.5/s) and the tail does the work; on the
+bank, or afloat and still, they splay again at `LegSplayRate` (2/s); `FoldedLegCount()`
+counts the crocodiles folded. In the renderer each limb's elbow and wrist blend back
+along the flank and in toward the body by the fold, the root masses, feet and toes
+following, on the same vertices. The crocodiles report line gains "a crocodile under way
+in the water folds its legs back along its flanks and swims on its tail" (pinned). Core
+check: the swimming crocodile has its legs folded past nine tenths while a crocodile on
+the bank keeps them splayed. Native `crocodiles` passes.
+
 ## Loop pass 184 (2026-10-20) — a crab folds its eyestalks
 
 A beach crab bolted for its burrow with its eyestalks standing. `CrabState::eyeFold`

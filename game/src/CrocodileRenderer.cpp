@@ -369,9 +369,11 @@ namespace island
                     const float stride=std::sin(crocodile.gaitPhase
                         +(pair*2+(sideIndex>0?1:0))*std::numbers::pi_v<float>)*.13f
                         *(1.0f-crocodile.submerged);
+                    // Folded for the swim, the elbow and wrist lie back along the flank.
+                    const float fold=std::clamp(crocodile.legFold,0.0f,1.0f);
                     const Vector3 shoulder=Local(centre,axes,side*.52f,.34f,rootZ,scale);
-                    const Vector3 elbow=Local(centre,axes,side*.83f,.18f,rootZ+stride,scale);
-                    const Vector3 wrist=Local(centre,axes,side*.78f,.025f,rootZ+.24f+stride,scale);
+                    const Vector3 elbow=Local(centre,axes,side*std::lerp(.83f,.62f,fold),std::lerp(.18f,.22f,fold),rootZ+stride-.28f*fold,scale);
+                    const Vector3 wrist=Local(centre,axes,side*std::lerp(.78f,.56f,fold),std::lerp(.025f,.14f,fold),rootZ+.24f+stride-.62f*fold,scale);
                     // A low pectoral/hip mass hides the old tube-to-barrel seam and
                     // gives the splayed limb a muscular crocodilian root. It remains
                     // centred on the existing animated joint and adds no simulation state.

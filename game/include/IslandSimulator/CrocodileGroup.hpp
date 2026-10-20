@@ -25,6 +25,9 @@ struct CrocodileState {
     /** @brief 0..1 the blink: the eyes shut for a moment every several seconds, basking or
      *  afloat; held open while dormant. */
     float blink=0;
+    /** @brief 0..1 the legs folded back along the flanks: a crocodile under way in the water
+     *  tucks its legs and swims on its tail; on the bank they splay again. */
+    float legFold=0;
     float submerged=0;
     float scale=1;
     CrocodileBehavior behavior=CrocodileBehavior::Bask;
@@ -74,6 +77,9 @@ public:
     [[nodiscard]] std::uint32_t BlinkCount()const noexcept{return blinks_;}
     [[nodiscard]] std::size_t BlinkingCount()const noexcept;
     static constexpr float BlinkSeconds=0.3f,BlinkPeriodSeconds=8.0f;
+    /** @brief Crocodiles with their legs folded back this moment (the fold past half). */
+    [[nodiscard]] std::size_t FoldedLegCount()const noexcept;
+    static constexpr float LegFoldRate=1.5f,LegSplayRate=2.0f;
     [[nodiscard]] std::span<const CrocodileHome> Homes()const noexcept{return homes_;}
     [[nodiscard]] int FullSimulationCount()const noexcept{return fullCount_;}
     [[nodiscard]] int ReducedSimulationCount()const noexcept{return reducedCount_;}

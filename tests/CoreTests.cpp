@@ -10097,6 +10097,11 @@ int main()
                 }
             }
             Check(wake.ReleaseCount()>=5U&&wake.ActiveCount()>0U&&near,"a swimming crocodile lays a wake of foam on the water behind its snout");
+            // The legs: the swimmer has them folded back, a crocodile on the bank splayed.
+            bool bankSplayed=true;
+            for(const auto& croc:swimmers.Crocodiles()) if(croc.submerged<0.2f&&croc.legFold>0.1f) bankSplayed=false;
+            Check(swimmers.Crocodiles()[swimmer].legFold>0.9f&&swimmers.FoldedLegCount()>=1U&&bankSplayed,
+                  "a swimming crocodile does not fold its legs back, or one on the bank does");
             island::CrocodileState bank; bank.simulationTier=island::WildlifeSimulationTier::Full; bank.speed=1.0f;
             island::CrocodileWakeField still;
             for(int step=0;step<60;++step) still.Update(0.05f,std::span<const island::CrocodileState>(&bank,1));

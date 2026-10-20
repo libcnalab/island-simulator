@@ -2563,7 +2563,8 @@ namespace island
                   << " agents bask, crawl, swim, and retreat within the stream estuary; one coming alert on its bank hisses at the walker, an original low open-jawed breath heard within thirty metres; "
                   << "a basking crocodile gapes, holding its jaws open for fourteen seconds a few seconds into each lie-up on the bank; "
                   << "a crocodile under way at the surface draws a faint wake of foam on the estuary behind its snout; "
-                  << "a crocodile blinks, its eyes shut for a moment every eight seconds or so\n"
+                  << "a crocodile blinks, its eyes shut for a moment every eight seconds or so; "
+                  << "a crocodile under way in the water folds its legs back along its flanks and swims on its tail\n"
                   << "island-simulator: fish " << fishSchools_.Fish().size()
                   << " agents in " << FishSchools::SchoolCount
                   << " distance-throttled shallow-water schools; a fish rolling through a turn flashes silver along its flanks, brightest parting from the shark\n"

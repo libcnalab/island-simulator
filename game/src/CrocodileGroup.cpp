@@ -144,6 +144,11 @@ void CrocodileGroup::Update(float deltaSeconds,float observerX,float observerY,
 #endif
 }
 
+std::size_t CrocodileGroup::FoldedLegCount()const noexcept {
+    std::size_t count=0;
+    for(const Agent& agent:agents_) count+=agent.state.legFold>.5f?1U:0U;
+    return count;
+}
 std::size_t CrocodileGroup::BlinkingCount()const noexcept {
     std::size_t count=0;
     for(const Agent& agent:agents_) count+=agent.blinking?1U:0U;
@@ -247,6 +252,10 @@ void CrocodileGroup::UpdateAgent(Agent& agent,float dt,float observerX,float obs
                               -dt*.55f,dt*.55f);
     agent.state.gaitPhase=std::fmod(agent.state.gaitPhase+dt*(1.1f+agent.state.speed*2.2f),Tau);
     agent.state.bodyWave=std::sin(agent.state.gaitPhase)*(.10f+.18f*agent.state.submerged);
+    // Swimming, the legs fold back along the flanks and the tail does the work; on the
+    // bank, or afloat and still, they splay again.
+    const bool swimming=agent.state.submerged>.6f&&agent.state.speed>.1f;
+    agent.state.legFold+=std::clamp((swimming?1.0f:0.0f)-agent.state.legFold,-dt*LegSplayRate,dt*LegFoldRate);
     agent.wasAlert=alertFacing;
     agent.hissSeconds=std::max(0.0f,agent.hissSeconds-dt);
     // The gape: a few seconds into a lie-up on the bank the jaws open and stay open for
