@@ -16,6 +16,8 @@ public:
               const Microsoft::Xna::Framework::Vector3&,float seconds=0.0f);
     /** Renders the hut into the bound fixed-sun shadow map. */
     void DrawSunShadow(SunShadowMap& map);
+    /** The map the hut's own surfaces receive (its eaves on its walls, the trees on it). */
+    void SetSunShadowMap(const SunShadowMap* map) noexcept { sunShadow_=map; }
     [[nodiscard]] int DrawCallCount() const noexcept { return drawCalls_; }
 private:
     Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
@@ -23,6 +25,7 @@ private:
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> material_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> sunShadowEffect_;
     bool sunShadowUnavailable_=false;
+    const SunShadowMap* sunShadow_=nullptr;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> vertices_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> thatch_;
     Microsoft::Xna::Framework::Vector3 thatchMean_;

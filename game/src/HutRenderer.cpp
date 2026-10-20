@@ -407,11 +407,16 @@ HutRenderer::HutRenderer(GraphicsDevice& device,const HutPlacement& hut)
             +environment::FogShaderDefinition+body;};
         const auto desktop=[](const char* body){return std::string("#version 330 core\n")
             +environment::FogShaderDefinition+body;};
+        // The fragment stage also receives the sun shadow map and the cumulus shade.
+        const auto esFragment=[](const char* body){return std::string("#version 300 es\nprecision highp float;\n")
+            +environment::FogShaderDefinition+SunShadowMap::ReceiverShader+body;};
+        const auto desktopFragment=[](const char* body){return std::string("#version 330 core\n")
+            +environment::FogShaderDefinition+SunShadowMap::ReceiverShader+body;};
         const CNA::Graphics::ShaderPackageEXT package({
             ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslEs,CNA::ShaderStageEXT::Vertex,"main","hut/es.vert",es(HutMaterialVertex)),
-            ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslEs,CNA::ShaderStageEXT::Fragment,"main","hut/es.frag",es(HutMaterialFragment)),
+            ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslEs,CNA::ShaderStageEXT::Fragment,"main","hut/es.frag",esFragment(HutMaterialFragment)),
             ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslDesktop,CNA::ShaderStageEXT::Vertex,"main","hut/gl.vert",desktop(HutMaterialVertex)),
-            ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslDesktop,CNA::ShaderStageEXT::Fragment,"main","hut/gl.frag",desktop(HutMaterialFragment))},
+            ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslDesktop,CNA::ShaderStageEXT::Fragment,"main","hut/gl.frag",desktopFragment(HutMaterialFragment))},
             {CNA::ShaderStageEXT::Vertex,CNA::ShaderStageEXT::Fragment});
         material_=std::make_unique<ShaderEffect>(device,package);
         if(!material_->IsEffectValid()) throw std::runtime_error(material_->GetCompileErrorEXT());
@@ -434,6 +439,8 @@ HutRenderer::HutRenderer(GraphicsDevice& device,const HutPlacement& hut)
         std::cout<<wallMessage<<'\n'; MirrorRuntimeDiagnosticToPlatformLog(wallMessage);
         const char* craftMessage="island-simulator: hut uses unequal fitted wall boards, overlapping ridge-cap bundles, joint lashings, and attached open shutters";
         std::cout<<craftMessage<<'\n'; MirrorRuntimeDiagnosticToPlatformLog(craftMessage);
+        const char* shadowMessage="island-simulator: the hut receives the sun shadows: its eaves shade its walls and the trees' shadows and the cumulus shade fall across it";
+        std::cout<<shadowMessage<<'\n'; MirrorRuntimeDiagnosticToPlatformLog(shadowMessage);
     } catch(const std::exception& error) {
         material_.reset();
         const std::string message=std::string("island-simulator: hut material fallback: ")+error.what();
@@ -474,6 +481,8 @@ void HutRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector3
         material_->SetUniformFloat("uGust",std::isfinite(seconds)?WindGust::Strength(centre_.X,centre_.Z,seconds):0.0f);
         material_->SetUniformFloat("uSeconds",std::isfinite(seconds)?seconds:0.0f);
         material_->SetUniformVec2("uHangTop",fishBarY_,netRailY_);
+        if(sunShadow_) sunShadow_->Bind(*material_);
+        else SunShadowMap::BindDisabled(*material_);
     } else {
         effect_->setWorldProperty(Matrix::getIdentityProperty()); effect_->setViewProperty(view); effect_->setProjectionProperty(projection); effect_->Apply();
     }

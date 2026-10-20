@@ -1140,11 +1140,14 @@ def main():
                 raise RuntimeError("current small-animal fog is missing; check for a stale executable")
             if not re.search(r"grass mesh tiers change per patch at its own distance, morphing over \d+ m, drawn by quarter-cell blocks instead of switching whole cells by their centre", diagnostics):
                 raise RuntimeError("current per-patch grass tiers are missing; check for a stale executable")
+            if "the hut receives the sun shadows: its eaves shade its walls and the trees' shadows and the cumulus shade fall across it" not in diagnostics:
+                raise RuntimeError("current hut sun-shadow receiving is missing; check for a stale executable")
             if "the abandoned helicopter is weathered: earthy grime low on the body, a patchy damp-green film on its upward faces and rust low on bare metal" not in diagnostics:
                 raise RuntimeError("current helicopter weathering is missing; check for a stale executable")
-            if "beyond that the wreck, hut and helicopter keep their projected mass shadows, cross-faded vertex by vertex with the map's" not in diagnostics:
+            # The sun shadow map's own startup line is absent in a --no-sun-shadows comparison.
+            if not args.no_sun_shadows and "beyond that the wreck, hut and helicopter keep their projected mass shadows, cross-faded vertex by vertex with the map's" not in diagnostics:
                 raise RuntimeError("current far structure mass shadows are missing; check for a stale executable")
-            if not re.search(r"they fade out \d+-\d+ m from the viewer in the sun's view, moving with the camera rather than with the map's 8 m re-centring", diagnostics):
+            if not args.no_sun_shadows and not re.search(r"they fade out \d+-\d+ m from the viewer in the sun's view, moving with the camera rather than with the map's 8 m re-centring", diagnostics):
                 raise RuntimeError("current sun shadow far fade is missing; check for a stale executable")
             if "screen-space canopy sun shafts are off" not in diagnostics:
                 raise RuntimeError("current canopy shaft removal is missing; check for a stale executable")

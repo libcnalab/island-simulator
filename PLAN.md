@@ -54,6 +54,27 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 216 (2026-10-20) — the hut receives the sun shadows
+
+The shadow map's own notes left "animals, hut and wreck surfaces and water do not yet
+receive". The hut was the simplest of them to change, because it already draws through its
+own material shader: its fragment stage now includes `SunShadowMap::ReceiverShader` and
+multiplies by the same cool shadow tint as the palms (0.56, 0.60, 0.66 where the map or a
+cumulus blocks the sun), IslandGame binds the map to it with the other receivers, and with
+no map it takes `BindDisabled` (the cumulus shade only). A face turned from the sun is not
+darkened twice: in the native `hut` view, set against a `--no-sun-shadows` capture of the
+same frame, the map darkens 14.3 % of the pixels by 12 levels or more, which covers the
+trees' and the lookout's ground shadows, the crowns, the gable top under the ridge and a
+corner post, but not the door face already dark from its baked facing. In `hut-material`
+the walls and roof read the same with or without the map (67.3 and 115.9 against 66.9 and
+115.3), so there is no self-shadow acne, and both are about 14 % darker than yesterday's
+capture, as the ground beside them is (57.8 to 50.9): the cumulus shade over the clearing
+now covers the hut along with the land. Two pins of passes 206 and 207 read the map's own
+startup line and failed a `--no-sun-shadows` capture; they now apply only with the map on.
+Startup: "the hut receives the sun shadows: its eaves shade its walls and the trees'
+shadows and the cumulus shade fall across it", pinned. Native `hut` and `hut-material`
+pass, with and without the map.
+
 ## Loop pass 215 (2026-10-20) — the abandoned helicopter is weathered
 
 The helicopter that has stood abandoned in the jungle wore clean factory olive with only a

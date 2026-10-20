@@ -85,6 +85,8 @@ void main() {
     color=mix(vColor.rgb,color,detail);
     float base=(1.0-smoothstep(-0.3,0.25,vWorld.y-uHutCentre.y))*(1.0-step(0.7,vColor.a));
     color*=1.0-base*0.12;
+    // The sun shadow map and the cumulus shade, with the same cool shadow tint as the palms.
+    color*=mix(vec3(0.56,0.60,0.66),vec3(1.0),sunShadowVisibility(vWorld));
     color=mix(color,islandAtmosphereFog,smoothstep(180.0,300.0,length(vWorld-uCameraPosition)));
     fragColor=vec4(color,1.0);
 }

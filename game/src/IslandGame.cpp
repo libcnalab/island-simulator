@@ -4850,6 +4850,7 @@ namespace island
                 grassRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 jungleRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 palmRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                if (hutRenderer_) hutRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 sunShadowReceiversBound_ = true;
             }
             SunShadowMap::SetCloudClock(timeSeconds);
