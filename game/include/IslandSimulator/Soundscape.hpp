@@ -140,6 +140,9 @@ namespace island
         /** @brief The weather's sound: the rain's loudness and the lightning strikes so far
          *  (a new strike's thunder follows after its distance over the speed of sound). */
         void SetWeather(float rain, std::uint32_t strikes, float strikeDistance) noexcept;
+        /** @brief The quad's engine: running or not, its revs, its load (throttle), where it is,
+         *  and whether the listener rides it (then heard close, not placed in the world). */
+        void SetEngine(bool running, float rpm, float load, float x, float y, float z, bool riding) noexcept;
         [[nodiscard]] int PlayedThunderCount() const noexcept { return playedThunderCount_; }
         [[nodiscard]] int PlayedClawKnockCount() const noexcept { return playedClawKnockCount_; }
         [[nodiscard]] int PlayedCrocodileHissCount() const noexcept { return playedCrocodileHissCount_; }
@@ -268,6 +271,11 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> campfireInstance_;
         bool campfirePlaybackActive_ = false;
         float campfirePresence_=0,campfireVolume_=0;
+        std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> engineEffects_;
+        std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance>, 2> engineInstances_;
+        bool engineRunning_ = false, engineRiding_ = false, enginePlaying_ = false;
+        float listenerX_ = 0.0f, listenerZ_ = 0.0f;
+        float engineRpm_ = 1400.0f, engineLoad_ = 0.0f, engineX_ = 0.0f, engineY_ = 0.0f, engineZ_ = 0.0f;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> rainEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> rainInstance_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> thunderEffects_;

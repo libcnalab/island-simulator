@@ -62,6 +62,18 @@ namespace island
         gradeBlend_->setColorDestinationBlendProperty(Blend::BlendFactor);
         gradeBlend_->setAlphaSourceBlendProperty(Blend::Zero);
         gradeBlend_->setAlphaDestinationBlendProperty(Blend::One);
+        // With a local light: the frame times (the hour's colour, the source, plus one minus
+        // the frame's alpha, where the light wrote its strength); the alpha back to one.
+        litGradeBlend_ = std::make_unique<BlendState>();
+        litGradeBlend_->setColorSourceBlendProperty(Blend::DestinationColor);
+        litGradeBlend_->setColorDestinationBlendProperty(Blend::InverseDestinationAlpha);
+        litGradeBlend_->setAlphaSourceBlendProperty(Blend::One);
+        litGradeBlend_->setAlphaDestinationBlendProperty(Blend::Zero);
+        alphaResetBlend_ = std::make_unique<BlendState>();
+        alphaResetBlend_->setColorSourceBlendProperty(Blend::Zero);
+        alphaResetBlend_->setColorDestinationBlendProperty(Blend::One);
+        alphaResetBlend_->setAlphaSourceBlendProperty(Blend::One);
+        alphaResetBlend_->setAlphaDestinationBlendProperty(Blend::Zero);
         const std::array<VertexPositionColor, 3> triangle{
             VertexPositionColor(Vector3(-1, -1, 0), Color(255, 255, 255, 255)),
             VertexPositionColor(Vector3(3, -1, 0), Color(255, 255, 255, 255)),
@@ -114,15 +126,40 @@ namespace island
 
     TimeOfDayRenderer::~TimeOfDayRenderer() = default;
 
-    void TimeOfDayRenderer::DrawGrade(const DayLighting& light)
+    bool TimeOfDayRenderer::GradeActive(const DayLighting& light) noexcept
+    {
+        return !(light.grade.x >= 0.999f && light.grade.y >= 0.999f && light.grade.z >= 0.999f);
+    }
+
+    void TimeOfDayRenderer::ResetAlpha()
+    {
+        device_.setRasterizerStateProperty(RasterizerState::CullNone);
+        device_.setBlendStateProperty(*alphaResetBlend_);
+        device_.setDepthStencilStateProperty(DepthStencilState::None);
+        device_.SetVertexBuffer(gradeTriangle_.get());
+        device_.setIndicesProperty(nullptr);
+        gradeEffect_->setWorldProperty(Matrix::getIdentityProperty());
+        gradeEffect_->setViewProperty(Matrix::getIdentityProperty());
+        gradeEffect_->setProjectionProperty(Matrix::getIdentityProperty());
+        gradeEffect_->Apply();
+        device_.DrawPrimitives(PrimitiveType::TriangleList, 0, 1);
+    }
+
+    void TimeOfDayRenderer::DrawGrade(const DayLighting& light, const bool localLight)
     {
         drawCalls_ = 0;
         gradeApplied_ = false;
-        if (light.grade.x >= 0.999f && light.grade.y >= 0.999f && light.grade.z >= 0.999f) return;   // full day
+        if (!GradeActive(light)) return;   // full day
         const auto c = [](const float v) { return static_cast<int>(std::lround(std::clamp(v, 0.0f, 1.0f) * 255.0f)); };
         device_.setRasterizerStateProperty(RasterizerState::CullNone);
-        device_.setBlendStateProperty(*gradeBlend_);
-        device_.setBlendFactorProperty(Color(c(light.grade.x), c(light.grade.y), c(light.grade.z), 255));
+        if (localLight) {
+            device_.setBlendStateProperty(*litGradeBlend_);
+            gradeEffect_->setDiffuseColorProperty(Vector3(std::clamp(light.grade.x, 0.0f, 1.0f), std::clamp(light.grade.y, 0.0f, 1.0f),
+                                                          std::clamp(light.grade.z, 0.0f, 1.0f)));
+        } else {
+            device_.setBlendStateProperty(*gradeBlend_);
+            device_.setBlendFactorProperty(Color(c(light.grade.x), c(light.grade.y), c(light.grade.z), 255));
+        }
         device_.setDepthStencilStateProperty(DepthStencilState::None);
         device_.SetVertexBuffer(gradeTriangle_.get());
         device_.setIndicesProperty(nullptr);
@@ -132,6 +169,7 @@ namespace island
         gradeEffect_->Apply();
         device_.DrawPrimitives(PrimitiveType::TriangleList, 0, 1);
         device_.setBlendFactorProperty(Color(255, 255, 255, 255));
+        gradeEffect_->setDiffuseColorProperty(Vector3(1.0f, 1.0f, 1.0f));
         ++drawCalls_;
         gradeApplied_ = true;
     }

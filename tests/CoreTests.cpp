@@ -65,6 +65,7 @@
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/QuadBike.hpp"
+#include "IslandSimulator/ExhaustSmokeField.hpp"
 #include "IslandSimulator/CrabBubbleField.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
 #include "IslandSimulator/CicadaColony.hpp"
@@ -6756,8 +6757,11 @@ int main()
         for (int i = 0; i < 60 * 3; ++i) turning.Step(1.0f / 60.0f, {0.5f, 0.0f, false}, flat);
         const float yawBefore = turning.YawRadians();
         for (int i = 0; i < 60 * 2; ++i) turning.Step(1.0f / 60.0f, {0.35f, 0.6f, false}, flat);
-        Check(std::abs(std::remainder(turning.YawRadians() - yawBefore, 6.2831853f)) > 0.5f && turning.Up().y > 0.9f,
-              "steering turns the quad, which stays on its wheels in a moderate turn");
+        Check(std::remainder(turning.YawRadians() - yawBefore, 6.2831853f) < -0.5f && turning.Up().y > 0.9f,
+              "steering right turns the quad to its right (heading +z, toward -x), on its wheels in a moderate turn");
+        const auto turnedRight = turning.Right(), turnedForward = turning.Forward();
+        Check(turnedRight.z * turnedForward.x - turnedRight.x * turnedForward.z > 0.99f,
+              "the quad's right crossed with its heading points up: its right is the rider's right");
         // on loose dirt a steep side slope slides the quad; on grippy rock it rolls it
         const auto gentle = sideSlope(14.0f), steep = sideSlope(44.0f, 1.3f);   // tips at 42.7, slides at 45.3
         QuadBike across({0.0f, 0.0f, 0.0f}, 0.0f), tipping({0.0f, 0.0f, 0.0f}, 0.0f);
@@ -6781,6 +6785,53 @@ int main()
         Check(a.Position().x == b.Position().x && a.Position().z == b.Position().z, "the quad's motion repeats exactly");
         std::cout << "quad bike: top " << topSpeed * 3.6f << " km/h, 0-50 km/h in " << timeTo50 << " s, brakes from top in "
                   << brakeDistance << " m\n";
+
+        // The engine's two loops: whole firing cycles of a single near two seconds, audible,
+        // the high one firing faster (more barks a second).
+        const auto low = island::GenerateEngineLoop(0), high = island::GenerateEngineLoop(1);
+        const auto barks = [](const island::AmbientLoop& loop) {
+            // firings counted as rises of the smoothed loudness through its mean
+            const std::size_t window = static_cast<std::size_t>(loop.sampleRate / 400);
+            std::vector<float> envelope;
+            float sum = 0.0f;
+            for (std::size_t i = 0; i + window < loop.samples.size(); i += window) {
+                float e = 0.0f;
+                for (std::size_t k = 0; k < window; ++k) e += std::abs(static_cast<float>(loop.samples[i + k]));
+                envelope.push_back(e / static_cast<float>(window));
+                sum += envelope.back();
+            }
+            const float mean = sum / static_cast<float>(std::max<std::size_t>(envelope.size(), 1U));
+            int rises = 0;
+            for (std::size_t i = 1; i < envelope.size(); ++i) rises += envelope[i - 1] < mean && envelope[i] >= mean ? 1 : 0;
+            return static_cast<float>(rises) * static_cast<float>(loop.sampleRate) / static_cast<float>(loop.samples.size());
+        };
+        const float lowSeconds = static_cast<float>(low.samples.size()) / static_cast<float>(std::max(low.sampleRate, 1));
+        const float lowBarks = barks(low), highBarks = barks(high);
+        Check(low.sampleRate > 0 && lowSeconds > 1.8f && lowSeconds < 2.2f && highBarks > lowBarks * 1.5f
+                  && lowBarks > island::EngineLowRpm / 120.0f * 0.6f && lowBarks < island::EngineLowRpm / 120.0f * 1.6f,
+              "the engine loops fire at their revs, the high one faster");
+
+        // The exhaust: puffs while the engine runs, more with the throttle, carried along and
+        // downwind, and none left a few seconds after it stops.
+        island::ExhaustSmokeField idle, open;
+        const island::BikeVec tip{0.0f, 0.5f, 0.0f}, back{0.0f, 0.0f, -1.0f}, still{0.0f, 0.0f, 0.0f};
+        for (int i = 0; i < 120; ++i) {
+            idle.Update(1.0f / 60.0f, true, 0.0f, tip, back, still, 1.0f, 0.0f);
+            open.Update(1.0f / 60.0f, true, 1.0f, tip, back, still, 1.0f, 0.0f);
+        }
+        float drift = 0.0f;
+        int live = 0;
+        for (const auto& puff : open.Puffs()) {
+            if (!puff.active) continue;
+            ++live;
+            drift += puff.x;
+        }
+        Check(idle.Emitted() > 0U && open.Emitted() > idle.Emitted() && live > 0 && drift / static_cast<float>(live) > 0.05f,
+              "the exhaust smokes at idle, thicker with the throttle, and drifts downwind");
+        for (int i = 0; i < 60 * 4; ++i) open.Update(1.0f / 60.0f, false, 0.0f, tip, back, still, 1.0f, 0.0f);
+        bool cleared = true;
+        for (const auto& puff : open.Puffs()) cleared = cleared && !puff.active;
+        Check(cleared, "the exhaust clears within its life once the engine stops");
     }
     const island::GrassLodSplit emptyGrassLod = island::GrassLod::Split(0, 82.0f);
     Check(emptyGrassLod.nearCount == 0 && emptyGrassLod.middleCount == 0

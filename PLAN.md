@@ -54,6 +54,76 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Quad bike pass 1 (2026-10-20) — ride a utility quad over the island
+
+Operator request: an ATV to ride, switched to and from walking by a key, with a CNA avatar on
+it, as realistic as possible, with engine sound, exhaust smoke, lights at night (and by day),
+rolling over and set back on its wheels with Backspace, at a real quad's top speed. The core
+`QuadBike` (previous commit) is the physics: a 260 kg rigid body on four sprung, damped wheels,
+tyre grip by surface (sand 0.75, wet sand 0.85, soil 1.0, steep ground 1.05, rock 1.3, the
+seabed 0.7, a quarter less when the weather has wet the ground), a CVT drive to the rear, a
+governor at 80 km/h, brakes on all four, speed-sensitive steering and hull contacts that let it
+roll. Its body frame now puts x on the rider's right (forward x up): in the right-handed world
+that frame is mirrored (the renderer's body matrix reflects), and the core check now asserts
+that steering right turns it right; before, A and D were swapped.
+
+In the game the quad stands parked in a clear, level spot near the hut. F mounts it (from more
+than 9 m away it is brought three and a half metres ahead of the walker) and dismounts on the
+left, the right or behind, wherever the ground is clear; W/S throttle and brake or reverse, A/D
+steer, Space is the handbrake, Backspace rights it. A chase camera rides 4.8 m behind and 1.9 m
+up, never below the ground; the mouse swings it round the quad and it settles back behind 1.5 s
+after the mouse rests. The walker's position follows the quad, so the wildlife and the sounds
+follow the rider. Obstacles (trunks, rocks, the hut) push it back through the collision grid.
+
+The model (`QuadBikeRenderer`, 16 688 triangles, five static draws and one dynamic): a steel
+frame; moulded fenders swept round the wheels (crowned tops, turned-down outer lips, deeper
+inner skirts, carried down into the floorboards); a hood rolling over into a fascia with a
+grille and two wide headlamps; a rear deck into a rear face with the taillight; ribbed
+floorboards with toe and heel guards; mud flaps; front and rear racks; a black brush guard and
+a rear grab bar; side panels; a tank with its filler cap; a long seat; a finned engine, the
+exhaust header, a muffler under the right rear fender and its tip; a skid plate; bars under a
+pod that turn with the steering; knobby tyres (two staggered tread rows and shoulder knobs) on
+five-spoke rims that spin and steer; A-arms, coil-over shocks, the swingarm and its mono-shock
+following each wheel's travel. One material shader with paint, plastic, rubber, steel, chrome
+and lens responses, fog and the sun shadow map. Its own shadow is drawn on the ground plane
+under it: a soft occlusion under the body and each tyre (also by night and under cloud) and the
+silhouette (with the rider's stand-in figure) cast along the sun, flat and even (the film
+writes a depth rounded to a coarse step, so overlapping layers of the silhouette fail the
+strict test instead of darkening twice).
+
+The rider is a CNA GamerServices avatar (a man of 1.78 m, red jersey) loaded asynchronously and
+posed in code: leaning to the bars, thighs forward on the seat, shins down to the floorboards,
+the hands turned palm down with all three joints of every finger curled round the grips; the
+shoulders turn and the elbows fold with the bars. The avatar needs `CNA_ENABLE_NET` in the
+pinned CNA (`ISLAND_CNA_AVATAR`, on for desktop) and its 288 bone uniform vectors exceed GLES
+3's guarantee, so the Web and Android builds draw a simple stand-in rider, as does the desktop
+until the avatar has loaded.
+
+The engine sound: two procedural loops of a big single (2200 and 5600 rpm: a bark of resonant
+noise per firing over its harmonics, valvetrain clatter, drive whine), crossfaded and
+pitch-shifted by the revs the CVT model gives, louder with the throttle; heard close while
+riding. The exhaust: puffs from the tip, more and denser with the throttle, carried with the
+quad's speed, swelling, rising and drifting downwind, gone within 2.4 s (drawn as grey dust
+puffs before the night grade).
+
+The headlights: two lamp lenses that glow (an additive glare after the grade, larger at night;
+the red taillight at night) whenever the quad is ridden, by day too. At night the beam lights
+the ground through the grade itself: the frame's alpha is set to one, then a slab over the pool
+ahead is drawn depth-tested, each of its pixels finding where its view ray comes down to the
+ground and how strongly the lamps light it there (a 20-degree core and a softer spill, falling
+off with distance to 40 m, facing the lamps), and writing one minus that into the alpha only;
+the grade then multiplies each pixel by the hour's colour plus that light, so lit grass, plants
+and ground keep their own colours instead of the night's blue (lit within the 8-bit frame
+before the grade, they could never exceed the grade's dark blue). The slab is drawn nearer
+along the eye's rays but never before the lamps, so the quad and its rider stand in front of it
+and stay unlit, and what stands in the pool lower than the eye is lit.
+
+QA views: `quad` (parked, from the front left), `quad-ride` (ridden with the bars turned right,
+from the front right), `quad-chase` (the chase camera); all pass natively by day, and at 21:30
+for `quad-ride` and `quad-chase`. Core checks: the right turn, the engine loops' firing rates,
+the exhaust smoking at idle and more with the throttle, drifting downwind and clearing.
+Not yet: dust and spray from the wheels, tyre tracks in the sand, a crash sound.
+
 ## Weather pass 1 (2026-10-20) — clear, cloudy, overcast, showers and thunderstorms
 
 The second half of the operator's request. A core `WeatherSystem` chains spells of 1.5 to 5

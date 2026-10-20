@@ -35,8 +35,9 @@ namespace island
      * wheel mounts, load-limited tyre grip by surface, a CVT drive to the rear wheels with a
      * real sport quad's top speed, speed-sensitive steering, drag, and a chassis whose corners
      * meet the ground when it tips, so it can roll over on a steep side slope or in a fast turn
-     * and lie there until Right() sets it back on its wheels. Body frame: x right, y up,
-     * z forward. Units: metres, kilograms, seconds.
+     * and lie there until Right() sets it back on its wheels. Body frame: x to the rider's
+     * right (forward x up), y up, z forward; in the right-handed world that frame is mirrored,
+     * so a matrix built from its axes reflects. Units: metres, kilograms, seconds.
      */
     class QuadBike final
     {

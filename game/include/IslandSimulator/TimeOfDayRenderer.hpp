@@ -34,7 +34,14 @@ namespace island
         explicit TimeOfDayRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         ~TimeOfDayRenderer();
 
-        void DrawGrade(const DayLighting& light);
+        /** @brief True when DrawGrade will darken the frame (anything short of full day). */
+        [[nodiscard]] static bool GradeActive(const DayLighting& light) noexcept;
+        /** @brief Sets the frame's alpha to one, for a local light to write into before the grade. */
+        void ResetAlpha();
+        /** @param localLight the frame's alpha carries a local light (one minus its strength,
+         *  written after ResetAlpha): each pixel is graded by the hour's colour plus that light,
+         *  so a lamp's pool keeps the surfaces' own colours instead of the night's blue. */
+        void DrawGrade(const DayLighting& light, bool localLight = false);
         /** @brief A lightning flash over everything already drawn (0..1). */
         void DrawFlash(float flash);
         void DrawNightSky(const Microsoft::Xna::Framework::Matrix& view,
@@ -47,7 +54,7 @@ namespace island
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> gradeEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> skyEffect_;
-        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BlendState> gradeBlend_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BlendState> gradeBlend_, litGradeBlend_, alphaResetBlend_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> gradeTriangle_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> stars_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> moon_;

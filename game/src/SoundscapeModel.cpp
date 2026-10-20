@@ -518,6 +518,39 @@ namespace island
         return Quantize(samples, near ? 0.92f : 0.75f);
     }
 
+    AmbientLoop GenerateEngineLoop(const std::uint8_t variant)
+    {
+        // A 450 cc single fires every second revolution: a bark of exhaust per firing (a short
+        // burst of low resonant noise over the firing's harmonics), a little irregular from
+        // stroke to stroke, over the clatter of the valvetrain and the whine of the drive.
+        const bool high = (variant & 1U) != 0U;
+        const float rpm = high ? EngineHighRpm : EngineLowRpm;
+        const float firing = rpm / 120.0f;                     // Hz
+        const int firings = static_cast<int>(std::round(firing * 2.0f));   // a two-second loop of whole cycles
+        const float seconds = static_cast<float>(firings) / firing;
+        const auto frameCount = static_cast<std::size_t>(AmbientSampleRate * seconds);
+        const std::vector<float> noise = Noise(high ? 0xe9f1a2b3U : 0xe9f1a2b4U, frameCount);
+        const std::vector<float> body = CircularSmooth(noise, high ? 6U : 9U);
+        std::vector<float> samples(frameCount, 0.0f);
+        DeterministicNoise variation(high ? 0x51c3a77dU : 0x51c3a77eU);
+        std::vector<float> strokes(static_cast<std::size_t>(firings));
+        for (float& s : strokes) s = 0.82f + 0.18f * (variation.Next() * 0.5f + 0.5f);
+        const float period = 1.0f / firing;
+        for (std::size_t i = 0; i < frameCount; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            const auto cycle = static_cast<std::size_t>(t / period) % strokes.size();
+            const float phase = std::fmod(t, period) / period;
+            const float bark = std::exp(-phase * (high ? 6.5f : 9.0f)) * strokes[cycle];
+            const float tone = std::sin(2.0f * std::numbers::pi_v<float> * firing * t)
+                + 0.55f * std::sin(2.0f * std::numbers::pi_v<float> * firing * 2.0f * t + 0.6f)
+                + 0.30f * std::sin(2.0f * std::numbers::pi_v<float> * firing * 3.0f * t + 1.1f);
+            const float valvetrain = (noise[i] - body[i]) * 0.10f * (0.6f + 0.4f * std::sin(2.0f * std::numbers::pi_v<float> * firing * 4.0f * t));
+            const float whine = 0.05f * std::sin(2.0f * std::numbers::pi_v<float> * rpm / 60.0f * 7.0f * t);
+            samples[i] = bark * (body[i] * 2.6f + tone * 0.42f) + valvetrain + whine;
+        }
+        return Quantize(samples, 0.82f, true);
+    }
+
     AmbientLoop GenerateBunkerHumLoop()
     {
         constexpr int loopSeconds=17;

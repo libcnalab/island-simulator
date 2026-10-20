@@ -64,6 +64,10 @@ namespace island
     [[nodiscard]] AmbientLoop GenerateRainLoop();
     /** @brief Thunder: variant 0 a near strike (a crack, then the roll), 1 a distant roll. */
     [[nodiscard]] AmbientLoop GenerateThunder(std::uint8_t variant);
+    /** @brief The quad's single-cylinder four-stroke engine, looped at a fixed revs: variant 0 at
+     *  EngineLowRpm, 1 at EngineHighRpm; played pitch-shifted and crossfaded by the revs. */
+    [[nodiscard]] AmbientLoop GenerateEngineLoop(std::uint8_t variant);
+    inline constexpr float EngineLowRpm = 2200.0f, EngineHighRpm = 5600.0f;
 
     /** @brief Generates one four-second stronger-wave wash for sparse shoreline accents. */
     [[nodiscard]] AmbientLoop GenerateWaveAccent();

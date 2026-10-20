@@ -205,6 +205,45 @@ namespace island
         ++chatterCount_;
     }
 
+    void Soundscape::SetEngine(const bool running, const float rpm, const float load, const float x, const float y,
+                               const float z, const bool riding) noexcept
+    {
+        engineRunning_ = running;
+        engineRpm_ = std::isfinite(rpm) ? std::clamp(rpm, 800.0f, 9000.0f) : 1400.0f;
+        engineLoad_ = std::isfinite(load) ? std::clamp(load, 0.0f, 1.0f) : 0.0f;
+        engineX_ = x; engineY_ = y; engineZ_ = z;
+        engineRiding_ = riding;
+        if (!available_ || !engineInstances_[0] || !engineInstances_[1]) return;
+        try {
+            if (running && !enginePlaying_) {
+                engineInstances_[0]->Play();
+                engineInstances_[1]->Play();
+                enginePlaying_ = true;
+            } else if (!running && enginePlaying_) {
+                engineInstances_[0]->Stop();
+                engineInstances_[1]->Stop();
+                enginePlaying_ = false;
+            }
+            if (!enginePlaying_) return;
+            // two loops pitched to the revs (an octave each way at most), crossfaded between them
+            const float highWeight = std::clamp((engineRpm_ - 3000.0f) / 1300.0f, 0.0f, 1.0f);
+            const float lowPitch = std::clamp(std::log2(engineRpm_ / EngineLowRpm), -1.0f, 1.0f);
+            const float highPitch = std::clamp(std::log2(engineRpm_ / EngineHighRpm), -1.0f, 1.0f);
+            float volume = (0.32f + 0.55f * engineLoad_) * (muted_ ? 0.0f : 1.0f) * underwaterAudio_.airGain;
+            if (!riding) {
+                // heard from where it stands
+                const float dx = x - listenerX_, dz = z - listenerZ_;
+                volume *= std::clamp(1.0f - (std::hypot(dx, dz) - 4.0f) / 60.0f, 0.0f, 1.0f);
+            }
+            engineInstances_[0]->setPitchProperty(lowPitch);
+            engineInstances_[1]->setPitchProperty(highPitch);
+            engineInstances_[0]->setVolumeProperty(volume * (1.0f - highWeight));
+            engineInstances_[1]->setVolumeProperty(volume * highWeight);
+        } catch (const std::exception&) {
+            enginePlaying_ = false;
+        }
+    }
+
     void Soundscape::SetWeather(const float rain, const std::uint32_t strikes, const float strikeDistance) noexcept
     {
         weatherRain_ = std::isfinite(rain) ? std::clamp(rain, 0.0f, 1.0f) : 0.0f;
@@ -388,6 +427,12 @@ namespace island
             campfireEffect_->setNameProperty("Procedural wood fire crackling");
             campfireInstance_=std::make_unique<SoundEffectInstance>(campfireEffect_->CreateInstance());
             campfireInstance_->setIsLoopedProperty(true);
+            for (std::size_t i = 0; i < engineEffects_.size(); ++i) {
+                engineEffects_[i] = CreateLoopedSoundEffect(GenerateEngineLoop(static_cast<std::uint8_t>(i)));
+                engineEffects_[i]->setNameProperty(i == 0 ? "Procedural quad engine, low revs" : "Procedural quad engine, high revs");
+                engineInstances_[i] = std::make_unique<SoundEffectInstance>(engineEffects_[i]->CreateInstance());
+                engineInstances_[i]->setIsLoopedProperty(true);
+            }
             rainEffect_=CreateLoopedSoundEffect(GenerateRainLoop());
             rainEffect_->setNameProperty("Procedural rain");
             rainInstance_=std::make_unique<SoundEffectInstance>(rainEffect_->CreateInstance());
@@ -851,6 +896,8 @@ namespace island
             }
         }
 
+        listenerX_ = listenerState.x;
+        listenerZ_ = listenerState.z;
         streamSound_ = StreamSoundField::Sample(listenerState.x, listenerState.z, streamCascade_);
         campfirePresence_=CampfireSite::SoundPresence(listenerState.x,listenerState.y,listenerState.z,CampfireLayout::GroundY());
         campfireVolume_+=(campfirePresence_*.26f-campfireVolume_)*(1-std::exp(-safeDelta*4));

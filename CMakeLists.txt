@@ -132,6 +132,7 @@ add_library(island_core STATIC
     game/src/DayNightCycle.cpp
     game/src/WeatherSystem.cpp
     game/src/QuadBike.cpp
+    game/src/ExhaustSmokeField.cpp
     game/src/SlopeScrubLayout.cpp
     game/src/LeafBladeProfile.cpp
     game/src/UnderstoryLeafProfile.cpp
@@ -615,7 +616,20 @@ if(ISLAND_BUILD_GAME)
 
     set(CNA_BUILD_TESTS OFF CACHE BOOL "Build CNA tests" FORCE)
     set(CNA_BUILD_EXAMPLES OFF CACHE BOOL "Build CNA examples" FORCE)
-    set(CNA_ENABLE_NET OFF CACHE BOOL "Build CNA networking" FORCE)
+    # The quad bike's rider is a CNA avatar (GamerServices AvatarRenderer, catalog compiled in).
+    # The pinned CNA builds GamerServices only with networking on; Web and Android keep it off
+    # (unmeasured there: synchronous loading, the GLES3 bone-uniform limit) and draw a stand-in rider.
+    if(EMSCRIPTEN OR ANDROID)
+        set(_island_avatar_default OFF)
+    else()
+        set(_island_avatar_default ON)
+    endif()
+    option(ISLAND_CNA_AVATAR "Draw the quad bike's rider as a CNA avatar" ${_island_avatar_default})
+    if(ISLAND_CNA_AVATAR)
+        set(CNA_ENABLE_NET ON CACHE BOOL "Build CNA networking" FORCE)
+    else()
+        set(CNA_ENABLE_NET OFF CACHE BOOL "Build CNA networking" FORCE)
+    endif()
     set(CNA_ENABLE_VIDEO OFF CACHE STRING "Build CNA video playback" FORCE)
     set(CNA_ENABLE_DRACO OFF CACHE BOOL "Build Draco mesh decoding" FORCE)
     set(CNA_ENABLE_FONT_PIPELINE OFF CACHE STRING "Build the font pipeline" FORCE)
@@ -691,6 +705,8 @@ if(ISLAND_BUILD_GAME)
         game/src/StructureShadowReceiver.cpp
         game/src/TimeOfDayRenderer.cpp
         game/src/RainRenderer.cpp
+        game/src/QuadBikeRenderer.cpp
+        game/src/QuadRider.cpp
         game/src/CrabRenderer.cpp
         game/src/CrocodileRenderer.cpp
         game/src/BoarRenderer.cpp
@@ -767,6 +783,10 @@ if(ISLAND_BUILD_GAME)
     endif()
     target_include_directories(island-simulator PRIVATE game/include)
     target_link_libraries(island-simulator PRIVATE IslandSimulator::Core CNA)
+    if(ISLAND_CNA_AVATAR AND TARGET CNA::GamerServices)
+        target_link_libraries(island-simulator PRIVATE CNA::GamerServices)
+        target_compile_definitions(island-simulator PRIVATE ISLAND_WITH_CNA_AVATAR=1)
+    endif()
     island_enable_cna_consumer_warnings(island-simulator)
     island_enable_first_party_sanitizers(island-simulator)
 

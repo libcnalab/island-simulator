@@ -107,6 +107,9 @@ namespace
         case FixedViewpoint::HelicopterDetail: return "helicopter";
         case FixedViewpoint::HelicopterInteriorDetail: return "helicopter-inside";
         case FixedViewpoint::HelicopterApproach: return "helicopter-approach";
+        case FixedViewpoint::QuadDetail: return "quad";
+        case FixedViewpoint::QuadRideDetail: return "quad-ride";
+        case FixedViewpoint::QuadChaseDetail: return "quad-chase";
         case FixedViewpoint::CrabDetail: return "crabs";
         case FixedViewpoint::HermitCrabDetail: return "hermit-crabs";
         case FixedViewpoint::CoconutCrabDetail: return "coconut-crabs";
@@ -364,6 +367,12 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::JettyDetail;
             } else if (name == "flight") {
                 viewpoint = island::FixedViewpoint::FlightOverview;
+            } else if (name == "quad") {
+                viewpoint = island::FixedViewpoint::QuadDetail;
+            } else if (name == "quad-ride") {
+                viewpoint = island::FixedViewpoint::QuadRideDetail;
+            } else if (name == "quad-chase") {
+                viewpoint = island::FixedViewpoint::QuadChaseDetail;
             } else if (name == "bridge") {
                 viewpoint = island::FixedViewpoint::BridgeDetail;
             } else if (name == "lookout") {

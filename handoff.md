@@ -70,11 +70,16 @@ level, so it is left out (at most a hidden joke switch, off by default, if the o
       still to do: morning mist, stronger gusts with the wind, rain rings on the water.
 
 Operator request 2026-10-20 (the next task after the weather): ride a quad bike (ATV).
-- [ ] A key switches between walking and the ATV and back; a driver avatar sits on it.
-- [ ] As realistic a model as possible (frame, bodywork, handlebars, four wheels with treaded tyres,
-      suspension), exhaust smoke, headlights by day and lighting the ground at night.
-- [ ] Drives over the island's terrain with suspension, can roll over; Backspace rights it.
-- [ ] Engine sound following the revs; a top speed of a real ATV (about 80 km/h).
+- [x] F switches between walking and the ATV and back; a CNA avatar rides it (native desktop;
+      Web and Android draw a stand-in rider: the avatar's bone uniforms exceed GLES 3's guarantee).
+- [x] As realistic a model as possible (steel frame, moulded fenders, hood and rear deck,
+      floorboards, racks, brush guard, handlebars under a pod, knobby tyres on spoked rims,
+      A-arms, coil-overs and a swingarm that follow the suspension), exhaust smoke, a cast
+      shadow, headlights by day and a pool of light on the ground at night (PLAN "Quad bike pass 1").
+- [x] Drives over the island's terrain with suspension, can roll over; Backspace rights it.
+- [x] Engine sound following the revs; a top speed of a real ATV (80 km/h).
+- [ ] Still open: dust and spray from the wheels, tyre tracks in sand, a crash sound, the
+      engine heard from the walker's ears while it idles parked (it stops when you step off).
 
 Loop log (propose → implement, continues until the operator stops the session):
 - Pass 1: dappled leaf-gap sun flecks on the shaded forest floor; `ground` view reclassified

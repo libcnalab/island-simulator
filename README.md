@@ -489,6 +489,16 @@ ordinary launch. Isolated smoke/capture/benchmark runs do not read or change pla
 `--no-sun-shadows` is a QA comparison switch: it leaves the sun shadow map out, so the large
 objects fall back to the contact-batch mass shadows, and a capture shows the scene without the
 map's tree, hut and tower shadows (`tools/run_software_capture.py <build> <view> --no-sun-shadows`).
+The island keeps its own clock (24 game hours in 24 real minutes): T moves it an hour on, and
+`--time-of-day H` / `--game-day D` start it at an hour and a day of the moon's month. Y steps
+through the weathers (clear, partly cloudy, overcast, showers, thunderstorm); `--weather NAME`
+starts with one.
+A utility quad bike stands parked beside the hut. F gets on it (from farther away it is brought
+to you) and off again; W and S throttle and brake (S held when stopped reverses), A and D steer,
+Space is the handbrake, and Backspace sets it back on its wheels after a rollover. A chase camera
+follows it; the mouse swings the camera round, and it settles back behind when the mouse rests.
+Its top speed is a real utility quad's 80 km/h, its engine note follows the revs and the
+throttle, its exhaust smokes, and its headlights burn by day and light the ground at night.
 The executable may be launched from any working directory; current runtime content is embedded or
 generated and does not depend on a repository-relative asset path.
 On Linux, press Escape once to release the mouse and again to exit. In a browser, Escape only

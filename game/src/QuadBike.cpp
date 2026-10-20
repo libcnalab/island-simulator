@@ -47,7 +47,7 @@ namespace island
     {
         axisZ_ = {std::sin(yawRadians), 0.0f, std::cos(yawRadians)};
         axisY_ = {0.0f, 1.0f, 0.0f};
-        axisX_ = Cross(axisY_, axisZ_);
+        axisX_ = Cross(axisZ_, axisY_);
         previousLength_.fill(SuspensionRest);
     }
 
@@ -70,7 +70,7 @@ namespace island
     {
         axisY_ = Normalised(axisY_);
         axisZ_ = Normalised(Sub(axisZ_, Mul(axisY_, Dot(axisZ_, axisY_))), {0, 0, 1});
-        axisX_ = Cross(axisY_, axisZ_);
+        axisX_ = Cross(axisZ_, axisY_);
     }
 
     void QuadBike::Place(const BikeVec position, const float yawRadians, const GroundQuery& ground) noexcept
@@ -78,7 +78,7 @@ namespace island
         position_ = position;
         axisZ_ = {std::sin(yawRadians), 0.0f, std::cos(yawRadians)};
         axisY_ = {0.0f, 1.0f, 0.0f};
-        axisX_ = Cross(axisY_, axisZ_);
+        axisX_ = Cross(axisZ_, axisY_);
         Right(ground);
     }
 
@@ -90,7 +90,7 @@ namespace island
         heading = Normalised(heading, {0, 0, 1});
         axisY_ = {0.0f, 1.0f, 0.0f};
         axisZ_ = heading;
-        axisX_ = Cross(axisY_, axisZ_);
+        axisX_ = Cross(axisZ_, axisY_);
         if (!ground) {
             velocity_ = {};
             angular_ = {};
@@ -108,7 +108,7 @@ namespace island
         const BikeVec flatRight = axisX_, flatForward = axisZ_;
         axisY_ = Normalised(Sub(Sub(BikeVec{0.0f, 1.0f, 0.0f}, Mul(flatRight, acrossSlope)), Mul(flatForward, alongSlope)));
         axisZ_ = Normalised(Sub(flatForward, Mul(axisY_, Dot(flatForward, axisY_))), {0, 0, 1});
-        axisX_ = Cross(axisY_, axisZ_);
+        axisX_ = Cross(axisZ_, axisY_);
         const float sag = Mass * 9.81f / 4.0f / SpringRate;
         const float average = (heights[0] + heights[1] + heights[2] + heights[3]) * 0.25f;
         const float lift = (WheelRadius + SuspensionRest - sag - MountHeight) / std::max(axisY_.y, 0.3f);

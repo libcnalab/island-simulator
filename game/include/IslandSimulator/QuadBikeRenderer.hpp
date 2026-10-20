@@ -1,0 +1,105 @@
+#pragma once
+
+#include "IslandSimulator/QuadBike.hpp"
+#include "Microsoft/Xna/Framework/Matrix.hpp"
+#include "Microsoft/Xna/Framework/Vector3.hpp"
+#include "Microsoft/Xna/Framework/Graphics/VertexPositionColor.hpp"
+#include "Microsoft/Xna/Framework/Graphics/VertexPositionNormalTexture.hpp"
+#include <array>
+#include <functional>
+#include <memory>
+#include <vector>
+
+namespace Microsoft::Xna::Framework::Graphics
+{
+    class BasicEffect;
+    class BlendState;
+    class DepthStencilState;
+    class DynamicVertexBuffer;
+    class GraphicsDevice;
+    class ShaderEffect;
+    class VertexBuffer;
+}
+
+namespace island
+{
+    class SunShadowMap;
+
+    /**
+     * The quad bike: a utility quad built in its body frame from tubes, shells and lathed
+     * parts (a steel frame with bumpers and racks, painted fenders and nose, a seat and tank,
+     * the engine with its finned head, the exhaust and muffler, footwells, a skid plate,
+     * headlights and a taillight), handlebars that turn with the steering, four wheels of
+     * knobby tyres on spoked rims that spin and steer, and A-arms, coil-over shocks and a
+     * swingarm that follow the suspension. One lit material (painted, plastic, rubber and metal
+     * responses, the sun shadow map, fog); the lamps glow after the night grade.
+     */
+    class QuadBikeRenderer final
+    {
+    public:
+        explicit QuadBikeRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
+        ~QuadBikeRenderer();
+        void SetSunShadowMap(const SunShadowMap* map) noexcept { sunShadow_ = map; }
+
+        /** @param riderFallback draw a simple seated rider (when no CNA avatar is available). */
+        void Draw(const Microsoft::Xna::Framework::Matrix& view, const Microsoft::Xna::Framework::Matrix& projection,
+                  const Microsoft::Xna::Framework::Vector3& camera, const QuadBike& bike, bool lightsOn,
+                  bool riderFallback);
+        /** @brief The quad's shadow on the ground under it: its silhouette (and the rider's, as
+         *  the stand-in figure) cast along the sun onto the plane through @p groundPoint, with
+         *  @p sunStrength 0..1 its darkness relative to the scene's own sun shadows, and a soft
+         *  occlusion under the body and the tyres that stays by night and under cloud. */
+        void DrawShadow(const Microsoft::Xna::Framework::Matrix& view, const Microsoft::Xna::Framework::Matrix& projection,
+                        const Microsoft::Xna::Framework::Vector3& camera, const QuadBike& bike, bool rider,
+                        const BikeVec& groundPoint, const BikeVec& groundNormal, float sunStrength);
+        /** @brief The headlights' pool, before the night grade: a slab over the ground ahead,
+         *  depth-tested, on which each pixel finds where its view ray meets the ground and how
+         *  strongly the lamps light it there; it writes only the frame's alpha (one minus that),
+         *  for TimeOfDayRenderer::DrawGrade(light, true) to lift the grade by. Call it after
+         *  TimeOfDayRenderer::ResetAlpha(). */
+        void DrawBeam(const Microsoft::Xna::Framework::Matrix& view, const Microsoft::Xna::Framework::Matrix& projection,
+                      const Microsoft::Xna::Framework::Vector3& camera, const QuadBike& bike,
+                      const std::function<BikeGround(float, float)>& ground, float strength);
+        /** @brief The lamps' glow, after the night grade (additive). */
+        void DrawLights(const Microsoft::Xna::Framework::Matrix& view, const Microsoft::Xna::Framework::Matrix& projection,
+                        const Microsoft::Xna::Framework::Vector3& camera, const QuadBike& bike, float nightness);
+        [[nodiscard]] int TriangleCount() const noexcept { return triangles_; }
+        [[nodiscard]] int DrawCallCount() const noexcept { return drawCalls_; }
+        /** @brief Body-frame points the game needs: the exhaust's tip, the headlights, the seat. */
+        static constexpr BikeVec ExhaustTip{0.22f, -0.10f, -1.05f};
+        static constexpr BikeVec HeadlightLeft{-0.19f, -0.03f, 1.005f}, HeadlightRight{0.19f, -0.03f, 1.005f};
+        static constexpr BikeVec Taillight{0.0f, 0.035f, -1.02f};
+        static constexpr BikeVec Seat{0.0f, 0.255f, -0.18f};
+        static constexpr BikeVec GripLeft{-0.40f, 0.455f, 0.31f}, GripRight{0.40f, 0.455f, 0.31f};
+        static constexpr BikeVec FootLeft{-0.36f, -0.24f, 0.10f}, FootRight{0.36f, -0.24f, 0.10f};
+
+    private:
+        using Vertex = Microsoft::Xna::Framework::Graphics::VertexPositionNormalTexture;
+        struct Pose
+        {
+            Microsoft::Xna::Framework::Matrix body, bars;
+            std::array<Microsoft::Xna::Framework::Matrix, 4> wheels;
+        };
+        [[nodiscard]] static Pose PoseOf(const QuadBike& bike);
+        /** The suspension (and the stand-in rider) in the body frame, uploaded; its vertex count. */
+        int BuildDynamic(const QuadBike& bike, bool rider);
+        void DrawAll(Microsoft::Xna::Framework::Graphics::ShaderEffect& effect, const Pose& pose, int dynamicCount);
+        void Upload(std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer>& buffer, int& count,
+                    const std::vector<Vertex>& vertices);
+        void DrawPart(Microsoft::Xna::Framework::Graphics::ShaderEffect& effect,
+                      Microsoft::Xna::Framework::Graphics::VertexBuffer& buffer, int count,
+                      const Microsoft::Xna::Framework::Matrix& world);
+        Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> material_, shadow_, beam_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BlendState> beamBlend_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::DepthStencilState> shadowDepth_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> glowEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> body_, bars_, frontWheel_, rearWheel_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> dynamic_, glow_, beamMesh_;
+        std::vector<Vertex> dynamicStaging_, beamStaging_;
+        std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> glowStaging_;
+        int bodyCount_ = 0, barsCount_ = 0, frontWheelCount_ = 0, rearWheelCount_ = 0;
+        const SunShadowMap* sunShadow_ = nullptr;
+        int triangles_ = 0, drawCalls_ = 0;
+    };
+}

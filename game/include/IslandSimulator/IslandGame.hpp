@@ -8,6 +8,10 @@
 #include <string>
 #include <vector>
 
+#include "IslandSimulator/ExhaustSmokeField.hpp"
+#include "IslandSimulator/QuadRider.hpp"
+#include "IslandSimulator/QuadBikeRenderer.hpp"
+#include "IslandSimulator/QuadBike.hpp"
 #include "IslandSimulator/RainRenderer.hpp"
 #include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/TimeOfDayRenderer.hpp"
@@ -242,6 +246,9 @@ namespace island
         HelicopterDetail,
         HelicopterInteriorDetail,
         HelicopterApproach,
+        QuadDetail,
+        QuadRideDetail,
+        QuadChaseDetail,
         CrabDetail,
         HermitCrabDetail,
         CoconutCrabDetail,
@@ -518,6 +525,24 @@ namespace island
         DayNightCycle dayNight_{};
         bool timeKeyWasDown_ = false;
         WeatherSystem weather_{};
+        // The quad bike: parked near the hut until ridden (F), driven with W/S/A/D, Space the
+        // handbrake, Backspace setting it back on its wheels.
+        QuadBike quad_{};
+        std::unique_ptr<QuadBikeRenderer> quadRenderer_;
+        std::unique_ptr<QuadRider> quadRider_;
+        ExhaustSmokeField exhaust_;
+        std::unique_ptr<RootingDustRenderer> exhaustRenderer_;
+        std::unique_ptr<RenderedTerrainSurface> quadSurface_;
+        BikeControls quadControls_{};
+        bool riding_ = false, quadKeyWasDown_ = false, quadRightKeyWasDown_ = false, quadPlaced_ = false;
+        float quadOrbit_ = 0.0f, quadCameraYaw_ = 0.0f, quadPreviousYaw_ = 0.0f, quadOrbitIdle_ = 0.0f;
+        Microsoft::Xna::Framework::Vector3 quadCamera_{};
+        [[nodiscard]] BikeGround QuadGround(float x, float z) const noexcept;
+        [[nodiscard]] bool QuadObstacle(float x, float z, float radius, float& pushX, float& pushZ) const noexcept;
+        void PlaceQuadNear(float x, float z, float yawRadians);
+        [[nodiscard]] float QuadLampNightness() const noexcept;
+        void UpdateQuad(float deltaSeconds);
+        void ToggleQuad();
         std::unique_ptr<RainRenderer> rain_;
         bool weatherKeyWasDown_ = false;
         FootprintTrail footprints_;

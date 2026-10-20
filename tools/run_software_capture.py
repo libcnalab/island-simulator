@@ -593,7 +593,7 @@ def run_monitored_capture(command, root, environment, evidence, journal, baselin
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("build", type=Path)
-    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "flight", "bridge", "lookout", "log", "hut", "hut-material", "helicopter", "helicopter-inside", "resident", "resident-tending", "resident-fishing", "bear", "bear-lying", "boars", "boar-lying", "goats", "goat-lying", "deer", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "monkey-scratch", "ground-doves", "bird-preen", "stingray-buried"}))
+    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "quad", "quad-ride", "quad-chase", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "flight", "bridge", "lookout", "log", "hut", "hut-material", "helicopter", "helicopter-inside", "resident", "resident-tending", "resident-fishing", "bear", "bear-lying", "boars", "boar-lying", "goats", "goat-lying", "deer", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "monkey-scratch", "ground-doves", "bird-preen", "stingray-buried"}))
     parser.add_argument("--canopy-lod-inspection", nargs=3, metavar=("X_MM", "Z_MM", "TIER"))
     parser.add_argument("--time-of-day", type=float, default=None,
                         help="QA: the game hour to hold the clock at (default: the 14:00 the views were made at)")
@@ -1167,6 +1167,10 @@ def main():
                 raise RuntimeError("current weather is missing; check for a stale executable")
             if "rain falls in world-anchored streaks around the walker" not in diagnostics:
                 raise RuntimeError("current rain is missing; check for a stale executable")
+            if not re.search(r"quad bike parked at \(-?\d+, -?\d+\): F to ride it or step off", diagnostics):
+                raise RuntimeError("current quad bike is missing; check for a stale executable")
+            if not re.search(r"quad bike: a utility quad of \d+ triangles", diagnostics):
+                raise RuntimeError("current quad bike model is missing; check for a stale executable")
             if "night sky: 1100 stars and a phased moon over the graded sky" not in diagnostics:
                 raise RuntimeError("current night sky is missing; check for a stale executable")
             if "the hut receives the sun shadows: its eaves shade its walls and the trees' shadows and the cumulus shade fall across it" not in diagnostics:
