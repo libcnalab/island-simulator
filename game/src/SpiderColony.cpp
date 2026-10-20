@@ -38,7 +38,23 @@ SpiderGroundPose SpiderColony::Pose(const SpiderState& state,const Feet& feet) c
         pose.feet[leg]=feet[leg].position;pose.stance[leg]=!feet[leg].swinging;
         pose.legs[leg]=SpiderPose::Solve(leg,pose.ToLocal(feet[leg].position));
     }
+    // Rearing, the front pair of legs is raised: once the display is past half, each front
+    // foot leaves its anchor for a point lifted and drawn in by the display amount, well
+    // within the leg's reach; the other six stay planted.
+    if(state.display>.5f)for(const std::size_t leg:{std::size_t{0},std::size_t{4}}) {
+        const auto neutral=SpiderPose::NeutralFoot(leg);
+        const float k=std::clamp(state.display,0.0f,1.0f);
+        const SpiderPoint raised{neutral.x*.72f,.060f,neutral.z*.80f};
+        const auto target=Add(Mul(neutral,1-k),Mul(raised,k));
+        pose.feet[leg]=pose.ToWorld(target);pose.stance[leg]=false;
+        pose.legs[leg]=SpiderPose::Solve(leg,target);
+    }
     return pose;
+}
+std::size_t SpiderColony::DisplayingCount() const noexcept {
+    std::size_t count=0;
+    for(const auto& intent:intents_)count+=intent.displaying?1U:0U;
+    return count;
 }
 bool SpiderColony::Valid(const SpiderGroundPose& pose) const {
     if(pose.up.y<.95f||CaveSite::Reserves(pose.origin.x,pose.origin.z,SpiderHabitat::BodyRadius))return false;
@@ -90,7 +106,8 @@ void SpiderColony::AdvanceFeet(std::size_t index,float dt) {
     const auto frame=Frame(state.x,state.z,state.heading);
     const auto active=std::count_if(feet.begin(),feet.end(),[](const auto& f){return f.swinging;});
     std::size_t selected=8;float largest=.00455f;
-    if(active<2)for(std::size_t leg=0;leg<8;++leg)if(!feet[leg].swinging) {
+    // A rearing spider plants no new steps: its feet stay where they are under the display.
+    if(active<2&&state.display<.1f)for(std::size_t leg=0;leg<8;++leg)if(!feet[leg].swinging) {
         const auto neutral=SpiderPose::NeutralFoot(leg);
         const auto local=frame.ToLocal(feet[leg].position);
         // A freshly planted foot ahead of its neutral point is useful support,
@@ -117,7 +134,17 @@ void SpiderColony::Step(std::size_t index,float dt,SpiderPoint observer,bool obs
     auto& state=states_[index];auto& intent=intents_[index];
     AdvanceFeet(index,dt);
     intent.remaining-=dt;
-    const bool retreat=observerValid&&std::hypot(state.x-observer.x,state.y+.04f-observer.y,state.z-observer.z)<2.5f;
+    const float observerDistance=observerValid?std::hypot(state.x-observer.x,state.y+.04f-observer.y,state.z-observer.z)
+        :std::numeric_limits<float>::infinity();
+    const bool retreat=observerDistance<RetreatDistance;
+    // The threat display: the walker standing at ground level short of the retreat range
+    // has the spider stop where it is and rear; closer it retreats, gone it lowers the legs.
+    const bool threatened=observerValid&&!retreat&&observerDistance<DisplayDistance
+        &&std::abs(observer.y-state.y)<DisplayHeightReach;
+    if(threatened&&!intent.displaying)++displays_;
+    intent.displaying=threatened;
+    state.display+=std::clamp((threatened?1.0f:0.0f)-state.display,-DisplayLowerRate*dt,DisplayRaiseRate*dt);
+    if(threatened){state.behavior=SpiderBehavior::Rest;intent.remaining=std::max(intent.remaining,.3f);}
     if(retreat) {
         state.behavior=SpiderBehavior::Retreat;intent.remaining=.5f;
         if(std::hypot(state.x-observer.x,state.z-observer.z)>.001f)
@@ -130,7 +157,7 @@ void SpiderColony::Step(std::size_t index,float dt,SpiderPoint observer,bool obs
         if(std::hypot(state.x-homes_[index].x,state.z-homes_[index].z)>.40f)
             intent.heading=std::atan2(homes_[index].z-state.z,homes_[index].x-state.x);
     }
-    if(state.behavior==SpiderBehavior::Rest){state.speed=0;return;}
+    if(state.behavior==SpiderBehavior::Rest){state.speed=0;state.pose=Pose(state,feet_[index]);return;}
     auto trial=state;
     trial.heading=Wrap(state.heading+std::clamp(Wrap(intent.heading-state.heading),-.6f*dt,.6f*dt));
     const float speed=state.behavior==SpiderBehavior::Retreat?RetreatSpeed:CrawlSpeed;

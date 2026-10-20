@@ -188,16 +188,16 @@ class SoftwareCaptureTests(unittest.TestCase):
 
     def test_spider_lighting_transfer_and_rejections(self):
         for transmission in (0, 0.5, 1):
-            tint = ','.join(str(a + (1-a)*transmission) for a in (0.46, 0.53, 0.62))
+            tint = ','.join(str(a + (1-a)*transmission) for a in (0.54, 0.60, 0.67))
             good = (f"spider lighting ground-transmission={transmission} "
                     f"body-transmission={transmission} body-tint={tint}\n")
             self.assertEqual(validate_spider_lighting(good)["bodyTransmission"], transmission)
-        good = "spider lighting ground-transmission=0 body-transmission=0 body-tint=0.46,0.53,0.62\n"
+        good = "spider lighting ground-transmission=0 body-transmission=0 body-tint=0.54,0.60,0.67\n"
         for bad in ("", good+good, good.replace("ground-transmission=0", "ground-transmission=nan"),
                     good.replace("body-transmission=0", "body-transmission=1.1"),
-                    good.replace("0.46,0.53,0.62", "0.46,0.53"),
-                    good.replace("0.46,0.53,0.62", "0.46,inf,0.62"),
-                    good.replace("0.46,0.53,0.62", "0.46,0.53,0.32"),
+                    good.replace("0.54,0.60,0.67", "0.54,0.60"),
+                    good.replace("0.54,0.60,0.67", "0.54,inf,0.67"),
+                    good.replace("0.54,0.60,0.67", "0.54,0.60,0.32"),
                     good.replace("ground-transmission=0", "ground-transmission=bad")):
             with self.subTest(bad=bad), self.assertRaises(RuntimeError):
                 validate_spider_lighting(bad)

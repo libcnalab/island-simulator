@@ -163,6 +163,29 @@ int main() {
         check(eligible>200,"too few eligible retreat samples");
         check(paused==0,"eligible retreat stalls while waiting for foot reach");
     }
+    {
+        // The threat display: the walker standing just over three metres from a spider at
+        // ground level has it rear within a second, the front pair of legs raised off the
+        // ground within reach with the other six planted; stepping in to a metre and a half
+        // drops the display for the retreat; standing off at seven metres lets it down.
+        SpiderColony threat(terrain,jungle,obstacles);
+        const auto subject=threat.Spiders()[0];
+        for(int step=0;step<60;++step)threat.Update(.02f,{subject.x+3.2f,subject.y+1.0f,subject.z});
+        const auto& reared=threat.Spiders()[0];
+        check(reared.display>.9f&&reared.behavior==SpiderBehavior::Rest&&threat.DisplayCount()>=1&&threat.DisplayingCount()>=1,
+            "a spider does not rear at the walker standing off within four metres");
+        for(const std::size_t leg:{std::size_t{0},std::size_t{4}}) {
+            const auto foot=reared.pose.feet[leg];
+            const auto actual=reared.pose.ToWorld(reared.pose.legs[leg].foot);
+            check(!reared.pose.stance[leg]&&foot.y-surface.Sample(foot.x,foot.z).height>.03f&&!reared.pose.legs[leg].reachLimited
+                &&std::hypot(actual.x-foot.x,actual.y-foot.y,actual.z-foot.z)<.00003f,"a rearing spider's front leg is not raised within reach");
+        }
+        check(std::count(reared.pose.stance.begin(),reared.pose.stance.end(),true)>=6,"a rearing spider has too few feet down");
+        for(int step=0;step<60;++step){const auto& s=threat.Spiders()[0];threat.Update(.02f,{s.x+1.5f,s.y+1.0f,s.z});}
+        check(threat.Spiders()[0].display<.1f&&threat.Spiders()[0].behavior==SpiderBehavior::Retreat,"a spider retreating from the walker keeps rearing");
+        for(int step=0;step<100;++step){const auto& s=threat.Spiders()[0];threat.Update(.02f,{s.x+7.0f,s.y+1.0f,s.z});}
+        check(threat.Spiders()[0].display==0&&threat.DisplayingCount()==0,"a spider keeps rearing once the walker has stood off");
+    }
     for(float dt:{0.0f,-1.0f,INFINITY,NAN})invalid.Update(dt,{0,0,0});
     check(std::equal(before.begin(),before.end(),invalid.Spiders().begin()),"invalid dt changed spiders");
     std::cout<<"stance pairs "<<pairs<<", swing samples "<<swings<<", min mesh clearance "<<minimumClearance<<'\n';

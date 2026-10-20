@@ -54,6 +54,28 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 162 (2026-10-20) — a ground spider rears at the walker
+
+A ground spider only crawled or retreated. `SpiderState::display` (0..1) now carries the
+threat display: the walker standing at ground level (within `DisplayHeightReach`, 1.5 m of
+the spider's height) between `RetreatDistance` (2.5 m) and `DisplayDistance` (4 m) has the
+spider stop where it is and rear at `DisplayRaiseRate` (3/s), the front pair of legs leaving
+their anchors for points lifted 6 cm and drawn in, well within reach, the other six planted
+and no new steps taken while it holds; stepping closer drops the display at
+`DisplayLowerRate` (2/s) for the retreat and standing off lets it down. The displays are
+counted (`DisplayCount()`, `DisplayingCount()`). A new report line "a ground spider the
+walker stands over within four metres rears, its front legs raised in a threat display,
+until they step closer and it retreats or they leave" is pinned. SpiderColonyTests: the
+walker at just over three metres has the spider reared within a second with both front
+feet raised within reach and six feet down, at a metre and a half it drops the display and
+retreats, and at seven metres it lowers the legs; the gait, stance and determinism audits
+hold throughout. Native `spiders` passes, after a capture-tool fix the view exposed: the
+tool's independent mirror of the canopy transfer still used the pre-2026-10-10 ambient
+tint (0.46, 0.53, 0.62) against the engine's `CanopyAmbientTint` (0.54, 0.60, 0.67), which
+only shows when the QA subject stands under canopy (body transmission below 1); the mirror
+and the Python fixtures (SoftwareCaptureTests, BrowserSoftwareTests, AndroidSoftwareTests)
+now carry the engine's values.
+
 ## Loop pass 161 (2026-10-20) — a skink flicks its tongue
 
 A foraging skink walked with its mouth shut. `SkinkState::tongue` (0..1) now carries the

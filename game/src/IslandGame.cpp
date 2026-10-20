@@ -2250,6 +2250,7 @@ namespace island
         std::cout << "island-simulator: ground spiders " << spiders_->Spiders().size()
                   << " agents with retained stance anchors; canopy webs "
                   << spiderWebRenderer_->SiteCount()<<" qualified sites in one bounded translucent batch\n";
+        std::cout << "island-simulator: a ground spider the walker stands over within four metres rears, its front legs raised in a threat display, until they step closer and it retreats or they leave\n";
         std::cout << "island-simulator: goats " << goats_->Goats().size()
                   << " agents on shared-field dry open slopes, terrain-fitted limbs, directional fur material; "
                   << "a rest two seconds in, undisturbed, settles a goat onto folded legs for a longer lie, and the walker's approach has it up at once; "

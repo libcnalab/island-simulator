@@ -223,6 +223,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 159: a butterfly settled at its flower uncurls its proboscis to feed and rolls it up to leave (`ButterflyState::proboscis`, `ButterflyMeadow::ProbeCount`) (PLAN "Loop pass 159").
 - Pass 160: a resting frog blinks, its eyes drawn down into its head for a moment (`FrogState::blink`, `FrogPopulation::BlinkCount`) (PLAN "Loop pass 160").
 - Pass 161: a foraging skink flicks its tongue at the ground ahead every few seconds (`SkinkState::tongue`, `SkinkPopulation::FlickCount`) (PLAN "Loop pass 161").
+- Pass 162: a ground spider the walker stands over within four metres rears, front legs raised in a threat display (`SpiderState::display`, `SpiderColony::DisplayCount`) (PLAN "Loop pass 162").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

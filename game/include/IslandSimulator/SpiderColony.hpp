@@ -19,6 +19,10 @@ struct SpiderState {
     float x=0,y=0,z=0,heading=0,speed=0;
     SpiderBehavior behavior=SpiderBehavior::Rest;
     WildlifeSimulationTier tier=WildlifeSimulationTier::Dormant;
+    // 0..1 the threat display: the walker standing at ground level between the retreat
+    // range and DisplayDistance has the spider stop and rear, its front pair of legs raised
+    // off the ground; stepping closer drops it for the retreat, leaving lets it down.
+    float display=0;
     SpiderGroundPose pose{};
     bool operator==(const SpiderState&) const = default;
 };
@@ -26,6 +30,11 @@ struct SpiderState {
 class SpiderColony final {
 public:
     static constexpr float CrawlSpeed=.035f,RetreatSpeed=.065f;
+    static constexpr float RetreatDistance=2.5f,DisplayDistance=4.0f,DisplayHeightReach=1.5f;
+    static constexpr float DisplayRaiseRate=3.0f,DisplayLowerRate=2.0f;
+    // Displays begun, and the spiders rearing this moment.
+    [[nodiscard]] std::uint32_t DisplayCount() const noexcept {return displays_;}
+    [[nodiscard]] std::size_t DisplayingCount() const noexcept;
     SpiderColony(const IslandTerrain& terrain,const JungleLayout& jungle,
         std::span<const CircularObstacle> obstacles);
     void Update(float dt,SpiderPoint observer);
@@ -34,7 +43,7 @@ public:
 private:
     struct Foot {SpiderPoint position{},start{},target{};float progress=0;bool swinging=false;};
     using Feet=std::array<Foot,8>;
-    struct Intent {float remaining=0,heading=0;std::uint32_t decisions=0;};
+    struct Intent {float remaining=0,heading=0;std::uint32_t decisions=0;bool displaying=false;};
     [[nodiscard]] SpiderGroundPose Frame(float x,float z,float heading) const;
     [[nodiscard]] SpiderGroundPose Pose(const SpiderState& state,const Feet& feet) const;
     [[nodiscard]] bool Valid(const SpiderGroundPose& pose) const;
@@ -47,5 +56,6 @@ private:
     std::array<Intent,SpiderHabitat::GroundCount> intents_{};
     std::array<float,SpiderHabitat::GroundCount> accumulatedSeconds_{};
     std::uint64_t frameIndex_=0;
+    std::uint32_t displays_=0;
 };
 }

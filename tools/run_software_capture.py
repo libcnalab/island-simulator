@@ -276,7 +276,7 @@ def validate_spider_lighting(text):
         raise RuntimeError("invalid spider lighting range")
     # Independent check of the shared canopy transfer, not a visual acceptance rule.
     if any(abs(actual - (ambient + (1 - ambient) * body)) > 0.00001
-           for actual, ambient in zip(tint, (0.46, 0.53, 0.62))):
+           for actual, ambient in zip(tint, (0.54, 0.60, 0.67))):  # CanopyAmbientTint (CanopyLightField.hpp)
         raise RuntimeError("spider lighting differs from the shared canopy transfer")
     return {"groundTransmission": ground, "bodyTransmission": body, "bodyTint": tint}
 
@@ -1368,6 +1368,8 @@ def main():
                 raise RuntimeError("current frog blink is missing; check for a stale executable")
             if "a foraging skink flicks its tongue at the ground ahead every few seconds, tasting its way" not in diagnostics:
                 raise RuntimeError("current skink tongue flick is missing; check for a stale executable")
+            if "a ground spider the walker stands over within four metres rears, its front legs raised in a threat display" not in diagnostics:
+                raise RuntimeError("current spider threat display is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:
