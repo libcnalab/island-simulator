@@ -769,7 +769,8 @@ namespace island
             AppendGeckoLoft(vertices, head, right, up, forward, HeadStations,
                             HeadWidths, HeadHeights, scale, back, flank, underside);
             // The vocal sac: a pale bulge under the chin that swells with the call.
-            const float throat = std::clamp(frog.throat, 0.0f, 1.0f);
+            // The call's sac, or at rest the gular pump's small swell, under the chin.
+            const float throat = std::max(std::clamp(frog.throat, 0.0f, 1.0f), std::clamp(frog.gular, 0.0f, 1.0f) * .22f);
             if (throat > 0.04f) {
                 const Vector3 sac = head - up * (.075f * scale) + forward * (.03f * scale);
                 constexpr std::array<float, 3> SacStations = {{-.07f, .0f, .07f}};

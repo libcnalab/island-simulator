@@ -113,6 +113,13 @@ namespace island
             && std::hypot(x - home.x, z - home.z) <= home.radius;
     }
 
+    std::size_t FrogPopulation::PumpingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.state.gular > 0.5f && agent.state.behavior == FrogBehavior::Rest ? 1U : 0U;
+        return count;
+    }
+
     std::size_t FrogPopulation::BlinkingCount() const noexcept
     {
         std::size_t count = 0;
@@ -243,6 +250,10 @@ namespace island
         agent.blinking = blinking;
         agent.state.blink += std::clamp((blinking ? 1.0f : 0.0f) - agent.state.blink,
             -deltaSeconds * 8.0f, deltaSeconds * 12.0f);
+        // The gular pump: resting, the throat rises and falls with the breathing, a swell
+        // under the chin between calls; hopping, it lies still.
+        const float gularTarget = resting ? 0.5f + 0.5f * std::sin(agent.state.breathPhase * GularRate) : 0.0f;
+        agent.state.gular += std::clamp(gularTarget - agent.state.gular, -deltaSeconds * 6.0f, deltaSeconds * 6.0f);
         if (resting) {
             agent.state.y = agent.groundY + .045f;
             return;

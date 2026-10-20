@@ -3630,6 +3630,20 @@ int main()
             if(peak>0.9f&&!anyClosed) settled=true;
         }
         Check(blinkers.BlinkCount()>=2U&&peak>0.9f&&settled&&longest<=10&&!hopBlink,"a resting frog blinks for a moment and the eyes come up again");
+        // The gular pump: a resting frog's throat swells past nine tenths and falls under
+        // a tenth within the next ten seconds; a hopping frog's lies still.
+        {
+            float pumpHigh=0.0f,pumpLow=1.0f,hopPump=0.0f;
+            for(int step=0;step<200;++step) {
+                blinkers.Update(0.05f,first.x+10.0f,first.y+1.6f,first.z);
+                for(const auto& frog:blinkers.Frogs()) {
+                    if(frog.simulationTier!=island::WildlifeSimulationTier::Full) continue;
+                    if(frog.behavior==island::FrogBehavior::Rest) { pumpHigh=std::max(pumpHigh,frog.gular); pumpLow=std::min(pumpLow,frog.gular); }
+                    if(frog.behavior==island::FrogBehavior::Hop&&frog.hopPhase>0.5f) hopPump=std::max(hopPump,frog.gular);
+                }
+            }
+            Check(pumpHigh>0.9f&&pumpLow<0.1f&&hopPump<0.5f&&blinkers.PumpingCount()<=blinkers.Frogs().size(),"a resting frog's throat does not pump with its breathing, or a hopping one's does");
+        }
     }
     for(std::size_t index=0;index<frogs.Frogs().size();++index) {
         const auto& frog=frogs.Frogs()[index];

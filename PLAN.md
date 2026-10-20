@@ -54,6 +54,18 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 194 (2026-10-20) — a resting frog's throat pumps
+
+A resting frog's throat lay slack between calls. `FrogState::gular` (0..1) now carries the
+gular pump: resting, the throat rises and falls with the breathing at `GularRate` (3.4
+times the breath phase), eased at 6/s, and lies still on the hop; `PumpingCount()` counts
+the resting frogs with the throat up. In the renderer the call's vocal sac doubles as the
+pump's small swell, drawn at up to 22 % of the call's size when no call runs. The frogs
+report line gains "a resting frog's throat rises and falls with its breathing, a small
+swell under the chin between calls" (pinned). Core check: a resting frog's throat swells
+past nine tenths and falls under a tenth within ten seconds while a hopping frog's lies
+still. Native `frogs` passes.
+
 ## Loop pass 193 (2026-10-20) — a hermit crab carries its shell
 
 A hermit crab's shell sat on the sand whether it walked or paused.

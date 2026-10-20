@@ -22,6 +22,9 @@ namespace island
         /** @brief 0..1 the blink: a resting frog draws its eyes down into its head for a
          *  moment every several seconds (frogs blink by retracting the eyes). */
         float blink = 0.0f;
+        /** @brief 0..1 the gular pump: a resting frog's throat rises and falls with its
+         *  breathing, a small steady swell under the chin between calls; still on the hop. */
+        float gular = 0.0f;
         float scale = 1.0f;
         /** @brief 0..1 under the pool's surface: a pool frog that leapt in from the walker. */
         float submerged = 0.0f;
@@ -61,6 +64,9 @@ namespace island
         [[nodiscard]] std::uint32_t BlinkCount() const noexcept { return blinks_; }
         [[nodiscard]] std::size_t BlinkingCount() const noexcept;
         static constexpr float BlinkDelaySeconds = 1.5f, BlinkSeconds = 0.25f, BlinkPeriodSeconds = 7.0f;
+        /** @brief Resting frogs with the throat pumping this moment (the pump past half). */
+        [[nodiscard]] std::size_t PumpingCount() const noexcept;
+        static constexpr float GularRate = 3.4f;
 
         explicit FrogPopulation(const IslandTerrain& terrain);
         void Update(float deltaSeconds, float observerX, float observerY,
