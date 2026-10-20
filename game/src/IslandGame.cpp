@@ -2156,6 +2156,7 @@ namespace island
         waterViewOverlay_ = std::make_unique<WaterViewOverlay>(device);
         underwaterEffect_ = std::make_unique<UnderwaterEffectRenderer>(device);
         canopyShafts_ = std::make_unique<CanopyShaftRenderer>(device);
+        footprintRenderer_ = std::make_unique<FootprintTrailRenderer>(device, terrain_);
         worldDebugRenderer_ = std::make_unique<WorldDebugRenderer>(device, terrain_);
         if (viewpoint_ == FixedViewpoint::GroundContactDetail) {
             constexpr float contactZ = 45.0f;
@@ -2569,6 +2570,13 @@ namespace island
                    ? benchmarkTraversalPresentationSpeed_
                    : std::hypot(playerMotion_.VelocityX(), playerMotion_.VelocityZ()));
         (void)grassInteractionModel_.Update(grassInteractionSpeed, deltaSeconds);
+        {
+            // The walker's prints: laid every stride while the feet are on sand.
+            const PlayerPosition& walker=playerMotion_.Position();
+            const bool onSand=!flightMotion_.IsActive()&&!IsDebugFreeCameraActive()
+                &&playerMotion_.Mode()!=LocomotionMode::Swimming&&FootstepGroundUnderPlayer()==FootstepSurface::Sand;
+            footprints_.Update(deltaSeconds,walker.x,walker.z,playerMotion_.VelocityX(),playerMotion_.VelocityZ(),onSand);
+        }
         const auto previousResident=resident_->State();
         const auto& observer=playerMotion_.Position();
         resident_->Update(deltaSeconds,{observer.x,observer.y,observer.z});
@@ -4226,6 +4234,7 @@ namespace island
             residentRenderer_->DrawShadow(cameraView_,cameraProjection_,renderCameraPosition_,resident_->State());
             bearRenderer_->DrawShadow(cameraView_,cameraProjection_,renderCameraPosition_,bear_->State());
             birdShadowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,birdFlock_.Birds());
+            footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,footprints_.Prints());
         }
 
         {

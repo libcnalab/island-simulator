@@ -104,6 +104,7 @@
 #include "IslandSimulator/JettyRenderer.hpp"
 #include "IslandSimulator/UnderwaterEffectRenderer.hpp"
 #include "IslandSimulator/CanopyShaftRenderer.hpp"
+#include "IslandSimulator/FootprintTrailRenderer.hpp"
 #include "IslandSimulator/HelicopterLayout.hpp"
 #include "IslandSimulator/HelicopterRenderer.hpp"
 #include "IslandSimulator/ShorelineRenderer.hpp"
@@ -468,6 +469,8 @@ namespace island
         std::unique_ptr<CascadeMistRenderer> cascadeMistRenderer_;
         std::unique_ptr<UnderwaterEffectRenderer> underwaterEffect_;
         std::unique_ptr<CanopyShaftRenderer> canopyShafts_;
+        FootprintTrail footprints_;
+        std::unique_ptr<FootprintTrailRenderer> footprintRenderer_;
         float lastSubmergedDepth_ = 0.0f, bubbleBurst_ = 0.0f;
         float seaForageSeconds_ = 0.0f;
         std::uint32_t notedDiveCount_ = 0U;

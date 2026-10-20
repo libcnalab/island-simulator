@@ -42,6 +42,7 @@
 #include "IslandSimulator/CloudShadow.hpp"
 #include "IslandSimulator/CascadeMistField.hpp"
 #include "IslandSimulator/CanopyShafts.hpp"
+#include "IslandSimulator/FootprintTrail.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
@@ -7828,6 +7829,27 @@ int main()
               &&island::CanopyShafts::Strength(0.2f,1.0f)<0.2f&&island::CanopyShafts::Strength(0.575f,0.0f)>0.45f
               &&island::CanopyShafts::Strength(0.575f,0.0f)<0.55f,
               "canopy sun shafts show under a crown in the sun and not in the open or under a cloud");
+        // The walker's trail: ten metres along the sand lays a print every stride, feet
+        // alternating either side of the line; off the sand none are laid; old prints fade.
+        {
+            island::FootprintTrail trail;
+            float wx=0,wz=0;
+            for(int step=0;step<200;++step) { wx+=1.0f*0.05f; trail.Update(0.05f,wx,wz,1.0f,0.0f,true); }
+            Check(trail.PrintCount()>=14U&&trail.PrintCount()<=18U,"a ten-metre walk on sand lays a print every stride");
+            bool alternating=true,onLine=true;
+            int lefts=0;
+            for(const auto& print:trail.Prints()) if(print.active) {
+                if(std::abs(print.z)>island::FootprintTrail::FootAcross+0.01f||print.x<0.0f||print.x>10.5f) onLine=false;
+                if(print.left) ++lefts;
+                if((print.left&&print.z>0.0f)||(!print.left&&print.z<0.0f)) alternating=false;
+            }
+            Check(onLine&&alternating&&lefts>=6,"the prints lie along the line of travel, left and right feet either side");
+            const std::uint32_t before=trail.PrintCount();
+            for(int step=0;step<200;++step) { wx+=0.05f; trail.Update(0.05f,wx,wz,1.0f,0.0f,false); }
+            Check(trail.PrintCount()==before,"no prints are laid off the sand");
+            for(int step=0;step<2500;++step) trail.Update(0.1f,wx,wz,0.0f,0.0f,true);
+            Check(trail.ActiveCount()==0U,"the sand takes the prints back within the trail's life");
+        }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls
         // on a little before it rests; resting fruit sit on the ground and keep still.

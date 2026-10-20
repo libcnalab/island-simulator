@@ -46,6 +46,21 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 40 (2026-10-20) — the walker's prints in the sand
+
+The resident left prints along the beach (pass 13) and the walker left none. A core
+`FootprintTrail` keeps the last 48 prints: while the feet are on sand (the footstep surface
+rule says Sand, not swimming, not flying, not the free camera) and the walker moves faster
+than 0.3 m/s, every 0.62 m of travel lays a print 0.11 m to the side of the line, left and
+right in turn, toed out a tenth of a radian, taking the oldest slot when all are used; a
+print fades over four minutes and is gone. `FootprintTrailRenderer` draws each as two
+terrain-conforming dark fans, the sole and the toe pad set a little to the outside, alpha
+78 fresh, after the bird shadows in the contact-shadow pass. Diagnostic "the walker's bare
+feet leave a trail of prints in the sand that the sand takes back over four minutes" is
+pinned by the native capture tool. Core checks: a ten-metre walk on sand lays 14–18 prints
+along the line, left and right feet either side; none are laid off the sand; the trail is
+empty after its life. Native `jetty` passes.
+
 ## Loop pass 39 (2026-10-20) — sun shafts under the canopy
 
 Under the crowns the light arrived as dapple on the ground and nothing in the air. A new
