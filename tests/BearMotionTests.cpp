@@ -89,7 +89,9 @@ int main() {
         CheckPose(bear,collision);
         observed[static_cast<std::size_t>(state.behavior)]=true;
         for(std::size_t leg=0;leg<4;++leg) {
-            if(previous.pose.legs[leg].stance&&state.pose.legs[leg].stance) {
+            // A bear folding its legs to lie down, or rising, moves its paws under it; the
+            // planted-paw invariant holds for a bear on its feet.
+            if(previous.pose.legs[leg].stance&&state.pose.legs[leg].stance&&previous.lieAmount==0&&state.lieAmount==0) {
                 Check(Distance(Sole(previous,leg),Sole(state,leg))<.0001f,"planted bear paw slides in world space");
                 ++locked;
             }
@@ -165,6 +167,26 @@ int main() {
     for(int tick=0;tick<100;++tick)emitted|=silent.Update(.25f,100,1.7f,0,audioBear,true).kind!=BearCallKind::None;
     Check(!emitted,"inaudible distant bear created playback requests");
 
+    {
+        // Lying: with nobody about, within five minutes a rest settles the bear onto folded
+        // legs, its body lower, every paw on the ground and the bones unchanged; the walker
+        // at fifteen metres has it up within a second.
+        BearMotion sleeper(terrain,solids);
+        bool lay=false;
+        for(int tick=0;tick<6000&&!lay;++tick) {sleeper.Update(.05f,distant);lay=sleeper.State().lieAmount>.9f;}
+        Check(lay&&sleeper.LieCount()>=1&&sleeper.Lying()&&sleeper.State().behavior==BearBehavior::Rest,"the bear never lies down at rest");
+        CheckPose(sleeper,collision);
+        const auto& down=sleeper.State();
+        const float groundHeight=sleeper.Ground().Sample(down.x,down.z).height;
+        Check(groundHeight-down.pose.origin.y>.3f&&groundHeight-down.pose.origin.y<.5f,"the lying bear's body does not settle lower");
+        bool up=false;
+        for(int tick=0;tick<24&&!up;++tick) {
+            const auto& s=sleeper.State();
+            sleeper.Update(.05f,{s.x+15,s.y+1.7f,s.z});
+            up=sleeper.State().lieAmount<.2f&&!sleeper.Lying();
+        }
+        Check(up,"the walker at fifteen metres does not get the lying bear up within a second");
+    }
     bool refused=false;
     try {const std::array blocked{CircularObstacle{0,0,400}};BearMotion impossible(terrain,blocked);}
     catch(const std::runtime_error&){refused=true;}

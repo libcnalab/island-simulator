@@ -167,6 +167,7 @@ namespace island
         CampfireWide,
         ResidentDetail,
         BearDetail,
+        BearLyingDetail,
         BeachPath,
         JungleTrail,
         StandingSnagDetail,

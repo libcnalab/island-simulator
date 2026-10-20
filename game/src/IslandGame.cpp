@@ -143,6 +143,7 @@ namespace island
             case FixedViewpoint::CampfireWide: return "campfire-wide";
             case FixedViewpoint::ResidentDetail: return "resident";
             case FixedViewpoint::BearDetail: return "bear";
+            case FixedViewpoint::BearLyingDetail: return "bear-lying";
             case FixedViewpoint::BeachPath: return "beach";
             case FixedViewpoint::JungleTrail: return "jungle";
             case FixedViewpoint::StandingSnagDetail: return "snags";
@@ -486,16 +487,20 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: resident QA camera frames and follows one peaceful adult\n";
-        } else if(viewpoint_==FixedViewpoint::BearDetail) {
+        } else if(viewpoint_==FixedViewpoint::BearDetail||viewpoint_==FixedViewpoint::BearLyingDetail) {
+            // The lying view holds the bear down at rest, framed lower and nearer.
+            const bool lying=viewpoint_==FixedViewpoint::BearLyingDetail;
+            if(lying) bear_->PreviewLie();
             const auto& subject=bear_->State();
             const Vector3 forward(std::sin(subject.heading),0,std::cos(subject.heading));
             const Vector3 right(std::cos(subject.heading),0,-std::sin(subject.heading));
-            cameraPosition_=Vector3(subject.x,subject.y+2.05f,subject.z)+forward*5.3f+right*2.35f;
-            const Vector3 target(subject.x,subject.y+1.03f,subject.z+.22f);
+            cameraPosition_=Vector3(subject.x,subject.y+(lying?1.45f:2.05f),subject.z)+forward*(lying?4.6f:5.3f)+right*(lying?2.4f:2.35f);
+            const Vector3 target(subject.x,subject.y+(lying?.55f:1.03f),subject.z+.22f);
             const auto direction=target-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
-            std::cout<<"island-simulator: bear QA camera frames and follows the single peaceful adult\n";
+            std::cout<<(lying?"island-simulator: bear QA camera frames the bear lying at rest on folded legs\n"
+                             :"island-simulator: bear QA camera frames and follows the single peaceful adult\n");
         } else if(viewpoint_==FixedViewpoint::HelicopterApproach) {
             // An ordinary first-person sight of the aircraft: eye height on the real ground
             // about eight metres off its front-left quarter, not an elevated QA frame.  The
@@ -2496,6 +2501,7 @@ namespace island
                   << "island-simulator: a flushing bird lets a pale feather go that rocks down slower than a leaf and lies where it lands\n"
                   << "island-simulator: a leaf or feather that comes down on the stream is taken by the current and drifts away with it\n"
                   << "island-simulator: the bear walks to fruit and coconuts lying in its range and eats them where they lie\n"
+                  << "island-simulator: a rest two seconds in, undisturbed, settles the bear onto folded legs for a longer lie, and the walker's approach has it up within a second\n"
                   << "island-simulator: the boars stand off from the bear and trot away when it comes close, as from the walker\n"
                   << "island-simulator: the hut's roof ridge is a perch for the birds\n"
                   << "island-simulator: crocodiles " << crocodileGroup_.Crocodiles().size()
@@ -2841,7 +2847,8 @@ namespace island
         }
         const auto previousBear=bear_->State();
         bear_->SetLyingFruit(fallingFruit_.Fruit());
-        bear_->Update(deltaSeconds,bearCaptureClock?BearPoint{NAN,NAN,NAN}
+        if(viewpoint_==FixedViewpoint::BearLyingDetail) bear_->PreviewLie();
+        bear_->Update(viewpoint_==FixedViewpoint::BearLyingDetail?0.0f:deltaSeconds,bearCaptureClock?BearPoint{NAN,NAN,NAN}
             :BearPoint{observer.x,observer.y,observer.z});
         for (const std::size_t eaten : bear_->EatenFruit()) fallingFruit_.Consume(eaten);
         if(viewpoint_==FixedViewpoint::BearDetail) {
@@ -4189,7 +4196,7 @@ namespace island
         cameraProjection_ = Matrix::CreatePerspectiveFieldOfView(
             (viewpoint_==FixedViewpoint::BoarDetail||viewpoint_==FixedViewpoint::BoarLyingDetail||viewpoint_==FixedViewpoint::GoatDetail||viewpoint_==FixedViewpoint::GoatLyingDetail
                 ||viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail
-                ||viewpoint_==FixedViewpoint::ResidentDetail||viewpoint_==FixedViewpoint::BearDetail
+                ||viewpoint_==FixedViewpoint::ResidentDetail||viewpoint_==FixedViewpoint::BearDetail||viewpoint_==FixedViewpoint::BearLyingDetail
                 ||viewpoint_==FixedViewpoint::MouseDetail||viewpoint_==FixedViewpoint::RatDetail
                 ||viewpoint_==FixedViewpoint::FlyDetail||viewpoint_==FixedViewpoint::AntDetail
                 ||viewpoint_==FixedViewpoint::CicadaDetail

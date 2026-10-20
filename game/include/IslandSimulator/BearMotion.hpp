@@ -30,6 +30,9 @@ enum class BearBehavior {Idle,Walk,Trot,Forage,Rest,Withdraw};
 struct BearState {
     float x=0,y=0,z=0,homeX=0,homeZ=0,heading=0,speed=0,phase=0;
     float foragePose=0,breathPhase=0,distanceTravelled=0;
+    // 0..1 lying down: a rest two seconds in, undisturbed, settles the bear onto folded legs,
+    // body on the ground (the pose carries it); the walker's approach has it up within a second.
+    float lieAmount=0;
     BearBehavior behavior=BearBehavior::Idle;
     BearPose pose{};
     bool operator==(const BearState&)const=default;
@@ -49,6 +52,14 @@ public:
     [[nodiscard]] std::span<const std::size_t> EatenFruit() const noexcept {return eaten_;}
     [[nodiscard]] std::uint32_t EatCount() const noexcept {return eats_;}
     static constexpr float EatSeconds=10.0f,FruitReach=1.1f;
+    // Lie-downs begun: a rest LieDelaySeconds in with no walker in the alert range settles the
+    // bear onto folded legs and lengthens the rest by LieBonusSeconds; an alert or the next
+    // walk has it up at RiseRate.
+    [[nodiscard]] std::uint32_t LieCount() const noexcept {return lies_;}
+    [[nodiscard]] bool Lying() const noexcept {return lying_;}
+    // QA: holds the bear lying at rest for a still capture.
+    void PreviewLie();
+    static constexpr float LieDelaySeconds=2.0f,LieBonusSeconds=8.0f,LieDownRate=.5f,RiseRate=1.5f,LieDrop=.42f;
     [[nodiscard]] const BearState& State()const noexcept{return state_;}
     [[nodiscard]] bool IsValidPosition(float x,float z)const noexcept;
     [[nodiscard]] const RenderedTerrainSurface& Ground()const noexcept{return ground_;}
@@ -74,6 +85,9 @@ private:
     std::uint32_t eats_=0;
     int fruitTarget_=-1;
     float eatSeconds_=0;
+    float restSeconds_=0;
+    bool lying_=false;
+    std::uint32_t lies_=0;
     bool ChooseFruit() noexcept;
 };
 }

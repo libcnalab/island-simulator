@@ -54,6 +54,28 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 130 (2026-10-20) — the bear lies down at rest
+
+The bear, like the herds before passes 119 and 126, stood through every rest.
+`BearState::lieAmount` (0..1) and the motion's `restSeconds_` / `lying_` carry a lie-down:
+a rest two seconds in with no walker in the alert range settles the bear at 0.5/s (a heavy
+animal) and lengthens the rest by 8 s; an alert or the next walk has it up at 1.5/s.
+`LieCount()` and `Lying()` report it. `ContactPose` carries the lie: the body origin settles
+0.42 m along its up axis, the gait bob fades, and each paw's sole is blended from where it
+stood to a tucked spot (the fore paws 0.34 m back under the chest, the hind paws 0.36 m
+forward under the belly), set on the rendered ground there with the ground's normal, and
+the chain solved as a planted leg is — so the bones keep their lengths and the planted-paw
+audits (sole on the terrain, no penetration, two-paw support) hold through the fold; the
+planted-paw slide invariant in the bear test is exempted while the bear folds or rises. A
+QA viewpoint `bear-lying` (`BearLyingDetail`, `PreviewLie()` each frame with the bear's
+update frozen) frames the bear down at rest, lower and nearer than `bear`; the capture tool
+accepts it and requires the lying camera line. General report line: "a rest two seconds
+in, undisturbed, settles the bear onto folded legs for a longer lie, and the walker's
+approach has it up within a second" (pinned). Bear motion checks: with nobody about the
+bear lies down within five minutes, its body 0.3–0.5 m lower with every paw on the ground
+and the bones unchanged, and the walker at fifteen metres has it up within a second.
+Native `bear-lying` passes.
+
 ## Loop pass 129 (2026-10-20) — hoof dust
 
 A boar trotting off, a deer bounding away or a goat sidestepping left the dry ground

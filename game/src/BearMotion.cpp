@@ -117,9 +117,36 @@ BearPose BearMotion::ContactPose(const BearState& state,const std::array<Foot,4>
             ground.x*pose.forward.x+ground.y*pose.forward.y+ground.z*pose.forward.z};
         pose.legs[leg]=SolveLeg({root.x,root.y+pose.bodyBob,root.z},paw,leg,!feet[leg].swinging,Unit(localNormal));
     }
+    // Lying: the body settles along its up axis and the legs fold under it, each paw's sole
+    // blended from where it stood to a tucked spot (the fore paws back under the chest, the
+    // hind paws forward under the belly) and set on the rendered ground there, the chain
+    // solved as a planted leg is so the bones keep their lengths.
+    const float lie=std::clamp(state.lieAmount,0.0f,1.0f);
+    if(lie>0) {
+        pose.origin=Sub(pose.origin,Mul(pose.up,lie*LieDrop));
+        pose.bodyBob*=1-lie;
+        for(std::size_t leg=0;leg<4;++leg) {
+            const bool front=leg%2==1;const auto root=LocalRoot(leg);
+            const auto standing=feet[leg].position;
+            const auto folded=pose.ToWorld({root.x*1.1f,0,front?root.z-.34f:root.z+.36f});
+            BearPoint sole{std::lerp(standing.x,folded.x,lie),0,std::lerp(standing.z,folded.z,lie)};
+            const auto sample=ground_.Sample(sole.x,sole.z);
+            sole.y=sample.height+ContactSeparation;
+            auto paw=pose.ToLocal(sole);paw.y+=BearLegPose::PawHeight;
+            const BearPoint localNormal{sample.normal.x*pose.right.x+sample.normal.y*pose.right.y+sample.normal.z*pose.right.z,
+                sample.normal.x*pose.up.x+sample.normal.y*pose.up.y+sample.normal.z*pose.up.z,
+                sample.normal.x*pose.forward.x+sample.normal.y*pose.forward.y+sample.normal.z*pose.forward.z};
+            pose.legs[leg]=SolveLeg({root.x,root.y+pose.bodyBob,root.z},paw,leg,true,Unit(localNormal));
+        }
+    }
     return pose;
 }
 
+void BearMotion::PreviewLie() {
+    state_.behavior=BearBehavior::Rest;state_.speed=0;state_.foragePose=0;state_.lieAmount=1;
+    remaining_=30;restSeconds_=LieDelaySeconds+1;lying_=true;
+    state_.pose=ContactPose(state_,feet_);
+}
 void BearMotion::StartFoot(std::size_t leg,BearPoint target,float duration) {
     if(leg>=4||solids_.IntersectsCircle(target.x,target.z,.20f))return;
     auto trial=feet_;auto& foot=trial[leg];foot.start=foot.position;foot.target=target;
@@ -242,6 +269,14 @@ void BearMotion::Step(float seconds,BearPoint observer,bool observerValid) {
     state_.speed+=std::clamp(targetSpeed-state_.speed,-1.15f*seconds,.72f*seconds);
     const float targetForage=state_.behavior==BearBehavior::Forage&&state_.speed<.08f?1.0f:0.0f;
     state_.foragePose+=std::clamp(targetForage-state_.foragePose,-1.4f*seconds,.75f*seconds);
+    // A rest two seconds in, undisturbed, settles the bear onto folded legs for a longer lie;
+    // the walker's approach, or the next walk, has it up again within a second.
+    const bool undisturbed=state_.behavior==BearBehavior::Rest&&!alertFacing&&state_.speed<.05f;
+    restSeconds_=undisturbed?restSeconds_+seconds:0;
+    const bool shouldLie=undisturbed&&restSeconds_>LieDelaySeconds;
+    if(shouldLie&&!lying_) {++lies_;remaining_+=LieBonusSeconds;}
+    lying_=shouldLie;
+    state_.lieAmount+=std::clamp((lying_?1.0f:0.0f)-state_.lieAmount,-RiseRate*seconds,LieDownRate*seconds);
     state_.breathPhase=std::fmod(state_.breathPhase+seconds*(state_.speed>.1f?2.1f:.82f),Tau);
     const float heading=Wrap(state_.heading+std::clamp(Wrap(targetHeading_-state_.heading),-.78f*seconds,.78f*seconds));
     if(state_.speed>.001f) {
