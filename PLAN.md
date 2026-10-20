@@ -54,6 +54,17 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 181 (2026-10-20) — a deer chews its cud
+
+A deer at rest, standing or bedded, held its muzzle still. `DeerState::chew` (-1..1) now
+carries the cud: at rest, unalerted and still, the deer chews at `ChewRate` (6 rad/s) under
+an envelope easing in at 1/s and out at 2/s with the next move or an alert;
+`ChewingCount()` counts the deer chewing. In the renderer the muzzle, with its nose, works
+1.4 cm side to side and drops a little, on the same vertices. The deer report line gains
+"a deer at rest, undisturbed, chews its cud, the muzzle working side to side" (pinned).
+Core check: with the walker gone a resting deer chews past eight tenths to either side
+within two minutes while a walking deer's jaw is still. Native `deer-bedded` passes.
+
 ## Loop pass 180 (2026-10-20) — a goat chews its cud
 
 A goat at rest held its jaw shut. `GoatState::chew` (-1..1) now carries the cud: at rest,

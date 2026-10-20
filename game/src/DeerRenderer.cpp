@@ -311,7 +311,10 @@ namespace island
                 + up * ((.045f - .105f * graze) * scale);
             Ellipsoid(out, head, right, up, forward, .155f * scale, .19f * scale,
                       .29f * scale, coat, transmission, near ? 8 : 3, near ? 18 : 7, .22f);
-            const Vector3 muzzle = head + forward * (.255f * scale) - up * (.055f * scale);
+            // Chewing the cud, the muzzle works side to side and drops a little.
+            const float chew = std::clamp(deer.chew, -1.0f, 1.0f);
+            const Vector3 muzzle = head + forward * (.255f * scale) - up * ((.055f + .008f * std::abs(chew)) * scale)
+                + right * (chew * .014f * scale);
             Ellipsoid(out, muzzle, right, up, forward, .112f * scale, .098f * scale,
                       .17f * scale, Color::Lerp(coat,dark,.25f), transmission,
                       near ? 6 : 2, near ? 12 : 6);

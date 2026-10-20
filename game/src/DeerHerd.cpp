@@ -208,6 +208,13 @@ namespace island
         }
     }
 
+    std::size_t DeerHerd::ChewingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.cud > 0.5f ? 1U : 0U;
+        return count;
+    }
+
     std::size_t DeerHerd::StampingCount() const noexcept
     {
         std::size_t count = 0;
@@ -411,6 +418,14 @@ namespace island
         agent.stamping = stamping;
         agent.state.stamp += std::clamp((stamping ? 1.0f : 0.0f) - agent.state.stamp,
             -8.0f * deltaSeconds, 10.0f * deltaSeconds);
+        // The cud: at rest, undisturbed (standing or bedded), the deer chews, the muzzle
+        // working side to side; the chew eases in over a second and stops with the next
+        // move or an alert.
+        const bool ruminating = agent.state.behavior == DeerBehavior::Rest && !alertFacing
+            && agent.state.speed < 0.05f;
+        agent.cud += std::clamp((ruminating ? 1.0f : 0.0f) - agent.cud, -2.0f * deltaSeconds, 1.0f * deltaSeconds);
+        if (agent.cud > 0.01f) agent.chewPhase = std::fmod(agent.chewPhase + deltaSeconds * ChewRate, TwoPi);
+        agent.state.chew = std::sin(agent.chewPhase) * agent.cud;
         const float nextX = agent.state.x
             + std::cos(agent.state.headingRadians) * agent.state.speed * deltaSeconds;
         const float nextZ = agent.state.z

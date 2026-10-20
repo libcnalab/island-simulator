@@ -10626,6 +10626,18 @@ int main()
                 if (step > 20) grazingStamp = std::max(grazingStamp, stampers.Deer()[2].stamp);
             }
             Check(grazingStamp < 0.05f, "a deer with the walker gone keeps stamping");
+            // The cud: with the walker gone, within two minutes a resting deer chews, the
+            // muzzle swung past eight tenths to either side, and a walking deer's jaw is still.
+            bool chewLeft = false, chewRight = false, walkingChew = false;
+            for (int step = 0; step < 2400 && !(chewLeft && chewRight); ++step) {
+                stampers.Update(0.05f, 1000.0f, 0.0f, 1000.0f);
+                for (const auto& deer : stampers.Deer()) {
+                    if (deer.behavior == island::DeerBehavior::Rest && deer.chew > 0.8f) chewRight = true;
+                    if (deer.behavior == island::DeerBehavior::Rest && deer.chew < -0.8f) chewLeft = true;
+                    if (deer.behavior == island::DeerBehavior::Walk && deer.speed > 0.5f && std::abs(deer.chew) > 0.3f) walkingChew = true;
+                }
+            }
+            Check(chewLeft && chewRight && !walkingChew, "a resting deer does not chew its cud, or chews on the move");
         }
     }
 

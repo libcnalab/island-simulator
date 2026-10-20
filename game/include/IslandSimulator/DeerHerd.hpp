@@ -30,6 +30,9 @@ namespace island
         /** @brief 0..1 the stamp: a deer standing alert at the walker lifts its left forefoot
          *  and stamps it down now and then, a warning; nothing while grazing or bedded. */
         float stamp = 0.0f;
+        /** @brief -1..1 the chew: a deer at rest, undisturbed (standing or bedded), chews its
+         *  cud, the muzzle working side to side; 0 on the move or alert. */
+        float chew = 0.0f;
         /** @brief 0..1 bedded down: the body lowered onto folded legs for a rest taken in
          *  the shade, rising over a second and a half; back on its feet within half a
          *  second of any other behaviour (an alarm, a bolt, the next graze). */
@@ -66,6 +69,9 @@ namespace island
         // The alert stamp's bout and the period between stamps while the deer stands alert.
         static constexpr float StampSeconds = 0.4f;
         static constexpr float StampPeriodSeconds = 3.5f;
+        /** @brief Deer chewing the cud this moment (at rest, undisturbed, the chew past half). */
+        [[nodiscard]] std::size_t ChewingCount() const noexcept;
+        static constexpr float ChewRate = 6.0f;
         /** @brief Stamps begun, and the deer mid-stamp. */
         [[nodiscard]] std::uint32_t StampCount() const noexcept { return stamps_; }
         [[nodiscard]] std::size_t StampingCount() const noexcept;
@@ -135,6 +141,7 @@ namespace island
             bool twitching = false;
             float stampClock = 0.0f;
             bool stamping = false;
+            float cud = 0.0f, chewPhase = 0.0f;   // 0..1 chewing the cud, and the jaw's phase
             // The shade a sunlit rest walks to; valid while seekingShade.
             float shadeX = 0.0f, shadeZ = 0.0f;
             bool seekingShade = false;
