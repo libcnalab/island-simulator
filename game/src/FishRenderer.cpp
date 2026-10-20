@@ -291,6 +291,16 @@ namespace island
                 wildlife_render::ApplyUnderwaterLight(sourcePalette.fin, waterLight),
             };
             const PoseAxes axes = MakePoseAxes(fish);
+            // The turning flash: the flanks go toward lit silver by the fish's flash, the
+            // back and belly keeping their own tones.
+            const Color silver = wildlife_render::ApplyUnderwaterLight(Color(228, 234, 238, 255), waterLight);
+            const float flash = std::clamp(fish.flash, 0.0f, 1.0f) * 0.6f;
+            const auto flashed = [&](const float angle, const float longitudinal) {
+                const Color base = SmoothBodyColor(palette, axes, angle, longitudinal, fish.colorVariant);
+                if (flash <= 0.001f) return base;
+                const float flank = 1.0f - std::clamp((std::abs(std::sin(angle)) - .2f) / .5f, 0.0f, 1.0f);
+                return Color::Lerp(base, silver, flash * flank);
+            };
             const float scale = fish.scale;
             const std::size_t variant = fish.colorVariant % 4U;
             constexpr std::array<float, 4> WidthScales = {{.82f, .90f, .74f, .94f}};
@@ -325,14 +335,10 @@ namespace island
                         * static_cast<float>(segment) / static_cast<float>(BodySegments);
                     const float nextAngle = 2.0f * std::numbers::pi_v<float>
                         * static_cast<float>(next) / static_cast<float>(BodySegments);
-                    const Color color = SmoothBodyColor(palette, axes, angle,
-                        BodySections[row].z, fish.colorVariant);
-                    const Color nextColor = SmoothBodyColor(palette, axes, nextAngle,
-                        BodySections[row].z, fish.colorVariant);
-                    const Color forwardColor = SmoothBodyColor(palette, axes, angle,
-                        BodySections[row + 1U].z, fish.colorVariant);
-                    const Color nextForwardColor = SmoothBodyColor(palette, axes, nextAngle,
-                        BodySections[row + 1U].z, fish.colorVariant);
+                    const Color color = flashed(angle, BodySections[row].z);
+                    const Color nextColor = flashed(nextAngle, BodySections[row].z);
+                    const Color forwardColor = flashed(angle, BodySections[row + 1U].z);
+                    const Color nextForwardColor = flashed(nextAngle, BodySections[row + 1U].z);
                     AddGradientTriangle(vertices, rings[row][segment], rings[row + 1U][segment],
                                         rings[row + 1U][next], color, forwardColor,
                                         nextForwardColor);
@@ -353,10 +359,8 @@ namespace island
                         * static_cast<float>(segment) / static_cast<float>(BodySegments);
                     const float nextAngle = 2.0f * std::numbers::pi_v<float>
                         * static_cast<float>(next) / static_cast<float>(BodySegments);
-                    const Color color = SmoothBodyColor(palette, axes, angle, z,
-                                                        fish.colorVariant);
-                    const Color nextColor = SmoothBodyColor(palette, axes, nextAngle, z,
-                                                            fish.colorVariant);
+                    const Color color = flashed(angle, z);
+                    const Color nextColor = flashed(nextAngle, z);
                     if (front)
                         AddGradientTriangle(vertices, rings[row][segment],
                                             rings[row][next], cap,

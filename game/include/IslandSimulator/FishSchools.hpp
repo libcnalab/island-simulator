@@ -22,6 +22,10 @@ namespace island
         float bankRadians = 0.0f;
         float speed = 0.0f;
         float bodyWave = 0.0f;
+        /** @brief 0..1 the flank's silver flash: a fish rolling through a turn catches the
+         *  light, brightest in a hard turn (parting from the shark), gone within a third of
+         *  a second after it straightens. */
+        float flash = 0.0f;
         float scale = 1.0f;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
         std::uint8_t schoolIndex = 0U;

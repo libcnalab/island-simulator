@@ -8359,6 +8359,18 @@ int main()
         schools.SetThreat(now.centreX, now.centreY, now.centreZ, true);
         schools.Update(0.05f, centre.centreX, 0.0f, centre.centreZ + 30.0f);
         Check(schools.ThreatPartingCount() >= island::FishSchools::FishPerSchool / 2U, "the shark in a school has most of its fish parting");
+        // The parting fish roll hard through their turns: within half a second a flank
+        // flashes; every flash stays within 0..1.
+        float brightest = 0.0f;
+        bool bounded = true;
+        for (int step = 0; step < 10; ++step) {
+            schools.Update(0.05f, centre.centreX, 0.0f, centre.centreZ + 30.0f);
+            for (const auto& fish : schools.Fish()) {
+                if (fish.schoolIndex == 0U) brightest = std::max(brightest, fish.flash);
+                if (fish.flash < 0.0f || fish.flash > 1.0f || !std::isfinite(fish.flash)) bounded = false;
+            }
+        }
+        Check(brightest > 0.5f && bounded, "a fish parting from the shark flashes silver as it rolls through the turn");
         float farthest = before;
         for (int step = 0; step < 60; ++step) {
             schools.Update(0.05f, centre.centreX, 0.0f, centre.centreZ + 30.0f);

@@ -382,8 +382,15 @@ namespace island
             }
             const float headingDifference = SignedAngleDifference(
                 agent.state.headingRadians, desiredHeading);
-            agent.state.headingRadians += std::clamp(
+            const float headingStep = std::clamp(
                 headingDifference, -1.55f * deltaSeconds, 1.55f * deltaSeconds);
+            agent.state.headingRadians += headingStep;
+            // A turn flashes the flank: the fish rolls through the light as it comes round,
+            // brightest in a hard turn, and the flash is gone within a third of a second
+            // once it swims straight again.
+            const float turn = std::min(1.0f, std::abs(headingStep) / (1.1f * deltaSeconds));
+            agent.state.flash += std::clamp(turn - agent.state.flash,
+                                            -3.0f * deltaSeconds, 12.0f * deltaSeconds);
             const float desiredBank = std::clamp(
                 headingDifference * 0.58f, -0.28f, 0.28f);
             agent.state.bankRadians += std::clamp(

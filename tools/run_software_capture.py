@@ -1310,6 +1310,8 @@ def main():
                 raise RuntimeError("current wet-sand print fade is missing; check for a stale executable")
             if "at the campfire the resident crouches to tend the fire, hands to the flames" not in diagnostics:
                 raise RuntimeError("current resident crouch is missing; check for a stale executable")
+            if "a fish rolling through a turn flashes silver along its flanks" not in diagnostics:
+                raise RuntimeError("current fish turning flash is missing; check for a stale executable")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:
                 raise RuntimeError("resident tending capture did not hold the crouch")
             if args.viewpoint == "bear-lying" and "bear QA camera frames the bear lying at rest on folded legs" not in diagnostics:

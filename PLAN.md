@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 133 (2026-10-20) — a turning fish flashes silver
+
+A school came round in its own flank colours. `FishState::flash` (0..1) now carries the
+turning flash: each update the fish's bounded heading step is read as a turn rate (full at
+1.1 rad/s), the flash rising at 12/s toward it and falling at 3/s, so a hard turn (parting
+from the shark, a route reversal) lights the flank and the flash is gone within a third of
+a second once the fish swims straight. `FishRenderer`'s near fish lerps every body colour
+toward lit silver (228,234,238 under the water light) by 0.6 × flash × a flank weight that
+leaves the back and belly their own tones. The fish report line gains "a fish rolling
+through a turn flashes silver along its flanks, brightest parting from the shark"
+(pinned). Core checks extend the shark-parting test: within half a second of the parting a
+flank flashes above 0.5 and every flash stays in 0..1. Native `fish` passes (luminance
+deviation 20.0).
+
 ## Loop pass 132 (2026-10-20) — the resident crouches to tend the fire
 
 The resident's campfire pause built the fire up (pass 89) while they stood straight beside
