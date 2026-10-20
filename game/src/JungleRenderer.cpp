@@ -145,6 +145,7 @@ layout(location = 8) in vec4 aInstance3;
 
 uniform mat4 uViewProjection;
 uniform float uTime;
+uniform vec4 uWalkers[6];   // bodies in the low growth: x, z, radius squared, strength (0: none)
 
 out vec3 vColor;
 out vec3 vWorld;
@@ -186,6 +187,23 @@ void main()
 
     vec4 world = instanceTransform * vec4(local, 1.0);
     float groundHeight = aInstance3.y;
+    // The animals and the resident brush through the bushes and understory: foliage within
+    // 1.7 m of the ground near a body is pushed away from it and down, by its wind weight.
+    float lowGrowth = 1.0 - smoothstep(1.1, 1.7, world.y - groundHeight);
+    if (lowGrowth > 0.0 && aWindData.x > 0.0) {
+        for (int walker = 0; walker < 6; ++walker) {
+            vec4 body = uWalkers[walker];
+            if (body.w <= 0.0) continue;
+            vec2 bodyOffset = world.xz - body.xy;
+            float bodyDistanceSquared = dot(bodyOffset, bodyOffset);
+            float reach = body.z * 1.6;
+            if (bodyDistanceSquared >= reach) continue;
+            float press = (1.0 - smoothstep(0.04, reach, bodyDistanceSquared)) * aWindData.x * lowGrowth * body.w;
+            vec2 awayFromBody = bodyOffset * inversesqrt(max(bodyDistanceSquared, 0.01));
+            world.xz += awayFromBody * press * 0.28;
+            world.y -= press * 0.12;
+        }
+    }
     if (aLeaf.w > 1.5) {
         // Dry litter is still. Preserve its scaled fold above the exact drawn terrain
         // at each vertex, not above the parent plant's horizontal root plane.
@@ -2544,7 +2562,8 @@ void main()
 
     void JungleRenderer::Draw(const Matrix& view, const Matrix& projection,
                               const Vector3& cameraPosition, const float timeSeconds,
-                              std::span<const MonkeyState> monkeys)
+                              std::span<const MonkeyState> monkeys,
+                              const std::span<const GrassWalker> walkers)
     {
         for (auto& transforms : visibleCanopyNear_) transforms.clear();
         for (auto& transforms : visibleCanopyFar_) transforms.clear();
@@ -2739,6 +2758,13 @@ void main()
                 "uToSun", environment::SunDirectionX, environment::SunDirectionY,
                 environment::SunDirectionZ);
             customEffect_->SetUniformFloat("uTime", timeSeconds);
+            for (std::size_t slot = 0; slot < GrassWalkers::Slots; ++slot) {
+                const GrassWalker body = slot < walkers.size() ? walkers[slot] : GrassWalker{};
+                const bool valid = std::isfinite(body.x) && std::isfinite(body.z) && body.strength > 0.0f;
+                const std::string name = "uWalkers[" + std::to_string(slot) + "]";
+                customEffect_->SetUniformVec4(name.c_str(), valid ? body.x : 0.0f, valid ? body.z : 0.0f,
+                    valid ? body.radius * body.radius : 0.0f, valid ? std::clamp(body.strength, 0.0f, 1.0f) : 0.0f);
+            }
             CampfireLighting::Bind(*customEffect_,timeSeconds);
             if (sunShadow_) sunShadow_->Bind(*customEffect_);
             else SunShadowMap::BindDisabled(*customEffect_);

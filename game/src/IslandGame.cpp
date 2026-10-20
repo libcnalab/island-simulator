@@ -2287,6 +2287,7 @@ namespace island
                   << "a foraging crab walks to a coconut lying in its range and works it with its claws until it is gone\n"
                   << "island-simulator: an ant trail whose food end lies near a fallen fruit bends to it and the carriers come back from the fruit\n"
                   << "island-simulator: the grass bends under the nearest six animals and the resident as they pass, not only under the walker\n"
+                  << "island-simulator: the bushes and understory are brushed aside by the same bodies as they pass\n"
                   << "island-simulator: crocodiles " << crocodileGroup_.Crocodiles().size()
                   << " agents bask, crawl, swim, and retreat within the stream estuary\n"
                   << "island-simulator: fish " << fishSchools_.Fish().size()
@@ -4292,10 +4293,20 @@ namespace island
             helicopterRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }
 
+        // The bodies in the grass and the low growth besides the walker: the herds, the bear
+        // and the resident, the nearest six to the camera; the jungle and the grass share them.
+        std::vector<GrassWalker> grassCandidates;
+        for (const auto& deer : deer_->Deer()) grassCandidates.push_back({deer.x, deer.z, 0.55f, GrassWalkers::Strength(deer.speed)});
+        for (const auto& goat : goats_->Goats()) grassCandidates.push_back({goat.x, goat.z, 0.45f, GrassWalkers::Strength(goat.speed)});
+        for (const auto& boar : boarHerd_.Boars()) grassCandidates.push_back({boar.x, boar.z, 0.62f, GrassWalkers::Strength(boar.speed)});
+        grassCandidates.push_back({bear_->State().x, bear_->State().z, 0.95f, GrassWalkers::Strength(bear_->State().speed)});
+        grassCandidates.push_back({resident_->State().x, resident_->State().z, 0.38f, GrassWalkers::Strength(resident_->State().speed)});
+        std::array<GrassWalker, GrassWalkers::Slots> grassWalkers{};
+        (void)GrassWalkers::Select(grassCandidates, renderCameraPosition_.X, renderCameraPosition_.Z, grassWalkers);
         {
             GpuDiagnosticScope gpuPass("jungle");
             jungleRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
-                                  timeSeconds,renderedMonkeys);
+                                  timeSeconds,renderedMonkeys,grassWalkers);
         }
 
         const PlayerPosition& grassPlayer = playerMotion_.Position();
@@ -4308,16 +4319,6 @@ namespace island
         }
         {
             GpuDiagnosticScope gpuPass("grass");
-            // The bodies in the grass besides the walker: the herds, the bear and the resident,
-            // the nearest six to the camera.
-            std::vector<GrassWalker> grassCandidates;
-            for (const auto& deer : deer_->Deer()) grassCandidates.push_back({deer.x, deer.z, 0.55f, GrassWalkers::Strength(deer.speed)});
-            for (const auto& goat : goats_->Goats()) grassCandidates.push_back({goat.x, goat.z, 0.45f, GrassWalkers::Strength(goat.speed)});
-            for (const auto& boar : boarHerd_.Boars()) grassCandidates.push_back({boar.x, boar.z, 0.62f, GrassWalkers::Strength(boar.speed)});
-            grassCandidates.push_back({bear_->State().x, bear_->State().z, 0.95f, GrassWalkers::Strength(bear_->State().speed)});
-            grassCandidates.push_back({resident_->State().x, resident_->State().z, 0.38f, GrassWalkers::Strength(resident_->State().speed)});
-            std::array<GrassWalker, GrassWalkers::Slots> grassWalkers{};
-            (void)GrassWalkers::Select(grassCandidates, renderCameraPosition_.X, renderCameraPosition_.Z, grassWalkers);
             grassRenderer_->Draw(
                 cameraView_, cameraProjection_, renderCameraPosition_,
                 grassInteractionPosition,grassInteractionStrength,timeSeconds,grassWalkers);

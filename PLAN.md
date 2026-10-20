@@ -54,6 +54,18 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 53 (2026-10-20) — the bushes and understory are brushed aside
+
+The grass parted for the animals (pass 52) and the bushes beside it stood rigid as a boar
+pushed through. The jungle vertex shader takes the same six walkers (`uWalkers[6]`) and, for
+foliage within 1.7 m of its ground (bushes, understory, a crown's lowest leaves), pushes
+vertices inside 1.6 times a body's radius² away from the body by 0.28 m and down by 0.12 m,
+scaled by the vertex's wind weight, the low-growth fade and the body's strength; trunks and
+crowns above that height are untouched. The walker list is now gathered once per frame
+before the jungle draw and shared with the grass. Diagnostic "the bushes and understory are
+brushed aside by the same bodies as they pass" is pinned by the native capture tool. The
+pass is shader-only over the tested walker selection. Native `jungle` passes.
+
 ## Loop pass 52 (2026-10-20) — the grass bends under the animals
 
 The grass parted only for the walker; a deer could stand in it untouched. A core

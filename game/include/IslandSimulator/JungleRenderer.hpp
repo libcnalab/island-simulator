@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 #include <span>
+#include "IslandSimulator/GrassWalkers.hpp"
 
 namespace Microsoft::Xna::Framework::Graphics
 {
@@ -50,10 +51,12 @@ namespace island
         JungleRenderer(JungleRenderer&&) = delete;
         JungleRenderer& operator=(JungleRenderer&&) = delete;
 
+        // walkers: the bodies pressing the low growth this frame (the grass's own list).
         void Draw(const Microsoft::Xna::Framework::Matrix& view,
                   const Microsoft::Xna::Framework::Matrix& projection,
                   const Microsoft::Xna::Framework::Vector3& cameraPosition,
-                  float timeSeconds, std::span<const MonkeyState> monkeys = {});
+                  float timeSeconds, std::span<const MonkeyState> monkeys = {},
+                  std::span<const GrassWalker> walkers = {});
 
         [[nodiscard]] bool UsesInstancing() const noexcept { return instancingSupported_; }
         [[nodiscard]] bool UsesCustomShader() const noexcept { return customShaderReady_; }
