@@ -2303,6 +2303,7 @@ namespace island
                   << "island-simulator: the bushes and understory are brushed aside by the same bodies as they pass\n"
                   << "island-simulator: mice, rats, geckos and skinks scatter from a passing animal or the resident as from the walker\n"
                   << "island-simulator: an alert deer swings both ears toward the watcher\n"
+                  << "island-simulator: the bear walks to fruit and coconuts lying in its range and eats them where they lie\n"
                   << "island-simulator: crocodiles " << crocodileGroup_.Crocodiles().size()
                   << " agents bask, crawl, swim, and retreat within the stream estuary\n"
                   << "island-simulator: fish " << fishSchools_.Fish().size()
@@ -2618,8 +2619,10 @@ namespace island
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
         }
         const auto previousBear=bear_->State();
+        bear_->SetLyingFruit(fallingFruit_.Fruit());
         bear_->Update(deltaSeconds,bearCaptureClock?BearPoint{NAN,NAN,NAN}
             :BearPoint{observer.x,observer.y,observer.z});
+        for (const std::size_t eaten : bear_->EatenFruit()) fallingFruit_.Consume(eaten);
         if(viewpoint_==FixedViewpoint::BearDetail) {
             const auto& current=bear_->State();
             cameraPosition_+=Vector3(current.x-previousBear.x,current.y-previousBear.y,current.z-previousBear.z);

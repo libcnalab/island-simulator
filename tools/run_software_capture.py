@@ -1169,6 +1169,8 @@ def main():
                 raise RuntimeError("current crocodile entry splash is missing; check for a stale executable")
             if "the deer keep seven metres clear of the campfire" not in diagnostics:
                 raise RuntimeError("current deer fire clearance is missing; check for a stale executable")
+            if "the bear walks to fruit and coconuts lying in its range and eats them where they lie" not in diagnostics:
+                raise RuntimeError("current bear fruit eating is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

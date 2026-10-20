@@ -1,4 +1,5 @@
 #include "IslandSimulator/BearMotion.hpp"
+#include "IslandSimulator/FallingFruitField.hpp"
 
 #include "IslandSimulator/CaveSite.hpp"
 #include "IslandSimulator/IslandEnvironmentField.hpp"
@@ -174,6 +175,21 @@ bool BearMotion::TryMove(float heading,float distance,bool& waitingForStep) {
     state_.phase=std::fmod(state_.phase+travelled/stride*Tau,Tau);return true;
 }
 
+// The nearest fruit or nut lying still within the bear's range on ground it accepts.
+bool BearMotion::ChooseFruit() noexcept {
+    fruitTarget_=-1;
+    float best=std::numeric_limits<float>::max();
+    for(std::size_t index=0;index<lyingFruit_.size();++index) {
+        const FallingFruit& fruit=lyingFruit_[index];
+        if(!fruit.active||fruit.restSeconds<0.0f||fruit.rolling||fruit.afloat) continue;
+        if(std::hypot(fruit.x-state_.homeX,fruit.z-state_.homeZ)>HomeRadius*.9f) continue;
+        const float distance=std::hypot(fruit.x-state_.x,fruit.z-state_.z);
+        if(distance>=best||!AcceptsGround(fruit.x,fruit.z)) continue;
+        best=distance;fruitTarget_=static_cast<int>(index);
+    }
+    return fruitTarget_>=0;
+}
+
 void BearMotion::Step(float seconds,BearPoint observer,bool observerValid) {
     remaining_-=seconds;avoidance_=std::max(0.0f,avoidance_-seconds);
     const float observerDistance=observerValid?std::hypot(state_.x-observer.x,state_.y+.8f-observer.y,state_.z-observer.z)
@@ -195,11 +211,34 @@ void BearMotion::Step(float seconds,BearPoint observer,bool observerValid) {
             choice<.78f?BearBehavior::Walk:choice<.90f?BearBehavior::Idle:BearBehavior::Trot;
         remaining_=state_.behavior==BearBehavior::Rest?7+choice*7:3+choice*6;
         targetHeading_=Wrap(state_.heading+(choice-.5f)*3.5f);
+        fruitTarget_=-1;eatSeconds_=0;
+        // A fruit or nut lying in range is the forage: the walk there and the meal.
+        if(state_.behavior==BearBehavior::Forage&&ChooseFruit()) remaining_+=40;
+    }
+    // On the way to a fruit, and at it: steer to it, stop over it, eat it.
+    bool atFruit=false;
+    if(state_.behavior==BearBehavior::Forage&&fruitTarget_>=0) {
+        if(static_cast<std::size_t>(fruitTarget_)>=lyingFruit_.size()||!lyingFruit_[static_cast<std::size_t>(fruitTarget_)].active) {
+            fruitTarget_=-1;
+        } else {
+            const FallingFruit& fruit=lyingFruit_[static_cast<std::size_t>(fruitTarget_)];
+            const float distance=std::hypot(fruit.x-state_.x,fruit.z-state_.z);
+            atFruit=distance<FruitReach;
+            if(!atFruit&&!alertFacing) targetHeading_=std::atan2(fruit.x-state_.x,fruit.z-state_.z);
+            if(atFruit) {
+                eatSeconds_+=seconds;
+                if(eatSeconds_>=EatSeconds) {
+                    eaten_.push_back(static_cast<std::size_t>(fruitTarget_));++eats_;
+                    fruitTarget_=-1;eatSeconds_=0;state_.behavior=BearBehavior::Rest;remaining_=5;
+                }
+            }
+        }
     }
     if(!alertFacing&&std::hypot(state_.x-state_.homeX,state_.z-state_.homeZ)>HomeRadius-5)
         targetHeading_=std::atan2(state_.homeX-state_.x,state_.homeZ-state_.z);
     const float targetSpeed=state_.behavior==BearBehavior::Trot?MaximumSpeed:
-        state_.behavior==BearBehavior::Withdraw?1.25f:state_.behavior==BearBehavior::Walk?.68f:0;
+        state_.behavior==BearBehavior::Withdraw?1.25f:state_.behavior==BearBehavior::Walk?.68f:
+        (state_.behavior==BearBehavior::Forage&&fruitTarget_>=0&&!atFruit?.5f:0);
     state_.speed+=std::clamp(targetSpeed-state_.speed,-1.15f*seconds,.72f*seconds);
     const float targetForage=state_.behavior==BearBehavior::Forage&&state_.speed<.08f?1.0f:0.0f;
     state_.foragePose+=std::clamp(targetForage-state_.foragePose,-1.4f*seconds,.75f*seconds);
@@ -220,6 +259,7 @@ void BearMotion::Step(float seconds,BearPoint observer,bool observerValid) {
 }
 
 void BearMotion::Update(float seconds,BearPoint observer) {
+    eaten_.clear();
     if(!std::isfinite(seconds)||seconds<=0)return;
     seconds=std::min(seconds,.1f);
     const bool valid=Finite(observer);const int steps=std::min(5,static_cast<int>(std::ceil(seconds/.02f)));

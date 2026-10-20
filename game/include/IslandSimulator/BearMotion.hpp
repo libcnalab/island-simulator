@@ -4,9 +4,11 @@
 #include "IslandSimulator/WorldCollisionGrid.hpp"
 
 #include <array>
+#include <vector>
 #include <span>
 
 namespace island {
+struct FallingFruit;
 class IslandTerrain;
 
 struct BearPoint {float x=0,y=0,z=0;bool operator==(const BearPoint&)const=default;};
@@ -41,6 +43,12 @@ public:
     static constexpr float AlertDistance=20.0f;
     BearMotion(const IslandTerrain& terrain,std::span<const CircularObstacle> obstacles);
     void Update(float seconds,BearPoint observer);
+    /** @brief Fruit and coconuts lying on the ground this frame; a forage may walk to one. */
+    void SetLyingFruit(std::span<const FallingFruit> fruit) noexcept {lyingFruit_=fruit;}
+    /** @brief Indices into that span the bear finished during the last update. */
+    [[nodiscard]] std::span<const std::size_t> EatenFruit() const noexcept {return eaten_;}
+    [[nodiscard]] std::uint32_t EatCount() const noexcept {return eats_;}
+    static constexpr float EatSeconds=10.0f,FruitReach=1.1f;
     [[nodiscard]] const BearState& State()const noexcept{return state_;}
     [[nodiscard]] bool IsValidPosition(float x,float z)const noexcept;
     [[nodiscard]] const RenderedTerrainSurface& Ground()const noexcept{return ground_;}
@@ -61,5 +69,11 @@ private:
     std::array<Foot,4> feet_{};
     float remaining_=2.5f,targetHeading_=0,avoidance_=0;
     std::uint32_t decisions_=0;
+    std::span<const FallingFruit> lyingFruit_;
+    std::vector<std::size_t> eaten_;
+    std::uint32_t eats_=0;
+    int fruitTarget_=-1;
+    float eatSeconds_=0;
+    bool ChooseFruit() noexcept;
 };
 }

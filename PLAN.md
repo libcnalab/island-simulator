@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 65 (2026-10-20) — the bear eats the fallen fruit
+
+The bear foraged in place while fruit and coconuts lay about its range. `BearMotion` reads
+the fruit span (`SetLyingFruit`): when its next behaviour is a forage it looks for the
+nearest fruit or nut lying still within 0.9 of its home radius on ground it accepts
+(`ChooseFruit`), the forage lasting forty seconds longer; it walks there at 0.5 m/s, stops
+within 1.1 m in its forage pose, and after ten seconds the index goes to `EatenFruit()`, the
+game consumes it and the bear rests; a fruit that goes away mid-walk drops the target. The
+startup report gains "the bear walks to fruit and coconuts lying in its range and eats them
+where they lie", pinned by the native capture tool. Core check: fruit shaken down three
+metres from the bear's home is walked to and eaten within ten simulated minutes. Native
+`bear` passes.
+
 ## Loop pass 64 (2026-10-20) — the deer keep clear of the fire
 
 The antlered deer's clearing home lay 4.8 m from the campfire and it grazed through the

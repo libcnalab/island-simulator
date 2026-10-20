@@ -20,6 +20,7 @@
 #include "IslandSimulator/OctopusInkField.hpp"
 #include "IslandSimulator/CrocodileGroup.hpp"
 #include "IslandSimulator/CampfireSite.hpp"
+#include "IslandSimulator/BearMotion.hpp"
 #include "IslandSimulator/CrabColony.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
 #include "IslandSimulator/CoastalWindResponse.hpp"
@@ -8206,6 +8207,26 @@ int main()
                 for(const auto& deer:herd.Deer()) nearest=std::min(nearest,std::hypot(deer.x-island::CampfireSite::X,deer.z-island::CampfireSite::Z));
             }
             Check(nearest>island::DeerHerd::FireClearance-0.01f,"no deer comes within seven metres of the campfire");
+        }
+        // The bear eats the fallen fruit: fruit shaken down three metres from its home draws
+        // its next forage; it walks there, stands over it and the fruit is gone within ten
+        // simulated minutes.
+        {
+            island::BearMotion bear(terrain,{});
+            const auto den=bear.State();
+            island::FallingFruitField larder(terrain);
+            island::MonkeyState picker{};
+            picker.behavior=island::MonkeyBehavior::InspectTree;picker.pickingFruit=true;picker.simulationTier=island::WildlifeSimulationTier::Full;
+            picker.selectedTree={den.homeX+3.0f,terrain.Height(den.homeX+3.0f,den.homeZ),den.homeZ,0.4f,1.0f,2U};
+            std::vector<island::MonkeyState> pickers{picker};
+            for(int step=0;step<400;++step) larder.Update(0.05f,pickers);
+            for(int step=0;step<12000&&bear.EatCount()==0U;++step) {
+                bear.SetLyingFruit(larder.Fruit());
+                bear.Update(0.05f,{NAN,NAN,NAN});
+                for(const std::size_t index:bear.EatenFruit()) larder.Consume(index);
+                larder.Update(0.05f,pickers);
+            }
+            Check(bear.EatCount()>=1U&&larder.ConsumedCount()>=1U,"the bear walks to a lying fruit and eats it within ten minutes");
         }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls
