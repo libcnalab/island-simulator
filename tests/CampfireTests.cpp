@@ -1,4 +1,5 @@
 #include "IslandSimulator/CampfireLayout.hpp"
+#include "IslandSimulator/WindGust.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
 #include "IslandSimulator/JungleLayout.hpp"
 #include "IslandSimulator/NaturalPropLayout.hpp"
@@ -27,6 +28,13 @@ int main() {
     }
     Check(std::hypot(wood.x-centre.x,wood.z-centre.z)>5.5f,"stored firewood is too close to flames");
     Check(StreamSoundField::Sample(centre.x,centre.z).distance>58,"fire/stream audible regions overlap");
+    // A gust front over the fire lays the plume over further than the trade wind alone, and
+    // the fronts do pass the fire: the strength there peaks within one front spacing.
+    Check(CampfirePlume::Lean(10.0f,0.0f)==10.0f*.34f&&CampfirePlume::Lean(10.0f,1.0f)>CampfirePlume::Lean(10.0f,0.0f)*2.0f,
+          "a gust front more than doubles the plume's lean");
+    float peakGust=0;
+    for(float t=0;t<WindGust::FrontSpacing/WindGust::FrontSpeed;t+=0.25f) peakGust=std::max(peakGust,WindGust::Strength(centre.x,centre.z,t));
+    Check(peakGust>0.9f,"a gust front passes over the fire within one spacing");
     Check(fire.Vertices().size()==5976&&fire.Vertices().size()==repeat.Vertices().size(),"fire geometry budget changed");
     std::array<int,7> materials{};
     for(std::size_t i=0;i<fire.Vertices().size();i+=3) {

@@ -46,6 +46,21 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 26 (2026-10-20) — the gust front lays the campfire plume over
+
+The smoke drifted west on the trade wind at one fixed lean while the grass beside the fire
+leaned to the passing fronts. The campfire vertex shader takes `uGust`, the gust strength at
+the fire on the render clock (the same `timeSeconds` the grass fronts use), and the cool
+upper plume's westward lean per unit altitude becomes `rise * (0.34 + 0.55 * gust)` with a
+sideways tear of `0.30 * gust` on a 0.9 Hz carrier, so the column lies over and shreds as a
+front passes and stands again behind it. The rule lives once in core as `CampfirePlume::Lean`
+(the renderer header is not visible to the core-only campfire test, which is where the first
+draft put it) and the shader applies the same constants. Diagnostic "a passing gust front
+lays the campfire plume over further downwind and tears it sideways" is printed by the
+renderer and pinned by the native capture tool. Campfire checks: a full-strength front more
+than doubles the lean, and the fronts do pass the fire (strength above 0.9 within one front
+spacing). Native `campfire` passes.
+
 ## Loop pass 25 (2026-10-20) — the fruit doves land beside the fallen fruit
 
 The fruit doves' ground visits went to a pseudo-random dry spot on their ring; the fruit the

@@ -1,6 +1,7 @@
 #include "IslandSimulator/CampfireRenderer.hpp"
 #include "IslandSimulator/CampfireLighting.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
+#include "IslandSimulator/WindGust.hpp"
 #include "CNA/Graphics/ShaderCodeEXT.hpp"
 #include "CNA/Graphics/ShaderPackageEXT.hpp"
 #include "CNA/ShaderLanguageEXT.hpp"
@@ -27,6 +28,7 @@ layout(location=2) in vec2 aTexCoord;
 uniform mat4 uViewProjection;
 uniform vec3 uRight;uniform vec3 uForward;
 uniform float uMoving;
+uniform float uGust;
 out vec3 world;out vec4 pigment;out vec2 uv;out float life;
 void main(){
     pigment=aColor;uv=aTexCoord;life=1.0;world=aPosition;
@@ -47,8 +49,10 @@ void main(){
             float altitude=1.0-aColor.g;
             float rise=max(local.y-.35,0.0);
             // The shared easterly trade wind bends the high, cool plume west in
-            // world space rather than in camera-facing billboard space.
-            world.x-=altitude*(rise*.34+sin(uCampfire.w*.11+aColor.r*19.0)*.38);
+            // world space rather than in camera-facing billboard space; a passing gust
+            // front lays it over further and tears it sideways as the grass leans.
+            world.x-=altitude*(rise*(.34+uGust*.55)+sin(uCampfire.w*.11+aColor.r*19.0)*.38);
+            world.z+=altitude*rise*uGust*.30*sin(uCampfire.w*.9+aColor.r*23.0+local.y*.6);
         }
     }
     gl_Position=uViewProjection*vec4(world,1);
@@ -183,6 +187,7 @@ CampfireRenderer::CampfireRenderer(GraphicsDevice& device,const CampfireLayout& 
         <<" flame/smoke/spark triangles in two culled draws; 11 stored logs six metres away\n";
     std::cout<<"island-simulator: campfire flame material uses broken translucent tongues, pale cores, a restrained blue base, and layered smoke\n";
     std::cout<<"island-simulator: campfire smoke uses 12 bounded upper quads in the existing moving draw, rising 15m and drifting west with the trade wind\n";
+    std::cout<<"island-simulator: a passing gust front lays the campfire plume over further downwind and tears it sideways\n";
     std::cout<<"island-simulator: campfire bed uses a pale mottled ash centre, scorched rim, and mixed glowing charcoal\n";
     std::cout<<"island-simulator: campfire and stored firewood stand in the qualified east inland clearing\n";
 }
@@ -198,6 +203,7 @@ void CampfireRenderer::Draw(const Matrix& view,const Matrix& projection,const Ve
     effect_->SetUniformVec3("uRight",toward.Z,0,-toward.X);
     effect_->SetUniformVec3("uForward",-toward.X,0,-toward.Z);
     effect_->SetUniformFloat("uMoving",effects?1.0f:0.0f);
+    effect_->SetUniformFloat("uGust",std::isfinite(seconds)?WindGust::Strength(centre_.x,centre_.z,seconds):0.0f);
     device_.setBlendStateProperty(effects?BlendState::AlphaBlend:BlendState::Opaque);
     device_.setDepthStencilStateProperty(effects?DepthStencilState::DepthRead:DepthStencilState::Default);
     device_.setRasterizerStateProperty(RasterizerState::CullNone);device_.SetVertexBuffer(effects?moving_.get():solid_.get());

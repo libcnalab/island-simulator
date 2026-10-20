@@ -23,4 +23,11 @@ private:
     std::array<CircularObstacle,2> obstacles_{};
     std::vector<FireVertex> vertices_;
 };
+// The smoke plume's westward lean per unit altitude for a rise above the flames and a gust
+// front strength 0..1: the trade-wind lean, plus the passing front laying it over further
+// (and tearing it sideways by GustTear). The campfire vertex shader applies the same rule.
+struct CampfirePlume {
+    static constexpr float TradeLean=.34f,GustLean=.55f,GustTear=.30f;
+    [[nodiscard]] static constexpr float Lean(float rise,float gust) noexcept {return rise*(TradeLean+gust*GustLean);}
+};
 }
