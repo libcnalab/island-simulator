@@ -215,6 +215,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 151: every few seconds a deer twitches one ear back and out at a fly, the ears taking turns (`DeerState::earTwitch`/`earSide`) (PLAN "Loop pass 151").
 - Pass 152: the bear standing lifts its head to sniff the air, and holds it up facing the walker in its alert range (`BearState::sniff`, `BearMotion::SniffCount`) (PLAN "Loop pass 152").
 - Pass 153: a perched bird stretches one wing out and down between its preens (`BirdState::stretchAmount`/`stretchSide`, `BirdFlock::StretchCount`) (PLAN "Loop pass 153").
+- Pass 154: a ground snake lifts its head to look at the walker standing off within fourteen metres, low to slip away closer (`SnakeState::headLift`) (PLAN "Loop pass 154").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

@@ -291,6 +291,7 @@ namespace island
             if (state.tier == WildlifeSimulationTier::Dormant) {
                 accumulatedSeconds_[index] = 0.0f;
                 state.tongue = 0.0f;
+                state.headLift = 0.0f;
                 continue;
             }
             accumulatedSeconds_[index] = std::min(accumulatedSeconds_[index] + frameDt, 0.1f);
@@ -299,11 +300,15 @@ namespace island
             const float dt = accumulatedSeconds_[index];
             accumulatedSeconds_[index] = 0.0f;
             clocks_[index] = std::fmod(clocks_[index]+dt,60.0f);
-            const bool retreat = distance < 8.0f;
+            const bool retreat = distance < RetreatDistance;
             state.behavior = retreat ? SnakeBehavior::Retreat
                 : clocks_[index] < 5.0f ? SnakeBehavior::Rest : SnakeBehavior::Explore;
             // The tongue flicks at rest and on the move alike.
             state.tongue = TongueAt(clocks_[index], index);
+            // The head lifts to look at the walker standing off within the look distance,
+            // and drops to slip away once they come within the retreat range.
+            const bool looking = !retreat && distance < LookDistance;
+            state.headLift += std::clamp((looking ? 1.0f : 0.0f) - state.headLift, -dt * 1.5f, dt * 2.5f);
             if (state.behavior == SnakeBehavior::Rest) continue;
             float target = 0.7f*std::sin(clocks_[index]*0.17f+static_cast<float>(index));
             if (std::hypot(head.x-state.homeX,head.z-state.homeZ) > HomeRadius-3.0f)

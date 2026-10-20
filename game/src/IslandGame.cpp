@@ -2277,6 +2277,7 @@ namespace island
                   << " ground agents with separated dense-understory-margin homes; "
                   << snakes_->TreeSnakes().size()<<" arboreal agents on sampled broadleaf trunks\n";
         std::cout << "island-simulator: snakes flick a forked tongue every few seconds, a half-second taste of the air at rest and on the move\n";
+        std::cout << "island-simulator: a ground snake lifts its head to look at the walker standing off within fourteen metres, and keeps it low to slip away closer\n";
         monkeyRenderer_ = std::move(monkeyRenderer);
         residentRenderer_=std::move(residentRenderer);
         bearRenderer_=std::move(bearRenderer);

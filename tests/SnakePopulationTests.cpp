@@ -435,6 +435,25 @@ int main(int argc,char** argv)
         Check(flicker.Snakes()[0].tongue==1.0f,"the head view's preview holds the tongue out");
         Check(island::SnakePopulation::TongueAt(0.0f,0)>0.0f||island::SnakePopulation::TongueAt(0.2f,0)>0.0f,"the flick cycle is deterministic from the clock");
     }
+    {
+        // The head lift: with the walker standing off at eleven metres a ground snake lifts
+        // its head within a second or so; with them gone to forty metres it lies flat again
+        // within a few seconds; with them at five metres it slips away low.
+        island::SnakePopulation looker(terrain);
+        const auto head=[&]{return looker.Snakes()[0].body.front();};
+        for(int frame=0;frame<100;++frame) { const auto h=head(); looker.Update(0.02f,h.x+11.0f,h.y,h.z); }
+        Check(looker.Snakes()[0].headLift>0.9f&&looker.Snakes()[0].behavior!=island::SnakeBehavior::Retreat,
+              "a snake does not lift its head at the walker standing off at eleven metres");
+        for(int frame=0;frame<200;++frame) { const auto h=head(); looker.Update(0.02f,h.x+40.0f,h.y,h.z); }
+        Check(looker.Snakes()[0].headLift<0.1f,"a snake does not lower its head once the walker is gone");
+        for(int frame=0;frame<100;++frame) { const auto h=head(); looker.Update(0.02f,h.x+11.0f,h.y,h.z); }
+        for(int frame=0;frame<100;++frame) { const auto h=head(); looker.Update(0.02f,h.x+5.0f,h.y,h.z); }
+        Check(looker.Snakes()[0].headLift<0.1f&&looker.Snakes()[0].behavior==island::SnakeBehavior::Retreat,
+              "a snake slipping away from the walker at five metres does not keep its head low");
+        bool treeFlat=true;
+        for(const auto& snake:looker.TreeSnakes()) if(snake.headLift!=0.0f) treeFlat=false;
+        Check(treeFlat,"a tree snake lifts its head");
+    }
     bool refused=false;
     try {
         const std::array<island::CircularObstacle,1> blocked{{{0,0,1000}}};

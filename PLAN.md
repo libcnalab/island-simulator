@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 154 (2026-10-20) — a snake lifts its head to look
+
+A ground snake lay flat whatever the walker did short of its retreat range.
+`SnakeState::headLift` (0..1) now carries the lift: with the walker standing off between
+`RetreatDistance` (8 m) and `LookDistance` (14 m) a fully or reduced-simulated ground snake
+raises its head at 2.5/s and lowers it at 1.5/s once they are gone; within the retreat
+range it keeps low to slip away, and dormant it lies flat. The renderer lifts the first
+seven stations by up to `HeadLiftHeight` (0.16 m) on a quadratic falloff from the head, the
+head rings, muzzle and tongue following. A new report line "a ground snake lifts its head
+to look at the walker standing off within fourteen metres, and keeps it low to slip away
+closer" is pinned. SnakePopulationTests: the walker at eleven metres has the head up within
+two seconds; gone to forty metres it is flat within four; at five metres the snake slips
+away low; tree snakes never lift. Native `snakes` passes.
+
 ## Loop pass 153 (2026-10-20) — a perched bird stretches a wing
 
 A perched bird kept both wings folded through its stay. `BirdState::stretchAmount` (0..1)

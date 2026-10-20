@@ -90,7 +90,14 @@ void SnakeRenderer::Draw(const Matrix& view,const Matrix& projection,const Vecto
     if(candidates.size()>SnakeRenderer::MaximumVisibleCount)candidates.resize(SnakeRenderer::MaximumVisibleCount);
     for (const auto& candidate:candidates) {
         const auto& snake=*candidate.second;
-        const auto origin=Point(snake.body[0]);
+        // The head lift: the first stations rise off the ground by the lift amount, most at
+        // the head and nothing from the seventh station back.
+        const float lift=std::clamp(snake.headLift,0.0f,1.0f);
+        const auto station=[&](const std::size_t j) {
+            const float t=j<7U?1.0f-static_cast<float>(j)/7.0f:0.0f;
+            return Point(snake.body[j])+Vector3::Up*(lift*SnakePopulation::HeadLiftHeight*t*t);
+        };
+        const auto origin=station(0);
         using Ring=std::array<VertexPositionColorTexture,Sides+1>;
         std::array<Ring,SnakeState::StationCount> rings;
         auto vertex=[&](Vector3 point,Vector3 normal,Color color,Vector2 uv) {
@@ -102,9 +109,9 @@ void SnakeRenderer::Draw(const Matrix& view,const Matrix& projection,const Vecto
                 static_cast<int>(color.getBProperty()*light*tint.blue)),uv);
         };
         for (std::size_t j=0;j<snake.body.size();++j) {
-            const auto centre=Point(snake.body[j]);
-            const auto before=Point(snake.body[j==0 ? 0 : j-1]);
-            const auto after=Point(snake.body[std::min(j+1,snake.body.size()-1)]);
+            const auto centre=station(j);
+            const auto before=station(j==0 ? 0 : j-1);
+            const auto after=station(std::min(j+1,snake.body.size()-1));
             const auto tangent=Vector3::Normalize(before-after);
             Vector3 right;
             if(snake.arboreal) {
@@ -147,7 +154,7 @@ void SnakeRenderer::Draw(const Matrix& view,const Matrix& projection,const Vecto
             triangle(rings[j-1][a],rings[j][a],rings[j][b]);
             triangle(rings[j-1][a],rings[j][b],rings[j-1][b]);
         }
-        const auto forward=Vector3::Normalize(Point(snake.body[0])-Point(snake.body[1]));
+        const auto forward=Vector3::Normalize(station(0)-station(1));
         Vector3 right;
         if(snake.arboreal) {
             const Vector3 radial(origin.X-snake.homeX,0,origin.Z-snake.homeZ);

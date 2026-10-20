@@ -25,6 +25,11 @@ namespace island
         /** @brief 0..1 the forked tongue out of the snout: flicked for about half a second
          *  every few seconds, at rest and on the move; held in while dormant. */
         float tongue = 0.0f;
+        /** @brief 0..1 the head lifted off the ground to look: a ground snake with the walker
+         *  standing off between the retreat range and LookDistance raises its head and the
+         *  first few stations of its neck; it keeps low to slip away closer, and lies flat
+         *  once they are gone or while dormant. The renderer carries the lift. */
+        float headLift = 0.0f;
     };
 
     /** @brief Nonhostile ground and trunk snakes with independent bounded motion. */
@@ -44,6 +49,7 @@ namespace island
         /** @brief QA: holds one ground snake's tongue fully out until the next update. */
         void PreviewTongue(std::size_t index) noexcept;
         static constexpr float TongueFlickSeconds = 0.45f;
+        static constexpr float LookDistance = 14.0f, RetreatDistance = 8.0f, HeadLiftHeight = 0.16f;
         [[nodiscard]] static float TongueAt(float clock, std::size_t index) noexcept;
         [[nodiscard]] std::span<const SnakeState> Snakes() const noexcept { return states_; }
         [[nodiscard]] std::span<const SnakeState> TreeSnakes() const noexcept
