@@ -378,7 +378,7 @@ namespace island
         resident_=std::make_unique<ResidentMotion>(terrain_,wildlifeObstacles,residentLandmarks,residentFacings);
         std::cout<<"island-simulator: resident tour visits "<<resident_->Route().LandmarkCount()
                  <<" landmark(s): the jetty foot joins the campfire, path and clearing calls; "
-                 <<"at the jetty foot the resident turns to look out along the deck to sea\n";
+                 <<"at the jetty foot the resident turns to look out along the deck to sea; at the campfire the resident stands facing the fire\n";
         bear_=std::make_unique<BearMotion>(terrain_,wildlifeObstacles);
         monkeyTroop_.SetObstacles(wildlifeObstacles);
         monkeyTroop_.SetCanopy(jungleLayout_.Canopy());

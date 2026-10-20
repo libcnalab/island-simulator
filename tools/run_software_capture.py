@@ -1133,6 +1133,8 @@ def main():
                 raise RuntimeError("current dolphin blows are missing; check for a stale executable")
             if "a foraging crab walks to a coconut lying in its range and works it with its claws until it is gone" not in diagnostics:
                 raise RuntimeError("current coconut crab feeding is missing; check for a stale executable")
+            if "at the campfire the resident stands facing the fire" not in diagnostics:
+                raise RuntimeError("current resident campfire facing is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

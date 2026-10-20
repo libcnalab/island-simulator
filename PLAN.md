@@ -46,6 +46,20 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 47 (2026-10-20) — the resident faces the fire
+
+Pass 31 gave the landmark pauses a facing; the campfire call, the tour's first and last
+point, still faced wherever the path pointed. The route's facing rule now gives goal 0 (the
+authored campfire point, six metres east and five north of the fire) a facing at the fire,
+and the motion's pause-start lookup maps the route's last point (the closed tour's return to
+the first) to pause 0, so the resident turns to stand facing the fire at both ends of the
+lap; only landmark pauses get the extra eight seconds, since a longer campfire pause broke
+the tour's resume-after-yield cadence that the resident tests hold. The resident diagnostic
+gains "at the campfire the resident stands facing the fire", pinned by the native capture
+tool. Resident check: the first pause's facing points from its point at the fire within
+0.35 rad. Native `resident` passes. (The first draft read the authored goal list inside a
+lambda declared before it.)
+
 ## Loop pass 46 (2026-10-20) — the coconut crabs take the coconuts
 
 The coconut crabs foraged round the palm zone and never touched a nut. `CoconutCrabGroup`

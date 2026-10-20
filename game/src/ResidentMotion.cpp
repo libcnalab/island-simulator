@@ -129,10 +129,13 @@ void ResidentMotion::Step(float seconds,ResidentPoint observer) {
         if(pause!=route_.PausePoints().end()||state_.nextPoint==route_.Points().size()-1){
             pauseRemaining_=6+static_cast<float>(state_.pauseCount%3)*2;++state_.pauseCount;
             // A pause with a view: the resident turns to it and stands looking for longer.
-            const std::size_t k=pause!=route_.PausePoints().end()?static_cast<std::size_t>(pause-route_.PausePoints().begin()):route_.PauseFacings().size();
+            // The last point is the first again (the route is closed): its pause is the campfire's.
+            const std::size_t k=pause!=route_.PausePoints().end()?static_cast<std::size_t>(pause-route_.PausePoints().begin()):0;
             if(k<route_.PauseFacings().size()&&std::isfinite(route_.PauseFacings()[k].x)) {
                 pauseFacing_=true;pauseFaceX_=route_.PauseFacings()[k].x;pauseFaceZ_=route_.PauseFacings()[k].z;
-                pauseRemaining_+=8;
+                // A landmark with a view holds the resident longer; the campfire call keeps
+                // its ordinary length (the tour's cadence is built on it).
+                if(k>0) pauseRemaining_+=8;
             }
         }
         ++state_.nextPoint;

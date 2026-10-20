@@ -1,4 +1,5 @@
 #include "IslandSimulator/ResidentMotion.hpp"
+#include "IslandSimulator/CampfireSite.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
 #include "IslandSimulator/JungleLayout.hpp"
 #include "IslandSimulator/NaturalPropLayout.hpp"
@@ -89,6 +90,14 @@ int main() {
             if(std::hypot(p.x-landmarks[0].x,p.z-landmarks[0].z)<5.0f&&std::isfinite(tour.PauseFacings()[k].x)) jettyFacing=true;
         }
         Check(jettyFacing,"the jetty pause carries the look-out facing");
+        // The campfire call faces the fire: the first pause's facing points from its point at
+        // the fire within a few degrees.
+        {
+            const auto p=tour.Points()[tour.PausePoints()[0]];
+            const auto f=tour.PauseFacings()[0];
+            const float toFire=std::atan2(CampfireSite::Z-p.z,CampfireSite::X-p.x);
+            Check(std::isfinite(f.x)&&std::abs(std::remainder(std::atan2(f.z,f.x)-toFire,6.2831853f))<.35f,"the campfire pause faces the fire");
+        }
         // Walking the tour: at the jetty pause the resident turns to face out along the deck.
         bool lookedOut=false;
         const float seaward=std::atan2(jetty->dirX,jetty->dirZ);

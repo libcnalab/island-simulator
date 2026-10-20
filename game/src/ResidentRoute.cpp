@@ -131,6 +131,13 @@ void ResidentRoute::Build(const IslandTerrain& terrain,const RenderedTerrainSurf
     constexpr float None=std::numeric_limits<float>::quiet_NaN();
     // Authored goals 0..2 are the campfire, path and clearing; the landmarks follow them.
     const auto facingOfGoal=[&](std::size_t goal)->ResidentPoint{
+        if(goal==0) {
+            // The campfire call (authored six metres east and five north of the fire): the
+            // resident stands facing the fire.
+            const float dx=-6.0f,dz=-5.0f;
+            const float length=std::hypot(dx,dz);
+            return {dx/length,0,dz/length};
+        }
         if(goal>=3&&goal-3<landmarks.size()&&landmarkFacings.size()==landmarks.size()) {
             const auto& f=landmarkFacings[goal-3];
             const float length=std::hypot(f.x,f.z);
