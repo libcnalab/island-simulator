@@ -288,8 +288,9 @@ namespace island
                        const float observerZ, const bool observerValid) noexcept
     {
         auto& state = agent.state;
+        // measured in the walker's terms: a louder, faster observer counts as nearer
         const float observerDistance = observerValid
-            ? std::hypot(state.x - observerX, state.z - observerZ)
+            ? std::hypot(state.x - observerX, state.z - observerZ) / observerThreat_
             : std::numeric_limits<float>::infinity();
         agent.remainingSeconds -= dt;
         const bool oddAgent = (static_cast<std::size_t>(&agent - agents_.data()) % 2U) == 1U;

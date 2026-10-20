@@ -4163,6 +4163,21 @@ namespace island
             quadIdleSeconds_ += deltaSeconds;
             if (quadIdleSeconds_ > QuadIdleOffSeconds || quad_.Overturned()) quadEngineOn_ = false;
         }
+        // The wildlife hears it: a rider on the roaring quad alarms the deer, goats and boars
+        // from up to two and a half times as far as a walker, and the perched birds flush as
+        // it races past.
+        const float quadSpeed = std::hypot(quad_.Velocity().x, quad_.Velocity().z);
+        const float threat = riding_ && quadEngineOn_
+            ? 1.0f + 1.5f * std::clamp(0.5f * std::max(quad_.Throttle(), 0.0f) + quadSpeed / 15.0f, 0.0f, 1.0f) : 1.0f;
+        if (deer_) deer_->SetObserverThreat(threat);
+        if (goats_) goats_->SetObserverThreat(threat);
+        boarHerd_.SetObserverThreat(threat);
+        quadFlushSeconds_ = std::max(0.0f, quadFlushSeconds_ - deltaSeconds);
+        if (riding_ && quadEngineOn_ && quadSpeed > 4.0f && quadFlushSeconds_ <= 0.0f) {
+            const auto p = quad_.Position();
+            birdFlock_.NoteDisturbance(p.x, p.z);
+            quadFlushSeconds_ = 1.5f;
+        }
         const BikeVec tip = quad_.ToWorld(QuadBikeRenderer::ExhaustTip);
         const BikeVec back{-quad_.Forward().x, -quad_.Forward().y, -quad_.Forward().z};
         exhaust_.Update(deltaSeconds, quadEngineOn_, quad_.Throttle(), tip, back, quad_.Velocity(), wind::DirectionX, wind::DirectionZ);

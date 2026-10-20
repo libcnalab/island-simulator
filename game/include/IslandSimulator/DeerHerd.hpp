@@ -1,4 +1,6 @@
 #pragma once
+#include <algorithm>
+#include <cmath>
 
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/WildlifeSimulation.hpp"
@@ -101,6 +103,9 @@ namespace island
         [[nodiscard]] bool SentinelAlert() const noexcept { return sentinelAlertSeconds_ > 0.0f; }
         /** @brief A sudden sound at a point; nearby deer stand alert facing it for a while. */
         void NoteDisturbance(float x, float z) noexcept;
+        /** @brief How alarming the observer is: 1 a walker; more on a roaring quad, so every alert
+         *  and flight distance stretches by it (clamped 1..4). */
+        void SetObserverThreat(float scale) noexcept { observerThreat_ = std::isfinite(scale) ? std::clamp(scale, 1.0f, 4.0f) : 1.0f; }
         [[nodiscard]] bool Startled() const noexcept { return disturbanceSeconds_ > 0.0f; }
         [[nodiscard]] float SentinelAlertSeconds() const noexcept { return sentinelAlertSeconds_; }
         /** @brief The light over the ground (crowns, palm heads and the solid casters' shade):
@@ -132,6 +137,7 @@ namespace island
         static constexpr float ShadedLevel = 0.55f;
 
     private:
+        float observerThreat_ = 1.0f;
         struct Agent
         {
             DeerState state;

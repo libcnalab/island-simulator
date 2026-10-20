@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 229 (2026-10-20) — the wildlife hears the quad
+
+Riding the quad, the observer the herds watch is the rider, but a walker's distances applied:
+deer stood grazing until a roaring quad came within 9 m. The deer, goat and boar herds now
+take an observer threat (`SetObserverThreat`, 1 for a walker, clamped 1-4) and measure the
+observer's distance in a walker's terms (divided by it), so every alert, sentinel and flight
+distance stretches together and nothing else changes. The game sets it each frame from the
+quad: 1 at a standstill with the throttle closed, up to 2.5 with the throttle open or at
+15 m/s (deer then bolt from 22 m and watch from 45 m; goats retreat from 17 m; boars from
+15 m), back to 1 on foot or with the engine off. While the quad races past faster than 4 m/s,
+the perched birds around it flush every 1.5 s as from a thud. Herd check: a walker 16 m off
+leaves a deer standing, a roaring quad at 16 m sends it off. The fixed QA views of the herds
+(`deer`, `goats`, `boars`) are unchanged.
+
 ## Loop pass 228 (2026-10-20) — the hut lit at night
 
 The last open item of the day/night request: the hut stood dark all night. A hurricane lantern

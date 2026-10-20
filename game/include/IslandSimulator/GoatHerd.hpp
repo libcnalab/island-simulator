@@ -1,4 +1,6 @@
 #pragma once
+#include <algorithm>
+#include <cmath>
 #include <vector>
 #include "IslandSimulator/GoatHabitat.hpp"
 #include "IslandSimulator/GoatPose.hpp"
@@ -55,6 +57,9 @@ public:
     [[nodiscard]] bool SentinelAlert() const noexcept {return sentinelAlertSeconds_>0;}
     // A sudden sound at a point; nearby goats stand alert facing it for a while.
     void NoteDisturbance(float x,float z) noexcept;
+    /** @brief How alarming the observer is: 1 a walker; more on a roaring quad, so every alert
+     *  and flight distance stretches by it (clamped 1..4). */
+    void SetObserverThreat(float scale) noexcept {observerThreat_=std::isfinite(scale)?std::clamp(scale,1.0f,4.0f):1.0f;}
     [[nodiscard]] bool Startled() const noexcept {return disturbanceSeconds_>0;}
     [[nodiscard]] float SentinelAlertSeconds() const noexcept {return sentinelAlertSeconds_;}
     // Goats standing nose to nose with their sparring partner this moment.
@@ -84,6 +89,7 @@ public:
     [[nodiscard]] std::size_t ChewingCount() const noexcept;
     static constexpr float ChewRate=6.5f;
 private:
+    float observerThreat_=1.0f;
     void FindDrinkingPoint(std::size_t index) noexcept;
     void Step(std::size_t index,float dt,GoatPoint observer,bool observerValid);
     bool TryMove(std::size_t index,float heading,float distance,bool& waitingForStep);

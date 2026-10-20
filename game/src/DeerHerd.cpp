@@ -185,7 +185,7 @@ namespace island
         ++frameIndex_;
         const DeerState& sentinel = agents_[0].state;
         const bool sentinelSees = observerValid && std::hypot(sentinel.x - observerX,
-            sentinel.z - observerZ) < SentinelAlertDistance;
+            sentinel.z - observerZ) / observerThreat_ < SentinelAlertDistance;
         sentinelAlertSeconds_ = sentinelSees ? sentinelAlertSeconds_ + safeDelta : 0.0f;
         disturbanceSeconds_ = std::max(0.0f, disturbanceSeconds_ - safeDelta);
         for (std::size_t index = 0; index < Count; ++index) {
@@ -264,8 +264,9 @@ namespace island
     {
         if (deltaSeconds <= 0.0f) return;
         const std::size_t index = static_cast<std::size_t>(&agent - agents_.data());
+        // measured in the walker's terms: a louder, faster observer counts as nearer
         const float observerDistance = observerValid
-            ? std::hypot(agent.state.x - observerX, agent.state.z - observerZ)
+            ? std::hypot(agent.state.x - observerX, agent.state.z - observerZ) / observerThreat_
             : std::numeric_limits<float>::infinity();
         bool alertFacing = false;
         if (observerDistance < 9.0f) {

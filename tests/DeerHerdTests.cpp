@@ -65,6 +65,18 @@ int main()
                   && std::hypot(herd.Deer().front().x - initial.x,
                                 herd.Deer().front().z - initial.z) > .15f,
               "nearby player did not cause bounded deer retreat");
+        // A walker 16 m off leaves a deer standing; the same distance on a roaring quad
+        // (threat 2.5) sends it off.
+        island::DeerHerd calm(terrain, obstacles), alarmed(terrain, obstacles);
+        alarmed.SetObserverThreat(2.5f);
+        for (int step = 0; step < 30; ++step) {
+            const auto& a = calm.Deer()[2], b = alarmed.Deer()[2];
+            calm.Update(1.0f / 60.0f, a.x + 16.0f, a.y + 1.0f, a.z);
+            alarmed.Update(1.0f / 60.0f, b.x + 16.0f, b.y + 1.0f, b.z);
+        }
+        Check(calm.Deer()[2].behavior != island::DeerBehavior::Retreat
+                  && alarmed.Deer()[2].behavior == island::DeerBehavior::Retreat,
+              "a roaring quad 16 m off should send a deer off where a walker does not");
         std::cout << "Four deterministic inland deer graze, walk and retreat safely\n";
         return 0;
     } catch (const std::exception& exception) {

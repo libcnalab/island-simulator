@@ -263,8 +263,9 @@ void GoatHerd::Step(std::size_t index,float dt,GoatPoint observer,bool observerV
         const auto& old=states_[static_cast<std::size_t>(intent.partner)];
         if(std::hypot(old.x-state.x,old.z-state.z)>=2*GoatHabitat::BodyClearance) intent.partner=-1;
     }
+    // measured in the walker's terms: a louder, faster observer counts as nearer
     const float observerRange=observerValid
-        ?std::hypot(state.x-observer.x,state.y+.8f-observer.y,state.z-observer.z)
+        ?std::hypot(state.x-observer.x,state.y+.8f-observer.y,state.z-observer.z)/observerThreat_
         :std::numeric_limits<float>::infinity();
     const bool retreat=observerRange<7;
     const bool startled=disturbanceSeconds_>0
@@ -470,7 +471,7 @@ void GoatHerd::Update(float dt,GoatPoint observer) {
     // herd's cohesion is its habitat; only the sentinel's alarm is shared here.
     const auto& sentinel=states_[0];
     const bool sentinelSees=observerValid&&std::hypot(sentinel.x-observer.x,
-        sentinel.y+.8f-observer.y,sentinel.z-observer.z)<SentinelAlertDistance;
+        sentinel.y+.8f-observer.y,sentinel.z-observer.z)/observerThreat_<SentinelAlertDistance;
     sentinelAlertSeconds_=sentinelSees?sentinelAlertSeconds_+dt:0;
     disturbanceSeconds_=std::max(0.0f,disturbanceSeconds_-dt);
     for(int step=0;step<steps;++step) for(std::size_t i=0;i<states_.size();++i) {
