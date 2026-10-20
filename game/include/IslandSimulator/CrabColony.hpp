@@ -44,6 +44,9 @@ namespace island
          *  it, lays its eyes along the carapace front and raises them again as it comes up
          *  and stands. */
         float eyeFold = 0.0f;
+        /** @brief 0..1 feeding: a crab paused among the strandings works the food with its
+         *  mouthparts, blowing a small bubble now and then (the bubble field draws them). */
+        float feeding = 0.0f;
         float scale = 1.0f;
         CrabBehavior behavior = CrabBehavior::Pause;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
@@ -107,6 +110,8 @@ namespace island
         static constexpr float WaveSeconds = 1.8f, WavePeriodSeconds = 9.0f, WaveDelaySeconds = 0.5f;
         /** @brief Crabs with their eyestalks folded this moment (the fold past half). */
         [[nodiscard]] std::size_t EyeFoldedCount() const noexcept;
+        /** @brief Crabs feeding among the strandings this moment (the feed past half). */
+        [[nodiscard]] std::size_t FeedingCount() const noexcept;
 
         [[nodiscard]] std::span<const CrabState> Crabs() const noexcept;
         [[nodiscard]] std::span<const CrabHomeRange> Homes() const noexcept;
@@ -134,6 +139,7 @@ namespace island
             float clearSeconds = 0.0f;
             float waveClock = 0.0f;
             bool waving = false;
+            bool feedingPause = false;     // this pause is a feed among the strandings
         };
 
         void InitializeAgent(std::size_t index);

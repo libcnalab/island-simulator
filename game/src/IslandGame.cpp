@@ -2531,7 +2531,8 @@ namespace island
                      "the resident's walk along the beach scatters them as the player's does; "
                      "a crab near its colony's burrow bolts down the hole and comes up once the beach has been clear a few seconds; "
                      "a crab paused in the open waves a claw, raised and swept up and down for a couple of seconds, a second into each pause and every nine seconds or so after; "
-                     "a crab bolting for its burrow folds its eyestalks flat and raises them again as it comes up\n"
+                     "a crab bolting for its burrow folds its eyestalks flat and raises them again as it comes up; "
+                     "a crab feeding among the strandings blows a small bubble from its mouth every couple of seconds\n"
                   << "island-simulator: hermit crabs " << hermitCrabGroup_.Crabs().size()
                   << " agents in deterministic sheltered-beach habitats; one still pressed after its retreat pulls into its shell until the beach is clear; "
                   << "one paused on the sand feeds, its small claw picking at the sand and lifting to its mouth; "
@@ -3204,6 +3205,7 @@ namespace island
         }
         crabColony_.SetWalker(resident_->State().x, resident_->State().z, true);
         crabColony_.Update(deltaSeconds, crabObserver.X, crabObserver.Y, crabObserver.Z);
+        crabBubbles_.Update(deltaSeconds, crabColony_.Crabs());
         Vector3 hermitCrabObserver = cameraPosition_;
         if (viewpoint_ == FixedViewpoint::HermitCrabDetail) {
             const auto& crab = hermitCrabGroup_.Crabs()[3U];
@@ -5093,6 +5095,7 @@ namespace island
             surfSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,surfSpray_.Puffs());
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,dolphinBlows_.Puffs());
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,dragonflyDips_.Puffs());
+            dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,crabBubbles_.Puffs());
             turtleBreathRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,turtleBreaths_.Puffs());
         }
         {

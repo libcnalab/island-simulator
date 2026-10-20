@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 197 (2026-10-20) — a feeding crab blows bubbles
+
+A beach crab paused to feed among the strandings looked like any other paused crab.
+`CrabState::feeding` (0..1) now marks the feed: a pause begun on the wrack line (the old
+longer feeding pause, now flagged), the crab in the open, eased at 3/s; `FeedingCount()`
+counts the crabs at it. New `CrabBubbleField` blows a small bubble from the mouth of every
+feeding, simulated crab every `IntervalSeconds` (1.6 s, a little per crab), each a
+`MistPuff` that rises a hand's breadth and pops within 0.8 s, drawn by the dolphin-blow mist
+renderer. The beach crabs report line gains "a crab feeding among the strandings blows a
+small bubble from its mouth every couple of seconds" (pinned). Core checks: watched from
+twenty metres a crab pauses among the strandings to feed within four minutes and a bubble
+rises at its mouth; the bubbles pop within the second. Native `crabs` passes.
+
 ## Loop pass 196 (2026-10-20) — a perched dragonfly holds the obelisk
 
 A perched dragonfly sat with its abdomen level. `DragonflyState::obelisk` (0..1) now

@@ -58,6 +58,7 @@
 #include "IslandSimulator/DragonflyDipField.hpp"
 #include "IslandSimulator/CrocodileWakeField.hpp"
 #include "IslandSimulator/MudFleckField.hpp"
+#include "IslandSimulator/CrabBubbleField.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
 #include "IslandSimulator/CicadaColony.hpp"
 #include "IslandSimulator/StreamFishField.hpp"
@@ -4423,6 +4424,29 @@ int main()
         for (int frame = 0; frame < 120; ++frame) burrowCrabs.Update(1.0f / 60.0f, start.x, start.y + 1.5f, start.z + 40.0f);
         Check(burrowCrabs.Crabs()[subject].hideAmount < 0.05f && burrowCrabs.Crabs()[subject].eyeFold < 0.1f,
               "a crab up from its burrow does not raise its eyestalks again");
+        // The feed and its bubbles: watched from twenty metres, within four minutes a crab
+        // pauses among the strandings to feed, and the bubble field blows a bubble at its
+        // mouth that rises and pops within the second.
+        {
+            island::CrabColony feeders(terrain);
+            island::CrabBubbleField bubbles;
+            const auto& watchHome = feeders.Homes()[0];
+            bool fed = false, blown = false, popped = false; std::size_t feeder = 0;
+            for (int step = 0; step < 4800 && !(fed && blown); ++step) {
+                feeders.Update(0.05f, watchHome.x + 20.0f, terrain.Height(watchHome.x, watchHome.z) + 1.6f, watchHome.z);
+                bubbles.Update(0.05f, feeders.Crabs());
+                for (std::size_t i = 0; i < feeders.Crabs().size(); ++i)
+                    if (feeders.Crabs()[i].feeding > 0.9f && feeders.Crabs()[i].behavior == island::CrabBehavior::Pause) { fed = true; feeder = i; }
+                if (fed && bubbles.BubbleCount() >= 1U && bubbles.ActiveCount() >= 1U) {
+                    for (const auto& puff : bubbles.Puffs())
+                        if (puff.active && std::hypot(puff.x - feeders.Crabs()[feeder].x, puff.z - feeders.Crabs()[feeder].z) < 0.6f) blown = true;
+                }
+            }
+            Check(fed && feeders.FeedingCount() >= 1U && blown, "a crab feeding among the strandings blows no bubble at its mouth");
+            for (int step = 0; step < 24; ++step) bubbles.Update(0.05f, std::span<const island::CrabState>());
+            popped = bubbles.ActiveCount() == 0U;
+            Check(popped, "a crab's bubble does not pop within the second");
+        }
         bool left = false;
         for (int frame = 0; frame < 1800 && !left; ++frame) {
             burrowCrabs.Update(1.0f / 60.0f, start.x, start.y + 1.5f, start.z + 40.0f);

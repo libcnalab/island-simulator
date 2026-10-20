@@ -123,6 +123,7 @@
 #include "IslandSimulator/DragonflyDipField.hpp"
 #include "IslandSimulator/CrocodileWakeField.hpp"
 #include "IslandSimulator/MudFleckField.hpp"
+#include "IslandSimulator/CrabBubbleField.hpp"
 #include "IslandSimulator/OctopusInkField.hpp"
 #include "IslandSimulator/TurtleBreathField.hpp"
 #include "IslandSimulator/HelicopterLayout.hpp"
@@ -529,6 +530,7 @@ namespace island
         DragonflyDipField dragonflyDips_;
         CrocodileWakeField crocodileWake_;
         MudFleckField mudFlecks_;
+        CrabBubbleField crabBubbles_;
         std::unique_ptr<CascadeMistRenderer> dolphinBlowRenderer_;
         StingraySandField stingraySand_;
         StingraySandField stingrayFlickSand_;

@@ -1438,6 +1438,8 @@ def main():
                 raise RuntimeError("current gecko lip lick is missing; check for a stale executable")
             if "a perched dragonfly raises its abdomen toward the sun a second into the perch, the obelisk, and levels it to lift off" not in diagnostics:
                 raise RuntimeError("current dragonfly obelisk is missing; check for a stale executable")
+            if "a crab feeding among the strandings blows a small bubble from its mouth every couple of seconds" not in diagnostics:
+                raise RuntimeError("current crab feeding bubbles are missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:

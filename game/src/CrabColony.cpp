@@ -344,9 +344,9 @@ namespace island
                         + static_cast<float>((agent.transitionCount * 3U
                                              + agent.state.colorVariant) % 6U) * 0.48f;
                     // Among the strandings there is food: the pause there is a feed.
-                    if (std::abs(terrain_.SignedShoreDistance(agent.state.x, agent.state.z)
-                                 - WrackLine::Centre(agent.state.x, agent.state.z)) < 0.9f)
-                        agent.behaviorSeconds *= 1.8f;
+                    agent.feedingPause = std::abs(terrain_.SignedShoreDistance(agent.state.x, agent.state.z)
+                                                  - WrackLine::Centre(agent.state.x, agent.state.z)) < 0.9f;
+                    if (agent.feedingPause) agent.behaviorSeconds *= 1.8f;
                 }
             }
         }
@@ -456,6 +456,11 @@ namespace island
             || agent.state.behavior == CrabBehavior::Hide || agent.state.hideAmount > 0.05f;
         agent.state.eyeFold += std::clamp((foldEyes ? 1.0f : 0.0f) - agent.state.eyeFold,
                                           -deltaSeconds * 2.0f, deltaSeconds * 6.0f);
+        // The feed: paused among the strandings, in the open, the crab works the food.
+        const bool feedingNow = agent.state.behavior == CrabBehavior::Pause && agent.feedingPause
+            && agent.state.hideAmount < 0.05f;
+        agent.state.feeding += std::clamp((feedingNow ? 1.0f : 0.0f) - agent.state.feeding,
+                                          -deltaSeconds * 3.0f, deltaSeconds * 3.0f);
         // A crab paused in the open waves a claw: a second into the pause, and every nine
         // seconds or so after (a little per crab), one claw is raised and swept up and down
         // for a couple of seconds; moving or going down the burrow drops the display.
@@ -478,6 +483,13 @@ namespace island
             agent.state.waveAmount += std::clamp((waving ? 1.0f : 0.0f) - agent.state.waveAmount,
                                                  -deltaSeconds * 6.0f, deltaSeconds * 6.0f);
         }
+    }
+
+    std::size_t CrabColony::FeedingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.state.feeding > 0.5f ? 1U : 0U;
+        return count;
     }
 
     std::size_t CrabColony::EyeFoldedCount() const noexcept
