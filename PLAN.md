@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 96 (2026-10-20) — the rays flee the shark
+
+The stingrays fled the swimmer but let the shark pass over them. `StingrayGroup::SetThreat`
+takes the shark each frame (while present and visible): a ray within 9 m of it
+(`ThreatDistance`) is treated as it is with the swimmer inside the burst distance, the
+flight heading away from the shark instead, so a gliding ray turns off and a settled one
+bursts from the sand with its ring of puffs (`ThreatBurstCount`); the nearer of the swimmer
+and the shark is the one fled. The startup report's stingray line gains "the shark passing
+within nine metres turns them away and bursts a settled one from the sand", pinned by the
+native capture tool. Core checks: the shark twenty metres from a settled ray leaves it
+lying; six metres off it bursts the ray from the sand, which glides away from the shark.
+Native `stingrays` passes.
+
 ## Loop pass 95 (2026-10-20) — the schools part around the shark
 
 The shark's patrol passed through the shallow-water schools without a ripple in them.

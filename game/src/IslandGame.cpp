@@ -2390,7 +2390,7 @@ namespace island
                   << " agents in " << FishSchools::SchoolCount
                   << " distance-throttled shallow-water schools\n"
                   << "island-simulator: stingrays " << stingrayGroup_.Stingrays().size()
-                  << " agents glide, forage, and settle over shallow sandy seabed\n"
+                  << " agents glide, forage, and settle over shallow sandy seabed; the shark passing within nine metres turns them away and bursts a settled one from the sand\n"
                   << "island-simulator: octopuses " << octopusGroup_.Octopuses().size()
                   << " agents den, crawl, forage, and swim in reef and rocky shallows; one lying still takes the sand's tones over a few seconds and flashes back to its own colours when it moves or is startled\n"
                   << "island-simulator: sea turtles " << seaTurtleGroup_.Turtles().size()
@@ -3100,6 +3100,10 @@ namespace island
         const StingrayState previousStingraySubject=stingrayGroup_.Stingrays().front();
         // Keep the focused anatomy frame symmetric; the deterministic CPU test separately
         // exercises the full undulating glide over 120 seconds.
+        {
+            const SharkState& shark=sharkPatrol_.State();
+            stingrayGroup_.SetThreat(shark.x,shark.z,shark.present&&shark.visible);
+        }
         stingrayGroup_.Update(viewpoint_==FixedViewpoint::StingrayDetail?0.0f:deltaSeconds,
                               cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z);
         stingraySand_.Update(deltaSeconds,stingrayGroup_.LastBurst());

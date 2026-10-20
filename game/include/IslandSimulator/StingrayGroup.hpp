@@ -55,6 +55,11 @@ namespace island
          *  it lay, counted so a burst is noted once. */
         struct StingrayBurst { float x = 0.0f, y = 0.0f, z = 0.0f, scale = 1.0f; std::uint32_t count = 0; };
         [[nodiscard]] const StingrayBurst& LastBurst() const noexcept { return burst_; }
+        /** @brief The shark this frame (while present): a ray within ThreatDistance of it
+         *  turns away as from the swimmer, and a settled one bursts from the sand. */
+        void SetThreat(float x, float z, bool valid) noexcept;
+        [[nodiscard]] std::uint32_t ThreatBurstCount() const noexcept { return threatBursts_; }
+        static constexpr float ThreatDistance = 9.0f;
         static constexpr float BurstDistance = 3.6f, BurstSpeed = 0.95f;
 
         void Update(float deltaSeconds, float observerX, float observerY,
@@ -97,6 +102,9 @@ namespace island
         float elapsedSeconds_ = 0.0f;
         std::uint64_t frameIndex_ = 0U;
         StingrayBurst burst_;
+        float threatX_ = 0.0f, threatZ_ = 0.0f;
+        bool threatValid_ = false;
+        std::uint32_t threatBursts_ = 0U;
         int fullCount_ = 0;
         int reducedCount_ = 0;
         int dormantCount_ = 0;

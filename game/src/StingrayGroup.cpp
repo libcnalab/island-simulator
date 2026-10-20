@@ -117,6 +117,12 @@ namespace island
         return std::min(-.18f, seabed + clearance * agent.state.scale);
     }
 
+    void StingrayGroup::SetThreat(const float x, const float z, const bool valid) noexcept
+    {
+        threatValid_ = valid && std::isfinite(x) && std::isfinite(z);
+        if (threatValid_) { threatX_ = x; threatZ_ = z; }
+    }
+
     void StingrayGroup::Update(const float deltaSeconds, const float observerX,
                                const float observerY, const float observerZ) noexcept
     {
@@ -188,9 +194,19 @@ namespace island
 
         const float homeDistance = std::hypot(
             agent.state.x - agent.home.x, agent.state.z - agent.home.z);
-        const float observerDistance = observerValid
+        // The swimmer close, or the shark passing within its larger distance: the same flight.
+        float observerDistance = observerValid
             ? std::hypot(agent.state.x - observerX, agent.state.z - observerZ)
             : std::numeric_limits<float>::infinity();
+        float fleeX = observerX, fleeZ = observerZ;
+        bool sharkThreat = false;
+        if (threatValid_) {
+            const float sharkDistance = std::hypot(agent.state.x - threatX_, agent.state.z - threatZ_);
+            if (sharkDistance < ThreatDistance && sharkDistance - (ThreatDistance - BurstDistance) < observerDistance) {
+                observerDistance = sharkDistance - (ThreatDistance - BurstDistance);
+                fleeX = threatX_; fleeZ = threatZ_; sharkThreat = true;
+            }
+        }
         agent.routePhase = std::fmod(agent.routePhase + deltaSeconds * .12f, TwoPi);
         float desiredHeading = std::atan2(
             agent.home.z + std::sin(agent.routePhase) * 4.4f - agent.state.z,
@@ -199,14 +215,15 @@ namespace island
             desiredHeading = std::atan2(agent.home.z - agent.state.z,
                                         agent.home.x - agent.state.x);
         } else if (observerDistance < BurstDistance) {
-            desiredHeading = std::atan2(agent.state.z - observerZ,
-                                        agent.state.x - observerX);
+            desiredHeading = std::atan2(agent.state.z - fleeZ,
+                                        agent.state.x - fleeX);
             if (agent.state.behavior == StingrayBehavior::Settle) {
                 // A settled ray bursts out of the sand and is away in a glide.
                 agent.state.behavior = StingrayBehavior::Glide;
                 agent.behaviorSeconds = 10.0f;
                 agent.state.speed = BurstSpeed;
                 burst_ = {agent.state.x, agent.state.y, agent.state.z, agent.state.scale, burst_.count + 1U};
+                if (sharkThreat) ++threatBursts_;
             }
         }
         const float before = agent.state.headingRadians;

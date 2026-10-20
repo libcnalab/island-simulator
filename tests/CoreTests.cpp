@@ -8738,6 +8738,25 @@ int main()
             for(int step=0;step<50;++step) sand.Update(0.05f,rays.LastBurst());
             Check(sand.ActiveCount()==0U,"the sand settles again within two seconds");
         }
+        // The shark passing a settled ray within nine metres, with no swimmer about, bursts
+        // it from the sand as the swimmer does; the shark twenty metres off leaves it lying.
+        {
+            island::StingrayGroup rays(terrain);
+            std::size_t settled=island::StingrayGroup::Count;
+            for(std::size_t i=0;i<rays.Stingrays().size();++i) if(rays.Stingrays()[i].behavior==island::StingrayBehavior::Settle) { settled=i; break; }
+            Check(settled<island::StingrayGroup::Count,"a stingray starts settled for the shark check");
+            const auto lay=rays.Stingrays()[settled];
+            rays.SetThreat(lay.x+20.0f,lay.z,true);
+            for(int step=0;step<4;++step) rays.Update(0.05f,lay.x+30.0f,lay.y,lay.z);
+            Check(rays.Stingrays()[settled].behavior==island::StingrayBehavior::Settle&&rays.ThreatBurstCount()==0U,"the shark twenty metres off leaves the settled ray lying");
+            rays.SetThreat(lay.x+6.0f,lay.z,true);
+            for(int step=0;step<4;++step) rays.Update(0.05f,lay.x+30.0f,lay.y,lay.z);
+            Check(rays.Stingrays()[settled].behavior==island::StingrayBehavior::Glide&&rays.ThreatBurstCount()==1U&&rays.LastBurst().count==1U,
+                  "the shark six metres off bursts the settled ray from the sand");
+            float away=0.0f;
+            for(int step=0;step<40;++step) { rays.Update(0.05f,lay.x+30.0f,lay.y,lay.z); away=std::hypot(rays.Stingrays()[settled].x-(lay.x+6.0f),rays.Stingrays()[settled].z-lay.z); }
+            Check(away>6.5f,"the burst ray glides away from the shark");
+        }
         // The grass walkers: of nine candidates the six nearest the camera within reach are
         // taken in distance order, the far and the strengthless left out; a standing body
         // presses lightly and a trotting one fully.
