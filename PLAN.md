@@ -233,6 +233,25 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 251 (2026-10-20) — no sunlight after sunset
+
+A dusk capture (`jetty-end` at 18:06, the sun just set) still showed the seabed's caustic net
+bright and a warm sun glint smeared over the near water. Both came from the shading direction,
+which is held at 15 degrees up after sunset so the lit shaders never shade from below, and
+neither asked whether the sun was actually out. The terrain's caustics (refracted direct
+sunlight) now scale with the direct sun (`uDirectSun`, the hour's shadow strength: full in sun,
+fading through the golden hour, gone at night and mostly under overcast); the ocean's glint
+takes its colour and strength from the sky (`uGlint`: the warm sun times its visibility by
+day, and at night a dim cool moon glint, 45 % of the moonlight, along the moon's direction that
+the shading turns to). At 17:36 the sun's glitter path and softer caustics remain; at 18:06
+the dusk sea is clean. The day's `jetty-end` is unchanged (0.001 % of the pixels by 20
+levels); `water` and `flight` pass. The same question was missing from every other sun-made
+highlight, so `uDirectSun` now lives in the shared sun-shadow receiver block (set by `Bind` and
+`BindDisabled` from the hour's shadow strength) and takes down the wet sand's sun sheen, the
+leaves' wax sheen and the wet trees' sheen, the shipwreck's wet and iron sheens, and the quad's
+specular (to a floor of 12 % for the moon); by day it is 1 and nothing changes. `jungle`,
+`shipwreck`, `quad`, `wet-sand` (also at 18:06), `hut` and `palms` pass.
+
 ## Loop pass 250 (2026-10-20) — the lightning bolt, and the puddles' glint
 
 A strike flashed the whole scene but no bolt was seen. `TimeOfDayRenderer::DrawBolt` now draws,

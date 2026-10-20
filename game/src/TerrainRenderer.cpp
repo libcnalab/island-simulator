@@ -598,7 +598,8 @@ void main()
         float lineB = pow(max(0.0, 1.0 - webB * 1.8), 3.0);
         float lineC = pow(max(0.0, 1.0 - webC * 1.8), 3.0);
         float web = min(1.0, (lineA + lineB + lineC) * 0.8);
-        color += vec3(0.17, 0.21, 0.19) * web * causticVisibility * vGroundLight;
+        // refracted direct sunlight: gone once the sun is down or behind the overcast
+        color += vec3(0.17, 0.21, 0.19) * web * causticVisibility * vGroundLight * uDirectSun;
     }
 
     float groundVariation = (broad * 0.160 + landMiddle * 0.075
@@ -1064,7 +1065,7 @@ void main()
                 + broad * 2.1));
         color = mix(color, color * vec3(0.72, 0.77, 0.73),
                     wetEdge * drainageThread * 0.42);
-        float wetSheen = wetEdge * (sunSheen * 0.48 + grazingSheen * 0.135)
+        float wetSheen = wetEdge * (sunSheen * 0.48 * uDirectSun + grazingSheen * 0.135)
             * (1.0 + drainageThread * 0.22);
         color += vec3(0.14, 0.20, 0.21) * wetSheen;
     }

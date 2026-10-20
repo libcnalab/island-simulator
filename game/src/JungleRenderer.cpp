@@ -335,7 +335,7 @@ void main()
         vec3 halfVector = normalize(uToSun) + viewDirection;
         halfVector *= inversesqrt(max(dot(halfVector, halfVector), 0.000001));
         float wax = pow(max(dot(facingNormal, halfVector), 0.0), 24.0)
-            * max(dot(facingNormal, normalize(uToSun)), 0.0);
+            * max(dot(facingNormal, normalize(uToSun)), 0.0) * uDirectSun;
         litColor += vec3(0.11, 0.12, 0.08) * wax * detailFade * (1.0 - bladeEdge * 0.35);
     }
     // Tagged wood is grey-brown by design; colour keys only identify untagged legacy bark.
@@ -381,7 +381,7 @@ void main()
         float wet = clamp(uWetness, 0.0, 1.0);
         float sheen = pow(max(dot(wetNormal, halfway), 0.0), liveLeaf ? 48.0 : 24.0);
         litColor *= 1.0 - (wood ? 0.28 : 0.12) * wet;
-        litColor += vec3(0.20, 0.22, 0.24) * sheen * wet * 0.8 * sunShadowVisibility(vWorld);
+        litColor += vec3(0.20, 0.22, 0.24) * sheen * wet * 0.8 * sunShadowVisibility(vWorld) * uDirectSun;
     }
     litColor=applyCampfireLight(litColor,vWorld);
     vec3 color = mix(litColor, islandAtmosphereFog, fog);

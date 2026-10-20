@@ -137,6 +137,7 @@ uniform vec3 uBirdSplash;   // strike point x, z and ring phase 0..1 (negative: 
 uniform vec3 uFishSplash;   // a fish breaking the surface: point x, z and ring phase (negative: none)
 uniform vec4 uJettyLine;    // deck root x, z and unit direction out to sea (zero: no jetty)
 uniform vec4 uCoastalOptics;
+uniform vec3 uGlint;   // the glint's colour and strength (the sun out, or the moon)
 uniform vec4 uSurfaceAppearance;
 uniform float uSeabedExtent;   // half the terrain mesh's square, where the seabed ends
 
@@ -295,7 +296,8 @@ void main()
 
     float sunGlint = pow(max(dot(normal, halfwayDirection), 0.0), 210.0);
     sunGlint += pow(max(dot(normal, halfwayDirection), 0.0), 42.0) * 0.055;
-    water += vec3(1.00, 0.91, 0.68) * sunGlint * 2.4;
+    // the glint of what is in the sky: the sun while it is up and out, the moon at night
+    water += uGlint * sunGlint * 2.4;
 
     float foam = clamp(vShoreFoam, 0.0, 1.0)
         * smoothstep(0.47, 0.79, crossingWaves + length(slope) * 4.2);
@@ -639,6 +641,13 @@ void main()
             }
             customEffect_->SetUniformFloat("uCloudCoverage", weather_now::Current().cloudCover);
             customEffect_->SetUniformFloat("uSeaState", weather_now::SeaState());
+            {
+                const auto& light = sun_light::Current().lighting;
+                const float sun = std::clamp(light.sunVisibility, 0.0f, 1.0f);
+                const float moon = (1.0f - sun) * std::clamp(light.moonLight, 0.0f, 1.0f) * 0.45f;
+                customEffect_->SetUniformVec3("uGlint", 1.00f * sun + 0.62f * moon, 0.91f * sun + 0.68f * moon,
+                                              0.68f * sun + 0.80f * moon);
+            }
             customEffect_->SetUniformFloat("uSeabedExtent", TerrainMeshLayout::Extent);
             customEffect_->SetUniformVec4("uCoastalOptics", CoastalWaterOptics::ExtinctionPerMetre,
                 CoastalWaterOptics::LagoonDecayPerMetre, CoastalWaterOptics::ContactFadeDepth,

@@ -36,6 +36,9 @@ namespace island {
 uniform mat4 uSunShadowMatrix;
 uniform sampler2D uSunShadowMap;
 uniform vec4 uSunShadowParams;
+// 0..1 the direct sun: the hour's shadow strength (full in sun, gone at night and mostly under
+// overcast), for the highlights and glints that only the sun itself makes.
+uniform float uDirectSun;
 uniform vec4 uRtFlipV;
 uniform vec4 uCloudShade;   // x: how much a cloud dims the sun, y: the cloud clock
 uniform vec4 uSunShadowViewer; // xy: the viewer in the light's clip space, zw: the far fade's start and end
@@ -209,6 +212,7 @@ void main() {
         effect.SetUniformVec4("uCloudShade", CloudShadow::LandStrength * sun_light::Current().lighting.sunVisibility,
                               cloudClock, 0.0f, 0.0f);   // a cloud only dims sunlight
         effect.SetUniformFloat("uCloudCoverage", weather_now::Current().cloudCover);
+        effect.SetUniformFloat("uDirectSun", sun_light::Current().lighting.shadowStrength);
         // The viewer's column at the light's target height, in the light's clip space: the far
         // fade is measured from it, so it follows the camera continuously between re-renders.
         const Vector3 viewer = Vector3::Transform(
@@ -223,6 +227,7 @@ void main() {
         effect.SetUniformVec4("uCloudShade", CloudShadow::LandStrength * sun_light::Current().lighting.sunVisibility,
                               cloudClock, 0.0f, 0.0f);   // a cloud only dims sunlight
         effect.SetUniformFloat("uCloudCoverage", weather_now::Current().cloudCover);
+        effect.SetUniformFloat("uDirectSun", sun_light::Current().lighting.shadowStrength);
     }
 
     std::unique_ptr<ShaderEffect> SunShadowMap::CreateCasterEffect(const char* vertexBody,

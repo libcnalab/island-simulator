@@ -535,7 +535,7 @@ void main()
     vec3 color = albedo * (ambient + diffuse * vec3(1.0, 0.97, 0.92));
     vec3 halfway = normalize(toSun + toEye);
     float fresnel = 0.04 + 0.96 * pow(1.0 - max(dot(n, toEye), 0.0), 5.0);
-    float specular = pow(max(dot(n, halfway), 0.0), material.y) * material.x * shadow;
+    float specular = pow(max(dot(n, halfway), 0.0), material.y) * material.x * shadow * max(uDirectSun, 0.12);
     color += mix(vec3(1.0), albedo, uMetal[index]) * specular;
     color += mix(vec3(0.30, 0.40, 0.50), albedo, uMetal[index]) * fresnel * material.x * 0.18 * vMaterial.y;
     color = mix(color, albedo * uEmissive.x, material.z * uEmissive.y);

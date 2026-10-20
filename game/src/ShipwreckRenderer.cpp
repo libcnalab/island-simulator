@@ -198,10 +198,10 @@ void main()
     if (dot(faceNormal, toViewer) < 0.0) faceNormal = -faceNormal;
     vec3 reflectedSun = reflect(-normalize(uToSun), faceNormal);
     float wetSheen = pow(max(dot(reflectedSun, toViewer), 0.0), 42.0)
-        * wetBand * (1.0 - submerged) * (0.12 + metal * 0.10);
+        * wetBand * (1.0 - submerged) * (0.12 + metal * 0.10) * uDirectSun;
     materialColor += vec3(1.00, 0.91, 0.70) * wetSheen;
     float ironSheen = pow(max(dot(reflectedSun, toViewer), 0.0), 22.0)
-        * metal * detailFade * (1.0 - rust) * 0.085;
+        * metal * detailFade * (1.0 - rust) * 0.085 * uDirectSun;
     materialColor += vec3(0.76, 0.78, 0.75) * ironSheen;
 
     // The sun shadow map and the cumulus shade, with the palms' cool shadow tint.
