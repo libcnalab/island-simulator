@@ -38,6 +38,7 @@
 #include "IslandSimulator/StreamDriftField.hpp"
 #include "IslandSimulator/StreamFishField.hpp"
 #include "IslandSimulator/HatchlingField.hpp"
+#include "IslandSimulator/BirdShadowProjection.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
@@ -7748,6 +7749,25 @@ int main()
         }
         Check(allSeaward,"the hatchlings keep to the sand between the nest and the sea");
         Check(hatchlings.ReachedSeaCount()>=3U,"some hatchlings reach the surf within three minutes");
+        // A flying bird's shadow falls on the ground opposite the fixed sun, further the
+        // higher the bird; a bird on the ground and a bird over the sea cast none.
+        {
+            // Twenty metres inside the east shore: the higher bird's shadow lands ten metres
+            // seaward of it and must still be on the sand.
+            const float groundX=nestX-14.0f,groundZ=0.0f;
+            const float ground=terrain.Height(groundX,groundZ);
+            const auto low=island::BirdShadowProjection::Project(terrain,groundX,ground+6.0f,groundZ);
+            const auto high=island::BirdShadowProjection::Project(terrain,groundX,ground+18.0f,groundZ);
+            const float slopeX=island::environment::SunDirectionX/island::environment::SunDirectionY;
+            const float slopeZ=island::environment::SunDirectionZ/island::environment::SunDirectionY;
+            Check(low.valid&&high.valid&&low.height>5.0f&&high.height>16.0f,"birds six and eighteen metres up cast shadows on the beach");
+            Check((low.x-groundX)*(-slopeX)>0.0f&&(low.z-groundZ)*(-slopeZ)>0.0f
+                  &&std::hypot(high.x-groundX,high.z-groundZ)>std::hypot(low.x-groundX,low.z-groundZ)*2.0f,
+                  "the shadow falls away from the sun, further for the higher bird");
+            const auto perched=island::BirdShadowProjection::Project(terrain,groundX,ground+0.1f,groundZ);
+            const auto overSea=island::BirdShadowProjection::Project(terrain,terrain.ShoreRadius(0.0f)+60.0f,8.0f,0.0f);
+            Check(!perched.valid&&!overSea.valid,"a bird on the ground or over the sea casts no ground shadow");
+        }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls
         // on a little before it rests; resting fruit sit on the ground and keep still.

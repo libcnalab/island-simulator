@@ -708,6 +708,7 @@ if(ISLAND_BUILD_GAME)
         game/src/StreamDriftRenderer.cpp
         game/src/StreamFishRenderer.cpp
         game/src/HatchlingRenderer.cpp
+        game/src/BirdShadowRenderer.cpp
         game/src/UnderwaterEffectRenderer.cpp
         game/src/HelicopterRenderer.cpp
         game/src/ShorelineRenderer.cpp

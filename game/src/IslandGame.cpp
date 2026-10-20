@@ -2117,6 +2117,7 @@ namespace island
         streamDriftRenderer_=std::make_unique<StreamDriftRenderer>(device);
         streamFishRenderer_=std::make_unique<StreamFishRenderer>(device);
         hatchlingRenderer_=std::make_unique<HatchlingRenderer>(device);
+        birdShadowRenderer_=std::make_unique<BirdShadowRenderer>(device,terrain_);
         fallingFruit_.SetPalms(vegetationLayout_.Palms());
         helicopterRenderer_=std::make_unique<HelicopterRenderer>(device,*helicopterPlacement_);
         palmRenderer_ = std::make_unique<PalmRenderer>(
@@ -4217,6 +4218,7 @@ namespace island
                                          playerShadow);
             residentRenderer_->DrawShadow(cameraView_,cameraProjection_,renderCameraPosition_,resident_->State());
             bearRenderer_->DrawShadow(cameraView_,cameraProjection_,renderCameraPosition_,bear_->State());
+            birdShadowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,birdFlock_.Birds());
         }
 
         {

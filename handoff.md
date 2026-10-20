@@ -95,6 +95,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 32: a leaf drifting over a pool fish draws it up in a dart (PLAN "Loop pass 32").
 - Pass 33: turtle hatchlings break out of the nests and scramble to the surf (PLAN "Loop pass 33").
 - Pass 34: the hut's hung fish and net swing in the breeze and the gust fronts (PLAN "Loop pass 34").
+- Pass 35: flying birds cast soft moving shadows on the ground (PLAN "Loop pass 35").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

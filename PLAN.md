@@ -46,6 +46,22 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 35 (2026-10-20) — the birds' shadows cross the ground
+
+The flying birds cast nothing; the sun shadow map's casters are static. A core
+`BirdShadowProjection` carries a bird's position down the fixed sun's rays to the ground
+(two refinements for the ground's own height) and accepts it only between 0.3 and 40 m up
+and over land. `BirdShadowRenderer` draws one terrain-conforming twelve-segment ellipse per
+flying bird within 70 m (perched and ground-foraging birds excluded), along the heading with
+the wings across it, spreading 6 % per metre of height, its centre alpha 96 scaled by a
+height fade (full to 4 m, gone at 40 m) and a distance fade (40–70 m), alpha-blended with
+depth read right after the contact shadows in the same pass. Diagnostic "flying birds cast
+soft moving shadows on the ground below them, projected along the fixed sun" is pinned by
+the native capture tool. Core checks on the east beach twenty metres inland: birds 6 and 18 m
+up both cast; the shadow lies away from the sun and the higher bird's more than twice as far;
+a bird on the ground and a bird over the sea cast none (the first draft's test point was 8 m
+inside the shore, where the high bird's shadow fell on the water). Native `birds` passes.
+
 ## Loop pass 34 (2026-10-20) — the hut yard's hung fish and net swing
 
 The split fish on the drying rack and the net on its frame hung rigid while the grass round
