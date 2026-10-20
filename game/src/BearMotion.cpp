@@ -269,6 +269,16 @@ void BearMotion::Step(float seconds,BearPoint observer,bool observerValid) {
     state_.speed+=std::clamp(targetSpeed-state_.speed,-1.15f*seconds,.72f*seconds);
     const float targetForage=state_.behavior==BearBehavior::Forage&&state_.speed<.08f?1.0f:0.0f;
     state_.foragePose+=std::clamp(targetForage-state_.foragePose,-1.4f*seconds,.75f*seconds);
+    // The sniff: a little into each stand (not foraging, lying or walking) the bear lifts
+    // its head and sniffs the air for a couple of seconds, again every nine seconds of the
+    // stand; facing the walker in its alert range it holds the head up throughout.
+    const bool standing=state_.speed<.08f&&state_.foragePose<.2f&&state_.lieAmount<.2f;
+    sniffClock_=standing?sniffClock_+seconds:0;
+    const float sniffCycle=std::fmod(sniffClock_,SniffPeriodSeconds);
+    const bool sniffing=alertFacing||(standing&&sniffCycle>=SniffDelaySeconds&&sniffCycle<SniffDelaySeconds+SniffSeconds);
+    if(sniffing&&!sniffing_) ++sniffs_;
+    sniffing_=sniffing;
+    state_.sniff+=std::clamp((sniffing?1.0f:0.0f)-state_.sniff,-1.6f*seconds,2.2f*seconds);
     // A rest two seconds in, undisturbed, settles the bear onto folded legs for a longer lie;
     // the walker's approach, or the next walk, has it up again within a second.
     const bool undisturbed=state_.behavior==BearBehavior::Rest&&!alertFacing&&state_.speed<.05f;

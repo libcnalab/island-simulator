@@ -213,6 +213,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 149: a boar stepping out of its wallow stands and shakes, mud flying from its flanks (`BoarState::shake`, `BoarHerd::LastShake`, `MudFleckField`) (PLAN "Loop pass 149").
 - Pass 150: every few seconds a goat flicks its short tail side to side (`GoatState::tailSwing`, `BuildGoatMesh` tail swing) (PLAN "Loop pass 150").
 - Pass 151: every few seconds a deer twitches one ear back and out at a fly, the ears taking turns (`DeerState::earTwitch`/`earSide`) (PLAN "Loop pass 151").
+- Pass 152: the bear standing lifts its head to sniff the air, and holds it up facing the walker in its alert range (`BearState::sniff`, `BearMotion::SniffCount`) (PLAN "Loop pass 152").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

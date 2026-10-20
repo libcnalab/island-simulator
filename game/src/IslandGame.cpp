@@ -2530,6 +2530,7 @@ namespace island
                   << "island-simulator: a leaf or feather that comes down on the stream is taken by the current and drifts away with it\n"
                   << "island-simulator: the bear walks to fruit and coconuts lying in its range and eats them where they lie\n"
                   << "island-simulator: a rest two seconds in, undisturbed, settles the bear onto folded legs for a longer lie, and the walker's approach has it up within a second\n"
+                  << "island-simulator: the bear standing lifts its head to sniff the air for a couple of seconds, and holds it up facing the walker in its alert range\n"
                   << "island-simulator: the boars stand off from the bear and trot away when it comes close, as from the walker\n"
                   << "island-simulator: the hut's roof ridge is a perch for the birds\n"
                   << "island-simulator: crocodiles " << crocodileGroup_.Crocodiles().size()

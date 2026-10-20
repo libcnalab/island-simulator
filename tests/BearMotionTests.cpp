@@ -187,6 +187,27 @@ int main() {
         }
         Check(up,"the walker at fifteen metres does not get the lying bear up within a second");
     }
+    {
+        // The sniff: left alone for two minutes the bear lifts its head to sniff at least
+        // twice, each sniff rising to full and settling again; the walker standing at
+        // sixteen metres has the head up within three seconds and held up while they stay.
+        BearMotion sniffer(terrain,solids);
+        float peak=0; bool settled=false;
+        for(int tick=0;tick<2400;++tick) {
+            sniffer.Update(.05f,{1000,0,1000});
+            peak=std::max(peak,sniffer.State().sniff);
+            if(peak>.9f&&sniffer.State().sniff<.1f) settled=true;
+        }
+        Check(sniffer.SniffCount()>=2&&peak>.9f&&settled,"the bear left alone does not lift its head to sniff and settle again");
+        BearMotion watched(terrain,solids);
+        bool heldUp=true;
+        for(int tick=0;tick<160;++tick) {
+            const auto& s=watched.State();
+            watched.Update(.05f,{s.x+16,s.y+.8f,s.z});
+            if(tick>=60&&(s.sniff<.9f||!watched.Sniffing())) heldUp=false;
+        }
+        Check(heldUp&&watched.State().behavior!=BearBehavior::Withdraw,"the bear facing the walker at sixteen metres does not hold its head up sniffing");
+    }
     bool refused=false;
     try {const std::array blocked{CircularObstacle{0,0,400}};BearMotion impossible(terrain,blocked);}
     catch(const std::runtime_error&){refused=true;}

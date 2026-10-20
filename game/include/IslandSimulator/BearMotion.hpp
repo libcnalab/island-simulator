@@ -33,6 +33,10 @@ struct BearState {
     // 0..1 lying down: a rest two seconds in, undisturbed, settles the bear onto folded legs,
     // body on the ground (the pose carries it); the walker's approach has it up within a second.
     float lieAmount=0;
+    // 0..1 the sniff: standing, the bear lifts its head nose-up and sniffs the air for a
+    // couple of seconds early in each stand, and holds it up facing the walker in its
+    // alert range (the renderer pitches the head by it).
+    float sniff=0;
     BearBehavior behavior=BearBehavior::Idle;
     BearPose pose{};
     bool operator==(const BearState&)const=default;
@@ -60,6 +64,12 @@ public:
     // QA: holds the bear lying at rest for a still capture.
     void PreviewLie();
     static constexpr float LieDelaySeconds=2.0f,LieBonusSeconds=8.0f,LieDownRate=.5f,RiseRate=1.5f,LieDrop=.42f;
+    // Sniffs begun: SniffDelaySeconds into a stand (not foraging, lying or walking) the bear
+    // lifts its head for SniffSeconds, again every SniffPeriodSeconds of the stand; facing
+    // the walker in its alert range it holds the head up throughout.
+    [[nodiscard]] std::uint32_t SniffCount() const noexcept {return sniffs_;}
+    [[nodiscard]] bool Sniffing() const noexcept {return sniffing_;}
+    static constexpr float SniffDelaySeconds=.6f,SniffSeconds=2.2f,SniffPeriodSeconds=9.0f;
     [[nodiscard]] const BearState& State()const noexcept{return state_;}
     [[nodiscard]] bool IsValidPosition(float x,float z)const noexcept;
     [[nodiscard]] const RenderedTerrainSurface& Ground()const noexcept{return ground_;}
@@ -88,6 +98,9 @@ private:
     float restSeconds_=0;
     bool lying_=false;
     std::uint32_t lies_=0;
+    float sniffClock_=0;
+    bool sniffing_=false;
+    std::uint32_t sniffs_=0;
     bool ChooseFruit() noexcept;
 };
 }

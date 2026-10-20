@@ -54,6 +54,21 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 152 (2026-10-20) — the bear sniffs the air
+
+The bear's head only dropped for a forage and rose again. `BearState::sniff` (0..1) now
+carries the sniff: `SniffDelaySeconds` (0.6 s) into each stand (not foraging, lying or
+walking) the bear lifts its head nose-up and sniffs the air for `SniffSeconds` (2.2 s),
+again every `SniffPeriodSeconds` (9 s) of the stand, and facing the walker in its alert
+range it holds the head up throughout; the sniffs are counted (`SniffCount()`,
+`Sniffing()`). In the renderer the whole head section (skull, face, muzzle, nose, ears,
+eyes and the near facial marks, not the tail) pitches nose-up about the head centre by up
+to 0.30 rad. A new report line "the bear standing lifts its head to sniff the air for a
+couple of seconds, and holds it up facing the walker in its alert range" is pinned.
+BearMotionTests: left alone for two minutes the bear sniffs at least twice, to full and
+settled; the walker at sixteen metres has the head up within three seconds and held up
+while they stay. Native `bear` passes.
+
 ## Loop pass 151 (2026-10-20) — a deer twitches an ear
 
 A deer's ears only swung together toward the walker. `DeerState::earTwitch` (0..1) and
