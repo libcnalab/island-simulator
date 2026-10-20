@@ -536,6 +536,14 @@ namespace island
         return count;
     }
 
+    std::size_t BirdFlock::FeedingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_)
+            count += agent.feeding && agent.state.behavior == BirdBehavior::Perched ? 1U : 0U;
+        return count;
+    }
+
     std::size_t BirdFlock::RaftingCount() const noexcept
     {
         std::size_t count = 0;
@@ -756,13 +764,32 @@ namespace island
             agent.state.perchAmount = 1.0f;
             agent.state.wingPose = 0.035f * std::sin(
                 elapsedSeconds_ * 1.7f + static_cast<float>(agent.index));
-            const float duration = 8.0f + std::fmod(
+            // A parrot on a fruiting lobe feeds: bouts of reaching to the fruit (the head
+            // thrust, forward and down) between looks around, and it stays twice as long.
+            const bool atFruit = agent.state.species == BirdSpecies::Parrot && site.fruiting;
+            if (atFruit) {
+                const float cycle = std::fmod(elapsedSeconds_ + static_cast<float>(agent.index) * 0.9f,
+                                              FeedBoutSeconds + FeedRestSeconds);
+                const bool inBout = cycle < FeedBoutSeconds;
+                if (inBout && !agent.feeding) ++feeds_;
+                agent.feeding = inBout;
+            } else {
+                agent.feeding = false;
+            }
+            agent.state.feedAmount += std::clamp((agent.feeding ? 1.0f : 0.0f) - agent.state.feedAmount,
+                                                 -deltaSeconds * 4.0f, deltaSeconds * 4.0f);
+            agent.state.headBob = agent.state.feedAmount
+                * (0.55f + 0.45f * std::sin(elapsedSeconds_ * 9.0f + static_cast<float>(agent.index)));
+            const float duration = (8.0f + std::fmod(
                 static_cast<float>(agent.index) * 1.7f
                     + static_cast<float>(agent.perchCycle) * 1.3f,
-                6.0f);
+                6.0f)) * (atFruit ? 2.0f : 1.0f);
             if (agent.behaviorSeconds >= duration) {
                 agent.state.behavior = BirdBehavior::Depart;
                 agent.behaviorSeconds = 0.0f;
+                agent.state.headBob = 0.0f;
+                agent.state.feedAmount = 0.0f;
+                agent.feeding = false;
             }
             return;
         }

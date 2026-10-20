@@ -63,6 +63,8 @@ namespace island
         float raftAmount = 0.0f;
         /** @brief 0..1 during a bathing bout: a dove at the pool bank flicking its wings and dipping. */
         float bathAmount = 0.0f;
+        /** @brief 0..1 during a feeding bout: a parrot on a fruiting lobe reaching to the fruit. */
+        float feedAmount = 0.0f;
         BirdPathFamily family = BirdPathFamily::Shore;
         BirdSpecies species = BirdSpecies::Coastal;
         BirdBehavior behavior = BirdBehavior::Fly;
@@ -145,6 +147,11 @@ namespace island
         [[nodiscard]] std::size_t BathingCount() const noexcept;
         static constexpr float BathBoutSeconds = 1.1f;
         static constexpr float BathRestSeconds = 2.2f;
+        /** @brief A parrot perched on a fruiting lobe feeds in bouts and stays twice as long. */
+        static constexpr float FeedBoutSeconds = 1.6f;
+        static constexpr float FeedRestSeconds = 2.6f;
+        [[nodiscard]] std::uint32_t FeedCount() const noexcept { return feeds_; }
+        [[nodiscard]] std::size_t FeedingCount() const noexcept;
         /** @brief Other bodies on the ground this frame (the herds, the bear, the resident): a
          *  dove foraging on the ground flushes from one within GroundFlushDistance. */
         void SetWalkers(std::span<const GrassWalker> walkers) noexcept { walkers_ = walkers; }
@@ -216,6 +223,7 @@ namespace island
             bool struck = false;            // this plunge has already touched the water
             float raftSeconds = 0.0f;       // remaining sit on the sea after a hunt; 0 when flying
             bool bathing = false;           // this ground visit is a bathe at the pool bank
+            bool feeding = false;           // in a feeding bout on a fruiting perch
             std::size_t index = 0U;
         };
 
@@ -242,6 +250,7 @@ namespace island
         float bathX_ = 0.0f, bathZ_ = 0.0f;
         bool bathValid_ = false;
         std::uint32_t baths_ = 0U;
+        std::uint32_t feeds_ = 0U;
         float disturbanceX_ = 0.0f, disturbanceZ_ = 0.0f, disturbanceSeconds_ = 0.0f;
         std::uint32_t flushCount_ = 0U;
         std::span<const FallingFruit> lyingFruit_;

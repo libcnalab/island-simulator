@@ -7595,6 +7595,40 @@ int main()
     }
 
     {
+        // A parrot perched on a fruiting lobe feeds there in bouts (the head thrust) and stays
+        // twice as long as on a bare branch; on a bare branch it never feeds.
+        const island::IslandTerrain terrain;
+        const float perchX = 60.0f, perchZ = 40.0f;
+        const float perchY = terrain.Height(perchX, perchZ) + 6.0f;
+        const auto runPerch = [&](const bool fruiting, float& feedSeen, float& perchSpan) {
+            const std::vector<island::BirdPerchSite> sites{{perchX, perchY, perchZ, 0.3f, island::BirdPerchKind::Branch, fruiting}};
+            island::BirdFlock flock(terrain);
+            flock.SetPerchSites(sites);
+            feedSeen = 0.0f; perchSpan = 0.0f;
+            std::size_t parrot = flock.Birds().size();
+            for (int step = 0; step < 6000; ++step) {
+                flock.Update(0.05f, perchX + 20.0f, perchY, perchZ);
+                if (parrot == flock.Birds().size()) {
+                    for (std::size_t index = 10U; index < 14U; ++index)
+                        if (flock.Birds()[index].behavior == island::BirdBehavior::Perched) parrot = index;
+                    continue;
+                }
+                const auto& bird = flock.Birds()[parrot];
+                if (bird.behavior != island::BirdBehavior::Perched) break;
+                perchSpan += 0.05f;
+                feedSeen = std::max(feedSeen, bird.feedAmount * bird.headBob);
+            }
+            return parrot < flock.Birds().size() ? flock.FeedCount() : 0U;
+        };
+        float fruitFeed = 0.0f, fruitSpan = 0.0f, bareFeed = 0.0f, bareSpan = 0.0f;
+        const std::uint32_t fruitBouts = runPerch(true, fruitFeed, fruitSpan);
+        const std::uint32_t bareBouts = runPerch(false, bareFeed, bareSpan);
+        Check(fruitBouts >= 2U && fruitFeed > 0.6f, "a parrot on a fruiting lobe feeds there in bouts, reaching to the fruit");
+        Check(fruitSpan > 15.0f && fruitSpan > bareSpan * 1.5f, "a parrot stays about twice as long on a fruiting lobe as on a bare branch");
+        Check(bareBouts == 0U && bareFeed == 0.0f, "a parrot on a bare branch never feeds");
+    }
+
+    {
         // Fruit doves land beside the fallen fruit: with fruit lying on dove-grade ground
         // within range, a dove's next ground visit goes there and it forages around it.
         const island::IslandTerrain terrain;

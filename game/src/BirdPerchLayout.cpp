@@ -116,9 +116,11 @@ namespace island
                 continue;
             }
             const auto middle = TransformTreePoint(tree, branch.vertices[6].position);
+            // The odd clusters are the crown's fruiting lobes (the fruit field hangs its
+            // fruit on them), so a perch on one is a feeding perch for the parrots.
             sites_.push_back({point[0], point[1], point[2],
                               std::atan2(point[2] - middle[2], point[0] - middle[0]),
-                              BirdPerchKind::Branch});
+                              BirdPerchKind::Branch, cluster % 2 == 1});
             ++acceptedBranches;
         }
 

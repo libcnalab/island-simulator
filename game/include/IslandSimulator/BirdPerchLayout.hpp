@@ -27,6 +27,8 @@ namespace island
         float z = 0.0f;
         float headingRadians = 0.0f;
         BirdPerchKind kind = BirdPerchKind::Branch;
+        /** @brief A branch perch on one of the crown's fruiting lobes: a parrot feeds there. */
+        bool fruiting = false;
     };
 
     /** @brief Deterministic bounded perch anchors derived from existing world placements. */

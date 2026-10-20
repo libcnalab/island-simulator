@@ -2277,6 +2277,7 @@ namespace island
                      "a dove on the ground flushes from a passing animal or the resident\n"
                   << "island-simulator: fruit doves coo in low slow phrases and thrust their heads as they walk; parrots keep their squawk and a pigeon-grey dove joins the green ones\n"
                   << "island-simulator: every fourth ground visit a fruit dove comes down to the plunge pool's bank to bathe, flicking its wings and dipping in bouts\n"
+                  << "island-simulator: a parrot perched on a fruiting lobe of the crown feeds there in bouts, reaching to the fruit, and stays twice as long\n"
                   << "island-simulator: fruit bats " << fruitBatColony_.Bats().size()
                   << " agents use six inland canopy roosts with four hanging and two bounded daytime flights\n"
                   << "island-simulator: clearing butterflies "

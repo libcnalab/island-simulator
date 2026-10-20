@@ -54,6 +54,21 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 74 (2026-10-20) — parrots feed on the fruiting lobes
+
+A perched parrot only sat. The branch perches come from the crowns' clusters, and the odd
+clusters are the fruiting lobes the fruit field hangs its fruit on, so `BirdPerchSite` now
+carries `fruiting` (set by the perch layout from the cluster's parity) and a parrot perched
+on a fruiting lobe feeds: `feedAmount` rises in bouts (1.6 s on, 2.6 s off, offset per bird)
+and drives the head thrust forward and down at 9 Hz, the reach to the fruit, and the perch
+lasts twice as long (16–28 s instead of 8–14 s). Departing clears the pose. `FeedCount()`
+counts bouts and `FeedingCount()` the parrots in one. The startup report gains "a parrot
+perched on a fruiting lobe of the crown feeds there in bouts, reaching to the fruit, and
+stays twice as long", pinned by the native capture tool. Core checks: on a fruiting branch
+a parrot feeds in at least two bouts with the head reaching, stays over fifteen seconds and
+one and a half times longer than on a bare branch, and on a bare branch never feeds. Native
+`birds` passes.
+
 ## Loop pass 73 (2026-10-20) — beach crabs bolt down their burrow
 
 Each beach colony has had a visible burrow since the debris-anchoring pass, but no crab
