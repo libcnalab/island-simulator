@@ -190,10 +190,13 @@ namespace island
                 agent.state.behavior = HermitCrabBehavior::Forage;
                 agent.behaviorSeconds = 3.2f
                     + static_cast<float>(agent.transitionCount % 5U) * .58f;
+                if (nightness_ >= 0.0f) agent.behaviorSeconds *= 1.0f + nightness_;   // longer rounds after dark
             } else {
                 agent.state.behavior = HermitCrabBehavior::Pause;
                 agent.behaviorSeconds = 1.1f
                     + static_cast<float>(agent.transitionCount % 4U) * .44f;
+                // by day they sit out long spells (in the shade of the wrack and the stones)
+                if (nightness_ >= 0.0f) agent.behaviorSeconds *= 1.0f + 7.0f * (1.0f - nightness_);
             }
         }
 

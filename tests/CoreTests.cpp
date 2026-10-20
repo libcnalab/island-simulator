@@ -4314,6 +4314,22 @@ int main()
         for (const auto& crab : nightly.Crabs()) down += crab.hideAmount > 0.9f ? 1U : 0U;
         Check(down * 10U >= nightly.Crabs().size() * 9U, "after dark the beach crabs go home down their burrows");
     }
+    {
+        // Hermit crabs: far more time paused by day than by night.
+        island::HermitCrabGroup day(terrain), night(terrain);
+        day.SetNightness(0.0f);
+        night.SetNightness(1.0f);
+        int dayPaused = 0, nightPaused = 0, samples = 0;
+        for (int step = 0; step < 30 * 300; ++step) {
+            day.Update(1.0f / 30.0f, 900.0f, 0.0f, 900.0f);
+            night.Update(1.0f / 30.0f, 900.0f, 0.0f, 900.0f);
+            if (step % 30 != 0) continue;
+            for (const auto& crab : day.Crabs()) dayPaused += crab.behavior == island::HermitCrabBehavior::Pause ? 1 : 0;
+            for (const auto& crab : night.Crabs()) nightPaused += crab.behavior == island::HermitCrabBehavior::Pause ? 1 : 0;
+            samples += static_cast<int>(day.Crabs().size());
+        }
+        Check(dayPaused > samples / 2 && nightPaused * 2 < dayPaused, "hermit crabs sit out the day and wander at night");
+    }
     island::CrabColony crabs(terrain);
     island::CrabColony repeatedCrabs(terrain);
     island::CrabColony invalidInputCrabs(terrain);

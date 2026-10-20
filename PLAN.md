@@ -233,6 +233,13 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 263 (2026-10-20) — the hermit crabs keep to the night
+
+Hermit crabs forage mostly at night. `HermitCrabGroup` takes the darkness (`SetNightness`; never
+set in the tests): by day a pause lasts eight times as long, and after dark a forage runs up to
+twice as long. Core check: over five minutes with no observer the crabs are paused in more than
+half of the samples by day and in under half as many by night. `hermit-crabs` passes.
+
 ## Loop pass 262 (2026-10-20) — waiting out the rain; frogs after rain
 
 Two small weather touches. In a downpour (rain above 0.6) the resident now waits it out
