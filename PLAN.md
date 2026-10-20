@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 238 (2026-10-20) — the resident keeps the fire through the night
+
+The resident walked the same round day and night, in the dark too. `ResidentMotion` can now
+hold the pause it is in (`SetHoldPause`: the pause's time stands still while held and runs on
+once released); the game holds the campfire's pause while the sun is more than 2 degrees
+below the horizon. Reaching the pit on their round after dusk, the resident stays crouched,
+tending the fire, which the tending keeps built up (and so its light on the ground through the
+grade), until dawn; then the pause runs out and they walk on. Resident check: a held pause
+keeps the resident in place for a minute and, released, lets them walk on. `resident` and
+`resident-tending` pass.
+
 ## Loop pass 237 (2026-10-20) — birds roost at night, the fruit bats come out
 
 With the day and night turning, the birds still flew their rounds all night and the fruit bats

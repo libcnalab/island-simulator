@@ -227,6 +227,22 @@ int main() {
         }
         Check(stretcher.StretchCount()>=1&&stretchPeak>.9f&&raised&&lowered,"the resident does not stretch both arms up at a pause and let them down");
     }
+    {
+        // A held pause stands still until it is released, then the walk goes on.
+        ResidentMotion keeper(terrain,solids);
+        const ResidentPoint far{1000.0f,0.0f,1000.0f};
+        int guard=0;
+        while(keeper.State().mode!=ResidentMode::Pausing&&guard++<20000) keeper.Update(.05f,far);
+        Check(keeper.State().mode==ResidentMode::Pausing,"the resident never paused");
+        keeper.SetHoldPause(true);
+        const float heldX=keeper.State().x,heldZ=keeper.State().z;
+        for(int i=0;i<1200;++i) keeper.Update(.05f,far);   // a minute held
+        Check(keeper.State().mode==ResidentMode::Pausing&&std::hypot(keeper.State().x-heldX,keeper.State().z-heldZ)<.05f,
+              "a held pause did not hold the resident in place");
+        keeper.SetHoldPause(false);
+        for(int i=0;i<600;++i) keeper.Update(.05f,far);   // thirty seconds released
+        Check(std::hypot(keeper.State().x-heldX,keeper.State().z-heldZ)>1.0f,"a released pause did not let the resident walk on");
+    }
     bool refused=false;
     try {const std::array blocked{CircularObstacle{0,0,350}};ResidentMotion impossible(terrain,blocked);}
     catch(const std::runtime_error&){refused=true;}

@@ -3235,8 +3235,10 @@ namespace island
             const bool tending=CampfireSite::Tending(tender.x,tender.z,tender.mode==ResidentMode::Pausing);
             campfireTend_+=std::clamp((tending?1.0f:0.0f)-campfireTend_,-0.3f*deltaSeconds,0.6f*deltaSeconds);
             if(campfireRenderer_) campfireRenderer_->SetTending(campfireTend_);
-            // At the fire the resident crouches to tend it, hands to the flames.
+            // At the fire the resident crouches to tend it, hands to the flames; at night they
+            // stay there, keeping it up until dawn, instead of walking their round in the dark.
             resident_->SetCrouch(tending?1.0f:0.0f);
+            resident_->SetHoldPause(tending&&sun_light::Current().lighting.sunElevationDegrees<-2.0f);
         }
         {
             // The resident's footfalls: one every 0.68 m of their walk, on the ground under them.

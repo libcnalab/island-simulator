@@ -180,7 +180,7 @@ void ResidentMotion::Step(float seconds,ResidentPoint observer) {
     state_.lookYaw+=std::clamp(wantLook-state_.lookYaw,-seconds*LookRate,seconds*LookRate);
     state_.mode=yield?ResidentMode::Yielding:pauseRemaining_>0?ResidentMode::Pausing:
         std::abs(turn)>.28f?ResidentMode::Turning:ResidentMode::Walking;
-    if(!yield&&pauseRemaining_>0)pauseRemaining_=std::max(0.0f,pauseRemaining_-seconds);
+    if(!yield&&pauseRemaining_>0&&!holdPause_)pauseRemaining_=std::max(0.0f,pauseRemaining_-seconds);
     const auto surface=ground_.Sample(state_.x,state_.z);
     const auto forward=Forward(desiredHeading);
     const float slope=std::abs((surface.normal.x*forward.x+surface.normal.z*forward.z)/surface.normal.y);

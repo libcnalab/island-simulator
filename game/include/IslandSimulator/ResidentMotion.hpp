@@ -62,6 +62,9 @@ public:
     // bent forward and both hands reaching to the front (tending the fire); the game asks for
     // it while they stand at the campfire, and the crouch eases in and out over a second.
     void SetCrouch(float target) noexcept;
+    // Holds the pause the resident is in (the game holds the fire's pause through the night):
+    // the pause's time stands still while held and runs on once released.
+    void SetHoldPause(bool hold) noexcept {holdPause_=hold;}
     [[nodiscard]] float CrouchAmount()const noexcept {return crouch_;}
     // QA: holds the resident fully crouched for a still capture.
     void PreviewCrouch();
@@ -93,6 +96,7 @@ private:
     void Step(float seconds,ResidentPoint observer);
     void AdvanceFeet(float seconds);
     void StartStep(float targetX,float targetZ,float heading,std::size_t leg,float duration);
+    bool holdPause_=false;
     const IslandTerrain& terrain_;
     RenderedTerrainSurface ground_;
     WorldCollisionGrid solids_;
