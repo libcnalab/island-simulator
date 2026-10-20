@@ -46,6 +46,21 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 46 (2026-10-20) — the coconut crabs take the coconuts
+
+The coconut crabs foraged round the palm zone and never touched a nut. `CoconutCrabGroup`
+reads the fruit span (`SetLyingCoconuts`): when a crab's rest ends in a forage it looks for
+the nearest coconut lying still (not rolling, not afloat) within 0.9 of its home radius on
+ground it can reach (`ChooseNut`), and the forage then lasts a minute longer; it steers to
+the nut at 2.3 rad/s instead of wandering, stops within 0.45 m, and works it with the claws
+raised (`working`, claw pose 0.72 plus a 5.5 Hz chew) for eighteen seconds, after which the
+index goes to `EatenCoconuts()`, the game consumes the nut, and the crab rests. A nut that
+goes away mid-walk drops the target. The coconut crab line gains "a foraging crab walks to a
+coconut lying in its range and works it with its claws until it is gone", pinned by the
+native capture tool. Core check: a nut shaken down at the first crab's home is walked to,
+worked with raised claws and finished within ten simulated minutes with the observer 40 m
+off. Native `coconut-crabs` passes.
+
 ## Loop pass 45 (2026-10-20) — the dolphins' blows
 
 A dolphin's back broke the surface in silence and dry. A core `DolphinBlowField` watches the

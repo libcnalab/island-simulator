@@ -106,6 +106,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 43: now and then a fish breaks the surface over a school (PLAN "Loop pass 43").
 - Pass 44: breakers throw spray up the offshore rocks in time with their foam (PLAN "Loop pass 44").
 - Pass 45: a surfacing dolphin blows a puff of spray from the blowhole (PLAN "Loop pass 45").
+- Pass 46: coconut crabs walk to lying coconuts and work them with their claws (PLAN "Loop pass 46").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

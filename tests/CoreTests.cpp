@@ -47,6 +47,7 @@
 #include "IslandSimulator/ShellDragTrail.hpp"
 #include "IslandSimulator/SurfSprayField.hpp"
 #include "IslandSimulator/DolphinBlowField.hpp"
+#include "IslandSimulator/CoconutCrabGroup.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
@@ -7964,6 +7965,28 @@ int main()
             Check(blows.BlowCount()==1U,"a second surfacing within two seconds blows nothing more");
             for(int step=0;step<60;++step) blows.Update(0.05f,0.0f,pod);
             Check(blows.ActiveCount()==0U,"a blow is gone within the second");
+        }
+        // Coconut crabs take the coconuts: a nut shaken down at a crab's home draws its
+        // next forage; it walks there, works the nut with raised claws and the nut is gone.
+        {
+            island::CoconutCrabGroup crabs(terrain);
+            const auto home=crabs.Homes()[0];
+            island::FallingFruitField nuts(terrain);
+            island::PalmPlacement palm{home.x,terrain.Height(home.x,home.z),home.z,0.0f,1.0f,30.0f,0.0f,1U,island::PalmCondition::Living};
+            nuts.ShakeCoconut(palm,1U);
+            for(int step=0;step<200;++step) nuts.Update(0.05f,{});
+            bool lying=false;
+            for(const auto& f:nuts.Fruit()) if(f.active&&f.variant==island::FallingFruitField::CoconutVariant&&f.restSeconds>=0.0f&&!f.rolling) lying=true;
+            Check(lying,"a coconut lies at the crab's home");
+            bool worked=false;
+            for(int step=0;step<12000&&crabs.WorkCount()==0U;++step) {
+                crabs.SetLyingCoconuts(nuts.Fruit());
+                crabs.Update(0.05f,home.x+40.0f,terrain.Height(home.x+40.0f,home.z)+1.5f,home.z);
+                for(const std::size_t index:crabs.EatenCoconuts()) nuts.Consume(index);
+                for(const auto& crab:crabs.Crabs()) if(crab.working&&crab.clawPose>0.5f) worked=true;
+                nuts.Update(0.05f,{});
+            }
+            Check(crabs.WorkCount()>=1U&&worked&&nuts.ConsumedCount()>=1U,"a coconut crab walks to the nut, works it with raised claws and finishes it within ten minutes");
         }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls

@@ -2281,7 +2281,8 @@ namespace island
                   << "island-simulator: hermit crabs " << hermitCrabGroup_.Crabs().size()
                   << " agents in deterministic sheltered-beach habitats\n"
                   << "island-simulator: coconut crabs " << coconutCrabGroup_.Crabs().size()
-                  << " agents in deterministic coastal palm-zone habitats\n"
+                  << " agents in deterministic coastal palm-zone habitats; "
+                  << "a foraging crab walks to a coconut lying in its range and works it with its claws until it is gone\n"
                   << "island-simulator: crocodiles " << crocodileGroup_.Crocodiles().size()
                   << " agents bask, crawl, swim, and retreat within the stream estuary\n"
                   << "island-simulator: fish " << fishSchools_.Fish().size()
@@ -2766,9 +2767,11 @@ namespace island
             const auto& crab = coconutCrabGroup_.Crabs()[2U];
             coconutCrabObserver = Vector3(crab.x, crab.y + 20.0f, crab.z);
         }
+        coconutCrabGroup_.SetLyingCoconuts(fallingFruit_.Fruit());
         coconutCrabGroup_.Update(
             viewpoint_ == FixedViewpoint::CoconutCrabDetail ? 0.0f : deltaSeconds,
             coconutCrabObserver.X, coconutCrabObserver.Y, coconutCrabObserver.Z);
+        for (const std::size_t eaten : coconutCrabGroup_.EatenCoconuts()) fallingFruit_.Consume(eaten);
         if (viewpoint_ == FixedViewpoint::CrabDetail) {
             const CrabState& subject = crabColony_.Crabs()[crabViewSubject_];
             cameraPosition_ += Vector3(subject.x - previousCrabSubject.x,
