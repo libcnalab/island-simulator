@@ -54,6 +54,18 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Quad bike pass 3 (2026-10-20) — the engine left idling, the tyres heard
+
+The engine now starts when the rider gets on and idles on after the rider steps off, heard
+from where the quad stands (fading over 60 m), its exhaust still smoking and its lamps still
+lit, until it is switched off a minute and a half later or the quad lies on its side.
+`QuadBike::SlideSpeed` reports how fast the touching tyres slide sideways (the fastest, over
+the last step), and a procedural tyre loop (a low rumble under a crunch of grains: 1800 short
+dull clicks over two seconds) plays louder and higher with the rolling speed and much louder
+in a skid or a power slide; heard close while riding, from where the quad is otherwise. Core
+checks: the tyres hardly slide rolling straight and skid in a full-lock turn at speed; the
+loop is an audible two seconds.
+
 ## Quad bike pass 2 (2026-10-20) — ruts, dust, spray and knocks
 
 What the wheels leave and throw. A core `TyreTrackField` lays a piece of rut every third of a

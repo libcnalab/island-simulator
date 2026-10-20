@@ -71,6 +71,9 @@ namespace island
     /** @brief The quad striking something or landing on its side: a dull body thump, the crack
      *  of its plastic and a rattle of loose metal, under a second. */
     [[nodiscard]] AmbientLoop GenerateQuadImpact();
+    /** @brief Knobby tyres rolling over sand, soil and grit: a low rumble under a crunch of
+     *  grains; looped, played louder with the speed and the sliding. */
+    [[nodiscard]] AmbientLoop GenerateTyreRollLoop();
 
     /** @brief Generates one four-second stronger-wave wash for sparse shoreline accents. */
     [[nodiscard]] AmbientLoop GenerateWaveAccent();

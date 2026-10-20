@@ -126,6 +126,7 @@ namespace island
         const float total = std::min(seconds, 0.1f);
         const float dt = total / static_cast<float>(Substeps);
         impact_ = 0.0f;
+        slide_ = 0.0f;
         for (int i = 0; i < Substeps; ++i) Substep(dt, controls, ground, obstacles);
         const bool over = Overturned();
         if (over && !wasOverturned_) ++rollovers_;
@@ -186,6 +187,7 @@ namespace island
                     const BikeVec sideOnGround = Normalised(Sub(side, Mul(g.normal, Dot(g.normal, side))), axisX_);
                     const BikeVec v = pointVelocity(contactPoint);
                     const float vLong = Dot(v, forwardOnGround), vSide = Dot(v, sideOnGround);
+                    slide_ = std::max(slide_, std::abs(vSide));
                     const float grip = TyreFriction * std::clamp(g.grip, 0.05f, 1.5f) * (g.waterDepth > 0.15f ? 0.6f : 1.0f);
                     const float limit = grip * spring;
                     float lateral = -vSide * LateralStiffness;

@@ -6804,6 +6804,25 @@ int main()
             if (rider.Position().z >= 27.0f) treeKnock = std::max(treeKnock, rider.LastImpact());
         }
         Check(flatKnock < 1.5f && treeKnock > 4.0f, "a tree at speed knocks the quad hard; the flat does not");
+        // Sliding: rolling straight the tyres hardly slide; a full-lock turn at speed skids them.
+        QuadBike skid({0.0f, 0.0f, 0.0f}, 0.0f);
+        skid.Place({0.0f, 0.0f, 0.0f}, 0.0f, flat);
+        float straightSlide = 0.0f, turnSlide = 0.0f;
+        for (int i = 0; i < 60 * 4; ++i) {
+            skid.Step(1.0f / 60.0f, {1.0f, 0.0f, false}, flat);
+            if (i > 60) straightSlide = std::max(straightSlide, skid.SlideSpeed());
+        }
+        for (int i = 0; i < 60; ++i) {
+            skid.Step(1.0f / 60.0f, {0.6f, 1.0f, false}, flat);
+            turnSlide = std::max(turnSlide, skid.SlideSpeed());
+        }
+        Check(straightSlide < 0.3f && turnSlide > 1.0f, "the tyres slide in a hard turn at speed, not rolling straight");
+        const auto tyres = island::GenerateTyreRollLoop();
+        std::int64_t tyreEnergy = 0;
+        for (const auto sample : tyres.samples) tyreEnergy += std::abs(static_cast<int>(sample));
+        Check(tyres.sampleRate > 0 && tyres.samples.size() == static_cast<std::size_t>(tyres.sampleRate) * 2U
+                  && tyreEnergy / static_cast<std::int64_t>(std::max<std::size_t>(tyres.samples.size(), 1U)) > 400,
+              "the tyres' roll is an audible two-second loop");
 
         // The engine's two loops: whole firing cycles of a single near two seconds, audible,
         // the high one firing faster (more barks a second).

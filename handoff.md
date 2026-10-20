@@ -80,7 +80,9 @@ Operator request 2026-10-20 (the next task after the weather): ride a quad bike 
 - [x] Engine sound following the revs; a top speed of a real ATV (80 km/h).
 - [x] Tyre tracks in sand and soil, dust off dry ground, spray in the shallows, a knock sound
       for trees, rocks, hard landings and rollovers (PLAN "Quad bike pass 2").
-- [ ] Still open: the engine idling on after you step off (it stops now), skid sounds.
+- [x] The engine idles on after you step off (lamps and exhaust with it) and is switched off
+      90 s later or when the quad lies on its side; tyres crunch louder with the speed and the
+      sliding (PLAN "Quad bike pass 3").
 
 Loop log (propose → implement, continues until the operator stops the session):
 - Pass 1: dappled leaf-gap sun flecks on the shaded forest floor; `ground` view reclassified

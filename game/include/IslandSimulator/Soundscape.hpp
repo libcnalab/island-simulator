@@ -145,6 +145,8 @@ namespace island
         void SetEngine(bool running, float rpm, float load, float x, float y, float z, bool riding) noexcept;
         /** @brief The quad struck something (strength 0..1); heard close when riding. */
         void NoteQuadImpact(float strength, float x, float y, float z, bool riding) noexcept;
+        /** @brief The quad's tyres on the ground: rolling speed and sliding speed, m/s. */
+        void SetTyres(float rolling, float sliding, float x, float y, float z, bool riding) noexcept;
         [[nodiscard]] int PlayedQuadImpactCount() const noexcept { return playedImpactCount_; }
         [[nodiscard]] int PlayedThunderCount() const noexcept { return playedThunderCount_; }
         [[nodiscard]] int PlayedClawKnockCount() const noexcept { return playedClawKnockCount_; }
@@ -283,7 +285,9 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> rainInstance_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> thunderEffects_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> thunderInstance_;
-        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> impactEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> impactEffect_, tyreEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> tyreInstance_;
+        bool tyrePlaying_ = false;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> impactInstance_;
         int playedImpactCount_ = 0;
         float weatherRain_ = 0.0f;

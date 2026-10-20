@@ -4079,6 +4079,8 @@ namespace island
                 PlaceQuadNear(clear ? ax : position.x, clear ? az : position.z, yaw_);
             }
             riding_ = true;
+            quadEngineOn_ = true;
+            quadIdleSeconds_ = 0.0f;
             quadOrbit_ = 0.0f;
             quadCameraYaw_ = quad_.YawRadians();
             const auto now = quad_.Position();
@@ -4133,13 +4135,25 @@ namespace island
             soundscape_->NoteQuadImpact(rolled ? 1.0f : std::clamp((knock - 2.0f) / 6.0f, 0.0f, 1.0f), p.x, p.y, p.z, riding_);
             quadImpactCooldown_ = 0.35f;
         }
-        // The exhaust while the engine runs (it runs while ridden).
+        // The engine: started when the rider gets on, idling on after the rider steps off until
+        // it is switched off a minute and a half later (or the quad lies on its side).
+        if (riding_) {
+            quadEngineOn_ = true;
+            quadIdleSeconds_ = 0.0f;
+        } else if (quadEngineOn_) {
+            quadIdleSeconds_ += deltaSeconds;
+            if (quadIdleSeconds_ > QuadIdleOffSeconds || quad_.Overturned()) quadEngineOn_ = false;
+        }
         const BikeVec tip = quad_.ToWorld(QuadBikeRenderer::ExhaustTip);
         const BikeVec back{-quad_.Forward().x, -quad_.Forward().y, -quad_.Forward().z};
-        exhaust_.Update(deltaSeconds, riding_, quad_.Throttle(), tip, back, quad_.Velocity(), wind::DirectionX, wind::DirectionZ);
+        exhaust_.Update(deltaSeconds, quadEngineOn_, quad_.Throttle(), tip, back, quad_.Velocity(), wind::DirectionX, wind::DirectionZ);
         if (soundscape_) {
             const auto p = quad_.Position();
-            soundscape_->SetEngine(riding_, quad_.EngineRpm(), quad_.Throttle(), p.x, p.y, p.z, riding_);
+            soundscape_->SetEngine(quadEngineOn_, quad_.EngineRpm(), quad_.Throttle(), p.x, p.y, p.z, riding_);
+            bool anyDown = false;
+            for (int w = 0; w < 4; ++w) anyDown = anyDown || quad_.WheelContact(w);
+            const auto v = quad_.Velocity();
+            soundscape_->SetTyres(anyDown ? std::hypot(v.x, v.z) : 0.0f, anyDown ? quad_.SlideSpeed() : 0.0f, p.x, p.y, p.z, riding_);
         }
         if (riding_) {
             // The walker goes where the quad goes (the wildlife and the sounds follow).
@@ -5390,7 +5404,7 @@ namespace island
             GpuDiagnosticScope gpuPass("quad-bike");
             const bool seated = riding_ && !quad_.Overturned();
             const bool avatar = seated && quadRider_ && quadRider_->Available();
-            quadRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, quad_, riding_, seated && !avatar);
+            quadRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, quad_, quadEngineOn_, seated && !avatar);
             if (avatar) quadRider_->Draw(cameraView_, cameraProjection_, quad_);
         }
 
@@ -5621,7 +5635,7 @@ namespace island
                 rain_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, weather.rain, weather.wind, timeSeconds);
             // The quad's headlights light their pool through the grade: the beam writes how
             // strongly each pixel is lit into the frame's alpha, and the grade lifts it there.
-            const bool lamps = quadRenderer_ && riding_ && !quad_.Overturned() && TimeOfDayRenderer::GradeActive(light);
+            const bool lamps = quadRenderer_ && quadEngineOn_ && !quad_.Overturned() && TimeOfDayRenderer::GradeActive(light);
             if (lamps) {
                 timeOfDay_->ResetAlpha();
                 quadRenderer_->DrawBeam(cameraView_, cameraProjection_, renderCameraPosition_, quad_,
@@ -5641,7 +5655,7 @@ namespace island
             timeOfDay_->DrawGrade(light, lamps);
             timeOfDay_->DrawNightSky(cameraView_, cameraProjection_, renderCameraPosition_, light);
             timeOfDay_->DrawFlash(weather.flash);
-            if (quadRenderer_ && riding_)
+            if (quadRenderer_ && quadEngineOn_)
                 quadRenderer_->DrawLights(cameraView_, cameraProjection_, renderCameraPosition_, quad_, QuadLampNightness());
         }
         {

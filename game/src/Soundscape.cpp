@@ -244,6 +244,32 @@ namespace island
         }
     }
 
+    void Soundscape::SetTyres(const float rolling, const float sliding, const float x, const float y, const float z,
+                              const bool riding) noexcept
+    {
+        (void)y;
+        if (!available_ || !tyreInstance_) return;
+        const float roll = std::isfinite(rolling) ? std::clamp(std::abs(rolling), 0.0f, 30.0f) : 0.0f;
+        const float slide = std::isfinite(sliding) ? std::clamp(sliding, 0.0f, 10.0f) : 0.0f;
+        float volume = (std::clamp(roll / 18.0f, 0.0f, 1.0f) * 0.30f + std::clamp((slide - 0.4f) / 3.0f, 0.0f, 1.0f) * 0.45f)
+            * (muted_ ? 0.0f : 1.0f) * underwaterAudio_.airGain;
+        if (!riding) volume *= std::clamp(1.0f - (std::hypot(x - listenerX_, z - listenerZ_) - 4.0f) / 40.0f, 0.0f, 1.0f);
+        try {
+            if (volume > 0.01f && !tyrePlaying_) {
+                tyreInstance_->Play();
+                tyrePlaying_ = true;
+            } else if (volume <= 0.01f && tyrePlaying_) {
+                tyreInstance_->Stop();
+                tyrePlaying_ = false;
+            }
+            if (!tyrePlaying_) return;
+            tyreInstance_->setVolumeProperty(volume);
+            tyreInstance_->setPitchProperty(std::clamp(-0.35f + roll / 30.0f + slide * 0.04f, -0.35f, 0.5f));
+        } catch (const std::exception&) {
+            tyrePlaying_ = false;
+        }
+    }
+
     void Soundscape::NoteQuadImpact(const float strength, const float x, const float y, const float z,
                                     const bool riding) noexcept
     {
@@ -452,6 +478,10 @@ namespace island
                 engineInstances_[i] = std::make_unique<SoundEffectInstance>(engineEffects_[i]->CreateInstance());
                 engineInstances_[i]->setIsLoopedProperty(true);
             }
+            tyreEffect_ = CreateLoopedSoundEffect(GenerateTyreRollLoop());
+            tyreEffect_->setNameProperty("Procedural tyres on the ground");
+            tyreInstance_ = std::make_unique<SoundEffectInstance>(tyreEffect_->CreateInstance());
+            tyreInstance_->setIsLoopedProperty(true);
             impactEffect_ = CreateOneShotSoundEffect(GenerateQuadImpact());
             impactEffect_->setNameProperty("Procedural quad impact");
             rainEffect_=CreateLoopedSoundEffect(GenerateRainLoop());

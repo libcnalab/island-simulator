@@ -518,6 +518,29 @@ namespace island
         return Quantize(samples, near ? 0.92f : 0.75f);
     }
 
+    AmbientLoop GenerateTyreRollLoop()
+    {
+        constexpr int loopSeconds = 2;
+        constexpr std::size_t frameCount = static_cast<std::size_t>(AmbientSampleRate * loopSeconds);
+        const std::vector<float> noise = Noise(0x2b7e1516U, frameCount);
+        const std::vector<float> rumble = CircularSmooth(noise, 60U);
+        const std::vector<float> scrub = CircularSmooth(noise, 7U);
+        std::vector<float> samples(frameCount, 0.0f);
+        for (std::size_t i = 0; i < frameCount; ++i) samples[i] = rumble[i] * 3.2f + (scrub[i] - rumble[i]) * 0.55f;
+        // the crunch: grains and grit squeezed out under the knobs, each a short dull click
+        DeterministicNoise grains(0x28aed2a6U);
+        for (int grain = 0; grain < 1800; ++grain) {
+            const auto at = static_cast<std::size_t>((grains.Next() * 0.5f + 0.5f) * static_cast<float>(frameCount - 1U));
+            const float strength = 0.10f + 0.25f * (grains.Next() * 0.5f + 0.5f);
+            const float ring = 900.0f + 1500.0f * (grains.Next() * 0.5f + 0.5f);
+            for (std::size_t k = 0; k < 140U; ++k) {
+                const float t = static_cast<float>(k) / static_cast<float>(AmbientSampleRate);
+                samples[(at + k) % frameCount] += strength * std::exp(-t * 380.0f) * std::sin(2.0f * std::numbers::pi_v<float> * ring * t);
+            }
+        }
+        return Quantize(samples, 0.7f, true);
+    }
+
     AmbientLoop GenerateQuadImpact()
     {
         constexpr float seconds = 0.9f;

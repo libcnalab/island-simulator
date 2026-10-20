@@ -541,6 +541,10 @@ namespace island
         std::unique_ptr<RootingDustRenderer> wheelDustRenderer_, wheelSprayRenderer_;
         std::uint32_t quadPreviousRollovers_ = 0;
         float quadImpactCooldown_ = 0.0f;
+        // the engine idles on after the rider steps off, until switched off a while later
+        bool quadEngineOn_ = false;
+        float quadIdleSeconds_ = 0.0f;
+        static constexpr float QuadIdleOffSeconds = 90.0f;
         std::unique_ptr<RenderedTerrainSurface> quadSurface_;
         BikeControls quadControls_{};
         bool riding_ = false, quadKeyWasDown_ = false, quadRightKeyWasDown_ = false, quadPlaced_ = false;
