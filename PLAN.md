@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 196 (2026-10-20) — a perched dragonfly holds the obelisk
+
+A perched dragonfly sat with its abdomen level. `DragonflyState::obelisk` (0..1) now
+carries the raise: `ObeliskDelaySeconds` (1 s) into the perch the abdomen is raised toward
+the sun at `ObeliskRaiseRate` (0.6/s) and held, and levelled at `ObeliskLevelRate` (2/s)
+as the dragonfly lifts off; `ObeliskCount()` counts the perched dragonflies holding it. In
+the renderer the seven abdominal segments angle up from the root by the raise, more
+toward the tip (up to about 0.55 to 1.1 rad), on the same vertices. The dragonflies report
+line gains "a perched dragonfly raises its abdomen toward the sun a second into the
+perch, the obelisk, and levels it to lift off" (pinned). Core check: within two minutes a
+perched dragonfly has its abdomen raised to full and levels it again on lifting off, and
+no patrolling dragonfly's is raised. Native `dragonflies` passes.
+
 ## Loop pass 195 (2026-10-20) — a gecko licks its lips
 
 A gecko's hunt ended without a trace. `GeckoState::lipLick` (0..1) now carries the lick:

@@ -64,6 +64,7 @@ void DragonflySwarm::Update(float dt,float ox,float oy,float oz)noexcept{
         if((frame_+i)%divisor==0){UpdateAgent(a,std::min(a.accumulated,.5f),ox,oz,observer);a.accumulated=0;}states_[i]=a.state;}
     assert(fullCount_+reducedCount_+dormantCount_==static_cast<int>(Count));
 }
+std::size_t DragonflySwarm::ObeliskCount()const noexcept{std::size_t count=0;for(const auto& a:agents_)count+=a.state.obelisk>.5f?1U:0U;return count;}
 std::size_t DragonflySwarm::PerchedCount()const noexcept{std::size_t count=0;for(const auto& a:agents_)count+=a.state.behavior==DragonflyBehavior::Perch?1U:0U;return count;}
 void DragonflySwarm::UpdateAgent(Agent& a,float dt,float ox,float oz,bool observer)noexcept{
     if(dt<=0)return;
@@ -100,6 +101,11 @@ void DragonflySwarm::UpdateAgent(Agent& a,float dt,float ox,float oz,bool observ
     const float targetY=std::lerp(flightY,ground+DipHeight,std::clamp(a.state.dip,0.0f,1.0f));
     a.state.y+=std::clamp(targetY-a.state.y,-dt*(a.state.dip>0.01f?4.5f:1.8f),dt*(a.state.dip>0.01f?4.5f:1.8f));
     if(!perched)a.state.wingPhase=std::fmod(a.state.wingPhase+dt*55.0f,TwoPi);
+    // The obelisk: a second into the perch the abdomen is raised toward the sun and held
+    // up; lifting off levels it again.
+    a.perchSeconds=perched?a.perchSeconds+dt:0.0f;
+    const bool obelisking=perched&&a.perchSeconds>=ObeliskDelaySeconds;
+    a.state.obelisk+=std::clamp((obelisking?1.0f:0.0f)-a.state.obelisk,-dt*ObeliskLevelRate,dt*ObeliskRaiseRate);
     a.state.bankRadians=std::clamp(std::sin(a.turnA)*.16f*(a.state.speed/1.05f),-.34f,.34f);
 }
 }

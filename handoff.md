@@ -257,6 +257,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 193: walking, a hermit crab lifts its shell clear of the sand and it rocks with the steps, set down at a pause (`HermitCrabState::shellCarry`, `HermitCrabGroup::CarryingCount`) (PLAN "Loop pass 193").
 - Pass 194: a resting frog's throat rises and falls with its breathing, a small swell under the chin between calls (`FrogState::gular`, `FrogPopulation::PumpingCount`) (PLAN "Loop pass 194").
 - Pass 195: a gecko licks its lips as a hunt ends (`GeckoState::lipLick`, `GeckoPopulation::LipLickCount`) (PLAN "Loop pass 195").
+- Pass 196: a perched dragonfly raises its abdomen toward the sun, the obelisk, and levels it to lift off (`DragonflyState::obelisk`, `DragonflySwarm::ObeliskCount`) (PLAN "Loop pass 196").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

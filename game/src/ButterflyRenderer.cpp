@@ -661,10 +661,13 @@ namespace island
 
             // Seven visibly separated, steadily tapering abdominal segments give
             // the insect its characteristic long needle silhouette.
+            // In the obelisk the abdomen angles up from its root by the raise, most at the tip.
+            const float obelisk = std::clamp(fly.obelisk, 0.0f, 1.0f);
             Vector3 root = centre - forward * (.052f * s);
             for (int segment = 0; segment < 7; ++segment) {
                 const float length = (.058f - .0025f * static_cast<float>(segment)) * s;
-                const Vector3 end = root - forward * length
+                const float tilt = obelisk * (0.55f + 0.09f * static_cast<float>(segment));
+                const Vector3 end = root - forward * (length * std::cos(tilt)) + up * (length * std::sin(tilt))
                     + right * (std::sin(fly.wingPhase * .08f
                                         + static_cast<float>(segment) * .42f)
                                * .0025f * s);

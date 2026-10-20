@@ -16,6 +16,9 @@ struct DragonflyState {
     float x=0,y=0,z=0,headingRadians=0,speed=0,wingPhase=0,bankRadians=0,scale=1;
     // 0..1 the dip: on patrol the dragonfly drops to touch the water every few seconds.
     float dip=0;
+    // 0..1 the obelisk: a second into its perch the dragonfly raises its abdomen toward the
+    // sun and holds it up; lifting off, it levels again.
+    float obelisk=0;
     DragonflyBehavior behavior=DragonflyBehavior::Hover;
     WildlifeSimulationTier simulationTier=WildlifeSimulationTier::Dormant;
     std::uint8_t colorVariant=0;
@@ -38,6 +41,9 @@ public:
     // drops to DipHeight over the ground for DipSeconds and touches the water; the touch is
     // noted, counted, for the fleck of spray it throws.
     static constexpr float DipPeriodSeconds=6.5f,DipSeconds=0.55f,DipHeight=0.30f;
+    // Perched dragonflies holding the obelisk this moment (the raise past half).
+    [[nodiscard]] std::size_t ObeliskCount()const noexcept;
+    static constexpr float ObeliskDelaySeconds=1.0f,ObeliskRaiseRate=0.6f,ObeliskLevelRate=2.0f;
     struct Dip { float x=0,y=0,z=0; std::uint32_t count=0; };
     [[nodiscard]] const Dip& LastDip()const noexcept{return dip_;}
     [[nodiscard]] std::uint32_t DipCount()const noexcept{return dip_.count;}
@@ -53,7 +59,7 @@ public:
 private:
     struct Agent { DragonflyState state;DragonflyHome home;float seconds=0,altitude=0;
         float turnA=0,turnB=0,vertical=0,accumulated=0;std::uint32_t transitions=0;
-        float dipClock=0;bool touched=false; };
+        float dipClock=0;bool touched=false;float perchSeconds=0; };
     void Initialize(std::size_t);
     void UpdateAgent(Agent&,float,float,float,bool) noexcept;
     [[nodiscard]] bool Valid(float,float,const DragonflyHome&)const noexcept;

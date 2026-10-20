@@ -2502,7 +2502,8 @@ namespace island
                   << "a skink basking in the sun flattens and spreads its body to soak the heat, rounding again as it displays or gets up\n"
                   << "island-simulator: dragonflies " << dragonflySwarm_.Dragonflies().size()
                   << " agents in three stream and wetland habitats; one patrol in three ends on a perch, a stem's top at half a metre, the wings held still a few seconds; "
-                  << "a patrolling dragonfly dips to touch the water every few seconds, a fleck of spray at the touch\n"
+                  << "a patrolling dragonfly dips to touch the water every few seconds, a fleck of spray at the touch; "
+                  << "a perched dragonfly raises its abdomen toward the sun a second into the perch, the obelisk, and levels it to lift off\n"
                   << "island-simulator: frogs " << frogPopulation_.Frogs().size()
                   << " agents rest, hop, and retreat beside the stream and wetland; two keep the banks of the cascade's plunge pool, "
                      "and one of those fleeing the walker leaps into the pool, swims under, surfaces and makes back for its bank; "

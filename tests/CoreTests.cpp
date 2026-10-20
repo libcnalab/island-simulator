@@ -3417,6 +3417,21 @@ int main()
         }
         Check(dippers.DipCount() >= 2U && lowest < island::DragonflySwarm::DipHeight + 0.25f && noted,
               "a patrolling dragonfly dips to touch the water and the touch is noted there");
+        // The obelisk: within two minutes a perched dragonfly has its abdomen raised to full
+        // and levels it again on lifting off; a flying dragonfly's abdomen is level.
+        {
+            float raised = 0.0f; bool levelled = false, flyingRaise = false;
+            for (int step = 0; step < 2400 && !(raised > 0.9f && levelled); ++step) {
+                dippers.Update(0.05f, first.x + 10.0f, first.y, first.z);
+                for (const auto& fly : dippers.Dragonflies()) {
+                    if (fly.behavior == island::DragonflyBehavior::Perch) raised = std::max(raised, fly.obelisk);
+                    if (fly.behavior == island::DragonflyBehavior::Patrol && fly.speed > 0.8f && fly.obelisk > 0.3f) flyingRaise = true;
+                    if (raised > 0.9f && fly.behavior != island::DragonflyBehavior::Perch && fly.obelisk < 0.05f) levelled = true;
+                }
+            }
+            Check(raised > 0.9f && levelled && !flyingRaise && dippers.ObeliskCount() <= dippers.Dragonflies().size(),
+                  "a perched dragonfly does not raise its abdomen in the obelisk and level it to lift off");
+        }
         island::DragonflyDipField spray;
         spray.Update(0.05f, dippers.LastDip());
         Check(spray.ActiveCount() == 1U && spray.DipCount() == dippers.DipCount(), "a dip throws a fleck of spray");
