@@ -65,11 +65,11 @@ level, so it is left out (at most a hidden joke switch, off by default, if the o
       grade, Loop pass 225); the hut's windows and veranda lantern at night (Loop pass 228).
 - [x] The moving sun in the real-time shaders and the sun shadow map; geometry with lighting
       baked at build time keeps the 14:00 sun (listed in PLAN "Day/night pass 1").
-- [~] Weather: clear, partly cloudy, overcast, showers, tropical thunderstorm (lightning and
+- [x] Weather: clear, partly cloudy, overcast, showers, tropical thunderstorm (lightning and
       thunder), world-anchored rain around the camera, wet darkened ground, rain and thunder
       sounds (done, PLAN "Weather pass 1"; Y steps through them, `--weather` for captures);
       rain rings on the sea (Loop pass 226), puddles (Loop pass 233), storm gusts (Loop pass
-      234); still to do: morning mist.
+      234), morning mist (Loop pass 235). The weather request is complete.
 
 Operator request 2026-10-20 (the next task after the weather): ride a quad bike (ATV).
 - [x] F switches between walking and the ATV and back; a CNA avatar rides it (native desktop;
@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 235: morning mist lies in banks over the stream's valley, the wetland and the coastal flats at first light and burns off by mid-morning (PLAN "Loop pass 235").
 - Pass 234: the gust fronts follow the weather's wind: in a storm they sweep the island about every eight seconds, faster and fuller, on a live clock that never jumps (PLAN "Loop pass 234").
 - Pass 233: puddles after rain: flat hollows of the paths, clearings and forest floor hold water that mirrors the sky and catches the sun, spreading in a soaking and drying back (PLAN "Loop pass 233").
 - Pass 232: the island sounds like night after dark: a chorus of crickets and tree frogs rises while the birds, monkeys and cicadas fall quiet and the jungle's day bed softens (PLAN "Loop pass 232"; not yet heard by a person).

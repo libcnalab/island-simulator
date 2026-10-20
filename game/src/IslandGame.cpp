@@ -2458,6 +2458,9 @@ namespace island
         rainRings_ = std::make_unique<RainRingRenderer>(device, terrain_);
         fireflies_ = std::make_unique<FireflySwarm>(terrain_);
         fireflyRenderer_ = std::make_unique<FireflyRenderer>(device);
+        morningMist_ = std::make_unique<MorningMistField>(terrain_);
+        mistBankRenderer_ = std::make_unique<MistBankRenderer>(device, MorningMistField::MaximumSites);
+        std::cout << "island-simulator: morning mist: " << morningMist_->SiteCount() << " sites on the low damp ground\n";
         try {
             localLights_ = std::make_unique<LocalLightRenderer>(device);
             std::cout << "island-simulator: local lights at night (the campfire, the quad's headlights) lift the night grade "
@@ -3167,6 +3170,10 @@ namespace island
             UpdateCamera(deltaSeconds);
         }
         UpdateQuad(deltaSeconds);
+        if (morningMist_)
+            morningMist_->Update(deltaSeconds, MorningMistField::Thickness(dayNight_.Hour(), weather_now::Current().wind,
+                                                                           weather_now::Current().rain),
+                                 wind::DirectionX, wind::DirectionZ);
         if (fireflies_) {
             const auto& light = sun_light::Current().lighting;
             fireflies_->Update(deltaSeconds, 1.0f - std::clamp((light.sunElevationDegrees + 4.0f) / 12.0f, 0.0f, 1.0f),
@@ -5667,6 +5674,8 @@ namespace island
             if (exhaustRenderer_) exhaustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,exhaust_.Puffs());
             if (wheelDustRenderer_) wheelDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,wheelDust_.Puffs());
             if (wheelSprayRenderer_) wheelSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,wheelSpray_.Puffs());
+            // the morning mist last of the translucent things, over everything solid it lies among
+            if (mistBankRenderer_ && morningMist_) mistBankRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,morningMist_->Puffs());
         }
         {
             // The hour: the scene graded (golden hours, a dark blue night), then the stars and

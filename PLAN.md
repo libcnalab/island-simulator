@@ -233,6 +233,23 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 235 (2026-10-20) — morning mist
+
+The last weather item. A core `MorningMistField` finds the low damp ground on a 14 m world
+grid (0.6-11 m up, under 0.25 rad, where the stream's moisture or drainage, the seasonal
+wetland or the coastal flats 6-60 m from the shore make it likely: 180 sites) and keeps one
+broad puff at each (5-9.5 m across, hovering 0.9-2.3 m over the ground, breathing slowly,
+the whole bank creeping a few metres downwind and back). `Thickness` gives the mist for the
+hour and the weather: gathering from 04:24, thickest from 05:42, burned off between 07:12 and
+08:48, dispersed by a wind above the trade wind's 1.15-1.6 and by rain. `MistBankRenderer`
+draws the puffs as wide, low, very faint discs facing the eye with a long two-ring falloff (so
+where one dips into the ground the cut is all but invisible), pale grey-white, faint up close
+so a walker inside a bank sees through it, to 220 m, last among the translucent things before
+the night grade (the dawn colours them). A first build drew them in the stream's pass, before
+the vegetation, which then painted over them; they moved to the end. Core check: banks at
+first light only, none at noon, in a storm or in the rain, all low over the ground.
+`stream`, `wetland` and `flight` at 06:00-06:12 show soft banks; daytime views change nothing.
+
 ## Loop pass 234 (2026-10-20) — gust fronts that follow the weather
 
 The gust fronts that lean the grass, the crowns, the fronds and the sea's ripples together

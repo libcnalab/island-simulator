@@ -69,6 +69,7 @@
 #include "IslandSimulator/QuadWheelTraces.hpp"
 #include "IslandSimulator/RainRings.hpp"
 #include "IslandSimulator/FireflySwarm.hpp"
+#include "IslandSimulator/MorningMistField.hpp"
 #include "IslandSimulator/CrabBubbleField.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
 #include "IslandSimulator/CicadaColony.hpp"
@@ -6775,6 +6776,28 @@ int main()
             gust::Live() = gust::Clock{};
             Check(storm >= trade * 2 && trade >= 4 && worstStep < 0.08f,
                   "storm gust fronts come twice as often as the trade wind's, and a rising wind never makes them jump");
+        }
+        // Morning mist: banks at first light, gone by mid-morning, none at noon, in a storm or
+        // in the rain, lying low on damp ground.
+        {
+            using island::MorningMistField;
+            const bool timing = MorningMistField::Thickness(6.0f, 1.0f, 0.0f) > 0.95f
+                && MorningMistField::Thickness(4.0f, 1.0f, 0.0f) < 0.01f
+                && MorningMistField::Thickness(9.0f, 1.0f, 0.0f) < 0.01f
+                && MorningMistField::Thickness(14.0f, 1.0f, 0.0f) < 0.01f
+                && MorningMistField::Thickness(6.0f, 2.0f, 0.0f) < 0.01f
+                && MorningMistField::Thickness(6.0f, 1.0f, 0.8f) < 0.01f;
+            const island::IslandTerrain mistTerrain;
+            MorningMistField mist(mistTerrain);
+            mist.Update(1.0f / 60.0f, 1.0f, 1.0f, 0.0f);
+            bool low = true;
+            std::size_t thick = 0;
+            for (const auto& puff : mist.Puffs()) {
+                low = low && puff.y - mistTerrain.Height(puff.x, puff.z) < 4.0f;
+                thick += puff.active ? 1U : 0U;
+            }
+            Check(timing && mist.SiteCount() >= 60 && thick == mist.SiteCount() && low,
+                  "morning mist lies low on the damp ground at first light only, and not in wind or rain");
         }
         // Rain rings on the sea: world-anchored and repeatable, each inside its own cell,
         // more cells striking in heavier rain, none in no rain.
