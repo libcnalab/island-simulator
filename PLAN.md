@@ -54,6 +54,29 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 117 (2026-10-20) — a perched bird preens
+
+A perched bird sat through its stay with its head fixed forward, only a parrot on a
+fruiting lobe moving (the feeding bouts of pass 70). `BirdState::preenAmount` (0..1) and
+`preenSide` (±1) carry a preening bout: between its looks around and its feeding bouts, and
+after its first second on the perch, a perched bird's head turns back over one shoulder and
+down into the wing for 2.6 s about every 11 s (a little more per bird), the wings
+alternating bout by bout; the amount rises at 3/s and falls at 5/s, and a departure or a
+flush zeroes it at once. `PreenCount()` counts bouts begun, `PreeningCount()` the birds
+mid-bout. `BirdRenderer` pivots the near head about the neck root (0.34 m along the body,
+0.365 for the dove): the head frame yaws 120° toward the preen side and pitches 0.55 rad
+down, so the beak comes to the folded wing's edge; the eyes stay camera-facing. A QA
+viewpoint `bird-preen` (`BirdPreenDetail`) holds the wreck's seeded perched bird mid-preen
+each frame (`PreviewPreen(0)`, applied in the update since the perch sites are seeded after
+the camera is placed) and feeds the flock a far-off walker so the close camera (0.95 m
+ahead, 1.15 m to the right, 0.42 m up) does not flush it; a one-frame proof line "bird
+preen proof: bird 0 behavior=2 preen=1 preening=1 near=1" is pinned for that view. Report
+line: "a perched bird preens between its looks around, the head turned back into one wing
+for a few seconds every eleven seconds or so" (pinned). Core checks: the seeded bird preens
+for a bout of a second or two during its stay; two seconds in it is mid-preen and a walker's
+flush drops the pose at once. Native `bird-preen` passes (luminance deviation 55.5; the
+head is turned over the right shoulder toward the camera with the beak at the wing).
+
 ## Loop pass 116 (2026-10-20) — a deer beds down in the shade
 
 A deer that had walked to the shade for its rest (pass 115) stood there as it stands

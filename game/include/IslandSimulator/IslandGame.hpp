@@ -195,6 +195,7 @@ namespace island
         ReefHabitatDetail,
         FallenFrondDetail,
         BirdDetail,
+        BirdPreenDetail,
         GroundDoveDetail,
         FruitBatDetail,
         FruitBatRoostDetail,

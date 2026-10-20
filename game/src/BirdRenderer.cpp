@@ -397,9 +397,19 @@ namespace island
             const float scale = bird.scale;
             AppendNearBody(vertices,centre,right,up,forward,scale,palette,bird.species);
             // The walking dove's head thrusts forward and dips slightly with each step.
-            const Vector3 headCentre = centre + forward * (bird.headBob * 0.055f * scale)
-                - up * (bird.headBob * 0.018f * scale);
-            AppendNearHead(vertices,headCentre,right,up,forward,scale,palette,bird.species,
+            // Preening, the head turns back over one shoulder (a hundred and twenty degrees)
+            // and down into the wing, pivoting about the neck root.
+            const float preen = std::clamp(bird.preenAmount, 0.0f, 1.0f);
+            const float preenSide = bird.preenSide < 0.0f ? -1.0f : 1.0f;
+            const float turn = preen * 2.1f * preenSide, dip = preen * 0.55f;
+            const Vector3 turnedForward = forward * std::cos(turn) + right * std::sin(turn);
+            const Vector3 turnedRight = right * std::cos(turn) - forward * std::sin(turn);
+            const Vector3 headForward = turnedForward * std::cos(dip) - up * std::sin(dip);
+            const Vector3 headUp = up * std::cos(dip) + turnedForward * std::sin(dip);
+            const float pivotZ = (bird.species == BirdSpecies::FruitDove ? .365f : .34f) * scale;
+            const Vector3 headCentre = centre + forward * (bird.headBob * 0.055f * scale + pivotZ)
+                - headForward * pivotZ - up * (bird.headBob * 0.018f * scale);
+            AppendNearHead(vertices,headCentre,turnedRight,headUp,headForward,scale,palette,bird.species,
                            cameraPosition);
 
             const float perch = std::clamp(bird.perchAmount, 0.0f, 1.0f);

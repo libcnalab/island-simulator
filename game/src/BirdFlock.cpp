@@ -370,6 +370,8 @@ namespace island
                 if (crowded || thudded || snaked || walked) {
                     agent.state.behavior = BirdBehavior::Depart;
                     agent.behaviorSeconds = 0.0f;
+                    agent.state.preenAmount = 0.0f;
+                    agent.preening = false;
                     ++flushCount_;
                     if (snaked) ++snakeFlushes_;
                     if (walked && !crowded && !thudded && !snaked) ++walkerFlushes_;
@@ -566,6 +568,24 @@ namespace island
         dolphinLeapZ_ = z;
         dolphinLeapAge_ = 0.0f;
         dolphinLeapValid_ = true;
+    }
+
+    std::size_t BirdFlock::PreeningCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_)
+            count += agent.preening && agent.state.behavior == BirdBehavior::Perched ? 1U : 0U;
+        return count;
+    }
+
+    void BirdFlock::PreviewPreen(const std::size_t index) noexcept
+    {
+        if (index >= agents_.size() || agents_[index].state.behavior != BirdBehavior::Perched) return;
+        Agent& agent = agents_[index];
+        agent.preening = true;
+        agent.state.preenAmount = 1.0f;
+        agent.state.preenSide = 1.0f;
+        states_[index] = agent.state;
     }
 
     std::size_t BirdFlock::FeedingCount() const noexcept
@@ -830,6 +850,22 @@ namespace island
                                                  -deltaSeconds * 4.0f, deltaSeconds * 4.0f);
             agent.state.headBob = agent.state.feedAmount
                 * (0.55f + 0.45f * std::sin(elapsedSeconds_ * 9.0f + static_cast<float>(agent.index)));
+            // Between its looks around (and its feeding bouts) a perched bird preens: about
+            // every eleven seconds, a little more per bird, the head turns back into one wing
+            // for two and a half seconds, the wings alternating bout by bout; never in the
+            // first second after landing.
+            {
+                const float preenCycle = std::fmod(elapsedSeconds_ + static_cast<float>(agent.index) * 2.3f,
+                                                   PreenPeriodSeconds + static_cast<float>(agent.index % 3U));
+                const bool inPreen = preenCycle < PreenBoutSeconds && !agent.feeding && agent.behaviorSeconds > 1.0f;
+                if (inPreen && !agent.preening) {
+                    ++preens_;
+                    agent.state.preenSide = (preens_ + agent.index) % 2U == 0U ? 1.0f : -1.0f;
+                }
+                agent.preening = inPreen;
+            }
+            agent.state.preenAmount += std::clamp((agent.preening ? 1.0f : 0.0f) - agent.state.preenAmount,
+                                                  -deltaSeconds * 5.0f, deltaSeconds * 3.0f);
             const float duration = (8.0f + std::fmod(
                 static_cast<float>(agent.index) * 1.7f
                     + static_cast<float>(agent.perchCycle) * 1.3f,
@@ -840,6 +876,8 @@ namespace island
                 agent.state.headBob = 0.0f;
                 agent.state.feedAmount = 0.0f;
                 agent.feeding = false;
+                agent.state.preenAmount = 0.0f;
+                agent.preening = false;
             }
             return;
         }

@@ -7889,6 +7889,32 @@ int main()
         underfoot.Update(0.05f, perchX + 25.0f, sites[0].y, perchZ);
         Check(underfoot.Birds()[0].behavior == island::BirdBehavior::Depart && underfoot.WalkerFlushCount() == 1U && underfoot.FlushCount() == 1U,
               "an animal walking up four metres from the perch flushes the bird");
+        // Between its looks around a perched bird preens: through its stay on the perch the
+        // seeded bird turns its head back into a wing for a bout of a second or two, and
+        // a flush drops the pose at once.
+        island::BirdFlock preener(terrain);
+        preener.SetPerchSites(sites);
+        float longest = 0.0f, bout = 0.0f;
+        for (int step = 0; step < 400; ++step) {
+            preener.Update(0.05f, perchX + 25.0f, sites[0].y, perchZ);
+            const auto& bird = preener.Birds()[0];
+            if (bird.behavior != island::BirdBehavior::Perched) break;
+            if (bird.preenAmount > 0.5f) bout += 0.05f;
+            else { longest = std::max(longest, bout); bout = 0.0f; }
+        }
+        longest = std::max(longest, bout);
+        Check(preener.PreenCount() >= 1U && longest > 0.8f && longest < 4.0f,
+              "a perched bird preens for a bout of a second or two during its stay");
+        island::BirdFlock dropped(terrain);
+        dropped.SetPerchSites(sites);
+        for (int step = 0; step < 40; ++step) dropped.Update(0.05f, perchX + 25.0f, sites[0].y, perchZ);
+        Check(dropped.PreeningCount() == 1U && dropped.Birds()[0].preenAmount > 0.5f,
+              "two seconds in, the seeded bird is mid-preen");
+        dropped.SetWalkers(nearBody);
+        dropped.Update(0.05f, perchX + 25.0f, sites[0].y, perchZ);
+        Check(dropped.Birds()[0].behavior == island::BirdBehavior::Depart && dropped.Birds()[0].preenAmount == 0.0f
+                  && dropped.PreeningCount() == 0U,
+              "a flush drops the preen at once");
         float climbed = sitting.Birds()[0].y;
         for (int step = 0; step < 70; ++step) { sitting.Update(0.05f, perchX + 6.0f, sites[0].y, perchZ); climbed = std::max(climbed, sitting.Birds()[0].y); }
         Check(sitting.Birds()[0].behavior == island::BirdBehavior::Fly && climbed > sites[0].y + 2.0f,

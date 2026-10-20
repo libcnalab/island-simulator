@@ -66,6 +66,11 @@ namespace island
         float bathAmount = 0.0f;
         /** @brief 0..1 during a feeding bout: a parrot on a fruiting lobe reaching to the fruit. */
         float feedAmount = 0.0f;
+        /** @brief 0..1 during a preening bout: a perched bird's head turned back over one
+         *  shoulder and down into the wing. */
+        float preenAmount = 0.0f;
+        /** @brief The wing the head turns to while preening: +1 right, -1 left. */
+        float preenSide = 1.0f;
         BirdPathFamily family = BirdPathFamily::Shore;
         BirdSpecies species = BirdSpecies::Coastal;
         BirdBehavior behavior = BirdBehavior::Fly;
@@ -160,6 +165,15 @@ namespace island
         [[nodiscard]] std::uint32_t SnakeFlushCount() const noexcept { return snakeFlushes_; }
         /** @brief Perched flushes from the resident or an animal walking up under the perch. */
         [[nodiscard]] std::uint32_t WalkerFlushCount() const noexcept { return walkerFlushes_; }
+        /** @brief Preening bouts begun: a perched bird, between feeding bouts and after its
+         *  first second on the perch, turns its head back into one wing for PreenBoutSeconds
+         *  about every PreenPeriodSeconds, the wings alternating. A departure or flush drops it. */
+        [[nodiscard]] std::uint32_t PreenCount() const noexcept { return preens_; }
+        [[nodiscard]] std::size_t PreeningCount() const noexcept;
+        /** @brief QA: holds one bird mid-preen for a still capture. */
+        void PreviewPreen(std::size_t index) noexcept;
+        static constexpr float PreenBoutSeconds = 2.6f;
+        static constexpr float PreenPeriodSeconds = 11.0f;
         static constexpr float SnakeFlushDistance = 3.0f;
         /** @brief Fruit lying on the ground this frame; a fruit dove's ground visit lands
          *  beside the nearest one within FruitLandingRange when there is any. The doves'
@@ -256,6 +270,7 @@ namespace island
             float raftSeconds = 0.0f;       // remaining sit on the sea after a hunt; 0 when flying
             bool bathing = false;           // this ground visit is a bathe at the pool bank
             bool feeding = false;           // in a feeding bout on a fruiting perch
+            bool preening = false;          // in a preening bout on the perch
             std::size_t index = 0U;
         };
 
@@ -295,6 +310,7 @@ namespace island
         std::span<const SnakeState> snakes_;
         std::uint32_t snakeFlushes_ = 0U;
         std::uint32_t walkerFlushes_ = 0U;
+        std::uint32_t preens_ = 0U;
         std::span<const FallingFruit> lyingFruit_;
         std::uint32_t fruitLandings_ = 0U;
         std::span<const GrassWalker> walkers_;

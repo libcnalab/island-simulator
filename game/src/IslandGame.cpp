@@ -174,6 +174,7 @@ namespace island
             case FixedViewpoint::ReefHabitatDetail: return "reef-habitat";
             case FixedViewpoint::FallenFrondDetail: return "fronds";
             case FixedViewpoint::BirdDetail: return "birds";
+            case FixedViewpoint::BirdPreenDetail: return "bird-preen";
             case FixedViewpoint::GroundDoveDetail: return "ground-doves";
             case FixedViewpoint::FruitBatDetail: return "bats";
             case FixedViewpoint::FruitBatRoostDetail: return "bat-roost";
@@ -1194,6 +1195,22 @@ namespace island
             yaw_ = std::atan2(toBird.X, toBird.Z);
             pitch_ = std::atan2(toBird.Y, std::hypot(toBird.X, toBird.Z));
             std::cout << "island-simulator: bird QA camera frames one flying hooked-beak parrot\n";
+        } else if (viewpoint_ == FixedViewpoint::BirdPreenDetail
+                   && !birdFlock_.Birds().empty()) {
+            // Agent 0 is seeded perched on the wreck; held mid-preen, framed from its
+            // right front so the head turned back into the right wing reads.
+            birdFlock_.PreviewPreen(0U);
+            const BirdState& bird = birdFlock_.Birds().front();
+            const Vector3 forward(std::cos(bird.headingRadians), 0.0f,
+                                  std::sin(bird.headingRadians));
+            const Vector3 right(-forward.Z, 0.0f, forward.X);
+            cameraPosition_ = Vector3(bird.x, bird.y, bird.z)
+                + forward * 0.95f + right * 1.15f + Vector3::Up * 0.42f;
+            const Vector3 toBird = Vector3(bird.x, bird.y + bird.scale * .05f, bird.z)
+                - cameraPosition_;
+            yaw_ = std::atan2(toBird.X, toBird.Z);
+            pitch_ = std::atan2(toBird.Y, std::hypot(toBird.X, toBird.Z));
+            std::cout << "island-simulator: bird QA camera frames one perched bird preening, its head turned back into a wing\n";
         } else if (viewpoint_ == FixedViewpoint::GroundDoveDetail
                    && birdFlock_.Birds().size() > 14U) {
             const BirdState& dove = birdFlock_.Birds()[14U];
@@ -2347,6 +2364,7 @@ namespace island
                   << "island-simulator: a seabird's strike brings the others on their routes within a hundred and twenty metres in to hunt the same school\n"
                   << "island-simulator: a dolphin's leap brings the seabirds on their routes within a hundred and sixty metres in to hunt the school of the moment\n"
                   << "island-simulator: a perched bird flushes from the resident or an animal walking up under its perch as from the walker\n"
+                  << "island-simulator: a perched bird preens between its looks around, the head turned back into one wing for a few seconds every eleven seconds or so\n"
                   << "island-simulator: a body standing in a snag's, a plant's or a structure's sun shadow is lit as the ground there is\n"
                   << "island-simulator: a fish school passing the jetty turns in and holds off the end of the deck, in its shade, a while before going on\n"
                   << "island-simulator: a school parts around the shark passing through it at seven metres, as around the swimmer at three\n"
@@ -2827,10 +2845,18 @@ namespace island
         const std::array<GrassWalker, GrassWalkers::Slots> birdWalkers = GatherWalkers(cameraPosition_.X, cameraPosition_.Z);
         birdFlock_.SetWalkers(birdWalkers);
         birdFlock_.SetSnakes(snakes_->Snakes());
+        // The preen view holds the wreck's perched bird mid-preen every frame (the perch
+        // sites are seeded after the camera is placed).
+        if(viewpoint_ == FixedViewpoint::BirdPreenDetail) birdFlock_.PreviewPreen(0U);
         birdFlock_.Update((viewpoint_ == FixedViewpoint::BirdDetail
+                              || viewpoint_ == FixedViewpoint::BirdPreenDetail
                               || viewpoint_ == FixedViewpoint::GroundDoveDetail)
                                  ? 0.0f : deltaSeconds,
-                          cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
+                          // The preen view's camera sits inside the flush distance, so the
+                          // flock sees the walker far off and the bird keeps its perch.
+                          viewpoint_ == FixedViewpoint::BirdPreenDetail ? 1.0e4f : cameraPosition_.X,
+                          cameraPosition_.Y,
+                          viewpoint_ == FixedViewpoint::BirdPreenDetail ? 1.0e4f : cameraPosition_.Z);
         // A bird settling on a branch, and a monkey moving through a crown every few
         // seconds, shake a leaf loose.
         // A bird flushing, from a perch or the ground, claps its wings where it was.
@@ -5505,6 +5531,15 @@ namespace island
             std::ostringstream report;
             report << "island-simulator: goat render proof: goats " << goatRenderer_->VisibleCount()
                 << '/' << goats_->Goats().size() << " visible, " << goatRenderer_->DrawCallCount() << " draw;";
+            std::cout << report.str() << '\n';
+            MirrorRuntimeDiagnosticToPlatformLog(report.str());
+        }
+        if(viewpoint_==FixedViewpoint::BirdPreenDetail&&drawnFrames_==1U&&!birdFlock_.Birds().empty()) {
+            const BirdState& bird=birdFlock_.Birds().front();
+            std::ostringstream report;
+            report << "island-simulator: bird preen proof: bird 0 behavior=" << static_cast<int>(bird.behavior)
+                << " preen=" << bird.preenAmount << " preening=" << birdFlock_.PreeningCount()
+                << " near=" << birdRenderer_->VisibleNearBirdCount();
             std::cout << report.str() << '\n';
             MirrorRuntimeDiagnosticToPlatformLog(report.str());
         }

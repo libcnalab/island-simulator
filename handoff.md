@@ -178,6 +178,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 114: animals darken in the sun shadows of snags, understory, bushes and structures through a CPU `SunShadeField` read by the canopy receiver sample (PLAN "Loop pass 114").
 - Pass 115: a deer whose rest comes on sunlit ground walks to the nearest shade within ten metres and lies up there; the capture tool rejoins diagnostics split by the asset logger (PLAN "Loop pass 115").
 - Pass 116: a deer resting in the shade beds down onto folded legs (`bedAmount`, `deer-bedded` QA viewpoint) and is up within half a second of an alarm (PLAN "Loop pass 116").
+- Pass 117: a perched bird preens, the head turned back into one wing for 2.6 s every 11 s or so (`preenAmount`, `bird-preen` QA viewpoint) (PLAN "Loop pass 117").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted
