@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 242 (2026-10-20) — shooting stars
+
+A small touch for the night sky. `shooting_stars::At` (core, header-only) gives, as a function
+of the render clock, a shooting star in four of every five 47-second windows, at a hashed time
+within the window: 0.75 s long, starting 26-63 degrees up at a hashed bearing and sliding about
+17 degrees down the sky, slanted either way. `TimeOfDayRenderer::DrawNightSky` draws it with
+the stars (additive, depth-read so the land and the trees hide it, only once the stars are
+out): a bright head drawing a trail that fades to nothing, waxing and waning over its life.
+Core check: six to thirteen in ten minutes, each under a second, high in the sky. A probe build
+holding one in front of the `overview` camera at 23:00 showed the streak and its fading tail
+over the island; the probe was removed.
+
 ## Loop pass 241 (2026-10-20) — the bear lies up at night
 
 The bear was the last land animal roaming all night. `BearMotion::SetNightness`: after dark,

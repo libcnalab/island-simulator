@@ -5752,7 +5752,7 @@ namespace island
                 }
             }
             timeOfDay_->DrawGrade(light, localLit);
-            timeOfDay_->DrawNightSky(cameraView_, cameraProjection_, renderCameraPosition_, light);
+            timeOfDay_->DrawNightSky(cameraView_, cameraProjection_, renderCameraPosition_, light, timeSeconds);
             timeOfDay_->DrawFlash(weather.flash);
             if (fireflyRenderer_ && fireflies_ && fireflies_->Presence() > 0.0f && !underground)
                 fireflyRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, fireflies_->Flies());

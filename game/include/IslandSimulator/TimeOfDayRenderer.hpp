@@ -1,4 +1,5 @@
 #pragma once
+#include "IslandSimulator/ShootingStars.hpp"
 
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "Microsoft/Xna/Framework/Matrix.hpp"
@@ -46,7 +47,8 @@ namespace island
         void DrawFlash(float flash);
         void DrawNightSky(const Microsoft::Xna::Framework::Matrix& view,
                           const Microsoft::Xna::Framework::Matrix& projection,
-                          const Microsoft::Xna::Framework::Vector3& camera, const DayLighting& light);
+                          const Microsoft::Xna::Framework::Vector3& camera, const DayLighting& light,
+                          double seconds = 0.0);
         [[nodiscard]] int DrawCallCount() const noexcept { return drawCalls_; }
         [[nodiscard]] bool GradeApplied() const noexcept { return gradeApplied_; }
 
@@ -57,7 +59,7 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BlendState> gradeBlend_, litGradeBlend_, alphaResetBlend_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> gradeTriangle_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> stars_;
-        std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> moon_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> moon_, meteor_;
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> moonStaging_;
         int starVertexCount_ = 0;
         int drawCalls_ = 0;

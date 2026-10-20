@@ -118,6 +118,8 @@ namespace island
         moon_ = std::make_unique<DynamicVertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(),
                                                       MoonVertexCapacity, BufferUsage::WriteOnly);
         moonStaging_.reserve(static_cast<std::size_t>(MoonVertexCapacity));
+        meteor_ = std::make_unique<DynamicVertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(), 12,
+                                                        BufferUsage::WriteOnly);
         const std::string message = "island-simulator: night sky: " + std::to_string(StarCount)
             + " stars and a phased moon over the graded sky; the scene is graded by the hour (golden hours, a dark blue night)";
         std::cout << message << '\n';
@@ -194,7 +196,7 @@ namespace island
     }
 
     void TimeOfDayRenderer::DrawNightSky(const Matrix& view, const Matrix& projection, const Vector3& camera,
-                                         const DayLighting& light)
+                                         const DayLighting& light, const double seconds)
     {
         const float nightness = 1.0f - light.sunVisibility;
         device_.setRasterizerStateProperty(RasterizerState::CullNone);
@@ -212,6 +214,35 @@ namespace island
             skyEffect_->Apply();
             device_.DrawPrimitives(PrimitiveType::TriangleList, 0, starVertexCount_ / 3);
             ++drawCalls_;
+            // A shooting star: a bright head drawing a fading trail as it slides down the sky.
+            const shooting_stars::Meteor meteor = shooting_stars::At(seconds);
+            if (meteor.visible && v > 0.25f) {
+                const auto along = [&](const float t) {
+                    const float elevation = meteor.elevation - 0.30f * t;
+                    const float azimuth = meteor.azimuth + meteor.slant * 0.30f * t;
+                    return Vector3(std::cos(elevation) * std::cos(azimuth), std::sin(elevation),
+                                   std::cos(elevation) * std::sin(azimuth)) * StarDistance;
+                };
+                const float head = meteor.progress, tail = std::max(0.0f, head - 0.28f);
+                const Vector3 h = along(head), t = along(tail);
+                Vector3 width = Vector3::Cross(Vector3::Normalize(h), Vector3::Normalize(h - t));
+                if (width.LengthSquared() < 1e-6f) width = Vector3::UnitX;
+                width = Vector3::Normalize(width) * (StarDistance * 0.0016f);
+                // bright as it streaks, gone at the end
+                const float bright = v * std::sin(std::numbers::pi_v<float> * std::min(meteor.progress * 1.4f, 1.0f));
+                const auto c = [](float x) { return static_cast<int>(std::lround(std::clamp(x, 0.0f, 1.0f) * 255.0f)); };
+                const Color headColour(c(bright), c(bright), c(bright * 0.92f), 255), tailColour(0, 0, 0, 0);
+                const std::array<VertexPositionColor, 6> streak{
+                    VertexPositionColor(t, tailColour), VertexPositionColor(h + width, headColour), VertexPositionColor(h - width, headColour),
+                    VertexPositionColor(h + width, headColour), VertexPositionColor(h + width * 0.2f + (h - t) * 0.04f, headColour),
+                    VertexPositionColor(h - width, headColour)};
+                meteor_->SetData(streak.data(), 0, static_cast<int>(streak.size()), SetDataOptions::Discard);
+                device_.SetVertexBuffer(meteor_.get());
+                skyEffect_->setDiffuseColorProperty(Vector3(1.0f, 1.0f, 1.0f));
+                skyEffect_->Apply();
+                device_.DrawPrimitives(PrimitiveType::TriangleList, 0, 2);
+                ++drawCalls_;
+            }
         }
         // The moon: a disc lit on the side facing the sun, pale by day, with a faint glow at night.
         // It rises and sets through the haze: hidden below half a degree (the distant sea does

@@ -70,6 +70,7 @@
 #include "IslandSimulator/RainRings.hpp"
 #include "IslandSimulator/FireflySwarm.hpp"
 #include "IslandSimulator/MorningMistField.hpp"
+#include "IslandSimulator/ShootingStars.hpp"
 #include "IslandSimulator/CrabBubbleField.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
 #include "IslandSimulator/CicadaColony.hpp"
@@ -6829,6 +6830,19 @@ int main()
             }
             Check(timing && mist.SiteCount() >= 60 && thick == mist.SiteCount() && low,
                   "morning mist lies low on the damp ground at first light only, and not in wind or rain");
+        }
+        // Shooting stars: about one a minute, each under a second, sliding down the sky.
+        {
+            int streaks = 0;
+            bool shortLived = true, inSky = true;
+            double started = -1.0;
+            for (int i = 0; i < 60 * 600; ++i) {
+                const double t = static_cast<double>(i) / 60.0;
+                const auto m = island::shooting_stars::At(t);
+                if (m.visible && started < 0.0) { started = t; ++streaks; inSky = inSky && m.elevation > 0.4f && m.elevation < 1.2f; }
+                if (!m.visible && started >= 0.0) { shortLived = shortLived && t - started < 0.8; started = -1.0; }
+            }
+            Check(streaks >= 6 && streaks <= 13 && shortLived && inSky, "about one shooting star a minute, each under a second, high in the sky");
         }
         // Rain rings on the sea: world-anchored and repeatable, each inside its own cell,
         // more cells striking in heavier rain, none in no rain.
