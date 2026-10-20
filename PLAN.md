@@ -54,6 +54,18 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 202 (2026-10-20) — a dolphin's blowhole opens for the breath
+
+A dolphin surfaced with its blowhole shut. `DolphinState::blowhole` (0..1) now carries the
+breath: the back rising through `BreathDepth` (-0.30 m), outside a leap, opens the blowhole
+for `BreathSeconds` (0.7 s), opening at 10/s and closing at 5/s as the dolphin goes under;
+the breaths are counted (`BreathCount()`). In the near renderer the blowhole's crescent
+opens, its sides parting 2 cm and its lip lifting, on the same vertices. The dolphins
+report line gains "a dolphin's blowhole opens as its back breaks the surface for the breath
+and closes as it goes under" (pinned). DolphinPodTests: through its ten minutes a dolphin
+at the surface has its blowhole open past 0.95, and none deeper than 1.5 m has it open.
+Native `dolphins` passes.
+
 ## Loop pass 201 (2026-10-20) — a perched bird scratches its head
 
 A perched bird never lifted a foot. `BirdState::scratchAmount` (0..1) and `scratchSide`

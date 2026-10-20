@@ -358,10 +358,12 @@ void Near(std::vector<VertexPositionColor> &out, const DolphinState &dolphin,
     Triangle(out, mouthFront, mouthKnee, mouthInner, colors[3]);
   }
   // A small two-facet dorsal blowhole completes the cetacean head cues.
-  const auto blowholeFront = Point(centre, axes, 0, .205f, .745f, scale);
-  const auto blowholeRight = Point(centre, axes, .032f, .195f, .700f, scale);
-  const auto blowholeRear = Point(centre, axes, 0, .205f, .665f, scale);
-  const auto blowholeLeft = Point(centre, axes, -.032f, .195f, .700f, scale);
+  // Breathing, the blowhole's crescent opens: its sides part and its lip lifts a little.
+  const float open = std::clamp(dolphin.blowhole, 0.0f, 1.0f);
+  const auto blowholeFront = Point(centre, axes, 0, .205f + .008f * open, .745f + .010f * open, scale);
+  const auto blowholeRight = Point(centre, axes, .032f + .020f * open, .195f, .700f, scale);
+  const auto blowholeRear = Point(centre, axes, 0, .205f - .006f * open, .665f - .008f * open, scale);
+  const auto blowholeLeft = Point(centre, axes, -.032f - .020f * open, .195f, .700f, scale);
   Triangle(out, blowholeFront, blowholeRight, blowholeRear, colors[3], true);
   Triangle(out, blowholeFront, blowholeRear, blowholeLeft, colors[3], true);
   if (out.size() - start != DolphinRenderer::MaximumNearVertexCount)

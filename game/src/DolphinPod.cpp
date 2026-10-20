@@ -317,5 +317,15 @@ void DolphinPod::UpdateAgent(Agent &agent, const float delta) noexcept {
     agent.slapSeconds = 0;
     agent.state.tailSlap = std::max(0.0f, agent.state.tailSlap - 4.0f * delta);
   }
+  // The breath: the back rising through the breath depth opens the blowhole for a moment.
+  const bool below = agent.state.y < BreathDepth;
+  if (agent.belowBreath && !below && agent.state.behavior != DolphinBehavior::Leap) {
+    agent.breathSeconds = BreathSeconds;
+    ++breaths_;
+  }
+  agent.belowBreath = below;
+  agent.breathSeconds = std::max(0.0f, agent.breathSeconds - delta);
+  agent.state.blowhole += std::clamp((agent.breathSeconds > 0 ? 1.0f : 0.0f) - agent.state.blowhole,
+                                     -5.0f * delta, 10.0f * delta);
 }
 } // namespace island

@@ -19,6 +19,9 @@ struct DolphinState {
   // 0..1 the tail slap: every other surfacing the flukes are raised clear of the water and
   // brought down on it, the splash where they strike.
   float tailSlap = 0;
+  // 0..1 the blowhole open: as the dolphin's back breaks the surface it opens for the
+  // breath and closes again as it goes under.
+  float blowhole = 0;
   DolphinBehavior behavior = DolphinBehavior::Cruise;
   WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
   std::uint8_t colorVariant = 0;
@@ -72,6 +75,9 @@ public:
    *  flukes over TailSlapSeconds and brings them down, the strike noted as a splash. */
   [[nodiscard]] std::uint32_t TailSlapCount() const noexcept { return tailSlaps_; }
   static constexpr float TailSlapSeconds = 1.0f;
+  /** @brief Breaths taken (the blowhole opening as the back breaks the surface). */
+  [[nodiscard]] std::uint32_t BreathCount() const noexcept { return breaths_; }
+  static constexpr float BreathSeconds = 0.7f, BreathDepth = -0.30f;
   /** @brief The shark this frame (while present): a dolphin within BerthDistance of it
    *  turns off its route to keep the berth, a little faster, until it is clear. */
   void SetThreat(float x, float z, bool valid) noexcept;
@@ -94,6 +100,8 @@ private:
     std::uint32_t transitionCount = 0;
     bool berthing = false;
     float slapSeconds = 0;    // remaining tail slap on this surfacing; 0 when none
+    float breathSeconds = 0;  // remaining open blowhole at the breath
+    bool belowBreath = true;  // the back was under the breath depth last update
     bool slapped = false;     // the flukes have struck the water this slap
   };
 
@@ -113,6 +121,7 @@ private:
   std::uint32_t leapCount_ = 0;
   std::uint32_t spyHops_ = 0;
   std::uint32_t tailSlaps_ = 0;
+  std::uint32_t breaths_ = 0;
   Leap lastLeap_;
   Splash splash_;
   float threatX_ = 0, threatZ_ = 0;

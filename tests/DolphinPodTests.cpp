@@ -20,7 +20,7 @@ int main() {
   invalid.Update(std::numeric_limits<float>::quiet_NaN(), NAN, NAN, NAN);
   bool cruise = false, surface = false, dive = false, left = false,
        right = false, up = false, down = false, spyHop = false, hopHeadUp = false,
-       slapRaised = false, slapStruck = false;
+       slapRaised = false, slapStruck = false, breathOpen = false, deepClosed = true;
   bool observedFullTier = false;
   float minimumDepth = 0, maximumDepth = -100;
   float travel = 0;
@@ -60,6 +60,8 @@ int main() {
       dive |= a.behavior == island::DolphinBehavior::Dive;
       spyHop |= a.behavior == island::DolphinBehavior::SpyHop;
       slapRaised |= a.behavior == island::DolphinBehavior::Surface && a.tailSlap > .95f;
+      breathOpen |= a.blowhole > .95f && a.y > -.40f;
+      if (a.y < -1.5f && a.blowhole > .05f) deepClosed = false;
       hopHeadUp |= a.behavior == island::DolphinBehavior::SpyHop && a.pitchRadians > .9f
           && a.y > -.25f && a.speed < .5f;
       minimumDepth = std::min(minimumDepth, a.y);
@@ -80,6 +82,8 @@ int main() {
   slapStruck = pod.TailSlapCount() >= 1 && pod.SplashCount() >= pod.TailSlapCount() + pod.LeapCount();
   Check(slapRaised && slapStruck,
         "a dolphin does not raise its flukes in a tail slap and strike the water with a splash");
+  Check(breathOpen && deepClosed && pod.BreathCount() >= 1,
+        "a dolphin's blowhole does not open at the surface for the breath, or stays open deep");
   Check(maximumDepth > -.40f && minimumDepth < -2.20f,
         "dolphin did not complete surface and dive travel");
   Check(left && right && up && down,
