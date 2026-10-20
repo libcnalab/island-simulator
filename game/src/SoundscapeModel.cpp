@@ -1696,6 +1696,35 @@ namespace island
         return Quantize(samples, .5f);
     }
 
+    AmbientLoop GenerateHoofbeats(const std::uint8_t variant)
+    {
+        // Hoofbeats of an animal trotting off: a drumming of dull thuds in fours, each a
+        // short burst of low filtered noise over a soft thump, the whole fading as the
+        // animal gets its distance; the deer's lighter and quicker than the boar's.
+        constexpr std::size_t frames = static_cast<std::size_t>(AmbientSampleRate * 1.4f);
+        std::vector<float> samples(frames, 0.0f);
+        const bool deer = (variant & 1U) != 0U;
+        DeterministicNoise noise(0x6a1f0b2dU + static_cast<std::uint32_t>(deer) * 977U);
+        const float beatHertz = deer ? 7.2f : 5.4f;
+        float low = 0.0f, slower = 0.0f;
+        for (std::size_t i = 0; i < frames; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            const float raw = noise.Next();
+            low += (deer ? 0.11f : 0.07f) * (raw - low);
+            slower += 0.018f * (low - slower);
+            const float cycle = std::fmod(t * beatHertz, 1.0f);
+            // Fours: the fourth beat a little stronger, a rest after it.
+            const int beat = static_cast<int>(std::fmod(t * beatHertz, 4.0f));
+            const float weight = beat == 3 ? 1.0f : 0.78f;
+            const float hit = SmoothStep(0.0f, 0.06f, cycle) * (1.0f - SmoothStep(0.18f, 0.42f, cycle)) * weight;
+            const float thump = std::sin(2.0f * std::numbers::pi_v<float> * (deer ? 85.0f : 58.0f) * t) * hit * 0.5f;
+            const float fade = 1.0f - SmoothStep(0.55f, 1.0f, t / 1.4f);
+            const float lift = SmoothStep(0.0f, 0.02f, t);
+            samples[i] = lift * fade * (hit * ((low - slower) * 2.0f + (raw - low) * (deer ? 0.35f : 0.22f)) + thump * hit);
+        }
+        return Quantize(samples, deer ? .5f : .6f);
+    }
+
     AmbientLoop GenerateWingClap(const std::uint8_t variant)
     {
         // A flushing bird's wing clap: six quick beats of air in half a second, each a

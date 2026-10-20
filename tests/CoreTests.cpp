@@ -9661,6 +9661,24 @@ int main()
                 "bird chatter PCM is deterministic, two variants, 1 s and silent at endpoints");
             Check(crossings>1500&&quietRuns>=5,"the bird chatter is high and comes in distinct chirps");
         }
+        {
+            // The hoofbeats PCM: deterministic, two variants, 1.4 s, silent at both ends, low
+            // (few zero crossings) and in distinct beats (quiet gaps between).
+            const auto boar=island::GenerateHoofbeats(0),deer=island::GenerateHoofbeats(1);
+            const std::size_t frames=static_cast<std::size_t>(22050*1.4f);
+            int crossings=0,quietRuns=0;bool quiet=false;
+            for(std::size_t i=2205;i<24255;++i) {
+                if((boar.samples[i]>=0)!=(boar.samples[i-1]>=0)) ++crossings;
+                const bool silent=std::abs(static_cast<int>(boar.samples[i]))<40;
+                if(silent&&!quiet) ++quietRuns;
+                quiet=silent;
+            }
+            Check(boar.sampleRate==22050&&boar.samples.size()==frames&&deer.samples.size()==frames
+                &&boar.samples!=deer.samples&&boar.samples==island::GenerateHoofbeats(0).samples
+                &&boar.samples.front()==0&&boar.samples.back()==0&&deer.samples.front()==0&&deer.samples.back()==0,
+                "hoofbeats PCM is deterministic, two variants, 1.4 s and silent at endpoints");
+            Check(crossings<6000&&quietRuns>=4,"the hoofbeats are low and come in distinct beats");
+        }
         // A crocodile on the bank slides into the water when the walker comes near: the entry
         // is noted once, at a point at the water's edge, within a minute.
         {
@@ -9737,6 +9755,20 @@ int main()
             herd.SetBear(sow.x+4.0f,sow.z,true);
             for(int step=0;step<40;++step) herd.Update(0.05f,sow.x+40.0f,sow.y+1.5f,sow.z);
             Check(herd.BearRetreatCount()>=1U&&herd.Boars()[0].behavior==island::BoarBehavior::Retreat,"a boar trots away from the bear");
+        }
+        // A boar's trot off is counted once, with the boar: the walker at four metres sends the
+        // first boar off and the count names it; a deer bolting from the walker likewise.
+        {
+            island::BoarHerd herd(terrain);
+            const auto sow=herd.Boars()[0];
+            for(int step=0;step<10;++step) herd.Update(0.05f,sow.x+4.0f,sow.y+1.5f,sow.z);
+            Check(herd.RetreatCount()==1U&&herd.LastRetreatIndex()==0U&&herd.Boars()[0].behavior==island::BoarBehavior::Retreat,
+                  "the walker at four metres sends the first boar trotting off, counted once");
+            island::DeerHerd deer(terrain,{});
+            const auto doe=deer.Deer()[1];
+            for(int step=0;step<10;++step) deer.Update(0.05f,doe.x+4.0f,doe.y+1.6f,doe.z);
+            Check(deer.BoltCount()>=1U&&deer.Deer()[deer.LastBoltIndex()].behavior==island::DeerBehavior::Retreat,
+                  "the walker at four metres sends a deer bolting, counted with the deer");
         }
         // A resting boar lies down: a second and a half into an undisturbed rest the boar
         // settles onto folded legs (and the rest is lengthened for it); the walker at ten

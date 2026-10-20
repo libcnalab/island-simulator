@@ -78,6 +78,10 @@ namespace island
          *  within ShadeSeekRadius and lies up there. Null keeps the deer resting where it is. */
         void SetLight(const CanopyLightField* light) noexcept { light_ = light; }
         [[nodiscard]] std::uint32_t ShadeRestCount() const noexcept { return shadeRests_; }
+        /** @brief Bolts begun from the walker, and the deer that last began one: its
+         *  hoofbeats drum where it goes. */
+        [[nodiscard]] std::uint32_t BoltCount() const noexcept { return bolts_; }
+        [[nodiscard]] std::size_t LastBoltIndex() const noexcept { return lastBolt_; }
         /** @brief The deer is lying up (a shade rest in progress). */
         [[nodiscard]] bool Bedded(std::size_t index) const noexcept
         {
@@ -129,5 +133,7 @@ namespace island
         float disturbanceX_ = 0.0f, disturbanceZ_ = 0.0f, disturbanceSeconds_ = 0.0f;
         const CanopyLightField* light_ = nullptr;
         std::uint32_t shadeRests_ = 0U;
+        std::uint32_t bolts_ = 0U;
+        std::size_t lastBolt_ = 0U;
     };
 }

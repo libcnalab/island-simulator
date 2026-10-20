@@ -76,6 +76,10 @@ namespace island
         [[nodiscard]] std::uint32_t BearRetreatCount() const noexcept { return bearRetreats_; }
         /** @brief The boar the bear last sent off (valid once BearRetreatCount is nonzero). */
         [[nodiscard]] std::size_t LastBearRetreatIndex() const noexcept { return lastBearRetreat_; }
+        /** @brief Trots off begun, from the walker or the bear, and the boar that last began one:
+         *  its hoofbeats drum where it goes. */
+        [[nodiscard]] std::uint32_t RetreatCount() const noexcept { return retreats_; }
+        [[nodiscard]] std::size_t LastRetreatIndex() const noexcept { return lastRetreat_; }
         /** @brief Fruit and coconuts lying on the ground this frame; a forage may go to one. */
         void SetLyingFruit(std::span<const FallingFruit> fruit) noexcept { lyingFruit_ = fruit; }
         /** @brief Indices into that span the boars ate during the last update. */
@@ -136,5 +140,7 @@ namespace island
         std::uint32_t bearRetreats_ = 0;
         std::size_t lastBearRetreat_ = 0;
         std::uint32_t lies_ = 0;
+        std::uint32_t retreats_ = 0;
+        std::size_t lastRetreat_ = 0;
     };
 }

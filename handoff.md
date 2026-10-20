@@ -205,6 +205,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 141: the fish, stingrays, sea turtles and the shark cast soft shadows on the sandy seabed (`SeabedShadowProjection`, `SeabedShadowRenderer`) (PLAN "Loop pass 141").
 - Pass 142: at the jetty-foot pause the resident casts a line, rod in the right hand and a float past the deck's end (`ResidentMotion::SetFishingSpot`, `ResidentState::fishing`) (PLAN "Loop pass 142").
 - Pass 143: the fishing float rides the swell and the rod is lifted every dozen seconds (`floatBob`, `rodLift`, `resident-fishing` QA viewpoint) (PLAN "Loop pass 143").
+- Pass 144: a boar trotting off or a deer bounding away drums its hoofbeats (`GenerateHoofbeats`, `WildlifeCallType::Hoofbeats`, herd retreat/bolt counts) (PLAN "Loop pass 144").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

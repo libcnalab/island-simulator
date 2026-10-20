@@ -341,7 +341,8 @@ namespace island
         Resident,
         WingClap,
         Crocodile,
-        Chatter
+        Chatter,
+        Hoofbeats
     };
 
     /** @brief Nearest currently eligible world-space source for one wildlife species. */
@@ -538,6 +539,9 @@ namespace island
     [[nodiscard]] AmbientLoop GenerateCrocodileHiss(std::uint8_t variant);
     /** @brief Original bird alarm chatter: a run of sharp quick chirps over a snake, one second. */
     [[nodiscard]] AmbientLoop GenerateBirdChatter(std::uint8_t variant);
+    /** @brief Original hoofbeats of an animal trotting off: a drumming of dull thuds, 1.4 s;
+     *  variant 0 a boar's heavy trot, 1 a deer's lighter bounds. */
+    [[nodiscard]] AmbientLoop GenerateHoofbeats(std::uint8_t variant);
     [[nodiscard]] float SnakeHissVolume(float distance) noexcept;
 
     struct SnakeHissRequest

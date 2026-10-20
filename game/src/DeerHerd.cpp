@@ -241,6 +241,7 @@ namespace island
             : std::numeric_limits<float>::infinity();
         bool alertFacing = false;
         if (observerDistance < 9.0f) {
+            if (agent.state.behavior != DeerBehavior::Retreat) { ++bolts_; lastBolt_ = index; }
             agent.state.behavior = DeerBehavior::Retreat;
             agent.behaviorSeconds = 1.8f;
             // Bound away about seventy degrees off the direct line of escape: the deer keeps

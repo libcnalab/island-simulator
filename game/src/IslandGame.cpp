@@ -2577,6 +2577,7 @@ namespace island
                   << "island-simulator: at the campfire the resident crouches to tend the fire, hands to the flames, and stands again to walk on\n"
                   << "island-simulator: at the jetty foot the resident casts a line, the rod held out in the right hand and the float riding the shallows past the deck's end, and takes it in to walk on\n"
                   << "island-simulator: the float rides the swell on its line, and every dozen seconds the resident lifts the rod to check it\n"
+                  << "island-simulator: a boar trotting off or a deer bounding away drums its hoofbeats, an original run of dull thuds in fours heard within twenty metres, the deer's lighter and quicker\n"
                   << "island-simulator: monkey tree routes reject isolated canopy and mangroves\n"
                   << "island-simulator: monkeys walk to fruit lying under the crowns and eat it, idling over the spot\n"
                   << "island-simulator: boars forage for the fallen fruit and coconuts before the trunk bases and eat them where they lie\n"
@@ -3204,6 +3205,12 @@ namespace island
             boarHerd_.Update(viewpoint_ == FixedViewpoint::BoarLyingDetail ? 0.0f : deltaSeconds,
                              cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
         for (const std::size_t eaten : boarHerd_.EatenFruit()) fallingFruit_.Consume(eaten);
+        // A boar trotting off drums its hoofbeats.
+        if (soundscape_ && boarHerd_.RetreatCount() != notedBoarRetreats_) {
+            notedBoarRetreats_ = boarHerd_.RetreatCount();
+            const auto& runner = boarHerd_.Boars()[boarHerd_.LastRetreatIndex()];
+            soundscape_->NoteHoofbeats(runner.x, runner.y + 0.4f, runner.z, 0U);
+        }
         // The boars' hooves print the stream's drainage mud on the wallow trip and any wet
         // sand they cross.
         for(std::size_t i=0;i<boarHerd_.Boars().size()&&i<boarPrints_.size();++i) {
@@ -3297,6 +3304,12 @@ namespace island
             soundscape_->NoteDeerSnort(sentinel.x,sentinel.y+1.1f*sentinel.scale,sentinel.z);
         }
         deerSentinelWasAlert_=deer_->SentinelAlert();
+        // A deer bounding off drums its hoofbeats, lighter and quicker than a boar's.
+        if (soundscape_ && deer_->BoltCount() != notedDeerBolts_) {
+            notedDeerBolts_ = deer_->BoltCount();
+            const auto& bolter = deer_->Deer()[deer_->LastBoltIndex()];
+            soundscape_->NoteHoofbeats(bolter.x, bolter.y + 0.6f, bolter.z, 1U);
+        }
         // The deer's hooves press cloven prints into wet sand and the shallows' bed as they
         // walk (the stream bank they drink at), a stride apart.
         for(std::size_t i=0;i<deer_->Deer().size()&&i<deerPrints_.size();++i) {

@@ -54,6 +54,25 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 144 (2026-10-20) — hoofbeats
+
+A boar trotting off from the walker or the bear, and a deer bounding away, went in
+silence. `BoarHerd::RetreatCount` / `LastRetreatIndex` and `DeerHerd::BoltCount` /
+`LastBoltIndex` now count each trot or bolt once as it begins, naming the animal; the game
+notes a hoofbeat voice at it through the soundscape: `GenerateHoofbeats` (two variants,
+1.4 s: a drumming of dull thuds in fours — a short burst of low filtered noise over a
+soft 58 or 85 Hz thump, the fourth beat stronger, fading as the animal gets its distance;
+the deer's lighter and quicker at 7.2 beats a second to the boar's 5.4),
+`WildlifeCallType::Hoofbeats`, `NoteHoofbeats(x, y, z, variant)` (pending a second, heard
+within about twenty metres, a 1.45 s slot), effects created and reset with the other
+one-shots, and the first-played line "first positional hoofbeats played". General report
+line: "a boar trotting off or a deer bounding away drums its hoofbeats, an original run
+of dull thuds in fours heard within twenty metres, the deer's lighter and quicker"
+(pinned). Core checks: the hoofbeats PCM is deterministic, two variants, 1.4 s, silent at
+the ends, low and in distinct beats; the walker at four metres sends the first boar
+trotting off, counted once and named, and a deer bolting, counted with the deer. Native
+`boars` passes.
+
 ## Loop pass 143 (2026-10-20) — the float rides the swell
 
 The float of pass 142 sat fixed on the water and the rod never moved. `ResidentState::

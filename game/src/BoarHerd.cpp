@@ -281,6 +281,10 @@ namespace island
         const bool oddAgent = (static_cast<std::size_t>(&agent - agents_.data()) % 2U) == 1U;
         bool alertFacing = false;
         if (observerDistance < 6.0f) {
+            if (state.behavior != BoarBehavior::Retreat) {
+                ++retreats_;
+                lastRetreat_ = static_cast<std::size_t>(&agent - agents_.data());
+            }
             state.behavior = BoarBehavior::Retreat;
             agent.remainingSeconds = 2.0f;
             // Trot off about seventy degrees from the direct line of escape so the boar
