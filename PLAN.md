@@ -54,6 +54,22 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 118 (2026-10-20) — a basking crocodile gapes
+
+A crocodile on the bank lay with its jaws all but closed (a slow 0..0.14 breathing sway),
+opening them only for the hiss of pass 110. Real crocodiles lie with the mouth open to shed
+heat. Each lie-up on the bank now carries a gape: `gapeDelay` (4–8 s into the bask, 5 s and
+9 s for the seeded pair) then `gapeSeconds` = 14 s during which the jaw target is
+`GapeOpen` 0.5 (the hiss's 0.62 still overrides), the jaw easing there at the existing
+0.18/s; moving off (crawl, swim, retreat) or the water drops the gape, and an alert at the
+walker pauses it. `GapeCount()` counts gapes begun, `GapingCount()` the crocodiles
+mid-gape. The crocodile report line gains "a basking crocodile gapes, holding its jaws
+open for fourteen seconds a few seconds into each lie-up on the bank" (pinned). Core
+checks: a basking crocodile's jaws reach the gape between three and eleven seconds into
+its lie-up and hold short of the hiss's gape; the swimming crocodile never gapes; forty
+seconds on the gape has closed unless a new lie-up has begun one. Native `crocodiles`
+passes (luminance deviation 36.1).
+
 ## Loop pass 117 (2026-10-20) — a perched bird preens
 
 A perched bird sat through its stay with its head fixed forward, only a parrot on a

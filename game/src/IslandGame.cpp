@@ -2446,7 +2446,8 @@ namespace island
                   << "island-simulator: the boars stand off from the bear and trot away when it comes close, as from the walker\n"
                   << "island-simulator: the hut's roof ridge is a perch for the birds\n"
                   << "island-simulator: crocodiles " << crocodileGroup_.Crocodiles().size()
-                  << " agents bask, crawl, swim, and retreat within the stream estuary; one coming alert on its bank hisses at the walker, an original low open-jawed breath heard within thirty metres\n"
+                  << " agents bask, crawl, swim, and retreat within the stream estuary; one coming alert on its bank hisses at the walker, an original low open-jawed breath heard within thirty metres; "
+                  << "a basking crocodile gapes, holding its jaws open for fourteen seconds a few seconds into each lie-up on the bank\n"
                   << "island-simulator: fish " << fishSchools_.Fish().size()
                   << " agents in " << FishSchools::SchoolCount
                   << " distance-throttled shallow-water schools\n"

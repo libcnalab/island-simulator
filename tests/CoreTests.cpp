@@ -9234,6 +9234,32 @@ int main()
             Check(wary.Crocodiles()[basking].jawOpen>.2f,"the hissing crocodile gapes");
             for(int step=0;step<100;++step) wary.Update(0.05f,lie.x+20.0f,lie.y+1.6f,lie.z);
             Check(wary.LastHiss().count==noted,"the hiss is not given again while the walker stays");
+            // A basking crocodile gapes: a few seconds into its lie-up the jaws open to the
+            // gape and hold there, then close again within the bask; the swimming one never
+            // gapes.
+            island::CrocodileGroup gaper(terrain);
+            std::size_t lying=island::CrocodileGroup::CrocodileCount;
+            for(std::size_t i=0;i<gaper.Crocodiles().size();++i) if(gaper.Crocodiles()[i].behavior==island::CrocodileBehavior::Bask&&gaper.Crocodiles()[i].submerged<.2f) { lying=i; break; }
+            Check(lying<island::CrocodileGroup::CrocodileCount,"a crocodile starts basking on the bank for the gape check");
+            const auto bank=gaper.Crocodiles()[lying];
+            float widest=0.0f; int opened=-1;
+            for(int step=0;step<240;++step) {
+                gaper.Update(0.05f,bank.x+60.0f,bank.y+1.6f,bank.z);
+                const float jaw=gaper.Crocodiles()[lying].jawOpen;
+                if(jaw>widest) widest=jaw;
+                if(opened<0&&jaw>.4f) opened=step;
+            }
+            Check(gaper.GapeCount()>=1U&&opened>=60&&opened<220,
+                  "a basking crocodile gapes a few seconds into its lie-up, the jaws reaching the gape within eleven seconds");
+            Check(widest<.6f,"the gape is held short of the hiss's gape");
+            bool swimmerGaped=false;
+            for(int step=0;step<600;++step) {
+                gaper.Update(0.05f,bank.x+60.0f,bank.y+1.6f,bank.z);
+                for(const auto& croc:gaper.Crocodiles()) if(croc.behavior==island::CrocodileBehavior::Swim&&croc.jawOpen>.3f) swimmerGaped=true;
+            }
+            Check(!swimmerGaped,"a swimming crocodile never gapes");
+            Check(gaper.Crocodiles()[lying].jawOpen<.3f||gaper.GapingCount()>=1U,
+                  "forty seconds on, the first gape has closed unless a new lie-up has begun one");
         }
         {
             // The crocodile's hiss PCM: deterministic, two variants, 1.2 s, silent at both

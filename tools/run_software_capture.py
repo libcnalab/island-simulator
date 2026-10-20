@@ -1280,6 +1280,8 @@ def main():
                 raise RuntimeError("current deer bedding is missing; check for a stale executable")
             if "a perched bird preens between its looks around" not in diagnostics:
                 raise RuntimeError("current bird preening is missing; check for a stale executable")
+            if "a basking crocodile gapes, holding its jaws open for fourteen seconds" not in diagnostics:
+                raise RuntimeError("current crocodile gape is missing; check for a stale executable")
             if args.viewpoint == "bird-preen" and "bird QA camera frames one perched bird preening" not in diagnostics:
                 raise RuntimeError("bird preen capture did not hold the perched bird mid-preen")
             if args.viewpoint == "bird-preen" and not re.search(r"bird preen proof: bird 0 behavior=2 preen=1 preening=1 near=[1-9]", diagnostics):

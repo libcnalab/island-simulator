@@ -58,6 +58,13 @@ public:
     struct Hiss { float x=0,y=0,z=0; std::uint32_t count=0; bool valid=false; };
     [[nodiscard]] const Hiss& LastHiss()const noexcept{return hiss_;}
     static constexpr float HissSeconds=1.6f;
+    /** @brief Gapes: a few seconds into each lie-up on the bank a basking crocodile opens
+     *  its jaws and holds them open for GapeSeconds (the thermoregulatory gape), closing
+     *  them again or when it moves off; counted as they begin. */
+    [[nodiscard]] std::uint32_t GapeCount()const noexcept{return gapes_;}
+    [[nodiscard]] std::size_t GapingCount()const noexcept;
+    static constexpr float GapeSeconds=14.0f;
+    static constexpr float GapeOpen=.50f;
     static constexpr float EntrySeconds=2.6f;
     [[nodiscard]] std::span<const CrocodileHome> Homes()const noexcept{return homes_;}
     [[nodiscard]] int FullSimulationCount()const noexcept{return fullCount_;}
@@ -75,6 +82,8 @@ private:
         std::uint32_t transitions=0;
         bool wasAlert=false;
         float hissSeconds=0;
+        float gapeDelay=0,gapeSeconds=0;   // the wait into a bask before the gape, and its remainder
+        bool gaping=false;
     };
     [[nodiscard]] std::pair<float,float> FindAnchor(float lateral,float targetShore,
                                                     bool requireDry)const;
@@ -91,6 +100,7 @@ private:
     std::uint64_t frameIndex_=0;
     Entry entry_;
     Hiss hiss_;
+    std::uint32_t gapes_=0;
     int fullCount_=0,reducedCount_=0,dormantCount_=0;
 };
 

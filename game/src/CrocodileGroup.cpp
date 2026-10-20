@@ -49,6 +49,9 @@ void CrocodileGroup::InitializeAgents() {
         agent.state.scale=.92f+static_cast<float>(i)*.10f;
         agent.state.colorVariant=static_cast<std::uint8_t>(i);
         agent.state.behavior=i==2?CrocodileBehavior::Swim:CrocodileBehavior::Bask;
+        // The basking pair gape a few seconds in, one after the other.
+        agent.gapeDelay=5.0f+static_cast<float>(i)*4.0f;
+        agent.gapeSeconds=GapeSeconds;
         agent.behaviorSeconds=8.0f+static_cast<float>(i)*4.0f;
         agent.phaseOffset=.8f+static_cast<float>(i)*1.71f;
         const auto sample=terrain_.Sample(agent.state.x,agent.state.z);
@@ -141,6 +144,12 @@ void CrocodileGroup::Update(float deltaSeconds,float observerX,float observerY,
 #endif
 }
 
+std::size_t CrocodileGroup::GapingCount()const noexcept{
+    std::size_t count=0;
+    for(const Agent& agent:agents_) count+=agent.gaping?1U:0U;
+    return count;
+}
+
 void CrocodileGroup::UpdateAgent(Agent& agent,float dt,float observerX,float observerZ,
                                  bool observerValid) noexcept {
     if(dt<=0)return;
@@ -176,7 +185,10 @@ void CrocodileGroup::UpdateAgent(Agent& agent,float dt,float observerX,float obs
             case CrocodileBehavior::Swim:
             case CrocodileBehavior::Retreat:
                 agent.state.behavior=CrocodileBehavior::Bask;
-                agent.behaviorSeconds=16.0f+static_cast<float>(agent.transitions%4U)*4.0f;break;
+                agent.behaviorSeconds=16.0f+static_cast<float>(agent.transitions%4U)*4.0f;
+                agent.gapeDelay=4.0f+static_cast<float>(agent.transitions%3U)*2.0f;
+                agent.gapeSeconds=GapeSeconds;
+                break;
             }
         }
     }
@@ -232,7 +244,21 @@ void CrocodileGroup::UpdateAgent(Agent& agent,float dt,float observerX,float obs
     agent.state.bodyWave=std::sin(agent.state.gaitPhase)*(.10f+.18f*agent.state.submerged);
     agent.wasAlert=alertFacing;
     agent.hissSeconds=std::max(0.0f,agent.hissSeconds-dt);
-    const float jawTarget=agent.hissSeconds>0.0f?.62f:agent.state.behavior==CrocodileBehavior::Bask
+    // The gape: a few seconds into a lie-up on the bank the jaws open and stay open for
+    // GapeSeconds; moving off, or the water, closes them.
+    const bool lying=agent.state.behavior==CrocodileBehavior::Bask&&agent.state.submerged<.2f;
+    if(lying&&!alertFacing) {
+        if(agent.gapeDelay>0.0f) agent.gapeDelay-=dt;
+        else if(agent.gapeSeconds>0.0f) {
+            if(!agent.gaping) {agent.gaping=true;++gapes_;}
+            agent.gapeSeconds-=dt;
+        } else agent.gaping=false;
+    } else {
+        if(!lying) {agent.gapeSeconds=0.0f;agent.gapeDelay=0.0f;}
+        agent.gaping=false;
+    }
+    const float jawTarget=agent.hissSeconds>0.0f?.62f:agent.gaping?GapeOpen
+        :agent.state.behavior==CrocodileBehavior::Bask
         ?(.5f+.5f*std::sin(elapsedSeconds_*.12f+agent.phaseOffset))*.14f:0.0f;
     agent.state.jawOpen+=std::clamp(jawTarget-agent.state.jawOpen,-dt*.18f,dt*.18f);
 }
