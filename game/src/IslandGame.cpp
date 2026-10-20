@@ -2311,7 +2311,7 @@ namespace island
                   << " and rats " << RodentPopulation::RatCount
                   << " forage, scurry, and hide in bounded inland edge habitats\n"
                   << "island-simulator: flies " << FlySwarms::Count
-                  << " agents in four close-range inland organic-ground swarms\n"
+                  << " agents in four close-range inland organic-ground swarms; a swarm with fermenting fruit lying within ten metres shifts over it and hangs low there\n"
                   << "island-simulator: ants " << AntTrails::Count
                   << " agents in three soil trails and one real broadleaf-trunk trail\n"
                   << "island-simulator: cicadas " << CicadaColony::Count
@@ -2829,6 +2829,7 @@ namespace island
             const FlyState& fly = flySwarms_.Flies()[FlySwarms::PerSwarm];
             flyObserver = Vector3(fly.x, fly.y + 12.0f, fly.z);
         }
+        flySwarms_.SetLyingFruit(fallingFruit_.Fruit());
         flySwarms_.Update(viewpoint_ == FixedViewpoint::FlyDetail ? 0.0f : deltaSeconds,
                           flyObserver.X, flyObserver.Y, flyObserver.Z);
         Vector3 antObserver=cameraPosition_;

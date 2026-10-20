@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 81 (2026-10-20) — fly swarms gather over fermenting fruit
+
+The four fly swarms hung over their own patches of organic ground whatever fell nearby.
+`FlySwarms::SetLyingFruit` hands them the fruit field; each fly keeps its swarm's own
+ground (`baseX/Z`) and its working centre (`home`) shifts at 1 m/s over the nearest fruit
+that has lain twenty seconds (`FermentSeconds`, as for the butterflies; coconuts never draw
+them) within 10 m of that ground, and there the swarm hangs low (0.26 m over the fruit
+instead of 0.5–0.9 m); with the fruit gone the centre drifts back to its ground and height.
+`FruitVisitCount()` and `AtFruitCount()` expose it. The startup report's flies line gains
+"a swarm with fermenting fruit lying within ten metres shifts over it and hangs low there",
+pinned by the native capture tool. Core checks: fresh fruit draws no flies; once it has
+fermented the swarm is over it and low within forty seconds; with the fruit gone it is back
+over its own ground and height. Native `flies` passes.
+
 ## Loop pass 80 (2026-10-20) — mice and rats feed at fallen fruit
 
 The rodents foraged in loops that never noticed the fruit the monkeys and bats let fall.

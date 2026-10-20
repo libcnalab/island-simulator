@@ -1,5 +1,6 @@
 #include "IslandSimulator/FlySwarms.hpp"
 
+#include "IslandSimulator/FallingFruitField.hpp"
 #include "IslandSimulator/IslandEnvironmentField.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
@@ -41,9 +42,12 @@ namespace island
         Agent& agent = agents_[index];
         const std::size_t swarm = index / PerSwarm;
         agent.home = {Centres[swarm][0], Centres[swarm][1], 2.8f + .25f * swarm};
+        agent.baseX = agent.home.x;
+        agent.baseZ = agent.home.z;
         agent.angle = static_cast<float>(index) * 2.39996323f;
         agent.radius = .35f + .16f * static_cast<float>(index % PerSwarm);
         agent.altitude = .48f + .12f * static_cast<float>(index % 4U);
+        agent.baseAltitude = agent.altitude;
         agent.state.x = agent.home.x + std::cos(agent.angle) * agent.radius;
         agent.state.z = agent.home.z + std::sin(agent.angle) * agent.radius;
         const TerrainSample sample = terrain_.Sample(agent.state.x, agent.state.z);
@@ -86,11 +90,55 @@ namespace island
         }
     }
 
+    // The nearest fruit lying still long enough to ferment within FruitRange of the swarm's
+    // own ground; coconuts never draw them.
+    bool FlySwarms::FindFermentingFruit(const Agent& agent, float& x, float& z) const noexcept
+    {
+        float best = FruitRange;
+        bool found = false;
+        for (const FallingFruit& fruit : lyingFruit_) {
+            if (!fruit.active || fruit.restSeconds < FermentSeconds || fruit.rolling || fruit.afloat
+                || fruit.variant == FallingFruitField::CoconutVariant) continue;
+            const float distance = std::hypot(fruit.x - agent.baseX, fruit.z - agent.baseZ);
+            if (distance >= best) continue;
+            best = distance;
+            x = fruit.x;
+            z = fruit.z;
+            found = true;
+        }
+        return found;
+    }
+
+    std::size_t FlySwarms::AtFruitCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.atFruit ? 1U : 0U;
+        return count;
+    }
+
     void FlySwarms::UpdateAgent(Agent& agent, const float deltaSeconds,
                                 const float observerX, const float observerZ,
                                 const bool observerValid) noexcept
     {
         if (deltaSeconds <= 0.0f) return;
+        // The swarm's centre shifts over fermenting fruit on its ground and hangs low there;
+        // with the fruit gone it drifts back to its own ground and height.
+        float fruitX = 0.0f, fruitZ = 0.0f;
+        const bool fruitNear = FindFermentingFruit(agent, fruitX, fruitZ);
+        const float wantX = fruitNear ? fruitX : agent.baseX;
+        const float wantZ = fruitNear ? fruitZ : agent.baseZ;
+        const float shiftX = wantX - agent.home.x, shiftZ = wantZ - agent.home.z;
+        const float shift = std::hypot(shiftX, shiftZ);
+        const float shiftStep = std::min(shift, ShiftSpeed * deltaSeconds);
+        if (shift > 0.001f) {
+            agent.home.x += shiftX / shift * shiftStep;
+            agent.home.z += shiftZ / shift * shiftStep;
+        }
+        const bool wasAtFruit = agent.atFruit;
+        agent.atFruit = fruitNear && shift < 1.0f;
+        if (agent.atFruit && !wasAtFruit) ++fruitVisits_;
+        const float wantAltitude = agent.atFruit ? FruitAltitude : agent.baseAltitude;
+        agent.altitude += std::clamp(wantAltitude - agent.altitude, -.4f * deltaSeconds, .4f * deltaSeconds);
         const float distance = observerValid
             ? std::hypot(agent.state.x - observerX, agent.state.z - observerZ)
             : std::numeric_limits<float>::infinity();

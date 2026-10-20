@@ -7678,6 +7678,53 @@ int main()
     }
 
     {
+        // Fermenting fruit on a fly swarm's ground: the swarm shifts over it and hangs low
+        // there; with the fruit gone it drifts back to its own ground and height. Fresh fruit
+        // does not draw it.
+        const island::IslandTerrain terrain;
+        island::FlySwarms flies(terrain);
+        const island::FlyHome base = flies.Homes()[0];
+        island::FallingFruitField field(terrain);
+        field.DropFrom(island::CanopyPlacement{base.x + 3.0f, terrain.Height(base.x + 3.0f, base.z), base.z, 0.4f, 1.0f, 2U});
+        const std::vector<island::MonkeyState> nobody;
+        for (int step = 0; step < 300; ++step) field.Update(0.05f, nobody);
+        std::size_t lying = field.Fruit().size();
+        for (std::size_t i = 0; i < field.Fruit().size(); ++i)
+            if (field.Fruit()[i].active && field.Fruit()[i].restSeconds >= 0.0f && !field.Fruit()[i].rolling) lying = i;
+        Check(lying < field.Fruit().size() && std::hypot(field.Fruit()[lying].x - base.x, field.Fruit()[lying].z - base.z) < island::FlySwarms::FruitRange,
+              "a fruit lies within the swarm's range");
+        flies.SetLyingFruit(field.Fruit());
+        for (int step = 0; step < 200; ++step) flies.Update(0.05f, base.x + 8.0f, terrain.Height(base.x, base.z) + 1.0f, base.z);
+        Check(flies.FruitVisitCount() == 0U && flies.AtFruitCount() == 0U, "fresh fruit draws no flies");
+        for (int step = 0; step < 500; ++step) field.Update(0.05f, nobody);
+        Check(field.Fruit()[lying].active && field.Fruit()[lying].restSeconds >= island::FlySwarms::FermentSeconds, "the fruit has lain long enough to ferment");
+        const float fruitX = field.Fruit()[lying].x, fruitZ = field.Fruit()[lying].z;
+        bool over = false;
+        for (int step = 0; step < 800 && !over; ++step) {
+            flies.Update(0.05f, base.x + 8.0f, terrain.Height(base.x, base.z) + 1.0f, base.z);
+            std::size_t near = 0;
+            for (std::size_t i = 0; i < island::FlySwarms::PerSwarm; ++i) {
+                const auto& fly = flies.Flies()[i];
+                if (std::hypot(fly.x - fruitX, fly.z - fruitZ) < 2.0f && fly.y < terrain.Height(fly.x, fly.z) + 0.45f) ++near;
+            }
+            over = near >= island::FlySwarms::PerSwarm - 1U && flies.AtFruitCount() >= island::FlySwarms::PerSwarm - 1U;
+        }
+        Check(over && flies.FruitVisitCount() >= 1U, "the swarm shifts over the fermenting fruit and hangs low there within forty seconds");
+        flies.SetLyingFruit({});
+        bool home = false;
+        for (int step = 0; step < 800 && !home; ++step) {
+            flies.Update(0.05f, base.x + 8.0f, terrain.Height(base.x, base.z) + 1.0f, base.z);
+            std::size_t back = 0;
+            for (std::size_t i = 0; i < island::FlySwarms::PerSwarm; ++i) {
+                const auto& fly = flies.Flies()[i];
+                if (std::hypot(fly.x - base.x, fly.z - base.z) < 2.0f && fly.y > terrain.Height(fly.x, fly.z) + 0.4f) ++back;
+            }
+            home = back >= island::FlySwarms::PerSwarm - 1U && flies.AtFruitCount() == 0U;
+        }
+        Check(home, "with the fruit gone the swarm drifts back to its own ground and height");
+    }
+
+    {
         // Fruit lying inside a rodent's range: the rodent's next forage goes to it, it feeds
         // there (still, nibbling) for a while, then rests; fruit beyond its range it ignores.
         const island::IslandTerrain terrain;

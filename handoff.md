@@ -141,6 +141,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 78: a fish school passing the jetty turns in and holds off the end of the deck in its shade a while (PLAN "Loop pass 78").
 - Pass 79: a roosting fruit bat's stir in its crown lets a fruit drop and a leaf come loose (PLAN "Loop pass 79").
 - Pass 80: a mouse or rat setting out to forage goes to fruit lying within six metres and nibbles there (PLAN "Loop pass 80").
+- Pass 81: a fly swarm with fermenting fruit within ten metres shifts over it and hangs low there (PLAN "Loop pass 81").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted
