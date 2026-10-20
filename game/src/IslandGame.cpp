@@ -2580,6 +2580,7 @@ namespace island
         }
         fallingFruit_.Update(deltaSeconds, monkeyTroop_.Monkeys());
         streamDrift_.Update(deltaSeconds);
+        streamFish_.SetLeaves(streamDrift_.Leaves());
         streamFish_.Update(deltaSeconds,playerMotion_.Position().x,playerMotion_.Position().z);
         fallingFruit_.UpdateCoconuts(seaForageSeconds_, cameraPosition_.X, cameraPosition_.Z);
         if (soundscape_ && fallingFruit_.LastCoconutLanding().count != notedThudCount_) {

@@ -46,6 +46,18 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 32 (2026-10-20) — the fish rise to the drifting leaves
+
+The pool fish and the drifting leaves shared the water without noticing each other. The fish
+field now reads the leaf span each frame (`StreamFishField::SetLeaves`, set by the game from
+the drift field): a holding fish with a leaf inside 1.2 m that has not yet passed it brings
+its next dart forward at once and steers the dart's lateral line to the leaf's, so the fish
+rises under the leaf and drifts back; `RiseCount()` counts these and the ordinary dart
+clock resumes after. The fish diagnostic gains "a leaf drifting over a fish draws it up in a
+dart", pinned by the native capture tool. Core check: with the drift field feeding the pool,
+a fish rises to a leaf within five simulated minutes and every fish is still inside the
+pool. Native `cascade` passes.
+
 ## Loop pass 31 (2026-10-20) — the resident looks out to sea at the jetty
 
 The resident's call at the jetty foot was a pause facing wherever the path happened to point.

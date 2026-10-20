@@ -25,7 +25,7 @@ StreamFishRenderer::StreamFishRenderer(GraphicsDevice& device)
     effect_->setFogEnabledProperty(true);
     effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
     effect_->setFogStartProperty(300.0f);effect_->setFogEndProperty(760.0f);
-    const char* message="island-simulator: small fish hold station in the plunge pool facing upstream, dart now and then and scatter to the deep when the walker comes near";
+    const char* message="island-simulator: small fish hold station in the plunge pool facing upstream, dart now and then and scatter to the deep when the walker comes near; a leaf drifting over a fish draws it up in a dart";
     std::cout<<message<<'\n';MirrorRuntimeDiagnosticToPlatformLog(message);
 }
 

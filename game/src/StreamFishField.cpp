@@ -71,8 +71,20 @@ void StreamFishField::Update(const float deltaSeconds,const float observerX,cons
                 // A dart upstream, then it drifts back to its station with the current.
                 fish.dartSeconds=std::max(0.0f,fish.dartSeconds-dt);
                 fish.distance=std::max(poolStart_,fish.distance-(DartLength/DartSeconds)*dt);
+                if(fish.riseLateral>-2.0f) fish.lateral+=std::clamp(fish.riseLateral-fish.lateral,-1.5f*dt,1.5f*dt);
             } else {
+                fish.riseLateral=-3.0f;
                 fish.nextDartSeconds-=dt;
+                // A leaf drifting over the holding fish, within reach and not yet past it,
+                // brings the dart forward: the fish rises toward the leaf's line.
+                if(fish.nextDartSeconds>1.0f) {
+                    for(const DriftingLeaf& leaf:leaves_) {
+                        if(!leaf.active||!std::isfinite(leaf.x)||!std::isfinite(leaf.z)) continue;
+                        if(std::hypot(leaf.x-fish.x,leaf.z-fish.z)>RiseReach||leaf.distance>fish.distance+0.3f) continue;
+                        fish.nextDartSeconds=0.0f;fish.riseLateral=std::clamp(leaf.lateral,-0.9f,0.9f);++rises_;
+                        break;
+                    }
+                }
                 if(fish.nextDartSeconds<=0.0f) {
                     fish.dartSeconds=DartSeconds;++darts_;
                     fish.nextDartSeconds=4.0f+static_cast<float>((darts_*5U)%6U);

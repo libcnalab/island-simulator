@@ -1,5 +1,6 @@
 #pragma once
 #include "IslandSimulator/StreamCourse.hpp"
+#include "IslandSimulator/StreamDriftField.hpp"
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -15,6 +16,7 @@ struct StreamFish {
     float holdDistance=0,holdLateral=0;   // the station it returns to
     float dartSeconds=0;    // remaining dart; 0 while holding
     float nextDartSeconds=0;
+    float riseLateral=-3.0f;   // the leaf's line this dart rises to; below -2 for an ordinary dart
     float tailPhase=0;
     bool hiding=false;      // scattered to the deep by the walker
     bool active=false;
@@ -31,6 +33,11 @@ public:
     static constexpr float MinimumDepth=0.06f,MaximumDepth=0.22f;
     explicit StreamFishField(const IslandTerrain& terrain);
     void Update(float deltaSeconds,float observerX,float observerZ) noexcept;
+    /** @brief The leaves afloat this frame; one passing over a holding fish draws it up in a
+     *  dart to the leaf's line, as a fish rises to anything that lands on its pool. */
+    void SetLeaves(std::span<const DriftingLeaf> leaves) noexcept {leaves_=leaves;}
+    [[nodiscard]] std::uint32_t RiseCount() const noexcept {return rises_;}
+    static constexpr float RiseReach=1.2f;
     [[nodiscard]] std::span<const StreamFish> Fish() const noexcept {return fish_;}
     [[nodiscard]] const StreamCourse& Course() const noexcept {return course_;}
     [[nodiscard]] std::uint32_t ScatterCount() const noexcept {return scatters_;}
@@ -45,7 +52,8 @@ private:
     StreamCourse course_;
     std::array<StreamFish,Capacity> fish_{};
     float poolStart_=0,poolEnd_=0,deepDistance_=0;
-    std::uint32_t scatters_=0,darts_=0;
+    std::uint32_t scatters_=0,darts_=0,rises_=0;
+    std::span<const DriftingLeaf> leaves_;
     bool wasNear_=false;
 };
 }

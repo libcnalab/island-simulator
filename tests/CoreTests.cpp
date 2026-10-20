@@ -7711,6 +7711,18 @@ int main()
         for(int step=0;step<600;++step) pool.Update(0.05f,1000.0f,1000.0f);
         float spreadBack=0; for(const auto& f:pool.Fish()) { spreadBack+=std::abs(f.distance-pool.DeepDistance()); allInPool=allInPool&&inPool(f); }
         Check(allInPool&&spreadBack>spreadAfter*2.0f,"left alone, the fish spread back to their stations");
+        // Leaves drifting through the pool draw the fish up: with the drift field feeding the
+        // pool, a fish rises to a passing leaf within five minutes and the dart ends on the
+        // leaf's line.
+        island::StreamDriftField leaves(terrain);
+        for(int step=0;step<6000&&pool.RiseCount()==0U;++step) {
+            leaves.Update(0.05f);
+            pool.SetLeaves(leaves.Leaves());
+            pool.Update(0.05f,1000.0f,1000.0f);
+        }
+        bool inPoolStill=true;
+        for(const auto& f:pool.Fish()) inPoolStill=inPoolStill&&inPool(f);
+        Check(pool.RiseCount()>=1U&&inPoolStill,"a fish rises to a leaf drifting over the pool within five minutes");
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls
         // on a little before it rests; resting fruit sit on the ground and keep still.
