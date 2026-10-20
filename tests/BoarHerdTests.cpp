@@ -100,6 +100,15 @@ int main()
     for (const auto& boar : herd.Boars()) {
         Check(herd.IsValidGround(boar.x, boar.z), "obstacle replacement did not rebuild safe homes");
     }
+    {
+        // After dark every boar rests within two minutes (no observer about).
+        island::BoarHerd sleepy(terrain, obstacles);
+        sleepy.SetNightness(1.0f);
+        for (int step = 0; step < 60 * 120; ++step) sleepy.Update(1.0f / 60.0f, nan, nan, nan);
+        bool allResting = true;
+        for (const auto& boar : sleepy.Boars()) allResting = allResting && boar.behavior == island::BoarBehavior::Rest;
+        Check(allResting, "after dark every boar should be resting");
+    }
     if (failures) return 1;
     std::cout << "BoarHerdTests: all checks passed (12000 frames with world obstacles)\n";
 }

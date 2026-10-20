@@ -314,6 +314,12 @@ namespace island
             agent.remainingSeconds = std::max(agent.remainingSeconds, 0.5f);
             agent.targetHeading = std::atan2(observerZ - state.z, observerX - state.x);
             alertFacing = true;
+        } else if (agent.remainingSeconds <= 0.0f && nightness_ > 0.6f) {
+            // After dark: a long rest where it stands until morning.
+            state.behavior = BoarBehavior::Rest;
+            agent.remainingSeconds = 25.0f + 10.0f * Sequence(++agent.decisions);
+            agent.hasRoot = false;
+            agent.fruitTarget = -1;
         } else if (agent.remainingSeconds <= 0.0f) {
             const float choice = Sequence(++agent.decisions);
             state.behavior = state.behavior == BoarBehavior::Wander

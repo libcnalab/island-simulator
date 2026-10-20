@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <limits>
 #include <numbers>
 #include <stdexcept>
 #include <vector>
@@ -77,6 +78,14 @@ int main()
         Check(calm.Deer()[2].behavior != island::DeerBehavior::Retreat
                   && alarmed.Deer()[2].behavior == island::DeerBehavior::Retreat,
               "a roaring quad 16 m off should send a deer off where a walker does not");
+        // After dark every deer beds down within two minutes (no observer about).
+        island::DeerHerd sleepy(terrain, obstacles);
+        sleepy.SetNightness(1.0f);
+        for (int step = 0; step < 60 * 120; ++step)
+            sleepy.Update(1.0f / 60.0f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
+        bool allBedded = true;
+        for (const auto& deer : sleepy.Deer()) allBedded = allBedded && deer.behavior == island::DeerBehavior::Rest && deer.bedAmount > 0.9f;
+        Check(allBedded, "after dark every deer should be bedded down");
         std::cout << "Four deterministic inland deer graze, walk and retreat safely\n";
         return 0;
     } catch (const std::exception& exception) {

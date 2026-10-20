@@ -55,6 +55,10 @@ namespace island
         /** @brief How alarming the observer is: 1 a walker; more on a roaring quad, so every alert
          *  and flight distance stretches by it (clamped 1..4). */
         void SetObserverThreat(float scale) noexcept { observerThreat_ = std::isfinite(scale) ? std::clamp(scale, 1.0f, 4.0f) : 1.0f; }
+        /** @brief How dark it is (0 by day .. 1 at night): after dark each animal, once its
+         *  present activity runs out, beds down where it stands until morning (an alarm still
+         *  gets it up). */
+        void SetNightness(float nightness) noexcept { nightness_ = std::isfinite(nightness) ? std::clamp(nightness, 0.0f, 1.0f) : 0.0f; }
         static constexpr std::size_t BoarCount = 6;
         static constexpr float HomeRadius = 27.0f;
         // Conservatively includes the adult snout and terrain-tilted body, not just its centre.
@@ -125,7 +129,7 @@ namespace island
         static constexpr float SnoutSwayRate = 5.0f;
 
     private:
-        float observerThreat_ = 1.0f;
+        float observerThreat_ = 1.0f, nightness_ = 0.0f;
         struct Agent
         {
             BoarState state;

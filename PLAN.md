@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 240 (2026-10-20) — the herds bed down at night
+
+The deer, goats and boars grazed and wandered all night. Each herd now takes the darkness too
+(`SetNightness`): after dark, as an animal's present activity runs out, it rests where it
+stands for 25-35 s at a time instead of choosing the next graze or walk, so within a couple of
+minutes the deer are bedded down (bedded at once, not walking to shade first), the goats lie
+down once settled, and the boars rest; an alarm, a fright or a roaring quad still gets them up
+and away. Herd checks: after dark every deer is bedded, every goat lying and every boar resting
+within two minutes with no observer about. The fixed herd QA views are by day and unchanged.
+
 ## Loop pass 239 (2026-10-20) — the monkeys rest at night
 
 The last of the day-active animals that ignored the clock: `MonkeyTroop::SetNightness` (the

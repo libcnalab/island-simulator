@@ -330,5 +330,15 @@ int main() {
     bool rejected=false;
     try { GoatHerd impossible(terrain,jungle,blocked); } catch(const std::runtime_error&) { rejected=true; }
     check(rejected,"impossible goat habitat silently accepted");
+    {
+        // After dark every goat rests and lies down within two minutes (no observer about).
+        GoatHerd sleepy(terrain,jungle,occupied);
+        sleepy.SetNightness(1.0f);
+        const GoatPoint nobody{std::numeric_limits<float>::quiet_NaN(),0,0};
+        for(int frame=0;frame<20*120;++frame) sleepy.Update(.05f,nobody);
+        bool allDown=true;
+        for(const auto& goat:sleepy.Goats()) allDown=allDown&&goat.behavior==GoatBehavior::Rest&&goat.lieAmount>.9f;
+        check(allDown,"after dark every goat should be resting, lying down");
+    }
     std::cout<<"Goat herd CPU tests passed; this is not a live rendering audit\n";
 }

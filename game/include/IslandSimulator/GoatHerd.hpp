@@ -60,6 +60,10 @@ public:
     /** @brief How alarming the observer is: 1 a walker; more on a roaring quad, so every alert
      *  and flight distance stretches by it (clamped 1..4). */
     void SetObserverThreat(float scale) noexcept {observerThreat_=std::isfinite(scale)?std::clamp(scale,1.0f,4.0f):1.0f;}
+    /** @brief How dark it is (0 by day .. 1 at night): after dark each animal, once its
+     *  present activity runs out, beds down where it stands until morning (an alarm still
+     *  gets it up). */
+    void SetNightness(float nightness) noexcept {nightness_=std::isfinite(nightness)?std::clamp(nightness,0.0f,1.0f):0.0f;}
     [[nodiscard]] bool Startled() const noexcept {return disturbanceSeconds_>0;}
     [[nodiscard]] float SentinelAlertSeconds() const noexcept {return sentinelAlertSeconds_;}
     // Goats standing nose to nose with their sparring partner this moment.
@@ -89,7 +93,7 @@ public:
     [[nodiscard]] std::size_t ChewingCount() const noexcept;
     static constexpr float ChewRate=6.5f;
 private:
-    float observerThreat_=1.0f;
+    float observerThreat_=1.0f,nightness_=0.0f;
     void FindDrinkingPoint(std::size_t index) noexcept;
     void Step(std::size_t index,float dt,GoatPoint observer,bool observerValid);
     bool TryMove(std::size_t index,float heading,float distance,bool& waitingForStep);

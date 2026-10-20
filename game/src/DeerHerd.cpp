@@ -297,7 +297,14 @@ namespace island
             agent.targetHeadingRadians = std::atan2(
                 disturbanceZ_ - agent.state.z, disturbanceX_ - agent.state.x);
             alertFacing = true;
-        } else if ((agent.behaviorSeconds -= deltaSeconds) <= 0.0f) {
+        } else if ((agent.behaviorSeconds -= deltaSeconds) <= 0.0f && nightness_ > 0.6f) {
+            // After dark: bed down where it stands until morning.
+            ++agent.transitions;
+            agent.seekingShade = false;
+            agent.state.behavior = DeerBehavior::Rest;
+            agent.behaviorSeconds = 25.0f + static_cast<float>((static_cast<std::uint32_t>(index) * 7U + agent.transitions) % 10U);
+            agent.bedded = true;
+        } else if (agent.behaviorSeconds <= 0.0f) {
             ++agent.transitions;
             agent.seekingShade = false;
             const auto phase = (agent.transitions + static_cast<std::uint32_t>(index) * 3U) % 7U;

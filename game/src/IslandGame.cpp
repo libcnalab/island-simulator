@@ -3149,6 +3149,9 @@ namespace island
             const float dark = 1.0f - std::clamp((light.sunElevationDegrees + 2.0f) / 10.0f, 0.0f, 1.0f);
             birdFlock_.SetNightness(dark);
             monkeyTroop_.SetNightness(dark);
+            if (deer_) deer_->SetNightness(dark);
+            if (goats_) goats_->SetNightness(dark);
+            boarHerd_.SetNightness(dark);
             fruitBatColony_.SetNightness(dark);
             const auto shading = sun_light::Current().shading;
             wildlife_render::FixedSunDirection = Vector3(shading.x, shading.y, shading.z);

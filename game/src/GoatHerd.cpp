@@ -290,6 +290,10 @@ void GoatHerd::Step(std::size_t index,float dt,GoatPoint observer,bool observerV
         state.behavior=GoatBehavior::Rest;intent.remaining=std::max(intent.remaining,.5f);
         if(intent.avoidance==0)
             intent.targetHeading=std::atan2(disturbanceZ_-state.z,disturbanceX_-state.x);
+    } else if(intent.remaining<=0&&nightness_>0.6f) {
+        // After dark: a long rest where it stands (it lies down once settled) until morning.
+        state.behavior=GoatBehavior::Rest;
+        intent.remaining=25+static_cast<float>((index*7+(++intent.decisions))%10);
     } else if(intent.remaining<=0) {
         const auto bits=Mix(GoatHabitat::Seed+static_cast<std::uint32_t>(index)*7919U+(++intent.decisions)*104729U);
         state.behavior=bits%5<3?GoatBehavior::Walk:(bits%5==3?GoatBehavior::Graze:GoatBehavior::Rest);
