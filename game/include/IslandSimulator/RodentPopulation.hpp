@@ -26,6 +26,9 @@ namespace island
          *  washes its face with both forepaws for a couple of seconds, groomPhase carrying
          *  the paws' strokes. */
         float groom = 0.0f, groomPhase = 0.0f;
+        /** @brief 0..1 the whiskers' twitch: swept forward and back with the sniff, fully on
+         *  the forage and at the fruit, a little at rest, still in the burrow. */
+        float whiskerTwitch = 0.0f;
         RodentSpecies species = RodentSpecies::Mouse;
         RodentBehavior behavior = RodentBehavior::Rest;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
@@ -70,6 +73,8 @@ namespace island
         [[nodiscard]] std::uint32_t GroomCount() const noexcept { return grooms_; }
         [[nodiscard]] std::size_t GroomingCount() const noexcept;
         static constexpr float GroomDelaySeconds = 0.8f, GroomSeconds = 2.0f, GroomStrokeRate = 9.0f;
+        /** @brief Rodents with their whiskers fully at work this moment (foraging or feeding). */
+        [[nodiscard]] std::size_t WhiskingCount() const noexcept;
 
         [[nodiscard]] std::span<const RodentState> Rodents() const noexcept { return states_; }
         [[nodiscard]] std::span<const RodentHome> Homes() const noexcept { return homes_; }

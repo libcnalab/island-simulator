@@ -141,6 +141,13 @@ namespace island
         return best;
     }
 
+    std::size_t RodentPopulation::WhiskingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.state.whiskerTwitch > 0.9f ? 1U : 0U;
+        return count;
+    }
+
     std::size_t RodentPopulation::GroomingCount() const noexcept
     {
         std::size_t count = 0;
@@ -296,6 +303,12 @@ namespace island
             -4.0f * deltaSeconds, 3.0f * deltaSeconds);
         if (agent.state.groom > .01f)
             agent.state.groomPhase = std::fmod(agent.state.groomPhase + deltaSeconds * GroomStrokeRate, TwoPi);
+        // The whiskers: swept with the sniff, fully on the forage and at the fruit, a little
+        // at rest, still down the burrow.
+        const float whiskerTarget = agent.state.visibility < .5f ? 0.0f
+            : (agent.state.behavior == RodentBehavior::Forage || feeding) ? 1.0f : 0.3f;
+        agent.state.whiskerTwitch += std::clamp(whiskerTarget - agent.state.whiskerTwitch,
+            -3.0f * deltaSeconds, 3.0f * deltaSeconds);
         agent.state.y = terrain_.Height(agent.state.x, agent.state.z) + .018f;
     }
 }

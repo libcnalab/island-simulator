@@ -247,6 +247,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 183: a boar rooting with its snout down works the snout side to side (`BoarState::snoutSway`, `BoarHerd::SnoutingCount`) (PLAN "Loop pass 183").
 - Pass 184: a crab bolting for its burrow folds its eyestalks flat and raises them again as it comes up (`CrabState::eyeFold`, `CrabColony::EyeFoldedCount`) (PLAN "Loop pass 184").
 - Pass 185: a crocodile under way in the water folds its legs back along its flanks and swims on its tail (`CrocodileState::legFold`, `CrocodileGroup::FoldedLegCount`) (PLAN "Loop pass 185").
+- Pass 186: a mouse or rat sweeps its whiskers with each sniff, fully on the forage and a little at rest (`RodentState::whiskerTwitch`, `RodentPopulation::WhiskingCount`) (PLAN "Loop pass 186").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

@@ -1416,6 +1416,8 @@ def main():
                 raise RuntimeError("current crab eyestalk fold is missing; check for a stale executable")
             if "a crocodile under way in the water folds its legs back along its flanks and swims on its tail" not in diagnostics:
                 raise RuntimeError("current crocodile leg fold is missing; check for a stale executable")
+            if "a mouse or rat sweeps its whiskers with each sniff, fully on the forage and a little at rest" not in diagnostics:
+                raise RuntimeError("current rodent whisker twitch is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:

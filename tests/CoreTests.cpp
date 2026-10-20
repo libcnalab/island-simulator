@@ -8669,6 +8669,20 @@ int main()
             }
             Check(groomers.GroomCount() >= 1U && peak > 0.9f && strokes > 1.0f && settled && !hiddenGroom,
                   "a resting rodent sits up to groom its face and settles again");
+            // The whiskers: through those thirty seconds a foraging rodent's whiskers come
+            // fully into play, a resting one's settle to a third, and a hidden one's lie still.
+            float foragingWhisk = 0.0f, restingWhisk = 1.0f, hiddenWhisk = 0.0f;
+            for (int step = 0; step < 600; ++step) {
+                groomers.Update(0.05f, groomHome.x + 12.0f, terrain.Height(groomHome.x, groomHome.z) + 1.0f, groomHome.z);
+                for (const auto& rodent : groomers.Rodents()) {
+                    if (rodent.simulationTier != island::WildlifeSimulationTier::Full) continue;
+                    if (rodent.behavior == island::RodentBehavior::Forage) foragingWhisk = std::max(foragingWhisk, rodent.whiskerTwitch);
+                    if (rodent.behavior == island::RodentBehavior::Rest && rodent.groom < 0.05f) restingWhisk = std::min(restingWhisk, rodent.whiskerTwitch);
+                    if (rodent.visibility < 0.2f) hiddenWhisk = std::max(hiddenWhisk, rodent.whiskerTwitch);
+                }
+            }
+            Check(foragingWhisk > 0.9f && restingWhisk <= 0.35f && hiddenWhisk < 0.3f,
+                  "a rodent's whiskers are not fully at work on the forage, eased at rest and still in hiding");
         }
         for (int step = 0; step < 20; ++step) {
             rodents.Update(0.05f, home.x + 12.0f, terrain.Height(home.x, home.z) + 1.0f, home.z);

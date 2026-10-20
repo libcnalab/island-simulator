@@ -1583,11 +1583,14 @@ namespace island
                 AddDoubleSidedTriangle(vertices, highlight + up * (.004f * unit),
                     highlight - forward * (.004f * unit) - up * (.003f * unit),
                     highlight + forward * (.004f * unit) - up * (.003f * unit), glint);
+                // The whiskers sweep forward and back with the sniff by the twitch amount.
+                const float whisk = std::clamp(rodent.whiskerTwitch, 0.0f, 1.0f)
+                    * std::sin(rodent.sniffPhase * 2.0f + side) * .035f;
                 const Vector3 whiskerRoot = head + forward * (.17f * unit)
                     + right * (side * .035f * unit) - up * (.015f * unit);
                 for (int whiskerIndex = -1; whiskerIndex <= 1; ++whiskerIndex) {
-                    const Vector3 tip = whiskerRoot + forward * (.045f * unit)
-                        + right * (side * (.16f + .018f * whiskerIndex) * unit)
+                    const Vector3 tip = whiskerRoot + forward * ((.045f + whisk) * unit)
+                        + right * (side * (.16f + .018f * whiskerIndex - std::abs(whisk) * .4f) * unit)
                         + up * (.023f * whiskerIndex * unit);
                     AppendGeckoSegment(vertices, whiskerRoot, tip, .0022f * unit, whisker);
                 }

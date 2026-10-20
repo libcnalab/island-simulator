@@ -54,6 +54,18 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 186 (2026-10-20) — a rodent's whiskers sweep
+
+A mouse's or rat's whiskers stood fixed through its sniffing. `RodentState::whiskerTwitch`
+(0..1) now carries their play: fully on the forage and at the fruit, a third at rest, still
+down the burrow, eased at 3/s; `WhiskingCount()` counts the rodents with them fully at
+work. In the renderer each whisker sweeps 3.5 % of a unit forward and back and draws in
+with the sniff (two sweeps to each sniff, the sides offset), on the same vertices. A new
+report line "a mouse or rat sweeps its whiskers with each sniff, fully on the forage and a
+little at rest" is pinned. Core check: through half a minute a foraging rodent's whiskers
+come fully into play, a resting one's settle to a third, and a hidden one's lie still.
+Native `mice` passes.
+
 ## Loop pass 185 (2026-10-20) — a swimming crocodile folds its legs
 
 A crocodile swam with its legs splayed as on the bank. `CrocodileState::legFold` (0..1)
