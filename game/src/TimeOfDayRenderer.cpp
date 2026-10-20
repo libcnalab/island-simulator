@@ -27,6 +27,8 @@ namespace island
     namespace
     {
         constexpr int MoonSegments = 40;
+        constexpr int RainbowSegments = 72, RainbowBands = 7;
+        constexpr int RainbowVertexCapacity = RainbowSegments * RainbowBands * 6 * 2;
         constexpr std::array<float, 6> MoonRings{0.0f, 0.3f, 0.55f, 0.75f, 0.9f, 1.0f};
         constexpr int GlowSegments = 32;
         constexpr int MoonVertexCapacity = (static_cast<int>(MoonRings.size()) - 1) * MoonSegments * 6
@@ -120,6 +122,9 @@ namespace island
         moonStaging_.reserve(static_cast<std::size_t>(MoonVertexCapacity));
         meteor_ = std::make_unique<DynamicVertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(), 12,
                                                         BufferUsage::WriteOnly);
+        rainbow_ = std::make_unique<DynamicVertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(),
+                                                         RainbowVertexCapacity, BufferUsage::WriteOnly);
+        rainbowStaging_.reserve(static_cast<std::size_t>(RainbowVertexCapacity));
         const std::string message = "island-simulator: night sky: " + std::to_string(StarCount)
             + " stars and a phased moon over the graded sky; the scene is graded by the hour (golden hours, a dark blue night)";
         std::cout << message << '\n';
@@ -174,6 +179,84 @@ namespace island
         gradeEffect_->setDiffuseColorProperty(Vector3(1.0f, 1.0f, 1.0f));
         ++drawCalls_;
         gradeApplied_ = true;
+    }
+
+    float TimeOfDayRenderer::RainbowStrength(const DayLighting& light, const float rain) noexcept
+    {
+        if (!std::isfinite(rain)) return 0.0f;
+        const auto smooth = [](float a, float b, float v) {
+            const float t = std::clamp((v - a) / (b - a), 0.0f, 1.0f);
+            return t * t * (3.0f - 2.0f * t);
+        };
+        // light rain in the air, not a downpour; the sun breaking through; low in the sky
+        const float drops = smooth(0.02f, 0.12f, rain) * (1.0f - smooth(0.35f, 0.6f, rain));
+        const float sun = smooth(0.25f, 0.6f, light.sunVisibility);
+        const float low = smooth(4.0f, 9.0f, light.sunElevationDegrees) * (1.0f - smooth(34.0f, 41.0f, light.sunElevationDegrees));
+        return drops * sun * low;
+    }
+
+    void TimeOfDayRenderer::DrawRainbow(const Matrix& view, const Matrix& projection, const Vector3& camera,
+                                        const DayLighting& light, const float strength)
+    {
+        if (!(strength > 0.01f)) return;
+        Vector3 anti(-light.toSun.x, -light.toSun.y, -light.toSun.z);   // the point opposite the sun
+        if (anti.LengthSquared() < 1e-6f) return;
+        anti.Normalize();
+        Vector3 u = Vector3::Cross(anti, Vector3::Up);
+        if (u.LengthSquared() < 1e-6f) u = Vector3::UnitX;
+        u.Normalize();
+        const Vector3 v = Vector3::Cross(u, anti);
+        constexpr float Degrees = std::numbers::pi_v<float> / 180.0f;
+        // the bands across a bow, outside to inside: red to violet
+        constexpr std::array<std::array<float, 3>, RainbowBands> Colours{{
+            {0.95f, 0.18f, 0.12f}, {1.0f, 0.55f, 0.10f}, {1.0f, 0.92f, 0.20f}, {0.30f, 0.90f, 0.30f},
+            {0.20f, 0.55f, 1.0f}, {0.30f, 0.25f, 0.95f}, {0.55f, 0.20f, 0.85f}}};
+        rainbowStaging_.clear();
+        const auto c = [](float x) { return static_cast<int>(std::lround(std::clamp(x, 0.0f, 1.0f) * 255.0f)); };
+        const auto bow = [&](const float radiusDegrees, const float widthDegrees, const float alpha, const bool reversed) {
+            for (int band = 0; band < RainbowBands; ++band) {
+                const int colourIndex = reversed ? RainbowBands - 1 - band : band;
+                const auto& rgb = Colours[static_cast<std::size_t>(colourIndex)];
+                const float outer = (radiusDegrees + widthDegrees * (0.5f - static_cast<float>(band) / RainbowBands)) * Degrees;
+                const float inner = outer - widthDegrees / RainbowBands * Degrees;
+                // the edge bands softer
+                const float edge = band == 0 || band == RainbowBands - 1 ? 0.55f : 1.0f;
+                for (int s = 0; s < RainbowSegments; ++s) {
+                    const float a0 = 6.2831853f * static_cast<float>(s) / RainbowSegments;
+                    const float a1 = 6.2831853f * static_cast<float>(s + 1) / RainbowSegments;
+                    const auto at = [&](float angle, float radius) {
+                        const Vector3 d = anti * std::cos(radius) + (u * std::cos(angle) + v * std::sin(angle)) * std::sin(radius);
+                        return d * MoonDistance;
+                    };
+                    const auto colour = [&](const Vector3& p) {
+                        // fades out toward the horizon and is gone below it
+                        const float above = std::clamp(p.Y / MoonDistance / 0.08f, 0.0f, 1.0f);
+                        const float a = alpha * edge * above * strength;
+                        return Color(c(rgb[0] * a), c(rgb[1] * a), c(rgb[2] * a), 255);
+                    };
+                    const Vector3 o0 = at(a0, outer), o1 = at(a1, outer), i0 = at(a0, inner), i1 = at(a1, inner);
+                    rainbowStaging_.emplace_back(o0, colour(o0)); rainbowStaging_.emplace_back(o1, colour(o1));
+                    rainbowStaging_.emplace_back(i1, colour(i1));
+                    rainbowStaging_.emplace_back(o0, colour(o0)); rainbowStaging_.emplace_back(i1, colour(i1));
+                    rainbowStaging_.emplace_back(i0, colour(i0));
+                }
+            }
+        };
+        bow(42.0f, 2.2f, 0.32f, false);
+        bow(51.0f, 3.2f, 0.12f, true);
+        device_.setRasterizerStateProperty(RasterizerState::CullNone);
+        device_.setBlendStateProperty(BlendState::Additive);
+        device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
+        rainbow_->SetData(rainbowStaging_.data(), 0, static_cast<int>(rainbowStaging_.size()), SetDataOptions::Discard);
+        device_.SetVertexBuffer(rainbow_.get());
+        device_.setIndicesProperty(nullptr);
+        skyEffect_->setWorldProperty(Matrix::CreateTranslation(camera));
+        skyEffect_->setViewProperty(view);
+        skyEffect_->setProjectionProperty(projection);
+        skyEffect_->setDiffuseColorProperty(Vector3(1.0f, 1.0f, 1.0f));
+        skyEffect_->Apply();
+        device_.DrawPrimitives(PrimitiveType::TriangleList, 0, static_cast<int>(rainbowStaging_.size() / 3));
+        ++drawCalls_;
     }
 
     void TimeOfDayRenderer::DrawFlash(const float flash)

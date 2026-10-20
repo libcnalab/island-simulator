@@ -45,6 +45,14 @@ namespace island
         void DrawGrade(const DayLighting& light, bool localLight = false);
         /** @brief A lightning flash over everything already drawn (0..1). */
         void DrawFlash(float flash);
+        /** @brief A rainbow: the primary bow at 42 degrees round the point opposite the sun
+         *  (red outside, violet inside) and a fainter, reversed secondary at 51, only above the
+         *  horizon, depth-read so the land stands in front; `strength` 0..1. */
+        void DrawRainbow(const Microsoft::Xna::Framework::Matrix& view, const Microsoft::Xna::Framework::Matrix& projection,
+                         const Microsoft::Xna::Framework::Vector3& camera, const DayLighting& light, float strength);
+        /** @brief How strong a rainbow is: rain still falling (lightly, a shower easing off),
+         *  the sun out and low enough (5-40 degrees) for the bow to stand above the horizon. */
+        [[nodiscard]] static float RainbowStrength(const DayLighting& light, float rain) noexcept;
         void DrawNightSky(const Microsoft::Xna::Framework::Matrix& view,
                           const Microsoft::Xna::Framework::Matrix& projection,
                           const Microsoft::Xna::Framework::Vector3& camera, const DayLighting& light,
@@ -59,7 +67,8 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BlendState> gradeBlend_, litGradeBlend_, alphaResetBlend_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> gradeTriangle_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> stars_;
-        std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> moon_, meteor_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> moon_, meteor_, rainbow_;
+        std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> rainbowStaging_;
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> moonStaging_;
         int starVertexCount_ = 0;
         int drawCalls_ = 0;

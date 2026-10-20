@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 246 (2026-10-20) — rainbows
+
+`TimeOfDayRenderer::DrawRainbow` draws, on the sky at the moon's distance round the point
+opposite the sun, the primary bow at 42 degrees (2.2 degrees across in seven bands, red outside
+to violet inside, the edge bands softer) and a fainter secondary at 51 degrees with its colours
+reversed, additive, depth-read so the land and the trees stand in front, fading out toward the
+horizon and gone below it. `RainbowStrength` asks for light rain still falling (from 0.02, gone
+in a downpour above 0.35-0.6), the sun out (its visibility from 0.25) and low enough for the bow
+to stand above the horizon (4-41 degrees): so a rainbow appears as a shower eases off and the
+sun breaks through, in the afternoon or morning, on the side opposite the sun. A probe build
+forcing it on showed both bows in `overview` at 16:30 behind the clouds; the probe was removed.
+Without rain no capture changes.
+
 ## Loop pass 245 (2026-10-20) — a storm's sea and wind
 
 A thunderstorm brought rain, lightning and faster gust fronts but the same gentle sea and the

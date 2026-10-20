@@ -5757,6 +5757,9 @@ namespace island
             }
             timeOfDay_->DrawGrade(light, localLit);
             timeOfDay_->DrawNightSky(cameraView_, cameraProjection_, renderCameraPosition_, light, timeSeconds);
+            if (!underground)
+                timeOfDay_->DrawRainbow(cameraView_, cameraProjection_, renderCameraPosition_, light,
+                                        TimeOfDayRenderer::RainbowStrength(light, weather.rain));
             timeOfDay_->DrawFlash(weather.flash);
             // the surf glitters blue on dark nights, less under a bright moon
             if (!underground) {
