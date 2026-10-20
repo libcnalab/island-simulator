@@ -1254,7 +1254,7 @@ void main()
                 const float instanceDeltaZ = instance.z - cameraPosition.Z;
                 const float instanceDistanceSquared = instanceDeltaX * instanceDeltaX
                     + instanceDeltaZ * instanceDeltaZ;
-                const float shrink = vegetation_fade::FarShrink(std::sqrt(instanceDistanceSquared), maximumDistance_,
+                const float shrink = vegetation_fade::FarShrink(vegetation_fade::SlantDistance(instanceDistanceSquared, cameraPosition.Y - instance.transform.M42), maximumDistance_,
                                                                 vegetation_fade::TreeShrinkFraction);
                 if (shrink <= 0.0f) continue;
                 const Matrix transform = shrink < 1.0f ? Matrix::CreateScale(shrink) * instance.transform

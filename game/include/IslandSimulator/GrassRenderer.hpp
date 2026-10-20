@@ -92,6 +92,7 @@ namespace island
             int first = 0;
             int count = 0;
             float minX = 0.0f, minZ = 0.0f, maxX = 0.0f, maxZ = 0.0f;   // its anchors' extent
+            float minY = 0.0f, maxY = 0.0f;
         };
 
         struct GrassCell

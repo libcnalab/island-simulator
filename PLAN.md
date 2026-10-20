@@ -54,6 +54,25 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 220 (2026-10-20) — the fades measure the true distance, so the air is clear
+
+The flight audit noted that every vegetation fade measured the horizontal distance only,
+so from the air a full-size disc of grass, floor plants and props stayed under the camera
+and ended at a crisp horizontal edge. The grass shader's per-patch tier weights and its
+draw-distance fade now take the patch's true distance from the camera (the CPU quarter-block
+ranges add the camera's height above or below each block's anchors, so the instance ranges
+stay conservative), and the end-of-range shrink of the canopy trees, palms, understory,
+bushes, ground plants, rocks, logs, driftwood, reef habitat, beach details, tracks, fronds
+and nuts takes `vegetation_fade::SlantDistance` of the horizontal distance and the camera's
+height above the instance's base. On native (grass to 72 m, full size to 56 m) at 40 m above
+the ground the grass is full-size within 39 m horizontally and gone beyond 60 m; at 72 m up
+it is gone, where before a full 72 m disc followed the camera. A walker's eye is 1.7 m up,
+so the walking views keep their counts (`ground` 1283 grass patches, 913 near; `hut` 1289),
+and the `overview` camera out over the sea draws slightly fewer far canopy trees and rocks
+(46 to 42, 40 to 37). The startup grass line adds "grass and plant fades measure the true
+distance, so from the air they recede instead of following the camera", pinned. Native
+`overview`, `ground` and `hut` pass.
+
 ## Loop pass 219 (2026-10-20) — water receiving the sun shadows: measured and dropped
 
 The last surface outside the sun shadows was the water. A trial gave the ocean's fragment

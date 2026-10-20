@@ -227,7 +227,9 @@ void main()
     float bladeRandom = fract(sin(aWindData.y * 91.73 + aVariation.w * 37.21 + 0.618)
                               * 43758.5453);
     float bladeStature = mix(grassMinimumStature, grassMaximumStature, bladeRandom);
-    float patchDistance = length(aPlacement.xz - uCameraPosition.xz);
+    // The true distance to the patch: from the air the grass recedes like everything else
+    // instead of a full-size disc following the camera's horizontal position.
+    float patchDistance = length(aPlacement.xyz - uCameraPosition);
     float visibility = 1.0 - smoothstep(uGrassFadeRange.x, uGrassFadeRange.y, patchDistance);
     // Per-patch tiers (GrassLod::PatchWeights): this draw's mesh takes the patch's own share,
     // so a patch morphs between meshes at its own distance rather than its whole cell's.
@@ -865,7 +867,8 @@ void main()
         if (customShaderReady_)
             std::cout << "island-simulator: grass mesh tiers change per patch at its own distance, morphing over "
                       << static_cast<int>(2.0f * GrassLod::MorphHalfWidth)
-                      << " m, drawn by quarter-cell blocks instead of switching whole cells by their centre\n";
+                      << " m, drawn by quarter-cell blocks instead of switching whole cells by their centre; "
+                         "grass and plant fades measure the true distance, so from the air they recede instead of following the camera\n";
     }
 
     void GrassRenderer::CreateCells(const IslandTerrain& terrain, const GrassLayout& layout)
@@ -951,6 +954,7 @@ void main()
                 block.count = static_cast<int>(end - first);
                 block.minX = block.maxX = entries[index][first].instance.x;
                 block.minZ = block.maxZ = entries[index][first].instance.z;
+                block.minY = block.maxY = entries[index][first].instance.y;
                 for (std::size_t i = first; i < end; ++i) {
                     GrassInstanceData instance = entries[index][i].instance;
                     instance.lodRank = (static_cast<float>(i - first) + 0.5f) / static_cast<float>(block.count);
@@ -958,6 +962,8 @@ void main()
                     block.maxX = std::max(block.maxX, instance.x);
                     block.minZ = std::min(block.minZ, instance.z);
                     block.maxZ = std::max(block.maxZ, instance.z);
+                    block.minY = std::min(block.minY, instance.y);
+                    block.maxY = std::max(block.maxY, instance.y);
                     instances.push_back(instance);
                 }
                 first = end;
@@ -1096,14 +1102,18 @@ void main()
                 };
                 for (const GrassBlock& block : cell.blocks) {
                     if (block.count <= 0) continue;
+                    // True distances, as the shader measures them: the camera's height above
+                    // the block's anchors counts too.
+                    const float gapY = std::max({block.minY - cameraPosition.Y, 0.0f, cameraPosition.Y - block.maxY});
                     const float nearest = std::sqrt(GrassVisibility::NearestDistanceSquared(
-                        cameraPosition.X, cameraPosition.Z, block.minX, block.minZ, block.maxX, block.maxZ));
+                        cameraPosition.X, cameraPosition.Z, block.minX, block.minZ, block.maxX, block.maxZ) + gapY * gapY);
                     if (nearest > maximumDrawDistance_) continue;
                     const float farX = std::max(std::abs(block.minX - cameraPosition.X), std::abs(block.maxX - cameraPosition.X));
                     const float farZ = std::max(std::abs(block.minZ - cameraPosition.Z), std::abs(block.maxZ - cameraPosition.Z));
+                    const float farY = std::max(std::abs(block.minY - cameraPosition.Y), std::abs(block.maxY - cameraPosition.Y));
                     // patches beyond the draw distance are scaled away, so no tier serves them
                     const GrassLodRanges ranges = GrassLod::Ranges(block.count, nearest,
-                        std::min(std::sqrt(farX * farX + farZ * farZ), maximumDrawDistance_));
+                        std::min(std::sqrt(farX * farX + farZ * farZ + farY * farY), maximumDrawDistance_));
                     const int nearCount = ranges.nearEnd - ranges.nearBegin;
                     const int middleCount = ranges.middleEnd - ranges.middleBegin;
                     const int farCount = ranges.farEnd - ranges.farBegin;

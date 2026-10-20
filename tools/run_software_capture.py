@@ -1138,7 +1138,7 @@ def main():
                 raise RuntimeError("current land-animal far fades are missing; check for a stale executable")
             if "so do spiders, crabs, hermit and coconut crabs, their burrows, crocodiles and flower patches, and the small animals keep the land's fog" not in diagnostics:
                 raise RuntimeError("current small-animal fog is missing; check for a stale executable")
-            if not re.search(r"grass mesh tiers change per patch at its own distance, morphing over \d+ m, drawn by quarter-cell blocks instead of switching whole cells by their centre", diagnostics):
+            if not re.search(r"grass mesh tiers change per patch at its own distance, morphing over \d+ m, drawn by quarter-cell blocks instead of switching whole cells by their centre; grass and plant fades measure the true distance, so from the air they recede instead of following the camera", diagnostics):
                 raise RuntimeError("current per-patch grass tiers are missing; check for a stale executable")
             if "the jetty, the rope bridge, the lookout and the helicopter receive them through one shared structure material" not in diagnostics:
                 raise RuntimeError("current structure sun-shadow receiving is missing; check for a stale executable")

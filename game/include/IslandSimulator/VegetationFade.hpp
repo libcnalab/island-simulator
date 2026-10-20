@@ -16,6 +16,14 @@ namespace island::vegetation_fade
     inline constexpr float ShrinkFraction = 0.22f;   // the last 22 % of the range shrinks
     inline constexpr float TreeShrinkFraction = 0.12f;   // trees and palms: a narrower band
 
+    /** @brief The true distance from the camera to a plant's base, from the horizontal
+     *  distance squared and the camera's height above the base: the fades measured only the
+     *  horizontal distance, so from the air a full-size disc of plants followed the camera. */
+    [[nodiscard]] inline float SlantDistance(const float horizontalSquared, const float heightAbove) noexcept
+    {
+        return std::sqrt(horizontalSquared + heightAbove * heightAbove);
+    }
+
     /** @brief A plant's own 0..1 seed from its ground position. */
     [[nodiscard]] inline float Seed(const float x, const float z) noexcept
     {

@@ -2656,7 +2656,7 @@ void main()
                     // Far trees shrink to nothing over the last part of the range instead of
                     // vanishing (a gripped tree keeps its size).
                     const float shrink = gripped ? 1.0f
-                        : vegetation_fade::FarShrink(std::sqrt(instanceDistanceSquared), canopyMaximumDistance,
+                        : vegetation_fade::FarShrink(vegetation_fade::SlantDistance(instanceDistanceSquared, cameraPosition.Y - instance.transform.M42), canopyMaximumDistance,
                                                      vegetation_fade::TreeShrinkFraction);
                     if (shrink <= 0.0f) continue;
                     (nearLod ? visibleCanopyNear_ : visibleCanopyFar_)[instance.variant]
@@ -2702,7 +2702,7 @@ void main()
                         <= instance.nearLodDistanceSquared;
                     {
                         // the last part of the range shrinks the plant into the ground
-                        const float shrink = vegetation_fade::FarShrink(std::sqrt(instanceDistanceSquared),
+                        const float shrink = vegetation_fade::FarShrink(vegetation_fade::SlantDistance(instanceDistanceSquared, cameraPosition.Y - instance.transform.M42),
                                                                          understoryMaximumDistance);
                         if (shrink <= 0.0f) continue;
                         (nearLod ? visibleUnderstoryNear_ : visibleUnderstoryFar_)[instance.variant]
@@ -2731,7 +2731,7 @@ void main()
                         <= instance.nearLodDistanceSquared;
                     {
                         // the last part of the range shrinks the plant into the ground
-                        const float shrink = vegetation_fade::FarShrink(std::sqrt(instanceDistanceSquared),
+                        const float shrink = vegetation_fade::FarShrink(vegetation_fade::SlantDistance(instanceDistanceSquared, cameraPosition.Y - instance.transform.M42),
                                                                          bushMaximumDistance);
                         if (shrink <= 0.0f) continue;
                         (nearLod ? visibleBushNear_ : visibleBushFar_)[instance.variant]
@@ -2761,7 +2761,7 @@ void main()
                         <= instance.nearLodDistanceSquared;
                     {
                         // the last part of the range shrinks the plant into the ground
-                        const float shrink = vegetation_fade::FarShrink(std::sqrt(instanceDistanceSquared),
+                        const float shrink = vegetation_fade::FarShrink(vegetation_fade::SlantDistance(instanceDistanceSquared, cameraPosition.Y - instance.transform.M42),
                                                                          groundPlantMaximumDistance);
                         if (shrink <= 0.0f) continue;
                         (nearLod ? visibleGroundPlantNear_ : visibleGroundPlantFar_)[instance.variant]
