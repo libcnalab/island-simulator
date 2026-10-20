@@ -5725,6 +5725,9 @@ namespace island
             const bool underground = renderCameraPosition_.Y < terrain_.Height(renderCameraPosition_.X, renderCameraPosition_.Z) - 0.5f;
             if (!underground && renderCameraPosition_.Y > 0.0f)
             {
+                timeOfDay_->DrawRainCurtains(cameraView_, cameraProjection_, renderCameraPosition_, light,
+                                             std::max(weather.rain, weather.cloudCover > 0.6f ? 0.35f * weather.cloudCover : 0.0f),
+                                             timeSeconds);
                 rain_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, weather.rain, weather.wind, timeSeconds);
                 rainRings_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, weather.rain, timeSeconds);
             }

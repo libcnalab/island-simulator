@@ -60,6 +60,8 @@ namespace island
         constexpr int RainbowSegments = 72, RainbowBands = 7;
         constexpr int RainbowVertexCapacity = RainbowSegments * RainbowBands * 6 * 2;
         constexpr int BoltSegments = 14, BoltBranches = 2, BoltBranchSegments = 6;
+        constexpr int CurtainCount = 7, CurtainStrips = 14;
+        constexpr int CurtainVertexCapacity = CurtainCount * CurtainStrips * 12;
         constexpr int BoltVertexCapacity = (BoltSegments + BoltBranches * BoltBranchSegments) * 6 * 2;
         constexpr std::array<float, 6> MoonRings{0.0f, 0.3f, 0.55f, 0.75f, 0.9f, 1.0f};
         constexpr int GlowSegments = 32;
@@ -168,6 +170,9 @@ namespace island
         bolt_ = std::make_unique<DynamicVertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(), BoltVertexCapacity,
                                                       BufferUsage::WriteOnly);
         boltStaging_.reserve(static_cast<std::size_t>(BoltVertexCapacity));
+        curtains_ = std::make_unique<DynamicVertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(),
+                                                          CurtainVertexCapacity, BufferUsage::WriteOnly);
+        curtainStaging_.reserve(static_cast<std::size_t>(CurtainVertexCapacity));
         const std::string message = "island-simulator: night sky: " + std::to_string(StarCount)
             + " stars and a phased moon over the graded sky; the scene is graded by the hour (golden hours, a dark blue night)";
         std::cout << message << '\n';
@@ -379,6 +384,74 @@ namespace island
         skyEffect_->setDiffuseColorProperty(Vector3(1.0f, 1.0f, 1.0f));
         skyEffect_->Apply();
         device_.DrawPrimitives(PrimitiveType::TriangleList, 0, static_cast<int>(boltStaging_.size() / 3));
+        ++drawCalls_;
+    }
+
+    void TimeOfDayRenderer::DrawRainCurtains(const Matrix& view, const Matrix& projection, const Vector3& camera,
+                                             const DayLighting& light, const float rain, const double seconds)
+    {
+        if (!(rain > 0.03f)) return;
+        constexpr float Distance = 760.0f;
+        const float drift = static_cast<float>(std::fmod(seconds * 0.0021, 6.283185307179586));
+        // The shafts reach down to the sea where it lies at their distance, seen from the
+        // camera's height (from high up that is well below the level horizon).
+        const float seaBelow = std::atan2(-std::max(camera.Y, 0.5f), 700.0f);
+        // the curtains' grey: the hour's horizon, darkened as rain is
+        const DayVec3& sky = light.skyHorizon;
+        const float lum = 0.3f * sky.x + 0.59f * sky.y + 0.11f * sky.z;
+        const auto c = [](float x) { return static_cast<int>(std::lround(std::clamp(x, 0.0f, 1.0f) * 255.0f)); };
+        curtainStaging_.clear();
+        for (int curtain = 0; curtain < CurtainCount; ++curtain) {
+            const float k = static_cast<float>(curtain);
+            const float centre = k * 0.897f + 0.4f + 0.25f * std::sin(k * 2.3f) + drift;
+            const float halfWidth = 0.10f + 0.05f * std::fmod(k * 0.73f, 1.0f);   // radians of azimuth
+            const float top = (6.0f + 4.0f * std::fmod(k * 0.41f, 1.0f)) * std::numbers::pi_v<float> / 180.0f;
+            const float slant = 0.035f * (std::fmod(k, 2.0f) < 1.0f ? 1.0f : -1.0f);   // the wind leans the shafts
+            const float strength = rain * (0.55f + 0.45f * std::fmod(k * 0.61f + 0.3f, 1.0f));
+            for (int strip = 0; strip < CurtainStrips; ++strip) {
+                const float u0 = static_cast<float>(strip) / CurtainStrips, u1 = static_cast<float>(strip + 1) / CurtainStrips;
+                // streaks: denser and fainter bands across the shaft, soft at its sides
+                const auto alphaAt = [&](float u) {
+                    const float side = std::sin(std::numbers::pi_v<float> * u);
+                    const float streak = 0.65f + 0.35f * std::sin(u * 37.0f + k * 3.1f) * std::sin(u * 13.0f + k);
+                    return std::clamp(0.85f * strength * side * streak, 0.0f, 0.75f);
+                };
+                const auto at = [&](float u, float elevation, float lean) {
+                    const float azimuth = centre + (u * 2.0f - 1.0f) * halfWidth + lean;
+                    return Vector3(std::cos(elevation) * std::cos(azimuth), std::sin(elevation), std::cos(elevation) * std::sin(azimuth))
+                        * Distance;
+                };
+                const float a0 = alphaAt(u0), a1 = alphaAt(u1);
+                const float grey = lum * 0.55f;
+                // premultiplied grey: soft where the shaft hangs from the cloud, densest a little
+                // below, thinning toward the sea
+                const auto shade = [&](float a, float f) { return Color(c(grey * a * f), c(grey * a * f), c(grey * 1.05f * a * f), c(a * f)); };
+                const float bottom = seaBelow - 0.002f, upper = bottom + 0.78f * top, high = bottom + top;
+                const Vector3 h0 = at(u0, high, -slant * 0.3f), h1 = at(u1, high, -slant * 0.3f);
+                const Vector3 m0 = at(u0, upper, 0.0f), m1 = at(u1, upper, 0.0f);
+                const Vector3 q0 = at(u0, bottom, slant), q1 = at(u1, bottom, slant);
+                curtainStaging_.emplace_back(h0, shade(a0, 0.0f)); curtainStaging_.emplace_back(h1, shade(a1, 0.0f));
+                curtainStaging_.emplace_back(m1, shade(a1, 1.0f));
+                curtainStaging_.emplace_back(h0, shade(a0, 0.0f)); curtainStaging_.emplace_back(m1, shade(a1, 1.0f));
+                curtainStaging_.emplace_back(m0, shade(a0, 1.0f));
+                curtainStaging_.emplace_back(m0, shade(a0, 1.0f)); curtainStaging_.emplace_back(m1, shade(a1, 1.0f));
+                curtainStaging_.emplace_back(q1, shade(a1, 0.45f));
+                curtainStaging_.emplace_back(m0, shade(a0, 1.0f)); curtainStaging_.emplace_back(q1, shade(a1, 0.45f));
+                curtainStaging_.emplace_back(q0, shade(a0, 0.45f));
+            }
+        }
+        device_.setRasterizerStateProperty(RasterizerState::CullNone);
+        device_.setBlendStateProperty(BlendState::AlphaBlend);
+        device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
+        curtains_->SetData(curtainStaging_.data(), 0, static_cast<int>(curtainStaging_.size()), SetDataOptions::Discard);
+        device_.SetVertexBuffer(curtains_.get());
+        device_.setIndicesProperty(nullptr);
+        skyEffect_->setWorldProperty(Matrix::CreateTranslation(camera));
+        skyEffect_->setViewProperty(view);
+        skyEffect_->setProjectionProperty(projection);
+        skyEffect_->setDiffuseColorProperty(Vector3(1.0f, 1.0f, 1.0f));
+        skyEffect_->Apply();
+        device_.DrawPrimitives(PrimitiveType::TriangleList, 0, static_cast<int>(curtainStaging_.size() / 3));
         ++drawCalls_;
     }
 

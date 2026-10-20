@@ -46,6 +46,13 @@ namespace island
         void DrawGrade(const DayLighting& light, bool localLight = false);
         /** @brief A lightning flash over everything already drawn (0..1). */
         void DrawFlash(float flash);
+        /** @brief Distant rain curtains: grey shafts of rain hanging from far showers over the
+         *  sea round the horizon, streaked, slanting with the wind and drifting slowly, before
+         *  the grade (the night darkens them), depth-read so the island stands in front;
+         *  `rain` 0..1 the showers about. */
+        void DrawRainCurtains(const Microsoft::Xna::Framework::Matrix& view, const Microsoft::Xna::Framework::Matrix& projection,
+                              const Microsoft::Xna::Framework::Vector3& camera, const DayLighting& light, float rain,
+                              double seconds);
         /** @brief The lightning bolt of a strike while its flash lasts: a jagged channel with a
          *  branch or two from the cloud base down to the horizon at the strike's bearing,
          *  sized for its distance, additive after the grade, depth-read so the island stands
@@ -74,7 +81,8 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BlendState> gradeBlend_, litGradeBlend_, alphaResetBlend_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> gradeTriangle_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> stars_;
-        std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> moon_, meteor_, rainbow_, bolt_, starsInSky_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> moon_, meteor_, rainbow_, bolt_, starsInSky_, curtains_;
+        std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> curtainStaging_;
         // the stars as built, and those low enough for the cumulus to pass in front of
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> starBase_, starStaging_;
         std::vector<std::uint32_t> lowStars_;

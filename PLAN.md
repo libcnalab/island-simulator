@@ -233,6 +233,21 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 259 (2026-10-20) — distant rain curtains
+
+In showery and overcast weather, grey shafts of rain now hang from far showers over the sea
+round the horizon (`TimeOfDayRenderer::DrawRainCurtains`): seven curtains at spread bearings,
+drifting slowly round, each 0.2-0.3 radians wide and 6-10 degrees tall, in fourteen streaked
+strips soft at the sides, faint where it hangs from the cloud, densest a little below and
+thinning toward the sea, slanted with the wind, in the hour's horizon grey darkened as rain is,
+alpha-blended before the grade (the night darkens them) and depth-read so the island stands in
+front. Their strength follows the rain, or a third of the cloud cover under a heavy overcast.
+A first build was too faint to see against a pale shower sky and floated above the horizon
+from a raised camera (from up high the sea's edge lies well below the level): the shafts are
+now darker and reach down to where the sea lies at their distance seen from the camera's
+height. `overview` and `flight` in showers and `jetty-end` under overcast show them; fair
+weather changes nothing.
+
 ## Loop pass 258 (2026-10-20) — moths round the lantern
 
 The hut's veranda lantern (Loop pass 228) now draws its moths: seven pale specks, each looping
