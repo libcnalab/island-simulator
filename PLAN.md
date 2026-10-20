@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 59 (2026-10-20) — fallen twigs on the forest floor
+
+The close ground view showed bare litter between the plants. A core `ForestTwigLayout`
+places up to two twigs for each canopy tree, 1.2–3 m from the trunk on forest floor (interior
+or coastal ground above 0.3 m, more than 20 m inland, slope under 0.5 rad, 3 m off the primary
+path and 2.5 m clear of the stream channel), each with a deterministic yaw, 0.45–0.95 m
+length, 1.8–3.2 cm radius and a bend, capped at 240 (a first cut at 0.3–0.7 m and 1–2 cm was
+lost against the litter in the close ground view). `ForestTwigRenderer` builds them once as bent
+three-segment five-sided sticks in three bark tones lit per facet by the fixed sun with a
+pale broken end, one static draw after the hatchlings. Its line "fallen twigs lie scattered
+on the forest floor under the crowns" (with the count) is pinned by the native capture tool.
+Core check: at least sixty twigs, all on forest floor within 3 m of a canopy trunk, laid out
+identically on a second construction. Native `ground` passes.
+
 ## Loop pass 58 (2026-10-20) — the boars' wallows show in the mud
 
 The boars wallowed at the bank (pass 11) and the bank looked untouched. `BoarHerd::WallowSites`

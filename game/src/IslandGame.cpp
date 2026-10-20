@@ -2164,6 +2164,7 @@ namespace island
             const std::vector<BoarHerd::WallowSite> wallowSites = boarHerd_.WallowSites();
             wallowScarRenderer_ = std::make_unique<WallowScarRenderer>(device, terrain_, wallowSites);
         }
+        forestTwigRenderer_ = std::make_unique<ForestTwigRenderer>(device, terrain_, forestTwigs_.Twigs());
         surfSprayRenderer_ = std::make_unique<CascadeMistRenderer>(device,
             "island-simulator: breakers throw spray up the seaward faces of the offshore rocks in time with their foam");
         dolphinBlowRenderer_ = std::make_unique<CascadeMistRenderer>(device,
@@ -4317,6 +4318,7 @@ namespace island
             GpuDiagnosticScope gpuPass("falling-fruit");
             fallingFruitRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,fallingFruit_.Fruit());
             hatchlingRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,hatchlings_.Hatchlings());
+            forestTwigRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }
         if(hutRenderer_) {
             GpuDiagnosticScope gpuPass("hut");

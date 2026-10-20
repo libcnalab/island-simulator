@@ -119,6 +119,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 56: a fish breaking the surface makes a small plip (PLAN "Loop pass 56").
 - Pass 57: mice, rats, geckos and skinks scatter from passing animals (PLAN "Loop pass 57").
 - Pass 58: the boars' wallows show as dark churned mud at the bank (PLAN "Loop pass 58").
+- Pass 59: fallen twigs lie scattered on the forest floor under the crowns (PLAN "Loop pass 59").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

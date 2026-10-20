@@ -100,6 +100,7 @@ add_library(island_core STATIC
     game/src/SurfSprayField.cpp
     game/src/DolphinBlowField.cpp
     game/src/StingraySandField.cpp
+    game/src/ForestTwigLayout.cpp
     game/src/HelicopterLayout.cpp
     game/src/GoatHabitat.cpp
     game/src/SpiderHabitat.cpp
@@ -722,6 +723,7 @@ if(ISLAND_BUILD_GAME)
         game/src/RootingDustRenderer.cpp
         game/src/ShellDragRenderer.cpp
         game/src/WallowScarRenderer.cpp
+        game/src/ForestTwigRenderer.cpp
         game/src/UnderwaterEffectRenderer.cpp
         game/src/HelicopterRenderer.cpp
         game/src/ShorelineRenderer.cpp

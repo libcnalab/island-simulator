@@ -16,6 +16,7 @@
 #include "IslandSimulator/StingraySandField.hpp"
 #include "IslandSimulator/GrassWalkers.hpp"
 #include "IslandSimulator/RodentPopulation.hpp"
+#include "IslandSimulator/ForestTwigLayout.hpp"
 #include "IslandSimulator/CrabColony.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
 #include "IslandSimulator/CoastalWindResponse.hpp"
@@ -8138,6 +8139,22 @@ int main()
                 for(std::size_t j=0;j<i;++j) if(std::hypot(sites[i].x-sites[j].x,sites[i].z-sites[j].z)<1.5f) distinct=false;
             }
             Check(!sites.empty()&&sites.size()<=island::BoarHerd::BoarCount&&onBank&&distinct,"the boars' wallow sites are distinct bank points");
+        }
+        // Fallen twigs: dozens under the crowns, every one on forest floor off the path and
+        // the stream, within three metres of a canopy trunk, deterministic.
+        {
+            const island::JungleLayout twigJungle(terrain);
+            island::ForestTwigLayout twigs(terrain,twigJungle),repeat(terrain,twigJungle);
+            bool floor=true,nearTrunk=true,same=twigs.Twigs().size()==repeat.Twigs().size();
+            for(std::size_t i=0;i<twigs.Twigs().size();++i) {
+                const auto& twig=twigs.Twigs()[i];
+                if(!island::ForestTwigLayout::IsForestFloor(terrain,twig.x,twig.z)) floor=false;
+                float best=1e9f;
+                for(const auto& tree:twigJungle.Canopy()) best=std::min(best,std::hypot(tree.x-twig.x,tree.z-twig.z));
+                if(best>3.05f) nearTrunk=false;
+                if(same&&(twig.x!=repeat.Twigs()[i].x||twig.z!=repeat.Twigs()[i].z)) same=false;
+            }
+            Check(twigs.Twigs().size()>=60U&&floor&&nearTrunk&&same,"fallen twigs lie on the forest floor near the trunks, deterministically");
         }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls
