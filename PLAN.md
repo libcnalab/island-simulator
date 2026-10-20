@@ -54,6 +54,18 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 170 (2026-10-20) — a crocodile blinks
+
+A crocodile's lidded eyes never closed. `CrocodileState::blink` (0..1) now carries the
+blink: every `BlinkPeriodSeconds` (8 s, plus a little per crocodile) the eyes shut for
+`BlinkSeconds` (0.3 s), closing at 12/s and opening at 8/s, basking or afloat; the blinks
+are counted (`BlinkCount()`, `BlinkingCount()`). In the near renderer the socket mound
+flattens by 45 % and the iris and pupil thin to a line, on the same vertices. The
+crocodiles report line gains "a crocodile blinks, its eyes shut for a moment every eight
+seconds or so" (pinned). Core check: through forty seconds the basking crocodile blinks at
+least three times, each shutting the eyes fully and opening them within a second. Native
+`crocodiles` passes.
+
 ## Loop pass 169 (2026-10-20) — a goat flicks an ear
 
 A goat's ears sat still through flies and all. `GoatState::earFlick` (magnitude 0..1, its

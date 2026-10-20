@@ -298,17 +298,20 @@ namespace island
                     AddDoubleTriangle(vertices,root-axes.forward*.035f*scale,
                                       root+axes.forward*.035f*scale,tip,palette.tooth);
                 }
+                // Blinking, the eye's lid closes over the iris: the socket mound flattens and
+                // the iris and pupil thin to a line, on the same vertices.
+                const float blink=std::clamp(crocodile.blink,0.0f,1.0f);
                 const Vector3 eye=Local(centre,axes,side*.40f,.615f,1.24f,scale);
-                AppendEllipsoid(vertices,eye,axes,scale,.10f,.058f,.12f,
+                AppendEllipsoid(vertices,eye,axes,scale,.10f,.058f*(1.0f-.45f*blink),.12f,
                                 palette.scute,palette.side,3,8);
                 // Crocodile pupils face laterally, not forward along the snout.
                 // Embedding the thin axis into the socket also removes the old
                 // stalk-eyed toy silhouette in broadside views.
                 const Vector3 iris=eye+axes.right*(side*.092f*scale)+axes.up*.006f*scale;
-                AppendEllipsoid(vertices,iris,axes,scale,.018f,.036f,.038f,
+                AppendEllipsoid(vertices,iris,axes,scale,.018f,.036f*(1.0f-.9f*blink),.038f,
                                 palette.eye,palette.eye,3,8);
                 const Vector3 pupil=iris+axes.right*(side*.017f*scale);
-                AppendEllipsoid(vertices,pupil,axes,scale,.009f,.027f,.012f,
+                AppendEllipsoid(vertices,pupil,axes,scale,.009f,.027f*(1.0f-.9f*blink),.012f,
                                 palette.pupil,palette.pupil,2,7);
                 const Vector3 nostril=Local(centre,axes,side*.21f,.505f,2.32f,scale);
                 AppendEllipsoid(vertices,nostril,axes,scale,.040f,.018f,.028f,

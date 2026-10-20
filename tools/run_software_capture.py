@@ -1384,6 +1384,8 @@ def main():
                 raise RuntimeError("current octopus jet is missing; check for a stale executable")
             if "and flicks an ear back at a fly now and then, the ears taking turns" not in diagnostics:
                 raise RuntimeError("current goat ear flick is missing; check for a stale executable")
+            if "a crocodile blinks, its eyes shut for a moment every eight seconds or so" not in diagnostics:
+                raise RuntimeError("current crocodile blink is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:

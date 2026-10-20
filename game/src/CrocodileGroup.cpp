@@ -144,6 +144,11 @@ void CrocodileGroup::Update(float deltaSeconds,float observerX,float observerY,
 #endif
 }
 
+std::size_t CrocodileGroup::BlinkingCount()const noexcept {
+    std::size_t count=0;
+    for(const Agent& agent:agents_) count+=agent.blinking?1U:0U;
+    return count;
+}
 std::size_t CrocodileGroup::GapingCount()const noexcept{
     std::size_t count=0;
     for(const Agent& agent:agents_) count+=agent.gaping?1U:0U;
@@ -261,6 +266,15 @@ void CrocodileGroup::UpdateAgent(Agent& agent,float dt,float observerX,float obs
         :agent.state.behavior==CrocodileBehavior::Bask
         ?(.5f+.5f*std::sin(elapsedSeconds_*.12f+agent.phaseOffset))*.14f:0.0f;
     agent.state.jawOpen+=std::clamp(jawTarget-agent.state.jawOpen,-dt*.18f,dt*.18f);
+    // The blink: every eight seconds or so (a little per crocodile) the eyes shut for a
+    // moment and open again.
+    const float blinkPeriod=BlinkPeriodSeconds+agent.phaseOffset*.5f;
+    agent.blinkClock+=dt;
+    if(agent.blinkClock>=blinkPeriod) agent.blinkClock=0.0f;
+    const bool blinking=agent.blinkClock>=2.0f&&agent.blinkClock<2.0f+BlinkSeconds;
+    if(blinking&&!agent.blinking) ++blinks_;
+    agent.blinking=blinking;
+    agent.state.blink+=std::clamp((blinking?1.0f:0.0f)-agent.state.blink,-dt*8.0f,dt*12.0f);
 }
 
 }

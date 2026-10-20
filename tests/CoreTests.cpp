@@ -9921,6 +9921,18 @@ int main()
             Check(!swimmerGaped,"a swimming crocodile never gapes");
             Check(gaper.Crocodiles()[lying].jawOpen<.3f||gaper.GapingCount()>=1U,
                   "forty seconds on, the first gape has closed unless a new lie-up has begun one");
+            // The blink: through those forty-two seconds the basking crocodile has blinked at
+            // least three times; a blink shuts the eyes fully and opens them within a second.
+            island::CrocodileGroup blinker(terrain);
+            float shut=0.0f; int shutFrames=0,longestShut=0; bool reopened=false;
+            for(int step=0;step<400;++step) {
+                blinker.Update(0.05f,bank.x+60.0f,bank.y+1.6f,bank.z);
+                const float blink=blinker.Crocodiles()[lying].blink;
+                shut=std::max(shut,blink);
+                shutFrames=blink>.5f?shutFrames+1:0; longestShut=std::max(longestShut,shutFrames);
+                if(shut>.9f&&blink<.05f) reopened=true;
+            }
+            Check(blinker.BlinkCount()>=3U&&shut>.9f&&longestShut<=20&&reopened,"a crocodile blinks every several seconds, the eyes shut for a moment and open again");
         }
         {
             // The crocodile's hiss PCM: deterministic, two variants, 1.2 s, silent at both

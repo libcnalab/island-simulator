@@ -22,6 +22,9 @@ struct CrocodileState {
     float gaitPhase=0;
     float bodyWave=0;
     float jawOpen=0;
+    /** @brief 0..1 the blink: the eyes shut for a moment every several seconds, basking or
+     *  afloat; held open while dormant. */
+    float blink=0;
     float submerged=0;
     float scale=1;
     CrocodileBehavior behavior=CrocodileBehavior::Bask;
@@ -66,6 +69,11 @@ public:
     static constexpr float GapeSeconds=14.0f;
     static constexpr float GapeOpen=.50f;
     static constexpr float EntrySeconds=2.6f;
+    /** @brief Blinks begun (every BlinkPeriodSeconds or so per crocodile, each BlinkSeconds)
+     *  and the crocodiles mid-blink. */
+    [[nodiscard]] std::uint32_t BlinkCount()const noexcept{return blinks_;}
+    [[nodiscard]] std::size_t BlinkingCount()const noexcept;
+    static constexpr float BlinkSeconds=0.3f,BlinkPeriodSeconds=8.0f;
     [[nodiscard]] std::span<const CrocodileHome> Homes()const noexcept{return homes_;}
     [[nodiscard]] int FullSimulationCount()const noexcept{return fullCount_;}
     [[nodiscard]] int ReducedSimulationCount()const noexcept{return reducedCount_;}
@@ -83,6 +91,7 @@ private:
         bool wasAlert=false;
         float hissSeconds=0;
         float gapeDelay=0,gapeSeconds=0;   // the wait into a bask before the gape, and its remainder
+        float blinkClock=0;bool blinking=false;
         bool gaping=false;
     };
     [[nodiscard]] std::pair<float,float> FindAnchor(float lateral,float targetShore,
@@ -101,6 +110,7 @@ private:
     Entry entry_;
     Hiss hiss_;
     std::uint32_t gapes_=0;
+    std::uint32_t blinks_=0;
     int fullCount_=0,reducedCount_=0,dormantCount_=0;
 };
 
