@@ -170,6 +170,11 @@ namespace island
         pendingPlipSeconds_ = 0.8f;
     }
 
+    void Soundscape::NoteGoatAlarm(const std::size_t animalIndex) noexcept
+    {
+        goatScheduler_.NoteAlarm(animalIndex);
+    }
+
     void Soundscape::NoteMonkeyAlarm(const float x, const float y, const float z) noexcept
     {
         if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) return;

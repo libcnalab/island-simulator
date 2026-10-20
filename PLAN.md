@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 101 (2026-10-20) — the goat sentinel's alarm bleat
+
+The sentinel lifted its head first at the walker, in silence; the herd bleated only in
+retreat. `GoatCallScheduler::NoteAlarm(animalIndex)` makes the scheduler's next request a
+loud bleat from that goat (the second variant, pitched up, 1.35 times the bleat's volume at
+that distance) ahead of the herd's cooldowns, held while the playback slot is busy and
+dropped after 2.5 s (`AlarmSeconds`) if none frees; `Soundscape::NoteGoatAlarm` passes it
+on, and the game gives it the moment the sentinel's alert begins. The startup report gains
+"the goat sentinel coming alert at the walker gives a loud alarm bleat ahead of the herd's
+other calls", pinned by the native capture tool. Core checks: with the herd's cooldowns
+running, the alarm waits for a slot, then is a loud pitched-up bleat from goat 0 at once;
+an alarm with no slot for five seconds is dropped; the ordinary goat call checks hold.
+Native `goats` passes.
+
 ## Loop pass 100 (2026-10-20) — a seabird's strike gathers the others
 
 Each seabird left its high route for the school at its own time, so the hunts were lone.

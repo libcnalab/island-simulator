@@ -468,10 +468,18 @@ namespace island
         [[nodiscard]] GoatCallRequest Update(float deltaSeconds,
             float listenerX, float listenerY, float listenerZ,
             std::span<const GoatState> goats, bool playbackSlotAvailable) noexcept;
+        /** @brief The sentinel's alarm: its next request is a loud bleat from that goat,
+         *  ahead of the herd's cooldowns, kept until a playback slot is free or it is stale. */
+        void NoteAlarm(std::size_t animalIndex) noexcept;
+        [[nodiscard]] bool AlarmPending() const noexcept { return alarmPending_; }
+        static constexpr float AlarmSeconds = 2.5f;
 
     private:
         [[nodiscard]] float NextUnit() noexcept;
         std::array<float, GoatHabitat::Count> cooldowns_{};
+        bool alarmPending_ = false;
+        std::size_t alarmIndex_ = 0;
+        float alarmSeconds_ = 0.0f;
         std::array<std::uint8_t, GoatHabitat::Count> callPhases_{};
         std::uint32_t randomState_ = 0x60a7b1eaU;
         float herdCooldown_ = 0.0f;

@@ -1512,6 +1512,13 @@ namespace island
         for (float& cooldown : cooldowns_) cooldown = .8f + 3.0f * NextUnit();
     }
 
+    void GoatCallScheduler::NoteAlarm(const std::size_t animalIndex) noexcept
+    {
+        alarmPending_ = true;
+        alarmIndex_ = animalIndex;
+        alarmSeconds_ = AlarmSeconds;
+    }
+
     GoatCallRequest GoatCallScheduler::Update(const float deltaSeconds,
         const float listenerX, const float listenerY, const float listenerZ,
         const std::span<const GoatState> goats, const bool playbackSlotAvailable) noexcept
@@ -1520,9 +1527,41 @@ namespace island
         if (dt <= 0.0f) return {};
         herdCooldown_ = std::max(0.0f, herdCooldown_ - dt);
         for (float& cooldown : cooldowns_) cooldown = std::max(0.0f, cooldown - dt);
-        if (!playbackSlotAvailable || herdCooldown_ > 0.0f
+        if (alarmPending_) {
+            alarmSeconds_ -= dt;
+            if (alarmSeconds_ <= 0.0f || alarmIndex_ >= goats.size()) alarmPending_ = false;
+        }
+        if (!playbackSlotAvailable
             || !std::isfinite(listenerX) || !std::isfinite(listenerY)
             || !std::isfinite(listenerZ)) return {};
+        // The sentinel's alarm goes ahead of the herd's turns: a loud bleat, pitched up.
+        if (alarmPending_) {
+            const GoatState& goat = goats[alarmIndex_];
+            if (std::isfinite(goat.x) && std::isfinite(goat.y) && std::isfinite(goat.z)
+                && std::isfinite(goat.scale) && goat.scale > 0.0f) {
+                alarmPending_ = false;
+                const float sourceY = goat.y + .78f * goat.scale;
+                const float distance = std::hypot(std::hypot(goat.x - listenerX,
+                    goat.z - listenerZ), sourceY - listenerY);
+                const float volume = std::min(1.0f, GoatCallVolume(GoatCallKind::Bleat, distance) * 1.35f);
+                if (volume >= .006f) {
+                    GoatCallRequest request;
+                    request.kind = GoatCallKind::Bleat;
+                    request.animalIndex = alarmIndex_;
+                    request.variant = 1U;
+                    request.volume = volume;
+                    request.pitch = .08f;
+                    request.source = {true, goat.x, sourceY, goat.z};
+                    cooldowns_[alarmIndex_] = 6.0f;
+                    callPhases_[alarmIndex_] = 1U;
+                    herdCooldown_ = 2.0f;
+                    return request;
+                }
+            } else {
+                alarmPending_ = false;
+            }
+        }
+        if (herdCooldown_ > 0.0f) return {};
 
         const std::size_t count = std::min(goats.size(), cooldowns_.size());
         for (std::size_t offset = 0; offset < count; ++offset) {

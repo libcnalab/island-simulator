@@ -109,6 +109,8 @@ namespace island
         /** @brief A monkey breaking into flight from the walker: its alarm call, the troop's
          *  second phrase pitched up and loud, heard within about forty metres. */
         void NoteMonkeyAlarm(float x, float y, float z) noexcept;
+        /** @brief The goat sentinel standing alert at the walker: its alarm bleat goes next. */
+        void NoteGoatAlarm(std::size_t animalIndex) noexcept;
 
         /** @brief Supplies the sampled portal elevation for underground acoustic zoning. */
         void SetBunkerSource(float entranceGroundY) noexcept;

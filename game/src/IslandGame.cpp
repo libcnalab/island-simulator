@@ -2156,6 +2156,7 @@ namespace island
                      "a coconut's thud startles the deer and goats within 30 m, who stand facing the fall for 6 s; "
                      "the deer keep seven metres clear of the campfire\n";
         std::cout << "island-simulator: goats square up to a neighbour for a bout of head-to-head shoving, standing nose to nose and taking turns lowering their heads\n";
+        std::cout << "island-simulator: the goat sentinel coming alert at the walker gives a loud alarm bleat ahead of the herd's other calls\n";
         std::cout << "island-simulator: snakes " << snakes_->Snakes().size()
                   << " ground agents with separated dense-understory-margin homes; "
                   << snakes_->TreeSnakes().size()<<" arboreal agents on sampled broadleaf trunks\n";
@@ -3031,6 +3032,9 @@ namespace island
             ?GoatPoint{std::numeric_limits<float>::quiet_NaN(),0,0}
             :GoatPoint{cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z};
         measureWildlife(1, [&] { goats_->Update(deltaSeconds,goatObserver); });
+        // The sentinel coming alert at the walker gives the alarm bleat.
+        if(soundscape_&&goats_->SentinelAlert()&&!goatSentinelWasAlert_) soundscape_->NoteGoatAlarm(0U);
+        goatSentinelWasAlert_=goats_->SentinelAlert();
         if(viewpoint_==FixedViewpoint::GoatDetail) {
             const auto& current=goats_->Goats().front();
             cameraPosition_+=Vector3(current.x-previousGoat.x,current.y-previousGoat.y,current.z-previousGoat.z);

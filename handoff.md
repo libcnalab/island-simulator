@@ -162,6 +162,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 98: the shark within eighteen metres sends a surfacing turtle under and the rest away from it (PLAN "Loop pass 98").
 - Pass 99: a fish breaking the surface within sixty metres draws the present shark that way for a few seconds (PLAN "Loop pass 99").
 - Pass 100: a seabird's strike brings the others within a hundred and twenty metres in to hunt the same school (PLAN "Loop pass 100").
+- Pass 101: the goat sentinel coming alert at the walker gives a loud alarm bleat ahead of the herd's other calls (PLAN "Loop pass 101").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

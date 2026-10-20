@@ -2192,6 +2192,23 @@ int main()
         &&noGoatCall(audioGoats,0,0,true)
         &&noGoatCall(std::span<const island::GoatState>{},0,.25f,true),
         "goat calls respect shared slots, range, valid listeners, paused time and empty herds");
+    {
+        // The sentinel's alarm: a loud bleat from goat 0 at the next free slot, ahead of the
+        // herd's cooldowns; held while the slot is busy; dropped once stale.
+        island::GoatCallScheduler alarmed;alarmed.Reset();
+        (void)alarmed.Update(.25f,0,1.72f,0,audioGoats,true);   // the herd's first call takes the cooldowns
+        alarmed.NoteAlarm(0);
+        const auto held=alarmed.Update(.25f,0,1.72f,0,audioGoats,false);
+        Check(held.kind==island::GoatCallKind::None&&alarmed.AlarmPending(),"the alarm waits for a playback slot");
+        const auto alarm=alarmed.Update(.25f,0,1.72f,0,audioGoats,true);
+        Check(alarm.kind==island::GoatCallKind::Bleat&&alarm.animalIndex==0U&&alarm.variant==1U
+            &&alarm.pitch>.07f&&alarm.volume>.3f&&!alarmed.AlarmPending(),
+            "the sentinel's alarm is a loud pitched-up bleat from goat 0 ahead of the herd's turns");
+        island::GoatCallScheduler stale;stale.Reset();
+        stale.NoteAlarm(0);
+        for(int step=0;step<20;++step) (void)stale.Update(.25f,0,1.72f,0,audioGoats,false);
+        Check(!stale.AlarmPending(),"an alarm with no slot for five seconds is dropped");
+    }
 
     const auto hissA=island::GenerateSnakeHiss(0),hissB=island::GenerateSnakeHiss(1);
     Check(hissA.sampleRate==22050 && hissA.samples.size()==22050U

@@ -1241,6 +1241,8 @@ def main():
                 raise RuntimeError("current shark breach interest is missing; check for a stale executable")
             if "a seabird's strike brings the others on their routes within a hundred and twenty metres in to hunt the same school" not in diagnostics:
                 raise RuntimeError("current seabird hunt joining is missing; check for a stale executable")
+            if "the goat sentinel coming alert at the walker gives a loud alarm bleat" not in diagnostics:
+                raise RuntimeError("current goat alarm bleat is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":
