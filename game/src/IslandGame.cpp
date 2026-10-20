@@ -2157,6 +2157,7 @@ namespace island
         underwaterEffect_ = std::make_unique<UnderwaterEffectRenderer>(device);
         canopyShafts_ = std::make_unique<CanopyShaftRenderer>(device);
         footprintRenderer_ = std::make_unique<FootprintTrailRenderer>(device, terrain_);
+        rootingDustRenderer_ = std::make_unique<RootingDustRenderer>(device);
         worldDebugRenderer_ = std::make_unique<WorldDebugRenderer>(device, terrain_);
         if (viewpoint_ == FixedViewpoint::GroundContactDetail) {
             constexpr float contactZ = 45.0f;
@@ -2784,6 +2785,7 @@ namespace island
         else
             boarHerd_.Update(deltaSeconds, cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
         for (const std::size_t eaten : boarHerd_.EatenFruit()) fallingFruit_.Consume(eaten);
+        rootingDust_.Update(deltaSeconds, seaForageSeconds_, boarHerd_.Boars());
         if(viewpoint_==FixedViewpoint::BoarDetail) {
             const auto& current=boarHerd_.Boars().front();
             // Follow both translation and heading. The old camera translated with
@@ -4437,6 +4439,7 @@ namespace island
             streamWaterRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,timeSeconds);
             streamDriftRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,streamDrift_.Leaves());
             cascadeMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,cascadeMist_.Puffs());
+            rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,rootingDust_.Puffs());
         }
         {
             GpuDiagnosticScope gpuPass("campfire-effects");

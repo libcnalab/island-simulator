@@ -46,6 +46,20 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 41 (2026-10-20) — the boars' rooting throws up soil
+
+A boar stood with its snout among the roots (pass 8) and the ground stayed still. A core
+`RootingDustField` watches the herd: a boar foraging with its rooting pose above 0.8 (and
+not dormant) throws up a puff every 0.42 s at the snout, 0.95 m ahead of its centre and
+0.18 m up, swept a little side to side; each puff rises 0.22 m/s slowing, swells from about
+10 cm, drifts toward −x on the breeze and faster in a gust front, and is gone in 1.1 s
+(density a half-sine). `RootingDustRenderer` draws each as a camera-facing eight-segment
+fan in premultiplied earth brown, alpha 110 at full density within 25 m, after the cascade
+mist. Diagnostic "rooting boars throw up small puffs of soil at the snout that drift off on
+the breeze" is pinned by the native capture tool. Core checks: a rooting boar releases at
+least ten puffs in six seconds, all within 0.6 m of its snout, rising while dense; a walking
+boar releases none and the old puffs clear. Native `boars` passes.
+
 ## Loop pass 40 (2026-10-20) — the walker's prints in the sand
 
 The resident left prints along the beach (pass 13) and the walker left none. A core

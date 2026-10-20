@@ -43,6 +43,7 @@
 #include "IslandSimulator/CascadeMistField.hpp"
 #include "IslandSimulator/CanopyShafts.hpp"
 #include "IslandSimulator/FootprintTrail.hpp"
+#include "IslandSimulator/RootingDustField.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
@@ -7849,6 +7850,32 @@ int main()
             Check(trail.PrintCount()==before,"no prints are laid off the sand");
             for(int step=0;step<2500;++step) trail.Update(0.1f,wx,wz,0.0f,0.0f,true);
             Check(trail.ActiveCount()==0U,"the sand takes the prints back within the trail's life");
+        }
+        // Rooting dust: a boar with its snout among the roots throws up puffs at the snout
+        // that rise, swell and are gone within the second; a walking boar throws none.
+        {
+            island::RootingDustField dust(terrain);
+            island::BoarState rooter{};
+            rooter.x=40.0f;rooter.z=-16.0f;rooter.y=terrain.Height(40.0f,-16.0f);rooter.headingRadians=0.3f;
+            rooter.behavior=island::BoarBehavior::Forage;rooter.rootingPose=1.0f;rooter.scale=1.0f;
+            rooter.simulationTier=island::WildlifeSimulationTier::Full;
+            std::vector<island::BoarState> boars{rooter};
+            bool atSnout=true,rose=false;std::size_t most=0;
+            for(int step=0;step<120;++step) {
+                dust.Update(0.05f,0.0f,boars);
+                most=std::max(most,dust.ActiveCount());
+                for(const auto& puff:dust.Puffs()) if(puff.active) {
+                    const float snoutX=rooter.x+std::cos(rooter.headingRadians)*island::RootingDustField::SnoutAhead;
+                    const float snoutZ=rooter.z+std::sin(rooter.headingRadians)*island::RootingDustField::SnoutAhead;
+                    if(std::hypot(puff.x-snoutX,puff.z-snoutZ)>0.6f) atSnout=false;
+                    if(puff.y>terrain.Height(puff.x,puff.z)+island::RootingDustField::SnoutHeight+0.08f&&puff.density>0.5f) rose=true;
+                }
+            }
+            Check(dust.ReleaseCount()>=10U&&most>=2U&&atSnout&&rose,"a rooting boar throws up puffs of soil at its snout that rise and are soon gone");
+            boars[0].behavior=island::BoarBehavior::Wander;boars[0].rootingPose=0.0f;
+            const std::uint32_t before=dust.ReleaseCount();
+            for(int step=0;step<60;++step) dust.Update(0.05f,0.0f,boars);
+            Check(dust.ReleaseCount()==before&&dust.ActiveCount()==0U,"a walking boar throws no dust and the old puffs clear");
         }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls
