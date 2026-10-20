@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 63 (2026-10-20) — the crocodile's slide into the water
+
+A crocodile retreating off the bank went under without a mark on the water. `CrocodileGroup`
+notes an `Entry` (point, age, count) the frame a crocodile's submersion crosses 0.2 on its
+way in, kept for 2.6 s. The game feeds the entry to the ocean's seabird splash ring whenever
+it is the more recent of the two (the same plume and widening ring, so the shader is
+unchanged) and plays the heavy splash clip through `NoteBirdSplash` once per entry
+(`notedEntryCount_`). Diagnostic "a crocodile sliding off the bank goes under with a heavy
+splash and a ring on the water" is printed in the startup report and pinned by the native
+capture tool. Core check: a crocodile on the bank, with the walker three metres off, slides
+into the water within a minute with one entry noted at the water's edge. Native
+`crocodiles` passes.
+
 ## Loop pass 62 (2026-10-20) — the startled octopus inks
 
 An octopus caught in the open by the swimmer went to its den in silence. `OctopusGroup`

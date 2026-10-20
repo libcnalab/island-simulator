@@ -502,6 +502,7 @@ namespace island
         std::uint32_t notedDiveCount_ = 0U;
         std::uint32_t notedThudCount_ = 0U;
         std::uint32_t notedBreachCount_ = 0U;
+        std::uint32_t notedEntryCount_ = 0U;
         std::unique_ptr<HelicopterRenderer> helicopterRenderer_;
         std::unique_ptr<ShorelineRenderer> shorelineRenderer_;
         std::unique_ptr<SkyRenderer> skyRenderer_;

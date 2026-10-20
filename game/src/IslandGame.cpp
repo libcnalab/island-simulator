@@ -2252,6 +2252,7 @@ namespace island
                   << "island-simulator: circling seabirds plunge-dive every nine seconds and each strike raises a foam ring on the water and a positional splash\n"
                   << "island-simulator: a falling coconut lands with a positional thud heard within thirty metres\n"
                   << "island-simulator: a fish breaking the surface makes a small plip heard within twenty-five metres\n"
+                  << "island-simulator: a crocodile sliding off the bank goes under with a heavy splash and a ring on the water\n"
                   << "island-simulator: passing gust fronts swell the breeze and canopy beds at the listener\n"
                   << "island-simulator: the cumulus shadows drift over the land as well as the sea, dimming every sun-shadow receiver together\n"
                   << "island-simulator: a fallen fruit bounces off where it strikes and rolls downhill to rest\n"
@@ -2643,6 +2644,10 @@ namespace island
             if (deer_) deer_->NoteDisturbance(landing.x, landing.z);
             if (goats_) goats_->NoteDisturbance(landing.x, landing.z);
             birdFlock_.NoteDisturbance(landing.x, landing.z);
+        }
+        if (soundscape_ && crocodileGroup_.LastEntry().count != notedEntryCount_) {
+            notedEntryCount_ = crocodileGroup_.LastEntry().count;
+            soundscape_->NoteBirdSplash(crocodileGroup_.LastEntry().x, 0.0f, crocodileGroup_.LastEntry().z);
         }
         if (soundscape_ && fishSchools_.LastBreach().count != notedBreachCount_) {
             notedBreachCount_ = fishSchools_.LastBreach().count;
@@ -4476,6 +4481,10 @@ namespace island
         {
             GpuDiagnosticScope gpuPass("ocean");
             const BirdDiveSplash& diveSplash = birdFlock_.DiveSplash();
+            // A crocodile sliding into the water takes the seabird's splash ring when its
+            // entry is the more recent of the two.
+            const CrocodileGroup::Entry& crocEntry = crocodileGroup_.LastEntry();
+            const bool crocSplash = crocEntry.valid && (!diveSplash.valid || crocEntry.ageSeconds < diveSplash.ageSeconds);
             if (soundscape_ && birdFlock_.DiveCount() != notedDiveCount_) {
                 notedDiveCount_ = birdFlock_.DiveCount();
                 soundscape_->NoteBirdSplash(diveSplash.x, 0.0f, diveSplash.z);
@@ -4486,8 +4495,9 @@ namespace island
                                  waterRippleModel_.Intensity(), waterRippleModel_.Phase(),
                                  waterRippleModel_.SplashIntensity(),
                                  waterRippleModel_.SplashPhase(),
-                                 diveSplash.x, diveSplash.z,
-                                 diveSplash.valid ? diveSplash.ageSeconds / BirdFlock::SplashSeconds : -1.0f,
+                                 crocSplash ? crocEntry.x : diveSplash.x, crocSplash ? crocEntry.z : diveSplash.z,
+                                 crocSplash ? crocEntry.ageSeconds / CrocodileGroup::EntrySeconds
+                                            : (diveSplash.valid ? diveSplash.ageSeconds / BirdFlock::SplashSeconds : -1.0f),
                                  jettyPlacement_ ? jettyPlacement_->rootX : 0.0f,
                                  jettyPlacement_ ? jettyPlacement_->rootZ : 0.0f,
                                  jettyPlacement_ ? jettyPlacement_->dirX : 0.0f,

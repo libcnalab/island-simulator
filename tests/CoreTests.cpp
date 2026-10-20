@@ -18,6 +18,7 @@
 #include "IslandSimulator/RodentPopulation.hpp"
 #include "IslandSimulator/ForestTwigLayout.hpp"
 #include "IslandSimulator/OctopusInkField.hpp"
+#include "IslandSimulator/CrocodileGroup.hpp"
 #include "IslandSimulator/CrabColony.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
 #include "IslandSimulator/CoastalWindResponse.hpp"
@@ -8174,6 +8175,18 @@ int main()
             Check(ink.ActiveCount()==island::OctopusInkField::PuffsPerCloud&&clouded,"a cloud of ink forms where the octopus was");
             for(int step=0;step<70;++step) ink.Update(0.05f,octopuses.LastInk());
             Check(ink.ActiveCount()==0U,"the ink thins away within three seconds");
+        }
+        // A crocodile on the bank slides into the water when the walker comes near: the entry
+        // is noted once, at a point at the water's edge, within a minute.
+        {
+            island::CrocodileGroup crocs(terrain);
+            std::size_t basking=island::CrocodileGroup::CrocodileCount;
+            for(std::size_t i=0;i<crocs.Crocodiles().size();++i) if(crocs.Crocodiles()[i].submerged<0.01f) { basking=i; break; }
+            Check(basking<island::CrocodileGroup::CrocodileCount,"a crocodile starts on the bank");
+            const auto start=crocs.Crocodiles()[basking];
+            for(int step=0;step<1200&&crocs.LastEntry().count==0U;++step) crocs.Update(0.05f,start.x+3.0f,start.y+1.6f,start.z);
+            Check(crocs.LastEntry().count==1U&&terrain.Height(crocs.LastEntry().x,crocs.LastEntry().z)<0.3f,
+                  "the crocodile slides into the water with one entry noted at the water's edge");
         }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls

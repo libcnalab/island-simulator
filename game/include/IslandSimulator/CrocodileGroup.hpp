@@ -49,6 +49,11 @@ public:
     void Update(float deltaSeconds,float observerX,float observerY,float observerZ) noexcept;
 
     [[nodiscard]] std::span<const CrocodileState> Crocodiles()const noexcept{return states_;}
+    /** @brief The last crocodile to slide off the bank into the water: the entry point and
+     *  the ring's age, counted so an entry is noted once. */
+    struct Entry { float x=0,z=0,ageSeconds=0; std::uint32_t count=0; bool valid=false; };
+    [[nodiscard]] const Entry& LastEntry()const noexcept{return entry_;}
+    static constexpr float EntrySeconds=2.6f;
     [[nodiscard]] std::span<const CrocodileHome> Homes()const noexcept{return homes_;}
     [[nodiscard]] int FullSimulationCount()const noexcept{return fullCount_;}
     [[nodiscard]] int ReducedSimulationCount()const noexcept{return reducedCount_;}
@@ -77,6 +82,7 @@ private:
     std::vector<CircularObstacle> obstacles_;
     float elapsedSeconds_=0;
     std::uint64_t frameIndex_=0;
+    Entry entry_;
     int fullCount_=0,reducedCount_=0,dormantCount_=0;
 };
 

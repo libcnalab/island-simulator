@@ -103,6 +103,10 @@ bool CrocodileGroup::IsValidHabitat(float x,float z,const CrocodileHome& home)co
 
 void CrocodileGroup::Update(float deltaSeconds,float observerX,float observerY,
                             float observerZ) noexcept {
+    if(entry_.valid) {
+        entry_.ageSeconds+=std::isfinite(deltaSeconds)?std::clamp(deltaSeconds,0.0f,0.1f):0.0f;
+        if(entry_.ageSeconds>EntrySeconds) entry_.valid=false;
+    }
     const float dt=std::isfinite(deltaSeconds)?std::clamp(deltaSeconds,0.0f,.1f):0.0f;
     const bool observerValid=std::isfinite(observerX)&&std::isfinite(observerY)
         &&std::isfinite(observerZ);
@@ -208,7 +212,10 @@ void CrocodileGroup::UpdateAgent(Agent& agent,float dt,float observerX,float obs
     const auto sample=terrain_.Sample(agent.state.x,agent.state.z);
     const float targetSubmerged=(agent.state.behavior==CrocodileBehavior::Swim
         ||agent.state.behavior==CrocodileBehavior::Retreat)&&sample.height<.05f?1.0f:0.0f;
+    const float previousSubmerged=agent.state.submerged;
     agent.state.submerged+=std::clamp(targetSubmerged-agent.state.submerged,-dt*.8f,dt*.8f);
+    // The slide off the bank: the moment the body goes under is the splash.
+    if(previousSubmerged<.2f&&agent.state.submerged>=.2f) entry_={agent.state.x,agent.state.z,0.0f,entry_.count+1U,true};
     const float groundY=sample.height+.10f*agent.state.scale;
     const float swimY=std::max(sample.height+.20f*agent.state.scale,-.18f);
     agent.state.y+=std::clamp(std::lerp(groundY,swimY,agent.state.submerged)-agent.state.y,
