@@ -281,6 +281,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 216: the hut's material shader receives the sun shadow map and the cumulus shade (the trees' and its own eaves' shadows fall on it); `--no-sun-shadows` captures pass again (PLAN "Loop pass 216").
 - Pass 217: the natural props (rocks, logs, driftwood, beach details) and the wreck receive the sun shadow map and the cumulus shade (a log in a palm's shadow is now shaded with the ground) (PLAN "Loop pass 217").
 - Pass 218: one shared `StructureShadowReceiver` material lets the jetty, rope bridge, lookout and helicopter receive the sun shadows and cumulus shade, BasicEffect kept as the fallback (PLAN "Loop pass 218").
+- Pass 219: water receiving the sun shadows was tried and dropped: 0.17 % of a dedicated view changed (the shallows already show the shaded seabed) for sixteen map samples per water pixel (PLAN "Loop pass 219").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

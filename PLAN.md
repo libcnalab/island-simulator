@@ -54,6 +54,21 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 219 (2026-10-20) — water receiving the sun shadows: measured and dropped
+
+The last surface outside the sun shadows was the water. A trial gave the ocean's fragment
+stage the receiver (its own cumulus term kept, the receiver's zeroed) and took the map's
+shadow out of the sun-lit body light, the sunward crests and the glints, darkening the body
+as a cloud does. Measured on a temporary `jetty-water` view (standing at the end of the deck,
+looking down at the water on the side away from the sun), with the trial build against the
+same build with only the ocean's map binding removed: the water's own share changes 0.17 %
+of the pixels by more than 4 levels, no more than the run-to-run noise (0.18 % brighter).
+In the clear shallows the body is nearly transparent and the seabed, a terrain receiver
+since pass 6211fa1, already shows the jetty's and the palms' shadows through the water;
+glints and deeper water rarely coincide with a shadow within the map's 63 m. The receiver
+costs sixteen map samples on every water pixel near the camera, so the trial and its view
+were dropped; nothing of it is committed.
+
 ## Loop pass 218 (2026-10-20) — the jetty, bridge, lookout and helicopter receive them
 
 The last structures outside the sun shadows drew with the stock BasicEffect: the jetty, the
