@@ -14,7 +14,8 @@ namespace island
      * the dry beach and the forest edge (bushes start 38 m from the shore), and the rocky
      * headlands (grass and bushes stop at a coastal rockiness of 0.6) that the terrain still
      * draws as smooth ground. Without it the bank rising behind the jetty's beach read as one
-     * smooth bare slope. Visual only (no colliders);
+     * smooth bare slope. Inland, the open hillsides below the steep banks' slope carry sparse
+     * shrubs too. Visual only (no colliders);
      * drawn with the jungle's bush meshes as extra instances.
      */
     class SlopeScrubLayout final
@@ -39,6 +40,9 @@ namespace island
         static constexpr float BeachBackEnd = 40.0f;
         static constexpr float MinimumScale = 0.55f, MaximumScale = 0.95f;
         static constexpr float MaximumRockiness = 0.90f;   // grass and bushes stop at 0.60
+        // Open inland hillsides between the grass's gentle ground and the steep banks: sparse
+        // shrubs so a hill seen across a clearing is not one smooth painted slope.
+        static constexpr float HillsideSlope = 0.24f, HillsideShoreStart = 40.0f, HillsideMinimumHeight = 4.0f;
 
         /** @brief The scrub on this terrain, clear of the reserved routes, the hut's clearing
          *  and the given circles (the goats' waterhole, the lookout, the jetty's root). */

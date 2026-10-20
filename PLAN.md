@@ -233,6 +233,24 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 230 (2026-10-20) — the open hillsides read as grass, not paint
+
+The handoff's whole-island critique target: the open hillside 20-120 m off (the `east` view's
+hill) read as one smooth painted green with soft pinkish humus blotches. The terrain's
+mid-distance hillside grain stops at steep ground (`openGround` carries `1 - steep`, and that
+hill runs at 0.3-0.65 rad), and its grass blades end within 72 m. A new mid-distance sward
+on the open slopes (up to 0.62-0.85 rad, off the paths, partly under the forest floor's
+classification) begins at 14-30 m: two-metre clumps and half-metre tussocks (value noise, each
+faded by the ground footprint before it can alias) as darker gaps and brighter, sun-cured
+crowns, and patches a few metres across of straw-coloured grass against fresher green, all
+world-anchored, so nothing shimmers in flight; from the air the island's ground now has a
+natural mottle instead of flat paint. The scrub layout also grows sparse shrubs on open inland
+hillsides (from 0.24 rad, 40 m from the shore, 4 m up; 1.2-10 % of the 1.7 m cells by slope):
+1531 bushes now (1262 before). A probe found 18 of them on that hill 55-74 m from the `east`
+camera, but the native-performance profile draws vegetation to 55 % (bushes to 56 m), so in
+the captures the hill still shows none; on a full-distance profile they stand there. `east`,
+`overview`, `flight`, `jungle`, `grass` and `ground` pass.
+
 ## Loop pass 229 (2026-10-20) — the wildlife hears the quad
 
 Riding the quad, the observer the herds watch is the rider, but a walker's distances applied:

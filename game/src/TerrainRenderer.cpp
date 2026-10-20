@@ -805,6 +805,30 @@ void main()
         color = mix(color, color * vec3(1.07, 1.00, 0.82), crown * hillsideGrain * 0.38);
     }
 
+    // Mid-distance sward on the open grassy slopes: from where the grass blades thin out,
+    // two-metre clumps and half-metre tussocks break the slope into darker gaps and brighter,
+    // sun-cured crowns, on steep hillsides too (the hillside grain above stops at them), so a
+    // hill 30-120 m off reads as grass rather than a smooth painted surface. World-anchored
+    // and faded by the ground footprint, so it never shimmers or strobes in flight.
+    float swardGround = interior * (1.0 - routeMask) * (1.0 - forestFloorMask * 0.65)
+        * smoothstep(14.0, 30.0, distanceToCamera) * (1.0 - smoothstep(0.62, 0.85, slopeRadians));
+    if (swardGround > 0.0) {
+        float clumpVisibility = 1.0 - smoothstep(0.22, 0.60, groundPixelWidth * 0.5);
+        float tuftVisibility = 1.0 - smoothstep(0.22, 0.60, groundPixelWidth * 2.0);
+        float sward = valueNoise(p * 0.5 + vec2(11.3, -7.7)) * 0.60 * clumpVisibility
+            + valueNoise(p * 2.0 + vec2(-4.9, 21.1)) * 0.45 * tuftVisibility
+            + hummock * 0.25;
+        color *= 1.0 + sward * 0.46 * swardGround;
+        color = mix(color, color * vec3(1.10, 1.05, 0.80),
+                    smoothstep(0.08, 0.32, sward) * 0.36 * swardGround);
+        // patches a few metres across: sun-cured straw-coloured grass against fresher green
+        float patchVisibility = 1.0 - smoothstep(0.30, 0.90, groundPixelWidth * 0.17);
+        float drySward = smoothstep(-0.10, 0.22, valueNoise(p * 0.17 + vec2(-31.7, 5.9)) + sward * 0.20)
+            * patchVisibility;
+        color = mix(color, color * vec3(1.16, 1.08, 0.70), drySward * 0.42 * swardGround);
+        color = mix(color, color * vec3(0.86, 1.02, 0.84), (1.0 - drySward) * patchVisibility * 0.22 * swardGround);
+    }
+
     // Wind-exposed upper ridges carry a sparse sun-cured turf transition between the
     // dark interior humus and bare rock. This broad, footprint-filtered field remains
     // legible in overview without adding grass instances or painting one uniform cap.

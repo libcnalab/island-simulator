@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 230: the open hillsides read as grass, not paint: a world-anchored sward texture (two-metre clumps, half-metre tussocks, dry and fresh patches) from where the grass blades thin out, and sparse shrubs on open inland slopes (PLAN "Loop pass 230").
 - Pass 229: the wildlife hears the quad: a rider on it alarms the deer, goats and boars from up to two and a half times a walker's distance, and perched birds flush as it races past (PLAN "Loop pass 229").
 - Pass 228: the hut is lit at night: its front windows glow warm through their mullions and a hurricane lantern on the veranda lights the steps (PLAN "Loop pass 228").
 - Pass 227: the straight seam across the sea from the air is gone: the water closes over the seabed where the eye's ray meets it near the terrain mesh's edge (PLAN "Loop pass 227").
@@ -328,9 +329,11 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 225: the campfire lights the night ground through the grade, warm orange instead of capped at the night's dark yellow-green; the quad's beam moved into the shared `LocalLightRenderer` (PLAN "Loop pass 225").
 - Pass 224: a `flight` QA viewpoint 40 m up; the sea's diamond lattice seen from the air (the ripple cells fading only from 28-85 m up) now fades by 10-32 m, and the seabed caustics are an irregular three-family net instead of an axis-aligned grid (PLAN "Loop pass 224").
 
-The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
-frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted
-green surface with soft dark blotches where the forest-material classification fades.
+The earlier agent-actionable backlog (above this section's predecessor) is empty. The open
+mid-distance hillside that read as a smooth painted green surface got a sward texture and sparse
+hillside shrubs (Loop pass 230); in the native-performance profile vegetation draws to 55 %
+(bushes to 56 m), so a hill 60-100 m off still shows no shrubs there, and the soft humus/moss
+blotches remain on it.
 
 Not agent-actionable (stay open in `PLAN.md`; need the operator or physical hardware): human
 speaker/headphone listening (goat, boar, fly, snake hiss, audio-focus lifecycle), the physical-GPU

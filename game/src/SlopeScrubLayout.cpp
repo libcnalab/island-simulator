@@ -43,7 +43,9 @@ namespace island
         const bool steepBank = slopeRadians >= SteepSlope && shoreDistance >= SteepBankShoreStart
             && height >= SteepBankMinimumHeight;
         const bool beachBack = shoreDistance >= BeachBackStart && shoreDistance < BeachBackEnd && height >= MinimumHeight;
-        return steepBank || beachBack;
+        const bool hillside = slopeRadians >= HillsideSlope && shoreDistance >= HillsideShoreStart
+            && height >= HillsideMinimumHeight;
+        return steepBank || beachBack || hillside;
     }
 
     std::vector<BushPlacement> SlopeScrubLayout::Generate(const IslandTerrain& terrain,
@@ -69,7 +71,12 @@ namespace island
                 // Clumped: denser on the steep banks, thinner on the beach back.
                 const float steep = std::clamp((sample.slopeRadians - 0.30f) / 0.30f, 0.0f, 1.0f);
                 const float rocky = std::clamp((sample.coastalRockiness - 0.60f) / 0.30f, 0.0f, 1.0f);
-                const float density = std::clamp((0.045f + 0.30f * steep) * (0.45f + 0.95f * Patchiness(x, z))
+                // an inland hillside below the steep banks' slope: only sparse shrubs
+                const bool hillside = sample.signedShoreDistance >= HillsideShoreStart && sample.slopeRadians < SteepSlope
+                    && !(sample.signedShoreDistance < BeachBackEnd);
+                const float base = hillside ? 0.012f + 0.09f * std::clamp((sample.slopeRadians - HillsideSlope) / (SteepSlope - HillsideSlope), 0.0f, 1.0f)
+                                            : 0.045f + 0.30f * steep;
+                const float density = std::clamp(base * (0.45f + 0.95f * Patchiness(x, z))
                                                   * (1.0f - 0.35f * rocky), 0.0f, 0.60f);
                 if (Unit(gridX, gridZ, 0x51ab0003U) >= density) continue;
                 BushPlacement bush;
