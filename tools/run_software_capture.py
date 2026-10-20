@@ -1130,6 +1130,8 @@ def main():
                 raise RuntimeError("current cascade mist is missing; check for a stale executable")
             if not re.search(r"jungle floor plants swap meshes at staggered per-plant distances \(\+-\d+ %\) and shrink into the ground over the last \d+ % of their range instead of popping on fixed circles", diagnostics):
                 raise RuntimeError("current jungle floor fades are missing; check for a stale executable")
+            if not re.search(r"canopy trees and palms shrink away over the last \d+ % of theirs, palms each by its own distance rather than by 85 m cell", diagnostics):
+                raise RuntimeError("current tree and palm far fades are missing; check for a stale executable")
             if not re.search(r"grass mesh tiers change per patch at its own distance, morphing over \d+ m, drawn by quarter-cell blocks instead of switching whole cells by their centre", diagnostics):
                 raise RuntimeError("current per-patch grass tiers are missing; check for a stale executable")
             if "beyond that the wreck, hut and helicopter keep their projected mass shadows, cross-faded vertex by vertex with the map's" not in diagnostics:

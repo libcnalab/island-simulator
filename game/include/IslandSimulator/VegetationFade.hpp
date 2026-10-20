@@ -12,6 +12,7 @@ namespace island::vegetation_fade
 {
     inline constexpr float NearStagger = 0.12f;      // +-12 % of the base near/far swap distance
     inline constexpr float ShrinkFraction = 0.22f;   // the last 22 % of the range shrinks
+    inline constexpr float TreeShrinkFraction = 0.12f;   // trees and palms: a narrower band
 
     /** @brief A plant's own 0..1 seed from its ground position. */
     [[nodiscard]] inline float Seed(const float x, const float z) noexcept
@@ -26,12 +27,13 @@ namespace island::vegetation_fade
         return baseDistance * (1.0f - NearStagger + 2.0f * NearStagger * Seed(x, z));
     }
 
-    /** @brief 0..1, the plant's scale at a horizontal distance: 1 until the last
-     *  ShrinkFraction of the range, then a smooth shrink to 0 at the maximum distance. */
-    [[nodiscard]] inline float FarShrink(const float distance, const float maximumDistance) noexcept
+    /** @brief 0..1, the plant's scale at a horizontal distance: 1 until the last fraction
+     *  of the range, then a smooth shrink to 0 at the maximum distance. */
+    [[nodiscard]] inline float FarShrink(const float distance, const float maximumDistance,
+                                         const float fraction = ShrinkFraction) noexcept
     {
         if (!(maximumDistance > 0.0f) || std::isnan(distance)) return 0.0f;
-        const float start = maximumDistance * (1.0f - ShrinkFraction);
+        const float start = maximumDistance * (1.0f - std::clamp(fraction, 0.01f, 1.0f));
         const float t = std::clamp((distance - start) / (maximumDistance - start), 0.0f, 1.0f);
         return 1.0f - t * t * (3.0f - 2.0f * t);
     }

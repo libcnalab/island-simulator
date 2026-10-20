@@ -1902,7 +1902,9 @@ void main()
                   << static_cast<int>(vegetation_fade::NearStagger * 100.0f + 0.5f)
                   << " %) and shrink into the ground over the last "
                   << static_cast<int>(vegetation_fade::ShrinkFraction * 100.0f + 0.5f)
-                  << " % of their range instead of popping on fixed circles\n";
+                  << " % of their range instead of popping on fixed circles; canopy trees and palms shrink away over the last "
+                  << static_cast<int>(vegetation_fade::TreeShrinkFraction * 100.0f + 0.5f)
+                  << " % of theirs, palms each by its own distance rather than by 85 m cell\n";
         std::cout << "island-simulator: jungle " << totalCanopyCount_ << " canopy trees, "
                   << totalUnderstoryCount_ << " understory plants, " << totalBushCount_
                   << " low bushes, "
@@ -2644,12 +2646,20 @@ void main()
                         ++inspectionSubmissions;
                     }
                     // Supporting geometry must not change beneath planted bark grips.
+                    bool gripped = false;
                     for (const auto& monkey:monkeys)
                         if ((monkey.treeExcursion || monkey.treeReleasing || monkey.treePreparing)
                             && std::hypot(monkey.selectedTree.x-instance.x,monkey.selectedTree.z-instance.z)<1e-4f)
-                            nearLod=true;
+                            nearLod=gripped=true;
+                    // Far trees shrink to nothing over the last part of the range instead of
+                    // vanishing (a gripped tree keeps its size).
+                    const float shrink = gripped ? 1.0f
+                        : vegetation_fade::FarShrink(std::sqrt(instanceDistanceSquared), canopyMaximumDistance,
+                                                     vegetation_fade::TreeShrinkFraction);
+                    if (shrink <= 0.0f) continue;
                     (nearLod ? visibleCanopyNear_ : visibleCanopyFar_)[instance.variant]
-                        .push_back(instance.transform);
+                        .push_back(shrink < 1.0f ? Matrix::CreateScale(shrink) * instance.transform
+                                                 : instance.transform);
                     if (nearLod) {
                         ++visibleCanopyNearCount_;
                     } else {

@@ -1,3 +1,4 @@
+#include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/PalmRenderer.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
 
@@ -1233,33 +1234,43 @@ void main()
             if (!cell.occupied || frustum.Contains(cell.bounds) == ContainmentType::Disjoint) {
                 continue;
             }
-            const Vector3 centre = (cell.bounds.Min + cell.bounds.Max) * 0.5f;
-            const float deltaX = centre.X - cameraPosition.X;
-            const float deltaZ = centre.Z - cameraPosition.Z;
-            const float distanceSquared = deltaX * deltaX + deltaZ * deltaZ;
-            if (distanceSquared > maximumDistance_ * maximumDistance_) {
+            // Whole cells used to vanish together when their centre crossed the maximum
+            // distance; the cell is now rejected only once all of it lies beyond, and each palm
+            // shrinks to nothing over the last part of its own range.
+            const float cellDeltaX = std::max({cell.bounds.Min.X - cameraPosition.X, 0.0f,
+                                               cameraPosition.X - cell.bounds.Max.X});
+            const float cellDeltaZ = std::max({cell.bounds.Min.Z - cameraPosition.Z, 0.0f,
+                                               cameraPosition.Z - cell.bounds.Max.Z});
+            if (cellDeltaX * cellDeltaX + cellDeltaZ * cellDeltaZ > maximumDistance_ * maximumDistance_) {
                 continue;
             }
-            ++visibleCellCount_;
+            bool cellVisible = false;
             for (const PalmDrawInstance& instance : cell.instances) {
                 const float instanceDeltaX = instance.x - cameraPosition.X;
                 const float instanceDeltaZ = instance.z - cameraPosition.Z;
-                const bool nearLod = instanceDeltaX * instanceDeltaX
-                        + instanceDeltaZ * instanceDeltaZ
-                    <= instance.nearLodDistanceSquared;
+                const float instanceDistanceSquared = instanceDeltaX * instanceDeltaX
+                    + instanceDeltaZ * instanceDeltaZ;
+                const float shrink = vegetation_fade::FarShrink(std::sqrt(instanceDistanceSquared), maximumDistance_,
+                                                                vegetation_fade::TreeShrinkFraction);
+                if (shrink <= 0.0f) continue;
+                const Matrix transform = shrink < 1.0f ? Matrix::CreateScale(shrink) * instance.transform
+                                                       : instance.transform;
+                const bool nearLod = instanceDistanceSquared <= instance.nearLodDistanceSquared;
                 if (nearLod) {
                     (instance.condition == PalmCondition::Broken
                          ? visibleBrokenNearTransforms_[instance.variant]
-                         : visibleNearTransforms_[instance.variant]).push_back(instance.transform);
+                         : visibleNearTransforms_[instance.variant]).push_back(transform);
                     ++visibleNearPalmCount_;
                 } else {
                     (instance.condition == PalmCondition::Broken
                          ? visibleBrokenFarTransforms_[instance.variant]
-                         : visibleFarTransforms_[instance.variant]).push_back(instance.transform);
+                         : visibleFarTransforms_[instance.variant]).push_back(transform);
                     ++visibleFarPalmCount_;
                 }
                 ++visiblePalmCount_;
+                cellVisible = true;
             }
+            if (cellVisible) ++visibleCellCount_;
         }
 
         device_.setRasterizerStateProperty(RasterizerState::CullNone);

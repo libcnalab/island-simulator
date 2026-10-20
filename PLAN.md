@@ -54,6 +54,26 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 211 (2026-10-20) — far trees and palms shrink away, palms by their own distance
+
+Third and fourth from the flight audit. Canopy trees were cut per tree at 475 m times the
+vegetation scale (261 m on native), where the jungle fog is about 0.2 %, so large crowns
+popped against the floor; palms were kept or dropped by whole 85 m cells as each cell's
+centre crossed 520 m times the scale (286 m), so blocks of beach palms appeared or vanished
+together, palms beyond the range among them. Now each tree and each palm shrinks to nothing
+over the last 12 % of its range (`vegetation_fade::FarShrink` with a narrower band than the
+floor plants', so a tall crown is not seen shrinking over 50 m), a tree a monkey grips keeps
+its size, and the palm cells are rejected only when all of a cell lies beyond the range,
+each palm then judged by its own distance. Core check: the tree band is 1 before 88 % of
+the range, 0 at its end, under 0.1 % per cm. The startup line of pass 210 adds "canopy trees
+and palms shrink away over the last 12 % of theirs, palms each by its own distance rather
+than by 85 m cell", pinned. Native `beach`, `shipwreck-wide`, `helicopter-approach` and
+`lookout` pass; `beach` draws 118 palms in 9 cells where it drew 120 in 8 and
+`shipwreck-wide` 91 where it drew 96 (palms beyond the range that their cell's centre had
+kept), with frames otherwise unchanged (0.7 % of pixels by 25 levels or more, the grass in
+the wind). Left from the audit: the canopy and palm near/far swaps (and the palm material
+detail step) and the beach-detail ring at 52 m.
+
 ## Loop pass 210 (2026-10-20) — the jungle floor fades instead of popping on circles
 
 Second from the flight audit: every understory plant, bush and ground plant swapped meshes

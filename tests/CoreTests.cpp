@@ -6555,6 +6555,15 @@ int main()
         Check(fade::FarShrink(56.1f * 0.78f, 56.1f) == 1.0f && fade::FarShrink(56.1f, 56.1f) == 0.0f
                   && largestStep < 0.002f,
               "jungle floor plants shrink smoothly to nothing over the last 22 % of their range");
+        float treeStep = 0.0f, treePrevious = 1.0f;
+        for (float d = 0.0f; d <= 300.0f; d += 0.01f) {
+            const float s = fade::FarShrink(d, 286.0f, fade::TreeShrinkFraction);
+            treeStep = std::max(treeStep, std::abs(s - treePrevious));
+            treePrevious = s;
+        }
+        Check(fade::FarShrink(286.0f * 0.88f, 286.0f, fade::TreeShrinkFraction) == 1.0f
+                  && fade::FarShrink(286.0f, 286.0f, fade::TreeShrinkFraction) == 0.0f && treeStep < 0.001f,
+              "trees and palms shrink smoothly to nothing over the last 12 % of their range");
     }
     const island::GrassLodSplit emptyGrassLod = island::GrassLod::Split(0, 82.0f);
     Check(emptyGrassLod.nearCount == 0 && emptyGrassLod.middleCount == 0
