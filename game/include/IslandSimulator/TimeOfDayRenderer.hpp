@@ -74,7 +74,10 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BlendState> gradeBlend_, litGradeBlend_, alphaResetBlend_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> gradeTriangle_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> stars_;
-        std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> moon_, meteor_, rainbow_, bolt_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> moon_, meteor_, rainbow_, bolt_, starsInSky_;
+        // the stars as built, and those low enough for the cumulus to pass in front of
+        std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> starBase_, starStaging_;
+        std::vector<std::uint32_t> lowStars_;
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> boltStaging_;
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> rainbowStaging_;
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> moonStaging_;

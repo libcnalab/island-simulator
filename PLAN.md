@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 256 (2026-10-20) — the stars behind the clouds
+
+After the moon (Loop pass 254), the stars: the low ones (below about 27 degrees, where the
+cumulus masses lie) are now dimmed by the cover in front of them each frame (to 5 %), from a
+dynamic copy of the star field, using the same mirrored cumulus masses and drift as the moon;
+the higher stars are never behind a cumulus and the overcast deck already hid them all. In
+`overview` at 23:00 the one star that sat inside a cloud's outline is gone and nothing else
+changed.
+
 ## Loop pass 255 (2026-10-20) — the dawn chorus
 
 At first light the birds sing most, but the soundscape treated dawn as any hour (and the night's

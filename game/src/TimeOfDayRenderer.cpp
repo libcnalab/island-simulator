@@ -146,6 +146,14 @@ namespace island
             stars.emplace_back(a, color); stars.emplace_back(c, color); stars.emplace_back(d, color);
         }
         starVertexCount_ = static_cast<int>(stars.size());
+        starBase_ = stars;
+        for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(StarCount); ++i) {
+            const Vector3 centre = (stars[i * 6U].Position + stars[i * 6U + 2U].Position) * 0.5f;
+            if (centre.Y / StarDistance < 0.46f) lowStars_.push_back(i);
+        }
+        starsInSky_ = std::make_unique<DynamicVertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(),
+                                                            starVertexCount_, BufferUsage::WriteOnly);
+        starStaging_.reserve(stars.size());
         stars_ = std::make_unique<VertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(),
                                                 starVertexCount_, BufferUsage::WriteOnly);
         stars_->SetData(stars.data(), starVertexCount_);
@@ -405,7 +413,23 @@ namespace island
         // Stars: additive, faded in with the dark.
         if (light.starVisibility > 0.01f) {
             device_.setBlendStateProperty(BlendState::Additive);
-            device_.SetVertexBuffer(stars_.get());
+            // the drifting cumulus stand in front of the low stars
+            starStaging_ = starBase_;
+            const float starDrift = sky_cloud::DriftAngle(static_cast<float>(seconds));
+            for (const std::uint32_t star : lowStars_) {
+                const Vector3 centre = (starBase_[star * 6U].Position + starBase_[star * 6U + 2U].Position) * 0.5f;
+                const float cover = CumulusCover(centre, starDrift);
+                if (cover <= 0.01f) continue;
+                const float keep = 1.0f - 0.95f * cover;
+                for (std::uint32_t k = 0; k < 6U; ++k) {
+                    auto& vertex = starStaging_[star * 6U + k];
+                    const auto scaled = [keep](std::uint8_t c) { return static_cast<int>(std::lround(static_cast<float>(c) * keep)); };
+                    vertex.Color = Color(scaled(vertex.Color.getRProperty()), scaled(vertex.Color.getGProperty()),
+                                         scaled(vertex.Color.getBProperty()), 255);
+                }
+            }
+            starsInSky_->SetData(starStaging_.data(), 0, static_cast<int>(starStaging_.size()), SetDataOptions::Discard);
+            device_.SetVertexBuffer(starsInSky_.get());
             skyEffect_->setWorldProperty(Matrix::CreateTranslation(camera));
             const float v = std::clamp(light.starVisibility * (1.0f - 0.55f * light.moonLight), 0.0f, 1.0f);
             skyEffect_->setDiffuseColorProperty(Vector3(v, v, v));
