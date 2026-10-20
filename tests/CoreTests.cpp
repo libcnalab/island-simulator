@@ -9842,6 +9842,39 @@ int main()
         }
         Check(tended, "the resident's route brings a pause within tend distance of the campfire within twenty minutes");
         {
+            // The crouch: asked for at the pause, the resident squats over a second, the
+            // pelvis a third of a metre lower on the same planted feet with neither leg
+            // reach-limited and both hands forward; asked off, they stand within a second.
+            const auto standing = tender.State();
+            tender.SetCrouch(1.0f);
+            float deepest = 0.0f;
+            for (int step = 0; step < 30 && tender.State().mode == island::ResidentMode::Pausing; ++step) {
+                tender.Update(0.05f, {1000.0f, 0.0f, 1000.0f});
+                deepest = std::max(deepest, tender.CrouchAmount());
+            }
+            Check(deepest > 0.7f && standing.pose.pelvisY > 0.0f, "at the pause the resident crouches most of the way within a second and a half");
+            island::ResidentMotion held(terrain, {});
+            const auto upright = held.State();
+            held.PreviewCrouch();
+            const auto& crouched = held.State();
+            Check(upright.pose.pelvisY - crouched.pose.pelvisY > 0.3f && upright.pose.pelvisY - crouched.pose.pelvisY < 0.4f,
+                  "the crouch drops the pelvis about a third of a metre");
+            bool planted = true, reachable = true;
+            for (std::size_t leg = 0; leg < 2; ++leg) {
+                if (std::hypot(crouched.pose.legs[leg].ankle.x - upright.pose.legs[leg].ankle.x,
+                               crouched.pose.legs[leg].ankle.z - upright.pose.legs[leg].ankle.z) > 0.01f) planted = false;
+                if (crouched.pose.legs[leg].reachLimited) reachable = false;
+            }
+            const float forwardX = std::sin(crouched.pose.heading), forwardZ = std::cos(crouched.pose.heading);
+            const auto& wrist = crouched.pose.wrists[0];
+            const float ahead = (wrist.x - crouched.x) * forwardX + (wrist.z - crouched.z) * forwardZ;
+            Check(planted && reachable && ahead > 0.2f, "the crouch keeps the feet planted, both legs reachable and the hands forward");
+            held.SetCrouch(0.0f);
+            bool stood = false;
+            for (int step = 0; step < 24 && !stood; ++step) { held.Update(0.05f, {1000.0f, 0.0f, 1000.0f}); stood = held.CrouchAmount() < 0.1f; }
+            Check(stood, "asked off, the resident stands within a second");
+        }
+        {
             // Two landmarks with facings, as the game gives the jetty foot and the lookout's
             // ramp foot: the route takes both, and at a landmark pause the resident turns to
             // its facing.

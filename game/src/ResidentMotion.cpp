@@ -60,7 +60,7 @@ ResidentFootFrame ResidentMotion::GroundFoot(float x,float z,float heading)const
 bool ResidentMotion::FitPose(float x,float z,float heading,float speed,ResidentPose& pose)const {
     const auto ground=ground_.Sample(x,z);const auto right=Right(heading),forward=Forward(heading);
     pose.origin={x,ground.height,z};pose.heading=heading;
-    pose.pelvisY=ground.height+.915f-.035f*std::clamp(speed/WalkingSpeed,0.0f,1.0f);
+    pose.pelvisY=ground.height+.915f-.035f*std::clamp(speed/WalkingSpeed,0.0f,1.0f)-CrouchDrop*crouch_;
     constexpr float reach=ResidentLegPose::UpperLength+ResidentLegPose::LowerLength-.003f;
     for(std::size_t leg=0;leg<2;++leg) {
         const auto hip=Add(ResidentPoint{x,0,z},Mul(right,leg==0?-.095f:.095f));
@@ -69,7 +69,7 @@ bool ResidentMotion::FitPose(float x,float z,float heading,float speed,ResidentP
         if(horizontal>=reach)return false;
         pose.pelvisY=std::min(pose.pelvisY,ankle.y+std::sqrt(reach*reach-horizontal*horizontal));
     }
-    if(pose.pelvisY<ground.height+.73f)return false;
+    if(pose.pelvisY<ground.height+.73f-CrouchDrop*crouch_)return false;
     for(std::size_t leg=0;leg<2;++leg) {
         auto hip=Add(ResidentPoint{x,pose.pelvisY,z},Mul(right,leg==0?-.095f:.095f));
         pose.legs[leg]=SolveResidentLeg(hip,feet_[leg].current,forward,!feet_[leg].swinging);
@@ -85,7 +85,11 @@ bool ResidentMotion::FitPose(float x,float z,float heading,float speed,ResidentP
         // small wave about the raised position.
         const float lift=leg==1?wave_:0.0f;
         const float raise=lift*(2.35f+.25f*std::sin(waveClock_*6.0f));
-        const auto lifted=Add(ResidentPoint{0,-std::cos(raise),0},Mul(right,sign*std::sin(raise)));
+        // Crouched, both hands come forward and down to the fire; the wave takes the right
+        // arm up out of that.
+        const float reachForward=crouch_*(1.0f-lift)*1.15f;
+        const auto lifted=Unit(Add(Add(ResidentPoint{0,-std::cos(raise)*std::cos(reachForward),0},Mul(right,sign*std::sin(raise))),
+            Mul(forward,std::sin(reachForward)*std::cos(raise))));
         const auto upper=Unit(Add(Mul(right,sign*.018f),Add(Mul(lifted,std::cos(swing)),Mul(forward,std::sin(swing)))));
         pose.elbows[leg]=Add(pose.shoulders[leg],Mul(upper,.29f));
         // Keep a relaxed visible elbow bend through idle and walking instead of
@@ -218,8 +222,25 @@ void ResidentMotion::Step(float seconds,ResidentPoint observer) {
         if(FitPose(state_.x,state_.z,state_.heading,0,pose))state_.pose=pose;
     }
 }
+void ResidentMotion::SetCrouch(float target) noexcept {
+    crouchTarget_=std::isfinite(target)?std::clamp(target,0.0f,1.0f):0.0f;
+}
+void ResidentMotion::PreviewCrouch() {
+    crouch_=crouchTarget_=1;
+    ResidentPose pose;
+    if(FitPose(state_.x,state_.z,state_.heading,0,pose))state_.pose=pose;
+}
 void ResidentMotion::Update(float seconds,ResidentPoint observer) {
     if(!std::isfinite(seconds)||seconds<=0)return;
+    // The crouch eases in only while the resident stands still at a pause and out again as
+    // soon as they move; a changed crouch refits the standing pose on the same feet.
+    const float wantCrouch=state_.mode==ResidentMode::Pausing&&state_.speed<=.0001f?crouchTarget_:0.0f;
+    const float before=crouch_;
+    crouch_+=std::clamp(wantCrouch-crouch_,-CrouchOutRate*seconds,CrouchInRate*seconds);
+    if(crouch_!=before) {
+        ResidentPose pose;
+        if(FitPose(state_.x,state_.z,state_.heading,0,pose))state_.pose=pose;
+    }
     seconds=std::min(seconds,.1f);
     const int steps=static_cast<int>(std::ceil(seconds/.02f));
     for(int step=0;step<steps;++step)Step(seconds/steps,observer);

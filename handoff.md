@@ -193,6 +193,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 129: a running boar, deer or goat on dry sand or bare soil kicks up puffs of earth behind its hooves (`HoofDustField`, drawn by the rooting-dust renderer) (PLAN "Loop pass 129").
 - Pass 130: the bear lies down onto folded legs two seconds into an undisturbed rest, the paws re-grounded with the bones kept (`lieAmount`, `bear-lying` QA viewpoint) (PLAN "Loop pass 130").
 - Pass 131: prints on the wet sand at the water's edge are taken back by the swash within 45 s, those higher up over four minutes (`Footprint::life`) (PLAN "Loop pass 131").
+- Pass 132: at the campfire the resident crouches to tend the fire, hands to the flames (`ResidentMotion::SetCrouch`, `resident-tending` QA viewpoint) (PLAN "Loop pass 132").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

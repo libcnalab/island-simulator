@@ -39,6 +39,7 @@ namespace
         case FixedViewpoint::CampfireDetail: return "campfire";
         case FixedViewpoint::CampfireWide: return "campfire-wide";
         case FixedViewpoint::ResidentDetail: return "resident";
+        case FixedViewpoint::ResidentTendDetail: return "resident-tending";
         case FixedViewpoint::BearDetail: return "bear";
         case FixedViewpoint::BearLyingDetail: return "bear-lying";
         case FixedViewpoint::BeachPath: return "beach";
@@ -230,6 +231,8 @@ int main(const int argc, char* argv[])
                 viewpoint=island::FixedViewpoint::CampfireWide;
             } else if(name=="resident") {
                 viewpoint=island::FixedViewpoint::ResidentDetail;
+            } else if(name=="resident-tending") {
+                viewpoint=island::FixedViewpoint::ResidentTendDetail;
             } else if(name=="bear") {
                 viewpoint=island::FixedViewpoint::BearDetail;
             } else if(name=="bear-lying") {

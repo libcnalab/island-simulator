@@ -142,6 +142,7 @@ namespace island
             case FixedViewpoint::CampfireDetail: return "campfire";
             case FixedViewpoint::CampfireWide: return "campfire-wide";
             case FixedViewpoint::ResidentDetail: return "resident";
+            case FixedViewpoint::ResidentTendDetail: return "resident-tending";
             case FixedViewpoint::BearDetail: return "bear";
             case FixedViewpoint::BearLyingDetail: return "bear-lying";
             case FixedViewpoint::BeachPath: return "beach";
@@ -477,16 +478,20 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: campfire QA camera "<<(wide?"wide":"near")<<'\n';
-        } else if(viewpoint_==FixedViewpoint::ResidentDetail) {
+        } else if(viewpoint_==FixedViewpoint::ResidentDetail||viewpoint_==FixedViewpoint::ResidentTendDetail) {
+            // The tending view holds the resident crouched as at the fire, framed lower.
+            const bool tending=viewpoint_==FixedViewpoint::ResidentTendDetail;
+            if(tending) resident_->PreviewCrouch();
             const auto& subject=resident_->State();
             const Vector3 forward(std::sin(subject.heading),0,std::cos(subject.heading));
             const Vector3 right(std::cos(subject.heading),0,-std::sin(subject.heading));
-            cameraPosition_=Vector3(subject.x,subject.y+1.58f,subject.z)+forward*2.65f+right*2.00f;
-            const Vector3 target(subject.x,subject.y+1.02f,subject.z);
+            cameraPosition_=Vector3(subject.x,subject.y+(tending?1.25f:1.58f),subject.z)+forward*2.65f+right*2.00f;
+            const Vector3 target(subject.x,subject.y+(tending?.72f:1.02f),subject.z);
             const auto direction=target-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
-            std::cout<<"island-simulator: resident QA camera frames and follows one peaceful adult\n";
+            std::cout<<(tending?"island-simulator: resident QA camera frames the resident crouched to tend the fire\n"
+                               :"island-simulator: resident QA camera frames and follows one peaceful adult\n");
         } else if(viewpoint_==FixedViewpoint::BearDetail||viewpoint_==FixedViewpoint::BearLyingDetail) {
             // The lying view holds the bear down at rest, framed lower and nearer.
             const bool lying=viewpoint_==FixedViewpoint::BearLyingDetail;
@@ -2549,6 +2554,7 @@ namespace island
                   << "island-simulator: wetland mist: " << wetlandMist_.Puffs().size() << " low puffs over the seasonal wetland wrap back in at its windward edge as the wind carries them out\n"
                   << "island-simulator: a boar trotting off, a deer bounding or a goat sidestepping on dry sand or bare soil kicks up puffs of earth behind its hooves, gone within the second\n"
                   << "island-simulator: prints on the wet sand at the water's edge are taken back by the swash within a minute, those higher up the beach over four\n"
+                  << "island-simulator: at the campfire the resident crouches to tend the fire, hands to the flames, and stands again to walk on\n"
                   << "island-simulator: monkey tree routes reject isolated canopy and mangroves\n"
                   << "island-simulator: monkeys walk to fruit lying under the crowns and eat it, idling over the spot\n"
                   << "island-simulator: boars forage for the fallen fruit and coconuts before the trunk bases and eat them where they lie\n"
@@ -2816,7 +2822,8 @@ namespace island
         }
         const auto previousResident=resident_->State();
         const auto& observer=playerMotion_.Position();
-        resident_->Update(deltaSeconds,{observer.x,observer.y,observer.z});
+        if(viewpoint_==FixedViewpoint::ResidentTendDetail) resident_->PreviewCrouch();
+        resident_->Update(viewpoint_==FixedViewpoint::ResidentTendDetail?0.0f:deltaSeconds,{observer.x,observer.y,observer.z});
         {
             // The resident's pause at the pit tends the fire: it builds up while they stay
             // and dies back once they walk on.
@@ -2824,6 +2831,8 @@ namespace island
             const bool tending=CampfireSite::Tending(tender.x,tender.z,tender.mode==ResidentMode::Pausing);
             campfireTend_+=std::clamp((tending?1.0f:0.0f)-campfireTend_,-0.3f*deltaSeconds,0.6f*deltaSeconds);
             if(campfireRenderer_) campfireRenderer_->SetTending(campfireTend_);
+            // At the fire the resident crouches to tend it, hands to the flames.
+            resident_->SetCrouch(tending?1.0f:0.0f);
         }
         {
             // The resident's footfalls: one every 0.68 m of their walk, on the ground under them.
@@ -4200,7 +4209,7 @@ namespace island
         cameraProjection_ = Matrix::CreatePerspectiveFieldOfView(
             (viewpoint_==FixedViewpoint::BoarDetail||viewpoint_==FixedViewpoint::BoarLyingDetail||viewpoint_==FixedViewpoint::GoatDetail||viewpoint_==FixedViewpoint::GoatLyingDetail
                 ||viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail
-                ||viewpoint_==FixedViewpoint::ResidentDetail||viewpoint_==FixedViewpoint::BearDetail||viewpoint_==FixedViewpoint::BearLyingDetail
+                ||viewpoint_==FixedViewpoint::ResidentDetail||viewpoint_==FixedViewpoint::ResidentTendDetail||viewpoint_==FixedViewpoint::BearDetail||viewpoint_==FixedViewpoint::BearLyingDetail
                 ||viewpoint_==FixedViewpoint::MouseDetail||viewpoint_==FixedViewpoint::RatDetail
                 ||viewpoint_==FixedViewpoint::FlyDetail||viewpoint_==FixedViewpoint::AntDetail
                 ||viewpoint_==FixedViewpoint::CicadaDetail

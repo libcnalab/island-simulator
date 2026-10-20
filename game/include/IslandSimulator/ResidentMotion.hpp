@@ -45,6 +45,14 @@ public:
     [[nodiscard]] bool LookingOut()const noexcept {return pauseFacing_&&pauseRemaining_>0;}
     // 0..1: how far the right hand is raised to a player who has stopped close by.
     [[nodiscard]] float WaveAmount()const noexcept {return wave_;}
+    // 0..1 crouched: at a pause the resident squats, pelvis CrouchDrop lower with the knees
+    // bent forward and both hands reaching to the front (tending the fire); the game asks for
+    // it while they stand at the campfire, and the crouch eases in and out over a second.
+    void SetCrouch(float target) noexcept;
+    [[nodiscard]] float CrouchAmount()const noexcept {return crouch_;}
+    // QA: holds the resident fully crouched for a still capture.
+    void PreviewCrouch();
+    static constexpr float CrouchDrop=.36f,CrouchInRate=1.0f,CrouchOutRate=1.4f;
     [[nodiscard]] const ResidentRoute& Route()const noexcept {return route_;}
     [[nodiscard]] const RenderedTerrainSurface& Ground()const noexcept {return ground_;}
 private:
@@ -66,6 +74,7 @@ private:
     ResidentState state_;
     float pauseRemaining_=3;
     float wave_=0,waveClock_=0;
+    float crouch_=0,crouchTarget_=0;
     float pauseFaceX_=0,pauseFaceZ_=0;bool pauseFacing_=false;
 };
 }

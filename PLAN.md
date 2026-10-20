@@ -54,6 +54,26 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 132 (2026-10-20) — the resident crouches to tend the fire
+
+The resident's campfire pause built the fire up (pass 89) while they stood straight beside
+it. `ResidentMotion::SetCrouch` (0..1, asked for by the game while `CampfireSite::Tending`
+holds) and `CrouchAmount()` carry a squat: at a pause with the resident standing still the
+crouch eases in at 1.0/s and out at 1.4/s the moment they move; `FitPose` drops the pelvis
+by `CrouchDrop` (0.36 m) on the same planted feet (its floor lowered with it), the leg
+solver bending the knees forward, and both hands come forward and down to the fire
+(the arm's hang vector turned 1.15 rad × crouch toward the front, the wave still taking the
+right arm up out of it); a changed crouch refits the pose on the same feet. A QA
+viewpoint `resident-tending` (`ResidentTendDetail`, `PreviewCrouch()` each frame with the
+resident's update frozen) frames the resident crouched, lower than `resident`; the
+capture tool accepts it and requires the tending camera line. General report line: "at
+the campfire the resident crouches to tend the fire, hands to the flames, and stands again
+to walk on" (pinned). Core checks: asked for at the campfire pause the resident crouches
+most of the way within a second and a half; the held crouch drops the pelvis a third of a
+metre, keeps the feet planted, both legs reachable and the hands forward; asked off, the
+resident stands within a second. Native `resident-tending` passes (luminance deviation
+34.7).
+
 ## Loop pass 131 (2026-10-20) — the swash takes the wet sand's prints
 
 Every print, bare or cloven, kept for the trail's four minutes whether it lay high on the
