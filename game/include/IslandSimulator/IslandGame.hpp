@@ -521,6 +521,7 @@ namespace island
         ResidentStepTracker residentSteps_;
         float residentWhistleClock_ = 0.0f;
         std::uint32_t notedFlushes_ = 0U;
+        std::uint32_t notedLeafLandings_ = 0U;
         std::uint32_t monkeyShakes_ = 0U;
         std::uint32_t notedThudCount_ = 0U;
         std::uint32_t notedBreachCount_ = 0U;

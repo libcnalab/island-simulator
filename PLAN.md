@@ -54,6 +54,23 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 108 (2026-10-20) — a leaf that lands on the stream drifts away with it
+
+A crown's leaf or a bird's feather that came down over the stream lay on the water as on
+the floor. `StreamCourse::Locate(x,z,distance,lateral)` says whether a point lies on the
+stream's water (the nearest station from the water mesh's first row to the mouth, within a
+metre along and the half width across) and where; `StreamDriftField::Adopt(distance,
+lateral,variant)` puts a leaf there in its own colour, in a free slot or in the place of
+the leaf furthest along (longest at sea, else nearest the mouth), which was about to be
+launched again anyway; the leaf field notes each landing (`LastLanding`: where, colour,
+slot) and the game hands a landing on the water to the drift and removes the lying leaf.
+`AdoptCount()` counts them. The startup report gains "a leaf or feather that comes down on
+the stream is taken by the current and drifts away with it", pinned by the native capture
+tool. Core checks: a point on a stream station is located at its distance in the middle of
+the water and one fifty metres off is not; a leaf that landed joins the drift where it
+landed in its own colour, the drift staying full, and goes on down the stream with the
+current. Native `stream` passes.
+
 ## Loop pass 107 (2026-10-20) — a feather from a flushing bird
 
 A bird's flush left nothing behind but its clap. `CanopyLeafFallField::Feather(x,y,z,seed)`

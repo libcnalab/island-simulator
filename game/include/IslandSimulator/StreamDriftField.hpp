@@ -36,6 +36,11 @@ public:
     void Update(float deltaSeconds) noexcept;
     [[nodiscard]] std::span<const DriftingLeaf> Leaves() const noexcept {return leaves_;}
     [[nodiscard]] std::uint32_t PassCount() const noexcept {return passes_;}
+    /** @brief A leaf (or feather) that landed on the water at a course distance and lateral
+     *  fraction joins the drift with its own colour, in a free slot or in the place of the
+     *  leaf furthest along; false only when it cannot be placed on the water. */
+    bool Adopt(float distance,float lateral,std::uint8_t variant) noexcept;
+    [[nodiscard]] std::uint32_t AdoptCount() const noexcept {return adoptions_;}
     [[nodiscard]] std::size_t SeaCount() const noexcept;
     [[nodiscard]] const StreamCourse& Course() const noexcept {return course_;}
     // The surface speed of the current at a course distance.
@@ -46,6 +51,6 @@ private:
     void Launch(std::size_t index,float distance) noexcept;
     StreamCourse course_;
     std::array<DriftingLeaf,Capacity> leaves_{};
-    std::uint32_t passes_=0,launches_=0;
+    std::uint32_t passes_=0,launches_=0,adoptions_=0;
 };
 }

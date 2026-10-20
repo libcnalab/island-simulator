@@ -111,7 +111,7 @@ void CanopyLeafFallField::Update(const float seconds,const float deltaSeconds,
             leaf.y-=leaf.speed*dt;
             leaf.yawRadians=std::fmod(leaf.yawRadians+SpinRate*dt,Tau);
             const float ground=std::max(terrain_.Height(leaf.x,leaf.z),0.0f)+0.03f;
-            if(leaf.y<=ground) {leaf.y=ground;rest_[i]=0.0f;leaf.speed=0.0f;}
+            if(leaf.y<=ground) {leaf.y=ground;rest_[i]=0.0f;leaf.speed=0.0f;landing_={leaf.x,leaf.z,leaf.variant,i,landing_.count+1U};}
         } else {
             rest_[i]+=dt;
             if(rest_[i]>=RestSeconds) leaf.active=false;

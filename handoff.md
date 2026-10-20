@@ -169,6 +169,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 105: on the walk the resident whistles an original short phrase every half minute (PLAN "Loop pass 105").
 - Pass 106: a bird flushing from a perch or the ground claps its wings, heard within twenty metres (PLAN "Loop pass 106").
 - Pass 107: a flushing bird lets a pale feather go that rocks down slower than a leaf (PLAN "Loop pass 107").
+- Pass 108: a leaf or feather that comes down on the stream is taken by the current and drifts away (PLAN "Loop pass 108").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

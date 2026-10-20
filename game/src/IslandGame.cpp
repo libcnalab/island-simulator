@@ -2389,6 +2389,7 @@ namespace island
                   << "island-simulator: on the walk the resident whistles an original short phrase every half minute, heard within thirty metres\n"
                   << "island-simulator: a bird flushing from a perch or the ground claps its wings, an original half-second whir heard within twenty metres\n"
                   << "island-simulator: a flushing bird lets a pale feather go that rocks down slower than a leaf and lies where it lands\n"
+                  << "island-simulator: a leaf or feather that comes down on the stream is taken by the current and drifts away with it\n"
                   << "island-simulator: the bear walks to fruit and coconuts lying in its range and eats them where they lie\n"
                   << "island-simulator: the boars stand off from the bear and trot away when it comes close, as from the walker\n"
                   << "island-simulator: the hut's roof ridge is a perch for the birds\n"
@@ -2744,6 +2745,15 @@ namespace island
         fallingFruit_.Update(deltaSeconds, monkeyTroop_.Monkeys());
         streamDrift_.Update(deltaSeconds);
         canopyLeafFall_.Update(seaForageSeconds_,deltaSeconds,cameraPosition_.X,cameraPosition_.Z);
+        // A leaf or feather that lands on the stream is taken by the current.
+        if(canopyLeafFall_.LastLanding().count!=notedLeafLandings_) {
+            notedLeafLandings_=canopyLeafFall_.LastLanding().count;
+            const auto& landing=canopyLeafFall_.LastLanding();
+            float courseDistance=0,lateral=0;
+            if(streamDrift_.Course().Locate(landing.x,landing.z,courseDistance,lateral)
+               &&streamDrift_.Adopt(courseDistance,lateral,landing.variant))
+                canopyLeafFall_.Remove(landing.slot);
+        }
         hatchlings_.Update(deltaSeconds);
         cascadeMist_.Update(deltaSeconds,seaForageSeconds_);
         surfSpray_.Update(deltaSeconds,seaForageSeconds_,cameraPosition_.X,cameraPosition_.Z);

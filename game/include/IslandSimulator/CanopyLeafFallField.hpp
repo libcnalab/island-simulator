@@ -40,6 +40,11 @@ public:
      *  wider rock, drawn by the leaf renderer as its pale variant. */
     void Feather(float x,float y,float z,std::uint32_t seed) noexcept;
     [[nodiscard]] std::uint32_t FeatherCount() const noexcept {return feathers_;}
+    /** @brief The last leaf to land: where, its colour, its slot, counted so a landing is
+     *  seen once; a leaf that landed on the stream is handed to the drift and removed. */
+    struct Landing { float x=0,z=0; std::uint8_t variant=0; std::size_t slot=0; std::uint32_t count=0; };
+    [[nodiscard]] const Landing& LastLanding() const noexcept {return landing_;}
+    void Remove(std::size_t slot) noexcept { if(slot<Capacity) leaves_[slot].active=false; }
     static constexpr float FeatherFallSpeed=0.28f;
     static constexpr std::uint8_t FeatherVariant=3;
     [[nodiscard]] std::uint32_t ShakeCount() const noexcept {return shakes_;}
@@ -53,5 +58,6 @@ private:
     std::array<float,Capacity> phase_{};
     std::array<float,Capacity> rest_{};   // seconds lying; negative while falling
     std::uint32_t releases_=0,shakes_=0,feathers_=0;
+    Landing landing_;
 };
 }

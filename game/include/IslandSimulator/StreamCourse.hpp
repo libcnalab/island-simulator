@@ -4,6 +4,7 @@
 #include <array>
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 
 namespace island {
@@ -50,6 +51,29 @@ public:
         ShapeCascade();
     }
     [[nodiscard]] std::size_t Count() const noexcept {return count_;}
+    // Whether a point lies on the stream's water (from the water mesh's first row to the
+    // mouth): the course distance and the signed lateral fraction of the half width there.
+    [[nodiscard]] bool Locate(const float x,const float z,float& distance,float& lateral) const noexcept {
+        if(!std::isfinite(x)||!std::isfinite(z)||count_<14) return false;
+        std::size_t best=12;float bestRange=std::numeric_limits<float>::max();
+        for(std::size_t i=12;i<count_;++i) {
+            const float range=std::hypot(x-stations_[i].x,z-stations_[i].z);
+            if(range<bestRange) {bestRange=range;best=i;}
+        }
+        const StreamStation& station=stations_[best];
+        const StreamStation& ahead=stations_[std::min(best+1,count_-1)];
+        const StreamStation& behind=stations_[best>12?best-1:best];
+        float dirX=ahead.x-behind.x,dirZ=ahead.z-behind.z;
+        const float length=std::hypot(dirX,dirZ);
+        if(length<0.001f) return false;
+        dirX/=length;dirZ/=length;
+        const float along=(x-station.x)*dirX+(z-station.z)*dirZ;
+        const float across=-(x-station.x)*dirZ+(z-station.z)*dirX;
+        if(std::abs(along)>1.0f||std::abs(across)>station.halfWidth) return false;
+        distance=station.distance+along;
+        lateral=across/std::max(station.halfWidth,0.01f);
+        return true;
+    }
     [[nodiscard]] const StreamStation& Station(std::size_t i) const {return stations_.at(i);}
     // Lip station: the water holds level here and drops to the next station.
     [[nodiscard]] std::size_t CascadeIndex() const noexcept {return cascade_;}

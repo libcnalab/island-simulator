@@ -65,6 +65,30 @@ void StreamDriftField::Launch(const std::size_t index,const float distance) noex
     leaf.yawRadians+=leaf.spin;
 }
 
+bool StreamDriftField::Adopt(const float distance,const float lateral,const std::uint8_t variant) noexcept {
+    if(!std::isfinite(distance)||!std::isfinite(lateral)) return false;
+    // A free slot if there is one; else the leaf furthest along (longest at sea, or
+    // nearest the mouth), which was about to be launched again anyway.
+    std::size_t slot=leaves_.size();
+    for(std::size_t index=0;index<leaves_.size();++index) if(!leaves_[index].active) {slot=index;break;}
+    if(slot==leaves_.size()) {
+        slot=0;
+        for(std::size_t index=1;index<leaves_.size();++index) {
+            const DriftingLeaf& a=leaves_[index];const DriftingLeaf& b=leaves_[slot];
+            const bool further=a.atSea!=b.atSea?a.atSea:(a.atSea?a.seaSeconds>b.seaSeconds:a.distance>b.distance);
+            if(further) slot=index;
+        }
+    }
+    DriftingLeaf& leaf=leaves_[slot];
+    Launch(slot,std::max(0.0f,distance));
+    leaf.lateral=std::clamp(lateral,-0.9f,0.9f);
+    leaf.variant=variant;
+    leaf.active=Surface(leaf.distance,leaf.lateral,leaf.x,leaf.y,leaf.z,leaf.yawRadians);
+    if(!leaf.active) return false;
+    ++adoptions_;
+    return true;
+}
+
 void StreamDriftField::Update(const float deltaSeconds) noexcept {
     const float dt=std::isfinite(deltaSeconds)?std::clamp(deltaSeconds,0.0f,0.1f):0.0f;
     if(dt<=0.0f) return;

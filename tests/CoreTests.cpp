@@ -8571,6 +8571,28 @@ int main()
             }
             Check(drift.SeaCount()>=1U&&seaLeaf&&downwind&&onSurface,"leaves out of the mouth drift on the lagoon downwind at the surface");
         }
+        {
+            // A point on the water is located on the course; one fifty metres off is not. A
+            // leaf that landed there joins the drift in the place of the leaf furthest along, in its own colour
+            // and goes on down the stream.
+            island::StreamDriftField adopter(terrain);
+            const auto& course=adopter.Course();
+            const auto& station=course.Station(40);
+            float courseDistance=0,lateral=0;
+            Check(course.Locate(station.x,station.z,courseDistance,lateral)&&std::abs(courseDistance-station.distance)<0.05f&&std::abs(lateral)<0.05f,
+                  "a point on a stream station is located at its distance in the middle of the water");
+            Check(!course.Locate(station.x+50.0f,station.z,courseDistance,lateral),"a point fifty metres from the stream is not on it");
+            for(int step=0;step<40;++step) adopter.Update(0.05f);
+            Check(adopter.Adopt(station.distance,0.3f,3U)&&adopter.AdoptCount()==1U,"a leaf that landed on the water joins the drift");
+            std::size_t active=0;for(const auto& leaf:adopter.Leaves()) active+=leaf.active?1U:0U;
+            Check(active==island::StreamDriftField::Capacity,"the adopted leaf takes the place of the leaf furthest along, the drift staying full");
+            std::size_t adopted=adopter.Leaves().size();
+            for(std::size_t i=0;i<adopter.Leaves().size();++i) if(adopter.Leaves()[i].active&&adopter.Leaves()[i].variant==3U) adopted=i;
+            Check(adopted<adopter.Leaves().size()&&std::abs(adopter.Leaves()[adopted].distance-station.distance)<0.05f,"the adopted leaf starts where it landed, in its own colour");
+            const float before=adopter.Leaves()[adopted].distance;
+            for(int step=0;step<60;++step) adopter.Update(0.05f);
+            Check(adopter.Leaves()[adopted].active&&adopter.Leaves()[adopted].distance>before+0.3f,"the adopted leaf goes on down the stream with the current");
+        }
     }
     {
         // Small fish in the plunge pool: all of them hold under the surface inside the pool's
