@@ -46,6 +46,23 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 24 (2026-10-20) — the fallen fruit bounces and rolls
+
+A fruit stopped dead on the spot it struck, as nothing dropped onto a slope does. `FallingFruit`
+carries a horizontal velocity and a `rolling` flag. The first strike (the bounce of pass 12,
+the thud of pass 15) now kicks the fruit along the ground: 2.4 times the slope gradient downhill
+plus a small deterministic sideways component, scaled by 0.12 of the strike speed; the bounce
+flies on that kick, re-sampling the ground as it goes. When it settles it rolls: pulled by a
+quarter of gravity along the slope, slowed by a 2.2/s drag and a 0.4 m/s² rolling resistance
+(which beats the pull on gentle ground), and cut off after 3 s on a steep bank; the roll stops
+below 0.05 m/s and `LastRollDistance()` records the distance from the strike. Monkeys, boars
+and butterflies ignore fruit still rolling. Diagnostic "a fallen fruit bounces off where it
+strikes and rolls downhill to rest" is pinned by the native capture tool. Core checks: under
+the sloping test tree the last fruit to rest rolled between 0.08 and 4 m from its strike, and
+resting fruit has no velocity. The first draft's drag-only roll never stopped on a sustained
+slope (and starved the boar test of resting fruit); the resistance term fixed both. Native
+`fruit` passes.
+
 ## Loop pass 23 (2026-10-20) — the gust front is heard
 
 The gust fronts of pass 9 leaned the grass, thrashed the palms and shook coconuts down, and

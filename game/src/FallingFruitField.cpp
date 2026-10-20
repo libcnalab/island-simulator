@@ -12,6 +12,12 @@ std::size_t FallingFruitField::ActiveCount() const noexcept {
     return count;
 }
 
+void FallingFruitField::SlopeAt(const float x,const float z,float& slopeX,float& slopeZ) const noexcept {
+    constexpr float Probe=0.3f;
+    slopeX=(terrain_.Height(x+Probe,z)-terrain_.Height(x-Probe,z))/(2*Probe);
+    slopeZ=(terrain_.Height(x,z+Probe)-terrain_.Height(x,z-Probe))/(2*Probe);
+}
+
 FallingFruit* FallingFruitField::FreeSlot() noexcept {
     for(auto& f:fruit_) if(!f.active) return &f;
     // Replace the longest-lying fruit.
@@ -46,7 +52,8 @@ void FallingFruitField::UpdateCoconuts(const float seconds,const float observerX
         slot->z=palm.z+std::sin(angle)*(lean+0.3f);
         slot->groundY=terrain_.Height(slot->x,slot->z)+0.10f;
         slot->y=std::max(palm.y+crown*0.9f,slot->groundY+1.0f);
-        slot->velocityY=0;slot->restSeconds=-1.0f;slot->variant=CoconutVariant;slot->active=true;
+        slot->velocityY=0;slot->velocityX=0;slot->velocityZ=0;slot->rolling=false;
+        slot->restSeconds=-1.0f;slot->variant=CoconutVariant;slot->active=true;
         ++coconutDrops_;
     }
 }
@@ -69,7 +76,7 @@ void FallingFruitField::Drop(const MonkeyState& monkey) noexcept {
     slot->y=tree.y+localY*tree.scale;
     slot->groundY=terrain_.Height(slot->x,slot->z)+0.06f;
     if(slot->y<=slot->groundY) slot->y=slot->groundY+0.5f;
-    slot->velocityY=0;
+    slot->velocityY=0;slot->velocityX=0;slot->velocityZ=0;slot->rolling=false;
     slot->restSeconds=-1.0f;
     slot->variant=tree.variant;
     slot->active=true;
@@ -88,18 +95,53 @@ void FallingFruitField::Update(const float deltaSeconds,const std::span<const Mo
             pickTimers_[i]=DropIntervalSeconds*0.6f;   // the first fruit comes soon after picking starts
         }
     }
-    for(auto& f:fruit_) {
+    for(std::size_t index=0;index<fruit_.size();++index) {
+        FallingFruit& f=fruit_[index];
         if(!f.active) continue;
         if(f.restSeconds<0.0f) {
             f.velocityY-=Gravity*dt;
             f.y+=f.velocityY*dt;
+            if(f.velocityX!=0.0f||f.velocityZ!=0.0f) {
+                f.x+=f.velocityX*dt;f.z+=f.velocityZ*dt;
+                f.groundY=terrain_.Height(f.x,f.z)+GroundOffset(f);
+            }
             if(f.y<=f.groundY) {
-                // A small bounce, then rest; a coconut's first strike is the thud.
+                // A small bounce, then rest; a coconut's first strike is the thud. The strike
+                // kicks the fruit a little downhill and a little to one side, so it bounces
+                // away from where it hit and rolls on from there.
                 if(f.velocityY<-2.5f) {
                     if(f.variant==CoconutVariant) landing_={f.x,f.groundY,f.z,landing_.count+1U};
+                    if(f.velocityX==0.0f&&f.velocityZ==0.0f) {
+                        strikeX_[index]=f.x;strikeZ_[index]=f.z;
+                        float slopeX=0,slopeZ=0;SlopeAt(f.x,f.z,slopeX,slopeZ);
+                        const float kick=-f.velocityY*0.12f;
+                        const float side=static_cast<float>((index*7U+3U)%5U)*0.1f-0.2f;
+                        f.velocityX=(-slopeX*2.4f+side)*kick;
+                        f.velocityZ=(-slopeZ*2.4f-side*0.6f)*kick;
+                    }
                     f.y=f.groundY; f.velocityY=-f.velocityY*0.18f;
                 }
-                else { f.y=f.groundY; f.velocityY=0; f.restSeconds=0.0f; }
+                else {
+                    f.y=f.groundY; f.velocityY=0; f.restSeconds=0.0f;
+                    f.rolling=std::hypot(f.velocityX,f.velocityZ)>RollStopSpeed;
+                    if(!f.rolling) { f.velocityX=0;f.velocityZ=0;lastRoll_=std::hypot(f.x-strikeX_[index],f.z-strikeZ_[index]); }
+                }
+            }
+        } else if(f.rolling) {
+            // Rolling: pulled on by the slope, slowed by the litter it rolls through (a drag
+            // and a rolling resistance that beats the pull on gentle ground), until it stops;
+            // on a steep bank the roll is cut short after RollSeconds in a hollow.
+            float slopeX=0,slopeZ=0;SlopeAt(f.x,f.z,slopeX,slopeZ);
+            const float speed=std::hypot(f.velocityX,f.velocityZ);
+            const float resistance=speed>0.0f?std::min(RollResistance*dt,speed)/speed:0.0f;
+            f.velocityX+=(-slopeX*Gravity*RollPull-f.velocityX*RollDrag)*dt-f.velocityX*resistance;
+            f.velocityZ+=(-slopeZ*Gravity*RollPull-f.velocityZ*RollDrag)*dt-f.velocityZ*resistance;
+            f.x+=f.velocityX*dt;f.z+=f.velocityZ*dt;
+            f.groundY=terrain_.Height(f.x,f.z)+GroundOffset(f);f.y=f.groundY;
+            f.restSeconds+=dt;
+            if(std::hypot(f.velocityX,f.velocityZ)<=RollStopSpeed||f.restSeconds>=RollSeconds) {
+                f.rolling=false;f.velocityX=0;f.velocityZ=0;
+                lastRoll_=std::hypot(f.x-strikeX_[index],f.z-strikeZ_[index]);
             }
         } else {
             f.restSeconds+=dt;

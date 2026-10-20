@@ -7589,6 +7589,12 @@ int main()
               "the coconut's landing is counted where it struck the ground");
         Check(highest>monkey.selectedTree.y+3.0f,"the fruit starts up in the crown");
         Check(landed,"the fruit lands on the ground under the tree and lies there");
+        // The ground under that tree slopes, so a fruit bounces off its strike point and rolls
+        // on a little before it rests; resting fruit sit on the ground and keep still.
+        Check(field.LastRollDistance()>0.08f&&field.LastRollDistance()<4.0f,"a fruit rolls a bounded distance from where it struck before it rests");
+        bool stillAtRest=true;
+        for(const auto& f:field.Fruit()) if(f.active&&f.restSeconds>=0.0f&&!f.rolling&&(f.velocityX!=0.0f||f.velocityZ!=0.0f)) stillAtRest=false;
+        Check(stillAtRest,"resting fruit keeps still");
         std::size_t lying=0;
         for(std::size_t i=0;i<field.Fruit().size();++i) if(field.Fruit()[i].active&&field.Fruit()[i].restSeconds>=0.0f) { field.Consume(i); ++lying; break; }
         Check(lying==1U&&field.ConsumedCount()==1U&&field.ActiveCount()+1U>=lying,"a lying fruit can be eaten and is counted once");

@@ -107,7 +107,7 @@ namespace island
         float best = std::numeric_limits<float>::max();
         bool found = false;
         for (const FallingFruit& fruit : lyingFruit_) {
-            if (!fruit.active || fruit.restSeconds < FermentSeconds
+            if (!fruit.active || fruit.restSeconds < FermentSeconds || fruit.rolling
                 || fruit.variant == FallingFruitField::CoconutVariant) continue;
             const float fromHome = std::hypot(fruit.x - agent.home.x, fruit.z - agent.home.z);
             if (fromHome > agent.home.radius + BushExcursionReach) continue;

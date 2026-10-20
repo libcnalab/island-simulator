@@ -84,6 +84,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 21: butterflies come down to feed on the fermenting fruit (PLAN "Loop pass 21").
 - Pass 22: the resident's walk along the beach scatters the crabs (PLAN "Loop pass 22").
 - Pass 23: the gust front swells the breeze and canopy beds as it passes the listener (PLAN "Loop pass 23").
+- Pass 24: a fallen fruit bounces off its strike and rolls downhill to rest (PLAN "Loop pass 24").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

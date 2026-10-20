@@ -15,6 +15,8 @@ class IslandTerrain;
 struct FallingFruit {
     float x=0,y=0,z=0;
     float velocityY=0;
+    float velocityX=0,velocityZ=0;   // the bounce and the roll downhill after it
+    bool rolling=false;              // on the ground but still moving
     float restSeconds=0;     // time lying on the ground; negative while still falling
     float groundY=0;
     std::uint8_t variant=0;  // canopy form: 2 orange, 5 purple; 9 a coconut from a palm
@@ -48,6 +50,10 @@ public:
     [[nodiscard]] std::uint32_t ConsumedCount() const noexcept {return consumed_;}
     [[nodiscard]] std::size_t ActiveCount() const noexcept;
     [[nodiscard]] std::uint32_t DropCount() const noexcept {return drops_;}
+    /** @brief How far the last fruit to come to rest rolled from where it first struck. */
+    [[nodiscard]] float LastRollDistance() const noexcept {return lastRoll_;}
+    static constexpr float RollStopSpeed=0.05f;
+    static constexpr float RollPull=0.25f,RollDrag=2.2f,RollResistance=0.4f,RollSeconds=3.0f;
 private:
     void Drop(const MonkeyState& monkey) noexcept;
     FallingFruit* FreeSlot() noexcept;
@@ -60,5 +66,9 @@ private:
     std::array<FallingFruit,Capacity> fruit_{};
     std::array<float,16> pickTimers_{};
     std::uint32_t drops_=0;
+    float lastRoll_=0;
+    std::array<float,Capacity> strikeX_{},strikeZ_{};
+    [[nodiscard]] float GroundOffset(const FallingFruit& f) const noexcept {return f.variant==CoconutVariant?0.10f:0.06f;}
+    void SlopeAt(float x,float z,float& slopeX,float& slopeZ) const noexcept;
 };
 }

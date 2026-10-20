@@ -371,7 +371,7 @@ namespace island
         float best = std::numeric_limits<float>::max();
         for (std::size_t index = 0; index < lyingFruit_.size(); ++index) {
             const FallingFruit& fruit = lyingFruit_[index];
-            if (!fruit.active || fruit.restSeconds < 0.0f || fruit.variant == FallingFruitField::CoconutVariant) continue;
+            if (!fruit.active || fruit.restSeconds < 0.0f || fruit.rolling || fruit.variant == FallingFruitField::CoconutVariant) continue;
             if (std::hypot(fruit.x - agent.state.homeX, fruit.z - agent.state.homeZ) > MaximumHomeDistance) continue;
             const float distance = std::hypot(fruit.x - agent.state.x, fruit.z - agent.state.z);
             if (distance >= best || !IsValidGround(fruit.x, fruit.z)) continue;
