@@ -162,6 +162,12 @@ namespace island
         school.centreY = FishDepth(sample.height, school.routeAngle, elapsedSeconds_);
     }
 
+    void FishSchools::SetThreat(const float x, const float y, const float z, const bool valid) noexcept
+    {
+        threatValid_ = valid && std::isfinite(x) && std::isfinite(y) && std::isfinite(z);
+        if (threatValid_) { threatX_ = x; threatY_ = y; threatZ_ = z; }
+    }
+
     void FishSchools::SetShelter(const float x, const float z, const bool valid) noexcept
     {
         shelterValid_ = valid && std::isfinite(x) && std::isfinite(z);
@@ -178,6 +184,7 @@ namespace island
     void FishSchools::Update(const float deltaSeconds, const float observerX,
                              const float observerY, const float observerZ) noexcept
     {
+        threatParting_ = 0U;
         const float safeDelta = std::isfinite(deltaSeconds)
             ? std::clamp(deltaSeconds, 0.0f, 0.1f) : 0.0f;
         elapsedSeconds_ += safeDelta;
@@ -348,6 +355,21 @@ namespace island
                     targetX += awayX / planar * push;
                     targetZ += awayZ / planar * push;
                     hurry = 1.7f;
+                }
+            }
+            // The shark through the school: the fish part around it further out than
+            // around the swimmer, and hurry.
+            if (threatValid_) {
+                const float awayX = agent.state.x - threatX_;
+                const float awayZ = agent.state.z - threatZ_;
+                const float threatDistance = std::hypot(agent.state.y - threatY_, std::hypot(awayX, awayZ));
+                const float planar = std::max(std::hypot(awayX, awayZ), 0.05f);
+                if (threatDistance < ThreatPartingDistance) {
+                    const float push = (ThreatPartingDistance - threatDistance) * 1.4f + 0.8f;
+                    targetX += awayX / planar * push;
+                    targetZ += awayZ / planar * push;
+                    hurry = std::max(hurry, 1.9f);
+                    ++threatParting_;
                 }
             }
             const float toTargetX = targetX - agent.state.x;

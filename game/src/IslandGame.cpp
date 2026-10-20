@@ -2312,6 +2312,7 @@ namespace island
                   << "island-simulator: circling seabirds plunge-dive every nine seconds and each strike raises a foam ring on the water and a positional splash\n"
                   << "island-simulator: a seabird done hunting settles onto the sea and rafts there with folded wings, head to wind, before climbing back to its route\n"
                   << "island-simulator: a fish school passing the jetty turns in and holds off the end of the deck, in its shade, a while before going on\n"
+                  << "island-simulator: a school parts around the shark passing through it at seven metres, as around the swimmer at three\n"
                   << "island-simulator: a falling coconut lands with a positional thud heard within thirty metres\n"
                   << "island-simulator: a fish breaking the surface makes a small plip heard within twenty-five metres\n"
                   << "island-simulator: a crocodile sliding off the bank goes under with a heavy splash and a ring on the water\n"
@@ -3083,6 +3084,10 @@ namespace island
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
         }
         const FishState previousFishSubject = fishSchools_.Fish().front();
+        {
+            const SharkState& shark = sharkPatrol_.State();
+            fishSchools_.SetThreat(shark.x, shark.y, shark.z, shark.present && shark.visible);
+        }
         fishSchools_.Update(deltaSeconds, cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
         if (viewpoint_ == FixedViewpoint::FishDetail) {
             // Follow translation only so a close CPU-rendered audit retains the subject while

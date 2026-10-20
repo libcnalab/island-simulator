@@ -67,6 +67,12 @@ namespace island
          *  ShelterRange turns in, holds there ShelterSeconds, and goes on; not again for
          *  ShelterIntervalSeconds. */
         void SetShelter(float x, float z, bool valid) noexcept;
+        /** @brief A large body in the water this frame (the shark, when present): a school
+         *  parts around it at ThreatPartingDistance as around the swimmer at the parting
+         *  distance, the fish hurrying out of its way. */
+        void SetThreat(float x, float y, float z, bool valid) noexcept;
+        [[nodiscard]] std::size_t ThreatPartingCount() const noexcept { return threatParting_; }
+        static constexpr float ThreatPartingDistance = 7.0f;
         [[nodiscard]] std::size_t ShelteringCount() const noexcept;
         [[nodiscard]] std::uint32_t ShelterCount() const noexcept { return shelters_; }
         static constexpr float ShelterRange = 12.0f;
@@ -132,6 +138,9 @@ namespace island
         std::uint64_t frameIndex_ = 0U;
         float observerX_ = 0.0f, observerY_ = 0.0f, observerZ_ = 0.0f;
         bool observerValid_ = false;
+        float threatX_ = 0.0f, threatY_ = 0.0f, threatZ_ = 0.0f;
+        bool threatValid_ = false;
+        std::size_t threatParting_ = 0U;
         int fullSimulationCount_ = 0;
         int reducedSimulationCount_ = 0;
         int dormantSimulationCount_ = 0;

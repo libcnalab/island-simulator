@@ -7998,6 +7998,35 @@ int main()
     }
 
     {
+        // The shark through a school: the fish part around it and hurry away; with the
+        // threat withdrawn the parting ends.
+        const island::IslandTerrain terrain;
+        island::FishSchools schools(terrain);
+        const island::FishSchoolState centre = schools.Schools()[0];
+        const auto meanDistance = [&](float x, float z) {
+            float sum = 0.0f; int count = 0;
+            for (const auto& fish : schools.Fish())
+                if (fish.schoolIndex == 0U) { sum += std::hypot(fish.x - x, fish.z - z); ++count; }
+            return count > 0 ? sum / static_cast<float>(count) : 0.0f;
+        };
+        for (int step = 0; step < 40; ++step) schools.Update(0.05f, centre.centreX, 0.0f, centre.centreZ + 30.0f);
+        const island::FishSchoolState now = schools.Schools()[0];
+        const float before = meanDistance(now.centreX, now.centreZ);
+        schools.SetThreat(now.centreX, now.centreY, now.centreZ, true);
+        schools.Update(0.05f, centre.centreX, 0.0f, centre.centreZ + 30.0f);
+        Check(schools.ThreatPartingCount() >= island::FishSchools::FishPerSchool / 2U, "the shark in a school has most of its fish parting");
+        float farthest = before;
+        for (int step = 0; step < 60; ++step) {
+            schools.Update(0.05f, centre.centreX, 0.0f, centre.centreZ + 30.0f);
+            farthest = std::max(farthest, meanDistance(now.centreX, now.centreZ));
+        }
+        Check(farthest > before + 1.0f, "the fish hurry a metre and more out of the shark's way within three seconds");
+        schools.SetThreat(0.0f, 0.0f, 0.0f, false);
+        schools.Update(0.05f, centre.centreX, 0.0f, centre.centreZ + 30.0f);
+        Check(schools.ThreatPartingCount() == 0U, "with the shark gone no fish parts from it");
+    }
+
+    {
         // A fish school passing a shelter turns in and holds there, then goes on and does not
         // turn in again for a while.
         const island::IslandTerrain terrain;

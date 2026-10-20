@@ -1229,6 +1229,8 @@ def main():
                 raise RuntimeError("current frog-splash fish scatter is missing; check for a stale executable")
             if "one patrol in three ends on a perch, a stem's top at half a metre, the wings held still" not in diagnostics:
                 raise RuntimeError("current dragonfly perch is missing; check for a stale executable")
+            if "a school parts around the shark passing through it at seven metres" not in diagnostics:
+                raise RuntimeError("current shark fish parting is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

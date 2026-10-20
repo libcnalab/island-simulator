@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 95 (2026-10-20) — the schools part around the shark
+
+The shark's patrol passed through the shallow-water schools without a ripple in them.
+`FishSchools::SetThreat(x,y,z,valid)` takes the shark each frame (while it is present and
+visible); a fish within 7 m of it (`ThreatPartingDistance`, against the swimmer's 3 m) has
+its slot pushed straight away from the shark, further the closer it is, and hurries there
+at 1.9 times its pace; `ThreatPartingCount()` is the number of fish parting this frame. The
+startup report gains "a school parts around the shark passing through it at seven metres,
+as around the swimmer at three", pinned by the native capture tool. Core checks: the shark
+set at a school's centre has most of its fish parting at once, the fish's mean distance from
+the spot grows by over a metre within three seconds, and with the shark withdrawn no fish
+parts. Native `fish` passes.
+
 ## Loop pass 94 (2026-10-20) — dragonflies perch with still wings
 
 The dragonflies hovered, patrolled and darted without ever landing. `DragonflyBehavior::Perch`
