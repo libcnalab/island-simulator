@@ -61,6 +61,31 @@ Color ScaleColor(const Color& color,const float scale) {
                  static_cast<int>(color.getAProperty()));
 }
 
+// Years abandoned in the jungle, in the vertex colours from each surface's own height and
+// facing: earthy grime gathers low on the body where rain splashes the ground up onto it, a
+// patchy damp-green film grows on the upward faces that hold the wet, and bare metal rusts
+// low down. Glass, cabin trim, seats and rubber keep their own colours.
+Color Weathered(const Color& pigment,const Vector3& local,const Vector3& localNormal,const Surface surface) {
+    if(surface!=Surface::Paint&&surface!=Surface::Metal)return pigment;
+    const float low=std::clamp((1.15f-local.Y)/.95f,0.0f,1.0f);
+    const float lowSmooth=low*low*(3.0f-2.0f*low);
+    const float patch=.5f+.5f*std::sin(local.X*2.3f+local.Z*1.7f)*std::sin(local.Z*3.1f-local.X*1.3f+local.Y*2.0f);
+    float r=pigment.getRProperty(),g=pigment.getGProperty(),b=pigment.getBProperty();
+    const auto toward=[&](const float tr,const float tg,const float tb,const float amount) {
+        const float t=std::clamp(amount,0.0f,1.0f);
+        r+=(tr-r)*t;g+=(tg-g)*t;b+=(tb-b)*t;
+    };
+    if(surface==Surface::Paint) {
+        toward(74.0f,63.0f,47.0f,lowSmooth*(.30f+.12f*patch));
+        const float up=std::clamp((localNormal.Y-.55f)/.35f,0.0f,1.0f);
+        toward(70.0f,92.0f,46.0f,up*std::clamp((patch-.45f)/.35f,0.0f,1.0f)*.38f);
+    } else {
+        toward(112.0f,70.0f,42.0f,lowSmooth*(.25f+.25f*patch));
+    }
+    return Color(static_cast<int>(std::lround(r)),static_cast<int>(std::lround(g)),
+                 static_cast<int>(std::lround(b)),static_cast<int>(pigment.getAProperty()));
+}
+
 std::uint32_t Hash(const std::uint32_t x,const std::uint32_t y) noexcept {
     std::uint32_t value=x*0x9e3779b9U+y*0x85ebca6bU+0xc2b2ae35U;
     value^=value>>16U;value*=0x7feb352dU;value^=value>>15U;value*=0x846ca68bU;
@@ -158,6 +183,7 @@ HelicopterRenderer::HelicopterRenderer(GraphicsDevice& device,const HelicopterPl
         localNormal.Normalize();
         const Vector2 uvA=MaterialUv(a,localNormal,surface),uvB=MaterialUv(b,localNormal,surface),
                       uvD=MaterialUv(d,localNormal,surface);
+        const Color weathered=Weathered(pigment,(a+b+d)*(1.0f/3.0f),localNormal,surface);
         a=world(a);b=world(b);d=world(d);
         Vector3 normal=Vector3::Cross(b-a,d-a);
         normal.Normalize();
@@ -168,7 +194,7 @@ HelicopterRenderer::HelicopterRenderer(GraphicsDevice& device,const HelicopterPl
         const float ambient=surface==Surface::Emissive?1.0f:
             surface==Surface::Cabin?.70f:surface==Surface::Upholstery?.60f:.48f;
         const float light=ambient+(1.0f-ambient)*std::max(0.0f,Vector3::Dot(normal,sun));
-        const Color color=ScaleColor(pigment,light);
+        const Color color=ScaleColor(weathered,light);
         auto& target=pigment.getAProperty()<255?glassMesh:mesh;
         target.emplace_back(a,color,uvA);target.emplace_back(b,color,uvB);target.emplace_back(d,color,uvD);
     };
@@ -183,23 +209,24 @@ HelicopterRenderer::HelicopterRenderer(GraphicsDevice& device,const HelicopterPl
         const Vector2 uvA=MaterialUv(a,localFaceNormal,surface);
         const Vector2 uvB=MaterialUv(b,localFaceNormal,surface);
         const Vector2 uvD=MaterialUv(d,localFaceNormal,surface);
+        const Vector3 localA=a,localB=b,localD=d;
         a=world(a);b=world(b);d=world(d);
         const auto worldNormal=[&](Vector3 normal) {
             normal=Vector3(c*normal.X+s*normal.Z,normal.Y,-s*normal.X+c*normal.Z);
             normal.Normalize();
             return normal;
         };
-        const auto litColor=[&](const Vector3& normal) {
+        const auto litColor=[&](const Vector3& normal,const Vector3& local) {
             const float ambient=surface==Surface::Emissive?1.0f:
                 surface==Surface::Cabin?.70f:surface==Surface::Upholstery?.60f:.48f;
             const float light=ambient+(1.0f-ambient)
                 *std::max(0.0f,Vector3::Dot(worldNormal(normal),sun));
-            return ScaleColor(pigment,light);
+            return ScaleColor(Weathered(pigment,local,normal,surface),light);
         };
         auto& target=pigment.getAProperty()<255?glassMesh:mesh;
-        target.emplace_back(a,litColor(normalA),uvA);
-        target.emplace_back(b,litColor(normalB),uvB);
-        target.emplace_back(d,litColor(normalD),uvD);
+        target.emplace_back(a,litColor(normalA,localA),uvA);
+        target.emplace_back(b,litColor(normalB,localB),uvB);
+        target.emplace_back(d,litColor(normalD,localD),uvD);
     };
     const auto quad=[&](const Vector3& a,const Vector3& b,const Vector3& d,const Vector3& e,
                         const Color& color,const Surface surface=Surface::Paint) {
@@ -976,6 +1003,8 @@ HelicopterRenderer::HelicopterRenderer(GraphicsDevice& device,const HelicopterPl
     std::cout<<detail<<'\n';MirrorRuntimeDiagnosticToPlatformLog(detail);
     const std::string material="island-simulator: helicopter uses a generated 128-square atlas for worn paint, brushed metal, woven seats, and fine rubber";
     std::cout<<material<<'\n';MirrorRuntimeDiagnosticToPlatformLog(material);
+    const std::string weathering="island-simulator: the abandoned helicopter is weathered: earthy grime low on the body, a patchy damp-green film on its upward faces and rust low on bare metal";
+    std::cout<<weathering<<'\n';MirrorRuntimeDiagnosticToPlatformLog(weathering);
     const std::string doors="island-simulator: helicopter carries four outward-open framed door panels with glazing and handles";
     std::cout<<doors<<'\n';MirrorRuntimeDiagnosticToPlatformLog(doors);
     const std::string doorHinges="island-simulator: helicopter open doors use two visible hinge barrels at every jamb";

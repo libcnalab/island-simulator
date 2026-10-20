@@ -277,6 +277,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 212: rocks, logs, driftwood, reef habitat, beach details, tracks, fallen fronds and nuts shrink away over the end of their range with staggered mesh swaps, and the palm frond shading fades with distance instead of switching with the mesh (PLAN "Loop pass 212").
 - Pass 213: deer, goats, boars, the bear and the resident use the land's fog and shrink away over the last 12 % of their range instead of fogging to pale silhouettes from 55-93 m on native (PLAN "Loop pass 213").
 - Pass 214: spiders (fully fogged from 18 m before), crabs and their burrows, crocodiles and the small-fauna batch use the land's fog; all but the tiny animals shrink away at the end of their range (PLAN "Loop pass 214").
+- Pass 215: the abandoned helicopter carries grime low on the body, a damp-green film on upward paint and rust on low bare metal in its vertex colours (PLAN "Loop pass 215").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

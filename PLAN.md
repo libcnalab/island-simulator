@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 215 (2026-10-20) — the abandoned helicopter is weathered
+
+The helicopter that has stood abandoned in the jungle wore clean factory olive with only a
+broad sun-fade gradient. Its vertex colours now carry years of exposure from each
+surface's own local height and facing: painted panels take an earthy grime from 1.15 m
+down to the splash zone (up to 42 %, patchy), upward-facing paint takes a patchy damp-green
+film (up to 38 % where the patch pattern and the facing agree) and bare metal rusts low down
+(the skids and struts, up to 50 %). Glass, cabin trim, seats and rubber are unchanged.
+Startup: "the abandoned helicopter is weathered: earthy grime low on the body, a patchy
+damp-green film on its upward faces and rust low on bare metal", pinned. Native `helicopter`
+and `helicopter-approach` pass; side by side with the previous `helicopter` capture the
+skids read rust-brown and the lower fuselage earthier, the roof film mostly faces away from
+that camera.
+
 ## Loop pass 214 (2026-10-20) — spiders, crabs, crocodiles and flower patches likewise
 
 The same early-fog fade sat on the smaller creatures. Spiders were fully fog-coloured from
