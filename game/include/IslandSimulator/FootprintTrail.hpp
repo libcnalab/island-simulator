@@ -16,6 +16,7 @@ struct Footprint {
     bool left=false;
     bool active=false;
     std::uint8_t kind=0;   // 0 the walker's bare foot, 1 a cloven hoof
+    float life=240.0f;     // how long the ground keeps this print (the swash takes wet sand's sooner)
 };
 
 // The walker's trail on the sand: a print every stride while walking on sand, alternating
@@ -25,8 +26,11 @@ class FootprintTrail final {
 public:
     static constexpr std::size_t Capacity=48;
     static constexpr float Stride=0.62f,FootAcross=0.11f,LifeSeconds=240.0f,MinimumSpeed=0.3f;
-    // onSand: the walker's feet are on sand this frame (not swimming, not on a deck).
-    void Update(float deltaSeconds,float x,float z,float velocityX,float velocityZ,bool onSand) noexcept;
+    // Prints on the wet sand at the water's edge are taken back by the swash within this.
+    static constexpr float WetLifeSeconds=45.0f;
+    // onSand: the walker's feet are on sand this frame (not swimming, not on a deck);
+    // wetSand: that sand is the wet strip at the water's edge, whose prints go sooner.
+    void Update(float deltaSeconds,float x,float z,float velocityX,float velocityZ,bool onSand,bool wetSand=false) noexcept;
     [[nodiscard]] std::span<const Footprint> Prints() const noexcept {return prints_;}
     [[nodiscard]] std::uint32_t PrintCount() const noexcept {return laid_;}
     [[nodiscard]] std::size_t ActiveCount() const noexcept;

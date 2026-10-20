@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 131 (2026-10-20) — the swash takes the wet sand's prints
+
+Every print, bare or cloven, kept for the trail's four minutes whether it lay high on the
+dry beach or on the wet strip the swash runs over. `Footprint::life` now carries each
+print's own keep: `FootprintTrail::Update` takes a `wetSand` flag and lays the print with
+`WetLifeSeconds` (45 s) on the wet strip and the usual 240 s elsewhere, the density fading
+over that life. The game passes the flag from the terrain's wet-sand surface under the
+walker, and for the deer and boars from the shallows' bed or wet sand under them. General
+report line: "prints on the wet sand at the water's edge are taken back by the swash
+within a minute, those higher up the beach over four" (pinned). Core checks: a walk from
+the wet strip onto dry sand lays prints of both lives, and after seventy seconds the wet
+sand's prints are gone while the dry sand's remain. Native `wet-sand` passes.
+
 ## Loop pass 130 (2026-10-20) — the bear lies down at rest
 
 The bear, like the herds before passes 119 and 126, stood through every rest.

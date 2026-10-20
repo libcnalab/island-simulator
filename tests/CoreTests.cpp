@@ -8932,6 +8932,19 @@ int main()
             bare.SetStride(0.0f);
             for(int step=0;step<200;++step) { hx+=0.05f; bare.Update(0.05f,hx,0.0f,1.0f,0.0f,true); }
             Check(bare.PrintCount()>=14U&&bare.PrintCount()<=18U&&bare.Prints()[0].kind==0U,"an invalid stride leaves the walker's own");
+            // Prints on the wet sand are taken back by the swash within a minute; those laid
+            // on dry sand in the same walk keep for four.
+            island::FootprintTrail shore;
+            float sx=0;
+            for(int step=0;step<40;++step) { sx+=0.05f; shore.Update(0.05f,sx,0.0f,1.0f,0.0f,true,true); }
+            for(int step=0;step<40;++step) { sx+=0.05f; shore.Update(0.05f,sx,0.0f,1.0f,0.0f,true,false); }
+            std::size_t wetPrints=0,dryPrints=0;
+            for(const auto& print:shore.Prints()) if(print.active) { if(print.life<100.0f) ++wetPrints; else ++dryPrints; }
+            Check(wetPrints>=2U&&dryPrints>=2U,"a walk from the wet strip onto dry sand lays prints of both lives");
+            for(int step=0;step<700;++step) shore.Update(0.1f,sx,0.0f,0.0f,0.0f,true,false);
+            std::size_t wetLeft=0,dryLeft=0;
+            for(const auto& print:shore.Prints()) if(print.active) { if(print.life<100.0f) ++wetLeft; else ++dryLeft; }
+            Check(wetLeft==0U&&dryLeft==dryPrints,"after seventy seconds the wet sand's prints are gone and the dry sand's remain");
         }
         // Blown sand: the windward beaches' exposed dry sand streams puffs downwind while a
         // gust front passes and none between fronts; the puffs drift westward with the wind

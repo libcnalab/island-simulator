@@ -10,14 +10,15 @@ std::size_t FootprintTrail::ActiveCount() const noexcept {
 }
 
 void FootprintTrail::Update(const float deltaSeconds,const float x,const float z,
-                            const float velocityX,const float velocityZ,const bool onSand) noexcept {
+                            const float velocityX,const float velocityZ,const bool onSand,const bool wetSand) noexcept {
     const float dt=std::isfinite(deltaSeconds)?std::clamp(deltaSeconds,0.0f,0.1f):0.0f;
     if(dt<=0.0f) return;
     for(Footprint& print:prints_) {
         if(!print.active) continue;
         print.age+=dt;
-        print.density=1.0f-print.age/LifeSeconds;
-        if(print.age>=LifeSeconds) print.active=false;
+        const float life=print.life>0.0f?print.life:LifeSeconds;
+        print.density=1.0f-print.age/life;
+        if(print.age>=life) print.active=false;
     }
     if(!onSand||!std::isfinite(x)||!std::isfinite(z)||!std::isfinite(velocityX)||!std::isfinite(velocityZ)) return;
     const float speed=std::hypot(velocityX,velocityZ);
@@ -37,6 +38,7 @@ void FootprintTrail::Update(const float deltaSeconds,const float x,const float z
     slot->z=z+std::cos(heading)*FootAcross*side;
     slot->headingRadians=heading+side*0.10f;
     slot->age=0;slot->density=1;slot->left=nextLeft_;slot->active=true;slot->kind=kind_;
+    slot->life=wetSand?WetLifeSeconds:LifeSeconds;
     nextLeft_=!nextLeft_;
     ++laid_;
 }

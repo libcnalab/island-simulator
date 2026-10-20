@@ -1306,6 +1306,8 @@ def main():
                 raise RuntimeError("current hoof dust is missing; check for a stale executable")
             if "settles the bear onto folded legs for a longer lie" not in diagnostics:
                 raise RuntimeError("current bear lie-down is missing; check for a stale executable")
+            if "prints on the wet sand at the water's edge are taken back by the swash within a minute" not in diagnostics:
+                raise RuntimeError("current wet-sand print fade is missing; check for a stale executable")
             if args.viewpoint == "bear-lying" and "bear QA camera frames the bear lying at rest on folded legs" not in diagnostics:
                 raise RuntimeError("bear lying capture did not hold the bear down")
             if args.viewpoint == "monkey-scratch" and "monkey QA camera frames one idle monkey scratching its flank" not in diagnostics:

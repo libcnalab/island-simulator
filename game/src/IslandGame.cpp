@@ -2548,6 +2548,7 @@ namespace island
                   << "island-simulator: a monkey idle on the ground scratches now and then, a forelimb up at its flank for a second and a half every fourteen seconds or so\n"
                   << "island-simulator: wetland mist: " << wetlandMist_.Puffs().size() << " low puffs over the seasonal wetland wrap back in at its windward edge as the wind carries them out\n"
                   << "island-simulator: a boar trotting off, a deer bounding or a goat sidestepping on dry sand or bare soil kicks up puffs of earth behind its hooves, gone within the second\n"
+                  << "island-simulator: prints on the wet sand at the water's edge are taken back by the swash within a minute, those higher up the beach over four\n"
                   << "island-simulator: monkey tree routes reject isolated canopy and mangroves\n"
                   << "island-simulator: monkeys walk to fruit lying under the crowns and eat it, idling over the spot\n"
                   << "island-simulator: boars forage for the fallen fruit and coconuts before the trunk bases and eat them where they lie\n"
@@ -2810,7 +2811,8 @@ namespace island
             const PlayerPosition& walker=playerMotion_.Position();
             const bool onSand=!flightMotion_.IsActive()&&!IsDebugFreeCameraActive()
                 &&playerMotion_.Mode()!=LocomotionMode::Swimming&&FootstepGroundUnderPlayer()==FootstepSurface::Sand;
-            footprints_.Update(deltaSeconds,walker.x,walker.z,playerMotion_.VelocityX(),playerMotion_.VelocityZ(),onSand);
+            footprints_.Update(deltaSeconds,walker.x,walker.z,playerMotion_.VelocityX(),playerMotion_.VelocityZ(),onSand,
+                onSand&&terrain_.Sample(walker.x,walker.z).surface==TerrainSurface::WetSand);
         }
         const auto previousResident=resident_->State();
         const auto& observer=playerMotion_.Position();
@@ -3169,7 +3171,8 @@ namespace island
             const auto& b=boarHerd_.Boars()[i];
             const FootstepSurface ground=FootstepGroundAt(b.x,b.z);
             boarPrints_[i].Update(deltaSeconds,b.x,b.z,std::cos(b.headingRadians)*b.speed,std::sin(b.headingRadians)*b.speed,
-                b.inChannel||ground==FootstepSurface::Sand||ground==FootstepSurface::Shallows);
+                b.inChannel||ground==FootstepSurface::Sand||ground==FootstepSurface::Shallows,
+                ground==FootstepSurface::Shallows||terrain_.Sample(b.x,b.z).surface==TerrainSurface::WetSand);
         }
         // A boar the bear sends off gives the alarm grunt.
         if (soundscape_ && boarHerd_.BearRetreatCount() != notedBearRetreats_) {
@@ -3263,7 +3266,8 @@ namespace island
             float bankX=0.0f,bankZ=0.0f;
             const bool atBank=deer_->DrinkPoint(i,bankX,bankZ)&&std::hypot(d.x-bankX,d.z-bankZ)<3.0f;
             deerPrints_[i].Update(deltaSeconds,d.x,d.z,std::cos(d.headingRadians)*d.speed,std::sin(d.headingRadians)*d.speed,
-                atBank||ground==FootstepSurface::Sand||ground==FootstepSurface::Shallows);
+                atBank||ground==FootstepSurface::Sand||ground==FootstepSurface::Shallows,
+                ground==FootstepSurface::Shallows||terrain_.Sample(d.x,d.z).surface==TerrainSurface::WetSand);
         }
         if(viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail) {
             const auto& current=deer_->Deer().front();
