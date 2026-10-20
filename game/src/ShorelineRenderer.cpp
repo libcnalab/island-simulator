@@ -143,6 +143,8 @@ void main()
     float distanceToCamera = length(vWorld - uCameraPosition);
     float distanceFade = 1.0 - smoothstep(95.0, 165.0, distanceToCamera);
     if (vPool > 0.5) {
+        // the tide pools are still water: nothing breaks there to glow
+        if (uGlow > 0.0) discard;
         float edge = 1.0-smoothstep(0.72,1.0,vAcross);
         float ripple = 0.5+0.5*sin(dot(vWorld.xz,vec2(2.1,-1.7))+uTime*.24);
         float glint = pow(max(0.0,0.5+0.5*sin(dot(vWorld.xz,vec2(.73,.41))-uTime*.18)),5.0);

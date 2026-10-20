@@ -1,5 +1,7 @@
 #include "IslandSimulator/TimeOfDayRenderer.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
+#include "IslandSimulator/SkyCloudDrift.hpp"
+#include "IslandSimulator/WeatherSystem.hpp"
 #include "Microsoft/Xna/Framework/Color.hpp"
 #include "Microsoft/Xna/Framework/Graphics/BasicEffect.hpp"
 #include "Microsoft/Xna/Framework/Graphics/Blend.hpp"
@@ -27,6 +29,34 @@ namespace island
     namespace
     {
         constexpr int MoonSegments = 40;
+        // The sky's eleven fixed cumulus masses (SkyRenderer's cumulusMass literals: azimuth,
+        // elevation, angular half-width and half-height), for what stands in front of the moon.
+        constexpr std::array<std::array<float, 4>, 11> CumulusMasses{{
+            {0.35f, 0.075f, 0.27f, 0.060f}, {1.10f, 0.060f, 0.22f, 0.042f}, {1.95f, 0.090f, 0.30f, 0.075f},
+            {2.60f, 0.055f, 0.19f, 0.036f}, {3.30f, 0.110f, 0.25f, 0.058f}, {3.95f, 0.070f, 0.31f, 0.068f},
+            {4.70f, 0.085f, 0.24f, 0.048f}, {5.25f, 0.060f, 0.27f, 0.050f}, {5.90f, 0.100f, 0.26f, 0.052f},
+            {0.80f, 0.230f, 0.17f, 0.040f}, {4.20f, 0.260f, 0.20f, 0.046f}}};
+        // How much of a sky direction the cumulus cover (0..1): each mass as its body, an
+        // ellipse over the flat base reaching up into the crown, with a soft rim.
+        float CumulusCover(const Vector3& direction, const float driftRadians)
+        {
+            const float length = direction.Length();
+            if (length < 1e-6f) return 0.0f;
+            const float y = direction.Y / length;
+            if (y < -0.02f || y > 0.45f) return 0.0f;
+            const float azimuth = std::atan2(direction.Z, direction.X) - driftRadians;
+            const float elevation = std::asin(std::clamp(y, -1.0f, 1.0f));
+            float cover = 0.0f;
+            for (const auto& cloud : CumulusMasses) {
+                float dAzimuth = azimuth - cloud[0];
+                dAzimuth -= 6.2831853f * std::floor(dAzimuth / 6.2831853f + 0.5f);
+                const float lx = dAzimuth / cloud[2], ly = (elevation - cloud[1]) / cloud[3];
+                const float r = std::hypot(lx / 0.95f, (ly - 0.22f) / 0.85f);
+                const float t = std::clamp((r - 0.70f) / 0.35f, 0.0f, 1.0f);
+                cover = std::max(cover, 1.0f - t * t * (3.0f - 2.0f * t));
+            }
+            return cover;
+        }
         constexpr int RainbowSegments = 72, RainbowBands = 7;
         constexpr int RainbowVertexCapacity = RainbowSegments * RainbowBands * 6 * 2;
         constexpr int BoltSegments = 14, BoltBranches = 2, BoltBranchSegments = 6;
@@ -429,10 +459,16 @@ namespace island
         const float radius = MoonDistance * std::tan(MoonRadiusDegrees * std::numbers::pi_v<float> / 180.0f);
         const Vector3 centre = forward * MoonDistance;
         const float cosine = 1.0f - 2.0f * light.moonIllumination;   // the terminator's place across the disc
+        // Clouds stand in front of the moon: the drifting cumulus by the part of the disc they
+        // cover, an overcast deck over all of it.
+        const float drift = sky_cloud::DriftAngle(static_cast<float>(seconds));
+        const float deck = 1.0f - 0.95f * std::clamp((weather_now::Current().cloudCover - 0.25f) / 0.55f, 0.0f, 1.0f);
         const auto vertex = [&](const float u, const float v) {
             const float lit = std::clamp((u - std::sqrt(std::max(0.0f, 1.0f - v * v)) * cosine) * 8.0f + 0.5f, 0.0f, 1.0f);
             const float mare = 0.92f - 0.10f * std::max(0.0f, std::sin(u * 5.1f + 0.7f) * std::sin(v * 4.3f - 0.4f));
-            const float litAlpha = (0.45f + 0.55f * nightness) * rise, darkAlpha = nightness * rise;
+            const Vector3 point = centre + sunAxis * (u * radius) + across * (v * radius);
+            const float clear = deck * (1.0f - 0.92f * CumulusCover(point, drift));
+            const float litAlpha = (0.45f + 0.55f * nightness) * rise * clear, darkAlpha = nightness * rise * clear;
             const float alpha = darkAlpha + (litAlpha - darkAlpha) * lit;
             const float r = 0.025f + (0.95f * mare - 0.025f) * lit;
             const float g = 0.030f + (0.95f * mare - 0.030f) * lit;

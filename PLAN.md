@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 254 (2026-10-20) — the moon behind the clouds; the tide pools no longer glow
+
+A moonlit `flight` capture (02:50, day 3) showed the moon's path on the sea (Loop pass 251's
+moon glint) but two faults. The moon, drawn after the grade, sat in front of a cumulus: the
+clouds are painted by the sky shader, which writes no depth. `TimeOfDayRenderer` now mirrors the
+sky's eleven fixed cumulus masses (their azimuth, elevation and half-extents, drifting with the
+same `sky_cloud::DriftAngle`) as soft ellipses over each mass's flat base and crown, and fades
+each vertex of the moon's disc by the cover in front of it (to 8 %), and the whole disc under an
+overcast deck; the moon now hides behind a passing cloud, a faint glow showing through. And two
+inland tide pools glowed cyan in the night: they are part of the shoreline ribbon's mesh, and
+the surf's glow pass (Loop pass 243) drew them with their own colour, additive after the grade;
+the glow pass now discards the pool geometry. `jetty` and `overview` at 23:00 pass.
+
 ## Loop pass 253 (2026-10-20) — coconut crabs keep to the night
 
 Coconut crabs are nocturnal; here they foraged the same day and night. `CoconutCrabGroup` takes
