@@ -54,6 +54,26 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 128 (2026-10-20) — a low mist over the seasonal wetland
+
+The seasonal wetland was wet ground and reeds under the same clear air as the dry slopes.
+New `WetlandMistField` (CPU, no GPU resources of its own): ten broad faint `MistPuff`s (3.0–
+4.8 m) seeded on a golden-angle spiral over the wetland's inner four fifths (the
+environment field's ellipse at (0, −140), radii 18 × 13 m), each hanging a hand's breadth
+to a knee's height over the ground (0.12–0.55 m, with a slow bob), breathing in density
+(0.58–0.86 base, ±28 % over about twenty seconds), drifting with the trade wind at 0.10 m/s
+plus 0.45 m/s in a gust front with a slow sideways wander, and wrapping back in at the
+windward edge on the same line when it leaves the ellipse (`WrapCount()`). A second
+`CascadeMistRenderer` draws them (pale camera-facing fans, 58 × density alpha, so the mist
+reads as a faint haze lying on the reeds; a one-frame proof line in the `wetland` view reports
+the visible count and the first puff). Startup report: the renderer's "a low mist hangs
+over the seasonal wetland, breathing slowly, drifting with the trade wind and leaning in
+the gust fronts" (pinned) and "wetland mist: 10 low puffs over the seasonal wetland wrap
+back in at its windward edge as the wind carries them out". Core checks: the mist starts
+as ten faint low puffs inside the wetland; it drifts westward; over two minutes it wraps
+back in, stays inside the wetland and breathes. Native `wetland` passes (luminance
+deviation 46.0).
+
 ## Loop pass 127 (2026-10-20) — a monkey scratches
 
 Idle on the ground a monkey only looked about. `MonkeyState::scratchAmount` (0..1) now

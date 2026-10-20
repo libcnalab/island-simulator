@@ -51,6 +51,7 @@
 #include "IslandSimulator/StreamDriftField.hpp"
 #include "IslandSimulator/SunShadeField.hpp"
 #include "IslandSimulator/BlownSandField.hpp"
+#include "IslandSimulator/WetlandMistField.hpp"
 #include "IslandSimulator/StreamFishField.hpp"
 #include "IslandSimulator/HatchlingField.hpp"
 #include "IslandSimulator/BirdShadowProjection.hpp"
@@ -8964,6 +8965,35 @@ int main()
             island::BlownSandField far(terrain);
             for(int step=0;step<20;++step) far.Update(0.05f,gustTime,source.x+500.0f,source.z);
             Check(far.ReleaseCount()==0U||far.ActiveCount()>0U,"sources far from the camera stay quiet unless another lies in reach");
+        }
+        // The wetland mist: ten faint puffs over the seasonal wetland, a hand's breadth to a
+        // knee's height over the ground, drifting westward with the wind and wrapping back
+        // in at the windward edge, never leaving the wetland, breathing in density.
+        {
+            island::WetlandMistField mist(terrain);
+            const auto inside=[&](const island::WetlandMistField& field) {
+                bool ok=true;
+                for(const auto& puff:field.Puffs()) {
+                    if(!puff.active||island::WetlandMistField::Extent(puff.x,puff.z)>1.0001f) ok=false;
+                    const float hover=puff.y-terrain.Height(puff.x,puff.z);
+                    if(hover<0.05f||hover>0.7f) ok=false;
+                    if(puff.density<0.1f||puff.density>1.0f||puff.size<1.5f) ok=false;
+                }
+                return ok;
+            };
+            Check(mist.Puffs().size()==island::WetlandMistField::Capacity&&inside(mist),"the wetland mist starts as faint low puffs inside the wetland");
+            const float startX=mist.Puffs()[0].x;
+            for(int step=0;step<200;++step) mist.Update(0.05f,static_cast<float>(step)*0.05f);
+            Check(mist.Puffs()[0].x<startX-0.5f||mist.WrapCount()>=1U,"the mist drifts westward with the trade wind");
+            bool breathed=false;
+            float low=1.0f,high=0.0f;
+            for(int step=0;step<2400;++step) {
+                mist.Update(0.05f,10.0f+static_cast<float>(step)*0.05f);
+                low=std::min(low,mist.Puffs()[0].density);high=std::max(high,mist.Puffs()[0].density);
+                if(!inside(mist)) break;
+                if(high-low>0.08f) breathed=true;
+            }
+            Check(inside(mist)&&mist.WrapCount()>=1U&&breathed,"over two minutes the mist wraps back in at the windward edge, stays inside the wetland and breathes");
         }
         // Rooting dust: a boar with its snout among the roots throws up puffs at the snout
         // that rise, swell and are gone within the second; a walking boar throws none.

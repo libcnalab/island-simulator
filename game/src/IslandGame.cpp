@@ -2274,6 +2274,8 @@ namespace island
         hatchlingRenderer_=std::make_unique<HatchlingRenderer>(device);
         birdShadowRenderer_=std::make_unique<BirdShadowRenderer>(device,terrain_);
         cascadeMistRenderer_=std::make_unique<CascadeMistRenderer>(device);
+        wetlandMistRenderer_=std::make_unique<CascadeMistRenderer>(device,
+            "island-simulator: a low mist hangs over the seasonal wetland, breathing slowly, drifting with the trade wind and leaning in the gust fronts");
         fallingFruit_.SetPalms(vegetationLayout_.Palms());
         coconutCrabGroup_.SetPalms(vegetationLayout_.Palms());
         helicopterRenderer_=std::make_unique<HelicopterRenderer>(device,*helicopterPlacement_);
@@ -2538,6 +2540,7 @@ namespace island
                   << MonkeyRenderer::SilhouetteCount << " silhouettes, 4 palettes\n"
                   << "island-simulator: monkeys use a horizontal lofted trunk and distance-driven quadrupedal gait\n"
                   << "island-simulator: a monkey idle on the ground scratches now and then, a forelimb up at its flank for a second and a half every fourteen seconds or so\n"
+                  << "island-simulator: wetland mist: " << wetlandMist_.Puffs().size() << " low puffs over the seasonal wetland wrap back in at its windward edge as the wind carries them out\n"
                   << "island-simulator: monkey tree routes reject isolated canopy and mangroves\n"
                   << "island-simulator: monkeys walk to fruit lying under the crowns and eat it, idling over the spot\n"
                   << "island-simulator: boars forage for the fallen fruit and coconuts before the trunk bases and eat them where they lie\n"
@@ -2862,6 +2865,7 @@ namespace island
         }
         hatchlings_.Update(deltaSeconds);
         cascadeMist_.Update(deltaSeconds,seaForageSeconds_);
+        wetlandMist_.Update(deltaSeconds,seaForageSeconds_);
         surfSpray_.Update(deltaSeconds,seaForageSeconds_,cameraPosition_.X,cameraPosition_.Z);
         dolphinBlows_.Update(deltaSeconds,seaForageSeconds_,dolphinPod_.Dolphins());
         streamFish_.SetLeaves(streamDrift_.Leaves());
@@ -4919,6 +4923,7 @@ namespace island
             streamDriftRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,canopyLeafFall_.Leaves());
             streamDriftRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,streamDrift_.Leaves());
             cascadeMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,cascadeMist_.Puffs());
+            wetlandMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,wetlandMist_.Puffs());
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,rootingDust_.Puffs());
             stingraySandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,stingraySand_.Puffs());
             stingraySandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,stingrayFlickSand_.Puffs());
@@ -5624,6 +5629,15 @@ namespace island
             std::ostringstream report;
             report << "island-simulator: goat render proof: goats " << goatRenderer_->VisibleCount()
                 << '/' << goats_->Goats().size() << " visible, " << goatRenderer_->DrawCallCount() << " draw;";
+            std::cout << report.str() << '\n';
+            MirrorRuntimeDiagnosticToPlatformLog(report.str());
+        }
+        if(viewpoint_==FixedViewpoint::SeasonalWetlandDetail&&drawnFrames_==1U&&wetlandMistRenderer_) {
+            const auto& first=wetlandMist_.Puffs().front();
+            std::ostringstream report;
+            report << "island-simulator: wetland mist proof: visible=" << wetlandMistRenderer_->VisibleCount()
+                << " first=" << first.x << ',' << first.y << ',' << first.z << " density=" << first.density << " size=" << first.size
+                << " camera=" << renderCameraPosition_.X << ',' << renderCameraPosition_.Y << ',' << renderCameraPosition_.Z;
             std::cout << report.str() << '\n';
             MirrorRuntimeDiagnosticToPlatformLog(report.str());
         }

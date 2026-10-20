@@ -189,6 +189,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 125: snakes flick a forked tongue every few seconds for half a second (`SnakeState::tongue`, drawn by the renderer; the snake-head view holds it out) (PLAN "Loop pass 125").
 - Pass 126: a resting goat lies down onto folded legs two seconds into an undisturbed rest, the pose re-grounded at the soles (`lieAmount`, `goat-lying` QA viewpoint) (PLAN "Loop pass 126").
 - Pass 127: a monkey idle on the ground scratches its flank with a forelimb for 1.4 s every 14 s or so (`scratchAmount`, `monkey-scratch` QA viewpoint) (PLAN "Loop pass 127").
+- Pass 128: a low mist hangs over the seasonal wetland, breathing, drifting with the trade wind and wrapping back in at the windward edge (`WetlandMistField`) (PLAN "Loop pass 128").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted
