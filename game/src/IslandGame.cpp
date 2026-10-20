@@ -2508,7 +2508,8 @@ namespace island
                   << " and rats " << RodentPopulation::RatCount
                   << " forage, scurry, and hide in bounded inland edge habitats\n"
                   << "island-simulator: flies " << FlySwarms::Count
-                  << " agents in four close-range inland organic-ground swarms; a swarm with fermenting fruit lying within ten metres shifts over it and hangs low there\n"
+                  << " agents in four close-range inland organic-ground swarms; a swarm with fermenting fruit lying within ten metres shifts over it and hangs low there; "
+                  << "a fly at the fruit sets down on it every other hover, wings still, and rubs its forelegs\n"
                   << "island-simulator: ants " << AntTrails::Count
                   << " agents in three soil trails and one real broadleaf-trunk trail; an ant pausing on the trail sweeps its antennae, feeling the way ahead\n"
                   << "island-simulator: cicadas " << CicadaColony::Count

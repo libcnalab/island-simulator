@@ -239,6 +239,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 175: an ant pausing on the trail sweeps its antennae, feeling the way ahead (`AntState::antennaSweep`/`sweepPhase`, `AntTrails::SweepCount`) (PLAN "Loop pass 175").
 - Pass 176: a deer standing alert at the walker stamps a forefoot now and then (`DeerState::stamp`, `DeerHerd::StampCount`) (PLAN "Loop pass 176").
 - Pass 177: every third pause the resident stretches, both arms straight up for a couple of seconds (`ResidentState::stretch`, `ResidentMotion::StretchCount`) (PLAN "Loop pass 177").
+- Pass 178: a fly at the fruit sets down on it every other hover, wings still, and rubs its forelegs (`FlyState::landed`/`rubPhase`, `FlySwarms::LandingCount`) (PLAN "Loop pass 178").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

@@ -8569,6 +8569,23 @@ int main()
             over = near >= island::FlySwarms::PerSwarm - 1U && flies.AtFruitCount() >= island::FlySwarms::PerSwarm - 1U;
         }
         Check(over && flies.FruitVisitCount() >= 1U, "the swarm shifts over the fermenting fruit and hangs low there within forty seconds");
+        {
+            // The landing: within twenty seconds at the fruit a fly sets down on it, landed at
+            // full with its wings still and its forelegs rubbing, and lifts off again.
+            bool landed = false, lifted = false; float wingBefore = -1.0f;
+            for (int step = 0; step < 400; ++step) {
+                flies.Update(0.05f, base.x + 8.0f, terrain.Height(base.x, base.z) + 1.0f, base.z);
+                for (std::size_t i = 0; i < island::FlySwarms::PerSwarm; ++i) {
+                    const auto& fly = flies.Flies()[i];
+                    if (fly.landed > 0.9f && fly.y < terrain.Height(fly.x, fly.z) + 0.15f && fly.rubPhase > 0.5f) {
+                        if (wingBefore >= 0.0f && std::abs(fly.wingPhase - wingBefore) < 0.01f) landed = true;
+                        wingBefore = fly.wingPhase;
+                    }
+                    if (landed && fly.landed < 0.1f && fly.y > terrain.Height(fly.x, fly.z) + 0.2f) lifted = true;
+                }
+            }
+            Check(flies.LandingCount() >= 1U && landed && lifted, "a fly at the fruit sets down on it, wings still, and lifts off again");
+        }
         flies.SetLyingFruit({});
         bool home = false;
         for (int step = 0; step < 800 && !home; ++step) {

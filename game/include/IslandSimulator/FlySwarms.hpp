@@ -18,6 +18,9 @@ namespace island
     {
         float x = 0.0f, y = 0.0f, z = 0.0f;
         float headingRadians = 0.0f, wingPhase = 0.0f, scale = 1.0f;
+        /** @brief 0..1 landed: a fly at the fruit sets down on it every other hover, its
+         *  wings still and its forelegs rubbing (rubPhase carries the rub); 0 in the air. */
+        float landed = 0.0f, rubPhase = 0.0f;
         FlyBehavior behavior = FlyBehavior::Hover;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
         std::uint8_t colorVariant = 0U;
@@ -54,6 +57,11 @@ namespace island
         static constexpr float FermentSeconds = 20.0f;
         static constexpr float ShiftSpeed = 1.0f;
         static constexpr float FruitAltitude = 0.26f;
+        /** @brief Landings begun (a hover at the fruit, every other one) and the flies
+         *  landed this moment. */
+        [[nodiscard]] std::uint32_t LandingCount() const noexcept { return landings_; }
+        [[nodiscard]] std::size_t LandedCount() const noexcept;
+        static constexpr float LandAltitude = 0.07f, RubRate = 9.0f;
 
     private:
         struct Agent
@@ -66,6 +74,7 @@ namespace island
             float angle = 0.0f, radius = 0.0f, altitude = 0.0f;
             float behaviorSeconds = 0.0f, accumulatedSeconds = 0.0f;
             std::uint32_t transitions = 0U;
+            bool landing = false;      // this hover at the fruit is a landing on it
         };
 
         [[nodiscard]] bool FindFermentingFruit(const Agent& agent, float& x, float& z) const noexcept;
@@ -84,5 +93,6 @@ namespace island
         std::uint64_t lungeFrame_ = 0U;
         bool lungeValid_ = false;
         std::uint32_t lungeDarts_ = 0U;
+        std::uint32_t landings_ = 0U;
     };
 }

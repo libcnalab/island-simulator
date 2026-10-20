@@ -118,6 +118,13 @@ namespace island
         lungeValid_ = true;
     }
 
+    std::size_t FlySwarms::LandedCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.state.landed > .5f ? 1U : 0U;
+        return count;
+    }
+
     std::size_t FlySwarms::AtFruitCount() const noexcept
     {
         std::size_t count = 0;
@@ -146,7 +153,9 @@ namespace island
         const bool wasAtFruit = agent.atFruit;
         agent.atFruit = fruitNear && shift < 1.0f;
         if (agent.atFruit && !wasAtFruit) ++fruitVisits_;
-        const float wantAltitude = agent.atFruit ? FruitAltitude : agent.baseAltitude;
+        // Every other hover at the fruit is a landing on it: the fly sets down, wings still.
+        if (!agent.atFruit || agent.state.behavior != FlyBehavior::Hover) agent.landing = false;
+        const float wantAltitude = agent.atFruit ? (agent.landing ? LandAltitude : FruitAltitude) : agent.baseAltitude;
         agent.altitude += std::clamp(wantAltitude - agent.altitude, -.4f * deltaSeconds, .4f * deltaSeconds);
         const float distance = observerValid
             ? std::hypot(agent.state.x - observerX, agent.state.z - observerZ)
@@ -171,9 +180,14 @@ namespace island
                     ? FlyBehavior::Dart : FlyBehavior::Hover;
             agent.behaviorSeconds = agent.state.behavior == FlyBehavior::Dart
                 ? .48f : 1.1f + .35f * static_cast<float>(agent.transitions % 6U);
+            if (agent.state.behavior == FlyBehavior::Hover && agent.atFruit && agent.transitions % 2U == 0U) {
+                agent.landing = true;
+                agent.behaviorSeconds += 1.4f;   // a landing is a longer stay
+                ++landings_;
+            }
         }
-        const float angularSpeed = agent.state.behavior == FlyBehavior::Hover ? .35f
-            : agent.state.behavior == FlyBehavior::Dart ? 4.7f : 1.55f;
+        const float angularSpeed = (agent.state.behavior == FlyBehavior::Hover ? .35f
+            : agent.state.behavior == FlyBehavior::Dart ? 4.7f : 1.55f) * (1.0f - agent.state.landed);
         agent.angle = std::fmod(agent.angle + angularSpeed * deltaSeconds, TwoPi);
         const float pulse = .12f * std::sin(agent.state.wingPhase * .11f);
         const float radius = std::clamp(agent.radius + pulse, .22f, 1.35f);
@@ -190,7 +204,12 @@ namespace island
             + std::sin(agent.state.wingPhase * .17f) * .09f;
         agent.state.y += std::clamp(targetY - agent.state.y,
             -1.8f * deltaSeconds, 1.8f * deltaSeconds);
+        // Landed, the wings fall still and the forelegs rub; lifting off, the beat resumes.
+        agent.state.landed += std::clamp((agent.landing ? 1.0f : 0.0f) - agent.state.landed,
+                                         -6.0f * deltaSeconds, 3.0f * deltaSeconds);
         agent.state.wingPhase = std::fmod(agent.state.wingPhase
-            + 74.0f * deltaSeconds, TwoPi);
+            + 74.0f * deltaSeconds * (1.0f - agent.state.landed), TwoPi);
+        if (agent.state.landed > .5f)
+            agent.state.rubPhase = std::fmod(agent.state.rubPhase + RubRate * deltaSeconds, TwoPi);
     }
 }

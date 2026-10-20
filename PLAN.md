@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 178 (2026-10-20) — a fly lands on the fruit
+
+Flies at fermenting fruit only hung over it. `FlyState::landed` (0..1) and `rubPhase` now
+carry the landing: every other hover at the fruit the fly sets down on it, its hover
+dropped to `LandAltitude` (7 cm) and its drift stilled, the landing rising at 3/s and
+lifting off at 6/s; landed, the wings fall still and the forelegs rub at `RubRate`
+(9 rad/s), and the stay runs a second and a half longer. The landings are counted
+(`LandingCount()`, `LandedCount()`); a dart lifts the fly off. In the renderer the wing beat
+scales out with the landing and the forelegs lift and rub, on the same vertices. The flies
+report line gains "a fly at the fruit sets down on it every other hover, wings still, and
+rubs its forelegs" (pinned). Core check: within twenty seconds at the fruit a fly sets
+down with its wings still and its forelegs rubbing and lifts off again. Native `flies`
+passes.
+
 ## Loop pass 177 (2026-10-20) — the resident stretches
 
 The resident's pauses began without a stir. `ResidentState::stretch` (0..1) now carries the

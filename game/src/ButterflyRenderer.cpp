@@ -926,7 +926,10 @@ namespace island
             constexpr std::array<float, 4> HeadHeights = {{.038f, .067f, .064f, .031f}};
             AppendGeckoLoft(vertices, head, right, up, forward, HeadStations,
                             HeadWidths, HeadHeights, scale, body, bodyFlank, underside);
-            const float beat = std::sin(fly.wingPhase);
+            // Landed, the wings lie still and the forelegs rub together.
+            const float landed = std::clamp(fly.landed, 0.0f, 1.0f);
+            const float beat = std::sin(fly.wingPhase) * (1.0f - landed);
+            const float rub = landed * std::sin(fly.rubPhase);
             for (const float side : {-1.0f, 1.0f}) {
                 const Vector3 root = centre - forward * (.015f * scale)
                     + right * (side * .065f * scale) + up * (.068f * scale);
@@ -969,7 +972,8 @@ namespace island
                         - up * (.055f * scale);
                     const Vector3 foot = knee + right * (side * (.075f + .020f * legIndex) * scale)
                         - forward * ((.02f + .04f * legIndex) * scale)
-                        - up * (.035f * scale);
+                        - up * (.035f * scale)
+                        + (legIndex == 0 ? (up * (.030f * landed) + forward * (.020f * rub) - right * (side * .030f * landed)) * scale : Vector3::Zero);
                     AppendGeckoTube(vertices, hip, knee, .009f * scale,
                                     .006f * scale, leg, 5);
                     AppendGeckoTube(vertices, knee, foot, .006f * scale,
