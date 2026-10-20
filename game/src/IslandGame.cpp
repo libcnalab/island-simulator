@@ -345,6 +345,15 @@ namespace island
         }
         birdFlock_.SetPerchSites(birdPerchLayout_.Sites());
         {
+            // The plunge pool's lower bank, a little outside the water's edge, is where the
+            // fruit doves come down to bathe.
+            const StreamCourse course(terrain_);
+            const StreamStation& pool=course.PoolStation();
+            const float reach=pool.halfWidth+0.7f;
+            const float side=terrain_.Height(pool.x,pool.z+reach)<=terrain_.Height(pool.x,pool.z-reach)?1.0f:-1.0f;
+            birdFlock_.SetBathSite(pool.x,pool.z+side*reach,true);
+        }
+        {
             // The turtle nests among the beach details are where the hatchlings break out.
             std::vector<HatchlingNest> nests;
             for (const auto& detail : naturalPropLayout_.BeachDetails())
@@ -2266,6 +2275,7 @@ namespace island
                      "a dove's ground visit crosses to the nearest fruit lying on dove-grade ground when there is any; "
                      "a dove on the ground flushes from a passing animal or the resident\n"
                   << "island-simulator: fruit doves coo in low slow phrases and thrust their heads as they walk; parrots keep their squawk and a pigeon-grey dove joins the green ones\n"
+                  << "island-simulator: every fourth ground visit a fruit dove comes down to the plunge pool's bank to bathe, flicking its wings and dipping in bouts\n"
                   << "island-simulator: fruit bats " << fruitBatColony_.Bats().size()
                   << " agents use six inland canopy roosts with four hanging and two bounded daytime flights\n"
                   << "island-simulator: clearing butterflies "

@@ -54,6 +54,23 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 71 (2026-10-20) — fruit doves bathe at the plunge pool
+
+The doves walked dry ground and fed at fallen fruit but never went to water. The game now
+gives the bird flock a bath site (`BirdFlock::SetBathSite`): the plunge pool's lower bank,
+0.7 m outside the pool's half width on the lower side. Every fourth ground visit of a fruit
+dove (`perchCycle % 4 == 1`, the odd cycle the fruit rule leaves alone) is a bathe: the dove
+flies to the bank as to any ground target, and once there it stays put for 12–18 s while
+`bathAmount` cycles in bouts (1.1 s on, 2.2 s off): the wings flick open (the perch amount
+drops to half at 22 Hz with the wing pose beating), the head and breast dip (the head bob
+rises and the body sinks 4 cm), and between bouts it stands still. It then departs like any
+ground dove with the pose cleared. `BathCount()` and `BathingCount()` expose it. The startup
+report gains "every fourth ground visit a fruit dove comes down to the plunge pool's bank to
+bathe, flicking its wings and dipping in bouts", pinned by the native capture tool. Core
+checks: the bath bank is dry ground above the pool water; a dove reaches the bank and bathes
+within twelve minutes, with the wing flick and the head dip seen; and no dove carries a
+bathing pose into the air afterwards. Native `cascade` passes (luminance deviation 35).
+
 ## Loop pass 70 (2026-10-20) — seabirds raft on the sea after a hunt
 
 A seabird that had finished its low circling over a school climbed straight back to its

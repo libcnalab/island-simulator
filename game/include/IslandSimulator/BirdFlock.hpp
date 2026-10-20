@@ -61,6 +61,8 @@ namespace island
         float huntAmount = 0.0f;
         /** @brief 0..1 while a seabird sits on the sea after a hunt, wings folded, drifting downwind. */
         float raftAmount = 0.0f;
+        /** @brief 0..1 during a bathing bout: a dove at the pool bank flicking its wings and dipping. */
+        float bathAmount = 0.0f;
         BirdPathFamily family = BirdPathFamily::Shore;
         BirdSpecies species = BirdSpecies::Coastal;
         BirdBehavior behavior = BirdBehavior::Fly;
@@ -136,6 +138,13 @@ namespace island
          *  the air and crosses to it. */
         void SetLyingFruit(std::span<const FallingFruit> fruit) noexcept { lyingFruit_ = fruit; }
         [[nodiscard]] std::uint32_t FruitLandingCount() const noexcept { return fruitLandings_; }
+        /** @brief The plunge pool's bank: every fourth ground visit of a fruit dove goes there
+         *  to bathe, flicking its wings and dipping in bouts, instead of a dry-ground walk. */
+        void SetBathSite(float x, float z, bool valid) noexcept;
+        [[nodiscard]] std::uint32_t BathCount() const noexcept { return baths_; }
+        [[nodiscard]] std::size_t BathingCount() const noexcept;
+        static constexpr float BathBoutSeconds = 1.1f;
+        static constexpr float BathRestSeconds = 2.2f;
         /** @brief Other bodies on the ground this frame (the herds, the bear, the resident): a
          *  dove foraging on the ground flushes from one within GroundFlushDistance. */
         void SetWalkers(std::span<const GrassWalker> walkers) noexcept { walkers_ = walkers; }
@@ -206,6 +215,7 @@ namespace island
             float diveSeconds = 0.0f;       // remaining plunge; 0 when not diving
             bool struck = false;            // this plunge has already touched the water
             float raftSeconds = 0.0f;       // remaining sit on the sea after a hunt; 0 when flying
+            bool bathing = false;           // this ground visit is a bathe at the pool bank
             std::size_t index = 0U;
         };
 
@@ -229,6 +239,9 @@ namespace island
         BirdDiveSplash diveSplash_;
         std::uint32_t diveCount_ = 0U;
         std::uint32_t raftCount_ = 0U;
+        float bathX_ = 0.0f, bathZ_ = 0.0f;
+        bool bathValid_ = false;
+        std::uint32_t baths_ = 0U;
         float disturbanceX_ = 0.0f, disturbanceZ_ = 0.0f, disturbanceSeconds_ = 0.0f;
         std::uint32_t flushCount_ = 0U;
         std::span<const FallingFruit> lyingFruit_;

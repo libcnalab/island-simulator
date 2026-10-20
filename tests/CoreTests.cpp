@@ -45,6 +45,7 @@
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/WreckScourPatch.hpp"
 #include "IslandSimulator/StreamCourse.hpp"
+#include "IslandSimulator/StreamCourse.hpp"
 #include "IslandSimulator/StreamDriftField.hpp"
 #include "IslandSimulator/StreamFishField.hpp"
 #include "IslandSimulator/HatchlingField.hpp"
@@ -7593,6 +7594,43 @@ int main()
         }
         Check(doves.FruitLandingCount() >= 1U && foragedAtFruit,
               "a fruit dove lands beside the fallen fruit and forages around it within six minutes");
+    }
+
+    {
+        // Every fourth ground visit a fruit dove goes to the bath site (the plunge pool's
+        // bank) and bathes there: standing at the site, wings flicking and head dipping in
+        // bouts, then departs.
+        const island::IslandTerrain terrain;
+        island::BirdFlock doves(terrain);
+        const island::StreamCourse course(terrain);
+        const island::StreamStation& pool = course.PoolStation();
+        const float reach = pool.halfWidth + 0.7f;
+        const float side = terrain.Height(pool.x, pool.z + reach) <= terrain.Height(pool.x, pool.z - reach) ? 1.0f : -1.0f;
+        const float bathX = pool.x, bathZ = pool.z + side * reach;
+        Check(!terrain.Sample(bathX, bathZ).IsSubmerged() && terrain.Height(bathX, bathZ) > pool.water,
+              "the pool's bath bank stands above the pool water on dry ground");
+        const std::vector<island::BirdPerchSite> sites{{bathX + 6.0f, terrain.Height(bathX + 6.0f, bathZ) + 2.5f, bathZ, 0.0f, island::BirdPerchKind::Branch}};
+        doves.SetPerchSites(sites);
+        doves.SetBathSite(bathX, bathZ, true);
+        bool bathed = false, flicked = false, dipped = false;
+        for (int step = 0; step < 14400 && !(bathed && flicked && dipped); ++step) {
+            doves.Update(0.05f, bathX, 2.0f, bathZ);
+            for (std::size_t index = 0U; index < doves.Birds().size(); ++index) {
+                const auto& bird = doves.Birds()[index];
+                if (bird.species != island::BirdSpecies::FruitDove || bird.behavior != island::BirdBehavior::GroundForage) continue;
+                if (std::hypot(bird.x - bathX, bird.z - bathZ) > 0.5f || bird.bathAmount < 0.9f) continue;
+                bathed = true;
+                if (bird.perchAmount < 0.75f) flicked = true;
+                if (bird.headBob > 0.8f) dipped = true;
+            }
+        }
+        Check(bathed && doves.BathCount() >= 1U, "a fruit dove comes down to the pool bank and bathes there within twelve minutes");
+        Check(flicked && dipped, "the bathing dove flicks its wings open and dips its head in bouts");
+        for (int step = 0; step < 600; ++step) doves.Update(0.05f, bathX, 2.0f, bathZ);
+        bool stuck = false;
+        for (const auto& bird : doves.Birds())
+            if (bird.bathAmount > 0.0f && bird.behavior != island::BirdBehavior::GroundForage) stuck = true;
+        Check(!stuck, "a dove leaving the bath carries no bathing pose into the air");
     }
 
     {

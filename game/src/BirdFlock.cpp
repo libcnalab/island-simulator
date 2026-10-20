@@ -410,6 +410,21 @@ namespace island
         if (agent.state.behavior == BirdBehavior::Fly && perchEligible
             && allowNewPerch && !perchSites_.empty()
             && elapsedSeconds_ >= agent.nextPerchSeconds) {
+            agent.bathing = false;
+            if (agent.state.species == BirdSpecies::FruitDove && bathValid_
+                && agent.perchCycle % 4U == 1U) {
+                // Every fourth ground visit is a bathe: the dove crosses to the plunge pool's
+                // bank and stands at the water's edge.
+                agent.groundTargetX = bathX_;
+                agent.groundTargetZ = bathZ_;
+                agent.state.behavior = BirdBehavior::GroundApproach;
+                agent.behaviorSeconds = 0.0f;
+                ++agent.perchCycle;
+                agent.bathing = true;
+                ++baths_;
+                UpdateGroundDove(agent, deltaSeconds);
+                return;
+            }
             if (agent.state.species == BirdSpecies::FruitDove
                 && agent.perchCycle % 2U == 0U) {
                 // Fruit on the ground within range settles the question of where to land.
@@ -504,6 +519,20 @@ namespace island
     {
         std::size_t count = 0;
         for (const Agent& agent : agents_) count += agent.huntSeconds > 0.0f ? 1U : 0U;
+        return count;
+    }
+
+    void BirdFlock::SetBathSite(const float x, const float z, const bool valid) noexcept
+    {
+        bathValid_ = valid && std::isfinite(x) && std::isfinite(z);
+        if (bathValid_) { bathX_ = x; bathZ_ = z; }
+    }
+
+    std::size_t BirdFlock::BathingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_)
+            count += agent.bathing && agent.state.behavior == BirdBehavior::GroundForage ? 1U : 0U;
         return count;
     }
 
@@ -809,6 +838,37 @@ namespace island
                 agent.state.bankRadians = 0.0f;
                 agent.state.perchAmount = 1.0f;
                 agent.state.wingPose = 0.0f;
+            }
+            return;
+        }
+
+        if (agent.state.behavior == BirdBehavior::GroundForage && agent.bathing) {
+            // Bathing: the dove stays at the bank and, in bouts, flicks its wings and dips
+            // its head and breast to the water, resting still between the bouts.
+            const float cycle = std::fmod(elapsedSeconds_ + static_cast<float>(agent.index) * 0.7f,
+                                          BathBoutSeconds + BathRestSeconds);
+            const bool inBout = cycle < BathBoutSeconds;
+            agent.state.bathAmount += std::clamp((inBout ? 1.0f : 0.0f) - agent.state.bathAmount,
+                                                 -deltaSeconds * 6.0f, deltaSeconds * 6.0f);
+            const float flick = 0.5f + 0.5f * std::sin(elapsedSeconds_ * 22.0f + static_cast<float>(agent.index));
+            agent.state.x = agent.groundTargetX;
+            agent.state.z = agent.groundTargetZ;
+            agent.state.y = terrain_.Height(agent.state.x, agent.state.z) + bodyClearance
+                - 0.04f * agent.state.bathAmount;
+            agent.state.speed = 0.0f;
+            agent.state.bankRadians = 0.0f;
+            agent.state.glideAmount = 0.0f;
+            agent.state.wingPose = std::sin(elapsedSeconds_ * 22.0f) * 0.7f * agent.state.bathAmount;
+            agent.state.perchAmount = 1.0f - 0.5f * agent.state.bathAmount * flick;
+            agent.state.headBob = agent.state.bathAmount
+                * (0.5f + 0.5f * std::sin(elapsedSeconds_ * 5.0f + static_cast<float>(agent.index)));
+            const float duration = 12.0f + std::fmod(static_cast<float>(agent.index) * 1.9f, 6.0f);
+            if (agent.behaviorSeconds >= duration) {
+                agent.state.behavior = BirdBehavior::GroundDepart;
+                agent.behaviorSeconds = 0.0f;
+                agent.state.headBob = 0.0f;
+                agent.state.bathAmount = 0.0f;
+                agent.bathing = false;
             }
             return;
         }
