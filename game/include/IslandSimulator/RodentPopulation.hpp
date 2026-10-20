@@ -22,6 +22,10 @@ namespace island
         float x = 0.0f, y = 0.0f, z = 0.0f;
         float headingRadians = 0.0f, speed = 0.0f;
         float gaitPhase = 0.0f, sniffPhase = 0.0f, visibility = 1.0f;
+        /** @brief 0..1 grooming: a resting rodent sits up on its haunches, head raised, and
+         *  washes its face with both forepaws for a couple of seconds, groomPhase carrying
+         *  the paws' strokes. */
+        float groom = 0.0f, groomPhase = 0.0f;
         RodentSpecies species = RodentSpecies::Mouse;
         RodentBehavior behavior = RodentBehavior::Rest;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
@@ -61,6 +65,11 @@ namespace island
         static constexpr float FruitRange = 6.0f;
         static constexpr float FruitReach = 0.32f;
         static constexpr float FeedSeconds = 6.0f;
+        /** @brief Grooming bouts begun (a rest GroomDelaySeconds in, for GroomSeconds, the
+         *  rodent in the open) and the rodents mid-bout. */
+        [[nodiscard]] std::uint32_t GroomCount() const noexcept { return grooms_; }
+        [[nodiscard]] std::size_t GroomingCount() const noexcept;
+        static constexpr float GroomDelaySeconds = 0.8f, GroomSeconds = 2.0f, GroomStrokeRate = 9.0f;
 
         [[nodiscard]] std::span<const RodentState> Rodents() const noexcept { return states_; }
         [[nodiscard]] std::span<const RodentHome> Homes() const noexcept { return homes_; }
@@ -77,6 +86,8 @@ namespace island
             std::uint32_t transitions = 0U;
             int fruitTarget = -1;          // index into the lying fruit; -1 for none
             float feedSeconds = 0.0f;      // time spent feeding at it
+            float restSeconds = 0.0f;      // time into the current rest
+            bool grooming = false;
         };
 
         void Initialize(std::size_t index);
@@ -93,6 +104,7 @@ namespace island
         std::uint32_t snakeScatters_ = 0U;
         std::span<const FallingFruit> lyingFruit_;
         std::uint32_t fruitVisits_ = 0U;
+        std::uint32_t grooms_ = 0U;
         [[nodiscard]] int FindFruit(const Agent& agent, std::size_t index) const noexcept;
     };
 }

@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 158 (2026-10-20) — a rodent grooms
+
+A resting mouse or rat only sniffed. `RodentState::groom` (0..1) and `groomPhase` now carry
+the groom: `GroomDelaySeconds` (0.8 s) into a rest in the open the rodent sits up and
+washes its face with both forepaws for `GroomSeconds` (2 s), the strokes at
+`GroomStrokeRate` (9 rad/s), rising at 3/s and down again at 4/s; a scurry, a hide or the
+next forage ends it, and the bouts are counted (`GroomCount()`, `GroomingCount()`). In the
+renderer the head rises 7.5 % of a unit and draws back over the haunches, and each forepaw
+comes up to the face, stroking down and out with the phase; the hind legs stay planted. A
+new report line "a resting mouse or rat sits up to groom, washing its face with both
+forepaws for a couple of seconds" is pinned. Core check: a rodent watched from twelve
+metres grooms to full on a rest with its strokes advancing and settles again, and no
+hidden rodent grooms. Native `mice` passes.
+
 ## Loop pass 157 (2026-10-20) — the resident turns their head to the walker
 
 The resident's head stayed square on their body however the walker stood. The

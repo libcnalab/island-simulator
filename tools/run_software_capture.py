@@ -1360,6 +1360,8 @@ def main():
                 raise RuntimeError("current gecko eye lick is missing; check for a stale executable")
             if "the resident's head turns to the walker within fourteen metres ahead of them, and back to the front once they leave that" not in diagnostics:
                 raise RuntimeError("current resident head turn is missing; check for a stale executable")
+            if "a resting mouse or rat sits up to groom, washing its face with both forepaws for a couple of seconds" not in diagnostics:
+                raise RuntimeError("current rodent grooming is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:

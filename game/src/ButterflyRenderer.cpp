@@ -1498,8 +1498,12 @@ namespace island
                 rat ? RatBodyHeights : MouseBodyHeights,
                 unit, coat, flank, underside, rodent.colorVariant);
             const float sniff = std::sin(rodent.sniffPhase) * .008f * unit;
-            const Vector3 head = centre + forward * (.235f * unit)
-                + up * ((rat ? .018f : .028f) * unit + sniff);
+            // Grooming, the rodent sits up: the head rises and draws back over the haunches
+            // and the forepaws come up to wash the face, stroking down and out.
+            const float groom = std::clamp(rodent.groom, 0.0f, 1.0f);
+            const float stroke = std::sin(rodent.groomPhase) * groom;
+            const Vector3 head = centre + forward * ((.235f - .055f * groom) * unit)
+                + up * ((rat ? .018f : .028f) * unit + sniff + .075f * groom * unit);
             constexpr std::array<float, 7> MouseHeadStations =
                 {{-.12f, -.075f, -.01f, .065f, .13f, .18f, .215f}};
             constexpr std::array<float, 7> MouseHeadWidths =
@@ -1560,10 +1564,15 @@ namespace island
                 const float phaseStride = (leg == 0 || leg == 3) ? stride : -stride;
                 const Vector3 hip = centre + forward * (along * unit)
                     + right * (side * .09f * unit) - up * (.045f * unit);
+                // A forepaw of a grooming rodent is raised to the face and strokes it.
+                const Vector3 wash = leg < 2
+                    ? (up * (.135f + .020f * stroke) + forward * (.035f - .025f * stroke)
+                       - right * (side * (.035f - .015f * stroke))) * (groom * unit)
+                    : Vector3::Zero;
                 const Vector3 ankle = hip + forward * phaseStride
-                    + right * (side * .055f * unit) - up * (.055f * unit);
+                    + right * (side * .055f * unit) - up * (.055f * unit) + wash * .55f;
                 const Vector3 paw = ankle + forward * (.055f * unit - phaseStride * .4f)
-                    + right * (side * .025f * unit);
+                    + right * (side * .025f * unit) + wash * .45f;
                 AppendRodentSegment(vertices, hip, ankle, .019f * unit,
                                     .014f * unit, flank);
                 AppendRodentSegment(vertices, ankle, paw, .014f * unit,

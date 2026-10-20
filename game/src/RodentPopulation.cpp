@@ -141,6 +141,13 @@ namespace island
         return best;
     }
 
+    std::size_t RodentPopulation::GroomingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.grooming ? 1U : 0U;
+        return count;
+    }
+
     std::size_t RodentPopulation::FeedingCount() const noexcept
     {
         std::size_t count = 0;
@@ -277,6 +284,18 @@ namespace island
             + deltaSeconds * (2.0f + 11.0f * agent.state.speed), TwoPi);
         // Feeding, the sniff becomes a nibble: the same motion, three times as fast.
         agent.state.sniffPhase = std::fmod(agent.state.sniffPhase + deltaSeconds * (feeding ? 8.1f : 2.7f), TwoPi);
+        // Grooming: a rest a little in, the rodent in the open, has it sit up and wash its
+        // face with both forepaws for a couple of seconds; a scurry or the next forage ends it.
+        const bool resting = agent.state.behavior == RodentBehavior::Rest && agent.state.visibility > .5f;
+        agent.restSeconds = resting ? agent.restSeconds + deltaSeconds : 0.0f;
+        const bool grooming = resting && agent.restSeconds >= GroomDelaySeconds
+            && agent.restSeconds < GroomDelaySeconds + GroomSeconds;
+        if (grooming && !agent.grooming) ++grooms_;
+        agent.grooming = grooming;
+        agent.state.groom += std::clamp((grooming ? 1.0f : 0.0f) - agent.state.groom,
+            -4.0f * deltaSeconds, 3.0f * deltaSeconds);
+        if (agent.state.groom > .01f)
+            agent.state.groomPhase = std::fmod(agent.state.groomPhase + deltaSeconds * GroomStrokeRate, TwoPi);
         agent.state.y = terrain_.Height(agent.state.x, agent.state.z) + .018f;
     }
 }

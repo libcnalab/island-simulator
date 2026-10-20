@@ -8498,6 +8498,24 @@ int main()
                     && rodents.FeedingCount() >= 1U) fed = true;
         }
         Check(fed && rodents.FruitVisitCount() >= 1U, "a rodent goes to fruit lying in its range and feeds there within two minutes");
+        {
+            // Grooming: a rodent watched from twelve metres sits up to groom on a rest, the
+            // paws' strokes advancing, and is down again by the next forage; one hidden
+            // never grooms.
+            island::RodentPopulation groomers(terrain);
+            const auto& groomHome = groomers.Homes()[0];
+            float peak = 0.0f, strokes = 0.0f; bool settled = false, hiddenGroom = false;
+            for (int step = 0; step < 600; ++step) {
+                groomers.Update(0.05f, groomHome.x + 12.0f, terrain.Height(groomHome.x, groomHome.z) + 1.0f, groomHome.z);
+                const auto& rodent = groomers.Rodents()[0];
+                peak = std::max(peak, rodent.groom);
+                if (rodent.groom > 0.9f) strokes = std::max(strokes, rodent.groomPhase);
+                if (peak > 0.9f && rodent.groom < 0.05f) settled = true;
+                for (const auto& other : groomers.Rodents()) if (other.visibility < 0.3f && other.groom > 0.1f) hiddenGroom = true;
+            }
+            Check(groomers.GroomCount() >= 1U && peak > 0.9f && strokes > 1.0f && settled && !hiddenGroom,
+                  "a resting rodent sits up to groom its face and settles again");
+        }
         for (int step = 0; step < 20; ++step) {
             rodents.Update(0.05f, home.x + 12.0f, terrain.Height(home.x, home.z) + 1.0f, home.z);
             if (rodents.FeedingCount() >= 1U && rodents.Rodents()[subject].speed < 0.05f) still = true;
