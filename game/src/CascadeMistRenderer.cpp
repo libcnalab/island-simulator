@@ -16,14 +16,14 @@ using namespace Microsoft::Xna::Framework;
 using namespace Microsoft::Xna::Framework::Graphics;
 
 namespace island {
-CascadeMistRenderer::CascadeMistRenderer(GraphicsDevice& device)
+CascadeMistRenderer::CascadeMistRenderer(GraphicsDevice& device,const char* message)
     :device_(device),effect_(std::make_unique<BasicEffect>(device)),
      vertices_(std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),
         VerticesPerPuff*static_cast<int>(CascadeMistField::Capacity),BufferUsage::WriteOnly))
 {
     staging_.reserve(static_cast<std::size_t>(VerticesPerPuff)*CascadeMistField::Capacity);
     effect_->setVertexColorEnabledProperty(true);effect_->setLightingEnabledProperty(false);
-    const char* message="island-simulator: a mist of spray hangs at the cascade's foot, rising and drifting on the breeze and laid over by the gust fronts";
+    if(!message) message="island-simulator: a mist of spray hangs at the cascade's foot, rising and drifting on the breeze and laid over by the gust fronts";
     std::cout<<message<<'\n';MirrorRuntimeDiagnosticToPlatformLog(message);
 }
 

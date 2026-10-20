@@ -45,6 +45,7 @@
 #include "IslandSimulator/FootprintTrail.hpp"
 #include "IslandSimulator/RootingDustField.hpp"
 #include "IslandSimulator/ShellDragTrail.hpp"
+#include "IslandSimulator/SurfSprayField.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
@@ -7918,6 +7919,30 @@ int main()
             Check(seen>=1U&&nearSchool,"a fish breaks the surface over a nearby school within a minute");
             for(int step=0;step<80;++step) breachers.Update(0.05f,1000.0f,0.0f,1000.0f);
             Check(!breachers.LastBreach().valid||breachers.LastBreach().ageSeconds<=island::FishSchools::BreachSeconds,"a breach ring ages out");
+        }
+        // Surf spray: an offshore rock near the observer bursts spray each time the breaker
+        // phase crests at it (about every twenty seconds), the puffs rising off its seaward
+        // face and gone within the second and a half; a rock on land throws none.
+        {
+            island::SurfSprayField spray(terrain);
+            const float rockX=terrain.ShoreRadius(0.0f)+4.0f;
+            island::RockPlacement sea{};sea.x=rockX;sea.z=0.0f;sea.y=terrain.Height(rockX,0.0f);sea.scaleX=1.2f;sea.scaleY=0.9f;sea.scaleZ=1.0f;sea.offshore=true;
+            island::RockPlacement land=sea;land.x=rockX-12.0f;land.offshore=false;
+            const std::vector<island::RockPlacement> rocks{sea,land};
+            spray.SetRocks(rocks);
+            Check(spray.RockCount()==1U,"only offshore rocks throw spray");
+            bool nearRock=true,rose=false;
+            for(int step=0;step<1200;++step) {
+                spray.Update(0.05f,static_cast<float>(step)*0.05f,rockX-6.0f,0.0f);
+                for(const auto& puff:spray.Puffs()) if(puff.active) {
+                    if(std::hypot(puff.x-rockX,puff.z)>3.0f) nearRock=false;
+                    if(puff.y>sea.y+sea.scaleY*0.6f+0.3f&&puff.density>0.5f) rose=true;
+                }
+            }
+            Check(spray.BurstCount()>=2U&&spray.BurstCount()<=4U&&nearRock&&rose,"breakers burst spray up the offshore rock about every twenty seconds");
+            const std::uint32_t before=spray.BurstCount();
+            for(int step=0;step<1200;++step) spray.Update(0.05f,60.0f+static_cast<float>(step)*0.05f,1000.0f,1000.0f);
+            Check(spray.BurstCount()==before,"a rock far from the observer throws no spray");
         }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls

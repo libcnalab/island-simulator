@@ -350,6 +350,7 @@ namespace island
                 if (detail.turtleNest) nests.push_back({detail.x, detail.z});
             hatchlings_.SetNests(nests);
         }
+        surfSpray_.SetRocks(naturalPropLayout_.Rocks());
         butterflyMeadow_.SetFlowerBushes(jungleLayout_.Bushes());
         bridgePlacement_=BridgeLayout::FindInWorld(terrain_,StreamCourse(terrain_));
         helicopterPlacement_=HelicopterLayout::FindInWorld(terrain_,jungleLayout_,worldObstacles);
@@ -2159,6 +2160,8 @@ namespace island
         footprintRenderer_ = std::make_unique<FootprintTrailRenderer>(device, terrain_);
         rootingDustRenderer_ = std::make_unique<RootingDustRenderer>(device);
         shellDragRenderer_ = std::make_unique<ShellDragRenderer>(device, terrain_);
+        surfSprayRenderer_ = std::make_unique<CascadeMistRenderer>(device,
+            "island-simulator: breakers throw spray up the seaward faces of the offshore rocks in time with their foam");
         worldDebugRenderer_ = std::make_unique<WorldDebugRenderer>(device, terrain_);
         if (viewpoint_ == FixedViewpoint::GroundContactDetail) {
             constexpr float contactZ = 45.0f;
@@ -2606,6 +2609,7 @@ namespace island
         streamDrift_.Update(deltaSeconds);
         hatchlings_.Update(deltaSeconds);
         cascadeMist_.Update(deltaSeconds,seaForageSeconds_);
+        surfSpray_.Update(deltaSeconds,seaForageSeconds_,cameraPosition_.X,cameraPosition_.Z);
         streamFish_.SetLeaves(streamDrift_.Leaves());
         streamFish_.Update(deltaSeconds,playerMotion_.Position().x,playerMotion_.Position().z);
         fallingFruit_.UpdateCoconuts(seaForageSeconds_, cameraPosition_.X, cameraPosition_.Z);
@@ -4446,6 +4450,7 @@ namespace island
             streamDriftRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,streamDrift_.Leaves());
             cascadeMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,cascadeMist_.Puffs());
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,rootingDust_.Puffs());
+            surfSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,surfSpray_.Puffs());
         }
         {
             GpuDiagnosticScope gpuPass("campfire-effects");

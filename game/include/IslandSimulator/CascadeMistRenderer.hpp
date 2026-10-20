@@ -15,7 +15,9 @@ namespace island {
 class CascadeMistRenderer final {
 public:
     static constexpr int Segments=10,VerticesPerPuff=Segments*3;
-    explicit CascadeMistRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
+    // message: the startup diagnostic this instance prints (the cascade's by default; the surf
+    // spray shares the renderer with its own line).
+    explicit CascadeMistRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,const char* message=nullptr);
     void Draw(const Microsoft::Xna::Framework::Matrix& view,
               const Microsoft::Xna::Framework::Matrix& projection,
               const Microsoft::Xna::Framework::Vector3& camera,

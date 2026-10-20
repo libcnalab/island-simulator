@@ -46,6 +46,21 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 44 (2026-10-20) — spray off the offshore rocks
+
+The breakers foamed round the offshore rocks and threw nothing up them. A core
+`SurfSprayField` takes the natural props' offshore rocks (seaward unit radial, top height,
+radius, offshore distance and coast angle) and evaluates the ocean's own breaker phase at
+each one within 90 m of the observer (`offshore · 0.46 + coastAngle · 7 − t · 0.31`, the
+shader's formula on the coconuts' clock); as the sine crests past 0.92 three puffs burst up
+the rock's seaward face, rise at 1.6 m/s slowing, drift downwind (faster in a gust), swell and
+are gone in 1.4 s. The puffs are `MistPuff`s, so the cascade's mist renderer draws them from
+a second instance that prints its own line: "breakers throw spray up the seaward faces of
+the offshore rocks in time with their foam", pinned by the native capture tool. Core checks:
+only offshore rocks are taken; a rock four metres outside the east shore bursts two to four
+times in a minute with every puff within 3 m of it and rising above its top while dense; a
+rock far from the observer throws nothing. Native `shipwreck-wide` passes.
+
 ## Loop pass 43 (2026-10-20) — fish break the surface
 
 The schools swam under an unbroken surface. `FishSchools` now carries a `FishBreach` (point,
