@@ -130,6 +130,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 67: leaves out of the stream mouth drift on across the lagoon (PLAN "Loop pass 67").
 - Pass 68: the boars stand off from the bear and trot away when it comes close (PLAN "Loop pass 68").
 - Pass 69: the hut's roof ridge is a perch for the birds (PLAN "Loop pass 69").
+- Pass 70: seabirds done hunting raft on the sea with folded wings before climbing back to their routes (PLAN "Loop pass 70").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

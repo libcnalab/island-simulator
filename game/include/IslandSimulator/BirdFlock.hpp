@@ -59,6 +59,8 @@ namespace island
         float scale = 1.0f;
         /** @brief 0..1 while a seabird has left its high orbit to circle low over a fish school. */
         float huntAmount = 0.0f;
+        /** @brief 0..1 while a seabird sits on the sea after a hunt, wings folded, drifting downwind. */
+        float raftAmount = 0.0f;
         BirdPathFamily family = BirdPathFamily::Shore;
         BirdSpecies species = BirdSpecies::Coastal;
         BirdBehavior behavior = BirdBehavior::Fly;
@@ -123,6 +125,9 @@ namespace island
         [[nodiscard]] std::size_t HuntingCount() const noexcept;
         [[nodiscard]] const BirdDiveSplash& DiveSplash() const noexcept { return diveSplash_; }
         [[nodiscard]] std::uint32_t DiveCount() const noexcept { return diveCount_; }
+        /** @brief Seabirds sitting on the water after a hunt. */
+        [[nodiscard]] std::size_t RaftingCount() const noexcept;
+        [[nodiscard]] std::uint32_t RaftCount() const noexcept { return raftCount_; }
         /** @brief A sudden sound at a point; perched birds near it flush within the second. */
         void NoteDisturbance(float x, float z) noexcept;
         /** @brief Fruit lying on the ground this frame; a fruit dove's ground visit lands
@@ -149,6 +154,9 @@ namespace island
         static constexpr float HuntAltitude = 7.5f;
         static constexpr float HuntSeconds = 42.0f;
         static constexpr float HuntIntervalSeconds = 75.0f;
+        static constexpr float RaftSeconds = 24.0f;
+        static constexpr float RaftHeight = 0.18f;
+        static constexpr float RaftDriftSpeed = 0.3f;
 
         [[nodiscard]] std::span<const BirdState> Birds() const noexcept;
         [[nodiscard]] std::span<const BirdRouteState> Routes() const noexcept;
@@ -197,6 +205,7 @@ namespace island
             float nextDiveSeconds = 0.0f;   // countdown to the next plunge while circling low
             float diveSeconds = 0.0f;       // remaining plunge; 0 when not diving
             bool struck = false;            // this plunge has already touched the water
+            float raftSeconds = 0.0f;       // remaining sit on the sea after a hunt; 0 when flying
             std::size_t index = 0U;
         };
 
@@ -219,6 +228,7 @@ namespace island
         bool forageValid_ = false;
         BirdDiveSplash diveSplash_;
         std::uint32_t diveCount_ = 0U;
+        std::uint32_t raftCount_ = 0U;
         float disturbanceX_ = 0.0f, disturbanceZ_ = 0.0f, disturbanceSeconds_ = 0.0f;
         std::uint32_t flushCount_ = 0U;
         std::span<const FallingFruit> lyingFruit_;

@@ -507,15 +507,31 @@ namespace island
         return count;
     }
 
+    std::size_t BirdFlock::RaftingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.raftSeconds > 0.0f ? 1U : 0U;
+        return count;
+    }
+
     void BirdFlock::UpdateFlight(Agent& agent, const float deltaSeconds) noexcept
     {
         agent.state.perchAmount = std::max(
             0.0f, agent.state.perchAmount - deltaSeconds * 1.5f);
         // Seabirds work the sea: every so often one leaves its high orbit to circle low over
-        // the current fish school, then climbs back onto its route.
+        // the current fish school, then climbs back onto its route. A hunt that runs its
+        // course over deep water ends with the bird settling onto the sea to sit a while,
+        // wings folded, drifting downwind, before it climbs back to the route.
         if (agent.state.species == BirdSpecies::Seabird) {
             if (agent.huntSeconds > 0.0f) {
                 agent.huntSeconds = forageValid_ ? agent.huntSeconds - deltaSeconds : 0.0f;
+                if (agent.huntSeconds <= 0.0f && forageValid_
+                    && terrain_.Height(agent.state.x, agent.state.z) < -0.5f) {
+                    agent.raftSeconds = RaftSeconds;
+                    ++raftCount_;
+                }
+            } else if (agent.raftSeconds > 0.0f) {
+                agent.raftSeconds = std::max(0.0f, agent.raftSeconds - deltaSeconds);
             } else if ((agent.nextHuntSeconds -= deltaSeconds) <= 0.0f && forageValid_) {
                 agent.huntSeconds = HuntSeconds;
                 agent.nextHuntSeconds = HuntIntervalSeconds;
@@ -523,11 +539,16 @@ namespace island
                 agent.diveSeconds = 0.0f;
             }
         }
-        const bool hunting = agent.huntSeconds > 0.0f;
+        const bool rafting = agent.raftSeconds > 0.0f;
+        const bool hunting = agent.huntSeconds > 0.0f || rafting;
+        agent.state.raftAmount += std::clamp((rafting ? 1.0f : 0.0f) - agent.state.raftAmount,
+                                             -deltaSeconds * 0.5f, deltaSeconds * 0.5f);
+        const float raft = agent.state.raftAmount;
+        agent.state.perchAmount = std::max(agent.state.perchAmount, raft);
         // Once settled low over the school a bird plunges every few seconds: a short fold to
         // the water and a climb out, the strike leaving a foam ring the ocean draws.
         float dive = 0.0f;
-        if (hunting && agent.state.huntAmount > 0.95f) {
+        if (hunting && !rafting && agent.state.huntAmount > 0.95f) {
             if (agent.diveSeconds > 0.0f) {
                 agent.diveSeconds = std::max(0.0f, agent.diveSeconds - deltaSeconds);
                 const float t = 1.0f - agent.diveSeconds / DiveSeconds;
@@ -562,9 +583,10 @@ namespace island
             (preferredRadius - radius) * (hunting ? 0.06f : 0.018f), -0.85f, 0.85f);
         // A hunting bird still far from the school flies straight at it; the orbit only
         // begins once it is within a few orbit radii.
-        const bool approaching = hunting && radius > HuntOrbitRadius * 3.0f;
-        const float desiredX = approaching ? -radialX : tangentX + radialX * radialCorrection;
-        const float desiredZ = approaching ? -radialZ : tangentZ + radialZ * radialCorrection;
+        const bool approaching = hunting && !rafting && radius > HuntOrbitRadius * 3.0f;
+        // On the water the bird turns to sit head to wind and drifts downwind (toward -x).
+        const float desiredX = raft > 0.5f ? 1.0f : approaching ? -radialX : tangentX + radialX * radialCorrection;
+        const float desiredZ = raft > 0.5f ? 0.0f : approaching ? -radialZ : tangentZ + radialZ * radialCorrection;
         const float wander = std::sin(elapsedSeconds_ * agent.wanderFrequencyA
                                       + agent.wanderPhaseA) * 0.18f
             + std::sin(elapsedSeconds_ * agent.wanderFrequencyB
@@ -576,17 +598,17 @@ namespace island
         const float orbitBank = static_cast<float>(agent.route.direction)
             * std::clamp(agent.state.speed / radius * 1.35f, 0.035f, 0.17f);
         const float desiredBank = std::clamp(
-            orbitBank + headingError * 0.58f, -0.34f, 0.34f);
+            orbitBank + headingError * 0.58f, -0.34f, 0.34f) * (1.0f - raft);
         agent.state.bankRadians += std::clamp(
             desiredBank - agent.state.bankRadians,
             -deltaSeconds * 0.62f, deltaSeconds * 0.62f);
 
         const float speedVariation = 1.0f
             + std::sin(elapsedSeconds_ * 0.21f + agent.wanderPhaseB) * 0.055f;
-        agent.state.x += std::cos(agent.state.headingRadians)
-            * agent.state.speed * speedVariation * deltaSeconds;
-        agent.state.z += std::sin(agent.state.headingRadians)
-            * agent.state.speed * speedVariation * deltaSeconds;
+        const float flightSpeed = agent.state.speed * speedVariation * (1.0f - raft);
+        agent.state.x += std::cos(agent.state.headingRadians) * flightSpeed * deltaSeconds
+            - RaftDriftSpeed * raft * deltaSeconds;
+        agent.state.z += std::sin(agent.state.headingRadians) * flightSpeed * deltaSeconds;
 
         const float terrainHeight = terrain_.Height(agent.state.x, agent.state.z);
         const float lookAhead = agent.state.speed * 2.0f;
@@ -605,12 +627,15 @@ namespace island
         const float circlingAltitude = std::lerp(routeAltitude, huntAltitude, agent.state.huntAmount);
         // The plunge folds to just above the water and back; it is the one time a bird may
         // drop below its clearance, and it climbs out at the same rate.
-        const float desiredAltitude = std::lerp(circlingAltitude, std::max(terrainHeight + 0.3f, 0.35f), dive);
+        // Rafting, the bird sits on the surface and rides the swell.
+        const float raftAltitude = RaftHeight + 0.05f * std::sin(elapsedSeconds_ * 1.7f + agent.verticalPhase);
+        const float desiredAltitude = std::lerp(
+            std::lerp(circlingAltitude, std::max(terrainHeight + 0.3f, 0.35f), dive), raftAltitude, raft);
         const float maximumVerticalStep = deltaSeconds * (dive > 0.0f || agent.diveSeconds > 0.0f ? 11.0f : 4.5f);
         agent.state.y += std::clamp(desiredAltitude - agent.state.y,
                                     -maximumVerticalStep, maximumVerticalStep);
         const float clearance = std::lerp(std::lerp(agent.route.minimumClearance, 4.0f, agent.state.huntAmount),
-                                          0.3f, dive);
+                                          0.3f, std::max(dive, raft));
         agent.state.y = std::max(agent.state.y, terrainHeight + clearance);
 
         agent.flapPhase = std::fmod(agent.flapPhase + agent.flapSpeed * deltaSeconds, TwoPi);

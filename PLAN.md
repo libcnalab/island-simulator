@@ -54,6 +54,24 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 70 (2026-10-20) — seabirds raft on the sea after a hunt
+
+A seabird that had finished its low circling over a school climbed straight back to its
+route; real gulls and boobies sit on the water for a while. A hunt that runs its course
+over water deeper than half a metre now ends with `raftSeconds` (24 s): `raftAmount` in the
+bird state ramps to one over two seconds, the flight speed fades out with it, the bird sinks
+to the surface (0.18 m plus a 5 cm swell bob, its clearance released as for a plunge), turns
+head to wind and drifts downwind at 0.3 m/s, and the perch pose folds its wings (the
+renderer's `perchAmount` is held at the raft amount). Dives are suppressed while rafting; when
+the raft ends the hunt amount and raft amount decay and the bird climbs out at its usual
+rate. `BirdFlock::RaftingCount()` and `RaftCount()` expose it. The startup report gains "a
+seabird done hunting settles onto the sea and rafts there with folded wings, head to wind,
+before climbing back to its route", pinned by the native capture tool. Core checks (the
+seabird block now runs with the observer at the school so the birds simulate at full rate):
+a seabird settles onto the sea with folded wings within two minutes of its strike, drifts
+downwind by more than half a metre in five seconds, and is back above three metres with no
+raft amount within a minute of the school's withdrawal. Native `birds` passes.
+
 ## Loop pass 69 (2026-10-20) — the hut's roof ridge is a bird perch
 
 The birds perched on the jetty posts, the wreck and the snags but never on the hut, the

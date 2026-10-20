@@ -7468,10 +7468,11 @@ int main()
         // A school point off the east shore at a typical offshore distance.
         const float shore = terrain.ShoreRadius(0.3f);
         const float forageX = std::cos(0.3f) * (shore + 25.0f), forageZ = std::sin(0.3f) * (shore + 25.0f);
+        // The observer stands at the school so the hunting seabirds simulate at full rate.
         flock.SetSeaForage(forageX, forageZ, true);
         bool circledLow = false;
         for (int step = 0; step < 4800 && !circledLow; ++step) {
-            flock.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
+            flock.Update(0.05f, forageX, 2.0f, forageZ);
             for (const auto& bird : flock.Birds()) {
                 if (bird.species != island::BirdSpecies::Seabird) continue;
                 if (bird.huntAmount > 0.9f && bird.y < 14.0f && bird.y > 3.0f
@@ -7481,16 +7482,42 @@ int main()
         Check(circledLow, "a seabird circles low over the fish school within four minutes");
         bool struck = false;
         for (int step = 0; step < 1200 && !struck; ++step) {
-            flock.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
+            flock.Update(0.05f, forageX, 2.0f, forageZ);
             const auto& splash = flock.DiveSplash();
             struck = splash.valid && splash.ageSeconds < 0.2f
                 && std::hypot(splash.x - forageX, splash.z - forageZ) < 24.0f;
         }
         Check(struck && flock.DiveCount() >= 1U, "a circling seabird plunges and strikes the water near the school within a minute");
+        // The hunt runs its course over deep water and the bird settles onto the sea: wings
+        // folded (the perch pose), sitting at the surface, drifting downwind.
+        bool rafted = false;
+        float raftStartX = 0.0f, raftEndX = 0.0f;
+        std::size_t rafter = 0U;
+        for (int step = 0; step < 2400 && !rafted; ++step) {
+            flock.Update(0.05f, forageX, 2.0f, forageZ);
+            for (std::size_t i = 0; i < flock.Birds().size(); ++i) {
+                const auto& bird = flock.Birds()[i];
+                if (bird.species != island::BirdSpecies::Seabird) continue;
+                if (bird.raftAmount > 0.9f && bird.y < 0.6f && bird.y > -0.1f && bird.perchAmount > 0.9f
+                    && terrain.Height(bird.x, bird.z) < -0.5f) { rafted = true; raftStartX = bird.x; rafter = i; break; }
+            }
+        }
+        Check(rafted && flock.RaftCount() >= 1U && flock.RaftingCount() >= 1U,
+              "a seabird whose hunt has run its course settles onto the sea with folded wings within two minutes");
+        for (int step = 0; step < 100; ++step)
+            flock.Update(0.05f, forageX, 2.0f, forageZ);
+        raftEndX = flock.Birds()[rafter].x;
+        Check(rafted && raftEndX < raftStartX - 0.5f, "the rafting seabird drifts downwind on the water");
         flock.SetSeaForage(0.0f, 0.0f, false);
         for (int step = 0; step < 1200; ++step)
-            flock.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
+            flock.Update(0.05f, forageX, 2.0f, forageZ);
         Check(flock.HuntingCount() == 0U, "seabirds return to their routes once the school is withdrawn");
+        for (int step = 0; step < 1200; ++step)
+            flock.Update(0.05f, forageX, 2.0f, forageZ);
+        bool anyLow = false;
+        for (const auto& bird : flock.Birds())
+            if (bird.species == island::BirdSpecies::Seabird && (bird.raftAmount > 0.05f || bird.y < 3.0f)) anyLow = true;
+        Check(flock.RaftingCount() == 0U && !anyLow, "rafting seabirds climb back to their routes within a minute of the raft's end");
     }
 
     {
