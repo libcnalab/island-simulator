@@ -2019,6 +2019,23 @@ int main()
         audioBoars[i].simulationTier = island::WildlifeSimulationTier::Full;
         audioBoars[i].behavior = static_cast<island::BoarBehavior>(i % 4U);
     }
+    {
+        // The alarm: a loud grunt from the boar the bear sent off at the next free slot,
+        // ahead of the herd's cooldowns; held while the slot is busy; dropped once stale.
+        island::BoarCallScheduler alarmed; alarmed.Reset();
+        (void)alarmed.Update(.25f, 0, 1.0f, 0, audioBoars, true);
+        alarmed.NoteAlarm(2);
+        const auto held = alarmed.Update(.25f, 0, 1.0f, 0, audioBoars, false);
+        Check(held.kind == island::BoarCallKind::None && alarmed.AlarmPending(), "the boar alarm waits for a playback slot");
+        const auto alarm = alarmed.Update(.25f, 0, 1.0f, 0, audioBoars, true);
+        Check(alarm.kind == island::BoarCallKind::Grunt && alarm.animalIndex == 2U && alarm.variant == 1U
+                  && alarm.pitch > .06f && alarm.volume > .3f && !alarmed.AlarmPending(),
+              "the boar alarm is a loud pitched-up grunt from the boar the bear sent off, ahead of the herd's turns");
+        island::BoarCallScheduler stale; stale.Reset();
+        stale.NoteAlarm(2);
+        for (int step = 0; step < 20; ++step) (void)stale.Update(.25f, 0, 1.0f, 0, audioBoars, false);
+        Check(!stale.AlarmPending(), "a boar alarm with no slot for five seconds is dropped");
+    }
     island::BoarCallScheduler boarCalls, repeatedBoarCalls;
     boarCalls.Reset(); repeatedBoarCalls.Reset();
     std::array<int, island::BoarHerd::BoarCount> boarCallCounts{};

@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 102 (2026-10-20) — the boars' alarm grunt at the bear
+
+A boar the bear sent off (pass 68) trotted away in silence. The herd now notes which boar
+the bear last sent off (`LastBearRetreatIndex`), and `BoarCallScheduler::NoteAlarm` makes
+the scheduler's next request a loud grunt from that boar (the second variant, pitched up,
+1.35 times the grunt's volume at that distance) ahead of the herd's cooldowns, held while
+the playback slot is busy and dropped after 2.5 s if none frees; `Soundscape::NoteBoarAlarm`
+passes it on and the game gives it on each new bear retreat. The startup report gains "a
+boar the bear sends off gives a loud alarm grunt ahead of the herd's other calls", pinned by
+the native capture tool. Core checks: with the herd's cooldowns running the alarm waits for
+a slot, then is a loud pitched-up grunt from the boar sent off; an alarm with no slot for
+five seconds is dropped; the ordinary boar call checks hold. Native `boars` passes.
+
 ## Loop pass 101 (2026-10-20) — the goat sentinel's alarm bleat
 
 The sentinel lifted its head first at the walker, in silence; the herd bleated only in

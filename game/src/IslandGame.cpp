@@ -2157,6 +2157,7 @@ namespace island
                      "the deer keep seven metres clear of the campfire\n";
         std::cout << "island-simulator: goats square up to a neighbour for a bout of head-to-head shoving, standing nose to nose and taking turns lowering their heads\n";
         std::cout << "island-simulator: the goat sentinel coming alert at the walker gives a loud alarm bleat ahead of the herd's other calls\n";
+        std::cout << "island-simulator: a boar the bear sends off gives a loud alarm grunt ahead of the herd's other calls\n";
         std::cout << "island-simulator: snakes " << snakes_->Snakes().size()
                   << " ground agents with separated dense-understory-margin homes; "
                   << snakes_->TreeSnakes().size()<<" arboreal agents on sampled broadleaf trunks\n";
@@ -2984,6 +2985,11 @@ namespace island
         else
             boarHerd_.Update(deltaSeconds, cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
         for (const std::size_t eaten : boarHerd_.EatenFruit()) fallingFruit_.Consume(eaten);
+        // A boar the bear sends off gives the alarm grunt.
+        if (soundscape_ && boarHerd_.BearRetreatCount() != notedBearRetreats_) {
+            notedBearRetreats_ = boarHerd_.BearRetreatCount();
+            soundscape_->NoteBoarAlarm(boarHerd_.LastBearRetreatIndex());
+        }
         rootingDust_.Update(deltaSeconds, seaForageSeconds_, boarHerd_.Boars());
         if(viewpoint_==FixedViewpoint::BoarDetail) {
             const auto& current=boarHerd_.Boars().front();

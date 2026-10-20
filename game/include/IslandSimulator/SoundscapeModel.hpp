@@ -434,10 +434,18 @@ namespace island
         [[nodiscard]] BoarCallRequest Update(float deltaSeconds,
             float listenerX, float listenerY, float listenerZ,
             std::span<const BoarState> boars, bool playbackSlotAvailable) noexcept;
+        /** @brief A boar sent off by the bear: its next request is a loud grunt from that
+         *  boar, ahead of the herd's cooldowns, kept until a slot is free or it is stale. */
+        void NoteAlarm(std::size_t animalIndex) noexcept;
+        [[nodiscard]] bool AlarmPending() const noexcept { return alarmPending_; }
+        static constexpr float AlarmSeconds = 2.5f;
 
     private:
         [[nodiscard]] float NextUnit() noexcept;
         std::array<float, BoarHerd::BoarCount> cooldowns_{};
+        bool alarmPending_ = false;
+        std::size_t alarmIndex_ = 0;
+        float alarmSeconds_ = 0.0f;
         std::array<std::uint8_t, BoarHerd::BoarCount> callPhases_{};
         std::uint32_t randomState_ = 0xb0a45eedU;
         float herdCooldown_ = 0.0f;

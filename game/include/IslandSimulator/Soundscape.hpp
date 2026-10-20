@@ -111,6 +111,8 @@ namespace island
         void NoteMonkeyAlarm(float x, float y, float z) noexcept;
         /** @brief The goat sentinel standing alert at the walker: its alarm bleat goes next. */
         void NoteGoatAlarm(std::size_t animalIndex) noexcept;
+        /** @brief A boar the bear sent off: its alarm grunt goes next. */
+        void NoteBoarAlarm(std::size_t animalIndex) noexcept;
 
         /** @brief Supplies the sampled portal elevation for underground acoustic zoning. */
         void SetBunkerSource(float entranceGroundY) noexcept;

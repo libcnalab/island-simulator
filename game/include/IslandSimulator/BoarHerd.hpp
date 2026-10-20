@@ -71,6 +71,8 @@ namespace island
          *  standing off at the alert range and trotting away when it comes close. */
         void SetBear(float x, float z, bool valid) noexcept;
         [[nodiscard]] std::uint32_t BearRetreatCount() const noexcept { return bearRetreats_; }
+        /** @brief The boar the bear last sent off (valid once BearRetreatCount is nonzero). */
+        [[nodiscard]] std::size_t LastBearRetreatIndex() const noexcept { return lastBearRetreat_; }
         /** @brief Fruit and coconuts lying on the ground this frame; a forage may go to one. */
         void SetLyingFruit(std::span<const FallingFruit> fruit) noexcept { lyingFruit_ = fruit; }
         /** @brief Indices into that span the boars ate during the last update. */
@@ -114,5 +116,6 @@ namespace island
         float bearX_ = 0.0f, bearZ_ = 0.0f;
         bool bearValid_ = false;
         std::uint32_t bearRetreats_ = 0;
+        std::size_t lastBearRetreat_ = 0;
     };
 }

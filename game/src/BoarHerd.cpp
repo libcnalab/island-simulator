@@ -238,7 +238,7 @@ namespace island
                         const float bearDistance = std::hypot(state.x - bearX_, state.z - bearZ_);
                         if (bearDistance < 15.0f && (!threatValid || bearDistance < std::hypot(state.x - observerX, state.z - observerZ))) {
                             threatX = bearX_; threatZ = bearZ_; threatValid = true;
-                            if (bearDistance < 6.0f && state.behavior != BoarBehavior::Retreat) ++bearRetreats_;
+                            if (bearDistance < 6.0f && state.behavior != BoarBehavior::Retreat) { ++bearRetreats_; lastBearRetreat_ = index; }
                         }
                     }
                     Step(agent, step, threatX, threatZ, threatValid);
