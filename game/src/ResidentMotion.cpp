@@ -80,11 +80,17 @@ bool ResidentMotion::FitPose(float x,float z,float heading,float speed,ResidentP
         pose.shoulders[leg]=Add(ResidentPoint{x,pose.pelvisY+.43f,z},Mul(right,sign*.205f));
         const float swing=std::sin(state_.phase+(leg==0?std::numbers::pi_v<float>:0))*.52f
             *std::min(1.0f,speed/WalkingSpeed);
-        const auto upper=Unit(Add(Mul(right,sign*.018f),Add(ResidentPoint{0,-std::cos(swing),0},Mul(forward,std::sin(swing)))));
+        // The right arm raises to a player who has stopped close by: the whole arm swings
+        // up and out about the shoulder in the side plane (the elbow bend is kept), with a
+        // small wave about the raised position.
+        const float lift=leg==1?wave_:0.0f;
+        const float raise=lift*(2.35f+.25f*std::sin(waveClock_*6.0f));
+        const auto lifted=Add(ResidentPoint{0,-std::cos(raise),0},Mul(right,sign*std::sin(raise)));
+        const auto upper=Unit(Add(Mul(right,sign*.018f),Add(Mul(lifted,std::cos(swing)),Mul(forward,std::sin(swing)))));
         pose.elbows[leg]=Add(pose.shoulders[leg],Mul(upper,.29f));
         // Keep a relaxed visible elbow bend through idle and walking instead of
         // aligning the upper and lower arm into one mannequin-straight rod.
-        pose.wrists[leg]=Add(pose.elbows[leg],Add(ResidentPoint{0,-std::cos(swing+.42f)*.26f,0},
+        pose.wrists[leg]=Add(pose.elbows[leg],Add(Mul(lifted,std::cos(swing+.42f)*.26f),
             Mul(forward,std::sin(swing+.42f)*.26f)));
     }
     return true;
@@ -148,6 +154,8 @@ void ResidentMotion::Step(float seconds,ResidentPoint observer) {
     const float desiredHeading=pauseRemaining_>0&&pauseFacing_?std::atan2(pauseFaceX_,pauseFaceZ_)
         :std::atan2(target.x-state_.x,target.z-state_.z);
     const float turn=Wrap(desiredHeading-state_.heading);
+    wave_+=std::clamp((yield?1.0f:0.0f)-wave_,-seconds*2.5f,seconds*3.0f);
+    if(wave_>0)waveClock_+=seconds;
     state_.mode=yield?ResidentMode::Yielding:pauseRemaining_>0?ResidentMode::Pausing:
         std::abs(turn)>.28f?ResidentMode::Turning:ResidentMode::Walking;
     if(!yield&&pauseRemaining_>0)pauseRemaining_=std::max(0.0f,pauseRemaining_-seconds);

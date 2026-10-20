@@ -43,6 +43,8 @@ public:
     [[nodiscard]] const ResidentState& State()const noexcept {return state_;}
     // True while a pause has a direction to face (the jetty foot looks out to sea).
     [[nodiscard]] bool LookingOut()const noexcept {return pauseFacing_&&pauseRemaining_>0;}
+    // 0..1: how far the right hand is raised to a player who has stopped close by.
+    [[nodiscard]] float WaveAmount()const noexcept {return wave_;}
     [[nodiscard]] const ResidentRoute& Route()const noexcept {return route_;}
     [[nodiscard]] const RenderedTerrainSurface& Ground()const noexcept {return ground_;}
 private:
@@ -63,6 +65,7 @@ private:
     std::array<Foot,2> feet_{};
     ResidentState state_;
     float pauseRemaining_=3;
+    float wave_=0,waveClock_=0;
     float pauseFaceX_=0,pauseFaceZ_=0;bool pauseFacing_=false;
 };
 }

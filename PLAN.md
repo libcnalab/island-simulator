@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 61 (2026-10-20) — the resident raises a hand
+
+The resident stopped for a player who came close and stood with both arms at the sides.
+`ResidentMotion` keeps a wave amount (0..1, rising at 3/s while yielding and falling at
+2.5/s after) and a wave clock; in the pose fit the right arm's rest direction is rotated in
+the shoulder's side plane by up to 2.35 rad (a quarter radian of wave about it), the same
+rotation applied to the upper arm and the forearm so the elbow bend the pose checks hold
+stays as it is, which puts the hand above the shoulder, out to the side, waving; the left
+arm and the walk are untouched. `WaveAmount()` exposes it. The resident diagnostic gains
+"the resident raises a hand to a player who stops close by", pinned by the native capture
+tool. Resident checks: yielding, the wave is full and the right wrist is above the shoulder
+with the pose check satisfied; once the player is gone and the walk resumes, the hand is
+down. Native `resident` passes.
+
 ## Loop pass 60 (2026-10-20) — an alert deer turns its ears to the watcher
 
 A deer standing alert kept its ears along its head. `AppendDeer` now takes the watcher's

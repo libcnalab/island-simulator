@@ -181,11 +181,18 @@ int main() {
         "a render stall causes unbounded resident catch-up motion");
     for(int tick=0;tick<40;++tick)actor.Update(.1f,{actor.State().x,actor.State().y+1.72f,actor.State().z});
     Check(actor.State().mode==ResidentMode::Yielding&&actor.State().speed==0,"resident does not yield to a nearby player");
+    // The yield comes with a raised right hand: above the shoulder while the player stands
+    // close, with the elbow bend the pose check holds everywhere.
+    Check(actor.WaveAmount()>.95f&&actor.State().pose.wrists[1].y>actor.State().pose.shoulders[1].y+.1f,
+        "the resident does not raise a hand to the nearby player");
+    CheckPose(actor,collisions);
     const auto stopped=actor.State();actor.Update(NAN,{NAN,NAN,NAN});actor.Update(-1,{NAN,NAN,NAN});
     Check(actor.State()==stopped,"invalid elapsed time moved the resident");
     const float beforeResume=actor.State().distanceTravelled;
     for(int tick=0;tick<100;++tick){actor.Update(.1f,{NAN,NAN,NAN});CheckPose(actor,collisions);}
     Check(actor.State().distanceTravelled>beforeResume+1,"resident does not resume when the player leaves");
+    Check(actor.WaveAmount()==0&&actor.State().pose.wrists[1].y<actor.State().pose.shoulders[1].y,
+        "the resident's hand does not come down once the player has gone");
     bool refused=false;
     try {const std::array blocked{CircularObstacle{0,0,350}};ResidentMotion impossible(terrain,blocked);}
     catch(const std::runtime_error&){refused=true;}
