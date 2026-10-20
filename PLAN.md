@@ -54,6 +54,25 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 161 (2026-10-20) — a skink flicks its tongue
+
+A foraging skink walked with its mouth shut. `SkinkState::tongue` (0..1) now carries the
+flick: foraging, every `FlickPeriodSeconds` (2.6 s, plus a little per skink) the tongue
+flicks out at the ground ahead for `FlickSeconds` (0.35 s), out at 12/s and in at 10/s;
+basking or fleeing it is held in, and the flicks are counted (`FlickCount()`,
+`FlickingCount()`). In the renderer a thin dark-pink stem dips from the snout to the ground
+ahead by the amount and forks at its tip. The skinks report line gains "a foraging skink
+flicks its tongue at the ground ahead every few seconds, tasting its way" (pinned). Core
+check: among the fully simulated skinks watched from ten metres a foraging skink flicks
+fully at least twice in twenty seconds, each in again within half a second, and no basking
+skink flicks. Native `skinks` passes, after a renderer fix the capture exposed: loop 159's
+proboscis was emitted only while uncurled, which broke the butterfly mesh's fixed vertex
+budget (a fatal "Butterfly near mesh does not match its fixed vertex budget") whenever a
+feeding butterfly came near the camera; the two segments are now always emitted (collapsed
+to the root when rolled), `MaximumVerticesPerButterfly` is 408 (384 plus the 24), and the
+gecko and skink per-animal maxima gain headroom (2400, 1760) for their tongues. Native
+`butterflies` re-passes.
+
 ## Loop pass 160 (2026-10-20) — a frog blinks
 
 A resting frog's eyes never moved. `FrogState::blink` (0..1) now carries the blink:

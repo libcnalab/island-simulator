@@ -3275,6 +3275,26 @@ int main()
             }
         }
         Check(displayers.DisplayCount()>=1U&&lifts>=3&&peak>0.9f&&!movingLift,"a basking skink in the sun does bouts of push-ups and a foraging skink never does");
+        {
+            // The tongue: among the fully simulated skinks watched from ten metres, within
+            // twenty seconds a foraging skink flicks its tongue out fully at least twice,
+            // each flick in again within half a second; a basking skink holds it in.
+            island::SkinkPopulation flickers(terrain);
+            const auto& flickHome=flickers.Homes()[0];
+            float tonguePeak=0.0f; bool baskFlick=false; int longest=0,run=0;
+            for(int step=0;step<400;++step) {
+                flickers.Update(0.05f,flickHome.x+10.0f,terrain.Height(flickHome.x,flickHome.z)+1.0f,flickHome.z);
+                bool anyOut=false;
+                for(const auto& skink:flickers.Skinks()) {
+                    if(skink.simulationTier!=island::WildlifeSimulationTier::Full) continue;
+                    tonguePeak=std::max(tonguePeak,skink.tongue);
+                    if(skink.tongue>0.9f) anyOut=true;
+                    if(skink.behavior==island::SkinkBehavior::Bask&&skink.tongue>0.5f) baskFlick=true;
+                }
+                run=anyOut?run+1:0; longest=std::max(longest,run);
+            }
+            Check(flickers.FlickCount()>=2U&&tonguePeak>0.9f&&longest<=10&&!baskFlick,"a foraging skink flicks its tongue at the ground ahead and a basking one holds it in");
+        }
     }
     for(std::size_t index=0;index<skinks.Skinks().size();++index) {
         const auto& skink=skinks.Skinks()[index];

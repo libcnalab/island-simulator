@@ -32,10 +32,12 @@ namespace island
     namespace
     {
         constexpr float NearLodDistance = 25.0f;
-        constexpr int MaximumVerticesPerButterfly = 384;
+        // 384 for the body, wings, antennae and legs, plus 24 for the proboscis (loop 159).
+        constexpr int MaximumVerticesPerButterfly = 408;
         constexpr int MaximumFlowerVertices = 1800;
-        constexpr int MaximumGeckoVertices = static_cast<int>(GeckoPopulation::Count) * 2300;
-        constexpr int MaximumSkinkVertices = static_cast<int>(SkinkPopulation::Count) * 1700;
+        // Headroom for the gecko's eye-lick tongue (loop 156) and the skink's tongue flick (loop 161).
+        constexpr int MaximumGeckoVertices = static_cast<int>(GeckoPopulation::Count) * 2400;
+        constexpr int MaximumSkinkVertices = static_cast<int>(SkinkPopulation::Count) * 1760;
         constexpr int MaximumDragonflyVertices =
             static_cast<int>(DragonflySwarm::Count) * 1500;
         constexpr int MaximumFrogVertices = static_cast<int>(FrogPopulation::Count) * 1700;
@@ -530,6 +532,20 @@ namespace island
             constexpr std::array<float, 4> HeadHeights = {{.035f, .052f, .046f, .025f}};
             AppendGeckoLoft(vertices, head, right, up, forward, HeadStations,
                             HeadWidths, HeadHeights, scale, back, flank, underside);
+            // The tongue: flicked out of the snout by the amount, a thin dark-pink stem
+            // dipping to the ground ahead and forking at its tip.
+            const float tongueOut = std::clamp(skink.tongue, 0.0f, 1.0f);
+            if (tongueOut > 0.03f) {
+                const Color tongueColor(168, 74, 92, 255);
+                const Vector3 snout = head + forward * (.158f * scale) - up * (.006f * scale);
+                const Vector3 stem = snout + forward * (.040f * tongueOut * scale) - up * (.012f * tongueOut * scale);
+                AppendGeckoSegment(vertices, snout, stem, .0045f * scale, tongueColor);
+                for (const float side : {-1.0f, 1.0f}) {
+                    const Vector3 fork = stem + forward * (.020f * tongueOut * scale)
+                        + right * (side * .011f * tongueOut * scale) - up * (.008f * tongueOut * scale);
+                    AppendGeckoSegment(vertices, stem, fork, .0030f * scale, tongueColor);
+                }
+            }
 
             const float stride = std::sin(skink.gaitPhase) * .045f * scale;
             for (const float side : {-1.0f, 1.0f}) {
@@ -1678,13 +1694,15 @@ namespace island
             AddTriangle(vertices,headBottom,headBack,headLeft,palette.body);
             // Feeding, the proboscis unrolls from under the head: a fine dark tube curving
             // down and forward to the flower by the uncurled amount; rolled up it is hidden.
+            // The two segments are always emitted (collapsed to the root when rolled) so
+            // the butterfly keeps its fixed vertex budget.
             const float probe=std::clamp(butterfly.proboscis,0.0f,1.0f);
-            if(probe>0.02f) {
+            {
                 const Vector3 probeRoot=headFront-up*(.030f*scale);
                 const Vector3 probeMid=probeRoot+forward*(.085f*probe*scale)-up*(.045f*probe*scale);
                 const Vector3 probeTip=probeRoot+forward*(.135f*probe*scale)-up*(.150f*probe*scale);
-                AppendGeckoSegment(vertices,probeRoot,probeMid,.0065f*scale,palette.body);
-                AppendGeckoSegment(vertices,probeMid,probeTip,.0050f*scale,palette.body);
+                AppendGeckoSegment(vertices,probeRoot,probeMid,.0065f*probe*scale,palette.body);
+                AppendGeckoSegment(vertices,probeMid,probeTip,.0050f*probe*scale,palette.body);
             }
             for(const float side:{-1.0f,1.0f}) {
                 const Vector3 antennaRoot=LocalPoint(

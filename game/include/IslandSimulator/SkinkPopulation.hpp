@@ -22,6 +22,9 @@ namespace island
         /** @brief 0..1 the push-up: the front body lifted on straightened forelegs, pulsed
          *  three times in a display bout while basking in the sun. */
         float pushUp = 0.0f;
+        /** @brief 0..1 the tongue out of the snout: a foraging skink flicks it at the ground
+         *  ahead for a moment every few seconds, tasting its way; held in basking or fleeing. */
+        float tongue = 0.0f;
         SkinkBehavior behavior = SkinkBehavior::Bask;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
         std::uint8_t colorVariant = 0U;
@@ -58,6 +61,11 @@ namespace island
         [[nodiscard]] std::uint32_t DisplayCount() const noexcept { return displays_; }
         [[nodiscard]] std::size_t DisplayingCount() const noexcept;
         static constexpr float DisplaySeconds = 1.5f, DisplayPeriodSeconds = 8.0f, DisplayDelaySeconds = 1.5f;
+        /** @brief Tongue flicks begun (a foraging skink every FlickPeriodSeconds or so, for
+         *  FlickSeconds) and the skinks mid-flick. */
+        [[nodiscard]] std::uint32_t FlickCount() const noexcept { return flicks_; }
+        [[nodiscard]] std::size_t FlickingCount() const noexcept;
+        static constexpr float FlickSeconds = 0.35f, FlickPeriodSeconds = 2.6f;
 
         [[nodiscard]] std::span<const SkinkState> Skinks() const noexcept { return states_; }
         [[nodiscard]] std::span<const SkinkHome> Homes() const noexcept { return homes_; }
@@ -75,6 +83,8 @@ namespace island
             std::uint32_t transitions = 0U;
             float displayClock = 0.0f;
             bool displaying = false;
+            float flickClock = 0.0f;
+            bool flicking = false;
         };
 
         void Initialize(std::size_t index);
@@ -92,5 +102,6 @@ namespace island
         float cloudClock_ = 0.0f;
         std::uint32_t shadeRouses_ = 0U;
         std::uint32_t displays_ = 0U;
+        std::uint32_t flicks_ = 0U;
     };
 }

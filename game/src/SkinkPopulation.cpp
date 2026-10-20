@@ -126,6 +126,13 @@ namespace island
         assert(fullCount_ + reducedCount_ + dormantCount_ == static_cast<int>(Count));
     }
 
+    std::size_t SkinkPopulation::FlickingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.flicking ? 1U : 0U;
+        return count;
+    }
+
     std::size_t SkinkPopulation::DisplayingCount() const noexcept
     {
         std::size_t count = 0;
@@ -201,6 +208,16 @@ namespace island
                 ? 0.5f + 0.5f * std::sin((cycle - DisplayDelaySeconds) / DisplaySeconds * 3.0f * 6.2831853f - 1.5707963f)
                 : 0.0f;
             agent.state.pushUp += std::clamp(want - agent.state.pushUp, -deltaSeconds * 8.0f, deltaSeconds * 8.0f);
+            // Foraging, the skink tastes its way: every few seconds (a little per skink) the
+            // tongue flicks out at the ground ahead for a moment; basking or fleeing it is held in.
+            const bool foraging = agent.state.behavior == SkinkBehavior::Forage;
+            agent.flickClock = foraging ? agent.flickClock + deltaSeconds : 0.0f;
+            const float flickPeriod = FlickPeriodSeconds + static_cast<float>(index % 4U) * 0.45f;
+            if (agent.flickClock >= flickPeriod) agent.flickClock = 0.0f;
+            const bool flicking = foraging && agent.flickClock >= 0.8f && agent.flickClock < 0.8f + FlickSeconds;
+            if (flicking && !agent.flicking) ++flicks_;
+            agent.flicking = flicking;
+            agent.state.tongue += std::clamp((flicking ? 1.0f : 0.0f) - agent.state.tongue, -deltaSeconds * 10.0f, deltaSeconds * 12.0f);
         }
         const float targetSpeed = agent.state.behavior == SkinkBehavior::Bask
             ? 0.0f : (agent.state.behavior == SkinkBehavior::Flee ? 1.65f : .42f);

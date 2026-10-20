@@ -2486,7 +2486,8 @@ namespace island
                   << "a resting gecko licks an eye clean with its tongue every ten seconds or so, the eyes taking turns\n"
                   << "island-simulator: skinks " << skinkPopulation_.Skinks().size()
                   << " agents in deterministic open-ground bask, forage, and flee habitats; a basking skink a cloud's shadow covers gets up and forages, and lies down to bask only in the sun; "
-                  << "a basking skink in the sun displays with a bout of push-ups, the front body lifted on straightened forelegs, a second and a half into the bask and every eight seconds or so after\n"
+                  << "a basking skink in the sun displays with a bout of push-ups, the front body lifted on straightened forelegs, a second and a half into the bask and every eight seconds or so after; "
+                  << "a foraging skink flicks its tongue at the ground ahead every few seconds, tasting its way\n"
                   << "island-simulator: dragonflies " << dragonflySwarm_.Dragonflies().size()
                   << " agents in three stream and wetland habitats; one patrol in three ends on a perch, a stem's top at half a metre, the wings held still a few seconds; "
                   << "a patrolling dragonfly dips to touch the water every few seconds, a fleck of spray at the touch\n"
