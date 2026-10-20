@@ -54,6 +54,21 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 139 (2026-10-20) — a basking skink's push-ups
+
+A skink basking in the sun lay flat and still. `SkinkState::pushUp` (0..1) now carries the
+push-up display: a second and a half into a bask in the sun, and every eight seconds or so
+after (1.3 s more per skink), a bout of three push-ups over 1.5 s (a sine from slack to the
+full lift, followed at 8/s); getting up, foraging or fleeing ends it. `DisplayCount()`
+counts bouts, `DisplayingCount()` the skinks mid-bout. The mesh tilts the whole body up
+about the hips by 0.26 rad × pushUp — the front rising on the straightened forelegs while
+the tail end stays down — by building it on a pitched forward/up frame about a hip pivot
+0.15 × scale behind the body centre. The skinks report line gains "a basking skink in the
+sun displays with a bout of push-ups, the front body lifted on straightened forelegs, a
+second and a half into the bask and every eight seconds or so after" (pinned). Core
+checks: over a sunny minute the skinks give at least one bout with three or more lifts to
+the full raise, and no skink up and foraging ever lifts. Native `skinks` passes.
+
 ## Loop pass 138 (2026-10-20) — a calling frog's throat pulses
 
 The frogs' calls (the soundscape's scheduler picks an audible frog) sounded from a still

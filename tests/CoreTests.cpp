@@ -3231,6 +3231,29 @@ int main()
     Check(skinks.Skinks().size()==island::SkinkPopulation::Count
               &&skinks.Homes().size()==island::SkinkPopulation::Count,
           "skink simulation exposes eight bounded open-ground animals");
+    {
+        // The push-up display: over a sunny minute a basking skink lifts its front body in
+        // push-up bouts, each push-up to the full lift, and no skink up and foraging ever does.
+        island::SkinkPopulation displayers(terrain);
+        const auto first=displayers.Skinks()[1];
+        float sunny=-1.0f;
+        for(float t=0.0f;t<1200.0f&&sunny<0.0f;t+=0.5f) if(island::CloudShadow::Cover(first.x,first.z,t)<=0.05f) sunny=t;
+        Check(sunny>=0.0f,"the cumulus clock has a sunny moment over a skink's ground");
+        displayers.SetCloudClock(sunny);
+        float peak=0.0f; bool movingLift=false; int lifts=0; std::array<bool,island::SkinkPopulation::Count> was{};
+        for(int step=0;step<1200;++step) {
+            displayers.Update(0.05f,first.x+10.0f,first.y+1.6f,first.z);
+            for(std::size_t i=0;i<displayers.Skinks().size();++i) {
+                const auto& skink=displayers.Skinks()[i];
+                peak=std::max(peak,skink.pushUp);
+                const bool up=skink.pushUp>0.6f;
+                if(up&&!was[i]) ++lifts;
+                was[i]=up;
+                if(skink.pushUp>0.5f&&skink.behavior!=island::SkinkBehavior::Bask) movingLift=true;
+            }
+        }
+        Check(displayers.DisplayCount()>=1U&&lifts>=3&&peak>0.9f&&!movingLift,"a basking skink in the sun does bouts of push-ups and a foraging skink never does");
+    }
     for(std::size_t index=0;index<skinks.Skinks().size();++index) {
         const auto& skink=skinks.Skinks()[index];
         const auto& repeated=repeatedSkinks.Skinks()[index];

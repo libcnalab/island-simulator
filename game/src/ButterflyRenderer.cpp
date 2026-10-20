@@ -486,11 +486,18 @@ namespace island
             const Color glint(215, 199, 151, 255);
             const float scale = skink.scale;
             const float breathing = 1.0f + .035f * std::sin(skink.breathPhase);
-            const Vector3 centre(skink.x, skink.y + .060f * scale, skink.z);
-            const Vector3 forward(std::cos(skink.headingRadians), 0.0f,
-                                  std::sin(skink.headingRadians));
-            const Vector3 right(-forward.Z, 0.0f, forward.X);
-            const Vector3 up = Vector3::Up;
+            // The push-up tilts the body up about the hips: the front rises on the
+            // straightened forelegs while the tail end stays down.
+            const float pushUp = std::clamp(skink.pushUp, 0.0f, 1.0f);
+            const float tilt = .26f * pushUp;
+            const Vector3 levelForward(std::cos(skink.headingRadians), 0.0f,
+                                       std::sin(skink.headingRadians));
+            const Vector3 right(-levelForward.Z, 0.0f, levelForward.X);
+            const Vector3 forward = Vector3::Normalize(levelForward * std::cos(tilt) + Vector3::Up * std::sin(tilt));
+            const Vector3 up = Vector3::Normalize(Vector3::Up * std::cos(tilt) - levelForward * std::sin(tilt));
+            const Vector3 hips(skink.x - levelForward.X * (.15f * scale), skink.y + .060f * scale,
+                               skink.z - levelForward.Z * (.15f * scale));
+            const Vector3 centre = hips + forward * (.15f * scale);
             constexpr std::array<float, 6> BodyStations =
                 {{-.28f, -.20f, -.08f, .08f, .22f, .30f}};
             constexpr std::array<float, 6> BodyWidths =

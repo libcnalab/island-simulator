@@ -126,6 +126,13 @@ namespace island
         assert(fullCount_ + reducedCount_ + dormantCount_ == static_cast<int>(Count));
     }
 
+    std::size_t SkinkPopulation::DisplayingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.displaying ? 1U : 0U;
+        return count;
+    }
+
     std::size_t SkinkPopulation::SunBaskingCount() const noexcept
     {
         std::size_t count = 0;
@@ -177,6 +184,23 @@ namespace island
                 agent.state.behavior = SkinkBehavior::Bask;
                 agent.behaviorSeconds = 4.0f + static_cast<float>(agent.transitions % 5U) * 1.0f;
             }
+        }
+        // A basking skink in the sun displays: a second and a half into the bask, and every
+        // eight seconds or so after (a little per skink), a bout of three push-ups, the
+        // front body lifted on straightened forelegs; getting up ends it.
+        {
+            const auto index = static_cast<std::size_t>(&agent - agents_.data());
+            const bool basking = agent.state.behavior == SkinkBehavior::Bask && agent.state.speed < 0.05f;
+            agent.displayClock = basking ? agent.displayClock + deltaSeconds : 0.0f;
+            const float period = DisplayPeriodSeconds + static_cast<float>(index % 3U) * 1.3f;
+            const float cycle = std::fmod(agent.displayClock, period);
+            const bool displaying = basking && cycle >= DisplayDelaySeconds && cycle < DisplayDelaySeconds + DisplaySeconds;
+            if (displaying && !agent.displaying) ++displays_;
+            agent.displaying = displaying;
+            const float want = displaying
+                ? 0.5f + 0.5f * std::sin((cycle - DisplayDelaySeconds) / DisplaySeconds * 3.0f * 6.2831853f - 1.5707963f)
+                : 0.0f;
+            agent.state.pushUp += std::clamp(want - agent.state.pushUp, -deltaSeconds * 8.0f, deltaSeconds * 8.0f);
         }
         const float targetSpeed = agent.state.behavior == SkinkBehavior::Bask
             ? 0.0f : (agent.state.behavior == SkinkBehavior::Flee ? 1.65f : .42f);

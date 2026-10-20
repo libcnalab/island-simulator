@@ -2464,7 +2464,8 @@ namespace island
                   << "island-simulator: geckos " << geckoPopulation_.Geckos().size()
                   << " agents in deterministic inland rest, flee, and hide habitats; a resting gecko with a fly hanging low within reach stalks it and lunges, and the flies dart from the snap\n"
                   << "island-simulator: skinks " << skinkPopulation_.Skinks().size()
-                  << " agents in deterministic open-ground bask, forage, and flee habitats; a basking skink a cloud's shadow covers gets up and forages, and lies down to bask only in the sun\n"
+                  << " agents in deterministic open-ground bask, forage, and flee habitats; a basking skink a cloud's shadow covers gets up and forages, and lies down to bask only in the sun; "
+                  << "a basking skink in the sun displays with a bout of push-ups, the front body lifted on straightened forelegs, a second and a half into the bask and every eight seconds or so after\n"
                   << "island-simulator: dragonflies " << dragonflySwarm_.Dragonflies().size()
                   << " agents in three stream and wetland habitats; one patrol in three ends on a perch, a stem's top at half a metre, the wings held still a few seconds\n"
                   << "island-simulator: frogs " << frogPopulation_.Frogs().size()

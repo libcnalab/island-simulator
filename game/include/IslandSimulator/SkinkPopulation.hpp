@@ -19,6 +19,9 @@ namespace island
         float x = 0.0f, y = 0.0f, z = 0.0f;
         float headingRadians = 0.0f, speed = 0.0f;
         float gaitPhase = 0.0f, breathPhase = 0.0f, scale = 1.0f;
+        /** @brief 0..1 the push-up: the front body lifted on straightened forelegs, pulsed
+         *  three times in a display bout while basking in the sun. */
+        float pushUp = 0.0f;
         SkinkBehavior behavior = SkinkBehavior::Bask;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
         std::uint8_t colorVariant = 0U;
@@ -49,6 +52,12 @@ namespace island
         [[nodiscard]] std::size_t SunBaskingCount() const noexcept;
         static constexpr float ShadeCover = 0.5f;
         static constexpr float SunCover = 0.25f;
+        /** @brief Push-up displays begun (a basking skink, DisplayDelaySeconds into its bask
+         *  and every DisplayPeriodSeconds or so after, a bout of three push-ups lasting
+         *  DisplaySeconds) and the skinks mid-bout. */
+        [[nodiscard]] std::uint32_t DisplayCount() const noexcept { return displays_; }
+        [[nodiscard]] std::size_t DisplayingCount() const noexcept;
+        static constexpr float DisplaySeconds = 1.5f, DisplayPeriodSeconds = 8.0f, DisplayDelaySeconds = 1.5f;
 
         [[nodiscard]] std::span<const SkinkState> Skinks() const noexcept { return states_; }
         [[nodiscard]] std::span<const SkinkHome> Homes() const noexcept { return homes_; }
@@ -64,6 +73,8 @@ namespace island
             float behaviorSeconds = 0.0f;
             float accumulatedSeconds = 0.0f;
             std::uint32_t transitions = 0U;
+            float displayClock = 0.0f;
+            bool displaying = false;
         };
 
         void Initialize(std::size_t index);
@@ -80,5 +91,6 @@ namespace island
         std::uint32_t walkerScatters_ = 0U;
         float cloudClock_ = 0.0f;
         std::uint32_t shadeRouses_ = 0U;
+        std::uint32_t displays_ = 0U;
     };
 }
