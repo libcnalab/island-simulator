@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 261 (2026-10-20) — the beach crabs go down at night
+
+The beach's claw-waving crabs keep to the day. `CrabColony` takes the darkness (`SetNightness`;
+never set in the tests, which keeps day and night alike): after dark each crab runs home to its
+colony's burrow and goes down it, staying down until morning (the night keeps the all-clear from
+counting), then emerges as after a fright. A first build left one colony's five crabs running
+on the beach all night, 6-29 m from a burrow they could not reach; a crab that has not reached
+its burrow after 20 s now digs in where it stands (these crabs dig their own holes) and comes
+up there in the morning. Core check: after dark at least nine in ten crabs are down within a
+minute and a half. `crabs` (a daytime QA view) passes.
+
 ## Loop pass 260 (2026-10-20) — rain rings on the puddles
 
 The puddles (Loop pass 233) lay still under falling rain. The terrain shader now rings them

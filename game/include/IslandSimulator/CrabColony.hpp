@@ -1,4 +1,6 @@
 #pragma once
+#include <algorithm>
+#include <cmath>
 
 #include <cstddef>
 #include <cstdint>
@@ -92,6 +94,10 @@ namespace island
         /** @brief Advances autonomous beach movement and observer-relative activation. */
         void Update(float deltaSeconds, float observerX, float observerY,
                     float observerZ) noexcept;
+        /** @brief How dark it is (0 by day .. 1 at night): these claw-waving crabs keep to the
+         *  day, so after dark each goes home to its colony's burrow and stays down until
+         *  morning. Never set (the tests), the day and the night are alike. */
+        void SetNightness(float nightness) noexcept { nightness_ = std::isfinite(nightness) ? std::clamp(nightness, 0.0f, 1.0f) : -1.0f; }
         /** @brief A second walker on the beach (the resident); crabs scatter from whichever
          *  of the observer and the walker is nearer. Activation stays observer-relative. */
         void SetWalker(float x, float z, bool valid) noexcept;
@@ -125,6 +131,7 @@ namespace island
         }
 
     private:
+        float nightness_ = -1.0f;   // unset: day and night alike
         struct Agent
         {
             CrabState state;
@@ -136,6 +143,8 @@ namespace island
             std::uint32_t transitionCount = 0U;
             int preferredDirection = 1;
             bool toBurrow = false;
+            bool ownHole = false;      // dug in where it stood (a night run that found no way home)
+            float nightRun = 0.0f;     // seconds running home after dark
             float clearSeconds = 0.0f;
             float waveClock = 0.0f;
             bool waving = false;

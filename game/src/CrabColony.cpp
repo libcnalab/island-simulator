@@ -287,7 +287,25 @@ namespace island
             }
         }
         const CrabBurrow& burrow = burrows_[std::min(index / 5U, burrows_.size() - 1U)];
-        if (observerDistance < ScuttleDistance && agent.state.behavior != CrabBehavior::Hide) {
+        const bool nightfall = nightness_ > 0.6f;
+        if (nightfall && agent.state.behavior != CrabBehavior::Hide) {
+            // After dark: home to the colony's burrow at a run, and down it.
+            const float toBurrowX = burrow.x - agent.state.x, toBurrowZ = burrow.z - agent.state.z;
+            const float burrowDistance = std::hypot(toBurrowX, toBurrowZ);
+            agent.state.behavior = CrabBehavior::Scuttle;
+            agent.behaviorSeconds = 1.5f;
+            agent.toBurrow = true;
+            if (burrowDistance > 0.001f) agent.state.travelHeadingRadians = std::atan2(toBurrowZ, toBurrowX);
+            agent.nightRun += deltaSeconds;
+            // home, or (the way there blocked) dug in where it stands: these crabs dig their own
+            if (burrowDistance < BurrowArriveDistance || agent.nightRun > 20.0f) {
+                agent.ownHole = burrowDistance >= BurrowArriveDistance;
+                agent.state.behavior = CrabBehavior::Hide;
+                agent.clearSeconds = 0.0f;
+                agent.nightRun = 0.0f;
+                ++hides_;
+            }
+        } else if (observerDistance < ScuttleDistance && agent.state.behavior != CrabBehavior::Hide) {
             agent.state.behavior = CrabBehavior::Scuttle;
             agent.behaviorSeconds = 1.5f;
             float awayX = agent.state.x - threatX;
@@ -321,12 +339,13 @@ namespace island
             }
         } else if (agent.state.behavior == CrabBehavior::Hide) {
             // Down the hole until the beach has been clear a while, then up and on.
-            agent.clearSeconds = observerDistance < ScuttleDistance * 1.6f
+            agent.clearSeconds = observerDistance < ScuttleDistance * 1.6f || nightfall
                 ? 0.0f : agent.clearSeconds + deltaSeconds;
             if (agent.clearSeconds >= EmergeDelaySeconds && agent.state.hideAmount <= 0.0f) {
                 agent.state.behavior = CrabBehavior::Pause;
                 agent.behaviorSeconds = 1.0f;
                 agent.toBurrow = false;
+                agent.ownHole = false;
             }
         } else {
             agent.behaviorSeconds -= deltaSeconds;
@@ -382,7 +401,7 @@ namespace island
             const float target = agent.clearSeconds >= EmergeDelaySeconds ? 0.0f : 1.0f;
             agent.state.hideAmount += std::clamp(target - agent.state.hideAmount,
                                                  -deltaSeconds * 1.5f, deltaSeconds * 2.5f);
-            if (target > 0.0f) {
+            if (target > 0.0f && !agent.ownHole) {
                 const float pull = std::min(1.0f, deltaSeconds * 4.0f);
                 agent.state.x += (burrow.x - agent.state.x) * pull;
                 agent.state.z += (burrow.z - agent.state.z) * pull;

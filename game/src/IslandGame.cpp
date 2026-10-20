@@ -3161,6 +3161,7 @@ namespace island
             boarHerd_.SetNightness(dark);
             if (bear_) bear_->SetNightness(dark);
             coconutCrabGroup_.SetNightness(dark);
+            crabColony_.SetNightness(dark);
             fruitBatColony_.SetNightness(dark);
             const auto shading = sun_light::Current().shading;
             wildlife_render::FixedSunDirection = Vector3(shading.x, shading.y, shading.z);

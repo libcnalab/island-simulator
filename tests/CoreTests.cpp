@@ -4305,6 +4305,15 @@ int main()
                      retreatingTurtle.z - initialReactiveTurtle.z) > 0.25f,
           "a nearby observer produces mild sea-turtle separation without hostility");
 
+    {
+        // After dark the crabs go home down their burrows and stay there.
+        island::CrabColony nightly(terrain);
+        nightly.SetNightness(1.0f);
+        for (int step = 0; step < 30 * 90; ++step) nightly.Update(1.0f / 30.0f, 900.0f, 0.0f, 900.0f);
+        std::size_t down = 0;
+        for (const auto& crab : nightly.Crabs()) down += crab.hideAmount > 0.9f ? 1U : 0U;
+        Check(down * 10U >= nightly.Crabs().size() * 9U, "after dark the beach crabs go home down their burrows");
+    }
     island::CrabColony crabs(terrain);
     island::CrabColony repeatedCrabs(terrain);
     island::CrabColony invalidInputCrabs(terrain);
