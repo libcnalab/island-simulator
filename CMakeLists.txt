@@ -95,6 +95,7 @@ add_library(island_core STATIC
     game/src/SunShadeField.cpp
     game/src/BlownSandField.cpp
     game/src/WetlandMistField.cpp
+    game/src/HoofDustField.cpp
     game/src/StreamFishField.cpp
     game/src/HatchlingField.cpp
     game/src/CascadeMistField.cpp

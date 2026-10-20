@@ -1302,6 +1302,8 @@ def main():
                 raise RuntimeError("current monkey scratch is missing; check for a stale executable")
             if "a low mist hangs over the seasonal wetland, breathing slowly, drifting with the trade wind" not in diagnostics:
                 raise RuntimeError("current wetland mist is missing; check for a stale executable")
+            if "kicks up puffs of earth behind its hooves, gone within the second" not in diagnostics:
+                raise RuntimeError("current hoof dust is missing; check for a stale executable")
             if args.viewpoint == "monkey-scratch" and "monkey QA camera frames one idle monkey scratching its flank" not in diagnostics:
                 raise RuntimeError("monkey scratch capture did not hold the subject mid-scratch")
             if args.viewpoint == "goat-lying" and "goat QA camera frames one resting goat lying on folded legs" not in diagnostics:

@@ -2541,6 +2541,7 @@ namespace island
                   << "island-simulator: monkeys use a horizontal lofted trunk and distance-driven quadrupedal gait\n"
                   << "island-simulator: a monkey idle on the ground scratches now and then, a forelimb up at its flank for a second and a half every fourteen seconds or so\n"
                   << "island-simulator: wetland mist: " << wetlandMist_.Puffs().size() << " low puffs over the seasonal wetland wrap back in at its windward edge as the wind carries them out\n"
+                  << "island-simulator: a boar trotting off, a deer bounding or a goat sidestepping on dry sand or bare soil kicks up puffs of earth behind its hooves, gone within the second\n"
                   << "island-simulator: monkey tree routes reject isolated canopy and mangroves\n"
                   << "island-simulator: monkeys walk to fruit lying under the crowns and eat it, idling over the spot\n"
                   << "island-simulator: boars forage for the fallen fruit and coconuts before the trunk bases and eat them where they lie\n"
@@ -3169,6 +3170,20 @@ namespace island
             soundscape_->NoteBoarAlarm(boarHerd_.LastBearRetreatIndex());
         }
         rootingDust_.Update(deltaSeconds, seaForageSeconds_, boarHerd_.Boars());
+        // The dust the running animals kick up: a boar trotting off, a deer bounding, a goat
+        // sidestepping, on dry sand or bare soil, puffs of earth behind the hooves.
+        hoofDustRunners_.clear();
+        const auto dryUnder=[&](const float x,const float z) {
+            const FootstepSurface ground=FootstepGroundAt(x,z);
+            return ground==FootstepSurface::Sand||ground==FootstepSurface::Soil;
+        };
+        for(const auto& b:boarHerd_.Boars())
+            hoofDustRunners_.push_back({b.x,b.y,b.z,b.headingRadians,b.speed,b.scale,dryUnder(b.x,b.z)});
+        for(const auto& d:deer_->Deer())
+            hoofDustRunners_.push_back({d.x,d.y,d.z,d.headingRadians,d.speed,d.scale,dryUnder(d.x,d.z)});
+        for(const auto& g:goats_->Goats())
+            hoofDustRunners_.push_back({g.x,g.y,g.z,g.heading,g.speed,g.scale,dryUnder(g.x,g.z)});
+        hoofDust_.Update(deltaSeconds, seaForageSeconds_, hoofDustRunners_);
         blownSand_.Update(deltaSeconds, seaForageSeconds_, cameraPosition_.X, cameraPosition_.Z);
         if(viewpoint_==FixedViewpoint::BoarDetail) {
             const auto& current=boarHerd_.Boars().front();
@@ -4925,6 +4940,7 @@ namespace island
             cascadeMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,cascadeMist_.Puffs());
             wetlandMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,wetlandMist_.Puffs());
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,rootingDust_.Puffs());
+            rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,hoofDust_.Puffs());
             stingraySandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,stingraySand_.Puffs());
             stingraySandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,stingrayFlickSand_.Puffs());
             blownSandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,blownSand_.Puffs());

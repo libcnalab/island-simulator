@@ -52,6 +52,7 @@
 #include "IslandSimulator/SunShadeField.hpp"
 #include "IslandSimulator/BlownSandField.hpp"
 #include "IslandSimulator/WetlandMistField.hpp"
+#include "IslandSimulator/HoofDustField.hpp"
 #include "IslandSimulator/StreamFishField.hpp"
 #include "IslandSimulator/HatchlingField.hpp"
 #include "IslandSimulator/BirdShadowProjection.hpp"
@@ -8994,6 +8995,28 @@ int main()
                 if(high-low>0.08f) breathed=true;
             }
             Check(inside(mist)&&mist.WrapCount()>=1U&&breathed,"over two minutes the mist wraps back in at the windward edge, stays inside the wetland and breathes");
+        }
+        // Hoof dust: an animal running on dry ground raises a puff behind its hooves every
+        // few strides, the puffs rising, drifting downwind and gone within the second; a
+        // walking animal, or one on wet ground, raises none.
+        {
+            island::HoofDustField dust(terrain);
+            std::vector<island::HoofDustRunner> runners{{10.0f,0.0f,10.0f,0.0f,2.8f,1.0f,true}};
+            for(int step=0;step<20;++step) { runners[0].x+=2.8f*0.05f; dust.Update(0.05f,0.0f,runners); }
+            Check(dust.ReleaseCount()>=4U&&dust.ReleaseCount()<=8U&&dust.ActiveCount()>=3U,"a trotting boar on dry ground raises a puff every few strides");
+            bool behind=true,low=true;
+            for(const auto& puff:dust.Puffs()) if(puff.active) {
+                if(puff.x>runners[0].x-0.2f) behind=false;
+                if(puff.y-terrain.Height(puff.x,puff.z)>0.6f) low=false;
+            }
+            Check(behind&&low,"the dust rises low behind the hooves");
+            for(int step=0;step<30;++step) dust.Update(0.05f,0.0f,{});
+            Check(dust.ActiveCount()==0U,"the dust is gone within the second once the animal stops");
+            island::HoofDustField walking(terrain),wet(terrain);
+            std::vector<island::HoofDustRunner> slow{{10.0f,0.0f,10.0f,0.0f,0.8f,1.0f,true}};
+            std::vector<island::HoofDustRunner> mud{{10.0f,0.0f,10.0f,0.0f,2.8f,1.0f,false}};
+            for(int step=0;step<20;++step) { walking.Update(0.05f,0.0f,slow); wet.Update(0.05f,0.0f,mud); }
+            Check(walking.ReleaseCount()==0U&&wet.ReleaseCount()==0U,"a walking animal, or one on wet ground, raises no dust");
         }
         // Rooting dust: a boar with its snout among the roots throws up puffs at the snout
         // that rise, swell and are gone within the second; a walking boar throws none.

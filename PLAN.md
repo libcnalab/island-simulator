@@ -54,6 +54,22 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 129 (2026-10-20) — hoof dust
+
+A boar trotting off, a deer bounding away or a goat sidestepping left the dry ground
+undisturbed. New `HoofDustField` (CPU): the game hands it every boar, deer and goat each
+frame as a `HoofDustRunner` (position, heading, speed, scale and whether the footstep
+classifier reads dry sand or bare soil under it); a runner at 1.4 m/s or more on dry ground
+releases a `DustPuff` every 0.16 s behind its hooves (0.45 m back, scaled, alternating a
+little either side), 10 cm up, sized by its speed; the puffs rise, drift downwind on the
+breeze and in the fronts, swell and are gone within 0.9 s. The rooting-dust renderer draws
+them in the same earth brown after the boars' rooting dust (the field shares its capacity
+of eighteen). General report line: "a boar trotting off, a deer bounding or a goat
+sidestepping on dry sand or bare soil kicks up puffs of earth behind its hooves, gone
+within the second" (pinned). Core checks: a trotting runner on dry ground raises a puff
+every few strides, low and behind the hooves; the dust is gone within the second once it
+stops; a walking animal, or one on wet ground, raises none. Native `deer` passes.
+
 ## Loop pass 128 (2026-10-20) — a low mist over the seasonal wetland
 
 The seasonal wetland was wet ground and reeds under the same clear air as the dry slopes.
