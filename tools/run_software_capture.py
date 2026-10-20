@@ -1147,6 +1147,8 @@ def main():
                 raise RuntimeError("current wildlife grass pressing is missing; check for a stale executable")
             if "the bushes and understory are brushed aside by the same bodies as they pass" not in diagnostics:
                 raise RuntimeError("current wildlife bush brushing is missing; check for a stale executable")
+            if "they scatter from a passing animal or the resident as from the walker" not in diagnostics:
+                raise RuntimeError("current butterfly scatter from wildlife is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

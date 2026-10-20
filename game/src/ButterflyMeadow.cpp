@@ -253,14 +253,23 @@ namespace island
     {
         if (deltaSeconds <= 0.0f) return;
 
-        const float observerDistance = observerValid
+        float observerDistance = observerValid
             ? std::hypot(agent.state.x - observerX, agent.state.z - observerZ)
             : std::numeric_limits<float>::infinity();
+        // A passing animal or the resident frightens a butterfly as the walker does: the
+        // nearest body is the one scattered from.
+        float threatX = observerX, threatZ = observerZ;
+        for (const GrassWalker& body : walkers_) {
+            if (body.strength <= 0.0f || !std::isfinite(body.x) || !std::isfinite(body.z)) continue;
+            const float distance = std::hypot(agent.state.x - body.x, agent.state.z - body.z);
+            if (distance < observerDistance) { observerDistance = distance; threatX = body.x; threatZ = body.z; }
+        }
         if (observerDistance < 2.6f) {
+            if (agent.state.behavior != ButterflyBehavior::Flutter || agent.behaviorSeconds < 2.0f) ++scatters_;
             agent.state.behavior = ButterflyBehavior::Flutter;
             agent.behaviorSeconds = 2.3f;
-            const float awayX = agent.state.x - observerX;
-            const float awayZ = agent.state.z - observerZ;
+            const float awayX = agent.state.x - threatX;
+            const float awayZ = agent.state.z - threatZ;
             if (std::hypot(awayX, awayZ) > 0.001f) {
                 agent.state.headingRadians = std::atan2(awayZ, awayX);
             }

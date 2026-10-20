@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "IslandSimulator/WildlifeSimulation.hpp"
+#include "IslandSimulator/GrassWalkers.hpp"
 
 namespace island
 {
@@ -89,6 +90,10 @@ namespace island
          *  butterfly's nectar visit may go down to feed on it instead. */
         void SetLyingFruit(std::span<const FallingFruit> fruit) noexcept { lyingFruit_ = fruit; }
         [[nodiscard]] std::uint32_t FruitVisitCount() const noexcept { return fruitVisits_; }
+        /** @brief Other bodies moving through the meadows this frame (the herds, the bear, the
+         *  resident): a butterfly scatters from the nearest of them as from the walker. */
+        void SetWalkers(std::span<const GrassWalker> walkers) noexcept { walkers_ = walkers; }
+        [[nodiscard]] std::uint32_t ScatterCount() const noexcept { return scatters_; }
         static constexpr float FermentSeconds = 20.0f;
         static constexpr float FruitHoverHeight = 0.22f;
         /** @brief The agent's current nectar target and its hover height above the ground. */
@@ -129,6 +134,8 @@ namespace island
         std::array<std::vector<NectarSite>, HabitatCount> bushSites_{};
         std::span<const FallingFruit> lyingFruit_;
         std::uint32_t fruitVisits_ = 0U;
+        std::span<const GrassWalker> walkers_;
+        std::uint32_t scatters_ = 0U;
         [[nodiscard]] bool FindFermentingFruit(const Agent& agent, NectarSite& site) const noexcept;
 
         void InitializeAgent(std::size_t index);

@@ -54,6 +54,18 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 54 (2026-10-20) — the butterflies scatter from the animals
+
+The butterflies scattered from the walker only; a deer could walk through a meadow of them.
+`ButterflyMeadow::SetWalkers` takes the same bodies the grass bends under (gathered once a
+frame by a new `IslandGame::GatherWalkers`, which the jungle, grass and meadow now share),
+and each butterfly's flee test uses the nearest of the walker and those bodies, fluttering
+away from whichever is within 2.6 m; `ScatterCount()` counts the scatters. The butterfly
+diagnostic gains "they scatter from a passing animal or the resident as from the walker",
+pinned by the native capture tool. Core check: a body one metre from a butterfly with no
+walker about sends it fluttering away within 1.2 rad of the opposite heading. Native
+`butterflies` passes.
+
 ## Loop pass 53 (2026-10-20) — the bushes and understory are brushed aside
 
 The grass parted for the animals (pass 52) and the bushes beside it stood rigid as a boar

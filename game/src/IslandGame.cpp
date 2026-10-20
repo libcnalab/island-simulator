@@ -2257,7 +2257,8 @@ namespace island
                   << " agents in deterministic low-altitude habitats; "
                   << butterflyMeadow_.FlowerBushCount()
                   << " flowering bushes within reach of the habitats draw alternate nectar excursions at blossom height; "
-                     "fruit that has lain fermenting for 20 s draws them down to feed low over it\n"
+                     "fruit that has lain fermenting for 20 s draws them down to feed low over it; "
+                     "they scatter from a passing animal or the resident as from the walker\n"
                   << "island-simulator: geckos " << geckoPopulation_.Geckos().size()
                   << " agents in deterministic inland rest, flee, and hide habitats\n"
                   << "island-simulator: skinks " << skinkPopulation_.Skinks().size()
@@ -2658,6 +2659,8 @@ namespace island
             butterflyObserver=Vector3(subject.x,subject.y+18.0f,subject.z);
         }
         butterflyMeadow_.SetLyingFruit(fallingFruit_.Fruit());
+        const std::array<GrassWalker, GrassWalkers::Slots> butterflyWalkers = GatherWalkers(butterflyObserver.X, butterflyObserver.Z);
+        butterflyMeadow_.SetWalkers(butterflyWalkers);
         butterflyMeadow_.Update(deltaSeconds,butterflyObserver.X,butterflyObserver.Y,
             butterflyObserver.Z);
         if(viewpoint_==FixedViewpoint::ButterflyDetail) {
@@ -3653,6 +3656,19 @@ namespace island
             frogPopulation_.Frogs(), cicadaColony_.Cicadas(), flySwarms_.Flies());
     }
 
+    std::array<GrassWalker, GrassWalkers::Slots> IslandGame::GatherWalkers(const float x, const float z) const
+    {
+        std::vector<GrassWalker> candidates;
+        for (const auto& deer : deer_->Deer()) candidates.push_back({deer.x, deer.z, 0.55f, GrassWalkers::Strength(deer.speed)});
+        for (const auto& goat : goats_->Goats()) candidates.push_back({goat.x, goat.z, 0.45f, GrassWalkers::Strength(goat.speed)});
+        for (const auto& boar : boarHerd_.Boars()) candidates.push_back({boar.x, boar.z, 0.62f, GrassWalkers::Strength(boar.speed)});
+        candidates.push_back({bear_->State().x, bear_->State().z, 0.95f, GrassWalkers::Strength(bear_->State().speed)});
+        candidates.push_back({resident_->State().x, resident_->State().z, 0.38f, GrassWalkers::Strength(resident_->State().speed)});
+        std::array<GrassWalker, GrassWalkers::Slots> walkers{};
+        (void)GrassWalkers::Select(candidates, x, z, walkers);
+        return walkers;
+    }
+
     FootstepSurface IslandGame::FootstepGroundUnderPlayer() const noexcept
     {
         if (flightMotion_.IsActive() || IsDebugFreeCameraActive()) return FootstepSurface::None;
@@ -4293,16 +4309,9 @@ namespace island
             helicopterRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }
 
-        // The bodies in the grass and the low growth besides the walker: the herds, the bear
-        // and the resident, the nearest six to the camera; the jungle and the grass share them.
-        std::vector<GrassWalker> grassCandidates;
-        for (const auto& deer : deer_->Deer()) grassCandidates.push_back({deer.x, deer.z, 0.55f, GrassWalkers::Strength(deer.speed)});
-        for (const auto& goat : goats_->Goats()) grassCandidates.push_back({goat.x, goat.z, 0.45f, GrassWalkers::Strength(goat.speed)});
-        for (const auto& boar : boarHerd_.Boars()) grassCandidates.push_back({boar.x, boar.z, 0.62f, GrassWalkers::Strength(boar.speed)});
-        grassCandidates.push_back({bear_->State().x, bear_->State().z, 0.95f, GrassWalkers::Strength(bear_->State().speed)});
-        grassCandidates.push_back({resident_->State().x, resident_->State().z, 0.38f, GrassWalkers::Strength(resident_->State().speed)});
-        std::array<GrassWalker, GrassWalkers::Slots> grassWalkers{};
-        (void)GrassWalkers::Select(grassCandidates, renderCameraPosition_.X, renderCameraPosition_.Z, grassWalkers);
+        // The bodies in the grass and the low growth besides the walker; the jungle and the
+        // grass share them.
+        const std::array<GrassWalker, GrassWalkers::Slots> grassWalkers = GatherWalkers(renderCameraPosition_.X, renderCameraPosition_.Z);
         {
             GpuDiagnosticScope gpuPass("jungle");
             jungleRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,

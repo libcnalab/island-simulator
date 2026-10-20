@@ -8073,6 +8073,19 @@ int main()
             Check(island::GrassWalkers::Strength(0.0f)>0.3f&&island::GrassWalkers::Strength(0.0f)<0.4f&&island::GrassWalkers::Strength(1.0f)==1.0f,
                   "a standing body presses the grass lightly and a moving one fully");
         }
+        // Butterflies scatter from a passing animal: a body one metre from a butterfly, with no
+        // walker about, sends it fluttering away from the body.
+        {
+            island::ButterflyMeadow scared(terrain);
+            const auto fly=scared.Butterflies()[0];
+            const std::vector<island::GrassWalker> bodies{{fly.x+1.0f,fly.z,0.5f,1.0f}};
+            scared.SetWalkers(bodies);
+            for(int step=0;step<3;++step) scared.Update(0.05f,fly.x,fly.y+1.0f,fly.z+40.0f);
+            const auto& after=scared.Butterflies()[0];
+            const float away=std::remainder(after.headingRadians-std::atan2(0.0f,-1.0f),6.2831853f);
+            Check(scared.ScatterCount()>=1U&&after.behavior==island::ButterflyBehavior::Flutter&&std::abs(away)<1.2f,
+                  "a butterfly scatters away from a passing animal");
+        }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls
         // on a little before it rests; resting fruit sit on the ground and keep still.

@@ -295,6 +295,9 @@ namespace island
         [[nodiscard]] int TrackedSceneDrawCount() const noexcept;
         /** @brief Resolves the footstep surface under the walking player. */
         [[nodiscard]] FootstepSurface FootstepGroundUnderPlayer() const noexcept;
+        /** The nearest bodies to a point that press the grass and frighten the small things:
+         *  the herds, the bear and the resident. */
+        [[nodiscard]] std::array<GrassWalker, GrassWalkers::Slots> GatherWalkers(float x, float z) const;
         [[nodiscard]] bool IsDebugFreeCameraActive() const noexcept;
 
         struct BenchmarkSceneRanges
