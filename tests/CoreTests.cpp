@@ -58,6 +58,7 @@
 #include "IslandSimulator/DragonflyDipField.hpp"
 #include "IslandSimulator/CrocodileWakeField.hpp"
 #include "IslandSimulator/MudFleckField.hpp"
+#include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include "IslandSimulator/CrabBubbleField.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
 #include "IslandSimulator/CicadaColony.hpp"
@@ -10436,6 +10437,26 @@ int main()
             const std::vector<island::CircularObstacle> none;
             const auto hut=island::HutLayout::FindInWorld(terrain,hutJungle,none);
             Check(hut.has_value(),"the hut is placed for its ridge perch");
+            {
+                // The resident's yard (backlog item 12): the drying rack, coconut pile, net
+                // frame and basket stand at their four hut-local sites in the clearing, each
+                // on the rendered ground, distinct, and clear of the hut's walls.
+                const island::RenderedTerrainSurface yardSurface(terrain);
+                bool yardOk=true;
+                for(std::size_t site=0;site<hut->yard.size();++site) {
+                    const auto& prop=hut->yard[site];
+                    const float c=std::cos(hut->yawRadians),s=std::sin(hut->yawRadians);
+                    const float u=island::HutLayout::YardSites[site][0],v=island::HutLayout::YardSites[site][1];
+                    const float ex=hut->x+c*u+s*v,ez=hut->z-s*u+c*v;
+                    const float fromHut=std::hypot(prop.x-hut->x,prop.z-hut->z);
+                    if(!std::isfinite(prop.groundY)||std::hypot(prop.x-ex,prop.z-ez)>0.001f
+                       ||std::abs(prop.groundY-yardSurface.Sample(prop.x,prop.z).height)>0.001f
+                       ||fromHut<island::HutLayout::Width*0.5f||fromHut>island::HutLayout::SiteClearance) yardOk=false;
+                    for(std::size_t other=0;other<site;++other)
+                        if(std::hypot(prop.x-hut->yard[other].x,prop.z-hut->yard[other].z)<1.0f) yardOk=false;
+                }
+                Check(yardOk,"the resident's four yard props stand at their sites in the hut's clearing, on the ground and apart");
+            }
             const auto perch=island::HutLayout::RidgePerch(*hut);
             Check(std::hypot(perch.x-hut->x,perch.z-hut->z)<island::HutLayout::Depth*0.5f+0.01f
                   &&std::abs(perch.y-(hut->floorY+island::HutLayout::RidgeHeight+0.04f))<0.001f

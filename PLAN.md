@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 204 (2026-10-20) — evidence for the yard, the walker's steps and shadow
+
+Three backlog items rested on diagnostics alone, so this pass makes them measurable.
+Item 12 (signs of the resident at the hut): a core check places the hut and confirms the
+drying rack, coconut pile, net frame and basket stand at their four hut-local sites in the
+clearing, on the rendered ground, a metre or more apart and clear of the walls. Item 19
+(the walker's steps and shadow): a startup probe resolves the walker's footstep ground at
+real places, "footstep ground probe: jetty deck wood, water beside its end shallows,
+nearest beach sand, nearest rock rock, nearest inland ground soil", and the tool fails
+unless every family resolves (a first version probed two metres behind the jetty's root,
+which lies on coastal rock); the visible inventory now carries the walker's own shadow,
+"contact shadows N (walker's own shadow 1)", pinned, and it reads 1 in the `jetty`,
+`beach` and `ground` views. Native `jetty`, `beach` and `ground` pass.
+
 ## Loop pass 203 (2026-10-20) — the goats drink at a rain-filled basin
 
 Backlog item 8 asked that the goats and deer walk to water to drink, and the ecology pass

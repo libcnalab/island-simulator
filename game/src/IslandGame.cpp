@@ -2268,6 +2268,46 @@ namespace island
                   << "coming up from a graze a deer tosses its head\n";
         std::cout << "island-simulator: boars " << boarHerd_.Boars().size()
                   << " agents in moist non-channel interior habitat; a rest a second and a half in settles a boar onto folded legs, body on the ground, for a longer lie, and an alarm has it up within half a second\n";
+        {
+            // The walker's footstep ground, resolved at real places: the jetty's deck, the
+            // beach at its root, the shallows off its end, the first rock and the first
+            // inland ground on a walk from the hut out to the north-east.
+            const auto name = [](const FootstepSurface surface) {
+                switch (surface) {
+                case FootstepSurface::Sand: return "sand";
+                case FootstepSurface::Soil: return "soil";
+                case FootstepSurface::Grass: return "grass";
+                case FootstepSurface::Rock: return "rock";
+                case FootstepSurface::Shallows: return "shallows";
+                case FootstepSurface::Wood: return "wood";
+                default: return "none";
+                }
+            };
+            std::ostringstream probe;
+            probe << "island-simulator: footstep ground probe:";
+            if (jettyPlacement_) {
+                const auto& j = *jettyPlacement_;
+                const float deckX = j.rootX + j.dirX * 7.0f, deckZ = j.rootZ + j.dirZ * 7.0f;
+                probe << " jetty deck " << name(FootstepGroundAt(deckX, deckZ))
+                      << ", water beside its end " << name(FootstepGroundAt(j.rootX + j.dirX * 12.0f + j.AcrossX() * 3.0f,
+                                                                             j.rootZ + j.dirZ * 12.0f + j.AcrossZ() * 3.0f));
+            }
+            const char* rock = "none";
+            const char* inland = "none";
+            const char* sand = "none";
+            for (float r = 0.0f; r < 220.0f && (std::string(rock) == "none" || std::string(inland) == "none" || std::string(sand) == "none"); r += 0.5f) {
+                for (float a = 0.0f; a < 6.2831853f; a += 0.19634954f) {
+                    const float x = std::cos(a) * r, z = std::sin(a) * r;
+                    const FootstepSurface surface = FootstepGroundAt(x, z);
+                    if (std::string(rock) == "none" && surface == FootstepSurface::Rock) rock = "rock";
+                    if (std::string(sand) == "none" && surface == FootstepSurface::Sand) sand = "sand";
+                    if (std::string(inland) == "none" && (surface == FootstepSurface::Grass || surface == FootstepSurface::Soil)) inland = name(surface);
+                }
+            }
+            probe << ", nearest beach " << sand << ", nearest rock " << rock << ", nearest inland ground " << inland;
+            std::cout << probe.str() << '\n';
+            MirrorRuntimeDiagnosticToPlatformLog(probe.str());
+        }
         std::cout << "island-simulator: ecological links: " << deer_->DrinkerCount() << " deer walk to the stream bank to drink and "
                   << goats_->DrinkerCount() << " goats to the rain-filled basin on their slope; "
                   << boarHerd_.WallowerCount() << " boars wallow at the bank and carry the mud on their legs and bellies; "
@@ -5714,7 +5754,8 @@ namespace island
                       << distantSceneryRenderer_->IsletCount() << " islets, "
                       << distantSceneryRenderer_->DrawCallCount()
                       << " draw; contact shadows "
-                      << contactShadowRenderer_->VisibleShadowCount() << ", "
+                      << contactShadowRenderer_->VisibleShadowCount() << " (walker's own shadow "
+                      << contactShadowRenderer_->VisiblePlayerShadowCount() << "), "
                       << contactShadowRenderer_->PrimitiveCount() << " triangles, "
                       << contactShadowRenderer_->DrawCallCount()
                       << " draw, contact-batch mass shadows "
