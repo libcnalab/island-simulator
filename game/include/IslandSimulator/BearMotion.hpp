@@ -40,6 +40,9 @@ struct BearState {
     // 0..1 the head shake: as a sniff ends (the bear not facing the walker) the head swings
     // side to side for a moment, shakePhase carrying the swing.
     float headShake=0,shakePhase=0;
+    // 0..1 the ear flick: every few seconds one ear flicks back at a fly and settles, the
+    // ears taking turns; earSide (+1 right, -1 left) is the ear.
+    float earFlick=0,earSide=1;
     BearBehavior behavior=BearBehavior::Idle;
     BearPose pose{};
     bool operator==(const BearState&)const=default;
@@ -78,6 +81,10 @@ public:
     [[nodiscard]] std::uint32_t HeadShakeCount() const noexcept {return headShakes_;}
     [[nodiscard]] bool HeadShaking() const noexcept {return headShakeSeconds_>0;}
     static constexpr float HeadShakeSeconds=.6f,HeadShakeRate=14.0f;
+    // Ear flicks begun (every EarFlickPeriodSeconds, each EarFlickSeconds) and mid-flick now.
+    [[nodiscard]] std::uint32_t EarFlickCount() const noexcept {return earFlicks_;}
+    [[nodiscard]] bool EarFlicking() const noexcept {return earFlicking_;}
+    static constexpr float EarFlickSeconds=.3f,EarFlickPeriodSeconds=5.0f;
     [[nodiscard]] const BearState& State()const noexcept{return state_;}
     [[nodiscard]] bool IsValidPosition(float x,float z)const noexcept;
     [[nodiscard]] const RenderedTerrainSurface& Ground()const noexcept{return ground_;}
@@ -108,6 +115,7 @@ private:
     std::uint32_t lies_=0;
     float sniffClock_=0;
     float headShakeSeconds_=0;
+    float earClock_=0;bool earFlicking_=false;std::uint32_t earFlicks_=0;
     std::uint32_t headShakes_=0;
     bool sniffing_=false;
     std::uint32_t sniffs_=0;

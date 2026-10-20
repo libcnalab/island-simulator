@@ -310,7 +310,9 @@ void BuildBear(std::vector<VertexPositionColorTexture>& vertices,const BearState
         Material::Nose,near?14:8,near?8:5);
     mesh.Ellipsoid({0,1.10f,-1.08f},right,up,forward,.13f,.13f,.14f,Material::Fur,near?12:8,near?7:5);
     for(int side=-1;side<=1;side+=2) {
-        const Vector3 ear=head+headRight*(side*.282f)+headUp*.285f-shakenForward*.045f;
+        // Flicked, the one ear folds back and down about its root by the flick amount.
+        const float earBack=(side==(state.earSide<0.0f?-1.0f:1.0f)?std::clamp(state.earFlick,0.0f,1.0f):0.0f)*.09f;
+        const Vector3 ear=head+headRight*(side*.282f)+headUp*(.285f-earBack*.5f)-shakenForward*(.045f+earBack);
         mesh.Ellipsoid(ear,headRight,headUp,shakenForward,.116f,.121f,.074f,Material::Fur,near?12:8,near?8:5);
         if(near) {
             mesh.Ellipsoid(ear+shakenForward*.052f,headRight,headUp,shakenForward,.068f,.074f,.019f,Material::DarkFur,10,7);

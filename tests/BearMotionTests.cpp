@@ -221,6 +221,19 @@ int main() {
             if(shakePeak>.9f&&s.headShake<.05f) shakeSettled=true;
         }
         Check(shaker.HeadShakeCount()>=1&&shakePeak>.9f&&swing>1.0f&&longestShake<=30&&shakeSettled,"the bear does not shake its head as a sniff ends");
+        // The ear flick: over the next half minute the bear flicks an ear at least three
+        // times, both ears seen, each to full and settled within a second.
+        const std::uint32_t flicksBefore=shaker.EarFlickCount();
+        bool leftEar=false,rightEar=false,earSettled=false; float earPeak=0; int earFrames=0,longestEar=0;
+        for(int tick=0;tick<600;++tick) {
+            shaker.Update(.05f,{1000,0,1000});
+            const auto& s=shaker.State();
+            earPeak=std::max(earPeak,s.earFlick);
+            if(s.earFlick>.9f) { if(s.earSide<0) leftEar=true; else rightEar=true; }
+            earFrames=s.earFlick>.5f?earFrames+1:0; longestEar=std::max(longestEar,earFrames);
+            if(earPeak>.9f&&s.earFlick<.05f) earSettled=true;
+        }
+        Check(shaker.EarFlickCount()>=flicksBefore+3&&earPeak>.9f&&leftEar&&rightEar&&longestEar<=20&&earSettled,"the bear does not flick its ears in turn and settle them");
     }
     bool refused=false;
     try {const std::array blocked{CircularObstacle{0,0,400}};BearMotion impossible(terrain,blocked);}

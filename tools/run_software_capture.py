@@ -1408,6 +1408,8 @@ def main():
                 raise RuntimeError("current goat cud chewing is missing; check for a stale executable")
             if "a deer at rest, undisturbed, chews its cud, the muzzle working side to side" not in diagnostics:
                 raise RuntimeError("current deer cud chewing is missing; check for a stale executable")
+            if "the bear flicks an ear back at a fly every few seconds, the ears taking turns" not in diagnostics:
+                raise RuntimeError("current bear ear flick is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:

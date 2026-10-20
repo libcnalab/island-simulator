@@ -284,6 +284,13 @@ void BearMotion::Step(float seconds,BearPoint observer,bool observerValid) {
     headShakeSeconds_=std::max(0.0f,headShakeSeconds_-seconds);
     state_.headShake+=std::clamp((headShakeSeconds_>0?1.0f:0.0f)-state_.headShake,-4.0f*seconds,8.0f*seconds);
     if(state_.headShake>.01f) state_.shakePhase=std::fmod(state_.shakePhase+seconds*HeadShakeRate,Tau);
+    // The ears: every few seconds one ear flicks back at a fly and settles, the ears taking turns.
+    earClock_+=seconds;
+    if(earClock_>=EarFlickPeriodSeconds) {earClock_=0;state_.earSide=-state_.earSide;}
+    const bool earFlicking=earClock_>=1.5f&&earClock_<1.5f+EarFlickSeconds;
+    if(earFlicking&&!earFlicking_) ++earFlicks_;
+    earFlicking_=earFlicking;
+    state_.earFlick+=std::clamp((earFlicking?1.0f:0.0f)-state_.earFlick,-8.0f*seconds,10.0f*seconds);
     // A rest two seconds in, undisturbed, settles the bear onto folded legs for a longer lie;
     // the walker's approach, or the next walk, has it up again within a second.
     const bool undisturbed=state_.behavior==BearBehavior::Rest&&!alertFacing&&state_.speed<.05f;

@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 182 (2026-10-20) — the bear flicks an ear
+
+The bear's ears sat fixed on its head. `BearState::earFlick` (0..1) and `earSide` (+1
+right, -1 left) now carry the flick: every `EarFlickPeriodSeconds` (5 s) one ear folds back
+and down at a fly for `EarFlickSeconds` (0.3 s), rising at 10/s and settling at 8/s, the
+ears taking turns; the flicks are counted (`EarFlickCount()`, `EarFlicking()`). In the
+renderer the flicked ear, with its inner ear, moves 9 cm back and 4.5 cm down about its
+root, on the same vertices and on top of the sniff's pitch and the head shake's yaw. A new
+report line "the bear flicks an ear back at a fly every few seconds, the ears taking
+turns" is pinned. BearMotionTests: over half a minute the bear flicks an ear at least
+three times, both ears seen, each to full and settled within a second. Native `bear`
+passes.
+
 ## Loop pass 181 (2026-10-20) — a deer chews its cud
 
 A deer at rest, standing or bedded, held its muzzle still. `DeerState::chew` (-1..1) now
