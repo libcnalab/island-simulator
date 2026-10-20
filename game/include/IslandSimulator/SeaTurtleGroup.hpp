@@ -64,6 +64,12 @@ namespace island
          *  which way it faced, its scale, counted so a breath is noted once. */
         struct Breath { float x = 0.0f, z = 0.0f, headingRadians = 0.0f, scale = 1.0f; std::uint32_t count = 0; };
         [[nodiscard]] const Breath& LastBreath() const noexcept { return breath_; }
+        /** @brief The shark this frame (while present): a turtle within ThreatDistance of it
+         *  turns away as from the swimmer, a surfacing one dives, and both swim on faster
+         *  until it is clear. */
+        void SetThreat(float x, float z, bool valid) noexcept;
+        [[nodiscard]] std::uint32_t ThreatDiveCount() const noexcept { return threatDives_; }
+        static constexpr float ThreatDistance = 18.0f;
         static constexpr float BreathDepth = -0.2f;
         [[nodiscard]] std::span<const SeaTurtleHomeRange> Homes() const noexcept;
         [[nodiscard]] int FullSimulationCount() const noexcept { return fullSimulationCount_; }
@@ -103,6 +109,9 @@ namespace island
         float elapsedSeconds_ = 0.0f;
         std::uint64_t frameIndex_ = 0U;
         Breath breath_;
+        float threatX_ = 0.0f, threatZ_ = 0.0f;
+        bool threatValid_ = false;
+        std::uint32_t threatDives_ = 0U;
         int fullSimulationCount_ = 0;
         int reducedSimulationCount_ = 0;
         int dormantSimulationCount_ = 0;

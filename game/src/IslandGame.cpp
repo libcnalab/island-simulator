@@ -2394,7 +2394,7 @@ namespace island
                   << "island-simulator: octopuses " << octopusGroup_.Octopuses().size()
                   << " agents den, crawl, forage, and swim in reef and rocky shallows; one lying still takes the sand's tones over a few seconds and flashes back to its own colours when it moves or is startled\n"
                   << "island-simulator: sea turtles " << seaTurtleGroup_.Turtles().size()
-                  << " agents in bounded habitat routes, three based in the sheltered western bay\n"
+                  << " agents in bounded habitat routes, three based in the sheltered western bay; the shark within eighteen metres sends a surfacing turtle under and the rest away from it\n"
                   << "island-simulator: one occasional non-hostile offshore shark patrol\n"
                   << "island-simulator: dolphins " << dolphinPod_.Dolphins().size()
                   << " agents in a peaceful offshore cruise, surface, and dive pod; a dolphin within twenty-eight metres of the shark leaves its route to keep its berth\n"
@@ -3118,6 +3118,10 @@ namespace island
         octopusInk_.Update(deltaSeconds,octopusGroup_.LastInk());
         if(viewpoint_==FixedViewpoint::OctopusDetail){const auto& o=octopusGroup_.Octopuses().front();cameraPosition_+=Vector3(o.x-previousOctopus.x,o.y-previousOctopus.y,o.z-previousOctopus.z);}
         const SeaTurtleState previousTurtleSubject = seaTurtleGroup_.Turtles()[2U];
+        {
+            const SharkState& shark = sharkPatrol_.State();
+            seaTurtleGroup_.SetThreat(shark.x, shark.z, shark.present && shark.visible);
+        }
         seaTurtleGroup_.Update(
             deltaSeconds, cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
         turtleBreaths_.Update(deltaSeconds,seaForageSeconds_,seaTurtleGroup_.LastBreath());

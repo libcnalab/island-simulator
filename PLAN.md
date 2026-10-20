@@ -54,6 +54,18 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 98 (2026-10-20) — the turtles dive from the shark
+
+The sea turtles surfaced and cruised through the shark's patrol untroubled. `SeaTurtleGroup::
+SetThreat` takes the shark each frame (while present and visible): a turtle within 18 m of
+it (`ThreatDistance`) swims a third of a metre a second faster and away from the shark when
+it is nearer than the swimmer, and a surfacing turtle goes under at once (back to the
+cruise for fifteen seconds, counted by `ThreatDiveCount`). The startup report's turtle line
+gains "the shark within eighteen metres sends a surfacing turtle under and the rest away
+from it", pinned by the native capture tool. Core checks: the shark fifty metres from a
+surfacing turtle leaves it up; six metres off it sends it under at once, and the turtle
+draws two metres and more away within fifteen seconds. Native `turtles` passes.
+
 ## Portable evidence for loop passes 39–86 (2026-10-20, Web package of 08:29)
 
 The Web package (`cmake --build --preset web-webgl2 -j2`, emsdk, ccache) was rebuilt at

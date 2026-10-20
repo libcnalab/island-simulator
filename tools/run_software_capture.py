@@ -1235,6 +1235,8 @@ def main():
                 raise RuntimeError("current stingray shark flight is missing; check for a stale executable")
             if "a dolphin within twenty-eight metres of the shark leaves its route to keep its berth" not in diagnostics:
                 raise RuntimeError("current dolphin shark berth is missing; check for a stale executable")
+            if "the shark within eighteen metres sends a surfacing turtle under and the rest away from it" not in diagnostics:
+                raise RuntimeError("current turtle shark dive is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

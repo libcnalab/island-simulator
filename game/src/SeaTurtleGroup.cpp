@@ -223,6 +223,17 @@ namespace island
         const float observerDistance = observerValid
             ? std::hypot(agent.state.x - observerX, agent.state.z - observerZ)
             : std::numeric_limits<float>::infinity();
+        // The shark within its distance: a surfacing turtle dives, and the flight is from
+        // the shark rather than the swimmer.
+        const float sharkDistance = threatValid_
+            ? std::hypot(agent.state.x - threatX_, agent.state.z - threatZ_)
+            : std::numeric_limits<float>::infinity();
+        const bool sharkNear = sharkDistance < ThreatDistance;
+        if (sharkNear && agent.state.behavior == SeaTurtleBehavior::Surface) {
+            agent.state.behavior = SeaTurtleBehavior::Cruise;
+            agent.behaviorSeconds = 15.0f;
+            ++threatDives_;
+        }
         float desiredHeading = agent.state.headingRadians
             + std::sin(elapsedSeconds_ * 0.19f + agent.wanderPhase) * 0.42f;
         const float homeDistance = std::hypot(
@@ -230,6 +241,9 @@ namespace island
         if (homeDistance > agent.home.radius * 0.67f) {
             desiredHeading = std::atan2(
                 agent.home.z - agent.state.z, agent.home.x - agent.state.x);
+        } else if (sharkNear && sharkDistance < observerDistance) {
+            desiredHeading = std::atan2(
+                agent.state.z - threatZ_, agent.state.x - threatX_);
         } else if (observerDistance < 4.0f) {
             desiredHeading = std::atan2(
                 agent.state.z - observerZ, agent.state.x - observerX);
@@ -253,9 +267,10 @@ namespace island
             targetBank - agent.state.bankRadians,
             -deltaSeconds * 0.42f, deltaSeconds * 0.42f);
 
-        const float targetSpeed = agent.state.behavior == SeaTurtleBehavior::Cruise
+        const float targetSpeed = (agent.state.behavior == SeaTurtleBehavior::Cruise
             ? 0.72f + static_cast<float>(agent.state.colorVariant) * 0.055f
-            : (agent.state.behavior == SeaTurtleBehavior::Surface ? 0.42f : 0.24f);
+            : (agent.state.behavior == SeaTurtleBehavior::Surface ? 0.42f : 0.24f))
+            + (sharkNear ? 0.35f : 0.0f);
         agent.state.speed += std::clamp(
             targetSpeed - agent.state.speed, -deltaSeconds * 0.34f, deltaSeconds * 0.34f);
         const float candidateX = agent.state.x
@@ -293,6 +308,12 @@ namespace island
         agent.flipperPhase = std::fmod(
             agent.flipperPhase + deltaSeconds * flipperRate, TwoPi);
         agent.state.flipperStroke = std::sin(agent.flipperPhase);
+    }
+
+    void SeaTurtleGroup::SetThreat(const float x, const float z, const bool valid) noexcept
+    {
+        threatValid_ = valid && std::isfinite(x) && std::isfinite(z);
+        if (threatValid_) { threatX_ = x; threatZ_ = z; }
     }
 
     std::span<const SeaTurtleState> SeaTurtleGroup::Turtles() const noexcept

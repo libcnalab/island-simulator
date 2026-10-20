@@ -7998,6 +7998,34 @@ int main()
     }
 
     {
+        // The shark near the turtles: a surfacing turtle dives at once and the turtles draw
+        // away from it; the shark far off changes nothing.
+        const island::IslandTerrain terrain;
+        island::SeaTurtleGroup turtles(terrain);
+        std::size_t surfacing = turtles.Turtles().size();
+        for (std::size_t i = 0; i < turtles.Turtles().size(); ++i)
+            if (turtles.Turtles()[i].behavior == island::SeaTurtleBehavior::Surface) { surfacing = i; break; }
+        Check(surfacing < turtles.Turtles().size(), "a turtle starts surfacing");
+        const auto up = turtles.Turtles()[surfacing];
+        turtles.SetThreat(up.x + 50.0f, up.z, true);
+        for (int step = 0; step < 20; ++step) turtles.Update(0.05f, up.x + 20.0f, 0.0f, up.z);
+        Check(turtles.Turtles()[surfacing].behavior == island::SeaTurtleBehavior::Surface && turtles.ThreatDiveCount() == 0U,
+              "the shark fifty metres off leaves the surfacing turtle up");
+        const float sharkX = up.x + 6.0f, sharkZ = up.z;
+        turtles.SetThreat(sharkX, sharkZ, true);
+        turtles.Update(0.05f, up.x + 20.0f, 0.0f, up.z);
+        Check(turtles.Turtles()[surfacing].behavior == island::SeaTurtleBehavior::Cruise && turtles.ThreatDiveCount() == 1U,
+              "the shark six metres off sends the surfacing turtle under at once");
+        const float first = std::hypot(turtles.Turtles()[surfacing].x - sharkX, turtles.Turtles()[surfacing].z - sharkZ);
+        float farthest = first;
+        for (int step = 0; step < 300; ++step) {
+            turtles.Update(0.05f, up.x + 20.0f, 0.0f, up.z);
+            farthest = std::max(farthest, std::hypot(turtles.Turtles()[surfacing].x - sharkX, turtles.Turtles()[surfacing].z - sharkZ));
+        }
+        Check(farthest > first + 2.0f, "the turtle draws two metres and more away from the shark within fifteen seconds");
+    }
+
+    {
         // The shark near a dolphin: it leaves its route and keeps its berth, drawing away
         // from the shark; the shark far off leaves the pod on its route.
         const island::IslandTerrain terrain;
