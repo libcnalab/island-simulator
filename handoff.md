@@ -157,6 +157,8 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 94: one dragonfly patrol in three ends on a perch with the wings held still (PLAN "Loop pass 94").
 - Pass 95: a school parts around the shark passing through it, as around the swimmer (PLAN "Loop pass 95").
 - Pass 96: the shark passing within nine metres turns the rays away and bursts a settled one from the sand (PLAN "Loop pass 96").
+- Pass 97: a dolphin within twenty-eight metres of the shark leaves its route to keep its berth (PLAN "Loop pass 97").
+- Portable evidence: Web package of 2026-10-20 08:29 (pass 86); twelve Chrome scopes passed (PLAN "Portable evidence for loop passes 39–86").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

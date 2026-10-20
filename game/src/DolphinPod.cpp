@@ -156,6 +156,21 @@ void DolphinPod::Update(const float deltaSeconds, const float observerX,
 #endif
 }
 
+void DolphinPod::SetThreat(const float x, const float z, const bool valid) noexcept {
+  threatValid_ = valid && std::isfinite(x) && std::isfinite(z);
+  if (threatValid_) {
+    threatX_ = x;
+    threatZ_ = z;
+  }
+}
+
+std::size_t DolphinPod::BerthingCount() const noexcept {
+  std::size_t count = 0;
+  for (const Agent &agent : agents_)
+    count += agent.berthing ? 1U : 0U;
+  return count;
+}
+
 void DolphinPod::UpdateAgent(Agent &agent, const float delta) noexcept {
   if (delta <= 0)
     return;
@@ -188,8 +203,20 @@ void DolphinPod::UpdateAgent(Agent &agent, const float delta) noexcept {
       agent.home.x + std::cos(agent.routePhase) * targetRadius;
   const float targetZ =
       agent.home.z + std::sin(agent.routePhase) * targetRadius;
-  const float desired =
+  float desired =
       std::atan2(targetZ - agent.state.z, targetX - agent.state.x);
+  // The shark close: the dolphin leaves its route to keep its berth, heading straight
+  // away from it, until it is clear again.
+  const float sharkDistance =
+      threatValid_ ? std::hypot(agent.state.x - threatX_, agent.state.z - threatZ_)
+                   : std::numeric_limits<float>::infinity();
+  const bool berthing = sharkDistance < BerthDistance;
+  if (berthing) {
+    desired = std::atan2(agent.state.z - threatZ_, agent.state.x - threatX_);
+    if (!agent.berthing)
+      ++berths_;
+  }
+  agent.berthing = berthing;
   const float before = agent.state.headingRadians;
   agent.state.headingRadians = MoveAngle(before, desired, .72f * delta);
   const float turn = Wrap(agent.state.headingRadians - before) / delta;
@@ -203,7 +230,7 @@ void DolphinPod::UpdateAgent(Agent &agent, const float delta) noexcept {
           ? 3.6f
           : (agent.state.behavior == DolphinBehavior::Surface ? 1.75f : 2.05f);
   agent.state.speed +=
-      std::clamp(targetSpeed - agent.state.speed, -.7f * delta, .7f * delta);
+      std::clamp(targetSpeed + (berthing ? 1.0f : 0.0f) - agent.state.speed, -.7f * delta, .7f * delta);
   const float x = agent.state.x + std::cos(agent.state.headingRadians) *
                                       agent.state.speed * delta;
   const float z = agent.state.z + std::sin(agent.state.headingRadians) *

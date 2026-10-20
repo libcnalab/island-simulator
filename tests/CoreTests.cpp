@@ -7998,6 +7998,32 @@ int main()
     }
 
     {
+        // The shark near a dolphin: it leaves its route and keeps its berth, drawing away
+        // from the shark; the shark far off leaves the pod on its route.
+        const island::IslandTerrain terrain;
+        island::DolphinPod pod(terrain);
+        const auto start = pod.Dolphins()[0];
+        pod.SetThreat(start.x + 60.0f, start.z, true);
+        for (int step = 0; step < 100; ++step) pod.Update(0.05f, start.x + 30.0f, 0.0f, start.z);
+        Check(pod.BerthCount() == 0U && pod.BerthingCount() == 0U, "the shark sixty metres off leaves the pod on its route");
+        const auto before = pod.Dolphins()[0];
+        const float sharkX = before.x + 8.0f, sharkZ = before.z;
+        pod.SetThreat(sharkX, sharkZ, true);
+        float farthest = std::hypot(before.x - sharkX, before.z - sharkZ);
+        const float first = farthest;
+        for (int step = 0; step < 160; ++step) {
+            pod.Update(0.05f, start.x + 30.0f, 0.0f, start.z);
+            const auto& dolphin = pod.Dolphins()[0];
+            farthest = std::max(farthest, std::hypot(dolphin.x - sharkX, dolphin.z - sharkZ));
+        }
+        Check(pod.BerthCount() >= 1U && farthest > first + 4.0f,
+              "a dolphin eight metres from the shark draws four metres and more away within eight seconds");
+        pod.SetThreat(0.0f, 0.0f, false);
+        pod.Update(0.05f, start.x + 30.0f, 0.0f, start.z);
+        Check(pod.BerthingCount() == 0U, "with the shark gone no dolphin keeps a berth");
+    }
+
+    {
         // The shark through a school: the fish part around it and hurry away; with the
         // threat withdrawn the parting ends.
         const island::IslandTerrain terrain;

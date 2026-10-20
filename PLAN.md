@@ -54,6 +54,45 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Portable evidence for loop passes 39–86 (2026-10-20, Web package of 08:29)
+
+The Web package (`cmake --build --preset web-webgl2 -j2`, emsdk, ccache) was rebuilt at
+commit `8d8caa8` (pass 86). A first attempt failed with "source file is not valid UTF-8"
+in emscripten's `<array>` because pass 86's sources were being rewritten while em++ read
+them; with the sources at rest the rebuild took 2 m 44 s. Twelve Chrome software scopes
+were run one after another against it (`tools/run_browser_software.py build-probe --scope
+<scope> --timeout 900`, under a machine load of 20–22 from other agents); all twelve passed
+with no new kernel GPU faults:
+
+- `birds`: passed, evidence `20261020T062946.348744Z-chrome-birds`
+- `boars`: passed, evidence `20261020T063538.432573Z-chrome-boars`
+- `goats`: passed, evidence `20261020T063908.798821Z-chrome-goats`
+- `hut`: passed, evidence `20261020T064509.212662Z-chrome-hut`
+- `geckos`: passed, evidence `20261020T065254.436964Z-chrome-geckos`
+- `crabs`: passed, evidence `20261020T065650.589287Z-chrome-crabs`
+- `coconut-crabs`: passed, evidence `20261020T065852.389451Z-chrome-coconut-crabs`
+- `fish`: passed, evidence `20261020T070151.993487Z-chrome-fish`
+- `flies`: passed, evidence `20261020T070309.792403Z-chrome-flies`
+- `cicadas`: passed, evidence `20261020T070715.078563Z-chrome-cicadas`
+- `bats`: passed, evidence `20261020T071031.522529Z-chrome-bats`
+- `monkeys`: passed, evidence `20261020T071622.689750Z-chrome-monkeys`
+
+The passes since (87–96 at the time of writing) are native-only until the next package.
+
+## Loop pass 97 (2026-10-20) — the dolphins keep a berth from the shark
+
+The pod cruised its routes through the shark's patrol as if it were not there. `DolphinPod::
+SetThreat` takes the shark each frame (while present and visible): a dolphin within 28 m of
+it (`BerthDistance`) leaves its route and heads straight away from the shark, a metre a
+second faster, until it is clear, then takes up its route again; `BerthCount()` counts the
+berths begun and `BerthingCount()` the dolphins keeping one. The startup report's dolphin
+line gains "a dolphin within twenty-eight metres of the shark leaves its route to keep its
+berth", pinned by the native capture tool. Core checks: the shark sixty metres off leaves
+the pod on its route; eight metres off, the first dolphin draws four metres and more away
+within eight seconds; with the shark gone no dolphin keeps a berth. The pass-96 suite run
+had the known load flake of the GPU qualification supervisor test, which passed alone.
+Native `dolphins` passes.
+
 ## Loop pass 96 (2026-10-20) — the rays flee the shark
 
 The stingrays fled the swimmer but let the shark pass over them. `StingrayGroup::SetThreat`

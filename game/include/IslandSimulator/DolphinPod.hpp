@@ -49,6 +49,12 @@ public:
   }
   [[nodiscard]] int FullSimulationCount() const noexcept { return fullCount_; }
   [[nodiscard]] std::uint32_t LeapCount() const noexcept { return leapCount_; }
+  /** @brief The shark this frame (while present): a dolphin within BerthDistance of it
+   *  turns off its route to keep the berth, a little faster, until it is clear. */
+  void SetThreat(float x, float z, bool valid) noexcept;
+  [[nodiscard]] std::uint32_t BerthCount() const noexcept { return berths_; }
+  [[nodiscard]] std::size_t BerthingCount() const noexcept;
+  static constexpr float BerthDistance = 28.0f;
   [[nodiscard]] int ReducedSimulationCount() const noexcept {
     return reducedCount_;
   }
@@ -63,6 +69,7 @@ private:
     float routePhase = 0, depthPhase = 0, tailPhase = 0, behaviorSeconds = 0,
           accumulatedSeconds = 0;
     std::uint32_t transitionCount = 0;
+    bool berthing = false;
   };
 
   void Initialize(std::size_t index);
@@ -79,5 +86,8 @@ private:
   std::uint64_t frameIndex_ = 0;
   int fullCount_ = 0, reducedCount_ = 0, dormantCount_ = 0;
   std::uint32_t leapCount_ = 0;
+  float threatX_ = 0, threatZ_ = 0;
+  bool threatValid_ = false;
+  std::uint32_t berths_ = 0;
 };
 } // namespace island

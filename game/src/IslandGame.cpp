@@ -2397,7 +2397,7 @@ namespace island
                   << " agents in bounded habitat routes, three based in the sheltered western bay\n"
                   << "island-simulator: one occasional non-hostile offshore shark patrol\n"
                   << "island-simulator: dolphins " << dolphinPod_.Dolphins().size()
-                  << " agents in a peaceful offshore cruise, surface, and dive pod\n"
+                  << " agents in a peaceful offshore cruise, surface, and dive pod; a dolphin within twenty-eight metres of the shark leaves its route to keep its berth\n"
                   << "island-simulator: sea from within: dolphins leap clear of the water on every fourth surfacing, "
                      "the shark shows its dorsal fin for nine seconds of each patrol, and fish schools part around the swimmer within three metres\n"
                   << "island-simulator: dolphin near/far geometry "
@@ -3137,6 +3137,10 @@ namespace island
             cameraPosition_ += Vector3(subject.x - previousSharkSubject.x,
                                        subject.y - previousSharkSubject.y,
                                        subject.z - previousSharkSubject.z);
+        }
+        {
+            const SharkState& shark=sharkPatrol_.State();
+            dolphinPod_.SetThreat(shark.x,shark.z,shark.present&&shark.visible);
         }
         dolphinPod_.Update(deltaSeconds,cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z);
         if (viewpoint_ == FixedViewpoint::DolphinDetail) {
