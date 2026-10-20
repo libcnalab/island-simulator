@@ -57,6 +57,9 @@ namespace island
         MonkeyTreeExcursion::Clock treeClock;
         bool treeReleasing = false;
         bool treePreparing = false;
+        /** @brief 0..1 a scratch: idle on the ground, the left forelimb comes up to the flank
+         *  and rubs there for a second and a half every fourteen seconds or so. */
+        float scratchAmount = 0.0f;
         MonkeyBehavior behavior = MonkeyBehavior::Idle;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
         std::uint8_t colorVariant = 0U;
@@ -107,6 +110,13 @@ namespace island
         [[nodiscard]] std::uint32_t SnakeAlarmCount() const noexcept { return snakeAlarms_; }
         static constexpr float SnakeAlarmDistance = 4.0f;
         void SetClimbingEnabled(bool enabled) noexcept { climbingEnabled_=enabled; }
+        /** @brief Scratches begun (a monkey idle or observing on the ground, every
+         *  ScratchPeriodSeconds or so, for ScratchSeconds) and the monkeys mid-scratch. */
+        [[nodiscard]] std::uint32_t ScratchCount() const noexcept { return scratches_; }
+        [[nodiscard]] std::size_t ScratchingCount() const noexcept;
+        /** @brief QA: holds one monkey idle on the ground mid-scratch for a still capture. */
+        void PreviewScratch(std::size_t index) noexcept;
+        static constexpr float ScratchSeconds = 1.4f, ScratchPeriodSeconds = 14.0f;
         [[nodiscard]] static bool IsClosedCanopyTree(
             std::span<const CanopyPlacement> trees, std::size_t index) noexcept;
         [[nodiscard]] static bool HomeHasClosedCanopy(
@@ -139,6 +149,8 @@ namespace island
             bool treeClimbAttempted = false;
             std::shared_ptr<const MonkeyTreeExcursion::Plan> pendingExcursion;
             int preflightStep = 0;
+            float scratchClock = 0.0f;
+            bool scratching = false;
         };
 
         void InitializeAgent(std::size_t index) noexcept;
@@ -154,6 +166,7 @@ namespace island
         std::uint32_t fleeCount_ = 0U;
         std::span<const SnakeState> snakes_;
         std::uint32_t snakeAlarms_ = 0U;
+        std::uint32_t scratches_ = 0U;
         [[nodiscard]] bool ChooseTreeTarget(Agent& agent) noexcept;
         void ChooseEscapeTarget(Agent& agent, float observerX, float observerZ) noexcept;
         [[nodiscard]] bool TryMove(Agent& agent, float headingRadians,

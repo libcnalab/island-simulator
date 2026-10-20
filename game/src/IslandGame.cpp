@@ -185,6 +185,7 @@ namespace island
             case FixedViewpoint::SharkDetail: return "shark";
             case FixedViewpoint::DolphinDetail: return "dolphins";
             case FixedViewpoint::MonkeyDetail: return "monkeys";
+            case FixedViewpoint::MonkeyScratchDetail: return "monkey-scratch";
             case FixedViewpoint::MonkeyTreeDetail: return "monkey-tree";
             case FixedViewpoint::MonkeyClimbDetail: return "monkey-climb";
             case FixedViewpoint::ShipwreckDetail: return "shipwreck";
@@ -1338,7 +1339,7 @@ namespace island
             pitch_ = std::atan2(toDolphin.Y, std::hypot(toDolphin.X, toDolphin.Z));
             std::cout << "island-simulator: dolphin QA uses a low moving broadside view\n";
         } else if (viewpoint_ == FixedViewpoint::MonkeyDetail || viewpoint_ == FixedViewpoint::MonkeyTreeDetail
-            || viewpoint_ == FixedViewpoint::MonkeyClimbDetail) {
+            || viewpoint_ == FixedViewpoint::MonkeyClimbDetail || viewpoint_ == FixedViewpoint::MonkeyScratchDetail) {
             if (viewpoint_ == FixedViewpoint::MonkeyTreeDetail) {
                 monkeyTroop_.SetClimbingEnabled(false); // Preserve the separate inspection-only regression.
                 const MonkeyTroop initialTroop(monkeyTroop_);
@@ -1424,7 +1425,17 @@ namespace island
             const Vector3 forward(std::cos(monkey.headingRadians), 0.0f,
                                   std::sin(monkey.headingRadians));
             const Vector3 side(-forward.Z, 0.0f, forward.X);
-            if (viewpoint_ == FixedViewpoint::MonkeyDetail) {
+            if (viewpoint_ == FixedViewpoint::MonkeyScratchDetail) {
+                // The scratch view holds the subject idle on the ground mid-scratch, framed
+                // from its left so the raised forelimb reads.
+                monkeyTroop_.PreviewScratch(monkeyQaSubjectIndex_);
+                std::cout << "island-simulator: monkey QA camera frames one idle monkey scratching its flank\n";
+            }
+            if (viewpoint_ == FixedViewpoint::MonkeyScratchDetail) {
+                // Further out on the same side, so the whole body and the raised forelimb read.
+                cameraPosition_ = Vector3(monkey.x, monkey.y, monkey.z)
+                    + forward * 1.0f + side * 2.0f + Vector3::Up * 1.05f;
+            } else if (viewpoint_ == FixedViewpoint::MonkeyDetail) {
                 // View across the shoulder from the open side of the deterministic route.
                 // This exposes the face and the full quadrupedal silhouette without putting
                 // the camera between the subject and its selected tree.
@@ -1445,7 +1456,7 @@ namespace island
             MirrorRuntimeDiagnosticToPlatformLog(monkeyCameraReport.str());
             const Vector3 monkeyTarget(monkey.x, monkey.y
                 + (viewpoint_==FixedViewpoint::MonkeyClimbDetail ? 1.8f
-                    : viewpoint_==FixedViewpoint::MonkeyDetail ? .82f : .52f), monkey.z);
+                    : viewpoint_==FixedViewpoint::MonkeyDetail ? .82f : viewpoint_==FixedViewpoint::MonkeyScratchDetail ? .6f : .52f), monkey.z);
             const Vector3 toMonkey = monkeyTarget-cameraPosition_;
             yaw_ = std::atan2(toMonkey.X, toMonkey.Z);
             pitch_ = std::atan2(toMonkey.Y, std::hypot(toMonkey.X, toMonkey.Z));
@@ -2526,6 +2537,7 @@ namespace island
                   << " agents with portable GPU skeletal animation, "
                   << MonkeyRenderer::SilhouetteCount << " silhouettes, 4 palettes\n"
                   << "island-simulator: monkeys use a horizontal lofted trunk and distance-driven quadrupedal gait\n"
+                  << "island-simulator: a monkey idle on the ground scratches now and then, a forelimb up at its flank for a second and a half every fourteen seconds or so\n"
                   << "island-simulator: monkey tree routes reject isolated canopy and mangroves\n"
                   << "island-simulator: monkeys walk to fruit lying under the crowns and eat it, idling over the spot\n"
                   << "island-simulator: boars forage for the fallen fruit and coconuts before the trunk bases and eat them where they lie\n"
@@ -3388,6 +3400,7 @@ namespace island
                 monkeyTroop_.Update(deltaSeconds, monkeyObserver.X, monkeyObserver.Y, monkeyObserver.Z,
                     snakeCaptureClock ? static_cast<float>(snakeCaptureUpdates_)*0.1f
                         : static_cast<float>(gameTime.getTotalGameTimeProperty().getTotalSecondsProperty()));
+                if (viewpoint_ == FixedViewpoint::MonkeyScratchDetail) monkeyTroop_.PreviewScratch(monkeyQaSubjectIndex_);
                 // A monkey breaking into flight from the walker gives the alarm.
                 if (soundscape_ && monkeyTroop_.FleeCount() != notedMonkeyFlees_) {
                     notedMonkeyFlees_ = monkeyTroop_.FleeCount();

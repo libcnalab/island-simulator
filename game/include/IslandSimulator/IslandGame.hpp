@@ -207,6 +207,7 @@ namespace island
         SharkDetail,
         DolphinDetail,
         MonkeyDetail,
+        MonkeyScratchDetail,
         MonkeyTreeDetail,
         MonkeyClimbDetail,
         ShipwreckDetail,

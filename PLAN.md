@@ -54,6 +54,27 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 127 (2026-10-20) — a monkey scratches
+
+Idle on the ground a monkey only looked about. `MonkeyState::scratchAmount` (0..1) now
+carries a scratch: a monkey idle or observing on the ground (no excursion, no walk) brings
+its left forelimb up to its flank for `ScratchSeconds` (1.4 s) every `ScratchPeriodSeconds`
+(14 s, plus 2.5 s per monkey) on the agent's own clock; walking, running or climbing drops
+it at 5/s. `ScratchCount()` counts bouts, `ScratchingCount()` the monkeys mid-bout. The
+renderer, after the ground fit and when no tree pose applies, solves the left forelimb to
+a point at the shoulder's flank (root x × 1.35, 10 cm above the shoulder, 6 cm back) with
+a 38 Hz rub of ±2.5 cm from the animation clock, blended from the planted palm by the
+amount, the elbow hint of a reaching arm and the limb unweighted; the skinning takes it
+from there. A QA viewpoint `monkey-scratch` (`MonkeyScratchDetail`) holds the monkeys'
+QA subject idle on the ground mid-scratch after each update (`PreviewScratch`), framed
+from its side further out than `monkeys` so the raised forelimb reads; the capture tool
+accepts it and requires the scratch camera line. Report line: "a monkey idle on the ground
+scratches now and then, a forelimb up at its flank for a second and a half every fourteen
+seconds or so" (pinned). Core checks: with the observer twelve metres off, within a
+minute a monkey scratches for a bout of 0.8–3 s; no walking or climbing monkey ever
+scratches; the preview holds the subject mid-scratch. Native `monkey-scratch` passes
+(luminance deviation 50.1).
+
 ## Loop pass 126 (2026-10-20) — a resting goat lies down
 
 The goats, like the boars before pass 119, stood through every rest. `GoatState::lieAmount`

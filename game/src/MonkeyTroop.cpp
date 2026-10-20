@@ -624,6 +624,22 @@ namespace island
         agent.state.headLookRadians += std::clamp(
             desiredHeadLook - agent.state.headLookRadians,
             -0.75f * deltaSeconds, 0.75f * deltaSeconds);
+        // Idle or observing on the ground, a monkey scratches now and then: every fourteen
+        // seconds or so (a little per monkey) the left forelimb comes up to the flank for a
+        // second and a half; walking, running or climbing drops it.
+        {
+            const bool settled = (agent.state.behavior == MonkeyBehavior::Idle
+                    || agent.state.behavior == MonkeyBehavior::Observe)
+                && !agent.state.treeExcursion && agent.state.speed <= 0.0f;
+            const auto index = static_cast<std::size_t>(&agent - agents_.data());
+            const float period = ScratchPeriodSeconds + static_cast<float>(index % 4U) * 2.5f;
+            agent.scratchClock = std::fmod(agent.scratchClock + deltaSeconds + static_cast<float>(index) * 0.0f, period);
+            const bool scratching = settled && agent.scratchClock < ScratchSeconds;
+            if (scratching && !agent.scratching) ++scratches_;
+            agent.scratching = scratching;
+            agent.state.scratchAmount += std::clamp((scratching ? 1.0f : 0.0f) - agent.state.scratchAmount,
+                                                    -5.0f * deltaSeconds, 5.0f * deltaSeconds);
+        }
 
         if (agent.state.behavior == MonkeyBehavior::Wander) {
             if (agent.decisionCounter % 4U == 0U && ChooseTreeTarget(agent)) {
@@ -770,6 +786,30 @@ namespace island
                 agent.state.treePreparing=true;
             }
         }
+    }
+
+    std::size_t MonkeyTroop::ScratchingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.scratching ? 1U : 0U;
+        return count;
+    }
+
+    void MonkeyTroop::PreviewScratch(const std::size_t index) noexcept
+    {
+        if (index >= agents_.size()) return;
+        Agent& agent = agents_[index];
+        agent.state.behavior = MonkeyBehavior::Idle;
+        agent.state.speed = 0.0f;
+        agent.state.treeIndex = -1;
+        agent.state.treeExcursion.reset();
+        agent.state.treeReleasing = false;
+        agent.state.treePreparing = false;
+        agent.pendingExcursion.reset();
+        agent.stateSecondsRemaining = 30.0f;
+        agent.state.scratchAmount = 1.0f;
+        agent.scratching = true;
+        states_[index] = agent.state;
     }
 
     std::span<const MonkeyState> MonkeyTroop::Monkeys() const noexcept

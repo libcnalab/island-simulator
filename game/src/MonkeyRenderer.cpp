@@ -1338,6 +1338,19 @@ namespace island
                         }
                     }
                 }
+                // A scratch: idle on the ground, the left forelimb comes up to the flank and
+                // rubs there for a moment, the rest of the pose as it stands.
+                if (!monkey.treeExcursion && monkey.behavior != MonkeyBehavior::InspectTree
+                    && monkey.scratchAmount > 0.01f) {
+                    const float amount = std::clamp(monkey.scratchAmount, 0.0f, 1.0f);
+                    auto& arm = pose.limbs[0];
+                    const float rub = std::sin(monkey.animationSeconds * 38.0f) * 0.025f * amount;
+                    const MonkeyGroundGait::Point flank{arm.root.x * 1.35f, arm.root.y + 0.10f + rub, arm.root.z - 0.06f};
+                    const MonkeyGroundGait::Point target{std::lerp(arm.sole.x, flank.x, amount),
+                        std::lerp(arm.sole.y, flank.y, amount), std::lerp(arm.sole.z, flank.z, amount)};
+                    bool limited = false;
+                    arm = MonkeyGroundGait::SolveLimb(arm.root, target, MonkeyTreeReach::BendHint(amount), amount < 0.01f, limited);
+                }
                 if (pose.reachLimited && !reportedReachLimit_) {
                     const char* diagnostic = "island-simulator: monkey terrain contact limited by limb reach";
                     std::cout << diagnostic << '\n';

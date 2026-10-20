@@ -593,7 +593,7 @@ def run_monitored_capture(command, root, environment, evidence, journal, baselin
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("build", type=Path)
-    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "bridge", "lookout", "log", "hut", "hut-material", "helicopter", "helicopter-inside", "resident", "bear", "boars", "boar-lying", "goats", "goat-lying", "deer", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "ground-doves", "bird-preen", "stingray-buried"}))
+    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "bridge", "lookout", "log", "hut", "hut-material", "helicopter", "helicopter-inside", "resident", "bear", "boars", "boar-lying", "goats", "goat-lying", "deer", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "monkey-scratch", "ground-doves", "bird-preen", "stingray-buried"}))
     parser.add_argument("--canopy-lod-inspection", nargs=3, metavar=("X_MM", "Z_MM", "TIER"))
     parser.add_argument("--missing-leaf", action="store_true",
                         help="test only the leaf-image fallback using a read-only namespace overlay")
@@ -1298,6 +1298,10 @@ def main():
                 raise RuntimeError("current snake tongue flick is missing; check for a stale executable")
             if "a rest two seconds in, undisturbed, settles a goat onto folded legs" not in diagnostics:
                 raise RuntimeError("current goat lie-down is missing; check for a stale executable")
+            if "a monkey idle on the ground scratches now and then" not in diagnostics:
+                raise RuntimeError("current monkey scratch is missing; check for a stale executable")
+            if args.viewpoint == "monkey-scratch" and "monkey QA camera frames one idle monkey scratching its flank" not in diagnostics:
+                raise RuntimeError("monkey scratch capture did not hold the subject mid-scratch")
             if args.viewpoint == "goat-lying" and "goat QA camera frames one resting goat lying on folded legs" not in diagnostics:
                 raise RuntimeError("goat lying capture did not hold the goat down")
             if args.viewpoint == "stingray-buried" and "stingray QA camera frames one settled ray lying half-buried in the sand" not in diagnostics:

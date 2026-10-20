@@ -4697,6 +4697,32 @@ int main()
           "collision broad phase exactly matches exhaustive circle tests across the island");
     Check(collisionCandidateTotal / collisionQueryCount < worldObstacles.size() / 8U,
           "collision broad phase materially reduces the average candidate population");
+    {
+        // A monkey idle on the ground scratches now and then: with the observer twelve
+        // metres off, within a minute one of the troop brings a forelimb up for a bout of
+        // about a second and a half, and never while it walks or climbs.
+        island::MonkeyTroop scratchers(terrain);
+        const auto first = scratchers.Monkeys().front();
+        float longest = 0.0f, bout = 0.0f;
+        bool movingScratch = false;
+        for (int step = 0; step < 1800; ++step) {
+            scratchers.Update(1.0f / 30.0f, first.x + 12.0f, first.y, first.z);
+            float best = 0.0f;
+            for (const auto& monkey : scratchers.Monkeys()) {
+                best = std::max(best, monkey.scratchAmount);
+                if (monkey.scratchAmount > 0.5f && (monkey.speed > 0.05f || monkey.treeExcursion)) movingScratch = true;
+            }
+            if (best > 0.5f) bout += 1.0f / 30.0f;
+            else { longest = std::max(longest, bout); bout = 0.0f; }
+        }
+        longest = std::max(longest, bout);
+        Check(scratchers.ScratchCount() >= 1U && longest > 0.8f && longest < 3.0f,
+              "a monkey idle on the ground scratches for a bout of about a second and a half within a minute");
+        Check(!movingScratch, "a walking or climbing monkey never scratches");
+        scratchers.PreviewScratch(0);
+        Check(scratchers.Monkeys()[0].scratchAmount == 1.0f && scratchers.ScratchingCount() >= 1U,
+              "the scratch view's preview holds the subject mid-scratch");
+    }
     island::MonkeyTroop monkeys(terrain);
     const island::RenderedTerrainSurface monkeyAttachmentTerrain(terrain);
     std::array<bool,island::MonkeyTroop::MonkeyCount> attachmentAttempted{};
