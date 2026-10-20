@@ -2542,6 +2542,7 @@ namespace island
                   << "island-simulator: the resident's pause at the campfire tends the fire, its tongues and plume standing a third taller while they stay\n"
                   << "island-simulator: the resident's footfalls sound on the ground under them, sand, soil, grass, rock, shallows or planks, heard within twenty-four metres\n"
                   << "island-simulator: the resident's head turns to the walker within fourteen metres ahead of them, and back to the front once they leave that\n"
+                  << "island-simulator: every third pause the resident stretches, both arms straight up for a couple of seconds before standing easy\n"
                   << "island-simulator: on the walk the resident whistles an original short phrase every half minute, heard within thirty metres\n"
                   << "island-simulator: a bird flushing from a perch or the ground claps its wings, an original half-second whir heard within twenty metres\n"
                   << "island-simulator: a flushing bird lets a pale feather go that rocks down slower than a leaf and lies where it lands\n"

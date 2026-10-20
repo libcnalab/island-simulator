@@ -83,8 +83,11 @@ bool ResidentMotion::FitPose(float x,float z,float heading,float speed,ResidentP
         // The right arm raises to a player who has stopped close by: the whole arm swings
         // up and out about the shoulder in the side plane (the elbow bend is kept), with a
         // small wave about the raised position.
-        const float lift=leg==1?wave_:0.0f;
-        const float raise=lift*(2.35f+.25f*std::sin(waveClock_*6.0f));
+        // Stretching, both arms go straight up; the wave takes the right arm up and out.
+        const float stretch=std::max(0.0f,state_.stretch-wave_);
+        const float lift=std::max(leg==1?wave_:0.0f,stretch);
+        const float raise=stretch>(leg==1?wave_:0.0f)?stretch*StretchRaise
+            :lift*(2.35f+.25f*std::sin(waveClock_*6.0f));
         // Crouched, both hands come forward and down to the fire; the wave takes the right
         // arm up out of that.
         // Fishing, the right arm holds the rod out ahead.
@@ -139,6 +142,8 @@ void ResidentMotion::Step(float seconds,ResidentPoint observer) {
         pauseFacing_=false;
         if(pause!=route_.PausePoints().end()||state_.nextPoint==route_.Points().size()-1){
             pauseRemaining_=6+static_cast<float>(state_.pauseCount%3)*2;++state_.pauseCount;
+            // Every third pause begins with a stretch, both arms straight up for a moment.
+            if(state_.pauseCount%3==1) {stretchSeconds_=StretchSeconds;++stretches_;}
             // A pause with a view: the resident turns to it and stands looking for longer.
             // The last point is the first again (the route is closed): its pause is the campfire's.
             const std::size_t k=pause!=route_.PausePoints().end()?static_cast<std::size_t>(pause-route_.PausePoints().begin()):0;
@@ -270,7 +275,15 @@ void ResidentMotion::Update(float seconds,ResidentPoint observer) {
     const float wantCrouch=state_.mode==ResidentMode::Pausing&&state_.speed<=.0001f?crouchTarget_:0.0f;
     const float before=crouch_;
     crouch_+=std::clamp(wantCrouch-crouch_,-CrouchOutRate*seconds,CrouchInRate*seconds);
-    if(crouch_!=before||state_.fishing!=fishingBefore) {
+    // The stretch runs only while the resident stands still at the pause; a wave or the
+    // walk on cuts it short, and a changed stretch refits the pose on the same feet.
+    const bool pausing=state_.mode==ResidentMode::Pausing;
+    if(!pausing) stretchSeconds_=0;
+    const bool standingAtPause=pausing&&state_.speed<=.0001f;
+    if(standingAtPause) stretchSeconds_=std::max(0.0f,stretchSeconds_-seconds);
+    const float stretchBefore=state_.stretch;
+    state_.stretch+=std::clamp((standingAtPause&&stretchSeconds_>0?1.0f:0.0f)-state_.stretch,-StretchOutRate*seconds,StretchInRate*seconds);
+    if(crouch_!=before||state_.fishing!=fishingBefore||state_.stretch!=stretchBefore) {
         ResidentPose pose;
         if(FitPose(state_.x,state_.z,state_.heading,0,pose))state_.pose=pose;
     }

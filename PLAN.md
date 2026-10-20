@@ -54,6 +54,22 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 177 (2026-10-20) — the resident stretches
+
+The resident's pauses began without a stir. `ResidentState::stretch` (0..1) now carries the
+stretch: every third pause (the count's first, fourth, seventh) begins with both arms
+straight up for `StretchSeconds` (2 s) once the resident stands still at the pause, eased in
+at `StretchInRate` (1.4/s) and out at `StretchOutRate` (1.6/s), the pose refitted on the
+same feet as it changes; the walk on, or a yield, cuts it short, and the stretches are
+counted (`StretchCount()`, `Stretching()`). In the pose fit the stretch raises both arms to
+`StretchRaise` (2.95 rad), the wave's side-swing taking over the right arm when a player
+stops close. A new report line "every third pause the resident stretches, both arms
+straight up for a couple of seconds before standing easy" is pinned. ResidentTests: through
+a tour the first pause begins with both wrists more than a third of a metre above the
+shoulders at full stretch, and both arms are down again within four seconds, the pose audit
+holding (the test runs up to twenty minutes, the first pause lying minutes along the
+route). Native `resident` passes.
+
 ## Loop pass 176 (2026-10-20) — an alert deer stamps
 
 A deer standing alert at the walker only stared. `DeerState::stamp` (0..1) now carries the

@@ -209,6 +209,24 @@ int main() {
         Check(actor.State().lookYaw==0,"the resident's head does not come back to the front once the player has gone");
         CheckPose(actor,collisions);
     }
+    {
+        // The stretch: through a tour (the first pause may be minutes along the route) the
+        // resident's first pause begins with both wrists raised above the shoulders by more
+        // than a third of a metre, the stretch at full, and both arms are down again within
+        // four seconds, the pose audit holding.
+        ResidentMotion stretcher(terrain,solids);
+        bool raised=false,lowered=false; float stretchPeak=0;
+        for(int tick=0;tick<12000&&!(raised&&lowered);++tick) {
+            stretcher.Update(.1f,{NAN,NAN,NAN});
+            const auto& s=stretcher.State();
+            stretchPeak=std::max(stretchPeak,s.stretch);
+            const bool bothUp=s.pose.wrists[0].y>s.pose.shoulders[0].y+.3f&&s.pose.wrists[1].y>s.pose.shoulders[1].y+.3f;
+            if(s.stretch>.9f&&bothUp) raised=true;
+            if(raised&&s.stretch<.05f&&s.pose.wrists[0].y<s.pose.shoulders[0].y&&s.pose.wrists[1].y<s.pose.shoulders[1].y) lowered=true;
+            CheckPose(stretcher,collisions);
+        }
+        Check(stretcher.StretchCount()>=1&&stretchPeak>.9f&&raised&&lowered,"the resident does not stretch both arms up at a pause and let them down");
+    }
     bool refused=false;
     try {const std::array blocked{CircularObstacle{0,0,350}};ResidentMotion impossible(terrain,blocked);}
     catch(const std::runtime_error&){refused=true;}

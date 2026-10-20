@@ -37,6 +37,9 @@ struct ResidentState {
     // within LookDistance and ahead of the resident, eased, and back to the front when
     // they leave that; the renderer turns the head and face by it.
     float lookYaw=0;
+    // 0..1 the stretch: at every third pause the resident reaches both arms straight up
+    // for a couple of seconds and lets them down; eased in and out.
+    float stretch=0;
     std::size_t nextPoint=1,completedLaps=0,pauseCount=0,rejectedMoves=0;
     ResidentMode mode=ResidentMode::Pausing;
     ResidentPose pose;
@@ -71,6 +74,10 @@ public:
     // The look: the head turns up to MaximumLookYaw to a player within LookDistance who is
     // within LookField of straight ahead, at LookRate; a player further round is not followed.
     static constexpr float LookDistance=14.0f,MaximumLookYaw=1.0f,LookField=1.35f,LookRate=2.5f;
+    // The stretch: StretchSeconds of both arms up at the start of every third pause.
+    [[nodiscard]] std::uint32_t StretchCount()const noexcept {return stretches_;}
+    [[nodiscard]] bool Stretching()const noexcept {return stretchSeconds_>0;}
+    static constexpr float StretchSeconds=2.0f,StretchInRate=1.4f,StretchOutRate=1.6f,StretchRaise=2.95f;
     // QA: holds the resident fishing, rod out, for a still capture.
     void PreviewFishing();
     [[nodiscard]] const ResidentRoute& Route()const noexcept {return route_;}
@@ -94,6 +101,7 @@ private:
     ResidentState state_;
     float pauseRemaining_=3;
     float wave_=0,waveClock_=0;
+    float stretchSeconds_=0;std::uint32_t stretches_=0;
     float crouch_=0,crouchTarget_=0;
     float fishSpotX_=0,fishSpotZ_=0;bool fishSpotValid_=false,fishing_=false;
     float fishClock_=0;
