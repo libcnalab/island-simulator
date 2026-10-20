@@ -518,6 +518,66 @@ namespace island
         return Quantize(samples, near ? 0.92f : 0.75f);
     }
 
+    AmbientLoop GenerateNightChorusLoop()
+    {
+        constexpr int loopSeconds = 8;
+        constexpr std::size_t frameCount = static_cast<std::size_t>(AmbientSampleRate * loopSeconds);
+        constexpr float Tau = 2.0f * std::numbers::pi_v<float>;
+        const std::vector<float> noise = Noise(0x6c8e9cf5U, frameCount);
+        const std::vector<float> air = CircularSmooth(noise, 30U);
+        std::vector<float> samples(frameCount, 0.0f);
+        for (std::size_t i = 0; i < frameCount; ++i) samples[i] = air[i] * 0.6f;
+        DeterministicNoise rng(0x3b7d1a29U);
+        const auto unit = [&] { return rng.Next() * 0.5f + 0.5f; };
+        // Crickets: each a carrier of 3.6-5.4 kHz pulsed in chirps of three or four pulses,
+        // whole chirps per loop so it repeats without a seam.
+        for (int cricket = 0; cricket < 16; ++cricket) {
+            const float carrier = 3600.0f + 1800.0f * unit();
+            const int chirps = 13 + static_cast<int>(unit() * 9.0f);   // per loop
+            const float chirpPeriod = static_cast<float>(loopSeconds) / static_cast<float>(chirps);
+            const int pulses = unit() < 0.5f ? 3 : 4;
+            const float level = 0.035f + 0.07f * unit();
+            const float offset = unit() * chirpPeriod;
+            for (int chirp = 0; chirp < chirps; ++chirp) {
+                const float start = offset + chirpPeriod * static_cast<float>(chirp);
+                for (int pulse = 0; pulse < pulses; ++pulse) {
+                    const float pulseStart = start + static_cast<float>(pulse) * 0.032f;
+                    const auto first = static_cast<std::size_t>(pulseStart * AmbientSampleRate);
+                    const auto length = static_cast<std::size_t>(0.020f * AmbientSampleRate);
+                    for (std::size_t k = 0; k < length; ++k) {
+                        const float u = static_cast<float>(k) / static_cast<float>(length);
+                        const float envelope = std::sin(std::numbers::pi_v<float> * u);
+                        const float t = static_cast<float>(first + k) / static_cast<float>(AmbientSampleRate);
+                        samples[(first + k) % frameCount] += level * envelope * envelope * std::sin(Tau * carrier * t);
+                    }
+                }
+            }
+        }
+        // Tree frogs: a rising two-note "quo-ip" with its harmonic, in bouts of two to four.
+        for (int frog = 0; frog < 5; ++frog) {
+            const float base = 700.0f + 500.0f * unit();
+            const float level = 0.12f + 0.10f * unit();
+            float at = unit() * 1.5f;
+            while (at < static_cast<float>(loopSeconds) - 0.5f) {
+                const int calls = 2 + static_cast<int>(unit() * 3.0f);
+                for (int call = 0; call < calls; ++call) {
+                    const auto first = static_cast<std::size_t>((at + 0.24f * static_cast<float>(call)) * AmbientSampleRate);
+                    const auto length = static_cast<std::size_t>(0.13f * AmbientSampleRate);
+                    float phase = 0.0f;
+                    for (std::size_t k = 0; k < length; ++k) {
+                        const float u = static_cast<float>(k) / static_cast<float>(length);
+                        const float frequency = base * (u < 0.45f ? 1.0f : 1.45f) * (1.0f + 0.08f * u);
+                        phase += Tau * frequency / static_cast<float>(AmbientSampleRate);
+                        const float envelope = std::sin(std::numbers::pi_v<float> * std::min(u * 1.6f, 1.0f)) * (1.0f - u * 0.4f);
+                        samples[(first + k) % frameCount] += level * envelope * (std::sin(phase) + 0.35f * std::sin(phase * 2.0f));
+                    }
+                }
+                at += 0.24f * static_cast<float>(calls) + 0.9f + 2.2f * unit();
+            }
+        }
+        return Quantize(samples, 0.55f, true);
+    }
+
     AmbientLoop GenerateTyreRollLoop()
     {
         constexpr int loopSeconds = 2;

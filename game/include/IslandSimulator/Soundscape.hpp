@@ -147,6 +147,9 @@ namespace island
         void NoteQuadImpact(float strength, float x, float y, float z, bool riding) noexcept;
         /** @brief The quad's tyres on the ground: rolling speed and sliding speed, m/s. */
         void SetTyres(float rolling, float sliding, float x, float y, float z, bool riding) noexcept;
+        /** @brief How dark it is (0 by day .. 1 at night): the night chorus rises, the day's
+         *  birds, monkeys and cicadas fall quiet and the jungle's day bed softens. */
+        void SetNightness(float nightness) noexcept { nightness_ = std::isfinite(nightness) ? std::clamp(nightness, 0.0f, 1.0f) : 0.0f; }
         [[nodiscard]] int PlayedQuadImpactCount() const noexcept { return playedImpactCount_; }
         [[nodiscard]] int PlayedThunderCount() const noexcept { return playedThunderCount_; }
         [[nodiscard]] int PlayedClawKnockCount() const noexcept { return playedClawKnockCount_; }
@@ -281,7 +284,9 @@ namespace island
         bool engineRunning_ = false, engineRiding_ = false, enginePlaying_ = false;
         float listenerX_ = 0.0f, listenerZ_ = 0.0f;
         float engineRpm_ = 1400.0f, engineLoad_ = 0.0f, engineX_ = 0.0f, engineY_ = 0.0f, engineZ_ = 0.0f;
-        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> rainEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> rainEffect_, nightChorusEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> nightChorusInstance_;
+        float nightness_ = 0.0f;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> rainInstance_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> thunderEffects_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> thunderInstance_;

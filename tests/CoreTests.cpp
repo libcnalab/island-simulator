@@ -6867,6 +6867,17 @@ int main()
             turnSlide = std::max(turnSlide, skid.SlideSpeed());
         }
         Check(straightSlide < 0.3f && turnSlide > 1.0f, "the tyres slide in a hard turn at speed, not rolling straight");
+        // The night chorus: an audible eight-second loop whose crickets live in the treble.
+        const auto chorus = island::GenerateNightChorusLoop();
+        double chorusEnergy = 0.0, chorusHigh = 0.0;
+        for (std::size_t i = 1; i < chorus.samples.size(); ++i) {
+            const double s = chorus.samples[i], d = static_cast<double>(chorus.samples[i]) - chorus.samples[i - 1];
+            chorusEnergy += s * s;
+            chorusHigh += d * d;
+        }
+        Check(chorus.sampleRate > 0 && chorus.samples.size() == static_cast<std::size_t>(chorus.sampleRate) * 8U
+                  && chorusEnergy / static_cast<double>(chorus.samples.size()) > 1.0e5 && chorusHigh > chorusEnergy * 0.3,
+              "the night chorus is an audible eight-second loop with its crickets high in the treble");
         const auto tyres = island::GenerateTyreRollLoop();
         std::int64_t tyreEnergy = 0;
         for (const auto sample : tyres.samples) tyreEnergy += std::abs(static_cast<int>(sample));

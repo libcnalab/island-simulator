@@ -484,6 +484,10 @@ namespace island
             tyreInstance_->setIsLoopedProperty(true);
             impactEffect_ = CreateOneShotSoundEffect(GenerateQuadImpact());
             impactEffect_->setNameProperty("Procedural quad impact");
+            nightChorusEffect_ = CreateLoopedSoundEffect(GenerateNightChorusLoop());
+            nightChorusEffect_->setNameProperty("Procedural night chorus of crickets and tree frogs");
+            nightChorusInstance_ = std::make_unique<SoundEffectInstance>(nightChorusEffect_->CreateInstance());
+            nightChorusInstance_->setIsLoopedProperty(true);
             rainEffect_=CreateLoopedSoundEffect(GenerateRainLoop());
             rainEffect_->setNameProperty("Procedural rain");
             rainInstance_=std::make_unique<SoundEffectInstance>(rainEffect_->CreateInstance());
@@ -660,6 +664,7 @@ namespace island
             breezeInstance_->Play();
             jungleInstance_->Play();
             rainInstance_->Play();
+            if (nightChorusInstance_) nightChorusInstance_->Play();
             bunkerHumPlaybackActive_=!swimming&&bunkerPresence_>.015f;
             campfirePlaybackActive_=!bunkerHumPlaybackActive_&&!swimming&&campfirePresence_>.015f;
             streamPlaybackActive_ = !bunkerHumPlaybackActive_&&!campfirePlaybackActive_
@@ -1584,6 +1589,12 @@ namespace island
                 pendingThud_.available = false;
             }
         }
+        // By night the birds, the monkeys and the cicadas are quiet (the frogs are not).
+        if (nightness_ > 0.0f && (wildlifeCall.type == WildlifeCallType::Bird || wildlifeCall.type == WildlifeCallType::Monkey
+                                  || wildlifeCall.type == WildlifeCallType::Cicada)) {
+            wildlifeCall.volume *= 1.0f - nightness_;
+            if (wildlifeCall.volume < 0.03f) wildlifeCall = {};
+        }
         if (wildlifeCall.type == WildlifeCallType::None) {
             return;
         }
@@ -1857,7 +1868,11 @@ namespace island
                 *underwaterAudio_.airGain*enclosureAir*gain);
             if (rainInstance_) rainInstance_->setVolumeProperty(std::clamp(weatherRain_, 0.0f, 1.0f) * 0.62f
                 *underwaterAudio_.airGain*enclosureAir*gain);
-            jungleInstance_->setVolumeProperty(model_.Mix().jungleVolume
+            jungleInstance_->setVolumeProperty(model_.Mix().jungleVolume*(1.0f-0.55f*nightness_)
+                *underwaterAudio_.airGain*enclosureAir*gain);
+            // the night chorus: everywhere on land, fuller where the jungle bed is, damped by rain
+            if (nightChorusInstance_) nightChorusInstance_->setVolumeProperty(std::min(0.6f,
+                (0.20f+0.9f*model_.Mix().jungleVolume)*nightness_*(1.0f-0.6f*std::clamp(weatherRain_,0.0f,1.0f)))
                 *underwaterAudio_.airGain*enclosureAir*gain);
             streamInstance_->setVolumeProperty(model_.Mix().streamVolume
                 *(1.0f+0.6f*streamSound_.turbulence)

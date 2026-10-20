@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 232 (2026-10-20) — the island sounds like night after dark
+
+The soundscape ignored the clock: birds called, monkeys hooted and cicadas buzzed all night.
+`Soundscape::SetNightness` (the game passes 0 with the sun 8 degrees up .. 1 from 2 degrees
+below the horizon) now raises a procedural night chorus, an eight-second seamless loop of
+sixteen crickets (carriers of 3.6-5.4 kHz pulsed in chirps of three or four, whole chirps per
+loop) and five tree frogs calling a rising two-note "quo-ip" with its harmonic in bouts of two
+to four over a faint night air, played everywhere on land and fuller where the jungle bed is,
+damped by rain; the jungle's day bed softens by up to 55 %; and the birds', monkeys' and
+cicadas' calls fade with the dark and are dropped once nearly silent, while the frogs' calls go
+on. Core check: the chorus is an audible eight-second loop with its energy high in the treble.
+Not yet heard by a person (the captures run without sound).
+
 ## Loop pass 231 (2026-10-20) — fireflies on dry nights
 
 A tropical night detail with the light-after-the-grade path: a core `FireflySwarm` of 120

@@ -3135,8 +3135,10 @@ namespace island
             auto light = dayNight_.Lighting();
             WeatherSystem::ApplyTo(light, weather_.State());
             sun_light::Set(light);
-            if (soundscape_)
+            if (soundscape_) {
                 soundscape_->SetWeather(weather_.State().rain, weather_.State().strikes, weather_.State().lastStrikeDistance);
+                soundscape_->SetNightness(1.0f - std::clamp((light.sunElevationDegrees + 2.0f) / 10.0f, 0.0f, 1.0f));
+            }
             const auto shading = sun_light::Current().shading;
             wildlife_render::FixedSunDirection = Vector3(shading.x, shading.y, shading.z);
         }
