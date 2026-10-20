@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 255 (2026-10-20) — the dawn chorus
+
+At first light the birds sing most, but the soundscape treated dawn as any hour (and the night's
+quieting of the day birds still held through sunrise). `Soundscape::SetDawn` (the game passes
+the chorus from 05:18, full by 05:54, fading out between 07:00 and 07:48, silenced by rain) now
+adds a bird call from the nearest bird every 2.2-5.1 s divided by the chorus's strength,
+alternating the two calls and varying the pitch, at 30 % volume times the chorus, whenever the
+wildlife voice is free; it comes after the night's quieting, so the chorus sings through the
+sunrise. Not yet heard by a person; the suite passes.
+
 ## Loop pass 254 (2026-10-20) — the moon behind the clouds; the tide pools no longer glow
 
 A moonlit `flight` capture (02:50, day 3) showed the moon's path on the sea (Loop pass 251's

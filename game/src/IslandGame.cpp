@@ -3145,6 +3145,12 @@ namespace island
                 soundscape_->SetWeather(weather_.State().rain, weather_.State().strikes, weather_.State().lastStrikeDistance);
                 soundscape_->SetWind(weather_.State().wind);
                 soundscape_->SetNightness(1.0f - std::clamp((light.sunElevationDegrees + 2.0f) / 10.0f, 0.0f, 1.0f));
+                {
+                    // the dawn chorus: from first light to an hour and a half after sunrise
+                    const float hour = dayNight_.Hour();
+                    const auto smooth = [](float a, float b, float v) { const float t = std::clamp((v - a) / (b - a), 0.0f, 1.0f); return t * t * (3.0f - 2.0f * t); };
+                    soundscape_->SetDawn(smooth(5.3f, 5.9f, hour) * (1.0f - smooth(7.0f, 7.8f, hour)) * (1.0f - weather_.State().rain));
+                }
             }
             // the birds go to roost at dusk; the fruit bats come out
             const float dark = 1.0f - std::clamp((light.sunElevationDegrees + 2.0f) / 10.0f, 0.0f, 1.0f);

@@ -151,6 +151,8 @@ namespace island
          *  birds, monkeys and cicadas fall quiet and the jungle's day bed softens. */
         /** @brief The weather's wind (1 the trade wind): the breeze in the trees swells with it. */
         void SetWind(float wind) noexcept { weatherWind_ = std::isfinite(wind) ? std::clamp(wind, 0.3f, 3.0f) : 1.0f; }
+        /** @brief How far into the dawn chorus (0..1): at first light the birds sing far more often. */
+        void SetDawn(float dawn) noexcept { dawn_ = std::isfinite(dawn) ? std::clamp(dawn, 0.0f, 1.0f) : 0.0f; }
         void SetNightness(float nightness) noexcept { nightness_ = std::isfinite(nightness) ? std::clamp(nightness, 0.0f, 1.0f) : 0.0f; }
         [[nodiscard]] int PlayedQuadImpactCount() const noexcept { return playedImpactCount_; }
         [[nodiscard]] int PlayedThunderCount() const noexcept { return playedThunderCount_; }
@@ -287,7 +289,8 @@ namespace island
         float listenerX_ = 0.0f, listenerZ_ = 0.0f;
         float engineRpm_ = 1400.0f, engineLoad_ = 0.0f, engineX_ = 0.0f, engineY_ = 0.0f, engineZ_ = 0.0f;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> rainEffect_, nightChorusEffect_, owlEffect_;
-        float owlSeconds_ = 12.0f;
+        float owlSeconds_ = 12.0f, dawn_ = 0.0f, chorusSeconds_ = 0.0f;
+        std::uint32_t chorusCalls_ = 0;
         std::uint32_t owlCalls_ = 0;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> nightChorusInstance_;
         float nightness_ = 0.0f, weatherWind_ = 1.0f;

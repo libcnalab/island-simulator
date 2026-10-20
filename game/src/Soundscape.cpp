@@ -1609,6 +1609,15 @@ namespace island
             wildlifeCall.volume *= 1.0f - nightness_;
             if (wildlifeCall.volume < 0.03f) wildlifeCall = {};
         }
+        // The dawn chorus: at first light the birds round the listener sing every few seconds.
+        chorusSeconds_ = std::max(0.0f, chorusSeconds_ - safeDelta);
+        if (dawn_ > 0.2f && !swimming && wildlifeSlotAvailable && wildlifeCall.type == WildlifeCallType::None
+            && chorusSeconds_ <= 0.0f && nearestBirdSource_.available) {
+            wildlifeCall = {WildlifeCallType::Bird, static_cast<std::uint8_t>(chorusCalls_ % 2U), 0.30f * dawn_,
+                            static_cast<float>(chorusCalls_ % 5U) * 0.05f - 0.10f, nearestBirdSource_};
+            chorusSeconds_ = (2.2f + static_cast<float>((chorusCalls_ * 7919U) % 30U) * 0.1f) / std::max(dawn_, 0.3f);
+            ++chorusCalls_;
+        }
         if (wildlifeCall.type == WildlifeCallType::None) {
             return;
         }

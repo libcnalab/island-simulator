@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 255: the dawn chorus: at first light the birds sing every few seconds until mid-morning (PLAN "Loop pass 255"; not yet heard by a person).
 - Pass 254: the moon hides behind passing clouds (and an overcast), and two tide pools no longer glow cyan at night (a pass-243 fault) (PLAN "Loop pass 254").
 - Pass 253: the coconut crabs keep to the night: long rests by day, longer forage rounds after dark (PLAN "Loop pass 253").
 - Pass 252: the surf pounds louder as a storm's wind raises the sea (PLAN "Loop pass 252"; not yet heard by a person).
