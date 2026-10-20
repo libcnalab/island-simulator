@@ -1,4 +1,6 @@
 #pragma once
+#include <algorithm>
+#include <cmath>
 
 #include <cstddef>
 #include <cstdint>
@@ -121,6 +123,10 @@ namespace island
             std::span<const CanopyPlacement> trees, std::size_t index) noexcept;
         [[nodiscard]] static bool HomeHasClosedCanopy(
             std::span<const CanopyPlacement> trees, float x, float z) noexcept;
+        /** @brief How dark it is (0 by day .. 1 at night): after dark the troop finishes what it
+         *  is doing and settles to rest, no more wandering until morning (a fright still
+         *  sends a monkey running). */
+        void SetNightness(float nightness) noexcept { nightness_ = std::isfinite(nightness) ? std::clamp(nightness, 0.0f, 1.0f) : 0.0f; }
         void Update(float deltaSeconds, float observerX, float observerY,
                     float observerZ, float windTime = -1.0f) noexcept;
 
@@ -138,6 +144,7 @@ namespace island
         }
 
     private:
+        float nightness_ = 0.0f;
         struct Agent
         {
             MonkeyState state;

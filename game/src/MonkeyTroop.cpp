@@ -738,7 +738,10 @@ namespace island
                 agent.fruitTarget = -1;
             }
         } else if (agent.stateSecondsRemaining <= 0.0f) {
-            if (agent.state.behavior == MonkeyBehavior::Idle) {
+            if (nightness_ > 0.6f) {
+                // after dark the troop rests where it is until morning
+                EnterState(agent, MonkeyBehavior::Idle);
+            } else if (agent.state.behavior == MonkeyBehavior::Idle) {
                 EnterState(agent, (agent.decisionCounter % 3U) == 0U
                     ? MonkeyBehavior::Observe : MonkeyBehavior::Wander);
             } else {

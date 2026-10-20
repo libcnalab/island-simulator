@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 239 (2026-10-20) — the monkeys rest at night
+
+The last of the day-active animals that ignored the clock: `MonkeyTroop::SetNightness` (the
+same darkness the birds and bats get) makes a monkey whose current activity runs out after dark
+rest where it is instead of choosing a new wander or look-around, until morning; a walk under
+way is finished first, a climb is finished, and a fright still sends a monkey running. Check:
+at night within three minutes no monkey of the troop is still wandering or walking about.
+`monkeys` passes (its QA view is by day).
+
 ## Loop pass 238 (2026-10-20) — the resident keeps the fire through the night
 
 The resident walked the same round day and night, in the dark too. `ResidentMotion` can now

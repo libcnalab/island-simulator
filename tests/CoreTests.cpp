@@ -5182,6 +5182,17 @@ int main()
         Check(scratchers.Monkeys()[0].scratchAmount == 1.0f && scratchers.ScratchingCount() >= 1U,
               "the scratch view's preview holds the subject mid-scratch");
     }
+    {
+        // After dark the troop finishes what it is doing and settles to rest: within three
+        // minutes no monkey is still wandering or walking about (the observer far off).
+        island::MonkeyTroop sleepy(terrain);
+        sleepy.SetNightness(1.0f);
+        for (int step = 0; step < 30 * 180; ++step) sleepy.Update(1.0f / 30.0f, 400.0f, 0.0f, 400.0f);
+        bool restless = false;
+        for (const auto& monkey : sleepy.Monkeys())
+            restless = restless || monkey.behavior == island::MonkeyBehavior::Wander || monkey.behavior == island::MonkeyBehavior::Walk;
+        Check(!restless, "after dark the monkeys settle to rest instead of wandering");
+    }
     island::MonkeyTroop monkeys(terrain);
     const island::RenderedTerrainSurface monkeyAttachmentTerrain(terrain);
     std::array<bool,island::MonkeyTroop::MonkeyCount> attachmentAttempted{};
