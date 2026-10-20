@@ -56,6 +56,17 @@ void FootprintTrailRenderer::Draw(const Matrix& view,const Matrix& projection,co
         const int alpha=static_cast<int>(std::lround(78.0f*std::clamp(print.density,0.0f,1.0f)*(1.0f-std::clamp((distance-30.0f)/15.0f,0.0f,1.0f))));
         if(alpha<3) continue;
         const float fx=std::cos(print.headingRadians),fz=std::sin(print.headingRadians);
+        if(print.kind==1U) {
+            // A cloven hoof: two narrow toes side by side, splayed a little at the front.
+            for(const float toe:{-1.0f,1.0f}) {
+                const float across=toe*0.03f;
+                const float dx=fx-fz*toe*0.18f,dz=fz+fx*toe*0.18f;
+                const float length=std::hypot(dx,dz);
+                fan(print.x-fz*across,print.z+fx*across,dx/length,dz/length,0.055f,0.021f,alpha);
+            }
+            ++visible_;
+            continue;
+        }
         // The sole behind, the toe pad ahead of it, a little to the outside.
         fan(print.x-fx*0.03f,print.z-fz*0.03f,fx,fz,0.10f,0.045f,alpha);
         const float toeSide=print.left?0.012f:-0.012f;

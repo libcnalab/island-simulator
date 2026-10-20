@@ -182,6 +182,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 118: a basking crocodile gapes, holding its jaws open for 14 s a few seconds into each lie-up on the bank (PLAN "Loop pass 118").
 - Pass 119: a resting boar lies down onto folded legs a second and a half into an undisturbed rest and is up within half a second of an alarm (`lieAmount`, `boar-lying` QA viewpoint) (PLAN "Loop pass 119").
 - Pass 120: a settled stingray flicks sand over its back two seconds in and lies half-buried in the sand's tones until it moves (`buryAmount`, `stingray-buried` QA viewpoint) (PLAN "Loop pass 120").
+- Pass 121: the deer and the boars press cloven hoofprints into wet sand, the stream's mud and the drinking bank as they walk (`FootprintTrail` kinds and strides) (PLAN "Loop pass 121").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

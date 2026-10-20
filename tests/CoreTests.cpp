@@ -8867,6 +8867,23 @@ int main()
             for(int step=0;step<2500;++step) trail.Update(0.1f,wx,wz,0.0f,0.0f,true);
             Check(trail.ActiveCount()==0U,"the sand takes the prints back within the trail's life");
         }
+        // A hoofed trail: cloven prints at the animal's own stride, laid only on the ground
+        // the caller says is printable.
+        {
+            island::FootprintTrail hooves;
+            hooves.SetKind(1U);
+            hooves.SetStride(0.9f);
+            float hx=0;
+            for(int step=0;step<200;++step) { hx+=0.05f; hooves.Update(0.05f,hx,0.0f,1.0f,0.0f,true); }
+            Check(hooves.PrintCount()>=10U&&hooves.PrintCount()<=12U,"a ten-metre walk lays a cloven print every 0.9 m stride");
+            bool cloven=true;
+            for(const auto& print:hooves.Prints()) if(print.active&&print.kind!=1U) cloven=false;
+            Check(cloven&&hooves.Kind()==1U,"the hoofed trail's prints are cloven");
+            island::FootprintTrail bare;
+            bare.SetStride(0.0f);
+            for(int step=0;step<200;++step) { hx+=0.05f; bare.Update(0.05f,hx,0.0f,1.0f,0.0f,true); }
+            Check(bare.PrintCount()>=14U&&bare.PrintCount()<=18U&&bare.Prints()[0].kind==0U,"an invalid stride leaves the walker's own");
+        }
         // Rooting dust: a boar with its snout among the roots throws up puffs at the snout
         // that rise, swell and are gone within the second; a walking boar throws none.
         {

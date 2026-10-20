@@ -54,6 +54,24 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 121 (2026-10-20) — hooves print the wet sand and the mud
+
+The walker and the resident left prints; the deer and the boars crossed wet sand and the
+stream's mud without a mark (only the static track lines of the tracks pass showed where
+they go). `FootprintTrail` now carries a kind and a stride per trail (`SetKind`, `SetStride`;
+`Footprint::kind` 0 bare, 1 cloven) and the renderer draws a cloven print as two narrow
+toes side by side, splayed a little at the front. The game keeps a trail per deer (stride
+0.9 m) and per boar (0.55 m), fed each frame from the animal's heading and speed, laying
+prints only on printable ground: wet or dry sand and the shallows' bed (the footstep
+classifier), the stream's drainage mud for a boar on its wallow trip (`inChannel`), and
+the bank within three metres of a deer's drinking point. The prints fade over the trail's
+four minutes and are drawn by the footprint renderer, one draw per trail with prints. A
+ten-minute probe of the herd laid 486 boar prints on the wallow corridor. General report
+line: "the deer and the boars press cloven prints into wet sand and the stream's mud as
+they walk, two toes a stride apart that the ground takes back over four minutes" (pinned).
+Core checks: a hoofed trail lays a cloven print every 0.9 m stride and reports its kind;
+an invalid stride leaves the walker's own. Native `boars` passes (luminance deviation 17.3).
+
 ## Loop pass 120 (2026-10-20) — a settled stingray buries itself
 
 A settled ray lay on the sand in its own colours until it burst away. `StingrayState::

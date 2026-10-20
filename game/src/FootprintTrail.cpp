@@ -23,8 +23,8 @@ void FootprintTrail::Update(const float deltaSeconds,const float x,const float z
     const float speed=std::hypot(velocityX,velocityZ);
     if(speed<MinimumSpeed) return;
     travelled_+=speed*dt;
-    if(travelled_<Stride) return;
-    travelled_-=Stride;
+    if(travelled_<stride_) return;
+    travelled_-=stride_;
     // The oldest print gives way to the newest.
     Footprint* slot=&prints_[0];
     for(Footprint& print:prints_) {
@@ -36,7 +36,7 @@ void FootprintTrail::Update(const float deltaSeconds,const float x,const float z
     slot->x=x-std::sin(heading)*FootAcross*side;
     slot->z=z+std::cos(heading)*FootAcross*side;
     slot->headingRadians=heading+side*0.10f;
-    slot->age=0;slot->density=1;slot->left=nextLeft_;slot->active=true;
+    slot->age=0;slot->density=1;slot->left=nextLeft_;slot->active=true;slot->kind=kind_;
     nextLeft_=!nextLeft_;
     ++laid_;
 }

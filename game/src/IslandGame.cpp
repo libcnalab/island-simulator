@@ -432,6 +432,8 @@ namespace island
         goats_ = std::make_unique<GoatHerd>(terrain_,jungleLayout_,wildlifeObstacles);
         deer_ = std::make_unique<DeerHerd>(terrain_,wildlifeObstacles);
         deer_->SetLight(&canopyLightField_);
+        for(auto& trail:deerPrints_) { trail.SetKind(1U); trail.SetStride(0.9f); }
+        for(auto& trail:boarPrints_) { trail.SetKind(1U); trail.SetStride(0.55f); }
         spiders_ = std::make_unique<SpiderColony>(terrain_,jungleLayout_,wildlifeObstacles);
         if (smokeTest_ && viewpoint_ == FixedViewpoint::None) {
             viewpoint_ = FixedViewpoint::Overview;
@@ -2389,6 +2391,7 @@ namespace island
                   << "island-simulator: a dolphin's leap brings the seabirds on their routes within a hundred and sixty metres in to hunt the school of the moment\n"
                   << "island-simulator: a perched bird flushes from the resident or an animal walking up under its perch as from the walker\n"
                   << "island-simulator: a perched bird preens between its looks around, the head turned back into one wing for a few seconds every eleven seconds or so\n"
+                  << "island-simulator: the deer and the boars press cloven prints into wet sand and the stream's mud as they walk, two toes a stride apart that the ground takes back over four minutes\n"
                   << "island-simulator: a body standing in a snag's, a plant's or a structure's sun shadow is lit as the ground there is\n"
                   << "island-simulator: a fish school passing the jetty turns in and holds off the end of the deck, in its shade, a while before going on\n"
                   << "island-simulator: a school parts around the shark passing through it at seven metres, as around the swimmer at three\n"
@@ -3116,6 +3119,14 @@ namespace island
             boarHerd_.Update(viewpoint_ == FixedViewpoint::BoarLyingDetail ? 0.0f : deltaSeconds,
                              cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
         for (const std::size_t eaten : boarHerd_.EatenFruit()) fallingFruit_.Consume(eaten);
+        // The boars' hooves print the stream's drainage mud on the wallow trip and any wet
+        // sand they cross.
+        for(std::size_t i=0;i<boarHerd_.Boars().size()&&i<boarPrints_.size();++i) {
+            const auto& b=boarHerd_.Boars()[i];
+            const FootstepSurface ground=FootstepGroundAt(b.x,b.z);
+            boarPrints_[i].Update(deltaSeconds,b.x,b.z,std::cos(b.headingRadians)*b.speed,std::sin(b.headingRadians)*b.speed,
+                b.inChannel||ground==FootstepSurface::Sand||ground==FootstepSurface::Shallows);
+        }
         // A boar the bear sends off gives the alarm grunt.
         if (soundscape_ && boarHerd_.BearRetreatCount() != notedBearRetreats_) {
             notedBearRetreats_ = boarHerd_.BearRetreatCount();
@@ -3184,6 +3195,16 @@ namespace island
             soundscape_->NoteDeerSnort(sentinel.x,sentinel.y+1.1f*sentinel.scale,sentinel.z);
         }
         deerSentinelWasAlert_=deer_->SentinelAlert();
+        // The deer's hooves press cloven prints into wet sand and the shallows' bed as they
+        // walk (the stream bank they drink at), a stride apart.
+        for(std::size_t i=0;i<deer_->Deer().size()&&i<deerPrints_.size();++i) {
+            const auto& d=deer_->Deer()[i];
+            const FootstepSurface ground=FootstepGroundAt(d.x,d.z);
+            float bankX=0.0f,bankZ=0.0f;
+            const bool atBank=deer_->DrinkPoint(i,bankX,bankZ)&&std::hypot(d.x-bankX,d.z-bankZ)<3.0f;
+            deerPrints_[i].Update(deltaSeconds,d.x,d.z,std::cos(d.headingRadians)*d.speed,std::sin(d.headingRadians)*d.speed,
+                atBank||ground==FootstepSurface::Sand||ground==FootstepSurface::Shallows);
+        }
         if(viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail) {
             const auto& current=deer_->Deer().front();
             cameraPosition_+=Vector3(current.x-previousDeer.x,current.y-previousDeer.y,
@@ -4640,6 +4661,8 @@ namespace island
             bearRenderer_->DrawShadow(cameraView_,cameraProjection_,renderCameraPosition_,bear_->State());
             birdShadowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,birdFlock_.Birds());
             footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,footprints_.Prints());
+            for(const auto& trail:deerPrints_) if(trail.ActiveCount()>0U) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,trail.Prints());
+            for(const auto& trail:boarPrints_) if(trail.ActiveCount()>0U) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,trail.Prints());
             shellDragRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,shellDrags_.Segments());
             wallowScarRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }

@@ -1286,6 +1286,8 @@ def main():
                 raise RuntimeError("current boar lie-down is missing; check for a stale executable")
             if "a settled ray two seconds in flicks sand over its back and lies half-buried" not in diagnostics:
                 raise RuntimeError("current stingray burying is missing; check for a stale executable")
+            if "the deer and the boars press cloven prints into wet sand and the stream's mud as they walk" not in diagnostics:
+                raise RuntimeError("current hoofprints are missing; check for a stale executable")
             if args.viewpoint == "stingray-buried" and "stingray QA camera frames one settled ray lying half-buried in the sand" not in diagnostics:
                 raise RuntimeError("buried stingray capture did not hold the ray down")
             if args.viewpoint == "boar-lying" and "boar QA camera frames one resting boar lying on folded legs" not in diagnostics:
