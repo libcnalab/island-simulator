@@ -116,6 +116,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 53: the bushes and understory are brushed aside by passing bodies (PLAN "Loop pass 53").
 - Pass 54: the butterflies scatter from passing animals and the resident (PLAN "Loop pass 54").
 - Pass 55: a dove on the ground flushes from a passing animal (PLAN "Loop pass 55").
+- Pass 56: a fish breaking the surface makes a small plip (PLAN "Loop pass 56").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

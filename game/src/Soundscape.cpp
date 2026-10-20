@@ -163,6 +163,13 @@ namespace island
         pendingThudSeconds_ = 1.0f;
     }
 
+    void Soundscape::NoteFishBreach(const float x, const float y, const float z) noexcept
+    {
+        if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) return;
+        pendingPlip_ = {true, x, y, z, 0U};
+        pendingPlipSeconds_ = 0.8f;
+    }
+
     void Soundscape::SetStreamCascade(const float x, const float z) noexcept
     {
         if (std::isfinite(x) && std::isfinite(z)) streamCascade_ = {x, z, true};
@@ -1158,6 +1165,20 @@ namespace island
                 pendingSplash_.available = false;
             } else if (pendingSplashSeconds_ <= 0.0f || falloff <= 0.02f) {
                 pendingSplash_.available = false;
+            }
+        }
+        // A fish breaking the surface: the splash clip small, quick and high, within about
+        // twenty-five metres, dropped if the slot is busy for most of a second.
+        if (pendingPlip_.available) {
+            pendingPlipSeconds_ -= safeDelta;
+            const float distance = std::hypot(std::hypot(pendingPlip_.x - listenerState.x,
+                pendingPlip_.z - listenerState.z), pendingPlip_.y - listenerState.y);
+            const float falloff = 1.0f - std::clamp((distance - 6.0f) / 20.0f, 0.0f, 1.0f);
+            if (wildlifeSlotAvailable && wildlifeCall.type == WildlifeCallType::None && falloff > 0.02f) {
+                wildlifeCall = {WildlifeCallType::Splash, 0U, 0.13f * falloff, 0.55f, pendingPlip_};
+                pendingPlip_.available = false;
+            } else if (pendingPlipSeconds_ <= 0.0f || falloff <= 0.02f) {
+                pendingPlip_.available = false;
             }
         }
         // A coconut's landing is a short, close thud: heard within about thirty metres.

@@ -54,6 +54,17 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 56 (2026-10-20) — the fish breach makes a plip
+
+The breach rings of pass 43 were silent. `Soundscape::NoteFishBreach` queues the splash clip
+small, quick and high (volume 0.13 at the point, pitch offset +0.55, heard within about
+twenty-five metres, dropped if the wildlife slot stays busy for most of a second), and the
+game notes each new breach once (`notedBreachCount_`). The audio inventory is unchanged.
+Diagnostic "a fish breaking the surface makes a small plip heard within twenty-five metres"
+is printed in the startup report and pinned by the native capture tool. Native `fish` passes.
+(The first draft's edit split the coconut-thud block and left the herds' startle outside its
+scope; the block is whole again.)
+
 ## Loop pass 55 (2026-10-20) — a dove on the ground flushes from the animals
 
 A fruit dove walking the ground ignored a boar walking up to it. `BirdFlock::SetWalkers`

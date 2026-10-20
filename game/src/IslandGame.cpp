@@ -2243,6 +2243,7 @@ namespace island
                   << "island-simulator: seabirds break from their high orbits to circle low over the fish school of the moment\n"
                   << "island-simulator: circling seabirds plunge-dive every nine seconds and each strike raises a foam ring on the water and a positional splash\n"
                   << "island-simulator: a falling coconut lands with a positional thud heard within thirty metres\n"
+                  << "island-simulator: a fish breaking the surface makes a small plip heard within twenty-five metres\n"
                   << "island-simulator: passing gust fronts swell the breeze and canopy beds at the listener\n"
                   << "island-simulator: the cumulus shadows drift over the land as well as the sea, dimming every sun-shadow receiver together\n"
                   << "island-simulator: a fallen fruit bounces off where it strikes and rolls downhill to rest\n"
@@ -2632,6 +2633,10 @@ namespace island
             if (deer_) deer_->NoteDisturbance(landing.x, landing.z);
             if (goats_) goats_->NoteDisturbance(landing.x, landing.z);
             birdFlock_.NoteDisturbance(landing.x, landing.z);
+        }
+        if (soundscape_ && fishSchools_.LastBreach().count != notedBreachCount_) {
+            notedBreachCount_ = fishSchools_.LastBreach().count;
+            soundscape_->NoteFishBreach(fishSchools_.LastBreach().x, 0.0f, fishSchools_.LastBreach().z);
         }
         {
             // The seabirds' school of the moment: the schools take turns every ninety seconds
