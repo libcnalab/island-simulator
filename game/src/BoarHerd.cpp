@@ -112,6 +112,22 @@ namespace island
 
     // The bank a metre outside the channel on the home's side, at the closest point of the
     // authored stream route inside the range that the habitat rules allow a boar to stand on.
+    std::vector<BoarHerd::WallowSite> BoarHerd::WallowSites() const
+    {
+        std::vector<WallowSite> sites;
+        for (const Agent& agent : agents_) {
+            if (!agent.hasWallow) continue;
+            bool known = false;
+            for (const WallowSite& site : sites)
+                if (std::hypot(site.x - agent.wallowX, site.z - agent.wallowZ) < 1.5f) known = true;
+            if (known) continue;
+            const float dx = agent.faceX - agent.wallowX, dz = agent.faceZ - agent.wallowZ;
+            const float length = std::max(std::hypot(dx, dz), 0.01f);
+            sites.push_back({agent.wallowX, agent.wallowZ, dx / length, dz / length});
+        }
+        return sites;
+    }
+
     void BoarHerd::FindWallow(Agent& agent) noexcept
     {
         const BoarState& state = agent.state;

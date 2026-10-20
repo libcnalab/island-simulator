@@ -107,6 +107,7 @@
 #include "IslandSimulator/FootprintTrailRenderer.hpp"
 #include "IslandSimulator/RootingDustRenderer.hpp"
 #include "IslandSimulator/ShellDragRenderer.hpp"
+#include "IslandSimulator/WallowScarRenderer.hpp"
 #include "IslandSimulator/SurfSprayField.hpp"
 #include "IslandSimulator/DolphinBlowField.hpp"
 #include "IslandSimulator/StingraySandField.hpp"
@@ -483,6 +484,7 @@ namespace island
         std::unique_ptr<RootingDustRenderer> rootingDustRenderer_;
         ShellDragTrail shellDrags_;
         std::unique_ptr<ShellDragRenderer> shellDragRenderer_;
+        std::unique_ptr<WallowScarRenderer> wallowScarRenderer_;
         SurfSprayField surfSpray_{terrain_};
         std::unique_ptr<CascadeMistRenderer> surfSprayRenderer_;
         DolphinBlowField dolphinBlows_;

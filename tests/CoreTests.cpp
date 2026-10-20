@@ -8128,6 +8128,17 @@ int main()
             for(int step=0;step<60;++step) skinks.Update(0.05f,skink.x+12.0f,skink.y+1.0f,skink.z);
             Check(skinks.WalkerScatterCount()>=1U,"a skink flees a passing animal");
         }
+        // The boars' wallow sites: at least one, each on drainage ground at the bank, distinct.
+        {
+            island::BoarHerd herd(terrain);
+            const auto sites=herd.WallowSites();
+            bool onBank=true,distinct=true;
+            for(std::size_t i=0;i<sites.size();++i) {
+                if(!herd.IsValidGround(sites[i].x,sites[i].z,true)) onBank=false;
+                for(std::size_t j=0;j<i;++j) if(std::hypot(sites[i].x-sites[j].x,sites[i].z-sites[j].z)<1.5f) distinct=false;
+            }
+            Check(!sites.empty()&&sites.size()<=island::BoarHerd::BoarCount&&onBank&&distinct,"the boars' wallow sites are distinct bank points");
+        }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls
         // on a little before it rests; resting fruit sit on the ground and keep still.

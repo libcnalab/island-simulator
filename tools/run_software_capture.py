@@ -1155,6 +1155,8 @@ def main():
                 raise RuntimeError("current fish plip is missing; check for a stale executable")
             if "mice, rats, geckos and skinks scatter from a passing animal or the resident as from the walker" not in diagnostics:
                 raise RuntimeError("current small-fauna scatter from wildlife is missing; check for a stale executable")
+            if "the boars' wallows show as dark churned mud at the stream bank" not in diagnostics:
+                raise RuntimeError("current wallow scars are missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

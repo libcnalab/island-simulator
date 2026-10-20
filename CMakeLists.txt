@@ -721,6 +721,7 @@ if(ISLAND_BUILD_GAME)
         game/src/FootprintTrailRenderer.cpp
         game/src/RootingDustRenderer.cpp
         game/src/ShellDragRenderer.cpp
+        game/src/WallowScarRenderer.cpp
         game/src/UnderwaterEffectRenderer.cpp
         game/src/HelicopterRenderer.cpp
         game/src/ShorelineRenderer.cpp

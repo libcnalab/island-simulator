@@ -63,6 +63,10 @@ namespace island
         [[nodiscard]] bool IsValidGround(float x, float z, bool allowDrainage = false) const noexcept;
         /** @brief Boars whose range reaches a stream bank; they walk there to wallow. */
         [[nodiscard]] std::size_t WallowerCount() const noexcept;
+        /** @brief The bank points the boars wallow at (distinct within 1.5 m) and the
+         *  direction each faces into the water: the churned mud shows there. */
+        struct WallowSite { float x = 0.0f, z = 0.0f, faceX = 1.0f, faceZ = 0.0f; };
+        [[nodiscard]] std::vector<WallowSite> WallowSites() const;
         /** @brief Fruit and coconuts lying on the ground this frame; a forage may go to one. */
         void SetLyingFruit(std::span<const FallingFruit> fruit) noexcept { lyingFruit_ = fruit; }
         /** @brief Indices into that span the boars ate during the last update. */

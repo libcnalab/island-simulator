@@ -54,6 +54,18 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 58 (2026-10-20) — the boars' wallows show in the mud
+
+The boars wallowed at the bank (pass 11) and the bank looked untouched. `BoarHerd::WallowSites`
+lists the distinct bank points the herd wallows at (within 1.5 m merged) with the facing into
+the water, and a new `WallowScarRenderer`, built once, draws at each a dark terrain-conforming
+fourteen-segment patch, 2.3 m along the bank by 1.6 m toward the water with a slightly
+ragged rim, alpha 118 at the churned centre fading to the edge, alpha-blended with depth read
+in the contact-shadow pass whenever the camera is within 90 m of a site. Its line "the boars'
+wallows show as dark churned mud at the stream bank" (with the site count) is pinned by the
+native capture tool. Core check: the sites exist, number no more than the boars, lie on bank
+drainage ground and are distinct. Native `boars` passes.
+
 ## Loop pass 57 (2026-10-20) — the small fauna scatter from the animals
 
 Mice, rats, geckos and skinks fled the walker and nothing else. Each population takes the

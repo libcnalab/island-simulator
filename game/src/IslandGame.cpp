@@ -2160,6 +2160,10 @@ namespace island
         footprintRenderer_ = std::make_unique<FootprintTrailRenderer>(device, terrain_);
         rootingDustRenderer_ = std::make_unique<RootingDustRenderer>(device);
         shellDragRenderer_ = std::make_unique<ShellDragRenderer>(device, terrain_);
+        {
+            const std::vector<BoarHerd::WallowSite> wallowSites = boarHerd_.WallowSites();
+            wallowScarRenderer_ = std::make_unique<WallowScarRenderer>(device, terrain_, wallowSites);
+        }
         surfSprayRenderer_ = std::make_unique<CascadeMistRenderer>(device,
             "island-simulator: breakers throw spray up the seaward faces of the offshore rocks in time with their foam");
         dolphinBlowRenderer_ = std::make_unique<CascadeMistRenderer>(device,
@@ -4286,6 +4290,7 @@ namespace island
             birdShadowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,birdFlock_.Birds());
             footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,footprints_.Prints());
             shellDragRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,shellDrags_.Segments());
+            wallowScarRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }
 
         {
