@@ -46,6 +46,24 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 30 (2026-10-20) — small fish in the plunge pool
+
+The cascade's pool held water and nothing else. A core `StreamFishField` keeps ten small fish
+on its own course copy between the first station below the drop and the pool's last: each
+has a holding station (course distance, lateral fraction, depth 6–22 cm under the surface,
+`Place` resolving all three to a point above the bed), faces upstream with a slow sway, and
+every 4–9 s darts 1.2 m upstream in 0.6 s before drifting back at 0.35 m/s. When the walker
+comes within 4 m of the pool's reach all of them run for the deepest station (2.4 m/s),
+crowd a little apart, sink deeper and hold there, flicking fast; left alone they rise and
+spread back to their stations. `StreamFishRenderer` draws each as a 14 cm olive sliver with
+a flicking forked tail in one dynamic draw before the stream water so the water tints them.
+Diagnostic "small fish hold station in the plunge pool facing upstream, dart now and then
+and scatter to the deep when the walker comes near" is pinned by the native capture tool.
+Core checks: every fish starts and stays under the surface at its own spot inside the pool
+(the first draft compared against the nearest station's level, which steps between the
+pool's stations) and darts within a minute; the walker at the bank scatters all of them to
+the deep within six seconds; thirty seconds alone spreads them back. Native `cascade` passes.
+
 ## Loop pass 29 (2026-10-20) — sand streamers in the gust front
 
 The dry beach lay still while a front leaned the grass behind it and darkened the sea in

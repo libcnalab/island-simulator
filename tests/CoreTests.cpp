@@ -36,6 +36,7 @@
 #include "IslandSimulator/WreckScourPatch.hpp"
 #include "IslandSimulator/StreamCourse.hpp"
 #include "IslandSimulator/StreamDriftField.hpp"
+#include "IslandSimulator/StreamFishField.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
@@ -7677,6 +7678,39 @@ int main()
             if(step%600==0) for(const auto& leaf:drift.Leaves()) allAfloat=allAfloat&&afloat(leaf);
         }
         Check(allAfloat&&drift.PassCount()>=1U,"leaves stay afloat in the channel and some reach the sea within ten minutes");
+    }
+    {
+        // Small fish in the plunge pool: all of them hold under the surface inside the pool's
+        // reach, dart now and then, and scatter toward the deepest station when the walker
+        // comes to the bank, returning to their stations once they are left alone.
+        const island::IslandTerrain terrain;
+        island::StreamFishField pool(terrain);
+        const auto& course=pool.Course();
+        const auto inPool=[&](const island::StreamFish& f){
+            if(!f.active||!std::isfinite(f.x)||!std::isfinite(f.y)||!std::isfinite(f.z)) return false;
+            float best=1e9f; const island::StreamStation* nearest=nullptr;
+            for(std::size_t i=0;i<course.Count();++i) { const float d=std::hypot(course.Station(i).x-f.x,course.Station(i).z-f.z); if(d<best) { best=d; nearest=&course.Station(i); } }
+            // Under the surface at the fish's own spot: the water level steps between the
+            // pool's stations, so the nearest station's level is not the surface there.
+            float sx=0,sy=0,sz=0,sh=0;
+            if(!pool.Place(f.distance,f.lateral,0.0f,sx,sy,sz,sh)) return false;
+            return nearest&&best<=nearest->halfWidth+0.2f&&f.y<=sy-0.05f&&f.y>=sy-0.5f
+                &&f.distance>=pool.PoolStart()-0.01f&&f.distance<=pool.PoolEnd()+0.01f;
+        };
+        bool allInPool=true;
+        for(const auto& f:pool.Fish()) allInPool=allInPool&&inPool(f);
+        Check(allInPool,"every pool fish starts under the surface inside the plunge pool");
+        for(int step=0;step<1200;++step) { pool.Update(0.05f,1000.0f,1000.0f); for(const auto& f:pool.Fish()) allInPool=allInPool&&inPool(f); }
+        Check(allInPool&&pool.DartCount()>=3U,"the fish dart now and then and stay in the pool");
+        float deepX=0,deepY=0,deepZ=0,deepHeading=0;
+        Check(pool.Place(pool.DeepDistance(),0.0f,0.1f,deepX,deepY,deepZ,deepHeading),"the pool's deep station resolves");
+        float spreadBefore=0; for(const auto& f:pool.Fish()) spreadBefore+=std::abs(f.distance-pool.DeepDistance());
+        for(int step=0;step<120;++step) pool.Update(0.05f,deepX+1.5f,deepZ);
+        float spreadAfter=0; bool allHiding=true; for(const auto& f:pool.Fish()) { spreadAfter+=std::abs(f.distance-pool.DeepDistance()); allHiding=allHiding&&f.hiding; }
+        Check(pool.ScatterCount()==1U&&allHiding&&spreadAfter<spreadBefore*0.5f,"the walker at the bank sends every fish to the deep within six seconds");
+        for(int step=0;step<600;++step) pool.Update(0.05f,1000.0f,1000.0f);
+        float spreadBack=0; for(const auto& f:pool.Fish()) { spreadBack+=std::abs(f.distance-pool.DeepDistance()); allInPool=allInPool&&inPool(f); }
+        Check(allInPool&&spreadBack>spreadAfter*2.0f,"left alone, the fish spread back to their stations");
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls
         // on a little before it rests; resting fruit sit on the ground and keep still.

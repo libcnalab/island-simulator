@@ -2104,6 +2104,7 @@ namespace island
         if(lookoutPlacement_) lookoutRenderer_=std::make_unique<LookoutRenderer>(device,*lookoutPlacement_);
         fallingFruitRenderer_=std::make_unique<FallingFruitRenderer>(device);
         streamDriftRenderer_=std::make_unique<StreamDriftRenderer>(device);
+        streamFishRenderer_=std::make_unique<StreamFishRenderer>(device);
         fallingFruit_.SetPalms(vegetationLayout_.Palms());
         helicopterRenderer_=std::make_unique<HelicopterRenderer>(device,*helicopterPlacement_);
         palmRenderer_ = std::make_unique<PalmRenderer>(
@@ -2575,6 +2576,7 @@ namespace island
         }
         fallingFruit_.Update(deltaSeconds, monkeyTroop_.Monkeys());
         streamDrift_.Update(deltaSeconds);
+        streamFish_.Update(deltaSeconds,playerMotion_.Position().x,playerMotion_.Position().z);
         fallingFruit_.UpdateCoconuts(seaForageSeconds_, cameraPosition_.X, cameraPosition_.Z);
         if (soundscape_ && fallingFruit_.LastCoconutLanding().count != notedThudCount_) {
             const auto& landing = fallingFruit_.LastCoconutLanding();
@@ -4398,6 +4400,7 @@ namespace island
         }
         {
             GpuDiagnosticScope gpuPass("stream-water");
+            streamFishRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,streamFish_.Fish());
             streamWaterRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,timeSeconds);
             streamDriftRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,streamDrift_.Leaves());
         }
