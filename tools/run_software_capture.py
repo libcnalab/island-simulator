@@ -1434,6 +1434,8 @@ def main():
                 raise RuntimeError("current hermit crab shell carry is missing; check for a stale executable")
             if "a resting frog's throat rises and falls with its breathing, a small swell under the chin between calls" not in diagnostics:
                 raise RuntimeError("current frog gular pump is missing; check for a stale executable")
+            if "and licks its lips as a hunt ends" not in diagnostics:
+                raise RuntimeError("current gecko lip lick is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:

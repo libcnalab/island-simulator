@@ -481,6 +481,15 @@ namespace island
                     AppendGeckoDiamond(vertices,tip,right,up,forward,.008f*scale,.006f*scale,.008f*scale,tongue,tongue);
                 }
             }
+            // Licking its lips as a hunt ends, the tongue comes out over the lips and is
+            // drawn in again by the lick amount.
+            if(const float lipLick=std::clamp(gecko.lipLick,0.0f,1.0f); lipLick>0.02f) {
+                const Color tongue(214,118,122,255);
+                const Vector3 lips=head+forward*(.178f*scale)-up*(.008f*scale);
+                const Vector3 tip=lips+forward*(.030f*lipLick*scale)-up*(.016f*lipLick*scale);
+                AppendGeckoTube(vertices,lips,tip,.008f*scale,.005f*scale,tongue);
+                AppendGeckoDiamond(vertices,tip,right,up,forward,.009f*scale,.005f*scale,.007f*scale,tongue,tongue);
+            }
             for(int spot=0;spot<6;++spot) {
                 const float z=(-.155f+static_cast<float>(spot)*.062f)*scale;
                 const float width=(spot%2==0?.025f:.019f)*scale;

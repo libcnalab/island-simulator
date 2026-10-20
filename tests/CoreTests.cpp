@@ -8612,6 +8612,14 @@ int main()
             rested = geckos.Geckos()[0].behavior == island::GeckoBehavior::Rest;
         }
         Check(rested, "after the lunge the gecko rests");
+        // The lip lick: the hunt over, the gecko has licked its lips, the lick drawn in
+        // again within a second and a half of the rest's start.
+        Check(geckos.LipLickCount() >= 1U, "the gecko does not lick its lips as the hunt ends");
+        {
+            float lipPeakSeen = geckos.Geckos()[0].lipLick;
+            for (int step = 0; step < 30; ++step) { geckos.Update(0.05f, home.x + 12.0f, terrain.Height(home.x, home.z) + 1.0f, home.z); lipPeakSeen = std::max(lipPeakSeen, geckos.Geckos()[0].lipLick); }
+            Check(lipPeakSeen > 0.5f && geckos.Geckos()[0].lipLick < 0.1f, "the lip lick is not drawn in again");
+        }
         Check(wagged && !restingWag, "a stalking gecko wags its tail and a resting one holds it still");
         for (int step = 0; step < 20; ++step) geckos.Update(0.05f, home.x + 12.0f, terrain.Height(home.x, home.z) + 1.0f, home.z);
         Check(geckos.Geckos()[0].tailWag < 0.2f, "the wag stills within a second of the lunge");

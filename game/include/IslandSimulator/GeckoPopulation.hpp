@@ -40,6 +40,9 @@ namespace island
          *  (+1 right, -1 left) is the eye, alternating lick by lick. */
         float eyeLick = 0.0f;
         float lickSide = 1.0f;
+        /** @brief 0..1 the lip lick: as a hunt ends (the lunge taken, or the stalk given
+         *  up) the tongue comes out over the lips for a moment and is drawn in. */
+        float lipLick = 0.0f;
         float scale = 1.0f;
         GeckoBehavior behavior = GeckoBehavior::Rest;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
@@ -91,6 +94,9 @@ namespace island
         [[nodiscard]] std::uint32_t LickCount() const noexcept { return licks_; }
         [[nodiscard]] std::size_t LickingCount() const noexcept;
         static constexpr float LickSeconds = 0.5f, LickPeriodSeconds = 11.0f;
+        /** @brief Lip licks begun (one as each hunt ends). */
+        [[nodiscard]] std::uint32_t LipLickCount() const noexcept { return lipLicks_; }
+        static constexpr float LipLickSeconds = 0.5f;
 
         [[nodiscard]] std::span<const GeckoState> Geckos() const noexcept { return states_; }
         [[nodiscard]] std::span<const GeckoHome> Homes() const noexcept { return homes_; }
@@ -109,6 +115,7 @@ namespace island
             float huntCooldown = 0.0f;
             int prey = -1;                 // index into the flies while stalking; -1 for none
             float lickClock = 0.0f;        // time into the eye-lick cycle
+            float lipLickSeconds = 0.0f;   // remaining lip lick as the hunt ends
             bool licking = false;
         };
 
@@ -130,6 +137,7 @@ namespace island
         std::span<const FlyState> flies_;
         std::uint32_t lunges_ = 0U;
         std::uint32_t licks_ = 0U;
+        std::uint32_t lipLicks_ = 0U;
         GeckoLunge lastLunge_;
     };
 }

@@ -54,6 +54,17 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 195 (2026-10-20) — a gecko licks its lips
+
+A gecko's hunt ended without a trace. `GeckoState::lipLick` (0..1) now carries the lick:
+as a hunt ends (the lunge taken, or the stalk given up) the tongue comes out over the lips
+for `LipLickSeconds` (0.5 s), rising at 8/s and drawn in at 6/s; the licks are counted
+(`LipLickCount()`). In the near renderer a short pink tongue tube with a rounded tip comes
+forward and down from the lips by the lick, drawn only while out as the eye lick is (the
+gecko's vertex headroom covers both). The geckos report line gains "and licks its lips as
+a hunt ends" (pinned). Core check: the hunt over, the gecko has licked its lips, the lick
+drawn in again within a second and a half of the rest's start. Native `geckos` passes.
+
 ## Loop pass 194 (2026-10-20) — a resting frog's throat pumps
 
 A resting frog's throat lay slack between calls. `FrogState::gular` (0..1) now carries the

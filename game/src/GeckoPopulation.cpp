@@ -203,6 +203,9 @@ namespace island
                 agent.behaviorSeconds = 4.0f;
                 agent.huntCooldown = HuntCooldownSeconds;
                 agent.prey = -1;
+                // The hunt over, the gecko licks its lips.
+                agent.lipLickSeconds = LipLickSeconds;
+                ++lipLicks_;
             }
         } else {
             // A fly hanging low within reach of a resting gecko, on ground it accepts, is prey.
@@ -260,6 +263,9 @@ namespace island
         if (licking && !agent.licking) { ++licks_; agent.state.lickSide = -agent.state.lickSide; }
         agent.licking = licking;
         agent.state.eyeLick += std::clamp((licking ? 1.0f : 0.0f) - agent.state.eyeLick,
+            -deltaSeconds * 6.0f, deltaSeconds * 8.0f);
+        agent.lipLickSeconds = std::max(0.0f, agent.lipLickSeconds - deltaSeconds);
+        agent.state.lipLick += std::clamp((agent.lipLickSeconds > 0.0f ? 1.0f : 0.0f) - agent.state.lipLick,
             -deltaSeconds * 6.0f, deltaSeconds * 8.0f);
         const float visibilityTarget = agent.state.behavior == GeckoBehavior::Hidden ? 0.0f : 1.0f;
         agent.state.visibility += std::clamp(visibilityTarget - agent.state.visibility,
