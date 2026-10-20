@@ -1354,6 +1354,8 @@ def main():
                 raise RuntimeError("current bird wing stretch is missing; check for a stale executable")
             if "a ground snake lifts its head to look at the walker standing off within fourteen metres, and keeps it low to slip away closer" not in diagnostics:
                 raise RuntimeError("current snake head lift is missing; check for a stale executable")
+            if "one paused on the sand feeds, its small claw picking at the sand and lifting to its mouth" not in diagnostics:
+                raise RuntimeError("current hermit crab feeding is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:

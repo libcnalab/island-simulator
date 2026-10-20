@@ -31,6 +31,11 @@ namespace island
         /** @brief 0..1 pulled into the shell: body, legs, eyes and antennae drawn back
          *  through the aperture, the claws closing it. */
         float withdrawAmount = 0.0f;
+        /** @brief 0..1 feeding: a crab paused on the sand, out of its shell, picks at the
+         *  sand with its small claw and lifts it to its mouth, feedPhase carrying the
+         *  pick-and-lift rhythm. */
+        float feedAmount = 0.0f;
+        float feedPhase = 0.0f;
         float scale = 1.0f;
         HermitCrabBehavior behavior = HermitCrabBehavior::Pause;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
@@ -60,6 +65,11 @@ namespace island
         static constexpr float ClearSeconds = 3.0f;
         [[nodiscard]] std::size_t WithdrawnCount() const noexcept;
         [[nodiscard]] std::uint32_t WithdrawCount() const noexcept { return withdrawals_; }
+        /** @brief Feeding bouts begun (a pause on the sand, out of the shell, standing
+         *  still) and the crabs mid-bout. */
+        [[nodiscard]] std::uint32_t FeedCount() const noexcept { return feeds_; }
+        [[nodiscard]] std::size_t FeedingCount() const noexcept;
+        static constexpr float FeedPickRate = 4.5f;
 
         explicit HermitCrabGroup(const IslandTerrain& terrain);
         void Update(float deltaSeconds, float observerX, float observerY,
@@ -85,6 +95,7 @@ namespace island
             float accumulatedSeconds = 0.0f;
             std::uint32_t transitionCount = 0U;
             float clearSeconds = 0.0f;
+            bool feeding = false;
         };
 
         void Initialize(std::size_t index);
@@ -103,5 +114,6 @@ namespace island
         int reducedCount_ = 0;
         int dormantCount_ = 0;
         std::uint32_t withdrawals_ = 0U;
+        std::uint32_t feeds_ = 0U;
     };
 }

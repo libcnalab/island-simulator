@@ -475,12 +475,19 @@ namespace island
 
             for (const float side : {-1.0f, 1.0f}) {
                 const bool major = side > 0.0f;
+                // Feeding, the small claw dips to the sand and lifts to the mouth in turn,
+                // the forearm following it halfway; the big claw is held as it was.
+                const float feed = major ? 0.0f : std::clamp(crab.feedAmount, 0.0f, 1.0f);
+                const float pick = std::sin(crab.feedPhase);
+                const Vector3 feedOffset = (pick > 0.0f
+                    ? (forward * .020f - up * .030f) * pick
+                    : (up * .028f - forward * .075f - right * (side * .045f)) * (-pick)) * (feed * scale);
                 const Vector3 root = head + right * (side * .045f * scale)
                     + forward * (.010f * scale);
                 const Vector3 elbow = head + right * (side * .105f * scale)
-                    + forward * (.080f * scale) + up * (.015f * scale);
+                    + forward * (.080f * scale) + up * (.015f * scale) + feedOffset * .5f;
                 const Vector3 wrist = head + right * (side * .132f * scale)
-                    + forward * (.145f * scale) - up * (.005f * scale);
+                    + forward * (.145f * scale) - up * (.005f * scale) + feedOffset;
                 const Vector3 palm = wrist + forward * (.030f * scale);
                 AppendTaperedLimbSegment(vertices, root, elbow,
                     .020f * scale, .016f * scale, limb);

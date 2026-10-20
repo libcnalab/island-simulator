@@ -133,6 +133,13 @@ namespace island
         assert(fullCount_ + reducedCount_ + dormantCount_ == static_cast<int>(Count));
     }
 
+    std::size_t HermitCrabGroup::FeedingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.feeding ? 1U : 0U;
+        return count;
+    }
+
     std::size_t HermitCrabGroup::WithdrawnCount() const noexcept
     {
         std::size_t count = 0;
@@ -192,6 +199,16 @@ namespace island
             && agent.clearSeconds < ClearSeconds ? 1.0f : 0.0f;
         agent.state.withdrawAmount += std::clamp(withdrawTarget - agent.state.withdrawAmount,
                                                  -deltaSeconds * 1.5f, deltaSeconds * 4.0f);
+        // Paused on the sand, out of its shell and standing still, the crab feeds: the
+        // small claw picks at the sand and lifts to the mouth in a steady rhythm.
+        const bool feeding = agent.state.behavior == HermitCrabBehavior::Pause
+            && agent.state.withdrawAmount <= 0.0f && agent.state.speed < .02f;
+        if (feeding && !agent.feeding) ++feeds_;
+        agent.feeding = feeding;
+        agent.state.feedAmount += std::clamp((feeding ? 1.0f : 0.0f) - agent.state.feedAmount,
+                                             -deltaSeconds * 4.0f, deltaSeconds * 3.0f);
+        if (agent.state.feedAmount > .01f)
+            agent.state.feedPhase = std::fmod(agent.state.feedPhase + deltaSeconds * FeedPickRate, TwoPi);
         agent.state.speed += std::clamp(targetSpeed - agent.state.speed,
                                         -deltaSeconds * 1.7f,
                                         deltaSeconds * 2.4f);

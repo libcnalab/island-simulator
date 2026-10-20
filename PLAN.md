@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 155 (2026-10-20) — a hermit crab feeds
+
+A hermit crab paused on the sand merely stood. `HermitCrabState::feedAmount` (0..1) and
+`feedPhase` now carry the feed: paused, out of its shell and standing still, the crab's
+small claw picks at the sand and lifts to its mouth at `FeedPickRate` (4.5 rad/s), the
+bouts counted (`FeedCount()`, `FeedingCount()`), rising at 3/s and dropping at 4/s when it
+forages on or withdraws. In the near renderer the minor claw's wrist (and palm and fingers
+with it) dips 3 cm to the sand on the first half of each cycle and lifts 2.8 cm up and
+7.5 cm back toward the mouth on the second, the forearm following halfway; the big claw is
+held as it was. The hermit crabs report line gains "one paused on the sand feeds, its small
+claw picking at the sand and lifting to its mouth" (pinned). Core check: a crab watched
+from twenty metres feeds to full on a pause with the rhythm advancing and stops to forage
+again, and no withdrawn crab feeds. Native `hermit-crabs` passes.
+
 ## Loop pass 154 (2026-10-20) — a snake lifts its head to look
 
 A ground snake lay flat whatever the walker did short of its retreat range.

@@ -2511,7 +2511,8 @@ namespace island
                      "a crab near its colony's burrow bolts down the hole and comes up once the beach has been clear a few seconds; "
                      "a crab paused in the open waves a claw, raised and swept up and down for a couple of seconds, a second into each pause and every nine seconds or so after\n"
                   << "island-simulator: hermit crabs " << hermitCrabGroup_.Crabs().size()
-                  << " agents in deterministic sheltered-beach habitats; one still pressed after its retreat pulls into its shell until the beach is clear\n"
+                  << " agents in deterministic sheltered-beach habitats; one still pressed after its retreat pulls into its shell until the beach is clear; "
+                  << "one paused on the sand feeds, its small claw picking at the sand and lifting to its mouth\n"
                   << "island-simulator: coconut crabs " << coconutCrabGroup_.Crabs().size()
                   << " agents in deterministic coastal palm-zone habitats; "
                   << "a foraging crab walks to a coconut lying in its range and works it with its claws until it is gone; "

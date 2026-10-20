@@ -3703,6 +3703,23 @@ int main()
         }
         Check(emerged,"with the beach clear the withdrawn hermit crab comes out within ten seconds");
     }
+    {
+        // Feeding: a crab watched from twenty metres feeds on each pause, the small claw's
+        // rhythm advancing, and stops to forage again; a crab in its shell does not feed.
+        island::HermitCrabGroup feeders(terrain);
+        const auto first=feeders.Crabs()[0];
+        float peak=0.0f,phase=0.0f; bool stopped=false,shellFed=false;
+        for(int frame=0;frame<900;++frame) {
+            feeders.Update(1.0f/60.0f,first.x+20.0f,first.y+1.6f,first.z);
+            const auto& crab=feeders.Crabs()[0];
+            peak=std::max(peak,crab.feedAmount);
+            if(crab.feedAmount>.9f) phase=std::max(phase,crab.feedPhase);
+            if(peak>.9f&&crab.feedAmount<.1f&&crab.behavior==island::HermitCrabBehavior::Forage) stopped=true;
+            for(const auto& other:feeders.Crabs()) if(other.withdrawAmount>.5f&&other.feedAmount>.1f) shellFed=true;
+        }
+        Check(feeders.FeedCount()>=1U&&peak>.9f&&phase>1.0f&&stopped&&!shellFed,
+              "a paused hermit crab feeds with its small claw and goes on foraging");
+    }
 
     island::CoconutCrabGroup coconutCrabs(terrain);
     island::CoconutCrabGroup repeatedCoconutCrabs(terrain);
