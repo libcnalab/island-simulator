@@ -54,6 +54,26 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 85 (2026-10-20) — a coconut crab climbs a palm
+
+The coconut crabs worked the nuts on the ground but never climbed, which is the thing a
+coconut crab is known for. `CoconutCrabGroup::SetPalms` gives them the palms; every fourth
+forage of a crab that finds no coconut (`ChooseTrunk`: the nearest living palm of scale 0.8
+or more whose trunk stands inside its range) is a climb: the walk to the stand at the
+trunk's foot (0.42 m from the axis), then `CoconutCrabBehavior::Climb`: up the trunk at
+0.3 m/s to 2.8 m, a four-second pause, down at 0.35 m/s, and off to rest at the foot; a
+threat does not call a crab down off a trunk. The state carries `climbAmount` (rising over
+the first 0.6 m) and the trunk's axis, and the crab renderer blends the body's frame from
+the ground's to one with forward up the trunk and up pointing away from the axis, so the
+crab hangs on the bark head up with its underside to the trunk; the legs work at the climb's
+rhythm. `ClimbCount()` and `ClimbingCount()` expose it. The startup report's coconut-crab
+line gains "every fourth forage without one is a climb up a living palm trunk, a pause near
+three metres up, and the way down", pinned by the native capture tool. Core checks: with a
+living palm two metres from a crab's home it climbs the trunk, body turned up it, within
+five minutes, reaches the climbing height, and is back on the ground within forty seconds
+of the top; the long-session grounding invariant now allows a climbing crab to be up to the
+climbing height above its spot. Native `coconut-crabs` passes.
+
 ## Loop pass 84 (2026-10-20) — the cicadas fall silent near a walker
 
 The cicadas called on whoever stood under the trunk. `CicadaColony` now keeps the observer

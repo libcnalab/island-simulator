@@ -817,10 +817,19 @@ namespace island
                                const CoconutCrabState& crab)
         {
             const Vector3 centre(crab.x, crab.y, crab.z);
-            const Vector3 forward(std::cos(crab.headingRadians), 0.0f,
-                                  std::sin(crab.headingRadians));
-            const Vector3 right(-forward.Z, 0.0f, forward.X);
-            const Vector3 up = Vector3::Up;
+            const Vector3 flatForward(std::cos(crab.headingRadians), 0.0f,
+                                      std::sin(crab.headingRadians));
+            // On a trunk the body turns up it, head up, its underside to the bark: the frame
+            // blends from the ground's to one whose forward is up and whose up points away
+            // from the trunk's axis.
+            const float climb = std::clamp(crab.climbAmount, 0.0f, 1.0f);
+            Vector3 radial(crab.x - crab.trunkX, 0.0f, crab.z - crab.trunkZ);
+            if (radial.LengthSquared() < 1.0e-6f) radial = -flatForward;
+            radial = Vector3::Normalize(radial);
+            Vector3 up = Vector3::Normalize(Vector3::Lerp(Vector3::Up, radial, climb));
+            Vector3 forward = Vector3::Normalize(Vector3::Lerp(flatForward, Vector3::Up, climb));
+            const Vector3 right = Vector3::Normalize(Vector3::Cross(up, forward));
+            forward = Vector3::Normalize(Vector3::Cross(right, up));
             const float scale = crab.scale;
             const std::array<Color, 4> plates = {{
                 Color(108, 116, 95, 255), Color(128, 91, 82, 255),

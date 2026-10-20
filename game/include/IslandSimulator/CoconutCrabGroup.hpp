@@ -12,7 +12,7 @@ namespace island
 {
     class IslandTerrain;
 
-    enum class CoconutCrabBehavior : std::uint8_t { Rest, Forage, Retreat };
+    enum class CoconutCrabBehavior : std::uint8_t { Rest, Forage, Retreat, Climb };
 
     struct CoconutCrabState
     {
@@ -20,12 +20,17 @@ namespace island
         float headingRadians = 0.0f, speed = 0.0f;
         float legPhase = 0.0f, clawPose = 0.0f, scale = 1.0f;
         bool working = false;   // claws on a lying coconut
+        /** @brief 0..1 on a palm trunk: the body turned up the trunk, its underside to the
+         *  bark; trunkX/Z is the trunk's axis the renderer faces the body away from. */
+        float climbAmount = 0.0f;
+        float trunkX = 0.0f, trunkZ = 0.0f;
         CoconutCrabBehavior behavior = CoconutCrabBehavior::Rest;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
         std::uint8_t colorVariant = 0U;
     };
 
     struct FallingFruit;
+    struct PalmPlacement;
 
     struct CoconutCrabHome { float x = 0.0f, z = 0.0f, radius = 0.0f; };
 
@@ -55,6 +60,17 @@ namespace island
         [[nodiscard]] std::span<const std::size_t> EatenCoconuts() const noexcept { return eaten_; }
         [[nodiscard]] std::uint32_t WorkCount() const noexcept { return works_; }
         static constexpr float WorkSeconds = 18.0f;
+        /** @brief The palms: every fourth forage of a crab with a living trunk in its range is
+         *  a climb: the walk to the trunk, up it at ClimbSpeed to ClimbHeight, a pause, and
+         *  down again. A climbing crab is on the trunk, not the ground. */
+        void SetPalms(std::span<const PalmPlacement> palms) noexcept { palms_ = palms; }
+        [[nodiscard]] std::uint32_t ClimbCount() const noexcept { return climbs_; }
+        [[nodiscard]] std::size_t ClimbingCount() const noexcept;
+        static constexpr float ClimbHeight = 2.8f;
+        static constexpr float ClimbSpeed = 0.3f;
+        static constexpr float DescendSpeed = 0.35f;
+        static constexpr float ClimbPauseSeconds = 4.0f;
+        static constexpr float TrunkStand = 0.42f;
         [[nodiscard]] int FullSimulationCount() const noexcept { return fullCount_; }
         [[nodiscard]] int ReducedSimulationCount() const noexcept { return reducedCount_; }
         [[nodiscard]] int DormantSimulationCount() const noexcept { return dormantCount_; }
@@ -70,8 +86,13 @@ namespace island
             std::uint32_t transitions = 0U;
             int nutTarget = -1;
             float workSeconds = 0.0f;
+            int trunkTarget = -1;        // index into the palms while walking to one
+            float climbY = 0.0f;         // height up the trunk
+            float climbPause = 0.0f;     // remaining pause at the top
+            bool descending = false;
         };
         bool ChooseNut(Agent& agent) noexcept;
+        bool ChooseTrunk(Agent& agent) noexcept;
         void Initialize(std::size_t index);
         void UpdateAgent(Agent&, float, float, float, bool) noexcept;
         [[nodiscard]] bool IsValid(float x, float z,
@@ -85,6 +106,8 @@ namespace island
         std::span<const FallingFruit> lyingFruit_;
         std::vector<std::size_t> eaten_;
         std::uint32_t works_ = 0U;
+        std::span<const PalmPlacement> palms_;
+        std::uint32_t climbs_ = 0U;
         int fullCount_ = 0, reducedCount_ = 0, dormantCount_ = 0;
     };
 }

@@ -2181,6 +2181,7 @@ namespace island
         birdShadowRenderer_=std::make_unique<BirdShadowRenderer>(device,terrain_);
         cascadeMistRenderer_=std::make_unique<CascadeMistRenderer>(device);
         fallingFruit_.SetPalms(vegetationLayout_.Palms());
+        coconutCrabGroup_.SetPalms(vegetationLayout_.Palms());
         helicopterRenderer_=std::make_unique<HelicopterRenderer>(device,*helicopterPlacement_);
         palmRenderer_ = std::make_unique<PalmRenderer>(
             device, vegetationLayout_, qualityProfile_.vegetationMaximumDistanceScale);
@@ -2364,7 +2365,8 @@ namespace island
                   << " agents in deterministic sheltered-beach habitats; one still pressed after its retreat pulls into its shell until the beach is clear\n"
                   << "island-simulator: coconut crabs " << coconutCrabGroup_.Crabs().size()
                   << " agents in deterministic coastal palm-zone habitats; "
-                  << "a foraging crab walks to a coconut lying in its range and works it with its claws until it is gone\n"
+                  << "a foraging crab walks to a coconut lying in its range and works it with its claws until it is gone; "
+                     "every fourth forage without one is a climb up a living palm trunk, a pause near three metres up, and the way down\n"
                   << "island-simulator: an ant trail whose food end lies near a fallen fruit bends to it and the carriers come back from the fruit\n"
                   << "island-simulator: the grass bends under the nearest six animals and the resident as they pass, not only under the walker\n"
                   << "island-simulator: the bushes and understory are brushed aside by the same bodies as they pass\n"

@@ -3498,8 +3498,10 @@ int main()
                       &&sample.signedShoreDistance>=island::CoconutCrabGroup::MinimumShoreDistance
                       &&sample.signedShoreDistance<=island::CoconutCrabGroup::MaximumShoreDistance
                       &&sample.slopeRadians<.42f
-                      &&std::fabs(crab.y-sample.height-.080f)<.002f,
-                  "coconut crabs remain grounded in bounded coastal habitats");
+                      &&(crab.behavior==island::CoconutCrabBehavior::Climb
+                         ? crab.y>=sample.height+.079f&&crab.y<=sample.height+.081f+island::CoconutCrabGroup::ClimbHeight
+                         : std::fabs(crab.y-sample.height-.080f)<.002f),
+                  "coconut crabs remain grounded in bounded coastal habitats, or on a trunk while climbing");
             Check(std::isfinite(crab.speed)&&crab.speed>=0.0f
                       &&std::isfinite(crab.legPhase)&&std::fabs(crab.legPhase)<=1.001f
                       &&crab.clawPose>=.13f&&crab.clawPose<=.51f,
@@ -3510,6 +3512,38 @@ int main()
     }
     Check(observedCoconutRest&&observedCoconutForage,
           "coconut crabs complete rest and forage activity states");
+    {
+        // A living palm in a crab's range: every fourth forage without a coconut is a climb
+        // up the trunk, a pause near three metres up, and the way down to rest at its foot.
+        island::CoconutCrabGroup climbers(terrain);
+        const auto& home=climbers.Homes()[0];
+        std::vector<island::PalmPlacement> palms(1);
+        palms[0].x=home.x+2.0f;palms[0].z=home.z;palms[0].y=terrain.Height(palms[0].x,palms[0].z);
+        palms[0].scale=1.0f;palms[0].condition=island::PalmCondition::Living;
+        climbers.SetPalms(palms);
+        bool up=false,turned=false;float top=0.0f;
+        for(int frame=0;frame<9000&&!(up&&turned&&top>=island::CoconutCrabGroup::ClimbHeight-.01f);++frame) {
+            climbers.Update(1.0f/30.0f,home.x+12.0f,terrain.Height(home.x,home.z)+1.0f,home.z);
+            const auto& crab=climbers.Crabs()[0];
+            if(crab.behavior==island::CoconutCrabBehavior::Climb) {
+                const float lift=crab.y-terrain.Height(crab.x,crab.z)-.080f;
+                top=std::max(top,lift);
+                if(lift>1.5f) up=true;
+                if(crab.climbAmount>.9f&&std::hypot(crab.x-palms[0].x,crab.z-palms[0].z)<island::CoconutCrabGroup::TrunkStand+.15f) turned=true;
+            }
+        }
+        Check(up&&turned&&climbers.ClimbCount()>=1U,
+              "a coconut crab walks to the palm in its range and climbs the trunk, body turned up it, within five minutes");
+        Check(top>=island::CoconutCrabGroup::ClimbHeight-.01f,"the climb reaches the climbing height");
+        bool down=false;
+        for(int frame=0;frame<1200&&!down;++frame) {
+            climbers.Update(1.0f/30.0f,home.x+12.0f,terrain.Height(home.x,home.z)+1.0f,home.z);
+            const auto& crab=climbers.Crabs()[0];
+            down=crab.behavior!=island::CoconutCrabBehavior::Climb&&crab.climbAmount==0.0f
+                &&std::fabs(crab.y-terrain.Height(crab.x,crab.z)-.080f)<.002f;
+        }
+        Check(down,"the crab comes down the trunk and is back on the ground within forty seconds of the top");
+    }
     Check(coconutCrabs.FullSimulationCount()+coconutCrabs.ReducedSimulationCount()
                   +coconutCrabs.DormantSimulationCount()
               ==static_cast<int>(island::CoconutCrabGroup::Count),

@@ -2,6 +2,7 @@
 
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/FallingFruitField.hpp"
+#include "IslandSimulator/VegetationLayout.hpp"
 
 #include <algorithm>
 #include <array>
@@ -140,6 +141,29 @@ namespace island
         return agent.nutTarget >= 0;
     }
 
+    // The nearest living palm whose trunk stands inside the crab's range.
+    bool CoconutCrabGroup::ChooseTrunk(Agent& agent) noexcept
+    {
+        agent.trunkTarget = -1;
+        float best = std::numeric_limits<float>::max();
+        for (std::size_t i = 0; i < palms_.size(); ++i) {
+            const PalmPlacement& palm = palms_[i];
+            if (palm.condition != PalmCondition::Living || palm.scale < .8f
+                || !std::isfinite(palm.x) || !std::isfinite(palm.z)) continue;
+            if (std::hypot(palm.x - agent.home.x, palm.z - agent.home.z) > agent.home.radius * .85f) continue;
+            const float distance = std::hypot(palm.x - agent.state.x, palm.z - agent.state.z);
+            if (distance < best) { best = distance; agent.trunkTarget = static_cast<int>(i); }
+        }
+        return agent.trunkTarget >= 0;
+    }
+
+    std::size_t CoconutCrabGroup::ClimbingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.state.behavior == CoconutCrabBehavior::Climb ? 1U : 0U;
+        return count;
+    }
+
     void CoconutCrabGroup::UpdateAgent(Agent& agent, const float deltaSeconds,
                                        const float observerX, const float observerZ,
                                        const bool observerValid) noexcept
@@ -148,10 +172,39 @@ namespace island
         const float observerDistance = observerValid
             ? std::hypot(agent.state.x - observerX, agent.state.z - observerZ)
             : std::numeric_limits<float>::infinity();
+        // On the trunk: up at the climbing speed, a pause at the top, down again, and off
+        // onto the ground; a threat does not call a crab down off a trunk.
+        if (agent.state.behavior == CoconutCrabBehavior::Climb) {
+            if (!agent.descending) {
+                agent.climbY = std::min(ClimbHeight, agent.climbY + ClimbSpeed * deltaSeconds);
+                if (agent.climbY >= ClimbHeight) {
+                    agent.climbPause -= deltaSeconds;
+                    if (agent.climbPause <= 0.0f) agent.descending = true;
+                }
+            } else {
+                agent.climbY = std::max(0.0f, agent.climbY - DescendSpeed * deltaSeconds);
+            }
+            const float onTrunk = std::clamp(agent.climbY / .6f, 0.0f, 1.0f);
+            agent.state.climbAmount = agent.descending && agent.climbY <= 0.0f ? 0.0f : onTrunk;
+            agent.state.speed = 0.0f;
+            agent.state.working = false;
+            agent.steeringPhase = std::fmod(agent.steeringPhase + deltaSeconds * .52f, TwoPi);
+            agent.state.legPhase = std::sin(agent.climbY * 9.0f) * (agent.climbY > 0.0f && agent.climbY < ClimbHeight ? 1.0f : 0.0f);
+            agent.state.clawPose = .40f + .10f * std::sin(agent.climbY * 9.0f);
+            agent.state.y = terrain_.Height(agent.state.x, agent.state.z) + .080f + agent.climbY;
+            if (agent.descending && agent.climbY <= 0.0f) {
+                agent.state.behavior = CoconutCrabBehavior::Rest;
+                agent.behaviorSeconds = 3.0f;
+                agent.descending = false;
+                agent.trunkTarget = -1;
+            }
+            return;
+        }
         if (observerDistance < 5.5f
             && agent.state.behavior != CoconutCrabBehavior::Retreat) {
             agent.state.behavior = CoconutCrabBehavior::Retreat;
             agent.behaviorSeconds = 1.8f;
+            agent.trunkTarget = -1;
             agent.state.headingRadians = std::atan2(
                 agent.state.z - observerZ, agent.state.x - observerX);
         } else if ((agent.behaviorSeconds -= deltaSeconds) <= 0.0f) {
@@ -160,12 +213,38 @@ namespace island
                 agent.state.behavior = CoconutCrabBehavior::Forage;
                 agent.behaviorSeconds = 4.0f + static_cast<float>(agent.transitions % 4U) * .75f;
                 // A coconut lying in range is the forage: the walk there and the work on it.
+                // Every fourth forage without one is a climb: the walk to a trunk and up it.
                 if (ChooseNut(agent)) agent.behaviorSeconds += 60.0f;
+                else if (agent.transitions % 4U == 1U && ChooseTrunk(agent)) agent.behaviorSeconds += 40.0f;
             } else {
                 agent.nutTarget = -1;
+                agent.trunkTarget = -1;
                 agent.state.working = false;
                 agent.state.behavior = CoconutCrabBehavior::Rest;
                 agent.behaviorSeconds = 1.8f + static_cast<float>(agent.transitions % 3U) * .60f;
+            }
+        }
+        // On the way to a trunk: steer to the stand at its foot; there, the climb begins.
+        bool atTrunk = false;
+        if (agent.state.behavior == CoconutCrabBehavior::Forage && agent.trunkTarget >= 0) {
+            const PalmPlacement& palm = palms_[static_cast<std::size_t>(agent.trunkTarget)];
+            const float toX = palm.x - agent.state.x, toZ = palm.z - agent.state.z;
+            const float distance = std::hypot(toX, toZ);
+            if (distance > TrunkStand + .12f) {
+                agent.state.headingRadians = MoveAngle(agent.state.headingRadians,
+                    std::atan2(toZ, toX), deltaSeconds * 2.3f);
+            } else {
+                atTrunk = true;
+                agent.state.behavior = CoconutCrabBehavior::Climb;
+                agent.state.trunkX = palm.x;
+                agent.state.trunkZ = palm.z;
+                // Face the trunk from the stand, the body set to turn up it.
+                agent.state.headingRadians = std::atan2(toZ, toX);
+                agent.climbY = 0.0f;
+                agent.climbPause = ClimbPauseSeconds;
+                agent.descending = false;
+                agent.state.speed = 0.0f;
+                ++climbs_;
             }
         }
         agent.steeringPhase = std::fmod(agent.steeringPhase + deltaSeconds * .52f, TwoPi);
@@ -199,12 +278,12 @@ namespace island
             agent.state.working = false;
             agent.workSeconds = 0.0f;
         }
-        const float targetSpeed = agent.state.behavior == CoconutCrabBehavior::Rest || atNut
+        const float targetSpeed = agent.state.behavior == CoconutCrabBehavior::Rest || atNut || atTrunk
             ? 0.0f : (agent.state.behavior == CoconutCrabBehavior::Retreat ? .95f : .30f);
         agent.state.speed += std::clamp(targetSpeed - agent.state.speed,
                                         -deltaSeconds * 1.5f, deltaSeconds * 2.2f);
-        if (agent.nutTarget >= 0) {
-            // The nut is inside the range; the walk to it is not a wander.
+        if (agent.nutTarget >= 0 || agent.trunkTarget >= 0) {
+            // The nut or the trunk is inside the range; the walk to it is not a wander.
         } else if (std::hypot(agent.state.x - agent.home.x, agent.state.z - agent.home.z)
                 > agent.home.radius * .72f) {
             agent.state.headingRadians = MoveAngle(agent.state.headingRadians,
@@ -226,6 +305,7 @@ namespace island
                 agent.home.z - agent.state.z, agent.home.x - agent.state.x);
         }
         agent.state.y = terrain_.Height(agent.state.x, agent.state.z) + .080f;
+        agent.state.climbAmount = 0.0f;
         agent.state.legPhase = std::sin(agent.steeringPhase * 3.0f)
             * std::clamp(agent.state.speed / .30f, 0.0f, 1.0f);
         agent.state.clawPose = agent.state.working
