@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 180 (2026-10-20) — a goat chews its cud
+
+A goat at rest held its jaw shut. `GoatState::chew` (-1..1) now carries the cud: at rest,
+undisturbed (no walker in the sentinel range, no startle, no retreat, standing still or
+lying), the goat chews, the jaw swinging side to side at `ChewRate` (6.5 rad/s) under an
+envelope easing in at 1/s and out at 2/s with the next walk or an alert; `ChewingCount()`
+counts the goats chewing. `BuildGoatMesh` takes the chew as a sixth argument and swings
+the beard's stations 1.6 to 2.6 cm aside with a 1 cm drop, the mouth creases following,
+nothing else moving. The goats report line gains "a goat at rest, undisturbed, chews its
+cud, the jaw and beard swinging side to side" (pinned). GoatHerdTests: within a minute a
+resting goat chews past eight tenths to either side while a walking goat's jaw is still,
+and the mesh with the jaw swung differs from the still mesh in beard and muzzle-detail
+vertices alone. Native `goats` passes.
+
 ## Loop pass 179 (2026-10-20) — a coconut crab's claws knock on the shell
 
 A crab working a coconut did it in silence. `CoconutCrabGroup::Knock` now notes a knock of

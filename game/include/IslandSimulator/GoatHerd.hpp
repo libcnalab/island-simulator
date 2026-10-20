@@ -16,6 +16,9 @@ struct GoatState {
     // The ear flick: magnitude 0..1 one ear flicked back at a fly and settling, its sign the
     // ear (+ right, - left); the ears take turns flick by flick.
     float earFlick=0;
+    // -1..1 the jaw's sideways chew: a goat at rest, undisturbed, chews its cud, the lower
+    // jaw and beard swinging side to side; 0 on the move or alert.
+    float chew=0;
     GoatBehavior behavior=GoatBehavior::Graze;
     GoatGroundPose pose{}; // Authoritative planted-foot pose shared with rendering.
     bool operator==(const GoatState&) const = default;
@@ -70,6 +73,9 @@ public:
     [[nodiscard]] std::uint32_t EarFlickCount() const noexcept {return earFlicks_;}
     [[nodiscard]] std::size_t EarFlickingCount() const noexcept;
     static constexpr float EarFlickPeriodSeconds=4.4f,EarFlickSeconds=0.3f;
+    // Goats chewing the cud this moment (at rest, undisturbed, the chew past half).
+    [[nodiscard]] std::size_t ChewingCount() const noexcept;
+    static constexpr float ChewRate=6.5f;
 private:
     void FindDrinkingPoint(std::size_t index) noexcept;
     void Step(std::size_t index,float dt,GoatPoint observer,bool observerValid);
@@ -91,6 +97,7 @@ private:
         float restSeconds=0; bool lying=false;   // time into the undisturbed rest, and down
         float wagClock=0; bool wagging=false,wagSeeded=false; // time into the tail-flick cycle, mid-flick, and seeded
         float earClock=0,earSide=1; bool earFlicking=false;   // time into the ear-flick cycle, the ear, and mid-flick
+        float cud=0,chewPhase=0;                             // 0..1 chewing the cud, and the jaw's phase
     };
     std::array<Intent,GoatHabitat::Count> intents_{};
     float sentinelAlertSeconds_=0;

@@ -210,8 +210,9 @@ struct Builder {
     }
 };
 }
-GoatMesh BuildGoatMesh(const GoatGroundPose& pose,float grazing,bool detailed,float tailSwing,float earFlick) {
-    if(!std::isfinite(grazing)||!std::isfinite(pose.bodyBob)||!std::isfinite(tailSwing)||!std::isfinite(earFlick))throw std::invalid_argument("Invalid goat mesh pose");
+GoatMesh BuildGoatMesh(const GoatGroundPose& pose,float grazing,bool detailed,float tailSwing,float earFlick,float chew) {
+    if(!std::isfinite(grazing)||!std::isfinite(pose.bodyBob)||!std::isfinite(tailSwing)||!std::isfinite(earFlick)||!std::isfinite(chew))throw std::invalid_argument("Invalid goat mesh pose");
+    chew=std::clamp(chew,-1.0f,1.0f);
     tailSwing=std::clamp(tailSwing,-1.0f,1.0f);
     earFlick=std::clamp(earFlick,-1.0f,1.0f);
     for(const auto& leg:pose.legs)
@@ -293,8 +294,10 @@ GoatMesh BuildGoatMesh(const GoatGroundPose& pose,float grazing,bool detailed,fl
             b.part=GoatPart::Eye;b.Eye(side);
         }
     }
-    const std::array<Tube,4> beard{{{{0,.83f,.68f},.046f},{{0,.74f,.68f},.04f},
-        {{0,.65f,.65f},.025f},{{0,.59f,.62f},.003f}}};
+    // Chewing, the lower jaw swings to a side and drops a little: the beard goes with it.
+    const float jawX=chew*.016f,jawDrop=std::abs(chew)*.010f;
+    const std::array<Tube,4> beard{{{{jawX,.83f-jawDrop,.68f},.046f},{{jawX*1.3f,.74f-jawDrop,.68f},.04f},
+        {{jawX*1.5f,.65f-jawDrop,.65f},.025f},{{jawX*1.6f,.59f-jawDrop,.62f},.003f}}};
     b.part=GoatPart::Beard;b.Sweep(beard,detailed?8:5,GoatMaterial::Coat,Attachment::Head);
     // The flick swings the tail from its root, the tip out to a side by the swing.
     const std::array<Tube,4> tail{{{{0,.88f,-.52f},.042f},{{tailSwing*.055f,.94f,-.61f},.035f},
@@ -308,8 +311,8 @@ GoatMesh BuildGoatMesh(const GoatGroundPose& pose,float grazing,bool detailed,fl
             // The cap sits at z=.788; a sub-millimetre lift prevents z fighting
             // without turning either oval into a projecting button.
             b.FaceOval(side,.864f,.7886f,.0085f,.0048f);
-            const std::array<Tube,3> mouth{{{{side*.0515f,.831f,.779f},.0032f},
-                {{side*.0590f,.821f,.748f},.0037f},{{side*.0550f,.839f,.704f},.0023f}}};
+            const std::array<Tube,3> mouth{{{{side*.0515f+jawX*.4f,.831f-jawDrop*.6f,.779f},.0032f},
+                {{side*.0590f+jawX*.5f,.821f-jawDrop*.7f,.748f},.0037f},{{side*.0550f+jawX*.6f,.839f-jawDrop*.8f,.704f},.0023f}}};
             b.Sweep(mouth,5,GoatMaterial::Mouth,Attachment::Head);
         }
     }

@@ -15,5 +15,6 @@ struct GoatMesh {
 };
 // tailSwing (-1..1) swings the short tail to one side at its tip.
 // earFlick: magnitude 0..1 one ear flicked back and down about its root, its sign the ear.
-[[nodiscard]] GoatMesh BuildGoatMesh(const GoatGroundPose& pose,float grazing,bool detailed,float tailSwing=0,float earFlick=0);
+// chew: -1..1 the lower jaw swung to a side chewing the cud, the beard and mouth creases with it.
+[[nodiscard]] GoatMesh BuildGoatMesh(const GoatGroundPose& pose,float grazing,bool detailed,float tailSwing=0,float earFlick=0,float chew=0);
 }

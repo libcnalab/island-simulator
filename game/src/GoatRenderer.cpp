@@ -136,7 +136,7 @@ void GoatRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector
         if(distanceSquared>maximumDistance_*maximumDistance_
             ||!frustum.Intersects(BoundingSphere(centre,1.8f*goat.scale)))continue;
         const auto& pose=goat.pose;
-        const auto mesh=BuildGoatMesh(pose,goat.grazingPose,distanceSquared<30*30,goat.tailSwing,goat.earFlick);
+        const auto mesh=BuildGoatMesh(pose,goat.grazingPose,distanceSquared<30*30,goat.tailSwing,goat.earFlick,goat.chew);
         for(const auto& vertex:mesh.vertices) {
             const auto world=Point(pose.ToWorld(vertex.position));
             const auto n=Vector3::Normalize(Point(pose.right)*vertex.normal.x

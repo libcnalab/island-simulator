@@ -2257,7 +2257,8 @@ namespace island
                   << " agents on shared-field dry open slopes, terrain-fitted limbs, directional fur material; "
                   << "a rest two seconds in, undisturbed, settles a goat onto folded legs for a longer lie, and the walker's approach has it up at once; "
                   << "every few seconds a goat flicks its short tail side to side, two beats and still again; "
-                  << "and flicks an ear back at a fly now and then, the ears taking turns\n";
+                  << "and flicks an ear back at a fly now and then, the ears taking turns; "
+                  << "a goat at rest, undisturbed, chews its cud, the jaw and beard swinging side to side\n";
         std::cout << "island-simulator: deer " << deer_->Deer().size()
                   << " agents graze and walk in two inland clearings and the stream valley and retreat non-aggressively; "
                   << "every few seconds a deer twitches one ear back and out at a fly, the ears taking turns; "

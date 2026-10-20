@@ -343,6 +343,11 @@ void GoatHerd::Step(std::size_t index,float dt,GoatPoint observer,bool observerV
     if(earFlicking&&!intent.earFlicking) ++earFlicks_;
     intent.earFlicking=earFlicking;
     state.earFlick=(earFlicking?std::sin((intent.earClock-1.1f)/EarFlickSeconds*Pi):0.0f)*intent.earSide;
+    // The cud: at rest, undisturbed, the goat chews, the jaw swinging side to side; the
+    // chew eases in over a second and stops with the next walk or an alert.
+    intent.cud+=std::clamp((undisturbed?1.0f:0.0f)-intent.cud,-dt*2.0f,dt*1.0f);
+    if(intent.cud>.01f) intent.chewPhase=std::fmod(intent.chewPhase+dt*ChewRate,Tau);
+    state.chew=std::sin(intent.chewPhase)*intent.cud;
     if(state.speed<=.0001f) { state.speed=0;return; }
     const float heading=Wrap(state.heading+std::clamp(Wrap(intent.targetHeading-state.heading),-1.8f*dt,1.8f*dt));
     bool waitingForStep=false;
@@ -378,6 +383,12 @@ void GoatHerd::NoteDisturbance(float x,float z) noexcept {
     if(!std::isfinite(x)||!std::isfinite(z)) return;
     disturbanceX_=x;disturbanceZ_=z;disturbanceSeconds_=StartleSeconds;
 }
+std::size_t GoatHerd::ChewingCount() const noexcept {
+    std::size_t count=0;
+    for(const auto& intent:intents_) count+=intent.cud>.5f?1U:0U;
+    return count;
+}
+
 std::size_t GoatHerd::EarFlickingCount() const noexcept {
     std::size_t count=0;
     for(const auto& intent:intents_) count+=intent.earFlicking?1U:0U;

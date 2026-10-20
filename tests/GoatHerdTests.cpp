@@ -278,6 +278,32 @@ int main() {
             }
         }
         check(earStill.vertices.size()==flickedMesh.vertices.size()&&earMoved>0&&onlyEar&&onlyRight,"the ear flick does not move the one ear alone");
+        // The cud: with the walker far, within a minute a resting goat chews, the jaw swung
+        // past eight tenths to either side, and a walking goat's jaw is still; the mesh with
+        // the jaw swung differs from the still mesh in beard and muzzle-detail vertices alone.
+        bool chewLeft=false,chewRight=false,walkingChew=false;
+        for(int frame=0;frame<1200;++frame) {
+            flickers.Update(.05f,{1000,0,1000});
+            for(const auto& goat:flickers.Goats()) {
+                if(goat.behavior==GoatBehavior::Rest&&goat.chew>.8f) chewRight=true;
+                if(goat.behavior==GoatBehavior::Rest&&goat.chew<-.8f) chewLeft=true;
+                if(goat.behavior==GoatBehavior::Walk&&goat.speed>.5f&&std::abs(goat.chew)>.3f) walkingChew=true;
+            }
+        }
+        check(chewLeft&&chewRight&&!walkingChew&&flickers.ChewingCount()<=GoatHabitat::Count,"the goats do not chew the cud at rest, or chew on the move");
+        const auto chewStill=BuildGoatMesh(subject.pose,subject.grazingPose,true,0.0f,0.0f,0.0f);
+        const auto chewMesh=BuildGoatMesh(subject.pose,subject.grazingPose,true,0.0f,0.0f,1.0f);
+        std::size_t jawMoved=0; bool onlyJaw=true;
+        for(std::size_t v=0;v<chewStill.vertices.size()&&v<chewMesh.vertices.size();++v) {
+            const float d=std::abs(chewMesh.vertices[v].position.x-chewStill.vertices[v].position.x)
+                +std::abs(chewMesh.vertices[v].position.y-chewStill.vertices[v].position.y)
+                +std::abs(chewMesh.vertices[v].position.z-chewStill.vertices[v].position.z);
+            if(d>1e-4f) {
+                ++jawMoved;
+                if(chewStill.vertices[v].part!=GoatPart::Beard&&chewStill.vertices[v].part!=GoatPart::MuzzleDetail) onlyJaw=false;
+            }
+        }
+        check(chewStill.vertices.size()==chewMesh.vertices.size()&&jawMoved>0&&onlyJaw,"the chew does not move the jaw's beard and creases alone");
     }
     const std::array<CircularObstacle,1> blocked{{{0,0,400}}};
     bool rejected=false;
