@@ -1428,6 +1428,8 @@ def main():
                 raise RuntimeError("current octopus arm probe is missing; check for a stale executable")
             if "a turtle moving slow draws a front flipper up to rub its eye every twenty seconds or so, the flippers taking turns" not in diagnostics:
                 raise RuntimeError("current turtle eye rub is missing; check for a stale executable")
+            if "a skink basking in the sun flattens and spreads its body to soak the heat" not in diagnostics:
+                raise RuntimeError("current skink basking flatten is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:

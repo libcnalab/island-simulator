@@ -3296,6 +3296,28 @@ int main()
                 run=anyOut?run+1:0; longest=std::max(longest,run);
             }
             Check(flickers.FlickCount()>=2U&&tonguePeak>0.9f&&longest<=10&&!baskFlick,"a foraging skink flicks its tongue at the ground ahead and a basking one holds it in");
+            // The flatten: with the cumulus clock at a sunny moment over the first home, a
+            // basking skink flattens to full within half a minute and rounds again as it
+            // displays or gets up; a foraging skink stays round.
+            {
+                float sunny=-1.0f;
+                for(float t=0.0f;t<1200.0f&&sunny<0.0f;t+=0.5f) if(island::CloudShadow::Cover(flickHome.x,flickHome.z,t)<=0.05f) sunny=t;
+                Check(sunny>=0.0f,"the cumulus clock has a sunny moment over the first skink home");
+                flickers.SetCloudClock(sunny);
+                float flatPeak=0.0f,foragingFlat=0.0f; bool rounded=false;
+                for(int step=0;step<1200;++step) {
+                    flickers.Update(0.05f,flickHome.x+10.0f,terrain.Height(flickHome.x,flickHome.z)+1.0f,flickHome.z);
+                    for(const auto& skink:flickers.Skinks()) {
+                        if(skink.simulationTier!=island::WildlifeSimulationTier::Full) continue;
+                        if(skink.behavior==island::SkinkBehavior::Bask) flatPeak=std::max(flatPeak,skink.flatten);
+                        if(skink.behavior==island::SkinkBehavior::Forage&&skink.speed>0.3f) foragingFlat=std::max(foragingFlat,skink.flatten);
+                        if(flatPeak>0.9f&&skink.flatten<0.1f&&(skink.pushUp>0.5f||skink.behavior!=island::SkinkBehavior::Bask)) rounded=true;
+                    }
+                }
+                // (A skink just up from its bask may still be rounding as it sets off, so a
+                // forager's flatten is only held under nine tenths.)
+                Check(flatPeak>0.9f&&rounded&&foragingFlat<0.9f,"a skink basking in the sun does not flatten to it and round again, or a foraging one is flat");
+            }
         }
     }
     for(std::size_t index=0;index<skinks.Skinks().size();++index) {

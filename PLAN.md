@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 192 (2026-10-20) — a basking skink flattens to the sun
+
+A skink basking in the sun kept the round trunk of a walking one. `SkinkState::flatten`
+(0..1) now carries the soak: basking in the sun (cloud cover at or under `SunCover`) between
+its push-up displays the skink flattens and spreads at `FlattenRate` (0.8/s), rounding
+again at `RoundRate` (3/s) for a display, a cloud's shade or the walk on; `FlattenedCount()`
+counts the skinks flattened. In the renderer the trunk's widths spread a fifth wider and
+its heights sit a sixth lower by the flatten, on the same vertices. The skinks report line
+gains "a skink basking in the sun flattens and spreads its body to soak the heat,
+rounding again as it displays or gets up" (pinned). Core check: with the cumulus clock at
+a sunny moment over the first home a basking skink flattens to full within a minute and
+rounds again as it displays or gets up, a forager's flatten held under nine tenths (one
+just up from its bask may still be rounding). Native `skinks` passes.
+
 ## Loop pass 191 (2026-10-20) — a turtle rubs its eye
 
 A sea turtle moving slow never touched its face. `SeaTurtleState::scratch` (0..1) and

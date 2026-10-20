@@ -521,10 +521,13 @@ namespace island
                 {{.045f, .080f, .105f, .108f, .085f, .048f}};
             constexpr std::array<float, 6> BodyHeights =
                 {{.032f, .055f, .068f, .070f, .057f, .034f}};
-            std::array<float, 6> breathingHeights = BodyHeights;
-            for (float& height : breathingHeights) height *= breathing;
+            // Flattened to the sun, the trunk spreads a fifth wider and sits a sixth lower.
+            const float flat = std::clamp(skink.flatten, 0.0f, 1.0f);
+            std::array<float, 6> breathingHeights = BodyHeights, spreadWidths = BodyWidths;
+            for (float& height : breathingHeights) height *= breathing * (1.0f - .17f * flat);
+            for (float& width : spreadWidths) width *= 1.0f + .22f * flat;
             AppendGeckoLoft(vertices, centre, right, up, forward, BodyStations,
-                            BodyWidths, breathingHeights, scale, back, flank, underside);
+                            spreadWidths, breathingHeights, scale, back, flank, underside);
 
             const Vector3 head = centre + forward * (.345f * scale) + up * (.006f * scale);
             constexpr std::array<float, 4> HeadStations = {{-.045f, .02f, .105f, .16f}};

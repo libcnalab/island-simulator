@@ -126,6 +126,13 @@ namespace island
         assert(fullCount_ + reducedCount_ + dormantCount_ == static_cast<int>(Count));
     }
 
+    std::size_t SkinkPopulation::FlattenedCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.state.flatten > 0.5f ? 1U : 0U;
+        return count;
+    }
+
     std::size_t SkinkPopulation::FlickingCount() const noexcept
     {
         std::size_t count = 0;
@@ -218,6 +225,11 @@ namespace island
             if (flicking && !agent.flicking) ++flicks_;
             agent.flicking = flicking;
             agent.state.tongue += std::clamp((flicking ? 1.0f : 0.0f) - agent.state.tongue, -deltaSeconds * 10.0f, deltaSeconds * 12.0f);
+            // Basking in the sun, between its displays, the skink flattens and spreads its
+            // body to soak the heat; a display, a cloud's shade or getting up rounds it again.
+            const bool soaking = basking && cover <= SunCover && !displaying;
+            agent.state.flatten += std::clamp((soaking ? 1.0f : 0.0f) - agent.state.flatten,
+                                              -deltaSeconds * RoundRate, deltaSeconds * FlattenRate);
         }
         const float targetSpeed = agent.state.behavior == SkinkBehavior::Bask
             ? 0.0f : (agent.state.behavior == SkinkBehavior::Flee ? 1.65f : .42f);

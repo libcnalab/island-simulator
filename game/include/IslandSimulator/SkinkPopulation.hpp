@@ -25,6 +25,9 @@ namespace island
         /** @brief 0..1 the tongue out of the snout: a foraging skink flicks it at the ground
          *  ahead for a moment every few seconds, tasting its way; held in basking or fleeing. */
         float tongue = 0.0f;
+        /** @brief 0..1 flattened: a skink basking in the sun spreads and flattens its body to
+         *  soak the heat, rounding again as it displays or gets up. */
+        float flatten = 0.0f;
         SkinkBehavior behavior = SkinkBehavior::Bask;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
         std::uint8_t colorVariant = 0U;
@@ -66,6 +69,9 @@ namespace island
         [[nodiscard]] std::uint32_t FlickCount() const noexcept { return flicks_; }
         [[nodiscard]] std::size_t FlickingCount() const noexcept;
         static constexpr float FlickSeconds = 0.35f, FlickPeriodSeconds = 2.6f;
+        /** @brief Skinks flattened to the sun this moment (the flatten past half). */
+        [[nodiscard]] std::size_t FlattenedCount() const noexcept;
+        static constexpr float FlattenRate = 0.8f, RoundRate = 3.0f;
 
         [[nodiscard]] std::span<const SkinkState> Skinks() const noexcept { return states_; }
         [[nodiscard]] std::span<const SkinkHome> Homes() const noexcept { return homes_; }
