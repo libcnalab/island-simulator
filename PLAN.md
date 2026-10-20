@@ -233,6 +233,22 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 231 (2026-10-20) — fireflies on dry nights
+
+A tropical night detail with the light-after-the-grade path: a core `FireflySwarm` of 120
+flies, 90 in three clusters along the stream's banks (from the channel's edge out to 4.8 m)
+and 30 round the seasonal wetland, each drifting low (0.55-1.45 m over the ground) on its own
+slow Lissajous loop within a couple of metres of its home and flashing a lantern for 0.55 s
+(a quick rise, a slower fade) once in its period: 45 % of each cluster keep the cluster's beat
+(2.0-3.5 s) and flash together, the rest their own (1.6-3.5 s). They come out from properly
+dark (the sun 4 degrees below the horizon and more), keep to cover in the rain, and ease in
+and out over a few seconds (a QA view starts at the hour's presence); on a thin night only a
+share is out. `FireflyRenderer` draws each glowing one as a bright yellow-green point in a
+soft halo, additive after the night grade (they make their own light), depth-tested against
+the leaves, a few pixels across even far off, to 70 m. Core check: none by day or in the rain;
+at night some flash at every moment and every one within seconds, all low over the ground.
+`stream --time-of-day 22` shows them blinking over the bank; the day's `stream` passes.
+
 ## Loop pass 230 (2026-10-20) — the open hillsides read as grass, not paint
 
 The handoff's whole-island critique target: the open hillside 20-120 m off (the `east` view's

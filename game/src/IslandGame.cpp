@@ -2455,6 +2455,8 @@ namespace island
         timeOfDay_ = std::make_unique<TimeOfDayRenderer>(device);
         rain_ = std::make_unique<RainRenderer>(device);
         rainRings_ = std::make_unique<RainRingRenderer>(device, terrain_);
+        fireflies_ = std::make_unique<FireflySwarm>(terrain_);
+        fireflyRenderer_ = std::make_unique<FireflyRenderer>(device);
         try {
             localLights_ = std::make_unique<LocalLightRenderer>(device);
             std::cout << "island-simulator: local lights at night (the campfire, the quad's headlights) lift the night grade "
@@ -3160,6 +3162,11 @@ namespace island
             UpdateCamera(deltaSeconds);
         }
         UpdateQuad(deltaSeconds);
+        if (fireflies_) {
+            const auto& light = sun_light::Current().lighting;
+            fireflies_->Update(deltaSeconds, 1.0f - std::clamp((light.sunElevationDegrees + 4.0f) / 12.0f, 0.0f, 1.0f),
+                               weather_now::Current().rain);
+        }
         if (viewpoint_ == FixedViewpoint::QuadDriveDetail) UpdateQuadChaseCamera(deltaSeconds);
         const bool waterViewAllowed = viewpoint_ == FixedViewpoint::None
             || viewpoint_ == FixedViewpoint::WaterlineDetail
@@ -5722,6 +5729,8 @@ namespace island
             timeOfDay_->DrawGrade(light, localLit);
             timeOfDay_->DrawNightSky(cameraView_, cameraProjection_, renderCameraPosition_, light);
             timeOfDay_->DrawFlash(weather.flash);
+            if (fireflyRenderer_ && fireflies_ && fireflies_->Presence() > 0.0f && !underground)
+                fireflyRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, fireflies_->Flies());
             if (hutRenderer_)
                 hutRenderer_->DrawNightLights(cameraView_, cameraProjection_, renderCameraPosition_,
                     1.0f - std::clamp((light.sunElevationDegrees + 4.0f) / 12.0f, 0.0f, 1.0f), timeSeconds);

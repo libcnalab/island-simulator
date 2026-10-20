@@ -134,6 +134,7 @@ add_library(island_core STATIC
     game/src/QuadBike.cpp
     game/src/ExhaustSmokeField.cpp
     game/src/QuadWheelTraces.cpp
+    game/src/FireflySwarm.cpp
     game/src/SlopeScrubLayout.cpp
     game/src/LeafBladeProfile.cpp
     game/src/UnderstoryLeafProfile.cpp
@@ -711,6 +712,7 @@ if(ISLAND_BUILD_GAME)
         game/src/TyreTrackRenderer.cpp
         game/src/LocalLightRenderer.cpp
         game/src/RainRingRenderer.cpp
+        game/src/FireflyRenderer.cpp
         game/src/CrabRenderer.cpp
         game/src/CrocodileRenderer.cpp
         game/src/BoarRenderer.cpp

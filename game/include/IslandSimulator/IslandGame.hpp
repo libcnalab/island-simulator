@@ -13,6 +13,7 @@
 #include "IslandSimulator/QuadBikeRenderer.hpp"
 #include "IslandSimulator/QuadBike.hpp"
 #include "IslandSimulator/LocalLightRenderer.hpp"
+#include "IslandSimulator/FireflyRenderer.hpp"
 #include "IslandSimulator/RainRingRenderer.hpp"
 #include "IslandSimulator/QuadWheelTraces.hpp"
 #include "IslandSimulator/TyreTrackRenderer.hpp"
@@ -540,6 +541,8 @@ namespace island
         std::unique_ptr<RootingDustRenderer> exhaustRenderer_;
         std::unique_ptr<LocalLightRenderer> localLights_;
         std::unique_ptr<RainRingRenderer> rainRings_;
+        std::unique_ptr<FireflySwarm> fireflies_;
+        std::unique_ptr<FireflyRenderer> fireflyRenderer_;
         TyreTrackField tyreTracks_;
         WheelThrowField wheelDust_{WheelThrowField::Kind::Dust}, wheelSpray_{WheelThrowField::Kind::Spray};
         std::unique_ptr<TyreTrackRenderer> tyreTrackRenderer_;

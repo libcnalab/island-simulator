@@ -68,6 +68,7 @@
 #include "IslandSimulator/ExhaustSmokeField.hpp"
 #include "IslandSimulator/QuadWheelTraces.hpp"
 #include "IslandSimulator/RainRings.hpp"
+#include "IslandSimulator/FireflySwarm.hpp"
 #include "IslandSimulator/CrabBubbleField.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
 #include "IslandSimulator/CicadaColony.hpp"
@@ -6723,6 +6724,29 @@ int main()
               "the weather names parse, and there is no snow on a tropical island");
     }
     {
+        // Fireflies: none by day or in the rain; at night some flash at any moment, low over
+        // the ground, and over a few seconds every one of them flashes.
+        const island::IslandTerrain fireflyTerrain;
+        island::FireflySwarm day(fireflyTerrain), night(fireflyTerrain), wet(fireflyTerrain);
+        std::size_t dayGlow = 0, wetGlow = 0, nightPeak = 0;
+        std::array<bool, island::FireflySwarm::Count> flashed{};
+        bool low = true;
+        for (int i = 0; i < 60 * 8; ++i) {
+            day.Update(1.0f / 60.0f, 0.0f, 0.0f);
+            wet.Update(1.0f / 60.0f, 1.0f, 0.9f);
+            night.Update(1.0f / 60.0f, 1.0f, 0.0f);
+            dayGlow += day.GlowingCount();
+            wetGlow += wet.GlowingCount();
+            nightPeak = std::max(nightPeak, night.GlowingCount());
+            for (std::size_t f = 0; f < island::FireflySwarm::Count; ++f) {
+                const auto& fly = night.Flies()[f];
+                if (fly.glow > 0.05f) flashed[f] = true;
+                low = low && fly.y - std::max(fireflyTerrain.Height(fly.x, fly.z), 0.0f) < 3.5f;
+            }
+        }
+        const bool all = std::all_of(flashed.begin(), flashed.end(), [](bool b) { return b; });
+        Check(dayGlow == 0 && wetGlow == 0 && nightPeak >= 6 && all && low,
+              "fireflies only on dry nights, every one flashing within seconds, low over the ground");
         // Rain rings on the sea: world-anchored and repeatable, each inside its own cell,
         // more cells striking in heavier rain, none in no rain.
         int light = 0, heavy = 0, none = 0;
