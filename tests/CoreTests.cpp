@@ -62,6 +62,7 @@
 #include "IslandSimulator/SunShadowFade.hpp"
 #include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/SlopeScrubLayout.hpp"
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/CrabBubbleField.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
 #include "IslandSimulator/CicadaColony.hpp"
@@ -6593,6 +6594,63 @@ int main()
         Check(steepShare, "at least a quarter of the coastal scrub holds the steep banks");
         std::cout << "coastal scrub: " << scrub.size() << " bushes, " << steep << " on banks steeper than "
                   << island::SlopeScrubLayout::SteepSlope << " rad\n";
+    }
+    {
+        // The day/night clock (operator request 2026-10-20): 24 game hours in 24 real minutes,
+        // the sun's path fitted to the former fixed sun at 14:00, sunrise and sunset at six,
+        // a dark night with stars, a moon opposite the sun at full, and no jumps in the light.
+        using island::DayNightCycle;
+        const float length = std::sqrt(island::environment::SunDirectionX * island::environment::SunDirectionX
+            + island::environment::SunDirectionY * island::environment::SunDirectionY
+            + island::environment::SunDirectionZ * island::environment::SunDirectionZ);
+        const auto at14 = DayNightCycle::SunDirectionAt(DayNightCycle::DefaultHour);
+        Check(std::abs(at14.x - island::environment::SunDirectionX / length) < 1e-3f
+                  && std::abs(at14.y - island::environment::SunDirectionY / length) < 1e-3f
+                  && std::abs(at14.z - island::environment::SunDirectionZ / length) < 1e-3f,
+              "at 14:00 the sun stands where the former fixed sun was");
+        const auto sunrise = DayNightCycle::LightingAt(6.0f, 2.0f), sunset = DayNightCycle::LightingAt(18.0f, 2.0f);
+        const auto noon = DayNightCycle::LightingAt(12.0f, 2.0f), midnight = DayNightCycle::LightingAt(0.0f, 2.0f);
+        const auto afternoon = DayNightCycle::LightingAt(DayNightCycle::DefaultHour, 2.0f);
+        Check(std::abs(sunrise.sunElevationDegrees) < 0.5f && std::abs(sunset.sunElevationDegrees) < 0.5f
+                  && sunrise.toSun.x * sunset.toSun.x + sunrise.toSun.z * sunset.toSun.z < -0.9f,
+              "the sun rises at six on one side and sets at six on the other");
+        Check(std::abs(noon.sunElevationDegrees - (90.0f - DayNightCycle::LatitudeDegrees())) < 0.5f,
+              "the noon sun stands at ninety degrees less the latitude");
+        Check(afternoon.grade.x == 1.0f && afternoon.grade.y == 1.0f && afternoon.grade.z == 1.0f
+                  && afternoon.shadowStrength == 1.0f && afternoon.starVisibility == 0.0f,
+              "the afternoon is full daylight with full shadows and no stars");
+        Check(std::max({midnight.grade.x, midnight.grade.y, midnight.grade.z}) < 0.30f
+                  && midnight.grade.z > midnight.grade.x && midnight.starVisibility > 0.99f
+                  && midnight.sunVisibility == 0.0f && midnight.shadowStrength == 0.0f,
+              "midnight is dark and blue, starry, without sun or shadows");
+        const auto fullMoon = DayNightCycle::LightingAt(0.0f, 0.5f * DayNightCycle::LunarDays);
+        const auto newMoon = DayNightCycle::LightingAt(0.0f, 0.0f);
+        Check(fullMoon.moonIllumination > 0.99f && newMoon.moonIllumination < 0.01f
+                  && fullMoon.moonElevationDegrees > 60.0f && fullMoon.moonLight > newMoon.moonLight + 0.5f
+                  && fullMoon.grade.z > newMoon.grade.z,
+              "a full moon stands high at midnight and lightens the night; a new moon does not");
+        float largestStep = 0.0f;
+        auto previous = DayNightCycle::LightingAt(0.0f, 2.0f);
+        for (int minute = 1; minute <= 24 * 60; ++minute) {
+            const auto now = DayNightCycle::LightingAt(static_cast<float>(minute) / 60.0f, 2.0f + minute / 1440.0f);
+            largestStep = std::max({largestStep, std::abs(now.grade.x - previous.grade.x),
+                                    std::abs(now.grade.y - previous.grade.y), std::abs(now.grade.z - previous.grade.z),
+                                    std::abs(now.skyHorizon.x - previous.skyHorizon.x),
+                                    std::abs(now.shadowStrength - previous.shadowStrength)});
+            previous = now;
+        }
+        Check(largestStep < 0.04f, "the light changes smoothly, under 4 % per game minute");
+        DayNightCycle clock;
+        const float startDay = clock.Day();
+        for (int second = 0; second < 1440; ++second) clock.Advance(1.0f);
+        Check(std::abs(clock.Day() - startDay - 1.0f) < 1e-3f && std::abs(clock.Hour() - DayNightCycle::DefaultHour) < 0.05f,
+              "twenty-four real minutes make one game day");
+        clock.SetFrozen(true);
+        const float held = clock.Hour();
+        clock.Advance(300.0f);
+        Check(clock.Hour() == held, "a frozen clock holds its hour");
+        std::cout << "day/night: latitude " << DayNightCycle::LatitudeDegrees() << " deg, east axis "
+                  << DayNightCycle::EastAxisDegrees() << " deg, largest light step " << largestStep << " per game minute\n";
     }
     const island::GrassLodSplit emptyGrassLod = island::GrassLod::Split(0, 82.0f);
     Check(emptyGrassLod.nearCount == 0 && emptyGrassLod.middleCount == 0

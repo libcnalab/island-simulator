@@ -1,0 +1,71 @@
+#pragma once
+
+#include <cstdint>
+
+namespace island
+{
+    /** @brief A unit direction or an RGB triple. */
+    struct DayVec3
+    {
+        float x = 0.0f, y = 0.0f, z = 0.0f;
+    };
+
+    /** @brief Everything the renderers need from the time of day. */
+    struct DayLighting
+    {
+        DayVec3 toSun;                 // unit vector towards the sun (below the horizon at night)
+        DayVec3 toMoon;                // unit vector towards the moon
+        float sunElevationDegrees = 0.0f;
+        float moonElevationDegrees = 0.0f;
+        float sunVisibility = 0.0f;    // 0..1 direct sunlight (fades through sunrise and sunset)
+        float moonIllumination = 0.0f; // 0..1 lit fraction of the disc (phase)
+        float moonLight = 0.0f;        // 0..1 moonlight reaching the ground (phase x altitude)
+        float starVisibility = 0.0f;   // 0..1
+        DayVec3 grade;                 // scene colour multiplier: (1,1,1) by day, warm at the golden hours, dark blue at night
+        DayVec3 skyZenith;             // sky colour overhead
+        DayVec3 skyHorizon;            // sky colour at the horizon
+        float shadowStrength = 1.0f;   // 0..1 sun shadows (none at night)
+    };
+
+    /**
+     * The island's clock: 24 game hours in SecondsPerDay real seconds (24 minutes by default),
+     * a sun crossing the sky from the east to the west with a short tropical twilight, and a
+     * moon whose phase turns through LunarDays game days. The sun's path is fitted so that at
+     * DefaultHour (14:00) it stands exactly where the island's former fixed afternoon sun was
+     * (environment::SunDirection), so geometry lit at build time stays correct then.
+     */
+    class DayNightCycle final
+    {
+    public:
+        static constexpr float SecondsPerDay = 24.0f * 60.0f;   // 24 real minutes per game day
+        static constexpr float DefaultHour = 14.0f;              // the former fixed sun's hour
+        static constexpr float LunarDays = 8.0f;                 // a short lunar month, for visible phases
+
+        explicit DayNightCycle(float startHour = DefaultHour, float startDay = 2.0f) noexcept;
+
+        /** @brief Advances the clock by real seconds (the game runs SecondsPerDay per day). */
+        void Advance(float realSeconds) noexcept;
+        /** @brief Holds the clock still (captures and tests); Advance does nothing while held. */
+        void SetFrozen(bool frozen) noexcept { frozen_ = frozen; }
+        [[nodiscard]] bool Frozen() const noexcept { return frozen_; }
+        void SetHour(float hour) noexcept;
+
+        [[nodiscard]] float Hour() const noexcept { return hour_; }          // 0..24
+        [[nodiscard]] float Day() const noexcept { return day_; }            // whole and fractional days elapsed
+        [[nodiscard]] float MoonPhase() const noexcept;                      // 0 new, 0.5 full
+        [[nodiscard]] DayLighting Lighting() const noexcept { return LightingAt(hour_, day_); }
+
+        /** @brief The lighting at any hour of any day, without a clock (tests, previews). */
+        [[nodiscard]] static DayLighting LightingAt(float hour, float day) noexcept;
+        /** @brief Unit direction to the sun at an hour (the equinox path at the fitted latitude). */
+        [[nodiscard]] static DayVec3 SunDirectionAt(float hour) noexcept;
+        /** @brief The fitted latitude (degrees) and the world rotation of the east axis. */
+        [[nodiscard]] static float LatitudeDegrees() noexcept;
+        [[nodiscard]] static float EastAxisDegrees() noexcept;
+
+    private:
+        float hour_ = DefaultHour;
+        float day_ = 0.0f;
+        bool frozen_ = false;
+    };
+}
