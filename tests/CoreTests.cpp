@@ -21,6 +21,7 @@
 #include "IslandSimulator/CrocodileGroup.hpp"
 #include "IslandSimulator/CampfireSite.hpp"
 #include "IslandSimulator/ResidentMotion.hpp"
+#include "IslandSimulator/SnakePopulation.hpp"
 #include "IslandSimulator/BearMotion.hpp"
 #include "IslandSimulator/TurtleBreathField.hpp"
 #include "IslandSimulator/CrabColony.hpp"
@@ -4642,6 +4643,24 @@ int main()
     island::MonkeyTroop calmMonkeys(terrain);
     for (int frame = 0; frame < 60; ++frame) calmMonkeys.Update(1.0f / 30.0f, 1000.0f, 0.0f, 1000.0f, 0.0f);
     Check(calmMonkeys.FleeCount() == 0U, "with the walker far off no monkey breaks into flight");
+    {
+        // A snake's head two metres from a monkey sends it off with the alarm; one eight
+        // metres off is left alone.
+        island::MonkeyTroop wary(terrain);
+        const auto& first = wary.Monkeys()[0];
+        std::vector<island::SnakeState> snakes(1);
+        for (auto& point : snakes[0].body) point = {first.x + 8.0f, first.y, first.z};
+        wary.SetSnakes(snakes);
+        for (int frame = 0; frame < 60; ++frame) wary.Update(1.0f / 30.0f, first.x + 20.0f, first.y + 1.0f, first.z, 0.0f);
+        Check(wary.SnakeAlarmCount() == 0U, "a snake eight metres off does not alarm the monkey");
+        for (auto& point : snakes[0].body) point = {first.x + 2.0f, first.y, first.z};
+        bool fled = false;
+        for (int frame = 0; frame < 60 && !fled; ++frame) {
+            wary.Update(1.0f / 30.0f, first.x + 20.0f, first.y + 1.0f, first.z, 0.0f);
+            fled = first.behavior == island::MonkeyBehavior::RunAway && wary.SnakeAlarmCount() >= 1U;
+        }
+        Check(fled && wary.FleeCount() >= 1U && wary.LastFlee().valid, "a snake two metres from a monkey sends it off with the alarm within two seconds");
+    }
 
     bool observedMonkeyIdle = false;
     bool observedMonkeyObserve = false;

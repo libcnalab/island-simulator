@@ -6,6 +6,7 @@
 #include <vector>
 #include <memory>
 #include "IslandSimulator/MonkeyTreeExcursion.hpp"
+#include "IslandSimulator/SnakePopulation.hpp"
 
 #include "IslandSimulator/WildlifeSimulation.hpp"
 #include "IslandSimulator/WorldCollision.hpp"
@@ -99,6 +100,12 @@ namespace island
         struct MonkeyFlee { float x = 0.0f, y = 0.0f, z = 0.0f; bool valid = false; };
         [[nodiscard]] const MonkeyFlee& LastFlee() const noexcept { return lastFlee_; }
         [[nodiscard]] std::uint32_t FleeCount() const noexcept { return fleeCount_; }
+        /** @brief The snakes this frame: a snake's head within SnakeAlarmDistance of a monkey
+         *  (and within three metres of its height) sends it off as the walker does, the
+         *  flight noted for the alarm call. */
+        void SetSnakes(std::span<const SnakeState> snakes) noexcept { snakes_ = snakes; }
+        [[nodiscard]] std::uint32_t SnakeAlarmCount() const noexcept { return snakeAlarms_; }
+        static constexpr float SnakeAlarmDistance = 4.0f;
         void SetClimbingEnabled(bool enabled) noexcept { climbingEnabled_=enabled; }
         [[nodiscard]] static bool IsClosedCanopyTree(
             std::span<const CanopyPlacement> trees, std::size_t index) noexcept;
@@ -145,6 +152,8 @@ namespace island
         std::uint32_t eatCount_ = 0U;
         MonkeyFlee lastFlee_;
         std::uint32_t fleeCount_ = 0U;
+        std::span<const SnakeState> snakes_;
+        std::uint32_t snakeAlarms_ = 0U;
         [[nodiscard]] bool ChooseTreeTarget(Agent& agent) noexcept;
         void ChooseEscapeTarget(Agent& agent, float observerX, float observerZ) noexcept;
         [[nodiscard]] bool TryMove(Agent& agent, float headingRadians,

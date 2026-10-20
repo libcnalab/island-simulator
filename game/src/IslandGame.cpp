@@ -2328,6 +2328,7 @@ namespace island
                   << "island-simulator: at a gust front the crowns let go leaves that spiral down through the shade, drift downwind and lie on the floor a while\n"
                   << "island-simulator: a bird settling on a branch and a monkey moving through a crown shake a leaf loose\n"
                   << "island-simulator: a monkey the walker closes on gives an alarm call as it breaks into flight, the troop's second phrase pitched up and heard within forty metres\n"
+                  << "island-simulator: a snake's head within four metres of a monkey sends it off with the alarm as the walker does\n"
                   << "island-simulator: fruit bats " << fruitBatColony_.Bats().size()
                   << " agents use six inland canopy roosts with four hanging and two bounded daytime flights; "
                      "a roosting bat's stir in its crown lets a fruit drop and a leaf come loose\n"
@@ -3148,6 +3149,7 @@ namespace island
         if (viewpoint_ != FixedViewpoint::MonkeyTreeDetail && viewpoint_ != FixedViewpoint::MonkeyClimbDetail) {
             measureWildlife(3, [&] {
                 monkeyTroop_.SetLyingFruit(fallingFruit_.Fruit());
+                monkeyTroop_.SetSnakes(snakes_->Snakes());
                 monkeyTroop_.Update(deltaSeconds, monkeyObserver.X, monkeyObserver.Y, monkeyObserver.Z,
                     snakeCaptureClock ? static_cast<float>(snakeCaptureUpdates_)*0.1f
                         : static_cast<float>(gameTime.getTotalGameTimeProperty().getTotalSecondsProperty()));

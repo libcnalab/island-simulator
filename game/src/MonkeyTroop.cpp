@@ -591,6 +591,23 @@ namespace island
             lastFlee_ = {agent.state.x, agent.state.y, agent.state.z, true};
             ++fleeCount_;
         }
+        // A snake's head close by, on the ground or up a trunk at the monkey's height, sends
+        // it off as the walker does, with the alarm given.
+        if (agent.state.behavior != MonkeyBehavior::RunAway && !agent.state.treeReleasing) {
+            for (const SnakeState& snake : snakes_) {
+                const SnakePoint& head = snake.body.front();
+                if (!std::isfinite(head.x) || !std::isfinite(head.y) || !std::isfinite(head.z)) continue;
+                if (std::hypot(agent.state.x - head.x, agent.state.z - head.z) < SnakeAlarmDistance
+                    && std::abs(agent.state.y - head.y) < 3.0f) {
+                    EnterState(agent, MonkeyBehavior::RunAway);
+                    ChooseEscapeTarget(agent, head.x, head.z);
+                    lastFlee_ = {agent.state.x, agent.state.y, agent.state.z, true};
+                    ++fleeCount_;
+                    ++snakeAlarms_;
+                    break;
+                }
+            }
+        }
 
         float desiredHeadLook = 0.0f;
         if (observerDistance >= 7.5f && observerDistance < 30.0f

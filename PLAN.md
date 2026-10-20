@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 90 (2026-10-20) — a monkey flees a snake with the alarm
+
+The monkeys shared the stand with the ground and tree snakes without a glance. The troop
+now takes the snakes each frame (`MonkeyTroop::SetSnakes`): a snake's head within 4 m of a
+monkey (`SnakeAlarmDistance`) and within three metres of its height sends it off as the
+walker does (`RunAway` with the escape chosen away from the head), the flight noted for the
+alarm call of pass 86 and counted by `SnakeAlarmCount()`; a monkey mid-release from a tree
+or already running is left to finish. The startup report gains "a snake's head within four
+metres of a monkey sends it off with the alarm as the walker does", pinned by the native
+capture tool. Core checks: a snake eight metres from the first monkey does not alarm it,
+one two metres off sends it running with the alarm within two seconds. The pass-89 suite
+run had the known load flake of the GPU qualification supervisor test, which passed alone.
+Native `monkey-tree` passes.
+
 ## Loop pass 89 (2026-10-20) — the resident tends the fire
 
 The resident's route pauses at the campfire's call each lap (about eight metres from the
