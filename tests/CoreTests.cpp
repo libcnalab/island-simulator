@@ -8242,12 +8242,14 @@ int main()
         flies[0].x = home.x + 1.6f; flies[0].z = home.z;
         flies[0].y = terrain.Height(flies[0].x, flies[0].z) + 0.3f;
         geckos.SetFlies(flies);
-        bool stalked = false, lunged = false;
+        bool stalked = false, lunged = false, wagged = false, restingWag = false;
         float lungeDistance = 100.0f;
         for (int step = 0; step < 1200 && !lunged; ++step) {
             geckos.Update(0.05f, home.x + 12.0f, terrain.Height(home.x, home.z) + 1.0f, home.z);
             const auto& gecko = geckos.Geckos()[0];
             if (gecko.behavior == island::GeckoBehavior::Stalk && gecko.speed > 0.2f && gecko.speed < 0.6f) stalked = true;
+            if (gecko.behavior == island::GeckoBehavior::Stalk && gecko.tailWag > 0.9f && geckos.WaggingCount() >= 1U) wagged = true;
+            if (gecko.behavior == island::GeckoBehavior::Rest && gecko.tailWag > 0.5f && step < 5) restingWag = true;
             if (geckos.LungeCount() >= 1U) { lunged = true; lungeDistance = std::hypot(gecko.x - flies[0].x, gecko.z - flies[0].z); }
         }
         Check(stalked && lunged && lungeDistance < island::GeckoPopulation::LungeReach + 0.1f
@@ -8259,6 +8261,9 @@ int main()
             rested = geckos.Geckos()[0].behavior == island::GeckoBehavior::Rest;
         }
         Check(rested, "after the lunge the gecko rests");
+        Check(wagged && !restingWag, "a stalking gecko wags its tail and a resting one holds it still");
+        for (int step = 0; step < 20; ++step) geckos.Update(0.05f, home.x + 12.0f, terrain.Height(home.x, home.z) + 1.0f, home.z);
+        Check(geckos.Geckos()[0].tailWag < 0.2f, "the wag stills within a second of the lunge");
         for (int step = 0; step < 200; ++step) geckos.Update(0.05f, home.x + 12.0f, terrain.Height(home.x, home.z) + 1.0f, home.z);
         Check(geckos.LungeCount() == 1U, "a gecko does not hunt again within the cooldown");
         island::FlySwarms swarm(terrain);

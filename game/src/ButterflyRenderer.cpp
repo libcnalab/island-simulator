@@ -441,11 +441,15 @@ namespace island
                 }
             }
             Vector3 tailRoot = body - forward * (.205f * scale);
+            // Stalking, the tail wags: a faster sway that grows toward the tip.
+            const float wag = std::clamp(gecko.tailWag, 0.0f, 1.0f);
             for (int segment = 0; segment < 5; ++segment) {
-                const float phase = gecko.gaitPhase * .35f + static_cast<float>(segment) * .72f;
+                const float phase = gecko.gaitPhase * .35f + static_cast<float>(segment) * .72f
+                    + wag * (gecko.tailWagPhase + static_cast<float>(segment) * .55f);
                 const float length = (.142f - static_cast<float>(segment) * .017f) * scale;
+                const float sway = (.032f + .004f * segment) * (1.0f + wag * (1.2f + .6f * segment));
                 const Vector3 tailEnd = tailRoot - forward * length
-                    + right * (std::sin(phase) * (.032f+.004f*segment) * scale);
+                    + right * (std::sin(phase) * sway * scale);
                 const float rootRadius=(.040f-static_cast<float>(segment)*.0065f)*scale;
                 const float tipRadius=std::max(.006f,
                     .0335f-static_cast<float>(segment)*.0065f)*scale;

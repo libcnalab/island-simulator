@@ -201,6 +201,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 137: a beach crab paused in the open waves a claw, raised and swept for a couple of seconds (`CrabState::waveAmount`) (PLAN "Loop pass 137").
 - Pass 138: a calling frog's throat swells and pulses under its chin through the call (`Soundscape::ActiveFrogCall`, `FrogPopulation::NoteCall`, `FrogState::throat`) (PLAN "Loop pass 138").
 - Pass 139: a basking skink in the sun displays with bouts of push-ups, the front body lifted about the hips (`SkinkState::pushUp`) (PLAN "Loop pass 139").
+- Pass 140: a stalking gecko wags its tail, the tip swaying wide and fast until the lunge (`GeckoState::tailWag`) (PLAN "Loop pass 140").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

@@ -31,6 +31,10 @@ namespace island
         float speed = 0.0f;
         float gaitPhase = 0.0f;
         float visibility = 1.0f;
+        /** @brief 0..1 the stalking tail wag: the tail tip sways wide and fast while the
+         *  gecko creeps on a fly, and stills again after the lunge or when the hunt ends. */
+        float tailWag = 0.0f;
+        float tailWagPhase = 0.0f;
         float scale = 1.0f;
         GeckoBehavior behavior = GeckoBehavior::Rest;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
@@ -74,6 +78,9 @@ namespace island
         static constexpr float LungeSeconds = 0.3f;
         static constexpr float StalkSeconds = 14.0f;
         static constexpr float HuntCooldownSeconds = 20.0f;
+        /** @brief Geckos wagging the tail this moment (those stalking). */
+        [[nodiscard]] std::size_t WaggingCount() const noexcept;
+        static constexpr float TailWagRate = 9.0f;
 
         [[nodiscard]] std::span<const GeckoState> Geckos() const noexcept { return states_; }
         [[nodiscard]] std::span<const GeckoHome> Homes() const noexcept { return homes_; }

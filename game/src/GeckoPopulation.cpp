@@ -92,6 +92,13 @@ namespace island
             && std::hypot(x - home.x, z - home.z) <= home.radius;
     }
 
+    std::size_t GeckoPopulation::WaggingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.state.behavior == GeckoBehavior::Stalk ? 1U : 0U;
+        return count;
+    }
+
     void GeckoPopulation::Update(const float deltaSeconds, const float observerX,
                                  const float observerY, const float observerZ) noexcept
     {
@@ -229,6 +236,13 @@ namespace island
             }
         }
 
+        // The stalking tail wag: creeping on a fly, the tail tip sways wide and fast; the
+        // lunge, or the hunt's end, stills it again.
+        const bool stalking = agent.state.behavior == GeckoBehavior::Stalk;
+        agent.state.tailWag += std::clamp((stalking ? 1.0f : 0.0f) - agent.state.tailWag,
+            -deltaSeconds * 4.0f, deltaSeconds * 3.0f);
+        if (agent.state.tailWag > 0.01f)
+            agent.state.tailWagPhase = std::fmod(agent.state.tailWagPhase + deltaSeconds * TailWagRate, 6.2831853f);
         const float visibilityTarget = agent.state.behavior == GeckoBehavior::Hidden ? 0.0f : 1.0f;
         agent.state.visibility += std::clamp(visibilityTarget - agent.state.visibility,
             -deltaSeconds * 3.8f, deltaSeconds * 2.6f);

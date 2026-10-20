@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 140 (2026-10-20) — a stalking gecko wags its tail
+
+A gecko creeping on a fly (pass 82) moved with the same slow tail sway as at rest.
+`GeckoState::tailWag` (0..1) and `tailWagPhase` now carry the stalking wag: while the
+gecko stalks the wag rises at 3/s and the phase runs at `TailWagRate` (9 rad/s); the
+lunge, or the hunt's end, lets it fall at 4/s. `WaggingCount()` reports the geckos wagging
+(those stalking). The mesh adds the wag phase to each tail segment's sway and widens the
+sway toward the tip (1.2 + 0.6 per segment, times the wag), so the tip whips while the
+root barely moves. The geckos report line gains "a stalking gecko wags its tail, the tip
+swaying wide and fast until the lunge" (pinned). Core checks extend the stalk test: the
+stalking gecko wags at full amount with the population reporting it, a resting gecko holds
+its tail still, and the wag stills within a second of the lunge. Native `geckos` passes.
+
 ## Loop pass 139 (2026-10-20) — a basking skink's push-ups
 
 A skink basking in the sun lay flat and still. `SkinkState::pushUp` (0..1) now carries the
