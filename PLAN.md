@@ -54,6 +54,18 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 184 (2026-10-20) — a crab folds its eyestalks
+
+A beach crab bolted for its burrow with its eyestalks standing. `CrabState::eyeFold`
+(0..1) now carries the fold: on the scuttle for the burrow, down it, and until the body is
+up out of the sand again, the eyestalks lie flat along the carapace front, folding at 6/s
+and rising at 2/s as the crab stands; `EyeFoldedCount()` counts the crabs folded. In the
+renderer each eyestalk's tip, with its pupil, moves 6 cm down and 4.5 cm forward about its
+root by the fold, on the same vertices. The beach crabs report line gains "a crab bolting
+for its burrow folds its eyestalks flat and raises them again as it comes up" (pinned).
+Core checks: a crab down its burrow has its eyestalks folded; up again and standing two
+seconds it has raised them. Native `crabs` passes.
+
 ## Loop pass 183 (2026-10-20) — a rooting boar works its snout
 
 A boar with its snout among the roots held it dead still. `BoarState::snoutSway` (-1..1)

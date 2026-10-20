@@ -450,6 +450,12 @@ namespace island
             : 0.24f + 0.08f * std::sin(agent.movementPhase);
         agent.state.clawPose += std::clamp(
             clawTarget - agent.state.clawPose, -deltaSeconds * 1.8f, deltaSeconds * 1.8f);
+        // The eyestalks fold flat on the scuttle for the burrow and down it, and rise again
+        // as the crab comes up and stands.
+        const bool foldEyes = agent.state.behavior == CrabBehavior::Scuttle
+            || agent.state.behavior == CrabBehavior::Hide || agent.state.hideAmount > 0.05f;
+        agent.state.eyeFold += std::clamp((foldEyes ? 1.0f : 0.0f) - agent.state.eyeFold,
+                                          -deltaSeconds * 2.0f, deltaSeconds * 6.0f);
         // A crab paused in the open waves a claw: a second into the pause, and every nine
         // seconds or so after (a little per crab), one claw is raised and swept up and down
         // for a couple of seconds; moving or going down the burrow drops the display.
@@ -472,6 +478,13 @@ namespace island
             agent.state.waveAmount += std::clamp((waving ? 1.0f : 0.0f) - agent.state.waveAmount,
                                                  -deltaSeconds * 6.0f, deltaSeconds * 6.0f);
         }
+    }
+
+    std::size_t CrabColony::EyeFoldedCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.state.eyeFold > 0.5f ? 1U : 0U;
+        return count;
     }
 
     std::size_t CrabColony::WavingCount() const noexcept

@@ -40,6 +40,10 @@ namespace island
         float wavePhase = 0.0f;
         /** @brief 0..1 down the colony's burrow: the body sinks below the sand at 1. */
         float hideAmount = 0.0f;
+        /** @brief 0..1 the eyestalks folded flat: a crab scuttling for its burrow, or down
+         *  it, lays its eyes along the carapace front and raises them again as it comes up
+         *  and stands. */
+        float eyeFold = 0.0f;
         float scale = 1.0f;
         CrabBehavior behavior = CrabBehavior::Pause;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
@@ -101,6 +105,8 @@ namespace island
         [[nodiscard]] std::uint32_t WaveCount() const noexcept { return waves_; }
         [[nodiscard]] std::size_t WavingCount() const noexcept;
         static constexpr float WaveSeconds = 1.8f, WavePeriodSeconds = 9.0f, WaveDelaySeconds = 0.5f;
+        /** @brief Crabs with their eyestalks folded this moment (the fold past half). */
+        [[nodiscard]] std::size_t EyeFoldedCount() const noexcept;
 
         [[nodiscard]] std::span<const CrabState> Crabs() const noexcept;
         [[nodiscard]] std::span<const CrabHomeRange> Homes() const noexcept;

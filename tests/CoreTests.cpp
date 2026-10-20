@@ -4326,6 +4326,9 @@ int main()
         }
         Check(hid && burrowCrabs.HideCount() >= 1U && burrowCrabs.HiddenCount() >= 1U,
               "a frightened crab bolts for its colony's burrow and goes down the hole within six seconds");
+        // The eyestalks: down the hole they lie folded flat.
+        Check(burrowCrabs.Crabs()[subject].eyeFold > 0.9f && burrowCrabs.EyeFoldedCount() >= 1U,
+              "a crab down its burrow does not fold its eyestalks");
         bool emerged = false;
         for (int frame = 0; frame < 900 && !emerged; ++frame) {
             burrowCrabs.Update(1.0f / 60.0f, start.x, start.y + 1.5f, start.z + 40.0f);
@@ -4333,6 +4336,10 @@ int main()
             emerged = crab.behavior != island::CrabBehavior::Hide && crab.hideAmount <= 0.0f;
         }
         Check(emerged, "with the beach clear the hidden crab comes up again within fifteen seconds");
+        // Up again and standing a while, the eyestalks are raised.
+        for (int frame = 0; frame < 120; ++frame) burrowCrabs.Update(1.0f / 60.0f, start.x, start.y + 1.5f, start.z + 40.0f);
+        Check(burrowCrabs.Crabs()[subject].hideAmount < 0.05f && burrowCrabs.Crabs()[subject].eyeFold < 0.1f,
+              "a crab up from its burrow does not raise its eyestalks again");
         bool left = false;
         for (int frame = 0; frame < 1800 && !left; ++frame) {
             burrowCrabs.Update(1.0f / 60.0f, start.x, start.y + 1.5f, start.z + 40.0f);

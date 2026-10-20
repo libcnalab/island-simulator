@@ -778,13 +778,15 @@ namespace island
                 }
             }
 
+            // Folded, each eyestalk lies down along the carapace front by the fold amount.
+            const float fold = std::clamp(crab.eyeFold, 0.0f, 1.0f);
             for (int sideIndex = -1; sideIndex <= 1; sideIndex += 2) {
                 const float side = static_cast<float>(sideIndex);
                 const Vector3 eyeRoot = LocalPoint(
                     centre, right, up, forward, side * 0.12f, 0.155f, 0.19f, scale);
                 const Vector3 eyeCentre = LocalPoint(
-                    centre, right, up, forward, side * 0.12f,
-                    0.225f, 0.225f, scale);
+                    centre, right, up, forward, side * (0.12f + 0.02f * fold),
+                    0.225f - 0.062f * fold, 0.225f + 0.045f * fold, scale);
                 AppendCrossedSegment(vertices, eyeRoot, eyeCentre,
                                      0.012f * scale, palette.shellSide);
                 AppendOctahedron(vertices, eyeCentre, right, up, forward,
