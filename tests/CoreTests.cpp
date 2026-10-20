@@ -7768,6 +7768,25 @@ int main()
             gathered = flock.HuntJoinCount() >= 1U && flock.HuntingCount() >= 2U;
         }
         Check(gathered, "a seabird's strike brings another in to hunt the same school within ten seconds");
+        {
+            // A dolphin's leap near a fresh school brings the seabirds in to hunt it at once,
+            // ahead of their own times; a leap with no school in play draws none.
+            island::BirdFlock drawn(terrain);
+            drawn.SetSeaForage(forageX, forageZ, true);
+            drawn.Update(0.05f, forageX, 2.0f, forageZ);
+            Check(drawn.HuntingCount() == 0U, "the seabirds start on their routes");
+            drawn.NoteDolphinLeap(forageX + 10.0f, forageZ);
+            bool came = false;
+            for (int step = 0; step < 40 && !came; ++step) {
+                drawn.Update(0.05f, forageX, 2.0f, forageZ);
+                came = drawn.DolphinJoinCount() >= 1U && drawn.HuntingCount() >= 1U;
+            }
+            Check(came, "a dolphin's leap near the school brings a seabird in to hunt within two seconds");
+            island::BirdFlock idle(terrain);
+            idle.NoteDolphinLeap(forageX + 10.0f, forageZ);
+            for (int step = 0; step < 40; ++step) idle.Update(0.05f, forageX, 2.0f, forageZ);
+            Check(idle.DolphinJoinCount() == 0U && idle.HuntingCount() == 0U, "a leap with no school in play draws no seabird");
+        }
         // The hunt runs its course over deep water and the bird settles onto the sea: wings
         // folded (the perch pose), sitting at the surface, drifting downwind.
         bool rafted = false;
@@ -9435,7 +9454,7 @@ int main()
             pod.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
             for (const auto& dolphin : pod.Dolphins()) crest = std::max(crest, dolphin.y);
         }
-        Check(pod.LeapCount() >= 1U && crest > 0.9f,
+        Check(pod.LeapCount() >= 1U && crest > 0.9f && pod.LastLeap().valid && std::isfinite(pod.LastLeap().x),
               "dolphins leap clear of the water within five minutes");
         island::FishSchools schools(terrain);
         schools.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);

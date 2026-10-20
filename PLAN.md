@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 111 (2026-10-20) — the seabirds follow the dolphins
+
+The pod's leaps and the seabirds' hunts were unconnected. The pod now notes where its last
+leap began (`DolphinPod::LastLeap`), the game hands each new leap to the bird flock
+(`BirdFlock::NoteDolphinLeap`), and for a second after it any seabird on its high route
+within 160 m (`DolphinJoinDistance`) with a school in play has its hunt timer set to zero,
+as a strike does within 120 m: the birds come in over the water the pod is working, the
+way they follow dolphins at sea; `DolphinJoinCount()` counts the joins apart from the
+strike joins. The startup report gains "a dolphin's leap brings the seabirds on their routes
+within a hundred and sixty metres in to hunt the school of the moment", pinned by the
+native capture tool. Core checks: the seabirds start on their routes; a leap near a fresh
+school brings one in to hunt within two seconds; a leap with no school in play draws none;
+the pod's leap is noted where it began. Native `dolphins` passes.
+
 ## Loop pass 110 (2026-10-20) — the crocodile hisses at the walker
 
 A crocodile came alert on its bank at the walker in silence. Coming alert (the walker inside

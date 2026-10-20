@@ -147,6 +147,11 @@ namespace island
          *  school one has found. */
         [[nodiscard]] std::uint32_t HuntJoinCount() const noexcept { return huntJoins_; }
         static constexpr float JoinDistance = 120.0f;
+        /** @brief A dolphin's leap: the pod is working a school, and seabirds on their routes
+         *  within DolphinJoinDistance come in to hunt the school of the moment at once. */
+        void NoteDolphinLeap(float x, float z) noexcept;
+        [[nodiscard]] std::uint32_t DolphinJoinCount() const noexcept { return dolphinJoins_; }
+        static constexpr float DolphinJoinDistance = 160.0f;
         /** @brief A sudden sound at a point; perched birds near it flush within the second. */
         void NoteDisturbance(float x, float z) noexcept;
         /** @brief The snakes this frame: a snake's head within SnakeFlushDistance of a perched
@@ -270,6 +275,9 @@ namespace island
         float forageX_ = 0.0f, forageZ_ = 0.0f;
         bool forageValid_ = false;
         BirdDiveSplash diveSplash_;
+        float dolphinLeapX_ = 0.0f, dolphinLeapZ_ = 0.0f, dolphinLeapAge_ = 1.0e9f;
+        bool dolphinLeapValid_ = false;
+        std::uint32_t dolphinJoins_ = 0U;
         BirdPerchLanding lastLanding_;
         std::uint32_t landings_ = 0U;
         std::uint32_t diveCount_ = 0U;

@@ -290,6 +290,10 @@ namespace island
             diveSplash_.ageSeconds += std::isfinite(deltaSeconds) ? std::max(0.0f, deltaSeconds) : 0.0f;
             if (diveSplash_.ageSeconds > SplashSeconds) diveSplash_.valid = false;
         }
+        if (dolphinLeapValid_) {
+            dolphinLeapAge_ += std::isfinite(deltaSeconds) ? std::max(0.0f, deltaSeconds) : 0.0f;
+            if (dolphinLeapAge_ > 1.0f) dolphinLeapValid_ = false;
+        }
         const float safeDelta = std::isfinite(deltaSeconds)
             ? std::clamp(deltaSeconds, 0.0f, 0.1f) : 0.0f;
         elapsedSeconds_ += safeDelta;
@@ -547,6 +551,15 @@ namespace island
         return count;
     }
 
+    void BirdFlock::NoteDolphinLeap(const float x, const float z) noexcept
+    {
+        if (!std::isfinite(x) || !std::isfinite(z)) return;
+        dolphinLeapX_ = x;
+        dolphinLeapZ_ = z;
+        dolphinLeapAge_ = 0.0f;
+        dolphinLeapValid_ = true;
+    }
+
     std::size_t BirdFlock::FeedingCount() const noexcept
     {
         std::size_t count = 0;
@@ -586,9 +599,12 @@ namespace island
                 // comes in to hunt at once rather than at its own time.
                 const bool drawnIn = forageValid_ && diveSplash_.valid && diveSplash_.ageSeconds < 1.0f
                     && std::hypot(agent.state.x - diveSplash_.x, agent.state.z - diveSplash_.z) < JoinDistance;
-                if (drawnIn && agent.nextHuntSeconds > 0.0f) {
+                // The pod working a school (a leap just now) draws the birds in the same way.
+                const bool dolphinsWorking = forageValid_ && dolphinLeapValid_
+                    && std::hypot(agent.state.x - dolphinLeapX_, agent.state.z - dolphinLeapZ_) < DolphinJoinDistance;
+                if ((drawnIn || dolphinsWorking) && agent.nextHuntSeconds > 0.0f) {
                     agent.nextHuntSeconds = 0.0f;
-                    ++huntJoins_;
+                    if (drawnIn) ++huntJoins_; else ++dolphinJoins_;
                 }
                 if (agent.nextHuntSeconds <= 0.0f && forageValid_) {
                     agent.huntSeconds = HuntSeconds;

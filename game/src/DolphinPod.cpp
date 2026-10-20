@@ -186,8 +186,10 @@ void DolphinPod::UpdateAgent(Agent &agent, const float delta) noexcept {
       agent.state.behavior = DolphinBehavior::Leap;
     else
       agent.state.behavior = DolphinBehavior::Cruise;
-    if (agent.state.behavior == DolphinBehavior::Leap)
+    if (agent.state.behavior == DolphinBehavior::Leap) {
       ++leapCount_;
+      lastLeap_ = {agent.state.x, agent.state.z, true};
+    }
     agent.behaviorSeconds = agent.state.behavior == DolphinBehavior::Surface
                                 ? 3.2f + .45f * (agent.transitionCount % 3)
                             : agent.state.behavior == DolphinBehavior::Dive

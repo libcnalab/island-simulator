@@ -49,6 +49,9 @@ public:
   }
   [[nodiscard]] int FullSimulationCount() const noexcept { return fullCount_; }
   [[nodiscard]] std::uint32_t LeapCount() const noexcept { return leapCount_; }
+  /** @brief Where the last leap began: the seabirds come to hunt where the pod is working. */
+  struct Leap { float x = 0, z = 0; bool valid = false; };
+  [[nodiscard]] const Leap& LastLeap() const noexcept { return lastLeap_; }
   /** @brief The shark this frame (while present): a dolphin within BerthDistance of it
    *  turns off its route to keep the berth, a little faster, until it is clear. */
   void SetThreat(float x, float z, bool valid) noexcept;
@@ -86,6 +89,7 @@ private:
   std::uint64_t frameIndex_ = 0;
   int fullCount_ = 0, reducedCount_ = 0, dormantCount_ = 0;
   std::uint32_t leapCount_ = 0;
+  Leap lastLeap_;
   float threatX_ = 0, threatZ_ = 0;
   bool threatValid_ = false;
   std::uint32_t berths_ = 0;
