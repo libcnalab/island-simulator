@@ -55,6 +55,7 @@
 #include "IslandSimulator/HoofDustField.hpp"
 #include "IslandSimulator/FinWakeField.hpp"
 #include "IslandSimulator/TurtleGrazeField.hpp"
+#include "IslandSimulator/DragonflyDipField.hpp"
 #include "IslandSimulator/StreamFishField.hpp"
 #include "IslandSimulator/HatchlingField.hpp"
 #include "IslandSimulator/BirdShadowProjection.hpp"
@@ -3335,6 +3336,30 @@ int main()
                             escapedSkink.z-initialReactiveSkink.z)>.25f,
           "a nearby observer prompts a skink to flee across the ground");
 
+    {
+        // The dip: within a minute a patrolling dragonfly drops to a hand's height over
+        // the ground and touches, the touch noted there; the dip field throws a fleck of
+        // spray at it that is gone within the second.
+        island::DragonflySwarm dippers(terrain);
+        const auto first = dippers.Dragonflies()[0];
+        float lowest = 100.0f; bool noted = false;
+        for (int step = 0; step < 1200 && dippers.DipCount() < 2U; ++step) {
+            dippers.Update(0.05f, first.x + 10.0f, first.y, first.z);
+            for (const auto& fly : dippers.Dragonflies())
+                if (fly.dip > 0.9f) lowest = std::min(lowest, fly.y - terrain.Height(fly.x, fly.z));
+            if (dippers.DipCount() >= 1U) {
+                const auto& dip = dippers.LastDip();
+                if (std::abs(dip.y - terrain.Height(dip.x, dip.z) - island::DragonflySwarm::DipHeight) < 0.01f) noted = true;
+            }
+        }
+        Check(dippers.DipCount() >= 2U && lowest < island::DragonflySwarm::DipHeight + 0.25f && noted,
+              "a patrolling dragonfly dips to touch the water and the touch is noted there");
+        island::DragonflyDipField spray;
+        spray.Update(0.05f, dippers.LastDip());
+        Check(spray.ActiveCount() == 1U && spray.DipCount() == dippers.DipCount(), "a dip throws a fleck of spray");
+        for (int step = 0; step < 20; ++step) spray.Update(0.05f, dippers.LastDip());
+        Check(spray.ActiveCount() == 0U, "the fleck is gone within the second");
+    }
     island::DragonflySwarm dragonflies(terrain);
     island::DragonflySwarm repeatedDragonflies(terrain);
     island::DragonflySwarm invalidInputDragonflies(terrain);

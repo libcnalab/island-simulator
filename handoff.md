@@ -207,6 +207,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 143: the fishing float rides the swell and the rod is lifted every dozen seconds (`floatBob`, `rodLift`, `resident-fishing` QA viewpoint) (PLAN "Loop pass 143").
 - Pass 144: a boar trotting off or a deer bounding away drums its hoofbeats (`GenerateHoofbeats`, `WildlifeCallType::Hoofbeats`, herd retreat/bolt counts) (PLAN "Loop pass 144").
 - Pass 145: a turtle foraging low over the bottom dips its head to graze, a puff of sand at each bite (`SeaTurtleState::graze`, `TurtleGrazeField`) (PLAN "Loop pass 145").
+- Pass 146: a patrolling dragonfly dips to touch the water every few seconds, a fleck of spray at the touch (`DragonflyState::dip`, `DragonflyDipField`) (PLAN "Loop pass 146").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

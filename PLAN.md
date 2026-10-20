@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 146 (2026-10-20) — a dragonfly dips to the water
+
+A patrolling dragonfly flew its wandering line at one height. `DragonflyState::dip`
+(0..1) now carries the dip: a second into each `DipPeriodSeconds` (6.5 s, plus 0.7 s per
+dragonfly) of patrol the flight drops in a 0.55 s sine to `DipHeight` (0.30 m over the
+ground) and back, the descent at 4.5 m/s while dipping, and the touch at the bottom is
+noted once as `DragonflySwarm::Dip` (`LastDip()`, `DipCount()`). New `DragonflyDipField`
+throws a fleck of spray at each new touch (a 5 cm `MistPuff` rising a hand's breadth and
+gone within 0.7 s), drawn by the dolphin-blow mist renderer. The dragonflies report line
+gains "a patrolling dragonfly dips to touch the water every few seconds, a fleck of spray
+at the touch" (pinned). Core checks: within a minute a patrolling dragonfly dips to within
+a hand's breadth of the dip height and the touch is noted there; a dip throws a fleck of
+spray that is gone within the second. Native `dragonflies` passes.
+
 ## Loop pass 145 (2026-10-20) — a turtle grazes the bottom
 
 A foraging turtle hung low over the sand with its head level. `SeaTurtleState::graze`

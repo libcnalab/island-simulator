@@ -83,9 +83,22 @@ void DragonflySwarm::UpdateAgent(Agent& a,float dt,float ox,float oz,bool observ
     const float nx=a.state.x+std::cos(a.state.headingRadians)*a.state.speed*dt,nz=a.state.z+std::sin(a.state.headingRadians)*a.state.speed*dt;
     if(Valid(nx,nz,a.home)){a.state.x=nx;a.state.z=nz;}else a.state.headingRadians=std::atan2(a.home.z-a.state.z,a.home.x-a.state.x);
     const float ground=terrain_.Height(a.state.x,a.state.z);
+    // On patrol, every few seconds the dragonfly dips to touch the water: the dip amount
+    // takes the flight down to DipHeight and back, the touch noted at its bottom.
+    const bool patrolling=a.state.behavior==DragonflyBehavior::Patrol;
+    a.dipClock=patrolling?a.dipClock+dt:0;
+    const std::size_t index=static_cast<std::size_t>(&a-agents_.data());
+    const float period=DipPeriodSeconds+.7f*static_cast<float>(index%4U);
+    const float cycle=std::fmod(a.dipClock,period);
+    const bool dipping=patrolling&&cycle>=1.0f&&cycle<1.0f+DipSeconds;
+    const float wantDip=dipping?std::sin((cycle-1.0f)/DipSeconds*3.14159265f):0.0f;
+    a.state.dip+=std::clamp(wantDip-a.state.dip,-dt*8.0f,dt*8.0f);
+    if(dipping&&wantDip>.95f&&!a.touched){a.touched=true;dip_={a.state.x,ground+DipHeight,a.state.z,dip_.count+1U};}
+    if(!dipping)a.touched=false;
     // Perched, the dragonfly settles onto a stem's top and holds its wings still.
-    const float targetY=perched?ground+PerchHeight:ground+a.altitude+std::sin(a.vertical)*(a.state.behavior==DragonflyBehavior::Hover?.06f:.20f);
-    a.state.y+=std::clamp(targetY-a.state.y,-dt*1.8f,dt*1.8f);
+    const float flightY=perched?ground+PerchHeight:ground+a.altitude+std::sin(a.vertical)*(a.state.behavior==DragonflyBehavior::Hover?.06f:.20f);
+    const float targetY=std::lerp(flightY,ground+DipHeight,std::clamp(a.state.dip,0.0f,1.0f));
+    a.state.y+=std::clamp(targetY-a.state.y,-dt*(a.state.dip>0.01f?4.5f:1.8f),dt*(a.state.dip>0.01f?4.5f:1.8f));
     if(!perched)a.state.wingPhase=std::fmod(a.state.wingPhase+dt*55.0f,TwoPi);
     a.state.bankRadians=std::clamp(std::sin(a.turnA)*.16f*(a.state.speed/1.05f),-.34f,.34f);
 }
