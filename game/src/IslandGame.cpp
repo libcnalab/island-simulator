@@ -2385,6 +2385,7 @@ namespace island
                   << "island-simulator: a bolting deer flags its tail up, and a grazing or resting deer flicks it every few seconds\n"
                   << "island-simulator: the deer sentinel coming alert at the walker snorts the alarm, an original short nasal blast heard within fifty metres\n"
                   << "island-simulator: the resident's pause at the campfire tends the fire, its tongues and plume standing a third taller while they stay\n"
+                  << "island-simulator: the resident's footfalls sound on the ground under them, sand, soil, grass, rock, shallows or planks, heard within twenty-four metres\n"
                   << "island-simulator: the bear walks to fruit and coconuts lying in its range and eats them where they lie\n"
                   << "island-simulator: the boars stand off from the bear and trot away when it comes close, as from the walker\n"
                   << "island-simulator: the hut's roof ridge is a perch for the birds\n"
@@ -2701,6 +2702,13 @@ namespace island
             const bool tending=CampfireSite::Tending(tender.x,tender.z,tender.mode==ResidentMode::Pausing);
             campfireTend_+=std::clamp((tending?1.0f:0.0f)-campfireTend_,-0.3f*deltaSeconds,0.6f*deltaSeconds);
             if(campfireRenderer_) campfireRenderer_->SetTending(campfireTend_);
+        }
+        {
+            // The resident's footfalls: one every 0.68 m of their walk, on the ground under them.
+            const auto& walker=resident_->State();
+            const bool walking=walker.mode==ResidentMode::Walking&&walker.speed>0.1f;
+            if(residentSteps_.Step(walker.x,walker.z,walking)&&soundscape_)
+                soundscape_->NoteResidentStep(walker.x,walker.y,walker.z,FootstepGroundAt(walker.x,walker.z));
         }
         if(viewpoint_==FixedViewpoint::ResidentDetail) {
             const auto& current=resident_->State();
@@ -3897,13 +3905,18 @@ namespace island
     {
         if (flightMotion_.IsActive() || IsDebugFreeCameraActive()) return FootstepSurface::None;
         const PlayerPosition& position = playerMotion_.Position();
-        if (!std::isfinite(position.x) || !std::isfinite(position.z)) return FootstepSurface::None;
+        return FootstepGroundAt(position.x, position.z);
+    }
+
+    FootstepSurface IslandGame::FootstepGroundAt(const float x, const float z) const noexcept
+    {
+        if (!std::isfinite(x) || !std::isfinite(z)) return FootstepSurface::None;
         // Plank decks ring hollow underfoot wherever they carry the walker.
-        if ((jettyPlacement_ && jettyPlacement_->OnDeck(position.x, position.z))
-            || (bridgePlacement_ && bridgePlacement_->OnDeck(position.x, position.z))
-            || (lookoutPlacement_ && lookoutPlacement_->OnDeck(position.x, position.z)))
+        if ((jettyPlacement_ && jettyPlacement_->OnDeck(x, z))
+            || (bridgePlacement_ && bridgePlacement_->OnDeck(x, z))
+            || (lookoutPlacement_ && lookoutPlacement_->OnDeck(x, z)))
             return FootstepSurface::Wood;
-        const TerrainSample sample = terrain_.Sample(position.x, position.z);
+        const TerrainSample sample = terrain_.Sample(x, z);
         // Ankle-deep water before the swim threshold wades; the scheduler stays silent once
         // the player is actually swimming.
         if (sample.height < -0.06f) return FootstepSurface::Shallows;
@@ -3925,10 +3938,10 @@ namespace island
         // The same living-turf density that places grass clusters decides whether the step
         // swishes through blades or lands on bare humus.
         const auto environment = IslandEnvironmentField::SampleInland(
-            position.x, position.z, sample.signedShoreDistance);
+            x, z, sample.signedShoreDistance);
         const float turf = sample.signedShoreDistance >= 20.0f && sample.slopeRadians <= 0.4886922f
-            ? GroundCover::Density(std::clamp(canopyLightField_.Sample(position.x, position.z), 0.0f, 1.0f),
-                                   std::clamp(groundCoverField_.SamplePatch(position.x, position.z), 0.0f, 1.0f),
+            ? GroundCover::Density(std::clamp(canopyLightField_.Sample(x, z), 0.0f, 1.0f),
+                                   std::clamp(groundCoverField_.SamplePatch(x, z), 0.0f, 1.0f),
                                    sample.signedShoreDistance, sample.slopeRadians,
                                    sample.coastalRockiness, sample.beachSuitability,
                                    environment.moisture, environment.drainage)

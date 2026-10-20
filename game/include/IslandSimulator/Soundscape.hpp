@@ -91,6 +91,11 @@ namespace island
 
         /** @brief Names the ground under the player's feet for the next footsteps (None = shore rule). */
         void SetFootstepGround(FootstepSurface ground) noexcept { footstepGround_ = ground; }
+        /** @brief A footfall of the resident, where it landed and on what: played through the
+         *  footstep voice when the player's own step does not need it, heard within about
+         *  twenty-four metres. */
+        void NoteResidentStep(float x, float y, float z, FootstepSurface surface) noexcept;
+        [[nodiscard]] int PlayedResidentStepCount() const noexcept { return playedResidentStepCount_; }
         /** @brief The clock the gust fronts run on (the same one the grass and palms use). */
         void SetWindClock(float seconds) noexcept { windSeconds_ = seconds; }
         [[nodiscard]] float GustStrength() const noexcept { return gustStrength_; }
@@ -184,6 +189,10 @@ namespace island
         ShipwreckCreakScheduler shipwreckCreakScheduler_;
         WaterTransitionScheduler waterTransitionScheduler_;
         FootstepScheduler footstepScheduler_;
+        WildlifeAudioSource residentStep_;
+        FootstepSurface residentStepSurface_ = FootstepSurface::None;
+        std::uint8_t residentStepVariant_ = 0U;
+        int playedResidentStepCount_ = 0;
         FootstepSurface footstepGround_ = FootstepSurface::None;
         float windSeconds_ = 0.0f;
         float gustStrength_ = 0.0f;

@@ -54,6 +54,25 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 104 (2026-10-20) — the resident's footfalls
+
+The resident walked the island without a sound while the player's own steps sounded on
+every surface. `ResidentStepTracker` (in the soundscape model, testable without audio)
+gives a footfall every 0.68 m of a walker's resolved travel, left and right in turn, the
+stride reset by standing or an invalid position; the game drives it from the resident's
+state (walking mode, speed over 0.1 m/s) and hands each footfall to
+`Soundscape::NoteResidentStep` with the ground under the resident classified by
+`FootstepGroundAt(x,z)`, the player's own classifier refactored to take any position
+(planks on the decks, shallows, sand, rock, grass by turf density, else soil). The
+soundscape plays the resident's step through the footstep voice whenever the player's own
+step does not need it that frame, with the surface's own effect, at half volume fading
+out over 3–24 m, pitched a little down; `PlayedResidentStepCount()` counts them, and the
+six-source budget is untouched. The startup report gains "the resident's footfalls sound
+on the ground under them, sand, soil, grass, rock, shallows or planks, heard within
+twenty-four metres", pinned by the native capture tool. Core checks: a walk of 3.4 m gives
+five footfalls left and right in turn, standing resets the stride, and an invalid position
+gives none. Native `resident` passes with its eight motion stages.
+
 ## Loop pass 103 (2026-10-20) — the deer sentinel snorts the alarm
 
 The deer were the one herd with no voice: the sentinel lifted its head at the walker in

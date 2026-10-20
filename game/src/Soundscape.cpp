@@ -180,6 +180,15 @@ namespace island
         goatScheduler_.NoteAlarm(animalIndex);
     }
 
+    void Soundscape::NoteResidentStep(const float x, const float y, const float z,
+                                      const FootstepSurface surface) noexcept
+    {
+        if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z) || surface == FootstepSurface::None) return;
+        residentStep_ = {true, x, y, z, 0U};
+        residentStepSurface_ = surface;
+        residentStepVariant_ = static_cast<std::uint8_t>(1U - residentStepVariant_);
+    }
+
     void Soundscape::NoteDeerSnort(const float x, const float y, const float z) noexcept
     {
         if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) return;
@@ -982,10 +991,29 @@ namespace island
             }
         }
 
-        const FootstepRequest footstep = footstepScheduler_.Update(
+        FootstepRequest footstep = footstepScheduler_.Update(
             safeDelta, swimming, signedShoreDistance,
             std::hypot(listenerState.velocityX, listenerState.velocityZ),
             listenerState.x, listenerState.z, footstepGround_);
+        // The resident's footfall takes the footstep voice when the player's own step does
+        // not need it: on its ground, quieter with distance, gone beyond about twenty-four metres.
+        bool residentStep = false;
+        if (residentStep_.available) {
+            if (footstep.surface == FootstepSurface::None) {
+                const float distance = std::hypot(std::hypot(residentStep_.x - listenerState.x,
+                    residentStep_.z - listenerState.z), residentStep_.y - listenerState.y);
+                const float falloff = 1.0f - std::clamp((distance - 3.0f) / 21.0f, 0.0f, 1.0f);
+                if (falloff > 0.02f) {
+                    footstep.surface = residentStepSurface_;
+                    footstep.variant = residentStepVariant_;
+                    footstep.volume = 0.5f * falloff;
+                    footstep.pitch = -0.05f;
+                    footstep.pan = 0.0f;
+                    residentStep = true;
+                }
+            }
+            residentStep_.available = false;
+        }
         SoundEffect* footstepEffect = nullptr;
         const bool alternateStep = footstep.variant == 1U;
         switch (footstep.surface) {
@@ -1034,6 +1062,7 @@ namespace island
                     }
                     footstepSecondsRemaining_ = 0.34f;
                     ++playedFootstepCount_;
+                    if (residentStep) ++playedResidentStepCount_;
                     if (playedFootstepCount_ == 1) {
                         std::cout << FootstepPlaybackDiagnostic << '\n' << std::flush;
 #ifdef __ANDROID__

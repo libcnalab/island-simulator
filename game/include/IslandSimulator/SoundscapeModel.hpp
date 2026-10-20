@@ -260,6 +260,32 @@ namespace island
     };
 
     /** @brief One distance-scheduled land footstep with bounded playback variation. */
+    /** @brief Footfalls for a walker other than the player, from resolved travel: one step
+     *  every StepDistance of ground covered while walking, left and right in turn; standing
+     *  or an invalid position resets the stride. */
+    class ResidentStepTracker final
+    {
+    public:
+        static constexpr float StepDistance = 0.68f;
+        void Reset() noexcept { primed_ = false; since_ = 0.0f; variant_ = 0U; }
+        [[nodiscard]] bool Step(const float x, const float z, const bool walking) noexcept
+        {
+            if (!walking || !std::isfinite(x) || !std::isfinite(z)) { primed_ = false; since_ = 0.0f; return false; }
+            if (!primed_) { primed_ = true; previousX_ = x; previousZ_ = z; since_ = StepDistance * 0.5f; return false; }
+            since_ += std::hypot(x - previousX_, z - previousZ_);
+            previousX_ = x; previousZ_ = z;
+            if (since_ < StepDistance) return false;
+            since_ = std::fmod(since_, StepDistance);
+            variant_ = static_cast<std::uint8_t>(1U - variant_);
+            return true;
+        }
+        [[nodiscard]] std::uint8_t Variant() const noexcept { return variant_; }
+    private:
+        float previousX_ = 0.0f, previousZ_ = 0.0f, since_ = 0.0f;
+        bool primed_ = false;
+        std::uint8_t variant_ = 0U;
+    };
+
     struct FootstepRequest
     {
         FootstepSurface surface = FootstepSurface::None;

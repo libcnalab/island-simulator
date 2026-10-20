@@ -300,6 +300,7 @@ namespace island
         [[nodiscard]] int TrackedSceneDrawCount() const noexcept;
         /** @brief Resolves the footstep surface under the walking player. */
         [[nodiscard]] FootstepSurface FootstepGroundUnderPlayer() const noexcept;
+        [[nodiscard]] FootstepSurface FootstepGroundAt(float x, float z) const noexcept;
         /** The nearest bodies to a point that press the grass and frighten the small things:
          *  the herds, the bear and the resident. */
         [[nodiscard]] std::array<GrassWalker, GrassWalkers::Slots> GatherWalkers(float x, float z) const;
@@ -517,6 +518,7 @@ namespace island
         bool goatSentinelWasAlert_ = false;
         std::uint32_t notedBearRetreats_ = 0U;
         bool deerSentinelWasAlert_ = false;
+        ResidentStepTracker residentSteps_;
         std::uint32_t monkeyShakes_ = 0U;
         std::uint32_t notedThudCount_ = 0U;
         std::uint32_t notedBreachCount_ = 0U;

@@ -2247,6 +2247,18 @@ int main()
         Check(peakIn(snortA,0,11025)>8000&&peakIn(snortA,16000,22050)<400&&peakIn(snortB,8800,15500)>6000,
             "the snort's blast lies in the first half second, the doubled variant's second blast after it, and the tail is gone");
     }
+    {
+        // The resident's stride: a footfall every 0.68 m of walking, left and right in turn;
+        // standing resets the stride; an invalid position gives none.
+        island::ResidentStepTracker stride;stride.Reset();
+        int steps=0;std::uint8_t last=0;bool alternates=true;
+        for(int i=0;i<=34;++i) {
+            if(stride.Step(static_cast<float>(i)*0.1f,0.0f,true)) { ++steps; if(steps>1) alternates=alternates&&stride.Variant()!=last; last=stride.Variant(); }
+        }
+        Check(steps==5&&alternates,"a walk of 3.4 m gives five footfalls, left and right in turn");
+        Check(!stride.Step(3.5f,0.0f,false)&&!stride.Step(4.2f,0.0f,true),"standing resets the stride, so the next step is primed afresh");
+        Check(!stride.Step(std::numeric_limits<float>::quiet_NaN(),0.0f,true),"an invalid position gives no footfall");
+    }
     Check(island::SnakeHissVolume(0)>.25f
         && island::SnakeHissVolume(8)<island::SnakeHissVolume(2)
         && island::SnakeHissVolume(16)==0 && island::SnakeHissVolume(-1)==0
