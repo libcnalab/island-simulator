@@ -93,6 +93,7 @@ add_library(island_core STATIC
     game/src/StreamDriftField.cpp
     game/src/StreamFishField.cpp
     game/src/HatchlingField.cpp
+    game/src/CascadeMistField.cpp
     game/src/HelicopterLayout.cpp
     game/src/GoatHabitat.cpp
     game/src/SpiderHabitat.cpp
@@ -709,6 +710,7 @@ if(ISLAND_BUILD_GAME)
         game/src/StreamFishRenderer.cpp
         game/src/HatchlingRenderer.cpp
         game/src/BirdShadowRenderer.cpp
+        game/src/CascadeMistRenderer.cpp
         game/src/UnderwaterEffectRenderer.cpp
         game/src/HelicopterRenderer.cpp
         game/src/ShorelineRenderer.cpp

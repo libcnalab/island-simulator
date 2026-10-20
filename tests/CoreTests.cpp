@@ -40,6 +40,7 @@
 #include "IslandSimulator/HatchlingField.hpp"
 #include "IslandSimulator/BirdShadowProjection.hpp"
 #include "IslandSimulator/CloudShadow.hpp"
+#include "IslandSimulator/CascadeMistField.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
@@ -7801,6 +7802,24 @@ int main()
                 drift=std::max(drift,std::abs(island::CloudShadow::Cover(x,z,100.0f)
                     -island::CloudShadow::Cover(x+island::CloudShadow::DriftX*30.0f,z+island::CloudShadow::DriftZ*30.0f,70.0f)));
             Check(drift<0.05f,"the cumulus shade drifts with the trade wind as one pattern");
+        }
+        // The cascade's mist: puffs are released at the foot of the drop, rise above the
+        // pool, swell and fade within their life, and never stray far from the foot.
+        {
+            island::CascadeMistField mist(terrain);
+            Check(mist.Present()&&mist.DropHeight()>0.3f,"the cascade has a drop for the mist to rise from");
+            bool rose=false,strayed=false;std::size_t most=0;
+            for(int step=0;step<200;++step) {
+                mist.Update(0.05f,static_cast<float>(step)*0.05f);
+                std::size_t active=0;
+                for(const auto& puff:mist.Puffs()) if(puff.active) {
+                    ++active;
+                    if(puff.y>mist.FootY()+0.45f&&puff.density>0.5f) rose=true;
+                    if(std::hypot(puff.x-mist.FootX(),puff.z-mist.FootZ())>6.0f||puff.y<mist.FootY()||puff.y>mist.FootY()+4.0f) strayed=true;
+                }
+                most=std::max(most,active);
+            }
+            Check(rose&&!strayed&&most>=6U,"the spray rises above the pool in a bounded cloud of puffs");
         }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls

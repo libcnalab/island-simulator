@@ -1115,6 +1115,8 @@ def main():
                 raise RuntimeError("current floating coconuts are missing; check for a stale executable")
             if "the cumulus shadows drift over the land as well as the sea, dimming every sun-shadow receiver together" not in diagnostics:
                 raise RuntimeError("current land cloud shadows are missing; check for a stale executable")
+            if "a mist of spray hangs at the cascade's foot, rising and drifting on the breeze and laid over by the gust fronts" not in diagnostics:
+                raise RuntimeError("current cascade mist is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

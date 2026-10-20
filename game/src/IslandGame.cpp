@@ -2118,6 +2118,7 @@ namespace island
         streamFishRenderer_=std::make_unique<StreamFishRenderer>(device);
         hatchlingRenderer_=std::make_unique<HatchlingRenderer>(device);
         birdShadowRenderer_=std::make_unique<BirdShadowRenderer>(device,terrain_);
+        cascadeMistRenderer_=std::make_unique<CascadeMistRenderer>(device);
         fallingFruit_.SetPalms(vegetationLayout_.Palms());
         helicopterRenderer_=std::make_unique<HelicopterRenderer>(device,*helicopterPlacement_);
         palmRenderer_ = std::make_unique<PalmRenderer>(
@@ -2591,6 +2592,7 @@ namespace island
         fallingFruit_.Update(deltaSeconds, monkeyTroop_.Monkeys());
         streamDrift_.Update(deltaSeconds);
         hatchlings_.Update(deltaSeconds);
+        cascadeMist_.Update(deltaSeconds,seaForageSeconds_);
         streamFish_.SetLeaves(streamDrift_.Leaves());
         streamFish_.Update(deltaSeconds,playerMotion_.Position().x,playerMotion_.Position().z);
         fallingFruit_.UpdateCoconuts(seaForageSeconds_, cameraPosition_.X, cameraPosition_.Z);
@@ -4422,6 +4424,7 @@ namespace island
             streamFishRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,streamFish_.Fish());
             streamWaterRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,timeSeconds);
             streamDriftRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,streamDrift_.Leaves());
+            cascadeMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,cascadeMist_.Puffs());
         }
         {
             GpuDiagnosticScope gpuPass("campfire-effects");

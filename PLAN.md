@@ -46,6 +46,25 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 38 (2026-10-20) — spray at the cascade's foot
+
+The drop of pass 6 had foam at the lip and nothing in the air. A core `CascadeMistField`
+releases a puff of spray every 0.26 s where the drop meets the pool (the first station
+below the lip, spread across 1.2 of the channel's half-width): each rises at 0.9 m/s scaled
+by the drop (slowing through its 2.6 s life), drifts downstream at 0.28 m/s, is laid over
+downwind at up to 0.9 m/s by a passing gust front (the field reads `WindGust` at the foot on
+the coconuts' clock), swells from about 0.25 m to near a metre and thins, its density a
+half-sine over its life. `CascadeMistRenderer` draws each puff as a camera-facing ten-segment
+fan, pale spray fading to clear at the rim, alpha 58 at full density, premultiplied for the
+alpha-blend state (the first capture showed solid white discs without that), with depth
+read after the drifting leaves. Diagnostic "a mist of spray hangs at the cascade's foot,
+rising and drifting on the breeze and laid over by the gust fronts" is pinned by the native
+capture tool. Core checks: the cascade has a drop; over ten seconds the puffs rise more than
+0.45 m above the pool while dense, never stray more than 6 m from the foot or 4 m up, and at
+least six hang in the air at once (the first draft rose too slowly for its own threshold on
+this drop's height, and the second scaled density by the 0.53 m drop to a peak of 0.5; a
+drop now gives at least 0.6 of full density). Native `cascade` passes.
+
 ## Loop pass 37 (2026-10-20) — the cumulus shadows cross the land
 
 Pass 5 put the cumulus shadows on the open sea and kept them off the lagoon so the sunlit

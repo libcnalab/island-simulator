@@ -100,6 +100,7 @@
 #include "IslandSimulator/StreamFishRenderer.hpp"
 #include "IslandSimulator/HatchlingRenderer.hpp"
 #include "IslandSimulator/BirdShadowRenderer.hpp"
+#include "IslandSimulator/CascadeMistRenderer.hpp"
 #include "IslandSimulator/JettyRenderer.hpp"
 #include "IslandSimulator/UnderwaterEffectRenderer.hpp"
 #include "IslandSimulator/HelicopterLayout.hpp"
@@ -462,6 +463,8 @@ namespace island
         HatchlingField hatchlings_{terrain_};
         std::unique_ptr<HatchlingRenderer> hatchlingRenderer_;
         std::unique_ptr<BirdShadowRenderer> birdShadowRenderer_;
+        CascadeMistField cascadeMist_{terrain_};
+        std::unique_ptr<CascadeMistRenderer> cascadeMistRenderer_;
         std::unique_ptr<UnderwaterEffectRenderer> underwaterEffect_;
         float lastSubmergedDepth_ = 0.0f, bubbleBurst_ = 0.0f;
         float seaForageSeconds_ = 0.0f;
