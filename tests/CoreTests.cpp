@@ -64,6 +64,7 @@
 #include "IslandSimulator/SlopeScrubLayout.hpp"
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/WeatherSystem.hpp"
+#include "IslandSimulator/QuadBike.hpp"
 #include "IslandSimulator/CrabBubbleField.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
 #include "IslandSimulator/CicadaColony.hpp"
@@ -6717,6 +6718,69 @@ int main()
               "overcast weakens the sun's shadows, hides its disc and dims the scene");
         Check(island::WeatherFromName("storm") == WeatherKind::Thunderstorm && !island::WeatherFromName("snow"),
               "the weather names parse, and there is no snow on a tropical island");
+    }
+    {
+        // The quad bike (operator request 2026-10-20): settles on its springs, reaches a real
+        // sport quad's 80 km/h and no more, accelerates and brakes like one, turns, rolls over on
+        // a steep side slope but not on a gentle one, is righted by Right(), and repeats.
+        using island::QuadBike;
+        using island::BikeGround;
+        const auto flat = [](float, float) { BikeGround g; g.height = 0.0f; return g; };
+        const auto sideSlope = [](const float degrees, const float grip = 1.0f) {
+            const float t = std::tan(degrees * 3.14159265f / 180.0f), length = std::sqrt(1.0f + t * t);
+            return [t, length, grip](const float x, float) {
+                BikeGround g; g.height = x * t; g.normal = {-t / length, 1.0f / length, 0.0f}; g.grip = grip; return g; };
+        };
+        QuadBike bike({0.0f, 1.0f, 0.0f}, 0.0f);
+        bike.Place({0.0f, 0.0f, 0.0f}, 0.0f, flat);
+        for (int i = 0; i < 180; ++i) bike.Step(1.0f / 60.0f, {}, flat);
+        bool allDown = true;
+        for (int w = 0; w < 4; ++w) allDown = allDown && bike.WheelContact(w) && bike.Compression(w) > 0.05f && bike.Compression(w) < 0.6f;
+        Check(bike.Up().y > 0.995f && std::abs(bike.Velocity().y) < 0.02f && allDown,
+              "the quad settles upright on its four sprung wheels");
+        float timeTo50 = -1.0f, topSpeed = 0.0f;
+        for (int i = 0; i < 60 * 40; ++i) {
+            bike.Step(1.0f / 60.0f, {1.0f, 0.0f, false}, flat);
+            if (timeTo50 < 0.0f && bike.Speed() >= 50.0f / 3.6f) timeTo50 = static_cast<float>(i) / 60.0f;
+            topSpeed = std::max(topSpeed, bike.Speed());
+        }
+        Check(topSpeed > 78.0f / 3.6f && topSpeed < 81.0f / 3.6f, "the quad's top speed is a sport quad's 80 km/h");
+        Check(timeTo50 > 2.0f && timeTo50 < 6.0f, "the quad reaches 50 km/h in two to six seconds");
+        const float brakeStart = bike.Position().z;
+        for (int i = 0; i < 60 * 10 && bike.Speed() > 0.3f; ++i) bike.Step(1.0f / 60.0f, {-1.0f, 0.0f, false}, flat);
+        const float brakeDistance = bike.Position().z - brakeStart;
+        Check(bike.Speed() < 0.5f && brakeDistance > 15.0f && brakeDistance < 50.0f,
+              "full brakes stop it from 80 km/h in 15 to 50 metres");
+        QuadBike turning({0.0f, 0.0f, 0.0f}, 0.0f);
+        turning.Place({0.0f, 0.0f, 0.0f}, 0.0f, flat);
+        for (int i = 0; i < 60 * 3; ++i) turning.Step(1.0f / 60.0f, {0.5f, 0.0f, false}, flat);
+        const float yawBefore = turning.YawRadians();
+        for (int i = 0; i < 60 * 2; ++i) turning.Step(1.0f / 60.0f, {0.35f, 0.6f, false}, flat);
+        Check(std::abs(std::remainder(turning.YawRadians() - yawBefore, 6.2831853f)) > 0.5f && turning.Up().y > 0.9f,
+              "steering turns the quad, which stays on its wheels in a moderate turn");
+        // on loose dirt a steep side slope slides the quad; on grippy rock it rolls it
+        const auto gentle = sideSlope(14.0f), steep = sideSlope(44.0f, 1.3f);   // tips at 42.7, slides at 45.3
+        QuadBike across({0.0f, 0.0f, 0.0f}, 0.0f), tipping({0.0f, 0.0f, 0.0f}, 0.0f);
+        across.Place({0.0f, 0.0f, 0.0f}, 0.0f, gentle);
+        tipping.Place({0.0f, 0.0f, 0.0f}, 0.0f, steep);
+        for (int i = 0; i < 60 * 6; ++i) {
+            across.Step(1.0f / 60.0f, {0.4f, 0.0f, false}, gentle);
+            tipping.Step(1.0f / 60.0f, {0.4f, 0.0f, false}, steep);
+        }
+        Check(across.Rollovers() == 0 && across.Up().y > 0.9f, "the quad crosses a 14 degree side slope on its wheels");
+        Check(tipping.Rollovers() >= 1 && tipping.Overturned(), "on a 44 degree rocky side slope the quad rolls over");
+        tipping.Right(flat);
+        for (int i = 0; i < 120; ++i) tipping.Step(1.0f / 60.0f, {}, flat);
+        Check(tipping.Up().y > 0.99f && !tipping.Overturned(), "Right() sets an overturned quad back on its wheels");
+        QuadBike a({0.0f, 0.0f, 0.0f}, 0.3f), b({0.0f, 0.0f, 0.0f}, 0.3f);
+        a.Place({0.0f, 0.0f, 0.0f}, 0.3f, gentle); b.Place({0.0f, 0.0f, 0.0f}, 0.3f, gentle);
+        for (int i = 0; i < 300; ++i) {
+            a.Step(1.0f / 60.0f, {0.8f, 0.3f, false}, gentle);
+            b.Step(1.0f / 60.0f, {0.8f, 0.3f, false}, gentle);
+        }
+        Check(a.Position().x == b.Position().x && a.Position().z == b.Position().z, "the quad's motion repeats exactly");
+        std::cout << "quad bike: top " << topSpeed * 3.6f << " km/h, 0-50 km/h in " << timeTo50 << " s, brakes from top in "
+                  << brakeDistance << " m\n";
     }
     const island::GrassLodSplit emptyGrassLod = island::GrassLod::Split(0, 82.0f);
     Check(emptyGrassLod.nearCount == 0 && emptyGrassLod.middleCount == 0

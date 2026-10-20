@@ -131,6 +131,7 @@ add_library(island_core STATIC
     game/src/JungleLayout.cpp
     game/src/DayNightCycle.cpp
     game/src/WeatherSystem.cpp
+    game/src/QuadBike.cpp
     game/src/SlopeScrubLayout.cpp
     game/src/LeafBladeProfile.cpp
     game/src/UnderstoryLeafProfile.cpp
