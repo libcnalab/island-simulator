@@ -2386,6 +2386,7 @@ namespace island
                   << "island-simulator: the deer sentinel coming alert at the walker snorts the alarm, an original short nasal blast heard within fifty metres\n"
                   << "island-simulator: the resident's pause at the campfire tends the fire, its tongues and plume standing a third taller while they stay\n"
                   << "island-simulator: the resident's footfalls sound on the ground under them, sand, soil, grass, rock, shallows or planks, heard within twenty-four metres\n"
+                  << "island-simulator: on the walk the resident whistles an original short phrase every half minute, heard within thirty metres\n"
                   << "island-simulator: the bear walks to fruit and coconuts lying in its range and eats them where they lie\n"
                   << "island-simulator: the boars stand off from the bear and trot away when it comes close, as from the walker\n"
                   << "island-simulator: the hut's roof ridge is a perch for the birds\n"
@@ -2709,6 +2710,12 @@ namespace island
             const bool walking=walker.mode==ResidentMode::Walking&&walker.speed>0.1f;
             if(residentSteps_.Step(walker.x,walker.z,walking)&&soundscape_)
                 soundscape_->NoteResidentStep(walker.x,walker.y,walker.z,FootstepGroundAt(walker.x,walker.z));
+            // On the walk the resident whistles a phrase every half minute or so.
+            residentWhistleClock_=walking?residentWhistleClock_+deltaSeconds:std::min(residentWhistleClock_,6.0f);
+            if(walking&&residentWhistleClock_>=28.0f&&soundscape_) {
+                residentWhistleClock_=0.0f;
+                soundscape_->NoteResidentWhistle(walker.x,walker.y+1.55f,walker.z);
+            }
         }
         if(viewpoint_==FixedViewpoint::ResidentDetail) {
             const auto& current=resident_->State();

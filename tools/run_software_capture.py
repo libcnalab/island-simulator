@@ -1249,6 +1249,8 @@ def main():
                 raise RuntimeError("current deer alarm snort is missing; check for a stale executable")
             if "the resident's footfalls sound on the ground under them" not in diagnostics:
                 raise RuntimeError("current resident footsteps are missing; check for a stale executable")
+            if "on the walk the resident whistles an original short phrase every half minute" not in diagnostics:
+                raise RuntimeError("current resident whistle is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

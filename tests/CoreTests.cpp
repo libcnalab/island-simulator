@@ -2259,6 +2259,22 @@ int main()
         Check(!stride.Step(3.5f,0.0f,false)&&!stride.Step(4.2f,0.0f,true),"standing resets the stride, so the next step is primed afresh");
         Check(!stride.Step(std::numeric_limits<float>::quiet_NaN(),0.0f,true),"an invalid position gives no footfall");
     }
+    {
+        // The resident's whistle: deterministic, two distinct tunes, 1.4 s of PCM silent at
+        // both ends, tonal (a strong, narrow peak) rather than noise.
+        const auto tuneA=island::GenerateResidentWhistle(0),tuneB=island::GenerateResidentWhistle(1);
+        const std::size_t frames=static_cast<std::size_t>(22050*1.4f);
+        int peakA=0;for(const auto s:tuneA.samples) peakA=std::max(peakA,std::abs(static_cast<int>(s)));
+        // Zero crossings in the first note (0.1–0.3 s) of tune A at 880 Hz: about 1760 per second.
+        int crossings=0;for(std::size_t i=2206;i<6615;++i) if((tuneA.samples[i]>=0)!=(tuneA.samples[i-1]>=0)) ++crossings;
+        const float perSecond=static_cast<float>(crossings)/(0.2f);
+        Check(tuneA.sampleRate==22050&&tuneA.samples.size()==frames&&tuneB.samples.size()==frames
+            &&tuneA.samples!=tuneB.samples&&tuneA.samples==island::GenerateResidentWhistle(0).samples
+            &&tuneA.samples.front()==0&&tuneA.samples.back()==0&&tuneB.samples.front()==0&&tuneB.samples.back()==0,
+            "resident whistle PCM is deterministic, two tunes, 1.4 s long and silent at endpoints");
+        Check(peakA>6000&&perSecond>1500.0f&&perSecond<2100.0f,
+            "the whistle's first note is a clear tone near 880 Hz");
+    }
     Check(island::SnakeHissVolume(0)>.25f
         && island::SnakeHissVolume(8)<island::SnakeHissVolume(2)
         && island::SnakeHissVolume(16)==0 && island::SnakeHissVolume(-1)==0

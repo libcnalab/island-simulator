@@ -54,6 +54,22 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 105 (2026-10-20) — the resident whistles on the walk
+
+The resident now has a voice: `GenerateResidentWhistle(variant)` is an original whistled
+phrase (1.4 s of 22.05 kHz PCM: three soft sine notes with a slide up into each, a 5.5 Hz
+vibrato and a trace of breath; the second variant a different tune), built into two
+one-shot effects at startup and carried by `WildlifeCallType::Resident` through the shared
+wildlife call slot (1.45 s). `Soundscape::NoteResidentWhistle(x,y,z)` queues it at the
+resident's mouth, soft (0.32) and heard within about thirty metres, dropped if the slot
+stays busy for two seconds; the game gives it every 28 s of walking (the clock held at six
+seconds while they pause, so the next phrase comes soon after they set off). The startup
+report gains "on the walk the resident whistles an original short phrase every half minute,
+heard within thirty metres", pinned by the native capture tool. Core checks: the whistle
+PCM is deterministic, two distinct tunes, 1.4 s long and silent at both ends; its first
+note is a clear tone near 880 Hz (zero crossings) with a strong peak. Native `resident`
+passes.
+
 ## Loop pass 104 (2026-10-20) — the resident's footfalls
 
 The resident walked the island without a sound while the player's own steps sounded on

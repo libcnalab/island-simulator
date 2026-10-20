@@ -117,6 +117,10 @@ namespace island
         /** @brief The deer sentinel coming alert: its snort, placed where it stands, heard
          *  within about fifty metres. */
         void NoteDeerSnort(float x, float y, float z) noexcept;
+        /** @brief The resident whistling a phrase on the walk, where they are; heard within
+         *  about thirty metres. */
+        void NoteResidentWhistle(float x, float y, float z) noexcept;
+        [[nodiscard]] int PlayedResidentWhistleCount() const noexcept { return playedResidentWhistleCount_; }
         /** @brief The goat sentinel standing alert at the walker: its alarm bleat goes next. */
         void NoteGoatAlarm(std::size_t animalIndex) noexcept;
         /** @brief A boar the bear sent off: its alarm grunt goes next. */
@@ -281,6 +285,7 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> doveCallAlternateEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> birdSplashEffect_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> deerSnortEffects_;
+        std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> residentWhistleEffects_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> coconutThudEffect_;
         WildlifeAudioSource pendingSplash_;
         float pendingSplashSeconds_ = 0.0f;
@@ -291,6 +296,10 @@ namespace island
         WildlifeAudioSource pendingSnort_;
         float pendingSnortSeconds_ = 0.0f;
         std::uint32_t snortCount_ = 0U;
+        WildlifeAudioSource pendingWhistle_;
+        float pendingWhistleSeconds_ = 0.0f;
+        std::uint32_t whistleCount_ = 0U;
+        int playedResidentWhistleCount_ = 0;
         WildlifeAudioSource pendingThud_;
         float pendingThudSeconds_ = 0.0f;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>

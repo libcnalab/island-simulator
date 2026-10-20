@@ -1650,6 +1650,38 @@ namespace island
         return {};
     }
 
+    AmbientLoop GenerateResidentWhistle(const std::uint8_t variant)
+    {
+        // A whistled phrase: soft sine notes with a touch of breath and vibrato, each note
+        // sliding a little up from its start; the second variant a different tune.
+        constexpr std::size_t frames = static_cast<std::size_t>(AmbientSampleRate * 1.4f);
+        std::vector<float> samples(frames, 0.0f);
+        const bool alternate = (variant & 1U) != 0U;
+        struct Note { float begin, length, hertz; };
+        const std::array<Note, 3> tune = alternate
+            ? std::array<Note, 3>{{{.05f, .32f, 1046.5f}, {.42f, .30f, 1174.7f}, {.78f, .50f, 880.0f}}}
+            : std::array<Note, 3>{{{.05f, .36f, 880.0f}, {.46f, .28f, 1046.5f}, {.80f, .46f, 987.8f}}};
+        DeterministicNoise noise(0x2bd1f007U + static_cast<std::uint32_t>(alternate) * 911U);
+        float breath = 0.0f, phase = 0.0f;
+        for (std::size_t i = 0; i < frames; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            float envelope = 0.0f, hertz = 0.0f;
+            for (const Note& note : tune) {
+                const float u = (t - note.begin) / note.length;
+                if (u <= 0.0f || u >= 1.0f) continue;
+                envelope = SmoothStep(0.0f, 0.12f, u) * (1.0f - SmoothStep(0.72f, 1.0f, u));
+                hertz = note.hertz * (1.0f + 0.012f * SmoothStep(0.0f, 0.5f, u))
+                    * (1.0f + 0.006f * std::sin(2.0f * std::numbers::pi_v<float> * 5.5f * t));
+            }
+            phase += 2.0f * std::numbers::pi_v<float> * hertz / static_cast<float>(AmbientSampleRate);
+            if (phase > 2.0f * std::numbers::pi_v<float>) phase -= 2.0f * std::numbers::pi_v<float>;
+            const float raw = noise.Next();
+            breath += 0.3f * (raw - breath);
+            samples[i] = envelope * (std::sin(phase) * .9f + (raw - breath) * .06f);
+        }
+        return Quantize(samples, .38f);
+    }
+
     AmbientLoop GenerateDeerSnort(const std::uint8_t variant)
     {
         // A deer's alarm snort: a sharp blast of breath through the nose, 0.35 s with a
