@@ -416,9 +416,8 @@ namespace island
             const bool groundDove = bird.behavior == BirdBehavior::GroundApproach
                 || bird.behavior == BirdBehavior::GroundForage
                 || bird.behavior == BirdBehavior::GroundDepart;
-            const float wingLift = std::lerp(bird.wingPose * 0.38f, -0.025f, perch);
-            const float wingSpan = std::lerp(.96f, 0.21f, perch);
-            const float wingRear = std::lerp(-0.08f, -0.29f, perch);
+            const float baseWingLift = std::lerp(bird.wingPose * 0.38f, -0.025f, perch);
+            const float stretchSide = bird.stretchSide < 0.0f ? -1.0f : 1.0f;
             const Vector3 leftFront = LocalPoint(
                 centre, right, up, forward, -0.06f, 0.035f, 0.20f, scale);
             const Vector3 leftBack = LocalPoint(
@@ -428,6 +427,13 @@ namespace island
             const Vector3 rightBack = LocalPoint(
                 centre, right, up, forward, 0.08f, 0.015f, -0.24f, scale);
             for(const float side:{-1.0f,1.0f}) {
+                // Stretching, the one wing opens out and down from its perch fold by the
+                // stretch amount; the other keeps its fold.
+                const float stretch=side==stretchSide?std::clamp(bird.stretchAmount,0.0f,1.0f):0.0f;
+                const float sidePerch=perch*(1.0f-0.85f*stretch);
+                const float wingLift=std::lerp(baseWingLift,-0.16f,stretch);
+                const float wingSpan=std::lerp(.96f,0.21f,sidePerch);
+                const float wingRear=std::lerp(-0.08f,-0.29f,sidePerch);
                 if(groundDove) {
                     const Vector3 foldedWing=LocalPoint(centre,right,up,forward,
                         side*.145f,.045f,-.055f,scale);
@@ -439,15 +445,15 @@ namespace island
                 const Vector3 front=side<0.0f?leftFront:rightFront;
                 const Vector3 back=side<0.0f?leftBack:rightBack;
                 const Vector3 elbow=LocalPoint(centre,right,up,forward,side*.40f,
-                    wingLift*.30f+.035f,std::lerp(.055f,-.20f,perch),scale);
+                    wingLift*.30f+.035f,std::lerp(.055f,-.20f,sidePerch),scale);
                 const Vector3 tip=LocalPoint(
                     centre,right,up,forward,side*wingSpan,wingLift,wingRear,scale);
                 const Vector3 outerTrailing=LocalPoint(centre,right,up,forward,
-                    side*std::lerp(.62f,.17f,perch),wingLift*.62f-.018f,
-                    std::lerp(-.39f,-.48f,perch),scale);
+                    side*std::lerp(.62f,.17f,sidePerch),wingLift*.62f-.018f,
+                    std::lerp(-.39f,-.48f,sidePerch),scale);
                 const Vector3 innerTrailing=LocalPoint(centre,right,up,forward,
-                    side*std::lerp(.25f,.11f,perch),wingLift*.20f-.010f,
-                    std::lerp(-.34f,-.43f,perch),scale);
+                    side*std::lerp(.25f,.11f,sidePerch),wingLift*.20f-.010f,
+                    std::lerp(-.34f,-.43f,sidePerch),scale);
                 const std::array<Vector3,6> wingOutline{
                     front,elbow,tip,outerTrailing,innerTrailing,back};
                 AppendClosedSurface(vertices,wingOutline,up*(.014f*scale),

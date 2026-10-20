@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 153 (2026-10-20) — a perched bird stretches a wing
+
+A perched bird kept both wings folded through its stay. `BirdState::stretchAmount` (0..1)
+and `stretchSide` (+1 right, -1 left) now carry the stretch: about every
+`StretchPeriodSeconds` (17 s, plus a little per bird) a perched bird not feeding, preening
+or newly landed opens one wing out and down from its fold for `StretchSeconds` (1.8 s), the
+wings alternating; a departure or flush drops it with the preen. The stretches are counted
+(`StretchCount()`, `StretchingCount()`). In the near renderer the stretched wing's perch
+fold is reduced by 85 % and its lift lowered, so tip, elbow and trailing edge open out and
+down while the other wing keeps its fold. A new report line "a perched bird stretches one
+wing out and down for a second or two every seventeen seconds or so, between its preens"
+is pinned. Core check: through its stay the seeded perched bird stretches a wing for a bout
+of a second or two, never while preening. Native `bird-preen` passes.
+
 ## Loop pass 152 (2026-10-20) — the bear sniffs the air
 
 The bear's head only dropped for a forage and rose again. `BearState::sniff` (0..1) now

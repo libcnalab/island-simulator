@@ -2442,6 +2442,7 @@ namespace island
                   << "island-simulator: a dolphin's leap brings the seabirds on their routes within a hundred and sixty metres in to hunt the school of the moment\n"
                   << "island-simulator: a perched bird flushes from the resident or an animal walking up under its perch as from the walker\n"
                   << "island-simulator: a perched bird preens between its looks around, the head turned back into one wing for a few seconds every eleven seconds or so\n"
+                  << "island-simulator: a perched bird stretches one wing out and down for a second or two every seventeen seconds or so, between its preens\n"
                   << "island-simulator: the deer and the boars press cloven prints into wet sand and the stream's mud as they walk, two toes a stride apart that the ground takes back over four minutes\n"
                   << "island-simulator: a bird flushed by a snake mobs it, circling low over its head for eight seconds and chattering the alarm, an original run of sharp chirps heard within twenty-five metres\n"
                   << "island-simulator: a snake's head within three and a half metres sends a mouse or rat bolting and to ground for six seconds or more\n"

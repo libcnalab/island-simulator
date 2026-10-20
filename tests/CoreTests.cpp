@@ -8168,6 +8168,24 @@ int main()
         Check(dropped.Birds()[0].behavior == island::BirdBehavior::Depart && dropped.Birds()[0].preenAmount == 0.0f
                   && dropped.PreeningCount() == 0U,
               "a flush drops the preen at once");
+        // Between its preens the perched bird stretches a wing: through a stay on the perch
+        // the seeded bird opens one wing for a bout of a second or two, never while preening,
+        // and a flush drops the stretch with the preen.
+        island::BirdFlock stretcher(terrain);
+        stretcher.SetPerchSites(sites);
+        float longestStretch = 0.0f, stretchBout = 0.0f; bool together = false; float stretchPeak = 0.0f;
+        for (int step = 0; step < 400; ++step) {
+            stretcher.Update(0.05f, perchX + 25.0f, sites[0].y, perchZ);
+            const auto& bird = stretcher.Birds()[0];
+            if (bird.behavior != island::BirdBehavior::Perched) break;
+            stretchPeak = std::max(stretchPeak, bird.stretchAmount);
+            if (bird.stretchAmount > 0.5f && bird.preenAmount > 0.5f) together = true;
+            if (bird.stretchAmount > 0.5f) stretchBout += 0.05f;
+            else { longestStretch = std::max(longestStretch, stretchBout); stretchBout = 0.0f; }
+        }
+        longestStretch = std::max(longestStretch, stretchBout);
+        Check(stretcher.StretchCount() >= 1U && stretchPeak > 0.9f && longestStretch > 0.8f && longestStretch < 3.0f && !together,
+              "a perched bird stretches one wing for a bout of a second or two between its preens");
         float climbed = sitting.Birds()[0].y;
         for (int step = 0; step < 70; ++step) { sitting.Update(0.05f, perchX + 6.0f, sites[0].y, perchZ); climbed = std::max(climbed, sitting.Birds()[0].y); }
         Check(sitting.Birds()[0].behavior == island::BirdBehavior::Fly && climbed > sites[0].y + 2.0f,

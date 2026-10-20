@@ -1350,6 +1350,8 @@ def main():
                 raise RuntimeError("current deer ear twitch is missing; check for a stale executable")
             if "the bear standing lifts its head to sniff the air for a couple of seconds, and holds it up facing the walker in its alert range" not in diagnostics:
                 raise RuntimeError("current bear sniff is missing; check for a stale executable")
+            if "a perched bird stretches one wing out and down for a second or two every seventeen seconds or so, between its preens" not in diagnostics:
+                raise RuntimeError("current bird wing stretch is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:

@@ -71,6 +71,11 @@ namespace island
         float preenAmount = 0.0f;
         /** @brief The wing the head turns to while preening: +1 right, -1 left. */
         float preenSide = 1.0f;
+        /** @brief 0..1 during a wing stretch: a perched bird opens one wing out and down
+         *  from its fold for a second or two, between its preens. */
+        float stretchAmount = 0.0f;
+        /** @brief The wing stretched: +1 right, -1 left, alternating stretch by stretch. */
+        float stretchSide = 1.0f;
         BirdPathFamily family = BirdPathFamily::Shore;
         BirdSpecies species = BirdSpecies::Coastal;
         BirdBehavior behavior = BirdBehavior::Fly;
@@ -183,6 +188,14 @@ namespace island
         void PreviewPreen(std::size_t index) noexcept;
         static constexpr float PreenBoutSeconds = 2.6f;
         static constexpr float PreenPeriodSeconds = 11.0f;
+        /** @brief Wing stretches begun: a perched bird, not feeding or preening and after
+         *  its first second and a half on the perch, opens one wing out and down for
+         *  StretchSeconds about every StretchPeriodSeconds, the wings alternating. A
+         *  departure or flush drops it. */
+        [[nodiscard]] std::uint32_t StretchCount() const noexcept { return stretches_; }
+        [[nodiscard]] std::size_t StretchingCount() const noexcept;
+        static constexpr float StretchSeconds = 1.8f;
+        static constexpr float StretchPeriodSeconds = 17.0f;
         static constexpr float SnakeFlushDistance = 3.0f;
         /** @brief Fruit lying on the ground this frame; a fruit dove's ground visit lands
          *  beside the nearest one within FruitLandingRange when there is any. The doves'
@@ -280,6 +293,7 @@ namespace island
             bool bathing = false;           // this ground visit is a bathe at the pool bank
             bool feeding = false;           // in a feeding bout on a fruiting perch
             bool preening = false;          // in a preening bout on the perch
+            bool stretching = false;        // in a wing stretch on the perch
             float mobSeconds = 0.0f;        // remaining circling over a snake; 0 when not mobbing
             float mobX = 0.0f, mobY = 0.0f, mobZ = 0.0f;
             float mobChatter = 0.0f;
@@ -323,6 +337,7 @@ namespace island
         std::uint32_t snakeFlushes_ = 0U;
         std::uint32_t walkerFlushes_ = 0U;
         std::uint32_t preens_ = 0U;
+        std::uint32_t stretches_ = 0U;
         std::uint32_t mobs_ = 0U;
         BirdMob lastMob_;
         std::span<const FallingFruit> lyingFruit_;

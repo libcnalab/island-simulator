@@ -377,6 +377,8 @@ namespace island
                     agent.behaviorSeconds = 0.0f;
                     agent.state.preenAmount = 0.0f;
                     agent.preening = false;
+                    agent.state.stretchAmount = 0.0f;
+                    agent.stretching = false;
                     ++flushCount_;
                     if (snaked) {
                         // Flushed by a snake, the bird mobs it: it circles low over the head,
@@ -588,6 +590,14 @@ namespace island
         std::size_t count = 0;
         for (const Agent& agent : agents_)
             count += agent.mobSeconds > 0.0f && agent.state.behavior == BirdBehavior::Depart ? 1U : 0U;
+        return count;
+    }
+
+    std::size_t BirdFlock::StretchingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_)
+            count += agent.stretching && agent.state.behavior == BirdBehavior::Perched ? 1U : 0U;
         return count;
     }
 
@@ -887,6 +897,22 @@ namespace island
             }
             agent.state.preenAmount += std::clamp((agent.preening ? 1.0f : 0.0f) - agent.state.preenAmount,
                                                   -deltaSeconds * 5.0f, deltaSeconds * 3.0f);
+            // Between its preens a perched bird stretches: about every seventeen seconds, a
+            // little more per bird, one wing opens out and down from its fold for a second
+            // or two, the wings alternating; never feeding, preening or newly landed.
+            {
+                const float stretchCycle = std::fmod(elapsedSeconds_ + static_cast<float>(agent.index) * 3.1f + 12.0f,
+                                                     StretchPeriodSeconds + static_cast<float>(agent.index % 4U));
+                const bool inStretch = stretchCycle < StretchSeconds && !agent.feeding && !agent.preening
+                    && agent.behaviorSeconds > 1.5f;
+                if (inStretch && !agent.stretching) {
+                    ++stretches_;
+                    agent.state.stretchSide = (stretches_ + agent.index) % 2U == 0U ? 1.0f : -1.0f;
+                }
+                agent.stretching = inStretch;
+            }
+            agent.state.stretchAmount += std::clamp((agent.stretching ? 1.0f : 0.0f) - agent.state.stretchAmount,
+                                                    -deltaSeconds * 4.0f, deltaSeconds * 3.0f);
             const float duration = (8.0f + std::fmod(
                 static_cast<float>(agent.index) * 1.7f
                     + static_cast<float>(agent.perchCycle) * 1.3f,
@@ -899,6 +925,8 @@ namespace island
                 agent.feeding = false;
                 agent.state.preenAmount = 0.0f;
                 agent.preening = false;
+                agent.state.stretchAmount = 0.0f;
+                agent.stretching = false;
             }
             return;
         }
