@@ -208,6 +208,20 @@ namespace island
         }
     }
 
+    void DeerHerd::PreviewBed(const std::size_t index) noexcept
+    {
+        if (index >= Count) return;
+        Agent& agent = agents_[index];
+        agent.state.behavior = DeerBehavior::Rest;
+        agent.state.speed = 0.0f;
+        agent.state.grazeAmount = 0.0f;
+        agent.state.bedAmount = 1.0f;
+        agent.bedded = true;
+        agent.seekingShade = false;
+        agent.behaviorSeconds = 30.0f;
+        states_[index] = agent.state;
+    }
+
     void DeerHerd::NoteDisturbance(const float x, const float z) noexcept
     {
         if (!std::isfinite(x) || !std::isfinite(z)) return;
@@ -297,12 +311,18 @@ namespace island
                 agent.state.behavior = DeerBehavior::Rest;
                 agent.behaviorSeconds = 6.0f + static_cast<float>((agent.transitions * 5U
                     + static_cast<std::uint32_t>(index) * 3U) % 30U) * .2f;
+                agent.bedded = true;
                 ++shadeRests_;
             } else {
                 agent.targetHeadingRadians = std::atan2(agent.shadeZ - agent.state.z,
                                                         agent.shadeX - agent.state.x);
             }
         }
+        // Bedded down for the shade rest; anything else (an alarm, a bolt, the next graze)
+        // has the deer on its feet within half a second.
+        if (agent.state.behavior != DeerBehavior::Rest) agent.bedded = false;
+        agent.state.bedAmount += std::clamp((agent.bedded ? 1.0f : 0.0f) - agent.state.bedAmount,
+            -RiseRate * deltaSeconds, BedDownRate * deltaSeconds);
         bool drinking = false;
         if (agent.state.behavior == DeerBehavior::Drink) {
             const float bankDistance = std::hypot(agent.state.x - agent.drinkX,

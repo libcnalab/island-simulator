@@ -54,6 +54,27 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 116 (2026-10-20) — a deer beds down in the shade
+
+A deer that had walked to the shade for its rest (pass 115) stood there as it stands
+anywhere. `DeerState::bedAmount` (0..1) now carries a bedded pose: the shade rest sets the
+agent bedded and the amount rises at 0.6/s (a second and a half to lie down); any other
+behaviour — an alarm, a bolt, the next graze or walk — drops it at 2.5/s, so a bedded deer is
+on its feet within half a second of a walker arriving. `DeerRenderer` lerps the body down
+by 0.56 m (scaled) and each leg's knee, hock and hoof from the standing chain to a folded
+one: the fore knees set forward with the cannons lying back along the ground, the hind legs
+tucked with the hooves brought forward under the belly; the neck, head, tail and the gait
+swing (speed is zero) follow as before. A QA viewpoint `deer-bedded` (`DeerBeddedDetail`,
+`DeerHerd::PreviewBed(0)`) sets the antlered deer down for a still capture, framed a little
+lower and closer than `deer`; the capture tool accepts it, requires the one-batch population
+and the bedded camera line, and validates it with the scene profile. Report line: "a deer
+that lies up in the shade beds down onto folded legs and is on its feet within half a
+second of an alarm" (pinned). Core checks extend the shade-rest test: the deer beds down
+within three seconds of its shade rest; the herd without a light field never beds; a walker
+at three metres has the bedded deer up and bolting within half a second. Native
+`deer-bedded` passes (luminance deviation 24.8; the deer lies with folded legs, head up);
+native `deer` unchanged.
+
 ## Loop pass 115 (2026-10-20) — a deer rests in the shade
 
 With the solid casters' shade in the receiver sample (pass 114) the deer's lighting read

@@ -227,6 +227,7 @@ namespace island
         BoarDetail,
         GoatDetail,
         DeerDetail,
+        DeerBeddedDetail,
         SpiderDetail,
         SpiderBrightDetail,
         SpiderWebDetail,

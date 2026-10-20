@@ -22,6 +22,10 @@ namespace island
         /** @brief 0..1 the tail raised: flagged up at a bolt, half up in the flick a grazing
          *  or resting deer gives every few seconds, hanging otherwise. */
         float tailRaise = 0.0f;
+        /** @brief 0..1 bedded down: the body lowered onto folded legs for a rest taken in
+         *  the shade, rising over a second and a half; back on its feet within half a
+         *  second of any other behaviour (an alarm, a bolt, the next graze). */
+        float bedAmount = 0.0f;
         DeerBehavior behavior = DeerBehavior::Graze;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
         std::uint8_t coatVariant = 0U;
@@ -74,6 +78,14 @@ namespace island
          *  within ShadeSeekRadius and lies up there. Null keeps the deer resting where it is. */
         void SetLight(const CanopyLightField* light) noexcept { light_ = light; }
         [[nodiscard]] std::uint32_t ShadeRestCount() const noexcept { return shadeRests_; }
+        /** @brief The deer is lying up (a shade rest in progress). */
+        [[nodiscard]] bool Bedded(std::size_t index) const noexcept
+        {
+            return index < Count && agents_[index].bedded;
+        }
+        static constexpr float BedDownRate = 0.6f, RiseRate = 2.5f;
+        /** @brief QA: sets one deer fully bedded down at rest for a still capture. */
+        void PreviewBed(std::size_t index) noexcept;
         [[nodiscard]] bool SeekingShade(std::size_t index) const noexcept
         {
             return index < Count && agents_[index].seekingShade;
@@ -98,6 +110,7 @@ namespace island
             // The shade a sunlit rest walks to; valid while seekingShade.
             float shadeX = 0.0f, shadeZ = 0.0f;
             bool seekingShade = false;
+            bool bedded = false;
         };
         [[nodiscard]] float LightAt(float x, float z) const noexcept;
         [[nodiscard]] bool FindShade(const Agent& agent, std::size_t index, float& x, float& z) const noexcept;

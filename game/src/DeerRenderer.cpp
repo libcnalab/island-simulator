@@ -286,7 +286,11 @@ namespace island
             const Vector3 forward(std::cos(deer.headingRadians), 0.0f,
                                   std::sin(deer.headingRadians));
             const Vector3 right(-forward.Z, 0.0f, forward.X), up = Vector3::Up;
-            const Vector3 body(deer.x, deer.y + 1.03f * scale, deer.z);
+            // Bedded down, the body settles toward the ground and the legs fold under it:
+            // the fore cannons lie back along the ground from knees set forward, the hind
+            // legs tuck with the hooves brought forward under the belly.
+            const float bed = std::clamp(deer.bedAmount, 0.0f, 1.0f);
+            const Vector3 body(deer.x, deer.y + (1.03f - .56f * bed) * scale, deer.z);
             AppendBody(out,body,right,up,forward,scale,coat,transmission,near);
             const float graze = deer.grazeAmount;
             const Vector3 neckBase = body + forward * (.58f * scale) + up * (.24f * scale);
@@ -364,13 +368,21 @@ namespace island
                 const Vector3 hip = body + forward * (fore * scale)
                     + right * (sideSign * .255f * scale) - up * (.23f * scale);
                 const bool hind = leg >= 2;
-                const Vector3 knee = hip + forward * (((hind ? .16f : -.07f)
+                const Vector3 standingKnee = hip + forward * (((hind ? .16f : -.07f)
                     + swing * .13f) * scale) - up * (.37f * scale)
                     + right * (sideSign * .018f * scale);
-                const Vector3 hock = knee + forward * (((hind ? -.22f : .08f)
+                const Vector3 standingHock = standingKnee + forward * (((hind ? -.22f : .08f)
                     - swing * .15f) * scale) - up * (.34f * scale);
-                const Vector3 hoofPoint = hock + forward * (((hind ? .18f : .04f)
+                const Vector3 standingHoof = standingHock + forward * (((hind ? .18f : .04f)
                     - swing * .08f) * scale);
+                const Vector3 foldedKnee = hip + forward * ((hind ? .22f : .10f) * scale)
+                    - up * ((hind ? .12f : .14f) * scale) + right * (sideSign * .05f * scale);
+                const Vector3 foldedHock = foldedKnee - forward * ((hind ? .28f : .30f) * scale)
+                    - up * ((hind ? .05f : .03f) * scale);
+                const Vector3 foldedHoof = foldedHock + forward * ((hind ? .30f : -.05f) * scale);
+                const Vector3 knee = Vector3::Lerp(standingKnee, foldedKnee, bed);
+                const Vector3 hock = Vector3::Lerp(standingHock, foldedHock, bed);
+                const Vector3 hoofPoint = Vector3::Lerp(standingHoof, foldedHoof, bed);
                 const float upperRootRadius = hind ? .142f : .128f;
                 const std::array<Vector3,4> upperLeg{{hip,Vector3::Lerp(hip,knee,.28f),
                     Vector3::Lerp(hip,knee,.62f),knee}};

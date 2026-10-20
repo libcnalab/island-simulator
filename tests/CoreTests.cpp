@@ -9635,6 +9635,22 @@ int main()
         Check(sought, "a rest on sunlit ground sends the deer walking to the shade");
         Check(restedInShade, "the deer takes its rest in the crown's shade within half an hour");
         Check(plain.ShadeRestCount() == 0U && !plain.SeekingShade(2), "with no light field the deer rests where it stands");
+        // The shade rest beds the deer down within two seconds; a walker arriving at three
+        // metres has it up and bolting within half a second.
+        bool bedded = false;
+        for (int step = 0; step < 60 && !bedded; ++step) {
+            herd.Update(0.05f, home.x + 60.0f, groundY + 1.6f, home.z);
+            bedded = herd.Bedded(2) && herd.Deer()[2].bedAmount > 0.9f && herd.Deer()[2].behavior == island::DeerBehavior::Rest;
+        }
+        Check(bedded, "a deer resting in the shade beds down within three seconds");
+        Check(plain.Deer()[2].bedAmount == 0.0f, "a deer resting on its feet never beds down");
+        const auto lying = herd.Deer()[2];
+        bool risen = false;
+        for (int step = 0; step < 12 && !risen; ++step) {
+            herd.Update(0.05f, lying.x + 3.0f, lying.y + 1.6f, lying.z);
+            risen = herd.Deer()[2].behavior == island::DeerBehavior::Retreat && herd.Deer()[2].bedAmount < 0.1f && !herd.Bedded(2);
+        }
+        Check(risen, "a bedded deer is up and bolting within half a second of a walker arriving");
     }
 
     {

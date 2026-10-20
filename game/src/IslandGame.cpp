@@ -206,6 +206,7 @@ namespace island
             case FixedViewpoint::BoarDetail: return "boars";
             case FixedViewpoint::GoatDetail: return "goats";
             case FixedViewpoint::DeerDetail: return "deer";
+            case FixedViewpoint::DeerBeddedDetail: return "deer-bedded";
             case FixedViewpoint::SpiderDetail: return "spiders";
             case FixedViewpoint::SpiderBrightDetail: return "spiders-bright";
             case FixedViewpoint::SpiderWebDetail: return "spider-web";
@@ -1665,17 +1666,23 @@ namespace island
             const auto direction=Vector3(goat.x,goat.y+.75f,goat.z)-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
-        } else if (viewpoint_ == FixedViewpoint::DeerDetail) {
+        } else if (viewpoint_ == FixedViewpoint::DeerDetail || viewpoint_ == FixedViewpoint::DeerBeddedDetail) {
+            const bool bedded=viewpoint_==FixedViewpoint::DeerBeddedDetail;
+            // The bedded view sets the antlered deer down as a shade rest does and frames it
+            // a little lower and closer.
+            if(bedded) deer_->PreviewBed(0);
             const auto& deer=deer_->Deer().front();
             const Vector3 forward(std::cos(deer.headingRadians),0,std::sin(deer.headingRadians));
             const Vector3 side(-forward.Z,0,forward.X);
-            const float x=deer.x-forward.X*2.4f+side.X*7.0f;
-            const float z=deer.z-forward.Z*2.4f+side.Z*7.0f;
-            cameraPosition_=Vector3(x,std::max(terrain_.Height(x,z)+.45f,deer.y+2.1f),z);
-            const auto direction=Vector3(deer.x,deer.y+1.05f,deer.z)-cameraPosition_;
+            const float reach=bedded?5.6f:7.0f;
+            const float x=deer.x-forward.X*2.4f+side.X*reach;
+            const float z=deer.z-forward.Z*2.4f+side.Z*reach;
+            cameraPosition_=Vector3(x,std::max(terrain_.Height(x,z)+.45f,deer.y+(bedded?1.5f:2.1f)),z);
+            const auto direction=Vector3(deer.x,deer.y+(bedded?.55f:1.05f),deer.z)-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
-            std::cout<<"island-simulator: deer QA camera frames one antlered clearing animal broadside\n";
+            std::cout<<(bedded?"island-simulator: deer QA camera frames one antlered clearing animal bedded down broadside\n"
+                              :"island-simulator: deer QA camera frames one antlered clearing animal broadside\n");
         } else if (viewpoint_ == FixedViewpoint::BoarDetail) {
             const auto& boar = boarHerd_.Boars().front();
             // Telephoto inspection outside the 6m retreat trigger; habitat stays unchanged.
@@ -2179,6 +2186,7 @@ namespace island
                      "the deer keep seven metres clear of the campfire; "
                      "a deer whose rest comes on sunlit ground walks to the nearest shade within ten metres and lies up there\n";
         std::cout << "island-simulator: goats square up to a neighbour for a bout of head-to-head shoving, standing nose to nose and taking turns lowering their heads\n";
+        std::cout << "island-simulator: a deer that lies up in the shade beds down onto folded legs and is on its feet within half a second of an alarm\n";
         std::cout << "island-simulator: the goat sentinel coming alert at the walker gives a loud alarm bleat ahead of the herd's other calls\n";
         std::cout << "island-simulator: a boar the bear sends off gives a loud alarm grunt ahead of the herd's other calls\n";
         std::cout << "island-simulator: snakes " << snakes_->Snakes().size()
@@ -3114,7 +3122,7 @@ namespace island
             const auto& current=goats_->Goats().front();
             cameraPosition_+=Vector3(current.x-previousGoat.x,current.y-previousGoat.y,current.z-previousGoat.z);
         }
-        deer_->Update(viewpoint_==FixedViewpoint::DeerDetail?0.0f:deltaSeconds,
+        deer_->Update(viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail?0.0f:deltaSeconds,
             cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z);
         // The deer sentinel coming alert at the walker snorts the alarm.
         if(soundscape_&&deer_->SentinelAlert()&&!deerSentinelWasAlert_&&!deer_->Deer().empty()) {
@@ -3122,7 +3130,7 @@ namespace island
             soundscape_->NoteDeerSnort(sentinel.x,sentinel.y+1.1f*sentinel.scale,sentinel.z);
         }
         deerSentinelWasAlert_=deer_->SentinelAlert();
-        if(viewpoint_==FixedViewpoint::DeerDetail) {
+        if(viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail) {
             const auto& current=deer_->Deer().front();
             cameraPosition_+=Vector3(current.x-previousDeer.x,current.y-previousDeer.y,
                                      current.z-previousDeer.z);
@@ -4046,7 +4054,7 @@ namespace island
                                            Vector3::Up);
         cameraProjection_ = Matrix::CreatePerspectiveFieldOfView(
             (viewpoint_==FixedViewpoint::BoarDetail||viewpoint_==FixedViewpoint::GoatDetail
-                ||viewpoint_==FixedViewpoint::DeerDetail
+                ||viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail
                 ||viewpoint_==FixedViewpoint::ResidentDetail||viewpoint_==FixedViewpoint::BearDetail
                 ||viewpoint_==FixedViewpoint::MouseDetail||viewpoint_==FixedViewpoint::RatDetail
                 ||viewpoint_==FixedViewpoint::FlyDetail||viewpoint_==FixedViewpoint::AntDetail
@@ -5500,7 +5508,7 @@ namespace island
             std::cout << report.str() << '\n';
             MirrorRuntimeDiagnosticToPlatformLog(report.str());
         }
-        if(viewpoint_==FixedViewpoint::DeerDetail&&drawnFrames_==1U) {
+        if((viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail)&&drawnFrames_==1U) {
             std::ostringstream report;
             report << "island-simulator: deer render proof: deer "
                 << deerRenderer_->VisibleCount() << '/' << deer_->Deer().size()
