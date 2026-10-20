@@ -54,6 +54,28 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 210 (2026-10-20) — the jungle floor fades instead of popping on circles
+
+Second from the flight audit: every understory plant, bush and ground plant swapped meshes
+at one fixed radius (58, 44 and 30 m) and vanished at another (128, 102 and 72 m times the
+vegetation scale, 70.4, 56.1 and 39.6 m on native), six perfect circles of popping plants
+between 30 and 70 m that followed the camera over the brown floor. Now each plant (and each
+standing snag, 74 m) swaps meshes at its own distance, the base times 0.88 to 1.12 from a
+seed of its ground position, so the swaps scatter instead of tracing a ring, and over the
+last 22 % of its range a plant shrinks smoothly into the ground (its instance transform
+scaled about its base, `vegetation_fade::FarShrink`) instead of vanishing; a plant scaled
+to nothing is not submitted. The canopy, palms and their far culls are unchanged (a later
+pass). The sun shadow casters are unchanged too: understory and bushes still cast within the
+map, which at native's 56 m bush range lies inside the shadows' 52-63 m fade.
+
+Core check: the staggered distances spread over the whole +-12 % and repeat exactly; the
+shrink is 1 before its band, 0 at the maximum and changes by under 0.2 % per cm. Startup:
+"jungle floor plants swap meshes at staggered per-plant distances (+-12 %) and shrink into
+the ground over the last 22 % of their range instead of popping on fixed circles", pinned.
+Native `ground`, `grass`, `hut` and `lookout` pass with the same visible counts within a few
+plants and 0.3-0.6 % of pixels changed by 20 levels or more (the change is in motion, not
+in a still frame).
+
 ## Loop pass 209 (2026-10-20) — grass changes detail per patch, not per 37.5 m cell
 
 A read-only audit of every camera-distance transition (after the operator's "everything

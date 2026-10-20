@@ -1,3 +1,4 @@
+#include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/JungleRenderer.hpp"
 #include "IslandSimulator/WindGust.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
@@ -1897,6 +1898,11 @@ void main()
             "island-simulator: canopy per-tree frustum boxes contain both LODs and wind";
         std::cout << cullingDiagnostic << '\n';
         MirrorRuntimeDiagnosticToPlatformLog(cullingDiagnostic);
+        std::cout << "island-simulator: jungle floor plants swap meshes at staggered per-plant distances (+-"
+                  << static_cast<int>(vegetation_fade::NearStagger * 100.0f + 0.5f)
+                  << " %) and shrink into the ground over the last "
+                  << static_cast<int>(vegetation_fade::ShrinkFraction * 100.0f + 0.5f)
+                  << " % of their range instead of popping on fixed circles\n";
         std::cout << "island-simulator: jungle " << totalCanopyCount_ << " canopy trees, "
                   << totalUnderstoryCount_ << " understory plants, " << totalBushCount_
                   << " low bushes, "
@@ -2361,7 +2367,8 @@ void main()
                                               * Matrix::CreateRotationY(snag.yawRadians)
                                               * Matrix::CreateTranslation(snag.x, snag.y, snag.z),
                                           snag.variant, snag.x, snag.z,
-                                          StandingSnagNearDistance * StandingSnagNearDistance});
+                                          [&] { const float d = vegetation_fade::StaggeredNearDistance(
+                                                    StandingSnagNearDistance, snag.x, snag.z); return d * d; }()});
             extendMeshBounds(cell, snag.x, snag.y, snag.z, snag.scale,
                              standingSnagNearMeshes_[snag.variant],
                              standingSnagFarMeshes_[snag.variant]);
@@ -2374,7 +2381,8 @@ void main()
                                            * Matrix::CreateRotationY(plant.yawRadians)
                                            * Matrix::CreateTranslation(plant.x, plant.y, plant.z),
                                        plant.variant, plant.x, plant.z,
-                                       UnderstoryNearDistance * UnderstoryNearDistance});
+                                       [&] { const float d = vegetation_fade::StaggeredNearDistance(
+                                                 UnderstoryNearDistance, plant.x, plant.z); return d * d; }()});
             extendMeshBounds(cell, plant.x, plant.y, plant.z, plant.scale,
                              understoryNearMeshes_[plant.variant], understoryFarMeshes_[plant.variant]);
             ++totalUnderstoryCount_;
@@ -2386,7 +2394,8 @@ void main()
                                        * Matrix::CreateRotationY(bush.yawRadians)
                                        * Matrix::CreateTranslation(bush.x, bush.y, bush.z),
                                    bush.variant, bush.x, bush.z,
-                                   BushNearDistance * BushNearDistance});
+                                   [&] { const float d = vegetation_fade::StaggeredNearDistance(
+                                             BushNearDistance, bush.x, bush.z); return d * d; }()});
             extendMeshBounds(cell, bush.x, bush.y, bush.z, bush.scale,
                              bushNearMeshes_[bush.variant], bushFarMeshes_[bush.variant]);
             ++totalBushCount_;
@@ -2409,7 +2418,8 @@ void main()
                                              * Matrix::CreateTranslation(
                                                  plant.x, plant.y, plant.z),
                                          plant.variant, plant.x, plant.z,
-                                         GroundPlantNearDistance * GroundPlantNearDistance});
+                                         [&] { const float d = vegetation_fade::StaggeredNearDistance(
+                                                   GroundPlantNearDistance, plant.x, plant.z); return d * d; }()});
             extendMeshBounds(cell, plant.x, plant.y, plant.z, plant.scale * 1.16f,
                              groundPlantNearMeshes_[plant.variant], groundPlantFarMeshes_[plant.variant]);
             if (customShaderReady_ && plant.variant == 0) {
@@ -2678,8 +2688,15 @@ void main()
                     }
                     const bool nearLod = instanceDistanceSquared
                         <= instance.nearLodDistanceSquared;
-                    (nearLod ? visibleUnderstoryNear_ : visibleUnderstoryFar_)[instance.variant]
-                        .push_back(instance.transform);
+                    {
+                        // the last part of the range shrinks the plant into the ground
+                        const float shrink = vegetation_fade::FarShrink(std::sqrt(instanceDistanceSquared),
+                                                                         understoryMaximumDistance);
+                        if (shrink <= 0.0f) continue;
+                        (nearLod ? visibleUnderstoryNear_ : visibleUnderstoryFar_)[instance.variant]
+                            .push_back(shrink < 1.0f ? Matrix::CreateScale(shrink) * instance.transform
+                                                     : instance.transform);
+                    }
                     if (nearLod) {
                         ++visibleUnderstoryNearCount_;
                     } else {
@@ -2700,8 +2717,15 @@ void main()
                     }
                     const bool nearLod = instanceDistanceSquared
                         <= instance.nearLodDistanceSquared;
-                    (nearLod ? visibleBushNear_ : visibleBushFar_)[instance.variant]
-                        .push_back(instance.transform);
+                    {
+                        // the last part of the range shrinks the plant into the ground
+                        const float shrink = vegetation_fade::FarShrink(std::sqrt(instanceDistanceSquared),
+                                                                         bushMaximumDistance);
+                        if (shrink <= 0.0f) continue;
+                        (nearLod ? visibleBushNear_ : visibleBushFar_)[instance.variant]
+                            .push_back(shrink < 1.0f ? Matrix::CreateScale(shrink) * instance.transform
+                                                     : instance.transform);
+                    }
                     if (nearLod) {
                         ++visibleBushNearCount_;
                     } else {
@@ -2723,8 +2747,15 @@ void main()
                     }
                     const bool nearLod = instanceDistanceSquared
                         <= instance.nearLodDistanceSquared;
-                    (nearLod ? visibleGroundPlantNear_ : visibleGroundPlantFar_)[instance.variant]
-                        .push_back(instance.transform);
+                    {
+                        // the last part of the range shrinks the plant into the ground
+                        const float shrink = vegetation_fade::FarShrink(std::sqrt(instanceDistanceSquared),
+                                                                         groundPlantMaximumDistance);
+                        if (shrink <= 0.0f) continue;
+                        (nearLod ? visibleGroundPlantNear_ : visibleGroundPlantFar_)[instance.variant]
+                            .push_back(shrink < 1.0f ? Matrix::CreateScale(shrink) * instance.transform
+                                                     : instance.transform);
+                    }
                     if (nearLod) {
                         ++visibleGroundPlantNearCount_;
                     } else {

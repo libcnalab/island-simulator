@@ -60,6 +60,7 @@
 #include "IslandSimulator/MudFleckField.hpp"
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include "IslandSimulator/SunShadowFade.hpp"
+#include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/CrabBubbleField.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
 #include "IslandSimulator/CicadaColony.hpp"
@@ -6527,6 +6528,33 @@ int main()
               "grass cells draw only the tiers their distances can reach");
         std::cout << "grass per-patch tiers: largest morph step " << largestStep << " per cm; old cell split at 70 m drew "
                   << oldCentre.middleCount << " of 100 patches as middle\n";
+    }
+    {
+        // The jungle floor's fades (loop pass 210): staggered per-plant swap distances spread
+        // over +-12 % and are deterministic; the far shrink is 1 inside its band, 0 at the
+        // maximum distance and continuous between.
+        namespace fade = island::vegetation_fade;
+        float lowest = 1e9f, highest = 0.0f;
+        bool deterministic = true;
+        for (float x = -200.0f; x <= 200.0f; x += 3.1f)
+            for (float z = -200.0f; z <= 200.0f; z += 2.9f) {
+                const float d = fade::StaggeredNearDistance(44.0f, x, z);
+                lowest = std::min(lowest, d);
+                highest = std::max(highest, d);
+                if (d != fade::StaggeredNearDistance(44.0f, x, z)) deterministic = false;
+            }
+        float largestStep = 0.0f, previous = 1.0f;
+        for (float d = 0.0f; d <= 60.0f; d += 0.01f) {
+            const float s = fade::FarShrink(d, 56.1f);
+            largestStep = std::max(largestStep, std::abs(s - previous));
+            previous = s;
+        }
+        Check(deterministic && lowest >= 44.0f * 0.88f - 1e-3f && highest <= 44.0f * 1.12f + 1e-3f
+                  && highest - lowest > 44.0f * 0.2f,
+              "jungle floor plants swap meshes at their own distances spread over +-12 %");
+        Check(fade::FarShrink(56.1f * 0.78f, 56.1f) == 1.0f && fade::FarShrink(56.1f, 56.1f) == 0.0f
+                  && largestStep < 0.002f,
+              "jungle floor plants shrink smoothly to nothing over the last 22 % of their range");
     }
     const island::GrassLodSplit emptyGrassLod = island::GrassLod::Split(0, 82.0f);
     Check(emptyGrassLod.nearCount == 0 && emptyGrassLod.middleCount == 0
