@@ -72,6 +72,10 @@ BridgeRenderer::BridgeRenderer(GraphicsDevice& device,const BridgePlacement& bri
     effect_->setFogEnabledProperty(true);
     effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
     effect_->setFogStartProperty(300.0f);effect_->setFogEndProperty(760.0f);
+    try { receiver_=std::make_unique<StructureShadowReceiver>(device,"bridge",false,300.0f,760.0f); }
+    catch(const std::exception& error) {
+        std::cout<<"island-simulator: bridge sun shadow receiver unavailable: "<<error.what()<<'\n';
+    }
     std::cout<<"island-simulator: rope bridge spans "<<bridge.span<<" m of the stream at station "
         <<bridge.station<<"; "<<triangles_<<" triangles in one draw\n";
     const char* message="island-simulator: rope bridge crosses the stream's lower reach on a sagging plank walkway with hand ropes; the walker crosses dry";
@@ -86,8 +90,11 @@ void BridgeRenderer::Draw(const Matrix& view,const Matrix& projection,const Vect
     device_.setBlendStateProperty(BlendState::Opaque);
     device_.setDepthStencilStateProperty(DepthStencilState::Default);
     device_.SetVertexBuffer(vertices_.get());device_.setIndicesProperty(nullptr);
-    effect_->setWorldProperty(Matrix::getIdentityProperty());
-    effect_->setViewProperty(view);effect_->setProjectionProperty(projection);effect_->Apply();
+    if(receiver_) receiver_->Apply(view*projection,camera,sunShadow_);
+    else {
+        effect_->setWorldProperty(Matrix::getIdentityProperty());
+        effect_->setViewProperty(view);effect_->setProjectionProperty(projection);effect_->Apply();
+    }
     device_.DrawPrimitives(PrimitiveType::TriangleList,0,triangles_);drawCalls_=1;
 }
 

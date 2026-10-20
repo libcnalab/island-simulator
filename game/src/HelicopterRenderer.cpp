@@ -996,6 +996,10 @@ HelicopterRenderer::HelicopterRenderer(GraphicsDevice& device,const HelicopterPl
     effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,
                                          environment::FogColorBlue));
     effect_->setFogStartProperty(190.0f);effect_->setFogEndProperty(330.0f);
+    try { receiver_=std::make_unique<StructureShadowReceiver>(device,"helicopter",true,190.0f,330.0f); }
+    catch(const std::exception& error) {
+        std::cout<<"island-simulator: helicopter sun shadow receiver unavailable: "<<error.what()<<'\n';
+    }
     const std::string message="island-simulator: grounded helicopter original procedural shell, open pilot/rear doors, interior and stationary rotors; triangles="
         +std::to_string(triangles_);
     std::cout<<message<<'\n';MirrorRuntimeDiagnosticToPlatformLog(message);
@@ -1077,13 +1081,19 @@ void HelicopterRenderer::Draw(const Matrix& view,const Matrix& projection,const 
     device_.setDepthStencilStateProperty(DepthStencilState::Default);
     device_.getSamplerStatesProperty()[0]=SamplerState::LinearClamp;
     device_.SetVertexBuffer(vertices_.get());device_.setIndicesProperty(nullptr);
-    effect_->setWorldProperty(Matrix::getIdentityProperty());effect_->setViewProperty(view);
-    effect_->setProjectionProperty(projection);effect_->Apply();
+    const auto apply=[&] {
+        if(receiver_) receiver_->Apply(view*projection,camera,sunShadow_,materialTexture_.get());
+        else {
+            effect_->setWorldProperty(Matrix::getIdentityProperty());effect_->setViewProperty(view);
+            effect_->setProjectionProperty(projection);effect_->Apply();
+        }
+    };
+    apply();
     device_.DrawPrimitives(PrimitiveType::TriangleList,0,triangles_-glassTriangles_);
     device_.setBlendStateProperty(BlendState::AlphaBlend);
     device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
     device_.setRasterizerStateProperty(RasterizerState::CullCounterClockwise);
-    device_.SetVertexBuffer(glassVertices_.get());effect_->Apply();
+    device_.SetVertexBuffer(glassVertices_.get());apply();
     device_.DrawPrimitives(PrimitiveType::TriangleList,0,glassTriangles_);drawCalls_=2;
 }
 }

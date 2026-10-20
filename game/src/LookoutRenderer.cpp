@@ -81,6 +81,10 @@ LookoutRenderer::LookoutRenderer(GraphicsDevice& device,const LookoutPlacement& 
     effect_->setFogEnabledProperty(true);
     effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
     effect_->setFogStartProperty(300.0f);effect_->setFogEndProperty(760.0f);
+    try { receiver_=std::make_unique<StructureShadowReceiver>(device,"lookout",false,300.0f,760.0f); }
+    catch(const std::exception& error) {
+        std::cout<<"island-simulator: lookout sun shadow receiver unavailable: "<<error.what()<<'\n';
+    }
     std::cout<<"island-simulator: lookout tower stands "<<LookoutPlacement::PlatformRise<<" m beside the hut clearing with a "
         <<LookoutPlacement::RampLength<<" m cleated ramp; "<<triangles_<<" triangles in one draw\n";
     const char* message="island-simulator: resident's lookout tower beside the hut carries a railed platform the walker climbs by a cleated ramp and a rail-post perch for the birds";
@@ -95,8 +99,11 @@ void LookoutRenderer::Draw(const Matrix& view,const Matrix& projection,const Vec
     device_.setBlendStateProperty(BlendState::Opaque);
     device_.setDepthStencilStateProperty(DepthStencilState::Default);
     device_.SetVertexBuffer(vertices_.get());device_.setIndicesProperty(nullptr);
-    effect_->setWorldProperty(Matrix::getIdentityProperty());
-    effect_->setViewProperty(view);effect_->setProjectionProperty(projection);effect_->Apply();
+    if(receiver_) receiver_->Apply(view*projection,camera,sunShadow_);
+    else {
+        effect_->setWorldProperty(Matrix::getIdentityProperty());
+        effect_->setViewProperty(view);effect_->setProjectionProperty(projection);effect_->Apply();
+    }
     device_.DrawPrimitives(PrimitiveType::TriangleList,0,triangles_);drawCalls_=1;
 }
 

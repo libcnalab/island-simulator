@@ -110,6 +110,10 @@ JettyRenderer::JettyRenderer(GraphicsDevice& device,const JettyPlacement& jetty)
     effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
     // The same linear band the ocean and terrain fade across, so the deck dissolves with them.
     effect_->setFogStartProperty(300.0f);effect_->setFogEndProperty(760.0f);
+    try { receiver_=std::make_unique<StructureShadowReceiver>(device,"jetty",false,300.0f,760.0f); }
+    catch(const std::exception& error) {
+        std::cout<<"island-simulator: jetty sun shadow receiver unavailable: "<<error.what()<<'\n';
+    }
     std::cout<<"island-simulator: jetty "<<JettyPlacement::PostCount<<" posts carry a "
         <<JettyPlacement::Length<<" m plank deck from the beach over the shallows; "<<triangles_
         <<" triangles in one draw with the dugout canoe\n";
@@ -125,8 +129,11 @@ void JettyRenderer::Draw(const Matrix& view,const Matrix& projection,const Vecto
     device_.setBlendStateProperty(BlendState::Opaque);
     device_.setDepthStencilStateProperty(DepthStencilState::Default);
     device_.SetVertexBuffer(vertices_.get());device_.setIndicesProperty(nullptr);
-    effect_->setWorldProperty(Matrix::getIdentityProperty());
-    effect_->setViewProperty(view);effect_->setProjectionProperty(projection);effect_->Apply();
+    if(receiver_) receiver_->Apply(view*projection,camera,sunShadow_);
+    else {
+        effect_->setWorldProperty(Matrix::getIdentityProperty());
+        effect_->setViewProperty(view);effect_->setProjectionProperty(projection);effect_->Apply();
+    }
     device_.DrawPrimitives(PrimitiveType::TriangleList,0,triangles_);drawCalls_=1;
 }
 

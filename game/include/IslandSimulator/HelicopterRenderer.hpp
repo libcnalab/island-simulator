@@ -1,5 +1,6 @@
 #pragma once
 
+#include "IslandSimulator/StructureShadowReceiver.hpp"
 #include "IslandSimulator/HelicopterLayout.hpp"
 #include "Microsoft/Xna/Framework/BoundingBox.hpp"
 #include "Microsoft/Xna/Framework/Matrix.hpp"
@@ -28,11 +29,15 @@ public:
               const Microsoft::Xna::Framework::Vector3& camera);
     /** Renders the opaque airframe into the bound fixed-sun shadow map. */
     void DrawSunShadow(SunShadowMap& map);
+    /** The map the airframe's own surfaces receive (StructureShadowReceiver). */
+    void SetSunShadowMap(const SunShadowMap* map) noexcept{sunShadow_=map;}
     [[nodiscard]] int DrawCallCount() const noexcept{return drawCalls_;}
     [[nodiscard]] int TriangleCount() const noexcept{return triangles_;}
 private:
     Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
+    std::unique_ptr<StructureShadowReceiver> receiver_;   // null: the BasicEffect fallback
+    const SunShadowMap* sunShadow_=nullptr;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> sunShadowEffect_;
     bool sunShadowUnavailable_=false;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> materialTexture_;

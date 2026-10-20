@@ -280,6 +280,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 215: the abandoned helicopter carries grime low on the body, a damp-green film on upward paint and rust on low bare metal in its vertex colours (PLAN "Loop pass 215").
 - Pass 216: the hut's material shader receives the sun shadow map and the cumulus shade (the trees' and its own eaves' shadows fall on it); `--no-sun-shadows` captures pass again (PLAN "Loop pass 216").
 - Pass 217: the natural props (rocks, logs, driftwood, beach details) and the wreck receive the sun shadow map and the cumulus shade (a log in a palm's shadow is now shaded with the ground) (PLAN "Loop pass 217").
+- Pass 218: one shared `StructureShadowReceiver` material lets the jetty, rope bridge, lookout and helicopter receive the sun shadows and cumulus shade, BasicEffect kept as the fallback (PLAN "Loop pass 218").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

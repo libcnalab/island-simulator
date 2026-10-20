@@ -2314,6 +2314,8 @@ namespace island
                      "and the small animals keep the land's fog\n";
         std::cout << "island-simulator: the rocks, logs, driftwood, beach details and the wreck receive the sun shadows "
                      "and the cumulus shade with the ground around them\n";
+        std::cout << "island-simulator: the jetty, the rope bridge, the lookout and the helicopter receive them through one "
+                     "shared structure material\n";
         std::cout << "island-simulator: ecological links: " << deer_->DrinkerCount() << " deer walk to the stream bank to drink and "
                   << goats_->DrinkerCount() << " goats to the rain-filled basin on their slope; "
                   << boarHerd_.WallowerCount() << " boars wallow at the bank and carry the mud on their legs and bellies; "
@@ -4854,6 +4856,10 @@ namespace island
                 palmRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (hutRenderer_) hutRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 naturalPropRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                if (jettyRenderer_) jettyRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                if (bridgeRenderer_) bridgeRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                if (lookoutRenderer_) lookoutRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                helicopterRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 shipwreckRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 sunShadowReceiversBound_ = true;
             }

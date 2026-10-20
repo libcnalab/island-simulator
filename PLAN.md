@@ -54,6 +54,22 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 218 (2026-10-20) — the jetty, bridge, lookout and helicopter receive them
+
+The last structures outside the sun shadows drew with the stock BasicEffect: the jetty, the
+rope bridge and the lookout (lit vertex colours) and the helicopter (vertex colours times its
+material atlas). One shared material, `StructureShadowReceiver`, now draws all four: the same
+vertex colours (times the texture when textured), the same linear fog band each had (300-760
+m, the helicopter 190-330 m), and the receiver shader's sun shadow map and cumulus shade with
+the palms' cool tint. Each renderer keeps its BasicEffect as the fallback when custom effects
+are unavailable or the shader fails, which it reports ("... sun shadow receiver unavailable"),
+and the capture tool fails on that report. In native captures against `--no-sun-shadows`
+frames of the same view, the map darkens by 12 levels or more 22.7 % of `bridge` (the bridge
+now lies in the trees' shadows with the ground under it), 16.6 % of `lookout`, 1.4 % of
+`helicopter` and 0.3 % of `jetty` (on the open beach). Startup: "the jetty, the rope bridge,
+the lookout and the helicopter receive them through one shared structure material", pinned.
+All four pass with and without the map. Still outside: the animals and the water.
+
 ## Loop pass 217 (2026-10-20) — rocks, logs, driftwood and the wreck receive them too
 
 The natural props (rocks, reef outcrops and habitat, logs, driftwood, shell and wrack
