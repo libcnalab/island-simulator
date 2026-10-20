@@ -209,6 +209,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 145: a turtle foraging low over the bottom dips its head to graze, a puff of sand at each bite (`SeaTurtleState::graze`, `TurtleGrazeField`) (PLAN "Loop pass 145").
 - Pass 146: a patrolling dragonfly dips to touch the water every few seconds, a fleck of spray at the touch (`DragonflyState::dip`, `DragonflyDipField`) (PLAN "Loop pass 146").
 - Pass 147: a hanging fruit bat fans its half-opened wings for a few seconds every quarter minute to cool (`FruitBatState::fan`, `FruitBatColony::FanCount`) (PLAN "Loop pass 147").
+- Pass 148: a crocodile under way at the surface draws a faint wake of foam behind its snout (`CrocodileWakeField`, drawn by the fin-wake renderer) (PLAN "Loop pass 148").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

@@ -56,6 +56,7 @@
 #include "IslandSimulator/FinWakeField.hpp"
 #include "IslandSimulator/TurtleGrazeField.hpp"
 #include "IslandSimulator/DragonflyDipField.hpp"
+#include "IslandSimulator/CrocodileWakeField.hpp"
 #include "IslandSimulator/StreamFishField.hpp"
 #include "IslandSimulator/HatchlingField.hpp"
 #include "IslandSimulator/BirdShadowProjection.hpp"
@@ -9741,6 +9742,37 @@ int main()
             for(int step=0;step<1200&&crocs.LastEntry().count==0U;++step) crocs.Update(0.05f,start.x+3.0f,start.y+1.6f,start.z);
             Check(crocs.LastEntry().count==1U&&terrain.Height(crocs.LastEntry().x,crocs.LastEntry().z)<0.3f,
                   "the crocodile slides into the water with one entry noted at the water's edge");
+        }
+        // The wake: a crocodile swimming at the surface, watched from close by, lays foam at
+        // its snout a few times a second, every puff on the water within two metres of a
+        // swimmer, gone within two and a half seconds; a crocodile on the bank lays none.
+        {
+            island::CrocodileGroup swimmers(terrain);
+            std::size_t swimmer=island::CrocodileGroup::CrocodileCount;
+            for(std::size_t i=0;i<swimmers.Crocodiles().size();++i) if(swimmers.Crocodiles()[i].submerged>0.99f) { swimmer=i; break; }
+            Check(swimmer<island::CrocodileGroup::CrocodileCount,"a crocodile starts swimming");
+            island::CrocodileWakeField wake;
+            bool near=true;
+            for(int step=0;step<60;++step) {
+                const auto subject=swimmers.Crocodiles()[swimmer];
+                swimmers.Update(0.05f,subject.x+6.0f,subject.y+1.6f,subject.z);
+                wake.Update(0.05f,swimmers.Crocodiles());
+                for(const auto& puff:wake.Puffs()) {
+                    if(!puff.active) continue;
+                    bool close=false;
+                    for(const auto& croc:swimmers.Crocodiles())
+                        if(croc.submerged>0.6f&&std::hypot(croc.x-puff.x,croc.z-puff.z)<2.0f*croc.scale+2.0f) close=true;
+                    if(!close||std::abs(puff.y)>0.1f) near=false;
+                }
+            }
+            Check(wake.ReleaseCount()>=5U&&wake.ActiveCount()>0U&&near,"a swimming crocodile lays a wake of foam on the water behind its snout");
+            island::CrocodileState bank; bank.simulationTier=island::WildlifeSimulationTier::Full; bank.speed=1.0f;
+            island::CrocodileWakeField still;
+            for(int step=0;step<60;++step) still.Update(0.05f,std::span<const island::CrocodileState>(&bank,1));
+            Check(still.ReleaseCount()==0U,"a crocodile on the bank lays no wake");
+            for(int step=0;step<60;++step) still.Update(0.05f,swimmers.Crocodiles().subspan(0,0));
+            for(int step=0;step<60;++step) wake.Update(0.05f,swimmers.Crocodiles().subspan(0,0));
+            Check(wake.ActiveCount()==0U,"the wake is gone within two and a half seconds");
         }
         // The deer keep clear of the campfire: a clearing home reaches the fire, yet over ten
         // minutes no deer, grazing, walking or bolting from the walker, comes within seven

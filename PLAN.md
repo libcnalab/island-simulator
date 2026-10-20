@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 148 (2026-10-20) — a swimming crocodile draws a wake
+
+A crocodile swimming the estuary left the water unmarked. New `CrocodileWakeField` lays a
+faint puff of foam at the snout of every crocodile under way at the surface (submerged past
+0.6, speed above 0.15 m/s, not simulated dormant) every third of a second, each puff a
+`DustPuff` on the water that spreads and thins to nothing within 2.5 s, fainter than the
+shark's cut, drawn by the fin-wake renderer in foam white. A crocodile on the bank, lying
+still in the water or dormant lays none. The crocodiles report line gains "a crocodile
+under way at the surface draws a faint wake of foam on the estuary behind its snout"
+(pinned). Core checks: the swimming crocodile watched from close lays five or more puffs in
+three seconds, every one on the water within two metres of a swimmer; a crocodile on the
+bank lays none; the wake is gone within two and a half seconds. Native `crocodiles` passes.
+
 ## Loop pass 147 (2026-10-20) — a roosting fruit bat fans its wings
 
 A hanging fruit bat hung still, its wings folded, until it flew. `FruitBatState::fan`

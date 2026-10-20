@@ -121,6 +121,7 @@
 #include "IslandSimulator/FinWakeField.hpp"
 #include "IslandSimulator/TurtleGrazeField.hpp"
 #include "IslandSimulator/DragonflyDipField.hpp"
+#include "IslandSimulator/CrocodileWakeField.hpp"
 #include "IslandSimulator/OctopusInkField.hpp"
 #include "IslandSimulator/TurtleBreathField.hpp"
 #include "IslandSimulator/HelicopterLayout.hpp"
@@ -525,6 +526,7 @@ namespace island
         std::unique_ptr<CascadeMistRenderer> surfSprayRenderer_;
         DolphinBlowField dolphinBlows_;
         DragonflyDipField dragonflyDips_;
+        CrocodileWakeField crocodileWake_;
         std::unique_ptr<CascadeMistRenderer> dolphinBlowRenderer_;
         StingraySandField stingraySand_;
         StingraySandField stingrayFlickSand_;

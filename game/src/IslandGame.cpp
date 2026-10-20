@@ -2531,7 +2531,8 @@ namespace island
                   << "island-simulator: the hut's roof ridge is a perch for the birds\n"
                   << "island-simulator: crocodiles " << crocodileGroup_.Crocodiles().size()
                   << " agents bask, crawl, swim, and retreat within the stream estuary; one coming alert on its bank hisses at the walker, an original low open-jawed breath heard within thirty metres; "
-                  << "a basking crocodile gapes, holding its jaws open for fourteen seconds a few seconds into each lie-up on the bank\n"
+                  << "a basking crocodile gapes, holding its jaws open for fourteen seconds a few seconds into each lie-up on the bank; "
+                  << "a crocodile under way at the surface draws a faint wake of foam on the estuary behind its snout\n"
                   << "island-simulator: fish " << fishSchools_.Fish().size()
                   << " agents in " << FishSchools::SchoolCount
                   << " distance-throttled shallow-water schools; a fish rolling through a turn flashes silver along its flanks, brightest parting from the shark\n"
@@ -3188,6 +3189,7 @@ namespace island
                                       previousCrocodile.z);
         crocodileGroup_.Update(deltaSeconds,crocodileObserver.X,crocodileObserver.Y,
                                crocodileObserver.Z);
+        crocodileWake_.Update(deltaSeconds,crocodileGroup_.Crocodiles());
         // A crocodile coming alert on its bank hisses at the walker.
         if(soundscape_&&crocodileGroup_.LastHiss().count!=notedCrocHisses_) {
             notedCrocHisses_=crocodileGroup_.LastHiss().count;
@@ -5031,6 +5033,7 @@ namespace island
             stingraySandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,turtleGraze_.Puffs());
             blownSandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,blownSand_.Puffs());
             finWakeRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,finWake_.Puffs());
+            finWakeRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,crocodileWake_.Puffs());
             octopusInkRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,octopusInk_.Puffs());
             surfSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,surfSpray_.Puffs());
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,dolphinBlows_.Puffs());
