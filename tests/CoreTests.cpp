@@ -8671,6 +8671,32 @@ int main()
     }
 
     {
+        // The gape: the present shark, watched from beside it, drops its jaw within ten
+        // seconds for under a second and a half and closes it again; a second gape follows
+        // within another ten; a shark gone under holds its jaw shut.
+        const island::IslandTerrain terrain;
+        island::SharkPatrol gaper(terrain);
+        Check(gaper.State().present, "the shark starts present for the gape check");
+        float peak = 0.0f; int openFrames = 0, longest = 0; bool closed = false;
+        for (int step = 0; step < 400; ++step) {
+            const auto& s = gaper.State();
+            gaper.Update(0.05f, s.x + 6.0f, s.y, s.z);
+            peak = std::max(peak, s.jawOpen);
+            openFrames = s.jawOpen > 0.5f ? openFrames + 1 : 0;
+            longest = std::max(longest, openFrames);
+            if (peak > 0.9f && s.jawOpen < 0.05f) closed = true;
+        }
+        Check(gaper.GapeCount() >= 2U && peak > 0.9f && longest <= 30 && closed, "the shark on patrol gapes for a moment every several seconds");
+        island::SharkPatrol hidden(terrain);
+        bool gone = false; float hiddenJaw = 0.0f;
+        for (int step = 0; step < 12000 && !(gone && hidden.State().activity < 0.1f); ++step) {
+            const auto& s = hidden.State();
+            hidden.Update(0.05f, s.x + 6.0f, s.y, s.z);
+            if (!s.present) { gone = true; if (s.activity < 0.5f) hiddenJaw = std::max(hiddenJaw, s.jawOpen); }
+        }
+        Check(gone && hiddenJaw < 0.3f, "a shark gone under keeps its jaw shut");
+    }
+    {
         // A fish's breach near the present shark draws it that way for a while; one far off
         // does not, and the patrol resumes once the interest has run out.
         const island::IslandTerrain terrain;

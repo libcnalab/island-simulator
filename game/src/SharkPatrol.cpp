@@ -107,6 +107,16 @@ namespace island
                                       -activityRate * safeDelta, activityRate * safeDelta);
         state_.activity = std::clamp(state_.activity, 0.0f, 1.0f);
         state_.visible = state_.activity > 0.035f;
+        // The gape: present and up, the shark drops its jaw for a moment every several
+        // seconds, oftener while it investigates a breach; hidden it holds the jaw shut.
+        const bool up = state_.present && state_.activity > 0.5f;
+        gapeClock_ = up ? gapeClock_ + safeDelta : 0.0f;
+        const float gapePeriod = interestSeconds_ > 0.0f ? InvestigatingGapePeriodSeconds : GapePeriodSeconds;
+        if (gapeClock_ >= gapePeriod) gapeClock_ = 0.0f;
+        const bool gaping = up && gapeClock_ >= 1.0f && gapeClock_ < 1.0f + GapeSeconds;
+        if (gaping && !gaping_) ++gapes_;
+        gaping_ = gaping;
+        state_.jawOpen += std::clamp((gaping ? 1.0f : 0.0f) - state_.jawOpen, -safeDelta * 4.0f, safeDelta * 6.0f);
 
         const float deltaX = state_.x - observerX;
         const float deltaY = state_.y - observerY;

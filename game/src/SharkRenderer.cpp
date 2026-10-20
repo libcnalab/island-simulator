@@ -382,14 +382,17 @@ namespace island
                         AddTriangle(vertices, topBack, bottomBack, bottomFront, gill);
                     }
                 }
+                // Gaping, the mouth's lower edge drops by the jaw amount, the dark gape
+                // opening down and a little forward on the same vertices.
+                const float gape = std::clamp(shark.jawOpen, 0.0f, 1.0f);
                 const Vector3 mouthFront = LocalPoint(
-                    centre, axes, side * 0.055f, -0.072f, 0.754f, scale);
+                    centre, axes, side * 0.055f, -0.072f - 0.012f * gape, 0.754f + 0.010f * gape, scale);
                 const Vector3 mouthOuter = LocalPoint(
-                    centre, axes, side * 0.180f, -0.102f, 0.625f, scale);
+                    centre, axes, side * 0.180f, -0.102f - 0.030f * gape, 0.625f, scale);
                 const Vector3 mouthKnee = LocalPoint(
-                    centre, axes, side * 0.125f, -0.105f, 0.682f, scale);
+                    centre, axes, side * 0.125f, -0.105f - 0.060f * gape, 0.682f + 0.015f * gape, scale);
                 const Vector3 mouthInner = LocalPoint(
-                    centre, axes, side * 0.065f, -0.094f, 0.724f, scale);
+                    centre, axes, side * 0.065f, -0.094f - 0.065f * gape, 0.724f + 0.020f * gape, scale);
                 AddTriangle(vertices, mouthFront, mouthOuter, mouthKnee, gill);
                 AddTriangle(vertices, mouthFront, mouthKnee, mouthInner, gill);
                 AddTriangle(vertices,

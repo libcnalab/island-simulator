@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 166 (2026-10-20) — the shark gapes
+
+The shark swam with its mouth fixed. `SharkState::jawOpen` (0..1) now carries the gape:
+present and up (activity past 0.5) the shark drops its jaw for `GapeSeconds` (0.8 s) a
+second into every `GapePeriodSeconds` (9 s) of patrol, every
+`InvestigatingGapePeriodSeconds` (3.5 s) while it investigates a breach, opening at 6/s and
+closing at 4/s; hidden it holds the jaw shut, and the gapes are counted (`GapeCount()`,
+`Gaping()`). In the near renderer the mouth's lower edge drops by up to 6.5 % of the body
+length on the same vertices, so the fixed near-mesh budget holds. A new report line "the
+shark on patrol drops its jaw in a gape for a moment every several seconds, oftener while
+it investigates a breach" is pinned. Core checks: the present shark gapes twice within
+twenty seconds, each under a second and a half and closed again; a shark gone under keeps
+its jaw shut. Native `shark` passes.
+
 ## Loop pass 165 (2026-10-20) — a bird shakes its feathers out
 
 A perched bird came out of a preen with its plumage as sleek as it went in.

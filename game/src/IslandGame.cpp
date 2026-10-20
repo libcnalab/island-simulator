@@ -2583,6 +2583,7 @@ namespace island
                   << " vertices, closed fins and CPU faceted daylight\n"
                   << "island-simulator: near fish use capped smooth-lit bodies, caudal peduncles "
                      "and progressive rear-body bends\n"
+                  << "island-simulator: the shark on patrol drops its jaw in a gape for a moment every several seconds, oftener while it investigates a breach\n"
                   << "island-simulator: shark near/far geometry "
                   << SharkRenderer::NearVertexCount << '/' << SharkRenderer::FarVertexCount
                   << " vertices, closed fins and CPU faceted daylight\n"

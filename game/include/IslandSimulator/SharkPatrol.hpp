@@ -18,6 +18,9 @@ namespace island
         float pitchRadians = 0.0f;
         float bankRadians = 0.0f;
         float bodyWave = 0.0f;
+        /** @brief 0..1 the jaw dropped: on patrol the shark gapes for a moment every several
+         *  seconds (the ram-ventilation yawn), oftener while it investigates a breach. */
+        float jawOpen = 0.0f;
         float scale = 2.8f;
         float activity = 1.0f;
         float targetX = 0.0f;
@@ -53,6 +56,12 @@ namespace island
         static constexpr float InterestDistance = 60.0f;
         static constexpr float InterestSeconds = 12.0f;
         static constexpr float InterestReach = 10.0f;
+        /** @brief Gapes begun (every GapePeriodSeconds of presence, every
+         *  InvestigatingGapePeriodSeconds while investigating, each for GapeSeconds) and
+         *  whether the jaw is dropped this moment. */
+        [[nodiscard]] std::uint32_t GapeCount() const noexcept { return gapes_; }
+        [[nodiscard]] bool Gaping() const noexcept { return gaping_; }
+        static constexpr float GapeSeconds = 0.8f, GapePeriodSeconds = 9.0f, InvestigatingGapePeriodSeconds = 3.5f;
     private:
         void ResolveRouteTarget() noexcept;
         void UpdateMotion(float deltaSeconds) noexcept;
@@ -70,6 +79,9 @@ namespace island
         std::uint32_t presenceCycleCount_ = 0U;
         int direction_ = 1;
         float interestX_ = 0.0f, interestZ_ = 0.0f, interestSeconds_ = 0.0f;
+        float gapeClock_ = 0.0f;
+        bool gaping_ = false;
+        std::uint32_t gapes_ = 0U;
         std::uint32_t investigations_ = 0U;
     };
 }
