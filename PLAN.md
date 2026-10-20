@@ -233,6 +233,14 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 258 (2026-10-20) — moths round the lantern
+
+The hut's veranda lantern (Loop pass 228) now draws its moths: seven pale specks, each looping
+round the flame on its own erratic path within 0.16-0.58 m, rising and dipping, now and then
+bumping in close, lit by the flame (brighter the nearer, flickering with the wing beat), drawn
+with the lantern's glow after the grade when the walker is within 22 m. `hut` at 21:30 shows
+them round the lantern; by day nothing changes.
+
 ## Loop pass 257 (2026-10-20) — the day fliers roost at dusk
 
 Butterflies, dragonflies and flies flew on through the night. They now go to roost in the

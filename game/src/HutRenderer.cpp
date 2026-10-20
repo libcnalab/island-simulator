@@ -475,7 +475,7 @@ void HutRenderer::DrawNightLights(const Matrix& view,const Matrix& projection,co
         glowEffect_=std::make_unique<BasicEffect>(device_);
         glowEffect_->setVertexColorEnabledProperty(true);glowEffect_->setLightingEnabledProperty(false);
         glowEffect_->setFogEnabledProperty(false);
-        glow_=std::make_unique<DynamicVertexBuffer>(device_,VertexPositionColor::getVertexDeclarationStatic(),96,BufferUsage::WriteOnly);
+        glow_=std::make_unique<DynamicVertexBuffer>(device_,VertexPositionColor::getVertexDeclarationStatic(),256,BufferUsage::WriteOnly);
     }
     glowStaging_.clear();
     // the flame's slow breathing
@@ -507,6 +507,34 @@ void HutRenderer::DrawNightLights(const Matrix& view,const Matrix& projection,co
             glowStaging_.emplace_back(o,centre);
             glowStaging_.emplace_back(o+(right*std::cos(a0)+up*std::sin(a0))*size,edge);
             glowStaging_.emplace_back(o+(right*std::cos(a1)+up*std::sin(a1))*size,edge);
+        }
+    }
+    // Moths drawn to the lantern: pale specks lit by its flame, each looping round it on its
+    // own erratic path within a forearm's reach, now and then bumping in close.
+    if(distance>0.3f&&distance<22.0f) {
+        Vector3 toCamera=Vector3::Normalize(camera-lantern_);
+        Vector3 right=Vector3::Cross(Vector3::Up,toCamera);
+        if(right.LengthSquared()<1e-6f) right=Vector3::UnitX;
+        right.Normalize();
+        const Vector3 up=Vector3::Cross(toCamera,right);
+        const float near=1.0f-std::clamp((distance-14.0f)/8.0f,0.0f,1.0f);
+        for(int moth=0;moth<7;++moth) {
+            const float m=static_cast<float>(moth);
+            const float a=seconds*(2.1f+0.37f*m)+m*1.9f;
+            const float bump=0.5f+0.5f*std::sin(seconds*(0.9f+0.21f*m)+m);
+            const float r=0.16f+0.42f*bump;
+            const Vector3 at=lantern_+Vector3(std::cos(a)*r,0.18f*std::sin(seconds*(3.1f+0.5f*m)+m*2.3f)+0.05f,std::sin(a*1.13f)*r);
+            // brighter the nearer the flame, flickering as the wings beat
+            const float lit=k*near*(0.35f+0.65f*(1.0f-std::clamp((r-0.16f)/0.42f,0.0f,1.0f)))*(0.7f+0.3f*std::sin(seconds*31.0f+m*5.0f));
+            const Color moth0(c(0.95f*lit),c(0.85f*lit),c(0.62f*lit),255),edge(0,0,0,0);
+            const float size=0.018f+0.004f*std::fmod(m*1.7f,1.0f);
+            constexpr int mothSegments=5;
+            for(int i=0;i<mothSegments;++i) {
+                const float a0=6.2831853f*static_cast<float>(i)/mothSegments,a1=6.2831853f*static_cast<float>(i+1)/mothSegments;
+                glowStaging_.emplace_back(at,moth0);
+                glowStaging_.emplace_back(at+(right*std::cos(a0)+up*std::sin(a0))*size*1.8f,edge);
+                glowStaging_.emplace_back(at+(right*std::cos(a1)+up*std::sin(a1))*size*1.8f,edge);
+            }
         }
     }
     if(glowStaging_.empty()) return;
