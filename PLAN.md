@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 233 (2026-10-20) — puddles after rain
+
+The rain only darkened the ground. Once the weather has soaked it (wetness from 0.45, full by
+0.9) the terrain shader now lays puddles in the hollows of a two-scale world-anchored field
+(0.31 and 0.83 cycles a metre) on flat ground (fading out between 0.10 and 0.17 rad) of the
+interior's paths, clearings and forest floor, never on the beach's sand (it drains) and from
+0.6 m above the sea; they spread as the ground soaks (to about a sixth of the flat ground) and
+shrink as it dries. A puddle is the soil darkened under water, mirroring the sky by Fresnel at
+a glance (a cool sky tone, lit with the ground's light, graded at night like everything) and
+catching the sun as a sharp glint where the sun shadow map lets it through. `hut`, `jungle` and
+`east` with `--weather showers` or `thunderstorm` (the forced weather starts soaked) show them;
+dry weather changes nothing.
+
 ## Loop pass 232 (2026-10-20) — the island sounds like night after dark
 
 The soundscape ignored the clock: birds called, monkeys hooted and cicadas buzzed all night.

@@ -1157,6 +1157,25 @@ void main()
     color=mix(color,closureStone,caveClosure);
     // Rain-wet ground darkens on land (the sea's own colours are unchanged).
     color *= 1.0 - 0.30 * clamp(uWetness, 0.0, 1.0) * smoothstep(0.10, 0.60, vWorld.y);
+    // Puddles: in a soaking the flat hollows of the paths, clearings and forest floor hold
+    // water (not the beach's sand, which drains), spreading as it rains and shrinking as it
+    // dries; dark water over the soil that mirrors the sky at a glance and catches the sun.
+    float soak = smoothstep(0.45, 0.90, uWetness);
+    if (soak > 0.0) {
+        float hollow = valueNoise(p * 0.31 + vec2(-17.3, 41.9)) + valueNoise(p * 0.83 + vec2(9.1, -3.7)) * 0.35;
+        float puddle = smoothstep(0.40 - soak * 0.18, 0.46 - soak * 0.18, hollow)
+            * (1.0 - smoothstep(0.10, 0.17, slopeRadians)) * interior * (1.0 - sand)
+            * smoothstep(0.6, 1.2, vWorld.y) * soak;
+        if (puddle > 0.0) {
+            vec3 toEye = normalize(uCameraPosition - vWorld);
+            float fresnel = 0.03 + 0.97 * pow(1.0 - max(toEye.y, 0.0), 5.0);
+            vec3 skyMirror = vec3(0.52, 0.62, 0.72) * (0.55 + 0.45 * vGroundLight);
+            vec3 waterOverSoil = color * vec3(0.52, 0.55, 0.58);
+            vec3 halfway = normalize(normalize(uToSun) + toEye);
+            float glint = pow(max(halfway.y, 0.0), 260.0) * sunShadowVisibility(vWorld) * 2.2;
+            color = mix(color, mix(waterOverSoil, skyMirror, fresnel) + vec3(glint), puddle * 0.92);
+        }
+    }
     color=applyCampfireLight(color,vWorld);
     float fog = smoothstep(260.0, 720.0, distanceToCamera);
     color = mix(color, islandAtmosphereFog, fog);
