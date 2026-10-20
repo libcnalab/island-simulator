@@ -54,7 +54,7 @@ int main() {
     const auto equal=[&](const GoatHerd& a,const GoatHerd& b){return copy(a)==copy(b);};
     const GoatPoint distant{1000,1000,1000};
     std::array<float,GoatHabitat::Count> travelled{};
-    std::array<bool,4> behaviors{};
+    std::array<bool,6> behaviors{};
     float minimumHoofClearance=1;
     for(int frame=0;frame<900;++frame) {
         const auto before=copy(herd);
@@ -109,9 +109,12 @@ int main() {
                         "moving goat sole contact differs from rendered terrain");
                 }
             }
-            for(std::size_t j=0;j<i;++j)
-                check(std::hypot(s.x-herd.Goats()[j].x,s.z-herd.Goats()[j].z)>=2*GoatHabitat::BodyClearance,
-                    "goats overlap");
+            for(std::size_t j=0;j<i;++j) {
+                // Sparring partners stand nose to nose; everyone else keeps two body clearances.
+                const bool partners=herd.SparPartner(i)==static_cast<int>(j)||herd.SparPartner(j)==static_cast<int>(i);
+                check(std::hypot(s.x-herd.Goats()[j].x,s.z-herd.Goats()[j].z)
+                    >=(partners?GoatHerd::SparContact-.01f:2*GoatHabitat::BodyClearance),"goats overlap");
+            }
         }
     }
     std::cout<<"goat minimum actual hoof vertex clearance="<<minimumHoofClearance<<std::endl;
@@ -159,6 +162,34 @@ int main() {
     const float aroundClearance=std::hypot(around.x-observer.x,around.z-observer.z);
     std::cout<<"goat head-on obstacle observer clearance="<<aroundClearance<<'\n';
     check(aroundClearance>3.5f,"head-on obstacle permanently trapped retreating goat");
+    {
+        // Sparring: within eight minutes two goats stand nose to nose, and over the next
+        // seconds each lowers its head in turn while the other holds its head up; the
+        // sentinel never joins a bout.
+        GoatHerd sparrers(terrain,jungle,occupied);
+        bool squaredUp=false;
+        for(int step=0;step<4800&&!squaredUp;++step) {
+            sparrers.Update(.1f,distant);
+            squaredUp=sparrers.SparringCount()>=2;
+        }
+        check(squaredUp&&sparrers.SparCount()>=1,"no two goats squared up for a sparring bout within eight minutes");
+        std::size_t a=GoatHabitat::Count,b=GoatHabitat::Count;
+        for(std::size_t i=1;i<GoatHabitat::Count&&a==GoatHabitat::Count;++i)
+            if(sparrers.Goats()[i].behavior==GoatBehavior::Spar&&sparrers.SparPartner(i)>=0) {a=i;b=static_cast<std::size_t>(sparrers.SparPartner(i));}
+        check(a<GoatHabitat::Count&&b<GoatHabitat::Count&&a!=0&&b!=0,"the sentinel joined a sparring bout");
+        const auto& ga=sparrers.Goats()[a];const auto& gb=sparrers.Goats()[b];
+        const float facing=std::cos(ga.heading-std::atan2(gb.z-ga.z,gb.x-ga.x));
+        check(std::hypot(ga.x-gb.x,ga.z-gb.z)<GoatHerd::SparReach&&facing>.5f,"sparring goats do not stand nose to nose");
+        bool aLowered=false,bLowered=false;
+        for(int step=0;step<80&&!(aLowered&&bLowered);++step) {
+            sparrers.Update(.1f,distant);
+            const auto& sa=sparrers.Goats()[a];const auto& sb=sparrers.Goats()[b];
+            if(sa.behavior!=GoatBehavior::Spar||sb.behavior!=GoatBehavior::Spar) break;
+            if(sa.grazingPose>.9f&&sb.grazingPose<.3f) aLowered=true;
+            if(sb.grazingPose>.9f&&sa.grazingPose<.3f) bLowered=true;
+        }
+        check(aLowered&&bLowered,"sparring goats do not take turns lowering their heads");
+    }
     const std::array<CircularObstacle,1> blocked{{{0,0,400}}};
     bool rejected=false;
     try { GoatHerd impossible(terrain,jungle,blocked); } catch(const std::runtime_error&) { rejected=true; }

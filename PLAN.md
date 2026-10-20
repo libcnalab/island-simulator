@@ -54,6 +54,29 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 72 (2026-10-20) — goats spar head to head
+
+The goats grazed, walked, rested and drank, each in its own range, and never touched one
+another. `GoatBehavior::Spar` is a bout between two goats: at a decision roll a goat other
+than the sentinel picks its nearest free neighbour within 12 m (not drinking, retreating or
+already sparring) and both enter the bout for 16 s. They walk toward each other at the
+walking speed, stop inside `SparReach` (1.6 m) and face each other; on a shared clock they
+take turns lowering the head (the grazing head-down pose, 1.5 s a turn, the lower index
+first), which reads as the shove. The herd's separation rule lets sparring partners close to
+`SparContact` (1.3 m between centres, nose to nose) while every other goat keeps the two
+body clearances; a partner is remembered after the bout until the two have drawn apart to the
+ordinary clearance, so the close stance can be left at a walk. The sentinel keeps its watch
+and never spars; an alert or startle ends a bout, and a goat whose partner is called away
+stands a moment and goes on. `SparringCount()`, `SparCount()` and `SparPartner(i)` expose it;
+the soundscape gives a sparring goat the hoof-strike call. The startup report gains "goats
+square up to a neighbour for a bout of head-to-head shoving, standing nose to nose and taking
+turns lowering their heads", pinned by the native capture tool. Goat herd checks: two goats
+stand nose to nose within eight minutes (the sentinel never among them), facing each other
+inside the reach, and each lowers its head in turn while the other holds its head up; the
+overlap rule exempts partners down to the contact distance; the behaviour bookkeeping array
+grew to six entries (it had four for five behaviours). Native `goats` passes (luminance
+deviation 57).
+
 ## Loop pass 71 (2026-10-20) — fruit doves bathe at the plunge pool
 
 The doves walked dry ground and fed at fallen fruit but never went to water. The game now

@@ -3,7 +3,7 @@
 #include "IslandSimulator/GoatPose.hpp"
 
 namespace island {
-enum class GoatBehavior { Graze,Walk,Rest,Retreat,Drink };
+enum class GoatBehavior { Graze,Walk,Rest,Retreat,Drink,Spar };
 struct GoatState {
     float x=0,y=0,z=0,heading=0,speed=0,phase=0,grazingPose=0;
     float scale=1;
@@ -23,6 +23,9 @@ public:
     static constexpr float HerdReactionSeconds=.7f;
     // A sudden sound (a coconut's thud) within this range makes a goat stand and face it.
     static constexpr float StartleDistance=30.0f,StartleSeconds=6.0f;
+    // A sparring bout: two goats within SparRange walk together, stand nose to nose inside
+    // SparReach and take turns lowering their heads to shove, for SparSeconds.
+    static constexpr float SparSeconds=16.0f,SparReach=1.6f,SparContact=1.3f,SparRange=12.0f,SparTurnSeconds=1.5f;
     GoatHerd(const IslandTerrain& terrain,const JungleLayout& jungle,
         std::span<const CircularObstacle> obstacles);
     void Update(float dt,GoatPoint observer);
@@ -35,6 +38,10 @@ public:
     void NoteDisturbance(float x,float z) noexcept;
     [[nodiscard]] bool Startled() const noexcept {return disturbanceSeconds_>0;}
     [[nodiscard]] float SentinelAlertSeconds() const noexcept {return sentinelAlertSeconds_;}
+    // Goats standing nose to nose with their sparring partner this moment.
+    [[nodiscard]] std::size_t SparringCount() const noexcept;
+    [[nodiscard]] std::uint32_t SparCount() const noexcept {return spars_;}
+    [[nodiscard]] int SparPartner(std::size_t index) const noexcept {return index<GoatHabitat::Count?intents_[index].partner:-1;}
 private:
     void FindDrinkingPoint(std::size_t index) noexcept;
     void Step(std::size_t index,float dt,GoatPoint observer,bool observerValid);
@@ -52,9 +59,11 @@ private:
     struct Intent {
         float remaining=0,targetHeading=0,avoidance=0; std::uint32_t decisions=0;
         float drinkX=0,drinkZ=0,faceX=0,faceZ=0; bool hasDrink=false;
+        int partner=-1; float sparClock=0;
     };
     std::array<Intent,GoatHabitat::Count> intents_{};
     float sentinelAlertSeconds_=0;
     float disturbanceX_=0,disturbanceZ_=0,disturbanceSeconds_=0;
+    std::uint32_t spars_=0;
 };
 }

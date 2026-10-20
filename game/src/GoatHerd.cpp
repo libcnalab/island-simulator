@@ -90,9 +90,14 @@ bool GoatHerd::TryMove(std::size_t index,float heading,float distance,bool& wait
     const float midX=(x+state.x)*.5f,midZ=(z+state.z)*.5f;
     if(!IsValidPosition(index,x,z)||!IsValidPosition(index,midX,midZ)
         ||clearance_.IntersectsCircle(midX,midZ,GoatHabitat::BodyClearance+horizontal*.5f)) return false;
-    for(std::size_t other=0;other<states_.size();++other) if(other!=index)
+    for(std::size_t other=0;other<states_.size();++other) if(other!=index) {
+        // Sparring partners (and ex-partners still drawing apart) close to nose-to-nose
+        // contact; any other goat keeps two body clearances.
+        const bool partner=intents_[index].partner==static_cast<int>(other)
+            ||intents_[other].partner==static_cast<int>(index);
         if(std::hypot(midX-states_[other].x,midZ-states_[other].z)
-            <2*GoatHabitat::BodyClearance+horizontal*.5f) return false;
+            <(partner?SparContact:2*GoatHabitat::BodyClearance)+horizontal*.5f) return false;
+    }
     const float y=surface_.Sample(x,z).height;
     const float travelled=std::hypot(x-state.x,y-state.y,z-state.z);
     const float phase=std::fmod(state.phase+GoatPhaseAdvance(travelled,state.speed,state.scale),Tau);
@@ -169,6 +174,12 @@ void GoatHerd::Step(std::size_t index,float dt,GoatPoint observer,bool observerV
     auto& state=states_[index];auto& intent=intents_[index];
     intent.remaining-=dt;
     intent.avoidance=std::max(0.0f,intent.avoidance-dt);
+    // A sparring partner stays remembered after the bout until the two have drawn apart to
+    // the ordinary two body clearances, so the close stance can be left at a walk.
+    if(intent.partner>=0&&state.behavior!=GoatBehavior::Spar) {
+        const auto& old=states_[static_cast<std::size_t>(intent.partner)];
+        if(std::hypot(old.x-state.x,old.z-state.z)>=2*GoatHabitat::BodyClearance) intent.partner=-1;
+    }
     const float observerRange=observerValid
         ?std::hypot(state.x-observer.x,state.y+.8f-observer.y,state.z-observer.z)
         :std::numeric_limits<float>::infinity();
@@ -206,6 +217,47 @@ void GoatHerd::Step(std::size_t index,float dt,GoatPoint observer,bool observerV
         if(intent.hasDrink&&bits%5==4&&intent.decisions%3==0) {
             state.behavior=GoatBehavior::Drink;intent.remaining=20;
         }
+        // Every so often a goat squares up to its nearest free neighbour for a bout of
+        // head-to-head shoving: the two walk together, stand nose to nose and take turns
+        // lowering their heads. The sentinel keeps its watch and never spars.
+        if(index!=0&&bits%5==2&&intent.decisions%3==1) {
+            std::size_t best=GoatHabitat::Count;float bestDistance=SparRange;
+            for(std::size_t other=1;other<GoatHabitat::Count;++other) {
+                if(other==index) continue;
+                const auto& candidate=states_[other];
+                if(candidate.behavior==GoatBehavior::Drink||candidate.behavior==GoatBehavior::Retreat
+                    ||candidate.behavior==GoatBehavior::Spar) continue;
+                const float distance=std::hypot(candidate.x-state.x,candidate.z-state.z);
+                if(distance<bestDistance) {bestDistance=distance;best=other;}
+            }
+            if(best<GoatHabitat::Count) {
+                state.behavior=GoatBehavior::Spar;intent.remaining=SparSeconds;
+                intent.partner=static_cast<int>(best);intent.sparClock=0;
+                auto& partnerIntent=intents_[best];
+                states_[best].behavior=GoatBehavior::Spar;partnerIntent.remaining=SparSeconds;
+                partnerIntent.partner=static_cast<int>(index);partnerIntent.sparClock=0;
+                ++spars_;
+            }
+        }
+    }
+    bool sparring=false,butting=false;
+    if(state.behavior==GoatBehavior::Spar) {
+        const bool partnerValid=intent.partner>=0&&intent.partner<static_cast<int>(GoatHabitat::Count)
+            &&states_[static_cast<std::size_t>(intent.partner)].behavior==GoatBehavior::Spar
+            &&intents_[static_cast<std::size_t>(intent.partner)].partner==static_cast<int>(index);
+        if(!partnerValid) {
+            // The partner was called away (alert, startle, its own bout over): stand a moment.
+            state.behavior=GoatBehavior::Rest;intent.remaining=std::min(intent.remaining,1.0f);
+        } else {
+            intent.sparClock+=dt;
+            const auto& partner=states_[static_cast<std::size_t>(intent.partner)];
+            const float distance=std::hypot(partner.x-state.x,partner.z-state.z);
+            sparring=distance<SparReach;
+            if(intent.avoidance==0) intent.targetHeading=std::atan2(partner.z-state.z,partner.x-state.x);
+            // Turns alternate on a shared clock: the lower index shoves in the first half.
+            const bool firstHalf=std::fmod(intent.sparClock,2*SparTurnSeconds)<SparTurnSeconds;
+            butting=sparring&&(firstHalf==(static_cast<int>(index)<intent.partner));
+        }
     }
     bool drinking=false;
     if(state.behavior==GoatBehavior::Drink) {
@@ -219,11 +271,13 @@ void GoatHerd::Step(std::size_t index,float dt,GoatPoint observer,bool observerV
     const bool alertTurning=(observerRange<AlertDistance||startled)&&!retreat
         &&std::abs(Wrap(intent.targetHeading-state.heading))>.18f;
     const float desired=state.behavior==GoatBehavior::Retreat?MaximumSpeed:
-        (state.behavior==GoatBehavior::Walk||(state.behavior==GoatBehavior::Drink&&!drinking)?.65f
+        (state.behavior==GoatBehavior::Walk||(state.behavior==GoatBehavior::Drink&&!drinking)
+        ||(state.behavior==GoatBehavior::Spar&&!sparring)?.65f
         :alertTurning?.25f:0);
     state.speed+=std::clamp(desired-state.speed,-1.5f*dt,.8f*dt);
-    // Drinking is the grazing head-down pose held at the water's edge.
-    const float graze=(state.behavior==GoatBehavior::Graze||drinking)&&state.speed<.05f?1.0f:0.0f;
+    // Drinking is the grazing head-down pose held at the water's edge; a sparring goat's
+    // shove is the same lowering, taken in turns with its partner.
+    const float graze=(state.behavior==GoatBehavior::Graze||drinking||butting)&&state.speed<.05f?1.0f:0.0f;
     state.grazingPose+=std::clamp(graze-state.grazingPose,-2*dt,dt);
     if(state.speed<=.0001f) { state.speed=0;return; }
     const float heading=Wrap(state.heading+std::clamp(Wrap(intent.targetHeading-state.heading),-1.8f*dt,1.8f*dt));
@@ -244,6 +298,17 @@ void GoatHerd::Step(std::size_t index,float dt,GoatPoint observer,bool observerV
         }
         if(!retreat) intent.remaining=std::min(intent.remaining,.7f);
     }
+}
+std::size_t GoatHerd::SparringCount() const noexcept {
+    std::size_t count=0;
+    for(std::size_t index=0;index<GoatHabitat::Count;++index) {
+        const auto& intent=intents_[index];
+        if(states_[index].behavior!=GoatBehavior::Spar||intent.partner<0
+            ||intent.partner>=static_cast<int>(GoatHabitat::Count)) continue;
+        const auto& partner=states_[static_cast<std::size_t>(intent.partner)];
+        if(std::hypot(partner.x-states_[index].x,partner.z-states_[index].z)<SparReach) ++count;
+    }
+    return count;
 }
 void GoatHerd::NoteDisturbance(float x,float z) noexcept {
     if(!std::isfinite(x)||!std::isfinite(z)) return;

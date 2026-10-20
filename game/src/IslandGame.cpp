@@ -2110,6 +2110,7 @@ namespace island
                      "East deer pair walks back together; a sentinel lifts its head first and the others follow after 0.7 s; "
                      "a coconut's thud startles the deer and goats within 30 m, who stand facing the fall for 6 s; "
                      "the deer keep seven metres clear of the campfire\n";
+        std::cout << "island-simulator: goats square up to a neighbour for a bout of head-to-head shoving, standing nose to nose and taking turns lowering their heads\n";
         std::cout << "island-simulator: snakes " << snakes_->Snakes().size()
                   << " ground agents with separated dense-understory-margin homes; "
                   << snakes_->TreeSnakes().size()<<" arboreal agents on sampled broadleaf trunks\n";
