@@ -3991,6 +3991,24 @@ int main()
                          && std::isfinite(crab.z) && std::isfinite(crab.bodyYawRadians);
                  }),
           "beach crabs reject non-finite frame and observer input without state poisoning");
+    {
+        // The claw wave: the first crab, paused in the open, raises a claw a second into its
+        // pause and sweeps it for a couple of seconds; no crab waves while it moves.
+        island::CrabColony wavers(terrain);
+        const auto first = wavers.Crabs()[0];
+        bool movingWave = false;
+        float longest = 0.0f, bout = 0.0f;
+        for (int frame = 0; frame < 2400; ++frame) {
+            wavers.Update(0.05f, first.x + 20.0f, first.y + 1.6f, first.z);
+            for (const auto& crab : wavers.Crabs())
+                if (crab.waveAmount > 0.9f && crab.behavior != island::CrabBehavior::Pause) movingWave = true;
+            if (wavers.Crabs()[0].waveAmount > 0.5f) bout += 0.05f;
+            else { longest = std::max(longest, bout); bout = 0.0f; }
+        }
+        longest = std::max(longest, bout);
+        Check(wavers.WaveCount() >= 1U && longest > 1.0f && longest < 4.0f && !movingWave,
+              "a crab paused in the open waves a claw for a couple of seconds and a moving crab never does");
+    }
     bool observedPause = false;
     bool observedForage = false;
     for (int frame = 0; frame < 12000; ++frame) {

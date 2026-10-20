@@ -32,6 +32,12 @@ namespace island
         float speed = 0.0f;
         float legPhase = 0.0f;
         float clawPose = 0.0f;
+        /** @brief The claw wave: 0..1 one claw raised (waveSide +1 right, -1 left) and swept
+         *  up and down on wavePhase; a crab paused in the open displays a second into each
+         *  pause and every nine seconds or so after, dropping it the moment it moves. */
+        float waveAmount = 0.0f;
+        float waveSide = 1.0f;
+        float wavePhase = 0.0f;
         /** @brief 0..1 down the colony's burrow: the body sinks below the sand at 1. */
         float hideAmount = 0.0f;
         float scale = 1.0f;
@@ -91,6 +97,10 @@ namespace island
         static constexpr float EmergeDelaySeconds = 4.0f;
         [[nodiscard]] std::size_t HiddenCount() const noexcept;
         [[nodiscard]] std::uint32_t HideCount() const noexcept { return hides_; }
+        /** @brief Claw waves begun, and the crabs mid-wave. */
+        [[nodiscard]] std::uint32_t WaveCount() const noexcept { return waves_; }
+        [[nodiscard]] std::size_t WavingCount() const noexcept;
+        static constexpr float WaveSeconds = 1.8f, WavePeriodSeconds = 9.0f, WaveDelaySeconds = 0.5f;
 
         [[nodiscard]] std::span<const CrabState> Crabs() const noexcept;
         [[nodiscard]] std::span<const CrabHomeRange> Homes() const noexcept;
@@ -116,6 +126,8 @@ namespace island
             int preferredDirection = 1;
             bool toBurrow = false;
             float clearSeconds = 0.0f;
+            float waveClock = 0.0f;
+            bool waving = false;
         };
 
         void InitializeAgent(std::size_t index);
@@ -140,5 +152,6 @@ namespace island
         std::array<CrabHabitatCue, 6> debrisAnchors_{};
         bool debrisAnchored_ = false;
         std::uint32_t hides_ = 0U;
+        std::uint32_t waves_ = 0U;
     };
 }

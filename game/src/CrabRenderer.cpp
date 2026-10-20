@@ -714,15 +714,19 @@ namespace island
                 }
 
                 const float clawSpread = 0.025f + crab.clawPose * 0.035f;
+                // The waving claw: raised and swept up and down from the shoulder, the
+                // other claw held as it was.
+                const float wave = crab.waveSide * side > 0.0f ? std::clamp(crab.waveAmount, 0.0f, 1.0f) : 0.0f;
+                const float lift = wave * (0.16f + 0.09f * std::sin(crab.wavePhase));
                 const Vector3 clawRoot = LocalPoint(
-                    centre, right, up, forward, side * 0.24f, 0.11f, 0.16f, scale);
+                    centre, right, up, forward, side * 0.24f, 0.11f + lift * 0.25f, 0.16f, scale);
                 const Vector3 clawJoint = LocalPoint(
-                    centre, right, up, forward, side * 0.40f, 0.13f, 0.28f, scale);
+                    centre, right, up, forward, side * 0.40f, 0.13f + lift * 0.7f, 0.28f - lift * 0.1f, scale);
                 AppendTaperedLimbSegment(vertices, clawRoot, clawJoint,
                                          0.032f * scale, 0.024f * scale,
                                          palette.limb);
                 const Vector3 palm = LocalPoint(
-                    centre, right, up, forward, side * 0.49f, 0.15f, 0.350f, scale);
+                    centre, right, up, forward, side * 0.49f, 0.15f + lift, 0.350f - lift * 0.2f, scale);
                 if (useRoundedUnequalPalms) {
                     AppendRoundedCoconutPalm(
                         vertices, palm, right, up, forward,
@@ -738,10 +742,10 @@ namespace island
                 }
                 const Vector3 outerTip = LocalPoint(
                     centre, right, up, forward, side * (0.46f + clawSpread),
-                    0.165f, 0.485f, scale);
+                    0.165f + lift * 1.15f, 0.485f - lift * 0.3f, scale);
                 const Vector3 innerTip = LocalPoint(
                     centre, right, up, forward, side * (0.44f - clawSpread * 0.45f),
-                    0.125f, 0.49f, scale);
+                    0.125f + lift * 1.15f, 0.49f - lift * 0.3f, scale);
                 const Vector3 outerBase = palm + right * (side * 0.035f * scale)
                     + forward * (0.035f * scale);
                 const Vector3 innerBase = palm - right * (side * 0.025f * scale)

@@ -450,6 +450,35 @@ namespace island
             : 0.24f + 0.08f * std::sin(agent.movementPhase);
         agent.state.clawPose += std::clamp(
             clawTarget - agent.state.clawPose, -deltaSeconds * 1.8f, deltaSeconds * 1.8f);
+        // A crab paused in the open waves a claw: a second into the pause, and every nine
+        // seconds or so after (a little per crab), one claw is raised and swept up and down
+        // for a couple of seconds; moving or going down the burrow drops the display.
+        {
+            const auto index = static_cast<std::size_t>(&agent - agents_.data());
+            const bool displaying = agent.state.behavior == CrabBehavior::Pause && agent.state.hideAmount < 0.05f;
+            agent.waveClock = displaying ? agent.waveClock + deltaSeconds : 0.0f;
+            const float period = WavePeriodSeconds + static_cast<float>(index % 4U) * 1.5f;
+            const float cycle = std::fmod(agent.waveClock, period);
+            const bool waving = displaying && cycle >= WaveDelaySeconds && cycle < WaveDelaySeconds + WaveSeconds;
+            if (waving && !agent.waving) {
+                ++waves_;
+                agent.state.waveSide = (waves_ + index) % 2U == 0U ? 1.0f : -1.0f;
+                agent.state.wavePhase = 0.0f;
+                // The pause holds through the display.
+                agent.behaviorSeconds = std::max(agent.behaviorSeconds, WaveSeconds + 0.4f);
+            }
+            agent.waving = waving;
+            if (waving) agent.state.wavePhase = std::fmod(agent.state.wavePhase + deltaSeconds * 11.0f, TwoPi);
+            agent.state.waveAmount += std::clamp((waving ? 1.0f : 0.0f) - agent.state.waveAmount,
+                                                 -deltaSeconds * 6.0f, deltaSeconds * 6.0f);
+        }
+    }
+
+    std::size_t CrabColony::WavingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.waving ? 1U : 0U;
+        return count;
     }
 
     std::span<const CrabState> CrabColony::Crabs() const noexcept

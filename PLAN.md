@@ -54,6 +54,21 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 137 (2026-10-20) — a crab waves a claw
+
+A beach crab paused in the open only opened and closed its claws. `CrabState` now carries a
+claw-wave display (`waveAmount`, `waveSide`, `wavePhase`): half a second into a pause in
+the open (not down the burrow), and every nine seconds or so after (a little per crab), one
+claw — the sides alternating — is raised and swept up and down at 11 rad/s for 1.8 s, the
+pause held through the display, and the display dropped at 6/s the moment the crab moves
+or hides. `WaveCount()` counts displays, `WavingCount()` the crabs mid-wave. The renderer
+lifts the waving side's claw from the shoulder (root, joint, palm and fingertips rising
+with the lift, the palm drawn a little back), the other claw as it was. The beach crabs
+report line gains "a crab paused in the open waves a claw, raised and swept up and down
+for a couple of seconds, a second into each pause and every nine seconds or so after"
+(pinned). Core checks: the first crab, paused in the open, waves for a bout of one to four
+seconds and no crab waves while it moves. Native `crabs` passes.
+
 ## Loop pass 136 (2026-10-20) — butterflies bask in the sun
 
 A butterfly at rest held its wings closed whatever the light. `ButterflyMeadow` now reads
