@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 260 (2026-10-20) — rain rings on the puddles
+
+The puddles (Loop pass 233) lay still under falling rain. The terrain shader now rings them
+while it rains (`uRain`): in each half-metre cell of a world grid a drop strikes now and then at
+a fresh point (each cell its own period of 0.9-1.7 s, a share of the strikes by the rain's
+strength), its ring spreading to 12 cm and fading in the strike's period, a pale line at least
+8 mm (and a pixel) wide; only where a ring is several pixels across (a ground footprint under
+3.5 cm). A first build drew 1 cm rings too fine for the screen (under a pixel at a few metres);
+a probe build forcing water over the hut's clearing showed the rings scattered over it; the
+probe was removed. `hut` by day and in showers pass.
+
 ## Loop pass 259 (2026-10-20) — distant rain curtains
 
 In showery and overcast weather, grey shafts of rain now hang from far showers over the sea

@@ -163,6 +163,7 @@ uniform vec4 uBunkerFrame;
 uniform vec3 uCameraPosition;
 uniform vec3 uToSun;
 uniform float uWetness;   // 0..1 rain-wet ground (WeatherSystem)
+uniform float uRain;      // 0..1 rain falling now: drops ring the puddles
 uniform vec2 uSandWind;
 uniform float uSeaSeconds;
 uniform float uWindSeconds;
@@ -1181,6 +1182,25 @@ void main()
             // the sun's glint only as strong as the direct sun is (the clouds hide it in a storm)
             float glint = pow(max(halfway.y, 0.0), 900.0) * sunShadowVisibility(vWorld) * uSunShadowParams.x * 1.4;
             color = mix(color, mix(waterOverSoil, skyMirror, fresnel) + vec3(glint), puddle * 0.92);
+            // Falling rain rings the puddles: a drop in each half-metre cell now and then (more
+            // in heavier rain), its ring spreading and fading in under a second; only where a
+            // ring is several pixels across.
+            float ringVisibility = (1.0 - smoothstep(0.012, 0.035, groundPixelWidth)) * clamp(uRain * 1.6, 0.0, 1.0);
+            if (ringVisibility > 0.0) {
+                vec2 cellCoordinate = p * 2.0;
+                vec2 cell = floor(cellCoordinate);
+                float period = 0.9 + 0.8 * hash12(cell + vec2(3.1, 7.7));
+                float cycle = uWindSeconds / period + hash12(cell + vec2(11.3, -4.9));
+                float phase = fract(cycle);
+                float strike = floor(cycle);
+                vec2 centre = cell + 0.25 + 0.5 * vec2(hash12(cell + vec2(strike, 1.7)), hash12(cell + vec2(-2.3, strike)));
+                float d = length(cellCoordinate - centre) / 2.0;   // metres
+                float radius = 0.12 * sqrt(phase);
+                float ringWidth = max(0.008, groundPixelWidth * 0.8);
+                float ring = (1.0 - smoothstep(ringWidth * 0.5, ringWidth * 1.5, abs(d - radius))) * (1.0 - phase) * (1.0 - phase)
+                    * step(hash12(cell + vec2(strike * 1.3, strike * 0.7 + 5.0)), uRain);
+                color += vec3(0.24, 0.27, 0.30) * ring * puddle * ringVisibility * (0.5 + 0.5 * vGroundLight);
+            }
         }
     }
     color=applyCampfireLight(color,vWorld);
@@ -1637,6 +1657,7 @@ void main()
                 sun_light::UniformDirection().z);
             materialEffect_->SetUniformVec2("uSandWind", wind::DirectionX, wind::DirectionZ);
             materialEffect_->SetUniformFloat("uWetness", weather_now::Current().wetness);
+            materialEffect_->SetUniformFloat("uRain", weather_now::Current().rain);
             materialEffect_->SetUniformVec4(
                 "uPrimaryPathShape", VegetationLayout::PrimaryPathBaseX,
                 VegetationLayout::PrimaryPathAmplitude,
