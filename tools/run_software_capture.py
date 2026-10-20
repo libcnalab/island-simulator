@@ -597,6 +597,8 @@ def main():
     parser.add_argument("--canopy-lod-inspection", nargs=3, metavar=("X_MM", "Z_MM", "TIER"))
     parser.add_argument("--time-of-day", type=float, default=None,
                         help="QA: the game hour to hold the clock at (default: the 14:00 the views were made at)")
+    parser.add_argument("--game-day", type=int, default=None,
+                        help="QA: the game day (the moon's phase follows it)")
     parser.add_argument("--no-sun-shadows", action="store_true",
                         help="QA comparison: run without the sun shadow map (contact footprints only)")
     parser.add_argument("--missing-leaf", action="store_true",
@@ -615,7 +617,8 @@ def main():
     baseline = journal.latest()  # Refuse an empty/inaccessible kernel journal before launch.
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     evidence = build / "software-captures" / (f"{stamp}-{args.viewpoint}" + ("-no-sun-shadows" if args.no_sun_shadows else "")
-                                              + (f"-t{args.time_of_day:05.2f}" if args.time_of_day is not None else ""))
+                                              + (f"-t{args.time_of_day:05.2f}" if args.time_of_day is not None else "")
+                                              + (f"-d{args.game_day}" if args.game_day is not None else ""))
     evidence.mkdir(parents=True)
     capture = evidence / "capture.ppm"
     platform = dependency / "tools/platform"
@@ -623,7 +626,8 @@ def main():
                str(platform / "run_gpu_tests_private.sh"), "--inside-private-compositor", "exec",
                str(build / "island-simulator"), "--capture", str(capture), "--viewpoint", args.viewpoint,
                "--no-user-settings", *inspection, *(["--no-sun-shadows"] if args.no_sun_shadows else []),
-               *(["--time-of-day", str(args.time_of_day)] if args.time_of_day is not None else [])]
+               *(["--time-of-day", str(args.time_of_day)] if args.time_of_day is not None else []),
+               *(["--game-day", str(args.game_day)] if args.game_day is not None else [])]
     scope = "single-tree frozen LOD inspection only" if inspection else "software visual validation only"
     # Exercise title-relative content loading from an unrelated, build-owned working directory.
     metadata = {"scope": scope, "command": command, "cwd": str(evidence), "kernel_before": baseline}

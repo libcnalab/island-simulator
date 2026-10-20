@@ -92,7 +92,11 @@ Native `hut` at 14:00, 17:00 (long shadows), 18:24 (dusk), 21:00, 00:00 and 19:0
 fixed 14:00 sun: lighting baked into geometry at build time (terrain vertex colours, the hut,
 jetty, bridge, lookout, helicopter, wreck, campfire stones, twigs, the canopy light field,
 the static contact shadows); hidden at night, but at the golden hours their shading faces the
-afternoon. Next: weather.
+afternoon. A `--game-day` switch sets the day and with it the moon's phase: the `flight` view
+at 02:50 on day 3 shows the 88 % gibbous moon low over the sea with its glitter path on the
+water (the ocean's glints follow the shading direction, the moon at night), stars and moonlit
+clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
+weather.
 
 ## Loop pass 224 (2026-10-20) — a flight view, and the sea's lattice from the air removed
 

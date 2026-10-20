@@ -2441,7 +2441,10 @@ namespace island
             // hour), or from --time-of-day; held still for the fixed QA views and smoke runs so
             // their frames stay comparable.
             const float requested = day_night_options::RequestedHour();
-            if (requested >= 0.0f) dayNight_.SetHour(requested);
+            const float requestedDay = day_night_options::RequestedDay();
+            if (requestedDay >= 0.0f)
+                dayNight_ = DayNightCycle(requested >= 0.0f ? requested : DayNightCycle::DefaultHour, requestedDay);
+            else if (requested >= 0.0f) dayNight_.SetHour(requested);
             dayNight_.SetFrozen(viewpoint_ != FixedViewpoint::None || smokeTest_);
             sun_light::Set(dayNight_.Lighting());
             const auto shading = sun_light::Current().shading;

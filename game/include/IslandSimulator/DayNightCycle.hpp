@@ -80,6 +80,9 @@ namespace island
     {
         void SetRequestedHour(float hour) noexcept;
         [[nodiscard]] float RequestedHour() noexcept;
+        /** @brief A game day asked for (--game-day; the moon's phase follows it); negative: none. */
+        void SetRequestedDay(float day) noexcept;
+        [[nodiscard]] float RequestedDay() noexcept;
     }
 
     namespace sun_light

@@ -189,6 +189,8 @@ int main(const int argc, char* argv[])
             inputDiagnostics = true;
         } else if (argument == "--no-user-settings") {
             noUserSettings = true;
+        } else if (argument == "--game-day" && index + 1 < argc) {
+            island::day_night_options::SetRequestedDay(std::strtof(argv[++index], nullptr));
         } else if (argument == "--time-of-day" && index + 1 < argc) {
             island::day_night_options::SetRequestedHour(std::strtof(argv[++index], nullptr));
         } else if (argument == "--no-sun-shadows") {

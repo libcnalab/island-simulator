@@ -68,6 +68,12 @@ namespace island
             requestedHour = std::isfinite(hour) ? std::fmod(std::fmod(hour, 24.0f) + 24.0f, 24.0f) : -1.0f;
         }
         float RequestedHour() noexcept { return requestedHour; }
+        namespace { float requestedDay = -1.0f; }
+        void SetRequestedDay(const float day) noexcept
+        {
+            requestedDay = std::isfinite(day) && day >= 0.0f ? std::floor(day) : -1.0f;
+        }
+        float RequestedDay() noexcept { return requestedDay; }
     }
 
     namespace sun_light
