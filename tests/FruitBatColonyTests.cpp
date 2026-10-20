@@ -75,6 +75,24 @@ int main()
         }
         require(fanners.FanCount()>=1&&peak>0.9f&&beatHigh-beatLow>1.0f&&stilled&&!flyingFan,
             "a hanging fruit bat does not fan its wings to cool");
+        // The stretch: within a minute a hanging bat stretches a wing fully at least twice,
+        // the wings taking turns, and folds it again; a bat in flight never stretches. (A
+        // stretch easing off may overlap a fan beginning; only its start is gated.)
+        island::FruitBatColony stretchers(terrain,jungle.Canopy());
+        const auto& hanger=stretchers.Bats()[2];
+        float stretchPeak=0.0f; bool leftWing=false,rightWing=false,folded=false,flyingStretch=false;
+        for(int step=0;step<3600;++step) {
+            stretchers.Update(1.0f/60.0f,hanger.x+4.0f,hanger.y,hanger.z);
+            for(const auto& bat:stretchers.Bats()) {
+                if(bat.behavior==island::FruitBatBehavior::DayFlight&&bat.stretch>0.01f) flyingStretch=true;
+                if(bat.behavior!=island::FruitBatBehavior::Roost) continue;
+                stretchPeak=std::max(stretchPeak,bat.stretch);
+                if(bat.stretch>0.9f) { if(bat.stretchSide<0.0f) leftWing=true; else rightWing=true; }
+                if(stretchPeak>0.9f&&bat.stretch<0.05f) folded=true;
+            }
+        }
+        require(stretchers.StretchCount()>=2&&stretchPeak>0.9f&&leftWing&&rightWing&&folded&&!flyingStretch,
+            "a hanging fruit bat does not stretch its wings in turn and fold them again");
     }
     std::cout<<"Fruit bats: six deterministic inland roosts, four hanging and two bounded daytime flights\n";
 }

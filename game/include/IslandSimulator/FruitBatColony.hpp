@@ -40,6 +40,11 @@ namespace island
         /** @brief 0..1 fanning: a hanging bat half-opens its wings and beats them slowly for
          *  a few seconds every quarter minute to cool, the wing pose carrying the beat. */
         float fan = 0.0f;
+        /** @brief 0..1 the stretch: now and then a hanging bat stretches one wing out and
+         *  down for a couple of seconds and folds it again; stretchSide (+1 right, -1 left)
+         *  is the wing, the wings taking turns. */
+        float stretch = 0.0f;
+        float stretchSide = 1.0f;
         float scale = 1.0f;
         FruitBatBehavior behavior = FruitBatBehavior::Roost;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
@@ -58,6 +63,10 @@ namespace island
         [[nodiscard]] std::uint32_t FanCount() const noexcept { return fans_; }
         [[nodiscard]] std::size_t FanningCount() const noexcept;
         static constexpr float FanSeconds = 3.0f, FanPeriodSeconds = 16.0f, FanBeatRate = 9.0f;
+        /** @brief Wing stretches begun by the hanging bats, and the bats mid-stretch. */
+        [[nodiscard]] std::uint32_t StretchCount() const noexcept { return stretches_; }
+        [[nodiscard]] std::size_t StretchingCount() const noexcept;
+        static constexpr float StretchSeconds = 2.2f, StretchPeriodSeconds = 23.0f;
 
         FruitBatColony(const IslandTerrain& terrain,
                        std::span<const CanopyPlacement> canopy);
@@ -82,6 +91,7 @@ namespace island
             float flapPhase = 0.0f;
             float accumulatedSeconds = 0.0f;
             bool fanning = false;
+            bool stretching = false;
         };
 
         std::vector<Agent> agents_;
@@ -92,5 +102,6 @@ namespace island
         int reducedSimulationCount_ = 0;
         int dormantSimulationCount_ = 0;
         std::uint32_t fans_ = 0U;
+        std::uint32_t stretches_ = 0U;
     };
 }

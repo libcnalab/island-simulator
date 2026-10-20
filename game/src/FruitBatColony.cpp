@@ -84,6 +84,13 @@ namespace island
         }
     }
 
+    std::size_t FruitBatColony::StretchingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.stretching ? 1U : 0U;
+        return count;
+    }
+
     std::size_t FruitBatColony::FanningCount() const noexcept
     {
         std::size_t count = 0;
@@ -136,6 +143,17 @@ namespace island
                     agent.fanning = fanning;
                     agent.state.fan += std::clamp((fanning ? 1.0f : 0.0f) - agent.state.fan, -step * 3.0f, step * 3.0f);
                     agent.state.wingPose = fanning ? std::sin(agent.accumulatedSeconds * FanBeatRate) : agent.state.wingPose * 0.8f;
+                    // And now and then, between its fans, a hanging bat stretches one wing out
+                    // and down for a couple of seconds and folds it again, the wings taking turns.
+                    const float stretchPeriod = StretchPeriodSeconds + 3.0f * static_cast<float>(index % 2U);
+                    const float stretchCycle = std::fmod(agent.accumulatedSeconds + 9.0f + 1.7f * static_cast<float>(index), stretchPeriod);
+                    const bool stretching = stretchCycle < StretchSeconds && !fanning;
+                    if (stretching && !agent.stretching) {
+                        ++stretches_;
+                        agent.state.stretchSide = -agent.state.stretchSide;
+                    }
+                    agent.stretching = stretching;
+                    agent.state.stretch += std::clamp((stretching ? 1.0f : 0.0f) - agent.state.stretch, -step * 2.0f, step * 1.5f);
                 }
             }
             states_[index] = agent.state;

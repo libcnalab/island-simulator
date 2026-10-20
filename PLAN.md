@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 174 (2026-10-20) — a hanging bat stretches a wing
+
+A roosting bat only fanned both wings together. `FruitBatState::stretch` (0..1) and
+`stretchSide` (+1 right, -1 left) now carry the stretch: between its fans, every
+`StretchPeriodSeconds` (23 s, plus 3 s on alternate bats, the first staggered) a hanging bat
+stretches one wing out and down for `StretchSeconds` (2.2 s), rising at 1.5/s and folding
+at 2/s, the wings taking turns; a stretch never begins during a fan, and the stretches are
+counted (`StretchCount()`, `StretchingCount()`). In the renderer the stretched wing opens
+to 80 % of the open span (capped with the fan at 90 %) and drops, the other keeping its
+fold. The bats report line gains "and stretches one wing out and down for a couple of
+seconds now and then, the wings taking turns" (pinned). FruitBatColonyTests: within a
+minute a hanging bat stretches a wing fully at least twice, both wings seen, folding again,
+and no flying bat stretches. Native `bat-roost` passes.
+
 ## Loop pass 173 (2026-10-20) — a settled ray ripples its margins
 
 A settled stingray lay dead still but for its sand flick. `StingrayState::marginRipple`

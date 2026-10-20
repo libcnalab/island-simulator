@@ -235,6 +235,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 171: the bear shakes its head as a sniff ends, a quick swing side to side (`BearState::headShake`/`shakePhase`, `BearMotion::HeadShakeCount`) (PLAN "Loop pass 171").
 - Pass 172: a turtle squeezes its eyes shut as its head breaks the surface for a breath, and blinks slowly under (`SeaTurtleState::blink`, `SeaTurtleGroup::BlinkCount`) (PLAN "Loop pass 172").
 - Pass 173: a settled ray breathes with a slow wave running back along each wing's edge (`StingrayState::marginRipple`/`ripplePhase`) (PLAN "Loop pass 173").
+- Pass 174: a hanging bat stretches one wing out and down now and then, the wings taking turns (`FruitBatState::stretch`/`stretchSide`, `FruitBatColony::StretchCount`) (PLAN "Loop pass 174").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

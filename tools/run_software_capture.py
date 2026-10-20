@@ -1392,6 +1392,8 @@ def main():
                 raise RuntimeError("current turtle blink is missing; check for a stale executable")
             if "a settled ray breathes with a slow wave running back along each wing's edge" not in diagnostics:
                 raise RuntimeError("current stingray margin ripple is missing; check for a stale executable")
+            if "and stretches one wing out and down for a couple of seconds now and then, the wings taking turns" not in diagnostics:
+                raise RuntimeError("current bat wing stretch is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:
