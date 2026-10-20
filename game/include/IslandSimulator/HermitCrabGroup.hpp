@@ -36,6 +36,9 @@ namespace island
          *  pick-and-lift rhythm. */
         float feedAmount = 0.0f;
         float feedPhase = 0.0f;
+        /** @brief 0..1 the shell carried: walking, the crab lifts its shell clear of the sand
+         *  and it rocks with the steps; pausing or withdrawing, it sets the shell down. */
+        float shellCarry = 0.0f;
         float scale = 1.0f;
         HermitCrabBehavior behavior = HermitCrabBehavior::Pause;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
@@ -70,6 +73,9 @@ namespace island
         [[nodiscard]] std::uint32_t FeedCount() const noexcept { return feeds_; }
         [[nodiscard]] std::size_t FeedingCount() const noexcept;
         static constexpr float FeedPickRate = 4.5f;
+        /** @brief Crabs with their shells lifted this moment (the carry past half). */
+        [[nodiscard]] std::size_t CarryingCount() const noexcept;
+        static constexpr float ShellLiftRate = 3.0f, ShellSetRate = 4.0f;
 
         explicit HermitCrabGroup(const IslandTerrain& terrain);
         void Update(float deltaSeconds, float observerX, float observerY,

@@ -3838,6 +3838,21 @@ int main()
         }
         Check(feeders.FeedCount()>=1U&&peak>.9f&&phase>1.0f&&stopped&&!shellFed,
               "a paused hermit crab feeds with its small claw and goes on foraging");
+        // The shell: carried at full on the walk, set down within a second of a pause, and
+        // never lifted by a crab in its shell.
+        {
+            float carried=0.0f; bool setDown=false,withdrawnCarry=false;
+            for(int frame=0;frame<900;++frame) {
+                feeders.Update(1.0f/60.0f,first.x+20.0f,first.y+1.6f,first.z);
+                for(const auto& crab:feeders.Crabs()) {
+                    if(crab.behavior==island::HermitCrabBehavior::Forage&&crab.speed>.15f) carried=std::max(carried,crab.shellCarry);
+                    if(crab.behavior==island::HermitCrabBehavior::Pause&&crab.speed<.01f&&crab.shellCarry<.1f) setDown=true;
+                    if(crab.withdrawAmount>.5f&&crab.shellCarry>.1f) withdrawnCarry=true;
+                }
+            }
+            Check(carried>.9f&&feeders.CarryingCount()<=feeders.Crabs().size()&&setDown&&!withdrawnCarry,
+                  "a walking hermit crab does not lift its shell and set it down at a pause");
+        }
     }
 
     island::CoconutCrabGroup coconutCrabs(terrain);

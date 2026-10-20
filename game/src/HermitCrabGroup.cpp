@@ -133,6 +133,13 @@ namespace island
         assert(fullCount_ + reducedCount_ + dormantCount_ == static_cast<int>(Count));
     }
 
+    std::size_t HermitCrabGroup::CarryingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.state.shellCarry > .5f ? 1U : 0U;
+        return count;
+    }
+
     std::size_t HermitCrabGroup::FeedingCount() const noexcept
     {
         std::size_t count = 0;
@@ -209,6 +216,11 @@ namespace island
                                              -deltaSeconds * 4.0f, deltaSeconds * 3.0f);
         if (agent.state.feedAmount > .01f)
             agent.state.feedPhase = std::fmod(agent.state.feedPhase + deltaSeconds * FeedPickRate, TwoPi);
+        // The shell: lifted clear of the sand on the walk, set down as the crab pauses or
+        // pulls in.
+        const bool carrying = agent.state.speed > .08f && agent.state.withdrawAmount <= 0.0f;
+        agent.state.shellCarry += std::clamp((carrying ? 1.0f : 0.0f) - agent.state.shellCarry,
+                                             -deltaSeconds * ShellSetRate, deltaSeconds * ShellLiftRate);
         agent.state.speed += std::clamp(targetSpeed - agent.state.speed,
                                         -deltaSeconds * 1.7f,
                                         deltaSeconds * 2.4f);

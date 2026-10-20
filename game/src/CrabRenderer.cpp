@@ -381,10 +381,14 @@ namespace island
                 {{-.145f, -.090f, -.015f, .070f, .145f, .215f}};
             constexpr std::array<float, 6> ShellRadii =
                 {{.050f, .125f, .158f, .150f, .095f, .018f}};
-            const Vector3 shellAxis = Vector3::Normalize(up * .84f - forward * .54f);
+            // Carried, the shell rides a little higher and rocks with the steps; set down
+            // at a pause it rests on the sand again.
+            const float carry = std::clamp(crab.shellCarry, 0.0f, 1.0f);
+            const float rock = carry * crab.legPhase * .07f;
+            const Vector3 shellAxis = Vector3::Normalize(up * .84f - forward * (.54f + rock) + right * (rock * .6f));
             const Vector3 shellOther = Vector3::Normalize(Vector3::Cross(shellAxis, right));
             const Vector3 shellCentre = shellBase - forward * (.070f * scale)
-                + up * (.145f * scale);
+                + up * ((.145f + .030f * carry) * scale);
             const auto shellPoint = [&](const std::size_t station, const int segment) {
                 const float angle = TwoPi * static_cast<float>(segment)
                     / static_cast<float>(RingSegments);

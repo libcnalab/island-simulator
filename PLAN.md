@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 193 (2026-10-20) — a hermit crab carries its shell
+
+A hermit crab's shell sat on the sand whether it walked or paused.
+`HermitCrabState::shellCarry` (0..1) now carries the carriage: walking (speed past
+0.08 m/s, out of the shell) the crab lifts its shell clear of the sand at `ShellLiftRate`
+(3/s) and sets it down at `ShellSetRate` (4/s) as it pauses or withdraws;
+`CarryingCount()` counts the crabs with the shell up. In the renderer the shell rides 3 cm
+higher and its axis rocks with the leg phase by the carry, on the same vertices. The
+hermit crabs report line gains "walking, a hermit crab lifts its shell clear of the sand
+and it rocks with the steps, set down again at a pause" (pinned). Core check: over
+fifteen seconds a walking crab carries its shell at full, a pausing one has set it down,
+and no withdrawn crab lifts it. Native `hermit-crabs` passes.
+
 ## Loop pass 192 (2026-10-20) — a basking skink flattens to the sun
 
 A skink basking in the sun kept the round trunk of a walking one. `SkinkState::flatten`

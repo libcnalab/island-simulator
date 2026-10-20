@@ -254,6 +254,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 190: a foraging octopus settled on the bottom reaches one arm out into the crevices every few seconds, the arms taking turns (`OctopusState::probe`/`probeArm`, `OctopusGroup::ProbeCount`) (PLAN "Loop pass 190").
 - Pass 191: a turtle moving slow draws a front flipper up to rub its eye, the flippers taking turns (`SeaTurtleState::scratch`/`scratchSide`, `SeaTurtleGroup::ScratchCount`) (PLAN "Loop pass 191").
 - Pass 192: a skink basking in the sun flattens and spreads its body to soak the heat (`SkinkState::flatten`, `SkinkPopulation::FlattenedCount`) (PLAN "Loop pass 192").
+- Pass 193: walking, a hermit crab lifts its shell clear of the sand and it rocks with the steps, set down at a pause (`HermitCrabState::shellCarry`, `HermitCrabGroup::CarryingCount`) (PLAN "Loop pass 193").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted
