@@ -1,10 +1,12 @@
 #pragma once
+#include "Microsoft/Xna/Framework/Graphics/VertexPositionColor.hpp"
+#include <vector>
 #include "IslandSimulator/HutLayout.hpp"
 #include "Microsoft/Xna/Framework/BoundingBox.hpp"
 #include "Microsoft/Xna/Framework/Matrix.hpp"
 #include "Microsoft/Xna/Framework/Vector3.hpp"
 #include <memory>
-namespace Microsoft::Xna::Framework::Graphics { class GraphicsDevice; class BasicEffect; class ShaderEffect; class VertexBuffer; class Texture2D; }
+namespace Microsoft::Xna::Framework::Graphics { class GraphicsDevice; class BasicEffect; class DynamicVertexBuffer; class ShaderEffect; class VertexBuffer; class Texture2D; }
 namespace island {
 class SunShadowMap;
 class HutRenderer final {
@@ -19,6 +21,13 @@ public:
     /** The map the hut's own surfaces receive (its eaves on its walls, the trees on it). */
     void SetSunShadowMap(const SunShadowMap* map) noexcept { sunShadow_=map; }
     [[nodiscard]] int DrawCallCount() const noexcept { return drawCalls_; }
+    /** The lamp lit inside at dusk: the two front windows glowing warm through their mullions
+     *  and the hurricane lantern hung on the veranda, drawn after the night grade (additive);
+     *  `nightness` 0 by day .. 1 in the night. The lantern's light on the ground is a local
+     *  light the game draws at LanternPosition(). */
+    void DrawNightLights(const Microsoft::Xna::Framework::Matrix& view,const Microsoft::Xna::Framework::Matrix& projection,
+                         const Microsoft::Xna::Framework::Vector3& camera,float nightness,float seconds);
+    [[nodiscard]] Microsoft::Xna::Framework::Vector3 LanternPosition() const noexcept { return lantern_; }
 private:
     Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
@@ -32,6 +41,11 @@ private:
     Microsoft::Xna::Framework::BoundingBox bounds_;
     Microsoft::Xna::Framework::Vector3 centre_;
     float fishBarY_=0,netRailY_=0;
+    Microsoft::Xna::Framework::Vector3 lantern_;
+    std::vector<Microsoft::Xna::Framework::Vector3> windowCorners_;   // four per front window
+    std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> glowEffect_;
+    std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> glow_;
+    std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> glowStaging_;
     int triangles_=0,drawCalls_=0;
 };
 }

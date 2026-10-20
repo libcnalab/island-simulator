@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 228 (2026-10-20) — the hut lit at night
+
+The last open item of the day/night request: the hut stood dark all night. A hurricane lantern
+now hangs from the front header beside the door on a short iron bracket (cap, pale glass globe
+in a wire guard, fuel base: part of the hut's mesh). From dusk (the sun 4 degrees below the
+horizon, as the fire) `HutRenderer::DrawNightLights` draws after the night grade, additive:
+the two front windows glowing warm from within (brighter low, where the lamp stands on a
+table), behind their mullions, and the lantern's soft glare, both breathing with a slow flame
+flicker; and the lantern lights the veranda, the steps and the ground in front through the
+grade as a 6 m local light (warm 1.0/0.74/0.44). The day's `hut` changes only by the lantern
+(0.15 % of the pixels by 20 levels).
+
 ## Loop pass 227 (2026-10-20) — the straight seam across the sea from the air
 
 From the air (`flight`) a straight line crossed the sea, the light lagoon on one side and the

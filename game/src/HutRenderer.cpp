@@ -19,6 +19,8 @@
 #include "Microsoft/Xna/Framework/Graphics/BasicEffect.hpp"
 #include "Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp"
 #include "Microsoft/Xna/Framework/Graphics/VertexBuffer.hpp"
+#include "Microsoft/Xna/Framework/Graphics/DynamicVertexBuffer.hpp"
+#include "Microsoft/Xna/Framework/Graphics/SetDataOptions.hpp"
 #include "Microsoft/Xna/Framework/Graphics/VertexPositionColorTexture.hpp"
 #include "Microsoft/Xna/Framework/Graphics/ShaderEffect.hpp"
 #include "Microsoft/Xna/Framework/Graphics/BufferUsage.hpp"
@@ -221,6 +223,23 @@ HutRenderer::HutRenderer(GraphicsDevice& device,const HutPlacement& hut)
     beam({-.36f,3.13f,1.82f},{ .36f,3.13f,1.82f},.075f,.075f,paleTimber);
     beam({0,2.68f,1.825f},{0,3.08f,1.825f},.045f,.045f,paleTimber);
     beam({-.28f,2.88f,1.825f},{.28f,2.88f,1.825f},.045f,.045f,paleTimber);
+    // A hurricane lantern hung from the front header beside the door on a short iron bracket:
+    // a cap, a pale glass globe in a wire guard, a fuel base. Lit at dusk (DrawNightLights).
+    {
+        const Vector3 iron(46,42,38),glass(198,176,120);
+        beam({.80f,2.15f,1.76f},{.80f,2.15f,1.98f},.03f,.03f,iron);
+        beam({.80f,2.15f,1.98f},{.80f,2.01f,1.98f},.012f,.012f,iron);
+        beam({.80f,1.99f,1.98f},{.80f,1.95f,1.98f},.13f,.13f,iron);
+        beam({.80f,1.94f,1.98f},{.80f,1.76f,1.98f},.10f,.10f,glass);
+        for(const float dx:{-.055f,.055f}) for(const float dz:{-.055f,.055f})
+            beam({.80f+dx,1.95f,1.98f+dz},{.80f+dx,1.75f,1.98f+dz},.012f,.012f,iron);
+        beam({.80f,1.76f,1.98f},{.80f,1.70f,1.98f},.14f,.14f,iron);
+        lantern_=world({.80f,1.85f,1.98f});
+        for(const float x:{-1.26f,1.26f})
+            for(const auto& corner:{Vector3(x-.43f,.55f,1.709f),Vector3(x+.43f,.55f,1.709f),
+                                    Vector3(x+.43f,1.35f,1.709f),Vector3(x-.43f,1.35f,1.709f)})
+                windowCorners_.push_back(world(corner));
+    }
     // Four short knee braces tie the veranda posts into the front header instead of
     // leaving two visually unsupported vertical poles below the roof.
     beam({-2.04f,1.72f,2.24f},{-1.48f,2.18f,1.78f},.075f,.075f,timber);
@@ -449,6 +468,59 @@ HutRenderer::HutRenderer(GraphicsDevice& device,const HutPlacement& hut)
     MirrorRuntimeDiagnosticToPlatformLog("island-simulator: hut timber frame and layered thatch, triangles="+std::to_string(triangles_));
 }
 HutRenderer::~HutRenderer()=default;
+void HutRenderer::DrawNightLights(const Matrix& view,const Matrix& projection,const Vector3& camera,
+                                  const float nightness,const float seconds) {
+    if(!(nightness>0.02f)||(lantern_-camera).LengthSquared()>260.0f*260.0f) return;
+    if(!glowEffect_) {
+        glowEffect_=std::make_unique<BasicEffect>(device_);
+        glowEffect_->setVertexColorEnabledProperty(true);glowEffect_->setLightingEnabledProperty(false);
+        glowEffect_->setFogEnabledProperty(false);
+        glow_=std::make_unique<DynamicVertexBuffer>(device_,VertexPositionColor::getVertexDeclarationStatic(),96,BufferUsage::WriteOnly);
+    }
+    glowStaging_.clear();
+    // the flame's slow breathing
+    const float flicker=.90f+.06f*std::sin(seconds*5.3f)+.04f*std::sin(seconds*11.7f+.8f);
+    const float k=std::clamp(nightness,0.0f,1.0f)*flicker;
+    const auto c=[k](float v){return static_cast<int>(std::lround(std::clamp(v*k,0.0f,1.0f)*255.0f));};
+    // the windows: warm light from within, a little brighter low (the lamp sits on a table)
+    const Color low(c(.62f),c(.36f),c(.14f),255),high(c(.46f),c(.25f),c(.09f),255);
+    for(std::size_t w=0;w+3<windowCorners_.size();w+=4) {
+        const auto& p=windowCorners_;
+        glowStaging_.emplace_back(p[w],low);glowStaging_.emplace_back(p[w+1],low);glowStaging_.emplace_back(p[w+2],high);
+        glowStaging_.emplace_back(p[w],low);glowStaging_.emplace_back(p[w+2],high);glowStaging_.emplace_back(p[w+3],high);
+    }
+    // the lantern's glow: a soft disc facing the eye
+    Vector3 toCamera=camera-lantern_;
+    const float distance=toCamera.Length();
+    if(distance>0.3f) {
+        toCamera/=distance;
+        Vector3 right=Vector3::Cross(Vector3::Up,toCamera);
+        if(right.LengthSquared()<1e-6f) right=Vector3::UnitX;
+        right.Normalize();
+        const Vector3 up=Vector3::Cross(toCamera,right);
+        const Color centre(c(1.0f),c(.72f),c(.38f),255),edge(0,0,0,0);
+        const float size=.22f+.14f*k;
+        constexpr int segments=16;
+        for(int i=0;i<segments;++i) {
+            const float a0=6.2831853f*static_cast<float>(i)/segments,a1=6.2831853f*static_cast<float>(i+1)/segments;
+            const Vector3 o=lantern_+toCamera*.08f;
+            glowStaging_.emplace_back(o,centre);
+            glowStaging_.emplace_back(o+(right*std::cos(a0)+up*std::sin(a0))*size,edge);
+            glowStaging_.emplace_back(o+(right*std::cos(a1)+up*std::sin(a1))*size,edge);
+        }
+    }
+    if(glowStaging_.empty()) return;
+    glow_->SetData(glowStaging_.data(),0,static_cast<int>(glowStaging_.size()),SetDataOptions::Discard);
+    device_.setRasterizerStateProperty(RasterizerState::CullNone);
+    device_.setBlendStateProperty(BlendState::Additive);
+    device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
+    device_.SetVertexBuffer(glow_.get());device_.setIndicesProperty(nullptr);
+    glowEffect_->setWorldProperty(Matrix::getIdentityProperty());
+    glowEffect_->setViewProperty(view);glowEffect_->setProjectionProperty(projection);glowEffect_->Apply();
+    device_.DrawPrimitives(PrimitiveType::TriangleList,0,static_cast<int>(glowStaging_.size()/3));
+    ++drawCalls_;
+}
+
 void HutRenderer::DrawSunShadow(SunShadowMap& map) {
     if(sunShadowUnavailable_||!map.CastsInto(centre_.X,centre_.Z))return;
     if(!sunShadowEffect_) {
