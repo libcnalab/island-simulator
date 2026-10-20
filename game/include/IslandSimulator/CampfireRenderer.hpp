@@ -1,4 +1,6 @@
 #pragma once
+#include <algorithm>
+#include <cmath>
 #include "IslandSimulator/CampfireLayout.hpp"
 #include "Microsoft/Xna/Framework/Matrix.hpp"
 #include "Microsoft/Xna/Framework/BoundingBox.hpp"
@@ -12,6 +14,10 @@ public:
     void Draw(const Microsoft::Xna::Framework::Matrix& view,const Microsoft::Xna::Framework::Matrix& projection,
         const Microsoft::Xna::Framework::Vector3& camera,float seconds,bool effects);
     [[nodiscard]] int DrawCallCount() const noexcept {return draws_;}
+    // 0..1 the fire tended: the resident at the pit feeds it, and its tongues and plume
+    // stand a third taller while they stay.
+    void SetTending(float amount) noexcept {tend_=std::isfinite(amount)?std::clamp(amount,0.0f,1.0f):0.0f;}
+    [[nodiscard]] float Tending() const noexcept {return tend_;}
     [[nodiscard]] int EffectTriangleCount() const noexcept {return effectCount_/3;}
 private:
     Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
@@ -20,5 +26,6 @@ private:
     Microsoft::Xna::Framework::BoundingBox bounds_;
     FirePoint centre_;
     int solidCount_=0,effectCount_=0,draws_=0;
+    float tend_=0.0f;
 };
 }

@@ -2375,6 +2375,7 @@ namespace island
                   << "island-simulator: a mouse or rat setting out to forage with fruit lying within six metres goes to it and nibbles there a while\n"
                   << "island-simulator: an alert deer swings both ears toward the watcher\n"
                   << "island-simulator: a bolting deer flags its tail up, and a grazing or resting deer flicks it every few seconds\n"
+                  << "island-simulator: the resident's pause at the campfire tends the fire, its tongues and plume standing a third taller while they stay\n"
                   << "island-simulator: the bear walks to fruit and coconuts lying in its range and eats them where they lie\n"
                   << "island-simulator: the boars stand off from the bear and trot away when it comes close, as from the walker\n"
                   << "island-simulator: the hut's roof ridge is a perch for the birds\n"
@@ -2683,6 +2684,14 @@ namespace island
         const auto previousResident=resident_->State();
         const auto& observer=playerMotion_.Position();
         resident_->Update(deltaSeconds,{observer.x,observer.y,observer.z});
+        {
+            // The resident's pause at the pit tends the fire: it builds up while they stay
+            // and dies back once they walk on.
+            const auto& tender=resident_->State();
+            const bool tending=CampfireSite::Tending(tender.x,tender.z,tender.mode==ResidentMode::Pausing);
+            campfireTend_+=std::clamp((tending?1.0f:0.0f)-campfireTend_,-0.3f*deltaSeconds,0.6f*deltaSeconds);
+            if(campfireRenderer_) campfireRenderer_->SetTending(campfireTend_);
+        }
         if(viewpoint_==FixedViewpoint::ResidentDetail) {
             const auto& current=resident_->State();
             cameraPosition_+=Vector3(current.x-previousResident.x,current.y-previousResident.y,

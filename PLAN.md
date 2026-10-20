@@ -54,6 +54,21 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 89 (2026-10-20) — the resident tends the fire
+
+The resident's route pauses at the campfire's call each lap (about eight metres from the
+pit) without the fire taking any notice. `CampfireSite::Tending(x,z,pausing)` is the rule:
+the resident pausing within 9 m of the pit (`TendDistance`) is tending it; the game eases a
+tend amount up at 0.6/s while they stay and down at 0.3/s once they walk on, and hands it
+to the campfire renderer (`SetTending`), whose flame and plume vertex shader stretches the
+tongues and the smoke up a third at full tend (`uTend`). The startup report gains "the
+resident's pause at the campfire tends the fire, its tongues and plume standing a third
+taller while they stay", pinned by the native capture tool. Core checks: the rule holds for
+a pause two metres off, not for a walk past, not for a pause twelve metres off, and not
+for a non-finite position; and the resident's authored route brings a pause within tend
+distance of the pit within twenty minutes. Native `campfire` passes with its four animation
+stages.
+
 ## Loop pass 88 (2026-10-20) — the deer's tail flags and flicks
 
 The deer's tail hung still in every mood. `DeerState::tailRaise` (0 hanging, 1 flagged up)

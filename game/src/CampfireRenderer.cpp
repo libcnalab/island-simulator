@@ -29,6 +29,7 @@ uniform mat4 uViewProjection;
 uniform vec3 uRight;uniform vec3 uForward;
 uniform float uMoving;
 uniform float uGust;
+uniform float uTend;
 out vec3 world;out vec4 pigment;out vec2 uv;out float life;
 void main(){
     pigment=aColor;uv=aTexCoord;life=1.0;world=aPosition;
@@ -40,6 +41,8 @@ void main(){
             life=1.0-smoothstep(2.6,4.35,age);
         }else if(aColor.a>.35){
             float altitude=1.0-aColor.g;
+            // A tended fire stands taller: the tongues and the plume stretched up a third.
+            local.y*=1.0+uTend*.35;
             local.x+=sin(uCampfire.w*(.47-altitude*.16)+aColor.r*13.0+local.y*.31)
                 *(.12+altitude*.42)-local.y*.032;
             local.z+=sin(uCampfire.w*.19+aColor.r*29.0+local.y*.17)*altitude*.26;
@@ -204,6 +207,7 @@ void CampfireRenderer::Draw(const Matrix& view,const Matrix& projection,const Ve
     effect_->SetUniformVec3("uForward",-toward.X,0,-toward.Z);
     effect_->SetUniformFloat("uMoving",effects?1.0f:0.0f);
     effect_->SetUniformFloat("uGust",std::isfinite(seconds)?WindGust::Strength(centre_.x,centre_.z,seconds):0.0f);
+    effect_->SetUniformFloat("uTend",tend_);
     device_.setBlendStateProperty(effects?BlendState::AlphaBlend:BlendState::Opaque);
     device_.setDepthStencilStateProperty(effects?DepthStencilState::DepthRead:DepthStencilState::Default);
     device_.setRasterizerStateProperty(RasterizerState::CullNone);device_.SetVertexBuffer(effects?moving_.get():solid_.get());

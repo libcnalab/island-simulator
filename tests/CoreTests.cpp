@@ -20,6 +20,7 @@
 #include "IslandSimulator/OctopusInkField.hpp"
 #include "IslandSimulator/CrocodileGroup.hpp"
 #include "IslandSimulator/CampfireSite.hpp"
+#include "IslandSimulator/ResidentMotion.hpp"
 #include "IslandSimulator/BearMotion.hpp"
 #include "IslandSimulator/TurtleBreathField.hpp"
 #include "IslandSimulator/CrabColony.hpp"
@@ -9025,6 +9026,29 @@ int main()
         const float after = nearest(centre.centreX, centre.centreY, centre.centreZ);
         Check(after > before + 0.4f && after > 1.0f,
               "a fish school parts around a swimmer at its centre");
+    }
+
+    {
+        // The campfire is tended by the resident pausing at the pit: within the tend
+        // distance and pausing, not walking past, and not pausing elsewhere.
+        Check(island::CampfireSite::Tending(island::CampfireSite::X + 2.0f, island::CampfireSite::Z + 1.0f, true),
+              "the resident pausing two metres from the pit tends the fire");
+        Check(!island::CampfireSite::Tending(island::CampfireSite::X + 2.0f, island::CampfireSite::Z + 1.0f, false),
+              "the resident walking past the pit does not tend the fire");
+        Check(!island::CampfireSite::Tending(island::CampfireSite::X + 12.0f, island::CampfireSite::Z, true),
+              "a pause twelve metres from the pit does not tend the fire");
+        Check(!island::CampfireSite::Tending(std::numeric_limits<float>::quiet_NaN(), island::CampfireSite::Z, true),
+              "a non-finite resident position tends nothing");
+        // The resident's authored route pauses at the campfire each lap, within the tend distance.
+        const island::IslandTerrain terrain;
+        island::ResidentMotion tender(terrain, {});
+        bool tended = false;
+        for (int step = 0; step < 24000 && !tended; ++step) {
+            tender.Update(0.05f, {1000.0f, 0.0f, 1000.0f});
+            const auto& state = tender.State();
+            tended = island::CampfireSite::Tending(state.x, state.z, state.mode == island::ResidentMode::Pausing);
+        }
+        Check(tended, "the resident's route brings a pause within tend distance of the campfire within twenty minutes");
     }
 
     {

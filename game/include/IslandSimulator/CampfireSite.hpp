@@ -8,6 +8,12 @@ struct CampfireSite final {
     static constexpr float WoodX=49.0f,WoodZ=-18.0f;
     static constexpr float PitRadius=1.25f,WoodRadius=1.40f;
     static constexpr float VegetationClearance=5.5f,WoodClearance=2.0f;
+    // The resident pausing this close to the pit is tending the fire (the route's campfire
+    // call stands about eight metres off it).
+    static constexpr float TendDistance=9.0f;
+    [[nodiscard]] static bool Tending(const float x,const float z,const bool pausing) noexcept {
+        return pausing&&std::isfinite(x)&&std::isfinite(z)&&std::hypot(x-X,z-Z)<TendDistance;
+    }
     [[nodiscard]] static bool Reserves(float x,float z,float margin=0) noexcept {
         if(!std::isfinite(x)||!std::isfinite(z)||!std::isfinite(margin))return false;
         margin=std::max(0.0f,margin);
