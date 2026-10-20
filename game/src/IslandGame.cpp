@@ -1680,7 +1680,9 @@ namespace island
             std::cout<<"island-simulator: spider-web QA camera frames qualified canopy site "
                 <<webViewIndex<<" regularity-offset score "<<bestWebScore<<'\n';
         } else if (UsesSpiderViewpoint()) {
-            if(viewpoint_==FixedViewpoint::SpiderBrightDetail) {
+            // Both spider views frame the sunlit subject: since the sun shade and the leaf-gap
+            // flecks (2026-10-20) a shaded spot falls below the close-detail luminance bar.
+            {
                 float brightest=-1;
                 for(std::size_t i=0;i<spiders_->Spiders().size();++i) {
                     const auto& candidate=spiders_->Spiders()[i];

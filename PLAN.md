@@ -74,7 +74,11 @@ tool's independent mirror of the canopy transfer still used the pre-2026-10-10 a
 tint (0.46, 0.53, 0.62) against the engine's `CanopyAmbientTint` (0.54, 0.60, 0.67), which
 only shows when the QA subject stands under canopy (body transmission below 1); the mirror
 and the Python fixtures (SoftwareCaptureTests, BrowserSoftwareTests, AndroidSoftwareTests)
-now carry the engine's values.
+now carry the engine's values. A second stale-capture fix followed: the plain `spiders`
+view framed a shaded subject whose close-up fell below the close-detail luminance bar
+(mean 28, deviation 8.4) since the sun shade and leaf-gap flecks; both spider views now
+select the sunlit subject the bright view already scored, and `spiders` and
+`spiders-bright` both pass.
 
 ## Loop pass 161 (2026-10-20) — a skink flicks its tongue
 
