@@ -46,6 +46,24 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 37 (2026-10-20) — the cumulus shadows cross the land
+
+Pass 5 put the cumulus shadows on the open sea and kept them off the lagoon so the sunlit
+beach and the water beside it would not disagree; the land itself had none. The cloud field
+(hash, value noise, drift with the trade wind, 0.56–0.70 threshold) now lives once in
+`CloudShadow.hpp` as GLSL plus a CPU mirror, the ocean uses it without the lagoon gate, and
+the sun shadow map's receiver snippet (`SunShadowMap::ReceiverShader`, now a string that
+begins with the cloud field) multiplies `sunShadowVisibility()` by `1 − 0.38 · cover` on
+every path, map or no map, so the terrain, grass, jungle and palms all dim together under a
+cloud; `SunShadowMap::SetCloudClock` (the render clock, set every frame) feeds the new
+`uCloudShade` uniform through both Bind paths. Diagnostic "the cumulus shadows drift over
+the land as well as the sea, dimming every sun-shadow receiver together" is printed in the
+startup report and pinned by the native capture tool. Core checks on the CPU mirror: the
+shade covers between 8 % and 50 % of a 600 m square with soft edges, and the pattern 30 s
+earlier matches the pattern displaced by 30 s of drift within 0.05. Native `shipwreck-wide`
+and `beach` pass. (The first draft's ocean edit sliced to the vertex body's copy of the wind
+exposure function and duplicated half the file; the fragment body's copy is the anchor.)
+
 ## Loop pass 36 (2026-10-20) — coconuts that strike the shallows float ashore
 
 A nut shaken from a palm leaning over the water fell through the surface to the seabed and

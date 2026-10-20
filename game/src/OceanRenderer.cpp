@@ -9,6 +9,7 @@
 #include "IslandSimulator/ProceduralMeshValidation.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "IslandSimulator/WindGust.hpp"
+#include "IslandSimulator/CloudShadow.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -132,35 +133,8 @@ uniform vec4 uSurfaceAppearance;
 
 out vec4 fragColor;
 
-float cloudShadowHash(vec2 p)
-{
-    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
-    p3 += dot(p3, p3.yzx + 33.33);
-    return fract((p3.x + p3.y) * p3.z);
-}
-
-float cloudShadowNoise(vec2 grid)
-{
-    vec2 cell = floor(grid);
-    vec2 t = fract(grid);
-    t = t * t * (3.0 - 2.0 * t);
-    float lower = mix(cloudShadowHash(cell), cloudShadowHash(cell + vec2(1.0, 0.0)), t.x);
-    float upper = mix(cloudShadowHash(cell + vec2(0.0, 1.0)),
-                      cloudShadowHash(cell + vec2(1.0, 1.0)), t.x);
-    return mix(lower, upper, t.y);
-}
-
-// Shadows of the drifting fair-weather cumulus on the open sea: a slow world-anchored
-// patch field moving with the trade wind. Soft 30 m edges, about a quarter coverage, and
-// kept off the lagoon so the sunlit beach and the water beside it never disagree.
-float cloudShadow(vec2 position, float offshore, float time)
-{
-    vec2 drift = position + vec2(1.6, 0.35) * time;
-    float field = cloudShadowNoise(drift * 0.0062)
-        + (cloudShadowNoise(drift * 0.0151 + 7.3) - 0.5) * 0.38;
-    return smoothstep(0.56, 0.70, field) * smoothstep(24.0, 95.0, offshore);
-}
-
+// The cumulus shadows are the shared CloudShadow field (cloudCover): the same clouds dim the
+// land's sun-shadow receivers, so a shadow crossing the beach crosses the water beside it.
 float coastalWindExposure(vec2 position,float shoreDistance)
 {
     float radius=length(position);
@@ -386,7 +360,7 @@ void main()
 
     // Cumulus shadows darken the body colour and the glints but not the reflected sky, which
     // the cloud itself still lights from above.
-    float cloudShade = cloudShadow(vWorld.xz, offshore, uTime);
+    float cloudShade = cloudCover(vWorld.xz, uTime);
     water *= 1.0 - 0.30 * cloudShade;
     // Cat's paws: the gust front that leans the grass ashore roughens the water into a
     // darker band of fine ripples racing downwind, over the open sea and the lagoon alike.
@@ -416,10 +390,10 @@ void main()
         {
             if (embedded) {
                 return std::string("#version 300 es\nprecision highp float;\n")
-                    + environment::FogShaderDefinition + WindGust::Shader + body;
+                    + environment::FogShaderDefinition + WindGust::Shader + CloudShadow::Shader + body;
             }
             return std::string("#version 330 core\n")
-                + environment::FogShaderDefinition + WindGust::Shader + body;
+                + environment::FogShaderDefinition + WindGust::Shader + CloudShadow::Shader + body;
         }
 
         [[nodiscard]] CNA::Graphics::ShaderPackageEXT CreateShaderPackage()

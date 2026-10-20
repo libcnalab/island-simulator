@@ -1,5 +1,6 @@
 #include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
+#include "IslandSimulator/CloudShadow.hpp"
 #include "CNA/Graphics/ShaderCodeEXT.hpp"
 #include "CNA/Graphics/ShaderPackageEXT.hpp"
 #include "CNA/ShaderLanguageEXT.hpp"
@@ -19,21 +20,29 @@ namespace island {
     // The light matrix keeps the XNA [0,1] clip depth, so p.z is the stored depth directly.
     // EasyGL reports the sampled row order of a render target per unit through uRtFlipV;
     // the map lives on unit 3, hence the .w component.
-    const char* const SunShadowMap::ReceiverShader = R"(
+    namespace {
+        float cloudClock = 0.0f;
+    }
+    void SunShadowMap::SetCloudClock(const float seconds) noexcept { cloudClock = std::isfinite(seconds) ? seconds : 0.0f; }
+    float SunShadowMap::CloudClock() noexcept { return cloudClock; }
+
+    const std::string SunShadowMap::ReceiverShader = std::string(CloudShadow::Shader) + R"(
 uniform mat4 uSunShadowMatrix;
 uniform sampler2D uSunShadowMap;
 uniform vec4 uSunShadowParams;
 uniform vec4 uRtFlipV;
+uniform vec4 uCloudShade;   // x: how much a cloud dims the sun, y: the cloud clock
 float sunShadowUnpack(vec4 c) {
     return dot(c, vec4(1.0, 1.0 / 255.0, 1.0 / 65025.0, 1.0 / 16581375.0));
 }
 float sunShadowVisibility(vec3 world) {
-    if (uSunShadowParams.x < 0.5) return 1.0;
+    float clouds = 1.0 - uCloudShade.x * cloudCover(world.xz, uCloudShade.y);
+    if (uSunShadowParams.x < 0.5) return clouds;
     vec4 p = uSunShadowMatrix * vec4(world, 1.0);
     vec2 uv = p.xy * 0.5 + 0.5;
     float depth = p.z - uSunShadowParams.y;
     float edge = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
-    if (edge <= 0.0 || depth <= 0.0 || depth >= 1.0) return 1.0;
+    if (edge <= 0.0 || depth <= 0.0 || depth >= 1.0) return clouds;
     uv.y = mix(uv.y, 1.0 - uv.y, uRtFlipV.w);
     float texel = uSunShadowParams.z;
     vec2 st = uv * uSunShadowParams.w - 0.5;
@@ -54,7 +63,7 @@ float sunShadowVisibility(vec3 world) {
         }
     }
     lit /= max(weightSum, 0.0001);
-    return mix(1.0, lit, smoothstep(0.0, 0.06, edge));
+    return clouds * mix(1.0, lit, smoothstep(0.0, 0.06, edge));
 }
 )";
 
@@ -160,11 +169,13 @@ void main() {
         effect.SetUniformVec4("uSunShadowParams", 1.0f, DepthBias,
                               1.0f / static_cast<float>(resolution_),
                               static_cast<float>(resolution_));
+        effect.SetUniformVec4("uCloudShade", CloudShadow::LandStrength, cloudClock, 0.0f, 0.0f);
     }
 
     void SunShadowMap::BindDisabled(ShaderEffect& effect)
     {
         effect.SetUniformVec4("uSunShadowParams", 0.0f, 0.0f, 0.0f, 1.0f);
+        effect.SetUniformVec4("uCloudShade", CloudShadow::LandStrength, cloudClock, 0.0f, 0.0f);
     }
 
     std::unique_ptr<ShaderEffect> SunShadowMap::CreateCasterEffect(const char* vertexBody,

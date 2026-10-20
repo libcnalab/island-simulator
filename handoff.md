@@ -97,6 +97,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 34: the hut's hung fish and net swing in the breeze and the gust fronts (PLAN "Loop pass 34").
 - Pass 35: flying birds cast soft moving shadows on the ground (PLAN "Loop pass 35").
 - Pass 36: coconuts that strike the shallows float and drift ashore (PLAN "Loop pass 36").
+- Pass 37: the cumulus shadows drift over the land as well as the sea (PLAN "Loop pass 37").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

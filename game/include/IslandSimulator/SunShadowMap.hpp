@@ -28,8 +28,12 @@ namespace island {
         static constexpr int TextureUnit = 3;        // sampler unit every receiver uses
         static constexpr float DepthBias = 0.0014f;  // normalised, about 0.45 m
 
-        /** GLSL for receivers: the uniforms and sunShadowVisibility(vec3 world) in [0,1]. */
-        static const char* const ReceiverShader;
+        /** GLSL for receivers: the uniforms and sunShadowVisibility(vec3 world) in [0,1],
+         *  which also carries the drifting cumulus shade (CloudShadow) on the clock set by
+         *  SetCloudClock, so every receiver dims under a cloud whether or not a map exists. */
+        static const std::string ReceiverShader;
+        static void SetCloudClock(float seconds) noexcept;
+        [[nodiscard]] static float CloudClock() noexcept;
         /** GLSL fragment for casters: packs the interpolated vSunDepth. */
         static const char* const CasterFragment;
         /** GLSL vertex for static, non-instanced casters whose position is attribute 0. */

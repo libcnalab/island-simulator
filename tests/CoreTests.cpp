@@ -39,6 +39,7 @@
 #include "IslandSimulator/StreamFishField.hpp"
 #include "IslandSimulator/HatchlingField.hpp"
 #include "IslandSimulator/BirdShadowProjection.hpp"
+#include "IslandSimulator/CloudShadow.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
@@ -7784,6 +7785,22 @@ int main()
             const auto perched=island::BirdShadowProjection::Project(terrain,groundX,ground+0.1f,groundZ);
             const auto overSea=island::BirdShadowProjection::Project(terrain,terrain.ShoreRadius(0.0f)+60.0f,8.0f,0.0f);
             Check(!perched.valid&&!overSea.valid,"a bird on the ground or over the sea casts no ground shadow");
+        }
+        // The cumulus shadow field: about a quarter of the island under shade with soft
+        // edges, and the whole pattern drifting with the trade wind rather than flickering.
+        {
+            int shaded=0,soft=0,samples=0;
+            for(float x=-300.0f;x<=300.0f;x+=10.0f) for(float z=-300.0f;z<=300.0f;z+=10.0f) {
+                const float cover=island::CloudShadow::Cover(x,z,100.0f);
+                ++samples; if(cover>0.5f) ++shaded; if(cover>0.02f&&cover<0.98f) ++soft;
+            }
+            const float coverage=static_cast<float>(shaded)/static_cast<float>(samples);
+            Check(coverage>0.08f&&coverage<0.5f&&soft>samples/40,"the cumulus shade covers a bounded fraction of the island with soft edges");
+            float drift=0;
+            for(float x=-200.0f;x<=200.0f;x+=25.0f) for(float z=-200.0f;z<=200.0f;z+=25.0f)
+                drift=std::max(drift,std::abs(island::CloudShadow::Cover(x,z,100.0f)
+                    -island::CloudShadow::Cover(x+island::CloudShadow::DriftX*30.0f,z+island::CloudShadow::DriftZ*30.0f,70.0f)));
+            Check(drift<0.05f,"the cumulus shade drifts with the trade wind as one pattern");
         }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls

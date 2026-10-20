@@ -2230,6 +2230,7 @@ namespace island
                   << "island-simulator: circling seabirds plunge-dive every nine seconds and each strike raises a foam ring on the water and a positional splash\n"
                   << "island-simulator: a falling coconut lands with a positional thud heard within thirty metres\n"
                   << "island-simulator: passing gust fronts swell the breeze and canopy beds at the listener\n"
+                  << "island-simulator: the cumulus shadows drift over the land as well as the sea, dimming every sun-shadow receiver together\n"
                   << "island-simulator: a fallen fruit bounces off where it strikes and rolls downhill to rest\n"
                   << "island-simulator: gust fronts sweep the grass, crowns and fronds downwind together every twenty-two seconds within their authored sway\n"
                   << "island-simulator: four fruit doves alternate canopy perches with bounded dry-ground walking and foraging; "
@@ -4169,6 +4170,7 @@ namespace island
                 palmRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 sunShadowReceiversBound_ = true;
             }
+            SunShadowMap::SetCloudClock(timeSeconds);
             if (sunShadowMap_->Prepare(renderCameraPosition_)) {
                 GpuDiagnosticScope gpuPass("sun-shadow");
                 sunShadowMap_->Begin();
