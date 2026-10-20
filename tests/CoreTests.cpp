@@ -8259,6 +8259,15 @@ int main()
             for(int step=0;step<30;++step) breaths.Update(0.05f,0.0f,turtles.LastBreath());
             Check(breaths.ActiveCount()==0U,"the breath is gone within the second");
         }
+        // The boars fear the bear: with the bear four metres from a boar and the walker far off
+        // (near enough for full simulation), the boar trots away within two seconds.
+        {
+            island::BoarHerd herd(terrain);
+            const auto sow=herd.Boars()[0];
+            herd.SetBear(sow.x+4.0f,sow.z,true);
+            for(int step=0;step<40;++step) herd.Update(0.05f,sow.x+40.0f,sow.y+1.5f,sow.z);
+            Check(herd.BearRetreatCount()>=1U&&herd.Boars()[0].behavior==island::BoarBehavior::Retreat,"a boar trots away from the bear");
+        }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls
         // on a little before it rests; resting fruit sit on the ground and keep still.

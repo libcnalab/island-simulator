@@ -201,6 +201,13 @@ namespace island
         }
     }
 
+    void BoarHerd::SetBear(const float x, const float z, const bool valid) noexcept
+    {
+        bearValid_ = valid && std::isfinite(x) && std::isfinite(z);
+        bearX_ = bearValid_ ? x : 0.0f;
+        bearZ_ = bearValid_ ? z : 0.0f;
+    }
+
     void BoarHerd::Update(const float deltaSeconds, const float observerX,
                          const float observerY, const float observerZ) noexcept
     {
@@ -223,7 +230,18 @@ namespace island
                 // Bound spatial increments even for distant, throttled agents. No obstacle tunneling.
                 while (agent.pendingSeconds > 0.00001f) {
                     const float step = std::min(agent.pendingSeconds, 1.0f / 30.0f);
-                    Step(agent, step, observerX, observerZ, valid && distance < 15.0f);
+                    // The bear is a threat too: the nearer of the walker and the bear is the
+                    // one the boar answers to.
+                    float threatX = observerX, threatZ = observerZ;
+                    bool threatValid = valid && distance < 15.0f;
+                    if (bearValid_) {
+                        const float bearDistance = std::hypot(state.x - bearX_, state.z - bearZ_);
+                        if (bearDistance < 15.0f && (!threatValid || bearDistance < std::hypot(state.x - observerX, state.z - observerZ))) {
+                            threatX = bearX_; threatZ = bearZ_; threatValid = true;
+                            if (bearDistance < 6.0f && state.behavior != BoarBehavior::Retreat) ++bearRetreats_;
+                        }
+                    }
+                    Step(agent, step, threatX, threatZ, threatValid);
                     agent.pendingSeconds -= step;
                 }
             }

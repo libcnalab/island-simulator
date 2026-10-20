@@ -54,6 +54,17 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 68 (2026-10-20) — the boars fear the bear
+
+A boar stood its ground as the bear walked through the herd. `BoarHerd::SetBear` takes the
+bear's position each frame, and in the herd's update the nearer of the walker and the bear
+(within 15 m) is the threat each boar's step answers to: the alert stand-off at 12 m and the
+oblique trot-away inside 6 m now happen for the bear as for the walker;
+`BearRetreatCount()` counts the retreats the bear causes. The startup report gains "the
+boars stand off from the bear and trot away when it comes close, as from the walker",
+pinned by the native capture tool. Core check: the bear four metres from a boar, the walker
+forty metres off, sends the boar into a retreat within two seconds. Native `boars` passes.
+
 ## Loop pass 67 (2026-10-20) — the leaves drift on across the lagoon
 
 A leaf reaching the stream mouth vanished at the last station. `StreamDriftField` now

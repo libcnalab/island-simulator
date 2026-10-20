@@ -2306,6 +2306,7 @@ namespace island
                   << "island-simulator: mice, rats, geckos and skinks scatter from a passing animal or the resident as from the walker\n"
                   << "island-simulator: an alert deer swings both ears toward the watcher\n"
                   << "island-simulator: the bear walks to fruit and coconuts lying in its range and eats them where they lie\n"
+                  << "island-simulator: the boars stand off from the bear and trot away when it comes close, as from the walker\n"
                   << "island-simulator: crocodiles " << crocodileGroup_.Crocodiles().size()
                   << " agents bask, crawl, swim, and retreat within the stream estuary\n"
                   << "island-simulator: fish " << fishSchools_.Fish().size()
@@ -2834,6 +2835,7 @@ namespace island
                                      subject.z-previousCrocodile.z);
         }
         boarHerd_.SetLyingFruit(fallingFruit_.Fruit());
+        boarHerd_.SetBear(bear_->State().x, bear_->State().z, true);
         if (UsesBoarCaptureClock())
             boarHerd_.Update(deltaSeconds, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
         else

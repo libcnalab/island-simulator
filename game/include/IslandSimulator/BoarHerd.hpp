@@ -67,6 +67,10 @@ namespace island
          *  direction each faces into the water: the churned mud shows there. */
         struct WallowSite { float x = 0.0f, z = 0.0f, faceX = 1.0f, faceZ = 0.0f; };
         [[nodiscard]] std::vector<WallowSite> WallowSites() const;
+        /** @brief The bear's position this frame: a boar treats it as it treats the walker,
+         *  standing off at the alert range and trotting away when it comes close. */
+        void SetBear(float x, float z, bool valid) noexcept;
+        [[nodiscard]] std::uint32_t BearRetreatCount() const noexcept { return bearRetreats_; }
         /** @brief Fruit and coconuts lying on the ground this frame; a forage may go to one. */
         void SetLyingFruit(std::span<const FallingFruit> fruit) noexcept { lyingFruit_ = fruit; }
         /** @brief Indices into that span the boars ate during the last update. */
@@ -107,5 +111,8 @@ namespace island
         std::span<const FallingFruit> lyingFruit_;
         std::vector<std::size_t> eatenFruit_;
         std::uint32_t eatCount_ = 0;
+        float bearX_ = 0.0f, bearZ_ = 0.0f;
+        bool bearValid_ = false;
+        std::uint32_t bearRetreats_ = 0;
     };
 }
