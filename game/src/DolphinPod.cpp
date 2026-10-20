@@ -210,6 +210,11 @@ void DolphinPod::UpdateAgent(Agent &agent, const float delta) noexcept {
       lastLeap_ = {agent.state.x, agent.state.z, true};
     }
     if (agent.state.behavior == DolphinBehavior::SpyHop) ++spyHops_;
+    // Every other surfacing carries a tail slap: the flukes raised and brought down.
+    if (agent.state.behavior == DolphinBehavior::Surface && agent.transitionCount % 4 == 2) {
+      agent.slapSeconds = TailSlapSeconds;
+      agent.slapped = false;
+    }
     agent.behaviorSeconds = agent.state.behavior == DolphinBehavior::Surface
                                 ? 3.2f + .45f * (agent.transitionCount % 3)
                             : agent.state.behavior == DolphinBehavior::Dive
@@ -295,5 +300,22 @@ void DolphinPod::UpdateAgent(Agent &agent, const float delta) noexcept {
   agent.tailPhase = std::fmod(
       agent.tailPhase + delta * (5.0f + agent.state.speed * .9f), TwoPi);
   agent.state.tailBeat = std::sin(agent.tailPhase);
+  // The tail slap: over its first six tenths the flukes rise clear of the water, then come
+  // down hard; the strike is noted as a splash a body and a half behind the dolphin.
+  if (agent.state.behavior == DolphinBehavior::Surface && agent.slapSeconds > 0) {
+    agent.slapSeconds = std::max(0.0f, agent.slapSeconds - delta);
+    const float t = 1.0f - agent.slapSeconds / TailSlapSeconds;
+    agent.state.tailSlap = t < .6f ? std::sin(t / .6f * 1.5707963f) : std::max(0.0f, 1.0f - (t - .6f) / .4f);
+    if (t >= .6f && !agent.slapped) {
+      agent.slapped = true;
+      ++tailSlaps_;
+      splash_ = {agent.state.x - std::cos(agent.state.headingRadians) * 1.6f * agent.state.scale,
+                 agent.state.z - std::sin(agent.state.headingRadians) * 1.6f * agent.state.scale,
+                 0.0f, splash_.count + 1U, true, true};
+    }
+  } else {
+    agent.slapSeconds = 0;
+    agent.state.tailSlap = std::max(0.0f, agent.state.tailSlap - 4.0f * delta);
+  }
 }
 } // namespace island

@@ -10448,22 +10448,24 @@ int main()
               "each finished leap is noted as a splash");
         {
             island::DolphinPod again(terrain);
-            std::uint32_t seen = 0U;
+            std::uint32_t seen = 0U, leapSplashes = 0U;
             bool placed = true, aged = true;
             float leapX = 0.0f, leapZ = 0.0f;
-            for (int step = 0; step < 6000 && seen < 2U; ++step) {
+            for (int step = 0; step < 6000 && leapSplashes < 2U; ++step) {
                 again.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
                 if (again.LastLeap().valid) { leapX = again.LastLeap().x; leapZ = again.LastLeap().z; }
                 if (again.SplashCount() != seen) {
                     seen = again.SplashCount();
                     const auto& splash = again.LastSplash();
+                    if (splash.tailSlap) continue;   // a tail slap's splash is not a leap's
+                    ++leapSplashes;
                     if (!splash.valid || std::hypot(splash.x - leapX, splash.z - leapZ) > 12.0f) placed = false;
                     for (int tick = 0; tick < 60; ++tick) again.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
                     if (again.LastSplash().valid && again.LastSplash().count == seen) aged = false;
                     seen = again.SplashCount();
                 }
             }
-            Check(seen >= 1U && placed && aged, "a leap's splash lies where the dolphin came down and its ring is gone within three seconds");
+            Check(leapSplashes >= 1U && placed && aged, "a leap's splash lies where the dolphin came down and its ring is gone within three seconds");
         }
         island::FishSchools schools(terrain);
         schools.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);

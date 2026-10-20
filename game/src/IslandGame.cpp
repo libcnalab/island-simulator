@@ -2585,7 +2585,8 @@ namespace island
                   << "island-simulator: dolphins " << dolphinPod_.Dolphins().size()
                   << " agents in a peaceful offshore cruise, surface, and dive pod; a dolphin within twenty-eight metres of the shark leaves its route to keep its berth; "
                   << "a leap comes down in a splash, the sea's foam ring and the positional splash where the dolphin re-enters; "
-                  << "every fourth surfacing after the leap's is a spy-hop, the dolphin slowing to rise head-up out of the water and look around for a few seconds\n"
+                  << "every fourth surfacing after the leap's is a spy-hop, the dolphin slowing to rise head-up out of the water and look around for a few seconds; "
+                  << "every other surfacing carries a tail slap, the flukes raised clear and brought down on the water with a splash where they strike\n"
                   << "island-simulator: sea from within: dolphins leap clear of the water on every fourth surfacing, "
                      "the shark shows its dorsal fin for nine seconds of each patrol, and fish schools part around the swimmer within three metres\n"
                   << "island-simulator: dolphin near/far geometry "

@@ -54,6 +54,22 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 187 (2026-10-20) — a dolphin slaps its tail
+
+A surfacing dolphin only breathed and swam on. `DolphinState::tailSlap` (0..1) now carries
+the slap: every other surfacing (the count's second of four) the flukes rise clear of the
+water over the first six tenths of `TailSlapSeconds` (1 s) and come down hard, the strike
+noted as a splash a body and a half behind the dolphin, so the sea's foam ring and the
+positional splash play there; `TailSlapCount()` counts the strikes, and the pod's `Splash`
+carries a `tailSlap` flag so the leap's splash stays distinct. In the renderer the tail
+stock bends up and the flukes lift by the slap, near and far, on the same vertices. The
+dolphins report line gains "every other surfacing carries a tail slap, the flukes raised
+clear and brought down on the water with a splash where they strike" (pinned).
+DolphinPodTests: through its ten minutes a surfacing dolphin raises its flukes past 0.95
+and the splash count covers the slaps and the leaps; the leap-splash core check skips the
+slaps' splashes. A first placement of the slap's trigger broke the behaviour chain (every
+surfacing fell straight to a cruise) and was moved after it. Native `dolphins` passes.
+
 ## Loop pass 186 (2026-10-20) — a rodent's whiskers sweep
 
 A mouse's or rat's whiskers stood fixed through its sniffing. `RodentState::whiskerTwitch`

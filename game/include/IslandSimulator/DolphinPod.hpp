@@ -16,6 +16,9 @@ struct DolphinState {
   float x = 0, z = 0, y = 0;
   float headingRadians = 0, pitchRadians = 0, bankRadians = 0;
   float speed = 0, tailBeat = 0, scale = 1;
+  // 0..1 the tail slap: every other surfacing the flukes are raised clear of the water and
+  // brought down on it, the splash where they strike.
+  float tailSlap = 0;
   DolphinBehavior behavior = DolphinBehavior::Cruise;
   WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
   std::uint8_t colorVariant = 0;
@@ -55,7 +58,7 @@ public:
   /** @brief Where the last leap came down: the re-entry raises the sea's foam ring and a
    *  positional splash there; the ring's age runs for SplashSeconds, counted so the
    *  splash is noted once. */
-  struct Splash { float x = 0, z = 0, ageSeconds = 1.0e9f; std::uint32_t count = 0; bool valid = false; };
+  struct Splash { float x = 0, z = 0, ageSeconds = 1.0e9f; std::uint32_t count = 0; bool valid = false; bool tailSlap = false; };
   [[nodiscard]] const Splash& LastSplash() const noexcept { return splash_; }
   [[nodiscard]] std::uint32_t SplashCount() const noexcept { return splash_.count; }
   static constexpr float SplashSeconds = 2.6f;
@@ -65,6 +68,10 @@ public:
   [[nodiscard]] std::uint32_t SpyHopCount() const noexcept { return spyHops_; }
   [[nodiscard]] std::size_t SpyHoppingCount() const noexcept;
   static constexpr float SpyHopSeconds = 3.0f, SpyHopDepth = -0.22f, SpyHopPitch = 1.15f, SpyHopSpeed = 0.25f;
+  /** @brief Tail slaps struck: every other surfacing (the count's second of four) raises the
+   *  flukes over TailSlapSeconds and brings them down, the strike noted as a splash. */
+  [[nodiscard]] std::uint32_t TailSlapCount() const noexcept { return tailSlaps_; }
+  static constexpr float TailSlapSeconds = 1.0f;
   /** @brief The shark this frame (while present): a dolphin within BerthDistance of it
    *  turns off its route to keep the berth, a little faster, until it is clear. */
   void SetThreat(float x, float z, bool valid) noexcept;
@@ -86,6 +93,8 @@ private:
           accumulatedSeconds = 0;
     std::uint32_t transitionCount = 0;
     bool berthing = false;
+    float slapSeconds = 0;    // remaining tail slap on this surfacing; 0 when none
+    bool slapped = false;     // the flukes have struck the water this slap
   };
 
   void Initialize(std::size_t index);
@@ -103,6 +112,7 @@ private:
   int fullCount_ = 0, reducedCount_ = 0, dormantCount_ = 0;
   std::uint32_t leapCount_ = 0;
   std::uint32_t spyHops_ = 0;
+  std::uint32_t tailSlaps_ = 0;
   Leap lastLeap_;
   Splash splash_;
   float threatX_ = 0, threatZ_ = 0;

@@ -184,7 +184,7 @@ void Near(std::vector<VertexPositionColor> &out, const DolphinState &dolphin,
   for (std::size_t row = 0; row < Body.size(); ++row) {
     const auto &section = Body[row];
     const float rear = std::max(0.0f, -section.z - .08f);
-    const float bend = dolphin.tailBeat * .16f * rear * rear;
+    const float bend = (dolphin.tailBeat * .16f + dolphin.tailSlap * .40f) * rear * rear;
     for (int segment = 0; segment < Segments; ++segment) {
       const float angle = 2 * std::numbers::pi_v<float> * segment / Segments;
       rings[row][segment] =
@@ -315,7 +315,7 @@ void Near(std::vector<VertexPositionColor> &out, const DolphinState &dolphin,
         .021f*scale,.028f*scale}};
     ClosedTaperedPolygon(out,fin,axes.up,finThickness,colors[0],colors[1]);
   }
-  const float tail = dolphin.tailBeat * .12f;
+  const float tail = dolphin.tailBeat * .12f + dolphin.tailSlap * .55f;
   for (float side : {-1.0f, 1.0f}) {
     const std::array fluke{
         Point(centre, axes, 0, tail, -.68f, scale),
@@ -375,7 +375,7 @@ void Far(std::vector<VertexPositionColor> &out, const DolphinState &dolphin,
   const auto a = Pose(dolphin);
   const auto colors = Palette(dolphin, time);
   const float s = 1.75f * dolphin.scale;
-  const float tail = dolphin.tailBeat * .10f;
+  const float tail = dolphin.tailBeat * .10f + dolphin.tailSlap * .45f;
   const auto nose = Point(c, a, 0, 0, .95f, s),
              top = Point(c, a, 0, .21f, .15f, s),
              bottom = Point(c, a, 0, -.18f, .10f, s),
