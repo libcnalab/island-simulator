@@ -293,7 +293,7 @@ namespace island
             shadow.radius = Vector3::Distance(minimum, maximum) * 0.5f + 0.001f;
         }
         vertexCapacity_ = staticVertices_.size()
-            + (MonkeyTroop::MonkeyCount + BoarHerd::BoarCount + GoatHabitat::Count) * VerticesPerShadow
+            + (MonkeyTroop::MonkeyCount + BoarHerd::BoarCount + GoatHabitat::Count + 1U) * VerticesPerShadow   // +1: the walker
             + MaximumSnakeShadows*SnakeShadowVertexLimit
             + MaximumSpiderShadows*SpiderShadowVertexLimit;
         if (vertexCapacity_ > static_cast<std::size_t>(std::numeric_limits<int>::max())) {

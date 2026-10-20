@@ -18,9 +18,9 @@ namespace island {
 StreamDriftRenderer::StreamDriftRenderer(GraphicsDevice& device)
     :device_(device),effect_(std::make_unique<BasicEffect>(device)),
      vertices_(std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),
-        VerticesPerLeaf*static_cast<int>(StreamDriftField::Capacity),BufferUsage::WriteOnly))
+        VerticesPerLeaf*static_cast<int>(MaximumLeaves),BufferUsage::WriteOnly))
 {
-    staging_.reserve(static_cast<std::size_t>(VerticesPerLeaf)*StreamDriftField::Capacity);
+    staging_.reserve(static_cast<std::size_t>(VerticesPerLeaf)*MaximumLeaves);
     effect_->setVertexColorEnabledProperty(true);effect_->setLightingEnabledProperty(false);
     effect_->setFogEnabledProperty(true);
     effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
@@ -34,6 +34,7 @@ void StreamDriftRenderer::Draw(const Matrix& view,const Matrix& projection,const
     drawCalls_=0;visible_=0;
     staging_.clear();
     for(const auto& leaf:leaves) {
+        if(static_cast<std::size_t>(visible_)>=MaximumLeaves) break;   // never past the buffer
         if(!leaf.active||!std::isfinite(leaf.x)||!std::isfinite(leaf.y)||!std::isfinite(leaf.z)) continue;
         if((Vector3(leaf.x,leaf.y,leaf.z)-camera).LengthSquared()>70.0f*70.0f) continue;
         const Vector3 base=leaf.variant==0?Vector3(96,128,54):leaf.variant==1?Vector3(122,88,46)

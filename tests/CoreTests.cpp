@@ -8668,6 +8668,35 @@ int main()
             gone = !leaves.Leaves()[slot].active;
         }
         Check(gone, "a lying leaf is gone after its rest");
+        {
+            // How many shed leaves one view can hold (loop pass 221): the leaf renderer, sized
+            // for the stream's 14 drifting leaves, also drew these and overflowed its buffer
+            // (a fatal "data is not the correct size" crash) once more than 14 lay within its
+            // 70 m draw radius. Ten minutes in the densest stand of crowns.
+            std::size_t densest = 0, densestCount = 0;
+            const auto crowns = jungle.Canopy();
+            for (std::size_t i = 0; i < crowns.size(); ++i) {
+                std::size_t near = 0;
+                for (const auto& other : crowns)
+                    if (std::hypot(other.x - crowns[i].x, other.z - crowns[i].z) < island::CanopyLeafFallField::Range) ++near;
+                if (near > densestCount) { densestCount = near; densest = i; }
+            }
+            island::CanopyLeafFallField stand(terrain);
+            stand.SetCrowns(crowns);
+            std::size_t peak = 0;
+            float clock = 0.0f;
+            for (int step = 0; step < 12000; ++step) {
+                clock += 0.05f;
+                stand.Update(clock, 0.05f, crowns[densest].x, crowns[densest].z);
+                std::size_t inView = 0;
+                for (const auto& leaf : stand.Leaves())
+                    if (leaf.active && std::hypot(leaf.x - crowns[densest].x, leaf.z - crowns[densest].z) < 70.0f) ++inView;
+                peak = std::max(peak, inView);
+            }
+            Check(peak <= island::CanopyLeafFallField::Capacity, "the shed leaves never exceed the field's capacity");
+            std::cout << "canopy leaf fall: up to " << peak << " leaves within 70 m of one view in ten minutes among "
+                      << densestCount << " crowns (the stream field holds " << island::StreamDriftField::Capacity << ")\n";
+        }
         // A shake at a point up in a crown lets a leaf go just below it; one at ground level
         // lets nothing go.
         island::CanopyLeafFallField shaken(terrain);

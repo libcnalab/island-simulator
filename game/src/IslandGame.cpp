@@ -2414,8 +2414,25 @@ namespace island
             wallowScarRenderer_ = std::make_unique<WallowScarRenderer>(device, terrain_, wallowSites);
         }
         forestTwigRenderer_ = std::make_unique<ForestTwigRenderer>(device, terrain_, forestTwigs_.Twigs());
+        // Every field drawn through a shared puff renderer must fit that renderer's buffer; an
+        // overflow is the fatal "data is not the correct size for this VertexBuffer".
+        static_assert(WetlandMistField::Capacity <= CascadeMistField::Capacity
+                      && DolphinBlowField::Capacity <= CascadeMistField::Capacity
+                      && DragonflyDipField::Capacity <= CascadeMistField::Capacity
+                      && CrabBubbleField::Capacity <= CascadeMistField::Capacity
+                      && TurtleBreathField::Capacity <= CascadeMistField::Capacity,
+                      "a mist field outgrew the shared mist renderer");
+        static_assert(MudFleckField::Capacity <= RootingDustField::Capacity
+                      && HoofDustField::Capacity <= RootingDustField::Capacity
+                      && StingraySandField::Capacity <= RootingDustField::Capacity
+                      && TurtleGrazeField::Capacity <= RootingDustField::Capacity
+                      && FinWakeField::Capacity <= RootingDustField::Capacity
+                      && CrocodileWakeField::Capacity <= RootingDustField::Capacity
+                      && OctopusInkField::Capacity <= RootingDustField::Capacity,
+                      "a puff field outgrew the shared dust renderer");
         surfSprayRenderer_ = std::make_unique<CascadeMistRenderer>(device,
-            "island-simulator: breakers throw spray up the seaward faces of the offshore rocks in time with their foam");
+            "island-simulator: breakers throw spray up the seaward faces of the offshore rocks in time with their foam",
+            SurfSprayField::Capacity);
         dolphinBlowRenderer_ = std::make_unique<CascadeMistRenderer>(device,
             "island-simulator: a dolphin breaking the surface blows a puff of spray from the blowhole");
         stingraySandRenderer_ = std::make_unique<RootingDustRenderer>(device,

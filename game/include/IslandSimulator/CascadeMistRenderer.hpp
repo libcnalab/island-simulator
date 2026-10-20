@@ -17,7 +17,9 @@ public:
     static constexpr int Segments=10,VerticesPerPuff=Segments*3;
     // message: the startup diagnostic this instance prints (the cascade's by default; the surf
     // spray shares the renderer with its own line).
-    explicit CascadeMistRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,const char* message=nullptr);
+    // capacity: the most puffs one Draw uploads (the largest field drawn through this instance).
+    explicit CascadeMistRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,const char* message=nullptr,
+                                 std::size_t capacity=CascadeMistField::Capacity);
     void Draw(const Microsoft::Xna::Framework::Matrix& view,
               const Microsoft::Xna::Framework::Matrix& projection,
               const Microsoft::Xna::Framework::Vector3& camera,
@@ -29,6 +31,7 @@ private:
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> vertices_;
     std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> staging_;
+    std::size_t capacity_=CascadeMistField::Capacity;
     int drawCalls_=0,visible_=0;
 };
 }

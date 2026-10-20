@@ -33,7 +33,8 @@ namespace island
 {
     namespace
     {
-        constexpr int MaximumVerticesPerDeer = 6500;
+        // A near antlered deer measures 6414 vertices; keep a real margin above it.
+        constexpr int MaximumVerticesPerDeer = 7200;
         constexpr int Capacity = static_cast<int>(DeerHerd::Count) * MaximumVerticesPerDeer;
 
         void Triangle(std::vector<VertexPositionColor>& out, const Vector3& a,

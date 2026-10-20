@@ -54,6 +54,26 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 221 (2026-10-20) — a second flight crash closed: the falling leaves
+
+After the operator's crash ("The data is not the correct size for this VertexBuffer", the
+blown sand overflowing the dust renderer, fixed in 7c039b7), a read-only audit of every
+vertex upload whose size depends on the scene found one more path to the same fatal error.
+The stream's leaf renderer was sized for the stream field's 14 leaves, but it also draws
+the canopy's falling leaves, a field of 48, with no bound in its loop. A new core check
+runs ten minutes of gust fronts in the densest stand of crowns (57 within the 60 m shedding
+range) and finds up to 35 leaves within the renderer's 70 m draw radius of one view, so
+walking or flying low through the forest in a gust would overflow it. The renderer now
+holds the larger of its two fields (`MaximumLeaves`, 48) and stops at its buffer. From the
+same audit: the mist renderer takes a capacity per instance, and the surf spray (24 puffs)
+no longer has up to 14 of them dropped each frame by a 10-puff buffer; compile-time checks
+in IslandGame now require every field drawn through the shared mist and dust renderers to
+fit their buffers; the deer buffer, 6500 vertices a deer where a near antlered deer
+measures 6414 and an overflow throws, now allows 7200; and the contact-shadow batch reserves
+the walker's own ellipse. Native `jungle`, `reef` and `deer` pass. The audit's other
+findings were safe (fixed populations with asserted per-animal counts, static buffers, and
+instance buffers that grow to the next power of two).
+
 ## Loop pass 220 (2026-10-20) — the fades measure the true distance, so the air is clear
 
 The flight audit noted that every vegetation fade measured the horizontal distance only,

@@ -1,5 +1,7 @@
 #pragma once
+#include "IslandSimulator/CanopyLeafFallField.hpp"
 #include "IslandSimulator/StreamDriftField.hpp"
+#include <algorithm>
 #include "Microsoft/Xna/Framework/Matrix.hpp"
 #include "Microsoft/Xna/Framework/Vector3.hpp"
 #include "Microsoft/Xna/Framework/Graphics/BasicEffect.hpp"
@@ -15,6 +17,9 @@ namespace island {
 class StreamDriftRenderer final {
 public:
     static constexpr int VerticesPerLeaf=12;   // two lobes, two triangles each, both faces by CullNone
+    // The same renderer draws the stream's drifting leaves and the canopy's falling ones, so
+    // its buffer holds the larger field; a frame never uploads more than this.
+    static constexpr std::size_t MaximumLeaves=std::max(StreamDriftField::Capacity,CanopyLeafFallField::Capacity);
     explicit StreamDriftRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
     void Draw(const Microsoft::Xna::Framework::Matrix& view,
               const Microsoft::Xna::Framework::Matrix& projection,

@@ -16,12 +16,13 @@ using namespace Microsoft::Xna::Framework;
 using namespace Microsoft::Xna::Framework::Graphics;
 
 namespace island {
-CascadeMistRenderer::CascadeMistRenderer(GraphicsDevice& device,const char* message)
+CascadeMistRenderer::CascadeMistRenderer(GraphicsDevice& device,const char* message,const std::size_t capacity)
     :device_(device),effect_(std::make_unique<BasicEffect>(device)),
      vertices_(std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),
-        VerticesPerPuff*static_cast<int>(CascadeMistField::Capacity),BufferUsage::WriteOnly))
+        VerticesPerPuff*static_cast<int>(std::max<std::size_t>(capacity,1)),BufferUsage::WriteOnly)),
+     capacity_(std::max<std::size_t>(capacity,1))
 {
-    staging_.reserve(static_cast<std::size_t>(VerticesPerPuff)*CascadeMistField::Capacity);
+    staging_.reserve(static_cast<std::size_t>(VerticesPerPuff)*capacity_);
     effect_->setVertexColorEnabledProperty(true);effect_->setLightingEnabledProperty(false);
     if(!message) message="island-simulator: a mist of spray hangs at the cascade's foot, rising and drifting on the breeze and laid over by the gust fronts";
     std::cout<<message<<'\n';MirrorRuntimeDiagnosticToPlatformLog(message);
@@ -32,7 +33,7 @@ void CascadeMistRenderer::Draw(const Matrix& view,const Matrix& projection,const
     drawCalls_=0;visible_=0;
     staging_.clear();
     for(const auto& puff:puffs) {
-        if(static_cast<std::size_t>(visible_)>=CascadeMistField::Capacity) break;   // never past the buffer
+        if(static_cast<std::size_t>(visible_)>=capacity_) break;   // never past the buffer
         if(!puff.active||puff.density<=0.02f||!std::isfinite(puff.x)||!std::isfinite(puff.y)||!std::isfinite(puff.z)) continue;
         const Vector3 centre(puff.x,puff.y,puff.z);
         Vector3 toCamera=camera-centre;
