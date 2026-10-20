@@ -54,6 +54,17 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 66 (2026-10-20) — the turtle's breath
+
+A sea turtle came up for air and the surface showed nothing. `SeaTurtleGroup` notes a
+`Breath` (point, heading, scale, counted) the frame a surfacing turtle's depth rises through
+−0.2 m. A core `TurtleBreathField` raises one small puff at the nose (0.45 m ahead, scaled),
+rising, drifting downwind and gone in 0.8 s, as a `MistPuff` drawn by a fourth cascade-mist
+renderer instance with its own line, "a sea turtle lifting its head through the surface
+breathes out a small puff of spray", pinned by the native capture tool. Core checks: with
+the observer over the turtles a breath is noted within three minutes; one puff stands at
+the nose and is gone within the second. Native `turtles` passes.
+
 ## Loop pass 65 (2026-10-20) — the bear eats the fallen fruit
 
 The bear foraged in place while fruit and coconuts lay about its range. `BearMotion` reads

@@ -113,6 +113,7 @@
 #include "IslandSimulator/DolphinBlowField.hpp"
 #include "IslandSimulator/StingraySandField.hpp"
 #include "IslandSimulator/OctopusInkField.hpp"
+#include "IslandSimulator/TurtleBreathField.hpp"
 #include "IslandSimulator/HelicopterLayout.hpp"
 #include "IslandSimulator/HelicopterRenderer.hpp"
 #include "IslandSimulator/ShorelineRenderer.hpp"
@@ -497,6 +498,8 @@ namespace island
         std::unique_ptr<RootingDustRenderer> stingraySandRenderer_;
         OctopusInkField octopusInk_;
         std::unique_ptr<RootingDustRenderer> octopusInkRenderer_;
+        TurtleBreathField turtleBreaths_;
+        std::unique_ptr<CascadeMistRenderer> turtleBreathRenderer_;
         float lastSubmergedDepth_ = 0.0f, bubbleBurst_ = 0.0f;
         float seaForageSeconds_ = 0.0f;
         std::uint32_t notedDiveCount_ = 0U;

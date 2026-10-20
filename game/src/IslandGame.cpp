@@ -2175,6 +2175,8 @@ namespace island
             "island-simulator: a settled stingray bursts out of the sand in a puff when the swimmer comes near", 196, 178, 140);
         octopusInkRenderer_ = std::make_unique<RootingDustRenderer>(device,
             "island-simulator: an octopus startled from the open jets for its den behind a cloud of ink", 22, 18, 34);
+        turtleBreathRenderer_ = std::make_unique<CascadeMistRenderer>(device,
+            "island-simulator: a sea turtle lifting its head through the surface breathes out a small puff of spray");
         worldDebugRenderer_ = std::make_unique<WorldDebugRenderer>(device, terrain_);
         if (viewpoint_ == FixedViewpoint::GroundContactDetail) {
             constexpr float contactZ = 45.0f;
@@ -2968,6 +2970,7 @@ namespace island
         const SeaTurtleState previousTurtleSubject = seaTurtleGroup_.Turtles()[2U];
         seaTurtleGroup_.Update(
             deltaSeconds, cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
+        turtleBreaths_.Update(deltaSeconds,seaForageSeconds_,seaTurtleGroup_.LastBreath());
         if (viewpoint_ == FixedViewpoint::SeaTurtleDetail) {
             // Follow translation only. A CPU-rendered 60-frame audit spans enough simulation
             // time for the close subject to leave an otherwise fixed camera.
@@ -4525,6 +4528,7 @@ namespace island
             octopusInkRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,octopusInk_.Puffs());
             surfSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,surfSpray_.Puffs());
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,dolphinBlows_.Puffs());
+            turtleBreathRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,turtleBreaths_.Puffs());
         }
         {
             GpuDiagnosticScope gpuPass("campfire-effects");

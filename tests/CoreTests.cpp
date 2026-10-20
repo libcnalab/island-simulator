@@ -21,6 +21,7 @@
 #include "IslandSimulator/CrocodileGroup.hpp"
 #include "IslandSimulator/CampfireSite.hpp"
 #include "IslandSimulator/BearMotion.hpp"
+#include "IslandSimulator/TurtleBreathField.hpp"
 #include "IslandSimulator/CrabColony.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
 #include "IslandSimulator/CoastalWindResponse.hpp"
@@ -8227,6 +8228,24 @@ int main()
                 larder.Update(0.05f,pickers);
             }
             Check(bear.EatCount()>=1U&&larder.ConsumedCount()>=1U,"the bear walks to a lying fruit and eats it within ten minutes");
+        }
+        // A sea turtle's breath: with the observer over the turtles (full simulation) a turtle
+        // surfacing for air is noted within three minutes, and one small puff forms at its
+        // nose and is gone within the second.
+        {
+            island::SeaTurtleGroup turtles(terrain);
+            const auto first=turtles.Turtles()[0];
+            for(int step=0;step<3600&&turtles.LastBreath().count==0U;++step)
+                turtles.Update(0.05f,first.x,2.0f,first.z);
+            Check(turtles.LastBreath().count>=1U,"a sea turtle lifts its head through the surface for a breath within three minutes");
+            island::TurtleBreathField breaths;
+            breaths.Update(0.05f,0.0f,turtles.LastBreath());
+            const auto& breath=turtles.LastBreath();
+            bool atNose=true;
+            for(const auto& puff:breaths.Puffs()) if(puff.active&&std::hypot(puff.x-breath.x,puff.z-breath.z)>1.0f) atNose=false;
+            Check(breaths.ActiveCount()==1U&&atNose,"one puff of spray stands at the turtle's nose");
+            for(int step=0;step<30;++step) breaths.Update(0.05f,0.0f,turtles.LastBreath());
+            Check(breaths.ActiveCount()==0U,"the breath is gone within the second");
         }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls

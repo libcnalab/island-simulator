@@ -60,6 +60,11 @@ namespace island
                     float observerZ) noexcept;
 
         [[nodiscard]] std::span<const SeaTurtleState> Turtles() const noexcept;
+        /** @brief The last turtle to lift its head through the surface for a breath: where,
+         *  which way it faced, its scale, counted so a breath is noted once. */
+        struct Breath { float x = 0.0f, z = 0.0f, headingRadians = 0.0f, scale = 1.0f; std::uint32_t count = 0; };
+        [[nodiscard]] const Breath& LastBreath() const noexcept { return breath_; }
+        static constexpr float BreathDepth = -0.2f;
         [[nodiscard]] std::span<const SeaTurtleHomeRange> Homes() const noexcept;
         [[nodiscard]] int FullSimulationCount() const noexcept { return fullSimulationCount_; }
         [[nodiscard]] int ReducedSimulationCount() const noexcept {
@@ -97,6 +102,7 @@ namespace island
         std::vector<SeaTurtleHomeRange> homes_;
         float elapsedSeconds_ = 0.0f;
         std::uint64_t frameIndex_ = 0U;
+        Breath breath_;
         int fullSimulationCount_ = 0;
         int reducedSimulationCount_ = 0;
         int dormantSimulationCount_ = 0;

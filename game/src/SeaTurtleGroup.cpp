@@ -158,9 +158,15 @@ namespace island
             const std::uint32_t divisor = WildlifeActivationPolicy::UpdateDivisor(
                 agent.state.simulationTier);
             if ((frameIndex_ + index) % divisor == 0U) {
+                const float depthBefore = agent.state.y;
                 UpdateAgent(agent, std::min(agent.accumulatedSeconds, 0.5f),
                             observerX, observerZ, observerValid);
                 agent.accumulatedSeconds = 0.0f;
+                // The head lifts through the surface for a breath on the way up.
+                if (depthBefore < BreathDepth && agent.state.y >= BreathDepth
+                    && agent.state.behavior == SeaTurtleBehavior::Surface) {
+                    breath_ = {agent.state.x, agent.state.z, agent.state.headingRadians, agent.state.scale, breath_.count + 1U};
+                }
             }
             states_[index] = agent.state;
         }
