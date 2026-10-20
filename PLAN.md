@@ -66,7 +66,12 @@ nearest beach sand, nearest rock rock, nearest inland ground soil", and the tool
 unless every family resolves (a first version probed two metres behind the jetty's root,
 which lies on coastal rock); the visible inventory now carries the walker's own shadow,
 "contact shadows N (walker's own shadow 1)", pinned, and it reads 1 in the `jetty`,
-`beach` and `ground` views. Native `jetty`, `beach` and `ground` pass.
+`beach` and `ground` views. Native `jetty`, `beach` and `ground` pass. The suite ran 72/73
+twice: `IslandGpuQualificationSupervisorTests` failed under a machine load of 21 on 16
+cores (other sessions) and passes alone every time (five runs). It drives a stub game, not
+this build, with sub-second supervision timeouts, and fails the same way when two copies of
+it run at once, so it is load-sensitive rather than a regression of this pass; a loop pass
+could widen its timeouts.
 
 ## Loop pass 203 (2026-10-20) — the goats drink at a rain-filled basin
 
