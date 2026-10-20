@@ -13,6 +13,7 @@
 #include "IslandSimulator/HermitCrabGroup.hpp"
 #include "IslandSimulator/CoconutCrabGroup.hpp"
 #include "IslandSimulator/AntTrails.hpp"
+#include "IslandSimulator/StingraySandField.hpp"
 #include "IslandSimulator/CrabColony.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
 #include "IslandSimulator/CoastalWindResponse.hpp"
@@ -8034,6 +8035,26 @@ int main()
             const auto& b=poolFrogs.Homes()[island::FrogPopulation::Count-1];
             Check(std::abs(std::hypot(a.x-pool.x,a.z-pool.z)-2.4f)<0.01f&&std::abs(std::hypot(b.x-pool.x,b.z-pool.z)-2.4f)<0.01f
                   &&std::hypot(a.x-b.x,a.z-b.z)>4.7f,"two frogs have the plunge pool's banks for their homes");
+        }
+        // A settled stingray bursts away from the swimmer: with the observer two metres from
+        // the settled ray it glides off at once, the burst is noted where it lay, and a ring of
+        // sand puffs rises there and is gone within two seconds.
+        {
+            island::StingrayGroup rays(terrain);
+            std::size_t settled=island::StingrayGroup::Count;
+            for(std::size_t i=0;i<rays.Stingrays().size();++i) if(rays.Stingrays()[i].behavior==island::StingrayBehavior::Settle) { settled=i; break; }
+            Check(settled<island::StingrayGroup::Count,"a stingray starts settled on the sand");
+            const auto lay=rays.Stingrays()[settled];
+            for(int step=0;step<4;++step) rays.Update(0.05f,lay.x+2.0f,lay.y,lay.z);
+            Check(rays.Stingrays()[settled].behavior==island::StingrayBehavior::Glide&&rays.LastBurst().count==1U
+                  &&std::hypot(rays.LastBurst().x-lay.x,rays.LastBurst().z-lay.z)<0.5f,"the settled ray bursts into a glide when the swimmer comes within four metres");
+            island::StingraySandField sand;
+            sand.Update(0.05f,rays.LastBurst());
+            bool ringed=true;
+            for(const auto& puff:sand.Puffs()) if(puff.active&&std::hypot(puff.x-lay.x,puff.z-lay.z)>1.0f) ringed=false;
+            Check(sand.ActiveCount()==island::StingraySandField::PuffsPerBurst&&ringed,"a ring of sand puffs rises where the ray lay");
+            for(int step=0;step<50;++step) sand.Update(0.05f,rays.LastBurst());
+            Check(sand.ActiveCount()==0U,"the sand settles again within two seconds");
         }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls

@@ -16,14 +16,15 @@ using namespace Microsoft::Xna::Framework;
 using namespace Microsoft::Xna::Framework::Graphics;
 
 namespace island {
-RootingDustRenderer::RootingDustRenderer(GraphicsDevice& device)
+RootingDustRenderer::RootingDustRenderer(GraphicsDevice& device,const char* message,const int red,const int green,const int blue)
     :device_(device),effect_(std::make_unique<BasicEffect>(device)),
      vertices_(std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),
         VerticesPerPuff*static_cast<int>(RootingDustField::Capacity),BufferUsage::WriteOnly))
 {
     staging_.reserve(static_cast<std::size_t>(VerticesPerPuff)*RootingDustField::Capacity);
     effect_->setVertexColorEnabledProperty(true);effect_->setLightingEnabledProperty(false);
-    const char* message="island-simulator: rooting boars throw up small puffs of soil at the snout that drift off on the breeze";
+    red_=std::clamp(red,0,255);green_=std::clamp(green,0,255);blue_=std::clamp(blue,0,255);
+    if(!message) message="island-simulator: rooting boars throw up small puffs of soil at the snout that drift off on the breeze";
     std::cout<<message<<'\n';MirrorRuntimeDiagnosticToPlatformLog(message);
 }
 
@@ -43,8 +44,8 @@ void RootingDustRenderer::Draw(const Matrix& view,const Matrix& projection,const
         Vector3 up=Vector3::Cross(toCamera,right);up.Normalize();
         const int alpha=static_cast<int>(std::lround(110.0f*puff.density*(1.0f-std::clamp((distance-25.0f)/15.0f,0.0f,1.0f))));
         if(alpha<2) continue;
-        // Premultiplied earth brown.
-        const Color core(118*alpha/255,92*alpha/255,62*alpha/255,alpha),rim(0,0,0,0);
+        // Premultiplied puff colour.
+        const Color core(red_*alpha/255,green_*alpha/255,blue_*alpha/255,alpha),rim(0,0,0,0);
         std::array<Vector3,Segments> edge;
         for(int segment=0;segment<Segments;++segment) {
             const float angle=static_cast<float>(segment)*2.0f*std::numbers::pi_v<float>/static_cast<float>(Segments);

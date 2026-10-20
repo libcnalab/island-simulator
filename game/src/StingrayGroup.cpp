@@ -198,9 +198,16 @@ namespace island
         if (homeDistance > agent.home.radius * .72f) {
             desiredHeading = std::atan2(agent.home.z - agent.state.z,
                                         agent.home.x - agent.state.x);
-        } else if (observerDistance < 3.6f) {
+        } else if (observerDistance < BurstDistance) {
             desiredHeading = std::atan2(agent.state.z - observerZ,
                                         agent.state.x - observerX);
+            if (agent.state.behavior == StingrayBehavior::Settle) {
+                // A settled ray bursts out of the sand and is away in a glide.
+                agent.state.behavior = StingrayBehavior::Glide;
+                agent.behaviorSeconds = 10.0f;
+                agent.state.speed = BurstSpeed;
+                burst_ = {agent.state.x, agent.state.y, agent.state.z, agent.state.scale, burst_.count + 1U};
+            }
         }
         const float before = agent.state.headingRadians;
         agent.state.headingRadians = MoveAngle(before, desiredHeading, .72f * deltaSeconds);

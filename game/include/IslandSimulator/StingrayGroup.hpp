@@ -51,6 +51,11 @@ namespace island
         static constexpr float ReducedSimulationDistance = 330.0f;
 
         explicit StingrayGroup(const IslandTerrain& terrain);
+        /** @brief The last settled ray to burst out of the sand at a swimmer's approach: where
+         *  it lay, counted so a burst is noted once. */
+        struct StingrayBurst { float x = 0.0f, y = 0.0f, z = 0.0f, scale = 1.0f; std::uint32_t count = 0; };
+        [[nodiscard]] const StingrayBurst& LastBurst() const noexcept { return burst_; }
+        static constexpr float BurstDistance = 3.6f, BurstSpeed = 0.95f;
 
         void Update(float deltaSeconds, float observerX, float observerY,
                     float observerZ) noexcept;
@@ -91,6 +96,7 @@ namespace island
         std::vector<StingrayHomeRange> homes_;
         float elapsedSeconds_ = 0.0f;
         std::uint64_t frameIndex_ = 0U;
+        StingrayBurst burst_;
         int fullCount_ = 0;
         int reducedCount_ = 0;
         int dormantCount_ = 0;

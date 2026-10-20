@@ -15,7 +15,10 @@ namespace island {
 class RootingDustRenderer final {
 public:
     static constexpr int Segments=8,VerticesPerPuff=Segments*3;
-    explicit RootingDustRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
+    // message: the startup diagnostic this instance prints (the boars' by default); red, green,
+    // blue: the puff colour (earth brown by default; the stingrays' sand shares the renderer).
+    explicit RootingDustRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,const char* message=nullptr,
+                                 int red=118,int green=92,int blue=62);
     void Draw(const Microsoft::Xna::Framework::Matrix& view,
               const Microsoft::Xna::Framework::Matrix& projection,
               const Microsoft::Xna::Framework::Vector3& camera,
@@ -28,5 +31,6 @@ private:
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> vertices_;
     std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> staging_;
     int drawCalls_=0,visible_=0;
+    int red_=118,green_=92,blue_=62;
 };
 }

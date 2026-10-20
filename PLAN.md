@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 51 (2026-10-20) — a settled stingray bursts from the sand
+
+A settled ray turned away from the swimmer at its slow settle speed, as if it had never
+been on the bottom. `StingrayGroup` now bursts a settled ray when the swimmer comes within
+3.6 m: it is in a glide at once at 0.95 m/s for ten seconds, and a `StingrayBurst` (where
+it lay, its scale, counted) is noted. A core `StingraySandField` reads the burst and raises
+five puffs in a ring 0.55 m (scaled) round the spot, rising at 0.3 m/s, swelling and gone in
+1.8 s, as `DustPuff`s; the rooting-dust renderer takes a message and a colour now, and a
+second instance draws them in sand (196, 178, 140) with its own line, "a settled stingray
+bursts out of the sand in a puff when the swimmer comes near", pinned by the native capture
+tool. Core checks: a ray starts settled; the swimmer two metres off sends it into a glide
+with the burst noted where it lay; a ring of five puffs rises there and settles within two
+seconds. Native `stingrays` passes.
+
 ## Loop pass 50 (2026-10-20) — frogs on the plunge pool's banks
 
 The frogs kept the stream reaches and the wetland. `FrogPopulation` grows to twelve: the

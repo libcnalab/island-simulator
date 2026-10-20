@@ -2164,6 +2164,8 @@ namespace island
             "island-simulator: breakers throw spray up the seaward faces of the offshore rocks in time with their foam");
         dolphinBlowRenderer_ = std::make_unique<CascadeMistRenderer>(device,
             "island-simulator: a dolphin breaking the surface blows a puff of spray from the blowhole");
+        stingraySandRenderer_ = std::make_unique<RootingDustRenderer>(device,
+            "island-simulator: a settled stingray bursts out of the sand in a puff when the swimmer comes near", 196, 178, 140);
         worldDebugRenderer_ = std::make_unique<WorldDebugRenderer>(device, terrain_);
         if (viewpoint_ == FixedViewpoint::GroundContactDetail) {
             constexpr float contactZ = 45.0f;
@@ -2916,6 +2918,7 @@ namespace island
         // exercises the full undulating glide over 120 seconds.
         stingrayGroup_.Update(viewpoint_==FixedViewpoint::StingrayDetail?0.0f:deltaSeconds,
                               cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z);
+        stingraySand_.Update(deltaSeconds,stingrayGroup_.LastBurst());
         if(viewpoint_==FixedViewpoint::StingrayDetail) {
             const StingrayState& subject=stingrayGroup_.Stingrays().front();
             cameraPosition_+=Vector3(subject.x-previousStingraySubject.x,
@@ -4458,6 +4461,7 @@ namespace island
             streamDriftRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,streamDrift_.Leaves());
             cascadeMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,cascadeMist_.Puffs());
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,rootingDust_.Puffs());
+            stingraySandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,stingraySand_.Puffs());
             surfSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,surfSpray_.Puffs());
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,dolphinBlows_.Puffs());
         }
