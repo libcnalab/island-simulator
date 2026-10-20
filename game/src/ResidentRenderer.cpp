@@ -279,57 +279,62 @@ void BuildHuman(std::vector<VertexPositionColorTexture>& vertices,const Resident
     const std::array neckRx{.101f,.089f,.078f,.070f,.066f};
     const std::array neckRz{.078f,.073f,.068f,.063f,.060f};
     mesh.Loft(neckCentres,neckRx,neckRz,right,forward,Material::Skin,16);
+    // The look: the head and face turn about the neck by the look yaw (the body keeps its
+    // heading), the hair, ears, eyes, nose, cheeks and mouth all built on the turned basis.
+    const float look=std::isfinite(state.lookYaw)?std::clamp(state.lookYaw,-1.2f,1.2f):0.0f;
+    const Vector3 headRight=right*std::cos(look)-forward*std::sin(look);
+    const Vector3 headForward=forward*std::cos(look)+right*std::sin(look);
     // Preserve the chin/neck overlap while trimming the high rounded cranium that made
     // the close view read as a large doll head.  Facial features remain in the same
     // local construction and therefore continue to follow every walking pose.
-    const Vector3 head=root+up*.696f+forward*.009f;
-    mesh.Ellipsoid(head,right,up,forward,.102f,.136f,.096f,Material::Skin,16,11);
+    const Vector3 head=root+up*.696f+headForward*.009f;
+    mesh.Ellipsoid(head,headRight,up,headForward,.102f,.136f,.096f,Material::Skin,16,11);
     // Recessed close-cropped hair preserves the forehead and jaw instead of reading as a helmet.
-    const Vector3 hairCentre=head+up*.061f-forward*.037f;
-    mesh.Ellipsoid(hairCentre,right,up,forward,.109f,.108f,.083f,Material::Hair,16,9);
+    const Vector3 hairCentre=head+up*.061f-headForward*.037f;
+    mesh.Ellipsoid(hairCentre,headRight,up,headForward,.109f,.108f,.083f,Material::Hair,16,9);
     for(int curl=0;curl<5;++curl) {
-        const Vector3 c=head+right*((curl-2)*.034f)+up*(.142f-std::abs(curl-2)*.004f)-forward*.035f;
-        mesh.Ellipsoid(c,right,up,forward,.019f,.017f,.018f,Material::Hair,8,5);
+        const Vector3 c=head+headRight*((curl-2)*.034f)+up*(.142f-std::abs(curl-2)*.004f)-headForward*.035f;
+        mesh.Ellipsoid(c,headRight,up,headForward,.019f,.017f,.018f,Material::Hair,8,5);
     }
-    mesh.Ellipsoid(head+right*.108f-up*.004f,right,up,forward,.015f,.031f,.012f,Material::Skin,9,6);
-    mesh.Ellipsoid(head-right*.108f-up*.004f,right,up,forward,.015f,.031f,.012f,Material::Skin,9,6);
+    mesh.Ellipsoid(head+headRight*.108f-up*.004f,headRight,up,headForward,.015f,.031f,.012f,Material::Skin,9,6);
+    mesh.Ellipsoid(head-headRight*.108f-up*.004f,headRight,up,headForward,.015f,.031f,.012f,Material::Skin,9,6);
     for(int side=-1;side<=1;side+=2) {
-        const Vector3 eye=head+right*(side*.038f)+up*.031f+forward*.094f;
-        mesh.Ellipsoid(eye,right,up,forward,.017f,.0065f,.0055f,Material::Eye,12,5);
-        mesh.Ellipsoid(eye+forward*.0055f,right,up,forward,.0048f,.0048f,.0028f,Material::Hair,8,5);
-        mesh.Tube(eye-right*.019f+up*.008f-forward*.002f,
-            eye+right*.019f+up*.006f-forward*.002f,.0028f,.0026f,Material::Skin,7);
-        const Vector3 browA=head+right*(side*.018f)+up*.054f+forward*.095f;
-        const Vector3 browB=head+right*(side*.058f)+up*.051f+forward*.091f;
+        const Vector3 eye=head+headRight*(side*.038f)+up*.031f+headForward*.094f;
+        mesh.Ellipsoid(eye,headRight,up,headForward,.017f,.0065f,.0055f,Material::Eye,12,5);
+        mesh.Ellipsoid(eye+headForward*.0055f,headRight,up,headForward,.0048f,.0048f,.0028f,Material::Hair,8,5);
+        mesh.Tube(eye-headRight*.019f+up*.008f-headForward*.002f,
+            eye+headRight*.019f+up*.006f-headForward*.002f,.0028f,.0026f,Material::Skin,7);
+        const Vector3 browA=head+headRight*(side*.018f)+up*.054f+headForward*.095f;
+        const Vector3 browB=head+headRight*(side*.058f)+up*.051f+headForward*.091f;
         mesh.Tube(browA,browB,.0035f,.003f,Material::Hair,7);
     }
     // A separate bridge, tip and nostrils make the face read in profile as well as head-on.
-    mesh.Ellipsoid(head+up*.010f+forward*.091f,right,up,forward,.014f,.036f,.017f,Material::Skin,10,7);
-    const Vector3 noseTip=head-up*.018f+forward*.105f;
-    mesh.Ellipsoid(noseTip,right,up,forward,.020f,.016f,.022f,Material::Skin,11,7);
+    mesh.Ellipsoid(head+up*.010f+headForward*.091f,headRight,up,headForward,.014f,.036f,.017f,Material::Skin,10,7);
+    const Vector3 noseTip=head-up*.018f+headForward*.105f;
+    mesh.Ellipsoid(noseTip,headRight,up,headForward,.020f,.016f,.022f,Material::Skin,11,7);
     for(int side=-1;side<=1;side+=2)
-        mesh.Ellipsoid(noseTip+right*(side*.008f)-up*.005f+forward*.021f,
-            right,up,forward,.0042f,.0032f,.003f,Material::Hair,7,4);
+        mesh.Ellipsoid(noseTip+headRight*(side*.008f)-up*.005f+headForward*.021f,
+            headRight,up,headForward,.0042f,.0032f,.003f,Material::Hair,7,4);
     // Separate cheek pads, nostril wings and jaw corners make the face readable as
     // a human face in the close QA view rather than marks painted on one sphere.
     for(float sign:{-1.0f,1.0f}) {
-        mesh.Ellipsoid(head+right*(sign*.051f)-up*.012f+forward*.077f,
-            right,up,forward,.044f,.041f,.027f,Material::Skin,12,7);
-        mesh.Ellipsoid(noseTip+right*(sign*.015f)-up*.003f+forward*.005f,
-            right,up,forward,.010f,.008f,.010f,Material::Skin,10,6);
-        mesh.Ellipsoid(head+right*(sign*.044f)-up*.073f+forward*.054f,
-            right,up,forward,.043f,.046f,.029f,Material::Skin,11,7);
+        mesh.Ellipsoid(head+headRight*(sign*.051f)-up*.012f+headForward*.077f,
+            headRight,up,headForward,.044f,.041f,.027f,Material::Skin,12,7);
+        mesh.Ellipsoid(noseTip+headRight*(sign*.015f)-up*.003f+headForward*.005f,
+            headRight,up,headForward,.010f,.008f,.010f,Material::Skin,10,6);
+        mesh.Ellipsoid(head+headRight*(sign*.044f)-up*.073f+headForward*.054f,
+            headRight,up,headForward,.043f,.046f,.029f,Material::Skin,11,7);
     }
-    const Vector3 mouth=head-up*.058f+forward*.097f;
-    const Vector3 lipPeak=mouth+up*.0035f+forward*.002f;
-    mesh.Tube(mouth-right*.027f,lipPeak,.0045f,.0040f,Material::Lip,8);
-    mesh.Tube(lipPeak,mouth+right*.027f,.0040f,.0045f,Material::Lip,8);
+    const Vector3 mouth=head-up*.058f+headForward*.097f;
+    const Vector3 lipPeak=mouth+up*.0035f+headForward*.002f;
+    mesh.Tube(mouth-headRight*.027f,lipPeak,.0045f,.0040f,Material::Lip,8);
+    mesh.Tube(lipPeak,mouth+headRight*.027f,.0040f,.0045f,Material::Lip,8);
     // A softer lower contour closes the lips without painting one thick dark bar
     // across the face. It follows the same head basis in every walking pose.
-    const Vector3 lowerLip=mouth-up*.009f+forward*.0025f;
-    mesh.Tube(mouth-right*.024f-up*.004f,lowerLip,.0034f,.0038f,Material::Lip,8);
-    mesh.Tube(lowerLip,mouth+right*.024f-up*.004f,.0038f,.0034f,Material::Lip,8);
-    mesh.Ellipsoid(head-up*.102f+forward*.061f,right,up,forward,.038f,.022f,.025f,Material::Skin,10,6);
+    const Vector3 lowerLip=mouth-up*.009f+headForward*.0025f;
+    mesh.Tube(mouth-headRight*.024f-up*.004f,lowerLip,.0034f,.0038f,Material::Lip,8);
+    mesh.Tube(lowerLip,mouth+headRight*.024f-up*.004f,.0038f,.0034f,Material::Lip,8);
+    mesh.Ellipsoid(head-up*.102f+headForward*.061f,headRight,up,headForward,.038f,.022f,.025f,Material::Skin,10,6);
 
     // Fishing: a cane rod out of the right hand, a line from its tip to a float riding
     // the shallows past the deck's end, the whole drawn out by the fishing amount.

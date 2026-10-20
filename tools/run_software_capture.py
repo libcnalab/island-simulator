@@ -69,7 +69,7 @@ def validate_resident_stages(text):
                    and len(arm_pair)==2
                    and all(len(wrist)==3 and all(map(math.isfinite,wrist)) for wrist in arm_pair)
                    and len(swing_pair)==2 and all(map(math.isfinite,swing_pair))
-                   and all(abs(value)<.56 for value in swing_pair)
+                   and all(abs(value)<1.0 for value in swing_pair)  # the campfire crouch reaches both hands forward
                    and int(body_triangles)>=1000 and int(shadow_triangles)==24)
         except ValueError:
             valid=False
@@ -1358,6 +1358,8 @@ def main():
                 raise RuntimeError("current hermit crab feeding is missing; check for a stale executable")
             if "a resting gecko licks an eye clean with its tongue every ten seconds or so, the eyes taking turns" not in diagnostics:
                 raise RuntimeError("current gecko eye lick is missing; check for a stale executable")
+            if "the resident's head turns to the walker within fourteen metres ahead of them, and back to the front once they leave that" not in diagnostics:
+                raise RuntimeError("current resident head turn is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:

@@ -193,6 +193,22 @@ int main() {
     Check(actor.State().distanceTravelled>beforeResume+1,"resident does not resume when the player leaves");
     Check(actor.WaveAmount()==0&&actor.State().pose.wrists[1].y<actor.State().pose.shoulders[1].y,
         "the resident's hand does not come down once the player has gone");
+    {
+        // The look: a player standing six metres off, forty degrees to the resident's left,
+        // has their head turned that way within a second; one at eight metres straight
+        // behind is not followed; with the player gone the head comes back to the front.
+        const auto s=actor.State();
+        const auto place=[&](float bearing,float range){return ResidentPoint{s.x+std::sin(s.heading+bearing)*range,s.y+1.0f,s.z+std::cos(s.heading+bearing)*range};};
+        for(int tick=0;tick<12;++tick)actor.Update(.1f,place(-.7f,6.0f));
+        Check(actor.State().lookYaw<-.4f&&actor.State().lookYaw>-1.0f,"the resident does not turn their head to a player off to the left");
+        for(int tick=0;tick<12;++tick)actor.Update(.1f,place(3.1f,8.0f));
+        Check(std::abs(actor.State().lookYaw)<.05f,"the resident follows a player straight behind them with their head");
+        for(int tick=0;tick<12;++tick)actor.Update(.1f,place(.5f,6.0f));
+        Check(actor.State().lookYaw>.3f,"the resident does not turn their head to a player off to the right");
+        for(int tick=0;tick<12;++tick)actor.Update(.1f,{NAN,NAN,NAN});
+        Check(actor.State().lookYaw==0,"the resident's head does not come back to the front once the player has gone");
+        CheckPose(actor,collisions);
+    }
     bool refused=false;
     try {const std::array blocked{CircularObstacle{0,0,350}};ResidentMotion impossible(terrain,blocked);}
     catch(const std::runtime_error&){refused=true;}

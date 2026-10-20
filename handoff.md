@@ -218,6 +218,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 154: a ground snake lifts its head to look at the walker standing off within fourteen metres, low to slip away closer (`SnakeState::headLift`) (PLAN "Loop pass 154").
 - Pass 155: a paused hermit crab feeds, its small claw picking at the sand and lifting to its mouth (`HermitCrabState::feedAmount`/`feedPhase`) (PLAN "Loop pass 155").
 - Pass 156: a resting gecko licks an eye clean with its tongue, the eyes taking turns (`GeckoState::eyeLick`/`lickSide`) (PLAN "Loop pass 156").
+- Pass 157: the resident's head turns to the walker within fourteen metres ahead of them (`ResidentState::lookYaw`) (PLAN "Loop pass 157").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

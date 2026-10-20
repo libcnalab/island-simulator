@@ -33,6 +33,10 @@ struct ResidentState {
     // While fishing: the float's rise and fall on the swell (metres), and 0..1 a lift of the
     // rod the resident gives now and then to check the line.
     float floatBob=0,rodLift=0;
+    // The head's yaw off the body's heading (radians, left negative): turned to a player
+    // within LookDistance and ahead of the resident, eased, and back to the front when
+    // they leave that; the renderer turns the head and face by it.
+    float lookYaw=0;
     std::size_t nextPoint=1,completedLaps=0,pauseCount=0,rejectedMoves=0;
     ResidentMode mode=ResidentMode::Pausing;
     ResidentPose pose;
@@ -64,6 +68,9 @@ public:
     [[nodiscard]] bool Fishing()const noexcept {return fishing_;}
     static constexpr float FishingReach=6.0f,FishingInRate=1.2f,FishingOutRate=2.5f;
     static constexpr float RodLiftPeriod=12.0f,RodLiftAt=9.0f,RodLiftSeconds=.8f;
+    // The look: the head turns up to MaximumLookYaw to a player within LookDistance who is
+    // within LookField of straight ahead, at LookRate; a player further round is not followed.
+    static constexpr float LookDistance=14.0f,MaximumLookYaw=1.0f,LookField=1.35f,LookRate=2.5f;
     // QA: holds the resident fishing, rod out, for a still capture.
     void PreviewFishing();
     [[nodiscard]] const ResidentRoute& Route()const noexcept {return route_;}

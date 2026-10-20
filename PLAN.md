@@ -54,6 +54,24 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 157 (2026-10-20) — the resident turns their head to the walker
+
+The resident's head stayed square on their body however the walker stood. The
+`ResidentState::lookYaw` (radians, left negative) now carries the look: a player within
+`LookDistance` (14 m) and within `LookField` (1.35 rad) of straight ahead has the head turned
+their way, up to `MaximumLookYaw` (1.0 rad) at `LookRate` (2.5 rad/s), and the head comes
+back to the front once they leave that; a player round behind is not followed. The renderer
+builds the whole head section (skull, hair and curls, ears, eyes and brows, nose, cheeks,
+jaw and mouth) on a basis turned about the neck by the yaw, the body keeping its heading. A
+new report line "the resident's head turns to the walker within fourteen metres ahead of
+them, and back to the front once they leave that" is pinned. ResidentTests: a player six
+metres off to the left turns the head that way within a second, one straight behind is not
+followed, one to the right turns it back the other way, and the head is square again once
+they have gone, the pose audit holding throughout. Native `resident` passes, after a
+capture-tool fix: its resident arm-swing bound (0.56 m) predated loop 132's campfire crouch,
+which reaches both hands 0.59 m forward at the tour's start where the capture begins; the
+bound is now 1.0 m with the reason noted beside it.
+
 ## Loop pass 156 (2026-10-20) — a gecko licks its eye
 
 A resting gecko did nothing with its lidless eyes. `GeckoState::eyeLick` (0..1) and

@@ -161,6 +161,18 @@ void ResidentMotion::Step(float seconds,ResidentPoint observer) {
     const float turn=Wrap(desiredHeading-state_.heading);
     wave_+=std::clamp((yield?1.0f:0.0f)-wave_,-seconds*2.5f,seconds*3.0f);
     if(wave_>0)waveClock_+=seconds;
+    // The head turns to a player within the look distance and ahead of the resident, and
+    // comes back to the front once they leave that.
+    float wantLook=0;
+    if(Finite(observer)&&std::abs(observer.y-state_.y-1.0f)<3.0f) {
+        const float dx=observer.x-state_.x,dz=observer.z-state_.z;
+        const float range=std::hypot(dx,dz);
+        if(range<LookDistance&&range>.01f) {
+            const float relative=Wrap(std::atan2(dx,dz)-state_.heading);
+            if(std::abs(relative)<LookField) wantLook=std::clamp(relative,-MaximumLookYaw,MaximumLookYaw);
+        }
+    }
+    state_.lookYaw+=std::clamp(wantLook-state_.lookYaw,-seconds*LookRate,seconds*LookRate);
     state_.mode=yield?ResidentMode::Yielding:pauseRemaining_>0?ResidentMode::Pausing:
         std::abs(turn)>.28f?ResidentMode::Turning:ResidentMode::Walking;
     if(!yield&&pauseRemaining_>0)pauseRemaining_=std::max(0.0f,pauseRemaining_-seconds);
