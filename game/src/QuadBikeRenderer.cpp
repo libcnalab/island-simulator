@@ -35,8 +35,6 @@ namespace island
     namespace
     {
         constexpr float Pi = std::numbers::pi_v<float>;
-        constexpr int BeamSpokes = 25, BeamRings = 18;
-        constexpr std::size_t BeamVertexCapacity = static_cast<std::size_t>((BeamSpokes - 1) * (BeamRings - 1) * 6);
         enum Palette : int {
             Paint = 0, BlackPlastic, Rubber, Steel, SeatVinyl, Aluminium, Chrome, EngineMetal,
             HeadLens, TailLens, Spring, SkidPlate, Decal, Shirt, Skin, Trousers, PaletteCount
@@ -602,74 +600,6 @@ void main()
             {CNA::ShaderStageEXT::Vertex, CNA::ShaderStageEXT::Fragment});
         shadow_ = std::make_unique<ShaderEffect>(device, shadowPackage);
         if (!shadow_->IsEffectValid()) throw std::runtime_error("quad bike shadow failed: " + shadow_->GetCompileErrorEXT());
-        constexpr const char* beamVertex = R"(
-layout(location = 0) in vec3 aPosition;
-layout(location = 1) in vec3 aNormal;
-layout(location = 2) in vec2 aGround;
-uniform mat4 uViewProjection;
-out vec3 vWorld;
-out vec3 vNormal;
-out float vGround;
-out float vReach;
-void main()
-{
-    vWorld = aPosition;
-    vNormal = aNormal;
-    vGround = aGround.x;
-    vReach = aGround.y;
-    gl_Position = uViewProjection * vec4(aPosition, 1.0);
-    gl_Position.z = 2.0 * gl_Position.z - gl_Position.w;
-}
-)";
-        constexpr const char* beamFragment = R"(
-in vec3 vWorld;
-in vec3 vNormal;
-in float vGround;
-in float vReach;
-uniform vec3 uCamera;
-uniform vec3 uLamp;
-uniform vec3 uAxis;
-uniform float uStrength;
-out vec4 fragColor;
-void main()
-{
-    // The surface this pixel shows lies on, or stands near, the ground where its view ray
-    // comes down to it beyond the slab: the lamps light it as they light that ground.
-    vec3 ray = vWorld - uCamera;
-    float fall = uCamera.y - vWorld.y;
-    vec3 lit = uCamera + ray * vReach;
-    if (fall > 0.02) lit = uCamera + ray * min((uCamera.y - vGround) / fall, 60.0 / max(length(ray), 0.01));
-    vec3 toLit = lit - uLamp;
-    float d = max(length(toLit), 0.05);
-    vec3 dir = toLit / d;
-    float axial = dot(dir, uAxis);
-    float beam = smoothstep(0.86, 0.97, axial) + 0.25 * smoothstep(0.70, 0.88, axial);
-    float facing = 0.4 + 0.6 * smoothstep(0.0, 0.2, dot(normalize(vNormal), -dir));
-    float strength = uStrength * beam * facing / (1.0 + 0.009 * d * d) * (1.0 - smoothstep(26.0, 40.0, d));
-    fragColor = vec4(0.0, 0.0, 0.0, 1.0 - clamp(strength, 0.0, 0.92));
-}
-)";
-        const auto beamSource = [&](const bool embedded, const bool fragment) {
-            return std::string(embedded ? "#version 300 es\nprecision highp float;\n" : "#version 330 core\n")
-                + (fragment ? beamFragment : beamVertex);
-        };
-        const CNA::Graphics::ShaderPackageEXT beamPackage(
-            {ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslEs, CNA::ShaderStageEXT::Vertex, "main", "quad-beam/es.vert", beamSource(true, false)),
-             ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslEs, CNA::ShaderStageEXT::Fragment, "main", "quad-beam/es.frag", beamSource(true, true)),
-             ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslDesktop, CNA::ShaderStageEXT::Vertex, "main", "quad-beam/gl.vert", beamSource(false, false)),
-             ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslDesktop, CNA::ShaderStageEXT::Fragment, "main", "quad-beam/gl.frag", beamSource(false, true))},
-            {CNA::ShaderStageEXT::Vertex, CNA::ShaderStageEXT::Fragment});
-        beam_ = std::make_unique<ShaderEffect>(device, beamPackage);
-        if (!beam_->IsEffectValid()) throw std::runtime_error("quad bike beam failed: " + beam_->GetCompileErrorEXT());
-        // the beam writes the frame's alpha only: alpha times its own, the colour untouched
-        beamBlend_ = std::make_unique<BlendState>();
-        beamBlend_->setColorSourceBlendProperty(Blend::Zero);
-        beamBlend_->setColorDestinationBlendProperty(Blend::One);
-        beamBlend_->setAlphaSourceBlendProperty(Blend::Zero);
-        beamBlend_->setAlphaDestinationBlendProperty(Blend::SourceAlpha);
-        beamStaging_.reserve(BeamVertexCapacity);
-        beamMesh_ = std::make_unique<DynamicVertexBuffer>(device, Vertex::getVertexDeclarationStatic(), static_cast<int>(BeamVertexCapacity),
-                                                          BufferUsage::WriteOnly);
         shadowDepth_ = std::make_unique<DepthStencilState>();
         shadowDepth_->setDepthBufferEnableProperty(true);
         shadowDepth_->setDepthBufferWriteEnableProperty(true);
@@ -937,77 +867,6 @@ void main()
         shadow_->SetUniformVec3("uToSun", l.X, l.Y, l.Z);
         shadow_->SetUniformFloat("uShadowAlpha", std::clamp(sunStrength, 0.0f, 1.0f) * 0.42f * fade);
         DrawAll(*shadow_, pose, dynamicCount);
-    }
-
-    void QuadBikeRenderer::DrawBeam(const Matrix& view, const Matrix& projection, const Vector3& camera,
-                                    const QuadBike& bike, const std::function<BikeGround(float, float)>& ground,
-                                    const float strength)
-    {
-        if (!(strength > 0.01f)) return;
-        const BikeVec l = bike.ToWorld(HeadlightLeft), r = bike.ToWorld(HeadlightRight);
-        const Vector3 lamp((l.x + r.x) * 0.5f, (l.y + r.y) * 0.5f, (l.z + r.z) * 0.5f);
-        if ((lamp - camera).LengthSquared() > 90.0f * 90.0f) return;
-        // the lamps aim a little down the bike's nose
-        const BikeVec f = bike.Forward(), u = bike.Up();
-        const Vector3 axis = Vector3::Normalize(Vector3(f.x - u.x * 0.10f, f.y - u.y * 0.10f, f.z - u.z * 0.10f));
-        Vector3 ahead(f.x, 0.0f, f.z);
-        if (ahead.LengthSquared() < 1e-4f) return;   // pointing at the sky or the ground
-        ahead.Normalize();
-        const Vector3 side(ahead.Z, 0.0f, -ahead.X);
-        // The slab: each ground point of the pool drawn nearer along the eye's ray to it, so
-        // it covers just the pool on screen and lies in front of what stands on that ground
-        // up to a lift below the eye, but never before the lamps, so the quad and its rider
-        // (behind them) stand in front of it and stay unlit.
-        const float eye = camera.Y - ground(camera.X, camera.Z).height;
-        const float lift = std::clamp(eye - 0.5f, 0.25f, 1.2f);
-        const float cameraAlong = Vector3::Dot(camera - lamp, ahead);
-        std::array<Vertex, BeamSpokes * BeamRings> grid{};
-        for (int ring = 0; ring < BeamRings; ++ring) {
-            const float t = static_cast<float>(ring) / (BeamRings - 1);
-            const float radius = 0.25f + 40.0f * std::pow(t, 1.6f);
-            for (int spoke = 0; spoke < BeamSpokes; ++spoke) {
-                const float angle = -0.85f + 1.7f * static_cast<float>(spoke) / (BeamSpokes - 1);
-                const Vector3 at = lamp + (ahead * std::cos(angle) + side * std::sin(angle)) * radius;
-                const BikeGround g = ground(at.X, at.Z);
-                const Vector3 onGround(at.X, g.height, at.Z);
-                const float drop = camera.Y - g.height;
-                float reach = drop > 0.05f ? std::clamp((drop - lift) / drop, 0.1f, 0.98f) : 0.98f;
-                const float along = Vector3::Dot(onGround - lamp, ahead);
-                if (cameraAlong < -0.3f && along > 0.12f)
-                    reach = std::max(reach, std::min((0.12f - cameraAlong) / (along - cameraAlong), 0.995f));
-                grid[static_cast<std::size_t>(ring * BeamSpokes + spoke)] =
-                    Vertex(camera + (onGround - camera) * reach, Vector3(g.normal.x, g.normal.y, g.normal.z),
-                           Vector2(g.height, 1.0f / reach));
-            }
-        }
-        beamStaging_.clear();
-        for (int ring = 0; ring + 1 < BeamRings; ++ring) {
-            for (int spoke = 0; spoke + 1 < BeamSpokes; ++spoke) {
-                const auto at = [&](int rr, int ss) { return grid[static_cast<std::size_t>(rr * BeamSpokes + ss)]; };
-                beamStaging_.push_back(at(ring, spoke));
-                beamStaging_.push_back(at(ring + 1, spoke));
-                beamStaging_.push_back(at(ring + 1, spoke + 1));
-                beamStaging_.push_back(at(ring, spoke));
-                beamStaging_.push_back(at(ring + 1, spoke + 1));
-                beamStaging_.push_back(at(ring, spoke + 1));
-            }
-        }
-        beamMesh_->SetData(beamStaging_.data(), 0, static_cast<int>(beamStaging_.size()), SetDataOptions::Discard);
-        device_.setRasterizerStateProperty(RasterizerState::CullNone);
-        device_.setBlendStateProperty(*beamBlend_);
-        device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
-        float viewProjection[16];
-        (view * projection).ToColumnMajor(viewProjection);
-        beam_->Apply();
-        beam_->SetUniformMat4("uViewProjection", viewProjection);
-        beam_->SetUniformVec3("uCamera", camera.X, camera.Y, camera.Z);
-        beam_->SetUniformVec3("uLamp", lamp.X, lamp.Y, lamp.Z);
-        beam_->SetUniformVec3("uAxis", axis.X, axis.Y, axis.Z);
-        beam_->SetUniformFloat("uStrength", strength);
-        device_.SetVertexBuffer(beamMesh_.get());
-        device_.setIndicesProperty(nullptr);
-        device_.DrawPrimitives(PrimitiveType::TriangleList, 0, static_cast<int>(beamStaging_.size() / 3));
-        ++drawCalls_;
     }
 
     void QuadBikeRenderer::DrawLights(const Matrix& view, const Matrix& projection, const Vector3& camera,

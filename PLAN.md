@@ -233,6 +233,23 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 225 (2026-10-20) — the campfire lights the night through the grade
+
+At night the campfire's light on the ground was clipped: the terrain, grass and jungle shaders
+add it before the night grade, in an 8-bit frame, so a lit surface could never come out
+brighter than the grade's own colour; around the fire the red channel stopped at 54 of 255 and
+the ground glowed a dull yellow-green. The quad's headlight beam (Quad bike pass 1) already
+lit through the grade; that slab is now the shared `LocalLightRenderer` with two shapes, a spot
+(the headlights, unchanged) and a point (the fire: 8 m, a soft core falling off from about
+1.8 m, flickering with the shaders' own pulse, from 4 degrees below the horizon at dusk),
+and each light also tints the lit pixels toward its colour before the lift (a multiply, so
+nothing clips: the fire 1.0/0.62/0.34, the lamps a warm white), its strength still in the
+frame's alpha, lights multiplying there so they add up. The ground round the fire at 21:30 now
+reads 170/112/25 a metre out and 96/62/22 three metres out, warm orange instead of 54/54/22,
+the ring of stones glows, and the pool fades softly into the night; `campfire-wide` shows it
+from afar and the quad's beam (`quad-chase` at 21:30) is as before. By day nothing changes (no
+grade, no pass).
+
 ## Loop pass 224 (2026-10-20) — a flight view, and the sea's lattice from the air removed
 
 The operator mostly flies, but no capture looked at the island from the air. A new `flight`

@@ -2444,6 +2444,13 @@ namespace island
         timeOfDay_ = std::make_unique<TimeOfDayRenderer>(device);
         rain_ = std::make_unique<RainRenderer>(device);
         try {
+            localLights_ = std::make_unique<LocalLightRenderer>(device);
+            std::cout << "island-simulator: local lights at night (the campfire, the quad's headlights) lift the night grade "
+                         "where they reach the ground, keeping its colours\n";
+        } catch (const std::exception& error) {
+            std::cout << "island-simulator: local lights unavailable: " << error.what() << '\n';
+        }
+        try {
             quadRenderer_ = std::make_unique<QuadBikeRenderer>(device);
             quadRider_ = std::make_unique<QuadRider>(*this);
             exhaustRenderer_ = std::make_unique<RootingDustRenderer>(device,
@@ -5633,26 +5640,49 @@ namespace island
             const bool underground = renderCameraPosition_.Y < terrain_.Height(renderCameraPosition_.X, renderCameraPosition_.Z) - 0.5f;
             if (!underground && renderCameraPosition_.Y > 0.0f)
                 rain_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, weather.rain, weather.wind, timeSeconds);
-            // The quad's headlights light their pool through the grade: the beam writes how
-            // strongly each pixel is lit into the frame's alpha, and the grade lifts it there.
-            const bool lamps = quadRenderer_ && quadEngineOn_ && !quad_.Overturned() && TimeOfDayRenderer::GradeActive(light);
-            if (lamps) {
-                timeOfDay_->ResetAlpha();
-                quadRenderer_->DrawBeam(cameraView_, cameraProjection_, renderCameraPosition_, quad_,
-                    [this](float x, float z) {
-                        BikeGround ground;
-                        const float extent = TerrainMeshLayout::Extent - 1.0f;
-                        if (quadSurface_ && std::abs(x) < extent && std::abs(z) < extent) {
-                            const auto sample = quadSurface_->Sample(x, z);
-                            ground.height = sample.height;
-                            ground.normal = {sample.normal.x, sample.normal.y, sample.normal.z};
-                        } else {
-                            ground.height = terrain_.Height(x, z);
-                        }
-                        return ground;
-                    }, 0.15f + 0.85f * QuadLampNightness());
+            // The local lights (the campfire, the quad's headlights) light the ground through the
+            // grade: each writes how strongly each pixel is lit into the frame's alpha, and the
+            // grade lifts it there.
+            bool localLit = false;
+            if (localLights_ && TimeOfDayRenderer::GradeActive(light) && !underground) {
+                localLights_->ResetCounts();
+                const auto ground = [this](float x, float z) {
+                    BikeGround g;
+                    const float extent = TerrainMeshLayout::Extent - 1.0f;
+                    if (quadSurface_ && std::abs(x) < extent && std::abs(z) < extent) {
+                        const auto sample = quadSurface_->Sample(x, z);
+                        g.height = sample.height;
+                        g.normal = {sample.normal.x, sample.normal.y, sample.normal.z};
+                    } else {
+                        g.height = terrain_.Height(x, z);
+                    }
+                    return g;
+                };
+                const Vector3 fire(CampfireSite::X, CampfireLayout::GroundY() + 0.45f, CampfireSite::Z);
+                const float night = 1.0f - std::clamp((light.sunElevationDegrees + 4.0f) / 12.0f, 0.0f, 1.0f);
+                const bool fireLit = night > 0.02f && (fire - renderCameraPosition_).LengthSquared() < 120.0f * 120.0f;
+                const bool lampsLit = quadRenderer_ && quadEngineOn_ && !quad_.Overturned();
+                if (fireLit || lampsLit) {
+                    timeOfDay_->ResetAlpha();
+                    localLit = true;
+                }
+                if (fireLit) {
+                    // the same flicker as the firelight the ground's shaders add
+                    const float pulse = 0.83f + 0.10f * std::sin(timeSeconds * 8.7f) + 0.07f * std::sin(timeSeconds * 17.1f + 1.3f);
+                    localLights_->DrawPoint(cameraView_, cameraProjection_, renderCameraPosition_, fire, 8.0f, ground,
+                                            1.0f * night * pulse, Vector3(1.0f, 0.62f, 0.34f));
+                }
+                if (lampsLit) {
+                    const BikeVec l = quad_.ToWorld(QuadBikeRenderer::HeadlightLeft), r = quad_.ToWorld(QuadBikeRenderer::HeadlightRight);
+                    const BikeVec f = quad_.Forward(), u = quad_.Up();
+                    // the lamps aim a little down the bike's nose
+                    localLights_->DrawSpot(cameraView_, cameraProjection_, renderCameraPosition_,
+                        Vector3((l.x + r.x) * 0.5f, (l.y + r.y) * 0.5f, (l.z + r.z) * 0.5f),
+                        Vector3(f.x - u.x * 0.10f, f.y - u.y * 0.10f, f.z - u.z * 0.10f), ground, 0.15f + 0.85f * QuadLampNightness(),
+                        Vector3(1.0f, 0.97f, 0.90f));
+                }
             }
-            timeOfDay_->DrawGrade(light, lamps);
+            timeOfDay_->DrawGrade(light, localLit);
             timeOfDay_->DrawNightSky(cameraView_, cameraProjection_, renderCameraPosition_, light);
             timeOfDay_->DrawFlash(weather.flash);
             if (quadRenderer_ && quadEngineOn_)

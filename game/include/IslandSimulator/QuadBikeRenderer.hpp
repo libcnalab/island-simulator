@@ -6,14 +6,12 @@
 #include "Microsoft/Xna/Framework/Graphics/VertexPositionColor.hpp"
 #include "Microsoft/Xna/Framework/Graphics/VertexPositionNormalTexture.hpp"
 #include <array>
-#include <functional>
 #include <memory>
 #include <vector>
 
 namespace Microsoft::Xna::Framework::Graphics
 {
     class BasicEffect;
-    class BlendState;
     class DepthStencilState;
     class DynamicVertexBuffer;
     class GraphicsDevice;
@@ -52,14 +50,6 @@ namespace island
         void DrawShadow(const Microsoft::Xna::Framework::Matrix& view, const Microsoft::Xna::Framework::Matrix& projection,
                         const Microsoft::Xna::Framework::Vector3& camera, const QuadBike& bike, bool rider,
                         const BikeVec& groundPoint, const BikeVec& groundNormal, float sunStrength);
-        /** @brief The headlights' pool, before the night grade: a slab over the ground ahead,
-         *  depth-tested, on which each pixel finds where its view ray meets the ground and how
-         *  strongly the lamps light it there; it writes only the frame's alpha (one minus that),
-         *  for TimeOfDayRenderer::DrawGrade(light, true) to lift the grade by. Call it after
-         *  TimeOfDayRenderer::ResetAlpha(). */
-        void DrawBeam(const Microsoft::Xna::Framework::Matrix& view, const Microsoft::Xna::Framework::Matrix& projection,
-                      const Microsoft::Xna::Framework::Vector3& camera, const QuadBike& bike,
-                      const std::function<BikeGround(float, float)>& ground, float strength);
         /** @brief The lamps' glow, after the night grade (additive). */
         void DrawLights(const Microsoft::Xna::Framework::Matrix& view, const Microsoft::Xna::Framework::Matrix& projection,
                         const Microsoft::Xna::Framework::Vector3& camera, const QuadBike& bike, float nightness);
@@ -90,13 +80,12 @@ namespace island
                       Microsoft::Xna::Framework::Graphics::VertexBuffer& buffer, int count,
                       const Microsoft::Xna::Framework::Matrix& world);
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
-        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> material_, shadow_, beam_;
-        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BlendState> beamBlend_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> material_, shadow_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::DepthStencilState> shadowDepth_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> glowEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> body_, bars_, frontWheel_, rearWheel_;
-        std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> dynamic_, glow_, beamMesh_;
-        std::vector<Vertex> dynamicStaging_, beamStaging_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> dynamic_, glow_;
+        std::vector<Vertex> dynamicStaging_;
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> glowStaging_;
         int bodyCount_ = 0, barsCount_ = 0, frontWheelCount_ = 0, rearWheelCount_ = 0;
         const SunShadowMap* sunShadow_ = nullptr;

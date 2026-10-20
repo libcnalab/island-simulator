@@ -709,6 +709,7 @@ if(ISLAND_BUILD_GAME)
         game/src/QuadBikeRenderer.cpp
         game/src/QuadRider.cpp
         game/src/TyreTrackRenderer.cpp
+        game/src/LocalLightRenderer.cpp
         game/src/CrabRenderer.cpp
         game/src/CrocodileRenderer.cpp
         game/src/BoarRenderer.cpp
