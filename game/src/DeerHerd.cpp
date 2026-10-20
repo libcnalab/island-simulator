@@ -1,5 +1,6 @@
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/CampfireSite.hpp"
+#include "IslandSimulator/CanopyLightField.hpp"
 
 #include "IslandSimulator/StreamRoute.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
@@ -133,6 +134,34 @@ namespace island
         agent.state.gaitPhase = static_cast<float>(index) * 1.4f;
     }
 
+    float DeerHerd::LightAt(const float x, const float z) const noexcept
+    {
+        if (light_ == nullptr) return 1.0f;
+        const float ground = terrain_.Height(x, z);
+        return light_->SampleReceiver(x, ground + 0.6f, z, ground);
+    }
+
+    bool DeerHerd::FindShade(const Agent& agent, const std::size_t index, float& x, float& z) const noexcept
+    {
+        // Twelve bearings at two reaches; the shadiest valid spot inside the home's inner
+        // margin (so the home pull does not override the walk) wins when it is shaded.
+        float best = ShadedLevel;
+        bool found = false;
+        for (int ring = 0; ring < 2; ++ring) {
+            const float reach = ring == 0 ? ShadeSeekRadius * 0.5f : ShadeSeekRadius;
+            for (int bearing = 0; bearing < 12; ++bearing) {
+                const float angle = static_cast<float>(bearing) * (TwoPi / 12.0f);
+                const float px = agent.state.x + std::cos(angle) * reach;
+                const float pz = agent.state.z + std::sin(angle) * reach;
+                if (!IsValidPosition(index, px, pz)) continue;
+                if (std::hypot(px - agent.home.x, pz - agent.home.z) > agent.home.radius * .6f) continue;
+                const float level = LightAt(px, pz);
+                if (level < best) { best = level; x = px; z = pz; found = true; }
+            }
+        }
+        return found;
+    }
+
     bool DeerHerd::IsValidPosition(const std::size_t index, const float x,
                                    const float z) const noexcept
     {
@@ -226,6 +255,7 @@ namespace island
             alertFacing = true;
         } else if ((agent.behaviorSeconds -= deltaSeconds) <= 0.0f) {
             ++agent.transitions;
+            agent.seekingShade = false;
             const auto phase = (agent.transitions + static_cast<std::uint32_t>(index) * 3U) % 7U;
             agent.state.behavior = phase < 3U ? DeerBehavior::Graze
                 : phase < 5U ? DeerBehavior::Walk : DeerBehavior::Rest;
@@ -245,6 +275,32 @@ namespace island
             if (agent.hasDrink && phase == 5U && (agent.transitions / 7U) % 2U == 0U) {
                 agent.state.behavior = DeerBehavior::Drink;
                 agent.behaviorSeconds = 22.0f;
+            }
+            // A rest that comes on sunlit ground: the deer walks to the nearest shade first
+            // (a crown, a palm head, a snag or a bush within ten metres) and lies up there.
+            if (agent.state.behavior == DeerBehavior::Rest && light_ != nullptr
+                && LightAt(agent.state.x, agent.state.z) > SunlitLevel
+                && FindShade(agent, index, agent.shadeX, agent.shadeZ)) {
+                agent.state.behavior = DeerBehavior::Walk;
+                agent.seekingShade = true;
+                agent.behaviorSeconds = 30.0f;
+                agent.targetHeadingRadians = std::atan2(agent.shadeZ - agent.state.z,
+                                                        agent.shadeX - agent.state.x);
+            }
+        }
+        if (agent.seekingShade) {
+            if (agent.state.behavior != DeerBehavior::Walk) {
+                agent.seekingShade = false;
+            } else if (std::hypot(agent.state.x - agent.shadeX, agent.state.z - agent.shadeZ) < 0.8f) {
+                // In the shade: the rest the deer set out for, a little longer for the walk.
+                agent.seekingShade = false;
+                agent.state.behavior = DeerBehavior::Rest;
+                agent.behaviorSeconds = 6.0f + static_cast<float>((agent.transitions * 5U
+                    + static_cast<std::uint32_t>(index) * 3U) % 30U) * .2f;
+                ++shadeRests_;
+            } else {
+                agent.targetHeadingRadians = std::atan2(agent.shadeZ - agent.state.z,
+                                                        agent.shadeX - agent.state.x);
             }
         }
         bool drinking = false;

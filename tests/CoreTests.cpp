@@ -9605,6 +9605,39 @@ int main()
     }
 
     {
+        // A deer rests in the shade: with one dense crown shading a spot five metres from the
+        // third deer's home, a rest that comes on sunlit ground becomes a walk to that
+        // shade and the rest is taken there; with no light field the deer rests where it is.
+        const island::IslandTerrain terrain;
+        island::DeerHerd herd(terrain, {}), plain(terrain, {});
+        const island::DeerHome home = herd.Homes()[2];
+        const float slopeX = island::environment::SunDirectionX / island::environment::SunDirectionY;
+        const float slopeZ = island::environment::SunDirectionZ / island::environment::SunDirectionY;
+        const float groundY = terrain.Height(home.x, home.z);
+        // The crown sits so that its shadow lands five metres east of the home centre.
+        const island::CanopyOccluder crown{home.x + 5.0f + slopeX * 6.0f, groundY + 6.0f, home.z + slopeZ * 6.0f,
+                                           3.5f, 2.5f, 3.5f, 0.0f, 3.0f};
+        const island::CanopyLightField light(terrain, std::span<const island::CanopyOccluder>(&crown, 1), 512);
+        Check(light.Sample(home.x + 5.0f, home.z) < island::DeerHerd::ShadedLevel
+                  && light.Sample(home.x - 8.0f, home.z) > island::DeerHerd::SunlitLevel,
+              "the test crown shades the spot east of the home and leaves the west sunlit");
+        herd.SetLight(&light);
+        bool sought = false, restedInShade = false;
+        for (int step = 0; step < 36000 && !restedInShade; ++step) {
+            herd.Update(0.05f, home.x + 60.0f, groundY + 1.6f, home.z);
+            plain.Update(0.05f, home.x + 60.0f, groundY + 1.6f, home.z);
+            if (herd.SeekingShade(2)) sought = true;
+            const auto& deer = herd.Deer()[2];
+            if (herd.ShadeRestCount() >= 1U && deer.behavior == island::DeerBehavior::Rest
+                && light.Sample(deer.x, deer.z) < island::DeerHerd::ShadedLevel)
+                restedInShade = true;
+        }
+        Check(sought, "a rest on sunlit ground sends the deer walking to the shade");
+        Check(restedInShade, "the deer takes its rest in the crown's shade within half an hour");
+        Check(plain.ShadeRestCount() == 0U && !plain.SeekingShade(2), "with no light field the deer rests where it stands");
+    }
+
+    {
         // Deer herd: the antlered sentinel stands alert before its clearing partner, and the
         // partner's wider alert range opens only after the reaction delay.
         const island::IslandTerrain terrain;

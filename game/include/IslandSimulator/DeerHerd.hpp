@@ -11,6 +11,7 @@
 
 namespace island
 {
+    class CanopyLightField;
     enum class DeerBehavior : std::uint8_t { Graze, Walk, Rest, Retreat, Drink };
 
     struct DeerState
@@ -68,6 +69,18 @@ namespace island
         void NoteDisturbance(float x, float z) noexcept;
         [[nodiscard]] bool Startled() const noexcept { return disturbanceSeconds_ > 0.0f; }
         [[nodiscard]] float SentinelAlertSeconds() const noexcept { return sentinelAlertSeconds_; }
+        /** @brief The light over the ground (crowns, palm heads and the solid casters' shade):
+         *  a deer whose rest comes on sunlit ground first walks to the shadiest valid spot
+         *  within ShadeSeekRadius and lies up there. Null keeps the deer resting where it is. */
+        void SetLight(const CanopyLightField* light) noexcept { light_ = light; }
+        [[nodiscard]] std::uint32_t ShadeRestCount() const noexcept { return shadeRests_; }
+        [[nodiscard]] bool SeekingShade(std::size_t index) const noexcept
+        {
+            return index < Count && agents_[index].seekingShade;
+        }
+        static constexpr float ShadeSeekRadius = 10.0f;
+        static constexpr float SunlitLevel = 0.72f;
+        static constexpr float ShadedLevel = 0.55f;
 
     private:
         struct Agent
@@ -82,7 +95,12 @@ namespace island
             float drinkX = 0.0f, drinkZ = 0.0f, faceX = 0.0f, faceZ = 0.0f;
             bool hasDrink = false;
             float flickClock = 0.0f;
+            // The shade a sunlit rest walks to; valid while seekingShade.
+            float shadeX = 0.0f, shadeZ = 0.0f;
+            bool seekingShade = false;
         };
+        [[nodiscard]] float LightAt(float x, float z) const noexcept;
+        [[nodiscard]] bool FindShade(const Agent& agent, std::size_t index, float& x, float& z) const noexcept;
         void FindDrinkingPoint(std::size_t index) noexcept;
 
         void Initialize(std::size_t index);
@@ -96,5 +114,7 @@ namespace island
         std::uint64_t frameIndex_ = 0U;
         float sentinelAlertSeconds_ = 0.0f;
         float disturbanceX_ = 0.0f, disturbanceZ_ = 0.0f, disturbanceSeconds_ = 0.0f;
+        const CanopyLightField* light_ = nullptr;
+        std::uint32_t shadeRests_ = 0U;
     };
 }

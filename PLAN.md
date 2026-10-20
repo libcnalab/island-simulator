@@ -54,6 +54,32 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 115 (2026-10-20) — a deer rests in the shade
+
+With the solid casters' shade in the receiver sample (pass 114) the deer's lighting read
+the shade, but the deer themselves lay up wherever a rest phase caught them, in full sun as
+often as not. `DeerHerd::SetLight(const CanopyLightField*)` gives the herd the light over
+the ground (crowns, palm heads and now the snags', plants' and structures' shade): when a
+rest transition comes on sunlit ground (receiver sample at 0.6 m above 0.72), `FindShade`
+scans twelve bearings at five and ten metres for the shadiest valid spot inside the home's
+inner margin (so the home pull does not override the walk) and, if one reads below 0.55,
+the rest becomes a walk to it (`seekingShade`, 30 s budget, heading re-aimed every update);
+within 0.8 m the deer lies up there for six to twelve seconds and `ShadeRestCount()`
+rises. A retreat, an alert or any other change of behaviour drops the seek; with no light
+field the deer rests where it is. The game passes the canopy light field at construction.
+Herd-behaviour report line: "a deer whose rest comes on sunlit ground walks to the nearest
+shade within ten metres and lies up there" (pinned). Core checks: with one dense crown whose
+shadow lands five metres east of the third deer's home, the deer is seen seeking shade and
+takes a rest under the crown within half an hour of simulated time; a herd without a light
+field never seeks. Native `deer` passes (luminance deviation 34.4).
+
+Also fixed in the native capture tool: the engine's asset logger shares the workload stream
+with the startup report, and when the report's buffer flushed mid-line the logger's
+`[INFO][APPLICATION]` lines landed inside a diagnostic ("… 14 bare footprint[INFO]… /
+s lead along the sand …"), so a pin failed on a run that was otherwise sound (the deer
+capture of 08:42 and 08:43). The tool now lifts such logger lines out of a split
+`island-simulator:` line before the pins are checked.
+
 ## Loop pass 114 (2026-10-20) — animals lit by the sun's solid casters
 
 The sun shadow map darkened the ground under a snag, a fern, a bush, the hut, the lookout

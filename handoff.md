@@ -176,6 +176,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 112: the resident's tour calls at the lookout's ramp foot and looks up the ramp at the platform (PLAN "Loop pass 112").
 - Pass 113: a perched bird flushes from the resident or an animal walking up under its perch (PLAN "Loop pass 113").
 - Pass 114: animals darken in the sun shadows of snags, understory, bushes and structures through a CPU `SunShadeField` read by the canopy receiver sample (PLAN "Loop pass 114").
+- Pass 115: a deer whose rest comes on sunlit ground walks to the nearest shade within ten metres and lies up there; the capture tool rejoins diagnostics split by the asset logger (PLAN "Loop pass 115").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

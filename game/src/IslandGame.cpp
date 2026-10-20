@@ -427,6 +427,7 @@ namespace island
             terrain_,jungleLayout_,wildlifeObstacles);
         goats_ = std::make_unique<GoatHerd>(terrain_,jungleLayout_,wildlifeObstacles);
         deer_ = std::make_unique<DeerHerd>(terrain_,wildlifeObstacles);
+        deer_->SetLight(&canopyLightField_);
         spiders_ = std::make_unique<SpiderColony>(terrain_,jungleLayout_,wildlifeObstacles);
         if (smokeTest_ && viewpoint_ == FixedViewpoint::None) {
             viewpoint_ = FixedViewpoint::Overview;
@@ -2175,7 +2176,8 @@ namespace island
         std::cout << "island-simulator: herd behaviour: goats share their separated ranges and the "
                      "East deer pair walks back together; a sentinel lifts its head first and the others follow after 0.7 s; "
                      "a coconut's thud startles the deer and goats within 30 m, who stand facing the fall for 6 s; "
-                     "the deer keep seven metres clear of the campfire\n";
+                     "the deer keep seven metres clear of the campfire; "
+                     "a deer whose rest comes on sunlit ground walks to the nearest shade within ten metres and lies up there\n";
         std::cout << "island-simulator: goats square up to a neighbour for a bout of head-to-head shoving, standing nose to nose and taking turns lowering their heads\n";
         std::cout << "island-simulator: the goat sentinel coming alert at the walker gives a loud alarm bleat ahead of the herd's other calls\n";
         std::cout << "island-simulator: a boar the bear sends off gives a loud alarm grunt ahead of the herd's other calls\n";

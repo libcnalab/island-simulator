@@ -644,6 +644,11 @@ def main():
             metadata["build_configuration"] = validate_build_configuration(cache_text, log)
             if 'gl-renderer="llvmpipe ' not in log or 'renderer="OPENGL33"' not in log:
                 raise RuntimeError("runtime did not confirm the expected software renderer")
+            # The engine's asset logger shares the workload stream with the game's startup
+            # report; when the report's buffer flushes mid-line the logger's lines land inside
+            # a diagnostic ("… 14 bare footprint[INFO][APPLICATION] … \ns lead along …").
+            # Lift the logger lines out so the diagnostic reads whole again.
+            log = re.sub(r"(?m)^(island-simulator:[^\n]*?)(?:\[INFO\]\[[A-Z]+\][^\n]*\n)+", r"\1", log)
             diagnostics = log + "".join(p.read_text(errors="replace") for p in evidence.glob("island-runtime-*.log"))
             if args.viewpoint in {"campfire", "campfire-wide"}:
                 validate_campfire_stages(log)
@@ -1269,6 +1274,8 @@ def main():
                 raise RuntimeError("current perched walker flush is missing; check for a stale executable")
             if "the animals' lighting reads the sun's solid casters" not in diagnostics:
                 raise RuntimeError("current sun shade field is missing; check for a stale executable")
+            if "a deer whose rest comes on sunlit ground walks to the nearest shade within ten metres" not in diagnostics:
+                raise RuntimeError("current deer shade rest is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":
