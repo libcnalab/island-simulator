@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 159 (2026-10-20) — a butterfly uncurls its proboscis
+
+A butterfly hovering at a blossom fed with nothing to feed through. `ButterflyState::proboscis`
+(0..1) now carries it: settled into a nectar hover at its flower, the patch or fermenting
+fruit (not travelling, slowed to `ProbeSettleSpeed` 0.16 m/s) the butterfly unrolls the
+proboscis at `ProbeUnrollRate` (2.5/s) and rolls it up at `ProbeRollRate` (4/s) as it
+leaves; the feeds are counted (`ProbeCount()`, `ProbingCount()`). In the near renderer a
+fine dark two-segment tube curves from under the head down and forward by the uncurled
+amount, hidden when rolled. The butterflies report line gains "a butterfly settled into its
+hover at a blossom, the patch or fruit uncurls its proboscis to feed and rolls it up again
+as it leaves" (pinned). Core check: within a minute a butterfly of the first habitat
+settles into a nectar hover with the proboscis fully out, and none resting or fluttering
+along has it out. Native `butterflies` passes.
+
 ## Loop pass 158 (2026-10-20) — a rodent grooms
 
 A resting mouse or rat only sniffed. `RodentState::groom` (0..1) and `groomPhase` now carry

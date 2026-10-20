@@ -1673,6 +1673,16 @@ namespace island
             AddTriangle(vertices,headBottom,headFront,headRight,palette.body);
             AddTriangle(vertices,headBottom,headRight,headBack,palette.body);
             AddTriangle(vertices,headBottom,headBack,headLeft,palette.body);
+            // Feeding, the proboscis unrolls from under the head: a fine dark tube curving
+            // down and forward to the flower by the uncurled amount; rolled up it is hidden.
+            const float probe=std::clamp(butterfly.proboscis,0.0f,1.0f);
+            if(probe>0.02f) {
+                const Vector3 probeRoot=headFront-up*(.030f*scale);
+                const Vector3 probeMid=probeRoot+forward*(.085f*probe*scale)-up*(.045f*probe*scale);
+                const Vector3 probeTip=probeRoot+forward*(.135f*probe*scale)-up*(.150f*probe*scale);
+                AppendGeckoSegment(vertices,probeRoot,probeMid,.0065f*scale,palette.body);
+                AppendGeckoSegment(vertices,probeMid,probeTip,.0050f*scale,palette.body);
+            }
             for(const float side:{-1.0f,1.0f}) {
                 const Vector3 antennaRoot=LocalPoint(
                     centre,right,up,forward,side*.025f,.045f,.30f,scale);

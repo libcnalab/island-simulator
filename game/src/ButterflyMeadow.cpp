@@ -183,6 +183,13 @@ namespace island
         }
     }
 
+    std::size_t ButterflyMeadow::ProbingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.probing ? 1U : 0U;
+        return count;
+    }
+
     std::size_t ButterflyMeadow::BaskingCount() const noexcept
     {
         std::size_t count = 0;
@@ -432,6 +439,14 @@ namespace island
         agent.state.wingFold += std::clamp(
             wingTarget - agent.state.wingFold, -deltaSeconds * wingRateLimit, deltaSeconds * wingRateLimit);
         agent.state.wingFold = std::clamp(agent.state.wingFold, 0.0f, 1.0f);
+        // The proboscis: settled into the hover at its flower (slowed to the hover's drift)
+        // the butterfly unrolls it down to feed, and rolls it up again as it leaves.
+        const bool probing = agent.state.behavior == ButterflyBehavior::NectarHover && !agent.travelling
+            && agent.state.speed <= ProbeSettleSpeed;
+        if (probing && !agent.probing) ++probes_;
+        agent.probing = probing;
+        agent.state.proboscis += std::clamp((probing ? 1.0f : 0.0f) - agent.state.proboscis,
+            -deltaSeconds * ProbeRollRate, deltaSeconds * ProbeUnrollRate);
     }
 
     std::span<const ButterflyState> ButterflyMeadow::Butterflies() const noexcept

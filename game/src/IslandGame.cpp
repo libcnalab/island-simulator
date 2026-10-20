@@ -2478,6 +2478,7 @@ namespace island
                   << butterflyMeadow_.FlowerBushCount()
                   << " flowering bushes within reach of the habitats draw alternate nectar excursions at blossom height; "
                      "fruit that has lain fermenting for 20 s draws them down to feed low over it; "
+                     "a butterfly settled into its hover at a blossom, the patch or fruit uncurls its proboscis to feed and rolls it up again as it leaves; "
                      "they scatter from a passing animal or the resident as from the walker\n"
                   << "island-simulator: geckos " << geckoPopulation_.Geckos().size()
                   << " agents in deterministic inland rest, flee, and hide habitats; a resting gecko with a fly hanging low within reach stalks it and lunges, and the flies dart from the snap; "

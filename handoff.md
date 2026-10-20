@@ -220,6 +220,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 156: a resting gecko licks an eye clean with its tongue, the eyes taking turns (`GeckoState::eyeLick`/`lickSide`) (PLAN "Loop pass 156").
 - Pass 157: the resident's head turns to the walker within fourteen metres ahead of them (`ResidentState::lookYaw`) (PLAN "Loop pass 157").
 - Pass 158: a resting mouse or rat sits up to groom, washing its face with both forepaws (`RodentState::groom`/`groomPhase`) (PLAN "Loop pass 158").
+- Pass 159: a butterfly settled at its flower uncurls its proboscis to feed and rolls it up to leave (`ButterflyState::proboscis`, `ButterflyMeadow::ProbeCount`) (PLAN "Loop pass 159").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

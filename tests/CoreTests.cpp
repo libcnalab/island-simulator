@@ -2996,6 +2996,23 @@ int main()
         // Basking: with the cumulus clock set to a sunny moment over the first habitat, a
         // resting butterfly there opens its wings flat within a few seconds; set to a moment
         // under a cloud's shadow, it closes them again.
+        {
+            // The proboscis: within a minute a butterfly of the first habitat, watched from
+            // eight metres, settles into a nectar hover and uncurls its proboscis fully; no
+            // butterfly resting or fluttering along has it out.
+            island::ButterflyMeadow feeders(terrain);
+            const auto& feedPatch = feeders.FlowerPatches()[0];
+            bool probed = false, wrong = false;
+            for (int step = 0; step < 1200; ++step) {
+                feeders.Update(0.05f, feedPatch.x + 8.0f, feedPatch.y + 1.6f, feedPatch.z);
+                for (std::size_t i = 0; i < 6U && i < feeders.Butterflies().size(); ++i) {
+                    const auto& fly = feeders.Butterflies()[i];
+                    if (fly.behavior == island::ButterflyBehavior::NectarHover && fly.proboscis > 0.95f) probed = true;
+                    if (fly.behavior != island::ButterflyBehavior::NectarHover && fly.speed > 0.3f && fly.proboscis > 0.5f) wrong = true;
+                }
+            }
+            Check(probed && feeders.ProbeCount() >= 1U && !wrong, "a butterfly settled at its flower uncurls its proboscis to feed and rolls it up to leave");
+        }
         island::ButterflyMeadow basking(terrain);
         const auto& patch = basking.FlowerPatches()[0];
         float sunny = -1.0f, shaded = -1.0f;

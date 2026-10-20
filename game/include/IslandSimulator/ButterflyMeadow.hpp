@@ -32,6 +32,9 @@ namespace island
         float headingRadians = 0.0f;
         float speed = 0.0f;
         float wingFold = 0.0f;
+        /** @brief 0..1 the proboscis uncurled: hovering at a blossom, the patch or fermenting
+         *  fruit the butterfly unrolls it down to feed, and rolls it up again as it leaves. */
+        float proboscis = 0.0f;
         float scale = 1.0f;
         ButterflyBehavior behavior = ButterflyBehavior::Rest;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
@@ -102,6 +105,11 @@ namespace island
         static constexpr float SunCover = 0.25f, ShadeCover = 0.5f;
         static constexpr float FermentSeconds = 20.0f;
         static constexpr float FruitHoverHeight = 0.22f;
+        /** @brief Feeds begun (a nectar hover settled at its flower, the proboscis uncurled)
+         *  and the butterflies feeding this moment. */
+        [[nodiscard]] std::uint32_t ProbeCount() const noexcept { return probes_; }
+        [[nodiscard]] std::size_t ProbingCount() const noexcept;
+        static constexpr float ProbeSettleSpeed = 0.16f, ProbeUnrollRate = 2.5f, ProbeRollRate = 4.0f;
         /** @brief The agent's current nectar target and its hover height above the ground. */
         [[nodiscard]] bool NectarTarget(std::size_t index, float& x, float& z, float& height) const noexcept;
         [[nodiscard]] int FullSimulationCount() const noexcept { return fullSimulationCount_; }
@@ -124,6 +132,7 @@ namespace island
             float verticalPhase = 0.0f;
             float wingPhase = 0.0f;
             float accumulatedSeconds = 0.0f;
+            bool probing = false;          // feeding at the flower, the proboscis out
             float nectarX = 0.0f;
             float nectarZ = 0.0f;
             // The ground flower patch point assigned at placement, and the hover height of
@@ -143,6 +152,7 @@ namespace island
         std::span<const GrassWalker> walkers_;
         float cloudClock_ = 0.0f;
         std::uint32_t scatters_ = 0U;
+        std::uint32_t probes_ = 0U;
         [[nodiscard]] bool FindFermentingFruit(const Agent& agent, NectarSite& site) const noexcept;
 
         void InitializeAgent(std::size_t index);
