@@ -186,6 +186,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 122: a gust front passing the windward beaches streams pale sand off the dry crests downwind (`BlownSandField`, 147 sources) (PLAN "Loop pass 122").
 - Pass 123: a bird flushed by a snake mobs it, circling low over its head for 8 s and chattering the alarm (`GenerateBirdChatter`, `WildlifeCallType::Chatter`) (PLAN "Loop pass 123").
 - Pass 124: a snake's head within 3.5 m sends a mouse or rat bolting and to ground for 6 s or more (`RodentPopulation::SetSnakes`) (PLAN "Loop pass 124").
+- Pass 125: snakes flick a forked tongue every few seconds for half a second (`SnakeState::tongue`, drawn by the renderer; the snake-head view holds it out) (PLAN "Loop pass 125").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

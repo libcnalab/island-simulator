@@ -192,6 +192,24 @@ void SnakeRenderer::Draw(const Matrix& view,const Matrix& projection,const Vecto
             triangle(nose,muzzle[static_cast<std::size_t>(k)],muzzle[static_cast<std::size_t>(k+1)]);
             triangle(tail,rings.back()[static_cast<std::size_t>(k+1)],rings.back()[static_cast<std::size_t>(k)]);
         }
+        // The tongue: flicked out of the snout for a moment every few seconds, a thin forked
+        // dark-red ribbon tasting the air, drawn both-sided.
+        if(snake.tongue>0.02f) {
+            const float out=std::clamp(snake.tongue,0.0f,1.0f);
+            const Vector3 base=origin+forward*(SnakeNoseForward-0.002f)-up*0.0045f;
+            const Vector3 fork=base+forward*(0.022f*out);
+            const Color tongueColor(118,34,46);
+            auto ribbon=[&](const Vector3& a,const Vector3& b,const float halfWidth) {
+                const auto a0=vertex(a-right*halfWidth,up,tongueColor,Vector2(0,0));
+                const auto a1=vertex(a+right*halfWidth,up,tongueColor,Vector2(0,0));
+                const auto b0=vertex(b-right*halfWidth,up,tongueColor,Vector2(0,0));
+                const auto b1=vertex(b+right*halfWidth,up,tongueColor,Vector2(0,0));
+                triangle(a0,b0,b1); triangle(a0,b1,a1); triangle(a1,b1,b0); triangle(a1,b0,a0);
+            };
+            ribbon(base,fork,0.0014f);
+            for(const float side:{-1.0f,1.0f})
+                ribbon(fork,fork+forward*(0.012f*out)+right*(side*0.006f*out)-up*0.001f,0.0009f);
+        }
         for (const float side:{-1.0f,1.0f}) {
             // Fine mouth seam follows the actual muzzle surface, not a floating bar.
             for(std::size_t section=1;section<SnakeHeadSections.size();++section) {

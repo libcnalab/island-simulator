@@ -54,6 +54,23 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 125 (2026-10-20) — snakes flick their tongues
+
+A snake's head was a closed muzzle. `SnakeState::tongue` (0..1) now carries the forked
+tongue: `SnakePopulation::TongueAt(clock, index)` gives a smooth half-second bout
+(`TongueFlickSeconds` 0.45) every 4.5 to 6.5 s per snake, the ground snakes from their own
+clocks (at rest and on the move alike; held in while dormant) and the tree snakes from the
+trunk clock. `SnakeRenderer` draws it when out: a thin dark-red ribbon from the snout
+(2.2 cm at full flick) forking into two prongs splayed 6 mm, both-sided so it reads from
+any side. The `snake-head` view holds the subject's tongue out after each update
+(`PreviewTongue(0)`) so the fork can be reviewed. Report line: "snakes flick a forked
+tongue every few seconds, a half-second taste of the air at rest and on the move"
+(pinned). Snake population checks: a ground snake with the observer twenty metres off
+flicks at least twice in twelve seconds for bouts of 0.2–0.8 s; every dormant snake holds
+its tongue in; the preview reads fully out; the cycle is deterministic from the clock.
+Native `snake-head` passes (luminance deviation 30.2; the red tongue tip shows at the
+snout).
+
 ## Loop pass 124 (2026-10-20) — rodents bolt from a snake
 
 Mice and rats scattered from the walker, the herds, the bear and the resident, but a snake

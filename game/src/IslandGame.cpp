@@ -2235,6 +2235,7 @@ namespace island
         std::cout << "island-simulator: snakes " << snakes_->Snakes().size()
                   << " ground agents with separated dense-understory-margin homes; "
                   << snakes_->TreeSnakes().size()<<" arboreal agents on sampled broadleaf trunks\n";
+        std::cout << "island-simulator: snakes flick a forked tongue every few seconds, a half-second taste of the air at rest and on the move\n";
         monkeyRenderer_ = std::move(monkeyRenderer);
         residentRenderer_=std::move(residentRenderer);
         bearRenderer_=std::move(bearRenderer);
@@ -3249,6 +3250,8 @@ namespace island
         measureWildlife(2, [&] {
             snakes_->Update(deltaSeconds,snakeObserver.X,snakeObserver.Y,snakeObserver.Z);
         });
+        // The head view holds the subject's tongue out so the fork can be reviewed.
+        if(viewpoint_==FixedViewpoint::SnakeHeadDetail) snakes_->PreviewTongue(0U);
         if (viewpoint_ == FixedViewpoint::SnakeDetail
                 || viewpoint_==FixedViewpoint::TreeSnakeDetail) {
             // Follow translation only: preserve the viewing direction and live retreat behavior.

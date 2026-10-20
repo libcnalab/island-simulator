@@ -22,6 +22,9 @@ namespace island
         SnakeBehavior behavior = SnakeBehavior::Rest;
         WildlifeSimulationTier tier = WildlifeSimulationTier::Dormant;
         bool arboreal = false;
+        /** @brief 0..1 the forked tongue out of the snout: flicked for about half a second
+         *  every few seconds, at rest and on the move; held in while dormant. */
+        float tongue = 0.0f;
     };
 
     /** @brief Nonhostile ground and trunk snakes with independent bounded motion. */
@@ -38,6 +41,10 @@ namespace island
         SnakePopulation(const IslandTerrain& terrain, const JungleLayout& jungle,
                         std::span<const CircularObstacle> obstacles = {});
         void Update(float deltaSeconds, float observerX, float observerY, float observerZ);
+        /** @brief QA: holds one ground snake's tongue fully out until the next update. */
+        void PreviewTongue(std::size_t index) noexcept;
+        static constexpr float TongueFlickSeconds = 0.45f;
+        [[nodiscard]] static float TongueAt(float clock, std::size_t index) noexcept;
         [[nodiscard]] std::span<const SnakeState> Snakes() const noexcept { return states_; }
         [[nodiscard]] std::span<const SnakeState> TreeSnakes() const noexcept
         {

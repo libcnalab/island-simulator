@@ -231,6 +231,21 @@ namespace island
         }
     }
 
+    float SnakePopulation::TongueAt(const float clock, const std::size_t index) noexcept
+    {
+        // A flick every 4.5 to 6.5 seconds (per snake), the tongue out and back in a
+        // smooth half-second bout.
+        const float period = 4.5f + static_cast<float>(index % 3U);
+        const float cycle = std::fmod(clock + static_cast<float>(index) * 0.37f, period);
+        if (cycle >= TongueFlickSeconds) return 0.0f;
+        return std::sin(cycle / TongueFlickSeconds * std::numbers::pi_v<float>);
+    }
+
+    void SnakePopulation::PreviewTongue(const std::size_t index) noexcept
+    {
+        if (index < states_.size()) states_[index].tongue = 1.0f;
+    }
+
     void SnakePopulation::UpdateTreeSnake(const std::size_t index,const float clock)
     {
         auto& state=treeStates_[index];
@@ -256,6 +271,7 @@ namespace island
         const auto& head=state.body[0];const auto& neck=state.body[1];
         state.heading=std::atan2(head.z-neck.z,head.x-neck.x);
         state.phase=std::fmod(clock*3.0f,2.0f*std::numbers::pi_v<float>);
+        state.tongue=TongueAt(clock,index+Count);
     }
 
     void SnakePopulation::Update(const float deltaSeconds, const float observerX,
@@ -274,6 +290,7 @@ namespace island
             state.speed = 0.0f;
             if (state.tier == WildlifeSimulationTier::Dormant) {
                 accumulatedSeconds_[index] = 0.0f;
+                state.tongue = 0.0f;
                 continue;
             }
             accumulatedSeconds_[index] = std::min(accumulatedSeconds_[index] + frameDt, 0.1f);
@@ -285,6 +302,8 @@ namespace island
             const bool retreat = distance < 8.0f;
             state.behavior = retreat ? SnakeBehavior::Retreat
                 : clocks_[index] < 5.0f ? SnakeBehavior::Rest : SnakeBehavior::Explore;
+            // The tongue flicks at rest and on the move alike.
+            state.tongue = TongueAt(clocks_[index], index);
             if (state.behavior == SnakeBehavior::Rest) continue;
             float target = 0.7f*std::sin(clocks_[index]*0.17f+static_cast<float>(index));
             if (std::hypot(head.x-state.homeX,head.z-state.homeZ) > HomeRadius-3.0f)

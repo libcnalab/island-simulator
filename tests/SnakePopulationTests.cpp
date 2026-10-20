@@ -411,6 +411,30 @@ int main(int argc,char** argv)
         Check(std::hypot(moved.x - start.x, moved.z - start.z) > 0.001f,
               "reduced-tier snake discarded accumulated simulation time");
     }
+    {
+        // The tongue: a ground snake with the observer near enough for full simulation
+        // flicks its forked tongue for about half a second every few seconds, at rest and on
+        // the move; a dormant one holds it in; the held preview reads fully out.
+        island::SnakePopulation flicker(terrain);
+        const auto start=flicker.Snakes()[0].body.front();
+        float longest=0.0f,bout=0.0f; int flicks=0; bool was=false;
+        for(int frame=0;frame<600;++frame) {
+            flicker.Update(0.02f,start.x+20.0f,start.y,start.z);
+            const float tongue=flicker.Snakes()[0].tongue;
+            const bool out=tongue>0.3f;
+            if(out&&!was) ++flicks;
+            if(out) bout+=0.02f; else { longest=std::max(longest,bout); bout=0.0f; }
+            was=out;
+        }
+        longest=std::max(longest,bout);
+        Check(flicks>=2&&longest>0.2f&&longest<0.8f,"a snake flicks its tongue every few seconds for about half a second");
+        bool dormantHeld=true;
+        for(const auto& snake:flicker.Snakes()) if(snake.tier==island::WildlifeSimulationTier::Dormant&&snake.tongue!=0.0f) dormantHeld=false;
+        Check(dormantHeld,"a dormant snake holds its tongue in");
+        flicker.PreviewTongue(0);
+        Check(flicker.Snakes()[0].tongue==1.0f,"the head view's preview holds the tongue out");
+        Check(island::SnakePopulation::TongueAt(0.0f,0)>0.0f||island::SnakePopulation::TongueAt(0.2f,0)>0.0f,"the flick cycle is deterministic from the clock");
+    }
     bool refused=false;
     try {
         const std::array<island::CircularObstacle,1> blocked{{{0,0,1000}}};
