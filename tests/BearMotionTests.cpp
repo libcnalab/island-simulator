@@ -207,6 +207,20 @@ int main() {
             if(tick>=60&&(s.sniff<.9f||!watched.Sniffing())) heldUp=false;
         }
         Check(heldUp&&watched.State().behavior!=BearBehavior::Withdraw,"the bear facing the walker at sixteen metres does not hold its head up sniffing");
+        // The head shake: left alone for two minutes the bear shakes its head as a sniff
+        // ends at least once, the shake rising to full with its swing advancing and
+        // settling within a second and a half.
+        BearMotion shaker(terrain,solids);
+        float shakePeak=0,swing=0; bool shakeSettled=false; int shakeFrames=0,longestShake=0;
+        for(int tick=0;tick<2400;++tick) {
+            shaker.Update(.05f,{1000,0,1000});
+            const auto& s=shaker.State();
+            shakePeak=std::max(shakePeak,s.headShake);
+            if(s.headShake>.9f) swing=std::max(swing,s.shakePhase);
+            shakeFrames=s.headShake>.5f?shakeFrames+1:0; longestShake=std::max(longestShake,shakeFrames);
+            if(shakePeak>.9f&&s.headShake<.05f) shakeSettled=true;
+        }
+        Check(shaker.HeadShakeCount()>=1&&shakePeak>.9f&&swing>1.0f&&longestShake<=30&&shakeSettled,"the bear does not shake its head as a sniff ends");
     }
     bool refused=false;
     try {const std::array blocked{CircularObstacle{0,0,400}};BearMotion impossible(terrain,blocked);}

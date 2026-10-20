@@ -277,8 +277,13 @@ void BearMotion::Step(float seconds,BearPoint observer,bool observerValid) {
     const float sniffCycle=std::fmod(sniffClock_,SniffPeriodSeconds);
     const bool sniffing=alertFacing||(standing&&sniffCycle>=SniffDelaySeconds&&sniffCycle<SniffDelaySeconds+SniffSeconds);
     if(sniffing&&!sniffing_) ++sniffs_;
+    // A sniff ending with no walker to face is followed by a shake of the head.
+    if(!sniffing&&sniffing_&&!alertFacing) {headShakeSeconds_=HeadShakeSeconds;++headShakes_;}
     sniffing_=sniffing;
     state_.sniff+=std::clamp((sniffing?1.0f:0.0f)-state_.sniff,-1.6f*seconds,2.2f*seconds);
+    headShakeSeconds_=std::max(0.0f,headShakeSeconds_-seconds);
+    state_.headShake+=std::clamp((headShakeSeconds_>0?1.0f:0.0f)-state_.headShake,-4.0f*seconds,8.0f*seconds);
+    if(state_.headShake>.01f) state_.shakePhase=std::fmod(state_.shakePhase+seconds*HeadShakeRate,Tau);
     // A rest two seconds in, undisturbed, settles the bear onto folded legs for a longer lie;
     // the walker's approach, or the next walk, has it up again within a second.
     const bool undisturbed=state_.behavior==BearBehavior::Rest&&!alertFacing&&state_.speed<.05f;

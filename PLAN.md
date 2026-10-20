@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 171 (2026-10-20) — the bear shakes its head
+
+A sniff ended with the bear's head simply lowering. `BearState::headShake` (0..1) and
+`shakePhase` now carry the shake: as a sniff ends with no walker to face the head swings
+side to side for `HeadShakeSeconds` (0.6 s) at `HeadShakeRate` (14 rad/s), rising at 8/s
+and settling at 4/s; the shakes are counted (`HeadShakeCount()`, `HeadShaking()`). In the
+renderer the whole head section (skull, face, muzzle, nose, ears, eyes and the near facial
+marks, not the tail) yaws about the neck by up to 0.28 rad with the swing, on top of the
+sniff's pitch. A new report line "the bear shakes its head as a sniff ends, a quick swing
+side to side" is pinned. BearMotionTests: left alone for two minutes the bear shakes its
+head as a sniff ends at least once, to full with its swing advancing, and settles within
+a second and a half. Native `bear` passes.
+
 ## Loop pass 170 (2026-10-20) — a crocodile blinks
 
 A crocodile's lidded eyes never closed. `CrocodileState::blink` (0..1) now carries the
