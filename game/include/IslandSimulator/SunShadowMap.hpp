@@ -33,6 +33,10 @@ namespace island {
          *  SetCloudClock, so every receiver dims under a cloud whether or not a map exists. */
         static const std::string ReceiverShader;
         static void SetCloudClock(float seconds) noexcept;
+        /** QA (--no-sun-shadows): the game skips the map and falls back to the projected
+         *  contact footprints, for a with/without comparison of the same view. */
+        static void SetQaDisabled(bool disabled) noexcept;
+        [[nodiscard]] static bool QaDisabled() noexcept;
         [[nodiscard]] static float CloudClock() noexcept;
         /** GLSL fragment for casters: packs the interpolated vSunDepth. */
         static const char* const CasterFragment;

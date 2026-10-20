@@ -595,6 +595,8 @@ def main():
     parser.add_argument("build", type=Path)
     parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "bridge", "lookout", "log", "hut", "hut-material", "helicopter", "helicopter-inside", "resident", "resident-tending", "resident-fishing", "bear", "bear-lying", "boars", "boar-lying", "goats", "goat-lying", "deer", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "monkey-scratch", "ground-doves", "bird-preen", "stingray-buried"}))
     parser.add_argument("--canopy-lod-inspection", nargs=3, metavar=("X_MM", "Z_MM", "TIER"))
+    parser.add_argument("--no-sun-shadows", action="store_true",
+                        help="QA comparison: run without the sun shadow map (contact footprints only)")
     parser.add_argument("--missing-leaf", action="store_true",
                         help="test only the leaf-image fallback using a read-only namespace overlay")
     args = parser.parse_args()
@@ -610,14 +612,14 @@ def main():
     journal = Journal()
     baseline = journal.latest()  # Refuse an empty/inaccessible kernel journal before launch.
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
-    evidence = build / "software-captures" / f"{stamp}-{args.viewpoint}"
+    evidence = build / "software-captures" / (f"{stamp}-{args.viewpoint}" + ("-no-sun-shadows" if args.no_sun_shadows else ""))
     evidence.mkdir(parents=True)
     capture = evidence / "capture.ppm"
     platform = dependency / "tools/platform"
     command = [str(platform / "wayland_test_server.sh"), "--compositor", "weston", "--renderer", "pixman",
                str(platform / "run_gpu_tests_private.sh"), "--inside-private-compositor", "exec",
                str(build / "island-simulator"), "--capture", str(capture), "--viewpoint", args.viewpoint,
-               "--no-user-settings", *inspection]
+               "--no-user-settings", *inspection, *(["--no-sun-shadows"] if args.no_sun_shadows else [])]
     scope = "single-tree frozen LOD inspection only" if inspection else "software visual validation only"
     # Exercise title-relative content loading from an unrelated, build-owned working directory.
     metadata = {"scope": scope, "command": command, "cwd": str(evidence), "kernel_before": baseline}

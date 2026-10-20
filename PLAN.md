@@ -54,6 +54,29 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 205 (2026-10-20) — the sun shadows with and without the map
+
+Backlog item 1 (the shadows of the large objects) rested on a caster counter, so this pass
+adds a with/without comparison. A QA switch, `--no-sun-shadows`, leaves the shadow map out
+at startup ("sun shadow map unavailable: switched off for a QA comparison
+(--no-sun-shadows)"), the same fallback a device without custom effects takes: the large
+objects return to the contact-batch mass shadows. `tools/run_software_capture.py` passes it
+through and writes the evidence to a `-no-sun-shadows` directory. The native `hut` view,
+same frame both ways:
+
+| | with the map | without |
+|---|---|---|
+| sun shadow map | 1 render, 444 casters | 0 renders, 0 casters |
+| contact-batch mass shadows | 0 (the map casts them) | 1 |
+| ground (lower half) mean luminance | 45.6 | 50.4 |
+
+With the map the palm, the broadleaf crowns, the hut and the lookout frame lay long
+shadows across the yard toward the camera; without it the yard is evenly lit and only the
+thin footprint darkening remains under the props. The darkening is broad and soft (only
+0.4 % of the ground pixels fall 25 levels or more), the texel-snapped map of the striping
+fix. Evidence: `build-consumer/software-captures/20261020T155404.755153Z-hut` and
+`…155414.449322Z-hut-no-sun-shadows`.
+
 ## Loop pass 204 (2026-10-20) — evidence for the yard, the walker's steps and shadow
 
 Three backlog items rested on diagnostics alone, so this pass makes them measurable.

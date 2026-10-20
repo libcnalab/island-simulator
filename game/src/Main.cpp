@@ -1,5 +1,6 @@
 #include "CNA/Platform/Entrypoint.hpp"
 
+#include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/IslandGame.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #ifdef __ANDROID__
@@ -185,6 +186,8 @@ int main(const int argc, char* argv[])
             inputDiagnostics = true;
         } else if (argument == "--no-user-settings") {
             noUserSettings = true;
+        } else if (argument == "--no-sun-shadows") {
+            island::SunShadowMap::SetQaDisabled(true);
         } else if (argument == "--overview") {
             viewpoint = island::FixedViewpoint::Overview;
         } else if (argument == "--viewpoint") {

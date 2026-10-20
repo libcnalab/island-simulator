@@ -486,6 +486,9 @@ The selected walk/run mode, camera-motion toggle, audio mute state, and Android 
 sensitivity are saved automatically through CNA's platform storage and restored on the next
 ordinary launch. Isolated smoke/capture/benchmark runs do not read or change player preferences;
 `--no-user-settings` provides the same isolation for an explicit diagnostic launch.
+`--no-sun-shadows` is a QA comparison switch: it leaves the sun shadow map out, so the large
+objects fall back to the contact-batch mass shadows, and a capture shows the scene without the
+map's tree, hut and tower shadows (`tools/run_software_capture.py <build> <view> --no-sun-shadows`).
 The executable may be launched from any working directory; current runtime content is embedded or
 generated and does not depend on a repository-relative asset path.
 On Linux, press Escape once to release the mouse and again to exit. In a browser, Escape only

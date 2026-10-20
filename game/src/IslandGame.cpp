@@ -2361,6 +2361,8 @@ namespace island
             if (!device.SupportsCapability(CNA::GraphicsCapability::CustomEffects)
                 || !device.SupportsCapability(CNA::GraphicsCapability::Instancing))
                 throw std::runtime_error("custom effects or instancing unavailable");
+            if (SunShadowMap::QaDisabled())
+                throw std::runtime_error("switched off for a QA comparison (--no-sun-shadows)");
 #if defined(__EMSCRIPTEN__) || defined(__ANDROID__)
             constexpr int sunShadowResolution = 1024;
 #else

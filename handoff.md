@@ -267,6 +267,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 202: a dolphin's blowhole opens as its back breaks the surface for the breath (`DolphinState::blowhole`, `DolphinPod::BreathCount`) (PLAN "Loop pass 202").
 - Pass 203: the goats, 85-110 m from the stream, drink at a rain-filled rock basin on their slope; 4 goats reach it (`GoatHerd::WaterholeSite`, `WaterholeRenderer`), closing backlog item 8's "0 goats" (PLAN "Loop pass 203").
 - Pass 204: evidence for backlog items 12 and 19: a core check of the four yard props at the hut, a startup footstep-ground probe (wood, shallows, sand, rock, soil) and the walker's own shadow in the inventory (1 in jetty, beach, ground) (PLAN "Loop pass 204").
+- Pass 205: evidence for backlog item 1: a `--no-sun-shadows` QA switch and a native `hut` comparison, 444 casters and long tree, hut and tower shadows over the yard with the map, the contact-batch fallback and an evenly lit yard without (PLAN "Loop pass 205").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

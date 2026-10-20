@@ -22,7 +22,10 @@ namespace island {
     // the map lives on unit 3, hence the .w component.
     namespace {
         float cloudClock = 0.0f;
+        bool qaDisabled = false;
     }
+    void SunShadowMap::SetQaDisabled(const bool disabled) noexcept { qaDisabled = disabled; }
+    bool SunShadowMap::QaDisabled() noexcept { return qaDisabled; }
     void SunShadowMap::SetCloudClock(const float seconds) noexcept { cloudClock = std::isfinite(seconds) ? seconds : 0.0f; }
     float SunShadowMap::CloudClock() noexcept { return cloudClock; }
 
