@@ -9955,6 +9955,20 @@ int main()
             Check(octopuses.JetCount()>=1U&&octopuses.Octopuses()[0].jet>0.9f&&octopuses.JettingCount()>=1U,"the startled octopus does not jet");
             for(int step=0;step<30;++step) octopuses.Update(0.05f,open.x+1.0f,open.y,open.z);
             Check(octopuses.Octopuses()[0].jet<0.1f&&octopuses.JettingCount()==0U,"the jet does not ease off");
+            // The probe: a foraging octopus left alone reaches an arm out within a quarter
+            // minute, the probe at full, draws it back, and the next probe takes another arm.
+            island::OctopusGroup probers(terrain);
+            Check(probers.Octopuses()[0].behavior==island::OctopusBehavior::Forage,"the first octopus starts foraging for the probe check");
+            float probePeak=0.0f; bool drawnBack=false; std::uint8_t firstArm=255U,secondArm=255U;
+            const auto forager=probers.Octopuses()[0];
+            for(int step=0;step<1200&&secondArm==255U;++step) {
+                probers.Update(0.05f,forager.x+20.0f,forager.y,forager.z);
+                const auto& o=probers.Octopuses()[0];
+                probePeak=std::max(probePeak,o.probe);
+                if(o.probe>0.9f) { if(firstArm==255U) firstArm=o.probeArm; else if(o.probeArm!=firstArm) secondArm=o.probeArm; }
+                if(probePeak>0.9f&&o.probe<0.05f) drawnBack=true;
+            }
+            Check(probers.ProbeCount()>=2U&&probePeak>0.9f&&drawnBack&&firstArm!=255U&&secondArm!=255U,"a foraging octopus does not probe with one arm after another");
             island::OctopusInkField ink;
             ink.Update(0.05f,octopuses.LastInk());
             bool clouded=true;

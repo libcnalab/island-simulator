@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 190 (2026-10-20) — an octopus probes with an arm
+
+A foraging octopus sat with all eight arms curled alike. `OctopusState::probe` (0..1) and
+`probeArm` now carry the probe: foraging and settled (speed under 0.08 m/s), a second into
+every `ProbePeriodSeconds` (5 s) one arm reaches out ahead into the crevices for
+`ProbeSeconds` (2.2 s), rising at 1.2/s and drawn back at 1.5/s, the arms taking turns
+(three on each probe); the probes are counted (`ProbeCount()`, `ProbingCount()`). In the
+near renderer the probing arm's curl is cut by nine tenths and its reach lengthened by
+more than half, on the same vertices. The octopuses report line gains "a foraging octopus
+settled on the bottom reaches one arm out ahead into the crevices every few seconds and
+draws it back, the arms taking turns" (pinned). Core check: the foraging octopus watched
+from twenty metres probes to full, draws the arm back, and the next probe takes another
+arm within a minute. Native `octopuses` passes.
+
 ## Loop pass 189 (2026-10-20) — a holding school fans its pectoral fins
 
 A school holding in the jetty's shade hung with its fins as on the move.

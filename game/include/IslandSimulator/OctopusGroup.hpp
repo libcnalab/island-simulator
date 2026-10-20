@@ -23,6 +23,10 @@ namespace island
         /** @brief 0..1 the jet: setting out to swim, or startled for its den, the octopus
          *  draws its mantle in hard and straightens its arms for the first moment. */
         float jet=0.0f;
+        /** @brief 0..1 the probe: a foraging octopus, settled, reaches one arm (probeArm)
+         *  out ahead into the crevices for a couple of seconds and draws it back. */
+        float probe=0.0f;
+        std::uint8_t probeArm=0U;
         OctopusBehavior behavior=OctopusBehavior::Den;
         WildlifeSimulationTier simulationTier=WildlifeSimulationTier::Dormant;
         std::uint8_t colorVariant=0U;
@@ -42,6 +46,11 @@ namespace island
         [[nodiscard]] std::uint32_t JetCount()const noexcept{return jets_;}
         [[nodiscard]] std::size_t JettingCount()const noexcept;
         static constexpr float JetSeconds=0.8f,EscapeJetSeconds=0.6f;
+        /** @brief Probes begun (a settled forage, every ProbePeriodSeconds, ProbeSeconds long)
+         *  and the octopuses mid-probe. */
+        [[nodiscard]] std::uint32_t ProbeCount()const noexcept{return probes_;}
+        [[nodiscard]] std::size_t ProbingCount()const noexcept;
+        static constexpr float ProbeSeconds=2.2f,ProbePeriodSeconds=5.0f;
         [[nodiscard]] std::size_t CamouflagedCount() const noexcept;
         explicit OctopusGroup(const IslandTerrain& terrain);
         void Update(float deltaSeconds,float observerX,float observerY,float observerZ)noexcept;
@@ -55,7 +64,7 @@ namespace island
         [[nodiscard]] int ReducedSimulationCount()const noexcept{return reducedCount_;}
         [[nodiscard]] int DormantSimulationCount()const noexcept{return dormantCount_;}
     private:
-        struct Agent { OctopusState state;OctopusDen den;float routePhase=0,pulsePhase=0,armPhase=0,behaviorSeconds=0,accumulatedSeconds=0;std::uint32_t transitionCount=0;float jetSeconds=0;bool jetting=false; };
+        struct Agent { OctopusState state;OctopusDen den;float routePhase=0,pulsePhase=0,armPhase=0,behaviorSeconds=0,accumulatedSeconds=0;std::uint32_t transitionCount=0;float jetSeconds=0;bool jetting=false;float probeClock=0;bool probing=false; };
         void Initialize(std::size_t index);
         void UpdateAgent(Agent&,float,float,float,bool)noexcept;
         [[nodiscard]] bool ValidHabitat(float,float,const OctopusDen&)const noexcept;
@@ -64,5 +73,6 @@ namespace island
         float elapsedSeconds_=0;std::uint64_t frameIndex_=0;int fullCount_=0,reducedCount_=0,dormantCount_=0;
         InkEvent ink_;
         std::uint32_t jets_=0;
+        std::uint32_t probes_=0;
     };
 }

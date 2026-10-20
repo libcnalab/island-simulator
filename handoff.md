@@ -251,6 +251,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 187: every other surfacing a dolphin slaps its tail, the flukes raised and brought down with a splash (`DolphinState::tailSlap`, `DolphinPod::TailSlapCount`) (PLAN "Loop pass 187").
 - Pass 188: a seabird lifting off its raft shakes the water from its feathers (`BirdFlock::WaterShakeCount`, the ruffle in flight) (PLAN "Loop pass 188").
 - Pass 189: a school holding in the shade fans its pectoral fins to hover, folding them back as it moves on (`FishState::finFan`/`finPhase`, `FishSchools::FanningCount`) (PLAN "Loop pass 189").
+- Pass 190: a foraging octopus settled on the bottom reaches one arm out into the crevices every few seconds, the arms taking turns (`OctopusState::probe`/`probeArm`, `OctopusGroup::ProbeCount`) (PLAN "Loop pass 190").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted
