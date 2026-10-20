@@ -574,18 +574,27 @@ void main()
 
     // Refracted sunlight on the shallow seabed: a slowly warping bright network, strongest a
     // metre down, gone by seven metres, and footprint-filtered like every other fine field.
+    // Fades by footprint early: seen from the air a fine net aliases into a regular lattice.
     float causticVisibility = smoothstep(0.12, 0.55, bedDepth)
         * (1.0 - smoothstep(4.5, 7.5, bedDepth))
-        * (1.0 - smoothstep(0.035, 0.12, groundPixelWidth));
+        * (1.0 - smoothstep(0.022, 0.065, groundPixelWidth));
     if (causticVisibility > 0.0) {
         vec2 q = p * 0.85;
         float ts = uSeaSeconds;
-        float webA = abs(sin(q.x * 2.4 + 0.9 * sin(q.y * 1.3 + ts * 0.70) + ts * 0.40));
-        float webB = abs(sin(q.y * 2.1 + 0.9 * sin(q.x * 1.1 - ts * 0.60) - ts * 0.30));
-        // Two wavy line families cross into the familiar net; each line is thin and bright.
-        float lineA = pow(max(0.0, 1.0 - webA * 1.7), 3.0);
-        float lineB = pow(max(0.0, 1.0 - webB * 1.7), 3.0);
-        float web = min(1.0, lineA + lineB);
+        // Three wavy line families at uneven angles, each bent by its own slow warp, cross
+        // into an irregular net of cells. Two families on the x and z axes crossed into a
+        // square grid that read as a lattice over the lagoon from above.
+        vec2 warp = vec2(sin(q.y * 0.83 + ts * 0.31) + 0.6 * sin(q.x * 1.37 - ts * 0.23),
+                         sin(q.x * 0.71 - ts * 0.27) + 0.6 * sin(q.y * 1.19 + ts * 0.19)) * 0.55;
+        vec2 w = q + warp;
+        float webA = abs(sin(dot(w, vec2(2.36, 0.41)) + 0.8 * sin(w.y * 1.30 + ts * 0.70) + ts * 0.40));
+        float webB = abs(sin(dot(w, vec2(-0.97, 1.93)) + 0.8 * sin(w.x * 1.10 - ts * 0.60) - ts * 0.30));
+        float webC = abs(sin(dot(w, vec2(1.21, -1.62)) + 0.8 * sin((w.x + w.y) * 0.90 + ts * 0.50) + ts * 0.35));
+        // each line is thin and bright; a third family breaks the crossings into cells
+        float lineA = pow(max(0.0, 1.0 - webA * 1.8), 3.0);
+        float lineB = pow(max(0.0, 1.0 - webB * 1.8), 3.0);
+        float lineC = pow(max(0.0, 1.0 - webC * 1.8), 3.0);
+        float web = min(1.0, (lineA + lineB + lineC) * 0.8);
         color += vec3(0.17, 0.21, 0.19) * web * causticVisibility * vGroundLight;
     }
 

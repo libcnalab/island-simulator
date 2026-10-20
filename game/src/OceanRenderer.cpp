@@ -211,8 +211,12 @@ void main()
 
     // Evaluate derivatives before player/material branches; unresolved colour waves fade to
     // their mean instead of producing screen-space stripes at grazing angles.
-    float phaseA = dot(vWorld.xz, vec2(0.48, 0.19)) - uTime * 0.82;
-    float phaseB = dot(vWorld.xz, vec2(-0.27, 0.57)) - uTime * 0.61 + 1.8;
+    // Two slow, irregular drifts bend both carriers: their plain crossing tiled the lagoon
+    // into a diamond lattice that read as stripes from the air.
+    float latticeWarp = sin(dot(vWorld.xz, vec2(0.071, -0.053)) + uTime * 0.09) * 2.3
+        + sin(dot(vWorld.xz, vec2(-0.033, 0.087)) - uTime * 0.07 + 0.9) * 1.7;
+    float phaseA = dot(vWorld.xz, vec2(0.48, 0.19)) - uTime * 0.82 + latticeWarp;
+    float phaseB = dot(vWorld.xz, vec2(-0.27, 0.57)) - uTime * 0.61 + 1.8 - latticeWarp * 0.8;
     float continuityPhase = dot(vWorld.xz, vec2(0.91, -0.43)) + uTime * 0.36;
     float weightA = oceanWaveFilter(max(abs(dFdx(phaseA)), abs(dFdy(phaseA))));
     float weightB = oceanWaveFilter(max(abs(dFdx(phaseB)), abs(dFdy(phaseB))));
@@ -228,8 +232,11 @@ void main()
     water += vec3(0.032, 0.076, 0.090) * reflectionRipple * grazingWeight;
     float subsurfaceVisibility = (1.0 - fresnel)
         * mix(0.42, 1.0, clamp(vShallow, 0.0, 1.0));
+    // Looking down from the air the subsurface carries are seen almost whole (Fresnel is
+    // low), so they give way there to the broad colour of the water.
+    float aerialSubsurface = 1.0 - 0.65 * smoothstep(12.0, 45.0, abs(uCameraPosition.y - vWorld.y));
     float subsurfaceWave = (crossingWaves - 0.50)
-        * waveDetailFade * subsurfaceVisibility;
+        * waveDetailFade * subsurfaceVisibility * aerialSubsurface;
     water += vec3(0.064, 0.164, 0.139) * subsurfaceWave;
 
     // The broad carriers alone can collapse into horizontal screen-space bands from a low
@@ -242,7 +249,9 @@ void main()
         + 0.38 * sin(phaseA * 0.42 - phaseB * 0.31)) * cellWarpWeight;
     float rippleCells = sin(phaseA * 1.7 + sin(phaseB) * 0.42 + cellWarp * 0.62)
         * sin(phaseB * 1.55 - sin(phaseA) * 0.31 - cellWarp * 0.49);
-    float aerialDetailFade = 1.0 - smoothstep(28.0, 85.0,
+    // The closed ripple cells are the product of the two carriers: from the air they tile into
+    // a lattice, so they belong to the swimming and walking heights only.
+    float aerialDetailFade = 1.0 - smoothstep(10.0, 32.0,
         abs(uCameraPosition.y - vWorld.y));
     float rippleCellWeight = weightA * weightB * waveDetailFade * aerialDetailFade
         * subsurfaceVisibility * mix(0.70, 1.0, windExposure);

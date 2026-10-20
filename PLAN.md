@@ -54,6 +54,28 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 224 (2026-10-20) — a flight view, and the sea's lattice from the air removed
+
+The operator mostly flies, but no capture looked at the island from the air. A new `flight`
+viewpoint stands 40 m above the ground 45 m behind the hut and looks out across the forest,
+the hut's clearing and the jetty's beach to the sea. Its first frame showed the whole lagoon
+tiled into a sharp regular diamond lattice, a pattern that sweeps past as stripes in flight.
+Ruled out one by one with captures of the same frame: the subsurface colour of the two
+crossing carriers (now also bent by two slow irregular drifts and reduced 65 % from 12-45 m
+up, which turned the lattice wavy but kept it), the broad wave normals (flattened in a
+temporary build, no change) and the seabed caustics (rebuilt anyway, below). The cause was
+the closed ripple cells, the product of the two carriers meant for swimming and walking
+heights: their aerial fade ran from 28 to 85 m above the water, so at 50 m they stood at 60 %.
+They now fade out between 10 and 32 m; the lagoon reads from the air as broad colour zones.
+The seabed caustics were two wavy line families on the world's x and z axes, a square grid
+1.5 m across; they are now three families at uneven angles, each bent by a slow warp, an
+irregular net of cells, and fade by footprint earlier (0.022-0.065 m per pixel instead of
+0.035-0.12). Native `flight`, `jetty`, `water`, `wet-sand`, `current` and `reef` pass; from
+swimming height the caustics read as an uneven net and the reef's ripple cells remain.
+Open: a straight seam across the sea about 140 m from the flight camera, where the 10.6 m
+ocean grid probably interpolates a reef drop-off along a row (not the seabed mesh's 340 m
+edge, which a trial closing the water over it showed).
+
 ## Loop pass 223 (2026-10-20) — coastal scrub on the banks every other plant left bare
 
 The bank rising behind the jetty's beach read as one large smooth bare slope. Every plant

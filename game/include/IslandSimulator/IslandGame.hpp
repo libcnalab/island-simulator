@@ -230,6 +230,7 @@ namespace island
         FallenLogDetail,
         StreamCascadeDetail,
         JettyDetail,
+        FlightOverview,
         BridgeDetail,
         LookoutDetail,
         HutDetail,

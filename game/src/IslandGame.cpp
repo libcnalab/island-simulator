@@ -198,6 +198,7 @@ namespace island
             case FixedViewpoint::FruitTreeDetail: return "fruit";
             case FixedViewpoint::StreamCascadeDetail: return "cascade";
             case FixedViewpoint::JettyDetail: return "jetty";
+            case FixedViewpoint::FlightOverview: return "flight";
             case FixedViewpoint::BridgeDetail: return "bridge";
             case FixedViewpoint::LookoutDetail: return "lookout";
             case FixedViewpoint::FallenLogDetail: return "log";
@@ -1541,6 +1542,21 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: bridge QA camera looks across the rope bridge from the bank\n";
+        } else if (viewpoint_ == FixedViewpoint::FlightOverview) {
+            // The operator's usual view: flying about forty metres over the forest behind the
+            // hut, looking out across the trees, the hut's clearing and the beach to the sea.
+            if(!hutPlacement_||!jettyPlacement_) throw std::runtime_error("Flight QA requires the hut and the jetty");
+            const auto& h=*hutPlacement_;
+            const auto& j=*jettyPlacement_;
+            const float towardX=j.rootX-h.x,towardZ=j.rootZ-h.z;
+            const float length=std::max(std::hypot(towardX,towardZ),1.0f);
+            const float cameraX=h.x-towardX/length*45.0f,cameraZ=h.z-towardZ/length*45.0f;
+            cameraPosition_=Vector3(cameraX,terrain_.Height(cameraX,cameraZ)+40.0f,cameraZ);
+            const Vector3 target(j.rootX+towardX/length*30.0f,0.0f,j.rootZ+towardZ/length*30.0f);
+            const Vector3 direction=target-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: flight QA camera looks out from forty metres over the forest behind the hut to the sea\n";
         } else if (viewpoint_ == FixedViewpoint::JettyDetail) {
             // Stand on the sand at the far end of the resident's footprints and look back along
             // them past the canoe to the deck and the mooring post.
