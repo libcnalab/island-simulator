@@ -57,6 +57,7 @@
 #include "IslandSimulator/StreamFishField.hpp"
 #include "IslandSimulator/HatchlingField.hpp"
 #include "IslandSimulator/BirdShadowProjection.hpp"
+#include "IslandSimulator/SeabedShadowProjection.hpp"
 #include "IslandSimulator/CloudShadow.hpp"
 #include "IslandSimulator/CascadeMistField.hpp"
 #include "IslandSimulator/CanopyShafts.hpp"
@@ -4368,6 +4369,24 @@ int main()
             cut = cut || island::FinWakeField::Cutting(patrol.State());
         }
         Check(cut && patrolWake.ReleaseCount() >= 1U, "the patrol's first seconds ride high enough to cut the water and lay a wake");
+    }
+    {
+        // Seabed shadows: a fish a metre over the sandy bottom casts a shadow down the sun's
+        // line onto ground under the sea; one on the bottom, one far above it, and one over
+        // land cast none here.
+        island::FishSchools shoal(terrain);
+        const auto& fish = shoal.Fish()[0];
+        const float bottom = terrain.Height(fish.x, fish.z);
+        const auto cast = island::SeabedShadowProjection::Project(terrain, fish.x, bottom + 1.0f, fish.z);
+        Check(bottom < 0.0f && cast.valid && std::abs(cast.height - 1.0f) < 0.4f
+                  && terrain.Height(cast.x, cast.z) < 0.0f && std::hypot(cast.x - fish.x, cast.z - fish.z) > 0.3f,
+              "a fish a metre over the seabed casts a shadow down the sun's line onto the bottom");
+        Check(!island::SeabedShadowProjection::Project(terrain, fish.x, bottom + 0.05f, fish.z).valid
+                  && !island::SeabedShadowProjection::Project(terrain, fish.x, bottom + 12.0f, fish.z).valid,
+              "a fish on the bottom or far above it casts no seabed shadow");
+        const float landX = 0.0f, landZ = 0.0f;
+        Check(terrain.Height(landX, landZ) > 0.0f && !island::SeabedShadowProjection::Project(terrain, landX, terrain.Height(landX, landZ) + 1.0f, landZ).valid,
+              "ground above the sea takes no seabed shadow");
     }
     bool observedPresentShark = false;
     bool observedHiddenShark = false;

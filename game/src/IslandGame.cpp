@@ -2283,6 +2283,7 @@ namespace island
         streamFishRenderer_=std::make_unique<StreamFishRenderer>(device);
         hatchlingRenderer_=std::make_unique<HatchlingRenderer>(device);
         birdShadowRenderer_=std::make_unique<BirdShadowRenderer>(device,terrain_);
+        seabedShadowRenderer_=std::make_unique<SeabedShadowRenderer>(device,terrain_);
         cascadeMistRenderer_=std::make_unique<CascadeMistRenderer>(device);
         wetlandMistRenderer_=std::make_unique<CascadeMistRenderer>(device,
             "island-simulator: a low mist hangs over the seasonal wetland, breathing slowly, drifting with the trade wind and leaning in the gust fronts");
@@ -4751,6 +4752,8 @@ namespace island
             residentRenderer_->DrawShadow(cameraView_,cameraProjection_,renderCameraPosition_,resident_->State());
             bearRenderer_->DrawShadow(cameraView_,cameraProjection_,renderCameraPosition_,bear_->State());
             birdShadowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,birdFlock_.Birds());
+            seabedShadowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,
+                fishSchools_.Fish(),stingrayGroup_.Stingrays(),seaTurtleGroup_.Turtles(),&sharkPatrol_.State());
             footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,footprints_.Prints());
             for(const auto& trail:deerPrints_) if(trail.ActiveCount()>0U) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,trail.Prints());
             for(const auto& trail:boarPrints_) if(trail.ActiveCount()>0U) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,trail.Prints());

@@ -725,6 +725,7 @@ if(ISLAND_BUILD_GAME)
         game/src/StreamFishRenderer.cpp
         game/src/HatchlingRenderer.cpp
         game/src/BirdShadowRenderer.cpp
+        game/src/SeabedShadowRenderer.cpp
         game/src/CascadeMistRenderer.cpp
         game/src/CanopyShaftRenderer.cpp
         game/src/FootprintTrailRenderer.cpp

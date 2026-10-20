@@ -54,6 +54,23 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 141 (2026-10-20) — shadows on the seabed
+
+The flying birds cast shadows on the ground (pass 59's bird shadows) but the swimming
+animals cast none on the sand below them. New `SeabedShadowProjection` (header-only, the
+birds' projection for ground under the sea): an animal's position carried along the fixed
+sun down to the bottom, refined twice, valid 0.15–9 m over ground below sea level and for a
+body at or under the surface. New `SeabedShadowRenderer`: one seabed-conforming ellipse per
+fish (0.16 × 0.06, scaled), stingray (0.95 × 1.25), sea turtle (0.62 × 0.50) and the
+present shark (0.60 × 0.16, scale 2.8), darker and tighter close over the bottom (84 alpha
+at the fullest), spreading 10 % per metre of height and fading with the water's reach
+(gone past 34 m), up to 72 shadows in one alpha-blended draw before the sea, right after
+the bird shadows, so the water's tint lies over them. Startup report: the renderer's "the
+fish, the stingrays, the sea turtles and the shark cast soft shadows on the sandy seabed
+below them, projected along the fixed sun" (pinned). Core checks: a fish a metre over the
+seabed casts a shadow down the sun's line onto ground under the sea; one on the bottom or
+far above it casts none; ground above the sea takes none. Native `stingrays` passes.
+
 ## Loop pass 140 (2026-10-20) — a stalking gecko wags its tail
 
 A gecko creeping on a fly (pass 82) moved with the same slow tail sway as at rest.
