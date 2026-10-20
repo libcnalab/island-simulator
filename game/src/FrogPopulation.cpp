@@ -3,6 +3,7 @@
 #include "IslandSimulator/IslandEnvironmentField.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/StreamRoute.hpp"
+#include "IslandSimulator/StreamCourse.hpp"
 
 #include <algorithm>
 #include <array>
@@ -19,7 +20,7 @@ namespace island
         constexpr float Pi = std::numbers::pi_v<float>;
         constexpr float TwoPi = Pi * 2.0f;
         struct Habitat { float x, z, radius; };
-        const std::array<Habitat, FrogPopulation::Count> Habitats = {{
+        const std::array<Habitat, FrogPopulation::Count - FrogPopulation::PoolFrogCount> Habitats = {{
             {-82.0f, StreamRoute::CentreZ(-82.0f) + 2.6f, 4.8f},
             {-91.0f, StreamRoute::CentreZ(-91.0f) - 2.8f, 5.0f},
             {-101.0f, StreamRoute::CentreZ(-101.0f) + 3.1f, 5.2f},
@@ -49,6 +50,17 @@ namespace island
 
     FrogPopulation::FrogPopulation(const IslandTerrain& terrain) : terrain_(terrain)
     {
+        {
+            // The plunge pool's banks: either side of the pool station, across the course.
+            const StreamCourse course(terrain);
+            const StreamStation& pool = course.PoolStation();
+            const std::size_t lip = course.CascadeIndex();
+            const StreamStation& below = course.Station(std::min(lip + 1 + StreamCourse::PoolLength, course.Count() - 1));
+            const float dx = below.x - pool.x, dz = below.z - pool.z;
+            const float length = std::max(std::hypot(dx, dz), 0.01f);
+            poolX_ = pool.x; poolZ_ = pool.z;
+            poolAcrossX_ = -dz / length; poolAcrossZ_ = dx / length;
+        }
         for (std::size_t index = 0; index < Count; ++index) {
             Initialize(index);
             states_[index] = agents_[index].state;
@@ -59,7 +71,10 @@ namespace island
     void FrogPopulation::Initialize(const std::size_t index)
     {
         Agent& agent = agents_[index];
-        const Habitat habitat = Habitats[index];
+        const Habitat habitat = index >= Count - PoolFrogCount
+            ? Habitat{poolX_ + poolAcrossX_ * (index == Count - 2 ? 2.4f : -2.4f),
+                      poolZ_ + poolAcrossZ_ * (index == Count - 2 ? 2.4f : -2.4f), PoolFrogRadius}
+            : Habitats[index];
         agent.home = {habitat.x, habitat.z, habitat.radius};
         bool found = false;
         for (int attempt = 0; attempt < 160 && !found; ++attempt) {

@@ -1139,6 +1139,8 @@ def main():
                 raise RuntimeError("current ant fruit trails are missing; check for a stale executable")
             if "twelve stream, plunge-pool and wetland dragonflies" not in diagnostics:
                 raise RuntimeError("current plunge-pool dragonflies are missing; check for a stale executable")
+            if "two keep the banks of the cascade's plunge pool" not in diagnostics:
+                raise RuntimeError("current plunge-pool frogs are missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":
@@ -1335,13 +1337,13 @@ def main():
                 if not re.search(r"dragonflies ([1-9]|1[0-2])/12 visible in shared draw",diagnostics):
                     raise RuntimeError("dragonfly capture did not submit a wet-habitat insect")
             if args.viewpoint == "frogs":
-                if "ten stream and wetland frogs rest, hop, and retreat in the shared butterfly batch" not in diagnostics:
+                if "twelve stream, plunge-pool and wetland frogs rest, hop, and retreat in the shared butterfly batch" not in diagnostics:
                     raise RuntimeError("current frog renderer is missing; check for a stale executable")
                 if "near frogs use solid folded legs, separated webbed toes, rounded eye sockets, fitted irises, nostrils, and a mouth line" not in diagnostics:
                     raise RuntimeError("current frog anatomy is missing; check for a stale executable")
                 if "frog QA camera frames one resting stream-bank animal" not in diagnostics:
                     raise RuntimeError("current frog inspection composition is missing")
-                if not re.search(r"frogs [1-9][0-9]*/10 visible in shared draw", diagnostics):
+                if not re.search(r"frogs [1-9][0-9]*/12 visible in shared draw", diagnostics):
                     raise RuntimeError("frog capture did not submit a wet-habitat animal")
             if args.viewpoint in {"mice", "rats"}:
                 for marker in (

@@ -54,6 +54,17 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 50 (2026-10-20) — frogs on the plunge pool's banks
+
+The frogs kept the stream reaches and the wetland. `FrogPopulation` grows to twelve: the
+last two homes are placed at construction 2.4 m either side of the stream course's pool
+station, across the course, with a 4.5 m range, and they rest, hop and retreat there like
+the others. The renderer's line becomes "twelve stream, plunge-pool and wetland frogs rest,
+hop, and retreat in the shared butterfly batch" and the frog diagnostic gains "two keep the
+banks of the cascade's plunge pool" (both pinned by the native capture tool, whose
+visible-count rule now reads of twelve). Core check: the two pool homes lie 2.4 m from the
+pool station on opposite banks. Native `frogs` passes.
+
 ## Loop pass 49 (2026-10-20) — dragonflies over the plunge pool
 
 The dragonflies kept the wetland and two stream reaches; the cascade's pool, the wettest

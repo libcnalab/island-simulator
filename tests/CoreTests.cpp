@@ -8025,6 +8025,16 @@ int main()
             }
             Check(onPool,"three dragonflies have the plunge pool for their habitat");
         }
+        // Two frogs keep the plunge pool's banks, one either side of the pool station.
+        {
+            island::FrogPopulation poolFrogs(terrain);
+            const island::StreamCourse poolCourse(terrain);
+            const auto& pool=poolCourse.PoolStation();
+            const auto& a=poolFrogs.Homes()[island::FrogPopulation::Count-2];
+            const auto& b=poolFrogs.Homes()[island::FrogPopulation::Count-1];
+            Check(std::abs(std::hypot(a.x-pool.x,a.z-pool.z)-2.4f)<0.01f&&std::abs(std::hypot(b.x-pool.x,b.z-pool.z)-2.4f)<0.01f
+                  &&std::hypot(a.x-b.x,a.z-b.z)>4.7f,"two frogs have the plunge pool's banks for their homes");
+        }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls
         // on a little before it rests; resting fruit sit on the ground and keep still.

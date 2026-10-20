@@ -2263,7 +2263,7 @@ namespace island
                   << "island-simulator: dragonflies " << dragonflySwarm_.Dragonflies().size()
                   << " agents in three stream and wetland habitats\n"
                   << "island-simulator: frogs " << frogPopulation_.Frogs().size()
-                  << " agents rest, hop, and retreat beside the stream and wetland\n"
+                  << " agents rest, hop, and retreat beside the stream and wetland; two keep the banks of the cascade's plunge pool\n"
                   << "island-simulator: field mice " << RodentPopulation::MouseCount
                   << " and rats " << RodentPopulation::RatCount
                   << " forage, scurry, and hide in bounded inland edge habitats\n"

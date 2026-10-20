@@ -29,7 +29,11 @@ namespace island
     class FrogPopulation final
     {
     public:
-        static constexpr std::size_t Count = 10U;
+        // Eight along the stream, two at the wetland, and two on the banks of the cascade's
+        // plunge pool (placed from the stream course at construction).
+        static constexpr std::size_t Count = 12U;
+        static constexpr std::size_t PoolFrogCount = 2U;
+        static constexpr float PoolFrogRadius = 4.5f;
         static constexpr float FullSimulationDistance = 48.0f;
         static constexpr float ReducedSimulationDistance = 105.0f;
 
@@ -63,6 +67,7 @@ namespace island
         std::array<FrogState, Count> states_{};
         std::array<FrogHome, Count> homes_{};
         std::uint64_t frameIndex_ = 0U;
+        float poolX_ = 0.0f, poolZ_ = 0.0f, poolAcrossX_ = 0.0f, poolAcrossZ_ = 1.0f;
         int fullCount_ = 0, reducedCount_ = 0, dormantCount_ = 0;
     };
 }

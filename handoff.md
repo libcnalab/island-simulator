@@ -110,6 +110,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 47: the resident stands facing the fire at the campfire pause (PLAN "Loop pass 47").
 - Pass 48: an ant trail bends to a fruit lying near its food end (PLAN "Loop pass 48").
 - Pass 49: three dragonflies patrol the cascade's plunge pool (PLAN "Loop pass 49").
+- Pass 50: two frogs keep the banks of the plunge pool (PLAN "Loop pass 50").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted
