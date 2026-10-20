@@ -46,6 +46,20 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 36 (2026-10-20) — coconuts that strike the shallows float ashore
+
+A nut shaken from a palm leaning over the water fell through the surface to the seabed and
+lay there. The gust path's crown drop is now `FallingFruitField::ShakeCoconut` (public, so
+the tests can shake one), which lands a nut over the shallows on the surface rather than the
+bed; a coconut whose first strike is on ground below sea level counts no thud and goes
+`afloat`: it rides half under the surface with a 3 cm bob, drifts downwind at 0.22 m/s with
+a slow sideways set, and where the ground rises above the sea it beaches (`BeachedCount`)
+and lies on the sand as any other nut, or is lost after eight minutes or 400 m. The fruit
+diagnostic gains "a nut that strikes the shallows floats and drifts ashore", pinned by the
+native capture tool. Core check: a nut shaken from a palm 2.5 m outside the east shore
+floats at the surface over the shallows, drifts in and washes up on the sand within a
+minute with no thud counted. Native `palms` passes.
+
 ## Loop pass 35 (2026-10-20) — the birds' shadows cross the ground
 
 The flying birds cast nothing; the sun shadow map's casters are static. A core

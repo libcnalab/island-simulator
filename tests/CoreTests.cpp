@@ -7634,6 +7634,23 @@ int main()
         Check(grove.CoconutDropCount()>=1U&&nutTop>palms[0].y+6.0f,"gust fronts shake a coconut from the palm crown within four minutes");
         Check(grove.LastCoconutLanding().count>=1U&&std::abs(grove.LastCoconutLanding().y-(terrain.Height(grove.LastCoconutLanding().x,grove.LastCoconutLanding().z)+0.10f))<0.01f,
               "the coconut's landing is counted where it struck the ground");
+        // A nut from a palm leaning over the shallows strikes the water, bobs at the surface,
+        // drifts toward the shore and washes up on the sand within a minute, no thud counted.
+        {
+            island::FallingFruitField shallows(terrain);
+            const float palmX=terrain.ShoreRadius(0.0f)+2.5f;
+            const island::PalmPlacement leaning{palmX,std::max(terrain.Height(palmX,0.0f),0.0f),0.0f,0.0f,1.0f,-2.5f,0.0f,1U,island::PalmCondition::Living};
+            shallows.ShakeCoconut(leaning,3U);
+            bool floated=false,beachedOnSand=false;
+            for(int step=0;step<1200&&!beachedOnSand;++step) {
+                shallows.Update(0.05f,{});
+                for(const auto& f:shallows.Fruit()) if(f.active&&f.variant==island::FallingFruitField::CoconutVariant) {
+                    if(f.afloat&&std::abs(f.y)<0.08f&&terrain.Height(f.x,f.z)<0.0f) floated=true;
+                    if(!f.afloat&&f.restSeconds>=0.0f&&shallows.BeachedCount()>=1U&&terrain.Height(f.x,f.z)>=0.0f) beachedOnSand=true;
+                }
+            }
+            Check(floated&&beachedOnSand&&shallows.LastCoconutLanding().count==0U,"a nut that strikes the shallows floats, drifts ashore and washes up on the sand");
+        }
         Check(highest>monkey.selectedTree.y+3.0f,"the fruit starts up in the crown");
         Check(landed,"the fruit lands on the ground under the tree and lies there");
         // The fronts cross the open sea as well as the land (the ocean's cat's paws read the

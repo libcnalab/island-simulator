@@ -42,20 +42,26 @@ void FallingFruitField::UpdateCoconuts(const float seconds,const float observerX
         std::uint32_t hash=static_cast<std::uint32_t>(i)*0x9e3779b9U^front*0x85ebca6bU;
         hash^=hash>>16U;hash*=0x7feb352dU;hash^=hash>>15U;
         if(static_cast<float>(hash&1023U)/1024.0f>=CoconutChance) continue;
-        // The nut hangs under the crown: fruiting variants carry theirs at the frond base,
-        // which the mesh puts at 9.4 m plus a variant step, scaled, and leaned downwind.
-        FallingFruit* slot=FreeSlot();
-        const float crown=(9.4f+static_cast<float>(palm.variant)*0.55f)*palm.scale;
-        const float lean=(0.55f+static_cast<float>((palm.variant*5)%3)*0.25f)*palm.scale;
-        const float angle=palm.yawRadians+static_cast<float>(hash%7U)*0.9f;
-        slot->x=palm.x+std::cos(angle)*(lean+0.3f);
-        slot->z=palm.z+std::sin(angle)*(lean+0.3f);
-        slot->groundY=terrain_.Height(slot->x,slot->z)+0.10f;
-        slot->y=std::max(palm.y+crown*0.9f,slot->groundY+1.0f);
-        slot->velocityY=0;slot->velocityX=0;slot->velocityZ=0;slot->rolling=false;
-        slot->restSeconds=-1.0f;slot->variant=CoconutVariant;slot->active=true;
-        ++coconutDrops_;
+        ShakeCoconut(palm,hash);
     }
+}
+
+void FallingFruitField::ShakeCoconut(const PalmPlacement& palm,const std::uint32_t seed) noexcept {
+    if(!std::isfinite(palm.x)||!std::isfinite(palm.z)||!std::isfinite(palm.y)) return;
+    // The nut hangs under the crown: fruiting variants carry theirs at the frond base,
+    // which the mesh puts at 9.4 m plus a variant step, scaled, and leaned downwind.
+    FallingFruit* slot=FreeSlot();
+    const float crown=(9.4f+static_cast<float>(palm.variant)*0.55f)*palm.scale;
+    const float lean=(0.55f+static_cast<float>((palm.variant*5)%3)*0.25f)*palm.scale;
+    const float angle=palm.yawRadians+static_cast<float>(seed%7U)*0.9f;
+    slot->x=palm.x+std::cos(angle)*(lean+0.3f);
+    slot->z=palm.z+std::sin(angle)*(lean+0.3f);
+    // Over the shallows the nut strikes the water's surface, not the seabed.
+    slot->groundY=std::max(terrain_.Height(slot->x,slot->z),0.0f)+0.10f;
+    slot->y=std::max(palm.y+crown*0.9f,slot->groundY+1.0f);
+    slot->velocityY=0;slot->velocityX=0;slot->velocityZ=0;slot->rolling=false;slot->afloat=false;
+    slot->restSeconds=-1.0f;slot->variant=CoconutVariant;slot->active=true;
+    ++coconutDrops_;
 }
 
 void FallingFruitField::Drop(const MonkeyState& monkey) noexcept {
@@ -76,7 +82,7 @@ void FallingFruitField::Drop(const MonkeyState& monkey) noexcept {
     slot->y=tree.y+localY*tree.scale;
     slot->groundY=terrain_.Height(slot->x,slot->z)+0.06f;
     if(slot->y<=slot->groundY) slot->y=slot->groundY+0.5f;
-    slot->velocityY=0;slot->velocityX=0;slot->velocityZ=0;slot->rolling=false;
+    slot->velocityY=0;slot->velocityX=0;slot->velocityZ=0;slot->rolling=false;slot->afloat=false;
     slot->restSeconds=-1.0f;
     slot->variant=tree.variant;
     slot->active=true;
@@ -110,6 +116,12 @@ void FallingFruitField::Update(const float deltaSeconds,const std::span<const Mo
                 // kicks the fruit a little downhill and a little to one side, so it bounces
                 // away from where it hit and rolls on from there.
                 if(f.velocityY<-2.5f) {
+                    if(f.variant==CoconutVariant&&terrain_.Height(f.x,f.z)<0.0f) {
+                        // Into the shallows: no thud, the nut bobs up and drifts with the sea.
+                        f.afloat=true;f.rolling=false;f.y=0.02f;f.velocityY=0;f.restSeconds=0.0f;
+                        f.velocityX=-DriftSpeed;f.velocityZ=0;
+                        continue;
+                    }
                     if(f.variant==CoconutVariant) landing_={f.x,f.groundY,f.z,landing_.count+1U};
                     if(f.velocityX==0.0f&&f.velocityZ==0.0f) {
                         strikeX_[index]=f.x;strikeZ_[index]=f.z;
@@ -127,6 +139,19 @@ void FallingFruitField::Update(const float deltaSeconds,const std::span<const Mo
                     if(!f.rolling) { f.velocityX=0;f.velocityZ=0;lastRoll_=std::hypot(f.x-strikeX_[index],f.z-strikeZ_[index]); }
                 }
             }
+        } else if(f.afloat) {
+            // Afloat: a drift downwind (toward -x, with the fronts) with a slow sideways set and
+            // a bob; the nut beaches where the ground rises above the sea and lies there as any
+            // other, or is lost to the open sea after AfloatLimitSeconds.
+            f.restSeconds+=dt;
+            f.velocityZ=0.08f*std::sin(f.restSeconds*0.3f+static_cast<float>(index));
+            f.x+=f.velocityX*dt;f.z+=f.velocityZ*dt;
+            f.y=0.02f+0.03f*std::sin(f.restSeconds*2.1f+static_cast<float>(index));
+            const float ground=terrain_.Height(f.x,f.z);
+            if(ground>=0.0f) {
+                f.afloat=false;f.velocityX=0;f.velocityZ=0;f.groundY=ground+0.10f;f.y=f.groundY;
+                f.restSeconds=0.0f;++beached_;
+            } else if(f.restSeconds>=AfloatLimitSeconds||std::abs(f.x)>400.0f||std::abs(f.z)>400.0f) f.active=false;
         } else if(f.rolling) {
             // Rolling: pulled on by the slope, slowed by the litter it rolls through (a drag
             // and a rolling resistance that beats the pull on gentle ground), until it stops;

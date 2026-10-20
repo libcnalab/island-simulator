@@ -17,6 +17,7 @@ struct FallingFruit {
     float velocityY=0;
     float velocityX=0,velocityZ=0;   // the bounce and the roll downhill after it
     bool rolling=false;              // on the ground but still moving
+    bool afloat=false;               // a coconut that struck the shallows, drifting on the sea
     float restSeconds=0;     // time lying on the ground; negative while still falling
     float groundY=0;
     std::uint8_t variant=0;  // canopy form: 2 orange, 5 purple; 9 a coconut from a palm
@@ -40,6 +41,11 @@ public:
     void Update(float deltaSeconds,std::span<const MonkeyState> monkeys) noexcept;
     // Palms shed in gusts near the observer; seconds is the world clock the gust field uses.
     void UpdateCoconuts(float seconds,float observerX,float observerZ) noexcept;
+    /** @brief Drops one nut from this palm's crown now (the gust path and the tests use it). */
+    void ShakeCoconut(const PalmPlacement& palm,std::uint32_t seed) noexcept;
+    /** @brief Coconuts that struck the shallows and later washed up on the sand. */
+    [[nodiscard]] std::uint32_t BeachedCount() const noexcept {return beached_;}
+    static constexpr float DriftSpeed=0.22f,AfloatLimitSeconds=480.0f;
     [[nodiscard]] std::uint32_t CoconutDropCount() const noexcept {return coconutDrops_;}
     /** @brief The last coconut to hit the ground, counted so a landing is noted once. */
     struct Landing { float x=0,y=0,z=0; std::uint32_t count=0; };
@@ -62,6 +68,7 @@ private:
     std::vector<float> palmGust_;       // last gust strength seen at each palm
     std::uint32_t coconutDrops_=0;
     std::uint32_t consumed_=0;
+    std::uint32_t beached_=0;
     Landing landing_;
     std::array<FallingFruit,Capacity> fruit_{};
     std::array<float,16> pickTimers_{};

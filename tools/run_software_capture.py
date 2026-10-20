@@ -1111,6 +1111,8 @@ def main():
                 raise RuntimeError("current hut yard sway is missing; check for a stale executable")
             if "flying birds cast soft moving shadows on the ground below them, projected along the fixed sun" not in diagnostics:
                 raise RuntimeError("current bird shadows are missing; check for a stale executable")
+            if "a nut that strikes the shallows floats and drifts ashore" not in diagnostics:
+                raise RuntimeError("current floating coconuts are missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":
