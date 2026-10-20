@@ -1177,6 +1177,8 @@ def main():
                 raise RuntimeError("current lagoon leaf drift is missing; check for a stale executable")
             if "the boars stand off from the bear and trot away when it comes close, as from the walker" not in diagnostics:
                 raise RuntimeError("current boar bear avoidance is missing; check for a stale executable")
+            if "the hut's roof ridge is a perch for the birds" not in diagnostics:
+                raise RuntimeError("current hut ridge perch is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

@@ -1,4 +1,6 @@
 #pragma once
+#include "IslandSimulator/BirdPerchLayout.hpp"
+#include <cmath>
 
 #include "IslandSimulator/WorldCollision.hpp"
 #include <array>
@@ -36,6 +38,14 @@ public:
     // Hut-local (across, along) sites of the four yard props, inside the decorative clearing.
     static constexpr std::array<std::array<float,2>,4> YardSites{{{3.3f,0.9f},{3.0f,2.7f},{3.1f,-1.2f},{-3.0f,-0.9f}}};
     static constexpr int CandidateCount=144*12;
+    // The roof ridge as a perch for the birds: on the ridge cap toward the veranda end, in
+    // the hut's own frame (the ridge crown sits 3.635 m above the floor).
+    static constexpr float RidgeHeight=3.635f;
+    [[nodiscard]] static BirdPerchSite RidgePerch(const HutPlacement& hut) noexcept {
+        const float c=std::cos(hut.yawRadians),s=std::sin(hut.yawRadians);
+        const float localZ=Depth*0.5f-0.45f;
+        return {hut.x+s*localZ,hut.floorY+RidgeHeight+0.04f,hut.z+c*localZ,hut.yawRadians+1.5707963f,BirdPerchKind::Wreck};
+    }
     [[nodiscard]] static bool ReservesDecorativeClearing(float x,float z,float radius=0) noexcept;
     [[nodiscard]] static std::optional<HutPlacement> Find(
         const IslandTerrain& terrain, const RenderedTerrainSurface& surface,

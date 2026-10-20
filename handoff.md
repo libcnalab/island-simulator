@@ -129,6 +129,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 66: a surfacing sea turtle breathes out a small puff of spray (PLAN "Loop pass 66").
 - Pass 67: leaves out of the stream mouth drift on across the lagoon (PLAN "Loop pass 67").
 - Pass 68: the boars stand off from the bear and trot away when it comes close (PLAN "Loop pass 68").
+- Pass 69: the hut's roof ridge is a perch for the birds (PLAN "Loop pass 69").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

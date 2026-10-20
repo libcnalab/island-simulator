@@ -8268,6 +8268,22 @@ int main()
             for(int step=0;step<40;++step) herd.Update(0.05f,sow.x+40.0f,sow.y+1.5f,sow.z);
             Check(herd.BearRetreatCount()>=1U&&herd.Boars()[0].behavior==island::BoarBehavior::Retreat,"a boar trots away from the bear");
         }
+        // The hut's roof ridge is a perch: it stands on the ridge cap above the hut, near the
+        // veranda end, well clear of the ground, and the flock accepts it as a site.
+        {
+            const island::JungleLayout hutJungle(terrain);
+            const std::vector<island::CircularObstacle> none;
+            const auto hut=island::HutLayout::FindInWorld(terrain,hutJungle,none);
+            Check(hut.has_value(),"the hut is placed for its ridge perch");
+            const auto perch=island::HutLayout::RidgePerch(*hut);
+            Check(std::hypot(perch.x-hut->x,perch.z-hut->z)<island::HutLayout::Depth*0.5f+0.01f
+                  &&std::abs(perch.y-(hut->floorY+island::HutLayout::RidgeHeight+0.04f))<0.001f
+                  &&perch.y>terrain.Height(perch.x,perch.z)+2.5f,"the ridge perch sits on the roof ridge well above the ground");
+            island::BirdFlock roofBirds(terrain);
+            const std::vector<island::BirdPerchSite> sites{perch};
+            roofBirds.SetPerchSites(sites);
+            Check(roofBirds.PerchSites().size()==1U&&roofBirds.Birds()[0].behavior==island::BirdBehavior::Perched,"the flock seeds a bird onto the ridge perch");
+        }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls
         // on a little before it rests; resting fruit sit on the ground and keep still.

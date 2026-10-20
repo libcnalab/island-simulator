@@ -337,6 +337,7 @@ namespace island
             for(const auto& obstacle:jettyPlacement_->CanoeObstacles()) worldObstacles.push_back(obstacle);
             birdPerchLayout_.AddSite(jettyPlacement_->MooringPerch());
         }
+        if(hutPlacement_) birdPerchLayout_.AddSite(HutLayout::RidgePerch(*hutPlacement_));
         if(hutPlacement_) lookoutPlacement_=LookoutLayout::FindInWorld(terrain_,*hutPlacement_,worldObstacles);
         if(lookoutPlacement_) {
             for(const auto& obstacle:lookoutPlacement_->PostObstacles()) worldObstacles.push_back(obstacle);
@@ -2307,6 +2308,7 @@ namespace island
                   << "island-simulator: an alert deer swings both ears toward the watcher\n"
                   << "island-simulator: the bear walks to fruit and coconuts lying in its range and eats them where they lie\n"
                   << "island-simulator: the boars stand off from the bear and trot away when it comes close, as from the walker\n"
+                  << "island-simulator: the hut's roof ridge is a perch for the birds\n"
                   << "island-simulator: crocodiles " << crocodileGroup_.Crocodiles().size()
                   << " agents bask, crawl, swim, and retreat within the stream estuary\n"
                   << "island-simulator: fish " << fishSchools_.Fish().size()

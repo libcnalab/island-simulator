@@ -54,6 +54,16 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 69 (2026-10-20) — the hut's roof ridge is a bird perch
+
+The birds perched on the jetty posts, the wreck and the snags but never on the hut, the
+one roof on the island. `HutLayout::RidgePerch` turns the placed hut into a perch site at the
+thatch ridge (3.635 m above the floor, a little back from the centre of the ridge, the wreck
+kind so the perch posture is the gull's), and the game adds it to the bird perch layout after
+the jetty perches. The startup report gains "the hut's roof ridge is a perch for the birds",
+pinned by the native capture tool. Core check: a hut found in the world yields a ridge perch
+above the hut's floor at the hut's position. Native `hut` passes (luminance deviation 44).
+
 ## Loop pass 68 (2026-10-20) — the boars fear the bear
 
 A boar stood its ground as the bear walked through the herd. `BoarHerd::SetBear` takes the
