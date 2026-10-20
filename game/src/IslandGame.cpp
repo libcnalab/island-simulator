@@ -2291,6 +2291,7 @@ namespace island
                   << "island-simulator: an ant trail whose food end lies near a fallen fruit bends to it and the carriers come back from the fruit\n"
                   << "island-simulator: the grass bends under the nearest six animals and the resident as they pass, not only under the walker\n"
                   << "island-simulator: the bushes and understory are brushed aside by the same bodies as they pass\n"
+                  << "island-simulator: mice, rats, geckos and skinks scatter from a passing animal or the resident as from the walker\n"
                   << "island-simulator: crocodiles " << crocodileGroup_.Crocodiles().size()
                   << " agents bask, crawl, swim, and retreat within the stream estuary\n"
                   << "island-simulator: fish " << fishSchools_.Fish().size()
@@ -2687,6 +2688,8 @@ namespace island
             const GeckoState& gecko=geckoPopulation_.Geckos()[2U];
             geckoObserver=Vector3(gecko.x,gecko.y+18.0f,gecko.z);
         }
+        const std::array<GrassWalker, GrassWalkers::Slots> smallFaunaWalkers = GatherWalkers(cameraPosition_.X, cameraPosition_.Z);
+        geckoPopulation_.SetWalkers(smallFaunaWalkers);
         geckoPopulation_.Update(viewpoint_==FixedViewpoint::GeckoDetail?0.0f:deltaSeconds,
                                 geckoObserver.X,geckoObserver.Y,
                                 geckoObserver.Z);
@@ -2705,6 +2708,7 @@ namespace island
             const SkinkState& skink = skinkPopulation_.Skinks()[1U];
             skinkObserver = Vector3(skink.x, skink.y + 18.0f, skink.z);
         }
+        skinkPopulation_.SetWalkers(smallFaunaWalkers);
         skinkPopulation_.Update(viewpoint_ == FixedViewpoint::SkinkDetail ? 0.0f : deltaSeconds,
                                 skinkObserver.X, skinkObserver.Y, skinkObserver.Z);
         Vector3 dragonflyObserver=cameraPosition_;
@@ -2726,6 +2730,7 @@ namespace island
             const RodentState& rodent = rodentPopulation_.Rodents()[subject];
             rodentObserver = Vector3(rodent.x, rodent.y + 18.0f, rodent.z);
         }
+        rodentPopulation_.SetWalkers(smallFaunaWalkers);
         rodentPopulation_.Update(
             viewpoint_ == FixedViewpoint::MouseDetail
                     || viewpoint_ == FixedViewpoint::RatDetail

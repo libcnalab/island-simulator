@@ -54,6 +54,18 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 57 (2026-10-20) — the small fauna scatter from the animals
+
+Mice, rats, geckos and skinks fled the walker and nothing else. Each population takes the
+shared walker bodies (`SetWalkers`) and its flee test now uses the nearest of the walker and
+those bodies (the same 2.5–3.3 m rules), scurrying or fleeing away from it;
+`WalkerScatterCount()` counts the scatters caused by bodies. Diagnostic "mice, rats, geckos
+and skinks scatter from a passing animal or the resident as from the walker" is pinned by
+the native capture tool. Core checks: a body one metre from a rodent, a resting gecko and a
+skink, with the observer twelve metres off (full simulation, too far to frighten; the first
+draft's absent observer left them dormant), sends each off within three seconds. Native
+`mice` passes.
+
 ## Loop pass 56 (2026-10-20) — the fish breach makes a plip
 
 The breach rings of pass 43 were silent. `Soundscape::NoteFishBreach` queues the splash clip

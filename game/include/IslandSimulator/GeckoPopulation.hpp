@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IslandSimulator/WildlifeSimulation.hpp"
+#include "IslandSimulator/GrassWalkers.hpp"
 
 #include <array>
 #include <cstddef>
@@ -52,6 +53,10 @@ namespace island
 
         void Update(float deltaSeconds, float observerX, float observerY,
                     float observerZ) noexcept;
+        /** @brief Other bodies on the ground this frame (the herds, the bear, the resident):
+         *  the nearest of them frightens an animal as the walker does. */
+        void SetWalkers(std::span<const GrassWalker> walkers) noexcept { walkers_ = walkers; }
+        [[nodiscard]] std::uint32_t WalkerScatterCount() const noexcept { return walkerScatters_; }
 
         [[nodiscard]] std::span<const GeckoState> Geckos() const noexcept { return states_; }
         [[nodiscard]] std::span<const GeckoHome> Homes() const noexcept { return homes_; }
@@ -82,5 +87,7 @@ namespace island
         int fullSimulationCount_ = 0;
         int reducedSimulationCount_ = 0;
         int dormantSimulationCount_ = 0;
+        std::span<const GrassWalker> walkers_;
+        std::uint32_t walkerScatters_ = 0U;
     };
 }

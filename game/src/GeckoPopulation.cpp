@@ -138,11 +138,20 @@ namespace island
         const float observerDistance = observerValid
             ? std::hypot(agent.state.x - observerX, agent.state.z - observerZ)
             : std::numeric_limits<float>::infinity();
-        if (observerDistance < 2.7f && agent.state.behavior == GeckoBehavior::Rest) {
+        // A passing animal or the resident frightens a gecko as the walker does.
+        float threatDistance = observerDistance, threatX = observerX, threatZ = observerZ;
+        bool walkerThreat = false;
+        for (const GrassWalker& body : walkers_) {
+            if (body.strength <= 0.0f || !std::isfinite(body.x) || !std::isfinite(body.z)) continue;
+            const float bodyDistance = std::hypot(agent.state.x - body.x, agent.state.z - body.z);
+            if (bodyDistance < threatDistance) { threatDistance = bodyDistance; threatX = body.x; threatZ = body.z; walkerThreat = true; }
+        }
+        if (threatDistance < 2.7f && agent.state.behavior == GeckoBehavior::Rest) {
+            if (walkerThreat) ++walkerScatters_;
             agent.state.behavior = GeckoBehavior::Scurry;
             agent.behaviorSeconds = .75f;
             agent.state.headingRadians = std::atan2(
-                agent.state.z - observerZ, agent.state.x - observerX);
+                agent.state.z - threatZ, agent.state.x - threatX);
         } else {
             agent.behaviorSeconds -= deltaSeconds;
             if (agent.behaviorSeconds <= 0.0f) {

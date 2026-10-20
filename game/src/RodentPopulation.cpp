@@ -126,15 +126,24 @@ namespace island
                                        const float observerZ, const bool observerValid) noexcept
     {
         if (deltaSeconds <= 0.0f) return;
-        const float distance = observerValid
+        float distance = observerValid
             ? std::hypot(agent.state.x - observerX, agent.state.z - observerZ)
             : std::numeric_limits<float>::infinity();
+        // A passing animal or the resident frightens a rodent as the walker does.
+        float threatX = observerX, threatZ = observerZ;
+        bool walkerThreat = false;
+        for (const GrassWalker& body : walkers_) {
+            if (body.strength <= 0.0f || !std::isfinite(body.x) || !std::isfinite(body.z)) continue;
+            const float bodyDistance = std::hypot(agent.state.x - body.x, agent.state.z - body.z);
+            if (bodyDistance < distance) { distance = bodyDistance; threatX = body.x; threatZ = body.z; walkerThreat = true; }
+        }
         const float fleeDistance = agent.state.species == RodentSpecies::Mouse ? 2.5f : 3.3f;
         if (distance < fleeDistance && agent.state.behavior != RodentBehavior::Hidden) {
+            if (walkerThreat && agent.state.behavior != RodentBehavior::Scurry) ++walkerScatters_;
             agent.state.behavior = RodentBehavior::Scurry;
             agent.behaviorSeconds = .75f;
             agent.state.headingRadians = std::atan2(
-                agent.state.z - observerZ, agent.state.x - observerX);
+                agent.state.z - threatZ, agent.state.x - threatX);
         } else if ((agent.behaviorSeconds -= deltaSeconds) <= 0.0f) {
             ++agent.transitions;
             if (agent.state.behavior == RodentBehavior::Scurry) {

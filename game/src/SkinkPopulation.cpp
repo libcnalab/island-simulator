@@ -133,11 +133,20 @@ namespace island
         const float observerDistance = observerValid
             ? std::hypot(agent.state.x - observerX, agent.state.z - observerZ)
             : std::numeric_limits<float>::infinity();
-        if (observerDistance < 3.1f && agent.state.behavior != SkinkBehavior::Flee) {
+        // A passing animal or the resident frightens a skink as the walker does.
+        float threatDistance = observerDistance, threatX = observerX, threatZ = observerZ;
+        bool walkerThreat = false;
+        for (const GrassWalker& body : walkers_) {
+            if (body.strength <= 0.0f || !std::isfinite(body.x) || !std::isfinite(body.z)) continue;
+            const float bodyDistance = std::hypot(agent.state.x - body.x, agent.state.z - body.z);
+            if (bodyDistance < threatDistance) { threatDistance = bodyDistance; threatX = body.x; threatZ = body.z; walkerThreat = true; }
+        }
+        if (threatDistance < 3.1f && agent.state.behavior != SkinkBehavior::Flee) {
+            if (walkerThreat) ++walkerScatters_;
             agent.state.behavior = SkinkBehavior::Flee;
             agent.behaviorSeconds = 1.1f;
             agent.state.headingRadians = std::atan2(
-                agent.state.z - observerZ, agent.state.x - observerX);
+                agent.state.z - threatZ, agent.state.x - threatX);
         } else if ((agent.behaviorSeconds -= deltaSeconds) <= 0.0f) {
             ++agent.transitions;
             if (agent.state.behavior == SkinkBehavior::Bask) {

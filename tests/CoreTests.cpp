@@ -15,6 +15,7 @@
 #include "IslandSimulator/AntTrails.hpp"
 #include "IslandSimulator/StingraySandField.hpp"
 #include "IslandSimulator/GrassWalkers.hpp"
+#include "IslandSimulator/RodentPopulation.hpp"
 #include "IslandSimulator/CrabColony.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
 #include "IslandSimulator/CoastalWindResponse.hpp"
@@ -8100,6 +8101,32 @@ int main()
             doves.Update(0.05f,std::numeric_limits<float>::quiet_NaN(),0.0f,0.0f);
             Check(doves.GroundFlushCount()==1U&&doves.Birds()[14U].behavior==island::BirdBehavior::GroundDepart,
                   "a dove on the ground flushes from a passing animal");
+        }
+        // The small fauna scatter from a passing animal: a body a metre from a rodent, a
+        // resting gecko and a skink, with no walker about, sends each off away from the body.
+        {
+            island::RodentPopulation rodents(terrain);
+            const auto rodent=rodents.Rodents()[0];
+            const std::vector<island::GrassWalker> nearRodent{{rodent.x+1.0f,rodent.z,0.6f,1.0f}};
+            rodents.SetWalkers(nearRodent);
+            // The observer stands twelve metres off: near enough for full simulation, too far to frighten.
+            for(int step=0;step<60;++step) rodents.Update(0.05f,rodent.x+12.0f,rodent.y+1.0f,rodent.z);
+            Check(rodents.WalkerScatterCount()>=1U,"a rodent scurries from a passing animal");
+            island::GeckoPopulation geckos(terrain);
+            std::size_t resting=geckos.Geckos().size();
+            for(std::size_t i=0;i<geckos.Geckos().size();++i) if(geckos.Geckos()[i].behavior==island::GeckoBehavior::Rest) { resting=i; break; }
+            Check(resting<geckos.Geckos().size(),"a gecko starts at rest");
+            const auto gecko=geckos.Geckos()[resting];
+            const std::vector<island::GrassWalker> nearGecko{{gecko.x+1.0f,gecko.z,0.6f,1.0f}};
+            geckos.SetWalkers(nearGecko);
+            for(int step=0;step<60;++step) geckos.Update(0.05f,gecko.x+12.0f,gecko.y+1.0f,gecko.z);
+            Check(geckos.WalkerScatterCount()>=1U,"a resting gecko scurries from a passing animal");
+            island::SkinkPopulation skinks(terrain);
+            const auto skink=skinks.Skinks()[0];
+            const std::vector<island::GrassWalker> nearSkink{{skink.x+1.0f,skink.z,0.6f,1.0f}};
+            skinks.SetWalkers(nearSkink);
+            for(int step=0;step<60;++step) skinks.Update(0.05f,skink.x+12.0f,skink.y+1.0f,skink.z);
+            Check(skinks.WalkerScatterCount()>=1U,"a skink flees a passing animal");
         }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls
