@@ -1134,6 +1134,8 @@ def main():
                 raise RuntimeError("current tree and palm far fades are missing; check for a stale executable")
             if "driftwood, reef habitat, beach details, tracks, fronds and nuts shrink away too, and a palm's frond shading fades with distance instead of switching with its mesh" not in diagnostics:
                 raise RuntimeError("current prop far fades are missing; check for a stale executable")
+            if "deer, goats, boars, the bear and the resident share the land's fog and shrink away over the last 12 % of their range instead of paling to the fog colour before they vanish" not in diagnostics:
+                raise RuntimeError("current land-animal far fades are missing; check for a stale executable")
             if not re.search(r"grass mesh tiers change per patch at its own distance, morphing over \d+ m, drawn by quarter-cell blocks instead of switching whole cells by their centre", diagnostics):
                 raise RuntimeError("current per-patch grass tiers are missing; check for a stale executable")
             if "beyond that the wreck, hut and helicopter keep their projected mass shadows, cross-faded vertex by vertex with the map's" not in diagnostics:

@@ -1,3 +1,4 @@
+#include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/DeerRenderer.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 
@@ -491,8 +492,9 @@ namespace island
         effect_->setFogEnabledProperty(true);
         effect_->setFogColorProperty(Vector3(environment::FogColorRed,
             environment::FogColorGreen, environment::FogColorBlue));
-        effect_->setFogStartProperty(maximumDistance_ * .70f);
-        effect_->setFogEndProperty(maximumDistance_);
+        // The land's own fog; the end of the range is a shrink, not a fade to the fog colour.
+        effect_->setFogStartProperty(250.0f);
+        effect_->setFogEndProperty(660.0f);
         constexpr auto diagnostic =
             "island-simulator: four inland deer use long legs, pointed ears, spotted coats and one antlered silhouette";
         std::cout << diagnostic << '\n';MirrorRuntimeDiagnosticToPlatformLog(diagnostic);
@@ -526,9 +528,14 @@ namespace island
             const float distanceSquared = Vector3::DistanceSquared(centre, camera);
             if (distanceSquared > maximumDistance_ * maximumDistance_
                 || !frustum.Intersects(BoundingSphere(centre, 2.1f * animal.scale))) continue;
+            const float shrink = vegetation_fade::FarShrink(std::sqrt(distanceSquared), maximumDistance_,
+                                                            vegetation_fade::TreeShrinkFraction);
+            if (shrink <= 0.0f) continue;
             const float transmission = canopy_.SampleReceiver(
                 animal.x, animal.y + 1.0f, animal.z, animal.y);
+            const std::size_t first = staging_.size();
             AppendDeer(staging_, animal, transmission, distanceSquared < 48.0f * 48.0f, camera);
+            vegetation_fade::ShrinkAbout(staging_, first, animal.x, animal.y, animal.z, shrink);
             ++visibleCount_;
         }
         if (staging_.empty()) return;

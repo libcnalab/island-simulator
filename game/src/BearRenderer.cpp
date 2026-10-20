@@ -1,3 +1,4 @@
+#include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/BearRenderer.hpp"
 
 #include "IslandSimulator/CanopyLightField.hpp"
@@ -397,7 +398,8 @@ BearRenderer::BearRenderer(GraphicsDevice& device,const CanopyLightField& canopy
     }
     effect_->setVertexColorEnabledProperty(true);effect_->setLightingEnabledProperty(false);effect_->setFogEnabledProperty(true);
     effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
-    effect_->setFogStartProperty(maximumDistance*.65f);effect_->setFogEndProperty(maximumDistance);
+    // The land's own fog; the end of the range is a shrink, not a fade to the fog colour.
+    effect_->setFogStartProperty(250.0f);effect_->setFogEndProperty(660.0f);
     const char* material="island-simulator: bear fur loaded Content/wildlife/bear-fur.png; 128x128, 8 mips, 87380 RGBA8 bytes";
     std::cout<<material<<'\n';MirrorRuntimeDiagnosticToPlatformLog(material);
     const char* diagnostic="island-simulator: one large peaceful bear uses original articulated quadruped anatomy and a photographic-detail directional-fur material";
@@ -428,6 +430,8 @@ void BearRenderer::DrawShadow(const Matrix& view,const Matrix& projection,const 
         shadows_.emplace_back(origin+right*(.64f*std::cos(a0))+forward*(1.18f*std::sin(a0)),edge,Vector2::Zero);
         shadows_.emplace_back(origin+right*(.64f*std::cos(a1))+forward*(1.18f*std::sin(a1)),edge,Vector2::Zero);
     }
+    vegetation_fade::ShrinkAbout(shadows_,0,bear.x,bear.y,bear.z,vegetation_fade::FarShrink(
+        Vector3::Distance({bear.x,bear.y+1,bear.z},camera),maximumDistance_,vegetation_fade::TreeShrinkFraction));
     shadowTriangles_=static_cast<int>(shadows_.size()/3);
     shadowBuffer_->SetData(shadows_.data(),0,static_cast<int>(shadows_.size()),SetDataOptions::Discard);
     device_.setRasterizerStateProperty(RasterizerState::CullNone);device_.setBlendStateProperty(BlendState::AlphaBlend);
@@ -443,6 +447,8 @@ void BearRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector
     nearDetail_=distanceSquared<55*55;
     const auto tint=CanopyTransmissionTint(canopy_.SampleReceiver(bear.x,bear.y+1,bear.z,bear.y));
     BuildBear(vertices_,bear,tint,nearDetail_);
+    vegetation_fade::ShrinkAbout(vertices_,0,bear.x,bear.y,bear.z,vegetation_fade::FarShrink(
+        std::sqrt(distanceSquared),maximumDistance_,vegetation_fade::TreeShrinkFraction));
     if(vertices_.empty()||vertices_.size()>VertexCapacity)throw std::length_error("Bear mesh exceeds bounded upload");
     triangles_=static_cast<int>(vertices_.size()/3);visible_=1;
     buffer_->SetData(vertices_.data(),0,static_cast<int>(vertices_.size()),SetDataOptions::Discard);

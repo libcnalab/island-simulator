@@ -1,3 +1,4 @@
+#include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/ResidentRenderer.hpp"
 
 #include "IslandSimulator/CanopyLightField.hpp"
@@ -423,7 +424,8 @@ ResidentRenderer::ResidentRenderer(GraphicsDevice& device,const CanopyLightField
     effect_->setVertexColorEnabledProperty(true);effect_->setLightingEnabledProperty(false);
     effect_->setFogEnabledProperty(true);
     effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
-    effect_->setFogStartProperty(maximumDistance*.65f);effect_->setFogEndProperty(maximumDistance);
+    // The land's own fog; the end of the range is a shrink, not a fade to the fog colour.
+    effect_->setFogStartProperty(250.0f);effect_->setFogEndProperty(660.0f);
     const char* diagnostic="island-simulator: one adult resident uses original articulated human geometry and a 128x128 skin, hair, cloth and plant-fibre material atlas";
     std::cout<<diagnostic<<'\n';MirrorRuntimeDiagnosticToPlatformLog(diagnostic);
     const char* silhouette="island-simulator: resident uses a shoulder-sloped woven tunic with open cap sleeves and anatomically tapered calves";
@@ -458,6 +460,9 @@ void ResidentRenderer::DrawShadow(const Matrix& view,const Matrix& projection,co
             shadows_.emplace_back(c+r*std::cos(a1)+f*std::sin(a1),edge,Vector2::Zero);
         }
     }
+    vegetation_fade::ShrinkAbout(shadows_,0,resident.x,resident.y,resident.z,vegetation_fade::FarShrink(
+        Vector3::Distance({resident.x,resident.y+1.0f,resident.z},camera),maximumDistance_,
+        vegetation_fade::TreeShrinkFraction));
     shadowTriangles_=static_cast<int>(shadows_.size()/3);
     shadowBuffer_->SetData(shadows_.data(),0,static_cast<int>(shadows_.size()),SetDataOptions::Discard);
     device_.setRasterizerStateProperty(RasterizerState::CullNone);
@@ -475,6 +480,9 @@ void ResidentRenderer::Draw(const Matrix& view,const Matrix& projection,const Ve
     if(!IsVisible(view,projection,camera,resident,maximumDistance_))return;
     const auto tint=CanopyTransmissionTint(canopy_.SampleReceiver(resident.x,resident.y+1.0f,resident.z,resident.y));
     BuildHuman(vertices_,resident,tint);
+    vegetation_fade::ShrinkAbout(vertices_,0,resident.x,resident.y,resident.z,vegetation_fade::FarShrink(
+        Vector3::Distance({resident.x,resident.y+1.0f,resident.z},camera),maximumDistance_,
+        vegetation_fade::TreeShrinkFraction));
     if(vertices_.empty()||vertices_.size()>VertexCapacity)throw std::length_error("Resident mesh exceeds bounded upload");
     triangles_=static_cast<int>(vertices_.size()/3);visible_=1;
     buffer_->SetData(vertices_.data(),0,static_cast<int>(vertices_.size()),SetDataOptions::Discard);

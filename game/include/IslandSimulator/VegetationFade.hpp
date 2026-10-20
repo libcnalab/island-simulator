@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
+#include <vector>
 
 // How the jungle floor's plants leave the view, kept free of graphics types for the core
 // tests. Before this, every understory plant, bush and ground plant swapped meshes on one
@@ -36,5 +38,20 @@ namespace island::vegetation_fade
         const float start = maximumDistance * (1.0f - std::clamp(fraction, 0.01f, 1.0f));
         const float t = std::clamp((distance - start) / (maximumDistance - start), 0.0f, 1.0f);
         return 1.0f - t * t * (3.0f - 2.0f * t);
+    }
+
+    /** @brief Scales the world-space vertices from `first` on about the foot point (an animal
+     *  built per frame shrinks into the ground over the end of its range like the plants). */
+    template <class Vertex>
+    void ShrinkAbout(std::vector<Vertex>& vertices, const std::size_t first, const float footX,
+                     const float footY, const float footZ, const float scale)
+    {
+        if (scale >= 1.0f) return;
+        for (std::size_t i = first; i < vertices.size(); ++i) {
+            auto& p = vertices[i].Position;
+            p.X = footX + (p.X - footX) * scale;
+            p.Y = footY + (p.Y - footY) * scale;
+            p.Z = footZ + (p.Z - footZ) * scale;
+        }
     }
 }

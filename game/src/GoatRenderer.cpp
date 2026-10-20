@@ -1,3 +1,4 @@
+#include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/GoatRenderer.hpp"
 #include "IslandSimulator/GoatMesh.hpp"
 #include "IslandSimulator/GoatCoatUv.hpp"
@@ -119,8 +120,9 @@ GoatRenderer::GoatRenderer(GraphicsDevice& device,
     effect_->setTextureEnabledProperty(false);
     effect_->setFogEnabledProperty(true);
     effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
-    effect_->setFogStartProperty(maximumDistance_*0.65f);
-    effect_->setFogEndProperty(maximumDistance_);
+    // The land's own fog; the end of the range is a shrink, not a fade to the fog colour.
+    effect_->setFogStartProperty(250.0f);
+    effect_->setFogEndProperty(660.0f);
 }
 GoatRenderer::~GoatRenderer()=default;
 void GoatRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector3& camera,
@@ -135,6 +137,10 @@ void GoatRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector
         const float distanceSquared=Vector3::DistanceSquared(centre,camera);
         if(distanceSquared>maximumDistance_*maximumDistance_
             ||!frustum.Intersects(BoundingSphere(centre,1.8f*goat.scale)))continue;
+        const float shrink=vegetation_fade::FarShrink(std::sqrt(distanceSquared),maximumDistance_,
+                                                      vegetation_fade::TreeShrinkFraction);
+        if(shrink<=0.0f)continue;
+        const std::size_t firstCoat=vertices_.size(),firstSolid=solidVertices_.size();
         const auto& pose=goat.pose;
         const auto mesh=BuildGoatMesh(pose,goat.grazingPose,distanceSquared<30*30,goat.tailSwing,goat.earFlick,goat.chew);
         for(const auto& vertex:mesh.vertices) {
@@ -159,6 +165,8 @@ void GoatRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector
             target.emplace_back(world,Color(channel(color.getRProperty(),tint.red),
                 channel(color.getGProperty(),tint.green),channel(color.getBProperty(),tint.blue)),Vector2(uv[0],uv[1]));
         }
+        vegetation_fade::ShrinkAbout(vertices_,firstCoat,goat.x,goat.y,goat.z,shrink);
+        vegetation_fade::ShrinkAbout(solidVertices_,firstSolid,goat.x,goat.y,goat.z,shrink);
         ++visible_;
     }
     if(vertices_.empty())return;

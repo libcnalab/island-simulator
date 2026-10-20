@@ -54,6 +54,23 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 213 (2026-10-20) — land animals no longer pale into ghosts before they vanish
+
+The flight audit noted that deer, goats, the bear and the resident fogged to the fog
+colour from 0.65-0.70 of their range and boars from 90 m, while the land around them
+takes fog only from about 250 m: the early fog was a fade that hid the cut, but in the
+clear forest it turned a far animal into a pale sky-blue silhouette first. On native
+(wildlife scale 0.7) a goat 70 m away was 52 % of the way to the fog colour (fog 55-84 m)
+and a deer 115 m away 54 % (93-133 m). The five now use the land's fog (250-660 m) and,
+over the last 12 % of their range, shrink about their feet into the ground
+(`vegetation_fade::ShrinkAbout` on the vertices they build each frame; the bear's and the
+resident's own blob shadows shrink with them), the same end-of-range rule as the trees.
+Startup: "deer, goats, boars, the bear and the resident share the land's fog and shrink
+away over the last 12 % of their range instead of paling to the fog colour before they
+vanish", pinned. Native `deer`, `goats`, `boars`, `bear` and `resident` pass; their animals
+are near, so the frames match the previous captures (0 to 0.9 % of pixels changed by 20
+levels or more; `resident` 2.6 % against a capture from before passes 157-177).
+
 ## Loop pass 212 (2026-10-20) — the props and the palm crowns' shading fade too
 
 The rest of the flight audit's hard switches outside the canopy's own mesh swap. The

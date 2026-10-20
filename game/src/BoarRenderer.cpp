@@ -1,3 +1,4 @@
+#include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/BoarRenderer.hpp"
 #include "IslandSimulator/MonkeyFurUv.hpp"
@@ -385,8 +386,9 @@ namespace island
         effect_->setDiffuseColorProperty(Vector3(1.46f, 1.36f, 1.24f));
         effect_->setFogEnabledProperty(true);
         effect_->setFogColorProperty(Vector3(environment::FogColorRed, environment::FogColorGreen, environment::FogColorBlue));
-        effect_->setFogStartProperty(90.0f);
-        effect_->setFogEndProperty(180.0f);
+        // The land's own fog; the end of the range is a shrink, not a fade to the fog colour.
+        effect_->setFogStartProperty(250.0f);
+        effect_->setFogEndProperty(660.0f);
         constexpr const char* diagnostic =
             "island-simulator: boars receive bilinear per-vertex canopy light in their existing batch";
         std::cout << diagnostic << '\n';
@@ -464,6 +466,8 @@ namespace island
                               up, vector(grounded.forward), boar.scale, canopyLight_};
             const auto vertexStart=staging_.size();
             AppendBoar(mesh, boar, grounded, distance < 55.0f * 55.0f);
+            vegetation_fade::ShrinkAbout(staging_, vertexStart, origin.X, origin.Y, origin.Z,
+                vegetation_fade::FarShrink(std::sqrt(distance), maximumDistance_, vegetation_fade::TreeShrinkFraction));
             if(staging_.size()-vertexStart>6000U)
                 throw std::runtime_error("Single boar exceeds per-animal geometry budget");
             ++visibleCount_;
