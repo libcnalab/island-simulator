@@ -97,6 +97,7 @@ in float vBaseMask;
 in float vWindExposure;
 
 uniform vec3 uCameraPosition;
+uniform float uGlow;   // 0 the foam; above 0 the night glow pass (its strength)
 uniform float uTime;
 
 out vec4 fragColor;
@@ -183,6 +184,13 @@ void main()
 
     vec3 foam = mix(vec3(0.78, 0.91, 0.88), vec3(0.96, 0.98, 0.91), crest);
     fragColor = vec4(foam * alpha, alpha);
+    if (uGlow > 0.0) {
+        // The glow pass, after the night grade: plankton stirred by the breaking crest light
+        // up blue in specks (the foam's cells), brightest at the crest, a faint trail behind.
+        float specks = smoothstep(0.55, 0.95, cells) * (0.6 + 0.4 * sin(uTime * 7.0 + dot(vWorld.xz, vec2(3.1, 2.3))));
+        float glow = (crest * 1.4 + wash * 0.5) * specks * envelope * edgeMask * distanceFade * uGlow;
+        fragColor = vec4(vec3(0.16, 0.62, 1.0), clamp(glow, 0.0, 1.0));
+    }
 }
 )";
 
@@ -371,6 +379,7 @@ void main()
             customEffect_->SetUniformVec3("uCameraPosition", cameraPosition.X,
                                           cameraPosition.Y, cameraPosition.Z);
             customEffect_->SetUniformFloat("uTime", timeSeconds);
+            customEffect_->SetUniformFloat("uGlow", 0.0f);
             device_.DrawIndexedPrimitives(PrimitiveType::TriangleList, 0, 0, vertexCount_, 0,
                                           primitiveCount_);
             ++drawCallCount_;
@@ -386,6 +395,28 @@ void main()
             }
         }
 
+        device_.setBlendStateProperty(BlendState::Opaque);
+        device_.setDepthStencilStateProperty(DepthStencilState::Default);
+    }
+
+    void ShorelineRenderer::DrawGlow(const Matrix& view, const Matrix& projection,
+                                     const Vector3& cameraPosition, const float timeSeconds, const float strength)
+    {
+        if (!customShaderReady_ || !(strength > 0.01f)) return;
+        device_.setRasterizerStateProperty(RasterizerState::CullNone);
+        device_.setBlendStateProperty(BlendState::Additive);
+        device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
+        device_.SetVertexBuffer(vertices_.get());
+        device_.setIndicesProperty(indices_.get());
+        float viewProjection[16];
+        (view * projection).ToColumnMajor(viewProjection);
+        customEffect_->Apply();
+        customEffect_->SetUniformMat4("uViewProjection", viewProjection);
+        customEffect_->SetUniformVec3("uCameraPosition", cameraPosition.X, cameraPosition.Y, cameraPosition.Z);
+        customEffect_->SetUniformFloat("uTime", timeSeconds);
+        customEffect_->SetUniformFloat("uGlow", strength);
+        device_.DrawIndexedPrimitives(PrimitiveType::TriangleList, 0, 0, vertexCount_, 0, primitiveCount_);
+        ++drawCallCount_;
         device_.setBlendStateProperty(BlendState::Opaque);
         device_.setDepthStencilStateProperty(DepthStencilState::Default);
     }

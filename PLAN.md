@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 243 (2026-10-20) — bioluminescence in the surf
+
+A tropical night detail: `ShorelineRenderer::DrawGlow` draws the foam ribbon a second time
+after the night grade, additive, in a glow mode of its own shader (`uGlow`): the plankton
+stirred by the breaking crest light up blue (0.16/0.62/1.0) in specks (the foam's own porous
+cells, twinkling), brightest at the crest with a faint trail in the wash behind, with the
+foam's envelope, edge and distance fades. The game asks for it from 6 degrees below the
+horizon, weaker under a bright moon (by up to 55 %). A first build declared the glow uniform
+in the vertex shader instead of the fragment's and the capture failed on the GL error; fixed.
+`jetty` at 23:00 shows the glittering lace along the waterline; the day's `jetty` passes.
+
 ## Loop pass 242 (2026-10-20) — shooting stars
 
 A small touch for the night sky. `shooting_stars::At` (core, header-only) gives, as a function

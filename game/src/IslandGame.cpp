@@ -5754,6 +5754,12 @@ namespace island
             timeOfDay_->DrawGrade(light, localLit);
             timeOfDay_->DrawNightSky(cameraView_, cameraProjection_, renderCameraPosition_, light, timeSeconds);
             timeOfDay_->DrawFlash(weather.flash);
+            // the surf glitters blue on dark nights, less under a bright moon
+            if (!underground) {
+                const float dark = 1.0f - std::clamp((light.sunElevationDegrees + 6.0f) / 8.0f, 0.0f, 1.0f);
+                shorelineRenderer_->DrawGlow(cameraView_, cameraProjection_, renderCameraPosition_, timeSeconds,
+                                             dark * (1.0f - 0.55f * light.moonLight));
+            }
             if (fireflyRenderer_ && fireflies_ && fireflies_->Presence() > 0.0f && !underground)
                 fireflyRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, fireflies_->Flies());
             if (hutRenderer_)
