@@ -7432,6 +7432,38 @@ int main()
     }
 
     {
+        // Perched birds flush: the walker within 9 m of the perch, or a coconut's thud within
+        // 30 m, sends the bird off at once; a distant walker and a far thud leave it sitting.
+        const island::IslandTerrain terrain;
+        const float perchX = 20.0f, perchZ = 20.0f;
+        const std::vector<island::BirdPerchSite> sites{{perchX, terrain.Height(perchX, perchZ) + 2.0f, perchZ, 0.3f, island::BirdPerchKind::Wreck}};
+        island::BirdFlock sitting(terrain);
+        sitting.SetPerchSites(sites);
+        Check(sitting.PerchedCount() == 0 && sitting.Birds()[0].behavior == island::BirdBehavior::Perched,
+              "a bird is seeded onto the wreck perch");
+        sitting.Update(0.05f, perchX + 25.0f, sites[0].y, perchZ);
+        Check(sitting.Birds()[0].behavior == island::BirdBehavior::Perched && sitting.FlushCount() == 0U,
+              "a walker 25 m off leaves the perched bird sitting");
+        sitting.NoteDisturbance(perchX + 45.0f, perchZ);
+        sitting.Update(0.05f, perchX + 25.0f, sites[0].y, perchZ);
+        Check(sitting.Birds()[0].behavior == island::BirdBehavior::Perched && sitting.FlushCount() == 0U,
+              "a thud 45 m off leaves the perched bird sitting");
+        sitting.Update(0.05f, perchX + 6.0f, sites[0].y, perchZ);
+        Check(sitting.Birds()[0].behavior == island::BirdBehavior::Depart && sitting.FlushCount() == 1U,
+              "a walker 6 m off flushes the perched bird");
+        float climbed = sitting.Birds()[0].y;
+        for (int step = 0; step < 70; ++step) { sitting.Update(0.05f, perchX + 6.0f, sites[0].y, perchZ); climbed = std::max(climbed, sitting.Birds()[0].y); }
+        Check(sitting.Birds()[0].behavior == island::BirdBehavior::Fly && climbed > sites[0].y + 2.0f,
+              "the flushed bird climbs away and is flying within four seconds");
+        island::BirdFlock startled(terrain);
+        startled.SetPerchSites(sites);
+        startled.NoteDisturbance(perchX + 12.0f, perchZ);
+        startled.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
+        Check(startled.Birds()[0].behavior == island::BirdBehavior::Depart && startled.FlushCount() == 1U,
+              "a thud 12 m off flushes the perched bird with no walker about");
+    }
+
+    {
         // Butterflies alternate their nectar visits between the ground patch and a flowering
         // bush inside the habitat, hovering at blossom height over the bush.
         const island::IslandTerrain terrain;

@@ -251,6 +251,14 @@ namespace island
         }
     }
 
+    void BirdFlock::NoteDisturbance(const float x, const float z) noexcept
+    {
+        if (!std::isfinite(x) || !std::isfinite(z)) return;
+        disturbanceX_ = x;
+        disturbanceZ_ = z;
+        disturbanceSeconds_ = DisturbanceSeconds;
+    }
+
     void BirdFlock::Update(const float deltaSeconds, const float observerX,
                            const float observerY, const float observerZ) noexcept
     {
@@ -261,6 +269,7 @@ namespace island
         const float safeDelta = std::isfinite(deltaSeconds)
             ? std::clamp(deltaSeconds, 0.0f, 0.1f) : 0.0f;
         elapsedSeconds_ += safeDelta;
+        disturbanceSeconds_ = std::max(0.0f, disturbanceSeconds_ - safeDelta);
         ++frameIndex_;
         fullSimulationCount_ = 0;
         reducedSimulationCount_ = 0;
@@ -294,6 +303,18 @@ namespace island
                 break;
             }
 
+            if (agent.state.behavior == BirdBehavior::Perched) {
+                // A perched bird flushes: the walker too close, or a thud within earshot.
+                const float horizontal = std::hypot(deltaX, deltaZ);
+                const bool crowded = std::isfinite(horizontal) && horizontal < FlushDistance;
+                const bool thudded = disturbanceSeconds_ > 0.0f && std::hypot(
+                    agent.state.x - disturbanceX_, agent.state.z - disturbanceZ_) < DisturbanceDistance;
+                if (crowded || thudded) {
+                    agent.state.behavior = BirdBehavior::Depart;
+                    agent.behaviorSeconds = 0.0f;
+                    ++flushCount_;
+                }
+            }
             agent.accumulatedSeconds += safeDelta;
             const std::uint32_t divisor = WildlifeActivationPolicy::UpdateDivisor(
                 agent.state.simulationTier);

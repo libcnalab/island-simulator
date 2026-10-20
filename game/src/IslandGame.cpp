@@ -2207,7 +2207,8 @@ namespace island
                   << "island-simulator: birds " << birdFlock_.Birds().size()
                   << " agents in a distance-throttled one-batch simulation\n"
                   << "island-simulator: birds use " << birdFlock_.PerchSites().size()
-                  << " real branch, rock, and wreck perches with approach and departure\n"
+                  << " real branch, rock, and wreck perches with approach and departure; "
+                     "a perched bird flushes when the walker comes within 9 m or a coconut thuds within 30 m\n"
                   << "island-simulator: bird flight uses slow radial drift, banking, and "
                      "intermittent glide\n"
                   << "island-simulator: seabirds break from their high orbits to circle low over the fish school of the moment\n"
@@ -2575,6 +2576,7 @@ namespace island
             // The thud carries: deer and goats within thirty metres stop and face the fall.
             if (deer_) deer_->NoteDisturbance(landing.x, landing.z);
             if (goats_) goats_->NoteDisturbance(landing.x, landing.z);
+            birdFlock_.NoteDisturbance(landing.x, landing.z);
         }
         {
             // The seabirds' school of the moment: the schools take turns every ninety seconds

@@ -121,6 +121,13 @@ namespace island
         [[nodiscard]] std::size_t HuntingCount() const noexcept;
         [[nodiscard]] const BirdDiveSplash& DiveSplash() const noexcept { return diveSplash_; }
         [[nodiscard]] std::uint32_t DiveCount() const noexcept { return diveCount_; }
+        /** @brief A sudden sound at a point; perched birds near it flush within the second. */
+        void NoteDisturbance(float x, float z) noexcept;
+        [[nodiscard]] std::uint32_t FlushCount() const noexcept { return flushCount_; }
+        // A perched bird leaves when the observer comes this close, or a thud lands this near.
+        static constexpr float FlushDistance = 9.0f;
+        static constexpr float DisturbanceDistance = 30.0f;
+        static constexpr float DisturbanceSeconds = 1.0f;
         static constexpr float DiveIntervalSeconds = 9.0f;
         static constexpr float DiveSeconds = 1.6f;
         static constexpr float SplashSeconds = 2.6f;
@@ -198,6 +205,8 @@ namespace island
         bool forageValid_ = false;
         BirdDiveSplash diveSplash_;
         std::uint32_t diveCount_ = 0U;
+        float disturbanceX_ = 0.0f, disturbanceZ_ = 0.0f, disturbanceSeconds_ = 0.0f;
+        std::uint32_t flushCount_ = 0U;
         int fullSimulationCount_ = 0;
         int reducedSimulationCount_ = 0;
         int dormantSimulationCount_ = 0;

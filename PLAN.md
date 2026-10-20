@@ -46,6 +46,20 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 20 (2026-10-20) — perched birds flush
+
+A bird on a perch sat out its eight to fourteen seconds whatever happened beside it: the walker
+could stand under the mooring post and the bird stayed. Now a perched bird flushes the frame
+the observer comes within 9 m horizontally, and `BirdFlock::NoteDisturbance` (set by the game
+from the coconut landing, alongside the herds') flushes every perched bird within 30 m during
+the following second. A flush is the ordinary departure from the start (`Depart`, the 1.1 s
+unfold and the 3.2 s climb to the route) and counts in `FlushCount()`; the bird then waits its
+usual minute before the next perch. The perch diagnostic gains "a perched bird flushes when
+the walker comes within 9 m or a coconut thuds within 30 m", pinned by the native capture
+tool. Core checks on a flock seeded onto one wreck perch: a walker 25 m off and a thud 45 m off
+leave it sitting; a walker 6 m off flushes it and it is flying higher than the perch within four
+seconds; a thud 12 m off flushes it with no walker about. Native `birds` passes.
+
 ## Loop pass 19 (2026-10-20) — the thud startles the herds
 
 The coconut's thud of pass 15 reached the player's ears and nothing else. Both herds now take a
