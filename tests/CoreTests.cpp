@@ -41,6 +41,7 @@
 #include "IslandSimulator/BirdShadowProjection.hpp"
 #include "IslandSimulator/CloudShadow.hpp"
 #include "IslandSimulator/CascadeMistField.hpp"
+#include "IslandSimulator/CanopyShafts.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
@@ -7821,6 +7822,12 @@ int main()
             }
             Check(rose&&!strayed&&most>=6U,"the spray rises above the pool in a bounded cloud of puffs");
         }
+        // The sun shafts belong under the canopy and need the sun: full under a dense crown
+        // in the open sun, none in the open, almost none under a cloud.
+        Check(island::CanopyShafts::Strength(0.2f,0.0f)==1.0f&&island::CanopyShafts::Strength(0.9f,0.0f)==0.0f
+              &&island::CanopyShafts::Strength(0.2f,1.0f)<0.2f&&island::CanopyShafts::Strength(0.575f,0.0f)>0.45f
+              &&island::CanopyShafts::Strength(0.575f,0.0f)<0.55f,
+              "canopy sun shafts show under a crown in the sun and not in the open or under a cloud");
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls
         // on a little before it rests; resting fruit sit on the ground and keep still.

@@ -46,6 +46,22 @@ with the 1024 px map rendering 873--877 casters, no caster shader failures, GL e
 contexts. All 73 active native tests pass. Remaining: animals, hut and wreck surfaces and water do
 not yet receive; rotor blades and glass do not cast; a physical-GPU FPS comparison is the operator's.
 
+## Loop pass 39 (2026-10-20) — sun shafts under the canopy
+
+Under the crowns the light arrived as dapple on the ground and nothing in the air. A new
+full-screen pass (`CanopyShaftRenderer`, the underwater pass's clip triangle and additive
+premultiplied output) draws slow beams leaning toward the sun's side of the frame, two
+carriers (broad between the crowns, fine within them) drifting at a few hundredths of a
+radian a second, brightest high in the view, in a warm pale tint. Its strength comes from a
+core rule, `CanopyShafts::Strength`: the canopy light field's transmission at the camera
+(open sky 0.80 down to 0.35 under a dense crown) and the cumulus cover there (a cloud
+removes 85 %), so there are none in the open, none under a cloud and none under water or
+in the free camera. Diagnostic "under the canopy the view carries slow sun shafts leaning
+to the sun, gone in the open and under a cloud" is pinned by the native capture tool. Core
+check: the rule gives 1 under a dense crown in the sun, 0 in the open, under 0.2 beneath a
+cloud and about a half midway. Native `jungle` passes (the `canopy` viewpoint is the LOD
+inspection mode, not a scene).
+
 ## Loop pass 38 (2026-10-20) — spray at the cascade's foot
 
 The drop of pass 6 had foam at the lip and nothing in the air. A core `CascadeMistField`

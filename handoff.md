@@ -99,6 +99,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 36: coconuts that strike the shallows float and drift ashore (PLAN "Loop pass 36").
 - Pass 37: the cumulus shadows drift over the land as well as the sea (PLAN "Loop pass 37").
 - Pass 38: a mist of spray hangs at the cascade's foot and drifts on the breeze (PLAN "Loop pass 38").
+- Pass 39: sun shafts under the canopy, gone in the open and under a cloud (PLAN "Loop pass 39").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

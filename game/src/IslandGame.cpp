@@ -3,6 +3,8 @@
 #include "IslandSimulator/LookoutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/StreamCourse.hpp"
+#include "IslandSimulator/CloudShadow.hpp"
+#include "IslandSimulator/CanopyShafts.hpp"
 #include "IslandSimulator/WreckScourPatch.hpp"
 #include "IslandSimulator/CanopyLighting.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
@@ -2153,6 +2155,7 @@ namespace island
         touchOverlay_ = std::make_unique<TouchOverlay>(device);
         waterViewOverlay_ = std::make_unique<WaterViewOverlay>(device);
         underwaterEffect_ = std::make_unique<UnderwaterEffectRenderer>(device);
+        canopyShafts_ = std::make_unique<CanopyShaftRenderer>(device);
         worldDebugRenderer_ = std::make_unique<WorldDebugRenderer>(device, terrain_);
         if (viewpoint_ == FixedViewpoint::GroundContactDetail) {
             constexpr float contactZ = 45.0f;
@@ -4447,6 +4450,10 @@ namespace island
             const float cameraDepth = overSea && eye.Y < 0.0f ? -eye.Y : 0.0f;
             underwaterEffect_->Draw(cameraDepth, waterViewModel_.Intensity(), bubbleBurst_, timeSeconds,
                                     cameraView_, viewport.getWidthProperty(), viewport.getHeightProperty());
+            // Under the canopy, and only with the sun out, the view carries the sun's shafts.
+            const float shaftStrength = cameraDepth > 0.03f || IsDebugFreeCameraActive() || !std::isfinite(eye.X) || !std::isfinite(eye.Z)
+                ? 0.0f : CanopyShafts::Strength(canopyLightField_.Sample(eye.X, eye.Z), CloudShadow::Cover(eye.X, eye.Z, timeSeconds));
+            canopyShafts_->Draw(shaftStrength, timeSeconds, cameraView_, viewport.getWidthProperty(), viewport.getHeightProperty());
         }
 
         if (locomotionModeNoticeSeconds_ > 0.0f) {
