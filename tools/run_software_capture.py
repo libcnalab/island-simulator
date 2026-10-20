@@ -1167,6 +1167,8 @@ def main():
                 raise RuntimeError("current octopus ink is missing; check for a stale executable")
             if "a crocodile sliding off the bank goes under with a heavy splash and a ring on the water" not in diagnostics:
                 raise RuntimeError("current crocodile entry splash is missing; check for a stale executable")
+            if "the deer keep seven metres clear of the campfire" not in diagnostics:
+                raise RuntimeError("current deer fire clearance is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

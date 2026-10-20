@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 64 (2026-10-20) — the deer keep clear of the fire
+
+The antlered deer's clearing home lay 4.8 m from the campfire and it grazed through the
+flames. `DeerHerd::IsValidPosition` now refuses any point within 7 m of the campfire
+(`FireClearance`), for grazing, walking and bolting alike, and the home search refuses a
+home centre within 10 m of it, so the clearing deer's home moved to the next candidate on
+its spiral (the first draft left the home where it was and the deer stood pinned on an
+invalid point). The herd diagnostic gains "the deer keep seven metres clear of the
+campfire", pinned by the native capture tool. Core checks: a deer home still reaches the
+fire's surroundings, and over ten simulated minutes with the walker driving the herd about
+from beside the fire every other minute, no deer comes within seven metres of it. Native
+`deer` passes.
+
 ## Loop pass 63 (2026-10-20) — the crocodile's slide into the water
 
 A crocodile retreating off the bank went under without a mark on the water. `CrocodileGroup`

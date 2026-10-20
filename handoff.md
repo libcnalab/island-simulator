@@ -124,6 +124,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 61: the resident raises a hand to a player who stops close by (PLAN "Loop pass 61").
 - Pass 62: a startled octopus jets for its den behind a cloud of ink (PLAN "Loop pass 62").
 - Pass 63: a crocodile sliding off the bank goes under with a splash and a ring (PLAN "Loop pass 63").
+- Pass 64: the deer keep seven metres clear of the campfire (PLAN "Loop pass 64").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

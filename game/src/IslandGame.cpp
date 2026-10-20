@@ -2098,7 +2098,8 @@ namespace island
                   << "boars root at the nearest trunk base, monkeys favour fruiting crowns and linger to pick\n";
         std::cout << "island-simulator: herd behaviour: goats share their separated ranges and the "
                      "East deer pair walks back together; a sentinel lifts its head first and the others follow after 0.7 s; "
-                     "a coconut's thud startles the deer and goats within 30 m, who stand facing the fall for 6 s\n";
+                     "a coconut's thud startles the deer and goats within 30 m, who stand facing the fall for 6 s; "
+                     "the deer keep seven metres clear of the campfire\n";
         std::cout << "island-simulator: snakes " << snakes_->Snakes().size()
                   << " ground agents with separated dense-understory-margin homes; "
                   << snakes_->TreeSnakes().size()<<" arboreal agents on sampled broadleaf trunks\n";

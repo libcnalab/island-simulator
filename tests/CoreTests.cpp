@@ -19,6 +19,7 @@
 #include "IslandSimulator/ForestTwigLayout.hpp"
 #include "IslandSimulator/OctopusInkField.hpp"
 #include "IslandSimulator/CrocodileGroup.hpp"
+#include "IslandSimulator/CampfireSite.hpp"
 #include "IslandSimulator/CrabColony.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
 #include "IslandSimulator/CoastalWindResponse.hpp"
@@ -8187,6 +8188,24 @@ int main()
             for(int step=0;step<1200&&crocs.LastEntry().count==0U;++step) crocs.Update(0.05f,start.x+3.0f,start.y+1.6f,start.z);
             Check(crocs.LastEntry().count==1U&&terrain.Height(crocs.LastEntry().x,crocs.LastEntry().z)<0.3f,
                   "the crocodile slides into the water with one entry noted at the water's edge");
+        }
+        // The deer keep clear of the campfire: a clearing home reaches the fire, yet over ten
+        // minutes no deer, grazing, walking or bolting from the walker, comes within seven
+        // metres of it.
+        {
+            island::DeerHerd herd(terrain,{});
+            bool homeReachesFire=false;
+            for(const auto& home:herd.Homes()) if(std::hypot(home.x-island::CampfireSite::X,home.z-island::CampfireSite::Z)<home.radius+5.0f) homeReachesFire=true;
+            Check(homeReachesFire,"a deer home reaches the campfire");
+            float nearest=1e9f;
+            for(int step=0;step<12000;++step) {
+                const auto& lead=herd.Deer()[0];
+                // The walker drives the herd about: standing near the fire every other minute.
+                const bool drive=(step/1200)%2==0;
+                herd.Update(0.05f,drive?island::CampfireSite::X+4.0f:1000.0f,drive?lead.y+1.6f:0.0f,drive?island::CampfireSite::Z:1000.0f);
+                for(const auto& deer:herd.Deer()) nearest=std::min(nearest,std::hypot(deer.x-island::CampfireSite::X,deer.z-island::CampfireSite::Z));
+            }
+            Check(nearest>island::DeerHerd::FireClearance-0.01f,"no deer comes within seven metres of the campfire");
         }
     }
         // The ground under that tree slopes, so a fruit bounces off its strike point and rolls

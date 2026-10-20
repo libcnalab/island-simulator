@@ -39,6 +39,8 @@ namespace island
         static constexpr float HerdReactionSeconds = .7f;
         // A sudden sound (a coconut's thud) within this range makes a deer stand and face it.
         static constexpr float StartleDistance = 30.0f;
+        // No deer comes closer than this to the campfire, grazing or fleeing.
+        static constexpr float FireClearance = 7.0f;
         static constexpr float StartleSeconds = 6.0f;
         // A clearing pair drifting further apart than this walks back together.
         static constexpr float CohesionDistance = 9.0f;

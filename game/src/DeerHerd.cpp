@@ -1,4 +1,5 @@
 #include "IslandSimulator/DeerHerd.hpp"
+#include "IslandSimulator/CampfireSite.hpp"
 
 #include "IslandSimulator/StreamRoute.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
@@ -112,6 +113,8 @@ namespace island
             found = (sample.surface == TerrainSurface::InteriorGround
                      || sample.surface == TerrainSurface::CoastalGround)
                 && sample.signedShoreDistance > 44.0f && sample.slopeRadians < .42f
+                // The clearing home stands off the campfire with room to graze round it.
+                && std::hypot(agent.home.x - CampfireSite::X, agent.home.z - CampfireSite::Z) > FireClearance + 3.0f
                 && !obstacles_.IntersectsCircle(agent.home.x, agent.home.z, .72f);
         }
         if (!found) throw std::runtime_error("No safe open inland deer habitat");
@@ -139,6 +142,7 @@ namespace island
             || sample.surface == TerrainSurface::CoastalGround;
         return ground && sample.signedShoreDistance > 40.0f && sample.slopeRadians < .48f
             && std::hypot(x - homes_[index].x, z - homes_[index].z) <= homes_[index].radius
+            && std::hypot(x - CampfireSite::X, z - CampfireSite::Z) > FireClearance
             && !obstacles_.IntersectsCircle(x, z, .72f);
     }
 
