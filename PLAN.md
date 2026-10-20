@@ -54,6 +54,22 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 124 (2026-10-20) — rodents bolt from a snake
+
+Mice and rats scattered from the walker, the herds, the bear and the resident, but a snake
+could pass through them. `RodentPopulation::SetSnakes` gives the population the snakes
+each frame: a snake's head within `SnakeFleeDistance` (3.5 m), nearer than any walker, is
+the threat the rodent answers to — it scurries away from the head for 1.1 s (the walker's
+0.75) and the hide that follows lasts `SnakeHideSeconds` (6 s, plus the usual spread)
+instead of the walker's 1.8 s (`Agent::snakeBolt` carries that into the hide);
+`SnakeScatterCount()` counts the bolts. The game passes the snake population's states
+before the rodents' update. General report line: "a snake's head within three and a half
+metres sends a mouse or rat bolting and to ground for six seconds or more" (pinned). Core
+checks: a snake's head two and a half metres from a rodent (placed on the far side from
+its home) sends it bolting away from the snake; three seconds on it has gone to ground and
+five and a half seconds on it is still hidden. Native `mice` passes (luminance deviation
+22.5).
+
 ## Loop pass 123 (2026-10-20) — birds mob a snake
 
 A bird flushed by a snake's head at its perch (pass 91) simply left. It now mobs the

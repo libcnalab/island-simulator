@@ -1292,6 +1292,8 @@ def main():
                 raise RuntimeError("current blown sand is missing; check for a stale executable")
             if "a bird flushed by a snake mobs it, circling low over its head for eight seconds" not in diagnostics:
                 raise RuntimeError("current bird mobbing is missing; check for a stale executable")
+            if "a snake's head within three and a half metres sends a mouse or rat bolting and to ground" not in diagnostics:
+                raise RuntimeError("current rodent snake flight is missing; check for a stale executable")
             if args.viewpoint == "stingray-buried" and "stingray QA camera frames one settled ray lying half-buried in the sand" not in diagnostics:
                 raise RuntimeError("buried stingray capture did not hold the ray down")
             if args.viewpoint == "boar-lying" and "boar QA camera frames one resting boar lying on folded legs" not in diagnostics:

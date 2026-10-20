@@ -2397,6 +2397,7 @@ namespace island
                   << "island-simulator: a perched bird preens between its looks around, the head turned back into one wing for a few seconds every eleven seconds or so\n"
                   << "island-simulator: the deer and the boars press cloven prints into wet sand and the stream's mud as they walk, two toes a stride apart that the ground takes back over four minutes\n"
                   << "island-simulator: a bird flushed by a snake mobs it, circling low over its head for eight seconds and chattering the alarm, an original run of sharp chirps heard within twenty-five metres\n"
+                  << "island-simulator: a snake's head within three and a half metres sends a mouse or rat bolting and to ground for six seconds or more\n"
                   << "island-simulator: a body standing in a snag's, a plant's or a structure's sun shadow is lit as the ground there is\n"
                   << "island-simulator: a fish school passing the jetty turns in and holds off the end of the deck, in its shade, a while before going on\n"
                   << "island-simulator: a school parts around the shark passing through it at seven metres, as around the swimmer at three\n"
@@ -3031,6 +3032,7 @@ namespace island
         }
         rodentPopulation_.SetWalkers(smallFaunaWalkers);
         rodentPopulation_.SetLyingFruit(fallingFruit_.Fruit());
+        rodentPopulation_.SetSnakes(snakes_->Snakes());
         rodentPopulation_.Update(
             viewpoint_ == FixedViewpoint::MouseDetail
                     || viewpoint_ == FixedViewpoint::RatDetail

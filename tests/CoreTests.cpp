@@ -9235,6 +9235,27 @@ int main()
             // The observer stands twelve metres off: near enough for full simulation, too far to frighten.
             for(int step=0;step<60;++step) rodents.Update(0.05f,rodent.x+12.0f,rodent.y+1.0f,rodent.z);
             Check(rodents.WalkerScatterCount()>=1U,"a rodent scurries from a passing animal");
+            // A snake's head near a rodent: it bolts away from the snake (toward its home)
+            // and goes to ground for six seconds or more; the walker twelve metres off plays
+            // no part.
+            island::RodentPopulation hunted(terrain);
+            const auto prey=hunted.Rodents()[0];
+            const auto den=hunted.Homes()[0];
+            float ax=prey.x-den.x,az=prey.z-den.z;
+            const float along=std::hypot(ax,az);
+            if(along>0.05f) { ax/=along; az/=along; } else { ax=1.0f; az=0.0f; }
+            std::vector<island::SnakeState> snakes(1);
+            for(auto& point:snakes[0].body) point={prey.x+ax*2.5f,prey.y,prey.z+az*2.5f};
+            hunted.SetSnakes(snakes);
+            for(int step=0;step<10;++step) hunted.Update(0.05f,prey.x+12.0f,prey.y+1.0f,prey.z);
+            Check(hunted.SnakeScatterCount()>=1U&&hunted.Rodents()[0].behavior==island::RodentBehavior::Scurry,
+                  "a snake's head two and a half metres off sends the rodent bolting");
+            const auto bolted=hunted.Rodents()[0];
+            Check(std::hypot(bolted.x-snakes[0].body.front().x,bolted.z-snakes[0].body.front().z)>2.6f,"it bolts away from the snake");
+            for(int step=0;step<50;++step) hunted.Update(0.05f,prey.x+12.0f,prey.y+1.0f,prey.z);
+            Check(hunted.Rodents()[0].behavior==island::RodentBehavior::Hidden,"three seconds on the rodent has gone to ground");
+            for(int step=0;step<50;++step) hunted.Update(0.05f,prey.x+12.0f,prey.y+1.0f,prey.z);
+            Check(hunted.Rodents()[0].behavior==island::RodentBehavior::Hidden,"five and a half seconds on it is still hidden from the snake");
             island::GeckoPopulation geckos(terrain);
             std::size_t resting=geckos.Geckos().size();
             for(std::size_t i=0;i<geckos.Geckos().size();++i) if(geckos.Geckos()[i].behavior==island::GeckoBehavior::Rest) { resting=i; break; }

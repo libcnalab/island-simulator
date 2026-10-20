@@ -164,11 +164,26 @@ namespace island
             const float bodyDistance = std::hypot(agent.state.x - body.x, agent.state.z - body.z);
             if (bodyDistance < distance) { distance = bodyDistance; threatX = body.x; threatZ = body.z; walkerThreat = true; }
         }
-        const float fleeDistance = agent.state.species == RodentSpecies::Mouse ? 2.5f : 3.3f;
+        // A snake's head near is the worst of threats: the rodent bolts from it and goes to
+        // ground for longer.
+        bool snakeThreat = false;
+        for (const SnakeState& snake : snakes_) {
+            const SnakePoint& head = snake.body.front();
+            if (!std::isfinite(head.x) || !std::isfinite(head.z)) continue;
+            const float headDistance = std::hypot(agent.state.x - head.x, agent.state.z - head.z);
+            if (headDistance < SnakeFleeDistance && headDistance < distance) {
+                distance = headDistance; threatX = head.x; threatZ = head.z;
+                walkerThreat = false; snakeThreat = true;
+            }
+        }
+        const float fleeDistance = snakeThreat ? SnakeFleeDistance
+            : (agent.state.species == RodentSpecies::Mouse ? 2.5f : 3.3f);
         if (distance < fleeDistance && agent.state.behavior != RodentBehavior::Hidden) {
             if (walkerThreat && agent.state.behavior != RodentBehavior::Scurry) ++walkerScatters_;
+            if (snakeThreat && agent.state.behavior != RodentBehavior::Scurry) ++snakeScatters_;
             agent.state.behavior = RodentBehavior::Scurry;
-            agent.behaviorSeconds = .75f;
+            agent.behaviorSeconds = snakeThreat ? 1.1f : .75f;
+            agent.snakeBolt = snakeThreat || (agent.snakeBolt && agent.state.behavior == RodentBehavior::Scurry);
             agent.fruitTarget = -1;
             agent.feedSeconds = 0.0f;
             agent.state.headingRadians = std::atan2(
@@ -177,7 +192,9 @@ namespace island
             ++agent.transitions;
             if (agent.state.behavior == RodentBehavior::Scurry) {
                 agent.state.behavior = RodentBehavior::Hidden;
-                agent.behaviorSeconds = 1.8f + .45f * static_cast<float>(agent.transitions % 5U);
+                agent.behaviorSeconds = (agent.snakeBolt ? SnakeHideSeconds : 1.8f)
+                    + .45f * static_cast<float>(agent.transitions % 5U);
+                agent.snakeBolt = false;
             } else if (agent.state.behavior == RodentBehavior::Hidden) {
                 agent.state.behavior = RodentBehavior::Rest;
                 agent.behaviorSeconds = 2.8f + .55f * static_cast<float>(agent.transitions % 6U);

@@ -3,6 +3,7 @@
 #include "IslandSimulator/WildlifeSimulation.hpp"
 #include "IslandSimulator/GrassWalkers.hpp"
 #include "IslandSimulator/FallingFruitField.hpp"
+#include "IslandSimulator/SnakePopulation.hpp"
 
 #include <array>
 #include <cstddef>
@@ -46,6 +47,12 @@ namespace island
          *  the nearest of them frightens an animal as the walker does. */
         void SetWalkers(std::span<const GrassWalker> walkers) noexcept { walkers_ = walkers; }
         [[nodiscard]] std::uint32_t WalkerScatterCount() const noexcept { return walkerScatters_; }
+        /** @brief The snakes this frame: a snake's head within SnakeFleeDistance is the worst
+         *  of threats; the rodent bolts from it and goes to ground for six seconds or more. */
+        void SetSnakes(std::span<const SnakeState> snakes) noexcept { snakes_ = snakes; }
+        [[nodiscard]] std::uint32_t SnakeScatterCount() const noexcept { return snakeScatters_; }
+        static constexpr float SnakeFleeDistance = 3.5f;
+        static constexpr float SnakeHideSeconds = 6.0f;
         /** @brief Fruit lying on the ground this frame: a rodent setting out to forage with
          *  a fruit lying within FruitRange inside its range goes to it and feeds there. */
         void SetLyingFruit(std::span<const FallingFruit> fruit) noexcept { lyingFruit_ = fruit; }
@@ -63,6 +70,7 @@ namespace island
         struct Agent
         {
             RodentState state;
+            bool snakeBolt = false;   // this scurry is from a snake: the hide after it is longer
             RodentHome home;
             float behaviorSeconds = 0.0f;
             float accumulatedSeconds = 0.0f;
@@ -81,6 +89,8 @@ namespace island
         std::uint64_t frameIndex_ = 0U;
         std::span<const GrassWalker> walkers_;
         std::uint32_t walkerScatters_ = 0U;
+        std::span<const SnakeState> snakes_;
+        std::uint32_t snakeScatters_ = 0U;
         std::span<const FallingFruit> lyingFruit_;
         std::uint32_t fruitVisits_ = 0U;
         [[nodiscard]] int FindFruit(const Agent& agent, std::size_t index) const noexcept;
