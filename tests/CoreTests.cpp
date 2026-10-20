@@ -50,6 +50,7 @@
 #include "IslandSimulator/StreamCourse.hpp"
 #include "IslandSimulator/StreamDriftField.hpp"
 #include "IslandSimulator/SunShadeField.hpp"
+#include "IslandSimulator/BlownSandField.hpp"
 #include "IslandSimulator/StreamFishField.hpp"
 #include "IslandSimulator/HatchlingField.hpp"
 #include "IslandSimulator/BirdShadowProjection.hpp"
@@ -8883,6 +8884,40 @@ int main()
             bare.SetStride(0.0f);
             for(int step=0;step<200;++step) { hx+=0.05f; bare.Update(0.05f,hx,0.0f,1.0f,0.0f,true); }
             Check(bare.PrintCount()>=14U&&bare.PrintCount()<=18U&&bare.Prints()[0].kind==0U,"an invalid stride leaves the walker's own");
+        }
+        // Blown sand: the windward beaches' exposed dry sand streams puffs downwind while a
+        // gust front passes and none between fronts; the puffs drift westward with the wind
+        // and are gone within two seconds.
+        {
+            island::BlownSandField sand(terrain);
+            Check(sand.Sources().size()>=20U,"the windward beaches give the blown sand its sources");
+            bool allDry=true;
+            for(const auto& source:sand.Sources()) {
+                const auto sample=terrain.Sample(source.x,source.z);
+                if(sample.surface!=island::TerrainSurface::DrySand||island::wind::Exposure(source.x,source.z,sample.signedShoreDistance)<island::BlownSandField::MinimumExposure) allDry=false;
+            }
+            Check(allDry,"every source lies on exposed dry sand");
+            const auto source=sand.Sources()[0];
+            float gustTime=-1.0f,calmTime=-1.0f;
+            for(float t=0.0f;t<90.0f&&(gustTime<0.0f||calmTime<0.0f);t+=0.1f) {
+                const float g=island::WindGust::Strength(source.x,source.z,t);
+                if(gustTime<0.0f&&g>0.7f) gustTime=t;
+                if(calmTime<0.0f&&g<0.05f) calmTime=t;
+            }
+            Check(gustTime>=0.0f&&calmTime>=0.0f,"a gust front and a calm pass the source within ninety seconds");
+            for(int step=0;step<20;++step) sand.Update(0.05f,calmTime,source.x,source.z);
+            Check(sand.ActiveCount()==0U&&sand.ReleaseCount()==0U,"between fronts no sand blows");
+            for(int step=0;step<20;++step) sand.Update(0.05f,gustTime,source.x,source.z);
+            Check(sand.ReleaseCount()>=1U&&sand.ActiveCount()>=1U,"a front's passing streams sand off the source");
+            const float startX=sand.Puffs()[0].x;
+            Check(sand.Puffs()[0].active,"the first puff is live for the drift check");
+            for(int step=0;step<10;++step) sand.Update(0.05f,gustTime,source.x,source.z);
+            Check(sand.Puffs()[0].active&&sand.Puffs()[0].x<startX-0.3f,"the sand drifts downwind, westward");
+            for(int step=0;step<60;++step) sand.Update(0.05f,calmTime,source.x,source.z);
+            Check(sand.ActiveCount()==0U,"the sand is gone within two seconds of the front passing");
+            island::BlownSandField far(terrain);
+            for(int step=0;step<20;++step) far.Update(0.05f,gustTime,source.x+500.0f,source.z);
+            Check(far.ReleaseCount()==0U||far.ActiveCount()>0U,"sources far from the camera stay quiet unless another lies in reach");
         }
         // Rooting dust: a boar with its snout among the roots throws up puffs at the snout
         // that rise, swell and are gone within the second; a walking boar throws none.

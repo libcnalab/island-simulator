@@ -54,6 +54,26 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 122 (2026-10-20) — blown sand in a gust front
+
+The gust fronts leaned the palms, the grass and the hung fish, but the dry beaches lay
+still under them. New `BlownSandField` (CPU, no GPU resources of its own): at construction
+it walks the shore every three degrees at 2.5, 5 and 8 m above the wet line and keeps every
+spot that is dry sand above 0.25 m with a trade-wind exposure of 0.5 or more (147 sources in
+the island, the windward and coastal beaches); each frame, for the sources within 70 m of
+the camera, a gust strength above 0.55 at the source releases a pale puff every 0.3 s (a
+little per source) up to 48 live puffs; a puff drifts downwind (westward) at 2.4 m/s,
+faster inside the front, lifts a hand's height, swells and fades over 1.6 s. The puffs are
+`DustPuff`s drawn by a third `RootingDustRenderer` in pale sand (221,208,172), after the
+stingrays' sand. Startup report: "blown sand: 147 exposed dry-sand sources around the shore
+blow while a gust front passes them" and the renderer's "a gust front passing the windward
+beaches streams pale sand off the dry crests downwind, a hand's height and gone within two
+seconds" (pinned). Core checks: the field has at least twenty sources, every one on exposed
+dry sand; at a calm moment of the gust clock nothing blows; at a front's passing sand
+streams off the source, the first puff drifts westward over the next half second, and
+within two seconds of the calm returning the sand is gone; sources out of the camera's
+reach stay quiet. Native `beach` passes (luminance deviation 35.5).
+
 ## Loop pass 121 (2026-10-20) — hooves print the wet sand and the mud
 
 The walker and the resident left prints; the deer and the boars crossed wet sand and the

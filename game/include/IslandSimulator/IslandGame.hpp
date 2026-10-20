@@ -114,6 +114,7 @@
 #include "IslandSimulator/SurfSprayField.hpp"
 #include "IslandSimulator/DolphinBlowField.hpp"
 #include "IslandSimulator/StingraySandField.hpp"
+#include "IslandSimulator/BlownSandField.hpp"
 #include "IslandSimulator/OctopusInkField.hpp"
 #include "IslandSimulator/TurtleBreathField.hpp"
 #include "IslandSimulator/HelicopterLayout.hpp"
@@ -496,6 +497,7 @@ namespace island
         std::array<FootprintTrail,BoarHerd::BoarCount> boarPrints_{};
         std::unique_ptr<FootprintTrailRenderer> footprintRenderer_;
         RootingDustField rootingDust_{terrain_};
+        BlownSandField blownSand_{terrain_};
         std::unique_ptr<RootingDustRenderer> rootingDustRenderer_;
         ShellDragTrail shellDrags_;
         std::unique_ptr<ShellDragRenderer> shellDragRenderer_;
@@ -509,6 +511,7 @@ namespace island
         StingraySandField stingraySand_;
         StingraySandField stingrayFlickSand_;
         std::unique_ptr<RootingDustRenderer> stingraySandRenderer_;
+        std::unique_ptr<RootingDustRenderer> blownSandRenderer_;
         OctopusInkField octopusInk_;
         std::unique_ptr<RootingDustRenderer> octopusInkRenderer_;
         TurtleBreathField turtleBreaths_;

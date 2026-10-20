@@ -1288,6 +1288,8 @@ def main():
                 raise RuntimeError("current stingray burying is missing; check for a stale executable")
             if "the deer and the boars press cloven prints into wet sand and the stream's mud as they walk" not in diagnostics:
                 raise RuntimeError("current hoofprints are missing; check for a stale executable")
+            if "a gust front passing the windward beaches streams pale sand off the dry crests downwind" not in diagnostics:
+                raise RuntimeError("current blown sand is missing; check for a stale executable")
             if args.viewpoint == "stingray-buried" and "stingray QA camera frames one settled ray lying half-buried in the sand" not in diagnostics:
                 raise RuntimeError("buried stingray capture did not hold the ray down")
             if args.viewpoint == "boar-lying" and "boar QA camera frames one resting boar lying on folded legs" not in diagnostics:

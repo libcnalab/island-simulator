@@ -2306,6 +2306,10 @@ namespace island
             "island-simulator: a dolphin breaking the surface blows a puff of spray from the blowhole");
         stingraySandRenderer_ = std::make_unique<RootingDustRenderer>(device,
             "island-simulator: a settled stingray bursts out of the sand in a puff when the swimmer comes near", 196, 178, 140);
+        blownSandRenderer_ = std::make_unique<RootingDustRenderer>(device,
+            "island-simulator: a gust front passing the windward beaches streams pale sand off the dry crests downwind, a hand's height and gone within two seconds", 221, 208, 172);
+        std::cout << "island-simulator: blown sand: " << blownSand_.Sources().size()
+                  << " exposed dry-sand sources around the shore blow while a gust front passes them\n";
         octopusInkRenderer_ = std::make_unique<RootingDustRenderer>(device,
             "island-simulator: an octopus startled from the open jets for its den behind a cloud of ink", 22, 18, 34);
         turtleBreathRenderer_ = std::make_unique<CascadeMistRenderer>(device,
@@ -3133,6 +3137,7 @@ namespace island
             soundscape_->NoteBoarAlarm(boarHerd_.LastBearRetreatIndex());
         }
         rootingDust_.Update(deltaSeconds, seaForageSeconds_, boarHerd_.Boars());
+        blownSand_.Update(deltaSeconds, seaForageSeconds_, cameraPosition_.X, cameraPosition_.Z);
         if(viewpoint_==FixedViewpoint::BoarDetail) {
             const auto& current=boarHerd_.Boars().front();
             // Follow both translation and heading. The old camera translated with
@@ -4885,6 +4890,7 @@ namespace island
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,rootingDust_.Puffs());
             stingraySandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,stingraySand_.Puffs());
             stingraySandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,stingrayFlickSand_.Puffs());
+            blownSandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,blownSand_.Puffs());
             octopusInkRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,octopusInk_.Puffs());
             surfSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,surfSpray_.Puffs());
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,dolphinBlows_.Puffs());
