@@ -1189,6 +1189,8 @@ def main():
                 raise RuntimeError("current crab burrow refuge is missing; check for a stale executable")
             if "a parrot perched on a fruiting lobe of the crown feeds there in bouts" not in diagnostics:
                 raise RuntimeError("current parrot feeding perch is missing; check for a stale executable")
+            if "pulls into its shell until the beach is clear" not in diagnostics:
+                raise RuntimeError("current hermit-crab shell withdrawal is missing; check for a stale executable")
             if "sea turtles use domed scute carapaces, beaked heads and bending paddle strokes" not in diagnostics:
                 raise RuntimeError("current sea-turtle form is missing; check for a stale executable")
             if args.viewpoint == "turtles":

@@ -3422,6 +3422,26 @@ int main()
               &&std::hypot(escapedHermit.x-initialReactiveHermit.x,
                             escapedHermit.z-initialReactiveHermit.z)>.12f,
           "a nearby observer prompts a hermit crab to retreat with its shell");
+    {
+        // Still pressed when the run ends, the crab stops and pulls into its shell; with the
+        // observer gone it comes out again after a few clear seconds and goes on.
+        bool withdrew=false;
+        for(int frame=0;frame<240&&!withdrew;++frame) {
+            const auto& crab=reactiveHermitCrabs.Crabs()[3U];
+            reactiveHermitCrabs.Update(1.0f/60.0f,crab.x+.4f,crab.y,crab.z);
+            withdrew=crab.behavior==island::HermitCrabBehavior::Withdraw
+                &&crab.withdrawAmount>.9f&&crab.speed<.01f;
+        }
+        Check(withdrew&&reactiveHermitCrabs.WithdrawCount()>=1U&&reactiveHermitCrabs.WithdrawnCount()>=1U,
+              "a hermit crab still pressed after its retreat pulls into its shell within four seconds");
+        bool emerged=false;
+        for(int frame=0;frame<600&&!emerged;++frame) {
+            reactiveHermitCrabs.Update(1.0f/60.0f,0.0f,100.0f,0.0f);
+            const auto& crab=reactiveHermitCrabs.Crabs()[3U];
+            emerged=crab.behavior!=island::HermitCrabBehavior::Withdraw&&crab.withdrawAmount<=0.0f;
+        }
+        Check(emerged,"with the beach clear the withdrawn hermit crab comes out within ten seconds");
+    }
 
     island::CoconutCrabGroup coconutCrabs(terrain);
     island::CoconutCrabGroup repeatedCoconutCrabs(terrain);

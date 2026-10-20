@@ -2311,7 +2311,7 @@ namespace island
                      "the resident's walk along the beach scatters them as the player's does; "
                      "a crab near its colony's burrow bolts down the hole and comes up once the beach has been clear a few seconds\n"
                   << "island-simulator: hermit crabs " << hermitCrabGroup_.Crabs().size()
-                  << " agents in deterministic sheltered-beach habitats\n"
+                  << " agents in deterministic sheltered-beach habitats; one still pressed after its retreat pulls into its shell until the beach is clear\n"
                   << "island-simulator: coconut crabs " << coconutCrabGroup_.Crabs().size()
                   << " agents in deterministic coastal palm-zone habitats; "
                   << "a foraging crab walks to a coconut lying in its range and works it with its claws until it is gone\n"

@@ -15,7 +15,8 @@ namespace island
     {
         Pause,
         Forage,
-        Retreat
+        Retreat,
+        Withdraw
     };
 
     struct HermitCrabState
@@ -27,6 +28,9 @@ namespace island
         float speed = 0.0f;
         float legPhase = 0.0f;
         float antennaPhase = 0.0f;
+        /** @brief 0..1 pulled into the shell: body, legs, eyes and antennae drawn back
+         *  through the aperture, the claws closing it. */
+        float withdrawAmount = 0.0f;
         float scale = 1.0f;
         HermitCrabBehavior behavior = HermitCrabBehavior::Pause;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
@@ -49,6 +53,13 @@ namespace island
         static constexpr float MaximumShoreDistance = 14.0f;
         static constexpr float FullSimulationDistance = 70.0f;
         static constexpr float ReducedSimulationDistance = 170.0f;
+        /** @brief A crab still pressed this close when its retreat ends pulls into its shell,
+         *  and stays in until nothing has been within ClearDistance for ClearSeconds. */
+        static constexpr float WithdrawDistance = 1.6f;
+        static constexpr float ClearDistance = 4.5f;
+        static constexpr float ClearSeconds = 3.0f;
+        [[nodiscard]] std::size_t WithdrawnCount() const noexcept;
+        [[nodiscard]] std::uint32_t WithdrawCount() const noexcept { return withdrawals_; }
 
         explicit HermitCrabGroup(const IslandTerrain& terrain);
         void Update(float deltaSeconds, float observerX, float observerY,
@@ -73,6 +84,7 @@ namespace island
             float steeringPhase = 0.0f;
             float accumulatedSeconds = 0.0f;
             std::uint32_t transitionCount = 0U;
+            float clearSeconds = 0.0f;
         };
 
         void Initialize(std::size_t index);
@@ -90,5 +102,6 @@ namespace island
         int fullCount_ = 0;
         int reducedCount_ = 0;
         int dormantCount_ = 0;
+        std::uint32_t withdrawals_ = 0U;
     };
 }

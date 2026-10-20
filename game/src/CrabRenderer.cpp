@@ -361,11 +361,17 @@ namespace island
             const Color joint = Color::Lerp(limb, Color(40, 29, 25, 255), .42f);
             const Color eye(16, 18, 15, 255);
             const float scale = crab.scale;
-            const Vector3 centre(crab.x, crab.y, crab.z);
             const Vector3 forward(std::cos(crab.headingRadians), 0.0f,
                                   std::sin(crab.headingRadians));
             const Vector3 right(-forward.Z, 0.0f, forward.X);
             const Vector3 up = Vector3::Up;
+            // Withdrawn, the body and its limbs draw back through the aperture into the
+            // shell (which stays where it is) and the legs tuck in; the claws, carried with
+            // the body, come to close the opening.
+            const float withdraw = std::clamp(crab.withdrawAmount, 0.0f, 1.0f);
+            const Vector3 shellBase(crab.x, crab.y, crab.z);
+            const Vector3 centre = shellBase - forward * (withdraw * .17f * scale);
+            const float limbScale = scale * (1.0f - .55f * withdraw);
 
             // A tilted six-station shell replaces the former vertical cone. Its
             // broad lower whorl encloses the body and its restrained apex sweeps
@@ -377,7 +383,7 @@ namespace island
                 {{.050f, .125f, .158f, .150f, .095f, .018f}};
             const Vector3 shellAxis = Vector3::Normalize(up * .84f - forward * .54f);
             const Vector3 shellOther = Vector3::Normalize(Vector3::Cross(shellAxis, right));
-            const Vector3 shellCentre = centre - forward * (.070f * scale)
+            const Vector3 shellCentre = shellBase - forward * (.070f * scale)
                 + up * (.145f * scale);
             const auto shellPoint = [&](const std::size_t station, const int segment) {
                 const float angle = TwoPi * static_cast<float>(segment)
@@ -442,20 +448,20 @@ namespace island
             for (int leg = 0; leg < 3; ++leg) {
                 for (const float side : {-1.0f, 1.0f}) {
                     const float stride = crab.legPhase
-                        * (leg % 2 == 0 ? .020f : -.020f) * scale;
-                    const Vector3 hip = centre + right * (side * .050f * scale)
-                        + forward * ((.060f - leg * .058f) * scale)
-                        + up * (.050f * scale);
+                        * (leg % 2 == 0 ? .020f : -.020f) * limbScale;
+                    const Vector3 hip = centre + right * (side * .050f * limbScale)
+                        + forward * ((.060f - leg * .058f) * limbScale)
+                        + up * (.050f * limbScale);
                     const Vector3 knee = hip
-                        + right * (side * (.080f + leg * .010f) * scale)
-                        + forward * stride + up * (.012f * scale);
+                        + right * (side * (.080f + leg * .010f) * limbScale)
+                        + forward * stride + up * (.012f * limbScale);
                     const Vector3 ankle = knee
-                        + right * (side * (.072f + leg * .008f) * scale)
-                        + forward * ((-.028f + leg * .018f) * scale)
-                        - up * (.048f * scale);
-                    const Vector3 toe = ankle + right * (side * .060f * scale)
-                        + forward * ((-.020f + leg * .016f) * scale)
-                        - up * (.010f * scale);
+                        + right * (side * (.072f + leg * .008f) * limbScale)
+                        + forward * ((-.028f + leg * .018f) * limbScale)
+                        - up * (.048f * limbScale);
+                    const Vector3 toe = ankle + right * (side * .060f * limbScale)
+                        + forward * ((-.020f + leg * .016f) * limbScale)
+                        - up * (.010f * limbScale);
                     AppendTaperedLimbSegment(vertices, hip, knee,
                                              .019f * scale, .015f * scale, limb);
                     AppendTaperedLimbSegment(vertices, knee, ankle,

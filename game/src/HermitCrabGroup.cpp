@@ -133,6 +133,14 @@ namespace island
         assert(fullCount_ + reducedCount_ + dormantCount_ == static_cast<int>(Count));
     }
 
+    std::size_t HermitCrabGroup::WithdrawnCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const HermitCrabState& crab : states_)
+            count += crab.behavior == HermitCrabBehavior::Withdraw ? 1U : 0U;
+        return count;
+    }
+
     void HermitCrabGroup::UpdateAgent(Agent& agent, const float deltaSeconds,
                                       const float observerX, const float observerZ,
                                       const bool observerValid) noexcept
@@ -142,14 +150,29 @@ namespace island
             ? std::hypot(agent.state.x - observerX, agent.state.z - observerZ)
             : std::numeric_limits<float>::infinity();
         if (observerDistance < 3.5f
-            && agent.state.behavior != HermitCrabBehavior::Retreat) {
+            && agent.state.behavior != HermitCrabBehavior::Retreat
+            && agent.state.behavior != HermitCrabBehavior::Withdraw) {
             agent.state.behavior = HermitCrabBehavior::Retreat;
             agent.behaviorSeconds = 1.25f;
             agent.state.headingRadians = std::atan2(
                 agent.state.z - observerZ, agent.state.x - observerX);
+        } else if (agent.state.behavior == HermitCrabBehavior::Withdraw) {
+            // In the shell until the beach has been clear a while, then out and on.
+            agent.clearSeconds = observerDistance < ClearDistance
+                ? 0.0f : agent.clearSeconds + deltaSeconds;
+            if (agent.clearSeconds >= ClearSeconds && agent.state.withdrawAmount <= 0.0f) {
+                agent.state.behavior = HermitCrabBehavior::Pause;
+                agent.behaviorSeconds = .8f;
+            }
         } else if ((agent.behaviorSeconds -= deltaSeconds) <= 0.0f) {
             ++agent.transitionCount;
-            if (agent.state.behavior == HermitCrabBehavior::Pause) {
+            if (agent.state.behavior == HermitCrabBehavior::Retreat
+                && observerDistance < WithdrawDistance) {
+                // Still pressed after the run: the crab stops and pulls into its shell.
+                agent.state.behavior = HermitCrabBehavior::Withdraw;
+                agent.clearSeconds = 0.0f;
+                ++withdrawals_;
+            } else if (agent.state.behavior == HermitCrabBehavior::Pause) {
                 agent.state.behavior = HermitCrabBehavior::Forage;
                 agent.behaviorSeconds = 3.2f
                     + static_cast<float>(agent.transitionCount % 5U) * .58f;
@@ -163,7 +186,12 @@ namespace island
         agent.steeringPhase = std::fmod(
             agent.steeringPhase + deltaSeconds * .67f, TwoPi);
         const float targetSpeed = agent.state.behavior == HermitCrabBehavior::Pause
+                || agent.state.behavior == HermitCrabBehavior::Withdraw
             ? 0.0f : (agent.state.behavior == HermitCrabBehavior::Retreat ? .82f : .22f);
+        const float withdrawTarget = agent.state.behavior == HermitCrabBehavior::Withdraw
+            && agent.clearSeconds < ClearSeconds ? 1.0f : 0.0f;
+        agent.state.withdrawAmount += std::clamp(withdrawTarget - agent.state.withdrawAmount,
+                                                 -deltaSeconds * 1.5f, deltaSeconds * 4.0f);
         agent.state.speed += std::clamp(targetSpeed - agent.state.speed,
                                         -deltaSeconds * 1.7f,
                                         deltaSeconds * 2.4f);

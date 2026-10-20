@@ -54,6 +54,21 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 75 (2026-10-20) — hermit crabs pull into their shells
+
+A pressed hermit crab only ran. `HermitCrabBehavior::Withdraw` follows a retreat that ends
+with the threat still within 1.6 m: the crab stops and `withdrawAmount` rises over a quarter
+second; it stays in until nothing has been within 4.5 m for three seconds, then comes out
+over two thirds of a second, pauses and goes on. The crab renderer draws the withdrawal: the
+shell stays where it is while the body, head, eyes and antennae draw back 17 cm (scaled)
+through the aperture into it, the legs tuck in to 45 % of their spread, and the claws,
+carried with the body, come to close the opening; the vertex budget is unchanged.
+`WithdrawnCount()` and `WithdrawCount()` expose it. The startup report's hermit-crab line
+gains "one still pressed after its retreat pulls into its shell until the beach is clear",
+pinned by the native capture tool. Core checks: the retreated crab, still pressed, is in its
+shell within four seconds, stopped; with the beach clear it is out again within ten seconds.
+The earlier retreat check still passes. Native `hermit-crabs` passes.
+
 ## Loop pass 74 (2026-10-20) — parrots feed on the fruiting lobes
 
 A perched parrot only sat. The branch perches come from the crowns' clusters, and the odd
