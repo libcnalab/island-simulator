@@ -193,8 +193,10 @@ namespace island
                     eyeGlint-forward*(.005f*s)-up*(.003f*s),
                     eyeGlint+forward*(.005f*s)-up*(.003f*s),Color(236,207,139,255));
 
-                const float wingLift = bat.wingPose * .30f * (1.0f - hang);
-                const float span = std::lerp(.23f, 1.02f, 1.0f - hang);
+                // Fanning, a hanging bat half-opens its wings and beats them slowly.
+                const float open = std::clamp(bat.fan, 0.0f, 1.0f) * hang * .45f;
+                const float wingLift = bat.wingPose * .30f * (1.0f - hang) + bat.wingPose * .16f * open;
+                const float span = std::lerp(.23f, 1.02f, (1.0f - hang) + open);
                 const Vector3 shoulder=Point(centre,right,up,forward,side*.14f,.04f,.20f,s);
                 const Vector3 elbow=Point(centre,right,up,forward,side*span*.56f,
                     wingLift+.05f,-.02f,s);

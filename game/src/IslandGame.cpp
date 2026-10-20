@@ -2465,7 +2465,8 @@ namespace island
                   << "island-simulator: a snake's head come within three metres of a perched bird flushes it as the walker does\n"
                   << "island-simulator: fruit bats " << fruitBatColony_.Bats().size()
                   << " agents use six inland canopy roosts with four hanging and two bounded daytime flights; "
-                     "a roosting bat's stir in its crown lets a fruit drop and a leaf come loose\n"
+                     "a roosting bat's stir in its crown lets a fruit drop and a leaf come loose; "
+                     "a hanging bat fans its half-opened wings for a few seconds every quarter minute to cool\n"
                   << "island-simulator: clearing butterflies "
                   << butterflyMeadow_.Butterflies().size()
                   << " agents in deterministic low-altitude habitats; "

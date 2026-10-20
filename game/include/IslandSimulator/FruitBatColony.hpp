@@ -37,6 +37,9 @@ namespace island
         float speed = 0.0f;
         float wingPose = 0.0f;
         float hangAmount = 1.0f;
+        /** @brief 0..1 fanning: a hanging bat half-opens its wings and beats them slowly for
+         *  a few seconds every quarter minute to cool, the wing pose carrying the beat. */
+        float fan = 0.0f;
         float scale = 1.0f;
         FruitBatBehavior behavior = FruitBatBehavior::Roost;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
@@ -51,6 +54,10 @@ namespace island
         static constexpr std::size_t MaximumDayFlights = 2U;
         static constexpr float FullSimulationDistance = 120.0f;
         static constexpr float ReducedSimulationDistance = 280.0f;
+        /** @brief Fanning bouts begun by the hanging bats, and the bats mid-bout. */
+        [[nodiscard]] std::uint32_t FanCount() const noexcept { return fans_; }
+        [[nodiscard]] std::size_t FanningCount() const noexcept;
+        static constexpr float FanSeconds = 3.0f, FanPeriodSeconds = 16.0f, FanBeatRate = 9.0f;
 
         FruitBatColony(const IslandTerrain& terrain,
                        std::span<const CanopyPlacement> canopy);
@@ -74,6 +81,7 @@ namespace island
             float orbitSpeed = 0.0f;
             float flapPhase = 0.0f;
             float accumulatedSeconds = 0.0f;
+            bool fanning = false;
         };
 
         std::vector<Agent> agents_;
@@ -83,5 +91,6 @@ namespace island
         int fullSimulationCount_ = 0;
         int reducedSimulationCount_ = 0;
         int dormantSimulationCount_ = 0;
+        std::uint32_t fans_ = 0U;
     };
 }

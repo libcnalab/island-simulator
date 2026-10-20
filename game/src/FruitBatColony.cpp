@@ -84,6 +84,13 @@ namespace island
         }
     }
 
+    std::size_t FruitBatColony::FanningCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.fanning ? 1U : 0U;
+        return count;
+    }
+
     void FruitBatColony::Update(const float deltaSeconds, const float observerX,
                                 const float observerY, const float observerZ) noexcept
     {
@@ -119,6 +126,16 @@ namespace island
                     agent.state.headingRadians = angle + std::numbers::pi_v<float> * .5f;
                     agent.state.wingPose = std::sin(
                         agent.flapPhase + agent.accumulatedSeconds * 5.8f);
+                } else {
+                    // A hanging bat fans: every quarter minute or so (a little per bat) it
+                    // half-opens its wings and beats them slowly for a few seconds to cool.
+                    const float period = FanPeriodSeconds + 2.0f * static_cast<float>(index % 3U);
+                    const float cycle = std::fmod(agent.accumulatedSeconds + 2.1f * static_cast<float>(index), period);
+                    const bool fanning = cycle < FanSeconds;
+                    if (fanning && !agent.fanning) ++fans_;
+                    agent.fanning = fanning;
+                    agent.state.fan += std::clamp((fanning ? 1.0f : 0.0f) - agent.state.fan, -step * 3.0f, step * 3.0f);
+                    agent.state.wingPose = fanning ? std::sin(agent.accumulatedSeconds * FanBeatRate) : agent.state.wingPose * 0.8f;
                 }
             }
             states_[index] = agent.state;

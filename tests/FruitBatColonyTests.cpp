@@ -56,5 +56,25 @@ int main()
             "a fruit-bat roost does not remember the crown it hangs in");
         require(roost.y>roost.tree.y+2.0f,"a fruit-bat roost's crown is not above its tree's foot");
     }
+    {
+        // Fanning: with the observer at a roost, within forty seconds a hanging bat fans its
+        // wings for a few seconds, the fan rising to full and the wing pose beating, and
+        // falls still again; a bat in flight never fans.
+        island::FruitBatColony fanners(terrain,jungle.Canopy());
+        const auto& sleeper=fanners.Bats()[2];
+        float peak=0.0f,beatLow=1.0f,beatHigh=-1.0f; bool flyingFan=false,stilled=false;
+        for(int step=0;step<2400;++step) {
+            fanners.Update(1.0f/60.0f,sleeper.x+4.0f,sleeper.y,sleeper.z);
+            for(const auto& bat:fanners.Bats()) {
+                if(bat.behavior==island::FruitBatBehavior::DayFlight&&bat.fan>0.01f) flyingFan=true;
+                if(bat.behavior!=island::FruitBatBehavior::Roost) continue;
+                peak=std::max(peak,bat.fan);
+                if(bat.fan>0.9f) { beatLow=std::min(beatLow,bat.wingPose); beatHigh=std::max(beatHigh,bat.wingPose); }
+                if(peak>0.9f&&bat.fan<0.1f) stilled=true;
+            }
+        }
+        require(fanners.FanCount()>=1&&peak>0.9f&&beatHigh-beatLow>1.0f&&stilled&&!flyingFan,
+            "a hanging fruit bat does not fan its wings to cool");
+    }
     std::cout<<"Fruit bats: six deterministic inland roosts, four hanging and two bounded daytime flights\n";
 }

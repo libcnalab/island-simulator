@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 147 (2026-10-20) — a roosting fruit bat fans its wings
+
+A hanging fruit bat hung still, its wings folded, until it flew. `FruitBatState::fan`
+(0..1) now carries the fan: every `FanPeriodSeconds` (16 s, plus 2 s per bat) a roosting
+bat half-opens its wings and beats them slowly for `FanSeconds` (3 s) to cool, the wing pose
+a 9 rad/s sine while fanning and settling to still after; the bouts are counted
+(`FanCount()`, `FanningCount()`) and a bat in flight never fans. In the renderer the fan
+opens the folded span by up to 45 % of the open span and lends the hanging wings a slow
+beat. The bats report line gains "a hanging bat fans its half-opened wings for a few
+seconds every quarter minute to cool" (pinned). FruitBatColonyTests: within forty seconds
+a hanging bat fans to full with its wings beating and falls still again, and no flying bat
+fans. Native `bat-roost` passes.
+
 ## Loop pass 146 (2026-10-20) — a dragonfly dips to the water
 
 A patrolling dragonfly flew its wandering line at one height. `DragonflyState::dip`

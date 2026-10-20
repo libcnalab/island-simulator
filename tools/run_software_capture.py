@@ -1338,6 +1338,8 @@ def main():
                 raise RuntimeError("current turtle grazing is missing; check for a stale executable")
             if "a patrolling dragonfly dips to touch the water every few seconds, a fleck of spray at the touch" not in diagnostics:
                 raise RuntimeError("current dragonfly dip is missing; check for a stale executable")
+            if "a hanging bat fans its half-opened wings for a few seconds every quarter minute to cool" not in diagnostics:
+                raise RuntimeError("current bat wing fanning is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:
