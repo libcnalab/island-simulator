@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 236 (2026-10-20) — hillside stains become outcrops
+
+The `east` hill's soft pinkish-brown smears (the last of the handoff's hillside critique) are
+not the forest floor's humus patches, as first assumed: they are the weathered-rock outcrops
+the terrain exposes on inland slopes steeper than 0.27-0.54 rad. Their boundary ramped over a
+wide band of the outcrop field (0.075-0.39), and from 50 m the bedding, joints and grain that
+make them read as rock have filtered away, leaving soft ovals of rock colour. The boundary is
+now a crisp lip (0.19-0.27), so from a distance they read as ledges of rock following the
+slope rather than stains. Separately, the leaf humus and moss patches now gather under the
+crowns (full strength where the canopy field's transmission is below 0.55, a quarter on open
+sunlit ground), not on the open turf. `east`, `headland` (the coastal cliffs), `overview`,
+`flight` and `jungle` pass.
+
 ## Loop pass 235 (2026-10-20) — morning mist
 
 The last weather item. A core `MorningMistField` finds the low damp ground on a 14 m world

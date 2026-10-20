@@ -641,10 +641,13 @@ void main()
     float farSilhouetteCalm=mix(1.0,0.55,smoothstep(315.0,460.0,distanceToCamera));
     float aerialPatchStrength=mix(1.0,0.30,smoothstep(165.0,315.0,distanceToCamera))
         * farSilhouetteCalm;
+    // Leaf humus and moss gather under the crowns; out on the open sunlit slopes (the canopy
+    // field's transmission near one) they would only stain the turf with soft blotches.
+    float underCrowns = 0.25 + 0.75 * (1.0 - smoothstep(0.55, 0.92, groundField.x));
     color = mix(color, vec3(0.205, 0.151, 0.091) * vGroundLight,
-                leafHumus * 0.54 * aerialPatchStrength);
+                leafHumus * 0.54 * aerialPatchStrength * underCrowns);
     color = mix(color, vec3(0.185, 0.265, 0.115) * vGroundLight,
-                coolMoss * 0.64 * aerialPatchStrength);
+                coolMoss * 0.64 * aerialPatchStrength * underCrowns);
 
     // Preserve broad authored material/lighting cues; the litter source supplies close detail.
     // Fade before the hashed lattice itself becomes subpixel. Its mip chain filters texels,
@@ -918,7 +921,9 @@ void main()
             * outcropEdgeFilter;
         float outcropShelf = valueNoise(p * 0.205 + vec2(-7.2, 31.6))
             * (1.0 - smoothstep(0.18, 0.50, groundPixelWidth * 0.205));
-        float outcropBreakup = smoothstep(0.075, 0.39,
+        // A crisp rim: an outcrop ends at a lip, it does not fade over metres (a wide ramp
+        // reads from mid-distance, once the bedding has filtered away, as a soft smear).
+        float outcropBreakup = smoothstep(0.19, 0.27,
             outcropField + outcropEdge * 0.30 + outcropShelf * 0.12);
         float soilShelf = smoothstep(0.14, 0.42,
             -outcropShelf + outcropEdge * 0.22) * (1.0 - coastalCliff);

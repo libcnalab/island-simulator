@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 236: the soft pinkish smears on the hillsides end at crisp outcrop lips, and leaf humus and moss gather under the crowns rather than staining the open turf (PLAN "Loop pass 236").
 - Pass 235: morning mist lies in banks over the stream's valley, the wetland and the coastal flats at first light and burns off by mid-morning (PLAN "Loop pass 235").
 - Pass 234: the gust fronts follow the weather's wind: in a storm they sweep the island about every eight seconds, faster and fuller, on a live clock that never jumps (PLAN "Loop pass 234").
 - Pass 233: puddles after rain: flat hollows of the paths, clearings and forest floor hold water that mirrors the sky and catches the sun, spreading in a soaking and drying back (PLAN "Loop pass 233").
@@ -337,8 +338,9 @@ Loop log (propose → implement, continues until the operator stops the session)
 The earlier agent-actionable backlog (above this section's predecessor) is empty. The open
 mid-distance hillside that read as a smooth painted green surface got a sward texture and sparse
 hillside shrubs (Loop pass 230); in the native-performance profile vegetation draws to 55 %
-(bushes to 56 m), so a hill 60-100 m off still shows no shrubs there, and the soft humus/moss
-blotches remain on it.
+(bushes to 56 m), so a hill 60-100 m off still shows no shrubs there. Its soft pinkish
+blotches were weathered-rock outcrops whose detail filters out at distance; they now end at
+crisp lips (Loop pass 236).
 
 Not agent-actionable (stay open in `PLAN.md`; need the operator or physical hardware): human
 speaker/headphone listening (goat, boar, fly, snake hiss, audio-focus lifecycle), the physical-GPU
