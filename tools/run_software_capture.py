@@ -1380,6 +1380,8 @@ def main():
                 raise RuntimeError("current shark gape is missing; check for a stale executable")
             if "every fourth surfacing after the leap's is a spy-hop, the dolphin slowing to rise head-up out of the water and look around for a few seconds" not in diagnostics:
                 raise RuntimeError("current dolphin spy-hop is missing; check for a stale executable")
+            if "setting out to swim, or startled for its den, an octopus jets, its mantle drawn in hard and its arms straightened for the first moment" not in diagnostics:
+                raise RuntimeError("current octopus jet is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:

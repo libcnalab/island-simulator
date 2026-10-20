@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 168 (2026-10-20) — an octopus jets
+
+An octopus set off swimming, or fled for its den, with the same lazy mantle pulse.
+`OctopusState::jet` (0..1) now carries the jet: as a swim sets out the mantle is drawn in
+hard for `JetSeconds` (0.8 s), and as a startled octopus makes for its den for
+`EscapeJetSeconds` (0.6 s), the jet rising at 8/s and easing off at 3/s; the jets are
+counted (`JetCount()`, `JettingCount()`). In the near renderer the mantle's radii contract
+by up to 22 % and the arms straighten (their curl cut by 85 %, their reach lengthened) on
+the same vertices. The octopuses report line gains "setting out to swim, or startled for
+its den, an octopus jets, its mantle drawn in hard and its arms straightened for the first
+moment" (pinned). Core check: the startled octopus has its jet at full within a fifth of a
+second and eased off within a second and a half. Native `octopuses` passes.
+
 ## Loop pass 167 (2026-10-20) — a dolphin spy-hops
 
 The pod surfaced, dived and leapt but never looked about. `DolphinBehavior::SpyHop` now

@@ -20,6 +20,9 @@ namespace island
          *  forage takes the sand's tones over a few seconds and flashes back to its own
          *  colours the moment it moves or is startled. */
         float camouflageAmount=0.0f;
+        /** @brief 0..1 the jet: setting out to swim, or startled for its den, the octopus
+         *  draws its mantle in hard and straightens its arms for the first moment. */
+        float jet=0.0f;
         OctopusBehavior behavior=OctopusBehavior::Den;
         WildlifeSimulationTier simulationTier=WildlifeSimulationTier::Dormant;
         std::uint8_t colorVariant=0U;
@@ -34,6 +37,11 @@ namespace island
         static constexpr float MinimumShoreDistance=-38.0f,MaximumShoreDistance=-7.0f;
         static constexpr float FullSimulationDistance=110.0f,ReducedSimulationDistance=280.0f;
         static constexpr float CamouflageSeconds=4.0f,FlashSeconds=0.4f,StillSpeed=0.03f;
+        /** @brief Jets begun (one as each swim sets out, one as a startled octopus makes for
+         *  its den) and the octopuses jetting this moment. */
+        [[nodiscard]] std::uint32_t JetCount()const noexcept{return jets_;}
+        [[nodiscard]] std::size_t JettingCount()const noexcept;
+        static constexpr float JetSeconds=0.8f,EscapeJetSeconds=0.6f;
         [[nodiscard]] std::size_t CamouflagedCount() const noexcept;
         explicit OctopusGroup(const IslandTerrain& terrain);
         void Update(float deltaSeconds,float observerX,float observerY,float observerZ)noexcept;
@@ -47,7 +55,7 @@ namespace island
         [[nodiscard]] int ReducedSimulationCount()const noexcept{return reducedCount_;}
         [[nodiscard]] int DormantSimulationCount()const noexcept{return dormantCount_;}
     private:
-        struct Agent { OctopusState state;OctopusDen den;float routePhase=0,pulsePhase=0,armPhase=0,behaviorSeconds=0,accumulatedSeconds=0;std::uint32_t transitionCount=0; };
+        struct Agent { OctopusState state;OctopusDen den;float routePhase=0,pulsePhase=0,armPhase=0,behaviorSeconds=0,accumulatedSeconds=0;std::uint32_t transitionCount=0;float jetSeconds=0;bool jetting=false; };
         void Initialize(std::size_t index);
         void UpdateAgent(Agent&,float,float,float,bool)noexcept;
         [[nodiscard]] bool ValidHabitat(float,float,const OctopusDen&)const noexcept;
@@ -55,5 +63,6 @@ namespace island
         const IslandTerrain& terrain_;std::vector<Agent> agents_;std::vector<OctopusState> states_;std::vector<OctopusDen> dens_;
         float elapsedSeconds_=0;std::uint64_t frameIndex_=0;int fullCount_=0,reducedCount_=0,dormantCount_=0;
         InkEvent ink_;
+        std::uint32_t jets_=0;
     };
 }

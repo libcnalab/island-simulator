@@ -9849,6 +9849,11 @@ int main()
             for(int step=0;step<4;++step) octopuses.Update(0.05f,open.x+1.0f,open.y,open.z);
             Check(octopuses.LastInk().count==1U&&std::hypot(octopuses.LastInk().x-open.x,octopuses.LastInk().z-open.z)<0.5f
                   &&octopuses.Octopuses()[0].behavior==island::OctopusBehavior::Den,"the startled octopus jets for its den and inks once");
+            // The jet itself: the startled octopus has its mantle drawn in within a fifth of a
+            // second, and eases off within a second and a half.
+            Check(octopuses.JetCount()>=1U&&octopuses.Octopuses()[0].jet>0.9f&&octopuses.JettingCount()>=1U,"the startled octopus does not jet");
+            for(int step=0;step<30;++step) octopuses.Update(0.05f,open.x+1.0f,open.y,open.z);
+            Check(octopuses.Octopuses()[0].jet<0.1f&&octopuses.JettingCount()==0U,"the jet does not ease off");
             island::OctopusInkField ink;
             ink.Update(0.05f,octopuses.LastInk());
             bool clouded=true;

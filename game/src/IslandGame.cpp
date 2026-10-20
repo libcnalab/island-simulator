@@ -2559,7 +2559,8 @@ namespace island
                   << " agents glide, forage, and settle over shallow sandy seabed; the shark passing within nine metres turns them away and bursts a settled one from the sand; "
                   << "a settled ray two seconds in flicks sand over its back and lies half-buried in the sand's tones until it moves\n"
                   << "island-simulator: octopuses " << octopusGroup_.Octopuses().size()
-                  << " agents den, crawl, forage, and swim in reef and rocky shallows; one lying still takes the sand's tones over a few seconds and flashes back to its own colours when it moves or is startled\n"
+                  << " agents den, crawl, forage, and swim in reef and rocky shallows; one lying still takes the sand's tones over a few seconds and flashes back to its own colours when it moves or is startled; "
+                  << "setting out to swim, or startled for its den, an octopus jets, its mantle drawn in hard and its arms straightened for the first moment\n"
                   << "island-simulator: sea turtles " << seaTurtleGroup_.Turtles().size()
                   << " agents in bounded habitat routes, three based in the sheltered western bay; the shark within eighteen metres sends a surfacing turtle under and the rest away from it; "
                   << "a turtle foraging low over the bottom dips its head to graze, a puff of sand rising at each bite\n"
