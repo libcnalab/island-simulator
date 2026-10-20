@@ -116,7 +116,8 @@ namespace island
         }
 
         [[nodiscard]] Vector3 DiscPoint(const Basis& basis, const float x,
-                                        const float z, const float wave, const float shell)
+                                        const float z, const float wave, const float shell,
+                                        const float ripple=0.0f, const float ripplePhase=0.0f)
         {
             const float lateral=std::clamp(std::fabs(x)/1.34f,0.0f,1.0f);
             const float longitudinal=std::clamp(1.0f-std::fabs(z-.04f)/.96f,0.0f,1.0f);
@@ -125,7 +126,9 @@ namespace island
                 *std::pow(longitudinal,.72f);
             const float crown=shell*(.010f+.145f*centralBody);
             const float feather=-.030f*std::pow(lateral,2.7f)*longitudinal;
-            return basis.Point(x,flap+crown+feather,z);
+            // The margin ripple: a slow wave running back along each wing's outer edge.
+            const float margin=ripple*.040f*std::pow(lateral,2.5f)*std::sin(ripplePhase-z*4.5f);
+            return basis.Point(x,flap+crown+feather+margin,z);
         }
 
         [[nodiscard]] std::array<float,2> Outline(const int index,const float radius)
@@ -175,17 +178,17 @@ namespace island
                 const auto outerA=Outline(index,1.0f);
                 const auto outerB=Outline((index+1)%DiscSegments,1.0f);
                 const Vector3 innerPointA=DiscPoint(
-                    basis,innerA[0],innerA[1],ray.wingWave,1.0f);
+                    basis,innerA[0],innerA[1],ray.wingWave,1.0f,ray.marginRipple,ray.ripplePhase);
                 const Vector3 innerPointB=DiscPoint(
-                    basis,innerB[0],innerB[1],ray.wingWave,1.0f);
+                    basis,innerB[0],innerB[1],ray.wingWave,1.0f,ray.marginRipple,ray.ripplePhase);
                 const Vector3 middlePointA=DiscPoint(
-                    basis,middleA[0],middleA[1],ray.wingWave,1.0f);
+                    basis,middleA[0],middleA[1],ray.wingWave,1.0f,ray.marginRipple,ray.ripplePhase);
                 const Vector3 middlePointB=DiscPoint(
-                    basis,middleB[0],middleB[1],ray.wingWave,1.0f);
+                    basis,middleB[0],middleB[1],ray.wingWave,1.0f,ray.marginRipple,ray.ripplePhase);
                 const Vector3 outerPointA=DiscPoint(
-                    basis,outerA[0],outerA[1],ray.wingWave,1.0f);
+                    basis,outerA[0],outerA[1],ray.wingWave,1.0f,ray.marginRipple,ray.ripplePhase);
                 const Vector3 outerPointB=DiscPoint(
-                    basis,outerB[0],outerB[1],ray.wingWave,1.0f);
+                    basis,outerB[0],outerB[1],ray.wingWave,1.0f,ray.marginRipple,ray.ripplePhase);
                 // Keep the buried centre fan in the dorsal tone. A pale fan left one
                 // exposed triangular wedge beside the raised body whenever the wing
                 // flexed, reading as a painted arrow rather than skin shading.
@@ -195,8 +198,8 @@ namespace island
                 LitTriangle(out,middlePointA,outerPointA,outerPointB,palette.margin);
                 LitTriangle(out,middlePointA,outerPointB,middlePointB,palette.margin);
                 Triangle(out,ventralCentre,
-                    DiscPoint(basis,outerB[0],outerB[1],ray.wingWave,-1.0f),
-                    DiscPoint(basis,outerA[0],outerA[1],ray.wingWave,-1.0f),
+                    DiscPoint(basis,outerB[0],outerB[1],ray.wingWave,-1.0f,ray.marginRipple,ray.ripplePhase),
+                    DiscPoint(basis,outerA[0],outerA[1],ray.wingWave,-1.0f,ray.marginRipple,ray.ripplePhase),
                     palette.underside);
             }
 
@@ -212,7 +215,7 @@ namespace island
                 const auto bodyPoint=[&](const float angle,const bool upper) {
                     const float x=std::cos(angle)*(upper?.255f:.43f);
                     const float z=.075f+std::sin(angle)*(upper?.41f:.61f);
-                    if(!upper)return DiscPoint(basis,x,z,ray.wingWave,1.0f)
+                    if(!upper)return DiscPoint(basis,x,z,ray.wingWave,1.0f,ray.marginRipple,ray.ripplePhase)
                         +basis.up*(.006f*basis.scale);
                     const float y=.205f+.022f*std::sin(angle)
                         +.015f*std::cos(angle)*std::cos(angle);

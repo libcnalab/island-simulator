@@ -30,6 +30,10 @@ namespace island
         /** @brief 0..1 buried: sand flicked over the back of a settled ray, taking the disc
          *  toward the sand's tones; it sheds as the ray moves off or bursts away. */
         float buryAmount = 0.0f;
+        /** @brief 0..1 the margin ripple: a settled ray breathes with a slow wave running
+         *  back along each wing's edge, ripplePhase carrying the wave; still on the move. */
+        float marginRipple = 0.0f;
+        float ripplePhase = 0.0f;
         float scale = 1.0f;
         StingrayBehavior behavior = StingrayBehavior::Glide;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
@@ -68,6 +72,9 @@ namespace island
         void PreviewBury(std::size_t index) noexcept;
         static constexpr float BuryDelaySeconds = 2.0f, FlickSeconds = 0.8f;
         static constexpr float BuryRate = 0.4f, ShedRate = 1.5f;
+        /** @brief Settled rays rippling their wing margins this moment. */
+        [[nodiscard]] std::size_t RipplingCount() const noexcept;
+        static constexpr float RippleRate = 5.5f;
         /** @brief The shark this frame (while present): a ray within ThreatDistance of it
          *  turns away as from the swimmer, and a settled one bursts from the sand. */
         void SetThreat(float x, float z, bool valid) noexcept;

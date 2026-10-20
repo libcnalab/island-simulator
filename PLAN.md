@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 173 (2026-10-20) — a settled ray ripples its margins
+
+A settled stingray lay dead still but for its sand flick. `StingrayState::marginRipple`
+(0..1) and `ripplePhase` now carry the breathing: lying settled, the flick over, a slow
+wave runs back along each wing's outer edge at `RippleRate` (5.5 rad/s), the ripple
+rising at 1.5/s and stilled at 2/s when the ray moves off; `RipplingCount()` counts the
+rays rippling. The disc deformation takes the ripple and its phase as two further
+arguments and lifts the margin by up to 4 cm on a wave travelling back along the edge, on
+the same vertices. The stingrays report line gains "a settled ray breathes with a slow
+wave running back along each wing's edge" (pinned). Core check: the buried ray's margins
+ripple at full with the wave's phase advancing while a gliding ray's edges lie still.
+Native `stingray-buried` passes.
+
 ## Loop pass 172 (2026-10-20) — a turtle blinks at the breath
 
 A sea turtle's eyes stayed fixed through its breath. `SeaTurtleState::blink` (0..1) now

@@ -2560,7 +2560,8 @@ namespace island
                   << " distance-throttled shallow-water schools; a fish rolling through a turn flashes silver along its flanks, brightest parting from the shark\n"
                   << "island-simulator: stingrays " << stingrayGroup_.Stingrays().size()
                   << " agents glide, forage, and settle over shallow sandy seabed; the shark passing within nine metres turns them away and bursts a settled one from the sand; "
-                  << "a settled ray two seconds in flicks sand over its back and lies half-buried in the sand's tones until it moves\n"
+                  << "a settled ray two seconds in flicks sand over its back and lies half-buried in the sand's tones until it moves; "
+                  << "a settled ray breathes with a slow wave running back along each wing's edge\n"
                   << "island-simulator: octopuses " << octopusGroup_.Octopuses().size()
                   << " agents den, crawl, forage, and swim in reef and rocky shallows; one lying still takes the sand's tones over a few seconds and flashes back to its own colours when it moves or is startled; "
                   << "setting out to swim, or startled for its den, an octopus jets, its mantle drawn in hard and its arms straightened for the first moment\n"

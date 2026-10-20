@@ -9717,6 +9717,14 @@ int main()
             Check(flickSand.ActiveCount()==island::StingraySandField::PuffsPerBurst,"the flick raises a ring of sand puffs");
             for(int step=0;step<60;++step) rays.Update(0.05f,lay.x+30.0f,lay.y,lay.z);
             Check(rays.Stingrays()[settled].buryAmount>0.9f&&rays.Stingrays()[settled].behavior==island::StingrayBehavior::Settle,"a few seconds on the ray lies fully buried");
+            // The margin ripple: the settled ray's edges ripple at full with the wave's phase
+            // advancing; a gliding ray's edges lie still.
+            float phaseA=rays.Stingrays()[settled].ripplePhase;
+            rays.Update(0.05f,lay.x+30.0f,lay.y,lay.z);
+            bool gliderStill=true;
+            for(const auto& ray:rays.Stingrays()) if(ray.behavior==island::StingrayBehavior::Glide&&ray.speed>0.3f&&ray.marginRipple>0.3f) gliderStill=false;
+            Check(rays.Stingrays()[settled].marginRipple>0.9f&&rays.Stingrays()[settled].ripplePhase!=phaseA&&rays.RipplingCount()>=1U&&gliderStill,
+                  "a settled ray does not ripple its wing margins, or a gliding one does");
             for(int step=0;step<12;++step) rays.Update(0.05f,lay.x+2.0f,lay.y,lay.z);
             Check(rays.Stingrays()[settled].behavior==island::StingrayBehavior::Glide&&rays.Stingrays()[settled].buryAmount<0.3f&&rays.BuriedCount()==0U,
                   "the swimmer at two metres bursts the buried ray out and the sand sheds within half a second");

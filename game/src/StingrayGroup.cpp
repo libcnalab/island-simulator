@@ -169,6 +169,13 @@ namespace island
 #endif
     }
 
+    std::size_t StingrayGroup::RipplingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.state.marginRipple > 0.5f ? 1U : 0U;
+        return count;
+    }
+
     std::size_t StingrayGroup::BuriedCount() const noexcept
     {
         std::size_t count = 0;
@@ -297,5 +304,12 @@ namespace island
         agent.flickSeconds = std::max(0.0f, agent.flickSeconds - deltaSeconds);
         agent.state.wingWave = std::clamp(std::sin(agent.flapPhase) * (1.0f - flick)
             + std::sin(agent.flickSeconds * 22.0f) * flick, -1.0f, 1.0f);
+        // The margin ripple: lying settled (the sand flick over) the ray breathes with a
+        // slow wave running back along each wing's edge; moving off stills it.
+        const bool rippling = agent.state.behavior == StingrayBehavior::Settle && agent.flickSeconds <= 0.0f;
+        agent.state.marginRipple += std::clamp((rippling ? 1.0f : 0.0f) - agent.state.marginRipple,
+                                               -2.0f * deltaSeconds, 1.5f * deltaSeconds);
+        if (agent.state.marginRipple > 0.01f)
+            agent.state.ripplePhase = std::fmod(agent.state.ripplePhase + deltaSeconds * RippleRate, TwoPi);
     }
 }
