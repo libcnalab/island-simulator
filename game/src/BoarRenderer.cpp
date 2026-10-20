@@ -454,8 +454,12 @@ namespace island
                 MirrorRuntimeDiagnosticToPlatformLog(warning);
                 reportedContactLimit_ = true;
             }
-            ModelBuilder mesh{staging_, vector(grounded.origin), vector(grounded.right),
-                              vector(grounded.up), vector(grounded.forward), boar.scale, canopyLight_};
+            // Shaking, the body rolls side to side about its length by the shake amount.
+            const float roll = std::clamp(boar.shake, 0.0f, 1.0f) * std::sin(boar.shakePhase) * 0.14f;
+            const Vector3 right = vector(grounded.right) * std::cos(roll) + vector(grounded.up) * std::sin(roll);
+            const Vector3 up = vector(grounded.up) * std::cos(roll) - vector(grounded.right) * std::sin(roll);
+            ModelBuilder mesh{staging_, vector(grounded.origin), right,
+                              up, vector(grounded.forward), boar.scale, canopyLight_};
             const auto vertexStart=staging_.size();
             AppendBoar(mesh, boar, grounded, distance < 55.0f * 55.0f);
             if(staging_.size()-vertexStart>6000U)

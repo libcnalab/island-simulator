@@ -30,6 +30,11 @@ namespace island
         /** @brief 0..1 lying down: a rest a second and a half in settles the boar onto folded
          *  legs, body on the ground; it is on its feet again within half a second of an alarm. */
         float lieAmount = 0.0f;
+        /** @brief 0..1 the shake: a boar stepping out of its wallow stands and shakes its
+         *  body side to side for a second and a bit, the mud flying; shakePhase carries
+         *  the side-to-side beat. */
+        float shake = 0.0f;
+        float shakePhase = 0.0f;
         /** @brief True while the boar stands on the stream's drainage ground for its wallow trip. */
         bool inChannel = false;
         float scale = 1.0f;
@@ -100,6 +105,13 @@ namespace island
         void PreviewLie(std::size_t index) noexcept;
         static constexpr float LieDelaySeconds = 1.5f, LieBonusSeconds = 8.0f;
         static constexpr float LieDownRate = 0.7f, RiseRate = 2.0f;
+        /** @brief Shakes begun: a boar leaving the mud with its coat wet stands and shakes for
+         *  ShakeSeconds; the last is noted where the body is for the mud it flings. */
+        struct Shake { float x = 0.0f, y = 0.0f, z = 0.0f, headingRadians = 0.0f, scale = 1.0f; std::uint32_t count = 0U; };
+        [[nodiscard]] const Shake& LastShake() const noexcept { return shake_; }
+        [[nodiscard]] std::uint32_t ShakeCount() const noexcept { return shake_.count; }
+        [[nodiscard]] std::size_t ShakingCount() const noexcept;
+        static constexpr float ShakeSeconds = 1.3f, ShakeBeatRate = 17.0f;
 
     private:
         struct Agent
@@ -119,6 +131,8 @@ namespace island
             bool inCorridor = false;        // still on drainage ground after the wallow ended
             float restSeconds = 0.0f;       // time into the current undisturbed rest
             bool lying = false;
+            bool wasWallowing = false;
+            float shakeSeconds = 0.0f;      // remainder of the shake on leaving the wallow
         };
         void ChooseRootingSite(Agent& agent) noexcept;
         bool ChooseFruitTarget(Agent& agent) noexcept;
@@ -140,6 +154,7 @@ namespace island
         std::uint32_t bearRetreats_ = 0;
         std::size_t lastBearRetreat_ = 0;
         std::uint32_t lies_ = 0;
+        Shake shake_;
         std::uint32_t retreats_ = 0;
         std::size_t lastRetreat_ = 0;
     };

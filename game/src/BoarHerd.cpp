@@ -256,6 +256,13 @@ namespace island
         return count;
     }
 
+    std::size_t BoarHerd::ShakingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.shakeSeconds > 0.0f ? 1U : 0U;
+        return count;
+    }
+
     void BoarHerd::PreviewLie(const std::size_t index) noexcept
     {
         if (index >= agents_.size()) return;
@@ -351,7 +358,8 @@ namespace island
         }
         state.headingRadians = Wrap(state.headingRadians + std::clamp(
             Wrap(agent.targetHeading - state.headingRadians), -dt * 2.1f, dt * 2.1f));
-        const float targetSpeed = state.behavior == BoarBehavior::Retreat ? 2.8f
+        const float targetSpeed = agent.shakeSeconds > 0.0f ? 0.0f
+            : state.behavior == BoarBehavior::Retreat ? 2.8f
             : state.behavior == BoarBehavior::Wander ? 0.85f
             : state.behavior == BoarBehavior::Forage
                 ? (agent.hasRoot ? (rooting ? 0.0f : 0.42f) : 0.11f)
@@ -403,5 +411,15 @@ namespace island
         state.rootingPose += std::clamp(rootTarget - state.rootingPose, -dt * 1.8f, dt * 1.2f);
         state.mudAmount = wallowing ? std::min(1.0f, state.mudAmount + dt / 6.0f)
             : std::max(0.0f, state.mudAmount - dt / MudDrySeconds);
+        // Out of the mud with the coat wet, the boar stands and shakes, side to side, for a
+        // second and a bit; the shake is noted where it stands for the mud it flings.
+        if (agent.wasWallowing && !wallowing && state.mudAmount > 0.5f) {
+            agent.shakeSeconds = ShakeSeconds;
+            shake_ = {state.x, state.y, state.z, state.headingRadians, state.scale, shake_.count + 1U};
+        }
+        agent.wasWallowing = wallowing;
+        agent.shakeSeconds = std::max(0.0f, agent.shakeSeconds - dt);
+        state.shake += std::clamp((agent.shakeSeconds > 0.0f ? 1.0f : 0.0f) - state.shake, -dt * 5.0f, dt * 8.0f);
+        if (state.shake > 0.01f) state.shakePhase = std::fmod(state.shakePhase + dt * ShakeBeatRate, Tau);
     }
 }

@@ -2260,6 +2260,7 @@ namespace island
         std::cout << "island-simulator: ecological links: " << deer_->DrinkerCount() << " deer and "
                   << goats_->DrinkerCount() << " goats walk to the stream bank to drink; "
                   << boarHerd_.WallowerCount() << " boars wallow at the bank and carry the mud on their legs and bellies; "
+                  << "a boar stepping out of its wallow stands and shakes, the mud flying from its flanks; "
                   << "boars root at the nearest trunk base, monkeys favour fruiting crowns and linger to pick\n";
         std::cout << "island-simulator: herd behaviour: goats share their separated ranges and the "
                      "East deer pair walks back together; a sentinel lifts its head first and the others follow after 0.7 s; "
@@ -3232,6 +3233,7 @@ namespace island
             soundscape_->NoteBoarAlarm(boarHerd_.LastBearRetreatIndex());
         }
         rootingDust_.Update(deltaSeconds, seaForageSeconds_, boarHerd_.Boars());
+        mudFlecks_.Update(deltaSeconds, boarHerd_.LastShake());
         // The dust the running animals kick up: a boar trotting off, a deer bounding, a goat
         // sidestepping, on dry sand or bare soil, puffs of earth behind the hooves.
         hoofDustRunners_.clear();
@@ -5027,6 +5029,7 @@ namespace island
             cascadeMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,cascadeMist_.Puffs());
             wetlandMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,wetlandMist_.Puffs());
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,rootingDust_.Puffs());
+            rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,mudFlecks_.Puffs());
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,hoofDust_.Puffs());
             stingraySandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,stingraySand_.Puffs());
             stingraySandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,stingrayFlickSand_.Puffs());

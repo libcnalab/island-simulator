@@ -54,6 +54,21 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 149 (2026-10-20) — a boar shakes the mud off
+
+A boar stepping out of its wallow walked off dripping. `BoarState::shake` (0..1) and
+`shakePhase` now carry the shake: a boar leaving the mud with its coat still wet (mud above
+0.5) stops and shakes for `ShakeSeconds` (1.3 s), the body rolling side to side at 17 rad/s
+in the renderer (up to 0.14 rad about its length), the shakes counted and the last noted
+where the boar stands (`BoarHerd::LastShake()`, `ShakeCount()`, `ShakingCount()`). New
+`MudFleckField` flings a ring of eight flecks from the flanks at each new shake, sideways
+and a little up, falling under gravity and gone within 0.8 s, drawn by the rooting-dust
+renderer in soil brown. The boars report line gains "a boar stepping out of its wallow
+stands and shakes, the mud flying from its flanks" (pinned). Core checks: within ten
+minutes a boar leaving its wallow shakes to full with its beat advancing, standing still,
+and each shake is noted where a muddy boar stands; the shake flings eight flecks that
+reach a body's height and fall within the second. Native `boars` passes.
+
 ## Loop pass 148 (2026-10-20) — a swimming crocodile draws a wake
 
 A crocodile swimming the estuary left the water unmarked. New `CrocodileWakeField` lays a

@@ -100,6 +100,7 @@ add_library(island_core STATIC
     game/src/TurtleGrazeField.cpp
     game/src/DragonflyDipField.cpp
     game/src/CrocodileWakeField.cpp
+    game/src/MudFleckField.cpp
     game/src/StreamFishField.cpp
     game/src/HatchlingField.cpp
     game/src/CascadeMistField.cpp

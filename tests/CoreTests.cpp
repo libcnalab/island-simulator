@@ -57,6 +57,7 @@
 #include "IslandSimulator/TurtleGrazeField.hpp"
 #include "IslandSimulator/DragonflyDipField.hpp"
 #include "IslandSimulator/CrocodileWakeField.hpp"
+#include "IslandSimulator/MudFleckField.hpp"
 #include "IslandSimulator/StreamFishField.hpp"
 #include "IslandSimulator/HatchlingField.hpp"
 #include "IslandSimulator/BirdShadowProjection.hpp"
@@ -7952,14 +7953,41 @@ int main()
         Check(herd.WallowerCount() >= 1U, "at least one boar range reaches a stream bank");
         float wettest = 0.0f;
         bool wallowed = false;
+        // The shake on leaving the mud: it begins within a second of the wallow ending with
+        // the boar standing still, the shake rising to full and its beat advancing, noted
+        // where the boar stands; the mud field flings flecks that fall within the second.
+        float shakePeak = 0.0f, shakeSpeed = 0.0f; bool shakeNear = true, beat = false;
+        island::MudFleckField flecks;
+        std::size_t flungAtOnce = 0; float highestFleck = -1.0f;
+        std::uint32_t seenShakes = 0U;
         for (int step = 0; step < 12000; ++step) {
             herd.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
+            flecks.Update(0.05f, herd.LastShake());
+            flungAtOnce = std::max(flungAtOnce, flecks.ActiveCount());
+            for (const auto& puff : flecks.Puffs()) if (puff.active) highestFleck = std::max(highestFleck, puff.y - herd.LastShake().y);
+            if (herd.ShakeCount() != seenShakes) {
+                seenShakes = herd.ShakeCount();
+                bool found = false;
+                for (const auto& boar : herd.Boars())
+                    if (boar.mudAmount > 0.5f && std::hypot(boar.x - herd.LastShake().x, boar.z - herd.LastShake().z) < 0.3f) found = true;
+                if (!found) shakeNear = false;
+            }
             for (const auto& boar : herd.Boars()) {
                 wettest = std::max(wettest, boar.mudAmount);
                 wallowed |= boar.behavior == island::BoarBehavior::Wallow && boar.mudAmount > 0.5f;
+                if (boar.shake > 0.5f) {
+                    shakePeak = std::max(shakePeak, boar.shake);
+                    if (boar.shake > 0.95f) shakeSpeed = std::max(shakeSpeed, boar.speed);
+                    if (boar.shakePhase > 0.0f) beat = true;
+                }
             }
         }
         Check(wallowed && wettest > 0.9f, "a boar wallows at the bank within ten minutes and comes out muddy");
+        Check(herd.ShakeCount() >= 1U && shakePeak > 0.95f && shakeSpeed < 0.05f && beat && shakeNear,
+              "a boar leaving its wallow stands and shakes where it stands");
+        Check(flecks.ShakeCount() == herd.ShakeCount() && flungAtOnce >= island::MudFleckField::FlecksPerShake
+                  && highestFleck > 0.3f && highestFleck < 1.2f,
+              "the shake flings a ring of mud flecks from the flanks that fall within the second");
     }
 
     {
