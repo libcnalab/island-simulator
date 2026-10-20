@@ -23,6 +23,28 @@ std::size_t CanopyLeafFallField::FallingCount() const noexcept {
 
 void CanopyLeafFallField::Release(const CanopyPlacement& crown,const std::uint32_t seed) noexcept {
     if(!std::isfinite(crown.x)||!std::isfinite(crown.z)||!std::isfinite(crown.y)||crown.scale<=0) return;
+    // From somewhere in the crown: a point around the trunk at the crown's height, the
+    // crown geometry putting its lobes six to nine metres up a unit tree.
+    const float angle=static_cast<float>(seed%360U)*(Tau/360.0f);
+    const float radius=(1.2f+static_cast<float>((seed>>9U)%100U)*0.014f)*crown.scale;
+    const float x=crown.x+std::cos(angle)*radius,z=crown.z+std::sin(angle)*radius;
+    const float y=std::max(crown.y+(6.0f+static_cast<float>((seed>>16U)%30U)*0.1f)*crown.scale,
+                           terrain_.Height(x,z)+3.0f);
+    Let(x,y,z,angle*1.7f,seed);
+    ++releases_;
+}
+
+void CanopyLeafFallField::Shake(const float x,const float y,const float z,const std::uint32_t seed) noexcept {
+    if(!std::isfinite(x)||!std::isfinite(y)||!std::isfinite(z)) return;
+    if(y<terrain_.Height(x,z)+1.5f) return;   // nothing to shake loose this low
+    std::uint32_t hash=seed*0x9e3779b9U^0x7f4a7c15U;
+    hash^=hash>>16U;hash*=0x7feb352dU;hash^=hash>>15U;
+    const float angle=static_cast<float>(hash%360U)*(Tau/360.0f);
+    Let(x+std::cos(angle)*0.4f,y-0.3f,z+std::sin(angle)*0.4f,angle,hash);
+    ++shakes_;
+}
+
+void CanopyLeafFallField::Let(const float x,const float y,const float z,const float yaw,const std::uint32_t seed) noexcept {
     // A free slot, or the leaf that has lain longest.
     std::size_t slot=Capacity;
     for(std::size_t i=0;i<Capacity;++i) if(!leaves_[i].active) {slot=i;break;}
@@ -31,15 +53,8 @@ void CanopyLeafFallField::Release(const CanopyPlacement& crown,const std::uint32
         for(std::size_t i=1;i<Capacity;++i) if(rest_[i]>rest_[slot]) slot=i;
     }
     DriftingLeaf& leaf=leaves_[slot];
-    // From somewhere in the crown: a point around the trunk at the crown's height, the
-    // crown geometry putting its lobes six to nine metres up a unit tree.
-    const float angle=static_cast<float>(seed%360U)*(Tau/360.0f);
-    const float radius=(1.2f+static_cast<float>((seed>>9U)%100U)*0.014f)*crown.scale;
-    leaf.x=crown.x+std::cos(angle)*radius;
-    leaf.z=crown.z+std::sin(angle)*radius;
-    leaf.y=std::max(crown.y+(6.0f+static_cast<float>((seed>>16U)%30U)*0.1f)*crown.scale,
-                    terrain_.Height(leaf.x,leaf.z)+3.0f);
-    leaf.yawRadians=angle*1.7f;
+    leaf.x=x;leaf.y=y;leaf.z=z;
+    leaf.yawRadians=yaw;
     leaf.spin=0;leaf.distance=0;leaf.lateral=0;leaf.speed=FallSpeed;
     // Old leaves go first: mostly brown and yellow, now and then a green one.
     const std::uint32_t tint=(seed>>5U)%5U;
@@ -47,7 +62,6 @@ void CanopyLeafFallField::Release(const CanopyPlacement& crown,const std::uint32
     leaf.active=true;leaf.atSea=false;leaf.seaSeconds=0;
     phase_[slot]=static_cast<float>((seed>>3U)%628U)*0.01f;
     rest_[slot]=-1.0f;
-    ++releases_;
 }
 
 void CanopyLeafFallField::Update(const float seconds,const float deltaSeconds,

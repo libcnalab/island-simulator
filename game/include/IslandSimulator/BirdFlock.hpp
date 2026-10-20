@@ -108,6 +108,13 @@ namespace island
         bool valid = false;
     };
 
+    /** @brief The last branch perch a bird settled on; the crown shakes a leaf loose. */
+    struct BirdPerchLanding
+    {
+        float x = 0.0f, y = 0.0f, z = 0.0f;
+        bool valid = false;
+    };
+
     /** @brief Deterministic, bounded and distance-throttled flying-bird simulation. */
     class BirdFlock final
     {
@@ -128,6 +135,8 @@ namespace island
         void SetSeaForage(float x, float z, bool valid) noexcept;
         [[nodiscard]] std::size_t HuntingCount() const noexcept;
         [[nodiscard]] const BirdDiveSplash& DiveSplash() const noexcept { return diveSplash_; }
+        [[nodiscard]] const BirdPerchLanding& LastLanding() const noexcept { return lastLanding_; }
+        [[nodiscard]] std::uint32_t LandingCount() const noexcept { return landings_; }
         [[nodiscard]] std::uint32_t DiveCount() const noexcept { return diveCount_; }
         /** @brief Seabirds sitting on the water after a hunt. */
         [[nodiscard]] std::size_t RaftingCount() const noexcept;
@@ -245,6 +254,8 @@ namespace island
         float forageX_ = 0.0f, forageZ_ = 0.0f;
         bool forageValid_ = false;
         BirdDiveSplash diveSplash_;
+        BirdPerchLanding lastLanding_;
+        std::uint32_t landings_ = 0U;
         std::uint32_t diveCount_ = 0U;
         std::uint32_t raftCount_ = 0U;
         float bathX_ = 0.0f, bathZ_ = 0.0f;

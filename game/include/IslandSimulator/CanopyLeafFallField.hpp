@@ -33,14 +33,19 @@ public:
     [[nodiscard]] std::size_t ActiveCount() const noexcept;
     [[nodiscard]] std::size_t FallingCount() const noexcept;
     [[nodiscard]] std::uint32_t ReleaseCount() const noexcept {return releases_;}
+    /** @brief Something moving in a crown (a bird landing, a monkey passing) shakes a leaf
+     *  loose just below the point. */
+    void Shake(float x,float y,float z,std::uint32_t seed) noexcept;
+    [[nodiscard]] std::uint32_t ShakeCount() const noexcept {return shakes_;}
 private:
     void Release(const CanopyPlacement& crown,std::uint32_t seed) noexcept;
+    void Let(float x,float y,float z,float yaw,std::uint32_t seed) noexcept;
     const IslandTerrain& terrain_;
     std::span<const CanopyPlacement> crowns_;
     std::vector<float> crownGust_;
     std::array<DriftingLeaf,Capacity> leaves_{};
     std::array<float,Capacity> phase_{};
     std::array<float,Capacity> rest_{};   // seconds lying; negative while falling
-    std::uint32_t releases_=0;
+    std::uint32_t releases_=0,shakes_=0;
 };
 }

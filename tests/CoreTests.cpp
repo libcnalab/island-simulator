@@ -7664,6 +7664,41 @@ int main()
             gone = !leaves.Leaves()[slot].active;
         }
         Check(gone, "a lying leaf is gone after its rest");
+        // A shake at a point up in a crown lets a leaf go just below it; one at ground level
+        // lets nothing go.
+        island::CanopyLeafFallField shaken(terrain);
+        const float shakeX = crown.x, shakeZ = crown.z, shakeY = terrain.Height(shakeX, shakeZ) + 7.0f;
+        shaken.Shake(shakeX, shakeY, shakeZ, 5U);
+        bool shakenLeaf = false;
+        for (const auto& leaf : shaken.Leaves())
+            if (leaf.active && std::hypot(leaf.x - shakeX, leaf.z - shakeZ) < 0.6f && std::abs(leaf.y - (shakeY - 0.3f)) < 0.001f) shakenLeaf = true;
+        Check(shakenLeaf && shaken.ShakeCount() == 1U && shaken.ActiveCount() == 1U, "a shake up in a crown lets one leaf go just below the point");
+        shaken.Shake(shakeX, terrain.Height(shakeX, shakeZ) + 0.5f, shakeZ, 6U);
+        Check(shaken.ActiveCount() == 1U, "a shake at ground level lets no leaf go");
+    }
+
+    {
+        // A bird settling on a branch perch is noted with the perch's position, so the
+        // game can shake a leaf loose there; a wreck perch is not a crown.
+        const island::IslandTerrain terrain;
+        const float perchX = 60.0f, perchZ = 40.0f, perchY = terrain.Height(perchX, perchZ) + 6.0f;
+        const std::vector<island::BirdPerchSite> sites{{perchX, perchY, perchZ, 0.3f, island::BirdPerchKind::Branch, false}};
+        island::BirdFlock flock(terrain);
+        flock.SetPerchSites(sites);
+        bool landed = false;
+        for (int step = 0; step < 6000 && !landed; ++step) {
+            flock.Update(0.05f, perchX + 20.0f, perchY, perchZ);
+            landed = flock.LandingCount() >= 1U;
+        }
+        const auto& landing = flock.LastLanding();
+        Check(landed && landing.valid && std::abs(landing.x - perchX) < 0.01f && std::abs(landing.z - perchZ) < 0.01f
+                  && std::abs(landing.y - perchY) < 0.01f,
+              "a bird settling on a branch perch is noted at the perch within five minutes");
+        const std::vector<island::BirdPerchSite> wreck{{20.0f, terrain.Height(20.0f, 20.0f) + 2.0f, 20.0f, 0.3f, island::BirdPerchKind::Wreck}};
+        island::BirdFlock sitting(terrain);
+        sitting.SetPerchSites(wreck);
+        for (int step = 0; step < 1200; ++step) sitting.Update(0.05f, 45.0f, wreck[0].y, 20.0f);
+        Check(sitting.LandingCount() == 0U, "a wreck perch landing is not a crown landing");
     }
 
     {

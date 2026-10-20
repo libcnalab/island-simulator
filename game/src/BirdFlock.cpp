@@ -749,6 +749,10 @@ namespace island
                 agent.state.behavior = BirdBehavior::Perched;
                 agent.behaviorSeconds = 0.0f;
                 agent.state.perchAmount = 1.0f;
+                if (site.kind == BirdPerchKind::Branch) {
+                    lastLanding_ = {site.x, site.y, site.z, true};
+                    ++landings_;
+                }
             }
             return;
         }

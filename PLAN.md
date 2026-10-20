@@ -54,6 +54,20 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 77 (2026-10-20) — a landing bird and a passing monkey shake leaves loose
+
+Leaf fall only came with the gusts. `CanopyLeafFallField::Shake(x,y,z,seed)` lets a leaf go
+0.4 m beside and 0.3 m below a point in a crown (nothing from a point within 1.5 m of the
+ground), sharing the slot and launch code with the gust release (`Let`). The bird flock
+notes a settling on a branch perch (`LastLanding`, `LandingCount`; wreck and rock perches
+are not crowns), and the game shakes a leaf loose there; a monkey in a crown
+(`InspectTree`, two metres up, not dormant) shakes one loose every five seconds it spends
+there. `ShakeCount()` counts them. The startup report gains "a bird settling on a branch
+and a monkey moving through a crown shake a leaf loose", pinned by the native capture tool.
+Core checks: a shake up in a crown lets exactly one leaf go just below the point and a
+shake at ground level none; a bird settling on a branch perch is noted at the perch within
+five minutes while a wreck-perch landing is not. Native `monkey-tree` passes.
+
 ## Loop pass 76 (2026-10-20) — the crowns shed leaves at a gust front
 
 Leaves drifted on the stream and lay on the floor, but none ever fell. `CanopyLeafFallField`

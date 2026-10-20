@@ -505,6 +505,9 @@ namespace island
         float lastSubmergedDepth_ = 0.0f, bubbleBurst_ = 0.0f;
         float seaForageSeconds_ = 0.0f;
         std::uint32_t notedDiveCount_ = 0U;
+        std::uint32_t notedLandingCount_ = 0U;
+        std::array<float, MonkeyTroop::MonkeyCount> monkeyShakeClock_{};
+        std::uint32_t monkeyShakes_ = 0U;
         std::uint32_t notedThudCount_ = 0U;
         std::uint32_t notedBreachCount_ = 0U;
         std::uint32_t notedEntryCount_ = 0U;

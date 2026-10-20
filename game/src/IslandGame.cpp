@@ -2280,6 +2280,7 @@ namespace island
                   << "island-simulator: every fourth ground visit a fruit dove comes down to the plunge pool's bank to bathe, flicking its wings and dipping in bouts\n"
                   << "island-simulator: a parrot perched on a fruiting lobe of the crown feeds there in bouts, reaching to the fruit, and stays twice as long\n"
                   << "island-simulator: at a gust front the crowns let go leaves that spiral down through the shade, drift downwind and lie on the floor a while\n"
+                  << "island-simulator: a bird settling on a branch and a monkey moving through a crown shake a leaf loose\n"
                   << "island-simulator: fruit bats " << fruitBatColony_.Bats().size()
                   << " agents use six inland canopy roosts with four hanging and two bounded daytime flights\n"
                   << "island-simulator: clearing butterflies "
@@ -2697,6 +2698,25 @@ namespace island
                               || viewpoint_ == FixedViewpoint::GroundDoveDetail)
                                  ? 0.0f : deltaSeconds,
                           cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
+        // A bird settling on a branch, and a monkey moving through a crown every few
+        // seconds, shake a leaf loose.
+        if (birdFlock_.LandingCount() != notedLandingCount_) {
+            notedLandingCount_ = birdFlock_.LandingCount();
+            const BirdPerchLanding& landing = birdFlock_.LastLanding();
+            if (landing.valid) canopyLeafFall_.Shake(landing.x, landing.y, landing.z, notedLandingCount_ * 7919U);
+        }
+        for (std::size_t i = 0; i < monkeyTroop_.Monkeys().size() && i < monkeyShakeClock_.size(); ++i) {
+            const MonkeyState& monkey = monkeyTroop_.Monkeys()[i];
+            const bool inCrown = monkey.behavior == MonkeyBehavior::InspectTree
+                && monkey.simulationTier != WildlifeSimulationTier::Dormant
+                && monkey.y > terrain_.Height(monkey.x, monkey.z) + 2.0f;
+            if (!inCrown) { monkeyShakeClock_[i] = 0.0f; continue; }
+            monkeyShakeClock_[i] += deltaSeconds;
+            if (monkeyShakeClock_[i] >= 5.0f) {
+                monkeyShakeClock_[i] = 0.0f;
+                canopyLeafFall_.Shake(monkey.x, monkey.y, monkey.z, static_cast<std::uint32_t>(i) * 7919U + (++monkeyShakes_) * 104729U);
+            }
+        }
         fruitBatColony_.Update((viewpoint_ == FixedViewpoint::FruitBatDetail
                                    || viewpoint_ == FixedViewpoint::FruitBatRoostDetail)
                                   ? 0.0f : deltaSeconds,
