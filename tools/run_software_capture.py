@@ -1388,6 +1388,8 @@ def main():
                 raise RuntimeError("current crocodile blink is missing; check for a stale executable")
             if "the bear shakes its head as a sniff ends, a quick swing side to side" not in diagnostics:
                 raise RuntimeError("current bear head shake is missing; check for a stale executable")
+            if "a turtle squeezes its eyes shut as its head breaks the surface for a breath, and blinks slowly every dozen seconds under" not in diagnostics:
+                raise RuntimeError("current turtle blink is missing; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:

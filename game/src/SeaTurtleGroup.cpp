@@ -166,6 +166,7 @@ namespace island
                 if (depthBefore < BreathDepth && agent.state.y >= BreathDepth
                     && agent.state.behavior == SeaTurtleBehavior::Surface) {
                     breath_ = {agent.state.x, agent.state.z, agent.state.headingRadians, agent.state.scale, breath_.count + 1U};
+                    agent.blinkSeconds = BlinkSeconds;   // the eyes squeeze shut as the head breaks the surface
                 }
             }
             states_[index] = agent.state;
@@ -188,6 +189,13 @@ namespace island
             assert(std::isfinite(turtle.scale) && turtle.scale > 0.0f);
         }
 #endif
+    }
+
+    std::size_t SeaTurtleGroup::BlinkingCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) count += agent.blinking ? 1U : 0U;
+        return count;
     }
 
     void SeaTurtleGroup::UpdateAgent(Agent& agent, const float deltaSeconds,
@@ -329,6 +337,19 @@ namespace island
             agent.bitten = false;
             agent.state.graze = std::max(0.0f, agent.state.graze - deltaSeconds * 3.0f);
         }
+        // The blink: a squeeze of the eyes at each breath (set where the breath is noted),
+        // and a slow blink every dozen seconds or so otherwise.
+        agent.blinkClock += deltaSeconds;
+        if (agent.blinkClock >= BlinkPeriodSeconds + agent.state.scale * 4.0f) {
+            agent.blinkClock = 0.0f;
+            agent.blinkSeconds = BlinkSeconds;
+        }
+        const bool blinking = agent.blinkSeconds > 0.0f;
+        if (blinking && !agent.blinking) ++blinks_;
+        agent.blinking = blinking;
+        agent.blinkSeconds = std::max(0.0f, agent.blinkSeconds - deltaSeconds);
+        agent.state.blink += std::clamp((blinking ? 1.0f : 0.0f) - agent.state.blink,
+                                        -deltaSeconds * 8.0f, deltaSeconds * 12.0f);
     }
 
     void SeaTurtleGroup::SetThreat(const float x, const float z, const bool valid) noexcept

@@ -412,11 +412,14 @@ namespace island
             }
             const Color eye(16, 22, 20, 255);
             const Color eyeShine(119, 137, 127, 255);
+            // Blinking, the eye's top and bottom facets close toward its middle and the
+            // shine thins, on the same vertices.
+            const float blink = std::clamp(turtle.blink, 0.0f, 1.0f);
             for (int sideIndex = -1; sideIndex <= 1; sideIndex += 2) {
                 const float side = static_cast<float>(sideIndex);
-                const Vector3 eTop = headLocal(side * 0.122f, 0.095f, 0.644f);
+                const Vector3 eTop = headLocal(side * 0.122f, 0.095f - 0.024f * blink, 0.644f);
                 const Vector3 eFront = headLocal(side * 0.124f, 0.069f, 0.672f);
-                const Vector3 eBottom = headLocal(side * 0.124f, 0.043f, 0.641f);
+                const Vector3 eBottom = headLocal(side * 0.124f, 0.043f + 0.024f * blink, 0.641f);
                 const Vector3 eRear = headLocal(side * 0.122f, 0.067f, 0.613f);
                 if (side > 0.0f) {
                     AddTriangle(vertices, eTop, eBottom, eFront, eye);
@@ -425,7 +428,7 @@ namespace island
                     AddTriangle(vertices, eTop, eFront, eBottom, eye);
                     AddTriangle(vertices, eTop, eBottom, eRear, eye);
                 }
-                const Vector3 h0 = headLocal(side * 0.126f, 0.084f, 0.644f);
+                const Vector3 h0 = headLocal(side * 0.126f, 0.084f - 0.012f * blink, 0.644f);
                 const Vector3 h1 = headLocal(side * 0.127f, 0.070f, 0.657f);
                 const Vector3 h2 = headLocal(side * 0.127f, 0.069f, 0.632f);
                 AddTriangle(vertices, h0, side > 0.0f ? h2 : h1, side > 0.0f ? h1 : h2, eyeShine);

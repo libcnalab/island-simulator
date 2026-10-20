@@ -32,6 +32,9 @@ namespace island
         float flipperStroke = 0.0f;
         /** @brief 0..1 the head dipped to the bottom in a grazing bite. */
         float graze = 0.0f;
+        /** @brief 0..1 the blink: the eyes squeezed shut as the head breaks the surface for
+         *  a breath, and a slow blink every dozen seconds or so otherwise. */
+        float blink = 0.0f;
         float scale = 1.0f;
         SeaTurtleBehavior behavior = SeaTurtleBehavior::Cruise;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
@@ -73,6 +76,11 @@ namespace island
         [[nodiscard]] const Bite& LastBite() const noexcept { return bite_; }
         [[nodiscard]] std::uint32_t BiteCount() const noexcept { return bite_.count; }
         static constexpr float BiteSeconds = 2.4f, BiteDipSeconds = 0.9f, GrazeHeight = 1.2f;
+        /** @brief Blinks begun (one at each breath, one every BlinkPeriodSeconds or so
+         *  otherwise, each BlinkSeconds) and the turtles mid-blink. */
+        [[nodiscard]] std::uint32_t BlinkCount() const noexcept { return blinks_; }
+        [[nodiscard]] std::size_t BlinkingCount() const noexcept;
+        static constexpr float BlinkSeconds = 0.35f, BlinkPeriodSeconds = 12.0f;
         /** @brief The shark this frame (while present): a turtle within ThreatDistance of it
          *  turns away as from the swimmer, a surfacing one dives, and both swim on faster
          *  until it is clear. */
@@ -102,6 +110,8 @@ namespace island
             std::uint32_t transitionCount = 0U;
             float grazeClock = 0.0f;
             bool bitten = false;
+            float blinkClock = 0.0f, blinkSeconds = 0.0f;
+            bool blinking = false;
         };
 
         void InitializeAgent(std::size_t index);
@@ -124,6 +134,7 @@ namespace island
         bool threatValid_ = false;
         std::uint32_t threatDives_ = 0U;
         Bite bite_;
+        std::uint32_t blinks_ = 0U;
         int fullSimulationCount_ = 0;
         int reducedSimulationCount_ = 0;
         int dormantSimulationCount_ = 0;

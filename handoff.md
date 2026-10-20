@@ -233,6 +233,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 169: a goat flicks an ear back at a fly now and then, the ears taking turns (`GoatState::earFlick`, `BuildGoatMesh` ear flick) (PLAN "Loop pass 169").
 - Pass 170: a crocodile blinks, its eyes shut for a moment every eight seconds or so (`CrocodileState::blink`, `CrocodileGroup::BlinkCount`) (PLAN "Loop pass 170").
 - Pass 171: the bear shakes its head as a sniff ends, a quick swing side to side (`BearState::headShake`/`shakePhase`, `BearMotion::HeadShakeCount`) (PLAN "Loop pass 171").
+- Pass 172: a turtle squeezes its eyes shut as its head breaks the surface for a breath, and blinks slowly under (`SeaTurtleState::blink`, `SeaTurtleGroup::BlinkCount`) (PLAN "Loop pass 172").
 
 The earlier agent-actionable backlog (above this section's predecessor) is empty. Next whole-island critique target, observed in the moving
 frames but not yet worked: the open mid-distance hillside (20--40 m) reads as a smooth painted

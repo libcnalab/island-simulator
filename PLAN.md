@@ -54,6 +54,19 @@ Chrome software scopes run against it between 02:45 and 03:33 under the other ag
 `build/browser-software/20261020T02…` to `…03…-chrome-<scope>`). `terrain` stays `[!]` blocked
 by load as recorded above. Loop passes 39 onward are not yet in a Web package.
 
+## Loop pass 172 (2026-10-20) — a turtle blinks at the breath
+
+A sea turtle's eyes stayed fixed through its breath. `SeaTurtleState::blink` (0..1) now
+carries the blink: as the head breaks the surface for a breath the eyes are squeezed shut
+for `BlinkSeconds` (0.35 s), closing at 12/s and opening at 8/s, and under water a slow
+blink comes every `BlinkPeriodSeconds` (12 s, plus a little per turtle); the blinks are
+counted (`BlinkCount()`, `BlinkingCount()`). In the near renderer the eye's top and bottom
+facets close toward its middle and the shine thins, on the same vertices. The turtles
+report line gains "a turtle squeezes its eyes shut as its head breaks the surface for a
+breath, and blinks slowly every dozen seconds under" (pinned). Core check: the breathing
+turtle has its eyes squeezed shut within a fifth of a second of the breath and open again
+within two seconds. Native `turtles` passes.
+
 ## Loop pass 171 (2026-10-20) — the bear shakes its head
 
 A sniff ended with the bear's head simply lowering. `BearState::headShake` (0..1) and

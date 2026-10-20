@@ -10073,6 +10073,20 @@ int main()
             for(int step=0;step<3600&&turtles.LastBreath().count==0U;++step)
                 turtles.Update(0.05f,first.x,2.0f,first.z);
             Check(turtles.LastBreath().count>=1U,"a sea turtle lifts its head through the surface for a breath within three minutes");
+            {
+                // The breath's blink: the breathing turtle has its eyes squeezed shut within a
+                // fifth of a second of the breath and open again within two seconds.
+                std::size_t breather=0; float nearest=1e9f;
+                for(std::size_t i=0;i<turtles.Turtles().size();++i) {
+                    const float d=std::hypot(turtles.Turtles()[i].x-turtles.LastBreath().x,turtles.Turtles()[i].z-turtles.LastBreath().z);
+                    if(d<nearest) { nearest=d; breather=i; }
+                }
+                float shut=0.0f;
+                for(int step=0;step<4;++step) { turtles.Update(0.05f,first.x,2.0f,first.z); shut=std::max(shut,turtles.Turtles()[breather].blink); }
+                Check(turtles.BlinkCount()>=1U&&shut>0.9f,"a turtle does not squeeze its eyes shut as it breaks the surface");
+                for(int step=0;step<40;++step) turtles.Update(0.05f,first.x,2.0f,first.z);
+                Check(turtles.Turtles()[breather].blink<0.1f,"the breath's blink does not open again");
+            }
             island::TurtleBreathField breaths;
             breaths.Update(0.05f,0.0f,turtles.LastBreath());
             const auto& breath=turtles.LastBreath();

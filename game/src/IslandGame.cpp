@@ -2566,7 +2566,8 @@ namespace island
                   << "setting out to swim, or startled for its den, an octopus jets, its mantle drawn in hard and its arms straightened for the first moment\n"
                   << "island-simulator: sea turtles " << seaTurtleGroup_.Turtles().size()
                   << " agents in bounded habitat routes, three based in the sheltered western bay; the shark within eighteen metres sends a surfacing turtle under and the rest away from it; "
-                  << "a turtle foraging low over the bottom dips its head to graze, a puff of sand rising at each bite\n"
+                  << "a turtle foraging low over the bottom dips its head to graze, a puff of sand rising at each bite; "
+                  << "a turtle squeezes its eyes shut as its head breaks the surface for a breath, and blinks slowly every dozen seconds under\n"
                   << "island-simulator: a fish breaking the surface within sixty metres draws the present shark that way for a few seconds before it takes up its patrol again\n"
                   << "island-simulator: one occasional non-hostile offshore shark patrol\n"
                   << "island-simulator: dolphins " << dolphinPod_.Dolphins().size()
