@@ -678,6 +678,7 @@ namespace island
         std::array<FootprintTrail,DeerHerd::Count> deerPrints_{};
         std::array<FootprintTrail,BoarHerd::BoarCount> boarPrints_{};
         FootprintTrail residentPrints_{};   // the resident's bare feet on the sand
+        std::array<FootprintTrail,GoatHabitat::Count> goatPrints_{};   // in the wet soil round the goats' basin
         std::unique_ptr<FootprintTrailRenderer> footprintRenderer_;
         std::unique_ptr<WaterholeRenderer> waterholeRenderer_;
         RootingDustField rootingDust_{terrain_};

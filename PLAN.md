@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 441 (2026-10-22) — goats print the wet soil round their basin
+
+The goats walk to their rain-filled basin to drink, through its ring of wet soil, and left no mark in
+it. Each goat now has a FootprintTrail of cloven prints (0.45 m stride) laid under its forefeet (0.4 m
+ahead of the body, which come to the water's edge as it drinks) while they are in the wet ring
+(0.85-1.5 basin radii); the dry slope takes none. A probe ran the herd for ten minutes with the walker
+away: some three prints are laid every two minutes and six or seven lie round the basin at a time.
+`goats` passes.
+
 ## Loop pass 440 (2026-10-22) — the resident leaves footprints in the sand
 
 The walker, the deer and the boars print the sand and the mud as they go; the resident, who walks

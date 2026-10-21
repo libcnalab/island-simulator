@@ -508,6 +508,7 @@ namespace island
         deer_->SetLight(&canopyLightField_);
         for(auto& trail:deerPrints_) { trail.SetKind(1U); trail.SetStride(0.9f); }
         for(auto& trail:boarPrints_) { trail.SetKind(1U); trail.SetStride(0.55f); }
+        for(auto& trail:goatPrints_) { trail.SetKind(1U); trail.SetStride(0.45f); }
         spiders_ = std::make_unique<SpiderColony>(terrain_,jungleLayout_,wildlifeObstacles);
         if (smokeTest_ && viewpoint_ == FixedViewpoint::None) {
             viewpoint_ = FixedViewpoint::Overview;
@@ -4100,6 +4101,20 @@ namespace island
         // The sentinel coming alert at the walker gives the alarm bleat.
         if(soundscape_&&goats_->SentinelAlert()&&!goatSentinelWasAlert_) soundscape_->NoteGoatAlarm(0U);
         goatSentinelWasAlert_=goats_->SentinelAlert();
+        // The goats' cloven hooves print the wet soil round their basin as they come to drink
+        // (the rest of their dry slope takes none).
+        if(goats_->WaterholeSite().valid) {
+            const auto& basin=goats_->WaterholeSite();
+            for(std::size_t i=0;i<goats_->Goats().size()&&i<goatPrints_.size();++i) {
+                // (under the forefeet, which come to the water's edge as the goat drinks)
+                const auto& goat=goats_->Goats()[i];
+                const float footX=goat.x+std::cos(goat.heading)*0.4f*goat.scale,footZ=goat.z+std::sin(goat.heading)*0.4f*goat.scale;
+                const float fromBasin=std::hypot(footX-basin.x,footZ-basin.z);
+                const bool wetSoil=fromBasin>GoatHerd::WaterholeRadius*0.85f&&fromBasin<GoatHerd::WaterholeRadius*1.5f;
+                goatPrints_[i].Update(deltaSeconds,footX,footZ,std::cos(goat.heading)*goat.speed,
+                    std::sin(goat.heading)*goat.speed,wetSoil,false);
+            }
+        }
         if(viewpoint_==FixedViewpoint::GoatDetail) {
             const auto& current=goats_->Goats().front();
             cameraPosition_+=Vector3(current.x-previousGoat.x,current.y-previousGoat.y,current.z-previousGoat.z);
@@ -6311,6 +6326,7 @@ namespace island
             for(const auto& trail:deerPrints_) if(trail.ActiveCount()>0U) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,trail.Prints());
             for(const auto& trail:boarPrints_) if(trail.ActiveCount()>0U) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,trail.Prints());
             if(residentPrints_.ActiveCount()>0U) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,residentPrints_.Prints());
+            for(const auto& trail:goatPrints_) if(trail.ActiveCount()>0U) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,trail.Prints());
             shellDragRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,shellDrags_.Segments());
             wallowScarRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }
