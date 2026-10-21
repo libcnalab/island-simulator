@@ -93,6 +93,43 @@ namespace island
         agent.struck = false;
     }
 
+    void ReefHeronGroup::SetDisturbers(const std::span<const Disturber> disturbers) noexcept
+    {
+        disturbers_.clear();
+        for (const Disturber& disturber : disturbers) {
+            if (disturbers_.size() >= MaximumDisturbers) break;
+            if (std::isfinite(disturber.x) && std::isfinite(disturber.z) && std::isfinite(disturber.distance)
+                && disturber.distance > 0.0f)
+                disturbers_.push_back(disturber);
+        }
+    }
+
+    bool ReefHeronGroup::Flush(Agent& agent, const float fromX, const float fromZ) noexcept
+    {
+        ReefHeronState& state = agent.state;
+        // off along the shore, away from what flushed it
+        const float fromAngle = std::atan2(fromZ, fromX);
+        const float away = WrapAngle(agent.angle - fromAngle) >= 0.0f ? 1.0f : -1.0f;
+        const float radius = std::max(terrain_.ShoreRadius(agent.angle), 10.0f);
+        for (const float sense : {away, -away}) {
+            const float hop = (45.0f + 25.0f * Random(agent)) / radius;
+            const float target = std::clamp(agent.angle + sense * hop,
+                                            agent.homeAngle - 0.6f, agent.homeAngle + 0.6f);
+            float x = 0.0f, z = 0.0f;
+            if (std::abs(target - agent.angle) > 0.05f && WadingPoint(target, agent.depth, x, z)) {
+                agent.startX = state.x; agent.startY = state.y; agent.startZ = state.z;
+                agent.targetAngle = target;
+                agent.targetX = x; agent.targetZ = z; agent.targetY = terrain_.Height(x, z);
+                agent.flightLength = std::max(2.0f, std::hypot(x - state.x, z - state.z) / FlySpeed);
+                agent.flightSeconds = 0.0f;
+                Begin(agent, ReefHeronBehavior::Fly, agent.flightLength);
+                ++flushes_;
+                return true;
+            }
+        }
+        return false;
+    }
+
     void ReefHeronGroup::SetNightness(const float nightness) noexcept
     {
         nightness_ = std::isfinite(nightness) ? std::clamp(nightness, 0.0f, 1.0f) : 0.0f;
@@ -136,28 +173,21 @@ namespace island
         agent.behaviorSeconds += dt;
         const float ease = 1.0f - std::exp(-2.5f * dt);
 
-        // A walker close by flushes it, whatever it is doing on the ground.
-        const float toObserverX = observerX - state.x, toObserverZ = observerZ - state.z;
-        if (observerValid && state.behavior != ReefHeronBehavior::Fly
-            && toObserverX * toObserverX + toObserverZ * toObserverZ < FlushDistance * FlushDistance) {
-            // off along the shore, away from the walker
-            const float observerAngle = std::atan2(observerZ, observerX);
-            const float away = WrapAngle(agent.angle - observerAngle) >= 0.0f ? 1.0f : -1.0f;
-            const float radius = std::max(terrain_.ShoreRadius(agent.angle), 10.0f);
-            for (const float sense : {away, -away}) {
-                const float hop = (45.0f + 25.0f * Random(agent)) / radius;
-                const float target = std::clamp(agent.angle + sense * hop,
-                                                agent.homeAngle - 0.6f, agent.homeAngle + 0.6f);
-                float x = 0.0f, z = 0.0f;
-                if (std::abs(target - agent.angle) > 0.05f && WadingPoint(target, agent.depth, x, z)) {
-                    agent.startX = state.x; agent.startY = state.y; agent.startZ = state.z;
-                    agent.targetAngle = target;
-                    agent.targetX = x; agent.targetZ = z; agent.targetY = terrain_.Height(x, z);
-                    agent.flightLength = std::max(2.0f, std::hypot(x - state.x, z - state.z) / FlySpeed);
-                    agent.flightSeconds = 0.0f;
-                    Begin(agent, ReefHeronBehavior::Fly, agent.flightLength);
-                    ++flushes_;
-                    break;
+        // A walker close by flushes it, whatever it is doing on the ground; so does anything
+        // else it will not let come near (the resident, the quad, a bear, boar or crocodile).
+        if (state.behavior != ReefHeronBehavior::Fly) {
+            const auto near = [&](const float x, const float z, const float distance) {
+                const float dx = x - state.x, dz = z - state.z;
+                return dx * dx + dz * dz < distance * distance;
+            };
+            if (observerValid && near(observerX, observerZ, FlushDistance)) {
+                Flush(agent, observerX, observerZ);
+            } else {
+                for (const Disturber& disturber : disturbers_) {
+                    if (near(disturber.x, disturber.z, disturber.distance)) {
+                        Flush(agent, disturber.x, disturber.z);
+                        break;
+                    }
                 }
             }
         }

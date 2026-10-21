@@ -52,6 +52,12 @@ namespace island
         explicit ReefHeronGroup(const IslandTerrain& terrain);
 
         void SetNightness(float nightness) noexcept;
+        /** @brief Something besides the walker that a wading heron will not let come near this
+         *  frame: the resident on the shore, the quad, the bear, a boar or a crocodile, each
+         *  flushing it from its own distance. */
+        struct Disturber { float x = 0.0f, z = 0.0f, distance = 0.0f; };
+        static constexpr std::size_t MaximumDisturbers = 24U;
+        void SetDisturbers(std::span<const Disturber> disturbers) noexcept;
         void Update(float deltaSeconds, float observerX, float observerY, float observerZ) noexcept;
 
         [[nodiscard]] std::span<const ReefHeronState> Herons() const noexcept { return states_; }
@@ -86,6 +92,8 @@ namespace island
         };
 
         void Begin(Agent& agent, ReefHeronBehavior behavior, float length) noexcept;
+        /** @brief Off along the shore away from (x, z); false where no landing was found. */
+        bool Flush(Agent& agent, float fromX, float fromZ) noexcept;
         void UpdateAgent(Agent& agent, float dt, float observerX, float observerZ, bool observerValid) noexcept;
         void PlaceOnShore(Agent& agent) noexcept;
         [[nodiscard]] float Random(Agent& agent) const noexcept;
@@ -94,6 +102,7 @@ namespace island
         std::vector<Agent> agents_;
         std::vector<ReefHeronState> states_;
         float nightness_ = 0.0f;
+        std::vector<Disturber> disturbers_;
         std::uint32_t strikes_ = 0U, flushes_ = 0U;
         Strike lastStrike_;
         std::size_t frozen_ = Count;   // the previewed heron, Count for none

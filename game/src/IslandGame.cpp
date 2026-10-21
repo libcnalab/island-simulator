@@ -3917,6 +3917,23 @@ namespace island
         stingrayGroup_.Update(viewpoint_==FixedViewpoint::StingrayDetail||viewpoint_==FixedViewpoint::StingrayBuriedDetail?0.0f:deltaSeconds,
                               cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z);
         if (viewpoint_ == FixedViewpoint::ReefHeronDetail) reefHeronGroup_.PreviewFreeze(0U);
+        {
+            // What else a wading heron will not let near: the resident on the shore (closer
+            // when they walk), the quad while its engine runs, the bear, the boars, and a
+            // crocodile on the move.
+            std::vector<ReefHeronGroup::Disturber> disturbers;
+            const auto& resident = resident_->State();
+            disturbers.push_back({resident.x, resident.z, resident.speed > 0.2f ? 11.0f : 6.0f});
+            if (quadEngineOn_) {
+                const auto quad = quad_.Position();
+                disturbers.push_back({quad.x, quad.z, std::abs(quad_.Speed()) > 1.0f ? 30.0f : 16.0f});
+            }
+            disturbers.push_back({bear_->State().x, bear_->State().z, 14.0f});
+            for (const auto& boar : boarHerd_.Boars()) disturbers.push_back({boar.x, boar.z, 8.0f});
+            for (const auto& crocodile : crocodileGroup_.Crocodiles())
+                if (crocodile.speed > 0.05f) disturbers.push_back({crocodile.x, crocodile.z, 7.0f});
+            reefHeronGroup_.SetDisturbers(disturbers);
+        }
         // the QA camera stands close: it must not flush the bird it frames
         reefHeronGroup_.Update(deltaSeconds, cameraPosition_.X,
                                viewpoint_ == FixedViewpoint::ReefHeronDetail ? cameraPosition_.Y + 100.0f : cameraPosition_.Y,

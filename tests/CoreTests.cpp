@@ -10944,6 +10944,21 @@ int main()
                     &&-terrain.Height(heron.x,heron.z)>=island::ReefHeronGroup::MinimumDepth-0.03f;
             }
             Check(landed,"the flushed heron lands in the shallows further along the shore");
+            {
+                // something else coming near flushes a heron too (the resident on the shore,
+                // the quad...), each from its own distance
+                island::ReefHeronGroup shy(terrain);
+                const auto target=shy.Herons()[0];
+                const island::ReefHeronGroup::Disturber far{target.x+9.0f,target.z,6.0f};
+                shy.SetDisturbers(std::span(&far,1));
+                for(int step=0;step<10;++step) shy.Update(0.05f,0.0f,1000.0f,0.0f);
+                const bool stayed=shy.FlushCount()==0U;
+                const island::ReefHeronGroup::Disturber close{target.x+5.0f,target.z,6.0f};
+                shy.SetDisturbers(std::span(&close,1));
+                for(int step=0;step<10;++step) shy.Update(0.05f,0.0f,1000.0f,0.0f);
+                Check(stayed&&shy.FlushCount()>0U&&shy.Herons()[0].behavior==island::ReefHeronBehavior::Fly,
+                      "a heron stays for a disturber beyond its distance and flushes from one within it");
+            }
             herons.SetNightness(1.0f);
             for(int step=0;step<200;++step) herons.Update(0.05f,0.0f,1000.0f,0.0f);
             bool resting=true;

@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 340 (2026-10-21) — the herons will not let the island come near either
+
+The reef herons of pass 336 flushed only from the walker, so the resident could wade past one,
+the quad drive along the shallows or the bear wander the shore beside it. `ReefHeronGroup` now
+takes this frame's disturbers, each with its own distance (`SetDisturbers`): the resident (11 m
+walking, 6 m standing), the quad while its engine runs (30 m moving, 16 m idling), the bear
+(14 m), each boar (8 m) and a crocodile on the move (7 m). A heron within a disturber's distance
+flushes off along the shore away from it, the same flight as from the walker (`Flush`, shared).
+A core test covers staying for a disturber beyond its distance and flushing from one within it.
+`herons` (the QA heron is held), `beach`, `quad-drive`, `resident` and the tests pass.
+
 ## Loop pass 339 (2026-10-21) — the crocodile shades round
 
 Like the turtle's shell before pass 335, the crocodile's barrel, shoulders, skull, snout, jaw and
