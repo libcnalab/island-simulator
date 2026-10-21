@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 390 (2026-10-21) — driftwood thickens to a flared root and ends in a broken tip
+
+The driftwood was a uniform tube with sawn ends. Its girth now runs from a flared root (1.40 of
+the radius at one end) to 0.82 at the other, the axis rising with the girth so the underside
+stays on the sand line all along (the grounding is unchanged); the thin end is broken rather than
+cut, its rim splintering out unevenly along the length (small enough in mesh space that the end
+cap's normals still face outward, as the mesh check requires). The near mesh has 8 sections of
+9 sides (from 4 x 7) so the taper and bend read smoothly; the far mesh 3 x 5 (from 2 x 5) with
+the same taper. `driftwood` (3x zoom of both ends) and `beach`; the tests pass.
+
 ## Loop pass 389 (2026-10-21) — driftwood is bleached, checked and damp underneath
 
 The beach driftwood (`driftwood`) read as smooth beige pipes: its material only rippled the

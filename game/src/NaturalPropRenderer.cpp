@@ -946,8 +946,8 @@ void main()
                                                            const bool farMesh)
         {
             PropGeometry geometry;
-            const int sections = farMesh ? 2 : 4;
-            const int sides = farMesh ? 5 : 7;
+            const int sections = farMesh ? 3 : 8;
+            const int sides = farMesh ? 5 : 9;
             // sun-bleached silver-grey, a little warm, in both LODs
             const Color woodBase = variant == 0 ? Color(170, 157, 135, 255)
                 : (variant == 1 ? Color(182, 168, 144, 255)
@@ -969,20 +969,34 @@ void main()
                     * std::sin(angle * (2.0f + static_cast<float>(variant))
                                + static_cast<float>(section) * 1.9f);
             };
+            // Thick at the root (t = 0) with a flare, thinner toward the broken tip; the axis
+            // rises with the girth so the underside stays on the sand line all along.
+            const auto taper = [](const float t) {
+                const float flare = std::max(0.0f, 1.0f - t / 0.16f);
+                return 1.18f - 0.36f * t + 0.22f * flare * flare;
+            };
+            // The tip is broken, not sawn: its rim splinters out unevenly along the length.
+            const auto splinter = [variant, farMesh](const float angle, const int section,
+                                                     const int lastSection) {
+                if (farMesh || section != lastSection) return 0.0f;
+                return 0.022f * (0.5f + 0.5f * std::sin(angle * 3.0f + 1.7f * static_cast<float>(variant)));
+            };
             const auto sideBase = static_cast<std::uint16_t>(geometry.vertices.size());
             for (int section = 0; section <= sections; ++section) {
                 const float t = static_cast<float>(section) / static_cast<float>(sections);
                 const float x = t - 0.5f;
                 const Vector3 bend = bendOffset(t);
+                const float girth = taper(t);
                 for (int side = 0; side < sides; ++side) {
                     const float angle = 2.0f * std::numbers::pi_v<float>
                         * static_cast<float>(side) / static_cast<float>(sides);
-                    const float ring = ringRadius(angle, section);
+                    const float ring = ringRadius(angle, section) * girth;
                     const float light = 0.72f + 0.27f
                         * std::max(0.0f, std::sin(angle) * 0.86f
                                             - std::cos(angle) * 0.18f);
                     geometry.vertices.emplace_back(
-                        Vector3(x, std::sin(angle) * ring + bend.Y,
+                        Vector3(x + splinter(angle, section, sections),
+                                std::sin(angle) * ring + bend.Y + girth - 1.0f,
                                 std::cos(angle) * ring + bend.Z),
                         ShadeColor(wood, light));
                     geometry.albedos.push_back(wood);
@@ -1011,15 +1025,19 @@ void main()
                 const float t = static_cast<float>(section) / static_cast<float>(sections);
                 const float x = t - 0.5f;
                 const Vector3 bend = bendOffset(t);
+                const float girth = taper(t);
                 const auto centre = static_cast<std::uint16_t>(geometry.vertices.size());
-                geometry.vertices.emplace_back(Vector3(x, bend.Y, bend.Z), endColor);
+                geometry.vertices.emplace_back(
+                    Vector3(x + (end == 1 && !farMesh ? 0.012f : 0.0f), bend.Y + girth - 1.0f, bend.Z),
+                    endColor);
                 geometry.albedos.push_back(endColor);
                 for (int side = 0; side < sides; ++side) {
                     const float angle = 2.0f * std::numbers::pi_v<float>
                         * static_cast<float>(side) / static_cast<float>(sides);
-                    const float ring = ringRadius(angle, section);
+                    const float ring = ringRadius(angle, section) * girth;
                     geometry.vertices.emplace_back(
-                        Vector3(x, std::sin(angle) * ring + bend.Y,
+                        Vector3(x + splinter(angle, section, sections),
+                                std::sin(angle) * ring + bend.Y + girth - 1.0f,
                                 std::cos(angle) * ring + bend.Z), endColor);
                     geometry.albedos.push_back(endColor);
                 }
