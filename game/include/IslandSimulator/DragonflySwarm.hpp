@@ -2,6 +2,9 @@
 
 #include "IslandSimulator/WildlifeSimulation.hpp"
 
+#include <algorithm>
+#include <cmath>
+
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -51,6 +54,10 @@ public:
     [[nodiscard]] std::size_t PerchedCount()const noexcept;
     explicit DragonflySwarm(const IslandTerrain&);
     void Update(float deltaSeconds,float observerX,float observerY,float observerZ) noexcept;
+    /** The weather's rain (0..1): over RainPerch every flight ends on a perch, held through
+     *  the shower (a fright still sends one darting off, to perch again). */
+    void SetRain(float rain) noexcept {rain_=std::isfinite(rain)?std::clamp(rain,0.0f,1.0f):0.0f;}
+    static constexpr float RainPerch=0.25f;
     [[nodiscard]] std::span<const DragonflyState> Dragonflies()const noexcept{return states_;}
     [[nodiscard]] std::span<const DragonflyHome> Homes()const noexcept{return homes_;}
     [[nodiscard]] int FullSimulationCount()const noexcept{return fullCount_;}
@@ -71,5 +78,6 @@ private:
     std::array<DragonflyHome,Count> homes_{};
     std::uint64_t frame_=0;int fullCount_=0,reducedCount_=0,dormantCount_=0;
     float poolX_=0,poolZ_=0;
+    float rain_=0;
 };
 }

@@ -233,10 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 438 (2026-10-22) — dragonflies perch through the rain
+
+As the butterflies: the few dragonflies still drawn in a shower (the rest gone to roost) flew on.
+DragonflySwarm::SetRain over RainPerch (0.25) ends each flight within a second on a perch, held while it
+rains (a fright still sends one darting off, to perch again); a held clock (the close-up's) leaves them
+as they are. New test: in a shower all twelve perch within four seconds and stay perched; after it
+they fly. The `dragonflies` view with showers fails as it did before this pass: in a shower nearly all
+day fliers are at roost and none is drawn there (checked on the previous commit); clear weather passes.
+
 ## Loop pass 437 (2026-10-22) — butterflies sit out the rain
 
-The butterflies flew on through showers and thunderstorms. ButterflyMeadow::SetRain takes the
-weather's rain: over RainSettle (0.25) a flight or a nectar visit ends within a second or so and the
+In a shower most of the day fliers already go to roost (the renderer draws fewer of them as the rain
+rises: some 11 % of them in a shower), but those still drawn flew on through it. ButterflyMeadow::SetRain
+takes the weather's rain: over RainSettle (0.25) a flight or a nectar visit ends within a second or so and the
 butterfly settles, sitting the shower out with its wings folded shut (the cloud-shade rule with full
 cover); one frightened by the walker or an animal flutters off and settles again; when the rain stops
 they fly as before. New test: within six seconds of a shower every butterfly rests, wings folded, and

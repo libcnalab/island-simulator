@@ -3092,6 +3092,21 @@ int main()
                   == island::ButterflyMeadow::HabitatCount,
           "butterfly simulation exposes the intended bounded population and habitats");
     {
+        // In the rain every dragonfly ends its flight on a perch and holds it; after it they fly.
+        island::DragonflySwarm wetDragonflies(terrain);
+        for (int step = 0; step < 100; ++step) wetDragonflies.Update(0.05f, 500.0f, 2.0f, 500.0f);
+        wetDragonflies.SetRain(0.55f);
+        for (int step = 0; step < 80; ++step) wetDragonflies.Update(0.05f, 500.0f, 2.0f, 500.0f);
+        const std::size_t perchedInRain = wetDragonflies.PerchedCount();
+        for (int step = 0; step < 200; ++step) wetDragonflies.Update(0.05f, 500.0f, 2.0f, 500.0f);
+        const std::size_t stillPerched = wetDragonflies.PerchedCount();
+        wetDragonflies.SetRain(0.0f);
+        for (int step = 0; step < 300; ++step) wetDragonflies.Update(0.05f, 500.0f, 2.0f, 500.0f);
+        Check(perchedInRain == island::DragonflySwarm::Count && stillPerched == island::DragonflySwarm::Count
+                  && wetDragonflies.PerchedCount() < island::DragonflySwarm::Count,
+              "in the rain every dragonfly perches and stays perched; after it they fly again");
+    }
+    {
         // In the rain the butterflies settle and sit it out with their wings closed; when it
         // stops they fly again.
         island::ButterflyMeadow wet(terrain);

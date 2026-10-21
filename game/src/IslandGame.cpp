@@ -3824,6 +3824,7 @@ namespace island
         Vector3 dragonflyObserver=cameraPosition_;
         if(viewpoint_==FixedViewpoint::DragonflyDetail){const auto& fly=dragonflySwarm_.Dragonflies()[1U];dragonflyObserver=Vector3(fly.x,fly.y+20,fly.z);}
         updateProfile_.Mark("dragonflySwarm");
+        dragonflySwarm_.SetRain(weather_.State().rain);
         dragonflySwarm_.Update(viewpoint_==FixedViewpoint::DragonflyDetail?0.0f:deltaSeconds,
             dragonflyObserver.X,dragonflyObserver.Y,dragonflyObserver.Z);
         updateProfile_.Mark("dragonflyDips");

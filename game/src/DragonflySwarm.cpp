@@ -70,6 +70,14 @@ void DragonflySwarm::UpdateAgent(Agent& a,float dt,float ox,float oz,bool observ
     if(dt<=0)return;
     const float d=observer?std::hypot(a.state.x-ox,a.state.z-oz):9999;
     if(d<2.8f&&a.state.behavior!=DragonflyBehavior::Dart){a.state.behavior=DragonflyBehavior::Dart;a.seconds=.85f;a.state.headingRadians=std::atan2(a.state.z-oz,a.state.x-ox);}
+    // in the rain a flight ends soon on a perch, held while it rains
+    // (a held clock, as the close-up's, leaves them as they are)
+    else if(rain_>RainPerch&&dt>0&&((a.state.behavior!=DragonflyBehavior::Perch&&(a.seconds=std::min(a.seconds,1.0f)-dt)<=0)
+            ||(a.state.behavior==DragonflyBehavior::Perch&&(a.seconds-=dt)<=0))){
+        ++a.transitions;
+        if(a.state.behavior!=DragonflyBehavior::Perch){++perches_;a.state.wingPhase=0;}
+        a.state.behavior=DragonflyBehavior::Perch;a.seconds=PerchSeconds;}
+    else if(rain_>RainPerch&&dt>0){}
     else if((a.seconds-=dt)<=0){++a.transitions;if(a.state.behavior==DragonflyBehavior::Dart){a.state.behavior=DragonflyBehavior::Hover;a.seconds=1.1f+.25f*(a.transitions%4);}else if(a.state.behavior==DragonflyBehavior::Hover){a.state.behavior=DragonflyBehavior::Patrol;a.seconds=4.2f+.6f*(a.transitions%5);}else if(a.state.behavior==DragonflyBehavior::Perch){a.state.behavior=DragonflyBehavior::Hover;a.seconds=1.4f;}
     else{a.state.behavior=a.transitions%3==0?DragonflyBehavior::Hover:(a.transitions%3==1?DragonflyBehavior::Perch:DragonflyBehavior::Dart);
         a.seconds=a.state.behavior==DragonflyBehavior::Hover?1.4f:(a.state.behavior==DragonflyBehavior::Perch?PerchSeconds+.9f*(a.transitions%5):.75f);
