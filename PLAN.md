@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 346 (2026-10-21) — the clearings' landmark logs lie along the slope
+
+In `west` a fallen log lay across the hill's crest with its end out in the sky. A probe of every
+fallen log against the rendered ground found the two authored clearing landmarks floating up to
+1.9 m (east) and 1.6 m (west) clear of it at their low ends: they were laid level at their
+authored bearings, at the height of the highest ground along them, on sloping clearings (the
+procedurally placed logs keep within 0.34 m of level by construction). A trunk that falls on a
+slope rolls until it lies along the contour, so each landmark now keeps its place and turns to the
+bearing nearest its authored one (in 2.5 degree steps either way) along which the ground changes
+least, its footprint still inside its clearing and clear of the central walking room. A core test
+checks that each lies within 0.45 m of level. `west`, `east`, `clearing-edge`, `deer`,
+`deer-bedded`, `goats`, `campfire`, `props`, `log` and the tests pass; the `resident` and
+`helicopter` Chrome scopes passed on pass 345's Web build.
+
 ## Loop pass 345 (2026-10-21) — the fishing resident at the jetty, the helicopter in its clearing
 
 A contact sheet of every view from the last sweep showed two more framings that hid their

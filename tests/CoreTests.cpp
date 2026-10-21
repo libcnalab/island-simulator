@@ -8248,7 +8248,19 @@ int main()
                       >= (log.wetBank ? 8.0f : 30.0f),
                   "the complete fallen-log footprint stays on suitable island ground");
         }
-        if (log.clearingLandmark) ++clearingLandmarkLogCount;
+        if (log.clearingLandmark) {
+            ++clearingLandmarkLogCount;
+            // a landmark log lies along the contour, not bridged out over the slope
+            float highest = -1.0e9f, lowest = 1.0e9f;
+            for (int sampleIndex = 0; sampleIndex < 7; ++sampleIndex) {
+                const float t = static_cast<float>(sampleIndex) / 6.0f - 0.5f;
+                const float height = terrain.Height(log.x + std::cos(log.yawRadians) * log.length * t,
+                                                    log.z + std::sin(log.yawRadians) * log.length * t);
+                highest = std::max(highest, height);
+                lowest = std::min(lowest, height);
+            }
+            Check(highest - lowest < 0.45f, "a clearing landmark log lies along the slope's contour");
+        }
     }
     Check(wetBankLogCount == props.StreamBankLogCount() && wetBankLogCount >= 2
         && wetBankLogCount <= island::NaturalPropLayout::StreamBankLogCandidateCount,

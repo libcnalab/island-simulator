@@ -561,6 +561,38 @@ namespace island
             log.radius = authored.radius;
             log.variant = authored.variant;
             log.clearingLandmark = true;
+            // A trunk that falls on a slope rolls until it lies along the contour: turn the
+            // landmark to the bearing nearest its authored one along which the ground changes
+            // least, keeping its footprint inside the clearing and off the central walking
+            // room. Laid level across the slope at its authored bearing, the low end floated
+            // up to two metres clear of the ground.
+            {
+                const ClearingDefinition& clearing = *authored.clearing;
+                float bestSpread = 1.0e9f, bestYaw = log.yawRadians;
+                for (int step = 0; step < 72; ++step) {
+                    const float turn = static_cast<float>((step + 1) / 2) * (std::numbers::pi_v<float> / 72.0f)
+                        * (step % 2 == 0 ? 1.0f : -1.0f);
+                    const float yaw = authored.yawRadians + turn;
+                    float highest = -1.0e9f, lowest = 1.0e9f;
+                    bool inside = true;
+                    for (int sampleIndex = 0; sampleIndex < LogCollisionSamples && inside; ++sampleIndex) {
+                        const float t = static_cast<float>(sampleIndex)
+                            / static_cast<float>(LogCollisionSamples - 1) - 0.5f;
+                        const float sampleX = log.x + std::cos(yaw) * log.length * t;
+                        const float sampleZ = log.z + std::sin(yaw) * log.length * t;
+                        inside = VegetationLayout::IsInsideAuthoredClearing(sampleX, sampleZ)
+                            && std::hypot(sampleX - clearing.x, sampleZ - clearing.z) > clearing.radius * 0.60f;
+                        const float height = terrain.Height(sampleX, sampleZ);
+                        highest = std::max(highest, height);
+                        lowest = std::min(lowest, height);
+                    }
+                    // a nearly level bearing close to the authored one beats a slightly
+                    // more level one far round from it
+                    const float spread = highest - lowest + 0.02f * std::abs(turn);
+                    if (inside && spread < bestSpread) { bestSpread = spread; bestYaw = yaw; }
+                }
+                log.yawRadians = bestYaw;
+            }
             const float directionX = std::cos(log.yawRadians);
             const float directionZ = std::sin(log.yawRadians);
             float maximumSupportHeight = terrain.Height(log.x, log.z);
