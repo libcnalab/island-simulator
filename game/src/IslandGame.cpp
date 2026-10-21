@@ -1368,6 +1368,9 @@ namespace island
             const Vector3 side(-forward.Z, 0.0f, forward.X);
             cameraPosition_ = Vector3(fish.x, fish.y, fish.z)
                 + side * 2.55f - forward * 0.35f + Vector3::Up * 0.68f;
+            // clear of the waves: a camera a few centimetres over the still water had the
+            // passing crests cut by its near plane, the sea missing from a band at its feet
+            cameraPosition_.Y = std::max(cameraPosition_.Y, 0.45f);
             const Vector3 toFish = Vector3(fish.x, fish.y, fish.z) - cameraPosition_;
             yaw_ = std::atan2(toFish.X, toFish.Z);
             pitch_ = std::atan2(toFish.Y, std::hypot(toFish.X, toFish.Z));

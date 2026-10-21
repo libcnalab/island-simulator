@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 425: full sweep 124/124 ok; fish QA camera >= 0.45 m over still water (near plane cut wave crests) (PLAN "Loop pass 425").
 - Pass 424: hermit crab near shell = 3-turn logarithmic whorl tube (30x9), aperture at the front; budget 4008 (PLAN "Loop pass 424").
 - Pass 423: damp tyre prints: quadTreadWater_ per wheel -> WheelOnGround::wetTread, TyreTrackField prints firm ground while wet (75 s) (PLAN "Loop pass 423").
 - Pass 422: monkey tail radius .065 -> .048 (was .085 -> .040), within the tail tests (PLAN "Loop pass 422").

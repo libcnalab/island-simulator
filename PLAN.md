@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 425 (2026-10-22) — full sweep after 397-424; the fish view's camera clears the waves
+
+A full sweep after passes 397-424: all 124 views pass (canopy needs its inspection arguments). At 1:1
+the `fish` view had a band without the sea at its feet, edged by a straight line; a bisection found
+no commit (7a01a267, the last good capture's code, showed it too): its camera, placed once 0.68 m over
+the first fish, stood a few centimetres over the still water, and depending on the moment of capture
+(the view runs on the wall clock; 17 updates now, 23 earlier) a passing crest was cut by the camera's
+near plane. The camera now stands at least 0.45 m over the still water; two captures show the sea to
+the bottom of the frame. The other differences against the last captures were the wall clock's
+animation or this session's changes.
+
 ## Loop pass 424 (2026-10-21) — hermit crabs carry coiled gastropod shells
 
 At 1:1 in `hermit-crabs` the shell was a body of revolution banded in rings with a wire spiral laid on
