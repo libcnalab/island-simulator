@@ -2,6 +2,7 @@
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
+#include "IslandSimulator/TerrainShaderNoise.hpp"
 #include "Microsoft/Xna/Framework/Color.hpp"
 #include "Microsoft/Xna/Framework/Graphics/BasicEffect.hpp"
 #include "Microsoft/Xna/Framework/Graphics/BlendState.hpp"
@@ -36,31 +37,8 @@ namespace island
         {
             return (static_cast<std::int64_t>(bx) << 32) ^ static_cast<std::int64_t>(static_cast<std::uint32_t>(bz));
         }
-        // The terrain shader's hash12 and valueNoise, so the blades stand where it paints the
-        // meadow on the lagoon floor.
-        float Fract(const float v) noexcept { return v - std::floor(v); }
-        float Hash12(const float x, const float y) noexcept
-        {
-            float a = Fract(x * 0.1031f), b = Fract(y * 0.1031f), c = Fract(x * 0.1031f);
-            const float d = a * (b + 33.33f) + b * (c + 33.33f) + c * (a + 33.33f);
-            a += d; b += d; c += d;
-            return Fract((a + b) * c);
-        }
-        float ValueNoise(const float x, const float y) noexcept
-        {
-            const float cx = std::floor(x), cy = std::floor(y);
-            float fx = x - cx, fy = y - cy;
-            fx = fx * fx * (3.0f - 2.0f * fx);
-            fy = fy * fy * (3.0f - 2.0f * fy);
-            const float lower = Hash12(cx, cy) + (Hash12(cx + 1.0f, cy) - Hash12(cx, cy)) * fx;
-            const float upper = Hash12(cx, cy + 1.0f) + (Hash12(cx + 1.0f, cy + 1.0f) - Hash12(cx, cy + 1.0f)) * fx;
-            return lower + (upper - lower) * fy - 0.5f;
-        }
-        float Smooth(const float a, const float b, const float v) noexcept
-        {
-            const float t = std::clamp((v - a) / (b - a), 0.0f, 1.0f);
-            return t * t * (3.0f - 2.0f * t);
-        }
+        using terrain_noise::Smooth;
+        using terrain_noise::ValueNoise;
         // How strongly the terrain paints seagrass meadow at (x, z) over a bed `depth` down.
         float MeadowAt(const float x, const float z, const float depth) noexcept
         {

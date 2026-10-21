@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 313 (2026-10-21) — the quad splashes through the rain puddles
+
+After rain the terrain shader lays puddles in the flat hollows, but the quad's wheels only knew
+the sea's water. `terrain_noise::PuddleAt` (in a new `TerrainShaderNoise.hpp`, which also holds
+the CPU mirrors of the shader's `hash12`/`valueNoise` that the seagrass placement already used,
+now shared) computes the same puddle mask on the CPU: the soak from the ground's wetness, the
+two hollow fields, the slope, the distance from the shore, the height, not on the beach's sand.
+A wheel in a puddle (mask above 0.35) has 3.5-6.5 cm of water under it, so it throws spray as in
+the shallows, its mud stays fresh, and no rut is laid in the water. A probe in `quad-drive` in a
+thunderstorm (the ground soaked) counted two wheels crossing a puddle and seven spray puffs
+thrown; the seagrass keeps its 58,610 clumps; `jetty-end`, `quad-drive` and the tests pass.
+
 (Tried after pass 312 and dropped: the headlight beams drawn as soft cones in hazy night air.
 From the chase camera a cone is seen end-on and from the side it mostly points at the eye, so
 even at 2.5 times the first strength it only brightened the haze a little ahead of the quad in

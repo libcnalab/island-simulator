@@ -16,6 +16,7 @@
 #include "IslandSimulator/CampfireLighting.hpp"
 #include "IslandSimulator/HutGeckos.hpp"
 #include "IslandSimulator/OceanWaveSpectrum.hpp"
+#include "IslandSimulator/TerrainShaderNoise.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
 #include "IslandSimulator/CoastalWindResponse.hpp"
 
@@ -4252,6 +4253,11 @@ namespace island
             wheel.down = quad_.WheelContact(w);
             wheel.waterDepth = std::max(0.0f, -sample.height);
             const auto surface = sample.surface;
+            // a rain puddle (where the terrain shader paints one): a few centimetres of water
+            // that the tyres throw up as spray
+            const float puddle = terrain_noise::PuddleAt(wheel.x, wheel.z, sample.height, sample.slopeRadians,
+                sample.signedShoreDistance, surface == TerrainSurface::DrySand || surface == TerrainSurface::WetSand, wetness);
+            if (puddle > 0.35f && wheel.waterDepth < 0.05f) wheel.waterDepth = 0.035f + 0.03f * puddle;
             wheel.wet = surface == TerrainSurface::WetSand || wetness > 0.6f;
             wheel.soft = wheel.waterDepth < 0.05f && (surface == TerrainSurface::DrySand || surface == TerrainSurface::WetSand
                 || surface == TerrainSurface::CoastalGround || surface == TerrainSurface::InteriorGround);
