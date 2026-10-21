@@ -104,6 +104,7 @@ namespace
         case FixedViewpoint::BridgeDetail: return "bridge";
         case FixedViewpoint::LookoutDetail: return "lookout";
         case FixedViewpoint::FallenLogDetail: return "log";
+        case FixedViewpoint::BeachVineDetail: return "beach-vine";
         case FixedViewpoint::HutDetail: return "hut";
         case FixedViewpoint::HutMaterialDetail: return "hut-material";
         case FixedViewpoint::HelicopterDetail: return "helicopter";
@@ -409,6 +410,8 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::LookoutDetail;
             } else if (name == "log") {
                 viewpoint = island::FixedViewpoint::FallenLogDetail;
+            } else if (name == "beach-vine") {
+                viewpoint = island::FixedViewpoint::BeachVineDetail;
             } else if (name == "hut") {
                 viewpoint = island::FixedViewpoint::HutDetail;
             } else if (name == "hut-material") {

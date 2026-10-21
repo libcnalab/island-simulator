@@ -233,6 +233,23 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 417 (2026-10-21) — beach morning glory creeps over the upper beaches
+
+The upper beaches were bare sand from the vegetation line to the swash. Beach morning glory
+(Ipomoea pes-caprae), the creeping vine of tropical strands, now roots there: NaturalPropLayout
+places 141 crowns on a 5.5 m grid over the beach ring (dry sand 4.5-32 m from the water, slope under
+0.42 rad, off the paths and tree trunks, thickening toward the vegetation and gathering in colonies,
+three metres clear of the turtles' crawls and nests), each laid along the drawn sand's plane (the sand
+within its spread within 9 cm of it) with its mesh's +X turned seaward. CreateBeachVineGeometry (three
+variants, 3.6-5.0 m spread): 7-11 runners, two of them landward, branching now and then, thin
+brown-green stems on the sand with a two-lobed notched leaf (10-13 cm, as wide as long, folded a
+little along its midrib) on a stalk at each 14 cm node, alternating sides, younger toward the tips, an
+old one yellowing, and a pink-purple funnel flower at one node in ten; both windings, the fronds'
+material. Drawn by the props' instanced path within 64 m, shrinking away at the end of it
+(natural-props 2.1-3.5 ms as before). New QA view `beach-vine` frames a crown from four metres up the
+beach; judged at 2x. New test: crowns on the dry upper beach, along the sand, clear of the turtles'
+marks, deterministic.
+
 ## Loop pass 416 (2026-10-21) — fallen logs taper, bow and swell at their knots
 
 At 1:1 the `log` view's trunk was a straight faceted pole of one girth (a 9 % taper), its flank

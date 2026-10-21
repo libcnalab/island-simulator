@@ -216,6 +216,7 @@ namespace island
             case FixedViewpoint::BridgeDetail: return "bridge";
             case FixedViewpoint::LookoutDetail: return "lookout";
             case FixedViewpoint::FallenLogDetail: return "log";
+            case FixedViewpoint::BeachVineDetail: return "beach-vine";
             case FixedViewpoint::HutDetail: return "hut";
             case FixedViewpoint::HutMaterialDetail: return "hut-material";
             case FixedViewpoint::HelicopterDetail: return "helicopter";
@@ -1630,6 +1631,18 @@ namespace island
             yaw_ = std::atan2(direction.X, direction.Z);
             pitch_ = std::atan2(direction.Y, std::hypot(direction.X, direction.Z));
             std::cout << "island-simulator: log QA camera frames the flank of a fallen log\n";
+        } else if (viewpoint_ == FixedViewpoint::BeachVineDetail) {
+            // Stand four metres up the beach from a crown of beach morning glory, looking down
+            // over it and its runners toward the sea.
+            const auto& vines = naturalPropLayout_.BeachVines();
+            if (vines.empty()) throw std::runtime_error("No beach morning glory to frame");
+            const auto& vine = vines[vines.size() / 2];
+            const float seaX = std::cos(vine.yawRadians), seaZ = -std::sin(vine.yawRadians);
+            cameraPosition_ = Vector3(vine.x - seaX * 4.0f, vine.y + 1.7f, vine.z - seaZ * 4.0f);
+            const Vector3 direction = Vector3(vine.x + seaX * 0.8f, vine.y, vine.z + seaZ * 0.8f) - cameraPosition_;
+            yaw_ = std::atan2(direction.X, direction.Z);
+            pitch_ = std::atan2(direction.Y, std::hypot(direction.X, direction.Z));
+            std::cout << "island-simulator: beach-vine QA camera frames a crown of beach morning glory\n";
         } else if (viewpoint_ == FixedViewpoint::FruitTreeDetail) {
             // Frame the crown of the first fruit-bearing canopy form from eleven metres.
             const auto& canopy = jungleLayout_.Canopy();

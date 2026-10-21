@@ -259,6 +259,7 @@ namespace island
         AnimalTrackDetail,
         FruitTreeDetail,
         FallenLogDetail,
+        BeachVineDetail,
         StreamCascadeDetail,
         JettyDetail,
         JettyEndDetail,

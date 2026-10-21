@@ -8087,6 +8087,25 @@ int main()
     }
     Check(props.FallenFronds().size() >= 30U && props.FallenFronds().size() <= 180U,
           "fallen palm fronds stay inside their near-field composition budget");
+    {
+        // Beach morning glory crowns root on the dry upper beach, lie along the sand, keep clear
+        // of the turtles' crawls and nests, and come out the same each time.
+        bool onUpperBeach = true, alongSand = true, clearOfTurtles = true;
+        for (const auto& vine : props.BeachVines()) {
+            const auto sample = terrain.Sample(vine.x, vine.z);
+            onUpperBeach = onUpperBeach && sample.surface == island::TerrainSurface::DrySand
+                && sample.signedShoreDistance >= 4.5f && sample.signedShoreDistance <= 32.0f
+                && vine.scale >= island::NaturalPropLayout::BeachVineMinimumScale
+                && vine.scale <= island::NaturalPropLayout::BeachVineMaximumScale;
+            alongSand = alongSand && vine.normalY > 0.85f && std::abs(vine.y - sample.height) < 0.35f;
+            for (const auto& detail : props.BeachDetails())
+                if (detail.turtleTrace && std::hypot(detail.x - vine.x, detail.z - vine.z) < 3.0f) clearOfTurtles = false;
+        }
+        Check(props.BeachVines().size() >= 80U && props.BeachVines().size() <= 360U && onUpperBeach && alongSand,
+              "beach morning glory crowns root on the dry upper beach and lie along the sand");
+        Check(clearOfTurtles && props.BeachVines().size() == repeatedProps.BeachVines().size(),
+              "beach morning glory keeps clear of the turtles' marks and is deterministic");
+    }
     Check(props.ReefHabitat().size() >= 180U && props.ReefHabitat().size() <= 380U,
           "spatial reef habitat stays inside its bounded instance budget");
     Check(props.Rocks().size() == repeatedProps.Rocks().size()

@@ -63,6 +63,7 @@ namespace island
         constexpr float DriftwoodMaximumDistance = 145.0f;
         constexpr float BeachDetailMaximumDistance = 52.0f;
         constexpr float FallenFrondMaximumDistance = 76.0f;
+        constexpr float BeachVineMaximumDistance = 64.0f;
         constexpr float ReefHabitatNearDistance = 46.0f;
         constexpr float ReefHabitatMaximumDistance = 138.0f;
         constexpr std::string_view RockFacetDiagnostic =
@@ -1649,6 +1650,131 @@ void main()
             return geometry;
         }
 
+        [[nodiscard]] PropGeometry CreateBeachVineGeometry(const int variant)
+        {
+            // Beach morning glory (Ipomoea pes-caprae): runners from one rooted crown creeping
+            // over the sand, most of them seaward (+x) and one back toward the land, each a thin
+            // reddish stem laid on the sand with a two-lobed, notched "goat's foot" leaf on a
+            // short stalk at each node, alternating sides, lifted a little and cupped; the leaves
+            // younger and smaller toward a runner's tip, an old one yellowing here and there, and
+            // now and then a pink-purple funnel flower facing the sky. Unit size: the placement
+            // scales it to its spread (3.4-5.6 m). Both windings: it reads from any side.
+            PropGeometry geometry;
+            geometry.vertices.reserve(3800U);
+            geometry.indices.reserve(12000U);
+            const Color stem(104, 86, 58, FallenFrondMaterialDetail);
+            const Color oldLeaf(50, 100, 44, FallenFrondMaterialDetail);
+            const Color youngLeaf(86, 148, 62, FallenFrondMaterialDetail);
+            const Color yellowLeaf(150, 140, 62, FallenFrondMaterialDetail);
+            const Color throat(122, 30, 92, FallenFrondMaterialDetail);
+            const Color petal(214, 112, 198, FallenFrondMaterialDetail);
+            std::uint32_t state = 0x9e3779b9U * static_cast<std::uint32_t>(variant + 1) + 0x7f4a7c15U;
+            const auto random = [&state]() {
+                state ^= state << 13U;
+                state ^= state >> 17U;
+                state ^= state << 5U;
+                return static_cast<float>(state & 0xffffffU) / 16777215.0f;
+            };
+            const auto add = [&geometry](const Vector3& at, const Color colour) {
+                geometry.vertices.emplace_back(at, colour);
+                return static_cast<std::uint16_t>(geometry.vertices.size() - 1U);
+            };
+            const auto both = [&geometry](const std::uint16_t a, const std::uint16_t b, const std::uint16_t c) {
+                geometry.indices.insert(geometry.indices.end(), {a, b, c, a, c, b});
+            };
+            const auto flat = [](const float x, const float y, const float z) { return Vector3(x, y, z); };
+            // the runners still to lay: where each starts, its heading, its length and how far
+            // along its parent it branched (its leaves as young as there)
+            struct Runner { float x, z, heading, length, age; };
+            std::vector<Runner> pending;
+            const int runners = 7 + 2 * variant;
+            for (int runner = 0; runner < runners; ++runner) {
+                const bool landward = runner >= runners - 2;
+                pending.push_back({(random() - 0.5f) * 0.02f, (random() - 0.5f) * 0.02f,
+                                   landward ? std::numbers::pi_v<float> + (random() - 0.5f) * 1.6f : (random() - 0.5f) * 2.6f,
+                                   landward ? 0.14f + 0.10f * random() : 0.26f + 0.22f * random(), 0.0f});
+            }
+            constexpr float spacing = 0.032f;
+            for (std::size_t next = 0; next < pending.size() && geometry.vertices.size() < 3600U; ++next) {
+                const Runner runner = pending[next];
+                float heading = runner.heading, px = runner.x, pz = runner.z;
+                const int nodes = std::max(3, static_cast<int>(runner.length / spacing));
+                for (int node = 0; node < nodes; ++node) {
+                    const float t = std::min(1.0f, runner.age + (1.0f - runner.age) * static_cast<float>(node) / static_cast<float>(nodes));
+                    heading += (random() - 0.5f) * 0.34f;
+                    const float dx = std::cos(heading), dz = std::sin(heading);
+                    const float nx = px + dx * spacing, nz = pz + dz * spacing;
+                    // the stem: a thin ribbon on the sand, thinning toward the tip
+                    const float half = 0.0019f * (1.0f - 0.45f * t);
+                    const auto s0 = add(flat(px + dz * half, 0.0015f, pz - dx * half), ShadeColor(stem, 0.92f));
+                    const auto s1 = add(flat(px - dz * half, 0.0015f, pz + dx * half), stem);
+                    const auto s2 = add(flat(nx - dz * half, 0.0015f, nz + dx * half), stem);
+                    const auto s3 = add(flat(nx + dz * half, 0.0015f, nz - dx * half), ShadeColor(stem, 0.92f));
+                    both(s0, s1, s2);
+                    both(s0, s2, s3);
+                    // a side runner now and then
+                    if (node > 2 && node + 3 < nodes && random() < 0.10f && pending.size() < 40U) {
+                        const float branchSide = random() < 0.5f ? -1.0f : 1.0f;
+                        pending.push_back({nx, nz, heading + branchSide * (0.55f + 0.35f * random()),
+                                           runner.length * (1.0f - static_cast<float>(node) / static_cast<float>(nodes)) * 0.6f, t});
+                    }
+                    // the leaf on its stalk, alternating sides, held up off the sand
+                    const float side = node % 2 == 0 ? 1.0f : -1.0f;
+                    const float leafHeading = heading + side * (0.85f + 0.45f * random());
+                    const float ax = std::cos(leafHeading), az = std::sin(leafHeading);
+                    const float stalk = 0.010f + 0.008f * random();
+                    const float bx = nx + ax * stalk, bz = nz + az * stalk;
+                    const float baseHeight = 0.0040f + 0.0035f * random();
+                    const float leafLength = (0.022f + 0.008f * random()) * (1.0f - 0.35f * t);
+                    const float leafWidth = leafLength * (1.05f + 0.15f * random());
+                    const float lift = 0.003f + 0.007f * random();
+                    const auto p0 = add(flat(nx - az * 0.0006f, 0.0018f, nz + ax * 0.0006f), stem);
+                    const auto p1 = add(flat(nx + az * 0.0006f, 0.0018f, nz - ax * 0.0006f), stem);
+                    const auto p2 = add(flat(bx + az * 0.0006f, baseHeight, bz - ax * 0.0006f), stem);
+                    const auto p3 = add(flat(bx - az * 0.0006f, baseHeight, bz + ax * 0.0006f), stem);
+                    both(p0, p1, p2);
+                    both(p0, p2, p3);
+                    const float age = random();
+                    const Color leaf = age < 0.07f ? yellowLeaf
+                        : Color::Lerp(oldLeaf, youngLeaf, std::clamp(0.25f + 0.75f * t + (age - 0.5f) * 0.3f, 0.0f, 1.0f));
+                    // the blade: broad, as wide as long, two-lobed with a notch at its tip,
+                    // folded a little up along its midrib
+                    const float fold = 0.0025f + 0.0030f * random();
+                    const auto blade = [&](const float u, const float v) {
+                        const float y = baseHeight + lift * u + fold * std::abs(v);
+                        return flat(bx + ax * u * leafLength - az * v * leafWidth, y,
+                                    bz + az * u * leafLength + ax * v * leafWidth);
+                    };
+                    const auto base = add(blade(0.0f, 0.0f), ShadeColor(leaf, 0.86f));
+                    const std::array<std::array<float, 2>, 7> rim{{
+                        {0.22f, -0.40f}, {0.66f, -0.50f}, {1.00f, -0.26f}, {0.80f, 0.0f},
+                        {1.00f, 0.26f}, {0.66f, 0.50f}, {0.22f, 0.40f}}};
+                    std::array<std::uint16_t, 7> ring{};
+                    for (std::size_t k = 0; k < rim.size(); ++k)
+                        ring[k] = add(blade(rim[k][0], rim[k][1]), ShadeColor(leaf, k == 3 ? 1.06f : 0.98f + 0.04f * rim[k][0]));
+                    for (std::size_t k = 0; k + 1 < ring.size(); ++k) both(base, ring[k], ring[k + 1]);
+                    // now and then a flower opposite the leaf, open to the sky on its stalk
+                    if (node > 1 && random() < 0.10f) {
+                        const float fx = nx - az * 0.012f, fz = nz + ax * 0.012f;
+                        const auto centre = add(flat(fx, 0.0100f, fz), throat);
+                        constexpr int petals = 10;
+                        std::array<std::uint16_t, petals> edge{};
+                        for (int k = 0; k < petals; ++k) {
+                            const float angle = 2.0f * std::numbers::pi_v<float> * static_cast<float>(k) / petals;
+                            const float r = 0.0095f * (k % 2 == 0 ? 1.0f : 0.93f);
+                            edge[static_cast<std::size_t>(k)] = add(flat(fx + std::cos(angle) * r, 0.0130f, fz + std::sin(angle) * r),
+                                                                    ShadeColor(petal, k % 2 == 0 ? 1.02f : 0.94f));
+                        }
+                        for (int k = 0; k < petals; ++k)
+                            both(centre, edge[static_cast<std::size_t>(k)], edge[static_cast<std::size_t>((k + 1) % petals)]);
+                    }
+                    px = nx;
+                    pz = nz;
+                }
+            }
+            return geometry;
+        }
+
         [[nodiscard]] std::size_t CellIndex(const float x, const float z) noexcept
         {
             constexpr float cellWidth = 2.0f * TerrainMeshLayout::Extent
@@ -1718,7 +1844,7 @@ void main()
         if (canopy != nullptr && customShaderReady_ && instancingSupported_) {
             for (PropCell& cell : cells_) {
                 for (auto* list : {&cell.rocks, &cell.logs, &cell.driftwood, &cell.beachDetails,
-                                   &cell.animalTracks, &cell.fallenFronds, &cell.fallenCoconuts,
+                                   &cell.animalTracks, &cell.fallenFronds, &cell.fallenCoconuts, &cell.beachVines,
                                    &cell.reefHabitat}) {
                     for (DrawInstance& instance : *list)
                         instance.transform.M14 = 1.0f + std::clamp(canopy->Sample(instance.x, instance.z), 0.0f, 1.0f);
@@ -1742,7 +1868,7 @@ void main()
                   << totalReefRockCount_ << " reef outcrops, "
                   << totalReefHabitatCount_ << " submerged reef habitat instances, "
                   << totalLogCount_ << " fallen logs, " << totalDriftwoodCount_
-                  << " driftwood pieces, " << totalFallenFrondCount_
+                  << " driftwood pieces, " << totalBeachVineCount_ << " beach morning glory crowns, " << totalFallenFrondCount_
                   << " fallen palm fronds, "
                   << (instancingSupported_ ? "hardware instancing" : "per-prop fallback") << '\n';
         std::cout << "island-simulator: clearing landmarks " << clearingRockCount
@@ -1908,6 +2034,10 @@ void main()
             upload(CreateFallenFrondGeometry(static_cast<int>(variant)),
                    fallenFrondMeshes_[variant], "fallen-frond");
         }
+        for (std::size_t variant = 0; variant < beachVineMeshes_.size(); ++variant) {
+            upload(CreateBeachVineGeometry(static_cast<int>(variant)),
+                   beachVineMeshes_[variant], "beach-vine");
+        }
         for (std::size_t variant = 0; variant < reefHabitatNearMeshes_.size(); ++variant) {
             upload(CreateReefHabitatGeometry(static_cast<int>(variant), false),
                    reefHabitatNearMeshes_[variant], "reef habitat near LOD");
@@ -2043,6 +2173,28 @@ void main()
                                  frond.z + radius));
             ++totalFallenFrondCount_;
         }
+        for (const BeachVinePlacement& vine : layout.BeachVines()) {
+            PropCell& cell = cells_[CellIndex(vine.x, vine.z)];
+            // laid along the sand under it
+            Matrix lay = Matrix::getIdentityProperty();
+            const Vector3 ground(vine.normalX, vine.normalY, vine.normalZ);
+            if (ground.Y < 0.9999f && ground.Y > 0.2f) {
+                const Vector3 axis = Vector3::Cross(Vector3::Up, ground);
+                if (axis.LengthSquared() > 1e-8f)
+                    lay = Matrix::CreateFromAxisAngle(Vector3::Normalize(axis), std::acos(std::clamp(ground.Y / ground.Length(), -1.0f, 1.0f)));
+            }
+            cell.beachVines.push_back({
+                Matrix::CreateScale(vine.scale)
+                    * Matrix::CreateRotationY(vine.yawRadians)
+                    * lay
+                    * Matrix::CreateTranslation(vine.x, vine.y, vine.z),
+                vine.variant, vine.x, vine.z});
+            const float radius = vine.scale * 0.55f;
+            extendBounds(cell,
+                         Vector3(vine.x - radius, vine.y - 0.10f, vine.z - radius),
+                         Vector3(vine.x + radius, vine.y + 0.15f, vine.z + radius));
+            ++totalBeachVineCount_;
+        }
         for (const ReefHabitatPlacement& habitat : layout.ReefHabitat()) {
             PropCell& cell = cells_[CellIndex(habitat.x, habitat.z)];
             cell.reefHabitat.push_back({
@@ -2069,6 +2221,9 @@ void main()
         }
         for (auto& transforms : visibleBeachDetails_) {
             transforms.reserve(layout.BeachDetails().size());
+        }
+        for (auto& transforms : visibleBeachVines_) {
+            transforms.reserve(layout.BeachVines().size());
         }
         for (auto& transforms : visibleFallenFronds_) {
             transforms.reserve(layout.FallenFronds().size());
@@ -2132,6 +2287,7 @@ void main()
         for (auto& transforms : visibleAnimalTracks_) transforms.clear();
         for (auto& transforms : visibleFallenCoconuts_) transforms.clear();
         for (auto& transforms : visibleFallenFronds_) transforms.clear();
+        for (auto& transforms : visibleBeachVines_) transforms.clear();
         for (auto& transforms : visibleReefHabitatNear_) transforms.clear();
         for (auto& transforms : visibleReefHabitatFar_) transforms.clear();
         visibleRockCount_ = 0;
@@ -2144,6 +2300,7 @@ void main()
         visibleAnimalTrackCount_ = 0;
         visibleFallenCoconutCount_ = 0;
         visibleFallenFrondCount_ = 0;
+        visibleBeachVineCount_ = 0;
         visibleReefHabitatCount_ = 0;
         visibleCellCount_ = 0;
         drawCallCount_ = 0;
@@ -2275,6 +2432,16 @@ void main()
                 ++visibleFallenFrondCount_;
                 cellVisible = true;
             }
+            for (const DrawInstance& instance : cell.beachVines) {
+                const float vineDeltaX = instance.x - cameraPosition.X;
+                const float vineDeltaZ = instance.z - cameraPosition.Z;
+                const float shrink = vegetation_fade::FarShrink(
+                    vegetation_fade::SlantDistance(vineDeltaX * vineDeltaX + vineDeltaZ * vineDeltaZ, cameraPosition.Y - instance.transform.M42), BeachVineMaximumDistance);
+                if (shrink <= 0.0f) continue;
+                visibleBeachVines_[instance.variant].push_back(shrunk(instance.transform, shrink));
+                ++visibleBeachVineCount_;
+                cellVisible = true;
+            }
             if (distanceSquared <= ReefHabitatMaximumDistance * ReefHabitatMaximumDistance) {
                 for (const DrawInstance& instance : cell.reefHabitat) {
                     const float reefDeltaX = instance.x - cameraPosition.X;
@@ -2340,6 +2507,9 @@ void main()
         }
         for (std::size_t variant = 0; variant < fallenFrondMeshes_.size(); ++variant) {
             DrawInstances(fallenFrondMeshes_[variant], visibleFallenFronds_[variant]);
+        }
+        for (std::size_t variant = 0; variant < beachVineMeshes_.size(); ++variant) {
+            DrawInstances(beachVineMeshes_[variant], visibleBeachVines_[variant]);
         }
         for (std::size_t variant = 0; variant < reefHabitatNearMeshes_.size(); ++variant) {
             DrawInstances(reefHabitatNearMeshes_[variant], visibleReefHabitatNear_[variant]);

@@ -104,6 +104,20 @@ namespace island
         std::uint8_t variant = 0U;
     };
 
+    /** @brief One crown of beach morning glory (Ipomoea pes-caprae) on the upper beach: its
+     *  runners creep over the dry sand mostly seaward (the mesh's local +X), the whole laid
+     *  along the ground's normal under it. */
+    struct BeachVinePlacement
+    {
+        float x = 0.0f;
+        float y = 0.0f;
+        float z = 0.0f;
+        float yawRadians = 0.0f;
+        float scale = 1.0f;
+        std::uint8_t variant = 0U;
+        float normalX = 0.0f, normalY = 1.0f, normalZ = 0.0f;
+    };
+
     /** @brief One fallen coconut resting on the ground near a bearing palm. */
     struct FallenCoconutPlacement
     {
@@ -139,6 +153,7 @@ namespace island
         static constexpr int AnimalTrackVariantCount = 3;   // 2: the resident's bare feet
         static constexpr int FallenFrondVariantCount = 3;
         static constexpr int FallenCoconutVariantCount = 2;
+        static constexpr int BeachVineVariantCount = 3;
         static constexpr int ReefHabitatVariantCount = 4;
         static constexpr int ReefHabitatSiteCount = 640;
         static constexpr int AuthoredClearingRockCount = 5;
@@ -165,6 +180,8 @@ namespace island
         static constexpr float BeachDetailMaximumScale = 1.30f;
         static constexpr float FallenFrondMinimumScale = 2.45f;
         static constexpr float FallenFrondMaximumScale = 3.75f;
+        static constexpr float BeachVineMinimumScale = 3.6f;
+        static constexpr float BeachVineMaximumScale = 5.0f;
         static constexpr float ReefHabitatMinimumScale = 0.42f;
         static constexpr float ReefHabitatMaximumScale = 1.38f;
 
@@ -203,6 +220,10 @@ namespace island
         {
             return fallenCoconuts_;
         }
+        [[nodiscard]] const std::vector<BeachVinePlacement>& BeachVines() const noexcept
+        {
+            return beachVines_;
+        }
         [[nodiscard]] const std::vector<ReefHabitatPlacement>& ReefHabitat() const noexcept
         {
             return reefHabitat_;
@@ -226,6 +247,7 @@ namespace island
         std::vector<AnimalTrackPlacement> animalTracks_;
         std::vector<FallenFrondPlacement> fallenFronds_;
         std::vector<FallenCoconutPlacement> fallenCoconuts_;
+        std::vector<BeachVinePlacement> beachVines_;
         std::vector<ReefHabitatPlacement> reefHabitat_;
         std::vector<CircularObstacle> obstacles_;
         std::size_t streamBankRockCount_ = 0;

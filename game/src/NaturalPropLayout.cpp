@@ -27,6 +27,8 @@ namespace island
         constexpr float DriftwoodSpacing = 17.5f;
         constexpr int DriftwoodRadius = 18;
         constexpr int DriftwoodSupportSamples = 5;
+        constexpr float BeachVineSpacing = 5.5f;
+        constexpr int BeachVineRadius = 51;
         constexpr float BeachDetailSpacing = 6.0f;
         constexpr int BeachDetailRadius = 47;
         constexpr int FallenFrondSupportSamples = 5;
@@ -1170,6 +1172,73 @@ namespace island
                 coconut.yawRadians = UnitRandom(nutHash >> 7U) * 2.0f * std::numbers::pi_v<float>;
                 coconut.variant = static_cast<std::uint8_t>((nutHash >> 5U) & 1U);
                 fallenCoconuts_.push_back(coconut);
+            }
+        }
+
+        // Beach morning glory: the creeping vine of tropical upper beaches, its crowns rooted
+        // on the dry sand below the vegetation line, thickening toward it and gathering in
+        // colonies, its runners laid seaward. Only the beach ring is looked at; a crown lies
+        // flat along the drawn ground, so the sand under its spread must be near a plane.
+        beachVines_.reserve(360U);
+        for (int gridZ = -BeachVineRadius; gridZ <= BeachVineRadius && beachVines_.size() < 360U; ++gridZ) {
+            for (int gridX = -BeachVineRadius; gridX <= BeachVineRadius && beachVines_.size() < 360U; ++gridX) {
+                const float x = static_cast<float>(gridX) * BeachVineSpacing
+                    + (UnitRandom(Hash(gridX, gridZ, seed ^ 0x7f4a7c15U)) - 0.5f) * BeachVineSpacing * 0.8f;
+                const float z = static_cast<float>(gridZ) * BeachVineSpacing
+                    + (UnitRandom(Hash(gridX, gridZ, seed ^ 0xf39cc060U)) - 0.5f) * BeachVineSpacing * 0.8f;
+                const float radius = std::hypot(x, z);
+                if (radius < IslandTerrain::MinimumShoreRadius - 32.0f || radius > 280.0f) continue;
+                const TerrainSample sample = terrain.Sample(x, z);
+                if (sample.surface != TerrainSurface::DrySand
+                    || sample.signedShoreDistance < 4.5f || sample.signedShoreDistance > 32.0f
+                    || sample.height < 0.8f || sample.slopeRadians > 0.42f
+                    || VegetationLayout::IsReservedRoute(x, z)
+                    || NearTree(x, z, 0.9f, palms, jungle)) {
+                    continue;
+                }
+                const float inland = std::clamp((sample.signedShoreDistance - 4.5f) / 16.0f, 0.0f, 1.0f);
+                const float cluster = ClusterNoise(x, z, seed ^ 0x0e9b5f13U);
+                const float density = std::clamp(0.06f + 0.42f * inland + 0.30f * cluster, 0.0f, 0.85f);
+                if (UnitRandom(Hash(gridX, gridZ, seed ^ 0x4cf5ad43U)) >= density) continue;
+                // clear of the turtles' crawls and nests
+                if (std::ranges::any_of(beachDetails_, [x, z](const BeachDetailPlacement& detail) {
+                        return detail.turtleTrace && DistanceSquared(x, z, detail.x, detail.z) < 9.0f;
+                    })) {
+                    continue;
+                }
+                BeachVinePlacement vine;
+                vine.x = x;
+                vine.z = z;
+                vine.scale = BeachVineMinimumScale + (BeachVineMaximumScale - BeachVineMinimumScale)
+                    * UnitRandom(Hash(gridX, gridZ, seed ^ 0x2545f491U));
+                vine.variant = static_cast<std::uint8_t>(Hash(gridX, gridZ, seed ^ 0x9b05688cU) % BeachVineVariantCount);
+                // the plane of the drawn sand under it, and the sand within its spread near it
+                const auto ground = drawnGround.Sample(x, z);
+                const float reach = vine.scale * 0.36f;
+                bool level = ground.normal.y > 0.85f;
+                for (int spoke = 0; spoke < 8 && level; ++spoke) {
+                    const float angle = static_cast<float>(spoke) * std::numbers::pi_v<float> / 4.0f;
+                    const float dx = std::cos(angle) * reach, dz = std::sin(angle) * reach;
+                    const float plane = ground.height - (ground.normal.x * dx + ground.normal.z * dz) / ground.normal.y;
+                    if (std::abs(drawnGround.Height(x + dx, z + dz) - plane) > 0.09f
+                        || terrain.Sample(x + dx, z + dz).signedShoreDistance < 2.5f) {
+                        level = false;
+                    }
+                }
+                if (!level) continue;
+                vine.y = ground.height + 0.004f;
+                vine.normalX = ground.normal.x;
+                vine.normalY = ground.normal.y;
+                vine.normalZ = ground.normal.z;
+                // seaward: down the shore distance; the mesh's +X turns there (CreateRotationY
+                // takes +X to (cos, -sin)), give or take a little
+                const float gradientX = terrain.Sample(x + 1.5f, z).signedShoreDistance
+                    - terrain.Sample(x - 1.5f, z).signedShoreDistance;
+                const float gradientZ = terrain.Sample(x, z + 1.5f).signedShoreDistance
+                    - terrain.Sample(x, z - 1.5f).signedShoreDistance;
+                vine.yawRadians = std::atan2(gradientZ, -gradientX)
+                    + (UnitRandom(Hash(gridX, gridZ, seed ^ 0x6c8e9cf5U)) - 0.5f) * 0.7f;
+                beachVines_.push_back(vine);
             }
         }
     }
