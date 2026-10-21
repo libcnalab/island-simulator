@@ -233,6 +233,21 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 304 (2026-10-21) — plankton light round a swimmer at night
+
+The surf glittered blue on dark nights (pass 243) but a swimmer stirred nothing. `SwimGlowField`
+(header-only, deterministic): while the player swims and it is dark (the surf glow's own
+strength: the night, less under a bright moon), plankton sparks are born in a ring 0.3-1.3 m
+about the swimmer at the surface, 10 a second treading water and up to 120 swimming hard, more
+of them in the wake behind; each flashes and fades within 0.8-1.8 s where it was stirred.
+`SwimGlowRenderer` draws them as small blue discs, additive after the grade. A probe swimmer
+3 m in front of `jetty-end` at 22:00 on a moonless night showed the sparks on the dark water (a
+first, sparser and smaller glow was raised in rate, size and brightness). New core check: more
+sparks swimming hard than treading water, none by day or ashore, all gone within two seconds of
+stopping. `water` at 22:00 and `jetty-end` pass, and the tests. (Open: the cave's interior walls
+streak radially towards the mouth; not the texture filter, which was checked and ruled out;
+probably the tunnel's long facets or the rock texture.)
+
 ## Loop pass 303 (2026-10-21) — seagrass on the lagoon floor
 
 The terrain painted dark seagrass meadow beds on the lagoon floor, and the turtles grazed a

@@ -21,6 +21,7 @@
 #include "IslandSimulator/SummitCloudField.hpp"
 #include "IslandSimulator/WaterspoutRenderer.hpp"
 #include "IslandSimulator/SeagrassRenderer.hpp"
+#include "IslandSimulator/SwimGlowRenderer.hpp"
 #include "IslandSimulator/SunbeamMoteRenderer.hpp"
 #include "IslandSimulator/EaveDripRenderer.hpp"
 #include "IslandSimulator/RainSplashRenderer.hpp"
@@ -571,6 +572,9 @@ namespace island
         Waterspout waterspout_{};
         std::unique_ptr<WaterspoutRenderer> waterspoutRenderer_;
         std::unique_ptr<SeagrassRenderer> seagrassRenderer_;
+        SwimGlowField swimGlow_{};
+        std::unique_ptr<SwimGlowRenderer> swimGlowRenderer_;
+        float swimGlowStrength_ = 0.0f;
         WhalePod whales_{};
         std::unique_ptr<WhaleRenderer> whaleRenderer_;
         SailboatPassage sailboat_{};

@@ -2476,6 +2476,7 @@ namespace island
         sailboatRenderer_ = std::make_unique<SailboatRenderer>(device);
         waterspoutRenderer_ = std::make_unique<WaterspoutRenderer>(device);
         seagrassRenderer_ = std::make_unique<SeagrassRenderer>(device, terrain_);
+        swimGlowRenderer_ = std::make_unique<SwimGlowRenderer>(device);
         sunbeamMotes_ = std::make_unique<SunbeamMoteRenderer>(device, terrain_, canopyLightField_);
         whaleBlowRenderer_ = std::make_unique<CascadeMistRenderer>(device,
             "island-simulator: a humpback's blow stands up five metres far offshore, drifts downwind and thins away", WhalePod::PuffCount);
@@ -3229,6 +3230,16 @@ namespace island
         UpdateQuad(deltaSeconds);
         whales_.Update(deltaSeconds, wind::DirectionX, wind::DirectionZ);
         sailboat_.Update(deltaSeconds);
+        {
+            // a swimmer stirs the plankton into light on a dark night (as the surf does)
+            const auto& light = sun_light::Current().lighting;
+            const float dark = 1.0f - std::clamp((light.sunElevationDegrees + 6.0f) / 8.0f, 0.0f, 1.0f);
+            swimGlowStrength_ = dark * (1.0f - 0.55f * light.moonLight);
+            const PlayerPosition& swimmer = playerMotion_.Position();
+            const float vx = playerMotion_.VelocityX(), vz = playerMotion_.VelocityZ();
+            swimGlow_.Update(deltaSeconds, swimmer.x, 0.0f, swimmer.z, std::hypot(vx, vz), vx, vz,
+                             playerMotion_.Mode() == LocomotionMode::Swimming, swimGlowStrength_);
+        }
         {
             // squalls breed waterspouts: heavy rain in a strong wind
             const auto& w = weather_now::Current();
@@ -5974,6 +5985,8 @@ namespace island
                 const float dark = 1.0f - std::clamp((light.sunElevationDegrees + 6.0f) / 8.0f, 0.0f, 1.0f);
                 shorelineRenderer_->DrawGlow(cameraView_, cameraProjection_, renderCameraPosition_, timeSeconds,
                                              dark * (1.0f - 0.55f * light.moonLight));
+                if (swimGlowRenderer_)
+                    swimGlowRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, swimGlow_.Specks(), swimGlowStrength_);
             }
             if (fireflyRenderer_ && fireflies_ && fireflies_->Presence() > 0.0f && !underground)
                 fireflyRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, fireflies_->Flies());

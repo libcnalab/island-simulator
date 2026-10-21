@@ -74,6 +74,7 @@
 #include "IslandSimulator/SailboatPassage.hpp"
 #include "IslandSimulator/Satellites.hpp"
 #include "IslandSimulator/Waterspout.hpp"
+#include "IslandSimulator/SwimGlowField.hpp"
 #include "IslandSimulator/ShootingStars.hpp"
 #include "IslandSimulator/CrabBubbleField.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
@@ -6980,6 +6981,29 @@ int main()
             Check(passages == 3 && outFrames > 3 * 300 && outFrames < 3 * 1000 && offshore && steady
                       && std::abs(std::remainder(firstHeading - secondHeading, 6.2831853f)) > 0.05f,
                   "a yacht passes well offshore once a period, sailing a straight line at its speed, a fresh line each time");
+        }
+        // A swimmer at night stirs the plankton into light: sparks round them, many more swimming
+        // hard than treading water, each fading within two seconds; none by day or ashore.
+        {
+            const auto lit = [](const island::SwimGlowField& field) {
+                int count = 0;
+                for (const auto& speck : field.Specks()) count += speck.Brightness() > 0.01f ? 1 : 0;
+                return count;
+            };
+            island::SwimGlowField treading, swimming, day, ashore;
+            for (int step = 0; step < 40; ++step) {
+                treading.Update(0.05f, 10.0f, 0.0f, 5.0f, 0.0f, 1.0f, 0.0f, true, 1.0f);
+                swimming.Update(0.05f, 10.0f, 0.0f, 5.0f, 1.5f, 1.0f, 0.0f, true, 1.0f);
+                day.Update(0.05f, 10.0f, 0.0f, 5.0f, 1.5f, 1.0f, 0.0f, true, 0.0f);
+                ashore.Update(0.05f, 10.0f, 0.0f, 5.0f, 1.5f, 1.0f, 0.0f, false, 1.0f);
+            }
+            bool near = true;
+            for (const auto& speck : swimming.Specks())
+                if (speck.active) near = near && std::hypot(speck.x - 10.0f, speck.z - 5.0f) < 2.5f;
+            island::SwimGlowField stopped = swimming;
+            for (int step = 0; step < 60; ++step) stopped.Update(0.05f, 10.0f, 0.0f, 5.0f, 0.0f, 1.0f, 0.0f, false, 1.0f);
+            Check(lit(swimming) > 3 * lit(treading) && lit(treading) > 0 && lit(day) == 0 && lit(ashore) == 0 && near && lit(stopped) == 0,
+                  "a swimmer at night stirs plankton light round them, more swimming hard, gone within two seconds");
         }
         // Waterspouts: in a storm one now and then, offshore, for its few minutes; in settled
         // weather none, and one already standing fades away when the storm passes.

@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 304: on dark nights a swimmer stirs plankton into blue light (PLAN "Loop pass 304"). Open: the cave interior walls streak radially toward the mouth (not the sampler; suspect the tube's long facets or the rock texture).
 - Pass 303: seagrass clumps sway on the lagoon floor's meadow beds (`SeagrassRenderer`; tufts, not yet a full carpet) (PLAN "Loop pass 303").
 - Pass 302: the stream's margins are wet mud and its shallows nearly clear, not a green film over the bank (PLAN "Loop pass 302").
 - Pass 301: the deer and boar prints are rounded ovals, not little square tiles (PLAN "Loop pass 301").
