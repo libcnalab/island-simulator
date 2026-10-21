@@ -614,6 +614,10 @@ namespace island
         void PlaceQuadNear(float x, float z, float yawRadians);
         [[nodiscard]] float QuadLampNightness() const noexcept;
         [[nodiscard]] bool TouchRideOffered() const noexcept;   // the touch action buttons shown
+        /** @brief QA framing: how far the sight line from eye to target keeps clear of the
+         *  plants and trunks along it (metres; the last stretch at the target is not counted). */
+        [[nodiscard]] float QaSightClearance(const Microsoft::Xna::Framework::Vector3& eye,
+                                             const Microsoft::Xna::Framework::Vector3& target) const;
         [[nodiscard]] bool TouchTorchOffered() const noexcept;
         void UpdateQuad(float deltaSeconds);
         void UpdateQuadChaseCamera(float deltaSeconds);

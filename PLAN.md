@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 344 (2026-10-21) — the scratching monkey is framed in the clear
+
+The `monkey-scratch` QA view stood at a fixed offset from the troop's first monkey: a broad leaf
+in the foreground filled a third of the frame and half the monkey, and that monkey stood at the
+foot of a tree with its head to the bark, so moving the camera only traded the leaf for the trunk
+(probes printed the subject's heading through the capture: it also settles half a pace on after
+the setup). The view now shows the scratch on the ground monkey standing furthest from any trunk,
+and places the camera on a ring of twelve bearings, 2.3 m out and 1.45 m up (over the tall grass
+and the plants' outer leaves), scored by how clear its sight lines to the body and to the head
+(half a pace ahead) keep of the ground plants, understory, bushes and canopy trunks
+(`QaSightClearance`), leaning to a front-left view and, beside a trunk, to the side away from it.
+The whole monkey now stands clear in a grassy glade. `monkey-scratch`, `monkeys`, `monkey-climb`,
+`monkey-tree` and the tests pass.
+
 ## Loop pass 343 (2026-10-21) — the bunker's computer room is running
 
 `bunker-computers` had failed every capture sweep on its colour-bin floor (48 of 64): a correct

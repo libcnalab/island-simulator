@@ -1510,6 +1510,20 @@ namespace island
                 }
                 if (monkeyTreeQaPoses_.size()!=8) throw std::runtime_error("Monkey climb QA missing cycle stages");
             }
+            if (viewpoint_ == FixedViewpoint::MonkeyScratchDetail) {
+                // The scratch is shown on the troop member standing furthest from any trunk on
+                // the ground: the first one stood at the foot of a tree with its head to the
+                // bark, hidden from every side.
+                float clearest = -1.0f;
+                for (std::size_t index = 0; index < monkeyTroop_.Monkeys().size(); ++index) {
+                    const MonkeyState& candidate = monkeyTroop_.Monkeys()[index];
+                    if (candidate.treeIndex >= 0) continue;
+                    float nearest = 1.0e6f;
+                    for (const auto& tree : jungleLayout_.Canopy())
+                        nearest = std::min(nearest, std::hypot(tree.x - candidate.x, tree.z - candidate.z) - 0.7f * tree.scale);
+                    if (nearest > clearest) { clearest = nearest; monkeyQaSubjectIndex_ = index; }
+                }
+            }
             const MonkeyState& monkey = monkeyTroop_.Monkeys()[monkeyQaSubjectIndex_];
             const Vector3 forward(std::cos(monkey.headingRadians), 0.0f,
                                   std::sin(monkey.headingRadians));
@@ -1521,9 +1535,40 @@ namespace island
                 std::cout << "island-simulator: monkey QA camera frames one idle monkey scratching its flank\n";
             }
             if (viewpoint_ == FixedViewpoint::MonkeyScratchDetail) {
-                // Further out on the same side, so the whole body and the raised forelimb read.
-                cameraPosition_ = Vector3(monkey.x, monkey.y, monkey.z)
-                    + forward * 1.0f + side * 2.0f + Vector3::Up * 1.05f;
+                // Out on the subject's left so the whole body and the raised forelimb read, at
+                // whichever of a few places round that side sees it clearest past the ground
+                // plants and trunks (a broad leaf once filled a third of the frame); the right
+                // side only if the left is screened everywhere.
+                const Vector3 base(monkey.x, monkey.y, monkey.z);
+                const Vector3 target = base + Vector3::Up * 0.6f;
+                // the head a little ahead of where it stands now: it settles half a pace on
+                const Vector3 head = base + forward * 0.75f + Vector3::Up * 0.55f;
+                // A monkey often scratches at the foot of a tree: stand on the far side of the
+                // nearest trunk so the tree falls behind it, not across its head.
+                Vector3 away = forward;
+                float trunkDistance = 1.0e6f;
+                for (const auto& tree : jungleLayout_.Canopy()) {
+                    const float distance = std::hypot(tree.x - monkey.x, tree.z - monkey.z);
+                    if (distance < trunkDistance) {
+                        trunkDistance = distance;
+                        away = Vector3(monkey.x - tree.x, 0.0f, monkey.z - tree.z);
+                    }
+                }
+                const bool besideTrunk = trunkDistance < 3.0f && away.LengthSquared() > 1.0e-6f;
+                if (besideTrunk) away.Normalize();
+                Vector3 frontLeft = forward + side;
+                frontLeft.Normalize();
+                float best = -1.0e6f;
+                for (int bearing = 0; bearing < 12; ++bearing) {
+                    const float angle = static_cast<float>(bearing) * (2.0f * std::numbers::pi_v<float> / 12.0f);
+                    const Vector3 direction = forward * std::cos(angle) + side * std::sin(angle);
+                    // eye height over the tall grass and the ground plants' outer leaves
+                    const Vector3 eye = base + direction * 2.3f + Vector3::Up * 1.45f;
+                    const float clear = std::min(QaSightClearance(eye, target), QaSightClearance(eye, head));
+                    const float score = std::min(clear, 1.2f) + 0.3f * Vector3::Dot(direction, frontLeft)
+                        + (besideTrunk ? 0.6f * Vector3::Dot(direction, away) : 0.0f);
+                    if (score > best) { best = score; cameraPosition_ = eye; }
+                }
             } else if (viewpoint_ == FixedViewpoint::MonkeyDetail) {
                 // View across the shoulder from the open side of the deterministic route.
                 // This exposes the face and the full quadrupedal silhouette without putting
@@ -4268,6 +4313,25 @@ namespace island
         // in the right hand at the chest, a little ahead
         const Vector3 right(cameraView_.M11, cameraView_.M21, cameraView_.M31);
         return renderCameraPosition_ + TorchAxis() * 0.25f + right * 0.18f - Vector3::Up * 0.35f;
+    }
+
+    float IslandGame::QaSightClearance(const Vector3& eye, const Vector3& target) const
+    {
+        const float ex = eye.X, ez = eye.Z;
+        const float dx = target.X - ex, dz = target.Z - ez;
+        const float length = std::max(std::hypot(dx, dz), 0.01f);
+        const float reach = std::max(0.0f, 1.0f - 0.35f / length);   // spare the subject's own spot
+        float clearance = 1.0e6f;
+        const auto consider = [&](const float x, const float z, const float radius) {
+            const float t = std::clamp(((x - ex) * dx + (z - ez) * dz) / (length * length), 0.0f, reach);
+            clearance = std::min(clearance, std::hypot(x - (ex + dx * t), z - (ez + dz * t)) - radius);
+        };
+        for (const auto& plant : jungleLayout_.GroundPlants()) consider(plant.x, plant.z, 0.45f * plant.scale);
+        for (const auto& plant : jungleLayout_.Understory()) consider(plant.x, plant.z, 0.9f * plant.scale);
+        for (const auto& bush : jungleLayout_.Bushes()) consider(bush.x, bush.z, 1.0f * bush.scale);
+        // canopy trunks flare broad at the foot, with their buttress roots
+        for (const auto& tree : jungleLayout_.Canopy()) consider(tree.x, tree.z, 0.7f * tree.scale);
+        return clearance;
     }
 
     bool IslandGame::TouchRideOffered() const noexcept
