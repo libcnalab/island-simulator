@@ -279,6 +279,7 @@ namespace island
         QuadJettyDetail,
         QuadHelicopterDetail,
         QuadLookoutDetail,
+        QuadBearDetail,
         CrabDetail,
         HermitCrabDetail,
         CoconutCrabDetail,
@@ -638,7 +639,8 @@ namespace island
         [[nodiscard]] bool QuadDriveView() const noexcept {
             return viewpoint_ == FixedViewpoint::QuadDriveDetail || viewpoint_ == FixedViewpoint::QuadBunkerDetail
                 || viewpoint_ == FixedViewpoint::QuadCaveDetail || viewpoint_ == FixedViewpoint::QuadJettyDetail
-                || viewpoint_ == FixedViewpoint::QuadHelicopterDetail || viewpoint_ == FixedViewpoint::QuadLookoutDetail;
+                || viewpoint_ == FixedViewpoint::QuadHelicopterDetail || viewpoint_ == FixedViewpoint::QuadLookoutDetail
+                || viewpoint_ == FixedViewpoint::QuadBearDetail;
         }
         float quadSiteFloorY_ = 0.0f;
         void UpdateQuadSite();

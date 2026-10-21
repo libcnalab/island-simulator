@@ -233,6 +233,14 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 410 (2026-10-21) — the quad bike bumps into the animals and the resident
+
+The quad's obstacles were the world's fixed circles: it drove through the bear, a boar, a goat, a
+deer, a crocodile or the resident as if they were air. QuadObstacle now pushes it off them too, as
+circles at their centres (bear 0.9 m, crocodile 0.6 m, deer and boars 0.45 m, goats 0.4 m, the
+resident 0.3 m). A new QA view `quad-bear` drives at the (unhurried) bear from eight metres: the
+quad stops 1.88 m from its centre. `quad-drive` ends as before; the tests pass.
+
 ## Loop pass 409 (2026-10-21) — the quad's shadow does not hang off the jetty's edge
 
 On the jetty (`quad-jetty`) the quad's shadow lay in the deck's plane past its edge, a grey sheet

@@ -229,6 +229,7 @@ namespace island
             case FixedViewpoint::QuadJettyDetail: return "quad-jetty";
             case FixedViewpoint::QuadHelicopterDetail: return "quad-helicopter";
             case FixedViewpoint::QuadLookoutDetail: return "quad-lookout";
+            case FixedViewpoint::QuadBearDetail: return "quad-bear";
             case FixedViewpoint::CrabDetail: return "crabs";
             case FixedViewpoint::HermitCrabDetail: return "hermit-crabs";
             case FixedViewpoint::CoconutCrabDetail: return "coconut-crabs";
@@ -2706,6 +2707,11 @@ namespace island
                     const float rampX = lookout.x + lookout.dirX * u, rampZ = lookout.z + lookout.dirZ * u;
                     const float fromX = rampX + lookout.AcrossX() * 4.5f, fromZ = rampZ + lookout.AcrossZ() * 4.5f;
                     PlaceQuadNear(fromX, fromZ, std::atan2(rampX - fromX, rampZ - fromZ));
+                } else if (viewpoint_ == FixedViewpoint::QuadBearDetail && bear_) {
+                    // straight at the bear from eight metres off
+                    const auto& bear = bear_->State();
+                    const float fromX = bear.x + 8.0f, fromZ = bear.z;
+                    PlaceQuadNear(fromX, fromZ, std::atan2(bear.x - fromX, bear.z - fromZ));
                 } else {
                     // up the beach path from the south shore, which runs clear of the trees
                     constexpr float startZ = -222.0f;
@@ -4605,6 +4611,24 @@ namespace island
             pushZ += dz / distance * (reach - distance);
             hit = true;
         }
+        // The large animals and the resident are bodies too (circles at their centres): the quad
+        // drove through a boar, a goat or the man himself as if they were air.
+        const auto body = [&](const float bodyX, const float bodyZ, const float bodyRadius) {
+            const float dx = x - bodyX, dz = z - bodyZ;
+            const float reach = radius + bodyRadius;
+            if (std::abs(dx) > reach || std::abs(dz) > reach) return;
+            const float distance = std::hypot(dx, dz);
+            if (distance >= reach || distance < 1e-4f) return;
+            pushX += dx / distance * (reach - distance);
+            pushZ += dz / distance * (reach - distance);
+            hit = true;
+        };
+        if (bear_) body(bear_->State().x, bear_->State().z, 0.9f);
+        for (const auto& boar : boarHerd_.Boars()) body(boar.x, boar.z, 0.45f);
+        if (goats_) for (const auto& goat : goats_->Goats()) body(goat.x, goat.z, 0.40f);
+        if (deer_) for (const auto& deer : deer_->Deer()) body(deer.x, deer.z, 0.45f);
+        for (const auto& crocodile : crocodileGroup_.Crocodiles()) body(crocodile.x, crocodile.z, 0.60f);
+        if (resident_) body(resident_->State().x, resident_->State().z, 0.30f);
         return hit;
     }
 
@@ -7577,7 +7601,10 @@ namespace island
             }
             if (QuadDriveView()) {
                 const auto q = quad_.Position();
-                if (viewpoint_ == FixedViewpoint::QuadJettyDetail || viewpoint_ == FixedViewpoint::QuadHelicopterDetail
+                if (viewpoint_ == FixedViewpoint::QuadBearDetail && bear_) {
+                    std::cout << "island-simulator: quad QA body: bear, distance "
+                              << std::hypot(q.x - bear_->State().x, q.z - bear_->State().z) << " m\n";
+                } else if (viewpoint_ == FixedViewpoint::QuadJettyDetail || viewpoint_ == FixedViewpoint::QuadHelicopterDetail
                     || viewpoint_ == FixedViewpoint::QuadLookoutDetail) {
                     std::cout << "island-simulator: quad QA structure: "
                               << (viewpoint_ == FixedViewpoint::QuadJettyDetail ? "jetty"
