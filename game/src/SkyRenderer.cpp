@@ -75,6 +75,7 @@ uniform float uCloudDriftRadians;
 // already divided by the scene grade the frame is multiplied by afterwards; w: the sun's visibility.
 uniform vec4 uSkyHorizonScale;
 uniform vec3 uSkyZenithScale;
+uniform vec3 uSkyAntiHorizonScale;   // the horizon opposite the sun, likewise
 uniform vec2 uWeatherSky;   // x: cloud cover (0 fair, 1 overcast), y: rain
 
 out vec4 fragColor;
@@ -168,8 +169,13 @@ void main()
     float verticalBlend = pow(elevation, 0.58);
     // The horizon haze is the same colour every renderer fogs toward, so distant terrain,
     // water and islets dissolve into the sky instead of standing in front of it.
-    vec3 hazeColor = islandAtmosphereFog * uSkyHorizonScale.xyz;
-    vec3 horizon = vec3(0.70, 0.86, 0.92) * uSkyHorizonScale.xyz;
+    // the horizon's colour (and its haze) turns from the sun's side to the side away from it
+    vec2 flatDirection = direction.xz * inversesqrt(max(dot(direction.xz, direction.xz), 1e-6));
+    vec2 flatSun = sun.xz * inversesqrt(max(dot(sun.xz, sun.xz), 1e-6));
+    float sunSideOfSky = smoothstep(-0.35, 0.85, dot(flatDirection, flatSun));
+    vec3 horizonScale = mix(uSkyAntiHorizonScale, uSkyHorizonScale.xyz, sunSideOfSky);
+    vec3 hazeColor = islandAtmosphereFog * horizonScale;
+    vec3 horizon = vec3(0.70, 0.86, 0.92) * horizonScale;
     vec3 zenith = vec3(0.12, 0.42, 0.74) * uSkyZenithScale;
     vec3 color = mix(horizon, zenith, verticalBlend);
     float haze = exp(-max(direction.y, 0.0) * 9.0);
@@ -438,6 +444,8 @@ void main()
             customEffect_->SetUniformVec2("uWeatherSky", std::max(weather_now::Current().cloudCover, 0.0f),
                                           weather_now::Current().rain);
             customEffect_->SetUniformVec3("uSkyZenithScale", scales.zenith.x, scales.zenith.y, scales.zenith.z);
+            customEffect_->SetUniformVec3("uSkyAntiHorizonScale", scales.antiHorizon.x, scales.antiHorizon.y,
+                                          scales.antiHorizon.z);
             customEffect_->SetUniformFloat("uCloudDriftRadians",sky_cloud::DriftAngle(timeSeconds));
         } else {
             fallbackEffect_->setWorldProperty(Matrix::CreateScale(SkyRadius)

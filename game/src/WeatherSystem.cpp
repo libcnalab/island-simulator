@@ -169,6 +169,7 @@ namespace island
         };
         light.skyZenith = mixSky(light.skyZenith, overcastZenith);
         light.skyHorizon = mixSky(light.skyHorizon, overcastHorizon);
+        light.skyAntiHorizon = mixSky(light.skyAntiHorizon, overcastHorizon);
         light.starVisibility *= 1.0f - cover;
         light.moonLight *= 1.0f - 0.8f * cover;
     }

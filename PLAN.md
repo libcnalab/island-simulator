@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 357 (2026-10-21) — the golden hours' warm horizon is on the sun's side
+
+At the golden hours and dusk the sky's horizon colour (and its haze) was one warm colour at every
+azimuth, so a dawn sky looking anywhere was a dull khaki dome. `DayLighting` now also carries the
+horizon opposite the sun (`skyAntiHorizon`): the day's own horizon above 20 degrees, a pale
+blue-grey at the golden hours, a rose band over the earth's shadow at dusk (the Belt of Venus),
+the night's horizon after; overcast greys it like the rest. The sky shader turns the horizon and
+its haze from that colour to the warm one as the bearing swings toward the sun. Midday is
+unchanged. `movement` at 06:12, 17:48 and midday, `water` at 06:24 and 17:36, `overview` at
+18:24 and the tests pass.
+
 ## Loop pass 356 (2026-10-21) — rain streaks a drop wide; rain shafts hang from the cloud
 
 Near the eye the rain streaks were fat grey bars - their half-width carried a fixed 6 mm, about

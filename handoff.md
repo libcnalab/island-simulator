@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 357: sky horizon colour by azimuth at golden hour/dusk (warm toward the sun, blue-grey / rose opposite) (PLAN "Loop pass 357").
 - Pass 356: rain streaks ~1 px wide (near ones fade), rain curtains fade out of the cloud deck (PLAN "Loop pass 356").
 - Pass 355: monkey shader hemisphere ambient (form in shade) (PLAN "Loop pass 355").
 - Pass 354: `monkeys` QA camera picks a clear spot; full sweep after 342-353: 116/117 (canopy needs its flag) (PLAN "Loop pass 354").

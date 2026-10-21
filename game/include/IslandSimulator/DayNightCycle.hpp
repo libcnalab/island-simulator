@@ -23,7 +23,8 @@ namespace island
         float starVisibility = 0.0f;   // 0..1
         DayVec3 grade;                 // scene colour multiplier: (1,1,1) by day, warm at the golden hours, dark blue at night
         DayVec3 skyZenith;             // sky colour overhead
-        DayVec3 skyHorizon;            // sky colour at the horizon
+        DayVec3 skyHorizon;            // sky colour at the horizon (toward the sun)
+        DayVec3 skyAntiHorizon;        // and at the horizon opposite the sun (cool at the golden hours, rose at dusk)
         float shadowStrength = 1.0f;   // 0..1 sun shadows (none at night)
     };
 
@@ -98,7 +99,7 @@ namespace island
         /** @brief The hour's sky against the reference afternoon's, divided by the night grade so
          *  what is drawn before the grade comes out at the hour's sky colour after it: the sky's
          *  horizon and zenith scales, which the sea's reflected sky shares. */
-        struct SkyScales { DayVec3 horizon, zenith; };
+        struct SkyScales { DayVec3 horizon, zenith, antiHorizon; };
         [[nodiscard]] SkyScales SkyScalesOf(const DayLighting& lighting) noexcept;
         void Set(const DayLighting& lighting) noexcept;
         /** @brief The shading direction scaled to the former constant's length, so at 14:00 the

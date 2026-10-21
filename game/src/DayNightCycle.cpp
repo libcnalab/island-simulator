@@ -123,7 +123,10 @@ namespace island
                      ratio(lighting.skyHorizon.z, day.skyHorizon.z, lighting.grade.z)},
                     {ratio(lighting.skyZenith.x, day.skyZenith.x, lighting.grade.x),
                      ratio(lighting.skyZenith.y, day.skyZenith.y, lighting.grade.y),
-                     ratio(lighting.skyZenith.z, day.skyZenith.z, lighting.grade.z)}};
+                     ratio(lighting.skyZenith.z, day.skyZenith.z, lighting.grade.z)},
+                    {ratio(lighting.skyAntiHorizon.x, day.skyHorizon.x, lighting.grade.x),
+                     ratio(lighting.skyAntiHorizon.y, day.skyHorizon.y, lighting.grade.y),
+                     ratio(lighting.skyAntiHorizon.z, day.skyHorizon.z, lighting.grade.z)}};
         }
 
         void Set(const DayLighting& lighting) noexcept
@@ -219,19 +222,28 @@ namespace island
         const DayVec3 goldenZenith{0.30f, 0.45f, 0.72f}, goldenHorizon{0.98f, 0.74f, 0.48f};
         const DayVec3 duskZenith{0.10f, 0.13f, 0.30f}, duskHorizon{0.78f, 0.42f, 0.38f};
         const DayVec3 nightZenith{0.012f, 0.018f, 0.045f}, nightHorizon{0.035f, 0.050f, 0.090f};
-        if (e >= 20.0f) { light.skyZenith = dayZenith; light.skyHorizon = dayHorizon; }
-        else if (e >= 2.0f) {
+        // The warm horizon belongs to the sun's side of the sky. Opposite it the golden hour's
+        // horizon is a pale blue-grey and the dusk's a rose band (the Belt of Venus) over the
+        // earth's shadow: warm all round, a dawn sky was one khaki dome.
+        const DayVec3 goldenAntiHorizon{0.66f, 0.74f, 0.86f}, duskAntiHorizon{0.54f, 0.43f, 0.55f};
+        if (e >= 20.0f) {
+            light.skyZenith = dayZenith; light.skyHorizon = dayHorizon; light.skyAntiHorizon = dayHorizon;
+        } else if (e >= 2.0f) {
             const float t = Smooth(2.0f, 20.0f, e);
             light.skyZenith = Mix(goldenZenith, dayZenith, t); light.skyHorizon = Mix(goldenHorizon, dayHorizon, t);
+            light.skyAntiHorizon = Mix(goldenAntiHorizon, dayHorizon, t);
         } else if (e >= -6.0f) {
             const float t = Smooth(-6.0f, 2.0f, e);
             light.skyZenith = Mix(duskZenith, goldenZenith, t); light.skyHorizon = Mix(duskHorizon, goldenHorizon, t);
+            light.skyAntiHorizon = Mix(duskAntiHorizon, goldenAntiHorizon, t);
         } else {
             const float t = Smooth(-14.0f, -6.0f, e);
             light.skyZenith = Mix(nightZenith, duskZenith, t); light.skyHorizon = Mix(nightHorizon, duskHorizon, t);
+            light.skyAntiHorizon = Mix(nightHorizon, duskAntiHorizon, t);
         }
         const DayVec3 moonGlow{0.03f, 0.045f, 0.08f};
         light.skyHorizon = Add(light.skyHorizon, Scale(moonGlow, light.moonLight * light.starVisibility));
+        light.skyAntiHorizon = Add(light.skyAntiHorizon, Scale(moonGlow, light.moonLight * light.starVisibility));
         light.skyZenith = Add(light.skyZenith, Scale(moonGlow, 0.6f * light.moonLight * light.starVisibility));
         return light;
     }
