@@ -41,7 +41,7 @@ namespace island
         constexpr int FarCrabVertexCount = 12;
         constexpr int MaximumVerticesPerCrab = NearCrabVertexCount;
         constexpr int MaximumBurrowVertices = 1024;
-        constexpr int HermitCrabVertexCount = 2088;
+        constexpr int HermitCrabVertexCount = 2232;
         // Past this a hermit crab is its shell, a few pixels across: a six-sided shell alone
         // (out to the crabs' 92 m every one was built whole, legs, eyes and spiral marks).
         constexpr float HermitDetailDistance = 18.0f;
@@ -381,7 +381,7 @@ namespace island
             // A tilted six-station shell replaces the former vertical cone. Its
             // broad lower whorl encloses the body and its restrained apex sweeps
             // rearward, matching the silhouette of a carried gastropod shell.
-            const int RingSegments = far ? 6 : 12;
+            const int RingSegments = far ? 6 : 16;
             constexpr std::array<float, 6> ShellStations =
                 {{-.145f, -.090f, -.015f, .070f, .145f, .215f}};
             constexpr std::array<float, 6> ShellRadii =
@@ -401,16 +401,34 @@ namespace island
                     + right * (std::cos(angle) * ShellRadii[station] * scale)
                     + shellOther * (std::sin(angle) * ShellRadii[station] * .92f * scale);
             };
+            // Lit from the whorl's own normals (the radius's slope along the axis tilts them),
+            // one-sided, instead of one brightness per facet: the shell rounds off with a
+            // shadowed flank, while each whorl keeps its own band colour edge to edge.
+            const auto shellVertex = [&](const std::size_t station, const int segment,
+                                         const Color& base) {
+                const float angle = TwoPi * static_cast<float>(segment)
+                    / static_cast<float>(RingSegments);
+                const std::size_t before = station == 0U ? 0U : station - 1U;
+                const std::size_t after = std::min<std::size_t>(station + 1U, ShellStations.size() - 1U);
+                const float slope = (ShellRadii[after] - ShellRadii[before])
+                    / (ShellStations[after] - ShellStations[before]);
+                const Vector3 normal = Vector3::Normalize(right * std::cos(angle)
+                    + shellOther * (std::sin(angle) / .92f) - shellAxis * slope);
+                const float direct = std::max(0.0f, Vector3::Dot(normal, wildlife_render::FixedSunDirection));
+                return VertexPositionColor(shellPoint(station, segment), wildlife_render::ScaleColor(
+                    base, .72f + .30f * direct + .06f * std::max(0.0f, normal.Y)));
+            };
             for (std::size_t station = 0; station + 1U < ShellStations.size(); ++station) {
                 for (int segment = 0; segment < RingSegments; ++segment) {
                     const int next = (segment + 1) % RingSegments;
-                    const Color base = station % 2U == 0U ? shell : shellShade;
-                    const Color color = segment < RingSegments / 2
-                        ? Color::Lerp(base, shellRidge, .10f) : base;
-                    AddQuad(vertices, shellPoint(station, segment),
-                            shellPoint(station + 1U, segment),
-                            shellPoint(station + 1U, next),
-                            shellPoint(station, next), color);
+                    const Color band = station % 2U == 0U ? shell : shellShade;
+                    const Color base = segment < RingSegments / 2
+                        ? Color::Lerp(band, shellRidge, .10f) : band;
+                    const VertexPositionColor a = shellVertex(station, segment, base);
+                    const VertexPositionColor b = shellVertex(station + 1U, segment, base);
+                    const VertexPositionColor c = shellVertex(station + 1U, next, base);
+                    const VertexPositionColor d = shellVertex(station, next, base);
+                    vertices.insert(vertices.end(), {a, b, c, a, c, d});
                 }
             }
             const Vector3 shellRear = shellCentre

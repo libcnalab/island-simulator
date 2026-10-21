@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 385 (2026-10-21) — the hermit crab's shell is round and lit from its own curve
+
+The hermit crab's shell (`hermit-crabs`) read as a cut cone: twelve flat facets round each whorl,
+each lit by its own face normal (two-sided, so the shadowed flank was lit as much as the sunny
+one). It now has sixteen sides near (the far shell of pass 384 keeps six) and every vertex is lit,
+one-sided, from the surface of revolution's own normal (round the axis, tilted by the radius's
+slope along it), with FacetColor's brightness terms; each whorl keeps its band colour edge to edge,
+so the growth bands stay crisp while the shell rounds off with a darker flank away from the sun.
+(Blending the band colours from ring to ring as well, first, smeared the whorls into one muddy
+gradient.) The near crab's budget is 2,232 vertices. The tests pass.
+
 ## Loop pass 384 (2026-10-21) — far hermit crabs are a shell alone
 
 The crabs' render pass (0.8 ms a frame on the operator's beach) built every one of the ten hermit
