@@ -33,6 +33,7 @@ namespace island
         std::unique_ptr<GS::AvatarRenderer> renderer;
         std::vector<Matrix> bones;
         float hipHeight = 0.79f;
+        float lean = 0.0f;
         bool readyReported = false;
     };
 
@@ -57,22 +58,26 @@ namespace island
         // leaning into the bars, the arms forward to the grips with the elbows bent.
         // `steer` -1..1: turning the bars right brings the right grip back and sends the left
         // one forward, so the shoulders turn with them and the right elbow folds.
-        void RidingPose(std::vector<Matrix>& bones, const float steer)
+        // `lean` radians, + to the right: in a corner the rider throws the upper body to the
+        // inside of the turn, against the pull outward, and keeps the head nearly level.
+        void RidingPose(std::vector<Matrix>& bones, const float steer, const float lean)
         {
             bones.assign(GS::AvatarRenderer::BoneCount, Matrix::getIdentityProperty());
             const auto set = [&](const int bone, const Matrix& m) { bones[static_cast<std::size_t>(bone)] = m; };
-            set(1, Matrix::CreateRotationX(-14.0f * Degrees));                                           // BackLower
-            set(5, Matrix::CreateRotationY(-20.0f * steer * Degrees) * Matrix::CreateRotationX(-10.0f * Degrees)); // BackUpper
-            set(14, Matrix::CreateRotationX(6.0f * Degrees));                                            // Neck
-            set(19, Matrix::CreateRotationX(10.0f * Degrees));                                           // Head
+            set(1, Matrix::CreateRotationZ(-0.6f * lean) * Matrix::CreateRotationX(-14.0f * Degrees)); // BackLower
+            set(5, Matrix::CreateRotationY(-20.0f * steer * Degrees) * Matrix::CreateRotationZ(-0.4f * lean)
+                       * Matrix::CreateRotationX(-10.0f * Degrees));                                    // BackUpper
+            set(14, Matrix::CreateRotationZ(0.45f * lean) * Matrix::CreateRotationX(6.0f * Degrees)); // Neck
+            set(19, Matrix::CreateRotationZ(0.35f * lean) * Matrix::CreateRotationX(10.0f * Degrees)); // Head
             set(2, Matrix::CreateRotationZ(-16.0f * Degrees) * Matrix::CreateRotationX(78.0f * Degrees)); // HipLeft
             set(3, Matrix::CreateRotationZ(16.0f * Degrees) * Matrix::CreateRotationX(78.0f * Degrees));  // HipRight
             set(6, Matrix::CreateRotationX(-92.0f * Degrees));                                           // KneeLeft
             set(8, Matrix::CreateRotationX(-92.0f * Degrees));                                           // KneeRight
             set(11, Matrix::CreateRotationX(18.0f * Degrees));                                           // AnkleLeft
             set(15, Matrix::CreateRotationX(18.0f * Degrees));                                           // AnkleRight
-            set(20, Matrix::CreateRotationZ(-26.0f * Degrees) * Matrix::CreateRotationX(58.0f * Degrees)); // ShoulderLeft
-            set(22, Matrix::CreateRotationZ(26.0f * Degrees) * Matrix::CreateRotationX(58.0f * Degrees));  // ShoulderRight
+            // the shoulders turned back against the lean so the arms still reach for the grips
+            set(20, Matrix::CreateRotationZ(-26.0f * Degrees + lean) * Matrix::CreateRotationX(58.0f * Degrees)); // ShoulderLeft
+            set(22, Matrix::CreateRotationZ(26.0f * Degrees + lean) * Matrix::CreateRotationX(58.0f * Degrees));  // ShoulderRight
             set(25, Matrix::CreateRotationX(std::max(32.0f - 26.0f * steer, 6.0f) * Degrees));           // ElbowLeft
             set(28, Matrix::CreateRotationX(std::max(32.0f + 26.0f * steer, 6.0f) * Degrees));           // ElbowRight
             // The hands turned palm down on the grips (the arms hang palm in at rest), every
@@ -100,7 +105,7 @@ namespace island
             avatar_ = std::make_unique<Avatar>();
             avatar_->description = std::make_unique<GS::AvatarDescription>(RiderDescription());
             avatar_->renderer = std::make_unique<GS::AvatarRenderer>(avatar_->description.get(), false);
-            RidingPose(avatar_->bones, 0.0f);
+            RidingPose(avatar_->bones, 0.0f, 0.0f);
             status_ = "a CNA avatar (loading)";
         } catch (const std::exception& error) {
             avatar_.reset();
@@ -149,7 +154,13 @@ namespace island
             const float sun = 0.70f * std::max(light.sunVisibility, 0.25f);
             renderer.setLightColorProperty(Vector3(sun, sun * 0.97f, sun * 0.92f));
             renderer.setAmbientLightColorProperty(Vector3(0.40f, 0.42f, 0.46f));
-            RidingPose(avatar_->bones, std::clamp(bike.SteerRadians() / QuadBike::MaxSteerRadians, -1.0f, 1.0f));
+            // The lean into a corner, from the cornering pull (speed squared over the turn's radius),
+            // eased so it follows the turn rather than snapping with the bars.
+            const float speed = bike.Speed();
+            const float pull = speed * speed * std::tan(bike.SteerRadians()) / QuadBike::WheelBase;
+            const float targetLean = std::clamp(pull / 9.81f, -1.0f, 1.0f) * 12.0f * Degrees;
+            avatar_->lean += (targetLean - avatar_->lean) * 0.12f;
+            RidingPose(avatar_->bones, std::clamp(bike.SteerRadians() / QuadBike::MaxSteerRadians, -1.0f, 1.0f), avatar_->lean);
             renderer.Draw(avatar_->bones, GS::AvatarExpression());
         } catch (const std::exception& error) {
             std::cout << "island-simulator: quad rider draw failed: " << error.what() << '\n';

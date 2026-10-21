@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 316 (2026-10-21) — the quad's rider leans into the corners
+
+The CNA avatar rider turned the bars but sat bolt upright through a corner, where a real ATV
+rider throws the upper body to the inside of the turn against the outward pull. The riding
+pose now takes a lean: from the cornering pull (speed squared times the steering's tangent
+over the wheelbase) up to 12 degrees at a pull of one g, eased so it follows the turn; the
+lower and upper back roll the body to the inside, the neck and head roll back to keep the
+head nearly level, and the shoulders turn back against the lean so the arms still reach for
+the grips (a first 22 degree lean without that took the hands well off the grips). A probe
+held the full lean in `quad-chase`: the rider leans right with the hands at the grips. Native
+desktop only (the Web and Android builds draw the stand-in rider). `quad-ride`, `quad-chase`,
+`quad-drive` and the tests pass.
+
 ## Loop pass 315 (2026-10-21) — a hand torch for the walker
 
 Under a new moon the island's night is truly dark, and on foot there was no light at all. H now
