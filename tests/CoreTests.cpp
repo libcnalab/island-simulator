@@ -47,7 +47,7 @@
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/WreckScourPatch.hpp"
 #include "IslandSimulator/StreamCourse.hpp"
-#include "IslandSimulator/StreamCourse.hpp"
+#include "IslandSimulator/StreamBedPatch.hpp"
 #include "IslandSimulator/StreamDriftField.hpp"
 #include "IslandSimulator/SunShadeField.hpp"
 #include "IslandSimulator/BlownSandField.hpp"
@@ -10251,6 +10251,23 @@ int main()
         }
         Check(level, "the stream's water level in its channel is its course's there");
         Check(beside, "two half widths off the stream's line there is no stream water");
+    }
+
+    {
+        // The drawn ground that marks and shadows lie on follows a local patch drawn in place of
+        // the mesh (the stream's carved bed), and is the mesh itself away from it.
+        const island::IslandTerrain terrain;
+        const island::RenderedTerrainSurface mesh(terrain);
+        const island::StreamCourse course(terrain);
+        const island::StreamBedPatch bed(course, mesh);
+        island::RenderedTerrainSurface drawn(terrain);
+        drawn.SetLocalPatches({&bed, nullptr});
+        const auto& station = course.Station(45);
+        const float inBed = drawn.Height(station.x, station.z);
+        Check(inBed == bed.SampleHeight(station.x, station.z) && inBed < mesh.Height(station.x, station.z) - 0.2f
+              && drawn.Sample(station.x, station.z).height == inBed && drawn.Sample(station.x, station.z).normal.y > 0.5f,
+              "the drawn ground in the stream's channel is its carved bed, below the mesh");
+        Check(drawn.Height(40.0f, 60.0f) == mesh.Height(40.0f, 60.0f), "away from the patches the drawn ground is the mesh");
     }
 
     {

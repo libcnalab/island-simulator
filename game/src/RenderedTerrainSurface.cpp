@@ -1,4 +1,5 @@
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
+#include "IslandSimulator/LocalTerrainPatch.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -45,6 +46,13 @@ namespace island
             || std::abs(x) > TerrainMeshLayout::Extent || std::abs(z) > TerrainMeshLayout::Extent) {
             throw std::invalid_argument("Rendered terrain query outside finite mesh");
         }
+        if (const LocalTerrainPatch* patch = PatchAt(x, z)) {
+            // the patch's surface, its slope from the heights a hand's breadth either side
+            const float dx = (Height(x + 0.05f, z) - Height(x - 0.05f, z)) / 0.1f;
+            const float dz = (Height(x, z + 0.05f) - Height(x, z - 0.05f)) / 0.1f;
+            const float length = std::sqrt(dx * dx + 1.0f + dz * dz);
+            return {patch->SampleHeight(x, z), {-dx / length, 1.0f / length, -dz / length}};
+        }
         const int column = Quad(x), row = Quad(z);
         const double width = double(Coordinates[column + 1]) - Coordinates[column];
         const double depth = double(Coordinates[row + 1]) - Coordinates[row];
@@ -76,6 +84,7 @@ namespace island
             || std::abs(x) > TerrainMeshLayout::Extent || std::abs(z) > TerrainMeshLayout::Extent) {
             throw std::invalid_argument("Rendered terrain query outside finite mesh");
         }
+        if (const LocalTerrainPatch* patch = PatchAt(x, z)) return patch->SampleHeight(x, z);
         const int column = Quad(x), row = Quad(z);
         const double width = double(Coordinates[column + 1]) - Coordinates[column];
         const double depth = double(Coordinates[row + 1]) - Coordinates[row];
@@ -87,6 +96,13 @@ namespace island
         const double br = heights_[index + TerrainMeshLayout::Resolution + 1];
         return static_cast<float>(u + v <= 1.0 ? tl + (tr - tl) * u + (bl - tl) * v
                                                 : br + (bl - br) * (1.0 - u) + (tr - br) * (1.0 - v));
+    }
+
+    const LocalTerrainPatch* RenderedTerrainSurface::PatchAt(const float x, const float z) const noexcept
+    {
+        for (const LocalTerrainPatch* patch : patches_)
+            if (patch && patch->Contains(x, z)) return patch;
+        return nullptr;
     }
 
     float DrawnOrAnalyticHeight(const RenderedTerrainSurface& surface, const IslandTerrain& terrain,

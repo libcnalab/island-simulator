@@ -9,6 +9,7 @@
 
 namespace island
 {
+    class LocalTerrainPatch;
     class RenderedTerrainSurface;
     [[nodiscard]] float DrawnOrAnalyticHeight(const RenderedTerrainSurface& surface,
                                               const IslandTerrain& terrain, float x, float z);
@@ -37,6 +38,10 @@ namespace island
         [[nodiscard]] static float DecodeHeight(std::array<std::uint8_t,4> pixel) noexcept;
         // CPU float emulation of the portable shader, used by the grounding audit and tests.
         [[nodiscard]] float SamplePacked(float x,float z) const;
+        // The local patches drawn in place of the mesh where they lie (the stream's carved bed,
+        // the wreck's scour): Sample and Height then give their surface there, for the marks and
+        // shadows laid on the ground. Unset, the mesh alone.
+        void SetLocalPatches(const std::array<const LocalTerrainPatch*, 2>& patches) noexcept { patches_ = patches; }
 
         static constexpr const char* Shader = R"(
 uniform sampler2D uGrassTerrainHeight;
@@ -66,6 +71,8 @@ float grassTerrainHeight(vec2 world)
 )";
 
     private:
+        [[nodiscard]] const LocalTerrainPatch* PatchAt(float x, float z) const noexcept;
         std::array<float, TerrainMeshLayout::Resolution * TerrainMeshLayout::Resolution> heights_;
+        std::array<const LocalTerrainPatch*, 2> patches_{};
     };
 }

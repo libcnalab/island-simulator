@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 412 (2026-10-21) — marks and shadows lie in the stream's channel and the wreck's scour
+
+The drawn ground the per-frame marks and shadows are laid on (drawnGround_: footprints, contact
+shadows, bird and seabed shadows, shell drags) and the quad's ground (quadSurface_: its ruts and its
+footing) were the coarse mesh alone, while the terrain draws the stream's carved bed and the wreck's
+scour in its place there: a shadow or a print in the channel lay up on the uncut ground above it.
+RenderedTerrainSurface::SetLocalPatches makes Sample and Height give a patch's surface where one
+lies (the normal from the patch's heights 5 cm either side); IslandGame sets the stream bed and the
+scour on both. QuadGround no longer patches the bed in itself (only the stream's water depth), and
+the quad's ruts are laid again on the channel's dry banks (49 pieces in `quad-stream`, from 36),
+not in its water. `stream`, `cascade`, `shipwreck-wide`, `deer` and `boars` differ from their last
+captures only by the wall clock's animation. New test: the drawn ground in the channel is the carved
+bed, below the mesh, and the mesh away from the patches.
+
 ## Loop pass 411 (2026-10-21) — the quad bike fords the stream
 
 Over the stream the quad drove on the rendered surface, which runs on level over the carved channel,

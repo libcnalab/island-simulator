@@ -2426,6 +2426,8 @@ namespace island
         }
         terrainRenderer_ = std::move(terrainRenderer);
         playerMotion_.SetGroundPatches(&terrainRenderer_->StreamBed(),&terrainRenderer_->WreckScour());
+        // the marks and shadows laid on the ground follow the channel and the scour too
+        drawnGround_->SetLocalPatches({&terrainRenderer_->StreamBed(), &terrainRenderer_->WreckScour()});
         playerMotion_.SetCave(&terrainRenderer_->Cave(),&terrainRenderer_->CaveGround());
         playerMotion_.SetBunker(&bunkerLayout_);
         flightMotion_.SetCave(&terrainRenderer_->Cave(),&terrainRenderer_->CaveGround());
@@ -2656,6 +2658,8 @@ namespace island
                 "island-simulator: the quad's exhaust puffs thicker with the throttle, carried with its speed and drifting downwind",
                 112, 112, 118, ExhaustSmokeField::Capacity);
             quadSurface_ = std::make_unique<RenderedTerrainSurface>(terrain_);
+            if (terrainRenderer_)
+                quadSurface_->SetLocalPatches({&terrainRenderer_->StreamBed(), &terrainRenderer_->WreckScour()});
             tyreTrackRenderer_ = std::make_unique<TyreTrackRenderer>(device, terrain_, *quadSurface_);
             wheelDustRenderer_ = std::make_unique<RootingDustRenderer>(device,
                 "island-simulator: the quad's wheels throw dust off dry sand and soil, more with the speed, settling downwind",
@@ -4552,18 +4556,9 @@ namespace island
         } else {
             ground.height = terrain_.Height(std::clamp(x, -900.0f, 900.0f), std::clamp(z, -900.0f, 900.0f));
         }
-        float streamDepth = 0.0f;
-        if (float bed = 0.0f; QuadStreamBed(x, z, bed, streamDepth)) {
-            const auto bedAt = [this, &ground](const float px, const float pz) {
-                float height = 0.0f, depth = 0.0f;
-                return QuadStreamBed(px, pz, height, depth) ? height : ground.height;
-            };
-            ground.height = bed;
-            const float slopeX = (bedAt(x + 0.25f, z) - bedAt(x - 0.25f, z)) / 0.5f;
-            const float slopeZ = (bedAt(x, z + 0.25f) - bedAt(x, z - 0.25f)) / 0.5f;
-            const float length = std::sqrt(slopeX * slopeX + 1.0f + slopeZ * slopeZ);
-            ground.normal = {-slopeX / length, 1.0f / length, -slopeZ / length};
-        }
+        // the stream's water over its bed (which the surface gives in its channel)
+        float streamBed = 0.0f, streamDepth = 0.0f;
+        (void)QuadStreamBed(x, z, streamBed, streamDepth);
         // The jetty's deck carries the quad as it does the walker, up its ramp from the sand
         // (off its side, the sea).
         if (jettyPlacement_) {
@@ -4605,8 +4600,7 @@ namespace island
 
     bool IslandGame::QuadStreamBed(const float x, const float z, float& bed, float& waterDepth) const noexcept
     {
-        // In the stream's channel its carved bed is the ground, under the stream's own water
-        // (the rendered surface the quad otherwise drives on runs on level over the channel).
+        // Near the stream: its carved bed, and the stream's own water over it.
         if (!terrainRenderer_ || !std::isfinite(x) || !std::isfinite(z) || std::abs(z - StreamRoute::CentreZ(x)) > 6.0f)
             return false;
         const StreamBedPatch& patch = terrainRenderer_->StreamBed();
@@ -4849,8 +4843,7 @@ namespace island
             wheel.load = quad_.Compression(w);
             wheel.down = quad_.WheelContact(w);
             wheel.waterDepth = std::max(0.0f, -sample.height);
-            // in the stream's channel: its bed and its water (and no rut: one would be laid on
-            // the ground above, uncut by the channel)
+            // in the stream's channel: its bed and its water
             float streamBed = 0.0f, streamDepth = 0.0f;
             const bool inChannel = QuadStreamBed(wheel.x, wheel.z, streamBed, streamDepth)
                 && streamBed < sample.height - 0.03f;
@@ -4865,7 +4858,7 @@ namespace island
                 sample.signedShoreDistance, surface == TerrainSurface::DrySand || surface == TerrainSurface::WetSand, wetness);
             if (puddle > 0.35f && wheel.waterDepth < 0.05f) wheel.waterDepth = 0.035f + 0.03f * puddle;
             wheel.wet = inChannel || surface == TerrainSurface::WetSand || wetness > 0.6f;
-            wheel.soft = !inChannel && wheel.waterDepth < 0.05f && (surface == TerrainSurface::DrySand || surface == TerrainSurface::WetSand
+            wheel.soft = wheel.waterDepth < 0.05f && (surface == TerrainSurface::DrySand || surface == TerrainSurface::WetSand
                 || surface == TerrainSurface::CoastalGround || surface == TerrainSurface::InteriorGround);
             // the forest floor stays damp under the canopy: it dusts only after a dry spell
             wheel.dusty = (wetness < 0.35f && (surface == TerrainSurface::DrySand || surface == TerrainSurface::CoastalGround))
