@@ -226,6 +226,41 @@ namespace island
             }
         }
 
+        // As AppendClosedSurface, each outline point with its own half-thickness and lift along
+        // `up`: a wing is a thick rounded bar of bone and coverts at its leading edge, thinning
+        // to the feather vanes behind and held at a slight angle to the air, so seen edge-on it
+        // shows a tapering blade instead of a flat stick.
+        template <std::size_t Count>
+        void AppendProfiledSurface(std::vector<VertexPositionColor>& vertices,
+                                   const std::array<Vector3, Count>& outline,
+                                   const Vector3& up,
+                                   const std::array<float, Count>& halfThickness,
+                                   const std::array<float, Count>& lift,
+                                   const Color& upper, const Color& lower)
+        {
+            static_assert(Count>=3U);
+            std::array<Vector3, Count> top{}, bottom{};
+            for(std::size_t point=0;point<outline.size();++point) {
+                const Vector3 centreLine=outline[point]+up*lift[point];
+                top[point]=centreLine+up*halfThickness[point];
+                bottom[point]=centreLine-up*halfThickness[point];
+            }
+            for(std::size_t point=1;point+1<outline.size();++point) {
+                AddTriangle(vertices,top[0],top[point],top[point+1],
+                    wildlife_render::FacetColor(top[0],top[point],top[point+1],upper,true));
+                AddTriangle(vertices,bottom[0],bottom[point+1],bottom[point],
+                    wildlife_render::FacetColor(bottom[0],bottom[point+1],bottom[point],lower,true));
+            }
+            const Color edge=wildlife_render::ScaleColor(upper,.78f);
+            for(std::size_t point=0;point<outline.size();++point) {
+                const std::size_t next=(point+1U)%outline.size();
+                AddTriangle(vertices,top[point],bottom[point],bottom[next],
+                    wildlife_render::FacetColor(top[point],bottom[point],bottom[next],edge,true));
+                AddTriangle(vertices,top[point],bottom[next],top[next],
+                    wildlife_render::FacetColor(top[point],bottom[next],top[next],edge,true));
+            }
+        }
+
         [[nodiscard]] Vector3 LocalPoint(const Vector3& centre, const Vector3& right,
                                          const Vector3& up, const Vector3& forward,
                                          const float localX,
@@ -500,8 +535,22 @@ namespace island
                 const std::array<Vector3,12> wingOutline{
                     front,elbow,tip,edge(.14f,-.018f),edge(.26f,.060f),edge(.40f,-.012f),
                     edge(.52f,.050f),edge(.66f,-.008f),edge(.78f,.036f),outerTrailing,innerTrailing,back};
-                AppendClosedSurface(vertices,wingOutline,up*(.014f*scale),
-                                    palette.upperWing,palette.lowerWing);
+                // thick at the leading edge (root and wrist), thin through the feathers; the
+                // leading edge carried a little above the trailing one; and, spread, the arm
+                // rises to the wrist and the hand angles down to the tip, so the wing is never
+                // one flat plane a level eye sees only edge-on
+                const float s=scale;
+                const float bend=spread*s;
+                const std::array<float,12> wingThickness{
+                    .034f*s,.026f*s,.008f*s,.005f*s,.004f*s,.004f*s,
+                    .004f*s,.004f*s,.004f*s,.006f*s,.010f*s,.016f*s};
+                const auto handDroop=[bend](const float t) {return bend*(-.045f+.075f*t);};
+                const std::array<float,12> wingCamber{
+                    .022f*s,.020f*s+.065f*bend,.006f*s-.045f*bend,
+                    handDroop(.14f),handDroop(.26f),handDroop(.40f),handDroop(.52f),
+                    handDroop(.66f),handDroop(.78f),.030f*bend,.034f*bend,.004f*s};
+                AppendProfiledSurface(vertices,wingOutline,up,wingThickness,wingCamber,
+                                      palette.upperWing,palette.lowerWing);
             }
 
             const float tailHalfWidth = bird.species == BirdSpecies::Parrot ? .16f

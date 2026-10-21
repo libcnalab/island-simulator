@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 353 (2026-10-21) — a bird's spread wing is a cambered, bent blade
+
+Close past the eye (`birds`) a flying parrot's wings were flat slabs 2.8 cm thick: level with
+the eye they collapsed into two long green sticks with a yellow line under them. The near wing is
+now profiled point by point (`AppendProfiledSurface`): a thick rounded leading edge at the root
+and wrist (bone and coverts) thinning to the feather vanes behind, carried a little above the
+trailing edge; and spread, the arm rises to the wrist and the hand angles down to the tip, so the
+wing is never one plane a level eye sees only edge-on. Folded wings are unchanged (the bend scales
+with the spread); the vertex count is the same. `birds` and the tests pass.
+
 ## Loop pass 352 (2026-10-21) — the tide pools lie in a rock bench
 
 The five tide pools lie 24-34 m back from the beach on the coastal flat, and in plain turf they
