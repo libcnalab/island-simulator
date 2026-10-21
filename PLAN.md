@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 396 (2026-10-21) — the sea turtle's flippers are scaled, its skin olive-grey
+
+The turtle's flippers (`turtles`) read as flat even teal boards: one skin tone mottled by 3.5%,
+dark seams, and a palette skin colour that was itself blue-green before the water's tint. The
+three palettes' skin is now grey-olive (the water still greens it with depth); each flipper's
+upper face is a row of large scales, each band a little lighter or darker than the next, between
+pale seams (as a green turtle's are), and its leading edge is a pale horny margin; same geometry,
+so the near turtle keeps its exact vertex budget. (Splitting each band's two triangles light and
+dark first drew a sawtooth along the flipper.) The head and neck take the olive skin too. The
+tests pass.
+
 ## Loop pass 395 (2026-10-21) — the animals' and the walker's contact shadows drape on the drawn ground
 
 The contact-shadow batch's moving part (pass 377) is rebuilt every frame while the monkeys, boars,

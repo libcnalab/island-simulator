@@ -68,11 +68,11 @@ namespace island
 
         const std::array<TurtlePalette, 3> Palettes = {{
             {Color(82, 82, 53, 255), Color(126, 109, 63, 255),
-             Color(182, 164, 108, 255), Color(77, 105, 82, 255)},
+             Color(182, 164, 108, 255), Color(92, 96, 70, 255)},
             {Color(73, 72, 48, 255), Color(119, 96, 58, 255),
-             Color(188, 164, 108, 255), Color(87, 103, 75, 255)},
+             Color(188, 164, 108, 255), Color(98, 93, 66, 255)},
             {Color(60, 82, 67, 255), Color(104, 111, 69, 255),
-             Color(169, 171, 119, 255), Color(68, 108, 91, 255)}
+             Color(169, 171, 119, 255), Color(82, 94, 76, 255)}
         }};
 
         void AddTriangle(std::vector<VertexPositionColor>& vertices,
@@ -500,16 +500,23 @@ namespace island
                     const float scaleMottle = 0.965f + 0.035f * std::sin(
                         static_cast<float>(i) * 2.6f
                         + static_cast<float>(turtle.colorVariant) * 1.4f);
-                    const Color top = ToneColor(palette.skin, topTone * scaleMottle);
+                    // A row of large dark scales between the pale seams, each band a little
+                    // lighter or darker than the next (one even tone read as a board; splitting a
+                    // band along its diagonal drew a sawtooth).
+                    const float scaleTone = (i % 2 == 0) ? 1.0f : -1.0f;
+                    const Color top = ToneColor(palette.skin, topTone * scaleMottle * (1.0f + 0.07f * scaleTone));
+                    const Color topOther = top;
                     const Color under = ToneColor(palette.underside, 0.9f);
                     const Color edge = ToneColor(palette.skin, topTone * 0.72f);
+                    // the leading edge's pale horny margin
+                    const Color margin = ToneColor(Color::Lerp(palette.skin, palette.underside, 0.62f), 0.92f);
                     const Vector3 above = (upperLeading[a] + upperTrailing[b]) * 0.5f + axes.up * 0.2f;
                     const Vector3 below = (lowerLeading[a] + lowerTrailing[b]) * 0.5f - axes.up * 0.2f;
                     AddOutwardTriangle(vertices, upperLeading[a], upperTrailing[a], upperTrailing[b], top, below);
-                    AddOutwardTriangle(vertices, upperLeading[a], upperTrailing[b], upperLeading[b], top, below);
+                    AddOutwardTriangle(vertices, upperLeading[a], upperTrailing[b], upperLeading[b], topOther, below);
                     AddOutwardTriangle(vertices, lowerLeading[a], lowerTrailing[b], lowerTrailing[a], under, above);
                     AddOutwardTriangle(vertices, lowerLeading[a], lowerLeading[b], lowerTrailing[b], under, above);
-                    AddQuad(vertices, upperLeading[a], upperLeading[b], lowerLeading[b], lowerLeading[a], edge);
+                    AddQuad(vertices, upperLeading[a], upperLeading[b], lowerLeading[b], lowerLeading[a], margin);
                     AddQuad(vertices, upperTrailing[b], upperTrailing[a], lowerTrailing[a], lowerTrailing[b], edge);
                 }
                 const Color edge = ToneColor(palette.skin, topTone * 0.72f);
@@ -517,7 +524,7 @@ namespace island
                         lowerLeading.front(), lowerTrailing.front(), edge);
                 AddQuad(vertices, upperLeading.back(), upperTrailing.back(),
                         lowerTrailing.back(), lowerLeading.back(), edge);
-                const Color joint = ToneColor(palette.skin, topTone * 0.90f);
+                const Color joint = ToneColor(Color::Lerp(palette.skin, palette.underside, 0.55f), 0.95f);
                 for (int i = 1; i + 1 < samples; ++i) {
                     const auto before = static_cast<std::size_t>(i - 1);
                     const auto at = static_cast<std::size_t>(i);
