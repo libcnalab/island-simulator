@@ -76,6 +76,9 @@ namespace island
         bool tidePoolLandmark = false;
         bool turtleTrace = false;
         bool turtleNest = false;
+        // The ground's normal under a flat trace, which is laid along it (not level) so a
+        // slope neither buries one side nor lifts the other.
+        float normalX = 0.0f, normalY = 1.0f, normalZ = 0.0f;
     };
 
     /** @brief One short line of deer or boar prints pressed into stream-bank mud or wet sand. */

@@ -8260,9 +8260,13 @@ int main()
             Check(sample.height >= 0.22f && sample.slopeRadians <= 0.2617994f,
                   "shell/pebble/wrack clusters stay on dry low-slope support");
         }
-        CheckNear(detail.y, sample.height + (detail.turtleTrace ? 0.008f : 0.012f),
+        CheckNear(detail.y, sample.height + (detail.turtleNest ? 0.02f : detail.turtleTrace ? 0.008f : 0.012f),
                   0.0001f,
                   "shell/pebble/wrack clusters rest just above authoritative terrain");
+        if (detail.turtleTrace)
+            Check(std::abs(detail.normalX - sample.normal.x) < 1e-5f && std::abs(detail.normalY - sample.normal.y) < 1e-5f
+                      && std::abs(detail.normalZ - sample.normal.z) < 1e-5f,
+                  "the turtle traces are laid along the ground's slope");
         Check(!island::VegetationLayout::IsReservedRoute(detail.x, detail.z),
               "shell/pebble/wrack clusters keep authored routes and spawn clear");
         Check(detail.variant < observedBeachDetailVariants.size(),

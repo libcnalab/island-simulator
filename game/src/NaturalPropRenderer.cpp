@@ -1385,7 +1385,7 @@ void main()
             }
             if (variant == 5) {
                 constexpr int sides = 14;
-                const Color innerSand(170, 143, 94, 255);
+                const Color innerSand(184, 156, 104, 255);
                 const Color outerSand(202, 173, 116, 255);
                 const auto base = static_cast<std::uint16_t>(geometry.vertices.size());
                 for (int side = 0; side < sides; ++side) {
@@ -1410,7 +1410,16 @@ void main()
                                             {inner, innerNext, outer,
                                              outer, innerNext, outerNext});
                 }
-                appendFlatQuad(-0.31f, -0.24f, 0.31f, 0.24f, 0.0f, innerSand);
+                // The churned middle: an uneven round fan, not a rectangle, so the nest has no
+                // straight edge anywhere.
+                const auto centre = static_cast<std::uint16_t>(geometry.vertices.size());
+                geometry.vertices.emplace_back(Vector3(0.0f, 0.009f, 0.0f), innerSand);
+                for (int side = 0; side < sides; ++side) {
+                    const int next = (side + 1) % sides;
+                    geometry.indices.insert(geometry.indices.end(),
+                                            {centre, static_cast<std::uint16_t>(base + next * 2),
+                                             static_cast<std::uint16_t>(base + side * 2)});
+                }
                 return geometry;
             }
             if (variant == 3) {
@@ -1873,9 +1882,18 @@ void main()
         }
         for (const BeachDetailPlacement& detail : layout.BeachDetails()) {
             PropCell& cell = cells_[CellIndex(detail.x, detail.z)];
+            // laid along the ground under it (the turtle traces carry its normal)
+            Matrix lay = Matrix::getIdentityProperty();
+            const Vector3 ground(detail.normalX, detail.normalY, detail.normalZ);
+            if (ground.Y < 0.9999f && ground.Y > 0.2f) {
+                const Vector3 axis = Vector3::Cross(Vector3::Up, ground);
+                if (axis.LengthSquared() > 1e-8f)
+                    lay = Matrix::CreateFromAxisAngle(Vector3::Normalize(axis), std::acos(std::clamp(ground.Y / ground.Length(), -1.0f, 1.0f)));
+            }
             cell.beachDetails.push_back({
                 Matrix::CreateScale(detail.scale)
                     * Matrix::CreateRotationY(detail.yawRadians)
+                    * lay
                     * Matrix::CreateTranslation(detail.x, detail.y, detail.z),
                 detail.variant, detail.x, detail.z});
             const float radius = detail.scale * (detail.turtleTrace ? 0.82f : 0.58f);

@@ -54,9 +54,12 @@ namespace island::sea_turtle
         RequireUnit(u, "Carapace length coordinate must be normalized");
         RequireUnit(s, "Carapace lateral coordinate must be normalized");
         const float along = std::sqrt(std::max(0.0f, 1.0f - u * u));
-        const float across = std::sqrt(std::max(0.0f, 1.0f - s * s));
+        // A low dome flaring out to a thin margin, as a sea turtle's shell is: the height falls
+        // away gently across the back and the marginal scutes lie nearly flat at the rim (a
+        // square-root profile stood the rim up as a drum wall).
+        const float across = std::max(0.0f, 1.0f - s * s);
         const float lift = 1.0f + 0.12f * u * (1.0f - u * u);
-        return CarapaceRimY + CarapaceDome * std::pow(along, 0.85f) * std::pow(across, 0.78f) * lift;
+        return CarapaceRimY + CarapaceDome * std::pow(along, 1.05f) * std::pow(across, 1.25f) * lift;
     }
 
     /** @brief Shallow convex plastron below the rim. */

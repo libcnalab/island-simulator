@@ -233,6 +233,26 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 300 (2026-10-21) — the turtle's shell and its nest
+
+The sea turtle, the operator's first "worst" creature, still had two faults close up:
+
+- **The shell.** Its height across the back fell off as a square root, so the margin stood up
+  as a drum wall under a flat top. `sea_turtle::CarapaceHeight` now uses (1 - s^2)^1.25 across and
+  a slightly fuller fall along: a low dome flaring out to a thin, nearly flat margin, the same
+  0.215 m at the crown (the shape checks pass unchanged).
+- **The nest.** The nest prop was a flat disc at its centre's height with a rectangle for its
+  churned middle; on the beach's slope (up to 12 degrees) one side was buried by up to 0.18 m and
+  the terrain's triangle edges cut it into a hard-edged quadrilateral. Its middle is now an
+  uneven round fan (no straight edge anywhere, a little closer to the sand's colour), and
+  `BeachDetailPlacement` carries the ground's normal for the turtle traces (the flipper tracks
+  and the nest), which the renderer lays them along; the nest sits 2 cm up. A probe painted it
+  red to confirm the cut patch was the nest. New core check: the traces carry their ground's
+  normal.
+
+`turtles`, `turtle-nest` (the whole nest and the full tracks now show), `beach` and `tracks`
+pass, and the tests.
+
 ## Loop pass 299 (2026-10-21) — waterspouts in a storm
 
 Waterspouts are common round tropical islands in squally weather. `Waterspout` (header-only,

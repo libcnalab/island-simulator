@@ -915,6 +915,7 @@ namespace island
                 mark.scale = 0.88f + 0.025f * static_cast<float>(segment % 3);
                 mark.variant = 4U;
                 mark.turtleTrace = true;
+                mark.normalX = sample.normal.x; mark.normalY = sample.normal.y; mark.normalZ = sample.normal.z;
                 pending.push_back(mark);
             }
             const float nestInland = 14.1f;
@@ -937,13 +938,14 @@ namespace island
             }
             BeachDetailPlacement nest;
             nest.x = nestX;
-            nest.y = nestSample.height + 0.008f;
+            nest.y = nestSample.height + 0.02f;
             nest.z = nestZ;
             nest.yawRadians = -angle - std::numbers::pi_v<float> * 0.5f;
             nest.scale = 1.18f;
             nest.variant = 5U;
             nest.turtleTrace = true;
             nest.turtleNest = true;
+            nest.normalX = nestSample.normal.x; nest.normalY = nestSample.normal.y; nest.normalZ = nestSample.normal.z;
             pending.push_back(nest);
             beachDetails_.insert(beachDetails_.end(), pending.begin(), pending.end());
             turtleNestCentres.push_back({nestX, nestZ});
