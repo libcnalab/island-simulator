@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 347 (2026-10-21) — shells and turtle marks rest on the drawn sand
+
+After pass 346 an audit compared every placed prop with the rendered ground. Rocks, trees, palms,
+plants and driftwood were all within a few centimetres to 0.15 m, but shell, pebble and wrack
+clusters some 11-13 m up the beach floated 0.09-0.23 m clear of the sand: they were seated on
+the analytic terrain, and there the rendered mesh runs below it. The beach details (the sorted
+and unsorted clusters, the tide-pool shells, the turtles' track marks and nests) are now seated on
+the drawn ground (`RenderedTerrainSurface`, built once for the layout), the turtle marks still
+laid along the analytic normal; the core test that checked them against the analytic terrain now
+checks them against the drawn one. (A first try at seating only the tide-pool shells lower
+buried one of them 0.14 m; they had not been the floaters and were reverted.) Startup is
+unchanged within its noise. `beach`, `bay-ground`, `crabs`, `hermit-crabs`, `turtle-nest`,
+`tide-pools`, `wet-sand`, `driftwood`, `shipwreck-wide` and the tests pass.
+
 ## Loop pass 346 (2026-10-21) — the clearings' landmark logs lie along the slope
 
 In `west` a fallen log lay across the hill's crest with its end out in the sky. A probe of every

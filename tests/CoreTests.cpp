@@ -8376,6 +8376,7 @@ int main()
     std::size_t shelteredBeachDetailCount=0U,exposedBeachDetailCount=0U;
     std::size_t turtleTrackMarkCount=0U,turtleNestCount=0U;
     std::vector<std::array<float,2>> turtleNestPositions;
+    const island::RenderedTerrainSurface drawnGround(terrain);
     for (std::size_t index = 0; index < props.BeachDetails().size(); ++index) {
         const island::BeachDetailPlacement& detail = props.BeachDetails()[index];
         const island::BeachDetailPlacement& repeated = repeatedProps.BeachDetails()[index];
@@ -8417,9 +8418,10 @@ int main()
             Check(sample.height >= 0.22f && sample.slopeRadians <= 0.2617994f,
                   "shell/pebble/wrack clusters stay on dry low-slope support");
         }
-        CheckNear(detail.y, sample.height + (detail.turtleNest ? 0.02f : detail.turtleTrace ? 0.008f : 0.012f),
+        CheckNear(detail.y, drawnGround.Sample(detail.x, detail.z).height
+                      + (detail.turtleNest ? 0.02f : detail.turtleTrace ? 0.008f : 0.012f),
                   0.0001f,
-                  "shell/pebble/wrack clusters rest just above authoritative terrain");
+                  "shell/pebble/wrack clusters rest just above the drawn ground");
         if (detail.turtleTrace)
             Check(std::abs(detail.normalX - sample.normal.x) < 1e-5f && std::abs(detail.normalY - sample.normal.y) < 1e-5f
                       && std::abs(detail.normalZ - sample.normal.z) < 1e-5f,

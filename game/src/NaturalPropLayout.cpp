@@ -1,6 +1,7 @@
 #include "IslandSimulator/NaturalPropLayout.hpp"
 
 #include "IslandSimulator/IslandTerrain.hpp"
+#include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include "IslandSimulator/IslandEnvironmentField.hpp"
 #include "IslandSimulator/StreamBedPatch.hpp"
 #include "IslandSimulator/StreamRoute.hpp"
@@ -811,6 +812,10 @@ namespace island
         }
 
         beachDetails_.reserve(440U);
+        // Shells, pebbles, wrack and the turtles' marks rest on the drawn ground: some ten
+        // metres up the beach the rendered mesh runs below the analytic height, and seated on
+        // that the clusters floated up to a hand's width clear of the sand.
+        const RenderedTerrainSurface drawnGround(terrain);
         for (int gridZ = -BeachDetailRadius; gridZ <= BeachDetailRadius; ++gridZ) {
             for (int gridX = -BeachDetailRadius; gridX <= BeachDetailRadius; ++gridX) {
                 const std::uint32_t siteHash = Hash(gridX, gridZ, seed ^ 0x6a09e667U);
@@ -848,7 +853,7 @@ namespace island
 
                 BeachDetailPlacement detail;
                 detail.x = x;
-                detail.y = sample.height + 0.012f;
+                detail.y = drawnGround.Sample(x, z).height + 0.012f;
                 detail.z = z;
                 detail.yawRadians = UnitRandom(
                     Hash(gridX, gridZ, seed ^ 0x510e527fU))
@@ -886,7 +891,7 @@ namespace island
                 })) continue;
             BeachDetailPlacement detail;
             detail.x=x;
-            detail.y=sample.height+.012f;
+            detail.y=drawnGround.Sample(x,z).height+.012f;
             detail.z=z;
             detail.yawRadians=UnitRandom(Hash(candidate,7,seed^0x082efa98U))
                 *2.0f*std::numbers::pi_v<float>;
@@ -907,7 +912,7 @@ namespace island
             const float rim=pool.radius*.82f*TidePoolLayout::OutlineScale(poolIndex,angle);
             detail.x=poolX+std::cos(angle)*rim;
             detail.z=poolZ+std::sin(angle)*rim;
-            detail.y=terrain.Height(detail.x,detail.z)+.012f;
+            detail.y=drawnGround.Sample(detail.x,detail.z).height+.012f;
             detail.yawRadians=angle-.7f;
             detail.scale=.82f+.07f*static_cast<float>(poolIndex%3U);
             detail.variant=static_cast<std::uint8_t>(poolIndex%3U);
@@ -942,7 +947,7 @@ namespace island
                 }
                 BeachDetailPlacement mark;
                 mark.x = x;
-                mark.y = sample.height + 0.008f;
+                mark.y = drawnGround.Sample(x, z).height + 0.008f;
                 mark.z = z;
                 mark.yawRadians = -angle - std::numbers::pi_v<float> * 0.5f;
                 mark.scale = 0.88f + 0.025f * static_cast<float>(segment % 3);
@@ -971,7 +976,7 @@ namespace island
             }
             BeachDetailPlacement nest;
             nest.x = nestX;
-            nest.y = nestSample.height + 0.02f;
+            nest.y = drawnGround.Sample(nestX, nestZ).height + 0.02f;
             nest.z = nestZ;
             nest.yawRadians = -angle - std::numbers::pi_v<float> * 0.5f;
             nest.scale = 1.18f;
