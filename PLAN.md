@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 356 (2026-10-21) — rain streaks a drop wide; rain shafts hang from the cloud
+
+Near the eye the rain streaks were fat grey bars - their half-width carried a fixed 6 mm, about
+9 px a metre away - standing in a shower like sticks. A drop is a few millimetres across: the
+streaks are now about a pixel wide at any distance, and those passing within a couple of metres
+of the eye, out of focus, fade. The distant rain shafts in a storm began 6-10 degrees up and were
+solid grey within a quarter of their height: a grey rectangle standing in the overcast. They now
+reach 9-14 degrees, fade in out of the cloud deck over their upper half, spread a fifth wider as
+they fall, and their streak banding is gentler. `jungle` and `movement` in showers and in a
+thunderstorm, and the tests pass.
+
 ## Loop pass 355 (2026-10-21) — monkeys in shade keep their form
 
 The monkey skinning shader lit everything not facing the sun with one flat ambient, so a monkey in

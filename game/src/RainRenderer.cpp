@@ -106,7 +106,9 @@ namespace island
 
     namespace
     {
-        // one streak: from `top` down along `fall`, about a pixel wide at any distance
+        // one streak: from `top` down along `fall`, about a pixel wide at any distance (a drop is
+        // a few millimetres across: a fixed centimetre-plus width made the near streaks fat
+        // grey bars, like sticks standing in the rain)
         bool Streak(std::vector<VertexPositionColor>& staging, const Vector3& camera, const Vector3& top,
                     const Vector3& fall, const float length, const Color& head, const Color& tail)
         {
@@ -116,7 +118,7 @@ namespace island
             const float distance = toCamera.Length();
             if (side.LengthSquared() < 1e-6f || distance < 0.3f) return false;
             side.Normalize();
-            side *= 0.006f + distance * 0.0011f;
+            side *= 0.0009f + distance * 0.00085f;
             staging.emplace_back(top - side, tail); staging.emplace_back(top + side, tail);
             staging.emplace_back(bottom + side, head);
             staging.emplace_back(top - side, tail); staging.emplace_back(bottom + side, head);
@@ -134,7 +136,9 @@ namespace island
         const float density = std::clamp(rain, 0.0f, 1.0f);
         ForEachDrop(camera, rain, wind, seconds, [&](const Vector3& top, const Vector3& fall, const float edge) {
             if (staging_.size() + 6U > static_cast<std::size_t>(MaximumDrops) * 6U) return false;   // never past the buffer
-            const float alpha = std::clamp(0.40f * edge * (0.6f + 0.4f * density), 0.0f, 1.0f);
+            // drops passing within a couple of metres of the eye are out of focus, a faint blur
+            const float nearBlur = std::clamp((Vector3::Distance(top, camera) - 0.5f) / 2.0f, 0.0f, 1.0f);
+            const float alpha = std::clamp(0.40f * edge * nearBlur * (0.6f + 0.4f * density), 0.0f, 1.0f);
             const auto c = [alpha](const float v) { return static_cast<int>(std::lround(v * alpha * 255.0f)); };
             const Color colour(c(0.74f), c(0.78f), c(0.83f), static_cast<int>(std::lround(alpha * 255.0f)));
             const Color tail(c(0.40f), c(0.43f), c(0.47f), static_cast<int>(std::lround(alpha * 0.4f * 255.0f)));

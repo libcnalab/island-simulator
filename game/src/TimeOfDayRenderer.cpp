@@ -492,7 +492,9 @@ namespace island
             const float k = static_cast<float>(curtain);
             const float centre = k * 0.897f + 0.4f + 0.25f * std::sin(k * 2.3f) + drift;
             const float halfWidth = 0.10f + 0.05f * std::fmod(k * 0.73f, 1.0f);   // radians of azimuth
-            const float top = (6.0f + 4.0f * std::fmod(k * 0.41f, 1.0f)) * std::numbers::pi_v<float> / 180.0f;
+            // tall enough to hang out of the cloud deck: a shaft that began 6-10 degrees up, its
+            // grey solid within a quarter of its height, stood in the sky as a grey rectangle
+            const float top = (9.0f + 5.0f * std::fmod(k * 0.41f, 1.0f)) * std::numbers::pi_v<float> / 180.0f;
             const float slant = 0.035f * (std::fmod(k, 2.0f) < 1.0f ? 1.0f : -1.0f);   // the wind leans the shafts
             const float strength = rain * (0.55f + 0.45f * std::fmod(k * 0.61f + 0.3f, 1.0f));
             for (int strip = 0; strip < CurtainStrips; ++strip) {
@@ -500,31 +502,32 @@ namespace island
                 // streaks: denser and fainter bands across the shaft, soft at its sides
                 const auto alphaAt = [&](float u) {
                     const float side = std::sin(std::numbers::pi_v<float> * u);
-                    const float streak = 0.65f + 0.35f * std::sin(u * 37.0f + k * 3.1f) * std::sin(u * 13.0f + k);
+                    const float streak = 0.80f + 0.20f * std::sin(u * 37.0f + k * 3.1f) * std::sin(u * 13.0f + k);
                     return std::clamp(0.85f * strength * side * streak, 0.0f, 0.75f);
                 };
-                const auto at = [&](float u, float elevation, float lean) {
-                    const float azimuth = centre + (u * 2.0f - 1.0f) * halfWidth + lean;
+                // the shaft spreads a little as it falls
+                const auto at = [&](float u, float elevation, float lean, float spread = 1.0f) {
+                    const float azimuth = centre + (u * 2.0f - 1.0f) * halfWidth * spread + lean;
                     return Vector3(std::cos(elevation) * std::cos(azimuth), std::sin(elevation), std::cos(elevation) * std::sin(azimuth))
                         * Distance;
                 };
                 const float a0 = alphaAt(u0), a1 = alphaAt(u1);
                 const float grey = lum * 0.55f;
-                // premultiplied grey: soft where the shaft hangs from the cloud, densest a little
-                // below, thinning toward the sea
+                // premultiplied grey: fading in out of the cloud over its upper half, densest
+                // below that, thinning a little toward the sea
                 const auto shade = [&](float a, float f) { return Color(c(grey * a * f), c(grey * a * f), c(grey * 1.05f * a * f), c(a * f)); };
-                const float bottom = seaBelow - 0.002f, upper = bottom + 0.78f * top, high = bottom + top;
-                const Vector3 h0 = at(u0, high, -slant * 0.3f), h1 = at(u1, high, -slant * 0.3f);
+                const float bottom = seaBelow - 0.002f, upper = bottom + 0.55f * top, high = bottom + top;
+                const Vector3 h0 = at(u0, high, -slant * 0.3f, 0.85f), h1 = at(u1, high, -slant * 0.3f, 0.85f);
                 const Vector3 m0 = at(u0, upper, 0.0f), m1 = at(u1, upper, 0.0f);
-                const Vector3 q0 = at(u0, bottom, slant), q1 = at(u1, bottom, slant);
+                const Vector3 q0 = at(u0, bottom, slant, 1.2f), q1 = at(u1, bottom, slant, 1.2f);
                 curtainStaging_.emplace_back(h0, shade(a0, 0.0f)); curtainStaging_.emplace_back(h1, shade(a1, 0.0f));
                 curtainStaging_.emplace_back(m1, shade(a1, 1.0f));
                 curtainStaging_.emplace_back(h0, shade(a0, 0.0f)); curtainStaging_.emplace_back(m1, shade(a1, 1.0f));
                 curtainStaging_.emplace_back(m0, shade(a0, 1.0f));
                 curtainStaging_.emplace_back(m0, shade(a0, 1.0f)); curtainStaging_.emplace_back(m1, shade(a1, 1.0f));
-                curtainStaging_.emplace_back(q1, shade(a1, 0.45f));
-                curtainStaging_.emplace_back(m0, shade(a0, 1.0f)); curtainStaging_.emplace_back(q1, shade(a1, 0.45f));
-                curtainStaging_.emplace_back(q0, shade(a0, 0.45f));
+                curtainStaging_.emplace_back(q1, shade(a1, 0.60f));
+                curtainStaging_.emplace_back(m0, shade(a0, 1.0f)); curtainStaging_.emplace_back(q1, shade(a1, 0.60f));
+                curtainStaging_.emplace_back(q0, shade(a0, 0.60f));
             }
         }
         device_.setRasterizerStateProperty(RasterizerState::CullNone);
