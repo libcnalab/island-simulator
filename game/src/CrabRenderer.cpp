@@ -42,6 +42,10 @@ namespace island
         constexpr int MaximumVerticesPerCrab = NearCrabVertexCount;
         constexpr int MaximumBurrowVertices = 1024;
         constexpr int HermitCrabVertexCount = 2088;
+        // Past this a hermit crab is its shell, a few pixels across: a six-sided shell alone
+        // (out to the crabs' 92 m every one was built whole, legs, eyes and spiral marks).
+        constexpr float HermitDetailDistance = 18.0f;
+        constexpr int FarHermitCrabVertexCount = 5 * 6 * 6 + 2 * 6 * 3;
         constexpr int MaximumHermitCrabVertices =
             static_cast<int>(HermitCrabGroup::Count) * HermitCrabVertexCount;
         constexpr int CoconutCrabVertexCount = 2664;
@@ -347,7 +351,7 @@ namespace island
                                    const Color& faceColor, const Color& edgeColor);
 
         void AppendHermitCrab(std::vector<VertexPositionColor>& vertices,
-                              const HermitCrabState& crab)
+                              const HermitCrabState& crab, const bool far = false)
         {
             const std::array<Color, 4> ShellColors = {{
                 Color(150, 111, 70, 255), Color(178, 139, 92, 255),
@@ -377,7 +381,7 @@ namespace island
             // A tilted six-station shell replaces the former vertical cone. Its
             // broad lower whorl encloses the body and its restrained apex sweeps
             // rearward, matching the silhouette of a carried gastropod shell.
-            constexpr int RingSegments = 12;
+            const int RingSegments = far ? 6 : 12;
             constexpr std::array<float, 6> ShellStations =
                 {{-.145f, -.090f, -.015f, .070f, .145f, .215f}};
             constexpr std::array<float, 6> ShellRadii =
@@ -420,6 +424,7 @@ namespace island
                 AddTriangle(vertices, shellApex, shellPoint(5U, segment),
                             shellPoint(5U, next), shellRidge);
             }
+            if (far) return;
 
             const Vector3 spiralCentre = shellCentre + right * (.157f * scale)
                 - shellAxis * (.005f * scale);
@@ -1244,8 +1249,11 @@ namespace island
                 continue;
             }
             const std::size_t firstVertex = stagingVertices_.size();
-            AppendHermitCrab(stagingVertices_, crab);
-            if (stagingVertices_.size() - firstVertex != HermitCrabVertexCount) {
+            const bool far = Vector3::DistanceSquared(centre, cameraPosition)
+                > HermitDetailDistance * HermitDetailDistance;
+            AppendHermitCrab(stagingVertices_, crab, far);
+            if (stagingVertices_.size() - firstVertex
+                    != static_cast<std::size_t>(far ? FarHermitCrabVertexCount : HermitCrabVertexCount)) {
                 throw std::logic_error(
                     "Hermit crab geometry violated its exact vertex budget");
             }

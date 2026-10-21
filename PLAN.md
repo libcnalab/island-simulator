@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 384 (2026-10-21) — far hermit crabs are a shell alone
+
+The crabs' render pass (0.8 ms a frame on the operator's beach) built every one of the ten hermit
+crabs whole (2,088 vertices: shell, spiral marks, legs, claws, eyes, antennae) out to the crabs'
+92 m, where one is a pixel or two. Past 18 m a hermit crab is now its shell alone with six sides
+round instead of twelve (216 vertices), still tilted, carried and rocked as before; within 18 m it
+is unchanged and held to its exact vertex budget, the far one to its own. `hermit-crabs` shows the
+same near crab; `crabs` and `beach` differ from their last runs only where the passes since then
+and the wind do. The tests pass.
+
 ## Loop pass 383 (2026-10-21) — fruit bats past 30 m are built coarser
 
 The fruit bats' render pass (0.2-1.3 ms a frame for the operator) built every bat within 110 m as
