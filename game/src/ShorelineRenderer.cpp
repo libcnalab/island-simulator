@@ -113,9 +113,18 @@ vec2 cellPoint(vec2 cell)
     return fract((p.xx + p.yz) * p.zy);
 }
 
-float porousFoam(vec2 world, float footprint)
+float foamNoise(vec2 p)
 {
-    const float frequency = 4.6;
+    vec2 cell = floor(p), f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    float a = cellPoint(cell).x, b = cellPoint(cell + vec2(1.0, 0.0)).x;
+    float c = cellPoint(cell + vec2(0.0, 1.0)).x, d = cellPoint(cell + vec2(1.0, 1.0)).x;
+    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+
+// Distance-to-edge of the Voronoi cells at a frequency: second minus first nearest, squared.
+float foamEdge(vec2 world, float frequency)
+{
     vec2 p = world * frequency;
     vec2 cell = floor(p);
     vec2 local = fract(p);
@@ -130,12 +139,27 @@ float porousFoam(vec2 world, float footprint)
             first = min(first, distanceSquared);
         }
     }
-    // Thin joined rims around transparent cells, not opaque white discs. Once cells fall below
-    // the pixel footprint, approach their mean coverage rather than sparkle at grazing angles.
+    return second - first;
+}
+
+float porousFoam(vec2 world, float footprint)
+{
+    const float frequency = 4.6;
+    // Thin joined rims around transparent cells, not opaque white discs. One cell size with
+    // rims all of one weight read as a chicken-wire net: the rims now swell and thin, break
+    // into beads, a coarser net of larger holes runs through the fine one, and here and there
+    // the foam fills in solid. Once cells fall below the pixel footprint, approach their mean
+    // coverage rather than sparkle at grazing angles.
     float filterWidth = clamp(footprint * frequency * 0.7, 0.015, 0.24);
-    float rim = 1.0 - smoothstep(0.035, 0.11 + filterWidth, second - first);
+    float weight = mix(0.55, 2.2, foamNoise(world * 0.85 + vec2(4.1, -2.7)));
+    float rim = 1.0 - smoothstep(0.035 * weight, (0.11 + filterWidth) * weight, foamEdge(world, frequency));
+    float beads = smoothstep(0.22, 0.62, foamNoise(world * 13.0 + vec2(-7.3, 1.9)));
+    rim *= mix(0.35, 1.0, beads);
+    float coarse = 1.0 - smoothstep(0.05, 0.20 + filterWidth, foamEdge(world + vec2(11.7, 5.3), frequency * 0.42));
+    float filled = smoothstep(0.58, 0.82, foamNoise(world * 0.55 + vec2(-3.4, 8.8))) * 0.62;
+    float lace = max(max(rim, coarse * 0.85), filled * (0.75 + 0.25 * beads));
     float resolved = 1.0 - smoothstep(0.10, 0.36, footprint);
-    return mix(0.38, rim, resolved);
+    return mix(0.40, lace, resolved);
 }
 
 void main()

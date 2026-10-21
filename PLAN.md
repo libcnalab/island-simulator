@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 364 (2026-10-21) — the swash's foam lace is irregular, not a chicken-wire net
+
+The foam the waves leave on the beach was one Voronoi net: cells of one size, rims all of one
+thin bright weight, so along the shore (`jetty`) it read as chicken wire laid on the sand. The
+shoreline shader's lace now has rims that swell and thin across the beach, break into beads, a
+coarser net of larger holes running through the fine one, and patches where the foam fills in
+solid; it still settles to its mean coverage once the cells are below a pixel, and the night
+glow's specks follow it. `jetty`, `beach`, `wet-sand` and the tests pass.
+
 ## Loop pass 363 (2026-10-21) — the wreck's timbers are sun-bleached above the tide
 
 The shipwreck's wood was one fresh warm brown from keel to rail, so the hull read as a film prop
