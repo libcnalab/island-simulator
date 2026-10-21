@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 397 (2026-10-21) — reef fish and deer keep their near bodies for near; a sweep after 369-396
+
+The operator's 19:20 frame profile still named the fish (up to 1.3 ms a frame) and the deer (1.0-2.6
+ms) among the render passes. All 48 reef fish took the 1,434-vertex near body out to 72 m, where
+a fish a hand or two long is three to five pixels: the near body now ends at 28 m (about a dozen
+pixels), the four-triangle silhouette beyond. The four deer took the smooth twenty-sided near body
+out to 48 m: now 30 m (some 25 pixels tall). `fish` keeps its six near fish, `deer` is
+pixel-identical. A full capture sweep of the 115 views after passes 369-396 passed; compared
+with their previous runs the views differ only where animals, flames, water and wind move
+(`monkeys` again showed its wall-clock leaf in front of the camera). The tests pass.
+
 ## Loop pass 396 (2026-10-21) — the sea turtle's flippers are scaled, its skin olive-grey
 
 The turtle's flippers (`turtles`) read as flat even teal boards: one skin tone mottled by 3.5%,

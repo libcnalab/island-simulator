@@ -609,7 +609,8 @@ namespace island
             const float transmission = canopy_.SampleReceiver(
                 animal.x, animal.y + 1.0f, animal.z, animal.y);
             const std::size_t first = staging_.size(), firstBare = solid_.size();
-            AppendDeer(staging_, solid_, animal, transmission, distanceSquared < 48.0f * 48.0f, camera, &eyes_);
+            // the smooth near body within 30 m (a deer is some 25 pixels tall there at 720p)
+            AppendDeer(staging_, solid_, animal, transmission, distanceSquared < 30.0f * 30.0f, camera, &eyes_);
             // the strand texture multiplies the coat: divided by its mean, the coat keeps its tones
             for (std::size_t i = first; i < staging_.size(); ++i) {
                 Color& c = staging_[i].Color;

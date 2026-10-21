@@ -33,7 +33,9 @@ namespace island
 {
     namespace
     {
-        constexpr float NearLodDistance = 72.0f;
+        // A reef fish a hand or two long is a dozen pixels at 28 m (720p): past it the four-
+        // triangle silhouette; the 1,434-vertex body for all 48 out to 72 m was most of the pass.
+        constexpr float NearLodDistance = 28.0f;
         constexpr int MaximumVerticesPerFish = FishRenderer::NearVertexCount;
         constexpr int MaximumVertexCount = static_cast<int>(FishSchools::FishCount)
             * MaximumVerticesPerFish;
