@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 419: reef heron slimmer body, folded wings (coverts/primaries), back and breast plumes, tapered neck (PLAN "Loop pass 419").
 - Pass 418: near beach crab carapace 0.42 x 0.31 (was 0.515 x 0.198), legs/claws/eyes/mouth/marks moved with it (PLAN "Loop pass 418").
 - Pass 417: beach morning glory (BeachVinePlacement, CreateBeachVineGeometry, 141 crowns, laid along the sand, seaward +X); QA view beach-vine (PLAN "Loop pass 417").
 - Pass 416: fallen logs: girth/axis (butt flare, taper, bow, knots), onTrunk for moss/fungi/stubs, layered bracket fungi, lichen colonies (PLAN "Loop pass 416").

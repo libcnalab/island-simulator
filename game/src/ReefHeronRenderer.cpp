@@ -148,8 +148,74 @@ namespace island
             const Vector3 hip = feet + up * ((0.29f - 0.04f * rest) * s);
             const Vector3 body = hip + up * (0.07f * s);
             const float fluff = 1.0f + 0.16f * rest;
-            Ellipsoid(out, body, Frame{axis, right, bodyUp}, 0.21f * s, 0.092f * s * fluff, 0.10f * s * fluff,
+            // a heron is slim through the body (a fat egg read as a duck's)
+            constexpr float BodyAlong = 0.22f, BodySide = 0.080f, BodyUp = 0.094f;
+            Ellipsoid(out, body, Frame{axis, right, bodyUp}, BodyAlong * s, BodySide * s * fluff, BodyUp * s * fluff,
                       palette.body, palette.belly, near ? 6 : 4, ringSides);
+            // The folded wings over the flanks: from the bend of the wing at the shoulder back
+            // along the body, the paler coverts in front, the dark primaries behind crossing
+            // over the tail; and in breeding dress a few long plumes over the back and hanging
+            // from the lower neck over the breast. (Folded away as it takes off.)
+            if (flight < 0.3f) {
+                constexpr int Along = 6, Across = 3;
+                const Color coverts = wildlife_render::ScaleColor(Color::Lerp(palette.body, palette.belly, 0.15f), 1.10f);
+                const Color primaries = wildlife_render::ScaleColor(palette.body, 0.78f);
+                for (const float side : {-1.0f, 1.0f}) {
+                    const auto wingPoint = [&](const int i, const int j, Vector3& normal) {
+                        const float a = static_cast<float>(i) / Along, b = static_cast<float>(j) / Across;
+                        const float along = (0.12f - 0.44f * a) * s;
+                        const float k = std::max(std::sqrt(std::max(0.0f, 1.0f - (along * along) / (BodyAlong * BodyAlong * s * s))), 0.35f);
+                        // narrow at the bend and at the tips, broadest over the middle of the flank
+                        const float spread = std::sin(Pi * std::min(1.0f, a * 0.85f + 0.12f));
+                        const float theta = (1.30f - (1.45f * spread) * b) - 0.10f * a;
+                        const float cosT = std::cos(theta), sinT = std::sin(theta);
+                        normal = right * (side * cosT / BodySide) + bodyUp * (sinT / BodyUp);
+                        normal.Normalize();
+                        return body + axis * along + (right * (side * cosT * BodySide) + bodyUp * (sinT * BodyUp)) * (k * fluff * 1.08f * s)
+                            + bodyUp * (0.006f * s);
+                    };
+                    for (int i = 0; i < Along; ++i) {
+                        for (int j = 0; j < Across; ++j) {
+                            Vector3 n00, n10, n11, n01;
+                            const Vector3 p00 = wingPoint(i, j, n00), p10 = wingPoint(i + 1, j, n10);
+                            const Vector3 p11 = wingPoint(i + 1, j + 1, n11), p01 = wingPoint(i, j + 1, n01);
+                            const auto tone = [&](const int ii, const int jj) {
+                                const float a = static_cast<float>(ii) / Along;
+                                Color c = Color::Lerp(coverts, primaries, std::clamp((a - 0.40f) / 0.30f, 0.0f, 1.0f));
+                                if (jj == 0 && a < 0.35f) c = wildlife_render::ScaleColor(c, 1.08f);   // the wing's bend
+                                return c;
+                            };
+                            const VertexPositionColor v00(p00, Lit(tone(i, j), n00)), v10(p10, Lit(tone(i + 1, j), n10));
+                            const VertexPositionColor v11(p11, Lit(tone(i + 1, j + 1), n11)), v01(p01, Lit(tone(i, j + 1), n01));
+                            out.push_back(v00); out.push_back(v10); out.push_back(v11);
+                            out.push_back(v00); out.push_back(v11); out.push_back(v01);
+                            out.push_back(v00); out.push_back(v11); out.push_back(v10);
+                            out.push_back(v00); out.push_back(v01); out.push_back(v11);
+                        }
+                    }
+                }
+                if (near) {
+                    // long plumes over the back, trailing past the wing tips
+                    const Color plume = wildlife_render::ScaleColor(Color::Lerp(palette.body, palette.belly, 0.4f), 1.12f);
+                    for (const float offset : {-0.022f, 0.0f, 0.022f}) {
+                        const Vector3 root = body + bodyUp * ((BodyUp + 0.008f) * s * fluff) + right * (offset * s) + axis * (0.02f * s);
+                        const Vector3 tip = body - axis * ((0.36f + 0.05f * std::abs(offset) / 0.022f) * s) + bodyUp * (0.02f * s)
+                            + right * (offset * 2.2f * s);
+                        const Vector3 width = right * (0.010f * s);
+                        const std::array<Vector3, 3> blade{root - width, root + width, tip};
+                        Sheet(out, blade, plume, plume);
+                    }
+                    // and hanging from the lower neck over the breast
+                    const Vector3 breast = body + axis * (0.17f * s) + bodyUp * (0.00f * s);
+                    for (const float offset : {-0.024f, -0.008f, 0.008f, 0.024f}) {
+                        const Vector3 root = breast + right * (offset * s);
+                        const Vector3 tip = root - up * ((0.085f + 0.02f * std::abs(offset) / 0.024f) * s) + axis * (0.03f * s);
+                        const Vector3 width = right * (0.009f * s);
+                        const std::array<Vector3, 3> blade{root - width, root + width, tip};
+                        Sheet(out, blade, palette.body, palette.body);
+                    }
+                }
+            }
             // the short tail, the wing tips crossing over it
             {
                 const Vector3 root = body - axis * (0.15f * s) + bodyUp * (0.02f * s);
@@ -189,7 +255,7 @@ namespace island
             const auto neckCorner = [&](const int ring, const int sideIndex) {
                 const auto r = static_cast<std::size_t>(ring);
                 const float t = static_cast<float>(ring) / NeckRings;
-                const float radius = (0.030f - 0.012f * t) * s;
+                const float radius = (0.036f - 0.020f * t) * s;   // thick at the shoulders, slender at the head
                 Vector3 other = Vector3::Cross(tangents[r], right);
                 if (other.LengthSquared() < 1.0e-10f) other = up; else other.Normalize();
                 const Vector3 sideAxis = Vector3::Normalize(Vector3::Cross(other, tangents[r]));

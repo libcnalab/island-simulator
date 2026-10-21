@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 419 (2026-10-21) — reef herons have folded wings and plumes
+
+At 1:1 in `herons` the dark reef heron's body was a smooth slate egg (0.21 by 0.092 by 0.10) with a
+spike of tail: no wings, nothing to say heron rather than duck. The body is slimmer (0.22 by 0.080 by
+0.094); standing, each flank carries a folded wing lofted over the body from the bend of the wing at
+the shoulder back past the tail (6 by 3 quads on a shell 8 % out from the body, narrow at the bend and
+at the tips, broadest over the flank), the paler coverts in front with the bend lit, the dark
+primaries behind crossing over the tail; near, three long plumes trail over the back past the wing
+tips and four hang from the lower neck over the breast. The neck is thick at the shoulders and slender
+at the head (0.036 to 0.016). The wings fold away as it takes off (flight under 0.3); under the 2400
+vertex budget.
+
 ## Loop pass 418 (2026-10-21) — beach crabs have near-square carapaces, not sausages
 
 At 1:1 in `crabs` and `mangroves` most beach crabs read as long red sausages with a claw at each
