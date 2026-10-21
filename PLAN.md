@@ -233,6 +233,14 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 428 (2026-10-22) — stones by the stream are wet
+
+At 1:1 in `bridge` and `stream` the stones on the stream's banks were pale mint-grey (their cool
+shade tint over a light albedo) beside the dark wet bank soil, and read as sponge. The props' rock
+material now darkens and warms stones within some three metres of the water (to 0.60/0.57/0.52 of
+their albedo at 85 %), the course computed in the shader from StreamRoute's centre line and half width
+along the valley; stones away from the stream are unchanged.
+
 ## Loop pass 427 (2026-10-22) — rain rings the sea and the stream
 
 Rain fell on the water without a mark. The sea's and the stream's shaders take the weather's rain

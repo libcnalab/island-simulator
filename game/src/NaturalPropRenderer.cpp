@@ -277,6 +277,18 @@ void main()
         albedo=mix(albedo,albedo*vec3(0.67,0.76,0.64),soilStain*0.58);
         float wetBand = 1.0 - smoothstep(-0.10, 0.26 + 0.10*grain, vWorld.y);
         albedo *= mix(vec3(1.0), vec3(0.64,0.71,0.73), wetBand);
+        // Stones by the stream are wet with its splash and the damp of its banks: darker and a
+        // little warmer (pale and dry beside the dark wet bank soil, they read as sponge). The
+        // course is StreamRoute's: its centre line and half width along the valley.
+        float streamAlong = -65.0 - vWorld.x;
+        if (streamAlong > -2.0 && streamAlong < 100.0) {
+            float streamEnvelope = smoothstep(0.0, 9.0, streamAlong) * (1.0 - smoothstep(86.0, 98.0, streamAlong));
+            float streamCentreZ = -55.0 - 0.23 * vWorld.x + streamEnvelope * (2.55 * sin(streamAlong * 0.117)
+                + 0.95 * sin(streamAlong * 0.253 + 0.7) + 0.45 * sin(streamAlong * 0.061 - 1.2));
+            float streamHalfWidth = mix(0.45, 1.5, smoothstep(0.0, 1.0, clamp(streamAlong / 98.0, 0.0, 1.0)));
+            float streamWet = 1.0 - smoothstep(streamHalfWidth + 0.8, streamHalfWidth + 3.0, abs(vWorld.z - streamCentreZ));
+            albedo = mix(albedo, albedo * vec3(0.60, 0.57, 0.52), streamWet * 0.85);
+        }
         materialColor = albedo * (0.55 + 0.43*direct + 0.13*sky);
     } else if (vMaterialDetail < 0.625) {
         float barkAngle = atan(vLocal.y, vLocal.z);
