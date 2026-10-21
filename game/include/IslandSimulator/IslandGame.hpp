@@ -779,6 +779,12 @@ namespace island
         [[nodiscard]] bool UsesBearCaptureClock() const noexcept {
             return !capturePath_.empty()&&viewpoint_==FixedViewpoint::BearDetail;
         }
+        // The monkey close-up on the QA clock too: on the wall clock its subject walked a
+        // different distance (and the following camera into a different plant) every run.
+        std::uint32_t monkeyCaptureUpdates_=0;
+        [[nodiscard]] bool UsesMonkeyCaptureClock() const noexcept {
+            return !capturePath_.empty()&&viewpoint_==FixedViewpoint::MonkeyDetail;
+        }
         [[nodiscard]] bool UsesBoarCaptureClock() const noexcept {
             return !capturePath_.empty() && viewpoint_==FixedViewpoint::BoarDetail;
         }

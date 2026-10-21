@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 398 (2026-10-21) — the monkey close-up runs on the QA clock
+
+The `monkeys` capture ran on the wall clock with fixed-step catch-up: under llvmpipe its subject
+walked a different distance every run (24 frames took 40 to 660 updates), and the camera, which
+follows it, ended inside a different plant; one run in three a broad leaf covered the frame. It now
+uses the deterministic QA clock the snake, goat, spider, boar, bear and resident views use (one
+0.1 s update a frame, the troop's and the shaders' time from the update count). Two consecutive
+runs are pixel-identical, the whole monkey in the clear beside its tree. The tests pass.
+
 ## Loop pass 397 (2026-10-21) — reef fish and deer keep their near bodies for near; a sweep after 369-396
 
 The operator's 19:20 frame profile still named the fish (up to 1.3 ms a frame) and the deer (1.0-2.6

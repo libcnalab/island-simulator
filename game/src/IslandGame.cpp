@@ -2207,7 +2207,7 @@ namespace island
         const bool interactivePlay = viewpoint_ == FixedViewpoint::None && capturePath_.empty()
             && !smokeTest_ && startupReportPath_.empty();
         // Capture-only clock: no wall-time catch-up updates between recorded frames.
-        setIsFixedTimeStepProperty(!interactivePlay && benchmarkPath_.empty() && !UsesSnakeCaptureClock() && !UsesGoatCaptureClock() && !UsesSpiderCaptureClock() && !UsesBoarCaptureClock()&&!UsesCampfireCaptureClock()&&!UsesResidentCaptureClock()&&!UsesBearCaptureClock()&&!(viewpoint_==FixedViewpoint::QuadDriveDetail&&!capturePath_.empty()));
+        setIsFixedTimeStepProperty(!interactivePlay && benchmarkPath_.empty() && !UsesSnakeCaptureClock() && !UsesGoatCaptureClock() && !UsesSpiderCaptureClock() && !UsesBoarCaptureClock()&&!UsesCampfireCaptureClock()&&!UsesResidentCaptureClock()&&!UsesBearCaptureClock()&&!UsesMonkeyCaptureClock()&&!(viewpoint_==FixedViewpoint::QuadDriveDetail&&!capturePath_.empty()));
         InitializeUserSettings();
 #if defined(__EMSCRIPTEN__)
         soundscapeNeedsGesture_ = true;
@@ -3249,6 +3249,8 @@ namespace island
         if(residentCaptureClock)++residentCaptureUpdates_;
         const bool bearCaptureClock=UsesBearCaptureClock();
         if(bearCaptureClock)++bearCaptureUpdates_;
+        const bool monkeyCaptureClock=UsesMonkeyCaptureClock();
+        if(monkeyCaptureClock)++monkeyCaptureUpdates_;
         const bool goatCaptureClock=UsesGoatCaptureClock();
         const bool boarCaptureClock=UsesBoarCaptureClock();
         if(boarCaptureClock)++boarCaptureUpdates_;
@@ -3263,7 +3265,7 @@ namespace island
         }
         if(snakeCaptureClock) ++snakeCaptureUpdates_;
         const bool quadDriveClock = viewpoint_ == FixedViewpoint::QuadDriveDetail && !capturePath_.empty();
-        const float deltaSeconds = canopyLodInspection_ ? 0.0f : (snakeCaptureClock||goatCaptureClock||spiderCaptureClock||boarCaptureClock||campfireCaptureClock||residentCaptureClock||bearCaptureClock||quadDriveClock) ? 0.1f : std::min(
+        const float deltaSeconds = canopyLodInspection_ ? 0.0f : (snakeCaptureClock||goatCaptureClock||spiderCaptureClock||boarCaptureClock||campfireCaptureClock||residentCaptureClock||bearCaptureClock||monkeyCaptureClock||quadDriveClock) ? 0.1f : std::min(
             0.1f, static_cast<float>(gameTime.getElapsedGameTimeProperty().getTotalMillisecondsProperty())
                 / 1000.0f);
         worldSeedCopyFeedbackSeconds_ = std::max(
@@ -4201,6 +4203,7 @@ namespace island
                 updateProfile_.Mark("monkeyTroop");
                 monkeyTroop_.Update(deltaSeconds, monkeyObserver.X, monkeyObserver.Y, monkeyObserver.Z,
                     snakeCaptureClock ? static_cast<float>(snakeCaptureUpdates_)*0.1f
+                        : monkeyCaptureClock ? static_cast<float>(monkeyCaptureUpdates_)*0.1f
                         : static_cast<float>(gameTime.getTotalGameTimeProperty().getTotalSecondsProperty()));
                 if (viewpoint_ == FixedViewpoint::MonkeyScratchDetail) monkeyTroop_.PreviewScratch(monkeyQaSubjectIndex_);
                 // A monkey breaking into flight from the walker gives the alarm.
@@ -5788,7 +5791,8 @@ namespace island
             ? static_cast<float>(goatCaptureUpdates_)*0.1f : UsesSpiderCaptureClock()
             ? static_cast<float>(spiderCaptureUpdates_)*0.1f : UsesBoarCaptureClock()
             ? static_cast<float>(boarCaptureUpdates_)*0.1f : UsesBearCaptureClock()
-            ? static_cast<float>(bearCaptureUpdates_)*0.1f : static_cast<float>(gameTime.getTotalGameTimeProperty()
+            ? static_cast<float>(bearCaptureUpdates_)*0.1f : UsesMonkeyCaptureClock()
+            ? static_cast<float>(monkeyCaptureUpdates_)*0.1f : static_cast<float>(gameTime.getTotalGameTimeProperty()
                                                          .getTotalSecondsProperty());
         auto& device = getGraphicsDeviceProperty();
         BeginGpuDiagnosticFrame(drawnFrames_, drawnFrames_ < 2U
