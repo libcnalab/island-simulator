@@ -233,6 +233,21 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 415 (2026-10-21) — rings spread on the stream where its water is cut or struck
+
+Nothing marked the stream's water when the quad ran through it, the walker or an animal waded it,
+a frog dove into the pool or a leaf landed on it. A new StreamRingField (StreamRingField.hpp,
+renderer-independent) holds sixteen rings: a point ringing within half a metre of a ring younger
+than 0.3 s adds none (so a wheel running through drops one each half metre and they overlap into
+its wake), the oldest gives way, each lives 1.6 s. The quad's wheels in the stream's water (deeper
+than 3 cm, faster than 0.5 m/s), the wading walker, boars, deer and goats (water over 4 cm, moving),
+a frog's dive and a landing leaf note rings. The stream's shader takes them as uRings[16]: an outer
+crest spreading at 0.45 m/s and a smaller one inside it, fading as they widen, tilting the surface
+(its sky sheen) and catching the light. Judged at 2x on a test ring set beside the quad's ford: soft
+pale ellipses in perspective; in `quad-stream` (now captured 0.2 s earlier, the quad in mid-ford
+over 0.29 m of water, 4 rings) the body hides its wheels' rings. New test: the field's spacing,
+replacement, strength clamp and fading.
+
 ## Loop pass 414 (2026-10-21) — the quad sounds in the water
 
 Driven through the sea's shallows or the stream the quad sounded as on dry ground: the tyres'

@@ -56,6 +56,7 @@ constexpr const char* fragment=R"(
 in vec3 world;in vec2 flow;in float courseDistance;in float opacity;in float lateral;
 uniform float uTime;uniform vec3 uCamera;uniform vec2 uCascade;
 uniform vec3 uSkyTint;   // the hour's low sky against the afternoon's, for the mirrored sky
+uniform vec4 uRings[16];   // rings spreading on the water: x, z, age (s), strength (0: none)
 out vec4 fragColor;
 void main(){
     vec2 downstream=normalize(flow);
@@ -64,6 +65,24 @@ void main(){
     float primary=sin(courseDistance*5.1-uTime*1.65+sin(across*3.3))*.040;
     float crossRipple=sin(across*8.7+courseDistance*1.7-uTime*.73)*.017;
     vec2 slope=downstream*primary+bankNormal*crossRipple;
+    // The rings where the water was cut or struck: a crest spreading out, a smaller one inside
+    // it, fading as they widen; they tilt the surface (its sheen) and catch the light.
+    float ringLight=0.0;
+    for(int i=0;i<16;++i){
+        vec4 ring=uRings[i];
+        if(ring.w<=0.0) continue;
+        vec2 away=world.xz-ring.xy;
+        float r=length(away);
+        float radius=.06+.45*ring.z;
+        float life=1.0-ring.z/1.6;
+        float fade=ring.w*life*life;
+        float outer=(r-radius)/.07,inner=(r-radius*.55)/.05;
+        float crest=(exp(-outer*outer)+.45*exp(-inner*inner))*fade;
+        float wave=(-outer*exp(-outer*outer)-.45*inner*exp(-inner*inner))*fade;
+        ringLight+=crest;
+        slope+=away/max(r,.001)*wave*.9;
+    }
+    ringLight=min(ringLight,1.0);
     vec3 n=normalize(vec3(slope.x,1.0,slope.y));
     vec3 eye=normalize(uCamera-world);
     float fresnel=.035+.43*pow(1.0-abs(dot(n,eye)),4.0);
@@ -93,9 +112,10 @@ void main(){
     water+=vec3(.22,.36,.32)*streak*.30+vec3(.48,.45,.33)*glint*.44;
     water+=vec3(.52,.60,.46)*(bankBand*(.24+.14*streak)+riffle*.24);
     water+=vec3(.40,.68,.59)*braided*.29;
+    water+=vec3(.62,.72,.68)*uSkyTint*ringLight*.55;
     // clear enough to show the gravel bed except where it mirrors the sky
     float alpha=opacity*(.40*mix(.55,1.0,centreDepth)+fresnel*.36+streak*.065+bankBand*.10+riffle*.11
-        +centreDepth*.055+braided*.055);
+        +centreDepth*.055+braided*.055+ringLight*.30);
     // White water: the sheet over the lip, the plunge below it and a foam raft that the
     // pool carries downstream and lets dissolve, all pulsing with the drop height.
     float sinceDrop=courseDistance-uCascade.x;
@@ -151,7 +171,8 @@ StreamWaterRenderer::StreamWaterRenderer(GraphicsDevice& device,const IslandTerr
     std::cout<<cascadeMessage<<'\n';MirrorRuntimeDiagnosticToPlatformLog(cascadeMessage);
 }
 StreamWaterRenderer::~StreamWaterRenderer()=default;
-void StreamWaterRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector3& camera,float seconds) {
+void StreamWaterRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector3& camera,float seconds,
+    const std::span<const StreamRing> rings) {
     draws_=0;if(!BoundingFrustum(view*projection).Intersects(bounds_))return;
     static bool reported=false;
     if(!reported){std::cout<<"island-simulator: stream water first visible draw\n";reported=true;}
@@ -163,6 +184,15 @@ void StreamWaterRenderer::Draw(const Matrix& view,const Matrix& projection,const
     {
         const auto sky=sun_light::SkyScalesOf(sun_light::Current().lighting).horizon;
         effect_->SetUniformVec3("uSkyTint",sky.x,sky.y,sky.z);
+    }
+    for(std::size_t slot=0;slot<StreamRingField::Capacity;++slot) {
+        static const auto names=[] {
+            std::array<std::string,StreamRingField::Capacity> result;
+            for(std::size_t i=0;i<result.size();++i) result[i]="uRings["+std::to_string(i)+"]";
+            return result;
+        }();
+        const StreamRing ring=slot<rings.size()?rings[slot]:StreamRing{};
+        effect_->SetUniformVec4(names[slot].c_str(),ring.x,ring.z,ring.age,ring.active?ring.strength:0.0f);
     }
     device_.setBlendStateProperty(BlendState::AlphaBlend);device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
     device_.setRasterizerStateProperty(RasterizerState::CullNone);

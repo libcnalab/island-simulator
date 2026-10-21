@@ -1,4 +1,5 @@
 #pragma once
+#include "IslandSimulator/StreamRingField.hpp"
 #include "IslandSimulator/StreamWaterMesh.hpp"
 #include "Microsoft/Xna/Framework/Matrix.hpp"
 #include "Microsoft/Xna/Framework/BoundingBox.hpp"
@@ -13,7 +14,7 @@ public:
         const IslandTerrain& terrain,const StreamBedPatch& bed);
     ~StreamWaterRenderer();
     void Draw(const Microsoft::Xna::Framework::Matrix& view,const Microsoft::Xna::Framework::Matrix& projection,
-        const Microsoft::Xna::Framework::Vector3& camera,float seconds);
+        const Microsoft::Xna::Framework::Vector3& camera,float seconds,std::span<const StreamRing> rings={});
     [[nodiscard]] int DrawCallCount() const noexcept{return draws_;}
 private:
     Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;

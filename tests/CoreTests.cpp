@@ -48,6 +48,7 @@
 #include "IslandSimulator/WreckScourPatch.hpp"
 #include "IslandSimulator/StreamCourse.hpp"
 #include "IslandSimulator/StreamBedPatch.hpp"
+#include "IslandSimulator/StreamRingField.hpp"
 #include "IslandSimulator/StreamDriftField.hpp"
 #include "IslandSimulator/SunShadeField.hpp"
 #include "IslandSimulator/BlownSandField.hpp"
@@ -10272,6 +10273,33 @@ int main()
         }
         Check(level, "the stream's water level in its channel is its course's there");
         Check(beside, "two half widths off the stream's line there is no stream water");
+    }
+
+    {
+        // The stream's rings: a wheel running through drops one each half metre, a point ringing
+        // again close to a young ring adds none, the oldest gives way and they fade out.
+        island::StreamRingField rings;
+        for (int step = 0; step < 10; ++step) rings.Note(static_cast<float>(step) * 0.1f, 0.0f, 0.8f);
+        Check(rings.Count() == 2U, "a wheel's run through the stream drops a ring each half metre");
+        rings.Update(0.2f);
+        rings.Update(0.2f);
+        rings.Note(0.0f, 0.0f, 0.8f);
+        Check(rings.Count() == 3U, "a point rings again once its ring has spread");
+        for (int ring = 0; ring < 20; ++ring) rings.Note(10.0f + static_cast<float>(ring), 0.0f, 2.0f);
+        std::size_t active = 0;
+        bool firstGone = true;
+        for (const auto& ring : rings.Rings()) {
+            if (!ring.active) continue;
+            ++active;
+            if (ring.x < 5.0f) firstGone = false;
+            if (ring.strength > 1.0f) firstGone = false;
+        }
+        Check(active == island::StreamRingField::Capacity && firstGone, "the oldest rings give way, strengths held to one");
+        rings.Update(0.25f); rings.Update(0.25f); rings.Update(0.25f); rings.Update(0.25f);
+        rings.Update(0.25f); rings.Update(0.25f); rings.Update(0.25f);
+        bool faded = true;
+        for (const auto& ring : rings.Rings()) faded = faded && !ring.active;
+        Check(faded, "the stream's rings fade out within their life");
     }
 
     {

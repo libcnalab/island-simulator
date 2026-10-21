@@ -546,6 +546,7 @@ namespace island
         CanopyLeafFallField canopyLeafFall_{terrain_};
         std::unique_ptr<StreamDriftRenderer> streamDriftRenderer_;
         StreamFishField streamFish_{terrain_};
+        StreamRingField streamRings_;
         std::unique_ptr<StreamFishRenderer> streamFishRenderer_;
         HatchlingField hatchlings_{terrain_};
         std::unique_ptr<HatchlingRenderer> hatchlingRenderer_;
@@ -644,7 +645,7 @@ namespace island
                 || viewpoint_ == FixedViewpoint::QuadBearDetail || viewpoint_ == FixedViewpoint::QuadStreamDetail;
         }
         float quadSiteFloorY_ = 0.0f;
-        int quadStreamWaitUpdates_ = 11;   // QA: the stream view stands this many updates before setting off
+        int quadStreamWaitUpdates_ = 13;   // QA: the stream view stands this many updates before setting off
         void UpdateQuadSite();
         [[nodiscard]] bool QuadWallBlocked(float x, float z) const noexcept;
         [[nodiscard]] bool QuadOnShelterFloor(float x, float z) const noexcept;

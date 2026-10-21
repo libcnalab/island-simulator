@@ -3588,8 +3588,10 @@ namespace island
             const auto& landing=canopyLeafFall_.LastLanding();
             float courseDistance=0,lateral=0;
             if(streamDrift_.Course().Locate(landing.x,landing.z,courseDistance,lateral)
-               &&streamDrift_.Adopt(courseDistance,lateral,landing.variant))
+               &&streamDrift_.Adopt(courseDistance,lateral,landing.variant)) {
                 canopyLeafFall_.Remove(landing.slot);
+                streamRings_.Note(landing.x,landing.z,0.3f);
+            }
         }
         // the clutches break out after dark (the turtle-nest QA view keeps its daytime clutch)
         if (viewpoint_ != FixedViewpoint::TurtleNestDetail)
@@ -3807,7 +3809,10 @@ namespace island
         if (frogPopulation_.DiveCount() != notedFrogDives_) {
             notedFrogDives_ = frogPopulation_.DiveCount();
             const auto& dive = frogPopulation_.LastDive();
-            if (dive.valid) streamFish_.NoteSplash(dive.x, dive.z);
+            if (dive.valid) {
+                streamFish_.NoteSplash(dive.x, dive.z);
+                streamRings_.Note(dive.x, dive.z, 1.0f);
+            }
         }
         Vector3 rodentObserver = cameraPosition_;
         if (viewpoint_ == FixedViewpoint::MouseDetail
@@ -3979,6 +3984,22 @@ namespace island
             hoofDustRunners_.push_back({g.x,g.y,g.z,g.heading,g.speed,g.scale,dryUnder(g.x,g.z)});
         updateProfile_.Mark("hoofDust");
         hoofDust_.Update(deltaSeconds, seaForageSeconds_, hoofDustRunners_);
+        // The stream rings where a wading walker or animal cuts its water (the quad's wheels
+        // ring it from the quad's own update).
+        updateProfile_.Mark("streamRings");
+        {
+            const auto wade = [this](const float x, const float z, const float speed, const float strength) {
+                float bed = 0.0f, depth = 0.0f;
+                if (speed > 0.2f && StreamWaterAt(x, z, bed, depth) && depth > 0.04f) streamRings_.Note(x, z, strength);
+            };
+            if (!flightMotion_.IsActive() && !riding_ && playerMotion_.Mode() == LocomotionMode::Walking)
+                wade(playerMotion_.Position().x, playerMotion_.Position().z,
+                     std::hypot(playerMotion_.VelocityX(), playerMotion_.VelocityZ()), 0.6f);
+            for (const auto& b : boarHerd_.Boars()) wade(b.x, b.z, b.speed, 0.5f);
+            for (const auto& d : deer_->Deer()) wade(d.x, d.z, d.speed, 0.5f);
+            for (const auto& goat : goats_->Goats()) wade(goat.x, goat.z, goat.speed, 0.45f);
+            streamRings_.Update(deltaSeconds);
+        }
         updateProfile_.Mark("blownSand");
         blownSand_.Update(deltaSeconds, seaForageSeconds_, cameraPosition_.X, cameraPosition_.Z);
         if(viewpoint_==FixedViewpoint::BoarDetail) {
@@ -4864,6 +4885,9 @@ namespace island
             if (inChannel) {
                 wheel.y = streamBed;
                 wheel.waterDepth = std::max(wheel.waterDepth, streamDepth);
+                // the wheel rings the stream's water it runs through
+                const float speed = std::hypot(quad_.Velocity().x, quad_.Velocity().z);
+                if (streamDepth > 0.03f && speed > 0.5f) streamRings_.Note(wheel.x, wheel.z, std::min(1.0f, 0.3f + speed / 8.0f));
             }
             const auto surface = sample.surface;
             // a rain puddle (where the terrain shader paints one): a few centimetres of water
@@ -6509,7 +6533,7 @@ namespace island
         {
             GpuDiagnosticScope gpuPass("stream-water");
             streamFishRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,streamFish_.Fish());
-            streamWaterRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,timeSeconds);
+            streamWaterRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,timeSeconds,streamRings_.Rings());
             // The crowns' shed leaves share the stream's leaf renderer; the stream's own
             // leaves draw last so the renderer's counts stay the stream's.
             streamDriftRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,canopyLeafFall_.Leaves());
@@ -7675,7 +7699,7 @@ namespace island
                     std::cout << "island-simulator: quad QA stream: from the centreline "
                               << std::hypot(q.x - centre.x, q.z - centre.z) << " m, ground "
                               << QuadGround(q.x, q.z).height << ", water depth " << (channel ? depth : 0.0f)
-                              << ", body " << q.y << '\n';
+                              << ", body " << q.y << ", " << streamRings_.Count() << " rings on the stream\n";
                 } else if (viewpoint_ == FixedViewpoint::QuadBearDetail && bear_) {
                     std::cout << "island-simulator: quad QA body: bear, distance "
                               << std::hypot(q.x - bear_->State().x, q.z - bear_->State().z) << " m\n";
