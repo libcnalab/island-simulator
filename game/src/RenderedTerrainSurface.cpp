@@ -70,6 +70,25 @@ namespace island
             static_cast<float>(1.0 / length), static_cast<float>(-dz / length)}};
     }
 
+    float RenderedTerrainSurface::Height(const float x, const float z) const
+    {
+        if (!std::isfinite(x) || !std::isfinite(z)
+            || std::abs(x) > TerrainMeshLayout::Extent || std::abs(z) > TerrainMeshLayout::Extent) {
+            throw std::invalid_argument("Rendered terrain query outside finite mesh");
+        }
+        const int column = Quad(x), row = Quad(z);
+        const double width = double(Coordinates[column + 1]) - Coordinates[column];
+        const double depth = double(Coordinates[row + 1]) - Coordinates[row];
+        const double u = (double(x) - Coordinates[column]) / width;
+        const double v = (double(z) - Coordinates[row]) / depth;
+        const int index = row * TerrainMeshLayout::Resolution + column;
+        const double tl = heights_[index], tr = heights_[index + 1];
+        const double bl = heights_[index + TerrainMeshLayout::Resolution];
+        const double br = heights_[index + TerrainMeshLayout::Resolution + 1];
+        return static_cast<float>(u + v <= 1.0 ? tl + (tr - tl) * u + (bl - tl) * v
+                                                : br + (bl - br) * (1.0 - u) + (tr - br) * (1.0 - v));
+    }
+
     std::array<float,2> RenderedTerrainSurface::HeightRange(float minX,float minZ,float maxX,float maxZ) const
     {
         (void)Sample(minX,minZ); (void)Sample(maxX,maxZ);

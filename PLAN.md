@@ -233,6 +233,23 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 379 (2026-10-21) — the goats, spiders and snakes simulate for less CPU
+
+The frame profile's Update side, after pass 373, was led by the goats (0.5-1.5 ms an update for
+six goats), the snakes (0.5-2.2 ms) and the spiders (up to 1.7 ms). A goat's step asked the
+analytic terrain (IslandTerrain::Sample: five full height evaluations and the coast) for the
+normal under its body up to seven times in one place, for the body frame of every trial foot
+pose; the herd now remembers the normal for its last few exact positions and hands it to new
+overloads of MakeGoatBodyFrame and FitGoatGroundPose. The 1,000 ground spiders were stepped in full
+to 18 m and at a batched quarter rate (the same 20 ms gait steps) to 48 m although they are drawn
+within 14 m: now full to 14 m, reduced to 22 m, asleep beyond (a dormant spider keeps its planted
+pose and wakes without a backlog). A snake's step grounds its stations with heights alone
+(RenderedTerrainSurface::Height: Sample's height bit for bit, without the normal's square root) and
+checks its body for self-contact and the home range by squared distances. `goats`, `snakes`,
+`snake-head`, `spiders`, `spiders-bright` and `bear` are pixel-identical; in the same views the
+goats' update fell from 1.44-1.98 ms to 0.78 ms and the spiders' from 1.35 ms to 0.58 ms. The
+snakes changed little (their per-station shore-distance test dominates) and are next.
+
 ## Loop pass 378 (2026-10-21) — the bear and the far snakes are built for less CPU
 
 The operator's 18:02-18:04 sessions named the next render-pass CPU costs: the bear up to 5.2 ms a

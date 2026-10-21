@@ -23,6 +23,8 @@ namespace island
         explicit RenderedTerrainSurface(const IslandTerrain& terrain);
         // Inclusive mesh extent; nonfinite and out-of-mesh positions are errors, not seabed.
         [[nodiscard]] RenderedTerrainSample Sample(float x, float z) const;
+        // Sample's height alone, bit for bit, without the normal's square root.
+        [[nodiscard]] float Height(float x, float z) const;
         [[nodiscard]] std::array<float,2> HeightRange(float minX,float minZ,float maxX,float maxZ) const;
         [[nodiscard]] std::span<const float> Heights() const noexcept { return heights_; }
         static constexpr float MinimumEncodedHeight = -64.0f;

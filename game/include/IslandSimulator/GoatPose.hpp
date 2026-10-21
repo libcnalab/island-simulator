@@ -38,4 +38,12 @@ struct GoatGroundPose {
 [[nodiscard]] GoatGroundPose MakeGoatBodyFrame(const IslandTerrain& terrain,
     const RenderedTerrainSurface& surface,float x,float z,float heading,
     float phase,float speed,float scale=1);
+// The same two, given the analytic terrain normal at (x,z) (IslandTerrain::Sample's, which
+// costs five full terrain evaluations): a goat's step asks for it several times in one place.
+[[nodiscard]] GoatGroundPose FitGoatGroundPose(GoatPoint terrainNormal,
+    const RenderedTerrainSurface& surface,float x,float z,float heading,
+    float phase,float speed,float scale=1);
+[[nodiscard]] GoatGroundPose MakeGoatBodyFrame(GoatPoint terrainNormal,
+    const RenderedTerrainSurface& surface,float x,float z,float heading,
+    float phase,float speed,float scale=1);
 }

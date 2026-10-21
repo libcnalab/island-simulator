@@ -95,6 +95,11 @@ GoatPoint GoatGroundPose::ToLocal(GoatPoint p) const noexcept {
 }
 GoatGroundPose MakeGoatBodyFrame(const IslandTerrain& terrain,const RenderedTerrainSurface& surface,
     float x,float z,float heading,float phase,float speed,float scale) {
+    const auto normal=terrain.Sample(x,z).normal;
+    return MakeGoatBodyFrame(GoatPoint{normal.x,normal.y,normal.z},surface,x,z,heading,phase,speed,scale);
+}
+GoatGroundPose MakeGoatBodyFrame(GoatPoint terrainNormal,const RenderedTerrainSurface& surface,
+    float x,float z,float heading,float phase,float speed,float scale) {
     if(!std::isfinite(x)||!std::isfinite(z)||std::abs(x)>TerrainMeshLayout::Extent-4
         ||std::abs(z)>TerrainMeshLayout::Extent-4||!std::isfinite(heading)
         ||!std::isfinite(phase)||!std::isfinite(speed)||speed<0
@@ -102,8 +107,7 @@ GoatGroundPose MakeGoatBodyFrame(const IslandTerrain& terrain,const RenderedTerr
         throw std::invalid_argument("Invalid goat ground pose");
     GoatGroundPose pose{};
     pose.origin={x,surface.Sample(x,z).height,z};
-    const auto normal=terrain.Sample(x,z).normal;
-    pose.up=Unit({normal.x,normal.y,normal.z});
+    pose.up=Unit(terrainNormal);
     pose.right=Unit(Cross(pose.up,{std::cos(heading),0,std::sin(heading)}));
     pose.forward=Unit(Cross(pose.right,pose.up));
     pose.scale=scale;
@@ -112,7 +116,12 @@ GoatGroundPose MakeGoatBodyFrame(const IslandTerrain& terrain,const RenderedTerr
 }
 GoatGroundPose FitGoatGroundPose(const IslandTerrain& terrain,const RenderedTerrainSurface& surface,
     float x,float z,float heading,float phase,float speed,float scale) {
-    auto pose=MakeGoatBodyFrame(terrain,surface,x,z,heading,phase,speed,scale);
+    const auto normal=terrain.Sample(x,z).normal;
+    return FitGoatGroundPose(GoatPoint{normal.x,normal.y,normal.z},surface,x,z,heading,phase,speed,scale);
+}
+GoatGroundPose FitGoatGroundPose(GoatPoint terrainNormal,const RenderedTerrainSurface& surface,
+    float x,float z,float heading,float phase,float speed,float scale) {
+    auto pose=MakeGoatBodyFrame(terrainNormal,surface,x,z,heading,phase,speed,scale);
     for(std::size_t leg=0;leg<4;++leg) {
         const auto flat=EvaluateGoatLeg(phase,speed,pose.bodyBob,leg);
         const auto residual=[&](float height) {

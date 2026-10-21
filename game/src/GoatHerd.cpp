@@ -156,8 +156,17 @@ bool GoatHerd::TryMove(std::size_t index,float heading,float distance,bool& wait
     state.x=x;state.y=y;state.z=z;state.heading=heading;state.phase=phase;
     return true;
 }
+GoatPoint GoatHerd::TerrainNormalAt(float x,float z) const {
+    for(const auto& memo:normalMemo_) if(memo.valid&&memo.x==x&&memo.z==z) return memo.normal;
+    const auto normal=terrain_.Sample(x,z).normal;
+    auto& memo=normalMemo_[normalMemoNext_];
+    normalMemoNext_=(normalMemoNext_+1)%normalMemo_.size();
+    memo={x,z,{normal.x,normal.y,normal.z},true};
+    return memo.normal;
+}
 GoatGroundPose GoatHerd::ContactPose(const GoatState& state,const Feet& feet) const {
-    auto pose=MakeGoatBodyFrame(terrain_,surface_,state.x,state.z,state.heading,state.phase,state.speed,state.scale);
+    auto pose=MakeGoatBodyFrame(TerrainNormalAt(state.x,state.z),surface_,state.x,state.z,
+        state.heading,state.phase,state.speed,state.scale);
     for(std::size_t leg=0;leg<4;++leg) {
         auto local=pose.ToLocal(feet[leg].position);
         local.y+=GoatLegPose::HoofHeight;local.z-=GoatLegPose::SoleForward;
@@ -222,7 +231,8 @@ void GoatHerd::AdvanceFeet(std::size_t index,float dt) {
         foot.swinging=t<1;
         if(valid(ContactPose(state,trial)))feet=trial;
     }
-    const auto neutral=FitGoatGroundPose(terrain_,surface_,state.x,state.z,state.heading,0,0,state.scale);
+    const auto neutral=FitGoatGroundPose(TerrainNormalAt(state.x,state.z),surface_,state.x,state.z,
+        state.heading,0,0,state.scale);
     int active=static_cast<int>(std::count_if(feet.begin(),feet.end(),[](const auto& f){return f.swinging;}));
     // Start at most one foot per substep and retain at least two grounded supports.
     std::size_t selected=4;float priority=0;

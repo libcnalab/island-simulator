@@ -101,6 +101,12 @@ private:
     using Feet=std::array<Foot,4>;
     [[nodiscard]] GoatGroundPose ContactPose(const GoatState& state,const Feet& feet) const;
     void AdvanceFeet(std::size_t index,float dt);
+    // The analytic terrain normal under a goat, remembered for the last few exact places: one
+    // step and its feet's poses ask for it up to seven times where the goat stands.
+    [[nodiscard]] GoatPoint TerrainNormalAt(float x,float z) const;
+    struct NormalMemo { float x=0,z=0; GoatPoint normal{0,1,0}; bool valid=false; };
+    mutable std::array<NormalMemo,8> normalMemo_{};
+    mutable std::size_t normalMemoNext_=0;
     const IslandTerrain& terrain_;
     RenderedTerrainSurface surface_;
     WorldCollisionGrid clearance_;

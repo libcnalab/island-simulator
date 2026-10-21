@@ -214,7 +214,10 @@ void SpiderColony::Update(float dt,SpiderPoint observer) {
         const float distance=valid?std::hypot(state.x-observer.x,state.y+.04f-observer.y,
             state.z-observer.z):std::numeric_limits<float>::infinity();
         const auto previousTier=state.tier;
-        state.tier=WildlifeActivationPolicy::Classify(distance,18.0f,48.0f);
+        // Drawn within 14 m (SpiderRenderer::Reach), so simulated in full that far and asleep
+        // past 22 m: the reduced tier replays the same 20 ms gait steps, only batched, and
+        // out to 48 m it stepped every spider in a wide ring nobody could see.
+        state.tier=WildlifeActivationPolicy::Classify(distance,14.0f,22.0f);
         // Outside the visible habitat keep the exact planted pose, without accruing
         // catch-up work. Replaying up to fifteen IK steps for every dormant spider
         // made aerial views pay for every ground animal even when none was drawn.

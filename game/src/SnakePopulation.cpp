@@ -77,9 +77,10 @@ namespace island
 
     float SnakePopulation::GroundedY(const float x, const float z, const float radius) const
     {
-        const float height = std::max({surface_->Sample(x,z).height,
-            surface_->Sample(x-radius,z).height, surface_->Sample(x+radius,z).height,
-            surface_->Sample(x,z-radius).height, surface_->Sample(x,z+radius).height});
+        // Heights only: every station of every moving snake asks five each step.
+        const float height = std::max({surface_->Height(x,z),
+            surface_->Height(x-radius,z), surface_->Height(x+radius,z),
+            surface_->Height(x,z-radius), surface_->Height(x,z+radius)});
         return height + radius + 0.004f;
     }
 
@@ -87,9 +88,10 @@ namespace island
     {
         for (std::size_t i = 0; i < state.body.size(); ++i) {
             const auto& p = state.body[i];
+            const float homeX = p.x-state.homeX, homeZ = p.z-state.homeZ;
             if (!std::isfinite(p.y) || !ValidPoint(p.x,p.z,MaximumRadius)
-                || std::hypot(p.x-state.homeX,p.z-state.homeZ) > HomeRadius
-                || p.y < surface_->Sample(p.x,p.z).height + RadiusAt(i)) return false;
+                || homeX*homeX+homeZ*homeZ > HomeRadius*HomeRadius
+                || p.y < surface_->Height(p.x,p.z) + RadiusAt(i)) return false;
             if (i != 0) {
                 const auto& q = state.body[i-1];
                 const float length = std::hypot(p.x-q.x,p.z-q.z);
@@ -98,9 +100,11 @@ namespace island
                     || !ValidPoint((p.x+q.x)*0.5f,(p.z+q.z)*0.5f,MaximumRadius+length*0.5f))
                     return false;
             }
+            // Squared distances: some 700 station pairs are checked for every step of every snake.
             for (std::size_t j=i+4; j<state.body.size(); ++j) {
                 const auto& q = state.body[j];
-                if (std::hypot(p.x-q.x,p.z-q.z) < RadiusAt(i)+RadiusAt(j)) return false;
+                const float dx = p.x-q.x, dz = p.z-q.z, reach = RadiusAt(i)+RadiusAt(j);
+                if (dx*dx+dz*dz < reach*reach) return false;
             }
         }
         return true;
