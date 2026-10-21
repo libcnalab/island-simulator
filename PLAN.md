@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 338 (2026-10-21) — trodden sand on the dry beach
+
+From a standing eye (`distant`) the dry upper beach read as one smooth yellow plane: its only
+relief, the wind ripples, lies in patchy trains and is lit only within 24 m. Soft hollows a hand
+to a stride across (old footprints, crab diggings, the wind's scour) now shade the whole dry beach
+from about 1.5 m above the swash, two noise octaves (0.5 and 0.23 m) lit as relief against the
+sun the way the ripples are, out to 22-55 m and filtered by the ground's footprint. They are
+isotropic, so unlike the crests they run on further without drawing long converging streaks.
+At noon they show as a soft trodden mottle; under a low sun (17:30) as a field of hollows (a first
+setting, three times the slope of the first try, was too busy at 17:30 and was eased to three
+quarters). `distant` (also at 17:30), `beach`, `bay-ground`, `wet-sand`, `jetty`, `turtle-nest`,
+`shipwreck-wide`, `driftwood`, `crabs`, `overview` and the tests pass.
+
 ## Loop pass 337 (2026-10-21) — the heron's strike splashes, and its legs stand in the water
 
 The reef herons of pass 336 struck at fish without a mark on the water, and their legs showed no

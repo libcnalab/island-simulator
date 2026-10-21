@@ -418,6 +418,28 @@ void main()
             color *= 1.0 + grains.x * 0.12 * grainVisibility * dryRelief;
         }
 
+        // Trodden and wind-scoured dry sand: soft hollows a hand to a stride across (old
+        // footprints, crab diggings, the wind's scour) shade the whole dry beach, not only the
+        // ripple trains; without them the backshore read as one smooth plane from a standing
+        // eye. Isotropic, so unlike the crests they may run on further before they filter out.
+        float dimpleRelief = closeSand * smoothstep(1.5, 4.0, signedShoreDistance)
+            * smoothstep(0.15, 0.50, vWorld.y) * (1.0 - smoothstep(22.0, 55.0, distanceToCamera));
+        float dimpleVisibility = 1.0 - smoothstep(0.18, 0.50, groundPixelWidth * 2.6);
+        if (dimpleRelief * dimpleVisibility > 0.0) {
+            vec3 hollowBroad = soilNoiseGradient(p * 1.9 + vec2(3.3, -8.1));
+            vec3 hollowFine = soilNoiseGradient(p * 4.3 + vec2(-12.7, 5.2));
+            float fineVisibility = 1.0 - smoothstep(0.18, 0.50, groundPixelWidth * 5.8);
+            vec2 hollowSlope = hollowBroad.yz * (1.9 * 0.12) * dimpleVisibility
+                + hollowFine.yz * (4.3 * 0.030) * fineVisibility;
+            vec3 flatNormal = terrainSurfaceNormal(cross(worldDx, worldDy));
+            vec3 hollowNormal = flatNormal - vec3(hollowSlope.x, 0.0, hollowSlope.y) * flatNormal.y;
+            hollowNormal *= inversesqrt(max(dot(hollowNormal, hollowNormal), 0.00000001));
+            vec3 toSunDirection = normalize(uToSun);
+            float flatLit = 0.55 + 0.45 * max(0.0, dot(flatNormal, toSunDirection));
+            float hollowLit = 0.55 + 0.45 * max(0.0, dot(hollowNormal, toSunDirection));
+            color *= mix(1.0, hollowLit / flatLit, dimpleRelief);
+        }
+
         float rippleMask = closeSand
             * smoothstep(0.35, 1.40, signedShoreDistance)
             * (1.0 - smoothstep(8.0, 14.0, signedShoreDistance));
