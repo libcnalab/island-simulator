@@ -149,9 +149,11 @@ vec3 cumulusMass(vec3 color, vec4 cloud, float seed, float azimuth, float skyEle
         topLight * (0.48 + 0.52 * sunSide));
     float softRim = smoothstep(0.18, 0.78, shape) * smoothstep(0.02, 0.62, local.y + 0.20);
     cloudColor += vec3(0.055, 0.047, 0.030) * softRim * sunSide;
-    vec3 fringeColor = mix(vec3(0.80, 0.86, 0.92), vec3(1.0, 0.99, 0.96), topLight * sunSide);
-    float shadeBand = (1.0 - core) * core * 4.0 * (1.0 - topLight) * 0.5;
-    cloudColor = mix(fringeColor, cloudColor, core) * (1.0 - 0.10 * shadeBand);
+    // The thin fringe lets more light through than the core, so it is the core's own colour
+    // lightened, never darker: a greyer fringe and a shaded band where it met the core drew a
+    // dark ink outline round every mass.
+    vec3 fringeColor = mix(cloudColor, vec3(1.0, 0.99, 0.96), 0.30 * (0.45 + 0.55 * sunSide));
+    cloudColor = mix(fringeColor, cloudColor, core);
     // Far masses sit inside the haze: soften toward the horizon colour.
     cloudColor = mix(cloudColor, hazeColor, 0.30 * (1.0 - smoothstep(0.03, 0.20, skyElevation)));
     return mix(color, cloudColor, coverage * mix(0.58, 0.92, core));

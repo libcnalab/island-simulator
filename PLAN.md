@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 328 (2026-10-21) — the cumulus lose their ink outline
+
+At 1:1 every fair-weather cumulus on the sky dome had a thin blue-white outline with a darker band
+just inside it, like an inked cartoon: the translucent fringe was painted a greyer blue-white than
+the core, and a shade band darkened the core by up to 10 % exactly where the fringe met it. A thin
+cloud edge lets more light through than the core, so the fringe is now the core's own colour
+lightened toward sunlit white (more on the sun's side), never darker, and the shade band is gone:
+the masses dissolve softly into the sky. `jetty-end` (also at 18:36), `overview`, `jetty` and the
+tests pass.
+
 ## Loop pass 327 (2026-10-21) — smooth birds with split primaries
 
 Close up the birds were the crudest animals left: the body a three-ring loft that read as a cut
