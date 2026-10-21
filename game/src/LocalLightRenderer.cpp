@@ -54,7 +54,7 @@ in float vReach;
 uniform vec3 uCamera;
 uniform vec3 uLight;
 uniform vec3 uAxis;
-uniform vec3 uShape;   // x: 0 a spot, 1 a point, 2 a point on a plane; y: the reach in metres; z: the strength
+uniform vec3 uShape;   // x: 0 a spot, 1 a point, 2 a point on a plane, 3 on a figure; y: the reach in metres; z: the strength
 uniform vec3 uTint;    // the light's colour: the lit pixels are tinted toward it before the lift
 out vec4 fragColor;
 void main()
@@ -70,7 +70,9 @@ void main()
     vec3 toLit = lit - uLight;
     float d = max(length(toLit), 0.05);
     vec3 dir = toLit / d;
-    float facing = 0.4 + 0.6 * smoothstep(0.0, 0.2, dot(normalize(vNormal), -dir));
+    // a figure's back stays nearly dark; the ground's and the boards' soften
+    float unlit = uShape.x > 2.5 ? 0.06 : 0.4;
+    float facing = unlit + (1.0 - unlit) * smoothstep(0.0, 0.2, dot(normalize(vNormal), -dir));
     float strength;
     if (uShape.x < 0.5) {
         float axial = dot(dir, uAxis);
@@ -193,6 +195,67 @@ void main()
         staging_.clear();
         for (const Vector3& corner : triangles) staging_.emplace_back(corner, normal, Vector2(0.0f, 1.0f));
         Flush(view, projection, camera, light, Vector3::Up, 2.0f, radius, strength, tint);
+    }
+
+    void LocalLightRenderer::DrawMesh(const Matrix& view, const Matrix& projection, const Vector3& camera,
+                                      const Vector3& light, const float radius,
+                                      const std::span<const VertexPositionColorTexture> triangles, const float strength,
+                                      const Vector3& tint)
+    {
+        constexpr int FigureCapacity = 40000;
+        if (!(strength > 0.01f) || !(radius > 0.5f) || triangles.size() < 3U
+            || triangles.size() > static_cast<std::size_t>(FigureCapacity)) return;
+        if (!figure_) {
+            figure_ = std::make_unique<DynamicVertexBuffer>(device_, Vertex::getVertexDeclarationStatic(), FigureCapacity,
+                                                            BufferUsage::WriteOnly);
+            figureStaging_.reserve(static_cast<std::size_t>(FigureCapacity));
+        }
+        figureStaging_.clear();
+        // Smooth normals: each triangle's (turned to the eye, as the figure is drawn two-sided,
+        // and weighted by its area) summed at every corner sharing a position, so the light
+        // shades the body smoothly instead of facet by facet.
+        const auto key = [](const Vector3& p) {
+            const auto q = [](const float v) { return static_cast<std::uint64_t>(static_cast<std::int64_t>(std::lround(v * 1000.0f)) & 0x1fffff); };
+            return q(p.X) | (q(p.Y) << 21U) | (q(p.Z) << 42U);
+        };
+        figureNormals_.clear();
+        for (std::size_t i = 0; i + 2 < triangles.size(); i += 3) {
+            const Vector3 a = triangles[i].Position, b = triangles[i + 1].Position, c = triangles[i + 2].Position;
+            Vector3 normal = Vector3::Cross(b - a, c - a);
+            if (Vector3::Dot(normal, camera - a) < 0.0f) normal = -normal;
+            for (const Vector3* corner : {&a, &b, &c}) figureNormals_[key(*corner)] += normal;
+        }
+        for (std::size_t i = 0; i + 2 < triangles.size(); i += 3) {
+            for (std::size_t k = 0; k < 3; ++k) {
+                const Vector3 p = triangles[i + k].Position;
+                Vector3 normal = figureNormals_[key(p)];
+                if (normal.LengthSquared() < 1e-12f) normal = Vector3::Up;
+                normal.Normalize();
+                // drawn 1.5 cm nearer along the eye's ray, so it passes the depth test on the
+                // drawn body without growing past its outline
+                const Vector3 toEye = camera - p;
+                const float range = toEye.Length();
+                figureStaging_.emplace_back(range > 0.05f ? p + toEye * (0.015f / range) : p, normal, Vector2(0.0f, 1.0f));
+            }
+        }
+        if (figureStaging_.empty()) return;
+        figure_->SetData(figureStaging_.data(), 0, static_cast<int>(figureStaging_.size()), SetDataOptions::Discard);
+        device_.setRasterizerStateProperty(RasterizerState::CullNone);
+        device_.setBlendStateProperty(*blend_);
+        device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
+        float viewProjection[16];
+        (view * projection).ToColumnMajor(viewProjection);
+        effect_->Apply();
+        effect_->SetUniformMat4("uViewProjection", viewProjection);
+        effect_->SetUniformVec3("uCamera", camera.X, camera.Y, camera.Z);
+        effect_->SetUniformVec3("uLight", light.X, light.Y, light.Z);
+        effect_->SetUniformVec3("uAxis", 0.0f, 1.0f, 0.0f);
+        effect_->SetUniformVec3("uShape", 3.0f, radius, strength);
+        effect_->SetUniformVec3("uTint", tint.X, tint.Y, tint.Z);
+        device_.SetVertexBuffer(figure_.get());
+        device_.setIndicesProperty(nullptr);
+        device_.DrawPrimitives(PrimitiveType::TriangleList, 0, static_cast<int>(figureStaging_.size() / 3U));
+        ++drawCalls_;
     }
 
     void LocalLightRenderer::Submit(const Matrix& view, const Matrix& projection, const Vector3& camera,

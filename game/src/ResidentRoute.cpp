@@ -1,6 +1,7 @@
 #include "IslandSimulator/ResidentRoute.hpp"
 #include "IslandSimulator/CaveSite.hpp"
 #include "IslandSimulator/CampfireSite.hpp"
+#include <optional>
 #include "IslandSimulator/IslandEnvironmentField.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
 #include "IslandSimulator/StreamSoundField.hpp"
@@ -129,14 +130,15 @@ ResidentRoute::ResidentRoute(const IslandTerrain& terrain,const RenderedTerrainS
 void ResidentRoute::Build(const IslandTerrain& terrain,const RenderedTerrainSurface& ground,const WorldCollisionGrid& solids,
                           const std::span<const ResidentPoint> landmarks,const std::span<const ResidentPoint> landmarkFacings) {
     constexpr float None=std::numeric_limits<float>::quiet_NaN();
+    // The campfire call (authored six metres east and five north of the fire, where the tour
+    // reaches it): the resident stands facing the fire, and walks up to the pit's edge when
+    // the ground allows (the spur below), so the hands go out to the flames.
+    float campfireFacingX=-6.0f,campfireFacingZ=-5.0f;
     // Authored goals 0..2 are the campfire, path and clearing; the landmarks follow them.
     const auto facingOfGoal=[&](std::size_t goal)->ResidentPoint{
         if(goal==0) {
-            // The campfire call (authored six metres east and five north of the fire): the
-            // resident stands facing the fire.
-            const float dx=-6.0f,dz=-5.0f;
-            const float length=std::hypot(dx,dz);
-            return {dx/length,0,dz/length};
+            const float length=std::hypot(campfireFacingX,campfireFacingZ);
+            return {campfireFacingX/length,0,campfireFacingZ/length};
         }
         if(goal>=3&&goal-3<landmarks.size()&&landmarkFacings.size()==landmarks.size()) {
             const auto& f=landmarkFacings[goal-3];
@@ -155,7 +157,20 @@ void ResidentRoute::Build(const IslandTerrain& terrain,const RenderedTerrainSurf
     landmarks_=landmarks.size();
     std::vector<int> goals(authored.size());
     for(std::size_t i=0;i<authored.size();++i)goals[i]=search.Nearest(authored[i]);
-    points_.push_back(search.Point(goals[0]));points_.back().y=ground.Sample(points_[0].x,points_[0].z).height;
+    // A spur from the tour's campfire node up to TendSpotDistance from the fire's centre, on
+    // the side the call stands (or the nearest bearing round the pit that is clear).
+    ResidentPoint node=search.Point(goals[0]);node.y=ground.Sample(node.x,node.z).height;
+    std::optional<ResidentPoint> spot;
+    const float bearing=std::atan2(5.0f,6.0f);
+    for(int k=0;k<9&&!spot;++k) {
+        const float angle=bearing+static_cast<float>((k+1)/2)*.35f*(k%2?1.0f:-1.0f);
+        ResidentPoint p{CampfireSite::X+std::cos(angle)*TendSpotDistance,0,CampfireSite::Z+std::sin(angle)*TendSpotDistance};
+        if(!SafePoint(terrain,ground,solids,p.x,p.z)||!SafeSegment(terrain,ground,solids,node,p))continue;
+        p.y=ground.Sample(p.x,p.z).height;
+        spot=p;campfireFacingX=-std::cos(angle);campfireFacingZ=-std::sin(angle);
+    }
+    if(spot)points_.push_back(*spot);
+    points_.push_back(node);
     pauses_.push_back(0);pauseFacings_.push_back(facingOfGoal(0));
     for(std::size_t leg=0;leg<goals.size();++leg) {
         const auto path=search.Path(goals[leg],goals[(leg+1)%goals.size()]);
@@ -166,6 +181,7 @@ void ResidentRoute::Build(const IslandTerrain& terrain,const RenderedTerrainSurf
         }
         if(leg+1<goals.size()){pauses_.push_back(points_.size()-1);pauseFacings_.push_back(facingOfGoal(leg+1));}
     }
+    if(spot)points_.push_back(*spot);   // back up the spur to the fire, closing the tour
     if(points_.size()<6||points_.size()>512||points_.front()!=points_.back())
         throw std::runtime_error("Resident tour is not a bounded closed route");
     for(std::size_t i=1;i<points_.size();++i)length_+=std::hypot(points_[i].x-points_[i-1].x,points_[i].z-points_[i-1].z);

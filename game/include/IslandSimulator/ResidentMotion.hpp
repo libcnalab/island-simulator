@@ -68,6 +68,8 @@ public:
     [[nodiscard]] float CrouchAmount()const noexcept {return crouch_;}
     // QA: holds the resident fully crouched for a still capture.
     void PreviewCrouch();
+    // QA: holds the resident crouched at the campfire call, turned to face the fire.
+    void PreviewTending();
     static constexpr float CrouchDrop=.36f,CrouchInRate=1.0f,CrouchOutRate=1.4f;
     // The fishing spot: a pause with a view within FishingReach of it is a fishing pause.
     void SetFishingSpot(float x,float z) noexcept;

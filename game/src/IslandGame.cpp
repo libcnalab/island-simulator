@@ -516,14 +516,17 @@ namespace island
             // and the line read.
             const bool tending=viewpoint_==FixedViewpoint::ResidentTendDetail;
             const bool fishing=viewpoint_==FixedViewpoint::ResidentFishDetail;
-            if(tending) resident_->PreviewCrouch();
+            if(tending) resident_->PreviewTending();
             if(fishing) resident_->PreviewFishing();
             const auto& subject=resident_->State();
             const Vector3 forward(std::sin(subject.heading),0,std::cos(subject.heading));
             const Vector3 right(std::cos(subject.heading),0,-std::sin(subject.heading));
+            // (tending, they face the fire at the pit's edge: framed from the side, the
+            // resident and the flames together)
             cameraPosition_=Vector3(subject.x,subject.y+(tending?1.25f:fishing?1.45f:1.58f),subject.z)
-                +forward*(fishing?3.4f:2.65f)+right*(fishing?2.6f:2.00f);
-            const Vector3 target(subject.x+(fishing?forward.X*.9f:0.0f),subject.y+(tending?.72f:fishing?1.0f:1.02f),subject.z+(fishing?forward.Z*.9f:0.0f));
+                +forward*(fishing?3.4f:tending?0.8f:2.65f)+right*(fishing?2.6f:tending?2.9f:2.00f);
+            const float lead=fishing?.9f:tending?.85f:0.0f;
+            const Vector3 target(subject.x+forward.X*lead,subject.y+(tending?.72f:fishing?1.0f:1.02f),subject.z+forward.Z*lead);
             const auto direction=target-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
@@ -3258,7 +3261,7 @@ namespace island
         }
         const auto previousResident=resident_->State();
         const auto& observer=playerMotion_.Position();
-        if(viewpoint_==FixedViewpoint::ResidentTendDetail) resident_->PreviewCrouch();
+        if(viewpoint_==FixedViewpoint::ResidentTendDetail) resident_->PreviewTending();
         if(viewpoint_==FixedViewpoint::ResidentFishDetail) resident_->PreviewFishing();
         resident_->Update(viewpoint_==FixedViewpoint::ResidentTendDetail||viewpoint_==FixedViewpoint::ResidentFishDetail?0.0f:deltaSeconds,
             {observer.x,observer.y,observer.z});
@@ -5810,6 +5813,14 @@ namespace island
                     const float pulse = 0.83f + 0.10f * std::sin(timeSeconds * 8.7f) + 0.07f * std::sin(timeSeconds * 17.1f + 1.3f);
                     localLights_->DrawPoint(cameraView_, cameraProjection_, renderCameraPosition_, fire, 8.0f, ground,
                                             CampfireLighting::Strength() * night * pulse, Vector3(1.0f, 0.62f, 0.34f));
+                    // and the resident by it, warm on the side turned to the flames
+                    if (residentRenderer_) {
+                        const auto& sitter = resident_->State();
+                        if (Vector3::DistanceSquared(Vector3(sitter.x, sitter.y, sitter.z), fire) < 8.0f * 8.0f)
+                            localLights_->DrawMesh(cameraView_, cameraProjection_, renderCameraPosition_, fire, 8.0f,
+                                                   residentRenderer_->LastMesh(), CampfireLighting::Strength() * night * pulse,
+                                                   Vector3(1.0f, 0.62f, 0.34f));
+                    }
                 }
                 if (lanternLit) {
                     const float flicker = 0.90f + 0.06f * std::sin(timeSeconds * 5.3f) + 0.04f * std::sin(timeSeconds * 11.7f + 0.8f);

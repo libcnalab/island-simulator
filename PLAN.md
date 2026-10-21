@@ -233,6 +233,32 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 285 (2026-10-21) — the resident tends the fire at its edge, lit by it
+
+Two things kept the night at the campfire from reading true. The route's campfire call stood
+on the nearest tour node to a point authored 7.8 m from the fire, so the resident crouched with
+both hands held out to flames eight metres off; and the firelight (the local light's ground
+slab) reached the ground but not anyone standing on it. Now:
+
+- **To the fire's edge.** `ResidentRoute` adds a spur from that node up to `TendSpotDistance`
+  (1.9 m) from the fire's centre, just outside the stones' 1.25 m ring, on the side the call
+  stands (or the nearest bearing round the pit that is clear of solids and safe to walk); the
+  campfire pause is its end, facing the fire, and the tour closes back up the spur. If no
+  bearing is clear the old call stands. A new route check pins the pause within 1.9 m.
+- **Lit by it.** `LocalLightRenderer::DrawMesh` lights a figure through the night grade: the
+  resident's mesh as last drawn, with normals smoothed over shared corners (flat ones striped
+  the body facet by facet), drawn 1.5 cm nearer along the eye's ray so it passes the depth test
+  without growing past its outline (lifting it along the normals put an orange rim round the
+  silhouette), the side away from the light left nearly dark. The game draws it from the fire
+  for a resident within 8 m.
+- **QA.** `ResidentMotion::PreviewTending` holds the resident crouched at the campfire call
+  turned to the fire (`PreviewCrouch` keeps its planted-feet contract); the `resident-tending`
+  view frames them from the side with the flames.
+
+`resident-tending` by day and at 21:30 shows the resident crouched at the stones, hands to the
+flames, warm on the fire side at night; `resident`, `resident-fishing`, `campfire` (21:30) and
+`campfire-wide` pass, and the tests.
+
 ## Loop pass 284 (2026-10-21) — the lantern lights the hut's boards
 
 The hurricane lantern hung on the veranda lit only the ground below it (the local light's

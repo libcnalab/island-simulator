@@ -3,10 +3,13 @@
 #include "IslandSimulator/QuadBike.hpp"
 #include "Microsoft/Xna/Framework/Matrix.hpp"
 #include "Microsoft/Xna/Framework/Vector3.hpp"
+#include "Microsoft/Xna/Framework/Graphics/VertexPositionColorTexture.hpp"
 #include "Microsoft/Xna/Framework/Graphics/VertexPositionNormalTexture.hpp"
 #include <functional>
 #include <memory>
+#include <cstdint>
 #include <span>
+#include <unordered_map>
 #include <vector>
 
 namespace Microsoft::Xna::Framework::Graphics
@@ -60,6 +63,13 @@ namespace island
                        float radius, std::span<const Microsoft::Xna::Framework::Vector3> triangles,
                        const Microsoft::Xna::Framework::Vector3& normal, float strength,
                        const Microsoft::Xna::Framework::Vector3& tint);
+        /** @brief A point lighting a figure by it (the resident at the campfire): the figure's own
+         *  triangles, just as drawn, lit through the grade on the faces turned to the light,
+         *  their backs left nearly dark. */
+        void DrawMesh(const Microsoft::Xna::Framework::Matrix& view, const Microsoft::Xna::Framework::Matrix& projection,
+                      const Microsoft::Xna::Framework::Vector3& camera, const Microsoft::Xna::Framework::Vector3& light,
+                      float radius, std::span<const Microsoft::Xna::Framework::Graphics::VertexPositionColorTexture> triangles,
+                      float strength, const Microsoft::Xna::Framework::Vector3& tint);
         [[nodiscard]] int DrawCallCount() const noexcept { return drawCalls_; }
         void ResetCounts() noexcept { drawCalls_ = 0; }
 
@@ -76,7 +86,9 @@ namespace island
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> effect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BlendState> blend_;
-        std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> mesh_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> mesh_, figure_;
+        std::vector<Vertex> figureStaging_;
+        std::unordered_map<std::uint64_t, Microsoft::Xna::Framework::Vector3> figureNormals_;
         std::vector<Vertex> grid_, staging_;
         int drawCalls_ = 0;
     };

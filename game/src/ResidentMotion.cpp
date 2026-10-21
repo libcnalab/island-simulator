@@ -252,6 +252,20 @@ void ResidentMotion::PreviewFishing() {
     ResidentPose pose;
     if(FitPose(state_.x,state_.z,state_.heading,0,pose))state_.pose=pose;
 }
+void ResidentMotion::PreviewTending() {
+    // Held as at the fire: at the tour's first point (the campfire call) turned to face the
+    // fire on re-planted feet, then crouched.
+    const auto first=route_.Points()[0];
+    if(!route_.PauseFacings().empty()&&std::isfinite(route_.PauseFacings()[0].x)
+        &&std::hypot(state_.x-first.x,state_.z-first.z)<.05f) {
+        state_.heading=std::atan2(route_.PauseFacings()[0].x,route_.PauseFacings()[0].z);
+        for(std::size_t leg=0;leg<2;++leg) {
+            const auto p=Add(first,Add(Mul(Right(state_.heading),leg==0?-.095f:.095f),Mul(Forward(state_.heading),.025f)));
+            feet_[leg].current=feet_[leg].start=feet_[leg].target=GroundFoot(p.x,p.z,state_.heading);
+        }
+    }
+    PreviewCrouch();
+}
 void ResidentMotion::PreviewCrouch() {
     crouch_=crouchTarget_=1;
     ResidentPose pose;

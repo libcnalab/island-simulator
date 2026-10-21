@@ -5,6 +5,7 @@
 #include "Microsoft/Xna/Framework/Vector3.hpp"
 
 #include <memory>
+#include <span>
 #include <vector>
 
 namespace Microsoft::Xna::Framework::Graphics {
@@ -37,6 +38,8 @@ public:
     /** @brief How soaked the clothes and hair are, 0 dry .. 1 drenched (they darken). */
     void SetWetness(float wetness)noexcept{wetness_=wetness;}
     [[nodiscard]] int VisibleCount()const noexcept{return visible_;}
+    /** The body as last drawn this frame (empty when unseen), for the lights that light it. */
+    [[nodiscard]] std::span<const Microsoft::Xna::Framework::Graphics::VertexPositionColorTexture> LastMesh()const noexcept;
     [[nodiscard]] int DrawCallCount()const noexcept{return draws_;}
     [[nodiscard]] int TriangleCount()const noexcept{return triangles_;}
     [[nodiscard]] int ShadowTriangleCount()const noexcept{return shadowTriangles_;}

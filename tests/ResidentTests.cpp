@@ -97,6 +97,8 @@ int main() {
             const auto f=tour.PauseFacings()[0];
             const float toFire=std::atan2(CampfireSite::Z-p.z,CampfireSite::X-p.x);
             Check(std::isfinite(f.x)&&std::abs(std::remainder(std::atan2(f.z,f.x)-toFire,6.2831853f))<.35f,"the campfire pause faces the fire");
+            Check(std::hypot(p.x-CampfireSite::X,p.z-CampfireSite::Z)<ResidentRoute::TendSpotDistance+.01f,
+                  "the campfire call walks up to the pit's edge, not eight metres off");
         }
         // Walking the tour: at the jetty pause the resident turns to face out along the deck.
         bool lookedOut=false;

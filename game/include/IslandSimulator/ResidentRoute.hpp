@@ -10,6 +10,8 @@ struct ResidentPoint {float x=0,y=0,z=0;bool operator==(const ResidentPoint&) co
 class ResidentRoute final {
 public:
     static constexpr float Clearance=.50f,GridSpacing=3.0f,Extent=258.0f;
+    // The campfire call ends this far from the fire's centre (the stones' ring is 1.25 m).
+    static constexpr float TendSpotDistance=1.9f;
     // Landmarks are extra tour goals (the jetty foot) visited after the west clearing; a
     // landmark the search cannot reach safely is dropped rather than breaking the tour.
     // landmarkFacings, one unit direction per landmark (x,z), is where the resident turns to

@@ -478,6 +478,11 @@ void ResidentRenderer::DrawShadow(const Matrix& view,const Matrix& projection,co
     device_.DrawPrimitives(PrimitiveType::TriangleList,0,shadowTriangles_);++draws_;
 }
 
+std::span<const VertexPositionColorTexture> ResidentRenderer::LastMesh()const noexcept {
+    if(!visible_)return {};
+    return {vertices_.data(),vertices_.size()};
+}
+
 void ResidentRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector3& camera,
     const ResidentState& resident) {
     vertices_.clear();visible_=0;triangles_=0;
