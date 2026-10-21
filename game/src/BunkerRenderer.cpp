@@ -429,6 +429,37 @@ BunkerRenderer::BunkerRenderer(GraphicsDevice& device,const BunkerLayout& layout
     box({9.12f,roomFloor+1.98f,11.35f},{9.20f,roomFloor+2.12f,22.82f},Color(69,137,130));
     for(float depth:{12.2f,15.1f,18.0f,20.9f})
         box({8.42f,roomFloor+.08f,depth-.58f},{8.50f,roomCeiling-.12f,depth+.58f},Color(102,109,105));
+    // The cabinets are running: rows of status lamps down each door, mostly green, some amber
+    // and blue at work, one red fault; a cable run in three coloured bundles along the wall
+    // above them; hazard striping on the floor before the racks; a green exit sign on the end
+    // wall. Small, but they take the room out of one grey.
+    {
+        int lamp=0;
+        for(float depth:{12.2f,15.1f,18.0f,20.9f}) {
+            for(int row=0;row<7;++row)for(int column=0;column<3;++column) {
+                const float y=roomFloor+1.10f+row*.11f;
+                const float z=depth-.30f+column*.30f;
+                const unsigned code=(static_cast<unsigned>(lamp)*2654435761U)>>27U;
+                const Color colour=lamp==37?Color(232,52,44)
+                    :code<4U?Color(236,168,52):code<7U?Color(70,150,245):Color(64,226,112);
+                // a lamp face on the cabinet door, facing the room (the static budget is tight)
+                quad({8.415f,y,z+.022f},{8.415f,y+.03f,z+.022f},{8.415f,y+.03f,z-.022f},{8.415f,y,z-.022f},colour,true);
+                ++lamp;
+            }
+        }
+        for(int bundle=0;bundle<3;++bundle) {
+            const float y=roomCeiling-.34f-bundle*.07f;
+            const Color colour=bundle==0?Color(168,44,38):bundle==1?Color(44,82,158):Color(196,166,42);
+            box({9.12f,y,11.3f},{9.19f,y+.05f,22.9f},colour);
+        }
+        for(int stripe=0;stripe<22;++stripe) {
+            const float z=11.6f+stripe*.5f;
+            quad({7.96f,roomFloor+.012f,z},{7.96f,roomFloor+.012f,z+.25f},{8.16f,roomFloor+.012f,z+.25f},
+                 {8.16f,roomFloor+.012f,z},stripe%2==0?Color(196,160,40):Color(30,30,28));
+        }
+        box({4.6f,roomCeiling-.52f,23.16f},{5.7f,roomCeiling-.26f,23.19f},Color(46,198,92),true);
+        box({4.78f,roomCeiling-.46f,23.155f},{5.52f,roomCeiling-.32f,23.165f},Color(214,246,220),true);
+    }
     // Floor tile joints and a wall-mounted situation display add human scale.
     for(float across:{2.6f,4.2f,5.8f,7.4f})
         box({across-.018f,roomFloor+.004f,11.2f},{across+.018f,roomFloor+.018f,23.0f},

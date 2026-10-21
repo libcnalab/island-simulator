@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 343 (2026-10-21) — the bunker's computer room is running
+
+`bunker-computers` had failed every capture sweep on its colour-bin floor (48 of 64): a correct
+render of a grey room, judged so and left as a known failure. The room now looks in use: rows of
+status lamps down each server cabinet's door (mostly green, some amber and blue at work, one red
+fault), a cable run in three coloured bundles along the wall above the racks, yellow-and-black
+hazard striping on the floor before them, and a green exit sign on the end wall. The bunker's
+static mesh has a fixed 24,000-vertex budget and stood at 21,792; full boxes for the 84 lamps
+overran it, so the lamps and the floor stripes are single faces (the bunker now 7,536
+triangles). The view passes on its own merit (72 colour bins), so the sweep's known failures are
+down to `canopy`, which needs its inspection argument. `bunker-computers`, `bunker`,
+`bunker-corridor`, `bunker-reactor`, `bunker-service`, `bunker-end` and the tests pass.
+
 ## Loop pass 342 (2026-10-21) — the heron croaks as it flushes
 
 A reef heron flushed in silence. `GenerateHeronCroak` synthesises its harsh, guttural alarm, about

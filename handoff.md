@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 343: bunker computer room lamps, cables, hazard stripes, exit sign; `bunker-computers` now passes (72 colour bins), the sweep's only known exception is `canopy` (PLAN "Loop pass 343").
 - Pass 342: heron alarm croak on flush (GenerateHeronCroak, NoteHeronCroak, WildlifeCallType::Heron); untested by ear (PLAN "Loop pass 342").
 - Pass 341: herons roost at night in shore palm crowns / coastal perches, back to wading at dawn (PLAN "Loop pass 341").
 - Pass 340: herons flush from the resident, the quad, the bear, boars and moving crocodiles too (PLAN "Loop pass 340").
