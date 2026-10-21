@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 387 (2026-10-21) — crab claws, bodies and joints shade round
+
+After the legs (pass 386) the crabs' remaining facets were the rounded palms (the hermit crab's
+claws, body and head, the shore crabs' claws) and the octahedral knees, elbows and eyes, each face
+one flat colour. The palm is now lit per vertex, one-sided, from its ellipsoid's own normals and
+has twelve sides instead of eight; each octahedron corner is lit from its own axis (a shared
+SmoothLit helper with FacetColor's brightness terms). Budgets: shore crab 1,968 (its two palms),
+hermit crab 2,760 (five). The hermit crab's big claw (1:1) is round instead of an octagon of flat
+triangles; `crabs`, `coconut-crabs` and `beach` run within their budgets. (The shore crabs' palms
+are still squat discs in shape: a later pass.) The tests pass.
+
 ## Loop pass 386 (2026-10-21) — crab legs are round, smoothly lit tubes
 
 Every crab's legs, arms and eye stalks (the shore crabs, the hermit crabs, the coconut crabs) were

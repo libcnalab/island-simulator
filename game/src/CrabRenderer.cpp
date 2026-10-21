@@ -37,11 +37,11 @@ namespace island
         constexpr float NearLodDistance = 38.0f;
         constexpr float TwoPi = 2.0f * std::numbers::pi_v<float>;
         constexpr int CarapaceSegments = 18;
-        constexpr int NearCrabVertexCount = 1872;
+        constexpr int NearCrabVertexCount = 1968;
         constexpr int FarCrabVertexCount = 12;
         constexpr int MaximumVerticesPerCrab = NearCrabVertexCount;
         constexpr int MaximumBurrowVertices = 1024;
-        constexpr int HermitCrabVertexCount = 2520;
+        constexpr int HermitCrabVertexCount = 2760;
         // Past this a hermit crab is its shell, a few pixels across: a six-sided shell alone
         // (out to the crabs' 92 m every one was built whole, legs, eyes and spiral marks).
         constexpr float HermitDetailDistance = 18.0f;
@@ -141,6 +141,15 @@ namespace island
         {
             AddTriangle(vertices, a, b, c, color);
             AddTriangle(vertices, a, c, d, color);
+        }
+
+        // One-sided light from a surface's own normal, with FacetColor's brightness terms.
+        [[nodiscard]] VertexPositionColor SmoothLit(const Vector3& point, const Vector3& normal,
+                                                    const Color& base)
+        {
+            const float direct = std::max(0.0f, Vector3::Dot(normal, wildlife_render::FixedSunDirection));
+            return VertexPositionColor(point, wildlife_render::ScaleColor(
+                base, .72f + .30f * direct + .06f * std::max(0.0f, normal.Y)));
         }
 
         void AddGradientTriangle(std::vector<VertexPositionColor>& vertices,
@@ -257,14 +266,25 @@ namespace island
             const Vector3 rightPoint = centre + right * halfX;
             const Vector3 front = centre + forward * halfZ;
             const Vector3 back = centre - forward * halfZ;
-            AddTriangle(vertices, top, front, rightPoint, topColor);
-            AddTriangle(vertices, top, rightPoint, back, topColor);
-            AddTriangle(vertices, top, back, left, topColor);
-            AddTriangle(vertices, top, left, front, topColor);
-            AddTriangle(vertices, bottom, rightPoint, front, sideColor);
-            AddTriangle(vertices, bottom, back, rightPoint, sideColor);
-            AddTriangle(vertices, bottom, left, back, sideColor);
-            AddTriangle(vertices, bottom, front, left, sideColor);
+            // Each corner lit from its own axis, so a knee or an eye shades round rather than
+            // as eight flat facets.
+            const auto lit = [&](const Vector3& point, const Vector3& normal, const Color& base) {
+                return SmoothLit(point, normal, base);
+            };
+            const std::array<std::array<Vector3, 2>, 4> ring{{
+                {front, forward}, {rightPoint, right}, {back, -forward}, {left, -right}}};
+            for (std::size_t corner = 0; corner < ring.size(); ++corner) {
+                const auto& a = ring[corner];
+                const auto& b = ring[(corner + 1U) % ring.size()];
+                vertices.insert(vertices.end(), {lit(top, up, topColor), lit(a[0], a[1], topColor),
+                                                 lit(b[0], b[1], topColor)});
+            }
+            for (std::size_t corner = 0; corner < ring.size(); ++corner) {
+                const auto& a = ring[corner];
+                const auto& b = ring[(corner + 1U) % ring.size()];
+                vertices.insert(vertices.end(), {lit(bottom, -up, sideColor), lit(b[0], b[1], sideColor),
+                                                 lit(a[0], a[1], sideColor)});
+            }
         }
 
         void AppendRoundedCrabPalm(std::vector<VertexPositionColor>& vertices,
@@ -274,7 +294,7 @@ namespace island
                                    const float halfZ, const Color& topColor,
                                    const Color& sideColor)
         {
-            constexpr int Segments = 8;
+            constexpr int Segments = 12;
             const Vector3 top = centre + up * halfY;
             const Vector3 bottom = centre - up * halfY;
             const auto ringPoint = [&](const float height, const int segment) {
@@ -284,15 +304,26 @@ namespace island
                     + forward * (std::sin(angle) * halfZ * .89f)
                     + up * (height * halfY);
             };
+            // Lit per vertex from the ellipsoid's own normals (one-sided), not one flat colour a
+            // facet: the claw's palm and the body read rounded.
+            const auto lit = [&](const Vector3& point, const Color& base) {
+                const Vector3 d = point - centre;
+                const Vector3 normal = Vector3::Normalize(
+                    right * (Vector3::Dot(d, right) / (halfX * halfX))
+                    + up * (Vector3::Dot(d, up) / (halfY * halfY))
+                    + forward * (Vector3::Dot(d, forward) / (halfZ * halfZ)));
+                return SmoothLit(point, normal, base);
+            };
             for (int segment = 0; segment < Segments; ++segment) {
                 const int next = (segment + 1) % Segments;
                 const Vector3 upper = ringPoint(.45f, segment);
                 const Vector3 upperNext = ringPoint(.45f, next);
                 const Vector3 lower = ringPoint(-.45f, segment);
                 const Vector3 lowerNext = ringPoint(-.45f, next);
-                AddTriangle(vertices, top, upperNext, upper, topColor);
-                AddQuad(vertices, upper, upperNext, lowerNext, lower, sideColor);
-                AddTriangle(vertices, bottom, lower, lowerNext, sideColor);
+                vertices.insert(vertices.end(), {lit(top, topColor), lit(upperNext, topColor), lit(upper, topColor),
+                    lit(upper, sideColor), lit(upperNext, sideColor), lit(lowerNext, sideColor),
+                    lit(upper, sideColor), lit(lowerNext, sideColor), lit(lower, sideColor),
+                    lit(bottom, sideColor), lit(lower, sideColor), lit(lowerNext, sideColor)});
             }
         }
 
