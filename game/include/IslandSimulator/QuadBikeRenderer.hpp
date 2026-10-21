@@ -83,9 +83,11 @@ namespace island
             std::array<Microsoft::Xna::Framework::Matrix, 4> wheels;
         };
         [[nodiscard]] static Pose PoseOf(const QuadBike& bike);
-        /** The suspension (and the stand-in rider) in the body frame, uploaded; its vertex count. */
-        int BuildDynamic(const QuadBike& bike, bool rider);
-        void DrawAll(Microsoft::Xna::Framework::Graphics::ShaderEffect& effect, const Pose& pose, int dynamicCount);
+        /** The suspension (within 30 m) and the stand-in rider in the body frame, uploaded to the
+         *  rider's or the riderless buffer unless unchanged since the last time; its vertex count. */
+        int BuildDynamic(const QuadBike& bike, bool rider, bool detailed);
+        void DrawAll(Microsoft::Xna::Framework::Graphics::ShaderEffect& effect, const Pose& pose, int dynamicCount,
+                     bool rider);
         void Upload(std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer>& buffer, int& count,
                     const std::vector<Vertex>& vertices);
         void DrawPart(Microsoft::Xna::Framework::Graphics::ShaderEffect& effect,
@@ -96,7 +98,17 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::DepthStencilState> shadowDepth_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> glowEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> body_, bars_, frontWheel_, rearWheel_;
-        std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> dynamic_, glow_;
+        // [rider]: the shadow and the body ask for the stand-in rider apart (with the avatar riding)
+        std::array<std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer>, 2> dynamic_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> glow_;
+        struct DynamicKey
+        {
+            std::array<Microsoft::Xna::Framework::Vector3, 4> hubs{};
+            float lean = 0.0f;
+            bool detailed = false, valid = false;
+            int count = 0;
+        };
+        std::array<DynamicKey, 2> dynamicKeys_{};
         std::vector<Vertex> dynamicStaging_;
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> glowStaging_;
         int bodyCount_ = 0, barsCount_ = 0, frontWheelCount_ = 0, rearWheelCount_ = 0;

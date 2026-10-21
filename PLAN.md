@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 382 (2026-10-21) — the quad's suspension is rebuilt only when it moves
+
+The quad bike's render pass cost the operator 0.8-1.0 ms a frame even parked: its moving parts
+(struts, springs, links and the stand-in rider) were rebuilt and uploaded every frame, twice (for
+the body and again for its sun shadow), at any distance out to 300 m. They are now kept per rider
+variant (the shadow asks for the stand-in rider while the avatar rides) and rebuilt only when the
+wheels' hubs move in the body frame, the stand-in rider leans or the detail changes; the struts,
+springs and links (a few centimetres thick) are drawn within 30 m only. The stand-in rider's lean
+still eases once per call, as before. `quad`, `quad-ride`, `quad-chase` and `quad-drive` show the
+same quad (the latter ends at the same 39 km/h, place, ruts and dust); they differ from their
+previous runs only in the wind-swayed plants, as those wall-clock captures always do. The tests pass.
+
 ## Loop pass 381 (2026-10-21) — birds past 35 m are built with six sides
 
 The birds' render pass cost the operator 0.7-1.7 ms a frame: every bird within 255 m was built as

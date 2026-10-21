@@ -640,7 +640,8 @@ void main()
         BuildWheel(vertices, 0.245f);
         Upload(rearWheel_, rearWheelCount_, vertices);
         dynamicStaging_.reserve(20000U);
-        dynamic_ = std::make_unique<DynamicVertexBuffer>(device, Vertex::getVertexDeclarationStatic(), 20000, BufferUsage::WriteOnly);
+        for (auto& buffer : dynamic_)
+            buffer = std::make_unique<DynamicVertexBuffer>(device, Vertex::getVertexDeclarationStatic(), 20000, BufferUsage::WriteOnly);
         glowStaging_.reserve(512U);
         glow_ = std::make_unique<DynamicVertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(), 512, BufferUsage::WriteOnly);
         glowEffect_->setVertexColorEnabledProperty(true);
@@ -704,50 +705,62 @@ void main()
         return pose;
     }
 
-    int QuadBikeRenderer::BuildDynamic(const QuadBike& bike, const bool riderFallback)
+    int QuadBikeRenderer::BuildDynamic(const QuadBike& bike, const bool riderFallback, const bool detailed)
     {
         const BikeVec p = bike.Position(), x = bike.Right(), y = bike.Up(), z = bike.Forward();
-        dynamicStaging_.clear();
-        MeshBuilder m{dynamicStaging_};
         const auto local = [&](const BikeVec& world) {
             const BikeVec d{world.x - p.x, world.y - p.y, world.z - p.z};
             return Vector3(d.x * x.x + d.y * x.y + d.z * x.z, d.x * y.x + d.y * y.y + d.z * y.z, d.x * z.x + d.y * z.y + d.z * z.z);
         };
-        for (const int wheel : {0, 1}) {
-            const float s = wheel == 0 ? -1.0f : 1.0f;
-            const Vector3 hub = local(bike.WheelHub(wheel));
-            const Vector3 lowerBall(hub.X - s * 0.07f, hub.Y - 0.07f, hub.Z), upperBall(hub.X - s * 0.07f, hub.Y + 0.09f, hub.Z);
-            m.Box(Vector3(hub.X - s * 0.06f, hub.Y, hub.Z), Vector3(0.025f, 0.09f, 0.035f), EngineMetal);
-            m.Path({Vector3(s * 0.20f, -0.32f, 0.54f), lowerBall, Vector3(s * 0.20f, -0.32f, 0.72f)}, 0.016f, Steel);
-            m.Path({Vector3(s * 0.17f, -0.13f, 0.57f), upperBall, Vector3(s * 0.17f, -0.13f, 0.70f)}, 0.014f, Steel);
-            const Vector3 top(s * 0.23f, 0.03f, 0.63f);
-            const Vector3 bottom = Vector3::Lerp(Vector3(s * 0.20f, -0.32f, 0.63f), lowerBall, 0.70f);
-            m.Tube(top, Vector3::Lerp(top, bottom, 0.55f), 0.022f, Steel, 10);
-            m.Tube(Vector3::Lerp(top, bottom, 0.5f), bottom, 0.010f, Chrome, 8);
-            m.Coil(Vector3::Lerp(top, bottom, 0.08f), Vector3::Lerp(top, bottom, 0.92f), 0.038f, 0.007f, 7, Spring);
-        }
-        {
-            const Vector3 rl = local(bike.WheelHub(2)), rr = local(bike.WheelHub(3));
-            const Vector3 axle = (rl + rr) * 0.5f;
-            m.Tube(rl, rr, 0.026f, Steel, 10);
-            m.Lathe(rl + Vector3(0.04f, 0.0f, 0.0f), Vector3::UnitX, {{0.0f, 0.10f}, {0.012f, 0.10f}, {0.014f, 0.0f}}, 14, SkidPlate);
-            for (const float s : {-1.0f, 1.0f})
-                m.Tube(Vector3(s * 0.12f, -0.24f, -0.08f), Vector3(s * 0.12f, axle.Y + 0.02f, axle.Z + 0.06f), 0.024f, Steel, 8);
-            m.Tube(Vector3(-0.12f, -0.22f, -0.30f), Vector3(0.12f, -0.22f, -0.30f), 0.018f, Steel, 8);
-            const Vector3 shockTop(0.0f, 0.06f, -0.26f);
-            const Vector3 shockBottom = Vector3::Lerp(Vector3(0.0f, -0.24f, -0.08f), Vector3(0.0f, axle.Y + 0.02f, axle.Z + 0.06f), 0.45f);
-            m.Tube(shockTop, Vector3::Lerp(shockTop, shockBottom, 0.55f), 0.026f, Steel, 10);
-            m.Tube(Vector3::Lerp(shockTop, shockBottom, 0.5f), shockBottom, 0.012f, Chrome, 8);
-            m.Coil(Vector3::Lerp(shockTop, shockBottom, 0.08f), Vector3::Lerp(shockTop, shockBottom, 0.92f), 0.045f, 0.008f, 7, Spring);
-        }
         if (riderFallback) {
-            // a simple seated rider: torso over the seat, arms to the grips, legs to the footwells
-            const Vector3 seat = V(Seat);
             // leaning into a corner as the CNA rider does: from the cornering pull, eased, up
             // to 12 degrees, the upper body turned about the hips (the hands stay on the grips)
             const float speed = bike.Speed();
             const float pull = speed * speed * std::tan(bike.SteerRadians()) / QuadBike::WheelBase;
             riderLean_ += (std::clamp(pull / 9.81f, -1.0f, 1.0f) * 0.2094f - riderLean_) * 0.12f;
+        }
+        // Only the wheels' travel and the rider's lean move these parts: a parked quad (and a
+        // second call in the same frame) keeps the last upload instead of rebuilding it.
+        std::array<Vector3, 4> hubs;
+        for (int wheel = 0; wheel < 4; ++wheel) hubs[static_cast<std::size_t>(wheel)] = local(bike.WheelHub(wheel));
+        auto& key = dynamicKeys_[riderFallback ? 1U : 0U];
+        if (key.valid && key.hubs == hubs && key.detailed == detailed && (!riderFallback || key.lean == riderLean_))
+            return key.count;
+        dynamicStaging_.clear();
+        MeshBuilder m{dynamicStaging_};
+        // The struts, springs and links are a few centimetres thick: sub-pixel past 30 m.
+        if (detailed) {
+            for (const int wheel : {0, 1}) {
+                const float s = wheel == 0 ? -1.0f : 1.0f;
+                const Vector3 hub = local(bike.WheelHub(wheel));
+                const Vector3 lowerBall(hub.X - s * 0.07f, hub.Y - 0.07f, hub.Z), upperBall(hub.X - s * 0.07f, hub.Y + 0.09f, hub.Z);
+                m.Box(Vector3(hub.X - s * 0.06f, hub.Y, hub.Z), Vector3(0.025f, 0.09f, 0.035f), EngineMetal);
+                m.Path({Vector3(s * 0.20f, -0.32f, 0.54f), lowerBall, Vector3(s * 0.20f, -0.32f, 0.72f)}, 0.016f, Steel);
+                m.Path({Vector3(s * 0.17f, -0.13f, 0.57f), upperBall, Vector3(s * 0.17f, -0.13f, 0.70f)}, 0.014f, Steel);
+                const Vector3 top(s * 0.23f, 0.03f, 0.63f);
+                const Vector3 bottom = Vector3::Lerp(Vector3(s * 0.20f, -0.32f, 0.63f), lowerBall, 0.70f);
+                m.Tube(top, Vector3::Lerp(top, bottom, 0.55f), 0.022f, Steel, 10);
+                m.Tube(Vector3::Lerp(top, bottom, 0.5f), bottom, 0.010f, Chrome, 8);
+                m.Coil(Vector3::Lerp(top, bottom, 0.08f), Vector3::Lerp(top, bottom, 0.92f), 0.038f, 0.007f, 7, Spring);
+            }
+            {
+                const Vector3 rl = local(bike.WheelHub(2)), rr = local(bike.WheelHub(3));
+                const Vector3 axle = (rl + rr) * 0.5f;
+                m.Tube(rl, rr, 0.026f, Steel, 10);
+                m.Lathe(rl + Vector3(0.04f, 0.0f, 0.0f), Vector3::UnitX, {{0.0f, 0.10f}, {0.012f, 0.10f}, {0.014f, 0.0f}}, 14, SkidPlate);
+                for (const float s : {-1.0f, 1.0f})
+                    m.Tube(Vector3(s * 0.12f, -0.24f, -0.08f), Vector3(s * 0.12f, axle.Y + 0.02f, axle.Z + 0.06f), 0.024f, Steel, 8);
+                m.Tube(Vector3(-0.12f, -0.22f, -0.30f), Vector3(0.12f, -0.22f, -0.30f), 0.018f, Steel, 8);
+                const Vector3 shockTop(0.0f, 0.06f, -0.26f);
+                const Vector3 shockBottom = Vector3::Lerp(Vector3(0.0f, -0.24f, -0.08f), Vector3(0.0f, axle.Y + 0.02f, axle.Z + 0.06f), 0.45f);
+                m.Tube(shockTop, Vector3::Lerp(shockTop, shockBottom, 0.55f), 0.026f, Steel, 10);
+                m.Tube(Vector3::Lerp(shockTop, shockBottom, 0.5f), shockBottom, 0.012f, Chrome, 8);
+                m.Coil(Vector3::Lerp(shockTop, shockBottom, 0.08f), Vector3::Lerp(shockTop, shockBottom, 0.92f), 0.045f, 0.008f, 7, Spring);
+            }
+        }
+        if (riderFallback) {
+            // a simple seated rider: torso over the seat, arms to the grips, legs to the footwells
+            const Vector3 seat = V(Seat);
             const float leanCos = std::cos(riderLean_), leanSin = std::sin(riderLean_);
             const Vector3 hips = seat + Vector3(0.0f, 0.06f, 0.0f);
             const auto leaned = [&](const Vector3& point) {
@@ -773,16 +786,17 @@ void main()
             }
         }
         const int count = static_cast<int>(std::min<std::size_t>(dynamicStaging_.size(), 20000U) / 3U * 3U);
-        if (count > 0) dynamic_->SetData(dynamicStaging_.data(), 0, count, SetDataOptions::Discard);
+        if (count > 0) dynamic_[riderFallback ? 1U : 0U]->SetData(dynamicStaging_.data(), 0, count, SetDataOptions::Discard);
+        key = {hubs, riderLean_, detailed, true, count};
         return count;
     }
 
-    void QuadBikeRenderer::DrawAll(ShaderEffect& effect, const Pose& pose, const int dynamicCount)
+    void QuadBikeRenderer::DrawAll(ShaderEffect& effect, const Pose& pose, const int dynamicCount, const bool rider)
     {
         effect.SetUniformVec3("uDirt", dirt_, dirtWet_, 0.0f);
         DrawPart(effect, *body_, bodyCount_, pose.body);
         DrawPart(effect, *bars_, barsCount_, pose.bars);
-        if (dynamicCount > 0) DrawPart(effect, *dynamic_, dynamicCount, pose.body);
+        if (dynamicCount > 0) DrawPart(effect, *dynamic_[rider ? 1U : 0U], dynamicCount, pose.body);
         effect.SetUniformVec3("uDirt", dirt_, dirtWet_, 1.0f);
         for (std::size_t wheel = 0; wheel < 4; ++wheel) {
             if (wheel < 2) DrawPart(effect, *frontWheel_, frontWheelCount_, pose.wheels[wheel]);
@@ -795,9 +809,10 @@ void main()
     {
         drawCalls_ = 0;
         const BikeVec p = bike.Position();
-        if ((Vector3(p.x, p.y, p.z) - camera).LengthSquared() > 300.0f * 300.0f) return;
+        const float distanceSquared = (Vector3(p.x, p.y, p.z) - camera).LengthSquared();
+        if (distanceSquared > 300.0f * 300.0f) return;
         const Pose pose = PoseOf(bike);
-        const int dynamicCount = BuildDynamic(bike, riderFallback);
+        const int dynamicCount = BuildDynamic(bike, riderFallback, distanceSquared < 30.0f * 30.0f);
         device_.setRasterizerStateProperty(RasterizerState::CullNone);
         device_.setBlendStateProperty(BlendState::Opaque);
         device_.setDepthStencilStateProperty(DepthStencilState::Default);
@@ -826,7 +841,7 @@ void main()
         material_->SetUniformFloat("uWetness", weather_now::Current().wetness);
         if (sunShadow_) sunShadow_->Bind(*material_);
         else SunShadowMap::BindDisabled(*material_);
-        DrawAll(*material_, pose, dynamicCount);
+        DrawAll(*material_, pose, dynamicCount, riderFallback);
     }
 
     void QuadBikeRenderer::DrawShadow(const Matrix& view, const Matrix& projection, const Vector3& camera,
@@ -894,7 +909,7 @@ void main()
         l.Normalize();
         if (Vector3::Dot(l, n) < 0.2f) return;
         const Pose pose = PoseOf(bike);
-        const int dynamicCount = BuildDynamic(bike, rider);
+        const int dynamicCount = BuildDynamic(bike, rider, distance < 30.0f);
         device_.setDepthStencilStateProperty(*shadowDepth_);
         float viewProjection[16];
         (view * projection).ToColumnMajor(viewProjection);
@@ -903,7 +918,7 @@ void main()
         shadow_->SetUniformVec4("uPlane", n.X, n.Y, n.Z, -Vector3::Dot(n, g));
         shadow_->SetUniformVec3("uToSun", l.X, l.Y, l.Z);
         shadow_->SetUniformFloat("uShadowAlpha", std::clamp(sunStrength, 0.0f, 1.0f) * 0.42f * fade);
-        DrawAll(*shadow_, pose, dynamicCount);
+        DrawAll(*shadow_, pose, dynamicCount, rider);
     }
 
     void QuadBikeRenderer::DrawLights(const Matrix& view, const Matrix& projection, const Vector3& camera,
