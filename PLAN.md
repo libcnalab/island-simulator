@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 279 (2026-10-21) — rain splashes on the ground
+
+Heavier rain now splashes on the land round the walker as the sea's rings already showed it
+on the water: a new `RainSplashRenderer` keeps a fixed world grid of 0.4 m cells out to 9 m,
+each taking a drop every 0.45-1.05 s (its own period and phase, a fresh spot in the cell each
+time) when the rain is heavy enough (none below 0.3, every cell in a downpour of 0.8 and up);
+the drop throws a small crown of four droplets that fly out at 0.55-0.9 m/s and up at
+0.8-1.1 m/s and fall back within 0.16 s, drawn as short pale streaks about a pixel wide,
+faded with their age and towards the edge of the radius. Not on the sea or the swash (they
+have the rings), world-anchored, before the night grade with the rain. `campfire` and `beach`
+in a thunderstorm show the ground seething with small splashes between the puddle rings;
+`beach` in showers passes too.
+
 ## Loop pass 278 (2026-10-21) — the forest and the grass in a storm's wind
 
 As the palms (pass 277), the forest trees and the grass now answer the weather's wind

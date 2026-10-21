@@ -2462,6 +2462,7 @@ namespace island
         if (hutPlacement_) rain_->SetShelter(hutPlacement_->x, hutPlacement_->z, hutPlacement_->yawRadians, 2.73f, 2.32f,
                                              hutPlacement_->floorY + 2.08f, hutPlacement_->floorY + 3.62f);
         rainRings_ = std::make_unique<RainRingRenderer>(device, terrain_);
+        rainSplashes_ = std::make_unique<RainSplashRenderer>(device, terrain_);
         fireflies_ = std::make_unique<FireflySwarm>(terrain_);
         fireflyRenderer_ = std::make_unique<FireflyRenderer>(device);
         morningMist_ = std::make_unique<MorningMistField>(terrain_);
@@ -5763,6 +5764,7 @@ namespace island
                                              timeSeconds);
                 rain_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, weather.rain, weather.wind, timeSeconds);
                 rainRings_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, weather.rain, timeSeconds);
+                rainSplashes_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, weather.rain, timeSeconds);
                 if (eaveDrips_) eaveDrips_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, weather.rain, timeSeconds);
             }
             // The local lights (the campfire, the quad's headlights) light the ground through the

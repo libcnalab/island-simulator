@@ -19,6 +19,7 @@
 #include "IslandSimulator/WhaleRenderer.hpp"
 #include "IslandSimulator/SunbeamMoteRenderer.hpp"
 #include "IslandSimulator/EaveDripRenderer.hpp"
+#include "IslandSimulator/RainSplashRenderer.hpp"
 #include "IslandSimulator/RainRingRenderer.hpp"
 #include "IslandSimulator/QuadWheelTraces.hpp"
 #include "IslandSimulator/TyreTrackRenderer.hpp"
@@ -547,6 +548,7 @@ namespace island
         std::unique_ptr<RootingDustRenderer> exhaustRenderer_;
         std::unique_ptr<LocalLightRenderer> localLights_;
         std::unique_ptr<RainRingRenderer> rainRings_;
+        std::unique_ptr<RainSplashRenderer> rainSplashes_;
         std::unique_ptr<FireflySwarm> fireflies_;
         // the day fliers still out this frame (they roost one by one at dusk)
         std::vector<ButterflyState> awakeButterflies_;
