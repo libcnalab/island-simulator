@@ -249,7 +249,7 @@ namespace island
         [[nodiscard]] float CarapaceSurfaceHeight(const float x, const float z)
         {
             const float ellipse = std::clamp(
-                1.0f - (x * x) / (.44f * .44f) - (z * z) / (.215f * .215f),
+                1.0f - (x * x) / (.36f * .36f) - (z * z) / (.33f * .33f),
                 0.0f, 1.0f);
             return .070f + .058f * std::sqrt(ellipse);
         }
@@ -662,16 +662,18 @@ namespace island
                 const float cosine = std::cos(angle);
                 const float sine = std::sin(angle);
                 const float frontTaper = sine > 0.0f ? 0.94f : 1.0f;
+                // A beach crab's carapace is near square, a third again as wide as long (at
+                // 2.6 to 1 a crab seen from its side or its front read as a sausage).
                 crown[index] = LocalPoint(centre, right, up, forward,
-                    cosine * 0.275f, 0.130f, sine * 0.086f - 0.01f, scale);
+                    cosine * 0.225f, 0.130f, sine * 0.135f - 0.01f, scale);
                 shoulder[index] = LocalPoint(centre, right, up, forward,
-                    cosine * 0.435f, 0.112f,
-                    sine * 0.155f * frontTaper - 0.005f, scale);
+                    cosine * 0.355f, 0.112f,
+                    sine * 0.243f * frontTaper - 0.005f, scale);
                 rim[index] = LocalPoint(centre, right, up, forward,
-                    cosine * 0.515f, 0.078f, sine * 0.198f * frontTaper, scale);
+                    cosine * 0.420f, 0.078f, sine * 0.310f * frontTaper, scale);
                 lower[index] = LocalPoint(
-                    centre, right, up, forward, cosine * 0.480f, 0.040f,
-                    sine * 0.178f * frontTaper, scale);
+                    centre, right, up, forward, cosine * 0.390f, 0.040f,
+                    sine * 0.279f * frontTaper, scale);
             }
             for (std::size_t index = 0; index < crown.size(); ++index) {
                 const std::size_t next = (index + 1U) % crown.size();
@@ -739,11 +741,14 @@ namespace island
                     return LocalPoint(centre, right, up, forward, x,
                                       CarapaceSurfaceHeight(x, z) + .004f, z, scale);
                 };
+                // (the marks were laid out on the old long-and-narrow shell)
+                const float mx = mark.x * .82f, mz = mark.z * 1.5f;
+                const float hx = mark.halfX * .82f, hz = mark.halfZ * 1.5f;
                 AddQuad(vertices,
-                        point(mark.x - mark.halfX, mark.z),
-                        point(mark.x, mark.z + mark.halfZ),
-                        point(mark.x + mark.halfX, mark.z),
-                        point(mark.x, mark.z - mark.halfZ), markColor);
+                        point(mx - hx, mz),
+                        point(mx, mz + hz),
+                        point(mx + hx, mz),
+                        point(mx, mz - hz), markColor);
             }
 
             // A crab's lateral shell corners remain characteristic even when its broad axis is
@@ -753,32 +758,32 @@ namespace island
                 const float side = static_cast<float>(sideIndex);
                 AddDoubleSidedTriangle(
                     vertices,
-                    LocalPoint(centre, right, up, forward, side * .38f, .088f,
-                               .135f, scale),
-                    LocalPoint(centre, right, up, forward, side * .585f, .072f,
-                               .015f, scale),
-                    LocalPoint(centre, right, up, forward, side * .39f, .080f,
-                               -.135f, scale),
+                    LocalPoint(centre, right, up, forward, side * .31f, .088f,
+                               .21f, scale),
+                    LocalPoint(centre, right, up, forward, side * .47f, .072f,
+                               .04f, scale),
+                    LocalPoint(centre, right, up, forward, side * .32f, .080f,
+                               -.17f, scale),
                     palette.shellSide);
             }
 
             for (int sideIndex = -1; sideIndex <= 1; sideIndex += 2) {
                 const float side = static_cast<float>(sideIndex);
                 for (int leg = 0; leg < 4; ++leg) {
-                    const float z = -0.17f + static_cast<float>(leg) * 0.115f;
+                    const float z = -0.20f + static_cast<float>(leg) * 0.115f;
                     const float stride = crab.legPhase * (leg % 2 == 0 ? 0.045f : -0.045f);
                     const float bend = (leg < 2 ? -0.045f : 0.045f)
                         + (leg % 2 == 0 ? 0.018f : -0.018f);
                     const Vector3 root = LocalPoint(
-                        centre, right, up, forward, side * 0.34f, 0.075f, z, scale);
+                        centre, right, up, forward, side * 0.30f, 0.075f, z, scale);
                     const Vector3 knee = LocalPoint(
-                        centre, right, up, forward, side * 0.52f, 0.035f,
+                        centre, right, up, forward, side * 0.50f, 0.035f,
                         z + bend + stride, scale);
                     const Vector3 foot = LocalPoint(
-                        centre, right, up, forward, side * 0.68f, -0.015f,
+                        centre, right, up, forward, side * 0.66f, -0.015f,
                         z + bend * 1.35f + stride * 1.55f, scale);
                     const Vector3 toe = LocalPoint(
-                        centre, right, up, forward, side * 0.78f, -0.020f,
+                        centre, right, up, forward, side * 0.77f, -0.020f,
                         z + bend * 1.55f + stride * 1.72f
                             + (leg % 2 == 0 ? -0.018f : 0.018f), scale);
                     AppendTaperedLimbSegment(vertices, root, knee, 0.026f * scale,
@@ -795,14 +800,14 @@ namespace island
                 const float wave = crab.waveSide * side > 0.0f ? std::clamp(crab.waveAmount, 0.0f, 1.0f) : 0.0f;
                 const float lift = wave * (0.16f + 0.09f * std::sin(crab.wavePhase));
                 const Vector3 clawRoot = LocalPoint(
-                    centre, right, up, forward, side * 0.24f, 0.11f + lift * 0.25f, 0.16f, scale);
+                    centre, right, up, forward, side * 0.22f, 0.11f + lift * 0.25f, 0.22f, scale);
                 const Vector3 clawJoint = LocalPoint(
-                    centre, right, up, forward, side * 0.40f, 0.13f + lift * 0.7f, 0.28f - lift * 0.1f, scale);
+                    centre, right, up, forward, side * 0.36f, 0.13f + lift * 0.7f, 0.36f - lift * 0.1f, scale);
                 AppendTaperedLimbSegment(vertices, clawRoot, clawJoint,
                                          0.032f * scale, 0.024f * scale,
                                          palette.limb);
                 const Vector3 palm = LocalPoint(
-                    centre, right, up, forward, side * 0.49f, 0.15f + lift, 0.350f - lift * 0.2f, scale);
+                    centre, right, up, forward, side * 0.44f, 0.15f + lift, 0.440f - lift * 0.2f, scale);
                 if (useRoundedUnequalPalms) {
                     AppendRoundedCoconutPalm(
                         vertices, palm, right, up, forward,
@@ -819,11 +824,11 @@ namespace island
                                           palette.shellSide);
                 }
                 const Vector3 outerTip = LocalPoint(
-                    centre, right, up, forward, side * (0.46f + clawSpread),
-                    0.165f + lift * 1.15f, 0.485f - lift * 0.3f, scale);
+                    centre, right, up, forward, side * (0.41f + clawSpread),
+                    0.165f + lift * 1.15f, 0.575f - lift * 0.3f, scale);
                 const Vector3 innerTip = LocalPoint(
-                    centre, right, up, forward, side * (0.44f - clawSpread * 0.45f),
-                    0.125f + lift * 1.15f, 0.49f - lift * 0.3f, scale);
+                    centre, right, up, forward, side * (0.39f - clawSpread * 0.45f),
+                    0.125f + lift * 1.15f, 0.58f - lift * 0.3f, scale);
                 const Vector3 outerBase = palm + right * (side * 0.035f * scale)
                     + forward * (0.035f * scale);
                 const Vector3 innerBase = palm - right * (side * 0.025f * scale)
@@ -854,10 +859,10 @@ namespace island
             for (int sideIndex = -1; sideIndex <= 1; sideIndex += 2) {
                 const float side = static_cast<float>(sideIndex);
                 const Vector3 eyeRoot = LocalPoint(
-                    centre, right, up, forward, side * 0.12f, 0.155f, 0.19f, scale);
+                    centre, right, up, forward, side * 0.12f, 0.150f, 0.26f, scale);
                 const Vector3 eyeCentre = LocalPoint(
                     centre, right, up, forward, side * (0.12f + 0.02f * fold),
-                    0.225f - 0.062f * fold, 0.225f + 0.045f * fold, scale);
+                    0.220f - 0.062f * fold, 0.295f + 0.045f * fold, scale);
                 AppendCrossedSegment(vertices, eyeRoot, eyeCentre,
                                      0.012f * scale, palette.shellSide);
                 AppendOctahedron(vertices, eyeCentre, right, up, forward,
@@ -871,13 +876,13 @@ namespace island
             }
 
             const Vector3 mouthCentre = LocalPoint(
-                centre, right, up, forward, 0.0f, 0.072f, 0.236f, scale);
+                centre, right, up, forward, 0.0f, 0.072f, 0.300f, scale);
             const Vector3 mouthLeft = LocalPoint(
-                centre, right, up, forward, -0.07f, 0.068f, 0.244f, scale);
+                centre, right, up, forward, -0.07f, 0.068f, 0.306f, scale);
             const Vector3 mouthRight = LocalPoint(
-                centre, right, up, forward, 0.07f, 0.068f, 0.244f, scale);
+                centre, right, up, forward, 0.07f, 0.068f, 0.306f, scale);
             const Vector3 mouthLow = LocalPoint(
-                centre, right, up, forward, 0.0f, 0.035f, 0.255f, scale);
+                centre, right, up, forward, 0.0f, 0.035f, 0.318f, scale);
             AddDoubleSidedTriangle(vertices, mouthLeft, mouthCentre, mouthLow,
                                    palette.joint);
             AddDoubleSidedTriangle(vertices, mouthCentre, mouthRight, mouthLow,
@@ -887,12 +892,12 @@ namespace island
                 const float side = static_cast<float>(sideIndex);
                 AddDoubleSidedTriangle(
                     vertices,
-                    LocalPoint(centre, right, up, forward, side * 0.30f, 0.11f,
-                               -0.16f, scale),
-                    LocalPoint(centre, right, up, forward, side * 0.41f, 0.085f,
-                               -0.10f, scale),
-                    LocalPoint(centre, right, up, forward, side * 0.34f, 0.10f,
-                               -0.035f, scale),
+                    LocalPoint(centre, right, up, forward, side * 0.25f, 0.11f,
+                               -0.24f, scale),
+                    LocalPoint(centre, right, up, forward, side * 0.35f, 0.085f,
+                               -0.17f, scale),
+                    LocalPoint(centre, right, up, forward, side * 0.30f, 0.10f,
+                               -0.07f, scale),
                     palette.shellSide);
             }
         }

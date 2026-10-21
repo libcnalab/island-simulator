@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 418 (2026-10-21) — beach crabs have near-square carapaces, not sausages
+
+At 1:1 in `crabs` and `mangroves` most beach crabs read as long red sausages with a claw at each
+end: the near crab's carapace rim was 2.6 times as wide as long (0.515 by 0.198), so a crab seen
+from its side or its front was a thin bar with legs. A beach crab's carapace (Ocypode, Grapsus) is
+near square; AppendNearCrab's is now a third again as wide as long (rim 0.42 by 0.31, the crown,
+shoulder and lower rings in proportion, CarapaceSurfaceHeight's ellipse 0.36 by 0.33), and what sat
+on the old shell moved with it: the shell marks, the anterolateral corners and the rear plates, the
+legs (roots at 0.30, spread from -0.20 along it), the claws (root, joint and palm forward to 0.22,
+0.36 and 0.44, the fingers' tips to 0.58), the eyestalks to the front margin (0.26-0.30) and the
+mouth. The vertex budget is unchanged (2112). Judged at 3x in `crabs` and `mangroves`.
+
 ## Loop pass 417 (2026-10-21) — beach morning glory creeps over the upper beaches
 
 The upper beaches were bare sand from the vegetation line to the swash. Beach morning glory
