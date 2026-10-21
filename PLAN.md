@@ -233,6 +233,21 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 320 (2026-10-21) — no checkerboard on the far sea
+
+From the shore (`tide-pools`, `headland`) the sea between about 30 and 300 m was tiled with a
+regular checkerboard of light and dark cells. Probes ruled out the wave normals (a flat normal
+kept it), the seabed caustics (off, it stayed) and a stricter normal-wave filter; zeroing the two
+crossing colour carriers (`phaseA`/`phaseB`, about 10 and 12 m wavelengths, which drive the
+subsurface tint, the ripple cells and the reflection ruffle) took it away. Their footprint filter
+was the normal waves' (gone only near 1.1-2.6 radians a pixel, close to Nyquist), so in the
+middle distance perspective pressed their crossing into cells some six pixels tall, about a
+radian a pixel, still unfiltered. They now have their own filter, giving way from 0.3 to 0.9
+radians a pixel (twenty pixels a wavelength down to seven): the far sea is smooth with its
+broad reflections, while the near water from the jetty, swimming (`current`, `shark`, `water`)
+and from the air (`bay`, `headland`) keeps its ripple. `tide-pools`, `headland`, `water`, `bay`,
+`current`, `dolphins`, `shark`, `jetty` and the tests pass.
+
 ## Loop pass 319 (2026-10-21) — the seagrass closes into a meadow
 
 Pass 303's seagrass stood as scattered tufts: every frame the CPU rebuilt the blades within 24 m
@@ -252,7 +267,8 @@ patches now read dark against the sand. A probe counted the load: about 490,000 
 (16 MB) and 13,000 drawn blades in `turtles`, the densest view, 140,000 corners in `jetty-end`.
 A first planting curve (from 0.08) left the fringe bare in `reef-habitat`; from 0 it keeps its
 scattered tufts. `turtles` (also at 21:30), `jetty-end`, `reef-habitat`, `overview`, `water`,
-`fish`, `stingrays`, `octopuses`, `jetty-water` and the tests pass.
+`fish`, `stingrays`, `octopuses` and the tests pass (a `jetty-water` named here at first is not
+a capture viewpoint: the check had read an older capture, corrected in pass 320).
 
 ## Loop pass 318 (2026-10-21) — touch buttons for the quad and the torch
 
