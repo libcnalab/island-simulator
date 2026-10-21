@@ -239,6 +239,58 @@ namespace island
             AddTriangle(vertices, belly, front, left, side);
         }
 
+        // A lofted body lit at each corner by its ring's own (elliptical) normal and the day's
+        // sun, the colour graded from the spine down the flanks to the belly: the small fauna
+        // took no light, each facet one of three flat colours by its angle, which read as
+        // moulded plastic. Optional fur grizzle, shell gloss and alternate-segment banding.
+        struct LoftShading
+        {
+            Color spine, flank, belly;
+            float grizzle = 0.0f, gloss = 0.0f, banding = 0.0f;
+            float seed = 0.0f;
+        };
+
+        template<int Sides, std::size_t StationCount>
+        void AppendShadedLoft(std::vector<VertexPositionColor>& vertices,
+                              const Vector3& centre, const Vector3& right,
+                              const Vector3& up, const Vector3& forward,
+                              const std::array<float, StationCount>& stations,
+                              const std::array<float, StationCount>& halfWidths,
+                              const std::array<float, StationCount>& halfHeights,
+                              const float scale, const LoftShading& shading)
+        {
+            const auto corner = [&](const std::size_t station, const int index) {
+                const float angle = 6.28318530718f * static_cast<float>(index) / Sides;
+                const float vertical = std::sin(angle);
+                const Color base = vertical > 0.0f
+                    ? Color::Lerp(shading.flank, shading.spine, std::clamp(vertical / .8f, 0.0f, 1.0f))
+                    : Color::Lerp(shading.flank, shading.belly, std::clamp(-vertical / .6f, 0.0f, 1.0f));
+                Vector3 normal = right * (std::cos(angle) / std::max(halfWidths[station], 1.0e-4f))
+                    + up * (vertical / std::max(halfHeights[station], 1.0e-4f));
+                normal.Normalize();
+                const float direct = std::max(0.0f, Vector3::Dot(normal, wildlife_render::FixedSunDirection));
+                const float sky = std::max(0.0f, normal.Y);
+                float light = .80f + .30f * direct + .08f * sky + shading.gloss * std::pow(sky, 8.0f);
+                light *= 1.0f + shading.grizzle * std::sin(static_cast<float>(station) * 3.7f
+                    + static_cast<float>(index) * 2.3f + shading.seed * 1.31f);
+                if (station % 2U == 1U) light *= 1.0f + shading.banding;
+                return VertexPositionColor(centre + forward * (stations[station] * scale)
+                    + right * (std::cos(angle) * halfWidths[station] * scale)
+                    + up * (vertical * halfHeights[station] * scale),
+                    wildlife_render::ScaleColor(base, light));
+            };
+            for (std::size_t station = 0; station + 1U < StationCount; ++station) {
+                for (int index = 0; index < Sides; ++index) {
+                    const int next = (index + 1) % Sides;
+                    const VertexPositionColor a = corner(station, index);
+                    const VertexPositionColor b = corner(station + 1U, index);
+                    const VertexPositionColor c = corner(station + 1U, next);
+                    const VertexPositionColor d = corner(station, next);
+                    vertices.insert(vertices.end(), {a, b, c, a, c, d});
+                }
+            }
+        }
+
         void AppendGeckoSegment(std::vector<VertexPositionColor>& vertices,
                                 const Vector3& a, const Vector3& b,
                                 const float halfWidth, const Color& color)
@@ -317,22 +369,8 @@ namespace island
                     +right*(std::cos(angle)*halfWidths[station]*scale)
                     +up*(std::sin(angle)*halfHeights[station]*scale);
             };
-            for(std::size_t station=0;station+1U<StationCount;++station) {
-                for(int side=0;side<Sides;++side) {
-                    const int next=(side+1)%Sides;
-                    const float vertical=std::sin(6.28318530718f
-                        *(static_cast<float>(side)+.5f)/Sides);
-                    const Color color=vertical>.28f
-                        ? Color::Lerp(dorsal,Color(194,204,139,255),.13f)
-                        : (vertical<-.28f?underside:flank);
-                    const Vector3 a=ringPoint(station,side);
-                    const Vector3 b=ringPoint(station+1U,side);
-                    const Vector3 c=ringPoint(station+1U,next);
-                    const Vector3 d=ringPoint(station,next);
-                    AddTriangle(vertices,a,b,c,color);
-                    AddTriangle(vertices,a,c,d,color);
-                }
-            }
+            AppendShadedLoft<Sides>(vertices,centre,right,up,forward,stations,halfWidths,halfHeights,
+                                    scale,LoftShading{dorsal,flank,underside,0.0f,.10f});
             const Vector3 rear=centre+forward*(stations.front()*scale);
             const Vector3 front=centre+forward*(stations.back()*scale);
             for(int side=0;side<Sides;++side) {
@@ -361,24 +399,10 @@ namespace island
                     + right * (std::cos(angle) * halfWidths[station] * scale)
                     + up * (std::sin(angle) * halfHeights[station] * scale);
             };
-            for (std::size_t station = 0; station + 1U < StationCount; ++station) {
-                for (int side = 0; side < Sides; ++side) {
-                    const int next = (side + 1) % Sides;
-                    const float vertical = std::sin(6.28318530718f
-                        * (static_cast<float>(side) + .5f) / Sides);
-                    const Color base = vertical > .22f
-                        ? Color::Lerp(dorsal, Color(185, 205, 177, 255), .10f)
-                        : (vertical < -.22f ? underside : flank);
-                    const Color color = station % 2U == 0U
-                        ? base : Color::Lerp(base, dorsal, .08f);
-                    AddTriangle(vertices, ringPoint(station, side),
-                                ringPoint(station + 1U, side),
-                                ringPoint(station + 1U, next), color);
-                    AddTriangle(vertices, ringPoint(station, side),
-                                ringPoint(station + 1U, next),
-                                ringPoint(station, next), color);
-                }
-            }
+            // a hard shell: a sky gloss on its crown, the segments a shade apart
+            AppendShadedLoft<Sides>(vertices, centre, right, up, forward, stations, halfWidths,
+                                    halfHeights, scale,
+                                    LoftShading{dorsal, flank, underside, 0.0f, .28f, .05f});
             const Vector3 rear = centre + forward * (stations.front() * scale);
             const Vector3 front = centre + forward * (stations.back() * scale);
             for (int side = 0; side < Sides; ++side) {
@@ -1485,37 +1509,12 @@ namespace island
                     + right * (std::cos(angle) * halfWidths[station] * scale)
                     + up * (std::sin(angle) * halfHeights[station] * scale);
             };
-            // Each corner lit at the ring's own (elliptical) normal by the day's sun, the coat
-            // darkest along the spine and paling down the flanks to the belly, with a faint
-            // agouti grizzle: three flat unlit bands of colour read as moulded plastic.
-            const Color spine = wildlife_render::ScaleColor(dorsal, .94f);
-            const Color side = Color::Lerp(dorsal, underside, .30f);
-            const auto corner = [&](const std::size_t station, const int index) {
-                const float angle = 6.28318530718f * static_cast<float>(index) / Sides;
-                const float vertical = std::sin(angle);
-                const Color base = vertical > 0.0f
-                    ? Color::Lerp(side, spine, std::clamp(vertical / .8f, 0.0f, 1.0f))
-                    : Color::Lerp(side, underside, std::clamp(-vertical / .6f, 0.0f, 1.0f));
-                Vector3 normal = right * (std::cos(angle) / std::max(halfWidths[station], 1.0e-4f))
-                    + up * (vertical / std::max(halfHeights[station], 1.0e-4f));
-                normal.Normalize();
-                const float direct = std::max(0.0f, Vector3::Dot(normal, wildlife_render::FixedSunDirection));
-                const float sky = std::max(0.0f, normal.Y);
-                const float grizzle = 1.0f + .07f * std::sin(static_cast<float>(station) * 3.7f
-                    + static_cast<float>(index) * 2.3f + static_cast<float>(colorVariant) * 1.31f);
-                return VertexPositionColor(ringPoint(station, index), wildlife_render::ScaleColor(
-                    base, (.80f + .30f * direct + .08f * sky) * grizzle));
-            };
-            for (std::size_t station = 0; station + 1U < StationCount; ++station) {
-                for (int index = 0; index < Sides; ++index) {
-                    const int next = (index + 1) % Sides;
-                    const VertexPositionColor a = corner(station, index);
-                    const VertexPositionColor b = corner(station + 1U, index);
-                    const VertexPositionColor c = corner(station + 1U, next);
-                    const VertexPositionColor d = corner(station, next);
-                    vertices.insert(vertices.end(), {a, b, c, a, c, d});
-                }
-            }
+            // the coat darkest along the spine, paling down the flanks, with an agouti grizzle
+            AppendShadedLoft<Sides>(vertices, centre, right, up, forward, stations, halfWidths,
+                                    halfHeights, scale,
+                                    LoftShading{wildlife_render::ScaleColor(dorsal, .94f),
+                                                Color::Lerp(dorsal, underside, .30f), underside,
+                                                .07f, 0.0f, 0.0f, static_cast<float>(colorVariant)});
             const Vector3 rear = centre + forward * (stations.front() * scale);
             const Vector3 front = centre + forward * (stations.back() * scale);
             for (int side = 0; side < Sides; ++side) {
