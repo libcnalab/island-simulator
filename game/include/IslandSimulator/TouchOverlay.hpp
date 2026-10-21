@@ -13,6 +13,15 @@ namespace Microsoft::Xna::Framework::Graphics
 
 namespace island
 {
+    /** @brief Which action buttons to draw and how they are lit. */
+    struct TouchActionDisplay
+    {
+        bool rideShown = false;
+        bool riding = false;   ///< lit while on the quad: a tap steps off
+        bool torchShown = false;
+        bool torchOn = false;
+    };
+
     /** @brief Asset-free presentation for movement, look, and look-sensitivity touch controls. */
     class TouchOverlay final
     {
@@ -27,7 +36,8 @@ namespace island
 
         /** @brief Draws movement and look affordances over the completed 3D scene. */
         void Draw(const TouchControlState& state, float inputWidth, float inputHeight,
-                  int viewportWidth, int viewportHeight, bool showIdleHints);
+                  int viewportWidth, int viewportHeight, bool showIdleHints,
+                  const TouchActionDisplay& actions = {});
 
     private:
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::SpriteBatch> spriteBatch_;

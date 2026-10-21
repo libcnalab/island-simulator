@@ -43,6 +43,20 @@ namespace island
         return {displayWidth - radius * 1.4f, radius * 1.4f, radius};
     }
 
+    TouchSensitivitySelectorLayout TouchControls::ActionButtonLayout(
+        const TouchAction action, const float displayWidth, const float displayHeight) noexcept
+    {
+        const TouchSensitivitySelectorLayout selector =
+            SensitivitySelectorLayout(displayWidth, displayHeight);
+        if (selector.radius <= 0.0f) {
+            return {};
+        }
+        // a little larger than the selector, a thumb's reach down the right edge
+        const float radius = selector.radius * 1.15f;
+        const float row = static_cast<float>(static_cast<int>(action)) + 1.0f;
+        return {selector.x - (radius - selector.radius), selector.y + row * radius * 2.5f, radius};
+    }
+
     void TouchControls::Reset() noexcept
     {
         const TouchLookSensitivityLevel sensitivity = state_.lookSensitivity;
@@ -51,6 +65,7 @@ namespace island
         movementId_ = -1;
         lookId_ = -1;
         sensitivitySelectorId_ = -1;
+        actionId_ = -1;
         lastLookX_ = 0.0f;
         lastLookY_ = 0.0f;
     }
@@ -75,7 +90,8 @@ namespace island
         for (const TouchContact& contact : contacts) {
             if (!IsUsableContact(contact, displayWidth, displayHeight)
                 || contact.phase == TouchPhase::Released || contact.id == movementId_
-                || contact.id == lookId_ || contact.id == sensitivitySelectorId_) {
+                || contact.id == lookId_ || contact.id == sensitivitySelectorId_
+                || contact.id == actionId_) {
                 continue;
             }
             if (contact.x < displayWidth * 0.5f && movementId_ < 0) {
@@ -137,6 +153,43 @@ namespace island
             state_.sensitivitySelectorActive = true;
             state_.lookSensitivityChanged = true;
             return;
+        }
+    }
+
+    void TouchControls::UpdateActionButtons(const std::span<const TouchContact> contacts,
+                                            const float displayWidth,
+                                            const float displayHeight) noexcept
+    {
+        state_.actionButtonActive = false;
+        state_.rideToggled = false;
+        state_.torchToggled = false;
+        const TouchContact* held = FindContact(contacts, actionId_);
+        if (held == nullptr || !IsUsableContact(*held, displayWidth, displayHeight)
+            || held->phase == TouchPhase::Released) {
+            actionId_ = -1;
+        }
+        if (actionId_ >= 0) {
+            state_.actionButtonActive = true;
+            return;
+        }
+        for (const TouchContact& contact : contacts) {
+            if (contact.phase != TouchPhase::Pressed || contact.id == movementId_
+                || contact.id == lookId_ || contact.id == sensitivitySelectorId_
+                || !IsUsableContact(contact, displayWidth, displayHeight)) {
+                continue;
+            }
+            for (const TouchAction action : {TouchAction::Ride, TouchAction::Torch}) {
+                const TouchSensitivitySelectorLayout button =
+                    ActionButtonLayout(action, displayWidth, displayHeight);
+                if (!IsActionEnabled(action)
+                    || std::hypot(contact.x - button.x, contact.y - button.y) > button.radius) {
+                    continue;
+                }
+                actionId_ = contact.id;
+                state_.actionButtonActive = true;
+                (action == TouchAction::Ride ? state_.rideToggled : state_.torchToggled) = true;
+                return;
+            }
         }
     }
 
@@ -213,6 +266,7 @@ namespace island
         }
 
         UpdateSensitivitySelector(contacts, displayWidth, displayHeight);
+        UpdateActionButtons(contacts, displayWidth, displayHeight);
         AssignNewContacts(contacts, displayWidth, displayHeight);
         movement = FindContact(contacts, movementId_);
         if (movement != nullptr && movement->phase != TouchPhase::Released) {

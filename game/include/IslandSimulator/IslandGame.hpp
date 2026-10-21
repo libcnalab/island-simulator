@@ -608,6 +608,8 @@ namespace island
         [[nodiscard]] bool QuadObstacle(float x, float z, float radius, float& pushX, float& pushZ) const noexcept;
         void PlaceQuadNear(float x, float z, float yawRadians);
         [[nodiscard]] float QuadLampNightness() const noexcept;
+        [[nodiscard]] bool TouchRideOffered() const noexcept;   // the touch action buttons shown
+        [[nodiscard]] bool TouchTorchOffered() const noexcept;
         void UpdateQuad(float deltaSeconds);
         void UpdateQuadChaseCamera(float deltaSeconds);
         void ToggleQuad();

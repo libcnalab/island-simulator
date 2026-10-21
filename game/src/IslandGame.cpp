@@ -4189,6 +4189,19 @@ namespace island
         return renderCameraPosition_ + TorchAxis() * 0.25f + right * 0.18f - Vector3::Up * 0.35f;
     }
 
+    bool IslandGame::TouchRideOffered() const noexcept
+    {
+        // the touch ride button, where F would do something: on the quad, or on foot on land
+        return quadRenderer_ != nullptr
+            && (riding_ || (!flightMotion_.IsActive() && playerMotion_.Mode() != LocomotionMode::Swimming));
+    }
+
+    bool IslandGame::TouchTorchOffered() const noexcept
+    {
+        // the torch button on foot from dusk on (and to put a lit torch out by day)
+        return !riding_ && (torchOn_ || QuadLampNightness() > 0.05f);
+    }
+
     float IslandGame::QuadLampNightness() const noexcept
     {
         // How dark it is for the lamps: the sun's height, and a heavy sky.
@@ -4464,6 +4477,7 @@ namespace island
             : static_cast<float>(viewport.getHeightProperty());
         touchDisplayWidth_ = touchWidth;
         touchDisplayHeight_ = touchHeight;
+        touchControls_.SetActionsEnabled(TouchRideOffered(), TouchTorchOffered());
         touchControlState_ = touchControls_.Update(touchContacts, touchWidth, touchHeight);
         if (!touchContacts.empty()) {
             touchOverlayVisible_ = true;
@@ -4487,7 +4501,8 @@ namespace island
         }
         const bool touchInteracting = touchControlState_.movementActive
             || touchControlState_.lookActive
-            || touchControlState_.sensitivitySelectorActive;
+            || touchControlState_.sensitivitySelectorActive
+            || touchControlState_.actionButtonActive;
 #if defined(__EMSCRIPTEN__)
         // The page acquires pointer lock synchronously in the trusted click handler. A short
         // click can finish between game updates, so polled button state is not its receipt.
@@ -4796,14 +4811,15 @@ namespace island
 
         // H: the hand torch on or off (on foot; the quad has its lamps).
         const bool torchKeyDown = keyboard.IsKeyDown(Keys::H);
-        if (torchKeyDown && !torchKeyWasDown_ && getIsActiveProperty()) {
+        if ((torchKeyDown && !torchKeyWasDown_ && getIsActiveProperty()) || touchControlState_.torchToggled) {
             torchOn_ = !torchOn_;
             std::cout << "island-simulator: hand torch " << (torchOn_ ? "on" : "off") << '\n';
         }
         torchKeyWasDown_ = torchKeyDown;
         // F: ride the quad or step off it.
         const bool quadKeyDown = keyboard.IsKeyDown(Keys::F);
-        if (quadKeyDown && !quadKeyWasDown_ && getIsActiveProperty()) ToggleQuad();
+        if ((quadKeyDown && !quadKeyWasDown_ && getIsActiveProperty()) || touchControlState_.rideToggled) ToggleQuad();
+        touchControlState_.rideToggled = touchControlState_.torchToggled = false;   // each tap acts once
         quadKeyWasDown_ = quadKeyDown;
         if (riding_) {
             const bool rightKeyDown = keyboard.IsKeyDown(Keys::Back);
@@ -6139,7 +6155,8 @@ namespace island
             const auto& viewport = device.getViewportProperty();
             GpuDiagnosticScope gpuPass("touch-overlay");
             touchOverlay_->Draw(touchControlState_, touchDisplayWidth_, touchDisplayHeight_,
-                                viewport.getWidthProperty(), viewport.getHeightProperty(), true);
+                                viewport.getWidthProperty(), viewport.getHeightProperty(), true,
+                                {TouchRideOffered(), riding_, TouchTorchOffered(), torchOn_});
         }
 
         if (debugOverlayVisible_) {

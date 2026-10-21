@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 318 (2026-10-21) — touch buttons for the quad and the torch
+
+The quad and the hand torch answered only the keyboard's F and H, so on a phone or a touch
+browser the walker could neither get on the quad nor light the torch (the movement stick already
+throttles and steers once riding). Two tap buttons now sit in a column under the look-sensitivity
+selector in the upper right: the ride button (two wheels under a rider's head and body, the ring
+lit amber while riding) gets on and off where F would, on the quad or on foot on land, and the
+torch button (a lamp, haloed while lit) shows on foot from dusk on, or while the torch burns by
+day so it can be put out. `TouchControls` reports one tap per press the way the selector does: a
+finger held on a button never turns the camera, the other thumb keeps the stick, and a hidden
+button leaves its place to the look role (core tests). Capture runs never reach the touch input,
+so a probe drew the overlay at the desktop's size: at 21:30 by the parked quad both buttons show,
+riding by day the ride ring is lit and the torch button gone. The README notes them.
+
 ## Loop pass 317 (2026-10-21) — the stand-in rider leans too
 
 The Web and Android builds draw a stand-in rider (helmet, torso, arms) instead of the CNA

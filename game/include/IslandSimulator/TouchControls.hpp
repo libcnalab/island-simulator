@@ -37,6 +37,14 @@ namespace island
         float radius = 0.0f;
     };
 
+    /** @brief The tap buttons below the sensitivity selector, top to bottom. */
+    enum class TouchAction
+    {
+        Ride,  ///< F: ride the quad or step off it
+        Torch, ///< H: the hand torch on or off
+        Count
+    };
+
     /** @brief One-frame movement and look output plus presentation state. */
     struct TouchControlState
     {
@@ -56,6 +64,9 @@ namespace island
         TouchLookSensitivityLevel lookSensitivity = TouchLookSensitivityLevel::Standard;
         bool sensitivitySelectorActive = false;
         bool lookSensitivityChanged = false;
+        bool actionButtonActive = false; ///< A finger rests on one of the action buttons.
+        bool rideToggled = false;        ///< The ride button was tapped this frame.
+        bool torchToggled = false;       ///< The torch button was tapped this frame.
     };
 
     /**
@@ -64,7 +75,8 @@ namespace island
      * A contact beginning in the left half controls a floating movement stick. A contact beginning
      * in the right half supplies relative look deltas. Contacts retain their role after crossing
      * the centre line; missing/released contacts and display-size changes cancel cleanly. A
-     * separate top-right target cycles look response without acquiring either gameplay role.
+     * separate top-right target cycles look response without acquiring either gameplay role,
+     * and the enabled action buttons under it report one tap each the same way.
      */
     class TouchControls final
     {
@@ -91,6 +103,17 @@ namespace island
         [[nodiscard]] static TouchSensitivitySelectorLayout SensitivitySelectorLayout(
             float displayWidth, float displayHeight) noexcept;
 
+        /** @brief Returns an action button's hit target, a column under the selector. */
+        [[nodiscard]] static TouchSensitivitySelectorLayout ActionButtonLayout(
+            TouchAction action, float displayWidth, float displayHeight) noexcept;
+
+        /** @brief Which action buttons are offered (a hidden one leaves its place to look). */
+        void SetActionsEnabled(bool ride, bool torch) noexcept { rideEnabled_ = ride; torchEnabled_ = torch; }
+        [[nodiscard]] bool IsActionEnabled(TouchAction action) const noexcept
+        {
+            return action == TouchAction::Ride ? rideEnabled_ : action == TouchAction::Torch && torchEnabled_;
+        }
+
         /** @brief Advances the interpreter from the complete current touch snapshot. */
         [[nodiscard]] TouchControlState Update(std::span<const TouchContact> contacts,
                                                float displayWidth,
@@ -113,11 +136,16 @@ namespace island
         void UpdateSensitivitySelector(std::span<const TouchContact> contacts,
                                        float displayWidth, float displayHeight) noexcept;
         void UpdateMovement(const TouchContact& contact, float displayHeight) noexcept;
+        void UpdateActionButtons(std::span<const TouchContact> contacts,
+                                 float displayWidth, float displayHeight) noexcept;
 
         TouchControlState state_;
         int movementId_ = -1;
         int lookId_ = -1;
         int sensitivitySelectorId_ = -1;
+        int actionId_ = -1;
+        bool rideEnabled_ = false;
+        bool torchEnabled_ = false;
         float lastLookX_ = 0.0f;
         float lastLookY_ = 0.0f;
         float displayWidth_ = 0.0f;

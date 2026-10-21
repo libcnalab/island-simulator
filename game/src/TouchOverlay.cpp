@@ -88,7 +88,8 @@ namespace island
 
     void TouchOverlay::Draw(const TouchControlState& state, const float inputWidth,
                             const float inputHeight, const int viewportWidth,
-                            const int viewportHeight, const bool showIdleHints)
+                            const int viewportHeight, const bool showIdleHints,
+                            const TouchActionDisplay& actions)
     {
         if (viewportWidth <= 0 || viewportHeight <= 0
             || (!showIdleHints && !state.movementActive && !state.lookActive)) {
@@ -187,6 +188,42 @@ namespace island
                                selected
                                    ? PremultipliedColor(225, 250, 255, 205)
                                    : PremultipliedColor(235, 250, 255, 58));
+        }
+
+        // The action buttons under the selector, each a ring round a small glyph drawn from the
+        // same two circles: the quad as two wheels under its rider's head, the torch as a lamp.
+        const auto button = [&](const TouchAction action, float& x, float& y, float& r) {
+            const TouchSensitivitySelectorLayout layout =
+                TouchControls::ActionButtonLayout(action, safeInputWidth, safeInputHeight);
+            x = layout.x * scaleX;
+            y = layout.y * scaleY;
+            r = layout.radius * scaleY * 0.72f;
+        };
+        const Color glyphIdle = PremultipliedColor(235, 250, 255, 120);
+        const Color glyphLit = PremultipliedColor(255, 236, 170, 225);
+        float x = 0.0f, y = 0.0f, r = 0.0f;
+        if (actions.rideShown) {
+            button(TouchAction::Ride, x, y, r);
+            spriteBatch_->Draw(*ringTexture_, CentredRectangle(x, y, r),
+                               actions.riding ? PremultipliedColor(255, 208, 112, 180)
+                                              : PremultipliedColor(235, 250, 255, 62));
+            const Color glyph = actions.riding ? glyphLit : glyphIdle;
+            spriteBatch_->Draw(*ringTexture_, CentredRectangle(x - r * 0.36f, y + r * 0.22f, r * 0.27f), glyph);
+            spriteBatch_->Draw(*ringTexture_, CentredRectangle(x + r * 0.36f, y + r * 0.22f, r * 0.27f), glyph);
+            spriteBatch_->Draw(*discTexture_, CentredRectangle(x, y - r * 0.12f, r * 0.13f), glyph);
+            spriteBatch_->Draw(*discTexture_, CentredRectangle(x - r * 0.04f, y - r * 0.40f, r * 0.12f), glyph);
+        }
+        if (actions.torchShown) {
+            button(TouchAction::Torch, x, y, r);
+            spriteBatch_->Draw(*ringTexture_, CentredRectangle(x, y, r),
+                               actions.torchOn ? PremultipliedColor(255, 208, 112, 180)
+                                               : PremultipliedColor(235, 250, 255, 62));
+            if (actions.torchOn) {
+                spriteBatch_->Draw(*discTexture_, CentredRectangle(x, y, r * 0.62f),
+                                   PremultipliedColor(255, 230, 150, 70));
+            }
+            spriteBatch_->Draw(*discTexture_, CentredRectangle(x, y, r * 0.30f),
+                               actions.torchOn ? glyphLit : glyphIdle);
         }
         spriteBatch_->End();
     }

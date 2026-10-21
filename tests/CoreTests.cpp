@@ -2591,6 +2591,45 @@ int main()
     CheckNear(island::TouchControls::LookSensitivityScale(
                   island::TouchLookSensitivityLevel::Low), 0.72f, 0.0001f,
               "low touch sensitivity exposes the documented bounded multiplier");
+    island::TouchControls touchActionControls;
+    const island::TouchSensitivitySelectorLayout rideButton = island::TouchControls::ActionButtonLayout(
+        island::TouchAction::Ride, 1280.0f, 720.0f);
+    const island::TouchSensitivitySelectorLayout torchButton = island::TouchControls::ActionButtonLayout(
+        island::TouchAction::Torch, 1280.0f, 720.0f);
+    Check(rideButton.x > 640.0f && rideButton.y > sensitivitySelector.y + sensitivitySelector.radius + rideButton.radius
+              && torchButton.y > rideButton.y + rideButton.radius + torchButton.radius
+              && torchButton.y + torchButton.radius < 720.0f * 0.5f,
+          "the touch action buttons stack under the sensitivity selector in the upper right");
+    std::array<island::TouchContact, 1> actionContact = {{
+        {61, torchButton.x, torchButton.y, island::TouchPhase::Pressed},
+    }};
+    island::TouchControlState actionState = touchActionControls.Update(actionContact, 1280.0f, 720.0f);
+    Check(!actionState.torchToggled && !actionState.actionButtonActive && actionState.lookActive,
+          "a hidden torch button leaves its place to the look role");
+    (void)touchActionControls.Update({}, 1280.0f, 720.0f);
+    touchActionControls.SetActionsEnabled(true, true);
+    actionContact[0] = {62, torchButton.x, torchButton.y, island::TouchPhase::Pressed};
+    actionState = touchActionControls.Update(actionContact, 1280.0f, 720.0f);
+    Check(actionState.torchToggled && !actionState.rideToggled && actionState.actionButtonActive
+              && !actionState.lookActive && !actionState.lookSensitivityChanged,
+          "a tap on the torch button toggles the torch without turning the camera");
+    actionContact[0].phase = island::TouchPhase::Moved;
+    actionContact[0].x += 30.0f;
+    actionState = touchActionControls.Update(actionContact, 1280.0f, 720.0f);
+    Check(!actionState.torchToggled && actionState.actionButtonActive && !actionState.lookActive,
+          "a finger held on an action button toggles once and never turns the camera");
+    actionContact[0].phase = island::TouchPhase::Released;
+    actionState = touchActionControls.Update(actionContact, 1280.0f, 720.0f);
+    Check(!actionState.actionButtonActive, "lifting the finger frees the action button");
+    std::array<island::TouchContact, 2> rideAndMove = {{
+        {63, 200.0f, 520.0f, island::TouchPhase::Pressed},
+        {64, rideButton.x, rideButton.y, island::TouchPhase::Pressed},
+    }};
+    actionState = touchActionControls.Update(rideAndMove, 1280.0f, 720.0f);
+    Check(actionState.rideToggled && !actionState.torchToggled && actionState.movementActive
+              && !actionState.lookActive,
+          "the ride button answers a tap while the other thumb holds the stick");
+
     island::TouchControls restoredTouchControls;
     restoredTouchControls.SetLookSensitivity(
         island::TouchLookSensitivityLevel::High);
