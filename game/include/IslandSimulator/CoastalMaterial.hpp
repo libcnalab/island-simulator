@@ -117,6 +117,9 @@ namespace island
         };
         if (height < -3.0f) return blend(deep, submerged, (height + 22.0f) / 19.0f);
         if (height < 0.0f) return blend(submerged, wet, (height + 3.0f) / 3.0f);
-        return blend(wet, dry, height / 1.4f);
+        // Dry by 0.6 m: the terrain shader lays its own wet band along the swash (up to about
+        // 0.7 m), so a palette still half wet at a metre darkened the dry backshore twice into
+        // a dull olive slope.
+        return blend(wet, dry, height / 0.6f);
     }
 }

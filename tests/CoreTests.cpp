@@ -363,7 +363,7 @@ int main()
         catch (const std::invalid_argument&) { rejected=true; }
         Check(rejected,"invalid rock variant is rejected before upload");
     }
-    for (float knot : {-22.0f, -3.0f, 0.0f, 1.4f}) {
+    for (float knot : {-22.0f, -3.0f, 0.0f, 0.6f, 1.4f}) {
         const auto lower = island::CoastalSandColor(knot - 0.00001f);
         const auto upper = island::CoastalSandColor(knot + 0.00001f);
         for (std::size_t channel = 0; channel < lower.size(); ++channel) {

@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 331 (2026-10-21) — the dry backshore is dry sand
+
+The coastal sand palette (`CoastalSandColor`) ran from wet at the waterline to dry only at 1.4 m,
+while the terrain shader lays its own darker wet band along the swash up to about 0.7 m: the dry
+backshore between was darkened twice into a dull olive slope. The palette is now dry by 0.6 m
+(its continuity test gains the new knot). The beaches between the swash and the vegetation are a
+shade warmer and lighter; the jetty's sand slope measures about 6 % brighter. Probes also showed
+the rest of that slope's olive cast in `jetty` is a drifting cumulus shadow over it at the capture
+moment (a cool, darker cast), which is right. `jetty`, `bay-ground`, `shipwreck-wide`, `wet-sand`,
+`turtle-nest`, `driftwood`, `crabs` and the tests pass.
+
 ## Loop pass 330 (2026-10-21) — firelit stones, and a fire's light that falls off
 
 At night the campfire's ring stones glowed bright orange all round like coals, and the ground
