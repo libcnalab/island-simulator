@@ -233,6 +233,22 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 350 (2026-10-21) — the campfire plume is one rising column; the east camera leaves the fire
+
+The campfire's upper plume was twelve billboards in six bands, each with a round alpha blob, its
+own sway phase and its own drift: seen from across the island (`sapling`) it was a vertical string
+of separate dark-grey beads. The bands are now strips twice their spacing tall, each weighed by a
+tent over its height so the two over any point sum to one; the plume's width (0.45 m + 0.17 m per
+metre risen, the strip's half-width carried in the vertex colour's blue channel), its cloud noise,
+its thinning and fade above 10.5-15.5 m, its sway and its trade-wind drift all follow the height
+alone, so overlapping strips move as one widening column. Sunlit wood smoke is paler: a warm grey
+low down to a bluish haze aloft (the low smoke by the flames a little lighter too), and a strip
+passing within a few metres of the eye fades. The `east` QA camera stood at the clearing's
+authored centre, which is now the campfire pit: it looked out from inside the flames, a grey smoke
+sheet across the top of the frame. It stands 8 m east and 3 m south of the pit, still looking west,
+with the fire, the resident tending it and the plume in view (diagnostic and the web smoke check
+updated). `sapling`, `east`, `campfire` (day and 21:00) and `campfire-wide` and the tests pass.
+
 ## Loop pass 349 (2026-10-21) — fallen palms lie flat, their crowns collapsed and dried
 
 The six storm-felled palms drew the living crown, rotated with the stem: a bright green wheel of

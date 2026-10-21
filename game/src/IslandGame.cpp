@@ -741,13 +741,16 @@ namespace island
                       << " nominal-height=" << stature << " position=" << selected->x << ','
                       << selected->y << ',' << selected->z << '\n';
         } else if (viewpoint_ == FixedViewpoint::EastClearingDetail) {
+            // The campfire pit sits at the clearing's authored centre; the eye stands off to
+            // the east of it (past the stored wood) and looks west across the clearing.
             const ClearingDefinition& clearing = VegetationLayout::EastClearing;
-            cameraPosition_ = Vector3(clearing.x, terrain_.Height(clearing.x, clearing.z)
+            const float cameraX = clearing.x + 8.0f, cameraZ = clearing.z - 3.0f;
+            cameraPosition_ = Vector3(cameraX, terrain_.Height(cameraX, cameraZ)
                                                    + PlayerMotion::EyeHeight,
-                                      clearing.z);
+                                      cameraZ);
             yaw_ = -std::numbers::pi_v<float> * 0.5f;
             pitch_ = -0.085f;
-            std::cout << "island-simulator: east clearing QA camera at authored centre\n";
+            std::cout << "island-simulator: east clearing QA camera east of the campfire at the authored centre\n";
         } else if (viewpoint_ == FixedViewpoint::ClearingEdgeDetail) {
             // Fixed world coordinates keep comparisons stable if colony placement changes.
             const auto& clearing = VegetationLayout::EastClearing;

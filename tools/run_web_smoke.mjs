@@ -2150,7 +2150,7 @@ try {
     && eastClearingResult.output?.includes(
       "island-simulator: terrain interior humus and moss reuse portable material fields")
     && eastClearingResult.output?.includes(
-      "island-simulator: east clearing QA camera at authored centre")
+      "island-simulator: east clearing QA camera east of the campfire at the authored centre")
     && eastClearingResult.output?.includes(
       "island-simulator: clearing landmarks 5 rocks and 2 fallen logs, shared authored placement")
     && eastClearingResult.output?.includes("island-simulator: debug overlay active")

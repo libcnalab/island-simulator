@@ -31,9 +31,9 @@ uniform float uMoving;
 uniform float uGust;
 uniform float uTend;
 uniform float uDouse;
-out vec3 world;out vec4 pigment;out vec2 uv;out float life;
+out vec3 world;out vec4 pigment;out vec2 uv;out float life;out float plumeHeight;
 void main(){
-    pigment=aColor;uv=aTexCoord;life=1.0;world=aPosition;
+    pigment=aColor;uv=aTexCoord;life=1.0;world=aPosition;plumeHeight=aPosition.y;
     if(uMoving>.5){
         vec3 local=aPosition;
         if(aColor.a>.6){
@@ -42,25 +42,31 @@ void main(){
             // a downpour puts the sparks out
             life=(1.0-smoothstep(2.6,4.35,age))*(1.0-uDouse);
         }else if(aColor.a>.35){
-            float altitude=1.0-aColor.g;
+            // The upper plume's strips (spread below 255) sway and lift by their height
+            // alone, so where two strips overlap they move as one column.
+            bool plume=aColor.b<.99;
+            float altitude=plume?.6*smoothstep(0.0,13.0,aPosition.y):1.0-aColor.g;
+            float phase=plume?0.0:aColor.r;
             // A tended fire stands taller: the tongues and the plume stretched up a third.
             local.y*=1.0+uTend*.35;
-            local.x+=sin(uCampfire.w*(.47-altitude*.16)+aColor.r*13.0+local.y*.31)
+            local.x+=sin(uCampfire.w*(.47-altitude*.16)+phase*13.0+local.y*.31)
                 *(.12+altitude*.42)-local.y*.032;
-            local.z+=sin(uCampfire.w*.19+aColor.r*29.0+local.y*.17)*altitude*.26;
+            local.z+=sin(uCampfire.w*.19+phase*29.0+local.y*.17)*altitude*.26;
         }else{
             // the rain beats the tongues down towards the embers
             local.y*=1.0-.5*uDouse;
         }
         world=uCampfire.xyz-vec3(0,.45,0)+uRight*local.x+vec3(0,local.y,0)+uForward*local.z;
         if(aColor.a>.35&&aColor.a<.6){
-            float altitude=1.0-aColor.g;
+            bool plume=aColor.b<.99;
+            float altitude=plume?.6*smoothstep(0.0,13.0,aPosition.y):1.0-aColor.g;
+            float phase=plume?0.0:aColor.r;
             float rise=max(local.y-.35,0.0);
             // The shared easterly trade wind bends the high, cool plume west in
             // world space rather than in camera-facing billboard space; a passing gust
             // front lays it over further and tears it sideways as the grass leans.
-            world.x-=altitude*(rise*(.34+uGust*.55)+sin(uCampfire.w*.11+aColor.r*19.0)*.38);
-            world.z+=altitude*rise*uGust*.30*sin(uCampfire.w*.9+aColor.r*23.0+local.y*.6);
+            world.x-=altitude*(rise*(.34+uGust*.55)+sin(uCampfire.w*.11+phase*19.0+local.y*.12)*.38);
+            world.z+=altitude*rise*uGust*.30*sin(uCampfire.w*.9+phase*23.0+local.y*.6);
         }
     }
     gl_Position=uViewProjection*vec4(world,1);
@@ -68,8 +74,9 @@ void main(){
 }
 )";
 constexpr const char* fragment=R"(
-in vec3 world;in vec4 pigment;in vec2 uv;in float life;
+in vec3 world;in vec4 pigment;in vec2 uv;in float life;in float plumeHeight;
 uniform float uMoving;
+uniform vec3 uCamera;
 uniform float uDouse;
 out vec4 fragColor;
 float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
@@ -141,6 +148,29 @@ void main(){
         color=mix(color,vec3(.30,.48,1.0),blueBase*.46);
         // beaten down by the rain the flames thin and sputter
         alpha*=1.0-uDouse*(.30+.25*noise(vec2(t*6.0,pigment.r*13.0)));
+    }else if(pigment.a<.6&&pigment.b<.99){
+        // The upper plume: strips twice their spacing tall, each weighed by a tent over its
+        // height, so the two over any point sum to one. Width, cloud and thinning follow the
+        // height alone and the column reads as one widening, paling haze, not a string of
+        // separate puffs.
+        float h=plumeHeight;
+        float x=p.x*pigment.b*255.0/40.0;   // metres across
+        float radius=.45+.17*h;
+        float sheet=pigment.r*2.0;
+        float cloud=fbm(vec2(x*.85+sheet*5.0,h*.62-t*.43));
+        float body=1.0-smoothstep(.25,1.0,abs(x+(cloud-.5)*.5*radius)/radius);
+        float tent=1.0-abs(2.0*uv.y-1.0);
+        float thin=smoothstep(1.0,13.0,h);
+        alpha=body*tent*smoothstep(.18,.70,cloud)*mix(.30,.13,thin)*(1.0-smoothstep(10.5,15.5,h));
+        alpha*=.74+.26*noise(vec2(x*1.9+t*.13,h*2.2-t*.31)+sheet*17.0);
+        // thin wood smoke in daylight: a pale warm grey low down, a bluish haze aloft
+        color=mix(vec3(.60,.59,.56),vec3(.78,.80,.83),thin)*(.86+.14*cloud);
+        color=mix(color,vec3(.62,.63,.62)*(.85+.15*cloud),uDouse*.75*(1.0-thin*.6));
+        alpha*=1.0+uDouse*(.55*(1.0-thin)-.55*thin);
+        vec3 nightGrade=1.0/max(uCampfireNight.xyz,vec3(1.0));
+        color*=mix(nightGrade,vec3(1.0,.62,.32),(1.0-smoothstep(.0,.35,thin))*uCampfireNight.w*.4);
+        // a strip passing right by the eye fades rather than sweeping a grey sheet over it
+        alpha*=smoothstep(1.0,7.0,length(world-uCamera));
     }else if(pigment.a<.6){
         float cloud=fbm(vec2(p.x*2.6,p.y*5.0-t*.43)+pigment.r*8.0);
         float altitude=1.0-pigment.g;
@@ -150,7 +180,7 @@ void main(){
         // noise field tears soft holes through it.  The two sheets remain far
         // below opaque even where they overlap.
         alpha*=.74+.26*noise(vec2(p.x*8.0+t*.13,p.y*11.0-t*.31)+pigment.r*17.0);
-        color=mix(mix(vec3(.24,.225,.20),vec3(.37,.35,.31),cloud),
+        color=mix(mix(vec3(.34,.32,.29),vec3(.50,.48,.44),cloud),
             vec3(.25,.27,.27),altitude*.52);
         // In a downpour the fire steams: a whiter, denser cloud low down, and the rain
         // knocks the high plume thin.
@@ -188,28 +218,30 @@ CampfireRenderer::CampfireRenderer(GraphicsDevice& device,const CampfireLayout& 
     solid_=std::make_unique<VertexBuffer>(device,VertexPositionColorTexture::getVertexDeclarationStatic(),solidCount_,BufferUsage::WriteOnly);
     solid_->SetData(vertices.data(),solidCount_);vertices.clear();
     const auto quad=[&](float x,float y,float z,float width,float height,int type,int phase,
-                        int density=255) {
+                        int density=255,int spread=255) {
         const std::array uv{Vector2(0,0),Vector2(1,0),Vector2(1,1),Vector2(0,0),Vector2(1,1),Vector2(0,1)};
-        for(const auto p:uv)vertices.emplace_back(Vector3(x+(p.X-.5f)*width,y+p.Y*height,z),Color(phase,density,255,type),p);
+        for(const auto p:uv)vertices.emplace_back(Vector3(x+(p.X-.5f)*width,y+p.Y*height,z),Color(phase,density,spread,type),p);
     };
     // Farther planes first; horizontal billboard depth stays ordered for every viewing yaw.
-    // Twelve broad, low-alpha quads extend the same smoke material into a sparse
-    // 15m column. They stay in this one moving buffer/draw and cost only 24 triangles.
-    constexpr std::array<float,6> plumeY{{1.55f,3.65f,5.85f,8.15f,10.55f,12.95f}};
-    constexpr std::array<float,6> plumeWidth{{1.65f,2.10f,2.60f,3.20f,3.85f,4.55f}};
-    constexpr std::array<int,6> plumeDensity{{220,196,172,148,124,104}};
-    for(int band=5;band>=0;--band)for(int sheet=0;sheet<2;++sheet)
-        quad((sheet==0?-.18f:.21f)+band*.035f,plumeY[band],
-            (sheet==0?.18f:-.16f),plumeWidth[band],2.65f,128,
-            (band*47+sheet*113)%256,plumeDensity[band]);
+    // Twelve broad, low-alpha quads extend the same smoke material into a 15m column: two
+    // sheets of six strips, each strip twice the spacing tall so that neighbours overlap by
+    // half (their tents sum to one) and wide enough for the plume at its top; the half-width
+    // rides in the blue channel. One moving buffer/draw, 24 triangles.
+    constexpr float PlumeBase=1.0f,PlumeSpacing=2.3f;
+    for(int band=5;band>=0;--band)for(int sheet=0;sheet<2;++sheet){
+        const float base=PlumeBase+static_cast<float>(band)*PlumeSpacing;
+        const float halfWidth=1.3f*(.45f+.17f*(base+2.0f*PlumeSpacing));
+        quad(sheet==0?-.18f:.21f,base,sheet==0?.18f:-.16f,2.0f*halfWidth,2.0f*PlumeSpacing,128,
+            sheet*113,255,static_cast<int>(std::lround(halfWidth*40.0f)));
+    }
     for(int i=0;i<3;++i)quad(-.12f*i,.40f+i*.37f,.45f-i*.03f,1.3f+i*.2f,1.6f,128,i*73);
     for(int i=0;i<6;++i)quad((i%3-1)*.20f,.15f,.30f-i*.12f,.68f,1.0f+.13f*(i%3),64,i*43);
     for(int i=0;i<12;++i)quad((i%4-1.5f)*.16f,.30f,-.45f,.028f,.065f,192,i*21);
     effectCount_=static_cast<int>(vertices.size());
     moving_=std::make_unique<VertexBuffer>(device,VertexPositionColorTexture::getVertexDeclarationStatic(),effectCount_,BufferUsage::WriteOnly);
     moving_->SetData(vertices.data(),effectCount_);
-    bounds_=BoundingBox(Vector3(centre_.x-11,centre_.y-.4f,centre_.z-6.5f),
-                        Vector3(centre_.x+6,centre_.y+16.2f,centre_.z+6.5f));
+    bounds_=BoundingBox(Vector3(centre_.x-14,centre_.y-.4f,centre_.z-6.5f),
+                        Vector3(centre_.x+6,centre_.y+22.0f,centre_.z+6.5f));
     std::cout<<"island-simulator: campfire "<<solidCount_/3<<" solid triangles, "<<effectCount_/3
         <<" flame/smoke/spark triangles in two culled draws; 11 stored logs six metres away\n";
     std::cout<<"island-simulator: campfire flame material uses broken translucent tongues, pale cores, a restrained blue base, and layered smoke\n";
@@ -230,6 +262,7 @@ void CampfireRenderer::Draw(const Matrix& view,const Matrix& projection,const Ve
     effect_->SetUniformVec3("uRight",toward.Z,0,-toward.X);
     effect_->SetUniformVec3("uForward",-toward.X,0,-toward.Z);
     effect_->SetUniformFloat("uMoving",effects?1.0f:0.0f);
+    effect_->SetUniformVec3("uCamera",camera.X,camera.Y,camera.Z);
     effect_->SetUniformFloat("uGust",std::isfinite(seconds)?WindGust::Strength(centre_.x,centre_.z,seconds):0.0f);
     effect_->SetUniformFloat("uTend",tend_);
     effect_->SetUniformFloat("uDouse",weather_now::FireDousing());
