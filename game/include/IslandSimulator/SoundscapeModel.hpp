@@ -62,6 +62,11 @@ namespace island
     [[nodiscard]] AmbientLoop GenerateBunkerHumLoop();
     /** @brief Rain: a broadband hiss over a patter of drops, looped (eight seconds). */
     [[nodiscard]] AmbientLoop GenerateRainLoop();
+    /** @brief The rain as heard where the listener stands: under the crowns (canopy 0..1) it
+     *  drums on the big leaves, louder and deeper; in the cave or the bunker (enclosed 0..1)
+     *  it is a far muffled hiss. Volume and pitch (-1..1) for the rain loop. */
+    struct RainHearing { float volume = 0.0f, pitch = 0.0f; };
+    [[nodiscard]] RainHearing RainUnderShelter(float rain, float canopy, float enclosed) noexcept;
     /** @brief Thunder: variant 0 a near strike (a crack, then the roll), 1 a distant roll. */
     [[nodiscard]] AmbientLoop GenerateThunder(std::uint8_t variant);
     /** @brief The quad's single-cylinder four-stroke engine, looped at a fixed revs: variant 0 at

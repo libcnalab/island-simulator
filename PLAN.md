@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 436 (2026-10-22) — the rain sounds of where the listener stands
+
+The rain was one loop at one level everywhere: on the open beach, under the forest's crowns and in the
+cave alike. RainUnderShelter (SoundscapeModel) now gives its volume and pitch by the listener's cover:
+under the crowns (the crowns' light averaged over four metres round the walker, so the dapple does not
+swell it) it drums on the big leaves, a third louder and a fifth of a tone deeper; in the cave (the
+walker on its floor under the hill) and in the bunker it is a far, muffled hiss (15 %, deeper); in the
+open it is as before. Soundscape::SetRainShelter takes the cover from IslandGame each frame. New test:
+louder and deeper under the crowns, far off in the cave, unchanged in the open, silent without rain;
+the soundscape runtime test passes. (Heard nowhere here: the captures run without audio.)
+
 ## Loop pass 435 (2026-10-22) — deer stand on slender legs
 
 At 1:1 in `deer` the deer stood on boxy posts: its shanks were 10 cm thick at the scale of a 1.5 m

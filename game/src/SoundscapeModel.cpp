@@ -491,6 +491,16 @@ namespace island
         return Quantize(samples, 0.62f, true);
     }
 
+    RainHearing RainUnderShelter(const float rain, const float canopy, const float enclosed) noexcept
+    {
+        const auto unit = [](const float value) { return std::isfinite(value) ? std::clamp(value, 0.0f, 1.0f) : 0.0f; };
+        const float r = unit(rain), c = unit(canopy), e = unit(enclosed);
+        RainHearing hearing;
+        hearing.volume = r * 0.62f * (1.0f + 0.35f * c) * (1.0f - 0.85f * e);
+        hearing.pitch = -0.22f * c * (1.0f - e) - 0.30f * e;
+        return hearing;
+    }
+
     AmbientLoop GenerateThunder(const std::uint8_t variant)
     {
         const bool near = (variant & 1U) == 0U;

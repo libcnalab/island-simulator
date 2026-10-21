@@ -1967,8 +1967,12 @@ namespace island
             breezeInstance_->setVolumeProperty(std::min(1.0f, model_.Mix().breezeVolume
                 *std::clamp(1.0f+0.55f*(weatherWind_-1.0f),0.6f,1.6f)
                 *underwaterAudio_.airGain*enclosureAir*gain));
-            if (rainInstance_) rainInstance_->setVolumeProperty(std::clamp(weatherRain_, 0.0f, 1.0f) * 0.62f
-                *underwaterAudio_.airGain*enclosureAir*gain);
+            if (rainInstance_) {
+                // drumming on the leaves under the crowns, a muffled hiss in the cave
+                const RainHearing hearing = RainUnderShelter(weatherRain_, rainCanopy_, std::max(rainEnclosed_, bunkerPresence_));
+                rainInstance_->setVolumeProperty(hearing.volume*underwaterAudio_.airGain*gain);
+                rainInstance_->setPitchProperty(hearing.pitch);
+            }
             jungleInstance_->setVolumeProperty(model_.Mix().jungleVolume*(1.0f-0.55f*nightness_)
                 *underwaterAudio_.airGain*enclosureAir*gain);
             // the night chorus: everywhere on land, fuller where the jungle bed is, damped by rain

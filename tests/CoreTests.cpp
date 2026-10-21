@@ -7322,6 +7322,17 @@ int main()
                       && splash.samples.back() == 0,
                   "the quad's splash is loud at once, dies away and is silent at its ends");
         }
+        // The rain where the listener stands: louder and deeper under the crowns, all but gone in
+        // the cave, nothing without rain.
+        {
+            const auto open = island::RainUnderShelter(0.8f, 0.0f, 0.0f);
+            const auto forest = island::RainUnderShelter(0.8f, 1.0f, 0.0f);
+            const auto cave = island::RainUnderShelter(0.8f, 0.0f, 1.0f);
+            Check(forest.volume > open.volume * 1.25f && forest.pitch < open.pitch - 0.15f
+                      && cave.volume < open.volume * 0.2f && island::RainUnderShelter(0.0f, 1.0f, 0.0f).volume == 0.0f
+                      && std::abs(open.volume - 0.8f * 0.62f) < 1e-6f && open.pitch == 0.0f,
+                  "the rain drums deeper under the crowns, is far off in the cave and unchanged in the open");
+        }
         // The night chorus: an audible eight-second loop whose crickets live in the treble.
         const auto chorus = island::GenerateNightChorusLoop();
         double chorusEnergy = 0.0, chorusHigh = 0.0;

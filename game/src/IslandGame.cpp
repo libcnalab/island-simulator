@@ -3406,6 +3406,18 @@ namespace island
             sun_light::Set(light);
             if (soundscape_) {
                 soundscape_->SetWeather(weather_.State().rain, weather_.State().strikes, weather_.State().lastStrikeDistance);
+                {
+                    // under the crowns the rain drums on the leaves; in the cave it is far off
+                    const PlayerPosition& listener = playerMotion_.Position();
+                    // (the crowns' light averaged over some four metres round the listener, so the
+                    // rain does not swell and fade with each fleck of the dapple underfoot)
+                    float open = 0.0f;
+                    for (const auto& offset : {std::array<float, 2>{0.0f, 0.0f}, {4.0f, 0.0f}, {-4.0f, 0.0f}, {0.0f, 4.0f}, {0.0f, -4.0f}})
+                        open += 0.2f * std::clamp(canopyLightField_.Sample(listener.x + offset[0], listener.z + offset[1]), 0.0f, 1.0f);
+                    const bool inCave = terrainRenderer_ && terrainRenderer_->CaveGround().Contains(listener.x, listener.z)
+                        && cameraPosition_.Y < terrain_.Height(cameraPosition_.X, cameraPosition_.Z) - 0.5f;
+                    soundscape_->SetRainShelter(1.0f - open, inCave ? 1.0f : 0.0f);
+                }
                 soundscape_->SetWind(weather_.State().wind);
                 soundscape_->SetWetness(weather_.State().wetness);
                 soundscape_->SetNightness(1.0f - std::clamp((light.sunElevationDegrees + 2.0f) / 10.0f, 0.0f, 1.0f));
