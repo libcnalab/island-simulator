@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 404 (2026-10-21) — a storm's cloud deck hangs in dark rolls
+
+Under a thunderstorm (`distant --weather thunderstorm`) the sky was one flat pale grey sheet (the
+closed deck varied by 5%). In the rain the closed deck's base now hangs in heavy darker rolls and
+billows: three octaves of the sky's value noise on the cloud plane (the drift-rotated direction
+over its height, so they drift with the clouds and stay anchored to the sky, not the screen), with
+a long roll pattern through them, varying it by up to 23% and darkening it by up to 16% with the
+rain's weight; low over the horizon a paler band of light leaks in under its far edge. The
+structure fades toward the horizon, where the plane's coordinates run away (a 1:1 crop shows no
+shimmer). Showers' broken cover and a dry overcast are unchanged. The tests pass.
+
 ## Loop pass 403 (2026-10-21) — forest puddles mirror the crowns, not a white sky
 
 In a soaking (`beach --weather thunderstorm`, `jungle --weather showers`) the forest floor's

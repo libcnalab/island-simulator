@@ -225,6 +225,22 @@ void main()
         amount = mix(amount, smoothstep(-0.02, 0.08, direction.y), closed);
         vec3 deckColour = vec3(dot(horizon, vec3(0.3, 0.59, 0.11))) * mix(0.80, 0.58, clamp(uWeatherSky.y, 0.0, 1.0))
             * (1.0 + 0.10 * closed * (deck - 0.5));
+        // A raining deck is not one grey sheet: its base hangs in heavy darker rolls and billows
+        // (value noise on the cloud plane, drifting with the clouds), and low over the horizon a
+        // paler band of light leaks in under its far edge. The structure fades toward the
+        // horizon, where the cloud plane's coordinates run away.
+        float heavy = closed * smoothstep(0.15, 0.75, uWeatherSky.y);
+        if (heavy > 0.0) {
+            vec2 plane = cloudDirection.xz / max(cloudDirection.y + 0.05, 0.08) * 1.4;
+            float billow = skyNoise(plane * 0.9) * 0.55 + skyNoise(plane * 2.3 + vec2(7.1, -2.3)) * 0.30
+                + skyNoise(plane * 5.1 + vec2(-3.7, 4.9)) * 0.15;
+            float rolls = 0.5 + 0.5 * sin(plane.x * 1.15 + plane.y * 0.45 + billow * 3.2);
+            float structure = mix(billow, rolls, 0.35) - 0.5;
+            float reach = smoothstep(0.03, 0.18, direction.y);
+            deckColour *= (1.0 - 0.16 * heavy) * (1.0 + heavy * reach * 0.46 * structure);
+            float underLight = 1.0 - smoothstep(0.0, 0.09, direction.y);
+            deckColour = mix(deckColour, horizon * 0.92, underLight * heavy * 0.30);
+        }
         color = mix(color, deckColour, amount * mix(0.94, 1.0, closed));
     }
     vec3 beforeMasses = color;
