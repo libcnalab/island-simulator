@@ -1211,24 +1211,23 @@ void main()
             PropGeometry geometry;
             geometry.vertices.reserve(160U);
             geometry.indices.reserve(240U);
-            const auto appendFlatQuad = [&geometry](const float centreX, const float centreZ,
-                                                    const float halfWidth, const float halfLength,
-                                                    const float skew, const Color& color) {
-                const auto base = static_cast<std::uint16_t>(geometry.vertices.size());
-                geometry.vertices.emplace_back(
-                    Vector3(centreX - halfWidth - skew, 0.008f, centreZ - halfLength), color);
-                geometry.vertices.emplace_back(
-                    Vector3(centreX + halfWidth - skew, 0.008f, centreZ - halfLength), color);
-                geometry.vertices.emplace_back(
-                    Vector3(centreX - halfWidth + skew, 0.008f, centreZ + halfLength), color);
-                geometry.vertices.emplace_back(
-                    Vector3(centreX + halfWidth + skew, 0.008f, centreZ + halfLength), color);
-                geometry.indices.insert(geometry.indices.end(),
-                                        {base, static_cast<std::uint16_t>(base + 2U),
-                                         static_cast<std::uint16_t>(base + 1U),
-                                         static_cast<std::uint16_t>(base + 1U),
-                                         static_cast<std::uint16_t>(base + 2U),
-                                         static_cast<std::uint16_t>(base + 3U)});
+            // Rounded outlines throughout: a square patch behind a print read as a tile.
+            const auto appendFlatEllipse = [&geometry](const float centreX, const float centreZ,
+                                                       const float radiusX, const float radiusZ,
+                                                       const float lift, const Color& color) {
+                constexpr int segments = 10;
+                const auto centre = static_cast<std::uint16_t>(geometry.vertices.size());
+                geometry.vertices.emplace_back(Vector3(centreX, lift, centreZ), color);
+                for (int i = 0; i < segments; ++i) {
+                    const float a = 2.0f * std::numbers::pi_v<float> * static_cast<float>(i) / segments;
+                    geometry.vertices.emplace_back(
+                        Vector3(centreX + std::cos(a) * radiusX, lift, centreZ + std::sin(a) * radiusZ), color);
+                }
+                for (int i = 0; i < segments; ++i) {
+                    geometry.indices.insert(geometry.indices.end(),
+                        {centre, static_cast<std::uint16_t>(centre + 1 + (i + 1) % segments),
+                         static_cast<std::uint16_t>(centre + 1 + i)});
+                }
             };
             // Wet, compressed soil is darker than the surface around it; the pressed rim is
             // only slightly darker so the cloven halves read as the print.
@@ -1238,10 +1237,10 @@ void main()
                 for (int stride = 0; stride < 6; ++stride) {
                     const float z = -1.40f + static_cast<float>(stride) * 0.56f;
                     const float lateral = stride % 2 == 0 ? -0.09f : 0.09f;
-                    appendFlatQuad(lateral, z - 0.004f, 0.062f, 0.070f, 0.0f, pressedGround);
+                    appendFlatEllipse(lateral, z - 0.004f, 0.052f, 0.064f, 0.0080f, pressedGround);
                     // Two toed-in halves with a narrow cleft between them.
-                    appendFlatQuad(lateral - 0.026f, z, 0.020f, 0.046f, -0.008f, printFloor);
-                    appendFlatQuad(lateral + 0.026f, z, 0.020f, 0.046f, 0.008f, printFloor);
+                    appendFlatEllipse(lateral - 0.022f, z, 0.017f, 0.044f, 0.0085f, printFloor);
+                    appendFlatEllipse(lateral + 0.022f, z, 0.017f, 0.044f, 0.0085f, printFloor);
                 }
                 return geometry;
             }
@@ -1251,23 +1250,6 @@ void main()
                 // outlines. (The wet-mud colours of the hoof prints read as dark stamps here.)
                 // Each print is its own placement on its own ground height, so a line of them
                 // follows a sloping beach.
-                const auto appendFlatEllipse = [&geometry](const float centreX, const float centreZ,
-                                                           const float radiusX, const float radiusZ,
-                                                           const float lift, const Color& color) {
-                    constexpr int segments = 10;
-                    const auto centre = static_cast<std::uint16_t>(geometry.vertices.size());
-                    geometry.vertices.emplace_back(Vector3(centreX, lift, centreZ), color);
-                    for (int i = 0; i < segments; ++i) {
-                        const float a = 2.0f * std::numbers::pi_v<float> * static_cast<float>(i) / segments;
-                        geometry.vertices.emplace_back(
-                            Vector3(centreX + std::cos(a) * radiusX, lift, centreZ + std::sin(a) * radiusZ), color);
-                    }
-                    for (int i = 0; i < segments; ++i) {
-                        geometry.indices.insert(geometry.indices.end(),
-                            {centre, static_cast<std::uint16_t>(centre + 1 + (i + 1) % segments),
-                             static_cast<std::uint16_t>(centre + 1 + i)});
-                    }
-                };
                 const Color heapedRim(122, 116, 85, 255);
                 const Color hollow(101, 94, 67, 255);
                 appendFlatEllipse(0.0f, 0.0f, 0.064f, 0.158f, 0.0070f, heapedRim);
@@ -1284,12 +1266,12 @@ void main()
             for (int stride = 0; stride < 5; ++stride) {
                 const float z = -1.00f + static_cast<float>(stride) * 0.50f;
                 const float lateral = stride % 2 == 0 ? -0.11f : 0.11f;
-                appendFlatQuad(lateral, z - 0.012f, 0.066f, 0.074f, 0.0f, pressedGround);
-                appendFlatQuad(lateral - 0.024f, z + 0.014f, 0.019f, 0.036f, -0.005f, printFloor);
-                appendFlatQuad(lateral + 0.024f, z + 0.014f, 0.019f, 0.036f, 0.005f, printFloor);
+                appendFlatEllipse(lateral, z - 0.012f, 0.056f, 0.068f, 0.0080f, pressedGround);
+                appendFlatEllipse(lateral - 0.021f, z + 0.014f, 0.016f, 0.034f, 0.0085f, printFloor);
+                appendFlatEllipse(lateral + 0.021f, z + 0.014f, 0.016f, 0.034f, 0.0085f, printFloor);
                 // Dewclaws press in behind the toes on soft ground.
-                appendFlatQuad(lateral - 0.042f, z - 0.050f, 0.012f, 0.014f, 0.0f, printFloor);
-                appendFlatQuad(lateral + 0.042f, z - 0.050f, 0.012f, 0.014f, 0.0f, printFloor);
+                appendFlatEllipse(lateral - 0.040f, z - 0.048f, 0.010f, 0.012f, 0.0085f, printFloor);
+                appendFlatEllipse(lateral + 0.040f, z - 0.048f, 0.010f, 0.012f, 0.0085f, printFloor);
             }
             return geometry;
         }

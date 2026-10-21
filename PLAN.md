@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 301 (2026-10-21) — rounded hoof prints
+
+Close up (`tracks`), each deer and boar print sat on a square patch of pressed soil with two
+skewed rectangles for the hoof's halves: a line of little tiles across the stream bank. The
+prints are now all rounded: a slightly darker oval of pressed soil, the two toed-in halves as
+narrow ovals with the cleft between, and for the boar two small round dewclaws behind (the
+same rounded outlines the human footprints already used, now shared by all the track
+variants). `tracks` and `boars` pass, and the tests.
+
 ## Loop pass 300 (2026-10-21) — the turtle's shell and its nest
 
 The sea turtle, the operator's first "worst" creature, still had two faults close up:
