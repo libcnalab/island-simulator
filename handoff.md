@@ -353,6 +353,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 296: the grass darkens and takes a sky sheen when wet, after rain and with the morning dew (PLAN "Loop pass 296"; `grass` in showers fails the luminance floor with or without it).
 - Pass 295: the forest drips from its crowns through and long after the rain (`CanopyDripRenderer`) (PLAN "Loop pass 295").
 - Pass 294: a cloud cap forms on the summit in moist air (`SummitCloudField`) (PLAN "Loop pass 294").
+- Capture sweep 2026-10-21 (after passes 294-325, three of them terrain colour): 114 of 116 views pass; `bunker-computers` fails its colour-bin floor as before, `canopy` needs `--canopy-lod-inspection`.
 - Capture sweep 2026-10-21 (after passes 268-293): 114 of 116 views pass; `bunker-computers` fails its colour-bin floor as before (a grey interior), `canopy` needs `--canopy-lod-inspection X_MM Z_MM near|far`.
 - Pass 293: at night the rain glitters in the quad's beams, the lantern's and the fire's light (`RainRenderer::DrawLit`) (PLAN "Loop pass 293").
 - Pass 292: the quad gathers mud and dust as it is ridden, washed off in the sea and rinsed by rain (PLAN "Loop pass 292").
