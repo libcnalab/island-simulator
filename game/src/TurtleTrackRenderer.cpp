@@ -1,4 +1,5 @@
 #include "IslandSimulator/TurtleTrackRenderer.hpp"
+#include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "Microsoft/Xna/Framework/Color.hpp"
 #include "Microsoft/Xna/Framework/Graphics/BlendState.hpp"
@@ -53,19 +54,86 @@ namespace {
     };
 }
 
-TurtleTrackRenderer::TurtleTrackRenderer(GraphicsDevice& device,const std::span<const BeachDetailPlacement> details)
+TurtleTrackRenderer::TurtleTrackRenderer(GraphicsDevice& device,const std::span<const BeachDetailPlacement> details,
+                                         const RenderedTerrainSurface& ground)
     :device_(device),effect_(std::make_unique<BasicEffect>(device))
 {
+    const auto onGround = [&ground](const Vector3& point) {
+        return Vector3(point.X, ground.Height(point.X, point.Z) + 0.014f, point.Z);
+    };
     // The layout lays each nest's trace pieces in order, seaward first, 1.34 m apart.
     std::vector<std::vector<Vector3>> groups;
     for (const BeachDetailPlacement& detail : details) {
-        if (!detail.turtleTrace || detail.turtleNest) continue;   // the nests stay props
+        if (!detail.turtleTrace || detail.turtleNest) continue;   // the nests are drawn apart
         const Vector3 piece(detail.x, detail.y + 0.004f, detail.z);
         if (groups.empty() || Vector3::DistanceSquared(groups.back().back(), piece) > 2.5f * 2.5f)
             groups.emplace_back();
         groups.back().push_back(piece);
     }
     std::size_t total = 0U;
+    // The nests: a churned patch of dry sand, darker in the body pit's rim, with clods of thrown
+    // sand scattered round it, all soft-edged (the opaque fourteen-sided stain had a hard rim).
+    std::uint32_t nestIndex = 0U;
+    for (const BeachDetailPlacement& detail : details) {
+        if (!detail.turtleNest) continue;
+        const auto seed = 4099U + 31U * nestIndex++;
+        Track nest;
+        const Vector3 centre(detail.x, detail.y + 0.004f, detail.z);
+        const float size = detail.scale * 0.85f;
+        nest.centre = centre;
+        nest.radius = size * 1.8f;
+        const auto shade = [](const float alpha) {
+            return Color(0, 0, 0, static_cast<int>(std::lround(std::clamp(alpha, 0.0f, 255.0f))));
+        };
+        const auto at = [&](const float angle, const float radius) {
+            return onGround(centre + Vector3(std::cos(angle) * radius, 0.0f, std::sin(angle) * radius * 0.82f));
+        };
+        constexpr int Segments = 28;
+        // rings out from the middle: the pit's floor, its darker rim, the churned apron, the edge
+        constexpr std::array<float, 4> RingRadius{0.0f, 0.42f, 0.62f, 1.0f};
+        constexpr std::array<float, 4> RingAlpha{30.0f, 56.0f, 38.0f, 0.0f};
+        for (int segment = 0; segment < Segments; ++segment) {
+            const float a0 = 6.2831853f * static_cast<float>(segment) / Segments;
+            const float a1 = 6.2831853f * static_cast<float>(segment + 1) / Segments;
+            const auto edge = [&](const float angle) {
+                return 1.0f + 0.16f * std::sin(angle * 3.0f + static_cast<float>(seed % 11U))
+                    + 0.08f * std::sin(angle * 7.0f + static_cast<float>(seed % 5U));
+            };
+            for (std::size_t ring = 0; ring + 1U < RingRadius.size(); ++ring) {
+                const float r0 = RingRadius[ring] * size, r1 = RingRadius[ring + 1U] * size;
+                const float e00 = ring == 0U ? 1.0f : edge(a0), e01 = ring == 0U ? 1.0f : edge(a1);
+                const float e10 = edge(a0), e11 = edge(a1);
+                nest.vertices.insert(nest.vertices.end(), {
+                    VertexPositionColor(at(a0, r0 * e00), shade(RingAlpha[ring])),
+                    VertexPositionColor(at(a0, r1 * e10), shade(RingAlpha[ring + 1U])),
+                    VertexPositionColor(at(a1, r1 * e11), shade(RingAlpha[ring + 1U])),
+                    VertexPositionColor(at(a0, r0 * e00), shade(RingAlpha[ring])),
+                    VertexPositionColor(at(a1, r1 * e11), shade(RingAlpha[ring + 1U])),
+                    VertexPositionColor(at(a1, r0 * e01), shade(RingAlpha[ring]))});
+            }
+        }
+        // thrown clods, irregular little shadows out past the apron
+        for (int clod = 0; clod < 22; ++clod) {
+            const auto clodSeed = seed * 53U + static_cast<std::uint32_t>(clod) * 389U;
+            const float angle = 6.2831853f * Jitter(clodSeed);
+            const float reach = size * (0.85f + 0.65f * Jitter(clodSeed * 3U));
+            const float radius = 0.035f + 0.05f * Jitter(clodSeed * 5U);
+            const float strength = 34.0f + 26.0f * Jitter(clodSeed * 7U);
+            const Vector3 middle = at(angle, reach);
+            constexpr int Sides = 6;
+            for (int side = 0; side < Sides; ++side) {
+                const float b0 = 6.2831853f * static_cast<float>(side) / Sides + angle;
+                const float b1 = 6.2831853f * static_cast<float>(side + 1) / Sides + angle;
+                const float stretch0 = 1.0f + 0.4f * std::cos(b0 - angle), stretch1 = 1.0f + 0.4f * std::cos(b1 - angle);
+                nest.vertices.insert(nest.vertices.end(), {
+                    VertexPositionColor(onGround(middle), shade(strength)),
+                    VertexPositionColor(onGround(middle + Vector3(std::cos(b0), 0.0f, std::sin(b0)) * (radius * stretch0)), shade(0.0f)),
+                    VertexPositionColor(onGround(middle + Vector3(std::cos(b1), 0.0f, std::sin(b1)) * (radius * stretch1)), shade(0.0f))});
+            }
+        }
+        total += nest.vertices.size();
+        tracks_.push_back(std::move(nest));
+    }
     for (std::size_t group = 0; group < groups.size(); ++group) {
         const auto& pieces = groups[group];
         if (pieces.size() < 2U) continue;
@@ -90,7 +158,7 @@ TurtleTrackRenderer::TurtleTrackRenderer(GraphicsDevice& device,const std::span<
         const auto point = [&](const float s, const float across) {
             const float clamped = std::clamp(s, 0.0f, length);
             const Vector3 forward = path.Forward(clamped);
-            return path.Point(clamped) + Vector3(-forward.Z, 0.0f, forward.X) * across;
+            return onGround(path.Point(clamped) + Vector3(-forward.Z, 0.0f, forward.X) * across);
         };
         // the crawl fades into the wet sand seaward and into the churned nest inland
         const auto endFade = [length](const float s) {
@@ -177,7 +245,7 @@ TurtleTrackRenderer::TurtleTrackRenderer(GraphicsDevice& device,const std::span<
     effect_->setVertexColorEnabledProperty(true);
     effect_->setLightingEnabledProperty(false);
     const std::string message = "island-simulator: " + std::to_string(tracks_.size())
-        + " nesting turtles' crawls are soft plastron troughs with a tail drag and irregular paired flipper gouges";
+        + " nesting turtles' crawls and nests: soft plastron troughs with a tail drag and irregular paired flipper gouges, churned body pits with thrown clods";
     std::cout << message << '\n';
     MirrorRuntimeDiagnosticToPlatformLog(message.c_str());
 }

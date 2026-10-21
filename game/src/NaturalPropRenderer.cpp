@@ -1928,9 +1928,9 @@ void main()
             ++totalDriftwoodCount_;
         }
         for (const BeachDetailPlacement& detail : layout.BeachDetails()) {
-            // the nesting turtles' crawls are soft blended ribbons (TurtleTrackRenderer), not
-            // these opaque strokes; the nests stay here
-            if (detail.turtleTrace && !detail.turtleNest) {
+            // the nesting turtles' crawls and nests are soft blended marks (TurtleTrackRenderer),
+            // not these opaque meshes
+            if (detail.turtleTrace) {   // the crawls and the nests alike
                 ++totalBeachDetailCount_;
                 continue;
             }

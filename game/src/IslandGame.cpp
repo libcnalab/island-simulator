@@ -2527,7 +2527,8 @@ namespace island
         if (jettyPlacement_)
             for (const auto& line : jettyPlacement_->FootprintLines(terrain_, RenderedTerrainSurface(terrain_)))
                 residentFootprints.push_back(line);
-        turtleTrackRenderer_ = std::make_unique<TurtleTrackRenderer>(device, naturalPropLayout_.BeachDetails());
+        turtleTrackRenderer_ = std::make_unique<TurtleTrackRenderer>(device, naturalPropLayout_.BeachDetails(),
+                                                                     RenderedTerrainSurface(terrain_));
         naturalPropRenderer_ = std::make_unique<NaturalPropRenderer>(device, naturalPropLayout_, residentFootprints,
                                                                      &canopyLightField_);
         shipwreckRenderer_ = std::make_unique<ShipwreckRenderer>(device, shipwreckLayout_);

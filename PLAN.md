@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 392 (2026-10-21) — the turtle nests are churned pits, and the crawls lie on the drawn sand
+
+The nests were opaque fourteen-sided stains with a hard rim. TurtleTrackRenderer now draws each
+as a soft irregular churned patch (premultiplied black like the crawls): the body pit's floor, its
+darker rim, a churned apron fading out at an uneven edge, and some twenty clods of thrown sand
+scattered round it; the clutch's hatchlings are drawn over it as before. Both the nests and the
+crawls are laid on the drawn terrain (RenderedTerrainSurface::Height, 1.4 cm up): a level patch,
+then a plane by the analytic normal, sank under the terrain mesh and was cut off along its grid
+lines, and so had part of each crawl. NaturalPropRenderer no longer draws either (still counted).
+`turtle-nest` shows the pit, its clods and both rows of flipper gouges along the whole crawl; the
+tests pass.
+
 ## Loop pass 391 (2026-10-21) — the nesting turtles' crawls are soft troughs, not railway sleepers
 
 Each nest's crawl up the beach was seven opaque beach-detail meshes: a 9 cm stripe down the middle

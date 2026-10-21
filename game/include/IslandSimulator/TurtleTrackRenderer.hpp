@@ -11,6 +11,7 @@
 #include <vector>
 
 namespace island {
+class RenderedTerrainSurface;
 // The nesting turtles' crawls up the beach, one continuous ribbon through each nest's placed
 // trace pieces: a soft-edged trough pressed by the plastron, a faint wavering tail drag down its
 // middle and the paired flippers' oblique gouges either side, irregular from stroke to stroke,
@@ -19,8 +20,10 @@ namespace island {
 class TurtleTrackRenderer final {
 public:
     static constexpr float DrawDistance=75.0f,FadeStart=58.0f;
+    // laid on the drawn terrain (the analytic ground or a plane sank into the mesh in places)
     TurtleTrackRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                        std::span<const BeachDetailPlacement> details);
+                        std::span<const BeachDetailPlacement> details,
+                        const RenderedTerrainSurface& ground);
     void Draw(const Microsoft::Xna::Framework::Matrix& view,
               const Microsoft::Xna::Framework::Matrix& projection,
               const Microsoft::Xna::Framework::Vector3& camera);
