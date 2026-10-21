@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 275 (2026-10-21) — a closed sky under overcast and in a storm
+
+A storm's sky showed blue-teal holes overhead and bluish cumulus smears along the horizon: the
+grey cloud deck's threshold still left gaps at full cover where its sum of sines dipped low
+(and let 6 % of the blue through everywhere), and the fair-weather cumulus masses, white-topped
+with blue-grey bases, were drawn over the deck. The deck now closes completely as the cover
+goes from a shower's 0.76 to an overcast's 0.86, keeping a faint light and dark texture from
+its own field, and the cumulus masses fade out behind it over the same range. Showers keep
+their broken sky with blue between the clouds. `palms` in a thunderstorm and overcast show a
+closed grey deck, in showers the broken one; `birds` in a thunderstorm lost the teal smears;
+`flight` overcast passes too. (Found looking at the pass-274 `palms` storm capture.)
+
 ## Loop pass 274 (2026-10-21) — the hut and the palms soak in the rain
 
 The ground and the forest trees already darkened in the rain; the hut and the palms stayed

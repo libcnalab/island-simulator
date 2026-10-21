@@ -202,18 +202,23 @@ void main()
     float awayFromSun = 1.0 - smoothstep(0.72, 0.96, sunDot);
     color = mix(color, vec3(0.90, 0.95, 0.96), wisps * awayFromSun * 0.14);
 
-    // A grey cloud deck under overcast and in the rain: broken at partial cover, closed at full,
-    // darker where it rains.
+    // A grey cloud deck under overcast and in the rain: broken at a shower's partial cover,
+    // closed from an overcast's (0.85) up (no blue holes through a storm's sky), darker where
+    // it rains; the closed deck keeps a faint light and dark texture.
     float deckCover = clamp(uWeatherSky.x, 0.0, 1.0);
+    float closed = smoothstep(0.76, 0.86, deckCover);
     if (deckCover > 0.0) {
         float deck = 0.5 + 0.30 * sin(dot(cloudDirection.xz, vec2(5.0, 3.0)) * 1.3 + warp)
             + 0.22 * sin(cloudDirection.y * 21.0 + cloudDirection.x * 9.0 - warp * 1.3)
             + 0.12 * sin(dot(cloudDirection, vec3(17.0, 11.0, -13.0)));
         float amount = smoothstep(1.05 - deckCover * 1.1, 1.30 - deckCover * 1.05, deck)
             * smoothstep(-0.02, 0.08, direction.y);
-        vec3 deckColour = vec3(dot(horizon, vec3(0.3, 0.59, 0.11))) * mix(0.80, 0.58, clamp(uWeatherSky.y, 0.0, 1.0));
-        color = mix(color, deckColour, amount * 0.94);
+        amount = mix(amount, smoothstep(-0.02, 0.08, direction.y), closed);
+        vec3 deckColour = vec3(dot(horizon, vec3(0.3, 0.59, 0.11))) * mix(0.80, 0.58, clamp(uWeatherSky.y, 0.0, 1.0))
+            * (1.0 + 0.10 * closed * (deck - 0.5));
+        color = mix(color, deckColour, amount * mix(0.94, 1.0, closed));
     }
+    vec3 beforeMasses = color;
     // Cumulus masses in azimuth/elevation space; nine low over the sea, two a little higher.
     float azimuth = atan(direction.z, direction.x) - uCloudDriftRadians;
     float skyElevation = asin(clamp(direction.y, -1.0, 1.0));
@@ -231,6 +236,8 @@ void main()
         color = cumulusMass(color, vec4(0.80, 0.230, 0.17, 0.040), 9.0, azimuth, skyElevation, sunAzimuth, hazeColor);
         color = cumulusMass(color, vec4(4.20, 0.260, 0.20, 0.046), 10.0, azimuth, skyElevation, sunAzimuth, hazeColor);
     }
+    // Under a closed deck the fair-weather masses are gone.
+    color = mix(color, beforeMasses, closed);
 
     fragColor = vec4(color, 1.0);
 }
