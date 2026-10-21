@@ -98,6 +98,15 @@ void SnakeRenderer::Draw(const Matrix& view,const Matrix& projection,const Vecto
             return Point(snake.body[j])+Vector3::Up*(lift*SnakePopulation::HeadLiftHeight*t*t);
         };
         const auto origin=station(0);
+        // A snake past 10 m is a few pixels wide and its eye a fraction of one: fewer sides
+        // round the body (8, past 30 m 4), every other station along it past 30 m, and the
+        // eyes, lips and tongue only within 10 m. Up to 16 full snakes out to 70 m were rebuilt
+        // every frame (1.3-3.5 ms on the operator's machine).
+        const float range=std::sqrt(candidate.first);
+        const int sideStep=range<10.0f?1:range<30.0f?2:4;
+        const std::size_t stride=range<30.0f?1U:2U;
+        static_assert((SnakeState::StationCount-1U)%2U==0U,"every other station must end on the tail");
+        const bool faceDetail=range<10.0f;
         using Ring=std::array<VertexPositionColorTexture,Sides+1>;
         std::array<Ring,SnakeState::StationCount> rings;
         // The canopy's light is taken once a ring (the body crosses the sun flecks along its
@@ -110,7 +119,7 @@ void SnakeRenderer::Draw(const Matrix& view,const Matrix& projection,const Vecto
                 static_cast<int>(color.getGProperty()*light*tint.green),
                 static_cast<int>(color.getBProperty()*light*tint.blue)),uv);
         };
-        for (std::size_t j=0;j<snake.body.size();++j) {
+        for (std::size_t j=0;j<snake.body.size();j+=stride) {
             const auto centre=station(j);
             tint=CanopyTransmissionTint(canopy_.SampleReceiver(centre.X,centre.Y,centre.Z,origin.Y));
             const auto before=station(j==0 ? 0 : j-1);
@@ -128,7 +137,7 @@ void SnakeRenderer::Draw(const Matrix& view,const Matrix& projection,const Vecto
                 right=Vector3::Normalize(Vector3::Cross(reference,tangent));
             }
             const auto up=Vector3::Normalize(Vector3::Cross(tangent,right));
-            for (int k=0;k<=Sides;++k) {
+            for (int k=0;k<=Sides;k+=sideStep) {
                 const float angle=Tau*static_cast<float>(k)/Sides;
                 const auto normal=right*std::cos(angle)+up*std::sin(angle);
                 const float band=0.80f+0.20f*std::cos(static_cast<float>(j)*1.65f);
@@ -152,10 +161,10 @@ void SnakeRenderer::Draw(const Matrix& view,const Matrix& projection,const Vecto
         auto triangle=[&](const auto& a,const auto& b,const auto& c) {
             vertices_.push_back(a); vertices_.push_back(b); vertices_.push_back(c);
         };
-        for (std::size_t j=1;j<rings.size();++j) for(int k=0;k<Sides;++k) {
-            const auto a=static_cast<std::size_t>(k),b=a+1;
-            triangle(rings[j-1][a],rings[j][a],rings[j][b]);
-            triangle(rings[j-1][a],rings[j][b],rings[j-1][b]);
+        for (std::size_t j=stride;j<rings.size();j+=stride) for(int k=0;k<Sides;k+=sideStep) {
+            const auto a=static_cast<std::size_t>(k),b=a+static_cast<std::size_t>(sideStep);
+            triangle(rings[j-stride][a],rings[j][a],rings[j][b]);
+            triangle(rings[j-stride][a],rings[j][b],rings[j-stride][b]);
         }
         // the head, its eyes and tongue in the light at the head
         tint=CanopyTransmissionTint(canopy_.SampleReceiver(origin.X,origin.Y,origin.Z,origin.Y));
@@ -176,7 +185,7 @@ void SnakeRenderer::Draw(const Matrix& view,const Matrix& projection,const Vecto
         for(std::size_t section=1;section<SnakeHeadSections.size();++section) {
             const auto profile=SnakeHeadSections[section];
             Ring next;
-            for(int k=0;k<=Sides;++k) {
+            for(int k=0;k<=Sides;k+=sideStep) {
                 const float angle=Tau*static_cast<float>(k)/Sides;
                 const auto normal=Vector3::Normalize(right*(std::cos(angle)/profile.width)
                     +up*(std::sin(angle)/profile.height)+forward*12.0f);
@@ -188,22 +197,23 @@ void SnakeRenderer::Draw(const Matrix& view,const Matrix& projection,const Vecto
                     Vector2(SnakeSkinU(static_cast<float>(k),Sides),
                         SnakeSkinV(-profile.forward,SnakePopulation::Spacing)));
             }
-            for(int k=0;k<Sides;++k) {
-                const auto a=static_cast<std::size_t>(k),b=a+1;
+            for(int k=0;k<Sides;k+=sideStep) {
+                const auto a=static_cast<std::size_t>(k),b=a+static_cast<std::size_t>(sideStep);
                 triangle(muzzle[a],next[a],next[b]); triangle(muzzle[a],next[b],muzzle[b]);
             }
             muzzle=next;
         }
         const auto tail=vertex(Point(snake.body.back()),-forward,Color(89,104,43),Vector2(0,0));
-        for(int k=0;k<Sides;++k) {
+        for(int k=0;k<Sides;k+=sideStep) {
             // Each cap triangle needs a local pole UV. Reusing (0,0) across the fan
             // dragged up to four texture wraps across a single tiny muzzle triangle.
             const auto nose=vertex(origin+forward*SnakeNoseForward-up*0.008f,forward,Color(111,128,57),
-                Vector2(SnakeSkinU(static_cast<float>(k)+0.5f,Sides),
+                Vector2(SnakeSkinU(static_cast<float>(k)+0.5f*static_cast<float>(sideStep),Sides),
                     SnakeSkinV(-SnakeNoseForward,SnakePopulation::Spacing)));
-            triangle(nose,muzzle[static_cast<std::size_t>(k)],muzzle[static_cast<std::size_t>(k+1)]);
-            triangle(tail,rings.back()[static_cast<std::size_t>(k+1)],rings.back()[static_cast<std::size_t>(k)]);
+            triangle(nose,muzzle[static_cast<std::size_t>(k)],muzzle[static_cast<std::size_t>(k+sideStep)]);
+            triangle(tail,rings.back()[static_cast<std::size_t>(k+sideStep)],rings.back()[static_cast<std::size_t>(k)]);
         }
+        if(!faceDetail) { ++visible_; continue; }
         // The tongue: flicked out of the snout for a moment every few seconds, a thin forked
         // dark-red ribbon tasting the air, drawn both-sided.
         if(snake.tongue>0.02f) {

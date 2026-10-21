@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 378: bear mesh built from shared lit grid corners (bit-identical, ~4.4x fewer lit vertices); snakes past 10 m / 30 m drop sides, stations and face detail (PLAN "Loop pass 378").
 - Pass 377: spiders drawn within 14 m (max 16, detail within 3 m); contact shadows split into a camera-only static part and a movement-driven dynamic tail (PLAN "Loop pass 377").
 - Pass 376: fallen-log bark weathered, furrowed, peeled, mossed and lichen-freckled (PLAN "Loop pass 376").
 - Pass 375: roosting fruit bat wrapped in a wing cloak, smooth-lit ellipsoids (near budget 2628) (PLAN "Loop pass 375").

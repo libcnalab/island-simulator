@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 378 (2026-10-21) — the bear and the far snakes are built for less CPU
+
+The operator's 18:02-18:04 sessions named the next render-pass CPU costs: the bear up to 5.2 ms a
+frame when near, the snakes 1.3-3.5 ms. The bear's mesh built every ellipsoid, loft and tube quad
+by quad, so each grid corner was placed, transformed and lit six times (about 19,000 lit vertices
+for 6,382 triangles); each corner is now made once into a small grid and its quads copy it
+(about 4,300 lit corners). The emitted vertices are bit-identical: `bear` is pixel-identical.
+Snakes past 10 m (a few pixels wide, the eye a fraction of one) have 8 sides round the body
+instead of 16 and no eyes, lips or tongue; past 30 m 4 sides and every other station along the
+body, with the canopy light sampled only at the stations drawn. `snakes` and `snake-head` are
+pixel-identical, `tree-snakes` differs in 63 pixels; `bear-lying` differs only in its wind-swayed
+grass, as between any two of its runs. The tests pass.
+
 ## Loop pass 377 (2026-10-21) — the spiders and the contact shadows cost less per frame
 
 The operator's 17:56 session (Radeon 780M, 720p, after pass 373's one-Update-per-frame fix) ran

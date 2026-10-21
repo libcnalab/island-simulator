@@ -78,26 +78,26 @@ public:
             +up*(ry*std::sin(a))+forward*(rz*c*std::sin(b));};
         const auto normal=[&](float a,float b){const float c=std::cos(a);return SafeUnit(
             right*(c*std::cos(b)/rx)+up*(std::sin(a)/ry)+forward*(c*std::sin(b)/rz));};
-        for(int y=0;y<latitude;++y)for(int x=0;x<longitude;++x) {
-            const float a0=-Pi*.5f+Pi*y/latitude,a1=-Pi*.5f+Pi*(y+1)/latitude;
-            const float b0=2*Pi*x/longitude,b1=2*Pi*(x+1)/longitude;
-            Quad(point(a0,b0),normal(a0,b0),{static_cast<float>(x)/longitude,static_cast<float>(y)/latitude},
-                 point(a0,b1),normal(a0,b1),{static_cast<float>(x+1)/longitude,static_cast<float>(y)/latitude},
-                 point(a1,b1),normal(a1,b1),{static_cast<float>(x+1)/longitude,static_cast<float>(y+1)/latitude},
-                 point(a1,b0),normal(a1,b0),{static_cast<float>(x)/longitude,static_cast<float>(y+1)/latitude},material);
+        grid_.clear();
+        for(int y=0;y<=latitude;++y)for(int x=0;x<=longitude;++x) {
+            const float a=-Pi*.5f+Pi*y/latitude,b=2*Pi*x/longitude;
+            grid_.push_back(Make(point(a,b),normal(a,b),
+                {static_cast<float>(x)/longitude,static_cast<float>(y)/latitude},material));
         }
+        EmitGrid(latitude,longitude);
     }
     void Tube(Vector3 a,Vector3 b,float radiusA,float radiusB,Material material,int segments) {
         const Vector3 axis=SafeUnit(b-a);
         const Vector3 side=SafeUnit(Vector3::Cross(axis,std::abs(axis.Y)<.86f?Vector3::Up:Vector3::Right));
         const Vector3 other=SafeUnit(Vector3::Cross(side,axis));
-        for(int i=0;i<segments;++i) {
-            const float t0=2*Pi*i/segments,t1=2*Pi*(i+1)/segments;
-            const Vector3 n0=SafeUnit(side*std::cos(t0)+other*std::sin(t0));
-            const Vector3 n1=SafeUnit(side*std::cos(t1)+other*std::sin(t1));
-            Quad(a+n0*radiusA,n0,{static_cast<float>(i)/segments,0},a+n1*radiusA,n1,{static_cast<float>(i+1)/segments,0},
-                b+n1*radiusB,n1,{static_cast<float>(i+1)/segments,1},b+n0*radiusB,n0,{static_cast<float>(i)/segments,1},material);
+        grid_.clear();
+        for(int end=0;end<2;++end)for(int i=0;i<=segments;++i) {
+            const float t=2*Pi*i/segments;
+            const Vector3 n=SafeUnit(side*std::cos(t)+other*std::sin(t));
+            grid_.push_back(Make((end==0?a:b)+n*(end==0?radiusA:radiusB),n,
+                {static_cast<float>(i)/segments,static_cast<float>(end)},material));
         }
+        EmitGrid(1,segments);
     }
     void LimbLoft(Vector3 root,Vector3 joint,Vector3 ankle,bool front,Material material,int segments) {
         // Keep one continuous surface through shoulder/haunch, knee and wrist.  A
@@ -122,8 +122,7 @@ public:
             else if(t>.68f)centres[ring]=departure+(ankle-departure)*((t-.68f)/.32f);
             else centres[ring]=roundedJoint((t-.42f)/.26f);
         }
-        for(std::size_t ring=0;ring+1<fractions.size();++ring) {
-            const auto ringFrame=[&](std::size_t index,float angle) {
+        const auto ringFrame=[&](std::size_t index,float angle) {
                 const Vector3 before=centres[index==0?0:index-1];
                 const Vector3 after=centres[std::min(index+1,centres.size()-1)];
                 const Vector3 axis=SafeUnit(after-before);
@@ -135,26 +134,19 @@ public:
                 const float span=std::max((centres[next]-centres[prior]).Length(),.001f);
                 const Vector3 normal=SafeUnit(radial-axis*((radii[next]-radii[prior])/span));
                 return std::array<Vector3,2>{centres[index]+radial*radii[index],normal};
-            };
-            for(int segment=0;segment<segments;++segment) {
-                const float a0=2*Pi*segment/segments,a1=2*Pi*(segment+1)/segments;
-                const auto p00=ringFrame(ring,a0),p01=ringFrame(ring,a1);
-                const auto p10=ringFrame(ring+1,a0),p11=ringFrame(ring+1,a1);
-                const float u0=static_cast<float>(segment)/segments;
-                const float u1=static_cast<float>(segment+1)/segments;
-                Quad(p00[0],p00[1],{u0,fractions[ring]},
-                    p01[0],p01[1],{u1,fractions[ring]},
-                    p11[0],p11[1],{u1,fractions[ring+1]},
-                    p10[0],p10[1],{u0,fractions[ring+1]},material);
-            }
+        };
+        grid_.clear();
+        for(std::size_t ring=0;ring<fractions.size();++ring)for(int segment=0;segment<=segments;++segment) {
+            const auto p=ringFrame(ring,2*Pi*segment/segments);
+            grid_.push_back(Make(p[0],p[1],{static_cast<float>(segment)/segments,fractions[ring]},material));
         }
+        EmitGrid(static_cast<int>(fractions.size())-1,segments);
     }
     template<std::size_t Count>
     void BodyLoft(const std::array<Vector3,Count>& centres,
                   const std::array<Vector2,Count>& radii,Material material,int segments) {
         static_assert(Count>=2);
-        for(std::size_t ring=0;ring+1<Count;++ring) {
-            const auto ringFrame=[&](std::size_t index,float angle) {
+        const auto ringFrame=[&](std::size_t index,float angle) {
                 const std::size_t prior=index==0?0:index-1;
                 const std::size_t next=std::min(index+1,Count-1);
                 const Vector3 axis=SafeUnit(centres[next]-centres[prior]);
@@ -170,25 +162,19 @@ public:
                 Vector3 normal=SafeUnit(Vector3::Cross(circumferential,longitudinal));
                 if(Vector3::Dot(normal,radial)<0)normal*=-1.0f;
                 return std::array<Vector3,2>{centres[index]+radial,normal};
-            };
-            for(int segment=0;segment<segments;++segment) {
-                // Place the non-tileable source-window seam beneath the belly rather
-                // than across either broad flank seen by the player.
-                const float a0=2*Pi*segment/segments-Pi*.5f;
-                const float a1=2*Pi*(segment+1)/segments-Pi*.5f;
-                const auto p00=ringFrame(ring,a0),p01=ringFrame(ring,a1);
-                const auto p10=ringFrame(ring+1,a0),p11=ringFrame(ring+1,a1);
-                const float u0=static_cast<float>(segment)/segments;
-                const float u1=static_cast<float>(segment+1)/segments;
-                const float v0=static_cast<float>(ring)/(Count-1);
-                const float v1=static_cast<float>(ring+1)/(Count-1);
-                // The source guard hairs run along U. Map U down the animal and V
-                // around the cross-section; the opposite assignment stretched whole
-                // clumps into conspicuous horizontal bands along the new long loft.
-                Quad(p00[0],p00[1],{v0,u0},p01[0],p01[1],{v0,u1},
-                    p11[0],p11[1],{v1,u1},p10[0],p10[1],{v1,u0},material);
-            }
+        };
+        grid_.clear();
+        for(std::size_t ring=0;ring<Count;++ring)for(int segment=0;segment<=segments;++segment) {
+            // Place the non-tileable source-window seam beneath the belly rather
+            // than across either broad flank seen by the player.
+            const auto p=ringFrame(ring,2*Pi*segment/segments-Pi*.5f);
+            // The source guard hairs run along U. Map U down the animal and V
+            // around the cross-section; the opposite assignment stretched whole
+            // clumps into conspicuous horizontal bands along the new long loft.
+            grid_.push_back(Make(p[0],p[1],
+                {static_cast<float>(ring)/(Count-1),static_cast<float>(segment)/segments},material));
         }
+        EmitGrid(static_cast<int>(Count)-1,segments);
     }
     void FurTuft(Vector3 root,float halfWidth,float length,float sweep) {
         const Vector3 across=Vector3::Right;
@@ -203,15 +189,27 @@ private:
     Vector3 World(Vector3 local)const{return Point(pose_.ToWorld(Point(local)));}
     Vector3 WorldNormal(Vector3 local)const{return SafeUnit(Point(pose_.right)*local.X
         +Point(pose_.up)*local.Y+Point(pose_.forward)*local.Z);}
-    void Vertex(Vector3 p,Vector3 normal,Vector2 uv,Material material) {
+    VertexPositionColorTexture Make(Vector3 p,Vector3 normal,Vector2 uv,Material material)const {
         const auto worldNormal=WorldNormal(normal);const auto base=BaseColor(material);
         const float light=.55f+.37f*std::max(0.0f,Vector3::Dot(worldNormal,wildlife_render::FixedSunDirection))
             +.10f*std::max(0.0f,worldNormal.Y);
         const auto channel=[&](std::uint8_t value,float tint){return static_cast<int>(std::clamp(
             std::lround(value*light*tint),0L,255L));};
-        output_.emplace_back(World(p),Color(channel(base.getRProperty(),canopy_.red),
+        return VertexPositionColorTexture(World(p),Color(channel(base.getRProperty(),canopy_.red),
             channel(base.getGProperty(),canopy_.green),channel(base.getBProperty(),canopy_.blue),255),
             AtlasUv(material,uv.X,uv.Y));
+    }
+    void Vertex(Vector3 p,Vector3 normal,Vector2 uv,Material material) {output_.push_back(Make(p,normal,uv,material));}
+    // The quads of a (rows+1) x (columns+1) grid of lit corners, in the order Quad emits them:
+    // each corner is placed and lit once instead of once for each of its six triangle uses.
+    void EmitGrid(int rows,int columns) {
+        const auto at=[&](int y,int x)->const VertexPositionColorTexture&{
+            return grid_[static_cast<std::size_t>(y*(columns+1)+x)];};
+        for(int y=0;y<rows;++y)for(int x=0;x<columns;++x) {
+            const auto &a=at(y,x),&b=at(y,x+1),&c=at(y+1,x+1),&d=at(y+1,x);
+            output_.push_back(a);output_.push_back(b);output_.push_back(c);
+            output_.push_back(a);output_.push_back(c);output_.push_back(d);
+        }
     }
     void Triangle(Vector3 a,Vector3 na,Vector2 ua,Vector3 b,Vector3 nb,Vector2 ub,
         Vector3 c,Vector3 nc,Vector2 uc,Material material) {
@@ -222,6 +220,7 @@ private:
         Triangle(a,na,ua,b,nb,ub,c,nc,uc,material);Triangle(a,na,ua,c,nc,uc,d,nd,ud,material);
     }
     std::vector<VertexPositionColorTexture>& output_;const BearPose& pose_;CanopyLightTint canopy_;
+    std::vector<VertexPositionColorTexture> grid_;
 };
 
 void BuildBear(std::vector<VertexPositionColorTexture>& vertices,const BearState& state,
