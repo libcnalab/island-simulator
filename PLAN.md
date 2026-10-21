@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 297 (2026-10-21) — the dew on the forest's leaves
+
+The dew of pass 296 is now one shared curve, `weather_now::Dew(hour, cloudCover)` (up to 0.5,
+settling from 21:00, burning off between 07:00 and 09:30, a third as much under full cloud),
+and the forest takes it too: `JungleRenderer::SetDew` feeds its wetness the larger of the rain's
+wetness and 0.7 of the dew, so at dawn the leaves glisten and darken a little as after a
+shower, and dry by mid-morning. The grass uses the same curve. `jungle`, `grass` and
+`clearing-edge` at dawn and `jungle` at 14:00 pass, and the tests.
+
 ## Loop pass 296 (2026-10-21) — wet grass after rain and with the morning dew
 
 The ground, the trees, the palms and the hut darkened in the wet; the grass stayed as dry as

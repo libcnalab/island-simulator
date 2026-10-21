@@ -110,6 +110,8 @@ namespace island
         [[nodiscard]] int VisibleCellCount() const noexcept { return visibleCellCount_; }
         /** Receives the fixed-sun shadow map; nullptr keeps only the baked canopy field. */
         void SetSunShadowMap(const SunShadowMap* map) noexcept { sunShadow_ = map; }
+        /** @brief The morning dew (weather_now::Dew): the leaves glisten with it as after rain. */
+        void SetDew(float dew) noexcept { dew_ = dew; }
         /** Renders far-LOD canopy, snag, understory and bush casters into the bound map. */
         void DrawSunShadow(SunShadowMap& map);
         [[nodiscard]] int DrawCallCount() const noexcept { return drawCallCount_; }
@@ -230,6 +232,7 @@ namespace island
         int visibleCellCount_ = 0;
         int drawCallCount_ = 0;
         const SunShadowMap* sunShadow_ = nullptr;
+        float dew_ = 0.0f;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> sunShadowEffect_;
         bool sunShadowUnavailable_ = false;
     };

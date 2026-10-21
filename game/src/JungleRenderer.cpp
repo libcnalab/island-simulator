@@ -2841,7 +2841,8 @@ void main()
                 "uToSun", sun_light::UniformDirection().x, sun_light::UniformDirection().y,
                 sun_light::UniformDirection().z);
             customEffect_->SetUniformFloat("uTime", timeSeconds);
-            customEffect_->SetUniformFloat("uWetness", weather_now::Current().wetness);
+            customEffect_->SetUniformFloat("uWetness", std::max(weather_now::Current().wetness,
+                                                                0.7f * (std::isfinite(dew_) ? dew_ : 0.0f)));
             customEffect_->SetUniformVec3("uStormWind", wind::DirectionX, wind::DirectionZ, weather_now::Current().wind);
             {
                 const auto& gusts = WindGust::Live();

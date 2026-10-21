@@ -62,6 +62,19 @@ namespace island
             const float wind = Current().wind;
             return 1.0f + 0.7f * std::clamp(std::isfinite(wind) ? wind - 1.0f : 0.0f, 0.0f, 1.0f);
         }
+        /** @brief The dew on the leaves and the grass at `hour`: up to 0.5, settling through the
+         *  night from 21:00 and burning off between 07:00 and 09:30, a third as much under
+         *  full cloud (`cloudCover`). */
+        [[nodiscard]] inline float Dew(const float hour, const float cloudCover) noexcept
+        {
+            const auto smooth = [](float a, float b, float v) {
+                const float t = std::clamp((v - a) / (b - a), 0.0f, 1.0f);
+                return t * t * (3.0f - 2.0f * t);
+            };
+            if (!std::isfinite(hour)) return 0.0f;
+            const float settled = hour >= 21.0f ? smooth(21.0f, 24.0f, hour) : 1.0f - smooth(7.0f, 9.5f, hour);
+            return 0.5f * settled * (1.0f - 0.7f * std::clamp(std::isfinite(cloudCover) ? cloudCover : 0.0f, 0.0f, 1.0f));
+        }
         /** @brief How far the rain beats the campfire down: 0 dry and in a passing shower's
          *  light rain, rising through heavier rain to 1 in a storm's downpour. */
         [[nodiscard]] inline float FireDousing() noexcept

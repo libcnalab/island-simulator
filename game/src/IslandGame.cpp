@@ -5559,6 +5559,7 @@ namespace island
         const std::array<GrassWalker, GrassWalkers::Slots> grassWalkers = GatherWalkers(renderCameraPosition_.X, renderCameraPosition_.Z);
         {
             GpuDiagnosticScope gpuPass("jungle");
+            jungleRenderer_->SetDew(weather_now::Dew(dayNight_.Hour(), weather_now::Current().cloudCover));
             jungleRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
                                   timeSeconds,renderedMonkeys,grassWalkers);
         }
@@ -5573,15 +5574,9 @@ namespace island
         }
         {
             GpuDiagnosticScope gpuPass("grass");
-            {
-                // The blades are wet after rain, and with the dew that settles through clear
-                // nights and burns off between seven and half past nine.
-                const float hour = dayNight_.Hour();
-                const auto smooth = [](float a, float b, float v) { const float t = std::clamp((v - a) / (b - a), 0.0f, 1.0f); return t * t * (3.0f - 2.0f * t); };
-                const float dew = 0.5f * (hour >= 21.0f ? smooth(21.0f, 24.0f, hour) : 1.0f - smooth(7.0f, 9.5f, hour))
-                    * (1.0f - 0.7f * std::clamp(weather_now::Current().cloudCover, 0.0f, 1.0f));
-                grassRenderer_->SetWetness(std::max(weather_now::Current().wetness, dew));
-            }
+            // The blades are wet after rain, and with the dew of clear nights until mid-morning.
+            grassRenderer_->SetWetness(std::max(weather_now::Current().wetness,
+                                                weather_now::Dew(dayNight_.Hour(), weather_now::Current().cloudCover)));
             grassRenderer_->Draw(
                 cameraView_, cameraProjection_, renderCameraPosition_,
                 grassInteractionPosition,grassInteractionStrength,timeSeconds,grassWalkers);
