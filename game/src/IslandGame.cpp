@@ -3315,6 +3315,7 @@ namespace island
         }
         fallingFruit_.Update(deltaSeconds, monkeyTroop_.Monkeys());
         streamDrift_.Update(deltaSeconds);
+        canopyLeafFall_.SetWind(weather_.State().wind);
         canopyLeafFall_.Update(seaForageSeconds_,deltaSeconds,cameraPosition_.X,cameraPosition_.Z);
         // A leaf or feather that lands on the stream is taken by the current.
         if(canopyLeafFall_.LastLanding().count!=notedLeafLandings_) {
@@ -3335,6 +3336,7 @@ namespace island
         dolphinBlows_.Update(deltaSeconds,seaForageSeconds_,dolphinPod_.Dolphins());
         streamFish_.SetLeaves(streamDrift_.Leaves());
         streamFish_.Update(deltaSeconds,playerMotion_.Position().x,playerMotion_.Position().z);
+        fallingFruit_.SetWind(weather_.State().wind);
         fallingFruit_.UpdateCoconuts(seaForageSeconds_, cameraPosition_.X, cameraPosition_.Z);
         if (soundscape_ && fallingFruit_.LastCoconutLanding().count != notedThudCount_) {
             const auto& landing = fallingFruit_.LastCoconutLanding();

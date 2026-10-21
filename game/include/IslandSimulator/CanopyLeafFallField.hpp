@@ -1,7 +1,9 @@
 #pragma once
 #include "IslandSimulator/JungleLayout.hpp"
 #include "IslandSimulator/StreamDriftField.hpp"
+#include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <span>
@@ -29,6 +31,10 @@ public:
     }
     /** @param seconds the shared wind clock; @param observerX,Z the viewer, for the range. */
     void Update(float seconds,float deltaSeconds,float observerX,float observerZ) noexcept;
+    /** @brief The weather's wind (1 the trade wind): above it each gust front tears more leaves
+     *  loose (the chance grows with the wind's square, every crown in range at 1.58) and
+     *  carries them downwind faster (by the square too) on a wider rock. */
+    void SetWind(float wind) noexcept {wind_=std::isfinite(wind)?std::clamp(wind,0.5f,3.0f):1.0f;}
     [[nodiscard]] std::span<const DriftingLeaf> Leaves() const noexcept {return leaves_;}
     [[nodiscard]] std::size_t ActiveCount() const noexcept;
     [[nodiscard]] std::size_t FallingCount() const noexcept;
@@ -58,6 +64,7 @@ private:
     std::array<float,Capacity> phase_{};
     std::array<float,Capacity> rest_{};   // seconds lying; negative while falling
     std::uint32_t releases_=0,shakes_=0,feathers_=0;
+    float wind_=1.0f;
     Landing landing_;
 };
 }

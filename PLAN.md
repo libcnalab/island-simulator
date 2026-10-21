@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 280 (2026-10-21) — a storm tears leaves loose and shakes the coconuts down
+
+The gust fronts already came faster in a storm (pass 234), but each front shed leaves and
+coconuts as in the trade wind. `CanopyLeafFallField::SetWind` and `FallingFruitField::SetWind`
+now take the weather's wind: a front tears a leaf from a crown with the chance times the wind's
+square (every crown in range from 1.58; a shower's 1.35 almost doubles it), the leaves are
+carried downwind by the square of the wind too (3.6 m/s in a storm's 2) on a wider rock, and
+a front shakes a nut from a fruiting palm with up to four times the chance. New core checks:
+over five minutes in the densest stand 105 leaves in the trade wind against 288 in a storm,
+carried up to 71 m and 129 m downwind; from a row of eight palms in twenty minutes 20 coconuts
+against 68. In the trade wind nothing changes; the tests and `jungle` in a thunderstorm pass.
+
 ## Loop pass 279 (2026-10-21) — rain splashes on the ground
 
 Heavier rain now splashes on the land round the walker as the sea's rings already showed it

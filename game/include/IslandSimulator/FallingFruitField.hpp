@@ -1,7 +1,9 @@
 #pragma once
 #include "IslandSimulator/MonkeyTroop.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
+#include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <span>
@@ -41,6 +43,9 @@ public:
     void Update(float deltaSeconds,std::span<const MonkeyState> monkeys) noexcept;
     // Palms shed in gusts near the observer; seconds is the world clock the gust field uses.
     void UpdateCoconuts(float seconds,float observerX,float observerZ) noexcept;
+    /** @brief The weather's wind (1 the trade wind): a stronger wind shakes more nuts loose at
+     *  each front, the chance growing with the wind's square up to four times at a storm's 2. */
+    void SetWind(float wind) noexcept {wind_=std::isfinite(wind)?std::clamp(wind,0.5f,3.0f):1.0f;}
     /** @brief A fruit let go from one of the crown's fruiting lobes, as a picking monkey's
      *  falls: a roosting fruit bat's stir in the crown, or anything else that shakes it. */
     void DropFrom(const CanopyPlacement& tree) noexcept;
@@ -68,6 +73,7 @@ private:
     FallingFruit* FreeSlot() noexcept;
     const IslandTerrain& terrain_;
     std::span<const PalmPlacement> palms_;
+    float wind_=1.0f;
     std::vector<float> palmGust_;       // last gust strength seen at each palm
     std::uint32_t coconutDrops_=0;
     std::uint32_t consumed_=0;

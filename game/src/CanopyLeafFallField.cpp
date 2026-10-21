@@ -94,7 +94,7 @@ void CanopyLeafFallField::Update(const float seconds,const float deltaSeconds,
             const std::uint32_t front=static_cast<std::uint32_t>((seconds*WindGust::FrontSpeed-crown.x)/WindGust::FrontSpacing);
             std::uint32_t hash=static_cast<std::uint32_t>(i)*0x9e3779b9U^front*0x85ebca6bU^0x3c6ef372U;
             hash^=hash>>16U;hash*=0x7feb352dU;hash^=hash>>15U;
-            if(static_cast<float>(hash&1023U)/1024.0f>=LeafChance) continue;
+            if(static_cast<float>(hash&1023U)/1024.0f>=LeafChance*std::clamp(wind_*wind_,1.0f,2.5f)) continue;
             Release(crown,hash);
         }
     }
@@ -104,9 +104,10 @@ void CanopyLeafFallField::Update(const float seconds,const float deltaSeconds,
         if(rest_[i]<0.0f) {
             // Falling: a steady descent at the leaf's own speed (a feather's is slower and
             // its rock wider), carried downwind, rocking side to side and turning.
-            const float rock=leaf.variant==FeatherVariant?1.8f:1.0f;
+            const float rock=(leaf.variant==FeatherVariant?1.8f:1.0f)*std::max(1.0f,wind_);
+            const float carry=std::max(1.0f,wind_*wind_);
             phase_[i]=std::fmod(phase_[i]+dt*2.2f,Tau);
-            leaf.x+=(-DriftSpeed*(leaf.variant==FeatherVariant?0.6f:1.0f)+std::sin(phase_[i])*SwaySpeed*rock)*dt;
+            leaf.x+=(-DriftSpeed*carry*(leaf.variant==FeatherVariant?0.6f:1.0f)+std::sin(phase_[i])*SwaySpeed*rock)*dt;
             leaf.z+=std::cos(phase_[i]*0.9f)*SwaySpeed*0.7f*rock*dt;
             leaf.y-=leaf.speed*dt;
             leaf.yawRadians=std::fmod(leaf.yawRadians+SpinRate*dt,Tau);

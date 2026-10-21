@@ -41,7 +41,7 @@ void FallingFruitField::UpdateCoconuts(const float seconds,const float observerX
         const std::uint32_t front=static_cast<std::uint32_t>((seconds*WindGust::FrontSpeed-palm.x)/WindGust::FrontSpacing);
         std::uint32_t hash=static_cast<std::uint32_t>(i)*0x9e3779b9U^front*0x85ebca6bU;
         hash^=hash>>16U;hash*=0x7feb352dU;hash^=hash>>15U;
-        if(static_cast<float>(hash&1023U)/1024.0f>=CoconutChance) continue;
+        if(static_cast<float>(hash&1023U)/1024.0f>=CoconutChance*std::clamp(wind_*wind_,1.0f,4.0f)) continue;
         ShakeCoconut(palm,hash);
     }
 }

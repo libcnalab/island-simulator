@@ -9294,6 +9294,23 @@ int main()
                 peak = std::max(peak, inView);
             }
             Check(peak <= island::CanopyLeafFallField::Capacity, "the shed leaves never exceed the field's capacity");
+            // In a storm's wind (2) the same fronts tear far more leaves loose and carry them
+            // faster downwind.
+            island::CanopyLeafFallField calm(terrain), storm(terrain);
+            calm.SetCrowns(crowns); storm.SetCrowns(crowns); storm.SetWind(2.0f);
+            float stormClock = 0.0f, calmFurthest = 0.0f, stormFurthest = 0.0f;
+            for (int step = 0; step < 6000; ++step) {
+                stormClock += 0.05f;
+                calm.Update(stormClock, 0.05f, crowns[densest].x, crowns[densest].z);
+                storm.Update(stormClock, 0.05f, crowns[densest].x, crowns[densest].z);
+                for (const auto& leaf : calm.Leaves()) if (leaf.active) calmFurthest = std::max(calmFurthest, crowns[densest].x - leaf.x);
+                for (const auto& leaf : storm.Leaves()) if (leaf.active) stormFurthest = std::max(stormFurthest, crowns[densest].x - leaf.x);
+            }
+            Check(storm.ReleaseCount() > calm.ReleaseCount() * 2U, "a storm's wind tears more than twice as many leaves loose");
+            Check(stormFurthest > calmFurthest + 10.0f, "a storm's wind carries the leaves further downwind");
+            std::cout << "canopy leaf fall in five minutes: " << calm.ReleaseCount() << " leaves in the trade wind, "
+                      << storm.ReleaseCount() << " in a storm's; carried up to " << calmFurthest << " m and "
+                      << stormFurthest << " m downwind\n";
             std::cout << "canopy leaf fall: up to " << peak << " leaves within 70 m of one view in ten minutes among "
                       << densestCount << " crowns (the stream field holds " << island::StreamDriftField::Capacity << ")\n";
         }
@@ -10021,6 +10038,25 @@ int main()
         Check(grove.CoconutDropCount()>=1U&&nutTop>palms[0].y+6.0f,"gust fronts shake a coconut from the palm crown within four minutes");
         Check(grove.LastCoconutLanding().count>=1U&&std::abs(grove.LastCoconutLanding().y-(terrain.Height(grove.LastCoconutLanding().x,grove.LastCoconutLanding().z)+0.10f))<0.01f,
               "the coconut's landing is counted where it struck the ground");
+        {
+            // A storm's wind (2) shakes nuts loose at more of the same fronts: a row of
+            // fruiting palms over twenty minutes, in the trade wind and in the storm.
+            std::vector<island::PalmPlacement> row;
+            for(int i=0;i<8;++i) {
+                const float z=-70.0f+static_cast<float>(i)*3.0f;
+                row.push_back({-60.0f,terrain.Height(-60.0f,z),z,0.3f,1.0f,60.0f,0.0f,1U,island::PalmCondition::Living});
+            }
+            island::FallingFruitField calmRow(terrain),stormRow(terrain);
+            calmRow.SetPalms(row);stormRow.SetPalms(row);stormRow.SetWind(2.0f);
+            for(int step=0;step<24000;++step) {
+                calmRow.UpdateCoconuts(static_cast<float>(step)*0.05f,-60.0f,-60.0f);
+                stormRow.UpdateCoconuts(static_cast<float>(step)*0.05f,-60.0f,-60.0f);
+                calmRow.Update(0.05f,{});stormRow.Update(0.05f,{});
+            }
+            Check(stormRow.CoconutDropCount()>calmRow.CoconutDropCount()*2U,"a storm's wind shakes more than twice as many coconuts loose");
+            std::cout<<"coconuts shaken loose from eight palms in twenty minutes: "<<calmRow.CoconutDropCount()
+                <<" in the trade wind, "<<stormRow.CoconutDropCount()<<" in a storm's\n";
+        }
         // A nut from a palm leaning over the shallows strikes the water, bobs at the surface,
         // drifts toward the shore and washes up on the sand within a minute, no thud counted.
         {
