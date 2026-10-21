@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 306: the sunbeam motes no longer make a false star against the daytime sky (only drawn below the eye, against the forest) (PLAN "Loop pass 306").
 - Pass 305: the cave's rock no longer streaks toward the mouth (its triplanar weights now use the normal in the cave's own frame) (PLAN "Loop pass 305").
 - Pass 304: on dark nights a swimmer stirs plankton into blue light (PLAN "Loop pass 304").
 - Pass 303: seagrass clumps sway on the lagoon floor's meadow beds (`SeagrassRenderer`; tufts, not yet a full carpet) (PLAN "Loop pass 303").

@@ -80,6 +80,13 @@ namespace island
                 Vector3 toCamera = camera - at;
                 const float distance = toCamera.Length();
                 if (distance > Radius || distance < 0.25f) continue;
+                // Only where it is seen against the dark of the forest: a glint is lost against
+                // the bright sky, but drawn additively there it piled up into a star-like point.
+                // Looking down at a mote (it lies below the eye) puts the floor and the trunks
+                // behind it.
+                const float below = (camera.Y - y) / distance;
+                const float againstDark = std::clamp((below - 0.02f) / 0.10f, 0.0f, 1.0f);
+                if (againstDark <= 0.0f) continue;
                 // in a gap of sunlight: the light field bright here
                 const float sunlit = std::clamp((light_.SampleReceiver(x, y, z, ground) - 0.45f) / 0.25f, 0.0f, 1.0f);
                 if (sunlit <= 0.0f) continue;
@@ -93,7 +100,7 @@ namespace island
                 const float fade = 1.0f - std::clamp((distance - Radius * 0.6f) / (Radius * 0.4f), 0.0f, 1.0f);
                 // dust scatters forwards: brightest looking into the light
                 const float into = std::max(0.0f, -Vector3::Dot(toCamera, toSun));
-                const float b = std::clamp(0.9f * sunlit * glint * fade * forest * directSun * (0.6f + 0.8f * into * into), 0.0f, 1.0f);
+                const float b = std::clamp(0.9f * sunlit * glint * fade * forest * directSun * againstDark * (0.6f + 0.8f * into * into), 0.0f, 1.0f);
                 if (b < 0.02f) continue;
                 const auto c = [b](float v) { return static_cast<int>(std::lround(std::clamp(v * b, 0.0f, 1.0f) * 255.0f)); };
                 const Color core(c(1.0f), c(0.95f), c(0.80f), 255), rim(0, 0, 0, 0);

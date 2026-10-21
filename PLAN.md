@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 306 (2026-10-21) — no false star in the daytime sky
+
+Reviewing `lookout` at 14:00 showed a small bright white point high in the blue sky, steady
+from capture to capture; it first appeared after pass 268. It was a sunbeam mote: the dust
+specks float 0.3-2.5 m up round the walker, and one above the eye, seen against the bright sky
+and drawn additively, piled up into a star-like point (a glint that is in truth lost against
+the sky). The motes now show only where they are seen against the dark of the forest: looking
+down at them (below the eye by a little more than 2 % of their distance, full by 12 %), with
+the floor and the trunks behind. `lookout`'s brightest sky pixel is back to its old value;
+`litter` and the tests pass.
+
 ## Loop pass 305 (2026-10-21) — the cave's walls no longer streak towards the mouth
 
 Inside the cave (`cave-inside`) the walls showed long streaks radiating towards the mouth, as if
