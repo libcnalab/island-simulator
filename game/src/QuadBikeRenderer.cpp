@@ -743,8 +743,20 @@ void main()
         if (riderFallback) {
             // a simple seated rider: torso over the seat, arms to the grips, legs to the footwells
             const Vector3 seat = V(Seat);
-            const Vector3 hips = seat + Vector3(0.0f, 0.06f, 0.0f), chest = seat + Vector3(0.0f, 0.42f, 0.10f);
-            const Vector3 head = chest + Vector3(0.0f, 0.24f, 0.04f);
+            // leaning into a corner as the CNA rider does: from the cornering pull, eased, up
+            // to 12 degrees, the upper body turned about the hips (the hands stay on the grips)
+            const float speed = bike.Speed();
+            const float pull = speed * speed * std::tan(bike.SteerRadians()) / QuadBike::WheelBase;
+            riderLean_ += (std::clamp(pull / 9.81f, -1.0f, 1.0f) * 0.2094f - riderLean_) * 0.12f;
+            const float leanCos = std::cos(riderLean_), leanSin = std::sin(riderLean_);
+            const Vector3 hips = seat + Vector3(0.0f, 0.06f, 0.0f);
+            const auto leaned = [&](const Vector3& point) {
+                const Vector3 d = point - hips;
+                // (the body frame's x runs to the rider's left)
+                return hips + Vector3(d.X * leanCos - d.Y * leanSin, d.Y * leanCos + d.X * leanSin, d.Z);
+            };
+            const Vector3 chest = leaned(seat + Vector3(0.0f, 0.42f, 0.10f));
+            const Vector3 head = leaned(seat + Vector3(0.0f, 0.66f, 0.14f));
             m.Shell((hips + chest) * 0.5f, Vector3(0.17f, 0.24f, 0.11f), 0.6f, Shirt, 14, 8);
             m.Shell(head, Vector3(0.11f, 0.13f, 0.12f), 0.85f, BlackPlastic, 14, 10);   // a helmet
             m.Shell(head + Vector3(0.0f, -0.02f, 0.09f), Vector3(0.07f, 0.05f, 0.03f), 0.8f, Skin, 10, 6);

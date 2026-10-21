@@ -104,5 +104,6 @@ namespace island
         int triangles_ = 0, drawCalls_ = 0;
         float dirt_ = 0.0f, dirtWet_ = 0.0f;
         bool braking_ = false;
+        float riderLean_ = 0.0f;   // the stand-in rider's lean into the corner, radians, + right
     };
 }

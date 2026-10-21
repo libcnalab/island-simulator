@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 317 (2026-10-21) — the stand-in rider leans too
+
+The Web and Android builds draw a stand-in rider (helmet, torso, arms) instead of the CNA
+avatar, and it still sat upright through the corners that pass 316 taught the avatar to lean
+into. It now takes the same lean (the cornering pull, up to 12 degrees, eased the same way):
+the chest and head are turned about the hips and the arms are drawn from the leaned shoulders
+to the grips that stay put. The quad body frame's x runs to the rider's left, so the first
+probe leaned the stand-in out of the turn; with the sign flipped a probe holding the full lean
+in `quad-chase` (the stand-in forced on the desktop) leans it right, hands on the grips.
+`quad`, `quad-ride`, `quad-chase`, `quad-drive` and the tests pass.
+
 ## Loop pass 316 (2026-10-21) — the quad's rider leans into the corners
 
 The CNA avatar rider turned the bars but sat bolt upright through a corner, where a real ATV

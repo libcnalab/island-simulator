@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 317: the Web/Android stand-in quad rider leans into the corners like the CNA avatar (PLAN "Loop pass 317").
 - Pass 316: the quad's CNA rider leans into the corners, hands kept on the grips (PLAN "Loop pass 316").
 - Pass 315: H switches a hand torch on foot: lights the night ground, the rain in its beam and the animals' eyeshine (PLAN "Loop pass 315").
 - Pass 314: at night the monkeys climb a tree and sleep up it until morning (PLAN "Loop pass 314"; closes the deferred monkeys-in-trees item).
