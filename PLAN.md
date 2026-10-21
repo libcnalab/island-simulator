@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 272 (2026-10-21) — the hut's eaves drip in the rain
+
+In rain the hut's thatch now sheds its water as a real roof does, off the drip edge: a new
+`EaveDripRenderer` takes the tip of every leaf in the thatch's lowest row on both slopes (96
+tips, from `BuildHutThatchBlade`), and from each lets up to three drops fall under gravity to
+the ground below (their streaks lengthen with the speed, about 0.7 s for the 2.5 m fall),
+splash in a small ring that spreads and thins over 0.14 s, then wait for the thatch to gather
+the next. The harder it rains, the more of a tip's drops run and the shorter the waits, so a
+shower drips and a downpour pours in near-curtains along the eaves. World-anchored, drawn with
+the rain before the grade, out to 45 m. `hut` in a thunderstorm shows the drip line falling
+past the side wall; `hut` in showers passes too.
+
 ## Loop pass 271 (2026-10-21) — wildlife takes shelter from the rain
 
 The animals now take cover from the rain as they do from the dark. The day fliers (butterflies,

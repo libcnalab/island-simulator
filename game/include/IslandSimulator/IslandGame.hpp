@@ -18,6 +18,7 @@
 #include "IslandSimulator/MorningMistField.hpp"
 #include "IslandSimulator/WhaleRenderer.hpp"
 #include "IslandSimulator/SunbeamMoteRenderer.hpp"
+#include "IslandSimulator/EaveDripRenderer.hpp"
 #include "IslandSimulator/RainRingRenderer.hpp"
 #include "IslandSimulator/QuadWheelTraces.hpp"
 #include "IslandSimulator/TyreTrackRenderer.hpp"
@@ -513,6 +514,7 @@ namespace island
         std::unique_ptr<DolphinRenderer> dolphinRenderer_;
         std::unique_ptr<ShipwreckRenderer> shipwreckRenderer_;
         std::unique_ptr<HutRenderer> hutRenderer_;
+        std::unique_ptr<EaveDripRenderer> eaveDrips_;
         std::unique_ptr<JettyRenderer> jettyRenderer_;
         std::unique_ptr<BridgeRenderer> bridgeRenderer_;
         std::unique_ptr<LookoutRenderer> lookoutRenderer_;

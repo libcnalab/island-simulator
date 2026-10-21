@@ -2400,6 +2400,7 @@ namespace island
         naturalPropRenderer_ = std::make_unique<NaturalPropRenderer>(device, naturalPropLayout_, residentFootprints);
         shipwreckRenderer_ = std::make_unique<ShipwreckRenderer>(device, shipwreckLayout_);
         if(hutPlacement_) hutRenderer_=std::make_unique<HutRenderer>(device,*hutPlacement_);
+        if(hutPlacement_) eaveDrips_=std::make_unique<EaveDripRenderer>(device,*hutPlacement_,terrain_);
         if(jettyPlacement_) jettyRenderer_=std::make_unique<JettyRenderer>(device,*jettyPlacement_);
         if(bridgePlacement_) bridgeRenderer_=std::make_unique<BridgeRenderer>(device,*bridgePlacement_);
         if(lookoutPlacement_) lookoutRenderer_=std::make_unique<LookoutRenderer>(device,*lookoutPlacement_);
@@ -5758,6 +5759,7 @@ namespace island
                                              timeSeconds);
                 rain_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, weather.rain, weather.wind, timeSeconds);
                 rainRings_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, weather.rain, timeSeconds);
+                if (eaveDrips_) eaveDrips_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, weather.rain, timeSeconds);
             }
             // The local lights (the campfire, the quad's headlights) light the ground through the
             // grade: each writes how strongly each pixel is lit into the frame's alpha, and the
