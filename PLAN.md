@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 407 (2026-10-21) — the quad bike meets the helicopter, the rope bridge and the jetty
+
+Like the cave and the bunker before pass 400, three structures were only the walker's: the quad
+drove through the helicopter (it is not in the world's circular obstacles; the walker has its own
+capsule test with doorways), across the rope bridge's posts and ropes, and under or through the
+jetty's deck. Now QuadWallBlocked stops it at the helicopter's airframe (its doorways are a
+walker's) and keeps it off the rope bridge with its end posts (a 1.1 m plank walk, narrower than
+the quad's track), and QuadGround carries it on the jetty's deck and up its ramp as the walker's
+support does (off its side, the sea); on the planks the wheels leave no ruts or spray. New QA views
+`quad-helicopter` (driven at its flank from ten metres: it stops 2.1 m from its axis, at the cabin's
+side) and `quad-jetty` (from the deck's ramp out along it, braking after six metres: it stands on
+the planks 8.4 m out, 0.85 m above the water; the jetty's root lies under a steep bank, down which
+a start on the sand slid past the deck). `quad-drive` ends as before. The tests pass.
+
 ## Loop pass 406 (2026-10-21) — a laid rut keeps its ground points
 
 Since pass 393 the ruts take the drawn ground's heights, but every frame still draped all of them

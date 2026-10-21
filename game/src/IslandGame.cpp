@@ -226,6 +226,8 @@ namespace island
             case FixedViewpoint::QuadDriveDetail: return "quad-drive";
             case FixedViewpoint::QuadBunkerDetail: return "quad-bunker";
             case FixedViewpoint::QuadCaveDetail: return "quad-cave";
+            case FixedViewpoint::QuadJettyDetail: return "quad-jetty";
+            case FixedViewpoint::QuadHelicopterDetail: return "quad-helicopter";
             case FixedViewpoint::CrabDetail: return "crabs";
             case FixedViewpoint::HermitCrabDetail: return "hermit-crabs";
             case FixedViewpoint::CoconutCrabDetail: return "coconut-crabs";
@@ -2687,6 +2689,15 @@ namespace island
                     const auto from = terrainRenderer_->Cave().World(0.0f, 0.0f, -6.0f);
                     const auto to = terrainRenderer_->Cave().World(0.0f, 0.0f, 0.0f);
                     PlaceQuadNear(from.x, from.z, std::atan2(to.x - from.x, to.z - from.z));
+                } else if (viewpoint_ == FixedViewpoint::QuadJettyDetail && jettyPlacement_) {
+                    // from the deck's ramp out along it (the jetty's root lies under a steep bank)
+                    const auto& jetty = *jettyPlacement_;
+                    PlaceQuadNear(jetty.rootX + jetty.dirX * 1.0f, jetty.rootZ + jetty.dirZ * 1.0f,
+                                  std::atan2(jetty.dirX, jetty.dirZ));
+                } else if (viewpoint_ == FixedViewpoint::QuadHelicopterDetail && helicopterPlacement_) {
+                    // straight at the helicopter's flank from ten metres off
+                    const auto side = helicopterPlacement_->World(10.0f, 0.0f, 0.0f);
+                    PlaceQuadNear(side.x, side.z, std::atan2(helicopterPlacement_->x - side.x, helicopterPlacement_->z - side.z));
                 } else {
                     // up the beach path from the south shore, which runs clear of the trees
                     constexpr float startZ = -222.0f;
@@ -2694,7 +2705,8 @@ namespace island
                     PlaceQuadNear(x0, startZ, std::atan2(x1 - x0, 6.0f));
                 }
                 riding_ = true;
-                quadControls_ = {viewpoint_ == FixedViewpoint::QuadDriveDetail ? 0.8f : 1.0f, 0.0f, false};
+                quadControls_ = {viewpoint_ == FixedViewpoint::QuadDriveDetail ? 0.8f
+                    : viewpoint_ == FixedViewpoint::QuadJettyDetail ? 0.4f : 1.0f, 0.0f, false};
                 quadCameraYaw_ = quad_.YawRadians();
                 const auto start = quad_.Position();
                 quadCamera_ = Vector3(start.x - std::sin(quadCameraYaw_) * 4.8f, start.y + 1.9f, start.z - std::cos(quadCameraYaw_) * 4.8f);
@@ -4406,7 +4418,8 @@ namespace island
     bool IslandGame::QuadOnShelterFloor(const float x, const float z) const noexcept
     {
         return quadSite_ != QuadSite::Open
-            || (terrainRenderer_ && terrainRenderer_->CaveGround().Contains(x, z));
+            || (terrainRenderer_ && terrainRenderer_->CaveGround().Contains(x, z))
+            || (jettyPlacement_ && jettyPlacement_->OnDeck(x, z));   // the planks, not the sand under them
     }
 
     bool IslandGame::QuadWallBlocked(const float x, const float z) const noexcept
@@ -4430,6 +4443,17 @@ namespace island
                     if (!bunkerLayout_.ContainsWalkable(px, pz, 0.0f)) return true;
                 }
             }
+        }
+        // The helicopter's airframe (its doorways are a walker's, not a quad's), and the rope
+        // bridge with its end posts: its plank walk is narrower than the quad's track.
+        if (helicopterPlacement_ && helicopterPlacement_->IntersectsCapsule(x, z, 0.95f)) return true;
+        if (bridgePlacement_) {
+            const auto& bridge = *bridgePlacement_;
+            const float dx = x - bridge.ax, dz = z - bridge.az;
+            const float along = dx * bridge.dirX + dz * bridge.dirZ;
+            const float across = dx * bridge.AcrossX() + dz * bridge.AcrossZ();
+            if (along > -1.1f && along < bridge.span + 1.1f
+                && std::abs(across) < BridgePlacement::PostAcross + 0.95f) return true;
         }
         // The cave's rock (an arched shell five metres wide): the quad and its rider as one
         // upright capsule, 0.95 m round and 1.9 m tall.
@@ -4481,6 +4505,15 @@ namespace island
             ground.normal = {sample.normal.x, sample.normal.y, sample.normal.z};
         } else {
             ground.height = terrain_.Height(std::clamp(x, -900.0f, 900.0f), std::clamp(z, -900.0f, 900.0f));
+        }
+        // The jetty's deck carries the quad as it does the walker, up its ramp from the sand
+        // (off its side, the sea).
+        if (jettyPlacement_) {
+            const float deck = jettyPlacement_->SupportHeight(x, z, ground.height);
+            if (deck > ground.height) {
+                ground.height = deck;
+                ground.normal = {0.0f, 1.0f, 0.0f};
+            }
         }
         // Tyre grip by the ground, less in the wet: loose sand, firm soil, grippy rock. The kind
         // is the analytic terrain's at the centre of the quarter-metre cell, remembered: a full
@@ -4664,6 +4697,13 @@ namespace island
         if (!quadRenderer_ || !quadPlaced_) return;
         const auto ground = [this](float x, float z) { return QuadGround(x, z); };
         const auto obstacles = [this](float x, float z, float r, float& px, float& pz) { return QuadObstacle(x, z, r, px, pz); };
+        if (viewpoint_ == FixedViewpoint::QuadJettyDetail && jettyPlacement_) {
+            // the jetty view rides six metres out along the deck, then brakes and stands on it
+            const auto q = quad_.Position();
+            const float along = (q.x - jettyPlacement_->rootX) * jettyPlacement_->dirX
+                + (q.z - jettyPlacement_->rootZ) * jettyPlacement_->dirZ;
+            if (along > 6.0f) quadControls_ = {0.0f, 0.0f, true};
+        }
         const BikeControls controls = riding_ ? quadControls_ : BikeControls{0.0f, 0.0f, true};
         // A parked quad that has settled sleeps: its physics (eight substeps, each sampling the
         // ground and the obstacles under four wheels) cost about 1.5 ms an update for a machine
@@ -7513,7 +7553,22 @@ namespace island
             }
             if (QuadDriveView()) {
                 const auto q = quad_.Position();
-                if (viewpoint_ != FixedViewpoint::QuadDriveDetail) {
+                if (viewpoint_ == FixedViewpoint::QuadJettyDetail || viewpoint_ == FixedViewpoint::QuadHelicopterDetail) {
+                    std::cout << "island-simulator: quad QA structure: "
+                              << (viewpoint_ == FixedViewpoint::QuadJettyDetail ? "jetty" : "helicopter")
+                              << ", ground " << QuadGround(q.x, q.z).height << ", body " << q.y
+                              << ", walls " << (QuadWallBlocked(q.x, q.z) ? "touching" : "clear");
+                    if (viewpoint_ == FixedViewpoint::QuadHelicopterDetail && helicopterPlacement_) std::cout << ", helicopter distance "
+                        << std::hypot(q.x - helicopterPlacement_->x, q.z - helicopterPlacement_->z);
+                    if (viewpoint_ == FixedViewpoint::QuadJettyDetail && jettyPlacement_) {
+                        const auto& jetty = *jettyPlacement_;
+                        const float along = (q.x - jetty.rootX) * jetty.dirX + (q.z - jetty.rootZ) * jetty.dirZ;
+                        const float across = (q.x - jetty.rootX) * jetty.dirZ - (q.z - jetty.rootZ) * jetty.dirX;
+                        std::cout << ", along the jetty " << along << " m, across " << across << " m, deck "
+                                  << jetty.SupportHeight(q.x, q.z, -100.0f);
+                    }
+                    std::cout << '\n';
+                } else if (viewpoint_ != FixedViewpoint::QuadDriveDetail) {
                     const bool bunker = viewpoint_ == FixedViewpoint::QuadBunkerDetail;
                     const float depth = bunker ? bunkerLayout_.Local({q.x, q.y, q.z}).z
                                                : terrainRenderer_->Cave().Local({q.x, q.y, q.z}).z;

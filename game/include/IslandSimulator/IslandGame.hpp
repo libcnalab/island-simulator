@@ -276,6 +276,8 @@ namespace island
         QuadDriveDetail,
         QuadBunkerDetail,
         QuadCaveDetail,
+        QuadJettyDetail,
+        QuadHelicopterDetail,
         CrabDetail,
         HermitCrabDetail,
         CoconutCrabDetail,
@@ -634,7 +636,8 @@ namespace island
         // the driven quad views: up the beach path, and into the bunker and the cave
         [[nodiscard]] bool QuadDriveView() const noexcept {
             return viewpoint_ == FixedViewpoint::QuadDriveDetail || viewpoint_ == FixedViewpoint::QuadBunkerDetail
-                || viewpoint_ == FixedViewpoint::QuadCaveDetail;
+                || viewpoint_ == FixedViewpoint::QuadCaveDetail || viewpoint_ == FixedViewpoint::QuadJettyDetail
+                || viewpoint_ == FixedViewpoint::QuadHelicopterDetail;
         }
         float quadSiteFloorY_ = 0.0f;
         void UpdateQuadSite();
