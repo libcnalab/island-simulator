@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 359 (2026-10-21) — wind ripples near the eye break the sun's glitter into sparkles
+
+The shortest wave in the ocean spectrum is 65 cm, so within a few metres of a low eye (`reef`)
+the sea was smooth soft swells and the sun's glitter smeared into long streaks toward the
+vanishing point. Two short plane ripple trains added to the spectrum crossed into a regular
+diagonal grating and were reverted. Instead the ocean shader adds a hand-scale ruffle near the
+eye only: the analytic gradient of two octaves of drifting value noise (18 and 9 cm cells, the
+finer turned off the grid), a few millimetres high, stronger on the windward coast and in a
+rough sea, gone once a pixel spans 2.5-7.5 cm. The glitter now breaks into irregular sparkles;
+the shallows seen from the surface and every underwater view are unchanged. `reef`, `water`,
+`current`, `fish`, `dolphins`, `reef-habitat`, `shark` and the tests pass.
+
 ## Loop pass 358 (2026-10-21) — the sea mirrors the sun's side of the horizon
 
 The ocean's mirrored sky took the hour's horizon colour in every direction, so after pass 357 a

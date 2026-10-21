@@ -157,6 +157,24 @@ float coastalWindExposure(vec2 position,float shoreDistance)
     return clamp(.5+(side-.5)*coastal,0.0,1.0);
 }
 
+float rippleHash(vec2 p)
+{
+    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+}
+
+// The gradient of smooth value noise (its own analytic derivative, not finite differences).
+vec2 rippleNoiseGradient(vec2 p)
+{
+    vec2 cell = floor(p), f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f), du = 6.0 * f * (1.0 - f);
+    float a = rippleHash(cell), b = rippleHash(cell + vec2(1.0, 0.0));
+    float c = rippleHash(cell + vec2(0.0, 1.0)), d = rippleHash(cell + vec2(1.0, 1.0));
+    float k = a - b - c + d;
+    return du * vec2(b - a + k * u.y, c - a + k * u.x);
+}
+
 float playerRippleBand(float distanceToPlayer, float phase)
 {
     float radius = mix(0.34, 1.85, phase);
@@ -196,6 +214,20 @@ void main()
     vec4 waveSlopes = oceanSlopes(vWorld.xz, uTime, dFdx(vWorld.xz), dFdy(vWorld.xz));
     vec2 slope = waveSlopes.xy*waveScale;
     vec2 surfaceSlope = slope + waveSlopes.zw*waveScale;
+    // Wind ripples a hand across, near the eye only: the shortest wave is 65 cm, so within a
+    // few metres the sea was smooth swells and the sun's glitter smeared into streaks. Two
+    // octaves of drifting value noise (the finer turned off the grid) give an irregular
+    // ruffle - plane ripple trains crossed into a grating - gone once a pixel spans them.
+    float ripplePixel = max(length(dFdx(vWorld.xz)), length(dFdy(vWorld.xz)));
+    float rippleWeight = (1.0 - smoothstep(0.025, 0.075, ripplePixel)) * mix(0.6, 1.0, windExposure)
+        * max(uSeaState, 1.0);
+    if (rippleWeight > 0.0) {
+        const mat2 rippleTurn = mat2(0.80, 0.60, -0.60, 0.80);
+        vec2 coarse = rippleNoiseGradient(vWorld.xz * 5.5 + vec2(uTime * 0.85, uTime * 0.30)) * 5.5;
+        vec2 fine = rippleTurn * rippleNoiseGradient(rippleTurn * vWorld.xz * 11.0
+            - vec2(uTime * 0.55, -uTime * 1.05)) * 11.0;
+        surfaceSlope += (coarse * 0.0034 + fine * 0.0013) * rippleWeight;
+    }
     vec3 normal = normalize(vec3(-surfaceSlope.x, 1.0, -surfaceSlope.y));
     float distanceToCamera = length(vWorld - uCameraPosition);
     vec3 toEye = (uCameraPosition - vWorld) / max(distanceToCamera, 0.0001);
