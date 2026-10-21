@@ -48,8 +48,6 @@ namespace island
         /** @brief A weather asked for on the command line (--weather); none when empty. */
         void SetRequested(std::optional<WeatherKind> kind) noexcept;
         [[nodiscard]] std::optional<WeatherKind> Requested() noexcept;
-        /** @brief How high the sea runs with this weather's wind: 1 in the trade wind (and below),
-         *  up to 1.7 in a storm's; the waves' heights and slopes scale by it. */
         /** @brief A bright moon casts soft shadows: the night's shadow strength from the
          *  moonlight (which the clouds already take down), up to 40 % under a full moon high. */
         inline void AddMoonShadows(DayLighting& light) noexcept
@@ -57,10 +55,20 @@ namespace island
             light.shadowStrength = std::max(light.shadowStrength,
                 0.40f * std::clamp(light.moonLight, 0.0f, 1.0f) * (1.0f - std::clamp(light.sunVisibility, 0.0f, 1.0f)));
         }
+        /** @brief How high the sea runs with this weather's wind: 1 in the trade wind (and below),
+         *  up to 1.7 in a storm's; the waves' heights and slopes scale by it. */
         [[nodiscard]] inline float SeaState() noexcept
         {
             const float wind = Current().wind;
             return 1.0f + 0.7f * std::clamp(std::isfinite(wind) ? wind - 1.0f : 0.0f, 0.0f, 1.0f);
+        }
+        /** @brief How far the rain beats the campfire down: 0 dry and in a passing shower's
+         *  light rain, rising through heavier rain to 1 in a storm's downpour. */
+        [[nodiscard]] inline float FireDousing() noexcept
+        {
+            const float rain = Current().rain;
+            const float t = std::clamp(std::isfinite(rain) ? (rain - 0.35f) / 0.65f : 0.0f, 0.0f, 1.0f);
+            return t * t * (3.0f - 2.0f * t);
         }
     }
 

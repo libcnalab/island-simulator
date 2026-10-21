@@ -30,6 +30,7 @@ uniform vec3 uRight;uniform vec3 uForward;
 uniform float uMoving;
 uniform float uGust;
 uniform float uTend;
+uniform float uDouse;
 out vec3 world;out vec4 pigment;out vec2 uv;out float life;
 void main(){
     pigment=aColor;uv=aTexCoord;life=1.0;world=aPosition;
@@ -38,7 +39,8 @@ void main(){
         if(aColor.a>.6){
             float age=fract(uCampfire.w*.23+aColor.r)*4.35;
             local.y+=age*.45;local.x+=sin(age*3.0+aColor.r*37.0)*.10-age*.035;
-            life=1.0-smoothstep(2.6,4.35,age);
+            // a downpour puts the sparks out
+            life=(1.0-smoothstep(2.6,4.35,age))*(1.0-uDouse);
         }else if(aColor.a>.35){
             float altitude=1.0-aColor.g;
             // A tended fire stands taller: the tongues and the plume stretched up a third.
@@ -46,6 +48,9 @@ void main(){
             local.x+=sin(uCampfire.w*(.47-altitude*.16)+aColor.r*13.0+local.y*.31)
                 *(.12+altitude*.42)-local.y*.032;
             local.z+=sin(uCampfire.w*.19+aColor.r*29.0+local.y*.17)*altitude*.26;
+        }else{
+            // the rain beats the tongues down towards the embers
+            local.y*=1.0-.5*uDouse;
         }
         world=uCampfire.xyz-vec3(0,.45,0)+uRight*local.x+vec3(0,local.y,0)+uForward*local.z;
         if(aColor.a>.35&&aColor.a<.6){
@@ -65,6 +70,7 @@ void main(){
 constexpr const char* fragment=R"(
 in vec3 world;in vec4 pigment;in vec2 uv;in float life;
 uniform float uMoving;
+uniform float uDouse;
 out vec4 fragColor;
 float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
@@ -91,8 +97,9 @@ void main(){
             float ash=1.0-smoothstep(.72,1.08,radius);
             float mottle=.62*noise(world.xz*8.0)+.38*noise(world.xz*27.0+7.3);
             color=mix(vec3(.095,.075,.058),mix(vec3(.27,.255,.23),vec3(.48,.455,.40),mottle),ash);
+            color*=1.0-.40*uDouse;   // rain-soaked ash goes dark
         }else if(tag==5){
-            color=mix(vec3(.30,.022,.002),vec3(1,.25,.008),noise(world.xz*31.0))*campfirePulse(t);
+            color=mix(vec3(.30,.022,.002),vec3(1,.25,.008),noise(world.xz*31.0))*campfirePulse(t)*(1.0-.45*uDouse);
         }else{
             float grain=noise(world.xz*24.0+world.y*13.0);
             float fissure=pow(.5+.5*sin(world.x*81.0+world.z*69.0+world.y*37.0),18.0);
@@ -125,6 +132,8 @@ void main(){
         color=mix(color,vec3(1,.95,.58),smoothstep(.66,1.0,heat)*core);
         float blueBase=(1.0-smoothstep(.025,.17,p.y))*core;
         color=mix(color,vec3(.30,.48,1.0),blueBase*.46);
+        // beaten down by the rain the flames thin and sputter
+        alpha*=1.0-uDouse*(.30+.25*noise(vec2(t*6.0,pigment.r*13.0)));
     }else if(pigment.a<.6){
         float cloud=fbm(vec2(p.x*2.6,p.y*5.0-t*.43)+pigment.r*8.0);
         float altitude=1.0-pigment.g;
@@ -136,6 +145,10 @@ void main(){
         alpha*=.74+.26*noise(vec2(p.x*8.0+t*.13,p.y*11.0-t*.31)+pigment.r*17.0);
         color=mix(mix(vec3(.24,.225,.20),vec3(.37,.35,.31),cloud),
             vec3(.25,.27,.27),altitude*.52);
+        // In a downpour the fire steams: a whiter, denser cloud low down, and the rain
+        // knocks the high plume thin.
+        color=mix(color,vec3(.58,.59,.58)*(.85+.15*cloud),uDouse*.75*(1.0-altitude*.6));
+        alpha*=1.0+uDouse*(.55*(1.0-altitude)-.55*altitude);
         // Drawn after the night grade: the smoke takes the hour's darkness itself, glowing
         // a little orange low down where the flames light it at night.
         vec3 nightGrade=1.0/max(uCampfireNight.xyz,vec3(1.0));
@@ -212,6 +225,7 @@ void CampfireRenderer::Draw(const Matrix& view,const Matrix& projection,const Ve
     effect_->SetUniformFloat("uMoving",effects?1.0f:0.0f);
     effect_->SetUniformFloat("uGust",std::isfinite(seconds)?WindGust::Strength(centre_.x,centre_.z,seconds):0.0f);
     effect_->SetUniformFloat("uTend",tend_);
+    effect_->SetUniformFloat("uDouse",weather_now::FireDousing());
     device_.setBlendStateProperty(effects?BlendState::AlphaBlend:BlendState::Opaque);
     device_.setDepthStencilStateProperty(effects?DepthStencilState::DepthRead:DepthStencilState::Default);
     device_.setRasterizerStateProperty(RasterizerState::CullNone);device_.SetVertexBuffer(effects?moving_.get():solid_.get());

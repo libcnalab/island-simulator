@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 270 (2026-10-21) — the rain beats the campfire down
+
+The campfire now answers the rain. A shared `weather_now::FireDousing()` is 0 when dry and in a
+shower's light rain, rising smoothly through heavier rain (from 0.35) to 1 in a storm's
+downpour. Doused, the flames stand half as tall, thin and sputter; the sparks go out; the
+embers glow 45 % less and the wet ash goes dark; the low smoke turns to a whiter, denser steam
+while the high plume thins; the firelight (the night's point light through the grade and the
+warm light the terrain, grass and jungle shaders add round the pit, now scaled by a shared
+`uCampfireStrength` uniform) falls to 40 %; and the crackle falls by 45 %. Dry, `campfire` is
+unchanged; a shower's rain (0.55 at its heaviest) douses it at most 23 %; in a
+thunderstorm by day and at 21:30 the low flames, the smaller light pool and the pale steam
+show. All five captures pass. (The misplaced doc comment of `weather_now::SeaState` sat on
+`AddMoonShadows`; it is back on its function.)
+
 ## Loop pass 269 (2026-10-21) — the resident's clothes soak in the rain
 
 Out in the rain the resident's clothes and hair now darken as they soak, as wet cotton does:

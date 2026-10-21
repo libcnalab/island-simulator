@@ -13,6 +13,7 @@
 #include "IslandSimulator/CanopyShafts.hpp"
 #include "IslandSimulator/WreckScourPatch.hpp"
 #include "IslandSimulator/CanopyLighting.hpp"
+#include "IslandSimulator/CampfireLighting.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
 #include "IslandSimulator/CoastalWindResponse.hpp"
 
@@ -5786,7 +5787,7 @@ namespace island
                     // the same flicker as the firelight the ground's shaders add
                     const float pulse = 0.83f + 0.10f * std::sin(timeSeconds * 8.7f) + 0.07f * std::sin(timeSeconds * 17.1f + 1.3f);
                     localLights_->DrawPoint(cameraView_, cameraProjection_, renderCameraPosition_, fire, 8.0f, ground,
-                                            1.0f * night * pulse, Vector3(1.0f, 0.62f, 0.34f));
+                                            CampfireLighting::Strength() * night * pulse, Vector3(1.0f, 0.62f, 0.34f));
                 }
                 if (lanternLit) {
                     const float flicker = 0.90f + 0.06f * std::sin(timeSeconds * 5.3f) + 0.04f * std::sin(timeSeconds * 11.7f + 0.8f);

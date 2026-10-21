@@ -2,6 +2,7 @@
 #include "IslandSimulator/WindGust.hpp"
 #include "IslandSimulator/BunkerSite.hpp"
 #include "IslandSimulator/CampfireLayout.hpp"
+#include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/IslandEnvironmentField.hpp"
 #include "IslandSimulator/PlayerMotion.hpp"
 
@@ -1907,7 +1908,8 @@ namespace island
             streamInstance_->setVolumeProperty(model_.Mix().streamVolume
                 *(1.0f+0.6f*streamSound_.turbulence)
                 *underwaterAudio_.airGain*enclosureAir*gain);
-            campfireInstance_->setVolumeProperty(campfireVolume_
+            // a fire beaten down by a downpour crackles less
+            campfireInstance_->setVolumeProperty(campfireVolume_*(1.0f-0.45f*weather_now::FireDousing())
                 *underwaterAudio_.airGain*gain);
             bunkerHumInstance_->setVolumeProperty(bunkerHumVolume_*gain);
             const float underwaterBed=.025f*underwaterAudio_.immersion;
