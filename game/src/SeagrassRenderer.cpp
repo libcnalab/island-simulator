@@ -3,6 +3,7 @@
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "IslandSimulator/TerrainShaderNoise.hpp"
+#include "IslandSimulator/UnderwaterFog.hpp"
 #include "CNA/Graphics/ShaderCodeEXT.hpp"
 #include "CNA/Graphics/ShaderPackageEXT.hpp"
 #include "CNA/ShaderLanguageEXT.hpp"
@@ -99,6 +100,7 @@ uniform mat4 uViewProjection;
 uniform vec4 uSea;   // seconds (wrapped), the surge, the drawing radius, the light from above
 uniform vec3 uCamera;
 out vec3 vColor;
+out float vDistance;
 void main(){
     float d=distance(uCamera.xz,aPosition.xz);
     float fade=1.0-smoothstep(uSea.z*mix(0.45,0.70,aBlade.y),uSea.z,d);
@@ -106,6 +108,7 @@ void main(){
     float sway=sin(uSea.x*0.9+aBlade.x+aPosition.x*0.05)*uSea.y;
     vec3 p=aPosition-vec3(0.0,aBlade.w*(1.0-fade),0.0)+vec3(sway,0.0,sway*0.6)*(aBlade.z*t*t*fade);
     vColor=aColor.rgb*uSea.w;
+    vDistance=distance(uCamera,p);
     gl_Position=uViewProjection*vec4(p,1.0);
     // XNA projection uses [0,1] depth; desktop GL and GLES require [-1,1].
     gl_Position.z=2.0*gl_Position.z-gl_Position.w;
@@ -113,9 +116,10 @@ void main(){
 )";
         constexpr const char* FragmentBody = R"(
 in vec3 vColor;
+in float vDistance;
 out vec4 fragColor;
 void main(){
-    fragColor=vec4(vColor,1.0);
+    fragColor=vec4(applyUnderwaterFog(vColor,vDistance),1.0);
 }
 )";
     }
@@ -125,7 +129,8 @@ void main(){
     {
         using CNA::Graphics::ShaderCodeEXT;
         const auto source = [](const bool es, const char* text) {
-            return std::string(es ? "#version 300 es\nprecision highp float;\n" : "#version 330 core\n") + text;
+            return std::string(es ? "#version 300 es\nprecision highp float;\n" : "#version 330 core\n")
+                + underwater_fog::ShaderDefinition + text;
         };
         try {
             const CNA::Graphics::ShaderPackageEXT package({
@@ -292,6 +297,7 @@ void main(){
                     effect_->SetUniformMat4("uViewProjection", matrix);
                     effect_->SetUniformVec4("uSea", std::remainder(seconds, 698.1317f), surge, Radius, 0.55f + 0.45f * sunUp);
                     effect_->SetUniformVec3("uCamera", camera.X, camera.Y, camera.Z);
+                    underwater_fog::Bind(*effect_);
                     device_.setIndicesProperty(indices_.get());
                     prepared = true;
                 }

@@ -233,6 +233,22 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 333 (2026-10-21) — the water limits a swimmer's sight
+
+Under the surface the seabed, the reef, the meadow and the fish stayed crisp and pale out to the
+horizon: the only underwater fog was the land's (from 70-260 m) and a screen-wide tinted veil,
+with nothing that thickened with distance. `UnderwaterFog.hpp` keeps a per-frame state from the
+eye's depth under the sea (set in `Draw` before the sky): exponential fog in the water's
+blue-green (0.17, 0.50, 0.55, darker and bluer the deeper the eye) at 0.085 a metre, so a few
+metres stay clear and little is left past 35. It ramps in over the first 0.8 m of depth, so an eye
+bobbing at the surface does not pop (an on/off switch also cost the `fish` view, whose camera
+sits just under the surface, its contrast floor). The terrain, seagrass and natural-prop shaders
+take it as a uniform (`applyUnderwaterFog`, zero above the surface), and the fish, stingray,
+octopus, turtle, shark and dolphin `BasicEffect`s have their linear fog range and colour blended
+toward 2-38 m in the water's colour by the same amount. Above the surface nothing changes. A core
+test covers the ramp. `fish`, `stingrays`, `reef-habitat`, `stingray-buried`, `octopuses`,
+`turtles`, `current`, `shark`, `dolphins`, `water`, `reef`, `jetty`, `overview` and the tests pass.
+
 ## Loop pass 332 (2026-10-21) — the wrack line is weed, not black wedges
 
 Across the beaches in `shipwreck` and `driftwood` long, dark, soft-edged wedges lay on the sand

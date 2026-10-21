@@ -1,6 +1,7 @@
 #include "IslandSimulator/StingrayRenderer.hpp"
 
 #include "IslandSimulator/EnvironmentLighting.hpp"
+#include "IslandSimulator/UnderwaterFog.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 
 #include <algorithm>
@@ -377,7 +378,7 @@ namespace island
                            SetDataOptions::Discard);
         device_.SetVertexBuffer(vertices_.get());device_.setIndicesProperty(nullptr);
         effect_->setWorldProperty(Matrix::getIdentityProperty());effect_->setViewProperty(view);
-        effect_->setProjectionProperty(projection);effect_->Apply();
+        effect_->setProjectionProperty(projection);underwater_fog::Apply(*effect_, 165.0f, 340.0f);effect_->Apply();
         device_.DrawPrimitives(PrimitiveType::TriangleList,0,
                                static_cast<int>(staging_.size()/3U));
         ++drawCallCount_;

@@ -12,6 +12,7 @@
 #include "IslandSimulator/BunkerLayout.hpp"
 
 #include "IslandSimulator/EnvironmentLighting.hpp"
+#include "IslandSimulator/UnderwaterFog.hpp"
 #include "IslandSimulator/CanopyLighting.hpp"
 #include "IslandSimulator/ForestFloorMaterial.hpp"
 #include "IslandSimulator/GroundCoverField.hpp"
@@ -1252,6 +1253,7 @@ void main()
     color=applyCampfireLight(color,vWorld);
     float fog = smoothstep(260.0, 720.0, distanceToCamera);
     color = mix(color, islandAtmosphereFog, fog);
+    color = applyUnderwaterFog(color, distanceToCamera);
     fragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
 }
 )";
@@ -1261,7 +1263,7 @@ void main()
         {
             if (embedded) {
                 return std::string("#version 300 es\nprecision highp float;\nprecision highp int;\n")
-                    + environment::FogShaderDefinition
+                    + environment::FogShaderDefinition + underwater_fog::ShaderDefinition
                     + WrackLine::Shader + WindGust::Shader
                     + (canopy ? CanopyLighting::Shader : "")
                     + (canopy ? IslandEnvironmentField::InlandShader : "")
@@ -1271,7 +1273,7 @@ void main()
                     + (canopy ? std::string(CampfireLighting::Shader) + SunShadowMap::ReceiverShader : std::string()) + body;
             }
             return std::string("#version 330 core\n") + environment::FogShaderDefinition
-                + WrackLine::Shader + WindGust::Shader
+                + underwater_fog::ShaderDefinition + WrackLine::Shader + WindGust::Shader
                 + (canopy ? CanopyLighting::Shader : "")
                 + (canopy ? IslandEnvironmentField::InlandShader : "")
                 + (canopy ? GroundCover::Shader() : std::string())
@@ -1698,6 +1700,7 @@ void main()
                 bunkerDepth.x-bunkerEntrance.x,bunkerDepth.z-bunkerEntrance.z);
             materialEffect_->SetUniformVec3("uCameraPosition", cameraPosition.X,
                                             cameraPosition.Y, cameraPosition.Z);
+            underwater_fog::Bind(*materialEffect_);
             materialEffect_->SetUniformVec3(
                 "uToSun", sun_light::UniformDirection().x, sun_light::UniformDirection().y,
                 sun_light::UniformDirection().z);

@@ -130,6 +130,7 @@
 #include "IslandSimulator/TerrainMeshLayout.hpp"
 #include "IslandSimulator/TidePoolLayout.hpp"
 #include "IslandSimulator/TouchControls.hpp"
+#include "IslandSimulator/UnderwaterFog.hpp"
 #include "IslandSimulator/UserSettings.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
 #include "IslandSimulator/WaterRippleModel.hpp"
@@ -2591,6 +2592,22 @@ int main()
     CheckNear(island::TouchControls::LookSensitivityScale(
                   island::TouchLookSensitivityLevel::Low), 0.72f, 0.0001f,
               "low touch sensitivity exposes the documented bounded multiplier");
+    // Underwater the water limits sight; above the surface nothing changes, and the change sets in
+    // gradually over the first metre so an eye bobbing at the surface does not pop.
+    island::underwater_fog::Update(-0.4f);
+    Check(island::underwater_fog::Live().amount == 0.0f, "no underwater fog above the sea surface");
+    island::underwater_fog::Update(0.3f);
+    const float shallowFog = island::underwater_fog::Live().amount;
+    island::underwater_fog::Update(3.0f);
+    const float deepFog = island::underwater_fog::Live().amount;
+    const float deepGreen = island::underwater_fog::Live().green;
+    island::underwater_fog::Update(12.0f);
+    Check(shallowFog > 0.0f && shallowFog < 0.6f && deepFog == 1.0f
+              && island::underwater_fog::Live().green < deepGreen,
+          "underwater fog ramps in over the first metre and the water darkens with depth");
+    island::underwater_fog::Update(std::numeric_limits<float>::quiet_NaN());
+    Check(island::underwater_fog::Live().amount == 0.0f, "a non-finite eye depth leaves the land's fog");
+
     island::TouchControls touchActionControls;
     const island::TouchSensitivitySelectorLayout rideButton = island::TouchControls::ActionButtonLayout(
         island::TouchAction::Ride, 1280.0f, 720.0f);

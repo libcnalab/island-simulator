@@ -1,3 +1,4 @@
+#include "IslandSimulator/UnderwaterFog.hpp"
 #include "IslandSimulator/DolphinRenderer.hpp"
 
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
@@ -497,7 +498,7 @@ void DolphinRenderer::Draw(const Matrix &view, const Matrix &projection,
   effect_->setWorldProperty(Matrix::getIdentityProperty());
   effect_->setViewProperty(view);
   effect_->setProjectionProperty(projection);
-  effect_->Apply();
+  underwater_fog::Apply(*effect_, 210.0f, 570.0f);effect_->Apply();
   device_.DrawPrimitives(PrimitiveType::TriangleList, 0,
                          static_cast<int>(staging_.size() / 3));
   drawCalls_ = 1;

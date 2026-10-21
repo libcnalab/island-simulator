@@ -1,3 +1,4 @@
+#include "IslandSimulator/UnderwaterFog.hpp"
 #include "IslandSimulator/FishRenderer.hpp"
 
 #include "IslandSimulator/WildlifeRenderLighting.hpp"
@@ -640,7 +641,7 @@ namespace island
         effect_->setWorldProperty(Matrix::getIdentityProperty());
         effect_->setViewProperty(view);
         effect_->setProjectionProperty(projection);
-        effect_->Apply();
+        underwater_fog::Apply(*effect_, 70.0f, 220.0f);effect_->Apply();
         device_.DrawPrimitives(PrimitiveType::TriangleList, 0,
                                static_cast<int>(stagingVertices_.size() / 3U));
         ++drawCallCount_;

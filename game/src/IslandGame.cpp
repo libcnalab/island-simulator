@@ -29,6 +29,7 @@
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "IslandSimulator/StreamRoute.hpp"
 #include "IslandSimulator/TidePoolLayout.hpp"
+#include "IslandSimulator/UnderwaterFog.hpp"
 #include "IslandSimulator/WorldIdentity.hpp"
 
 #include <algorithm>
@@ -5536,6 +5537,13 @@ namespace island
                 helicopterRenderer_->DrawSunShadow(*sunShadowMap_);
                 sunShadowMap_->End();
             }
+        }
+        {
+            // Under the sea surface the water limits the swimmer's sight (UnderwaterFog).
+            const Vector3& eye = renderCameraPosition_;
+            const bool overSea = std::isfinite(eye.X) && std::isfinite(eye.Z)
+                && terrain_.Height(eye.X, eye.Z) < 0.0f && terrain_.SignedShoreDistance(eye.X, eye.Z) < 0.0f;
+            underwater_fog::Update(overSea && eye.Y < 0.0f ? -eye.Y : 0.0f);
         }
         {
             GpuDiagnosticScope gpuPass("sky");

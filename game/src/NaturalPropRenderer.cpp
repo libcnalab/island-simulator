@@ -4,6 +4,7 @@
 #include "IslandSimulator/NaturalPropRenderer.hpp"
 
 #include "IslandSimulator/EnvironmentLighting.hpp"
+#include "IslandSimulator/UnderwaterFog.hpp"
 #include "IslandSimulator/ProceduralMeshValidation.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "IslandSimulator/RockSurface.hpp"
@@ -324,7 +325,7 @@ void main()
     // The sun shadow map and the cumulus shade, with the palms' cool shadow tint: a rock or a
     // log in a tree's shadow is shaded with the ground around it.
     materialColor *= mix(vec3(0.56, 0.60, 0.66), vec3(1.0), sunShadowVisibility(vWorld));
-    vec3 color = mix(materialColor, islandAtmosphereFog, fog);
+    vec3 color = applyUnderwaterFog(mix(materialColor, islandAtmosphereFog, fog), distanceToCamera);
     fragColor = vec4(color, 1.0);
 }
 )";
@@ -335,10 +336,10 @@ void main()
             const std::string receiver = fragment ? SunShadowMap::ReceiverShader : std::string();
             if (embedded) {
                 return std::string("#version 300 es\nprecision highp float;\n")
-                    + environment::FogShaderDefinition + receiver + body;
+                    + environment::FogShaderDefinition + underwater_fog::ShaderDefinition + receiver + body;
             }
             return std::string("#version 330 core\n")
-                + environment::FogShaderDefinition + receiver + body;
+                + environment::FogShaderDefinition + underwater_fog::ShaderDefinition + receiver + body;
         }
 
         [[nodiscard]] CNA::Graphics::ShaderPackageEXT CreateShaderPackage()
@@ -2192,6 +2193,7 @@ void main()
             else SunShadowMap::BindDisabled(*customEffect_);
             customEffect_->SetUniformVec3("uCameraPosition", cameraPosition.X,
                                           cameraPosition.Y, cameraPosition.Z);
+            underwater_fog::Bind(*customEffect_);
             customEffect_->SetUniformVec3(
                 "uToSun", sun_light::UniformDirection().x, sun_light::UniformDirection().y,
                 sun_light::UniformDirection().z);
