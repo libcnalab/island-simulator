@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 267 (2026-10-21) — whitecaps in a strong wind
+
+In a strong wind the open sea now breaks into scattered whitecaps: from a sea state of 1.15
+(showers' wind) to full at 1.65 (a storm's), the ocean shader lays white crests where three
+wave trains at uneven angles, through a slow warp, rise together on the steeper wave faces,
+broken up by a finer train that its footprint filter calms with the distance, only over water
+deeper than 3-9 m (not the lagoon flats) and fading out by 680 m. A first field (two sine waves
+multiplied) set the caps in a visible regular grid; the third train and the warp scatter them.
+`flight` in a thunderstorm shows them on the dark sea; the calm `jetty-end` is unchanged and
+`water` and `jetty-end` in showers pass. (`jetty-end` in a thunderstorm still fails the colour
+floor as before: a murky grey scene.)
+
 ## Loop pass 266 (2026-10-20) — moon shadows
 
 A bright moon casts soft shadows, but the hour's shadow strength fell to nothing at night (the

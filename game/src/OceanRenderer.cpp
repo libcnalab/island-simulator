@@ -383,6 +383,24 @@ void main()
         float fishRing = playerSplashBand(fishOffset * 1.6, uFishSplash.z);
         foam = max(foam, max(fleck * 0.8, fishRing * 0.5));
     }
+    // Whitecaps: in a strong wind the open water breaks into scattered white crests on the
+    // steeper faces of the waves, drifting with them; none in the trade wind. The fine
+    // break-up is filtered by its footprint so the far sea never strobes.
+    float capPhase = dot(vWorld.xz, vec2(0.93, 0.61)) + uTime * 1.9;
+    float capFilter = oceanWaveFilter(max(abs(dFdx(capPhase)), abs(dFdy(capPhase))));
+    float rough = clamp((uSeaState - 1.15) / 0.5, 0.0, 1.0);
+    if (rough > 0.0) {
+        // three wave trains at uneven angles through a slow warp: scattered caps, no grid
+        vec2 capWorld = vWorld.xz + 7.0 * vec2(sin(vWorld.z * 0.031 + uTime * 0.07), sin(vWorld.x * 0.027 - uTime * 0.05));
+        float capField = sin(dot(capWorld, vec2(0.21, 0.13)) - uTime * 1.1)
+            * sin(dot(capWorld, vec2(-0.09, 0.27)) + uTime * 0.7)
+            + 0.55 * sin(dot(capWorld, vec2(0.17, -0.23)) - uTime * 0.9);
+        float capCrest = smoothstep(0.62, 1.10, capField) * smoothstep(0.008, 0.028, length(surfaceSlope));
+        float capBreak = mix(0.6, 0.5 + 0.5 * sin(capPhase), capFilter);
+        float capOpen = smoothstep(3.0, 9.0, waterDepth);   // the open water, not the lagoon flats
+        float capDistance = 1.0 - smoothstep(320.0, 680.0, distanceToCamera);
+        foam = max(foam, capCrest * capBreak * rough * capOpen * capDistance * 0.92);
+    }
     foam = clamp(foam, 0.0, 0.86);
     water = mix(water, vec3(0.82, 0.94, 0.91), foam);
 
