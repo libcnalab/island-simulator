@@ -1346,13 +1346,20 @@ void main()
     float soak = smoothstep(0.45, 0.90, uWetness);
     if (soak > 0.0) {
         float hollow = valueNoise(p * 0.31 + vec2(-17.3, 41.9)) + valueNoise(p * 0.83 + vec2(9.1, -3.7)) * 0.35;
-        float puddle = smoothstep(0.40 - soak * 0.18, 0.46 - soak * 0.18, hollow)
+        float puddle = smoothstep(0.40 - soak * 0.18, 0.50 - soak * 0.18, hollow)
             * (1.0 - smoothstep(0.10, 0.17, slopeRadians)) * interior * (1.0 - sand)
             * smoothstep(0.6, 1.2, vWorld.y) * soak;
         if (puddle > 0.0) {
             vec3 toEye = normalize(uCameraPosition - vWorld);
-            float fresnel = 0.03 + 0.97 * pow(1.0 - max(toEye.y, 0.0), 5.0);
-            vec3 skyMirror = vec3(0.52, 0.62, 0.72) * uSkyTint * (0.55 + 0.45 * vGroundLight);
+            // the wind and the rain trouble the surface a little, so it is never one flat sheet
+            float trouble = valueNoise(p * 5.3 + vec2(uWindSeconds * 0.9, -uWindSeconds * 0.6));
+            float fresnel = (0.03 + 0.97 * pow(1.0 - max(toEye.y, 0.0), 5.0)) * (0.80 + 0.35 * trouble);
+            // Under the crowns a puddle mirrors the dark leaves above it and the sky only through
+            // their gaps: the bright sky colour, added after the canopy's shade, made forest
+            // puddles white as snow (and the leaves alone hid them in the soil).
+            vec3 skyMirror = mix(vec3(0.07, 0.09, 0.07) * (0.6 + 0.4 * vGroundLight),
+                                 vec3(0.52, 0.62, 0.72) * uSkyTint * (0.55 + 0.45 * vGroundLight),
+                                 0.25 + 0.75 * smoothstep(0.25, 0.85, terrainTransmission));
             vec3 waterOverSoil = color * vec3(0.52, 0.55, 0.58);
             vec3 halfway = normalize(normalize(uToSun) + toEye);
             // the sun's glint only as strong as the direct sun is (the clouds hide it in a storm)

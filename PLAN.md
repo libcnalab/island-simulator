@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 403 (2026-10-21) — forest puddles mirror the crowns, not a white sky
+
+In a soaking (`beach --weather thunderstorm`, `jungle --weather showers`) the forest floor's
+puddles read as flat white sheets, like snow: the terrain shader mixed in its sky reflection after
+the canopy had shaded the ground, so under the crowns a puddle took the bright storm sky's colour
+over dark soil. The reflection now follows the sky's openness (the canopy transmission): under the
+crowns a puddle mirrors the dark leaves with a quarter of the sky through their gaps, in the open
+the sky as before. Its edge is softer, and the wind and rain trouble the surface's Fresnel a
+little so it is never one flat sheet. (Mirroring the leaves alone hid forest puddles in the soil.)
+The tests pass.
+
 ## Loop pass 402 (2026-10-21) — the deer's mesh lights each corner once
 
 The deer's ellipsoids placed and lit each corner (normal, coat tone, canopy light) once for each of
