@@ -1273,7 +1273,16 @@ namespace island
                    && birdFlock_.Birds().size() > 14U) {
             const BirdState& dove = birdFlock_.Birds()[14U];
             const Vector3 radial = Vector3::Normalize(Vector3(dove.x, 0.0f, dove.z));
-            const Vector3 tangent(-radial.Z, 0.0f, radial.X);
+            Vector3 tangent(-radial.Z, 0.0f, radial.X);
+            // Of the two sides, the one away from the resident (who tends the fire beside this
+            // clearing and otherwise crouches right by the camera).
+            if (resident_) {
+                const auto& r = resident_->State();
+                const Vector3 at(dove.x, dove.y, dove.z), them(r.x, r.y, r.z);
+                if (Vector3::DistanceSquared(at - radial * 1.55f + tangent * 0.62f, them)
+                    < Vector3::DistanceSquared(at - radial * 1.55f - tangent * 0.62f, them))
+                    tangent = -tangent;
+            }
             cameraPosition_ = Vector3(dove.x, dove.y, dove.z)
                 - radial * 1.55f + tangent * 0.62f + Vector3::Up * 0.45f;
             const Vector3 toDove = Vector3(dove.x, dove.y + dove.scale * .06f, dove.z)

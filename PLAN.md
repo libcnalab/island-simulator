@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 307 (2026-10-21) — a regression audit of the views
+
+The false star of pass 306 was found by chance, so this pass compared every view's last capture
+before pass 268 with its capture in the sweep after pass 293 (106 views): the share of pixels
+changed by more than 40 levels, largest first. The resident's views changed as intended (the
+new route to the fire). `monkeys` follows its monkey, which stands elsewhere now; `butterflies`
+now shows the resident crouched just beyond the fire (1.9 m from its centre, outside the stones).
+`ground-doves` was a real regression: the route now starts at the fire's edge, so in every
+capture the resident crouched right beside that low camera and their leg filled a third of the
+frame. The dove close-up now takes whichever side of the dove lies away from the resident; the
+frame is clear again. The rest changed by under 3 % (animals in motion, the new water and
+grass shading). `ground-doves` and the tests pass.
+
 ## Loop pass 306 (2026-10-21) — no false star in the daytime sky
 
 Reviewing `lookout` at 14:00 showed a small bright white point high in the blue sky, steady
