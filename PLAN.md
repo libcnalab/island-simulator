@@ -233,6 +233,21 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 295 (2026-10-21) — the forest drips after the rain
+
+A forest goes on raining under its crowns long after a shower has passed. `CanopyDripRenderer`
+keeps a fixed world grid of 0.9 m cells out to 14 m round the walker; where the canopy light
+field shows a crown overhead, about three cells in five hold a leaf tip 3-9 m up that gathers a
+drop and lets it go every 0.8-3.8 s (sooner the wetter the leaves), the drop streaking down
+under gravity and splashing in a small ring on the floor; nothing in the open, nothing on the
+sea. The game feeds it how wet the leaves are, the larger part from the ground's wetness (which
+lingers for hours after rain) and a share from the rain still falling, so it drips through the
+shower and for a long while after. World-anchored, drawn with the rain before the grade. A
+probe of soaked leaves on a dry day counted nine drips out at once under the crowns of
+`litter`, faint against the sunlit floor (they read against the dark wet floor under a dull
+sky they fall in); `litter` dry and in showers and `jungle` in a thunderstorm pass, and the
+tests.
+
 ## Loop pass 294 (2026-10-21) — a cloud cap on the summit
 
 High tropical islands wear a cloud on their top: moist trade-wind air forced up the windward

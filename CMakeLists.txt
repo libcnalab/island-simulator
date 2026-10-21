@@ -721,6 +721,7 @@ if(ISLAND_BUILD_GAME)
         game/src/EaveDripRenderer.cpp
         game/src/RainSplashRenderer.cpp
         game/src/SailboatRenderer.cpp
+        game/src/CanopyDripRenderer.cpp
         game/src/CrabRenderer.cpp
         game/src/CrocodileRenderer.cpp
         game/src/BoarRenderer.cpp
