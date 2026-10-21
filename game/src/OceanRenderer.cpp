@@ -140,6 +140,7 @@ uniform vec4 uJettyLine;    // deck root x, z and unit direction out to sea (zer
 uniform vec4 uCoastalOptics;
 uniform vec3 uGlint;   // the glint's colour and strength (the sun out, or the moon)
 uniform vec3 uSkyHorizonScale, uSkyZenithScale;   // the hour's sky against the afternoon's (the sky shader's)
+uniform vec3 uSkyAntiHorizonScale;                 // and its horizon opposite the sun
 uniform vec4 uSurfaceAppearance;
 uniform float uSeabedExtent;   // half the terrain mesh's square, where the seabed ends
 
@@ -209,8 +210,13 @@ void main()
     float fresnel = 0.025 + 0.975 * pow(1.0 - viewFacing, 5.0);
     vec3 reflected = reflect(-toEye, normal);
     float horizon = pow(1.0 - clamp(reflected.y, 0.0, 1.0), 1.7);
-    // the sky the sea mirrors is the hour's: pink at dusk, deep blue at night
-    vec3 reflectedSky = mix(vec3(0.22, 0.60, 0.82) * uSkyZenithScale, vec3(0.72, 0.89, 0.95) * uSkyHorizonScale, horizon);
+    // the sky the sea mirrors is the hour's: pink at dusk, deep blue at night; at the golden
+    // hours its horizon warm only toward the sun, as the sky's own
+    vec2 flatReflected = reflected.xz * inversesqrt(max(dot(reflected.xz, reflected.xz), 1e-6));
+    vec2 flatToSun = toSun.xz * inversesqrt(max(dot(toSun.xz, toSun.xz), 1e-6));
+    vec3 mirroredHorizonScale = mix(uSkyAntiHorizonScale, uSkyHorizonScale,
+                                    smoothstep(-0.35, 0.85, dot(flatReflected, flatToSun)));
+    vec3 reflectedSky = mix(vec3(0.22, 0.60, 0.82) * uSkyZenithScale, vec3(0.72, 0.89, 0.95) * mirroredHorizonScale, horizon);
 
     vec3 deepWater = vec3(0.015, 0.245, 0.385);
     vec3 lagoonWater = vec3(0.070, 0.625, 0.610);
@@ -697,6 +703,8 @@ void main()
                 const auto scales = sun_light::SkyScalesOf(light);
                 customEffect_->SetUniformVec3("uSkyHorizonScale", scales.horizon.x, scales.horizon.y, scales.horizon.z);
                 customEffect_->SetUniformVec3("uSkyZenithScale", scales.zenith.x, scales.zenith.y, scales.zenith.z);
+                customEffect_->SetUniformVec3("uSkyAntiHorizonScale", scales.antiHorizon.x, scales.antiHorizon.y,
+                                              scales.antiHorizon.z);
             }
             customEffect_->SetUniformFloat("uSeabedExtent", TerrainMeshLayout::Extent);
             customEffect_->SetUniformVec4("uCoastalOptics", CoastalWaterOptics::ExtinctionPerMetre,

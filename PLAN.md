@@ -233,6 +233,14 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 358 (2026-10-21) — the sea mirrors the sun's side of the horizon
+
+The ocean's mirrored sky took the hour's horizon colour in every direction, so after pass 357 a
+dawn sea still reflected a warm horizon under a cool anti-solar sky. Its reflected horizon now
+turns from `skyAntiHorizon` to the warm horizon as the reflected bearing swings toward the sun,
+the same weighting as the sky's. `movement` at 06:12, `reef` at 17:42 and midday, `water` at
+06:24 and the tests pass; the Chrome `sky` scope passed for pass 357.
+
 ## Loop pass 357 (2026-10-21) — the golden hours' warm horizon is on the sun's side
 
 At the golden hours and dusk the sky's horizon colour (and its haze) was one warm colour at every
