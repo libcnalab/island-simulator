@@ -1104,27 +1104,34 @@ void main()
         vec2 gravelPoint = p * 7.0;   // stones about fourteen centimetres across
         vec2 gravelCell = floor(gravelPoint), gravelFraction = fract(gravelPoint);
         float inside = 9.0, stoneSeed = 0.0;
+        vec2 stoneOffset = vec2(0.0);
         for (int j = -1; j <= 1; ++j) {
             for (int i = -1; i <= 1; ++i) {
                 vec2 offset = vec2(float(i), float(j));
                 vec2 neighbour = gravelCell + offset;
                 vec2 centre = offset + 0.15 + 0.70 * vec2(hash12(neighbour), hash12(neighbour + 17.3));
                 vec2 toStone = gravelFraction - centre;
-                // each stone its own size and a little oblong
-                float radius = 0.32 + 0.22 * hash12(neighbour + 9.1);
-                float r = length(toStone * vec2(1.0, 1.0 + 0.35 * hash12(neighbour + 5.3))) / radius;
-                if (r < inside) { inside = r; stoneSeed = hash12(neighbour + 3.7); }
+                // each stone its own size and a little oblong, packed close
+                float radius = 0.38 + 0.22 * hash12(neighbour + 9.1);
+                vec2 shaped = toStone * vec2(1.0, 1.0 + 0.35 * hash12(neighbour + 5.3)) / radius;
+                float r = length(shaped);
+                if (r < inside) { inside = r; stoneSeed = hash12(neighbour + 3.7); stoneOffset = shaped; }
             }
         }
-        float stoneMask = 1.0 - smoothstep(0.80, 1.0, inside);
+        float stoneMask = 1.0 - smoothstep(0.86, 1.0, inside);
+        // each stone a low dome lit by the sun: a coin of one tone read as a polka dot
+        vec3 domeNormal = normalize(vec3(stoneOffset.x, 1.6 * sqrt(max(1.0 - inside * inside, 0.04)), stoneOffset.y));
+        float domeLight = 0.62 + 0.55 * max(dot(domeNormal, normalize(uToSun)), 0.0);
         // wet stones under the water: darker than dry, many with a film of brown-green algae
         vec3 stone = mix(vec3(0.21, 0.20, 0.17), vec3(0.37, 0.34, 0.28), stoneSeed);
         stone = mix(stone, vec3(0.17, 0.20, 0.13), smoothstep(0.55, 0.62, fract(stoneSeed * 7.3)) * 0.8);
         stone = mix(stone, vec3(0.13, 0.14, 0.14), step(0.86, stoneSeed));
-        stone *= 0.84 + 0.24 * (1.0 - inside * inside);
-        // grit and sand between them, speckled with grains, close in tone to the stones
+        stone *= domeLight * 0.92;
+        // grit and sand between them, speckled with grains, close in tone to the stones and
+        // shadowed where it meets them
         float grain = valueNoise(p * 41.0 + vec2(3.1, -7.7)) * gravelVisibility;
-        vec3 grit = mix(vec3(0.16, 0.14, 0.10), vec3(0.27, 0.24, 0.18), grain);
+        vec3 grit = mix(vec3(0.16, 0.14, 0.10), vec3(0.27, 0.24, 0.18), grain)
+            * mix(0.62, 1.0, smoothstep(1.0, 1.45, inside));
         vec3 gravel = mix(grit, stone, stoneMask);
         vec3 gravelBed = mix(wetMargin * 1.15, gravel * vGroundLight, gravelVisibility);
         color = mix(color, gravelBed, streamBed);

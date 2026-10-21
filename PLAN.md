@@ -233,6 +233,14 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 370 (2026-10-21) — the stream's stones are lit domes, packed close
+
+Seen from above (`tracks`) pass 360's gravel was pale flat coins of one tone each on dark grit,
+a polka-dot cloth under the water. Each stone is now a low dome lit by the day's sun (its normal
+from the offset inside the stone), the stones a fifth larger so they pack with little grit
+between, with crisper rims, and the grit darkened where it meets a stone. `tracks`, `cascade`,
+`stream`, `bridge` and the tests pass.
+
 ## Loop pass 369 (2026-10-21) — rocks lose their green skirt; rock moss in patches
 
 From above (`tracks`) an inland rock stood in a dark-green ring. Probed with magenta and a
