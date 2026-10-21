@@ -1,4 +1,5 @@
 #include "IslandSimulator/SeabedShadowRenderer.hpp"
+#include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "IslandSimulator/SeabedShadowProjection.hpp"
@@ -18,8 +19,8 @@ using namespace Microsoft::Xna::Framework;
 using namespace Microsoft::Xna::Framework::Graphics;
 
 namespace island {
-SeabedShadowRenderer::SeabedShadowRenderer(GraphicsDevice& device,const IslandTerrain& terrain)
-    :device_(device),terrain_(terrain),effect_(std::make_unique<BasicEffect>(device)),
+SeabedShadowRenderer::SeabedShadowRenderer(GraphicsDevice& device,const IslandTerrain& terrain,const RenderedTerrainSurface& ground)
+    :device_(device),terrain_(terrain),ground_(ground),effect_(std::make_unique<BasicEffect>(device)),
      vertices_(std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),
         VerticesPerShadow*MaximumShadows,BufferUsage::WriteOnly))
 {
@@ -34,7 +35,7 @@ void SeabedShadowRenderer::AppendShadow(const Vector3& camera,const float x,cons
     if(visible_>=MaximumShadows) return;
     const SeabedShadowPoint shadow=SeabedShadowProjection::Project(terrain_,x,y,z);
     if(!shadow.valid||!std::isfinite(headingRadians)) return;
-    const float distance=std::hypot(std::hypot(shadow.x-camera.X,shadow.z-camera.Z),terrain_.Height(shadow.x,shadow.z)-camera.Y);
+    const float distance=std::hypot(std::hypot(shadow.x-camera.X,shadow.z-camera.Z),DrawnOrAnalyticHeight(ground_,terrain_,shadow.x,shadow.z)-camera.Y);
     if(distance>MaximumDistance) return;
     // Darker and tighter close over the bottom, broad and faint for a high one; the water
     // takes it with distance.
@@ -45,14 +46,14 @@ void SeabedShadowRenderer::AppendShadow(const Vector3& camera,const float x,cons
     const float spread=1.0f+shadow.height*0.10f;
     const float forwardX=std::cos(headingRadians),forwardZ=std::sin(headingRadians);
     const float sideX=-forwardZ,sideZ=forwardX;
-    const Vector3 centre(shadow.x,terrain_.Height(shadow.x,shadow.z)+0.025f,shadow.z);
+    const Vector3 centre(shadow.x,DrawnOrAnalyticHeight(ground_,terrain_,shadow.x,shadow.z)+0.025f,shadow.z);
     const Color centreColor(0,0,0,alpha),edgeColor(0,0,0,0);
     std::array<Vector3,Segments> edge;
     for(int segment=0;segment<Segments;++segment) {
         const float angle=static_cast<float>(segment)*2.0f*std::numbers::pi_v<float>/static_cast<float>(Segments);
         const float along=std::cos(angle)*forwardRadius*spread,across=std::sin(angle)*sideRadius*spread;
         const float ex=shadow.x+forwardX*along+sideX*across,ez=shadow.z+forwardZ*along+sideZ*across;
-        edge[static_cast<std::size_t>(segment)]=Vector3(ex,terrain_.Height(ex,ez)+0.025f,ez);
+        edge[static_cast<std::size_t>(segment)]=Vector3(ex,DrawnOrAnalyticHeight(ground_,terrain_,ex,ez)+0.025f,ez);
     }
     for(int segment=0;segment<Segments;++segment) {
         staging_.emplace_back(centre,centreColor);

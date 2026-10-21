@@ -610,6 +610,7 @@ namespace island
         std::array<WheelOnGround, 4> quadWheels_{};
         static constexpr float QuadIdleOffSeconds = 90.0f;
         std::unique_ptr<RenderedTerrainSurface> quadSurface_;
+        std::unique_ptr<RenderedTerrainSurface> drawnGround_;   // the per-frame ground marks' surface
         BikeControls quadControls_{};
         bool riding_ = false, quadKeyWasDown_ = false, quadRightKeyWasDown_ = false, quadPlaced_ = false;
         bool torchOn_ = false, torchKeyWasDown_ = false;   // H: the walker's hand torch

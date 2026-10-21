@@ -1,4 +1,5 @@
 #include "IslandSimulator/FootprintTrailRenderer.hpp"
+#include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "Microsoft/Xna/Framework/Color.hpp"
@@ -17,8 +18,8 @@ using namespace Microsoft::Xna::Framework;
 using namespace Microsoft::Xna::Framework::Graphics;
 
 namespace island {
-FootprintTrailRenderer::FootprintTrailRenderer(GraphicsDevice& device,const IslandTerrain& terrain)
-    :device_(device),terrain_(terrain),effect_(std::make_unique<BasicEffect>(device)),
+FootprintTrailRenderer::FootprintTrailRenderer(GraphicsDevice& device,const IslandTerrain& terrain,const RenderedTerrainSurface& ground)
+    :device_(device),terrain_(terrain),ground_(ground),effect_(std::make_unique<BasicEffect>(device)),
      vertices_(std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),
         VerticesPerPrint*static_cast<int>(FootprintTrail::Capacity),BufferUsage::WriteOnly))
 {
@@ -34,14 +35,14 @@ void FootprintTrailRenderer::Draw(const Matrix& view,const Matrix& projection,co
     staging_.clear();
     const auto fan=[&](float cx,float cz,float forwardX,float forwardZ,float forwardRadius,float sideRadius,int alpha){
         const float sideX=-forwardZ,sideZ=forwardX;
-        const Vector3 centre(cx,terrain_.Height(cx,cz)+0.012f,cz);
+        const Vector3 centre(cx,DrawnOrAnalyticHeight(ground_,terrain_,cx,cz)+0.012f,cz);
         const Color core(0,0,0,alpha),rim(0,0,0,0);
         std::array<Vector3,Segments> edge;
         for(int segment=0;segment<Segments;++segment) {
             const float angle=static_cast<float>(segment)*2.0f*std::numbers::pi_v<float>/static_cast<float>(Segments);
             const float along=std::cos(angle)*forwardRadius,across=std::sin(angle)*sideRadius;
             const float ex=cx+forwardX*along+sideX*across,ez=cz+forwardZ*along+sideZ*across;
-            edge[static_cast<std::size_t>(segment)]=Vector3(ex,terrain_.Height(ex,ez)+0.012f,ez);
+            edge[static_cast<std::size_t>(segment)]=Vector3(ex,DrawnOrAnalyticHeight(ground_,terrain_,ex,ez)+0.012f,ez);
         }
         for(int segment=0;segment<Segments;++segment) {
             staging_.emplace_back(centre,core);

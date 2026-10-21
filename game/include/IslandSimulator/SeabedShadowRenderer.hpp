@@ -15,6 +15,7 @@
 
 namespace island {
 class IslandTerrain;
+class RenderedTerrainSurface;
 /** Soft shadows on the sandy seabed under the swimming animals — the fish, the stingrays,
  *  the sea turtles and the shark — one seabed-conforming ellipse each, projected along the
  *  fixed sun, darker and tighter close over the bottom, broad and faint for a high one,
@@ -23,7 +24,8 @@ class SeabedShadowRenderer final {
 public:
     static constexpr int Segments=12,VerticesPerShadow=Segments*3,MaximumShadows=72;
     static constexpr float MaximumDistance=34.0f;
-    SeabedShadowRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,const IslandTerrain& terrain);
+    SeabedShadowRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,const IslandTerrain& terrain,
+        const RenderedTerrainSurface& ground);   // laid on the drawn ground where the mesh reaches
     void Draw(const Microsoft::Xna::Framework::Matrix& view,
               const Microsoft::Xna::Framework::Matrix& projection,
               const Microsoft::Xna::Framework::Vector3& camera,
@@ -36,6 +38,7 @@ private:
                       float headingRadians,float forwardRadius,float sideRadius) noexcept;
     Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
     const IslandTerrain& terrain_;
+    const RenderedTerrainSurface& ground_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> vertices_;
     std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> staging_;

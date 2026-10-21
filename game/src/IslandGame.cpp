@@ -2541,8 +2541,11 @@ namespace island
         streamDriftRenderer_=std::make_unique<StreamDriftRenderer>(device);
         streamFishRenderer_=std::make_unique<StreamFishRenderer>(device);
         hatchlingRenderer_=std::make_unique<HatchlingRenderer>(device);
-        birdShadowRenderer_=std::make_unique<BirdShadowRenderer>(device,terrain_);
-        seabedShadowRenderer_=std::make_unique<SeabedShadowRenderer>(device,terrain_);
+        // The per-frame ground marks and shadows lie on the drawn mesh: its height costs ~10 ns,
+        // the analytic terrain's microseconds a vertex.
+        drawnGround_=std::make_unique<RenderedTerrainSurface>(terrain_);
+        birdShadowRenderer_=std::make_unique<BirdShadowRenderer>(device,terrain_,*drawnGround_);
+        seabedShadowRenderer_=std::make_unique<SeabedShadowRenderer>(device,terrain_,*drawnGround_);
         cascadeMistRenderer_=std::make_unique<CascadeMistRenderer>(device);
         // a small stream's step throws a thin spray, not a fog: ten overlapping puffs at full
         // density smeared the bank beside the pool into a pale haze
@@ -2765,12 +2768,12 @@ namespace island
                       << (dayNight_.Frozen() ? "; held still for this QA view" : "") << '\n';
         }
         std::cout << "island-simulator: screen-space canopy sun shafts are off; the light under the crowns comes from the shade field and the drifting leaf-gap flecks\n";
-        footprintRenderer_ = std::make_unique<FootprintTrailRenderer>(device, terrain_);
+        footprintRenderer_ = std::make_unique<FootprintTrailRenderer>(device, terrain_, *drawnGround_);
         if (goats_->WaterholeSite().valid)
             waterholeRenderer_ = std::make_unique<WaterholeRenderer>(device, terrain_,
                 goats_->WaterholeSite().x, goats_->WaterholeSite().z, GoatHerd::WaterholeRadius);
         rootingDustRenderer_ = std::make_unique<RootingDustRenderer>(device);
-        shellDragRenderer_ = std::make_unique<ShellDragRenderer>(device, terrain_);
+        shellDragRenderer_ = std::make_unique<ShellDragRenderer>(device, terrain_, *drawnGround_);
         {
             const std::vector<BoarHerd::WallowSite> wallowSites = boarHerd_.WallowSites();
             wallowScarRenderer_ = std::make_unique<WallowScarRenderer>(device, terrain_, wallowSites);

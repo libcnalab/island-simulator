@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 394 (2026-10-21) — every per-frame ground mark and shadow lies on the drawn ground
+
+After the ruts (pass 393), the other marks and shadows rebuilt every frame still took the analytic
+terrain's height at each vertex: the birds' ground shadows (a ring of 17 per bird), the seabed
+shadows of the fish, rays, turtles and the shark, the hermit crabs' shell drags, and the
+footprint trails (the walker's, the deer's and the boars'). They now share one RenderedTerrainSurface
+(IslandGame::drawnGround_) through DrawnOrAnalyticHeight: the drawn mesh where it reaches, ~10 ns
+a vertex and the surface they are seen on, the analytic terrain beyond it. `birds`,
+`hermit-crabs`, `deer` and `fish` show their shadows and marks in place (the fish view differs from
+its last run where the fish swim, as wall-clock runs do). The tests pass.
+
 ## Loop pass 393 (2026-10-21) — the quad's ruts lie on the drawn ground, not the analytic one
 
 The operator's 19:20 session (Radeon 780M) rode the quad bike and its `contact-shadows` render pass

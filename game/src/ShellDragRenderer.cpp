@@ -1,4 +1,5 @@
 #include "IslandSimulator/ShellDragRenderer.hpp"
+#include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "Microsoft/Xna/Framework/Color.hpp"
@@ -15,8 +16,8 @@ using namespace Microsoft::Xna::Framework;
 using namespace Microsoft::Xna::Framework::Graphics;
 
 namespace island {
-ShellDragRenderer::ShellDragRenderer(GraphicsDevice& device,const IslandTerrain& terrain)
-    :device_(device),terrain_(terrain),effect_(std::make_unique<BasicEffect>(device)),
+ShellDragRenderer::ShellDragRenderer(GraphicsDevice& device,const IslandTerrain& terrain,const RenderedTerrainSurface& ground)
+    :device_(device),terrain_(terrain),ground_(ground),effect_(std::make_unique<BasicEffect>(device)),
      vertices_(std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),
         VerticesPerSegment*static_cast<int>(ShellDragTrail::Capacity),BufferUsage::WriteOnly))
 {
@@ -41,7 +42,7 @@ void ShellDragRenderer::Draw(const Matrix& view,const Matrix& projection,const V
         if(length<1e-4f) continue;
         const float nx=-dz/length*0.011f,nz=dx/length*0.011f;
         const Color ink(0,0,0,alpha);
-        const auto at=[&](float x,float z){return Vector3(x,terrain_.Height(x,z)+0.008f,z);};
+        const auto at=[&](float x,float z){return Vector3(x,DrawnOrAnalyticHeight(ground_,terrain_,x,z)+0.008f,z);};
         const Vector3 a=at(segment.x0+nx,segment.z0+nz),b=at(segment.x0-nx,segment.z0-nz);
         const Vector3 c=at(segment.x1-nx,segment.z1-nz),d=at(segment.x1+nx,segment.z1+nz);
         staging_.emplace_back(a,ink);staging_.emplace_back(b,ink);staging_.emplace_back(c,ink);

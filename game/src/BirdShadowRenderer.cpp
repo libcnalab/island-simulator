@@ -1,4 +1,5 @@
 #include "IslandSimulator/BirdShadowRenderer.hpp"
+#include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include "IslandSimulator/BirdShadowProjection.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "Microsoft/Xna/Framework/Color.hpp"
@@ -17,8 +18,8 @@ using namespace Microsoft::Xna::Framework;
 using namespace Microsoft::Xna::Framework::Graphics;
 
 namespace island {
-BirdShadowRenderer::BirdShadowRenderer(GraphicsDevice& device,const IslandTerrain& terrain)
-    :device_(device),terrain_(terrain),effect_(std::make_unique<BasicEffect>(device)),
+BirdShadowRenderer::BirdShadowRenderer(GraphicsDevice& device,const IslandTerrain& terrain,const RenderedTerrainSurface& ground)
+    :device_(device),terrain_(terrain),ground_(ground),effect_(std::make_unique<BasicEffect>(device)),
      vertices_(std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),
         VerticesPerShadow*MaximumShadows,BufferUsage::WriteOnly))
 {
@@ -49,14 +50,14 @@ void BirdShadowRenderer::Draw(const Matrix& view,const Matrix& projection,const 
         const float forwardRadius=0.26f*bird.scale*spread,sideRadius=0.48f*bird.scale*spread;
         const float forwardX=std::cos(bird.headingRadians),forwardZ=std::sin(bird.headingRadians);
         const float sideX=-forwardZ,sideZ=forwardX;
-        const Vector3 centre(shadow.x,terrain_.Height(shadow.x,shadow.z)+0.03f,shadow.z);
+        const Vector3 centre(shadow.x,DrawnOrAnalyticHeight(ground_,terrain_,shadow.x,shadow.z)+0.03f,shadow.z);
         const Color centreColor(0,0,0,alpha),edgeColor(0,0,0,0);
         std::array<Vector3,Segments> edge;
         for(int segment=0;segment<Segments;++segment) {
             const float angle=static_cast<float>(segment)*2.0f*std::numbers::pi_v<float>/static_cast<float>(Segments);
             const float along=std::cos(angle)*forwardRadius,across=std::sin(angle)*sideRadius;
             const float ex=shadow.x+forwardX*along+sideX*across,ez=shadow.z+forwardZ*along+sideZ*across;
-            edge[static_cast<std::size_t>(segment)]=Vector3(ex,terrain_.Height(ex,ez)+0.03f,ez);
+            edge[static_cast<std::size_t>(segment)]=Vector3(ex,DrawnOrAnalyticHeight(ground_,terrain_,ex,ez)+0.03f,ez);
         }
         for(int segment=0;segment<Segments;++segment) {
             staging_.emplace_back(centre,centreColor);

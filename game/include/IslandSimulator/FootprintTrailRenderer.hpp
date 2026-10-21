@@ -11,12 +11,14 @@
 
 namespace island {
 class IslandTerrain;
+class RenderedTerrainSurface;
 // The walker's prints on the sand: a sole and a toe pad each, terrain-conforming dark fans
 // fading with the print's age, alpha-blended with depth read after the contact shadows.
 class FootprintTrailRenderer final {
 public:
     static constexpr int Segments=8,VerticesPerPrint=Segments*3*2;
-    FootprintTrailRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,const IslandTerrain& terrain);
+    FootprintTrailRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,const IslandTerrain& terrain,
+        const RenderedTerrainSurface& ground);   // laid on the drawn ground where the mesh reaches
     void Draw(const Microsoft::Xna::Framework::Matrix& view,
               const Microsoft::Xna::Framework::Matrix& projection,
               const Microsoft::Xna::Framework::Vector3& camera,
@@ -26,6 +28,7 @@ public:
 private:
     Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
     const IslandTerrain& terrain_;
+    const RenderedTerrainSurface& ground_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> vertices_;
     std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> staging_;

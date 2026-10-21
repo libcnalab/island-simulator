@@ -11,12 +11,14 @@
 
 namespace island {
 class IslandTerrain;
+class RenderedTerrainSurface;
 // The hermit crabs' drag lines on the sand: a thin dark terrain-conforming ribbon per
 // segment, fading with age, alpha-blended with depth read after the contact shadows.
 class ShellDragRenderer final {
 public:
     static constexpr int VerticesPerSegment=6;
-    ShellDragRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,const IslandTerrain& terrain);
+    ShellDragRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,const IslandTerrain& terrain,
+        const RenderedTerrainSurface& ground);   // laid on the drawn ground where the mesh reaches
     void Draw(const Microsoft::Xna::Framework::Matrix& view,
               const Microsoft::Xna::Framework::Matrix& projection,
               const Microsoft::Xna::Framework::Vector3& camera,
@@ -26,6 +28,7 @@ public:
 private:
     Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
     const IslandTerrain& terrain_;
+    const RenderedTerrainSurface& ground_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> vertices_;
     std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> staging_;
