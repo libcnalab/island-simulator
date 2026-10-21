@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 434 (2026-10-22) — the sea turtle's front flippers curve to a point
+
+At 1:1 in `turtles` the front flipper was a straight plank, squared off at its tip and striped across
+its whole width by the pale seams. FrontFlipper now curls the outer half back toward the tip (0.34 t²
+of sweep in the paddle's plane, the stroke's lift unchanged) and narrows the outer part to a narrow
+tip (a third less at the end); the paddles are thick at the leading edge and thin at the trailing one,
+their upper face in two strips: the large dark scales with their pale seams along the leading half,
+the trailing half's skin a shade paler and mottled out of step with them. The near budget grows by
+two triangles per paddle section (NearVertexCount 4986 to 5142). The turtle tests' planform, taper,
+reach and stroke checks pass.
+
 ## Loop pass 433 (2026-10-22) — the wreck is lit by the hour's sun
 
 The wreck's timbers had LitColor's fixed 14:00 light baked in (0.66 + 0.34 direct + 0.08 sky). Its

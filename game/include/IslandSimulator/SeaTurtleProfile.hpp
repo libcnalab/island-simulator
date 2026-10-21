@@ -130,14 +130,18 @@ namespace island::sea_turtle
         constexpr float length = 0.72f;
         const float lag = std::pow(t, 1.6f);
         const float flap = stroke * 0.55f - stroke * 0.30f * lag;      // radians about forward axis
-        // Power stroke (negative) sweeps back, recovery (positive) brings the paddle forward.
-        const float sweep = -0.32f + stroke * 0.22f * (0.4f + 0.6f * lag); // radians, negative = rear
+        // Power stroke (negative) sweeps back, recovery (positive) brings the paddle forward;
+        // the outer half curves back toward the tip as a flipper's does (straight, it read as
+        // a plank).
+        const float sweep = -0.32f - 0.34f * t * t + stroke * 0.22f * (0.4f + 0.6f * lag); // radians, negative = rear
         const float reach = length * t;
         const float outward = reach * std::cos(sweep) * std::cos(flap);
         const float back = reach * std::sin(sweep);
-        const float rise = reach * std::sin(flap) * std::cos(sweep);
+        const float rise = reach * std::sin(flap) * std::cos(sweep + 0.34f * t * t);   // (the curl lies in the paddle's plane)
+        // broadest in the inner third, the outer part tapering to a narrow tip
+        const float outer = std::clamp((t - 0.55f) / 0.45f, 0.0f, 1.0f);
         halfWidth = 0.078f * (0.95f + 0.75f * std::sin(3.14159265f * std::min(1.0f, t * 1.1f + 0.1f)))
-            * (1.0f - 0.55f * t * t);
+            * (1.0f - 0.55f * t * t) * (1.0f - 0.32f * outer * outer * (3.0f - 2.0f * outer));
         // Start beneath the marginal scutes instead of leaving a visible gap between the
         // shell and the first paddle section. The distal reach remains long enough for the
         // characteristic green-turtle silhouette.

@@ -195,8 +195,8 @@ namespace island
                 + HeadSegments * (HeadRings - 1) * 2 + HeadSegments * 2       // neck/skull/crown/brow/snout, nose, neck cap
                 + 6                                                           // paired two-facet eyes and highlights
                 + 4                                                           // paired nostrils and mouth creases
-                + 2 * ((FrontSamples - 1) * 2 * 4)                            // front paddles, faces and edges
-                + 2 * ((RearSamples - 1) * 2 * 4)                             // rear paddles, faces and edges
+                + 2 * ((FrontSamples - 1) * 2 * 5)                            // front paddles, faces (two strips above) and edges
+                + 2 * ((RearSamples - 1) * 2 * 5)                             // rear paddles, faces (two strips above) and edges
                 + 2 * 4 * 2                                                   // closed roots and tips
                 + 2 * ((FrontSamples - 2) * 2 + (RearSamples - 2) * 2)        // upper paddle scale seams
                 + 4;                                                          // tail, two faces
@@ -482,7 +482,10 @@ namespace island
             const float stroke = turtle.flipperStroke;
             const auto appendPaddle = [&](const float side, const int samples,
                                           const auto& sampler, const float topTone) {
-                std::vector<Vector3> upperLeading, upperTrailing;
+                // Thick at the leading edge and thin at the trailing one; the upper face in two
+                // strips, the large scales along the leading half and the trailing half's
+                // smaller-scaled, mottled skin.
+                std::vector<Vector3> upperLeading, upperMiddle, upperTrailing;
                 std::vector<Vector3> lowerLeading, lowerTrailing;
                 for (int i = 0; i < samples; ++i) {
                     const float t = static_cast<float>(i) / static_cast<float>(samples - 1);
@@ -491,9 +494,10 @@ namespace island
                     const float halfThickness = (0.020f - 0.012f * t) * scale;
                     const Vector3 lift = axes.up * halfThickness;
                     upperLeading.push_back(local(c.x, c.y, c.z + halfWidth) + lift);
-                    upperTrailing.push_back(local(c.x, c.y, c.z - halfWidth) + lift);
+                    upperMiddle.push_back(local(c.x, c.y, c.z + 0.1f * halfWidth) + lift * 0.85f);
+                    upperTrailing.push_back(local(c.x, c.y, c.z - halfWidth) + lift * 0.45f);
                     lowerLeading.push_back(local(c.x, c.y, c.z + halfWidth) - lift);
-                    lowerTrailing.push_back(local(c.x, c.y, c.z - halfWidth) - lift);
+                    lowerTrailing.push_back(local(c.x, c.y, c.z - halfWidth) - lift * 0.45f);
                 }
                 for (int i = 0; i + 1 < samples; ++i) {
                     const auto a = static_cast<std::size_t>(i), b = a + 1U;
@@ -505,15 +509,20 @@ namespace island
                     // band along its diagonal drew a sawtooth).
                     const float scaleTone = (i % 2 == 0) ? 1.0f : -1.0f;
                     const Color top = ToneColor(palette.skin, topTone * scaleMottle * (1.0f + 0.07f * scaleTone));
-                    const Color topOther = top;
+                    // the trailing skin a shade paler, mottled out of step with the scales
+                    const Color skinTone = ToneColor(Color::Lerp(palette.skin, palette.underside, 0.14f),
+                        topTone * (0.97f + 0.05f * std::sin(static_cast<float>(i) * 1.9f + 0.7f
+                            + static_cast<float>(turtle.colorVariant))));
                     const Color under = ToneColor(palette.underside, 0.9f);
                     const Color edge = ToneColor(palette.skin, topTone * 0.72f);
                     // the leading edge's pale horny margin
                     const Color margin = ToneColor(Color::Lerp(palette.skin, palette.underside, 0.62f), 0.92f);
                     const Vector3 above = (upperLeading[a] + upperTrailing[b]) * 0.5f + axes.up * 0.2f;
                     const Vector3 below = (lowerLeading[a] + lowerTrailing[b]) * 0.5f - axes.up * 0.2f;
-                    AddOutwardTriangle(vertices, upperLeading[a], upperTrailing[a], upperTrailing[b], top, below);
-                    AddOutwardTriangle(vertices, upperLeading[a], upperTrailing[b], upperLeading[b], topOther, below);
+                    AddOutwardTriangle(vertices, upperLeading[a], upperMiddle[a], upperMiddle[b], top, below);
+                    AddOutwardTriangle(vertices, upperLeading[a], upperMiddle[b], upperLeading[b], top, below);
+                    AddOutwardTriangle(vertices, upperMiddle[a], upperTrailing[a], upperTrailing[b], skinTone, below);
+                    AddOutwardTriangle(vertices, upperMiddle[a], upperTrailing[b], upperMiddle[b], skinTone, below);
                     AddOutwardTriangle(vertices, lowerLeading[a], lowerTrailing[b], lowerTrailing[a], under, above);
                     AddOutwardTriangle(vertices, lowerLeading[a], lowerLeading[b], lowerTrailing[b], under, above);
                     AddQuad(vertices, upperLeading[a], upperLeading[b], lowerLeading[b], lowerLeading[a], margin);
@@ -530,10 +539,11 @@ namespace island
                     const auto at = static_cast<std::size_t>(i);
                     const auto after = static_cast<std::size_t>(i + 1);
                     const Vector3 offset = axes.up * (0.0025f * scale);
+                    // the seams between the large scales, over the leading half only
                     const Vector3 l0 = Vector3::Lerp(upperLeading[before], upperLeading[at], 0.985f) + offset;
-                    const Vector3 t0 = Vector3::Lerp(upperTrailing[before], upperTrailing[at], 0.985f) + offset;
+                    const Vector3 t0 = Vector3::Lerp(upperMiddle[before], upperMiddle[at], 0.985f) + offset;
                     const Vector3 l1 = Vector3::Lerp(upperLeading[at], upperLeading[after], 0.015f) + offset;
-                    const Vector3 t1 = Vector3::Lerp(upperTrailing[at], upperTrailing[after], 0.015f) + offset;
+                    const Vector3 t1 = Vector3::Lerp(upperMiddle[at], upperMiddle[after], 0.015f) + offset;
                     const Vector3 below = (l0 + t0 + l1 + t1) * 0.25f - axes.up * 0.2f;
                     AddOutwardTriangle(vertices, l0, t0, t1, joint, below);
                     AddOutwardTriangle(vertices, l0, t1, l1, joint, below);
