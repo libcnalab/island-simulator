@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 337 (2026-10-21) — the heron's strike splashes, and its legs stand in the water
+
+The reef herons of pass 336 struck at fish without a mark on the water, and their legs showed no
+waterline: the shallows they wade are nearly clear (the surface's opacity at 20 cm is a few per
+cent), so the legs below the surface looked the same as above it. A strike is now noted with its
+age (`ReefHeronGroup::LastStrike`, gone after 1.6 s) and shares the ocean's small splash, the fish
+breach's fleck and half-size ring, with whichever of the two is more recent; the soundscape plays
+the same small plip at it. The heron's vertices below sea level take the water's teal, more the
+deeper they are, so the wading legs and toes show where they enter the water. A probe holding a
+strike on the QA heron showed the ring spreading in front of its feet; a core test covers the
+strike's place in the water and its lifetime. `herons` (also at 07:30), `fish`, `jetty` and the
+tests pass.
+
 ## Loop pass 336 (2026-10-21) — reef herons wade the lagoon's edge
 
 The lagoon's edge, between the swash and the seagrass, had no life of its own. Four Pacific reef

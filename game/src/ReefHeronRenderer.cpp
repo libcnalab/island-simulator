@@ -300,6 +300,16 @@ namespace island
             AppendHeron(staging_, heron, distanceSquared < NearDistance * NearDistance);
             if (staging_.size() - first > static_cast<std::size_t>(MaximumVerticesPerHeron))
                 throw std::length_error("Reef heron mesh exceeds its vertex budget");
+            // Below the sea surface the legs and toes take the water's colour: the shallows are
+            // nearly clear, so without it the wading legs showed no waterline at all.
+            const Color water(52, 118, 112);
+            for (std::size_t i = first; i < staging_.size(); ++i) {
+                auto& vertex = staging_[i];
+                if (vertex.Position.Y < 0.0f) {
+                    const float under = std::clamp(-vertex.Position.Y / 0.25f, 0.0f, 1.0f);
+                    vertex.Color = Color::Lerp(vertex.Color, water, 0.45f + 0.30f * under);
+                }
+            }
             ++visibleCount_;
         }
         if (staging_.empty()) return;

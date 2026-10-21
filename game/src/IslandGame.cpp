@@ -3433,6 +3433,11 @@ namespace island
             notedBreachCount_ = fishSchools_.LastBreach().count;
             soundscape_->NoteFishBreach(fishSchools_.LastBreach().x, 0.0f, fishSchools_.LastBreach().z);
         }
+        // a heron's bill going into the water makes the same small plip
+        if (soundscape_ && reefHeronGroup_.LastStrike().count != notedHeronStrikes_) {
+            notedHeronStrikes_ = reefHeronGroup_.LastStrike().count;
+            soundscape_->NoteFishBreach(reefHeronGroup_.LastStrike().x, 0.0f, reefHeronGroup_.LastStrike().z);
+        }
         {
             // The seabirds' school of the moment: the schools take turns every ninety seconds
             // so the low circling moves around the coast instead of fixing on one bay.
@@ -5896,6 +5901,16 @@ namespace island
                 if (dolphinSplash.valid) soundscape_->NoteBirdSplash(dolphinSplash.x, 0.0f, dolphinSplash.z);
             }
             const FishSchools::FishBreach& fishBreach = fishSchools_.LastBreach();
+            // The small splash on the surface: a fish breaking it, or a reef heron's bill going
+            // in, whichever is the more recent (they share the fleck and the small ring).
+            struct { float x, z, phase; } smallSplash{fishBreach.x, fishBreach.z,
+                fishBreach.valid ? fishBreach.ageSeconds / FishSchools::BreachSeconds : -1.0f};
+            {
+                const ReefHeronGroup::Strike& strike = reefHeronGroup_.LastStrike();
+                const float strikePhase = strike.ageSeconds / ReefHeronGroup::StrikeSeconds;
+                if (strike.valid && (smallSplash.phase < 0.0f || strikePhase < smallSplash.phase))
+                    smallSplash = {strike.x, strike.z, strikePhase};
+            }
             oceanRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
                                  timeSeconds, oceanPlayer.x, oceanPlayer.z,
                                  waterRippleModel_.Intensity(), waterRippleModel_.Phase(),
@@ -5906,8 +5921,7 @@ namespace island
                                  jettyPlacement_ ? jettyPlacement_->rootZ : 0.0f,
                                  jettyPlacement_ ? jettyPlacement_->dirX : 0.0f,
                                  jettyPlacement_ ? jettyPlacement_->dirZ : 0.0f,
-                                 fishBreach.x, fishBreach.z,
-                                 fishBreach.valid ? fishBreach.ageSeconds / FishSchools::BreachSeconds : -1.0f);
+                                 smallSplash.x, smallSplash.z, smallSplash.phase);
         }
         {
             GpuDiagnosticScope gpuPass("shoreline");

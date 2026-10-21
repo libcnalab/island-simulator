@@ -10917,6 +10917,19 @@ int main()
             }
             Check(inBand&&wandered>2.0f&&herons.StrikeCount()>0U,
                   "the herons stalk along the shore in the wading band and strike at fish");
+            {
+                // the strike's fleck and ring: noted where the bill went in, in the water, and
+                // gone within its time
+                const auto& strike=herons.LastStrike();
+                Check(strike.count==herons.StrikeCount()&&terrain.Height(strike.x,strike.z)<0.0f,
+                      "a heron's strike is noted in the water in front of it");
+                island::ReefHeronGroup quiet(terrain);
+                bool expired=true;
+                for(int step=0;step<2000&&quiet.StrikeCount()==0U;++step) quiet.Update(0.05f,0.0f,1000.0f,0.0f);
+                for(int step=0;step<40;++step) quiet.Update(0.05f,0.0f,1000.0f,0.0f);
+                if(quiet.LastStrike().valid&&quiet.LastStrike().ageSeconds>island::ReefHeronGroup::StrikeSeconds) expired=false;
+                Check(quiet.StrikeCount()>0U&&expired,"a strike's splash lasts only its time");
+            }
             const auto before=herons.Herons()[2];
             const std::uint32_t flushes=herons.FlushCount();
             for(int step=0;step<10;++step) herons.Update(0.05f,before.x+3.0f,before.y+1.6f,before.z);

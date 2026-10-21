@@ -682,6 +682,7 @@ namespace island
         std::uint32_t notedDolphinLeaps_ = 0U;
         std::uint32_t notedBirdMobs_ = 0U;
         std::uint32_t notedDolphinSplashes_ = 0U;
+        std::uint32_t notedHeronStrikes_ = 0U;
         std::uint32_t monkeyShakes_ = 0U;
         std::uint32_t notedThudCount_ = 0U;
         std::uint32_t notedBreachCount_ = 0U;

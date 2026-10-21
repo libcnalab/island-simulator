@@ -107,6 +107,10 @@ namespace island
                                 const float observerZ) noexcept
     {
         const float dt = std::isfinite(deltaSeconds) ? std::clamp(deltaSeconds, 0.0f, 0.1f) : 0.0f;
+        if (lastStrike_.valid) {
+            lastStrike_.ageSeconds += dt;
+            if (lastStrike_.ageSeconds >= StrikeSeconds) lastStrike_.valid = false;
+        }
         const bool observerValid = std::isfinite(observerX) && std::isfinite(observerY) && std::isfinite(observerZ);
         for (std::size_t index = 0; index < Count; ++index) {
             Agent& agent = agents_[index];
@@ -204,7 +208,7 @@ namespace island
                 ++strikes_;
                 const float fx = std::cos(state.headingRadians), fz = std::sin(state.headingRadians);
                 lastStrike_ = Strike{state.x + fx * 0.42f * state.scale, 0.0f, state.z + fz * 0.42f * state.scale,
-                                     lastStrike_.count + 1U};
+                                     lastStrike_.count + 1U, 0.0f, true};
             }
             if (agent.behaviorSeconds >= agent.behaviorLength) {
                 state.strike = 0.0f;
