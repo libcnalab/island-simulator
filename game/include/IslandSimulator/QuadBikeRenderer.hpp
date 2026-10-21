@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -56,9 +57,12 @@ namespace island
          *  the stand-in figure) cast along the sun onto the plane through @p groundPoint, with
          *  @p sunStrength 0..1 its darkness relative to the scene's own sun shadows, and a soft
          *  occlusion under the body and the tyres that stays by night and under cloud. */
+        /** groundHeight, when given, fades the soft pools where they would hang off the surface under
+         *  the quad (over a jetty's edge, a step), the plane they lie in parting from the ground. */
         void DrawShadow(const Microsoft::Xna::Framework::Matrix& view, const Microsoft::Xna::Framework::Matrix& projection,
                         const Microsoft::Xna::Framework::Vector3& camera, const QuadBike& bike, bool rider,
-                        const BikeVec& groundPoint, const BikeVec& groundNormal, float sunStrength);
+                        const BikeVec& groundPoint, const BikeVec& groundNormal, float sunStrength,
+                        const std::function<float(float, float)>& groundHeight = {});
         /** @brief The brakes on (the rider pulling back while it rolls, or the handbrake): the
          *  brake light glows red behind, by day as well as by night. */
         void SetBraking(bool braking) noexcept { braking_ = braking; }

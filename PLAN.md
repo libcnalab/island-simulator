@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 409 (2026-10-21) — the quad's shadow does not hang off the jetty's edge
+
+On the jetty (`quad-jetty`) the quad's shadow lay in the deck's plane past its edge, a grey sheet
+hanging over the water: its soft pools and its sun silhouette are drawn in the plane of the ground
+under the quad. QuadBikeRenderer::DrawShadow now takes the quad's ground height: a pool vertex more
+than 25 cm off the ground under it fades out, and the silhouette is left out when the sun would lay
+its rider's head or one of its corners that far off the surface. On the beach (`quad-drive`,
+`quad`) the shadow is as before; the tests pass.
+
 ## Loop pass 408 (2026-10-21) — the quad stops at the lookout's ramp
 
 The lookout's posts were the quad's obstacles but its ramp was not, so the quad drove through the

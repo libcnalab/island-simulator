@@ -846,7 +846,8 @@ void main()
 
     void QuadBikeRenderer::DrawShadow(const Matrix& view, const Matrix& projection, const Vector3& camera,
                                       const QuadBike& bike, const bool rider, const BikeVec& groundPoint,
-                                      const BikeVec& groundNormal, const float sunStrength)
+                                      const BikeVec& groundNormal, const float sunStrength,
+                                      const std::function<float(float, float)>& groundHeight)
     {
         const BikeVec p = bike.Position();
         const float distance = (Vector3(p.x, p.y, p.z) - camera).Length();
@@ -891,6 +892,13 @@ void main()
         device_.setRasterizerStateProperty(RasterizerState::CullNone);
         device_.setBlendStateProperty(BlendState::AlphaBlend);
         device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
+        if (groundHeight) {
+            // fade where the pools' plane parts from the ground under them (more than a hand)
+            for (auto& vertex : glowStaging_) {
+                const float below = groundHeight(vertex.Position.X, vertex.Position.Z);
+                if (std::abs(vertex.Position.Y - 0.02f - below) > 0.25f) vertex.Color = Color(0, 0, 0, 0);
+            }
+        }
         if (!glowStaging_.empty()) {
             glow_->SetData(glowStaging_.data(), 0, static_cast<int>(glowStaging_.size()), SetDataOptions::Discard);
             device_.SetVertexBuffer(glow_.get());
@@ -908,6 +916,19 @@ void main()
         if (sunStrength * fade < 0.01f || l.LengthSquared() < 1e-6f) return;
         l.Normalize();
         if (Vector3::Dot(l, n) < 0.2f) return;
+        if (groundHeight) {
+            // The silhouette lies in that plane too: where the sun would lay its rider's head or a
+            // corner off the surface under the quad (over a jetty's edge), it is left out rather
+            // than drawn hanging over the water.
+            for (const BikeVec& local : {BikeVec{0.0f, 1.55f, -0.15f}, BikeVec{0.62f, 0.3f, 1.0f},
+                                         BikeVec{-0.62f, 0.3f, 1.0f}, BikeVec{0.62f, 0.3f, -1.0f},
+                                         BikeVec{-0.62f, 0.3f, -1.0f}}) {
+                const BikeVec w = bike.ToWorld(local);
+                const Vector3 point(w.x, w.y, w.z);
+                const Vector3 laid = point - l * (Vector3::Dot(n, point - g) / Vector3::Dot(n, l));
+                if (std::abs(laid.Y - groundHeight(laid.X, laid.Z)) > 0.25f) return;
+            }
+        }
         const Pose pose = PoseOf(bike);
         const int dynamicCount = BuildDynamic(bike, rider, distance < 30.0f);
         device_.setDepthStencilStateProperty(*shadowDepth_);

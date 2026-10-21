@@ -321,8 +321,9 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 409: quad shadow pools fade and the sun silhouette is skipped where they would hang off the surface (jetty edge) (PLAN "Loop pass 409").
 - Pass 408: quad blocked by the lookout ramp where it is under 1.9 m above the ground; QA view quad-lookout (PLAN "Loop pass 408").
-- Pass 407: quad blocked by the helicopter and the rope bridge, carried on the jetty deck (no ruts/spray there); QA views quad-helicopter, quad-jetty (PLAN "Loop pass 407"). Known: the quad's ground shadow on the jetty extends over the water past the deck edge.
+- Pass 407: quad blocked by the helicopter and the rope bridge, carried on the jetty deck (no ruts/spray there); QA views quad-helicopter, quad-jetty (PLAN "Loop pass 407").
 - Pass 406: TyreTrackRenderer caches each rut piece's ground points per slot (PLAN "Loop pass 406").
 - Pass 405: boar canopy tint from three body stations per boar instead of per vertex (operator saw boars 7.7 ms) (PLAN "Loop pass 405").
 - Pass 404: raining closed cloud deck gets noise rolls/billows on the cloud plane, darker base, pale under-edge band at the horizon (PLAN "Loop pass 404").

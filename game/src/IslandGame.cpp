@@ -6098,7 +6098,8 @@ namespace island
                 const BikeGround ground = QuadGround(q.x, q.z);
                 quadRenderer_->DrawShadow(cameraView_, cameraProjection_, renderCameraPosition_, quad_,
                     riding_ && !quad_.Overturned(), BikeVec{q.x, ground.height, q.z}, ground.normal,
-                    sun_light::Current().lighting.shadowStrength);
+                    sun_light::Current().lighting.shadowStrength,
+                    [this](const float x, const float z) { return QuadGround(x, z).height; });
             }
             bearRenderer_->DrawShadow(cameraView_,cameraProjection_,renderCameraPosition_,bear_->State());
             birdShadowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,birdFlock_.Birds());
