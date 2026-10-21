@@ -207,6 +207,18 @@ namespace island
             }
         }
 
+        // A crocodile's tail is laterally compressed: round-ish at the root, it narrows faster
+        // than it loses height, so past mid-length it is a tall, narrow swimming paddle under
+        // its keel (wider than tall all the way, it read from above as a flat wedge).
+        [[nodiscard]] float TailHalfWidth(const float t) noexcept
+        {
+            return .56f*std::pow(1.0f-t,1.15f)+.018f;
+        }
+        [[nodiscard]] float TailHalfHeight(const float t) noexcept
+        {
+            return .30f*std::pow(1.0f-t,.55f)+.030f;
+        }
+
         void AppendNearCrocodile(std::vector<VertexPositionColor>& vertices,
                                  const CrocodileState& crocodile,
                                  std::vector<EyeGlint>* eyes=nullptr)
@@ -231,8 +243,8 @@ namespace island
                     *t*t*.55f;
                 const Vector3 next=Local(centre,axes,wave,.22f-.17f*t,
                                          -1.04f-2.66f*t,scale);
-                const float width=(.56f*std::pow(1.0f-t,.78f)+.022f)*scale;
-                const float height=(.30f*(1.0f-t)+.020f)*scale;
+                const float width=TailHalfWidth(t)*scale;
+                const float height=TailHalfHeight(t)*scale;
                 AppendTailSegment(vertices,previous,next,axes,previousWidth,previousHeight,
                                   width,height,palette.side,.10f,section);
                 previous=next;previousWidth=width;previousHeight=height;
@@ -350,7 +362,7 @@ namespace island
                 const float wave=std::sin(t*4.2f+crocodile.gaitPhase)*crocodile.bodyWave
                     *t*t*.55f;
                 const float centreY=.22f-.17f*t;
-                const float tailHeight=.30f*(1.0f-t)+.020f;
+                const float tailHeight=TailHalfHeight(t);
                 const float halfWidth=std::lerp(.070f,.018f,t);
                 const float halfLength=std::lerp(.090f,.038f,t);
                 const float baseY=centreY+tailHeight*.88f;
@@ -358,7 +370,7 @@ namespace island
                 const Vector3 right=Local(centre,axes,wave+halfWidth,baseY,z,scale);
                 const Vector3 front=Local(centre,axes,wave,baseY,z+halfLength,scale);
                 const Vector3 left=Local(centre,axes,wave-halfWidth,baseY,z,scale);
-                const Vector3 peak=Local(centre,axes,wave,baseY+.040f*(1.0f-.65f*t),z,scale);
+                const Vector3 peak=Local(centre,axes,wave,baseY+.046f*(1.0f-.45f*t),z,scale);
                 AddTriangle(vertices,rear,right,peak,palette.scute);
                 AddTriangle(vertices,right,front,peak,palette.scute);
                 AddTriangle(vertices,front,left,peak,palette.scute);

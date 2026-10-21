@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 329 (2026-10-21) — the crocodile's tail is a paddle
+
+The crocodile's tail was wider than tall from root to tip (0.56 by 0.30 m at the root, shrinking
+evenly), so from above and behind it read as a flat wedge. A crocodile's tail is laterally
+compressed: round-ish at the root, it narrows faster than it loses height, so past mid-length it is
+a tall, narrow swimming paddle under its keel. Its half-width now falls as `(1-t)^1.15` and its
+half-height as `(1-t)^0.55` (0.26 by 0.24 m at mid-length, 0.06 by 0.13 m near the tip), and the
+single keel row behind the hips rides on the new height a little taller. `crocodiles` and the
+tests pass.
+
 ## Loop pass 328 (2026-10-21) — the cumulus lose their ink outline
 
 At 1:1 every fair-weather cumulus on the sky dome had a thin blue-white outline with a darker band
