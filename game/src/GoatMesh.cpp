@@ -266,7 +266,9 @@ GoatMesh BuildGoatMesh(const GoatGroundPose& pose,float grazing,bool detailed,fl
         // Bury a generous shoulder/haunch root inside the barrel, then taper
         // through a separate upper-limb station. Joint and hoof locations remain
         // the authored planted-foot chain; only the visible flesh silhouette grows.
-        const std::array<Tube,7> limb{{{Add(leg.root,{0,.14f,0}),front?.120f:.145f},
+        // (The buried top station is drawn in toward the spine: straight above the hip it
+        // poked 3-5 cm out of the barrel and its sunlit cap drew a pale line at the flank.)
+        const std::array<Tube,7> limb{{{Add(leg.root,{-leg.root.x*.45f,.14f,0}),front?.105f:.120f},
             {leg.root,front?.110f:.135f},{upper,front?.088f:.108f},
             {upperLower,front?.072f:.088f},{leg.knee,front?.055f:.064f},
             {lower,front?.043f:.052f},{leg.hoof,.031f}}};

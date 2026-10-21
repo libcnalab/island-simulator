@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 372 (2026-10-21) — the goats' thighs grow out of the barrel
+
+Each goat leg's flesh tube begins with a buried station 14 cm above the hip, its ends capped. At
+x = +-0.18 with up to 0.145 m radius it reached 3-5 cm past the barrel's side, so its ring and its
+up-facing, sunlit cap showed as a pale horizontal line at the shoulder and the haunch, over a
+squared-off thigh top. That station is now drawn 45 % of the way in toward the spine and slimmed
+(0.105 / 0.120 m), staying inside the body; the thighs blend into the barrel. `goats`,
+`goat-lying` and the tests pass.
+
 ## Loop pass 371 (2026-10-21) — rocks and logs under the crowns take the canopy's sky shade
 
 The terrain and the grass under the crowns take the canopy's sky occlusion (the baked

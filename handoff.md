@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 372: goat limb top station kept inside the barrel (no pale cap lines at shoulder/haunch) (PLAN "Loop pass 372").
 - Pass 371: natural props take the canopy sky occlusion (transmission packed in instance M14) (PLAN "Loop pass 371").
 - Pass 370: stream gravel stones sun-lit domes, packed, shadowed grit (PLAN "Loop pass 370").
 - Pass 369: removed the opaque green contact disk under every rock (a green ring on soil/sand); rock moss in patches (PLAN "Loop pass 369").
