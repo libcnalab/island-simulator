@@ -233,6 +233,13 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 435 (2026-10-22) — deer stand on slender legs
+
+At 1:1 in `deer` the deer stood on boxy posts: its shanks were 10 cm thick at the scale of a 1.5 m
+body (a chital's cannon bone is some 3 cm), the knee 14 cm. The forearm and gaskin now taper to a
+slender knee and hock (0.044), the shank runs 0.040 to 0.030 and the pastern 0.031 to 0.024, and the
+cloven hooves are smaller (0.024 to 0.015, 10 cm long). `deer` and `deer-bedded` judged at 2x.
+
 ## Loop pass 434 (2026-10-22) — the sea turtle's front flippers curve to a point
 
 At 1:1 in `turtles` the front flipper was a straight plank, squared off at its tip and striped across

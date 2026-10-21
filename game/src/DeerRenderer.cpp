@@ -471,22 +471,24 @@ namespace island
                 const float upperRootRadius = hind ? .142f : .128f;
                 const std::array<Vector3,4> upperLeg{{hip,Vector3::Lerp(hip,knee,.28f),
                     Vector3::Lerp(hip,knee,.62f),knee}};
+                // The forearm and the gaskin taper to a slender knee and hock: a deer stands on
+                // legs no thicker than a wrist below them (at three times that, boxy posts).
                 const std::array<float,4> upperLegRadii{{upperRootRadius*scale,
-                    (hind?.132f:.118f)*scale,.091f*scale,.069f*scale}};
+                    (hind?.120f:.104f)*scale,(hind?.072f:.064f)*scale,.044f*scale}};
                 LoftTube(out,upperLeg,upperLegRadii,right,coat,transmission,near?9:7);
                 // A deer's shanks keep its coat, a little greyer and darker toward the hoof: in
                 // near-black they stood under the body like stained wooden posts.
                 const Color shank = Color::Lerp(coat, Color(92, 76, 60), .42f);
-                Tube(out, knee, hock, .064f * scale, .052f * scale, Color::Lerp(coat, shank, .55f),
+                Tube(out, knee, hock, .040f * scale, .030f * scale, Color::Lerp(coat, shank, .55f),
                      transmission, near ? 9 : 7);
                 Tube(out, hock, Vector3(hoofPoint.X, deer.y + .060f * scale + lift, hoofPoint.Z),
-                     .052f * scale, .031f * scale, shank, transmission, near ? 9 : 7);
+                     .031f * scale, .024f * scale, shank, transmission, near ? 9 : 7);
                 const Vector3 groundedHoof(hoofPoint.X, deer.y + .060f * scale + lift, hoofPoint.Z);
                 for(const float toeSide:{-.018f,.018f}) {
                     const Vector3 offset=right*(toeSide*scale);
-                    Tube(bare,groundedHoof-forward*(.042f*scale)+offset,
-                         groundedHoof+forward*(.085f*scale)+offset,
-                         .032f*scale,.022f*scale,hoof,transmission,near?8:6);
+                    Tube(bare,groundedHoof-forward*(.030f*scale)+offset,
+                         groundedHoof+forward*(.070f*scale)+offset,
+                         .024f*scale,.015f*scale,hoof,transmission,near?8:6);
                 }
             }
             const Vector3 tailRoot = body - forward * (.73f * scale) + up * (.17f * scale);
