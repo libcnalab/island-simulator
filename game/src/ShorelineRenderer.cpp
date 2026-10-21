@@ -193,7 +193,14 @@ void main()
     alpha *= mix(0.72, 1.0, clamp(vBaseMask * 2.0, 0.0, 1.0));
 
     vec3 foam = mix(vec3(0.78, 0.91, 0.88), vec3(0.96, 0.98, 0.91), crest);
-    fragColor = vec4(foam * alpha, alpha);
+    // The swash: behind the advancing front the foam rides a thin sheet of water that darkens
+    // the sand and glances the sky at a low angle; it thins as the wave runs back. Without it
+    // the foam's lace lay on dry-looking sand like a chalk net.
+    vec3 toEye = normalize(uCameraPosition - vWorld);
+    float sheet = smoothstep(front - 0.004, front + 0.035, vAcross) * envelope * edgeMask * distanceFade
+        * (1.0 - 0.45 * smoothstep(0.55, 0.96, cycle)) * 0.70;
+    vec3 sheetColour = vec3(0.24, 0.29, 0.27) + vec3(0.22, 0.27, 0.29) * pow(1.0 - max(toEye.y, 0.0), 4.0);
+    fragColor = vec4(foam * alpha + sheetColour * sheet * (1.0 - alpha), alpha + sheet * (1.0 - alpha));
     if (uGlow > 0.0) {
         // The glow pass, after the night grade: plankton stirred by the breaking crest light
         // up blue in specks (the foam's cells), brightest at the crest, a faint trail behind.

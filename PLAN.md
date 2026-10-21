@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 309 (2026-10-21) — the swash foam rides a sheet of water
+
+The shore's advancing swash foam (`jetty`) lay on the sand as a white lace of cell rims with
+nothing beneath it, like a chalk net drawn on dry ground; in a real swash the foam rides a thin
+sheet of water that darkens the sand and glances the sky. The shoreline shader now composites
+the foam over such a sheet: from the advancing front back towards the sea, a translucent dark
+wet film (70 % at most) with a grazing sky sheen, thinning as the wave runs back. In `jetty` the
+lace now lies on a darker wet band. Partly done: the wide strip of sand between the lace and
+the sea's own edge in that view stays dry-looking, as the ribbon's wash does not reach the
+ocean mesh's edge there; closing that gap is left open. `jetty`, `beach`, `wet-sand` and
+`headland` pass, and the tests.
+
 ## Loop pass 308 (2026-10-21) — dew on the spider webs
 
 An orb web is never so plain to see as at dawn, beaded with dew. `SpiderWebRenderer::SetDew`
