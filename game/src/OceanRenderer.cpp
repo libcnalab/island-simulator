@@ -227,12 +227,13 @@ void main()
     float phaseA = dot(vWorld.xz, vec2(0.48, 0.19)) - uTime * 0.82 + latticeWarp;
     float phaseB = dot(vWorld.xz, vec2(-0.27, 0.57)) - uTime * 0.61 + 1.8 - latticeWarp * 0.8;
     float continuityPhase = dot(vWorld.xz, vec2(0.91, -0.43)) + uTime * 0.36;
-    // The colour carriers give way well before they alias: from about twenty pixels a
-    // wavelength down to seven. The normal waves' filter (gone only near Nyquist) let them on
-    // into the middle distance, where perspective pressed their crossing into a checkerboard
-    // seen from the shore.
-    float weightA = 1.0 - smoothstep(0.30, 0.90, max(abs(dFdx(phaseA)), abs(dFdy(phaseA))));
-    float weightB = 1.0 - smoothstep(0.30, 0.90, max(abs(dFdx(phaseB)), abs(dFdy(phaseB))));
+    // The colour carriers belong to the near water: they give way from about forty pixels a
+    // wavelength down to twelve, and from 30 m out to 90 m. With the normal waves' filter (gone
+    // only near Nyquist) they ran on into the middle distance, where perspective pressed their
+    // crossing into a checkerboard seen from the shore, resolved or not.
+    float carrierReach = 1.0 - smoothstep(30.0, 90.0, distanceToCamera);
+    float weightA = (1.0 - smoothstep(0.15, 0.50, max(abs(dFdx(phaseA)), abs(dFdy(phaseA))))) * carrierReach;
+    float weightB = (1.0 - smoothstep(0.15, 0.50, max(abs(dFdx(phaseB)), abs(dFdy(phaseB))))) * carrierReach;
     float continuityWeight = oceanWaveFilter(max(abs(dFdx(continuityPhase)), abs(dFdy(continuityPhase))));
     float crossingWaves = 0.50 + 0.27 * sin(phaseA) * weightA + 0.23 * sin(phaseB) * weightB;
     float waveDetailFade = 1.0 - smoothstep(135.0, 420.0, distanceToCamera);

@@ -248,6 +248,13 @@ broad reflections, while the near water from the jetty, swimming (`current`, `sh
 and from the air (`bay`, `headland`) keeps its ripple. `tide-pools`, `headland`, `water`, `bay`,
 `current`, `dolphins`, `shark`, `jetty` and the tests pass.
 
+Follow-up: that first filter only weakened the lattice. It was judged on a half-size contact
+sheet; at full resolution the band between about 40 and 200 m still showed it, because there the
+crossing reads as a lattice even where it is resolved. The carriers now give way from 0.15 to 0.5
+radians a pixel (forty pixels a wavelength down to twelve) and with distance from 30 to 90 m: at
+full size the far sea in `tide-pools` is smooth, while `current` and `shark` keep their near
+ripple. `tide-pools`, `headland`, `current`, `shark`, `water`, `jetty`, `bay` and the tests pass.
+
 ## Loop pass 319 (2026-10-21) — the seagrass closes into a meadow
 
 Pass 303's seagrass stood as scattered tufts: every frame the CPU rebuilt the blades within 24 m
