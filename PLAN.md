@@ -233,6 +233,21 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 330 (2026-10-21) — firelit stones, and a fire's light that falls off
+
+At night the campfire's ring stones glowed bright orange all round like coals, and the ground
+round the fire was one uniform saturated yellow pool out to about three metres: the shared
+`applyCampfireLight` knew no surface normal, and its falloff (`(1 - d²/36)²`) stays near full for
+the first metres. The falloff is now nearly inverse-square from a fire about a metre across
+(`1.15 / (1 + d²/5)`, still windowed to nothing at six metres): bright beside the flames, half at
+two metres, a fifth at three. It is shared by the terrain, grass and jungle. The campfire's own
+props (ring stones, ash, stacked firewood) take the light by how squarely their facet faces the
+flames, from the facet normal of the screen derivatives (they are flat-faceted), so the stones
+show warm fire-side faces and shaded backs; the burning logs, inside the flames, stay fully lit.
+`campfire` (day and 21:30), `campfire-wide` at 21:30, `resident-tending` at 21:30 and the tests
+pass. (`resident` at 21:30 fails its walking-motion check, as it already did before this pass:
+at night the resident sits at the fire instead of walking.)
+
 ## Loop pass 329 (2026-10-21) — the crocodile's tail is a paddle
 
 The crocodile's tail was wider than tall from root to tip (0.56 by 0.30 m at the root, shrinking

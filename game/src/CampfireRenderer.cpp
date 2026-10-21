@@ -106,7 +106,14 @@ void main(){
             color=mix(vec3(.012,.010,.009),vec3(.075,.050,.036),grain);
             color+=vec3(.40,.052,.002)*fissure*campfirePulse(t);
         }
-        if(tag!=5)color=applyCampfireLight(color*pigment.rgb,world);
+        // The ring stones, the ash and the stacked wood take the flames' light on the faces
+        // turned to the fire (the facet's own normal; they are flat-faceted): lit all round,
+        // the stones glowed like coals.
+        vec3 facet=normalize(cross(dFdx(world),dFdy(world)));
+        vec3 toFire=normalize(uCampfire.xyz-world);
+        float facing=.10+.90*abs(dot(facet,toFire));
+        if(tag==1||tag>5)facing=1.0;   // the burning logs sit in the flames
+        if(tag!=5)color=applyCampfireLightFacing(color*pigment.rgb,world,facing);
         fragColor=vec4(color,1);return;
     }
     vec2 p=vec2((uv.x-.5)*2.0,uv.y);
