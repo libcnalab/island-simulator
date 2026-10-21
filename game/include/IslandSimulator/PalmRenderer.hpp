@@ -27,13 +27,15 @@ namespace island
 {
     /** @brief Procedural instanced palm rendering with portable non-instanced fallback. */
     class SunShadowMap;
+    class RenderedTerrainSurface;
 
     class PalmRenderer final
     {
     public:
         PalmRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                      const VegetationLayout& layout,
-                     float maximumDistanceScale = 1.0f);
+                     float maximumDistanceScale = 1.0f,
+                     const RenderedTerrainSurface* ground = nullptr);
         ~PalmRenderer();
 
         PalmRenderer(const PalmRenderer&) = delete;
@@ -79,6 +81,8 @@ namespace island
             float z = 0.0f;
             float nearLodDistanceSquared = 0.0f;
             float midLodDistanceSquared = 0.0f;
+            static constexpr std::uint16_t NoFallen = 0xFFFFU;
+            std::uint16_t fallen = NoFallen;   // its own collapsed-crown meshes in fallen_
             std::uint8_t variant = 0U;
             PalmCondition condition = PalmCondition::Living;
         };
@@ -92,8 +96,8 @@ namespace island
 
         [[nodiscard]] static const Microsoft::Xna::Framework::Graphics::VertexDeclaration&
             InstanceDeclaration();
-        void CreateMeshes();
-        void CreateCells(const VegetationLayout& layout);
+        void CreateMeshes(const RenderedTerrainSurface* ground);
+        void CreateCells(const VegetationLayout& layout, const RenderedTerrainSurface* ground);
         void DrawVariant(PalmMesh& mesh,
                          const std::vector<Microsoft::Xna::Framework::Matrix>& transforms);
 
@@ -106,6 +110,17 @@ namespace island
         std::array<PalmMesh, VegetationLayout::PalmVariantCount> brokenNearMeshes_;
         std::array<PalmMesh, VegetationLayout::PalmVariantCount> brokenFarMeshes_;
         std::array<PalmCell, TerrainMeshLayout::CellCount> cells_;
+        /** A fallen palm's own meshes, its crown collapsed onto the ground under it. */
+        struct FallenPalm
+        {
+            PalmMesh nearMesh;
+            PalmMesh farMesh;
+            std::uint8_t variant = 0U;
+            std::vector<Microsoft::Xna::Framework::Matrix> transform;   // the one instance
+            bool drawNear = false;
+            bool drawFar = false;
+        };
+        std::vector<FallenPalm> fallen_;
         std::array<std::vector<Microsoft::Xna::Framework::Matrix>,
                    VegetationLayout::PalmVariantCount> visibleNearTransforms_;
         std::array<std::vector<Microsoft::Xna::Framework::Matrix>,

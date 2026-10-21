@@ -9,6 +9,7 @@
 #include "IslandSimulator/WindGust.hpp"
 #include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/ProceduralMeshValidation.hpp"
+#include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "IslandSimulator/SurfaceNormals.hpp"
 #include "IslandSimulator/TrunkSurfaceMaterial.hpp"
@@ -68,6 +69,8 @@ namespace island
         constexpr float MidLodDistanceRange = 8.0f;
         constexpr int NearLeafletStations = 34;
         constexpr int MidLeafletStations = NearLeafletStations / 2;
+        constexpr int NearFrondSegments = 9;
+        constexpr int FarFrondSegments = 5;
         constexpr float MaximumDistance = 520.0f;
 
         struct PalmGeometry
@@ -82,6 +85,12 @@ namespace island
             // packed into the frond's otherwise zero normal so the shader can keep a receding
             // leaflet about a pixel wide.
             std::vector<Vector3> across;
+            // Filled while fronds are appended, for a fallen palm's crown: the frond each vertex
+            // belongs to (NoFrond for wood and fruit), and each frond's bearing and arch.
+            static constexpr std::uint8_t NoFrond = 255U;
+            std::vector<std::uint8_t> frond;
+            struct FrondShape { float angle = 0.0f, length = 1.0f, lift = 0.0f, drop = 0.0f; };
+            std::vector<FrondShape> fronds;
         };
 
         struct PalmGpuVertex
@@ -400,13 +409,43 @@ void main()
             }
         }
 
+        // A living palm stem's centre line and girth, t from the soil (0) to the crown (1).
+        struct TrunkShape
+        {
+            float height = 9.4f, curveAngle = 0.72f, lean = 0.55f;
+        };
+
+        [[nodiscard]] TrunkShape PalmTrunkShape(const int variant)
+        {
+            return {9.4f + static_cast<float>(variant) * 0.55f,
+                    0.72f + static_cast<float>(variant) * 1.37f,
+                    0.55f + static_cast<float>((variant * 5) % 3) * 0.25f};
+        }
+
+        [[nodiscard]] Vector3 PalmTrunkCentre(const TrunkShape& shape, const float t)
+        {
+            const float bend = shape.lean * t * t;
+            return Vector3(std::cos(shape.curveAngle) * bend
+                               + std::sin(t * std::numbers::pi_v<float>) * 0.10f,
+                           shape.height * t,
+                           std::sin(shape.curveAngle) * bend
+                               + std::cos(t * std::numbers::pi_v<float> * 0.8f) * 0.08f * t);
+        }
+
+        [[nodiscard]] float PalmTrunkRadius(const float y, const float t)
+        {
+            return (PalmTrunkBaseRadius + (PalmTrunkTipRadius - PalmTrunkBaseRadius) * t)
+                * (1.0f + PalmBoleFlare * std::exp(-y / PalmBoleHeight));
+        }
+
         void AppendTrunk(PalmGeometry& geometry, const int variant, const bool farMesh,
                          float& crownX, float& crownY, float& crownZ)
         {
             const int sides = farMesh ? 6 : 10;
-            const float height = 9.4f + static_cast<float>(variant) * 0.55f;
-            const float curveAngle = 0.72f + static_cast<float>(variant) * 1.37f;
-            const float lean = 0.55f + static_cast<float>((variant * 5) % 3) * 0.25f;
+            const TrunkShape shape = PalmTrunkShape(variant);
+            const float height = shape.height;
+            const float curveAngle = shape.curveAngle;
+            const float lean = shape.lean;
             const std::uint16_t base = static_cast<std::uint16_t>(geometry.vertices.size());
             // Slender stem on a swollen bole. Near rings concentrate on the flare.
             std::vector<float> ringTs = farMesh
@@ -420,14 +459,11 @@ void main()
             }
 
             for (const float t : ringTs) {
-                const float bend = lean * t * t;
-                const float centreX = std::cos(curveAngle) * bend
-                    + std::sin(t * std::numbers::pi_v<float>) * 0.10f;
-                const float centreZ = std::sin(curveAngle) * bend
-                    + std::cos(t * std::numbers::pi_v<float> * 0.8f) * 0.08f * t;
-                const float y = height * t;
-                const float radius = (PalmTrunkBaseRadius + (PalmTrunkTipRadius - PalmTrunkBaseRadius) * t)
-                    * (1.0f + PalmBoleFlare * std::exp(-y / PalmBoleHeight));
+                const Vector3 centre = PalmTrunkCentre(shape, t);
+                const float centreX = centre.X;
+                const float centreZ = centre.Z;
+                const float y = centre.Y;
+                const float radius = PalmTrunkRadius(y, t);
                 // The flare's radial slope tilts the smooth normal upward near the soil.
                 const float flareSlope = PalmTrunkBaseRadius * PalmBoleFlare / PalmBoleHeight
                     * std::exp(-y / PalmBoleHeight);
@@ -622,7 +658,7 @@ void main()
                           const float crownX, const float crownY, const float crownZ,
                           const int leafletStations = NearLeafletStations)
         {
-            const int segments = farMesh ? 5 : 9;
+            const int segments = farMesh ? FarFrondSegments : NearFrondSegments;
             const int frondCount = farMesh ? 12 : 12 + variant % 3;
             const float rotation = static_cast<float>(variant) * 0.41f;
             for (int frond = 0; frond < frondCount; ++frond) {
@@ -647,6 +683,9 @@ void main()
                     static_cast<float>(frond + 1) * 1.73f
                     + static_cast<float>(variant) * 0.91f);
                 const std::uint16_t base = static_cast<std::uint16_t>(geometry.vertices.size());
+                geometry.frond.resize(geometry.vertices.size(), PalmGeometry::NoFrond);
+                const auto frondTag = static_cast<std::uint8_t>(geometry.fronds.size());
+                geometry.fronds.push_back({angle, length, lift, drop});
                 const Color leafBase = frond % 3 == 0
                     ? Color(42, 128 + variant * 3, 52, 255)
                     : (frond % 3 == 1 ? Color(51, 147, 58 + variant * 2, 255)
@@ -693,6 +732,7 @@ void main()
                 }
 
                 if (farMesh) {
+                    geometry.frond.resize(geometry.vertices.size(), frondTag);
                     continue;
                 }
 
@@ -775,6 +815,7 @@ void main()
                         geometry.across[at(3U)] = across * 0.9f;
                     }
                 }
+                geometry.frond.resize(geometry.vertices.size(), frondTag);
             }
         }
 
@@ -904,6 +945,154 @@ void main()
             return geometry;
         }
 
+        // A storm-felled palm: the stem as it stood, but the crown is no longer a wheel of live
+        // fronds radiating about the fallen stem. It has collapsed onto the ground at the head:
+        // the fronds that were underneath were crushed forward, the upper ones flopped over to
+        // either side, and all of them lie on the drawn ground, dried to straw and tawny brown.
+        // Built per palm, in its own transform, against the rendered terrain.
+        [[nodiscard]] PalmGeometry CreateFallenPalmGeometry(const int variant, const bool farMesh,
+                                                            const Matrix& transform,
+                                                            const RenderedTerrainSurface& ground)
+        {
+            constexpr float Pi = std::numbers::pi_v<float>;
+            PalmGeometry geometry;
+            geometry.vertices.reserve(farMesh ? 160U : 4800U);
+            geometry.indices.reserve(farMesh ? 480U : 9000U);
+            if (!farMesh) AppendRoots(geometry, variant);
+            float crownX = 0.0f;
+            float crownY = 0.0f;
+            float crownZ = 0.0f;
+            AppendTrunk(geometry, variant, farMesh, crownX, crownY, crownZ);
+            PalmGeometry crown;
+            AppendFronds(crown, variant, farMesh, crownX, crownY, crownZ);
+
+            const Matrix inverse = Matrix::Invert(transform);
+            const Vector3 worldUp(0.0f, 1.0f, 0.0f);
+            const float scale = Vector3::TransformNormal(worldUp, transform).Length();
+            // world up seen from the palm's own frame, the stem laid along the ground, and across it
+            const Vector3 up = Vector3::Normalize(Vector3::TransformNormal(worldUp, inverse));
+            const Vector3 forward = Vector3::Normalize(worldUp - up * up.Y);
+            const Vector3 sideways = Vector3::Cross(up, forward);
+            const Vector3 crownLocal(crownX, crownY, crownZ);
+            const Vector3 crownWorld = Vector3::Transform(crownLocal, transform);
+            const float crownHeight = std::max(
+                0.08f, crownWorld.Y - ground.Sample(crownWorld.X, crownWorld.Z).height);
+            const Vector3 crownFoot = crownLocal - up * (crownHeight / scale);
+            // the bearing, in the living crown, of the frond that pointed straight down
+            const float downAngle = std::atan2(-up.Z, -up.X);
+            const auto smooth = [](const float edge0, const float edge1, const float x) {
+                const float t = std::clamp((x - edge0) / (edge1 - edge0), 0.0f, 1.0f);
+                return t * t * (3.0f - 2.0f * t);
+            };
+            const auto blend = [](const Color& from, const Color& to, const float amount) {
+                const auto channel = [amount](const std::uint8_t a, const std::uint8_t b) {
+                    return static_cast<std::uint8_t>(std::lround(
+                        static_cast<float>(a) + (static_cast<float>(b) - static_cast<float>(a)) * amount));
+                };
+                return Color(channel(from.getRProperty(), to.getRProperty()),
+                             channel(from.getGProperty(), to.getGProperty()),
+                             channel(from.getBProperty(), to.getBProperty()), static_cast<std::uint8_t>(255U));
+            };
+            const auto light = [](const Color& color) {
+                return 0.30f * static_cast<float>(color.getRProperty())
+                    + 0.59f * static_cast<float>(color.getGProperty())
+                    + 0.11f * static_cast<float>(color.getBProperty());
+            };
+
+            struct LaidFrond
+            {
+                Vector3 living, livingSide, along, lateral;
+                float reach = 1.0f, arch = 0.0f, floor = 0.03f, seed = 0.0f, referenceLight = 1.0f;
+                Color dry;
+            };
+            std::vector<LaidFrond> laid(crown.fronds.size());
+            for (std::size_t f = 0; f < laid.size(); ++f) {
+                const auto& shape = crown.fronds[f];
+                const float seed = static_cast<float>(f) + 0.37f * static_cast<float>(variant);
+                LaidFrond& frond = laid[f];
+                frond.living = Vector3(std::cos(shape.angle), 0.0f, std::sin(shape.angle));
+                frond.livingSide = Vector3(-frond.living.Z, 0.0f, frond.living.X);
+                const float fromDown = std::remainder(shape.angle - downAngle, 2.0f * Pi);
+                const float bearing = 0.80f * fromDown + 0.12f * std::sin(seed * 2.71f);
+                frond.along = forward * std::cos(bearing) + sideways * std::sin(bearing);
+                frond.lateral = Vector3::Cross(up, frond.along);
+                // the crushed lower fronds meet the ground at once; the upper ones arch up and
+                // over before they come down, heaping the crown at the stem's head
+                const float upper = std::abs(fromDown) / Pi;
+                frond.reach = (0.28f + 0.40f * upper) * shape.length;
+                frond.arch = 0.10f + 0.45f * upper * upper;
+                frond.floor = 0.03f + 0.025f * (0.5f + 0.5f * std::sin(seed * 1.93f));
+                frond.seed = seed;
+                const float age = 0.5f + 0.5f * std::sin(seed * 2.37f + 0.4f);
+                const float weathered = 0.5f + 0.5f * std::sin(seed * 1.37f + 2.0f);
+                frond.dry = blend(blend(Color(152, 118, 70), Color(98, 72, 46), age),
+                                  Color(116, 106, 90), 0.50f * weathered * weathered);
+            }
+            for (std::size_t i = 0; i < crown.vertices.size(); ++i) {
+                const std::uint8_t f = crown.frond[i];
+                if (f != PalmGeometry::NoFrond && laid[f].referenceLight == 1.0f)
+                    laid[f].referenceLight = std::max(1.0f, light(crown.vertices[i].Color));
+            }
+            const auto lay = [&](const Vector3& point, const LaidFrond& frond,
+                                 const PalmGeometry::FrondShape& shape, const float narrow) {
+                const Vector3 q = point - crownLocal;
+                const float a = std::max(0.0f, Vector3::Dot(q, frond.living));
+                const float b = Vector3::Dot(q, frond.livingSide) * narrow;
+                const float t = std::clamp(a / shape.length, 0.0f, 1.0f);
+                // a leaflet's hang below the rachis (or rise above it)
+                const float hang = q.Y - (shape.lift * std::sin(t * Pi) - shape.drop * t * t);
+                const Vector3 flat = crownFoot + frond.along * (a * 0.96f) + frond.lateral * b;
+                const Vector3 world = Vector3::Transform(flat, transform);
+                const float along = std::clamp(a / frond.reach, 0.0f, 1.0f);
+                const float falling = 1.0f - smooth(0.0f, 1.0f, along);
+                const float raised = crownHeight * falling * std::sqrt(falling)
+                    + frond.arch * std::sin(along * Pi);
+                // leaflets hang from a frond still in the air and flatten where it lies
+                float height = raised + hang * scale * (0.25f + 0.75f * smooth(0.05f, 0.60f, raised));
+                // a lying frond's stalk stands proud, its dead leaflets slope off it to the
+                // ground and curl a little
+                const float midrib = std::clamp(1.0f - (std::abs(b) * scale - 0.06f) / 0.35f, 0.0f, 1.0f);
+                const float curl = 0.025f * (0.5f + 0.5f * std::sin(
+                    a * scale * 23.0f + b * scale * 9.0f + frond.seed * 3.1f));
+                height = std::max(height, frond.floor + 0.07f * midrib + curl * (1.0f - midrib));
+                const float groundY = ground.Sample(world.X, world.Z).height;
+                return Vector3::Transform(Vector3(world.X, groundY + height, world.Z), inverse);
+            };
+
+            const auto base = static_cast<std::uint16_t>(geometry.vertices.size());
+            geometry.across.resize(geometry.vertices.size(), Vector3::Zero);
+            // Each frond's block opens with its rachis ribbon, two corners per segment end. On
+            // the near mesh, with the leaflets drawn, a dead frond's stalk is a narrow rib.
+            const std::size_t rachisCorners = farMesh ? 0U
+                : 2U * static_cast<std::size_t>(NearFrondSegments + 1);
+            std::size_t blockStart = 0U;
+            for (std::size_t i = 0; i < crown.vertices.size(); ++i) {
+                VertexPositionColorTexture vertex = crown.vertices[i];
+                const std::uint8_t f = crown.frond[i];
+                if (i == 0U || f != crown.frond[i - 1U]) blockStart = i;
+                Vector3 across = i < crown.across.size() ? crown.across[i] : Vector3::Zero;
+                if (f != PalmGeometry::NoFrond) {
+                    const LaidFrond& frond = laid[f];
+                    const auto& shape = crown.fronds[f];
+                    const float narrow = i - blockStart < rachisCorners ? 0.40f : 1.0f;
+                    const Vector3 position = lay(vertex.Position, frond, shape, narrow);
+                    if (across.LengthSquared() > 0.0f)
+                        across = lay(vertex.Position + across, frond, shape, narrow) - position;
+                    vertex.Position = position;
+                    // dead: the vertex keeps its light and shade in the dried frond's colour
+                    vertex.Color = ShadeColor(frond.dry, std::clamp(
+                        light(vertex.Color) / frond.referenceLight, 0.70f, 1.25f));
+                    // and, lying on the ground, no longer sways
+                    vertex.TextureCoordinate.X = 0.0f;
+                }
+                geometry.vertices.push_back(vertex);
+                geometry.across.push_back(across);
+            }
+            for (const std::uint16_t index : crown.indices)
+                geometry.indices.push_back(static_cast<std::uint16_t>(base + index));
+            return geometry;
+        }
+
         [[nodiscard]] PalmGeometry CreateBrokenPalmGeometry(const int variant, const bool farMesh)
         {
             PalmGeometry geometry;
@@ -943,7 +1132,8 @@ void main()
     }
 
     PalmRenderer::PalmRenderer(GraphicsDevice& device, const VegetationLayout& layout,
-                               const float maximumDistanceScale)
+                               const float maximumDistanceScale,
+                               const RenderedTerrainSurface* ground)
         : device_(device), maximumDistance_(MaximumDistance * maximumDistanceScale)
     {
         if (!std::isfinite(maximumDistanceScale) || maximumDistanceScale <= 0.0f
@@ -981,14 +1171,20 @@ void main()
             }
         }
 
-        CreateMeshes();
-        CreateCells(layout);
+        CreateCells(layout, ground);
+        CreateMeshes(ground);
         std::cout << "island-simulator: palms " << totalPalmCount_ << " in "
                   << TerrainMeshLayout::CellCount << " cells, "
                   << (instancingSupported_ ? "hardware instancing" : "per-palm fallback")
                   << '\n';
         std::cout << "island-simulator: palm storm history " << fallenPalmCount_
                   << " fallen, " << brokenPalmCount_ << " broken trunks\n";
+        if (!fallen_.empty()) {
+            constexpr const char* fallenDiagnostic =
+                "island-simulator: fallen palms lie flat on the drawn ground, their crowns collapsed into dried fronds at the stem's head";
+            std::cout << fallenDiagnostic << '\n';
+            MirrorRuntimeDiagnosticToPlatformLog(fallenDiagnostic);
+        }
         if (customShaderReady_) {
             std::cout << "island-simulator: palm portable wind shader with near/far mesh LOD\n";
             std::cout << "island-simulator: palm near mesh segmented fuller leaflet silhouettes\n";
@@ -1040,7 +1236,7 @@ void main()
 
     PalmRenderer::~PalmRenderer() = default;
 
-    void PalmRenderer::CreateMeshes()
+    void PalmRenderer::CreateMeshes(const RenderedTerrainSurface* ground)
     {
         const auto upload = [this](const PalmGeometry& geometry, PalmMesh& mesh,
                                    const char* label) {
@@ -1092,22 +1288,56 @@ void main()
             upload(CreateBrokenPalmGeometry(static_cast<int>(variant), true),
                    brokenFarMeshes_[variant], "broken palm far LOD");
         }
+        if (ground == nullptr) return;
+        for (FallenPalm& fallen : fallen_) {
+            upload(CreateFallenPalmGeometry(fallen.variant, false, fallen.transform.front(), *ground),
+                   fallen.nearMesh, "fallen palm near LOD");
+            upload(CreateFallenPalmGeometry(fallen.variant, true, fallen.transform.front(), *ground),
+                   fallen.farMesh, "fallen palm far LOD");
+        }
     }
 
-    void PalmRenderer::CreateCells(const VegetationLayout& layout)
+    void PalmRenderer::CreateCells(const VegetationLayout& layout,
+                                   const RenderedTerrainSurface* ground)
     {
         for (const PalmPlacement& palm : layout.Palms()) {
             PalmCell& cell = cells_[CellIndex(palm.x, palm.z)];
             PalmDrawInstance instance;
             if (palm.condition == PalmCondition::Fallen) {
                 const float side = palm.variant % 2U == 0U ? 1.0f : -1.0f;
-                instance.transform = Matrix::CreateScale(palm.scale)
-                    * Matrix::CreateRotationZ(side * 1.43f)
-                    // Compensate the local Z-axis fall rotation so local +Y follows the same
-                    // world-space direction used by placement, collision, and the contact patch.
-                    * Matrix::CreateRotationY(palm.damageYawRadians
-                                              + side * std::numbers::pi_v<float> * 0.5f)
-                    * Matrix::CreateTranslation(palm.x, palm.y + 0.24f * palm.scale, palm.z);
+                const auto fallenTransform = [&palm, side](const float tilt) {
+                    return Matrix::CreateScale(palm.scale)
+                        * Matrix::CreateRotationZ(side * tilt)
+                        // Compensate the local Z-axis fall rotation so local +Y follows the same
+                        // world-space direction used by placement, collision, and the contact patch.
+                        * Matrix::CreateRotationY(palm.damageYawRadians
+                                                  + side * std::numbers::pi_v<float> * 0.5f)
+                        * Matrix::CreateTranslation(palm.x, palm.y + 0.24f * palm.scale, palm.z);
+                };
+                // A felled stem lies on the ground with its heavy crown down. Without the drawn
+                // ground a fixed tilt keeps every stem's curve clear of flat soil; with it the
+                // stem is laid as near flat as the ground along it allows, its crown resting low.
+                float tilt = 1.43f;
+                if (ground != nullptr) {
+                    const TrunkShape shape = PalmTrunkShape(palm.variant);
+                    for (float candidate = 1.62f; candidate > 1.43f; candidate -= 0.01f) {
+                        const Matrix transform = fallenTransform(candidate);
+                        bool clear = true;
+                        for (int step = 2; step <= 12 && clear; ++step) {
+                            const float t = static_cast<float>(step) / 12.0f;
+                            const Vector3 centre = PalmTrunkCentre(shape, t);
+                            const Vector3 world = Vector3::Transform(centre, transform);
+                            const float underside = world.Y
+                                - PalmTrunkRadius(centre.Y, t) * palm.scale;
+                            clear = underside >= ground->Sample(world.X, world.Z).height - 0.04f;
+                        }
+                        if (clear) {
+                            tilt = candidate;
+                            break;
+                        }
+                    }
+                }
+                instance.transform = fallenTransform(tilt);
             } else {
                 // Lean away from the fixed trade wind in world space, after yaw so the lean does
                 // not depend on the authored facing. Collision stays at the base.
@@ -1131,6 +1361,12 @@ void main()
             instance.midLodDistanceSquared = midLodDistance * midLodDistance;
             instance.variant = palm.variant;
             instance.condition = palm.condition;
+            if (palm.condition == PalmCondition::Fallen && ground != nullptr) {
+                instance.fallen = static_cast<std::uint16_t>(fallen_.size());
+                FallenPalm& fallen = fallen_.emplace_back();
+                fallen.variant = palm.variant;
+                fallen.transform.push_back(instance.transform);
+            }
             cell.instances.push_back(instance);
             ++totalPalmCount_;
             fallenPalmCount_ += palm.condition == PalmCondition::Fallen ? 1 : 0;
@@ -1211,11 +1447,19 @@ void main()
         }
         for (auto& list : visibleFarTransforms_) list.clear();
         for (auto& list : visibleBrokenFarTransforms_) list.clear();
+        for (FallenPalm& fallen : fallen_) fallen.drawNear = fallen.drawFar = false;
         int casters = 0;
         for (const PalmCell& cell : cells_) {
             if (!cell.occupied) continue;
             for (const PalmDrawInstance& instance : cell.instances) {
                 if (!map.CastsInto(instance.x, instance.z)) continue;
+                if (instance.fallen != PalmDrawInstance::NoFallen) {
+                    FallenPalm& fallen = fallen_[instance.fallen];
+                    fallen.transform.front() = instance.transform;
+                    fallen.drawFar = true;
+                    ++casters;
+                    continue;
+                }
                 (instance.condition == PalmCondition::Broken
                      ? visibleBrokenFarTransforms_[instance.variant]
                      : visibleFarTransforms_[instance.variant]).push_back(instance.transform);
@@ -1230,6 +1474,8 @@ void main()
             DrawVariant(farMeshes_[variant], visibleFarTransforms_[variant]);
             DrawVariant(brokenFarMeshes_[variant], visibleBrokenFarTransforms_[variant]);
         }
+        for (FallenPalm& fallen : fallen_)
+            if (fallen.drawFar) DrawVariant(fallen.farMesh, fallen.transform);
         device_.SetVertexBuffers({});
         device_.setIndicesProperty(nullptr);
         map.CountCasters(casters);
@@ -1285,6 +1531,7 @@ void main()
             transforms.clear();
         }
         for (auto& transforms : visibleMidTransforms_) transforms.clear();
+        for (FallenPalm& fallen : fallen_) fallen.drawNear = fallen.drawFar = false;
         for (auto& transforms : visibleFarTransforms_) {
             transforms.clear();
         }
@@ -1323,7 +1570,12 @@ void main()
                 const Matrix transform = shrink < 1.0f ? Matrix::CreateScale(shrink) * instance.transform
                                                        : instance.transform;
                 const bool nearLod = instanceDistanceSquared <= instance.nearLodDistanceSquared;
-                if (nearLod) {
+                if (instance.fallen != PalmDrawInstance::NoFallen) {
+                    FallenPalm& fallen = fallen_[instance.fallen];
+                    fallen.transform.front() = transform;
+                    (nearLod ? fallen.drawNear : fallen.drawFar) = true;
+                    ++(nearLod ? visibleNearPalmCount_ : visibleFarPalmCount_);
+                } else if (nearLod) {
                     (instance.condition == PalmCondition::Broken
                          ? visibleBrokenNearTransforms_[instance.variant]
                          : instanceDistanceSquared <= instance.midLodDistanceSquared
@@ -1383,6 +1635,11 @@ void main()
             DrawVariant(farMeshes_[variant], visibleFarTransforms_[variant]);
             DrawVariant(brokenNearMeshes_[variant], visibleBrokenNearTransforms_[variant]);
             DrawVariant(brokenFarMeshes_[variant], visibleBrokenFarTransforms_[variant]);
+        }
+        if (customShaderReady_) customEffect_->SetUniformFloat("uLeafletPixels", 0.5f);
+        for (FallenPalm& fallen : fallen_) {
+            if (fallen.drawNear) DrawVariant(fallen.nearMesh, fallen.transform);
+            if (fallen.drawFar) DrawVariant(fallen.farMesh, fallen.transform);
         }
         device_.SetVertexBuffers({});
         device_.setIndicesProperty(nullptr);

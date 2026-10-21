@@ -233,6 +233,22 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 349 (2026-10-21) — fallen palms lie flat, their crowns collapsed and dried
+
+The six storm-felled palms drew the living crown, rotated with the stem: a bright green wheel of
+fronds standing upright about the fallen trunk, some fronds pointing four metres into the air,
+and a stem tilted a fixed 82 degrees that, with each variant's curve, held the crown 0.4-2.6 m
+off the ground. Each fallen palm now has its own near and far meshes, built against the drawn
+ground (`RenderedTerrainSurface`): the stem is laid as near flat as the ground along it allows
+(searched from 93 degrees down to the old 82, its underside kept within 4 cm of the ground), so
+the crown rests 0.1-0.8 m up; the fronds, tagged by frond while the living crown is built, are
+mapped from their living bearing onto a fan on the ground - the lower ones crushed forward under
+the crown, the upper ones arching up to half a metre and over to either side - and lie on the
+ground beyond, a narrow stalk standing proud with the dead leaflets sloping off it and curling a
+little. They are dried straw, tawny and grey-brown, and no longer sway. The sun-shadow pass casts
+the fallen far meshes. `fallen-palm`, `palms`, `broken-palm`, `fronds`, `beach`, `water` and the
+tests pass.
+
 ## Loop pass 348 (2026-10-21) — a middle LOD for the palm crowns
 
 Pass 326's leaflet straps (34 a side per frond, three triangles each) made the near palm mesh six

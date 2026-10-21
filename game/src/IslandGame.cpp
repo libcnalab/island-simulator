@@ -2525,8 +2525,12 @@ namespace island
         fallingFruit_.SetPalms(vegetationLayout_.Palms());
         coconutCrabGroup_.SetPalms(vegetationLayout_.Palms());
         helicopterRenderer_=std::make_unique<HelicopterRenderer>(device,*helicopterPlacement_);
-        palmRenderer_ = std::make_unique<PalmRenderer>(
-            device, vegetationLayout_, qualityProfile_.vegetationMaximumDistanceScale);
+        {
+            // the fallen palms' crowns are laid on the drawn ground
+            const RenderedTerrainSurface palmGround(terrain_);
+            palmRenderer_ = std::make_unique<PalmRenderer>(
+                device, vegetationLayout_, qualityProfile_.vegetationMaximumDistanceScale, &palmGround);
+        }
         try {
             if (!device.SupportsCapability(CNA::GraphicsCapability::CustomEffects)
                 || !device.SupportsCapability(CNA::GraphicsCapability::Instancing))
