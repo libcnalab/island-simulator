@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 408 (2026-10-21) — the quad stops at the lookout's ramp
+
+The lookout's posts were the quad's obstacles but its ramp was not, so the quad drove through the
+low end of the plank ramp that climbs to the platform. QuadWallBlocked now stops it where any
+point of its footprint (corners and side middles, as it heads) lies on the ramp less than 1.9 m
+under its deck (under the ramp's high end and the platform, 3.2 m up, the quad and its rider still
+pass). A new QA view `quad-lookout` drives at the ramp from its side near its foot: the quad stops
+with its nose at the ramp's edge (1.6 m from its axis). `quad-drive` ends as before; the tests pass.
+
 ## Loop pass 407 (2026-10-21) — the quad bike meets the helicopter, the rope bridge and the jetty
 
 Like the cave and the bunker before pass 400, three structures were only the walker's: the quad

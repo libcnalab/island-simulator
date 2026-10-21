@@ -228,6 +228,7 @@ namespace island
             case FixedViewpoint::QuadCaveDetail: return "quad-cave";
             case FixedViewpoint::QuadJettyDetail: return "quad-jetty";
             case FixedViewpoint::QuadHelicopterDetail: return "quad-helicopter";
+            case FixedViewpoint::QuadLookoutDetail: return "quad-lookout";
             case FixedViewpoint::CrabDetail: return "crabs";
             case FixedViewpoint::HermitCrabDetail: return "hermit-crabs";
             case FixedViewpoint::CoconutCrabDetail: return "coconut-crabs";
@@ -2698,6 +2699,13 @@ namespace island
                     // straight at the helicopter's flank from ten metres off
                     const auto side = helicopterPlacement_->World(10.0f, 0.0f, 0.0f);
                     PlaceQuadNear(side.x, side.z, std::atan2(helicopterPlacement_->x - side.x, helicopterPlacement_->z - side.z));
+                } else if (viewpoint_ == FixedViewpoint::QuadLookoutDetail && lookoutPlacement_) {
+                    // at the lookout's ramp from its side, four and a half metres off, near its foot
+                    const auto& lookout = *lookoutPlacement_;
+                    const float u = LookoutPlacement::Half + LookoutPlacement::RampLength * 0.8f;
+                    const float rampX = lookout.x + lookout.dirX * u, rampZ = lookout.z + lookout.dirZ * u;
+                    const float fromX = rampX + lookout.AcrossX() * 4.5f, fromZ = rampZ + lookout.AcrossZ() * 4.5f;
+                    PlaceQuadNear(fromX, fromZ, std::atan2(rampX - fromX, rampZ - fromZ));
                 } else {
                     // up the beach path from the south shore, which runs clear of the trees
                     constexpr float startZ = -222.0f;
@@ -4454,6 +4462,21 @@ namespace island
             const float across = dx * bridge.AcrossX() + dz * bridge.AcrossZ();
             if (along > -1.1f && along < bridge.span + 1.1f
                 && std::abs(across) < BridgePlacement::PostAcross + 0.95f) return true;
+        }
+        // The lookout's ramp where it runs low enough to strike (under its high end and the
+        // platform the quad and its rider pass): the footprint's corners and side middles.
+        if (lookoutPlacement_) {
+            const BikeVec forward = quad_.Forward();
+            const float length = std::hypot(forward.x, forward.z);
+            const float fx = length > 1e-4f ? forward.x / length : 0.0f, fz = length > 1e-4f ? forward.z / length : 1.0f;
+            for (const float along : {-1.0f, 0.0f, 1.0f}) {
+                for (const float across : {-0.62f, 0.0f, 0.62f}) {
+                    const float px = x + fx * along + fz * across, pz = z + fz * along - fx * across;
+                    if (!lookoutPlacement_->OnRamp(px, pz)) continue;
+                    const float below = QuadGround(px, pz).height;
+                    if (lookoutPlacement_->SupportHeight(px, pz, -1.0e6f) - below < 1.9f) return true;
+                }
+            }
         }
         // The cave's rock (an arched shell five metres wide): the quad and its rider as one
         // upright capsule, 0.95 m round and 1.9 m tall.
@@ -7553,13 +7576,20 @@ namespace island
             }
             if (QuadDriveView()) {
                 const auto q = quad_.Position();
-                if (viewpoint_ == FixedViewpoint::QuadJettyDetail || viewpoint_ == FixedViewpoint::QuadHelicopterDetail) {
+                if (viewpoint_ == FixedViewpoint::QuadJettyDetail || viewpoint_ == FixedViewpoint::QuadHelicopterDetail
+                    || viewpoint_ == FixedViewpoint::QuadLookoutDetail) {
                     std::cout << "island-simulator: quad QA structure: "
-                              << (viewpoint_ == FixedViewpoint::QuadJettyDetail ? "jetty" : "helicopter")
+                              << (viewpoint_ == FixedViewpoint::QuadJettyDetail ? "jetty"
+                                  : viewpoint_ == FixedViewpoint::QuadHelicopterDetail ? "helicopter" : "lookout")
                               << ", ground " << QuadGround(q.x, q.z).height << ", body " << q.y
                               << ", walls " << (QuadWallBlocked(q.x, q.z) ? "touching" : "clear");
                     if (viewpoint_ == FixedViewpoint::QuadHelicopterDetail && helicopterPlacement_) std::cout << ", helicopter distance "
                         << std::hypot(q.x - helicopterPlacement_->x, q.z - helicopterPlacement_->z);
+                    if (viewpoint_ == FixedViewpoint::QuadLookoutDetail && lookoutPlacement_) {
+                        const auto& lookout = *lookoutPlacement_;
+                        const float across = (q.x - lookout.x) * lookout.AcrossX() + (q.z - lookout.z) * lookout.AcrossZ();
+                        std::cout << ", across the ramp " << across << " m";
+                    }
                     if (viewpoint_ == FixedViewpoint::QuadJettyDetail && jettyPlacement_) {
                         const auto& jetty = *jettyPlacement_;
                         const float along = (q.x - jetty.rootX) * jetty.dirX + (q.z - jetty.rootZ) * jetty.dirZ;
