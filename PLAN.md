@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 421 (2026-10-21) — frogs have round bronze eyes and smooth skin
+
+At 1:1 in `frogs` the frog was a cut green stone (eight-sided lofts) whose eyes were octahedra on the
+head's sides, each with a flat iris facing straight out and a black vertical slit, a cat's. The body and
+head are lofted with fourteen sides (AppendGeckoLoft takes its side count as a template argument, eight
+by default for the geckos, skinks and the rest); each eye is a round ball (a 12-sided loft) bulging from
+the top of the head looking out and up, its outer face a broad flattened cap carrying the bronze iris
+(36 by 34 mm at unit scale, radially striated) with a horizontal pupil and a glint; seven irregular dark
+blotches lie over the back instead of three triangles. Under the 1700-vertex budget; `geckos` and
+`skinks` capture as before.
+
 ## Loop pass 420 (2026-10-21) — ground doves stand on their legs, breast up
 
 At 1:1 in `ground-doves` the foraging dove lay flat on the ground like a pillow: its feet were only

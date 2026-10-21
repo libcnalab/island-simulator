@@ -354,7 +354,7 @@ namespace island
             }
         }
 
-        template<std::size_t StationCount>
+        template<std::size_t StationCount,int Sides=8>
         void AppendGeckoLoft(std::vector<VertexPositionColor>& vertices,
                              const Vector3& centre,const Vector3& right,
                              const Vector3& up,const Vector3& forward,
@@ -364,7 +364,6 @@ namespace island
                              const float scale,const Color& dorsal,
                              const Color& flank,const Color& underside)
         {
-            constexpr int Sides=8;
             const auto ringPoint=[&](const std::size_t station,const int side) {
                 const float angle=6.28318530718f*static_cast<float>(side)/Sides;
                 return centre+forward*(stations[station]*scale)
@@ -803,14 +802,15 @@ namespace island
             constexpr std::array<float, 5> BodyHeights = {{.07f, .15f, .18f, .15f, .08f}};
             std::array<float, 5> bodyHeights = BodyHeights;
             for (float& height : bodyHeights) height *= breathing;
-            AppendGeckoLoft(vertices, centre, right, up, forward, BodyStations,
+            // (fourteen sides: at eight the frog's smooth skin read as a cut stone)
+            AppendGeckoLoft<5, 14>(vertices, centre, right, up, forward, BodyStations,
                             BodyWidths, bodyHeights, scale, back, flank, underside);
 
             const Vector3 head = centre + forward * (.265f * scale) + up * (.035f * scale);
             constexpr std::array<float, 4> HeadStations = {{-.08f, .0f, .12f, .19f}};
             constexpr std::array<float, 4> HeadWidths = {{.17f, .25f, .23f, .13f}};
             constexpr std::array<float, 4> HeadHeights = {{.10f, .16f, .14f, .07f}};
-            AppendGeckoLoft(vertices, head, right, up, forward, HeadStations,
+            AppendGeckoLoft<4, 14>(vertices, head, right, up, forward, HeadStations,
                             HeadWidths, HeadHeights, scale, back, flank, underside);
             // The vocal sac: a pale bulge under the chin that swells with the call.
             // The call's sac, or at rest the gular pump's small swell, under the chin.
@@ -877,45 +877,57 @@ namespace island
                 AppendGeckoTube(vertices, foldA, foldB, .011f * scale,
                                 .008f * scale, marking, 5);
             }
-            for (int spot = 0; spot < 3; ++spot) {
-                const float side = spot == 1 ? -1.0f : 1.0f;
-                const Vector3 spotCentre = centre + forward * ((-.12f + spot * .12f) * scale)
-                    + right * (side * .09f * scale) + up * (.18f * scale);
-                AddDoubleSidedTriangle(vertices, spotCentre + forward * (.025f * scale),
-                    spotCentre - right * (.025f * scale) - forward * (.018f * scale),
-                    spotCentre + right * (.025f * scale) - forward * (.018f * scale), marking);
+            // irregular dark blotches over the back and the thighs' tops
+            constexpr std::array<std::array<float, 4>, 7> Blotches{{
+                {-.15f, .07f, .028f, .020f}, {-.09f, -.10f, .022f, .030f}, {-.02f, .04f, .034f, .022f},
+                {.05f, -.06f, .020f, .026f}, {.11f, .10f, .024f, .018f}, {.16f, -.02f, .018f, .022f},
+                {-.20f, -.03f, .020f, .016f}}};
+            for (const auto& blotch : Blotches) {
+                const float across = blotch[1] / .27f;
+                const Vector3 spotCentre = centre + forward * (blotch[0] * scale) + right * (blotch[1] * scale)
+                    + up * ((.183f * std::sqrt(std::max(0.0f, 1.0f - across * across)) * breathing + .004f) * scale);
+                AppendGeckoSpot(vertices, spotCentre, right, forward, blotch[2] * scale, blotch[3] * scale, marking);
             }
 
             for (const float side : {-1.0f, 1.0f}) {
                 // Blinking, the eye is drawn down into the head by the blink amount, the
-                // iris, pupil and glint going with it.
+                // iris, pupil and glint going with it. A frog's eyes bulge from the top of
+                // its head, looking out and up: a round ball, most of its outer face the
+                // bronze iris with a horizontal pupil (a vertical slit read as a cat's).
+                const float blink = std::clamp(frog.blink, 0.0f, 1.0f);
+                const Vector3 outward = Vector3::Normalize(right * (side * .82f) + up * .57f);
                 const Vector3 eyeCentre = head + forward * (.045f * scale)
-                    + right * (side * .195f * scale)
-                    + up * ((.115f - .080f * std::clamp(frog.blink, 0.0f, 1.0f)) * scale);
-                AppendGeckoDiamond(vertices, eyeCentre, right, up, forward,
-                                   .060f * scale, .058f * scale, .046f * scale, back, flank);
-                const Vector3 irisCentre = eyeCentre + right * (side * .052f * scale)
-                    + forward * (.012f * scale) + up * (.004f * scale);
-                for (int edge = 0; edge < 8; ++edge) {
-                    const float firstAngle = 6.28318530718f * static_cast<float>(edge) / 8.0f;
-                    const float secondAngle = 6.28318530718f * static_cast<float>(edge + 1) / 8.0f;
-                    const Vector3 first = irisCentre
-                        + forward * (std::cos(firstAngle) * .025f * scale)
-                        + up * (std::sin(firstAngle) * .030f * scale);
-                    const Vector3 second = irisCentre
-                        + forward * (std::cos(secondAngle) * .025f * scale)
-                        + up * (std::sin(secondAngle) * .030f * scale);
-                    AddDoubleSidedTriangle(vertices, irisCentre, first, second, iris);
+                    + right * (side * .150f * scale)
+                    + up * ((.125f - .080f * blink) * scale);
+                // (the ball's outer face is the iris's: a broad flattened cap it lies on)
+                constexpr std::array<float, 4> EyeStations = {{-.052f, -.022f, .020f, .045f}};
+                constexpr std::array<float, 4> EyeWidths = {{.026f, .056f, .055f, .040f}};
+                constexpr std::array<float, 4> EyeHeights = {{.026f, .054f, .053f, .038f}};
+                const Vector3 eyeUp = Vector3::Normalize(Vector3::Cross(outward, forward)) * side;
+                AppendGeckoLoft<4, 12>(vertices, eyeCentre, forward, eyeUp, outward, EyeStations,
+                                       EyeWidths, EyeHeights, scale, back, flank, flank);
+                const Vector3 irisCentre = eyeCentre + outward * (.0475f * scale);
+                const Vector3 irisUp = Vector3::Normalize(eyeUp * side);
+                for (int edge = 0; edge < 12; ++edge) {
+                    const float firstAngle = 6.28318530718f * static_cast<float>(edge) / 12.0f;
+                    const float secondAngle = 6.28318530718f * static_cast<float>(edge + 1) / 12.0f;
+                    const auto rim = [&](const float angle) {
+                        return irisCentre - outward * (.0015f * scale)
+                            + forward * (std::cos(angle) * .036f * scale)
+                            + irisUp * (std::sin(angle) * .034f * scale);
+                    };
+                    AddDoubleSidedTriangle(vertices, irisCentre, rim(firstAngle), rim(secondAngle),
+                                           edge % 2 == 0 ? iris : Color::Lerp(iris, pupil, .18f));
                 }
-                const Vector3 pupilCentre = irisCentre + right * (side * .002f * scale);
-                AddDoubleSidedTriangle(vertices, pupilCentre + up * (.035f * scale),
-                    pupilCentre - forward * (.012f * scale) - up * (.035f * scale),
-                    pupilCentre + forward * (.012f * scale) - up * (.035f * scale), pupil);
-                const Vector3 highlight = pupilCentre + up * (.020f * scale)
-                    + right * (side * .004f * scale);
-                AddDoubleSidedTriangle(vertices, highlight + up * (.007f * scale),
-                    highlight - forward * (.006f * scale) - up * (.004f * scale),
-                    highlight + forward * (.006f * scale) - up * (.004f * scale), glint);
+                const Vector3 pupilCentre = irisCentre + outward * (.002f * scale);
+                const Vector3 pupilAlong = forward * (.024f * scale), pupilAcross = irisUp * (.011f * scale);
+                AddDoubleSidedTriangle(vertices, pupilCentre - pupilAlong, pupilCentre + pupilAcross, pupilCentre + pupilAlong, pupil);
+                AddDoubleSidedTriangle(vertices, pupilCentre - pupilAlong, pupilCentre + pupilAlong, pupilCentre - pupilAcross, pupil);
+                const Vector3 highlight = pupilCentre + irisUp * (.017f * scale)
+                    - forward * (.010f * scale) + outward * (.002f * scale);
+                AddDoubleSidedTriangle(vertices, highlight + irisUp * (.007f * scale),
+                    highlight - forward * (.006f * scale) - irisUp * (.004f * scale),
+                    highlight + forward * (.006f * scale) - irisUp * (.004f * scale), glint);
             }
 
             const Vector3 snout = head + forward * (.194f * scale);
