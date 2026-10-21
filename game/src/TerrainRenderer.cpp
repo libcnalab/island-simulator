@@ -1093,6 +1093,40 @@ void main()
                                                               streamGeometry.z * 0.9 + 1.1, streamGeometry.y));
     vec3 wetMargin = mix(vec3(0.150, 0.122, 0.086), vec3(0.205, 0.170, 0.118), 0.5 + 0.5 * medium) * vGroundLight;
     color = mix(color, wetMargin, streamMargin * 0.72);
+    // The stream runs over gravel and cobbles, seen through its clear shallow water: rounded
+    // stones of mixed rock and size - grey, buff, a few dark - lying in wet grit and sand, each
+    // a little lighter at its crown. (Wet mud from bank to bank read as a painted channel; the
+    // cells' own edges as stones read as crazy paving.)
+    float streamBed = streamGeometry.x * (1.0 - smoothstep(streamGeometry.z * 0.78,
+                                                           streamGeometry.z * 1.02, streamGeometry.y));
+    if (streamBed > 0.0) {
+        float gravelVisibility = 1.0 - smoothstep(0.015, 0.05, groundPixelWidth);
+        vec2 gravelPoint = p * 7.0;   // stones about fourteen centimetres across
+        vec2 gravelCell = floor(gravelPoint), gravelFraction = fract(gravelPoint);
+        float inside = 9.0, stoneSeed = 0.0;
+        for (int j = -1; j <= 1; ++j) {
+            for (int i = -1; i <= 1; ++i) {
+                vec2 offset = vec2(float(i), float(j));
+                vec2 neighbour = gravelCell + offset;
+                vec2 centre = offset + 0.15 + 0.70 * vec2(hash12(neighbour), hash12(neighbour + 17.3));
+                vec2 toStone = gravelFraction - centre;
+                // each stone its own size and a little oblong
+                float radius = 0.24 + 0.24 * hash12(neighbour + 9.1);
+                float r = length(toStone * vec2(1.0, 1.0 + 0.35 * hash12(neighbour + 5.3))) / radius;
+                if (r < inside) { inside = r; stoneSeed = hash12(neighbour + 3.7); }
+            }
+        }
+        float stoneMask = 1.0 - smoothstep(0.82, 1.0, inside);
+        vec3 stone = mix(vec3(0.30, 0.29, 0.26), vec3(0.50, 0.46, 0.38), stoneSeed);
+        stone = mix(stone, vec3(0.20, 0.215, 0.22), step(0.84, stoneSeed));
+        stone *= 0.80 + 0.30 * (1.0 - inside * inside);
+        // grit and sand between them, speckled with grains
+        float grain = valueNoise(p * 41.0 + vec2(3.1, -7.7)) * gravelVisibility;
+        vec3 grit = mix(vec3(0.20, 0.17, 0.12), vec3(0.33, 0.29, 0.21), grain);
+        vec3 gravel = mix(grit, stone, stoneMask);
+        vec3 gravelBed = mix(wetMargin * 1.15, gravel * vGroundLight, gravelVisibility);
+        color = mix(color, gravelBed, streamBed);
+    }
 
     float wetHeight = vWorld.y + broad * 0.06 + medium * 0.025;
     float wetEdge = (1.0 - smoothstep(0.06, 0.68, wetHeight))

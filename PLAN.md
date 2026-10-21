@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 360 (2026-10-21) — the stream runs over gravel
+
+The stream read as a painted channel: its bed was wet mud from bank to bank under fairly opaque
+green water. The terrain shader now lays a gravel bed inside the channel (`streamRouteGeometry`):
+rounded stones of mixed rock and size - grey, buff, a few dark basalt - each its own radius and
+a little oblong, lighter at the crown, lying in wet grit and sand speckled with grains (a first
+version that used the cells' own edges as stones read as crazy paving), the detail fading to the
+wet margin colour before it could shimmer. The water's body is a third clearer, so the bed shows
+except where it mirrors the sky. `stream`, `bridge`, `cascade` and the tests pass; the Chrome
+`fish` scope passed for pass 359.
+
 ## Loop pass 359 (2026-10-21) — wind ripples near the eye break the sun's glitter into sparkles
 
 The shortest wave in the ocean spectrum is 65 cm, so within a few metres of a low eye (`reef`)

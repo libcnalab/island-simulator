@@ -93,7 +93,8 @@ void main(){
     water+=vec3(.22,.36,.32)*streak*.30+vec3(.48,.45,.33)*glint*.44;
     water+=vec3(.52,.60,.46)*(bankBand*(.24+.14*streak)+riffle*.24);
     water+=vec3(.40,.68,.59)*braided*.29;
-    float alpha=opacity*(.57*mix(.55,1.0,centreDepth)+fresnel*.36+streak*.065+bankBand*.10+riffle*.11
+    // clear enough to show the gravel bed except where it mirrors the sky
+    float alpha=opacity*(.40*mix(.55,1.0,centreDepth)+fresnel*.36+streak*.065+bankBand*.10+riffle*.11
         +centreDepth*.055+braided*.055);
     // White water: the sheet over the lip, the plunge below it and a foam raft that the
     // pool carries downstream and lets dissolve, all pulsing with the drop height.
