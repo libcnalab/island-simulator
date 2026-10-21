@@ -3768,6 +3768,7 @@ namespace island
         const std::array<GrassWalker, GrassWalkers::Slots> butterflyWalkers = GatherWalkers(butterflyObserver.X, butterflyObserver.Z);
         butterflyMeadow_.SetWalkers(butterflyWalkers);
         butterflyMeadow_.SetCloudClock(seaForageSeconds_);
+        butterflyMeadow_.SetRain(weather_.State().rain);
         updateProfile_.Mark("butterflyMeadow");
         butterflyMeadow_.Update(deltaSeconds,butterflyObserver.X,butterflyObserver.Y,
             butterflyObserver.Z);

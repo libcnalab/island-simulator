@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 437 (2026-10-22) — butterflies sit out the rain
+
+The butterflies flew on through showers and thunderstorms. ButterflyMeadow::SetRain takes the
+weather's rain: over RainSettle (0.25) a flight or a nectar visit ends within a second or so and the
+butterfly settles, sitting the shower out with its wings folded shut (the cloud-shade rule with full
+cover); one frightened by the walker or an animal flutters off and settles again; when the rain stops
+they fly as before. New test: within six seconds of a shower every butterfly rests, wings folded, and
+after it they fly again. `butterflies` clear and with showers pass.
+
 ## Loop pass 436 (2026-10-22) — the rain sounds of where the listener stands
 
 The rain was one loop at one level everywhere: on the open beach, under the forest's crowns and in the

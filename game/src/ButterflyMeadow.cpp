@@ -190,6 +190,12 @@ namespace island
         return count;
     }
 
+    std::size_t ButterflyMeadow::RestingCount() const noexcept
+    {
+        return static_cast<std::size_t>(std::count_if(agents_.begin(), agents_.end(),
+            [](const Agent& agent) { return agent.state.behavior == ButterflyBehavior::Rest; }));
+    }
+
     std::size_t ButterflyMeadow::BaskingCount() const noexcept
     {
         std::size_t count = 0;
@@ -292,7 +298,15 @@ namespace island
             }
         } else {
             agent.behaviorSeconds -= deltaSeconds;
-            if (agent.behaviorSeconds <= 0.0f) {
+            const bool raining = rain_ > RainSettle;
+            // in the rain a flight or a visit ends soon, and the butterfly settles
+            if (raining && agent.state.behavior != ButterflyBehavior::Rest)
+                agent.behaviorSeconds = std::min(agent.behaviorSeconds, 1.2f);
+            if (raining && agent.behaviorSeconds <= 0.0f) {
+                ++agent.transitionCount;
+                agent.state.behavior = ButterflyBehavior::Rest;
+                agent.behaviorSeconds = 3.0f;
+            } else if (agent.behaviorSeconds <= 0.0f) {
                 ++agent.transitionCount;
                 switch (agent.state.behavior) {
                 case ButterflyBehavior::Rest:
@@ -431,7 +445,8 @@ namespace island
         if (agent.state.behavior != ButterflyBehavior::Rest) {
             wingTarget = 0.12f + (0.5f + 0.5f * std::sin(agent.wingPhase)) * 0.78f;
         } else {
-            const float cover = CloudShadow::Cover(agent.state.x, agent.state.z, cloudClock_);
+            // (in the rain the wings stay closed)
+            const float cover = rain_ > RainSettle ? 1.0f : CloudShadow::Cover(agent.state.x, agent.state.z, cloudClock_);
             const float sun = 1.0f - std::clamp((cover - SunCover) / (ShadeCover - SunCover), 0.0f, 1.0f);
             wingTarget = std::lerp(wingTarget, 0.10f + 0.06f * std::sin(agent.wingPhase), sun);
             wingRateLimit = 1.5f;

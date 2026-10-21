@@ -3092,6 +3092,21 @@ int main()
                   == island::ButterflyMeadow::HabitatCount,
           "butterfly simulation exposes the intended bounded population and habitats");
     {
+        // In the rain the butterflies settle and sit it out with their wings closed; when it
+        // stops they fly again.
+        island::ButterflyMeadow wet(terrain);
+        for (int step = 0; step < 200; ++step) wet.Update(0.05f, 500.0f, 2.0f, 500.0f);
+        wet.SetRain(0.55f);
+        for (int step = 0; step < 120; ++step) wet.Update(0.05f, 500.0f, 2.0f, 500.0f);
+        bool closed = true;
+        for (const auto& fly : wet.Butterflies()) closed = closed && fly.wingFold > 0.5f;   // (1: folded shut)
+        Check(wet.RestingCount() == wet.Butterflies().size() && closed,
+              "in the rain every butterfly settles within six seconds, wings closed");
+        wet.SetRain(0.0f);
+        for (int step = 0; step < 300; ++step) wet.Update(0.05f, 500.0f, 2.0f, 500.0f);
+        Check(wet.RestingCount() < wet.Butterflies().size(), "after the rain the butterflies fly again");
+    }
+    {
         // Basking: with the cumulus clock set to a sunny moment over the first habitat, a
         // resting butterfly there opens its wings flat within a few seconds; set to a moment
         // under a cloud's shadow, it closes them again.

@@ -101,6 +101,12 @@ namespace island
          *  SunCover) basks with its wings held open, pumping slowly; under a cloud's shadow
          *  (cover over ShadeCover) it closes them. */
         void SetCloudClock(float seconds) noexcept { cloudClock_ = seconds; }
+        /** @brief The weather's rain (0..1): over RainSettle the butterflies stop flying, each
+         *  settling as its flight ends and sitting out the shower with its wings closed; a
+         *  frightened one flutters off and settles again. */
+        void SetRain(float rain) noexcept { rain_ = std::isfinite(rain) ? std::clamp(rain, 0.0f, 1.0f) : 0.0f; }
+        static constexpr float RainSettle = 0.25f;
+        [[nodiscard]] std::size_t RestingCount() const noexcept;
         [[nodiscard]] std::size_t BaskingCount() const noexcept;
         static constexpr float SunCover = 0.25f, ShadeCover = 0.5f;
         static constexpr float FermentSeconds = 20.0f;
@@ -151,6 +157,7 @@ namespace island
         std::uint32_t fruitVisits_ = 0U;
         std::span<const GrassWalker> walkers_;
         float cloudClock_ = 0.0f;
+        float rain_ = 0.0f;
         std::uint32_t scatters_ = 0U;
         std::uint32_t probes_ = 0U;
         [[nodiscard]] bool FindFermentingFruit(const Agent& agent, NectarSite& site) const noexcept;
