@@ -37,6 +37,11 @@ private:
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> vertices_;
     std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> staging_;
+    // Each piece's ground points, kept by its slot until another piece takes it (a laid piece
+    // never moves, it only fades): up to 480 pieces were draped afresh every frame.
+    struct CachedPiece { float x0=0.0f,z0=0.0f,x1=0.0f,z1=0.0f,width=-1.0f; int knobVertices=0; };
+    std::vector<CachedPiece> cached_;
+    std::vector<Microsoft::Xna::Framework::Vector3> cachedPoints_;   // VerticesPerSegment a slot
     int drawCalls_=0,visible_=0;
 };
 }

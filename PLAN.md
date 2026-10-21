@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 406 (2026-10-21) — a laid rut keeps its ground points
+
+Since pass 393 the ruts take the drawn ground's heights, but every frame still draped all of them
+afresh: up to 480 pieces of 78 ground points (with the operator riding, contact-shadows, which draws
+them, still cost up to 5 ms). A piece never moves once laid, it only fades: TyreTrackRenderer now
+keeps each piece's ground points by its slot until another piece takes the slot, and a frame only
+copies them with the piece's present alpha (the knobs' prints within 22 m, as before). The
+vertices are the same in the same order: in `quad-drive` the ruts are pixel-identical (the frame
+differs only far off, where passes 401-405 changed what moves). The tests pass.
+
 ## Loop pass 405 (2026-10-21) — the boars take the canopy's light at three stations, not every vertex
 
 The operator's 20:22 session showed the boars' render pass at 7.7 ms a frame with the herd close:
