@@ -233,6 +233,13 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 290 (2026-10-21) — the mice and rats come out at night
+
+With the frogs (pass 289), the island's rodents keep a forager's hours: by day about three in
+ten of the mice and rats are about, at night all of them, filtered at draw time on the same
+night measure as the hut's geckos; the two close-ups' animals always stay. `mice`, `rats` and
+`mice` at 22:00 pass, and the tests.
+
 ## Loop pass 289 (2026-10-21) — the frogs and the lizards keep their hours
 
 The night chorus already called from frogs the eye saw just as many of by day, and the basking

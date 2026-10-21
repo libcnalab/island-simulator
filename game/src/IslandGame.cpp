@@ -5579,6 +5579,13 @@ namespace island
             for (std::size_t i = 0; i < frogPopulation_.Frogs().size(); ++i)
                 if (i == 1U || static_cast<float>((i * 53U + 17U) % 100U) / 100.0f < 0.35f + 0.65f * frogsOut)
                     awakeFrogs_.push_back(frogPopulation_.Frogs()[i]);
+            // The mice and rats are night foragers too: by day a few are about, at night all
+            // (the two close-ups' stay).
+            awakeRodents_.clear();
+            for (std::size_t i = 0; i < rodentPopulation_.Rodents().size(); ++i)
+                if (i == 0U || i == RodentPopulation::MouseCount + 6U
+                    || static_cast<float>((i * 61U + 29U) % 100U) / 100.0f < 0.30f + 0.70f * night)
+                    awakeRodents_.push_back(rodentPopulation_.Rodents()[i]);
             // At night two house geckos come out on the hut's wall by the lantern.
             if (hutPlacement_) {
                 if (night > 0.45f)
@@ -5589,7 +5596,7 @@ namespace island
                                      butterflyMeadow_.FlowerPatches(),
                                      allGeckos_, awakeSkinks_,
                                      dragonflies, awakeFrogs_,
-                                     rodentPopulation_.Rodents(), flies,
+                                     awakeRodents_, flies,
                                      antTrails_.Ants(), cicadaColony_.Cicadas(),
                                      beetlePopulation_.Beetles());
         }
