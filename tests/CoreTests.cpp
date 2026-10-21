@@ -10965,6 +10965,35 @@ int main()
             for(const auto& heron:herons.Herons())
                 if(heron.behavior!=island::ReefHeronBehavior::Rest||heron.rest<0.9f) resting=false;
             Check(resting,"at night the reef herons stand hunched at rest");
+            {
+                // with roosts a few metres up near each, the herons fly up at dusk and stand
+                // hunched there, one to a roost, and at dawn fly back down to the shallows
+                island::ReefHeronGroup roosting(terrain);
+                std::vector<island::ReefHeronGroup::Roost> roosts;
+                for(const auto& heron:roosting.Herons()) {
+                    roosts.push_back({heron.x*0.97f,4.5f,heron.z*0.97f});
+                    roosts.push_back({heron.x*0.96f,5.0f,heron.z*0.96f});
+                }
+                roosting.SetRoosts(roosts);
+                roosting.SetNightness(1.0f);
+                for(int step=0;step<600;++step) roosting.Update(0.05f,0.0f,1000.0f,0.0f);
+                bool up=roosting.RoostedCount()==island::ReefHeronGroup::Count;
+                for(const auto& heron:roosting.Herons())
+                    if(heron.y<4.0f||heron.behavior!=island::ReefHeronBehavior::Rest) up=false;
+                for(std::size_t a=0;a<island::ReefHeronGroup::Count;++a)
+                    for(std::size_t b=a+1;b<island::ReefHeronGroup::Count;++b)
+                        if(std::hypot(roosting.Herons()[a].x-roosting.Herons()[b].x,
+                                      roosting.Herons()[a].z-roosting.Herons()[b].z)<0.1f) up=false;
+                roosting.SetNightness(0.0f);
+                for(int step=0;step<900;++step) roosting.Update(0.05f,0.0f,1000.0f,0.0f);
+                bool down=roosting.RoostedCount()==0U;
+                for(const auto& heron:roosting.Herons()) {
+                    if(heron.behavior==island::ReefHeronBehavior::Fly) { down=false; continue; }
+                    const float depth=-terrain.Height(heron.x,heron.z);
+                    if(depth<island::ReefHeronGroup::MinimumDepth-0.03f) down=false;
+                }
+                Check(up&&down,"the herons roost up off the shore at night, one to a perch, and come back down to wade at dawn");
+            }
         }
         // A settled stingray bursts away from the swimmer: with the observer two metres from
         // the settled ray it glides off at once, the burst is noted where it lay, and a ring of

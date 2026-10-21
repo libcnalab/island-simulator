@@ -382,6 +382,30 @@ namespace island
         }
         birdFlock_.SetPerchSites(birdPerchLayout_.Sites());
         {
+            // The reef herons roost on the coast: in the crowns of the shore's palms (the crown
+            // anchor the canopy light field uses: the curved stem and the wind's lean) and on
+            // the perches near the water, the wreck, the rocks, the jetty's post.
+            std::vector<ReefHeronGroup::Roost> roosts;
+            for (const PalmPlacement& palm : vegetationLayout_.Palms()) {
+                if (palm.condition != PalmCondition::Living || palm.shoreDistance > 35.0f) continue;
+                const float variant = static_cast<float>(palm.variant);
+                const float height = 9.4f + variant * 0.55f;
+                const float curveAngle = 0.72f + variant * 1.37f;
+                const float internalLean = 0.55f + static_cast<float>((palm.variant * 5U) % 3U) * 0.25f;
+                const float localX = std::cos(curveAngle) * internalLean, localZ = std::sin(curveAngle) * internalLean;
+                const float cosine = std::cos(palm.yawRadians), sine = std::sin(palm.yawRadians);
+                const float windLean = wind::PalmLeanRadians(wind::Exposure(palm.x, palm.z, palm.shoreDistance));
+                roosts.push_back({palm.x + (localX * cosine + localZ * sine) * palm.scale
+                                      + wind::DirectionX * std::sin(windLean) * height * palm.scale,
+                                  palm.y + std::cos(windLean) * height * palm.scale + 0.35f * palm.scale,
+                                  palm.z + (-localX * sine + localZ * cosine) * palm.scale
+                                      + wind::DirectionZ * std::sin(windLean) * height * palm.scale});
+            }
+            for (const BirdPerchSite& site : birdPerchLayout_.Sites())
+                if (terrain_.SignedShoreDistance(site.x, site.z) < 40.0f) roosts.push_back({site.x, site.y, site.z});
+            reefHeronGroup_.SetRoosts(roosts);
+        }
+        {
             // The plunge pool's lower bank, a little outside the water's edge, is where the
             // fruit doves come down to bathe.
             const StreamCourse course(terrain_);

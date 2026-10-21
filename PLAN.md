@@ -233,6 +233,21 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 341 (2026-10-21) — the herons roost in the shore's palms at night
+
+Reef herons roost off the water at night, in mangroves and coastal trees, but pass 336's stood
+hunched in the shallows. `ReefHeronGroup::SetRoosts` takes roost points: the crowns of the living
+palms within 35 m of the shore (the crown anchor the canopy light field computes, the curved stem
+and the wind's lean, a little above it) and the bird perches within 40 m of the shore (the wreck,
+the rocks, the jetty's post); the island's general perch sites, mostly canopy branches 75-180 m
+inland, were too far from the shore to serve on their own. At dusk each heron flies to the
+nearest roost no other heron holds, within 160 m, and rests there hunched, letting the walker pass
+below; without one it rests in the shallows as before. At dawn it flies back down to its stretch
+of shore and wades again. A probe found every heron's roost 10-22 m from its wading place (palm
+crowns 13-16 m up, the wreck). A core test with synthetic roosts covers the flight up, one heron
+to a roost, and the return to the wading band at dawn. `herons` (also at 21:30), `palms` at 21:30,
+`shipwreck`, `beach` and the tests pass.
+
 ## Loop pass 340 (2026-10-21) — the herons will not let the island come near either
 
 The reef herons of pass 336 flushed only from the walker, so the resident could wade past one,

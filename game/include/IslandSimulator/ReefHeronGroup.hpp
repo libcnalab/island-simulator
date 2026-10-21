@@ -58,6 +58,14 @@ namespace island
         struct Disturber { float x = 0.0f, z = 0.0f, distance = 0.0f; };
         static constexpr std::size_t MaximumDisturbers = 24U;
         void SetDisturbers(std::span<const Disturber> disturbers) noexcept;
+        /** @brief Where a heron may roost the night: perches on the mangroves and trees by the
+         *  shore, the wreck, the rocks, the jetty's post. At dusk each flies to the nearest one
+         *  no other heron holds (within RoostRange) and stands hunched there; at dawn it flies
+         *  back to its stretch of shore. Without one it rests in the shallows. */
+        struct Roost { float x = 0.0f, y = 0.0f, z = 0.0f; };
+        static constexpr float RoostRange = 160.0f;
+        void SetRoosts(std::span<const Roost> roosts);
+        [[nodiscard]] std::size_t RoostedCount() const noexcept;
         void Update(float deltaSeconds, float observerX, float observerY, float observerZ) noexcept;
 
         [[nodiscard]] std::span<const ReefHeronState> Herons() const noexcept { return states_; }
@@ -89,11 +97,16 @@ namespace island
             float flightSeconds = 0.0f, flightLength = 1.0f;
             bool struck = false;
             std::uint32_t random = 1U;
+            enum class Flight : std::uint8_t { Flush, ToRoost, Home } flightKind = Flight::Flush;
+            std::size_t roost = 0U;   // the roost held (roosts_.size() for none)
+            bool roosted = false;
         };
 
         void Begin(Agent& agent, ReefHeronBehavior behavior, float length) noexcept;
         /** @brief Off along the shore away from (x, z); false where no landing was found. */
         bool Flush(Agent& agent, float fromX, float fromZ) noexcept;
+        void FlyTo(Agent& agent, float x, float y, float z) noexcept;
+        [[nodiscard]] std::size_t FreeRoostNear(const Agent& agent) const noexcept;
         void UpdateAgent(Agent& agent, float dt, float observerX, float observerZ, bool observerValid) noexcept;
         void PlaceOnShore(Agent& agent) noexcept;
         [[nodiscard]] float Random(Agent& agent) const noexcept;
@@ -103,6 +116,7 @@ namespace island
         std::vector<ReefHeronState> states_;
         float nightness_ = 0.0f;
         std::vector<Disturber> disturbers_;
+        std::vector<Roost> roosts_;
         std::uint32_t strikes_ = 0U, flushes_ = 0U;
         Strike lastStrike_;
         std::size_t frozen_ = Count;   // the previewed heron, Count for none

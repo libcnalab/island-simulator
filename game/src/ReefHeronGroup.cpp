@@ -104,9 +104,49 @@ namespace island
         }
     }
 
-    bool ReefHeronGroup::Flush(Agent& agent, const float fromX, const float fromZ) noexcept
+    void ReefHeronGroup::SetRoosts(const std::span<const Roost> roosts)
+    {
+        roosts_.clear();
+        for (const Roost& roost : roosts)
+            if (std::isfinite(roost.x) && std::isfinite(roost.y) && std::isfinite(roost.z)) roosts_.push_back(roost);
+        for (Agent& agent : agents_) { agent.roost = roosts_.size(); agent.roosted = false; }
+    }
+
+    std::size_t ReefHeronGroup::RoostedCount() const noexcept
+    {
+        std::size_t count = 0;
+        for (const Agent& agent : agents_) if (agent.roosted) ++count;
+        return count;
+    }
+
+    std::size_t ReefHeronGroup::FreeRoostNear(const Agent& agent) const noexcept
+    {
+        std::size_t best = roosts_.size();
+        float bestDistance = RoostRange * RoostRange;
+        for (std::size_t index = 0; index < roosts_.size(); ++index) {
+            bool held = false;
+            for (const Agent& other : agents_)
+                if (&other != &agent && other.roost == index) held = true;
+            if (held) continue;
+            const float dx = roosts_[index].x - agent.state.x, dz = roosts_[index].z - agent.state.z;
+            const float distance = dx * dx + dz * dz;
+            if (distance < bestDistance) { bestDistance = distance; best = index; }
+        }
+        return best;
+    }
+
+    void ReefHeronGroup::FlyTo(Agent& agent, const float x, const float y, const float z) noexcept
     {
         ReefHeronState& state = agent.state;
+        agent.startX = state.x; agent.startY = state.y; agent.startZ = state.z;
+        agent.targetX = x; agent.targetY = y; agent.targetZ = z;
+        agent.flightLength = std::max(2.0f, std::hypot(x - state.x, z - state.z) / FlySpeed);
+        agent.flightSeconds = 0.0f;
+        Begin(agent, ReefHeronBehavior::Fly, agent.flightLength);
+    }
+
+    bool ReefHeronGroup::Flush(Agent& agent, const float fromX, const float fromZ) noexcept
+    {
         // off along the shore, away from what flushed it
         const float fromAngle = std::atan2(fromZ, fromX);
         const float away = WrapAngle(agent.angle - fromAngle) >= 0.0f ? 1.0f : -1.0f;
@@ -117,12 +157,11 @@ namespace island
                                             agent.homeAngle - 0.6f, agent.homeAngle + 0.6f);
             float x = 0.0f, z = 0.0f;
             if (std::abs(target - agent.angle) > 0.05f && WadingPoint(target, agent.depth, x, z)) {
-                agent.startX = state.x; agent.startY = state.y; agent.startZ = state.z;
                 agent.targetAngle = target;
-                agent.targetX = x; agent.targetZ = z; agent.targetY = terrain_.Height(x, z);
-                agent.flightLength = std::max(2.0f, std::hypot(x - state.x, z - state.z) / FlySpeed);
-                agent.flightSeconds = 0.0f;
-                Begin(agent, ReefHeronBehavior::Fly, agent.flightLength);
+                agent.flightKind = Agent::Flight::Flush;
+                agent.roost = roosts_.size();
+                agent.roosted = false;
+                FlyTo(agent, x, terrain_.Height(x, z), z);
                 ++flushes_;
                 return true;
             }
@@ -175,7 +214,8 @@ namespace island
 
         // A walker close by flushes it, whatever it is doing on the ground; so does anything
         // else it will not let come near (the resident, the quad, a bear, boar or crocodile).
-        if (state.behavior != ReefHeronBehavior::Fly) {
+        // a heron roosting up in a tree lets the shore go on below it
+        if (state.behavior != ReefHeronBehavior::Fly && !agent.roosted) {
             const auto near = [&](const float x, const float z, const float distance) {
                 const float dx = x - state.x, dz = z - state.z;
                 return dx * dx + dz * dz < distance * distance;
@@ -193,10 +233,33 @@ namespace island
         }
 
         if (state.behavior != ReefHeronBehavior::Fly) {
-            if (nightness_ > 0.6f && state.behavior != ReefHeronBehavior::Rest)
-                Begin(agent, ReefHeronBehavior::Rest, 1.0e6f);
-            else if (nightness_ < 0.3f && state.behavior == ReefHeronBehavior::Rest)
-                Begin(agent, ReefHeronBehavior::Stalk, 4.0f + 6.0f * Random(agent));
+            if (nightness_ > 0.6f && state.behavior != ReefHeronBehavior::Rest) {
+                // dusk: off to the nearest free roost, or rest in the shallows without one
+                const std::size_t roost = FreeRoostNear(agent);
+                if (roost < roosts_.size()) {
+                    agent.roost = roost;
+                    agent.flightKind = Agent::Flight::ToRoost;
+                    FlyTo(agent, roosts_[roost].x, roosts_[roost].y, roosts_[roost].z);
+                } else {
+                    Begin(agent, ReefHeronBehavior::Rest, 1.0e6f);
+                }
+            } else if (nightness_ < 0.3f && state.behavior == ReefHeronBehavior::Rest) {
+                if (agent.roosted) {
+                    // dawn: back down to its stretch of shore
+                    float x = 0.0f, z = 0.0f;
+                    if (!WadingPoint(agent.angle, agent.depth, x, z)) {
+                        agent.angle = agent.homeAngle;
+                        (void)WadingPoint(agent.angle, agent.depth, x, z);
+                    }
+                    agent.roosted = false;
+                    agent.roost = roosts_.size();
+                    agent.targetAngle = agent.angle;
+                    agent.flightKind = Agent::Flight::Home;
+                    FlyTo(agent, x, terrain_.Height(x, z), z);
+                } else {
+                    Begin(agent, ReefHeronBehavior::Stalk, 4.0f + 6.0f * Random(agent));
+                }
+            }
         }
 
         float neckTarget = 0.55f;
@@ -257,10 +320,19 @@ namespace island
             state.flight = std::min(std::clamp(t / 0.12f, 0.0f, 1.0f), std::clamp((1.0f - t) / 0.12f, 0.0f, 1.0f));
             state.wingBeat = std::fmod(state.wingBeat + dt * 2.0f * Pi * 2.3f, 2.0f * Pi);
             if (t >= 1.0f) {
-                agent.angle = agent.targetAngle;
                 state.flight = 0.0f;
-                PlaceOnShore(agent);
-                Begin(agent, ReefHeronBehavior::Freeze, 3.0f);   // alert a while after landing
+                if (agent.flightKind == Agent::Flight::ToRoost) {
+                    state.x = agent.targetX; state.y = agent.targetY; state.z = agent.targetZ;
+                    agent.roosted = true;
+                    Begin(agent, ReefHeronBehavior::Rest, 1.0e6f);
+                } else {
+                    agent.angle = agent.targetAngle;
+                    PlaceOnShore(agent);
+                    if (agent.flightKind == Agent::Flight::Home)
+                        Begin(agent, ReefHeronBehavior::Stalk, 4.0f + 6.0f * Random(agent));
+                    else
+                        Begin(agent, ReefHeronBehavior::Freeze, 3.0f);   // alert a while after landing
+                }
             }
             break;
         }
