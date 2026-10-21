@@ -72,6 +72,7 @@
 #include "IslandSimulator/MorningMistField.hpp"
 #include "IslandSimulator/WhalePod.hpp"
 #include "IslandSimulator/SailboatPassage.hpp"
+#include "IslandSimulator/Satellites.hpp"
 #include "IslandSimulator/ShootingStars.hpp"
 #include "IslandSimulator/CrabBubbleField.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
@@ -6901,6 +6902,32 @@ int main()
                 if (!m.visible && started >= 0.0) { shortLived = shortLived && t - started < 0.8; started = -1.0; }
             }
             Check(streaks >= 6 && streaks <= 13 && shortLived && inSky, "about one shooting star a minute, each under a second, high in the sky");
+        }
+        // Satellites: in the twilight hours (the sun 5-20 degrees down) a steady point glides
+        // across the sky now and then, always above the horizon, moving smoothly; none in the
+        // deep night or by day.
+        {
+            int twilightFrames = 0, passes = 0;
+            bool aboveHorizon = true, smooth = true, was = false;
+            float lastX = 0.0f, lastY = 0.0f, lastZ = 0.0f;
+            for (int step = 0; step < 20 * 240; ++step) {   // twenty windows, a second apart
+                const auto pass = island::satellites::At(static_cast<double>(step), -10.0f);
+                if (pass.visible) {
+                    ++twilightFrames;
+                    aboveHorizon = aboveHorizon && pass.y > 0.0f;
+                    if (!was) ++passes;
+                    else smooth = smooth && std::hypot(pass.x - lastX, pass.y - lastY, pass.z - lastZ) < 0.04f;
+                    lastX = pass.x; lastY = pass.y; lastZ = pass.z;
+                }
+                was = pass.visible;
+            }
+            bool deepNight = false, day = false;
+            for (int step = 0; step < 20 * 240; step += 7) {
+                deepNight = deepNight || island::satellites::At(static_cast<double>(step), -30.0f).visible;
+                day = day || island::satellites::At(static_cast<double>(step), 10.0f).visible;
+            }
+            Check(passes >= 6 && passes <= 18 && twilightFrames > 600 && aboveHorizon && smooth && !deepNight && !day,
+                  "satellites glide across the twilight sky now and then, above the horizon, none in the deep night or by day");
         }
         // Whales offshore: a surfacing every 35-85 s, 330-620 m out, its blow standing up
         // several metres and gone within six seconds.

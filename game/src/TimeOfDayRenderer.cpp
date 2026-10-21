@@ -634,6 +634,29 @@ namespace island
                 device_.DrawPrimitives(PrimitiveType::TriangleList, 0, 2);
                 ++drawCalls_;
             }
+            // A satellite gliding across the stars in the hours after dusk and before dawn.
+            const satellites::Pass satellite = satellites::At(seconds, light.sunElevationDegrees);
+            if (satellite.visible && v > 0.25f) {
+                const Vector3 at = Vector3(satellite.x, satellite.y, satellite.z) * StarDistance;
+                Vector3 right = Vector3::Cross(Vector3::Normalize(at), Vector3::Up);
+                if (right.LengthSquared() < 1e-6f) right = Vector3::UnitX;
+                right.Normalize();
+                const Vector3 up = Vector3::Normalize(Vector3::Cross(right, Vector3::Normalize(at)));
+                const float half = StarDistance * std::tan(0.07f * std::numbers::pi_v<float> / 180.0f);
+                const float b = std::clamp(satellite.brightness * v, 0.0f, 1.0f);
+                const auto c = [](float x) { return static_cast<int>(std::lround(std::clamp(x, 0.0f, 1.0f) * 255.0f)); };
+                const Color colour(c(b), c(b * 0.97f), c(b * 0.92f), 255);
+                const std::array<VertexPositionColor, 6> point{
+                    VertexPositionColor(at - right * half - up * half, colour), VertexPositionColor(at + right * half - up * half, colour),
+                    VertexPositionColor(at + right * half + up * half, colour), VertexPositionColor(at - right * half - up * half, colour),
+                    VertexPositionColor(at + right * half + up * half, colour), VertexPositionColor(at - right * half + up * half, colour)};
+                meteor_->SetData(point.data(), 0, static_cast<int>(point.size()), SetDataOptions::Discard);
+                device_.SetVertexBuffer(meteor_.get());
+                skyEffect_->setDiffuseColorProperty(Vector3(1.0f, 1.0f, 1.0f));
+                skyEffect_->Apply();
+                device_.DrawPrimitives(PrimitiveType::TriangleList, 0, 2);
+                ++drawCalls_;
+            }
         }
         // The moon: a disc lit on the side facing the sun, pale by day, with a faint glow at night.
         // It rises and sets through the haze: hidden below half a degree (the distant sea does

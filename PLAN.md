@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 298 (2026-10-21) — satellites in the twilight sky
+
+From a dark island, in the hours after dusk and before dawn, satellites glide across the
+stars: high up they are still in sunlight while the ground is dark, until they pass into the
+Earth's shadow. `satellites::At(seconds, sunElevation)` (header-only, a function of the time
+like the shooting stars): in three windows of four minutes in five, one crosses the sky in
+two minutes on a great circle from one horizon to the other, over a highest point 26-86
+degrees up, fading near the horizon; only while the sun is 5-20 degrees below it. The night
+sky draws it as a steady star-like point after the stars (brightness 0.55-0.9 times the stars'
+visibility). A new core check over twenty windows: 6-18 passes in twilight, always above the
+horizon and moving smoothly, none in the deep night (sun 30 degrees down) or by day. `palms` at
+19:12 and at 23:00 pass, and the tests.
+
 ## Loop pass 297 (2026-10-21) — the dew on the forest's leaves
 
 The dew of pass 296 is now one shared curve, `weather_now::Dew(hour, cloudCover)` (up to 0.5,

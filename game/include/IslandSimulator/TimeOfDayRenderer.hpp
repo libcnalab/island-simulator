@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include "IslandSimulator/ShootingStars.hpp"
+#include "IslandSimulator/Satellites.hpp"
 
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "Microsoft/Xna/Framework/Matrix.hpp"
