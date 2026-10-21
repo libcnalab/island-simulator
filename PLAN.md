@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 426 (2026-10-22) — coconut crabs stand tall on long, fanned legs
+
+At 1:1 in `coconut-crabs` the robber crab was a round blue dome (0.34 wide by 0.29 long) on short legs
+all pointing straight out, a generic beach crab. Its cephalothorax is now longer than wide (0.27 by
+0.36, the armour marks scaled onto it), the tucked abdomen and its plates moved back behind it, the
+walking legs long with the knee carried high (toes out to 1.06, from 0.79) and fanned, the front pairs
+reaching forward and the rear pairs back; the chelipeds, eyes, longer antennae and mouthparts moved
+forward onto the longer front. Vertex budget unchanged (3000).
+
 ## Loop pass 425 (2026-10-22) — full sweep after 397-424; the fish view's camera clears the waves
 
 A full sweep after passes 397-424: all 124 views pass (canopy needs its inspection arguments). At 1:1

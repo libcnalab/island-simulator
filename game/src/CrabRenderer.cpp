@@ -978,10 +978,12 @@ namespace island
             // beach-crab mesh made the animal read as a flat disc with wheel-shaped
             // claws. This deep, closed volume keeps a high shoulder and a visible
             // ventral edge from frontal, lateral and elevated views.
+            // (longer than wide, as a coconut crab's cephalothorax is: a dome wider than
+            // long, on short legs, read as a generic beach crab)
             AppendRoundedCoconutPalm(vertices,
                 centre + forward * (.025f * scale) + up * (.245f * scale),
-                right, up, forward, .340f * scale, .185f * scale,
-                .290f * scale, bodyLight, bodyShade);
+                right, up, forward, .270f * scale, .190f * scale,
+                .360f * scale, bodyLight, bodyShade);
 
             struct ArmourMark { float x; float z; float halfX; float halfZ; };
             constexpr std::array<ArmourMark, 10> ArmourMarks = {{
@@ -994,24 +996,26 @@ namespace island
             for (const ArmourMark& mark : ArmourMarks) {
                 const auto shellPoint = [&](const float x, const float z) {
                     const float dome = std::sqrt(std::max(0.0f, 1.0f
-                        - x * x / (.340f * .340f) - z * z / (.290f * .290f)));
+                        - x * x / (.270f * .270f) - z * z / (.360f * .360f)));
                     return centre + right * (x * scale)
                         + forward * ((z + .025f) * scale)
-                        + up * ((.245f + .185f * dome + .004f) * scale);
+                        + up * ((.245f + .190f * dome + .004f) * scale);
                 };
+                const float mx = mark.x * .80f, mz = mark.z * 1.24f;
+                const float hx = mark.halfX * .80f, hz = mark.halfZ * 1.24f;
                 AddQuad(vertices,
-                        shellPoint(mark.x - mark.halfX, mark.z),
-                        shellPoint(mark.x, mark.z + mark.halfZ),
-                        shellPoint(mark.x + mark.halfX, mark.z),
-                        shellPoint(mark.x, mark.z - mark.halfZ),
+                        shellPoint(mx - hx, mz),
+                        shellPoint(mx, mz + hz),
+                        shellPoint(mx + hx, mz),
+                        shellPoint(mx, mz - hz),
                         Color::Lerp(bodyShade, plate, .22f));
             }
 
             // Coconut crabs have a reduced, tucked abdomen. It remains readable
             // behind the main shield without turning into a second flat shell.
             constexpr int Segments = 12;
-            constexpr std::array<float, 4> Stations = {{-.335f, -.275f, -.205f, -.125f}};
-            constexpr std::array<float, 4> Widths = {{.120f, .190f, .250f, .230f}};
+            constexpr std::array<float, 4> Stations = {{-.420f, -.360f, -.290f, -.210f}};
+            constexpr std::array<float, 4> Widths = {{.110f, .170f, .215f, .200f}};
             constexpr std::array<float, 4> Heights = {{.070f, .105f, .140f, .120f}};
             const auto ringPoint = [&](std::size_t station, int segment) {
                 const float angle = TwoPi * static_cast<float>(segment)
@@ -1040,8 +1044,8 @@ namespace island
 
             // Four fitted dorsal plates articulate the tucked abdomen.
             for (int band = 0; band < 4; ++band) {
-                const float z = -.305f + static_cast<float>(band) * .055f;
-                const float width = .115f + static_cast<float>(band) * .030f;
+                const float z = -.390f + static_cast<float>(band) * .055f;
+                const float width = .100f + static_cast<float>(band) * .026f;
                 const float y = .236f + static_cast<float>(band) * .018f;
                 AddQuad(vertices,
                     LocalPoint(centre, right, up, forward, -width, y, z-.010f, scale),
@@ -1056,20 +1060,23 @@ namespace island
             for (int sideIndex = -1; sideIndex <= 1; sideIndex += 2) {
                 const float side = static_cast<float>(sideIndex);
                 for (int leg = 0; leg < 4; ++leg) {
-                    const float z = -.145f + static_cast<float>(leg) * .112f;
+                    const float z = -.200f + static_cast<float>(leg) * .130f;
                     const float stride = crab.legPhase
                         * (leg % 2 == 0 ? .034f : -.034f);
                     const Vector3 hip = LocalPoint(centre, right, up, forward,
-                        side * .245f, .175f, z, scale);
+                        side * .205f, .175f, z, scale);
+                    // long legs, the knee carried high: a coconut crab stands tall on them
                     const Vector3 knee = LocalPoint(centre, right, up, forward,
-                        side * (.455f + leg * .014f), .195f,
+                        side * (.580f + leg * .020f), .235f,
                         z + stride, scale);
+                    // fanned out: the front pairs reach forward, the rear pairs back
+                    const float fan = static_cast<float>(leg) - 1.5f;
                     const Vector3 ankle = LocalPoint(centre, right, up, forward,
-                        side * (.635f + leg * .012f), .080f,
-                        z + (leg < 2 ? -.038f : .038f) + stride * 1.35f, scale);
+                        side * (.860f + leg * .015f - std::abs(fan) * .050f), .100f,
+                        z + fan * .090f + stride * 1.35f, scale);
                     const Vector3 toe = LocalPoint(centre, right, up, forward,
-                        side * (.790f + leg * .008f), .006f,
-                        z + (leg < 2 ? -.060f : .060f) + stride * 1.65f, scale);
+                        side * (1.060f + leg * .010f - std::abs(fan) * .080f), .006f,
+                        z + fan * .160f + stride * 1.65f, scale);
                     AppendTaperedLimbSegment(vertices, hip, knee,
                         .041f * scale, .034f * scale, limb);
                     AppendTaperedLimbSegment(vertices, knee, ankle,
@@ -1092,13 +1099,13 @@ namespace island
                 const float side = static_cast<float>(sideIndex);
                 const bool major = sideIndex > 0;
                 const Vector3 root = LocalPoint(centre, right, up, forward,
-                    side * .205f, .230f, .180f, scale);
+                    side * .170f, .230f, .260f, scale);
                 const Vector3 elbow = LocalPoint(centre, right, up, forward,
-                    side * .355f, .250f, .315f, scale);
+                    side * .320f, .250f, .400f, scale);
                 const Vector3 wrist = LocalPoint(centre, right, up, forward,
-                    side * .405f, .215f, .430f, scale);
+                    side * .370f, .215f, .510f, scale);
                 const Vector3 palm = LocalPoint(centre, right, up, forward,
-                    side * .410f, .225f, .510f, scale);
+                    side * .375f, .225f, .590f, scale);
                 AppendTaperedLimbSegment(vertices, root, elbow,
                     .050f * scale, .044f * scale, limb);
                 AppendTaperedLimbSegment(vertices, elbow, wrist,
@@ -1136,9 +1143,9 @@ namespace island
             for (int sideIndex = -1; sideIndex <= 1; sideIndex += 2) {
                 const float side = static_cast<float>(sideIndex);
                 const Vector3 eyeRoot = LocalPoint(centre, right, up, forward,
-                    side * .105f, .335f, .210f, scale);
+                    side * .095f, .335f, .280f, scale);
                 const Vector3 eyeCentre = LocalPoint(centre, right, up, forward,
-                    side * .120f, .385f, .300f, scale);
+                    side * .110f, .385f, .370f, scale);
                 AppendCrossedSegment(vertices, eyeRoot, eyeCentre,
                     .013f * scale, plateShade);
                 AppendOctahedron(vertices, eyeCentre, right, up, forward,
@@ -1149,10 +1156,10 @@ namespace island
                     .003f * scale, eyeGlint, eyeGlint);
 
                 const Vector3 antennaMid = LocalPoint(centre, right, up, forward,
-                    side * .115f, .370f, .345f, scale);
+                    side * .105f, .370f, .415f, scale);
                 const Vector3 antennaTip = LocalPoint(centre, right, up, forward,
-                    side * (.180f + .018f * std::sin(crab.legPhase)),
-                    .435f, .490f, scale);
+                    side * (.240f + .018f * std::sin(crab.legPhase)),
+                    .470f, .640f, scale);
                 AppendCrossedSegment(vertices, eyeRoot, antennaMid,
                     .006f * scale, joint);
                 AppendCrossedSegment(vertices, antennaMid, antennaTip,
@@ -1160,7 +1167,7 @@ namespace island
             }
 
             const Vector3 mouthCentre = LocalPoint(centre, right, up, forward,
-                0.0f, .190f, .307f, scale);
+                0.0f, .190f, .377f, scale);
             AddQuad(vertices,
                 mouthCentre - right * (.060f * scale) + up * (.010f * scale),
                 mouthCentre + right * (.060f * scale) + up * (.010f * scale),
