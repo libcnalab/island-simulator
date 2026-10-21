@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 314 (2026-10-21) — the monkeys sleep up in the trees
+
+The deferred item from pass 239: at night the troop rested on the ground, where monkeys never
+sleep. Now after dark each monkey, once a night, makes for a tree it can reach and climbs it
+by the existing excursion (approach, inspection, the preflighted attachment and climb), and at
+the top of its climb, in the four-grip rest, its clock holds (no descent, and the walker
+coming near no longer sends it down) until the dark lifts; then it climbs down as usual. A
+monkey that cannot climb (no tree in reach, or too far from the walker for the full simulation
+that climbing needs) rests where it is as before. `MonkeyTroop::SetNightness` left unset (the
+tests) changes nothing. A new core check runs a troop through nine minutes of night beside the
+walker: four monkeys asleep up their trees after three minutes, still four after nine, none a
+minute and a half into the morning. `monkeys` by day and at 22:00, `monkey-tree`,
+`monkey-climb` and the tests pass.
+
 ## Loop pass 313 (2026-10-21) — the quad splashes through the rain puddles
 
 After rain the terrain shader lays puddles in the flat hollows, but the quad's wheels only knew

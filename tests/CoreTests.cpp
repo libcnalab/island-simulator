@@ -5859,6 +5859,39 @@ int main()
     std::cout << "Monkey attachment 16-pose chunk maximum milliseconds " << attachmentChunkMaxMillis << '\n';
     Check(observedPreparing,"live preparation is exercised across updates instead of blocking on the whole trajectory");
     Check(excursionClear>0,"natural island arrivals include an excursion passing full-cycle clearance probes");
+    {
+        // At night each monkey near the walker makes for a tree and climbs it, and stays up at
+        // the top of its climb, asleep, until morning; then it climbs down.
+        island::MonkeyTroop roosting(terrain);
+        roosting.SetObstacles(worldObstacles);
+        roosting.SetCanopy(jungle.Canopy());
+        roosting.SetNightness(1.0f);
+        float cx = 0.0f, cz = 0.0f;
+        for (const auto& monkey : roosting.Monkeys()) { cx += monkey.x; cz += monkey.z; }
+        cx /= static_cast<float>(roosting.Monkeys().size());
+        cz /= static_cast<float>(roosting.Monkeys().size());
+        const auto restingUp = [&]() {
+            int count = 0;
+            for (const auto& monkey : roosting.Monkeys())
+                if (monkey.treeExcursion && monkey.treeClock.seconds >= island::MonkeyTreeExcursion::AttachSeconds
+                        + island::MonkeyTreeExcursion::TravelSeconds
+                    && monkey.treeClock.seconds < island::MonkeyTreeExcursion::DescendStart) ++count;
+            return count;
+        };
+        int upAtThreeMinutes = 0, upAtNineMinutes = 0;
+        for (int frame = 0; frame < 30 * 540; ++frame) {
+            roosting.Update(1.0f / 30.0f, cx + 12.0f, 4.0f, cz + 9.0f);
+            if (frame == 30 * 180) upAtThreeMinutes = restingUp();
+        }
+        upAtNineMinutes = restingUp();
+        roosting.SetNightness(0.0f);
+        for (int frame = 0; frame < 30 * 90; ++frame) roosting.Update(1.0f / 30.0f, cx + 12.0f, 4.0f, cz + 9.0f);
+        const int upInTheMorning = restingUp();
+        std::cout << "monkeys asleep up their trees: " << upAtThreeMinutes << " after three minutes of night, "
+                  << upAtNineMinutes << " after nine, " << upInTheMorning << " a minute and a half into the morning\n";
+        Check(upAtNineMinutes >= 1 && upAtNineMinutes >= upAtThreeMinutes && upInTheMorning < upAtNineMinutes,
+              "at night monkeys climb a tree and sleep up it until morning, then come down");
+    }
     Check(observedLiveClimb && observedLiveSummit && checkedLiveReturn,
         "ordinary island simulation actually climbs, reaches summit and exercises safe interruption");
     Check(observedMonkeyTreeApproach && observedMonkeyTreeArrival,

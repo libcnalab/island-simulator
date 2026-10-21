@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 314: at night the monkeys climb a tree and sleep up it until morning (PLAN "Loop pass 314"; closes the deferred monkeys-in-trees item).
 - Pass 313: the quad throws spray through the rain puddles (CPU mirror of the shader's puddle mask, `TerrainShaderNoise.hpp`); the headlight-beam haze cones were tried and dropped (PLAN "Loop pass 313").
 - Pass 312: the quad's brake light flares red when braking, by day and night (PLAN "Loop pass 312").
 - Pass 311: the crocodiles' eyes glow red in the quad's beam (PLAN "Loop pass 311").

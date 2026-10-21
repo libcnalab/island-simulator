@@ -460,6 +460,9 @@ namespace island
                              const float observerY, const float observerZ, const float windTime) noexcept
     {
         eatenFruit_.clear();
+        // by day each monkey may make for its sleeping tree again the coming night
+        if (nightness_ >= 0.0f && nightness_ < 0.3f)
+            for (Agent& agent : agents_) agent.nightRoost = false;
         const float safeDelta = std::isfinite(deltaSeconds)
             ? std::clamp(deltaSeconds, 0.0f, 0.1f) : 0.0f;
         windTime_=std::isfinite(windTime)&&windTime>=0 ? windTime : windTime_+safeDelta;
@@ -562,7 +565,13 @@ namespace island
         }
         if (agent.state.treeExcursion) {
             agent.state.animationSeconds+=deltaSeconds;
-            agent.state.treeClock.Advance(deltaSeconds,
+            // After dark a monkey up its tree stays there at the top of its climb, asleep, until
+            // morning (monkeys sleep in the trees, out of a predator's reach).
+            const auto& clock=agent.state.treeClock;
+            const bool roosting=nightness_>0.6f && !clock.returning
+                && clock.seconds>=MonkeyTreeExcursion::AttachSeconds+MonkeyTreeExcursion::TravelSeconds
+                && clock.seconds<MonkeyTreeExcursion::DescendStart;
+            if (!roosting) agent.state.treeClock.Advance(deltaSeconds,
                 std::hypot(agent.state.x-observerX,agent.state.z-observerZ)<7.5f);
             if (agent.state.treeClock.finished) {
                 agent.state.treeExcursion.reset();
@@ -739,8 +748,16 @@ namespace island
             }
         } else if (agent.stateSecondsRemaining <= 0.0f) {
             if (nightness_ > 0.6f) {
-                // after dark the troop rests where it is until morning
-                EnterState(agent, MonkeyBehavior::Idle);
+                // After dark each monkey makes for a tree once to climb it and sleep up there;
+                // one that cannot (no tree in reach, too far from the walker to climb) rests
+                // where it is until morning.
+                if (!agent.nightRoost && ChooseTreeTarget(agent)) {
+                    agent.nightRoost = true;
+                    EnterState(agent, MonkeyBehavior::ApproachTree);
+                } else {
+                    agent.nightRoost = true;
+                    EnterState(agent, MonkeyBehavior::Idle);
+                }
             } else if (agent.state.behavior == MonkeyBehavior::Idle) {
                 EnterState(agent, (agent.decisionCounter % 3U) == 0U
                     ? MonkeyBehavior::Observe : MonkeyBehavior::Wander);

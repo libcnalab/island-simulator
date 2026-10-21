@@ -124,8 +124,9 @@ namespace island
         [[nodiscard]] static bool HomeHasClosedCanopy(
             std::span<const CanopyPlacement> trees, float x, float z) noexcept;
         /** @brief How dark it is (0 by day .. 1 at night): after dark the troop finishes what it
-         *  is doing and settles to rest, no more wandering until morning (a fright still
-         *  sends a monkey running). */
+         *  is doing, each monkey makes once for a tree to climb and sleeps up it until morning
+         *  (one that cannot climb rests where it is), no more wandering until morning (a fright
+         *  still sends a monkey on the ground running). */
         void SetNightness(float nightness) noexcept { nightness_ = std::isfinite(nightness) ? std::clamp(nightness, 0.0f, 1.0f) : 0.0f; }
         void Update(float deltaSeconds, float observerX, float observerY,
                     float observerZ, float windTime = -1.0f) noexcept;
@@ -154,6 +155,7 @@ namespace island
             std::uint32_t decisionCounter = 0U;
             int fruitTarget = -1;   // index of the lying fruit this walk goes to; -1 for none
             bool treeClimbAttempted = false;
+            bool nightRoost = false;   // this night's walk to a tree to sleep in it has been made
             std::shared_ptr<const MonkeyTreeExcursion::Plan> pendingExcursion;
             int preflightStep = 0;
             float scratchClock = 0.0f;
