@@ -5640,6 +5640,26 @@ namespace island
         return walkers;
     }
 
+    std::span<const SpiderState> IslandGame::AwakeSpiders()
+    {
+        // The ground spiders hunt by night: by day three in four keep to their retreats under
+        // the litter, and at dusk all come out (five large spiders crossing an open patch of
+        // floor at noon read as an infestation). The close-ups keep the whole colony. Only those
+        // within forty metres of the camera are drawn or cast shadows, so only they are kept.
+        const auto all = spiders_->Spiders();
+        if (UsesSpiderViewpoint()) return all;
+        const float day = std::clamp((sun_light::Current().lighting.sunElevationDegrees + 2.0f) / 10.0f, 0.0f, 1.0f);
+        awakeSpiders_.clear();
+        for (std::size_t i = 0; i < all.size(); ++i) {
+            const auto& spider = all[i];
+            const float dx = spider.x - renderCameraPosition_.X, dz = spider.z - renderCameraPosition_.Z;
+            if (dx * dx + dz * dz > 40.0f * 40.0f) continue;
+            if (static_cast<float>((i * 61U) % 100U) / 100.0f >= 1.0f - 0.75f * day) continue;
+            awakeSpiders_.push_back(spider);
+        }
+        return std::span<const SpiderState>(awakeSpiders_.data(), awakeSpiders_.size());
+    }
+
     FootstepSurface IslandGame::FootstepGroundUnderPlayer() const noexcept
     {
         if (flightMotion_.IsActive() || IsDebugFreeCameraActive()) return FootstepSurface::None;
@@ -6262,7 +6282,7 @@ namespace island
                 playerShadow = {walker.x, walker.z, true};
             }
             contactShadowRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
-                                         renderedMonkeys, boarHerd_.Boars(),*snakes_,goats_->Goats(),spiders_->Spiders(),
+                                         renderedMonkeys, boarHerd_.Boars(),*snakes_,goats_->Goats(),AwakeSpiders(),
                                          playerShadow);
             residentRenderer_->DrawShadow(cameraView_,cameraProjection_,renderCameraPosition_,resident_->State());
             if (quadRenderer_ && quadPlaced_) {
@@ -6445,7 +6465,7 @@ namespace island
         }
         {
             GpuDiagnosticScope gpuPass("spiders");
-            spiderRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,spiders_->Spiders());
+            spiderRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,AwakeSpiders());
         }
         {
             GpuDiagnosticScope gpuPass("resident");

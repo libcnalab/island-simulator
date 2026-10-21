@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 439 (2026-10-22) — the ground spiders keep to their retreats by day
+
+At 1:1 in `grass` five large black spiders crossed one open patch of forest floor at noon, reading as an
+infestation. The island's wandering ground spiders hunt by night: IslandGame::AwakeSpiders now hands the
+spider renderer and the contact shadows only the spiders out of their retreats near the camera (within
+40 m): by day three in four stay hidden under the litter (a fixed quarter of them out), and from dusk
+(the sun 8 degrees up down to 2 below) all come out. The simulation runs on for all of them; the spider
+close-ups keep the whole colony. `grass` at 14:00 draws 3 spiders, at 22:00 more; `spiders`,
+`spiders-bright` and `ants` pass.
+
 ## Loop pass 438 (2026-10-22) — dragonflies perch through the rain
 
 As the butterflies: the few dragonflies still drawn in a shower (the rest gone to roost) flew on.
