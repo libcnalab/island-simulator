@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 393 (2026-10-21) — the quad's ruts lie on the drawn ground, not the analytic one
+
+The operator's 19:20 session (Radeon 780M) rode the quad bike and its `contact-shadows` render pass
+(which also draws the footprints and the ruts) cost 20-66 ms a frame (10-35 fps) where it had cost
+1.3-2.9: TyreTrackRenderer placed every vertex of every rut piece (up to 480 pieces, 78 vertices
+each within 22 m) at IslandTerrain::Height every frame, the analytic terrain (microseconds: four
+noise octaves, the coast's lobes and the environment fields). A new DrawnOrAnalyticHeight takes
+the drawn mesh's height (RenderedTerrainSurface::Height, ~10 ns, and the surface a mark should lie
+on) wherever the mesh reaches and the analytic terrain beyond it; the ruts use it with the quad's
+existing surface. `quad-drive` ends the same (39 km/h, 100 ruts, 42 dust puffs) with the same ruts,
+its contact-shadow pass 10.4 -> 5.0 ms under llvmpipe. The tests pass.
+
 ## Loop pass 392 (2026-10-21) — the turtle nests are churned pits, and the crawls lie on the drawn sand
 
 The nests were opaque fourteen-sided stains with a hard rim. TurtleTrackRenderer now draws each

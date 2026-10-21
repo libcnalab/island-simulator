@@ -12,6 +12,7 @@
 
 namespace island {
 class IslandTerrain;
+class RenderedTerrainSurface;
 // The quad's tyre tracks: each piece a terrain-conforming rut, darker inside soft edges,
 // with the knobs' staggered prints across it, fading as the ground takes it back;
 // alpha-blended with depth read beside the footprints.
@@ -19,7 +20,10 @@ class TyreTrackRenderer final {
 public:
     static constexpr int KnobsPerSegment=5,VerticesPerSegment=(3*2+KnobsPerSegment*2)*6;
     static constexpr float DrawDistance=42.0f;
-    TyreTrackRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,const IslandTerrain& terrain);
+    // laid on the drawn ground (every vertex of up to 480 pieces, every frame: the analytic
+    // terrain's height there cost 20-66 ms a frame while the quad was ridden)
+    TyreTrackRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,const IslandTerrain& terrain,
+                      const RenderedTerrainSurface& ground);
     void Draw(const Microsoft::Xna::Framework::Matrix& view,
               const Microsoft::Xna::Framework::Matrix& projection,
               const Microsoft::Xna::Framework::Vector3& camera,
@@ -29,6 +33,7 @@ public:
 private:
     Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
     const IslandTerrain& terrain_;
+    const RenderedTerrainSurface& ground_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> vertices_;
     std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> staging_;

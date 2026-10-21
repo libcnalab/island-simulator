@@ -2645,7 +2645,7 @@ namespace island
                 "island-simulator: the quad's exhaust puffs thicker with the throttle, carried with its speed and drifting downwind",
                 112, 112, 118, ExhaustSmokeField::Capacity);
             quadSurface_ = std::make_unique<RenderedTerrainSurface>(terrain_);
-            tyreTrackRenderer_ = std::make_unique<TyreTrackRenderer>(device, terrain_);
+            tyreTrackRenderer_ = std::make_unique<TyreTrackRenderer>(device, terrain_, *quadSurface_);
             wheelDustRenderer_ = std::make_unique<RootingDustRenderer>(device,
                 "island-simulator: the quad's wheels throw dust off dry sand and soil, more with the speed, settling downwind",
                 214, 200, 172, WheelThrowField::Capacity);

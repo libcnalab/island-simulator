@@ -89,6 +89,18 @@ namespace island
                                                 : br + (bl - br) * (1.0 - u) + (tr - br) * (1.0 - v));
     }
 
+    float DrawnOrAnalyticHeight(const RenderedTerrainSurface& surface, const IslandTerrain& terrain,
+                                const float x, const float z)
+    {
+        // The drawn mesh where it reaches (~10 ns, and the surface a mark must lie on), else the
+        // analytic terrain (microseconds: five noise octaves and the coast's lobes).
+        if (std::isfinite(x) && std::isfinite(z)
+            && std::abs(x) <= TerrainMeshLayout::Extent && std::abs(z) <= TerrainMeshLayout::Extent) {
+            return surface.Height(x, z);
+        }
+        return terrain.Height(x, z);
+    }
+
     std::array<float,2> RenderedTerrainSurface::HeightRange(float minX,float minZ,float maxX,float maxZ) const
     {
         (void)Sample(minX,minZ); (void)Sample(maxX,maxZ);

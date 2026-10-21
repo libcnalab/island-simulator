@@ -1,5 +1,6 @@
 #include "IslandSimulator/TyreTrackRenderer.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
+#include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "Microsoft/Xna/Framework/Color.hpp"
 #include "Microsoft/Xna/Framework/Graphics/BlendState.hpp"
@@ -16,8 +17,9 @@ using namespace Microsoft::Xna::Framework;
 using namespace Microsoft::Xna::Framework::Graphics;
 
 namespace island {
-TyreTrackRenderer::TyreTrackRenderer(GraphicsDevice& device,const IslandTerrain& terrain)
-    :device_(device),terrain_(terrain),effect_(std::make_unique<BasicEffect>(device)),
+TyreTrackRenderer::TyreTrackRenderer(GraphicsDevice& device,const IslandTerrain& terrain,
+                                     const RenderedTerrainSurface& ground)
+    :device_(device),terrain_(terrain),ground_(ground),effect_(std::make_unique<BasicEffect>(device)),
      vertices_(std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),
         VerticesPerSegment*static_cast<int>(TyreTrackField::Capacity),BufferUsage::WriteOnly))
 {
@@ -31,7 +33,7 @@ void TyreTrackRenderer::Draw(const Matrix& view,const Matrix& projection,const V
                              const std::span<const TyreTrack> tracks) {
     drawCalls_=0;visible_=0;
     staging_.clear();
-    const auto on=[&](float x,float z){return Vector3(x,terrain_.Height(x,z)+0.013f,z);};
+    const auto on=[&](float x,float z){return Vector3(x,DrawnOrAnalyticHeight(ground_,terrain_,x,z)+0.013f,z);};
     // a quad of four ground points with their alphas (black, premultiplied: it darkens)
     const auto quad=[&](const Vector3& a,const Vector3& b,const Vector3& c,const Vector3& d,int alphaA,int alphaB,int alphaC,int alphaD){
         const Color ca(0,0,0,alphaA),cb(0,0,0,alphaB),cc(0,0,0,alphaC),cd(0,0,0,alphaD);

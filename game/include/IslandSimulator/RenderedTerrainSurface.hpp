@@ -9,6 +9,10 @@
 
 namespace island
 {
+    class RenderedTerrainSurface;
+    [[nodiscard]] float DrawnOrAnalyticHeight(const RenderedTerrainSurface& surface,
+                                              const IslandTerrain& terrain, float x, float z);
+
     struct RenderedTerrainSample
     {
         float height;
