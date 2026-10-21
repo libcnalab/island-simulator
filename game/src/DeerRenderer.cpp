@@ -459,10 +459,13 @@ namespace island
                 const std::array<float,4> upperLegRadii{{upperRootRadius*scale,
                     (hind?.132f:.118f)*scale,.091f*scale,.069f*scale}};
                 LoftTube(out,upperLeg,upperLegRadii,right,coat,transmission,near?9:7);
-                Tube(out, knee, hock, .064f * scale, .052f * scale, dark, transmission,
-                     near ? 9 : 7);
+                // A deer's shanks keep its coat, a little greyer and darker toward the hoof: in
+                // near-black they stood under the body like stained wooden posts.
+                const Color shank = Color::Lerp(coat, Color(92, 76, 60), .42f);
+                Tube(out, knee, hock, .064f * scale, .052f * scale, Color::Lerp(coat, shank, .55f),
+                     transmission, near ? 9 : 7);
                 Tube(out, hock, Vector3(hoofPoint.X, deer.y + .060f * scale + lift, hoofPoint.Z),
-                     .052f * scale, .031f * scale, dark, transmission, near ? 9 : 7);
+                     .052f * scale, .031f * scale, shank, transmission, near ? 9 : 7);
                 const Vector3 groundedHoof(hoofPoint.X, deer.y + .060f * scale + lift, hoofPoint.Z);
                 for(const float toeSide:{-.018f,.018f}) {
                     const Vector3 offset=right*(toeSide*scale);

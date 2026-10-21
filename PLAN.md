@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 365 (2026-10-21) — the deer's shanks keep the coat
+
+Below the knee the deer's legs were 58 % of the way to near-black, so the shanks stood under the
+coat like stained wooden posts with a hard line at the knee. They now keep the coat, a little
+greyer and darker toward the hoof: halfway at the cannon, the full shank tone below the hock.
+(A dune-scarp idea for the steep sand beside the jetty was probed with a mask, found to be a
+plausible 2.4 m scarp with rock above it, and not changed.) `deer`, `deer-bedded` and the tests
+pass.
+
 ## Loop pass 364 (2026-10-21) — the swash's foam lace is irregular, not a chicken-wire net
 
 The foam the waves leave on the beach was one Voronoi net: cells of one size, rims all of one
