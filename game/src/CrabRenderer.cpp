@@ -37,18 +37,18 @@ namespace island
         constexpr float NearLodDistance = 38.0f;
         constexpr float TwoPi = 2.0f * std::numbers::pi_v<float>;
         constexpr int CarapaceSegments = 18;
-        constexpr int NearCrabVertexCount = 1560;
+        constexpr int NearCrabVertexCount = 1872;
         constexpr int FarCrabVertexCount = 12;
         constexpr int MaximumVerticesPerCrab = NearCrabVertexCount;
         constexpr int MaximumBurrowVertices = 1024;
-        constexpr int HermitCrabVertexCount = 2232;
+        constexpr int HermitCrabVertexCount = 2520;
         // Past this a hermit crab is its shell, a few pixels across: a six-sided shell alone
         // (out to the crabs' 92 m every one was built whole, legs, eyes and spiral marks).
         constexpr float HermitDetailDistance = 18.0f;
         constexpr int FarHermitCrabVertexCount = 5 * 6 * 6 + 2 * 6 * 3;
         constexpr int MaximumHermitCrabVertices =
             static_cast<int>(HermitCrabGroup::Count) * HermitCrabVertexCount;
-        constexpr int CoconutCrabVertexCount = 2664;
+        constexpr int CoconutCrabVertexCount = 3000;
         constexpr int MaximumCoconutCrabVertices =
             static_cast<int>(CoconutCrabGroup::Count) * CoconutCrabVertexCount;
         constexpr int MaximumVertexCount = static_cast<int>(CrabColony::CrabCount)
@@ -189,21 +189,26 @@ namespace island
             const Vector3 side = horizontalLength > .0001f
                 ? Vector3(-delta.Z / horizontalLength, 0.0f, delta.X / horizontalLength)
                 : Vector3::Right;
-            const Vector3 aSide = side * startHalfWidth;
-            const Vector3 bSide = side * endHalfWidth;
-            const Vector3 aVertical(0.0f, startHalfWidth * .70f, 0.0f);
-            const Vector3 bVertical(0.0f, endHalfWidth * .70f, 0.0f);
-            const std::array<Vector3, 4> start = {{
-                a + aSide + aVertical, a - aSide + aVertical,
-                a - aSide - aVertical, a + aSide - aVertical,
-            }};
-            const std::array<Vector3, 4> end = {{
-                b + bSide + bVertical, b - bSide + bVertical,
-                b - bSide - bVertical, b + bSide - bVertical,
-            }};
-            for (std::size_t sideIndex = 0; sideIndex < start.size(); ++sideIndex) {
-                const std::size_t next = (sideIndex + 1U) % start.size();
-                AddQuad(vertices, start[sideIndex], end[sideIndex], end[next], start[next], color);
+            // A six-sided elliptical tube (about the old square prism's girth), lit per vertex
+            // from its own round normals: the prism, one flat colour a face, made every leg and
+            // arm a faceted stick.
+            constexpr int Sides = 6;
+            constexpr float Across = 1.10f, Upright = .77f;
+            const auto ring = [&](const Vector3& centre, const float halfWidth, const int index) {
+                const float angle = TwoPi * static_cast<float>(index) / static_cast<float>(Sides);
+                const float c = std::cos(angle), s = std::sin(angle);
+                const Vector3 normal = Vector3::Normalize(side * (c / Across) + Vector3::Up * (s / Upright));
+                const float direct = std::max(0.0f, Vector3::Dot(normal, wildlife_render::FixedSunDirection));
+                return VertexPositionColor(
+                    centre + side * (c * Across * halfWidth) + Vector3::Up * (s * Upright * halfWidth),
+                    wildlife_render::ScaleColor(color, .72f + .30f * direct + .06f * std::max(0.0f, normal.Y)));
+            };
+            for (int index = 0; index < Sides; ++index) {
+                const VertexPositionColor a0 = ring(a, startHalfWidth, index);
+                const VertexPositionColor a1 = ring(a, startHalfWidth, index + 1);
+                const VertexPositionColor b0 = ring(b, endHalfWidth, index);
+                const VertexPositionColor b1 = ring(b, endHalfWidth, index + 1);
+                vertices.insert(vertices.end(), {a0, b0, b1, a0, b1, a1});
             }
         }
 

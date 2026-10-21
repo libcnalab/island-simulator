@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 386 (2026-10-21) — crab legs are round, smoothly lit tubes
+
+Every crab's legs, arms and eye stalks (the shore crabs, the hermit crabs, the coconut crabs) were
+square prisms, each face one flat colour (FacetColor, two-sided), so the limbs read as faceted
+sticks at any distance. AppendTaperedLimbSegment now builds a six-sided elliptical tube of about
+the prism's girth (1.10 by 0.77 of the half-width, across and upright as before) lit per vertex,
+one-sided, from its own round normals with FacetColor's brightness terms. The budgets grow by
+twelve vertices a segment: shore crab 1,872, hermit crab 2,520, coconut crab 3,000. `hermit-crabs`
+(1:1), `crabs` and `coconut-crabs` show the rounded limbs; the claws' palms and fingers are still
+faceted. The tests pass.
+
 ## Loop pass 385 (2026-10-21) — the hermit crab's shell is round and lit from its own curve
 
 The hermit crab's shell (`hermit-crabs`) read as a cut cone: twelve flat facets round each whorl,
