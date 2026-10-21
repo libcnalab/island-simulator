@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 388 (2026-10-21) — crab claws are flattened, elongated palms, not drums
+
+The rounded crab palm was two rings at +-0.45 of its height with a cone above and below: a drum
+with lids, which a claw on a shore crab showed from above as a round cap on a stalk (and the
+hermit crab's claws, body and head as squat pucks). It is now three rings of the inscribed
+ellipsoid (+-0.6 and the equator), its upper half in the top colour and the lower in the side
+colour, still lit per vertex from the ellipsoid's normals. The shore crab's palm is also shaped
+like a crab's: flattened side to side, taller than wide and long along the arm (0.062 x 0.085 x
+0.140 of its scale, from 0.105 x 0.075 x 0.110). Budgets: shore crab 2,112, hermit crab 3,120.
+`crabs` (3x zoom) and `hermit-crabs` show rounded claws; the tests pass.
+
 ## Loop pass 387 (2026-10-21) — crab claws, bodies and joints shade round
 
 After the legs (pass 386) the crabs' remaining facets were the rounded palms (the hermit crab's

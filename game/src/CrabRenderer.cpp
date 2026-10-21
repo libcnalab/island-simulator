@@ -37,11 +37,11 @@ namespace island
         constexpr float NearLodDistance = 38.0f;
         constexpr float TwoPi = 2.0f * std::numbers::pi_v<float>;
         constexpr int CarapaceSegments = 18;
-        constexpr int NearCrabVertexCount = 1968;
+        constexpr int NearCrabVertexCount = 2112;
         constexpr int FarCrabVertexCount = 12;
         constexpr int MaximumVerticesPerCrab = NearCrabVertexCount;
         constexpr int MaximumBurrowVertices = 1024;
-        constexpr int HermitCrabVertexCount = 2760;
+        constexpr int HermitCrabVertexCount = 3120;
         // Past this a hermit crab is its shell, a few pixels across: a six-sided shell alone
         // (out to the crabs' 92 m every one was built whole, legs, eyes and spiral marks).
         constexpr float HermitDetailDistance = 18.0f;
@@ -297,12 +297,15 @@ namespace island
             constexpr int Segments = 12;
             const Vector3 top = centre + up * halfY;
             const Vector3 bottom = centre - up * halfY;
-            const auto ringPoint = [&](const float height, const int segment) {
+            // Three rings of the inscribed ellipsoid (two, at +-0.45, made a drum with conical
+            // lids: a claw read as a round cap on a stalk).
+            constexpr std::array<std::array<float, 2>, 3> Rings{{{.6f, .8f}, {0.0f, 1.0f}, {-.6f, .8f}}};
+            const auto ringPoint = [&](const std::size_t ring, const int segment) {
                 const float angle = TwoPi * static_cast<float>(segment)
                     / static_cast<float>(Segments);
-                return centre + right * (std::cos(angle) * halfX * .89f)
-                    + forward * (std::sin(angle) * halfZ * .89f)
-                    + up * (height * halfY);
+                return centre + right * (std::cos(angle) * halfX * Rings[ring][1])
+                    + forward * (std::sin(angle) * halfZ * Rings[ring][1])
+                    + up * (Rings[ring][0] * halfY);
             };
             // Lit per vertex from the ellipsoid's own normals (one-sided), not one flat colour a
             // facet: the claw's palm and the body read rounded.
@@ -314,15 +317,17 @@ namespace island
                     + forward * (Vector3::Dot(d, forward) / (halfZ * halfZ)));
                 return SmoothLit(point, normal, base);
             };
+            // the upper half in the top colour, the lower in the side colour
             for (int segment = 0; segment < Segments; ++segment) {
                 const int next = (segment + 1) % Segments;
-                const Vector3 upper = ringPoint(.45f, segment);
-                const Vector3 upperNext = ringPoint(.45f, next);
-                const Vector3 lower = ringPoint(-.45f, segment);
-                const Vector3 lowerNext = ringPoint(-.45f, next);
+                const Vector3 upper = ringPoint(0U, segment), upperNext = ringPoint(0U, next);
+                const Vector3 middle = ringPoint(1U, segment), middleNext = ringPoint(1U, next);
+                const Vector3 lower = ringPoint(2U, segment), lowerNext = ringPoint(2U, next);
                 vertices.insert(vertices.end(), {lit(top, topColor), lit(upperNext, topColor), lit(upper, topColor),
-                    lit(upper, sideColor), lit(upperNext, sideColor), lit(lowerNext, sideColor),
-                    lit(upper, sideColor), lit(lowerNext, sideColor), lit(lower, sideColor),
+                    lit(upper, topColor), lit(upperNext, topColor), lit(middleNext, topColor),
+                    lit(upper, topColor), lit(middleNext, topColor), lit(middle, topColor),
+                    lit(middle, sideColor), lit(middleNext, sideColor), lit(lowerNext, sideColor),
+                    lit(middle, sideColor), lit(lowerNext, sideColor), lit(lower, sideColor),
                     lit(bottom, sideColor), lit(lower, sideColor), lit(lowerNext, sideColor)});
             }
         }
@@ -806,9 +811,11 @@ namespace island
                         (side > 0.0f ? .140f : .122f) * scale,
                         palette.claw, palette.shellSide);
                 } else {
+                    // A crab's palm is flattened side to side, taller than wide and long along
+                    // the arm; the old squat lozenge read from above as a round cap on a stalk.
                     AppendRoundedCrabPalm(vertices, palm, right, up, forward,
-                                          .105f * scale, .075f * scale,
-                                          .110f * scale, palette.claw,
+                                          .062f * scale, .085f * scale,
+                                          .140f * scale, palette.claw,
                                           palette.shellSide);
                 }
                 const Vector3 outerTip = LocalPoint(
