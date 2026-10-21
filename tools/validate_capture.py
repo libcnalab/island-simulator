@@ -42,7 +42,7 @@ def profile_for_viewpoint(viewpoint: str, hour: float | None = None) -> str:
         return "night-scene"
     if viewpoint == "litter":
         return "shaded-detail"
-    if viewpoint == "cave-back":
+    if viewpoint in ("cave-back", "quad-cave"):   # quad-cave: the quad driven into the cave, reviewed 2026-10-21
         return "dark-cave-detail"
     if viewpoint in UNDERWATER_VIEWPOINTS:
         return "underwater-scene"

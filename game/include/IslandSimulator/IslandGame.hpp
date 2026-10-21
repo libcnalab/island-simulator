@@ -274,6 +274,8 @@ namespace island
         QuadRideDetail,
         QuadChaseDetail,
         QuadDriveDetail,
+        QuadBunkerDetail,
+        QuadCaveDetail,
         CrabDetail,
         HermitCrabDetail,
         CoconutCrabDetail,
@@ -624,6 +626,20 @@ namespace island
         struct QuadSurfaceMemo { std::int32_t cellX = INT32_MIN, cellZ = INT32_MIN; TerrainSurface surface{}; };
         mutable std::array<QuadSurfaceMemo, 1024> quadSurfaceMemo_{};
         [[nodiscard]] bool QuadObstacle(float x, float z, float radius, float& pushX, float& pushZ) const noexcept;
+        // Where the quad is: in the cave or the bunker their floors are its ground and their
+        // rock, walls and roof its obstacles (the terrain heightfield runs on through the hill
+        // above them, so it had driven on as if neither were there).
+        enum class QuadSite : std::uint8_t { Open, Cave, Bunker };
+        QuadSite quadSite_ = QuadSite::Open;
+        // the driven quad views: up the beach path, and into the bunker and the cave
+        [[nodiscard]] bool QuadDriveView() const noexcept {
+            return viewpoint_ == FixedViewpoint::QuadDriveDetail || viewpoint_ == FixedViewpoint::QuadBunkerDetail
+                || viewpoint_ == FixedViewpoint::QuadCaveDetail;
+        }
+        float quadSiteFloorY_ = 0.0f;
+        void UpdateQuadSite();
+        [[nodiscard]] bool QuadWallBlocked(float x, float z) const noexcept;
+        [[nodiscard]] bool QuadOnShelterFloor(float x, float z) const noexcept;
         void PlaceQuadNear(float x, float z, float yawRadians);
         [[nodiscard]] float QuadLampNightness() const noexcept;
         [[nodiscard]] bool TouchRideOffered() const noexcept;   // the touch action buttons shown

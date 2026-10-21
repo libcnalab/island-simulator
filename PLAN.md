@@ -233,6 +233,30 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 400 (2026-10-21) — the quad bike drives into the cave and the bunker for real
+
+The operator: the quad could be driven "into" the bunker and the cave, but it ran on as if neither
+were there, over the terrain heightfield of the hill above them. The walker has their floors and
+walls (PlayerMotion: the cave's excavated ground patch, the bunker's floor plan, capsule sweeps);
+the quad had only the heightfield and circular obstacles. Now:
+- IslandGame::UpdateQuadSite places the quad, before each physics step, in the open, the cave
+  (inside its ground patch) or the bunker (in its floor plan within 1.15 m of the floor, so the
+  ridge above the rooms stays ordinary ground).
+- QuadGround takes the bunker's ramp and rooms from the floor plan past the portal plane (behind it
+  the hillside: the plan's gentler apron lifted the rear wheels and the quad nosed over the ramp),
+  and the cave's patch, with the floor under the quad for hull points reaching into the rock.
+- QuadObstacle keeps the quad out of the cave's rock (a 0.95 m by 1.9 m capsule) and the bunker's
+  walls (its footprint's corners and side middles must lie in the plan's walkable rooms past the
+  portal: the walker's 0.3 m capsule test let no wider body through the portal plane), moving it
+  to the nearest free place most against its motion.
+- On those floors the wheels leave no ruts, dust or spray; the chase camera stays in the bunker's
+  rooms under the roof instead of climbing over the ridge's terrain.
+New QA views `quad-bunker` and `quad-cave` drive in at full throttle from six metres before the
+portal and the mouth: the quad goes down the bunker's ramp to 8.2 m deep and 7 m into the cave at
+38 km/h, on the floors, clear of the walls (`quad-cave` takes the reviewed dark-cave validation
+profile, as `cave-back` does). `quad-drive` ends as before (39 km/h, 100 ruts, 42 dust puffs). The
+tests pass.
+
 ## Loop pass 399 (2026-10-21) — the monkeys' forearms and shanks are slimmer
 
 Close up (`monkeys`, now deterministic) the monkey's limbs read as balloons: past the shoulder

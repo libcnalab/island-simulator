@@ -224,6 +224,8 @@ namespace island
             case FixedViewpoint::QuadRideDetail: return "quad-ride";
             case FixedViewpoint::QuadChaseDetail: return "quad-chase";
             case FixedViewpoint::QuadDriveDetail: return "quad-drive";
+            case FixedViewpoint::QuadBunkerDetail: return "quad-bunker";
+            case FixedViewpoint::QuadCaveDetail: return "quad-cave";
             case FixedViewpoint::CrabDetail: return "crabs";
             case FixedViewpoint::HermitCrabDetail: return "hermit-crabs";
             case FixedViewpoint::CoconutCrabDetail: return "coconut-crabs";
@@ -2207,7 +2209,7 @@ namespace island
         const bool interactivePlay = viewpoint_ == FixedViewpoint::None && capturePath_.empty()
             && !smokeTest_ && startupReportPath_.empty();
         // Capture-only clock: no wall-time catch-up updates between recorded frames.
-        setIsFixedTimeStepProperty(!interactivePlay && benchmarkPath_.empty() && !UsesSnakeCaptureClock() && !UsesGoatCaptureClock() && !UsesSpiderCaptureClock() && !UsesBoarCaptureClock()&&!UsesCampfireCaptureClock()&&!UsesResidentCaptureClock()&&!UsesBearCaptureClock()&&!UsesMonkeyCaptureClock()&&!(viewpoint_==FixedViewpoint::QuadDriveDetail&&!capturePath_.empty()));
+        setIsFixedTimeStepProperty(!interactivePlay && benchmarkPath_.empty() && !UsesSnakeCaptureClock() && !UsesGoatCaptureClock() && !UsesSpiderCaptureClock() && !UsesBoarCaptureClock()&&!UsesCampfireCaptureClock()&&!UsesResidentCaptureClock()&&!UsesBearCaptureClock()&&!UsesMonkeyCaptureClock()&&!(QuadDriveView()&&!capturePath_.empty()));
         InitializeUserSettings();
 #if defined(__EMSCRIPTEN__)
         soundscapeNeedsGesture_ = true;
@@ -2674,17 +2676,25 @@ namespace island
                 }
             }
             if (!quadPlaced_) PlaceQuadNear(cameraPosition_.X + 3.0f, cameraPosition_.Z, 0.0f);
-            if (viewpoint_ == FixedViewpoint::QuadDriveDetail) {
+            if (QuadDriveView()) {
                 // Driven: set off up the beach path at a run before the capture (on a fixed
-                // clock), the chase camera following, to show its ruts and its dust.
-                {
+                // clock), the chase camera following, to show its ruts and its dust; or in from
+                // six metres before the bunker's portal or the cave's mouth, on their floors.
+                if (viewpoint_ == FixedViewpoint::QuadBunkerDetail) {
+                    const auto from = bunkerLayout_.World(0.0f, 0.0f, -6.0f), to = bunkerLayout_.World(0.0f, 0.0f, 0.0f);
+                    PlaceQuadNear(from.x, from.z, std::atan2(to.x - from.x, to.z - from.z));
+                } else if (viewpoint_ == FixedViewpoint::QuadCaveDetail) {
+                    const auto from = terrainRenderer_->Cave().World(0.0f, 0.0f, -6.0f);
+                    const auto to = terrainRenderer_->Cave().World(0.0f, 0.0f, 0.0f);
+                    PlaceQuadNear(from.x, from.z, std::atan2(to.x - from.x, to.z - from.z));
+                } else {
                     // up the beach path from the south shore, which runs clear of the trees
                     constexpr float startZ = -222.0f;
                     const float x0 = VegetationLayout::PrimaryPathCenterX(startZ), x1 = VegetationLayout::PrimaryPathCenterX(startZ + 6.0f);
                     PlaceQuadNear(x0, startZ, std::atan2(x1 - x0, 6.0f));
                 }
                 riding_ = true;
-                quadControls_ = {0.8f, 0.0f, false};
+                quadControls_ = {viewpoint_ == FixedViewpoint::QuadDriveDetail ? 0.8f : 1.0f, 0.0f, false};
                 quadCameraYaw_ = quad_.YawRadians();
                 const auto start = quad_.Position();
                 quadCamera_ = Vector3(start.x - std::sin(quadCameraYaw_) * 4.8f, start.y + 1.9f, start.z - std::cos(quadCameraYaw_) * 4.8f);
@@ -3264,7 +3274,7 @@ namespace island
             MirrorRuntimeDiagnosticToPlatformLog("island-simulator: snake QA update resumed after first draw");
         }
         if(snakeCaptureClock) ++snakeCaptureUpdates_;
-        const bool quadDriveClock = viewpoint_ == FixedViewpoint::QuadDriveDetail && !capturePath_.empty();
+        const bool quadDriveClock = QuadDriveView() && !capturePath_.empty();
         const float deltaSeconds = canopyLodInspection_ ? 0.0f : (snakeCaptureClock||goatCaptureClock||spiderCaptureClock||boarCaptureClock||campfireCaptureClock||residentCaptureClock||bearCaptureClock||monkeyCaptureClock||quadDriveClock) ? 0.1f : std::min(
             0.1f, static_cast<float>(gameTime.getElapsedGameTimeProperty().getTotalMillisecondsProperty())
                 / 1000.0f);
@@ -3410,7 +3420,7 @@ namespace island
             fireflies_->Update(deltaSeconds, 1.0f - std::clamp((light.sunElevationDegrees + 4.0f) / 12.0f, 0.0f, 1.0f),
                                weather_now::Current().rain);
         }
-        if (viewpoint_ == FixedViewpoint::QuadDriveDetail) UpdateQuadChaseCamera(deltaSeconds);
+        if (QuadDriveView()) UpdateQuadChaseCamera(deltaSeconds);
         const bool waterViewAllowed = viewpoint_ == FixedViewpoint::None
             || viewpoint_ == FixedViewpoint::WaterlineDetail
             || viewpoint_ == FixedViewpoint::CurrentBoundaryDetail
@@ -4376,9 +4386,94 @@ namespace island
         reset();
     }
 
+    void IslandGame::UpdateQuadSite()
+    {
+        const BikeVec p = quad_.Position();
+        float floor = 0.0f;
+        // The wheels touch about 0.6 m below the body's origin; the bunker's floor plan answers
+        // only within 1.15 m of that, so the ridge over its rooms stays ordinary ground.
+        if (bunkerLayout_.SupportHeight(p.x, p.z, p.y - 0.6f, floor)) {
+            quadSite_ = QuadSite::Bunker;
+            quadSiteFloorY_ = floor;
+        } else if (terrainRenderer_ && terrainRenderer_->CaveGround().Contains(p.x, p.z)) {
+            quadSite_ = QuadSite::Cave;
+            quadSiteFloorY_ = terrainRenderer_->CaveGround().SampleHeight(p.x, p.z);
+        } else {
+            quadSite_ = QuadSite::Open;
+        }
+    }
+
+    bool IslandGame::QuadOnShelterFloor(const float x, const float z) const noexcept
+    {
+        return quadSite_ != QuadSite::Open
+            || (terrainRenderer_ && terrainRenderer_->CaveGround().Contains(x, z));
+    }
+
+    bool IslandGame::QuadWallBlocked(const float x, const float z) const noexcept
+    {
+        // The bunker: the quad's footprint (its corners and the middles of its sides, as it is
+        // heading) must lie in the floor plan's walkable rooms once past the portal plane. Its
+        // capsule test is the walker's (0.3 m round): a capsule as wide as the quad never fit
+        // through the portal, its tail still outside the plan while its middle was in.
+        const BunkerPoint centre = bunkerLayout_.Local({x, 0.0f, z});
+        const float floorHere = bunkerLayout_.EntranceGroundY() + bunkerLayout_.FloorRelative(centre.z);
+        if (centre.z > -2.5f && centre.z < 37.5f && std::abs(centre.x) < 12.0f
+            && std::abs(quad_.Position().y - 0.6f - floorHere) < 1.15f) {
+            const BikeVec forward = quad_.Forward();
+            const float length = std::hypot(forward.x, forward.z);
+            const float fx = length > 1e-4f ? forward.x / length : 0.0f, fz = length > 1e-4f ? forward.z / length : 1.0f;
+            for (const float along : {-1.0f, 0.0f, 1.0f}) {
+                for (const float across : {-0.62f, 0.0f, 0.62f}) {
+                    if (along == 0.0f && across == 0.0f) continue;
+                    const float px = x + fx * along + fz * across, pz = z + fz * along - fx * across;
+                    if (bunkerLayout_.Local({px, 0.0f, pz}).z < -0.35f) continue;   // still outside
+                    if (!bunkerLayout_.ContainsWalkable(px, pz, 0.0f)) return true;
+                }
+            }
+        }
+        // The cave's rock (an arched shell five metres wide): the quad and its rider as one
+        // upright capsule, 0.95 m round and 1.9 m tall.
+        constexpr float Radius = 0.95f, Height = 1.9f;
+        const float feet = QuadGround(x, z).height + 0.03f;
+        return terrainRenderer_ && terrainRenderer_->Cave().IntersectsCapsule({x, feet, z}, Radius, Height);
+    }
+
     BikeGround IslandGame::QuadGround(const float x, const float z) const noexcept
     {
         BikeGround ground;
+        // In the bunker its ramp and rooms are the ground, from its floor plan, and in the cave
+        // its excavated floor (beyond which, while inside, the floor under the quad goes on
+        // under the hull's points that reach into the rock).
+        // (Behind the portal plane the hillside is still the ground: the plan's gentler apron
+        // there lifted the rear wheels as the front went in, and the quad nosed over the ramp.)
+        if (quadSite_ == QuadSite::Bunker
+            && bunkerLayout_.Local({x, bunkerLayout_.EntranceGroundY(), z}).z >= -0.35f) {
+            const auto floorAt = [this](const float px, const float pz) {
+                const auto local = bunkerLayout_.Local({px, bunkerLayout_.EntranceGroundY(), pz});
+                return bunkerLayout_.EntranceGroundY() + bunkerLayout_.FloorRelative(local.z);
+            };
+            ground.height = floorAt(x, z);
+            const float slopeX = (floorAt(x + 0.25f, z) - floorAt(x - 0.25f, z)) / 0.5f;
+            const float slopeZ = (floorAt(x, z + 0.25f) - floorAt(x, z - 0.25f)) / 0.5f;
+            const float length = std::sqrt(slopeX * slopeX + 1.0f + slopeZ * slopeZ);
+            ground.normal = {-slopeX / length, 1.0f / length, -slopeZ / length};
+            return ground;
+        }
+        if (terrainRenderer_ && (quadSite_ == QuadSite::Cave || terrainRenderer_->CaveGround().Contains(x, z))) {
+            const CaveGroundPatch& cave = terrainRenderer_->CaveGround();
+            const auto heightAt = [&](const float px, const float pz) {
+                if (cave.Contains(px, pz)) return cave.SampleHeight(px, pz);
+                if (quadSite_ == QuadSite::Cave) return quadSiteFloorY_;
+                return DrawnOrAnalyticHeight(*drawnGround_, terrain_, px, pz);
+            };
+            ground.height = heightAt(x, z);
+            const float slopeX = (heightAt(x + 0.25f, z) - heightAt(x - 0.25f, z)) / 0.5f;
+            const float slopeZ = (heightAt(x, z + 0.25f) - heightAt(x, z - 0.25f)) / 0.5f;
+            const float length = std::sqrt(slopeX * slopeX + 1.0f + slopeZ * slopeZ);
+            ground.normal = {-slopeX / length, 1.0f / length, -slopeZ / length};
+            ground.grip = 1.1f;   // packed earth and grit
+            return ground;
+        }
         const float extent = TerrainMeshLayout::Extent - 1.0f;
         if (quadSurface_ && std::isfinite(x) && std::isfinite(z) && std::abs(x) < extent && std::abs(z) < extent) {
             const auto sample = quadSurface_->Sample(x, z);
@@ -4421,6 +4516,29 @@ namespace island
     {
         pushX = pushZ = 0.0f;
         bool hit = false;
+        // The cave's rock and the bunker's walls and roof are not circles: the quad is moved to
+        // the nearest place where it clears them (searched only while it touches one).
+        if (QuadWallBlocked(x, z)) {
+            // of the free places at the smallest step, the one most against the way it moves
+            const BikeVec velocity = quad_.Velocity();
+            const float speed = std::hypot(velocity.x, velocity.z);
+            for (const float step : {0.06f, 0.15f, 0.3f, 0.55f}) {
+                float best = 2.0f, bestX = 0.0f, bestZ = 0.0f;
+                for (int k = 0; k < 12; ++k) {
+                    const float angle = static_cast<float>(k) * (2.0f * std::numbers::pi_v<float> / 12.0f);
+                    const float dx = std::cos(angle), dz = std::sin(angle);
+                    if (QuadWallBlocked(x + dx * step, z + dz * step)) continue;
+                    const float along = speed > 0.05f ? (dx * velocity.x + dz * velocity.z) / speed : 0.0f;
+                    if (along < best) { best = along; bestX = dx * step; bestZ = dz * step; }
+                }
+                if (best < 1.5f) {
+                    pushX += bestX;
+                    pushZ += bestZ;
+                    break;
+                }
+            }
+            hit = true;
+        }
         for (const auto& obstacle : worldCollisionGrid_.Obstacles()) {
             const float dx = x - obstacle.x, dz = z - obstacle.z;
             const float reach = radius + obstacle.radius;
@@ -4492,6 +4610,7 @@ namespace island
 
     void IslandGame::PlaceQuadNear(const float x, const float z, const float yawRadians)
     {
+        quadSite_ = QuadSite::Open;   // placed anew, it is not where it was
         quad_.Place({x, 0.0f, z}, yawRadians, [this](float px, float pz) { return QuadGround(px, pz); });
         quadPlaced_ = true;
         quadRestSeconds_ = 0.0f;
@@ -4566,7 +4685,10 @@ namespace island
         }
         const bool asleep = quadRestSeconds_ > 1.0f;
         updateProfile_.Mark(asleep ? "quad (asleep)" : "quad physics");
-        if (!asleep) quad_.Step(deltaSeconds, controls, ground, obstacles);
+        if (!asleep) {
+            UpdateQuadSite();
+            quad_.Step(deltaSeconds, controls, ground, obstacles);
+        }
         updateProfile_.Mark("quad wheels");
         // What the wheels leave and throw: ruts in sand and soil, dust off dry ground, spray in
         // the shallows.
@@ -4578,6 +4700,17 @@ namespace island
             WheelOnGround& wheel = wheels[static_cast<std::size_t>(w)];
             wheel.x = hub.x - up.x * QuadBike::WheelRadius;
             wheel.z = hub.z - up.z * QuadBike::WheelRadius;
+            if (QuadOnShelterFloor(wheel.x, wheel.z)) {
+                // on the cave's or the bunker's floor: no ruts, dust or spray (the heightfield's
+                // soil is up on the hill above)
+                wheel.y = QuadGround(wheel.x, wheel.z).height;
+                wheel.width = w < 2 ? 0.20f : 0.245f;
+                wheel.load = quad_.Compression(w);
+                wheel.down = quad_.WheelContact(w);
+                wheel.waterDepth = 0.0f;
+                wheel.wet = wheel.soft = wheel.dusty = false;
+                continue;
+            }
             const auto sample = terrain_.Sample(wheel.x, wheel.z);
             wheel.y = sample.height;
             wheel.width = w < 2 ? 0.20f : 0.245f;
@@ -4687,7 +4820,24 @@ namespace island
         const float targetYaw = quad_.YawRadians() + quadOrbit_;
         quadCameraYaw_ += std::remainder(targetYaw - quadCameraYaw_, 6.2831853f) * (1.0f - std::exp(-deltaSeconds * 6.0f));
         Vector3 desired(p.x - std::sin(quadCameraYaw_) * 4.8f, p.y + 1.9f, p.z - std::cos(quadCameraYaw_) * 4.8f);
-        desired.Y = std::max(desired.Y, terrain_.Height(desired.X, desired.Z) + 0.6f);
+        const auto insideBunker = [this](const Vector3& at) {
+            return bunkerLayout_.Local({at.X, at.Y, at.Z}).z >= -0.35f;
+        };
+        if (quadSite_ == QuadSite::Bunker && insideBunker(desired)) {
+            // In the bunker the camera stays in its rooms, under the roof (the ridge's terrain
+            // above them had lifted it out onto the grass): drawn in behind the quad until it
+            // stands in the plan, between the floor and the ceiling.
+            for (float back = 4.8f; back > 0.9f && !bunkerLayout_.ContainsWalkable(desired.X, desired.Z, 0.3f); back -= 0.3f) {
+                desired.X = p.x - std::sin(quadCameraYaw_) * back;
+                desired.Z = p.z - std::cos(quadCameraYaw_) * back;
+            }
+            const float depth = bunkerLayout_.Local({desired.X, desired.Y, desired.Z}).z;
+            const float floor = bunkerLayout_.EntranceGroundY() + bunkerLayout_.FloorRelative(depth);
+            const float ceiling = floor + (depth < 10.0f ? 2.75f : 3.05f);   // the ramp's and the rooms' roofs
+            desired.Y = std::clamp(desired.Y, floor + 0.6f, ceiling - 0.35f);
+        } else {
+            desired.Y = std::max(desired.Y, terrain_.Height(desired.X, desired.Z) + 0.6f);
+        }
         quadCamera_ = Vector3::Lerp(quadCamera_, desired, 1.0f - std::exp(-deltaSeconds * 9.0f));
         cameraPosition_ = quadCamera_;
         const Vector3 look(p.x - quadCamera_.X, p.y + 0.7f - quadCamera_.Y, p.z - quadCamera_.Z);
@@ -7342,7 +7492,7 @@ namespace island
                 <<" frames="<<drawnFrames_<<" time="<<timeSeconds
                 <<" draws="<<streamWaterRenderer_->DrawCallCount()<<" triangles=6080\n";
         }
-        const std::uint32_t targetFrames = goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture ? 64U : snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||viewpoint_==FixedViewpoint::QuadDriveDetail ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
+        const std::uint32_t targetFrames = goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture ? 64U : snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
                 && (viewpoint_ == FixedViewpoint::MonkeyDetail || viewpoint_ == FixedViewpoint::MonkeyTreeDetail || viewpoint_ == FixedViewpoint::MonkeyClimbDetail)
             ? MonkeyCaptureFrames : SmokeTestFrames;
         if (!capturePath_.empty() && drawnFrames_ == targetFrames) {
@@ -7361,8 +7511,17 @@ namespace island
                 GpuDiagnosticScope gpuPass("capture-readback");
                 CaptureFrame(capturePath_);
             }
-            if (viewpoint_ == FixedViewpoint::QuadDriveDetail) {
+            if (QuadDriveView()) {
                 const auto q = quad_.Position();
+                if (viewpoint_ != FixedViewpoint::QuadDriveDetail) {
+                    const bool bunker = viewpoint_ == FixedViewpoint::QuadBunkerDetail;
+                    const float depth = bunker ? bunkerLayout_.Local({q.x, q.y, q.z}).z
+                                               : terrainRenderer_->Cave().Local({q.x, q.y, q.z}).z;
+                    std::cout << "island-simulator: quad QA shelter: " << (bunker ? "bunker" : "cave")
+                              << ", site " << (quadSite_ == QuadSite::Bunker ? "bunker" : quadSite_ == QuadSite::Cave ? "cave" : "open")
+                              << ", depth " << depth << " m, floor " << QuadGround(q.x, q.z).height
+                              << ", body " << q.y << ", walls " << (QuadWallBlocked(q.x, q.z) ? "touching" : "clear") << '\n';
+                }
                 std::cout << "island-simulator: quad QA drive: " << static_cast<int>(std::lround(quad_.Speed() * 3.6f))
                           << " km/h at (" << static_cast<int>(q.x) << ", " << static_cast<int>(q.z) << "), "
                           << tyreTracks_.LaidCount() << " rut pieces laid, " << wheelDust_.Emitted() << " dust puffs, "

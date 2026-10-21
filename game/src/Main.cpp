@@ -113,6 +113,8 @@ namespace
         case FixedViewpoint::QuadRideDetail: return "quad-ride";
         case FixedViewpoint::QuadChaseDetail: return "quad-chase";
         case FixedViewpoint::QuadDriveDetail: return "quad-drive";
+        case FixedViewpoint::QuadBunkerDetail: return "quad-bunker";
+        case FixedViewpoint::QuadCaveDetail: return "quad-cave";
         case FixedViewpoint::CrabDetail: return "crabs";
         case FixedViewpoint::HermitCrabDetail: return "hermit-crabs";
         case FixedViewpoint::CoconutCrabDetail: return "coconut-crabs";
@@ -382,6 +384,10 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::QuadChaseDetail;
             } else if (name == "quad-drive") {
                 viewpoint = island::FixedViewpoint::QuadDriveDetail;
+            } else if (name == "quad-bunker") {
+                viewpoint = island::FixedViewpoint::QuadBunkerDetail;
+            } else if (name == "quad-cave") {
+                viewpoint = island::FixedViewpoint::QuadCaveDetail;
             } else if (name == "bridge") {
                 viewpoint = island::FixedViewpoint::BridgeDetail;
             } else if (name == "lookout") {
