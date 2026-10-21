@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 401 (2026-10-21) — the resident's mesh lights each grid corner once
+
+The resident's render pass cost the operator 0.85-1.6 ms a frame. Like the bear's (pass 378), the
+resident's builder emitted every ellipsoid, tube and loft quad by quad, so each grid corner was
+placed and lit (normalised, sun, sky, the rain's soaking) six times. Each corner is now made once
+into a small grid whose quads copy it, in the same order: the vertices are bit-identical (a
+difference map of `resident` is black over the whole figure; only the swaying foliage behind it
+and the fire, on the wall clock, differ), and the resident's pass in the llvmpipe captures fell from
+6.88 to 3.66 ms (`resident`) and 4.24 to 2.30 ms (`resident-tending`). The tests pass.
+
 ## Loop pass 400 (2026-10-21) — the quad bike drives into the cave and the bunker for real
 
 The operator: the quad could be driven "into" the bunker and the cave, but it ran on as if neither

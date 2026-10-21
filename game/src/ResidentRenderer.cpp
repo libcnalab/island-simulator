@@ -159,16 +159,16 @@ public:
             +right*(rx*c*std::cos(b))+up*(ry*std::sin(a))+forward*(rz*c*std::sin(b));};
         const auto normal=[&](float a,float b){const float c=std::cos(a);return SafeUnit(
             right*(c*std::cos(b)/rx)+up*(std::sin(a)/ry)+forward*(c*std::sin(b)/rz));};
-        for(int y=0;y<latitude;++y) {
-            const float a0=-Pi*.5f+Pi*y/latitude,a1=-Pi*.5f+Pi*(y+1)/latitude;
-            for(int x=0;x<longitude;++x) {
-                const float b0=2*Pi*x/longitude,b1=2*Pi*(x+1)/longitude;
-                Quad(point(a0,b0),normal(a0,b0),{static_cast<float>(x)/longitude,static_cast<float>(y)/latitude},
-                     point(a0,b1),normal(a0,b1),{static_cast<float>(x+1)/longitude,static_cast<float>(y)/latitude},
-                     point(a1,b1),normal(a1,b1),{static_cast<float>(x+1)/longitude,static_cast<float>(y+1)/latitude},
-                     point(a1,b0),normal(a1,b0),{static_cast<float>(x)/longitude,static_cast<float>(y+1)/latitude},material);
+        grid_.clear();
+        for(int y=0;y<=latitude;++y) {
+            const float a=-Pi*.5f+Pi*y/latitude;
+            for(int x=0;x<=longitude;++x) {
+                const float b=2*Pi*x/longitude;
+                grid_.push_back(Make(point(a,b),normal(a,b),
+                    {static_cast<float>(x)/longitude,static_cast<float>(y)/latitude},material));
             }
         }
+        EmitGrid(latitude,longitude);
     }
 
     void Tube(Vector3 a,Vector3 b,float radiusA,float radiusB,Material material,int segments=10) {
@@ -177,30 +177,29 @@ public:
         const Vector3 axis=SafeUnit(b-a);
         Vector3 side=SafeUnit(Vector3::Cross(axis,std::abs(axis.Y)<.85f?Vector3::Up:Vector3::Right));
         const Vector3 other=SafeUnit(Vector3::Cross(side,axis));
-        for(int i=0;i<segments;++i) {
-            const float t0=2*Pi*i/segments,t1=2*Pi*(i+1)/segments;
-            const Vector3 n0=SafeUnit(side*std::cos(t0)+other*std::sin(t0));
-            const Vector3 n1=SafeUnit(side*std::cos(t1)+other*std::sin(t1));
-            Quad(a+n0*radiusA,n0,{static_cast<float>(i)/segments,0},
-                 a+n1*radiusA,n1,{static_cast<float>(i+1)/segments,0},
-                 b+n1*radiusB,n1,{static_cast<float>(i+1)/segments,1},
-                 b+n0*radiusB,n0,{static_cast<float>(i)/segments,1},material);
+        grid_.clear();
+        for(int end=0;end<2;++end)for(int i=0;i<=segments;++i) {
+            const float t=2*Pi*i/segments;
+            const Vector3 n=SafeUnit(side*std::cos(t)+other*std::sin(t));
+            grid_.push_back(Make((end==0?a:b)+n*(end==0?radiusA:radiusB),n,
+                {static_cast<float>(i)/segments,static_cast<float>(end)},material));
         }
+        EmitGrid(1,segments);
     }
 
     void Loft(std::span<const Vector3> centres,std::span<const float> rx,std::span<const float> rz,
         Vector3 right,Vector3 forward,Material material,int segments=14) {
         segments=Scaled(segments,6);
         right=SafeUnit(right);forward=SafeUnit(forward);
-        for(std::size_t ring=0;ring+1<centres.size();++ring)for(int i=0;i<segments;++i) {
-            const float a0=2*Pi*i/segments,a1=2*Pi*(i+1)/segments;
-            const auto p=[&](std::size_t r,float a){return centres[r]+right*(rx[r]*std::cos(a))+forward*(rz[r]*std::sin(a));};
-            const auto n=[&](std::size_t r,float a){return SafeUnit(right*(std::cos(a)/rx[r])+forward*(std::sin(a)/rz[r]));};
-            Quad(p(ring,a0),n(ring,a0),{static_cast<float>(i)/segments,static_cast<float>(ring)/(centres.size()-1)},
-                 p(ring,a1),n(ring,a1),{static_cast<float>(i+1)/segments,static_cast<float>(ring)/(centres.size()-1)},
-                 p(ring+1,a1),n(ring+1,a1),{static_cast<float>(i+1)/segments,static_cast<float>(ring+1)/(centres.size()-1)},
-                 p(ring+1,a0),n(ring+1,a0),{static_cast<float>(i)/segments,static_cast<float>(ring+1)/(centres.size()-1)},material);
+        const auto p=[&](std::size_t r,float a){return centres[r]+right*(rx[r]*std::cos(a))+forward*(rz[r]*std::sin(a));};
+        const auto n=[&](std::size_t r,float a){return SafeUnit(right*(std::cos(a)/rx[r])+forward*(std::sin(a)/rz[r]));};
+        grid_.clear();
+        for(std::size_t ring=0;ring<centres.size();++ring)for(int i=0;i<=segments;++i) {
+            const float a=2*Pi*i/segments;
+            grid_.push_back(Make(p(ring,a),n(ring,a),
+                {static_cast<float>(i)/segments,static_cast<float>(ring)/(centres.size()-1)},material));
         }
+        EmitGrid(static_cast<int>(centres.size())-1,segments);
     }
 
     void Panel(Vector3 a,Vector3 b,Vector3 c,Vector3 d,Vector3 normal,Material material) {
@@ -211,7 +210,7 @@ private:
     [[nodiscard]] int Scaled(const int count,const int minimum) const noexcept {
         return std::max(minimum,static_cast<int>(std::lround(static_cast<float>(count)*detail_)));
     }
-    void Vertex(Vector3 p,Vector3 normal,Vector2 uv,Material material) {
+    VertexPositionColorTexture Make(Vector3 p,Vector3 normal,Vector2 uv,Material material) const {
         const auto base=BaseColor(material);
         const float direct=std::max(0.0f,Vector3::Dot(SafeUnit(normal),wildlife_render::FixedSunDirection));
         const float sky=std::max(0.0f,normal.Y);
@@ -221,9 +220,20 @@ private:
         const float light=(.57f+.35f*direct+.10f*sky)*(1.0f-soaked*wetness_);
         const auto channel=[&](std::uint8_t value,float tint){return static_cast<int>(std::clamp(
             std::lround(value*light*tint),0L,255L));};
-        output_.emplace_back(p,Color(channel(base.getRProperty(),canopy_.red),
+        return VertexPositionColorTexture(p,Color(channel(base.getRProperty(),canopy_.red),
             channel(base.getGProperty(),canopy_.green),channel(base.getBProperty(),canopy_.blue),255),
             AtlasUv(material,uv.X,uv.Y));
+    }
+    void Vertex(Vector3 p,Vector3 normal,Vector2 uv,Material material) {output_.push_back(Make(p,normal,uv,material));}
+    // The quads of a (rows+1) x (columns+1) grid of lit corners, in the order Quad emits them:
+    // each corner is placed and lit once instead of once for each of its six triangle uses.
+    void EmitGrid(int rows,int columns) {
+        const auto at=[&](int y,int x)->const VertexPositionColorTexture&{
+            return grid_[static_cast<std::size_t>(y*(columns+1)+x)];};
+        for(int y=0;y<rows;++y)for(int x=0;x<columns;++x) {
+            const auto &a=at(y,x),&b=at(y,x+1),&c=at(y+1,x+1),&d=at(y+1,x);
+            output_.insert(output_.end(),{a,b,c,a,c,d});
+        }
     }
     void Triangle(Vector3 a,Vector3 na,Vector2 ua,Vector3 b,Vector3 nb,Vector2 ub,
         Vector3 c,Vector3 nc,Vector2 uc,Material material) {
@@ -237,6 +247,7 @@ private:
     CanopyLightTint canopy_;
     float wetness_;
     float detail_=1.0f,minimumFeature_=0.0f;
+    std::vector<VertexPositionColorTexture> grid_;
 };
 
 void BuildHuman(std::vector<VertexPositionColorTexture>& vertices,const ResidentState& state,
