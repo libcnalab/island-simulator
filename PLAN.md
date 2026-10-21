@@ -233,6 +233,13 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 433 (2026-10-22) — the wreck is lit by the hour's sun
+
+The wreck's timbers had LitColor's fixed 14:00 light baked in (0.66 + 0.34 direct + 0.08 sky). Its
+material shader, which already had the face normal turned to the eye, relights each face by the hour
+with that rule's ratio (the sky term kept), exact at 14:00: the 14:00 `shipwreck` capture differs only
+in the water behind it; 07:00 and 17:30 pass.
+
 ## Loop pass 432 (2026-10-22) — the jetty, the rope bridge and the lookout are lit by the hour's sun
 
 The structures StructureMeshBuilder bakes (jetty, rope bridge, lookout) took the fixed 14:00 sun once

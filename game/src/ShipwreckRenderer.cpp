@@ -218,6 +218,11 @@ void main()
         * metal * detailFade * (1.0 - rust) * 0.085 * uDirectSun;
     materialColor += vec3(0.76, 0.78, 0.75) * ironSheen;
 
+    // Each face's light was baked for the fixed afternoon sun (LitColor's rule): relit by the
+    // hour's sun, exactly as baked at 14:00.
+    float faceSky = 0.08 * max(0.0, faceNormal.y);
+    materialColor *= (0.66 + 0.34 * max(0.0, dot(faceNormal, normalize(uToSun))) + faceSky)
+        / (0.66 + 0.34 * max(0.0, dot(faceNormal, normalize(vec3(-0.45, 0.82, -0.34)))) + faceSky);
     // The sun shadow map and the cumulus shade, with the palms' cool shadow tint.
     materialColor *= mix(vec3(0.56, 0.60, 0.66), vec3(1.0), sunShadowVisibility(vWorld));
     float fog = smoothstep(190.0, 520.0, distanceToCamera);
