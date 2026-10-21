@@ -798,6 +798,16 @@ void main()
         vec3 tinted = dot(color, luminanceWeights) * turfChroma;
         color = mix(color, mix(tinted, turf * vGroundLight, 0.35), turfWeight);
     }
+    // Steep vegetated banks: too steep for the turf undercoat and, below the ridges, too low
+    // for the rock, they showed the bare vertex palette, a flat saturated green standing out
+    // of the olive slopes round it. They take the turf's hue a shade deeper; the ridge rock and
+    // the coastal cliffs still paint over it further on.
+    float steepBank = steep * (1.0 - sand) * (1.0 - routeMask);
+    if (steepBank > 0.0) {
+        const vec3 bankLuminance = vec3(0.30, 0.55, 0.15);
+        vec3 bankTint = dot(color, bankLuminance) * turf / max(dot(turf, bankLuminance), 0.0001);
+        color = mix(color, mix(bankTint, turf * vGroundLight, 0.55) * vec3(0.97, 0.99, 0.92), steepBank * 0.85);
+    }
 
     // Mid-distance hillside grain on open inland ground: sunlit tussock crowns against the
     // shaded gaps between them, with a dry-straw lean on the crowns. It begins where the

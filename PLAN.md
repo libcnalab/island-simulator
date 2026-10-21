@@ -233,6 +233,21 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 325 (2026-10-21) — steep hillsides lose the cartoon green
+
+Pass 323 found that the cave's steep shoulders kept the terrain's bare vertex palette (a flat
+saturated green, `(79,139,70)` from 4.5 m up), and noted the same on other steep faces. A mask
+probe over `overview`, `cave-top`, `stream` and `jungle` showed where: the hill behind the deer in
+`east`, the slope left of the stream, the summit dome. The turf undercoat is kept off steep
+ground (`turfAmount` carries `1 - steep`), and the ridge rock only paints steep faces from 4-10 m
+up, so every steep, vegetated, mid-height slope stood out flat and cartoon-green against the
+olive slopes round it. Right after the turf undercoat, steep banks (not sand, not paths) now take
+the turf's hue at their own luminance, mixed with plain turf and a shade deeper, at 85 %; the
+ridge rock and coastal cliffs still paint over them further on, and the cave's own soil shoulders
+(pass 323) still apply. `east`, `stream` and `overview` now show olive vegetated hillsides with
+their mottling; `cave`, `cave-top`, `lookout`, `headland`, `flight`, `west`, `jungle`, `grass`,
+`hut` and the tests pass.
+
 ## Loop pass 324 (2026-10-21) — the deer get a coat of hair
 
 Beside the goat, boar and bear, whose coats carry strand textures, the deer were plain smooth
