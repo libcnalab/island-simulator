@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 374 (2026-10-21) — the frame profile names the calls inside blocks
+
+The Update profile marks only top-level calls, so a call inside an `if` or a lambda was billed to
+the mark before it: the boar herd's update showed as the crocodile wake (0.3-0.6 ms "for a wake").
+Ten more marks name the walker (UpdateCamera), the boar herd, the spiders, snakes and monkeys
+inside their timing lambdas, the morning mist, swim glow, waterspout, fireflies and footprints.
+Rechecked in 64-frame software captures after pass 373: the goats' draw 5.8 ms a frame (was
+12.8-14.3), the small-fauna batch 3.0-3.6 (was 4.1-6.8). Two leads closed: the dolphins' 8-12 ms
+in four-frame captures was llvmpipe compiling their shader on first sight (building a near
+dolphin costs 0.7 ms); the sound's ~0.9 ms an Update is not its field lookups (a thousand calls of
+each cost 0.005-1.8 ms in all) but time around its voice calls, left for now. Tests pass.
+
 ## Loop pass 373 (2026-10-21) — why the game ran at 12-40 fps, and the first fixes
 
 The operator asked why the game runs at about 20 fps, sometimes 12, sometimes 40, and whether

@@ -3361,6 +3361,7 @@ namespace island
             UpdateBenchmarkTraversal();
         }
         if (!smokeTest_ && viewpoint_ == FixedViewpoint::None) {
+            updateProfile_.Mark("UpdateCamera");
             UpdateCamera(deltaSeconds);
         }
         updateProfile_.Mark("UpdateQuad");
@@ -3376,12 +3377,14 @@ namespace island
             swimGlowStrength_ = dark * (1.0f - 0.55f * light.moonLight);
             const PlayerPosition& swimmer = playerMotion_.Position();
             const float vx = playerMotion_.VelocityX(), vz = playerMotion_.VelocityZ();
+            updateProfile_.Mark("swimGlow");
             swimGlow_.Update(deltaSeconds, swimmer.x, 0.0f, swimmer.z, std::hypot(vx, vz), vx, vz,
                              playerMotion_.Mode() == LocomotionMode::Swimming, swimGlowStrength_);
         }
         {
             // squalls breed waterspouts: heavy rain in a strong wind
             const auto& w = weather_now::Current();
+            updateProfile_.Mark("waterspout");
             waterspout_.Update(deltaSeconds, std::clamp((w.rain - 0.45f) / 0.30f, 0.0f, 1.0f) * std::clamp((w.wind - 1.2f) / 0.4f, 0.0f, 1.0f),
                                wind::DirectionX, wind::DirectionZ);
         }
@@ -3389,12 +3392,14 @@ namespace island
         summitCloud_.Update(deltaSeconds, SummitCloudField::Cover(weather_now::Current().cloudCover,
                                                                   weather_now::Current().rain, dayNight_.Hour()),
                             wind::DirectionX, wind::DirectionZ, weather_now::Current().wind);
+        updateProfile_.Mark("morningMist");
         if (morningMist_)
             morningMist_->Update(deltaSeconds, MorningMistField::Thickness(dayNight_.Hour(), weather_now::Current().wind,
                                                                            weather_now::Current().rain),
                                  wind::DirectionX, wind::DirectionZ);
         if (fireflies_) {
             const auto& light = sun_light::Current().lighting;
+            updateProfile_.Mark("fireflies");
             fireflies_->Update(deltaSeconds, 1.0f - std::clamp((light.sunElevationDegrees + 4.0f) / 12.0f, 0.0f, 1.0f),
                                weather_now::Current().rain);
         }
@@ -3437,6 +3442,7 @@ namespace island
             const PlayerPosition& walker=playerMotion_.Position();
             const bool onSand=!flightMotion_.IsActive()&&!IsDebugFreeCameraActive()
                 &&playerMotion_.Mode()!=LocomotionMode::Swimming&&FootstepGroundUnderPlayer()==FootstepSurface::Sand;
+            updateProfile_.Mark("footprints");
             footprints_.Update(deltaSeconds,walker.x,walker.z,playerMotion_.VelocityX(),playerMotion_.VelocityZ(),onSand,
                 onSand&&terrain_.Sample(walker.x,walker.z).surface==TerrainSurface::WetSand);
         }
@@ -3858,6 +3864,7 @@ namespace island
         boarHerd_.SetLyingFruit(fallingFruit_.Fruit());
         boarHerd_.SetBear(bear_->State().x, bear_->State().z, true);
         if (viewpoint_ == FixedViewpoint::BoarLyingDetail) boarHerd_.PreviewLie(1U);
+        updateProfile_.Mark("boarHerd");
         if (UsesBoarCaptureClock())
             boarHerd_.Update(deltaSeconds, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
         else
@@ -3934,6 +3941,7 @@ namespace island
         }
         updateProfile_.Mark("spiders");
         measureWildlife(0, [&] {
+            updateProfile_.Mark("spiders");
             spiders_->Update(deltaSeconds,spiderObserver);
         });
         if(UsesSpiderViewpoint()) {
@@ -4017,6 +4025,7 @@ namespace island
         }
         updateProfile_.Mark("snakes");
         measureWildlife(2, [&] {
+            updateProfile_.Mark("snakes");
             snakes_->Update(deltaSeconds,snakeObserver.X,snakeObserver.Y,snakeObserver.Z);
         });
         // The head view holds the subject's tongue out so the fork can be reviewed.
@@ -4184,6 +4193,7 @@ namespace island
             measureWildlife(3, [&] {
                 monkeyTroop_.SetLyingFruit(fallingFruit_.Fruit());
                 monkeyTroop_.SetSnakes(snakes_->Snakes());
+                updateProfile_.Mark("monkeyTroop");
                 monkeyTroop_.Update(deltaSeconds, monkeyObserver.X, monkeyObserver.Y, monkeyObserver.Z,
                     snakeCaptureClock ? static_cast<float>(snakeCaptureUpdates_)*0.1f
                         : static_cast<float>(gameTime.getTotalGameTimeProperty().getTotalSecondsProperty()));
