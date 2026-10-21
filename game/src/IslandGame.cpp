@@ -2426,6 +2426,9 @@ namespace island
         birdShadowRenderer_=std::make_unique<BirdShadowRenderer>(device,terrain_);
         seabedShadowRenderer_=std::make_unique<SeabedShadowRenderer>(device,terrain_);
         cascadeMistRenderer_=std::make_unique<CascadeMistRenderer>(device);
+        // a small stream's step throws a thin spray, not a fog: ten overlapping puffs at full
+        // density smeared the bank beside the pool into a pale haze
+        cascadeMistRenderer_->SetRange(40.0f,20.0f,0.45f);
         wetlandMistRenderer_=std::make_unique<CascadeMistRenderer>(device,
             "island-simulator: a low mist hangs over the seasonal wetland, breathing slowly, drifting with the trade wind and leaning in the gust fronts");
         fallingFruit_.SetPalms(vegetationLayout_.Palms());

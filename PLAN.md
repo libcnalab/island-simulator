@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 322 (2026-10-21) — the cascade's spray is a thin mist, not a fog
+
+In `stream` a large pale-green haze lay over the bank beside the water near the eye. Probes
+switching the mists off one by one traced it to the cascade's spray (not the morning mist,
+which has burned off by then): ten overlapping camera-facing fans, each swelling to about 1.5 m
+at full density, built up to some 70 % cover beside the plunge pool. A small stream's step
+throws a thin spray, so the cascade's instance now draws at 45 % density, its puffs swell more
+slowly (to about a metre), and every puff drawn through the shared mist renderer thins away
+within a couple of metres of the eye, where a flat fan seen from inside covered the view as one
+smooth smear. The haze is gone from `stream`; `cascade` keeps a faint spray at the foot of the
+lip; `wetland` and `dolphins` (the renderer's other users) and the tests pass.
+
 ## Loop pass 321 (2026-10-21) — lobed tide pools that thin to the waterline
 
 The five rocky-shore tide pools read as hard-edged octagons. Their basins were perfectly round,

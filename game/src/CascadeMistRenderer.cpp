@@ -44,7 +44,10 @@ void CascadeMistRenderer::Draw(const Matrix& view,const Matrix& projection,const
         Vector3 right=Vector3::Cross(Vector3::Up,toCamera);
         if(right.LengthSquared()<1e-6f) right=Vector3::Right; else right.Normalize();
         Vector3 up=Vector3::Cross(toCamera,right);up.Normalize();
-        const int alpha=static_cast<int>(std::lround(std::min(255.0f,58.0f*densityScale_*puff.density
+        // and within a couple of metres of the eye a puff thins away: a flat fan seen from
+        // inside the spray would cover the view as one smooth smear
+        const float nearFade=std::clamp((distance-0.6f)/2.0f,0.0f,1.0f);
+        const int alpha=static_cast<int>(std::lround(std::min(255.0f,58.0f*densityScale_*puff.density*nearFade
             *(1.0f-std::clamp((distance-fadeStart_)/fadeLength_,0.0f,1.0f)))));
         if(alpha<2) continue;
         // The blend state takes premultiplied colour: the rim is clear black, the core the

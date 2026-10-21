@@ -45,7 +45,7 @@ void CascadeMistField::Update(const float deltaSeconds,const float windSeconds) 
         puff.y+=RiseSpeed*spray*(1.0f-0.7f*t)*dt;
         puff.x+=(downX_*DriftSpeed-GustLean*gust_)*dt;
         puff.z+=downZ_*DriftSpeed*dt;
-        puff.size+=(0.32f+0.1f*spray)*dt;
+        puff.size+=(0.20f+0.06f*spray)*dt;
         // Even a low step throws a visible mist; a tall drop a dense one.
         puff.density=std::sin(3.14159f*t)*std::clamp(spray,0.6f,1.0f);
     }
