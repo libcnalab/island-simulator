@@ -305,10 +305,12 @@ void main()
         float mossField = filteredStoneNoise(barkCoordinate * vec3(1.0, 2.5, 1.0) + vec3(-3.3, 1.1, 7.7), worldFootprint * 2.0);
         float moss = smoothstep(0.25, 0.65, woodNormal.y) * smoothstep(0.48, 0.62, mossField) * (1.0 - barkLoss);
         materialColor = mix(materialColor, vec3(0.20, 0.31, 0.11) * (0.80 + 0.40 * mossField), moss * 0.70);
-        // lichen in small freckles a few centimetres across
+        // lichen in small freckles a few centimetres across, gathered in loose colonies (spread
+        // evenly over the whole flank they read as spattered paint)
+        float lichenColony = smoothstep(0.44, 0.70, filteredStoneNoise(vWorld * 2.2 + vec3(1.7, 5.1, 3.3), worldFootprint * 2.2));
         float lichen = smoothstep(0.72, 0.80, filteredStoneNoise(vWorld * 24.0 + vec3(9.0, 3.0, 1.0), worldFootprint * 24.0))
-            * (1.0 - smoothstep(0.55, 0.85, abs(woodNormal.y))) * nearDetail;
-        materialColor = mix(materialColor, vec3(0.58, 0.62, 0.52), lichen * 0.50);
+            * (1.0 - smoothstep(0.55, 0.85, abs(woodNormal.y))) * nearDetail * lichenColony;
+        materialColor = mix(materialColor, vec3(0.56, 0.60, 0.50), lichen * 0.40);
         materialColor = mix(vColor, materialColor, max(nearDetail, 0.65));
     } else if (vMaterialDetail < 0.875) {
         float cutRadius = length(vLocal.yz);
@@ -685,7 +687,7 @@ void main()
         [[nodiscard]] PropGeometry CreateLogGeometry(const int variant, const bool farMesh)
         {
             PropGeometry geometry;
-            const int sections = farMesh ? 2 : 7;
+            const int sections = farMesh ? 4 : 12;
             const int sides = farMesh ? 6 : 12;
             geometry.vertices.reserve(static_cast<std::size_t>((sections + 1) * sides + sides * 2 + 64));
             geometry.indices.reserve(static_cast<std::size_t>(sections * sides * 6 + sides * 6 + 180));
@@ -693,15 +695,36 @@ void main()
             const Color bark = variant == 0 ? Color(101, 69, 42, barkMaterial)
                 : (variant == 1 ? Color(87, 67, 45, barkMaterial)
                                 : Color(112, 77, 44, barkMaterial));
-            const auto ringRadius = [variant, sections](const int section, const int side,
-                                                        const int sideCount) {
+            // The trunk's line and girth along it (t from the butt, 0, to the broken top, 1): a
+            // flared butt tapering to the top, bowed a little sideways and arching, swollen at
+            // the two branch knots. The moss, the fungi and the stubs sit on this same surface.
+            // (A pole of one girth, straight and level, read as a sawn beam.)
+            const auto axisAt = [variant](const float t) {
+                const float pi = std::numbers::pi_v<float>;
+                const float bow = (0.20f + 0.07f * static_cast<float>(variant)) * (variant == 1 ? -1.0f : 1.0f);
+                return Vector3(0.0f, std::sin(t * pi) * (0.035f + 0.012f * static_cast<float>(variant)),
+                               std::sin(t * pi) * bow + 0.05f * std::sin(t * 3.0f * pi));
+            };
+            const auto girthAt = [](const float t) {
+                const auto knot = [t](const float at) {
+                    const float d = (t - at) / 0.035f;
+                    return std::exp(-d * d);
+                };
+                return 0.84f + 0.22f * (1.0f - t) + 0.20f * std::exp(-t * 14.0f)
+                    + 0.08f * knot(0.28f) + 0.07f * knot(0.77f);
+            };
+            // a point given on the old straight unit trunk, carried onto this one
+            const auto onTrunk = [&](const Vector3& p) {
+                const float t = std::clamp(p.X + 0.5f, 0.0f, 1.0f);
+                const float girth = girthAt(t);
+                return Vector3(p.X, p.Y * girth, p.Z * girth) + axisAt(t);
+            };
+            const auto ringRadius = [variant, sections, &girthAt](const int section, const int side,
+                                                                  const int sideCount) {
                 const float angle = 2.0f * std::numbers::pi_v<float>
                     * static_cast<float>(side) / static_cast<float>(sideCount);
                 const float t = static_cast<float>(section) / static_cast<float>(sections);
-                const float taper = 1.03f - 0.09f * t
-                    + 0.025f * std::sin(t * std::numbers::pi_v<float>
-                        + static_cast<float>(variant) * 0.73f);
-                return taper * (0.92f + 0.07f
+                return girthAt(t) * (0.92f + 0.07f
                     * std::sin(angle * (2.0f + static_cast<float>(variant))
                                + static_cast<float>(section) * 1.7f));
             };
@@ -721,8 +744,7 @@ void main()
             for (int section = 0; section <= sections; ++section) {
                 const float t = static_cast<float>(section) / static_cast<float>(sections);
                 const float x = t - 0.5f;
-                const float bend = std::sin(t * std::numbers::pi_v<float>)
-                    * (0.035f + 0.012f * variant);
+                const Vector3 axis = axisAt(t);
                 for (int side = 0; side < sides; ++side) {
                     const float angle = 2.0f * std::numbers::pi_v<float>
                         * static_cast<float>(side) / static_cast<float>(sides);
@@ -734,8 +756,8 @@ void main()
                     const float light = 0.60f + 0.36f
                         * std::max(0.0f, std::sin(angle) * 0.78f - std::cos(angle) * 0.22f);
                     geometry.vertices.emplace_back(
-                        Vector3(brokenX, std::sin(angle) * ring + bend,
-                                std::cos(angle) * ring),
+                        Vector3(brokenX, std::sin(angle) * ring + axis.Y,
+                                std::cos(angle) * ring + axis.Z),
                         ShadeColor(bark, light));
                     geometry.albedos.push_back(bark);
                 }
@@ -768,8 +790,7 @@ void main()
                     const float cutX = farMesh ? x
                         : endDirection * 0.5f
                             + endDirection * brokenEndOffset(endSection, side);
-                    const float cutRadius = farMesh ? 0.86f
-                        : ringRadius(endSection, side, sides);
+                    const float cutRadius = ringRadius(endSection, side, sides);
                     geometry.vertices.emplace_back(
                         Vector3(cutX, std::sin(angle) * cutRadius,
                                 std::cos(angle) * cutRadius),
@@ -834,10 +855,10 @@ void main()
                         geometry.indices.insert(geometry.indices.end(), {centre, first, next});
                     }
                 };
-                appendStub(Vector3(-0.22f, 0.54f, handedness * 0.58f),
-                           Vector3(-0.22f, 1.68f, handedness * 0.91f), 0.24f, 0.10f);
-                appendStub(Vector3(0.27f, 0.66f, -handedness * 0.48f),
-                           Vector3(0.27f, 1.34f, -handedness * 0.72f), 0.18f, 0.078f);
+                appendStub(onTrunk(Vector3(-0.22f, 0.54f, handedness * 0.58f)),
+                           onTrunk(Vector3(-0.22f, 1.68f, handedness * 0.91f)), 0.24f, 0.10f);
+                appendStub(onTrunk(Vector3(0.27f, 0.66f, -handedness * 0.48f)),
+                           onTrunk(Vector3(0.27f, 1.34f, -handedness * 0.72f)), 0.18f, 0.078f);
             }
 
             BuildWoodNormals(geometry);
@@ -869,13 +890,13 @@ void main()
                     const float skew = patch == 1 ? 0.025f : -0.018f;
                     const auto mossBase = static_cast<std::uint16_t>(geometry.vertices.size());
                     geometry.vertices.emplace_back(
-                        centre + Vector3(-half.X, 0, -half.Z + skew), moss);
+                        onTrunk(centre + Vector3(-half.X, 0, -half.Z + skew)), moss);
                     geometry.vertices.emplace_back(
-                        centre + Vector3(half.X, 0, -half.Z - skew), moss);
+                        onTrunk(centre + Vector3(half.X, 0, -half.Z - skew)), moss);
                     geometry.vertices.emplace_back(
-                        centre + Vector3(-half.X * 0.82f, 0, half.Z), ShadeColor(moss, 1.12f));
+                        onTrunk(centre + Vector3(-half.X * 0.82f, 0, half.Z)), ShadeColor(moss, 1.12f));
                     geometry.vertices.emplace_back(
-                        centre + Vector3(half.X * 0.91f, 0, half.Z), ShadeColor(moss, 1.12f));
+                        onTrunk(centre + Vector3(half.X * 0.91f, 0, half.Z)), ShadeColor(moss, 1.12f));
                     geometry.indices.insert(geometry.indices.end(),
                         {mossBase, static_cast<std::uint16_t>(mossBase + 1U),
                          static_cast<std::uint16_t>(mossBase + 2U),
@@ -886,39 +907,60 @@ void main()
                 // Bracket fungi: small half-fan shelves growing from the shaded flank of the
                 // trunk. Local X is in log-length units and Y/Z in radius units, so a shelf
                 // is 0.03 x-units (12--18 cm) wide and reaches 0.36 radii outward, drooping
-                // slightly at the rim. Both windings are emitted so the pale cap and darker
-                // underside read from any side.
-                const Color capColor(206, 182, 134, FallenFrondMaterialDetail);
-                const Color rimColor(168, 134, 88, FallenFrondMaterialDetail);
+                // slightly at the rim. Each is a shelf with a body: its cap zoned dark brown at
+                // the trunk through ochre to a cream growing rim, the rim's edge thick, and the
+                // pale pore surface beneath (a single tan fan read as a flat sticker). Both
+                // windings are emitted so each layer reads from any side.
+                const Color innerColor(112, 80, 50, FallenFrondMaterialDetail);
+                const Color bandColor(158, 120, 76, FallenFrondMaterialDetail);
+                const Color rimColor(212, 194, 154, FallenFrondMaterialDetail);
+                const Color poreColor(190, 178, 146, FallenFrondMaterialDetail);
                 const std::array<std::array<float, 3>, 4> shelves{{
                     {-0.36f, 0.30f, 1.0f}, {-0.22f, 0.12f, -1.0f},
                     {0.08f, 0.34f, -1.0f}, {0.27f, 0.20f, 1.0f}}};
+                const auto both = [&geometry](const std::uint16_t a, const std::uint16_t b, const std::uint16_t c) {
+                    geometry.indices.insert(geometry.indices.end(), {a, b, c, a, c, b});
+                };
                 for (std::size_t shelf = 0; shelf < shelves.size(); ++shelf) {
                     const float x0 = shelves[shelf][0];
                     const float y0 = shelves[shelf][1];
                     const float side = shelves[shelf][2];
                     const float z0 = side * std::sqrt(std::max(0.0f, 0.90f - y0 * y0));
-                    const Vector3 root(x0, y0, z0);
-                    const auto fanBase = static_cast<std::uint16_t>(geometry.vertices.size());
-                    geometry.vertices.emplace_back(root, ShadeColor(rimColor, 0.9f));
-                    constexpr int fanSegments = 5;
+                    const Vector3 root = onTrunk(Vector3(x0, y0, z0));
+                    constexpr int fanSegments = 7;
                     const float reach = 0.40f + 0.04f * static_cast<float>(shelf % 3);
-                    for (int segment = 0; segment <= fanSegments; ++segment) {
+                    const float thickness = 0.07f * reach;
+                    // a point of the cap at a fraction of the reach: the cap curves down toward
+                    // its rim, so even a low viewpoint sees a shelf rather than an edge-on sliver
+                    const auto capPoint = [&](const int segment, const float fraction) {
                         const float t = static_cast<float>(segment) / fanSegments;
                         const float angle = (t - 0.5f) * 2.4f;
                         const float lobe = 1.0f + 0.08f * std::sin(t * 9.0f + static_cast<float>(shelf));
-                        // The cap curves down toward its rim, so even a low viewpoint sees a
-                        // shelf rather than an edge-on sliver.
-                        geometry.vertices.emplace_back(
-                            root + Vector3(std::sin(angle) * 0.045f * lobe,
-                                           -0.16f * reach * (0.3f + 0.7f * std::abs(std::cos(angle))),
-                                           side * std::cos(angle) * reach * lobe),
-                            ShadeColor(segment % 2 == 0 ? capColor : rimColor, 1.0f));
-                    }
+                        return root + Vector3(std::sin(angle) * 0.045f * lobe * (0.45f + 0.55f * fraction),
+                                              -0.16f * reach * fraction * fraction * (0.3f + 0.7f * std::abs(std::cos(angle))),
+                                              side * std::cos(angle) * reach * lobe * fraction);
+                    };
+                    const auto base = static_cast<std::uint16_t>(geometry.vertices.size());
+                    const auto add = [&geometry](const Vector3& at, const Color colour) {
+                        geometry.vertices.emplace_back(at, colour);
+                    };
+                    add(root, ShadeColor(innerColor, 0.9f));
+                    for (int segment = 0; segment <= fanSegments; ++segment) add(capPoint(segment, 0.55f), bandColor);
+                    for (int segment = 0; segment <= fanSegments; ++segment) add(capPoint(segment, 1.0f), rimColor);
+                    for (int segment = 0; segment <= fanSegments; ++segment)
+                        add(capPoint(segment, 0.97f) - Vector3(0.0f, thickness, 0.0f), ShadeColor(poreColor, 0.80f));
+                    add(root - Vector3(0.0f, thickness * 1.6f, 0.0f), ShadeColor(poreColor, 0.62f));
+                    const auto inner = [base](const int i) { return static_cast<std::uint16_t>(base + 1 + i); };
+                    const auto rim = [base](const int i) { return static_cast<std::uint16_t>(base + 1 + (fanSegments + 1) + i); };
+                    const auto under = [base](const int i) { return static_cast<std::uint16_t>(base + 1 + 2 * (fanSegments + 1) + i); };
+                    const auto underRoot = static_cast<std::uint16_t>(base + 1 + 3 * (fanSegments + 1));
                     for (int segment = 0; segment < fanSegments; ++segment) {
-                        const auto a = static_cast<std::uint16_t>(fanBase + 1U + segment);
-                        const auto b = static_cast<std::uint16_t>(fanBase + 2U + segment);
-                        geometry.indices.insert(geometry.indices.end(), {fanBase, a, b, fanBase, b, a});
+                        both(base, inner(segment), inner(segment + 1));
+                        both(inner(segment), rim(segment), rim(segment + 1));
+                        both(inner(segment), rim(segment + 1), inner(segment + 1));
+                        both(rim(segment), under(segment), under(segment + 1));
+                        both(rim(segment), under(segment + 1), rim(segment + 1));
+                        both(underRoot, under(segment), under(segment + 1));
                     }
                 }
             }

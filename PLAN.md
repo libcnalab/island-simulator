@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 416 (2026-10-21) — fallen logs taper, bow and swell at their knots
+
+At 1:1 the `log` view's trunk was a straight faceted pole of one girth (a 9 % taper), its flank
+spattered evenly with blue-grey lichen dots and its bracket fungi flat tan lenses. CreateLogGeometry
+now runs the trunk along a line and girth (12 sections near, 4 far): a flared butt (1.26) tapering
+to the broken top (0.84), bowed sideways by 0.20-0.34 radii and arching a little, swollen at the two
+branch knots; the moss islands, the fungi and the stubs are carried onto that surface (onTrunk), and
+the far mesh's caps follow its girth. Each bracket fungus is a shelf with a body: the cap zoned dark
+brown at the trunk through ochre to a cream rim, a thick rim edge and the pale pore surface beneath.
+The lichen freckles gather in loose colonies (a 2.2 /m noise) at 40 % instead of covering the flank
+at 50 %. `log`, `props` and `west` judged at 1:1 against their last captures.
+
 ## Loop pass 415 (2026-10-21) — rings spread on the stream where its water is cut or struck
 
 Nothing marked the stream's water when the quad ran through it, the walker or an animal waded it,
