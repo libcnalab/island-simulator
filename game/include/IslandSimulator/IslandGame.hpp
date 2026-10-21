@@ -574,6 +574,7 @@ namespace island
         std::unique_ptr<RootingDustRenderer> wheelDustRenderer_, wheelSprayRenderer_;
         std::uint32_t quadPreviousRollovers_ = 0;
         float quadImpactCooldown_ = 0.0f;
+        float quadDirt_ = 0.0f, quadDirtWet_ = 0.0f;   // the quad's mud: how much, and how fresh
         // the engine idles on after the rider steps off, until switched off a while later
         bool quadEngineOn_ = false;
         float quadFlushSeconds_ = 0.0f;

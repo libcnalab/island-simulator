@@ -5,7 +5,9 @@
 #include "Microsoft/Xna/Framework/Vector3.hpp"
 #include "Microsoft/Xna/Framework/Graphics/VertexPositionColor.hpp"
 #include "Microsoft/Xna/Framework/Graphics/VertexPositionNormalTexture.hpp"
+#include <algorithm>
 #include <array>
+#include <cmath>
 #include <memory>
 #include <vector>
 
@@ -38,6 +40,13 @@ namespace island
         explicit QuadBikeRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         ~QuadBikeRenderer();
         void SetSunShadowMap(const SunShadowMap* map) noexcept { sunShadow_ = map; }
+        /** @brief How dirty the quad is (0 clean .. 1 caked) and how wet that dirt is (0 dried
+         *  dust .. 1 fresh mud). */
+        void SetDirt(float amount, float wet) noexcept
+        {
+            dirt_ = std::isfinite(amount) ? std::clamp(amount, 0.0f, 1.0f) : 0.0f;
+            dirtWet_ = std::isfinite(wet) ? std::clamp(wet, 0.0f, 1.0f) : 0.0f;
+        }
 
         /** @param riderFallback draw a simple seated rider (when no CNA avatar is available). */
         void Draw(const Microsoft::Xna::Framework::Matrix& view, const Microsoft::Xna::Framework::Matrix& projection,
@@ -90,5 +99,6 @@ namespace island
         int bodyCount_ = 0, barsCount_ = 0, frontWheelCount_ = 0, rearWheelCount_ = 0;
         const SunShadowMap* sunShadow_ = nullptr;
         int triangles_ = 0, drawCalls_ = 0;
+        float dirt_ = 0.0f, dirtWet_ = 0.0f;
     };
 }

@@ -233,6 +233,21 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 292 (2026-10-21) — the quad gets dirty
+
+Ridden anywhere, the quad stayed showroom-clean. It now gathers dirt: each wheel down on wet
+ground (wet sand, or anywhere once the ground is soaked) throws up mud at 0.0008 per second per
+m/s, each on dry dusty ground dust at a quarter of that (four wheels at 8 m/s cake it in about
+40 s of mud, two or three minutes of dust); wading the sea washes it off in seconds (0.05 per
+second per wheel in the water) and the rain rinses it slowly. The dirt stays dark while fresh
+or rained on and dries pale over five minutes. The quad's shader lays it in splotches fixed
+to the parts (three octaves in their model space, so they ride with the body and spin with
+the tyres), coating the lower body and all of the tyres and only flecking the upper body,
+never the lamps' glass; dirt kills the paint's shine and the metals' tint. A first pattern
+of large hard blobs read as camouflage paint; the finer, softer field reads as spatter. A probe
+at 0.8 shows dark mud up the fenders' edges and on the tyres, and dried, a pale dust; clean,
+`quad`, `quad-ride` and `quad-drive` pass, and the tests.
+
 ## Loop pass 291 (2026-10-21) — a yacht sails past offshore
 
 Now and then a cruising yacht passes the island well offshore. `SailboatPassage`

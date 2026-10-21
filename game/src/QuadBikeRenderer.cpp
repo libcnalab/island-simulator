@@ -500,10 +500,12 @@ uniform mat4 uViewProjection;
 out vec3 vWorld;
 out vec3 vNormal;
 out vec2 vMaterial;
+out vec3 vLocal;
 void main()
 {
     vec4 world = uWorld * vec4(aPosition, 1.0);
     vWorld = world.xyz;
+    vLocal = aPosition;
     vNormal = mat3(uWorld) * aNormal;
     vMaterial = aMaterial;
     gl_Position = uViewProjection * world;
@@ -514,6 +516,7 @@ void main()
 in vec3 vWorld;
 in vec3 vNormal;
 in vec2 vMaterial;
+in vec3 vLocal;
 uniform vec3 uPalette[16];
 uniform vec3 uMaterial[16];   // specular, shininess, emissive
 uniform float uMetal[16];
@@ -521,6 +524,7 @@ uniform vec3 uToSun;
 uniform vec3 uCameraPosition;
 uniform vec2 uEmissive;       // x: one over the night grade, y: the lamps lit
 uniform float uWetness;       // 0..1 rain-wet (WeatherSystem)
+uniform vec3 uDirt;           // x: how dirty 0..1, y: how wet the dirt, z: 1 drawing a wheel
 out vec4 fragColor;
 void main()
 {
@@ -531,6 +535,17 @@ void main()
     // carries a film of water that mirrors the sky at a glancing view.
     float wet = clamp(uWetness, 0.0, 1.0);
     albedo *= 1.0 - wet * 0.25 * (1.0 - uMetal[index]) * (1.0 - smoothstep(20.0, 60.0, material.y));
+    // Dirt thrown up by the wheels: mud, dark while wet and drying pale, thickest low on the
+    // body and all over the tyres, in splotches fixed to the parts (not on the lamps' glass).
+    float splotch = 0.5 + 0.22 * sin(vLocal.x * 41.0 + sin(vLocal.z * 29.0) * 1.9) * sin(vLocal.z * 47.0 + vLocal.y * 33.0)
+        + 0.18 * sin(vLocal.y * 67.0 + vLocal.x * 23.0) * sin(vLocal.z * 59.0 - vLocal.x * 31.0)
+        + 0.10 * sin(vLocal.x * 113.0 + vLocal.z * 97.0 + vLocal.y * 71.0);
+    float low = uDirt.z > 0.5 ? 1.0 : smoothstep(0.22, -0.25, vLocal.y);
+    float threshold = 1.0 - clamp(uDirt.x, 0.0, 1.0) * (0.08 + 1.0 * low);
+    float dirt = smoothstep(threshold, threshold + 0.22, splotch) * step(0.001, uDirt.x) * (1.0 - material.z);
+    albedo = mix(albedo, mix(vec3(0.47, 0.40, 0.30), vec3(0.17, 0.12, 0.08), clamp(uDirt.y, 0.0, 1.0)), dirt);
+    material.x *= 1.0 - 0.8 * dirt;
+    float metal = uMetal[index] * (1.0 - dirt);
     vec3 n = normalize(vNormal);
     vec3 toEye = normalize(uCameraPosition - vWorld);
     if (dot(n, toEye) < 0.0) n = -n;
@@ -542,8 +557,8 @@ void main()
     vec3 halfway = normalize(toSun + toEye);
     float fresnel = 0.04 + 0.96 * pow(1.0 - max(dot(n, toEye), 0.0), 5.0);
     float specular = pow(max(dot(n, halfway), 0.0), material.y) * material.x * shadow * max(uDirectSun, 0.12);
-    color += mix(vec3(1.0), albedo, uMetal[index]) * specular;
-    color += mix(vec3(0.30, 0.40, 0.50), albedo, uMetal[index]) * fresnel * max(material.x, 0.55 * wet)
+    color += mix(vec3(1.0), albedo, metal) * specular;
+    color += mix(vec3(0.30, 0.40, 0.50), albedo, metal) * fresnel * max(material.x, 0.55 * wet)
         * (0.18 + 0.30 * wet) * vMaterial.y;
     color = mix(color, albedo * uEmissive.x, material.z * uEmissive.y);
     float fog = smoothstep(260.0, 720.0, length(vWorld - uCameraPosition));
@@ -752,13 +767,15 @@ void main()
 
     void QuadBikeRenderer::DrawAll(ShaderEffect& effect, const Pose& pose, const int dynamicCount)
     {
+        effect.SetUniformVec3("uDirt", dirt_, dirtWet_, 0.0f);
         DrawPart(effect, *body_, bodyCount_, pose.body);
         DrawPart(effect, *bars_, barsCount_, pose.bars);
+        if (dynamicCount > 0) DrawPart(effect, *dynamic_, dynamicCount, pose.body);
+        effect.SetUniformVec3("uDirt", dirt_, dirtWet_, 1.0f);
         for (std::size_t wheel = 0; wheel < 4; ++wheel) {
             if (wheel < 2) DrawPart(effect, *frontWheel_, frontWheelCount_, pose.wheels[wheel]);
             else DrawPart(effect, *rearWheel_, rearWheelCount_, pose.wheels[wheel]);
         }
-        if (dynamicCount > 0) DrawPart(effect, *dynamic_, dynamicCount, pose.body);
     }
 
     void QuadBikeRenderer::Draw(const Matrix& view, const Matrix& projection, const Vector3& camera,

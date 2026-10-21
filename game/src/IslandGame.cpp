@@ -4214,6 +4214,24 @@ namespace island
             wheel.dusty = (wetness < 0.35f && (surface == TerrainSurface::DrySand || surface == TerrainSurface::CoastalGround))
                 || (wetness < 0.1f && surface == TerrainSurface::InteriorGround);
         }
+        // The quad gathers dirt: mud off wet ground and dust off dry, thrown up by the wheels
+        // the faster it goes; wading the sea washes it off, and the rain rinses it slowly. The
+        // mud stays dark while fresh or rained on and dries pale over a few minutes.
+        {
+            const BikeVec velocity = quad_.Velocity();
+            const float speed = std::min(std::hypot(velocity.x, velocity.z), 12.0f);
+            float gain = 0.0f, wash = 0.0f, freshen = 0.0f;
+            for (const auto& wheel : wheels) {
+                if (wheel.waterDepth > 0.15f) wash += 0.05f;
+                if (!wheel.down || wheel.waterDepth >= 0.05f) continue;
+                if (wheel.wet) { gain += 0.0008f * speed; freshen += 0.25f; }
+                else if (wheel.dusty) gain += 0.0002f * speed;
+            }
+            const float rain = weather_now::Current().rain;
+            quadDirt_ = std::clamp(quadDirt_ + deltaSeconds * (gain - wash - 0.004f * rain), 0.0f, 1.0f);
+            if ((freshen > 0.0f && speed > 0.5f) || rain > 0.3f) quadDirtWet_ = std::min(1.0f, quadDirtWet_ + deltaSeconds * 0.5f);
+            else quadDirtWet_ = std::max(0.0f, quadDirtWet_ - deltaSeconds / 300.0f);
+        }
         tyreTracks_.Update(deltaSeconds, wheels);
         wheelDust_.Update(deltaSeconds, wheels, quad_.Velocity(), wind::DirectionX, wind::DirectionZ);
         wheelSpray_.Update(deltaSeconds, wheels, quad_.Velocity(), wind::DirectionX, wind::DirectionZ);
@@ -5515,6 +5533,7 @@ namespace island
             GpuDiagnosticScope gpuPass("quad-bike");
             const bool seated = riding_ && !quad_.Overturned();
             const bool avatar = seated && quadRider_ && quadRider_->Available();
+            quadRenderer_->SetDirt(quadDirt_, quadDirtWet_);
             quadRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, quad_, quadEngineOn_, seated && !avatar);
             if (avatar) quadRider_->Draw(cameraView_, cameraProjection_, quad_);
         }
