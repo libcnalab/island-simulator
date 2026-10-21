@@ -2478,6 +2478,18 @@ namespace island
             "island-simulator: a humpback's blow stands up five metres far offshore, drifts downwind and thins away", WhalePod::PuffCount);
         whaleBlowRenderer_->SetRange(700.0f, 200.0f, 2.2f);
         mistBankRenderer_ = std::make_unique<MistBankRenderer>(device, MorningMistField::MaximumSites);
+        summitCloudRenderer_ = std::make_unique<MistBankRenderer>(device, SummitCloudField::Count, 1000.0f, 0.6f, 215.0f,
+            "island-simulator: a cloud cap forms on the summit in moist air, hugging the top and dissolving in its lee");
+        {
+            // the cap sits on the island's highest ground
+            float bestX = 0.0f, bestZ = 0.0f, best = -1.0e9f;
+            for (float z = -250.0f; z <= 250.0f; z += 2.0f)
+                for (float x = -250.0f; x <= 250.0f; x += 2.0f) {
+                    const float h = terrain_.Height(x, z);
+                    if (h > best) { best = h; bestX = x; bestZ = z; }
+                }
+            summitCloud_.SetSummit(bestX, best, bestZ);
+        }
         std::cout << "island-simulator: morning mist: " << morningMist_->SiteCount() << " sites on the low damp ground\n";
         try {
             localLights_ = std::make_unique<LocalLightRenderer>(device);
@@ -3214,6 +3226,9 @@ namespace island
         UpdateQuad(deltaSeconds);
         whales_.Update(deltaSeconds, wind::DirectionX, wind::DirectionZ);
         sailboat_.Update(deltaSeconds);
+        summitCloud_.Update(deltaSeconds, SummitCloudField::Cover(weather_now::Current().cloudCover,
+                                                                  weather_now::Current().rain, dayNight_.Hour()),
+                            wind::DirectionX, wind::DirectionZ, weather_now::Current().wind);
         if (morningMist_)
             morningMist_->Update(deltaSeconds, MorningMistField::Thickness(dayNight_.Hour(), weather_now::Current().wind,
                                                                            weather_now::Current().rain),
@@ -5810,6 +5825,7 @@ namespace island
             if (wheelSprayRenderer_) wheelSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,wheelSpray_.Puffs());
             // the morning mist last of the translucent things, over everything solid it lies among
             if (mistBankRenderer_ && morningMist_) mistBankRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,morningMist_->Puffs());
+            if (summitCloudRenderer_) summitCloudRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,summitCloud_.Puffs());
         }
         {
             // The hour: the scene graded (golden hours, a dark blue night), then the stars and

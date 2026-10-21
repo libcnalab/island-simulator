@@ -233,6 +233,23 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 294 (2026-10-21) — a cloud cap on the summit
+
+High tropical islands wear a cloud on their top: moist trade-wind air forced up the windward
+slope condenses near the summit and dissolves again in its lee. `SummitCloudField`
+(header-only, deterministic in its clock) keeps 18 puffs, 18-34 m across, riding the wind over
+the island's highest ground (found at start by scanning the terrain): each is born 70 m upwind,
+thickens as it climbs to the top, sits from 3 m below the summit to 6 m above it and thins away
+over 90 m in the lee, on its own cycle, carried at 2.2 m/s times the wind. How much cap there is
+follows the moisture: none in clear weather, a few puffs on a fair day, a heavy hood under
+overcast and in rain, more about dawn. It is drawn by a second `MistBankRenderer`, now with its
+draw distance (1000 m), flattening (0.6), opacity (215, the banks keep 125) and diagnostic as
+constructor parameters. A first cap of fainter puffs floating 6-18 m above the top read as a
+smudge in the sky; the denser, lower puffs sit on the summit as a soft white cloud in
+`overview`, and under overcast it merges into the grey as low cloud does. `overview` (fair and
+overcast), `beach` overcast, `east` at dawn, `lookout` and `east` pass, and the tests. (The
+capture sweep after passes 268-293: 114 of 116 pass, the same two known exceptions.)
+
 ## Loop pass 293 (2026-10-21) — rain glitters in the lamps at night
 
 At night the rain streaks, drawn before the grade like the rest of the scene, came out as

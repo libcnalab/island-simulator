@@ -27,20 +27,20 @@ namespace island
         constexpr int VerticesPerPuff = Segments * 3 * 3;
     }
 
-    MistBankRenderer::MistBankRenderer(GraphicsDevice& device, const std::size_t capacity)
+    MistBankRenderer::MistBankRenderer(GraphicsDevice& device, const std::size_t capacity, const float drawDistance,
+                                       const float flatten, const float opacity, const char* diagnostic)
         : device_(device), effect_(std::make_unique<BasicEffect>(device)),
           vertices_(std::make_unique<DynamicVertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(),
                                                           VerticesPerPuff * static_cast<int>(std::max<std::size_t>(capacity, 1)),
                                                           BufferUsage::WriteOnly)),
-          capacity_(std::max<std::size_t>(capacity, 1))
+          capacity_(std::max<std::size_t>(capacity, 1)), drawDistance_(drawDistance), flatten_(flatten), opacity_(opacity)
     {
         staging_.reserve(static_cast<std::size_t>(VerticesPerPuff) * capacity_);
         effect_->setVertexColorEnabledProperty(true);
         effect_->setLightingEnabledProperty(false);
         effect_->setFogEnabledProperty(false);
-        const char* message = "island-simulator: morning mist lies in banks over the stream's valley, the wetland and the coastal flats at first light and burns off as the sun climbs";
-        std::cout << message << '\n';
-        MirrorRuntimeDiagnosticToPlatformLog(message);
+        std::cout << diagnostic << '\n';
+        MirrorRuntimeDiagnosticToPlatformLog(diagnostic);
     }
 
     MistBankRenderer::~MistBankRenderer() = default;
@@ -61,7 +61,7 @@ namespace island
             const Vector3 centre(puff.x, puff.y, puff.z);
             Vector3 toCamera = camera - centre;
             const float distance = toCamera.Length();
-            if (distance > DrawDistance || distance < 0.5f) continue;
+            if (distance > drawDistance_ || distance < 0.5f) continue;
             toCamera /= distance;
             Vector3 right = Vector3::Cross(Vector3::Up, toCamera);
             if (right.LengthSquared() < 1e-6f) right = Vector3::UnitX;
@@ -69,8 +69,8 @@ namespace island
             const Vector3 up = Vector3::Cross(toCamera, right);
             // faint up close (a walker inside the bank sees through it), fullest at a distance
             const float near = std::clamp((distance - puff.size * 0.6f) / (puff.size * 2.5f), 0.15f, 1.0f);
-            const float far = 1.0f - std::clamp((distance - DrawDistance * 0.7f) / (DrawDistance * 0.3f), 0.0f, 1.0f);
-            const int alpha = static_cast<int>(std::lround(125.0f * std::clamp(puff.density, 0.0f, 1.0f) * near * far));
+            const float far = 1.0f - std::clamp((distance - drawDistance_ * 0.7f) / (drawDistance_ * 0.3f), 0.0f, 1.0f);
+            const int alpha = static_cast<int>(std::lround(opacity_ * std::clamp(puff.density, 0.0f, 1.0f) * near * far));
             if (alpha < 2) continue;
             const Color core(222 * alpha / 255, 228 * alpha / 255, 232 * alpha / 255, alpha);
             const int mid = alpha * 11 / 20;
@@ -78,7 +78,7 @@ namespace island
             // wider than tall: mist lies in banks
             const auto at = [&](int s, float r) {
                 return centre + right * (cosines[static_cast<std::size_t>(s)] * puff.size * r)
-                    + up * (sines[static_cast<std::size_t>(s)] * puff.size * r * 0.45f);
+                    + up * (sines[static_cast<std::size_t>(s)] * puff.size * r * flatten_);
             };
             for (int s = 0; s < Segments; ++s) {
                 staging_.emplace_back(centre, core);

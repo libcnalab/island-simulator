@@ -18,6 +18,7 @@
 #include "IslandSimulator/MorningMistField.hpp"
 #include "IslandSimulator/WhaleRenderer.hpp"
 #include "IslandSimulator/SailboatRenderer.hpp"
+#include "IslandSimulator/SummitCloudField.hpp"
 #include "IslandSimulator/SunbeamMoteRenderer.hpp"
 #include "IslandSimulator/EaveDripRenderer.hpp"
 #include "IslandSimulator/RainSplashRenderer.hpp"
@@ -561,7 +562,8 @@ namespace island
         std::vector<RodentState> awakeRodents_;
         std::unique_ptr<FireflyRenderer> fireflyRenderer_;
         std::unique_ptr<MorningMistField> morningMist_;
-        std::unique_ptr<MistBankRenderer> mistBankRenderer_;
+        std::unique_ptr<MistBankRenderer> mistBankRenderer_, summitCloudRenderer_;
+        SummitCloudField summitCloud_{};
         WhalePod whales_{};
         std::unique_ptr<WhaleRenderer> whaleRenderer_;
         SailboatPassage sailboat_{};
