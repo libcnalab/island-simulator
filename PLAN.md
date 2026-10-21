@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 395 (2026-10-21) — the animals' and the walker's contact shadows drape on the drawn ground
+
+The contact-shadow batch's moving part (pass 377) is rebuilt every frame while the monkeys, boars,
+goats or the walker move, and each of their soft ellipses was draped point by point on the
+analytic terrain (17 IslandTerrain::Height calls an ellipse): this was most of the pass's 1.3-2.9
+ms in the operator's sessions before the ruts' cost appeared. ContactShadowRenderer now takes the
+shared drawn surface (IslandGame::drawnGround_, created before it) and drapes the moving ellipses
+with DrawnOrAnalyticHeight; the static patches, built once, keep the analytic terrain. `boars`
+(70 pixels) and `goats` (5 pixels) differ only where a shadow now follows the drawn mesh; the
+tests pass.
+
 ## Loop pass 394 (2026-10-21) — every per-frame ground mark and shadow lies on the drawn ground
 
 After the ruts (pass 393), the other marks and shadows rebuilt every frame still took the analytic

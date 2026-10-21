@@ -21,6 +21,7 @@ namespace Microsoft::Xna::Framework::Graphics
 namespace island
 {
     class IslandTerrain;
+    class RenderedTerrainSurface;
     class JungleLayout;
     class NaturalPropLayout;
     class ShipwreckLayout;
@@ -49,7 +50,8 @@ namespace island
             const JungleLayout& jungle, const NaturalPropLayout& naturalProps,
             const ShipwreckLayout& shipwreck,
             float maximumDistanceScale = 1.0f, const HutPlacement* hut = nullptr,
-            const HelicopterPlacement* helicopter = nullptr);
+            const HelicopterPlacement* helicopter = nullptr,
+            const RenderedTerrainSurface* ground = nullptr);   // the moving shadows' surface
         ~ContactShadowRenderer();
 
         ContactShadowRenderer(const ContactShadowRenderer&) = delete;
@@ -135,6 +137,7 @@ namespace island
 
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
         const IslandTerrain& terrain_;
+        const RenderedTerrainSurface* ground_ = nullptr;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> vertices_;
         std::vector<StaticShadow> staticShadows_;

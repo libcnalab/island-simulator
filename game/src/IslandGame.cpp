@@ -2339,11 +2339,14 @@ namespace island
             device, terrain_, *canopyLighting, bunkerLayout_);
         distantSceneryRenderer_ = std::make_unique<DistantSceneryRenderer>(
             device, distantSceneryLayout_);
+        // The per-frame ground marks and shadows lie on the drawn mesh: its height costs ~10 ns,
+        // the analytic terrain's microseconds a vertex.
+        drawnGround_=std::make_unique<RenderedTerrainSurface>(terrain_);
         contactShadowRenderer_ = std::make_unique<ContactShadowRenderer>(
             device, terrain_, vegetationLayout_, jungleLayout_, naturalPropLayout_,
             shipwreckLayout_, qualityProfile_.contactShadowDistanceScale,
             hutPlacement_?&*hutPlacement_:nullptr,
-            helicopterPlacement_?&*helicopterPlacement_:nullptr);
+            helicopterPlacement_?&*helicopterPlacement_:nullptr, drawnGround_.get());
         constexpr auto coastalShadowDiagnostic =
             "island-simulator: coastal contact patches follow rendered seabed triangles in the existing batch";
         std::cout << coastalShadowDiagnostic << '\n';
@@ -2541,9 +2544,6 @@ namespace island
         streamDriftRenderer_=std::make_unique<StreamDriftRenderer>(device);
         streamFishRenderer_=std::make_unique<StreamFishRenderer>(device);
         hatchlingRenderer_=std::make_unique<HatchlingRenderer>(device);
-        // The per-frame ground marks and shadows lie on the drawn mesh: its height costs ~10 ns,
-        // the analytic terrain's microseconds a vertex.
-        drawnGround_=std::make_unique<RenderedTerrainSurface>(terrain_);
         birdShadowRenderer_=std::make_unique<BirdShadowRenderer>(device,terrain_,*drawnGround_);
         seabedShadowRenderer_=std::make_unique<SeabedShadowRenderer>(device,terrain_,*drawnGround_);
         cascadeMistRenderer_=std::make_unique<CascadeMistRenderer>(device);

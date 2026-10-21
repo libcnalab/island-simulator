@@ -1,4 +1,5 @@
 #include "IslandSimulator/ContactShadowRenderer.hpp"
+#include "IslandSimulator/RenderedTerrainSurface.hpp"
 
 #include <algorithm>
 #include <array>
@@ -91,8 +92,9 @@ namespace island
                            0, 255));
         }
 
+        template <class GroundHeight>
         void AppendTerrainEllipse(std::vector<VertexPositionColor>& vertices,
-                                  const IslandTerrain& terrain,
+                                  const GroundHeight& groundHeight,
                                   const float x, const float z,
                                   const float forwardX, const float forwardZ,
                                   const float forwardRadius, const float sideRadius,
@@ -103,7 +105,7 @@ namespace island
             const float centreZ = z + offsetZ;
             const float sideX = -forwardZ;
             const float sideZ = forwardX;
-            const Vector3 centre(centreX, terrain.Height(centreX, centreZ) + SurfaceOffset,
+            const Vector3 centre(centreX, groundHeight(centreX, centreZ) + SurfaceOffset,
                                  centreZ);
             const Color centreColor(0, 0, 0, static_cast<int>(centreAlpha));
             const Color edgeColor(0, 0, 0, 0);
@@ -118,7 +120,7 @@ namespace island
                 const float edgeX = centreX + forwardX * along + sideX * across;
                 const float edgeZ = centreZ + forwardZ * along + sideZ * across;
                 edgePoints[static_cast<std::size_t>(segment)] = Vector3(
-                    edgeX, terrain.Height(edgeX, edgeZ) + SurfaceOffset, edgeZ);
+                    edgeX, groundHeight(edgeX, edgeZ) + SurfaceOffset, edgeZ);
             }
             for (int segment = 0; segment < EllipseSegments; ++segment) {
                 const int nextSegment = (segment + 1) % EllipseSegments;
@@ -150,9 +152,10 @@ namespace island
         const VegetationLayout& vegetation, const JungleLayout& jungle,
         const NaturalPropLayout& naturalProps, const ShipwreckLayout& shipwreck,
         const float maximumDistanceScale, const HutPlacement* hut,
-        const HelicopterPlacement* helicopter)
+        const HelicopterPlacement* helicopter, const RenderedTerrainSurface* ground)
         : device_(device),
           terrain_(terrain),
+          ground_(ground),
           effect_(std::make_unique<BasicEffect>(device)),
           monkeyMaximumDistance_(MonkeyMaximumDistance * maximumDistanceScale)
     {
@@ -180,7 +183,7 @@ namespace island
                                         const float forwardOffset,
                                         const std::uint8_t centreAlpha) {
             const std::size_t firstVertex = staticVertices_.size();
-            AppendTerrainEllipse(staticVertices_, terrain_, x, z, forwardX, forwardZ,
+            AppendTerrainEllipse(staticVertices_, [this](const float hx, const float hz) { return terrain_.Height(hx, hz); }, x, z, forwardX, forwardZ,
                                  forwardRadius, sideRadius, forwardX*forwardOffset,
                                  forwardZ*forwardOffset, centreAlpha);
             staticShadows_.push_back({Vector3(x, y, z), radius, maximumDistance,
@@ -264,7 +267,7 @@ namespace island
             const float axisX=std::cos(yaw),axisZ=std::sin(yaw);
             const float castLength=height*horizontalSunLength/environment::SunDirectionY;
             const std::size_t first=staticVertices_.size();
-            AppendTerrainEllipse(staticVertices_,terrain_,x,z,axisX,axisZ,
+            AppendTerrainEllipse(staticVertices_,[this](const float hx,const float hz){return terrain_.Height(hx,hz);},x,z,axisX,axisZ,
                 halfLength+castLength*.24f,halfWidth+castLength*.18f,
                 shadowDirectionX*castLength*.5f,shadowDirectionZ*castLength*.5f,alpha);
             staticShadows_.push_back({Vector3(x,y,z),halfLength+castLength,
@@ -314,6 +317,11 @@ namespace island
         const PlayerShadow& player)
     {
         const auto snakes=population.Snakes();
+        // The moving shadows are draped afresh at every rebuild (every frame while the animals
+        // move): on the drawn mesh, ~10 ns a point, not the analytic terrain's microseconds.
+        const auto movingHeight = [this](const float x, const float z) {
+            return ground_ ? DrawnOrAnalyticHeight(*ground_, terrain_, x, z) : terrain_.Height(x, z);
+        };
         drawCallCount_ = 0;
         if (monkeys.size() > MonkeyTroop::MonkeyCount || boars.size() > BoarHerd::BoarCount
             || goats.size()>GoatHabitat::Count || spiders.size()>SpiderHabitat::GroundCount) {
@@ -513,7 +521,7 @@ namespace island
                 }
                 const float elevation=std::max(0.0f,centre.y-monkey.y-.72f*monkey.scale);
                 fade*=std::clamp(1-elevation/3.0f,0.0f,1.0f);
-                AppendTerrainEllipse(stagingVertices_, terrain_, centre.x, centre.z,
+                AppendTerrainEllipse(stagingVertices_, movingHeight, centre.x, centre.z,
                                      shadowDirectionX, shadowDirectionZ,
                                      0.62f * monkey.scale, 0.38f * monkey.scale,
                                      shadowDirectionX*0.12f*monkey.scale,
@@ -525,7 +533,7 @@ namespace island
                 float fade = 0.0f;
                 if (!IsVisible(frustum, cameraPosition, boar.x, boar.y, boar.z,
                                1.3f * boar.scale, monkeyMaximumDistance_, fade)) continue;
-                AppendTerrainEllipse(stagingVertices_, terrain_, boar.x, boar.z,
+                AppendTerrainEllipse(stagingVertices_, movingHeight, boar.x, boar.z,
                                      std::cos(boar.headingRadians), std::sin(boar.headingRadians),
                                      1.05f * boar.scale, 0.48f * boar.scale,
                                      std::cos(boar.headingRadians)*0.10f*boar.scale,
@@ -538,7 +546,7 @@ namespace island
                 float fade=0;
                 if(!IsVisible(frustum,cameraPosition,goat.x,goat.y,goat.z,1.8f*goat.scale,
                     monkeyMaximumDistance_,fade))continue;
-                AppendTerrainEllipse(stagingVertices_,terrain_,goat.x,goat.z,
+                AppendTerrainEllipse(stagingVertices_,movingHeight,goat.x,goat.z,
                     std::cos(goat.heading),std::sin(goat.heading),
                     .70f*goat.scale,.30f*goat.scale,
                     std::cos(goat.heading)*.08f*goat.scale,
@@ -548,7 +556,7 @@ namespace island
             if (player.visible) {
                 // A standing walker under the 55-degree fixed sun casts about 1.2 m of shadow
                 // in the shadow direction; this soft ellipse grounds the first-person body.
-                AppendTerrainEllipse(stagingVertices_, terrain_, player.x, player.z,
+                AppendTerrainEllipse(stagingVertices_, movingHeight, player.x, player.z,
                                      shadowDirectionX, shadowDirectionZ, 0.80f, 0.30f,
                                      shadowDirectionX * 0.62f, shadowDirectionZ * 0.62f, 74);
                 ++visiblePlayerShadowCount_;
