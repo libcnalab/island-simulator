@@ -114,6 +114,29 @@ namespace island
             AddTriangle(vertices, a, c, d, color);
         }
 
+        // The shared wildlife facet light, taken at a corner's own surface normal instead of the
+        // facet's, so a rounded part shades smoothly while each quad keeps its own pigment
+        // (its scale): lit per facet the barrel, skull and tail read as low-poly blocks.
+        [[nodiscard]] Color CornerLit(const Color& color, const Vector3& normal)
+        {
+            const float directLight = std::max(0.0f, Vector3::Dot(normal, wildlife_render::FixedSunDirection));
+            const float skyFill = std::max(0.0f, normal.Y);
+            return wildlife_render::ScaleColor(color, 0.72f + directLight * 0.30f + skyFill * 0.06f);
+        }
+
+        void AddSmoothQuad(std::vector<VertexPositionColor>& vertices,
+                           const Vector3& a, const Vector3& b, const Vector3& c, const Vector3& d,
+                           const Vector3& na, const Vector3& nb, const Vector3& nc, const Vector3& nd,
+                           const Color& color)
+        {
+            vertices.emplace_back(a, CornerLit(color, na));
+            vertices.emplace_back(b, CornerLit(color, nb));
+            vertices.emplace_back(c, CornerLit(color, nc));
+            vertices.emplace_back(a, CornerLit(color, na));
+            vertices.emplace_back(c, CornerLit(color, nc));
+            vertices.emplace_back(d, CornerLit(color, nd));
+        }
+
         void AddDoubleTriangle(std::vector<VertexPositionColor>& vertices,
                                const Vector3& a, const Vector3& b, const Vector3& c,
                                const Color& color)
@@ -144,6 +167,12 @@ namespace island
                         return Local(centre,axes,std::cos(v)*std::cos(u)*radiusX,
                             std::sin(v)*radiusY,std::cos(v)*std::sin(u)*radiusZ,scale);
                     };
+                    const auto normal=[&](const float u,const float v) {
+                        Vector3 n=axes.right*(std::cos(v)*std::cos(u)/radiusX)+axes.up*(std::sin(v)/radiusY)
+                            +axes.forward*(std::cos(v)*std::sin(u)/radiusZ);
+                        if(n.LengthSquared()>1.0e-12f) n.Normalize(); else n=axes.up;
+                        return n;
+                    };
                     const Color base=(v0+v1)*.5f>0?upper:lower;
                     // Two incommensurate row/column waves produce bounded irregular
                     // quadrilateral scale fields without another texture, vertex or draw.
@@ -152,8 +181,8 @@ namespace island
                         +.32f*std::cos((ring+1)*4.03f-(segment+1)*1.43f
                                       +pigmentSeed*1.27f);
                     const Color color=ScalePigment(base,1.0f+pigmentVariation*patch);
-                    AddQuad(vertices,surface(u0,v0),surface(u0,v1),surface(u1,v1),
-                            surface(u1,v0),color);
+                    AddSmoothQuad(vertices,surface(u0,v0),surface(u0,v1),surface(u1,v1),surface(u1,v0),
+                                  normal(u0,v0),normal(u0,v1),normal(u1,v1),normal(u1,v0),color);
                 }
             }
         }
@@ -202,8 +231,18 @@ namespace island
                     +axes.up*(std::sin(angle1)*heightB);
                 const float patch=.66f*std::sin((i+1)*2.43f+pigmentSeed*.83f)
                     +.34f*std::cos((i+1)*4.19f-pigmentSeed*1.31f);
-                AddQuad(vertices,a0,a1,b1,b0,
-                        ScalePigment(color,1.0f+pigmentVariation*patch));
+                // the ring's own outward normals (its elliptical section), the length's slope
+                // ignored: the segments are short and nearly level
+                const auto ringNormal=[&](const float angle,const float width,const float height) {
+                    Vector3 n=axes.right*(std::cos(angle)/std::max(width,1.0e-4f))
+                        +axes.up*(std::sin(angle)/std::max(height,1.0e-4f));
+                    if(n.LengthSquared()>1.0e-12f) n.Normalize(); else n=axes.up;
+                    return n;
+                };
+                AddSmoothQuad(vertices,a0,a1,b1,b0,
+                              ringNormal(angle0,widthA,heightA),ringNormal(angle1,widthA,heightA),
+                              ringNormal(angle1,widthB,heightB),ringNormal(angle0,widthB,heightB),
+                              ScalePigment(color,1.0f+pigmentVariation*patch));
             }
         }
 

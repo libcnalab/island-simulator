@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 339 (2026-10-21) — the crocodile shades round
+
+Like the turtle's shell before pass 335, the crocodile's barrel, shoulders, skull, snout, jaw and
+tail were lit flat per facet, and read up close as low-poly blocks. Their ellipsoids and the
+elliptical tail and jaw segments now light each corner by the surface's own normal there (the
+same light terms, `CornerLit`), while each quad keeps its own pigment, so the reticulated scale
+pattern and the plates stay and the body rounds. The scutes, teeth, eyes and limbs are unchanged.
+`crocodiles`, `wetland` and the tests pass.
+
 ## Loop pass 338 (2026-10-21) — trodden sand on the dry beach
 
 From a standing eye (`distant`) the dry upper beach read as one smooth yellow plane: its only
