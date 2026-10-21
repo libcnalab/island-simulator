@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 289 (2026-10-21) — the frogs and the lizards keep their hours
+
+The night chorus already called from frogs the eye saw just as many of by day, and the basking
+lizards stayed out on the ground all night. At draw time, as the day fliers already do (pass
+257): the day geckos and the skinks go to their crevices one by one as the sun goes down (the
+dark only, not the rain); the frogs keep the opposite hours, a third of them basking by the
+water by day and the rest hidden in the wet bank, all out at night or in the rain (the larger
+of the night and 0.8 times the wetness); the close-up's frog always stays. `stream` at 14:00
+now shows 2 of its 12 frogs (7 before) and at 21:30 all 7 in view, with no geckos or skinks;
+`frogs`, `geckos` and `skinks` (at 14:00) pass, and the tests.
+
 ## Loop pass 288 (2026-10-21) — the puddles, the stream and the wet sand mirror the hour's sky
 
 As the sea now does (pass 287), the other mirrors take the hour's sky: the terrain's rain

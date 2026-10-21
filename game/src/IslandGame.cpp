@@ -5562,18 +5562,33 @@ namespace island
             const auto butterflies = awake(butterflyMeadow_.Butterflies(), awakeButterflies_);
             const auto dragonflies = awake(dragonflySwarm_.Dragonflies(), awakeDragonflies_);
             const auto flies = awake(flySwarms_.Flies(), awakeFlies_);
+            // The day geckos and the skinks are basking lizards: they go to their crevices at dusk
+            // as the fliers go to the leaves (the dark only, not the rain).
+            const float sundown = std::clamp((-sun_light::Current().lighting.sunElevationDegrees + 1.0f) / 6.0f, 0.0f, 1.0f);
+            allGeckos_.clear();
+            for (std::size_t i = 0; i < geckoPopulation_.Geckos().size(); ++i)
+                if (sundown <= 0.0f || static_cast<float>((i * 37U) % 100U) / 100.0f >= sundown) allGeckos_.push_back(geckoPopulation_.Geckos()[i]);
+            awakeSkinks_.clear();
+            for (std::size_t i = 0; i < skinkPopulation_.Skinks().size(); ++i)
+                if (sundown <= 0.0f || static_cast<float>((i * 37U) % 100U) / 100.0f >= sundown) awakeSkinks_.push_back(skinkPopulation_.Skinks()[i]);
+            const float night = 1.0f - std::clamp((sun_light::Current().lighting.sunElevationDegrees + 4.0f) / 12.0f, 0.0f, 1.0f);
+            // The frogs keep the other hours: by day most hide in the wet bank and a few bask
+            // by the water; at night, or in the rain, they are all out (the close-up's stays).
+            const float frogsOut = std::max(night, 0.8f * weather_now::Current().wetness);
+            awakeFrogs_.clear();
+            for (std::size_t i = 0; i < frogPopulation_.Frogs().size(); ++i)
+                if (i == 1U || static_cast<float>((i * 53U + 17U) % 100U) / 100.0f < 0.35f + 0.65f * frogsOut)
+                    awakeFrogs_.push_back(frogPopulation_.Frogs()[i]);
             // At night two house geckos come out on the hut's wall by the lantern.
-            allGeckos_.assign(geckoPopulation_.Geckos().begin(), geckoPopulation_.Geckos().end());
             if (hutPlacement_) {
-                const float night = 1.0f - std::clamp((sun_light::Current().lighting.sunElevationDegrees + 4.0f) / 12.0f, 0.0f, 1.0f);
                 if (night > 0.45f)
                     for (const auto& gecko : hut_geckos::At(*hutPlacement_, timeSeconds, night)) allGeckos_.push_back(gecko);
             }
             butterflyRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
                                      butterflies,
                                      butterflyMeadow_.FlowerPatches(),
-                                     allGeckos_, skinkPopulation_.Skinks(),
-                                     dragonflies, frogPopulation_.Frogs(),
+                                     allGeckos_, awakeSkinks_,
+                                     dragonflies, awakeFrogs_,
                                      rodentPopulation_.Rodents(), flies,
                                      antTrails_.Ants(), cicadaColony_.Cicadas(),
                                      beetlePopulation_.Beetles());
