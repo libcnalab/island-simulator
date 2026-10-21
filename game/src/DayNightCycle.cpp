@@ -112,6 +112,20 @@ namespace island
 
         const State& Current() noexcept { return Mutable(); }
 
+        SkyScales SkyScalesOf(const DayLighting& lighting) noexcept
+        {
+            static const DayLighting day = DayNightCycle::LightingAt(DayNightCycle::DefaultHour, 2.0f);
+            const auto ratio = [](const float target, const float daytime, const float grade) {
+                return target / std::max(daytime, 1e-3f) / std::max(grade, 0.02f);
+            };
+            return {{ratio(lighting.skyHorizon.x, day.skyHorizon.x, lighting.grade.x),
+                     ratio(lighting.skyHorizon.y, day.skyHorizon.y, lighting.grade.y),
+                     ratio(lighting.skyHorizon.z, day.skyHorizon.z, lighting.grade.z)},
+                    {ratio(lighting.skyZenith.x, day.skyZenith.x, lighting.grade.x),
+                     ratio(lighting.skyZenith.y, day.skyZenith.y, lighting.grade.y),
+                     ratio(lighting.skyZenith.z, day.skyZenith.z, lighting.grade.z)}};
+        }
+
         void Set(const DayLighting& lighting) noexcept
         {
             State& state = Mutable();

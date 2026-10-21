@@ -421,20 +421,12 @@ void main()
             const auto& light = sun_light::Current().lighting;
             const Vector3 sun = Vector3::Normalize(Vector3(light.toSun.x, light.toSun.y, light.toSun.z));
             customEffect_->SetUniformVec3("uSunDirection", sun.X, sun.Y, sun.Z);
-            const auto day = DayNightCycle::LightingAt(DayNightCycle::DefaultHour, 2.0f);
-            const auto ratio = [](const float target, const float daytime, const float grade) {
-                return target / std::max(daytime, 1e-3f) / std::max(grade, 0.02f);
-            };
-            customEffect_->SetUniformVec4("uSkyHorizonScale",
-                ratio(light.skyHorizon.x, day.skyHorizon.x, light.grade.x),
-                ratio(light.skyHorizon.y, day.skyHorizon.y, light.grade.y),
-                ratio(light.skyHorizon.z, day.skyHorizon.z, light.grade.z), light.sunVisibility);
+            const auto scales = sun_light::SkyScalesOf(light);
+            customEffect_->SetUniformVec4("uSkyHorizonScale", scales.horizon.x, scales.horizon.y, scales.horizon.z,
+                                          light.sunVisibility);
             customEffect_->SetUniformVec2("uWeatherSky", std::max(weather_now::Current().cloudCover, 0.0f),
                                           weather_now::Current().rain);
-            customEffect_->SetUniformVec3("uSkyZenithScale",
-                ratio(light.skyZenith.x, day.skyZenith.x, light.grade.x),
-                ratio(light.skyZenith.y, day.skyZenith.y, light.grade.y),
-                ratio(light.skyZenith.z, day.skyZenith.z, light.grade.z));
+            customEffect_->SetUniformVec3("uSkyZenithScale", scales.zenith.x, scales.zenith.y, scales.zenith.z);
             customEffect_->SetUniformFloat("uCloudDriftRadians",sky_cloud::DriftAngle(timeSeconds));
         } else {
             fallbackEffect_->setWorldProperty(Matrix::CreateScale(SkyRadius)

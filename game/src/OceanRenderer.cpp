@@ -138,6 +138,7 @@ uniform vec3 uFishSplash;   // a fish breaking the surface: point x, z and ring 
 uniform vec4 uJettyLine;    // deck root x, z and unit direction out to sea (zero: no jetty)
 uniform vec4 uCoastalOptics;
 uniform vec3 uGlint;   // the glint's colour and strength (the sun out, or the moon)
+uniform vec3 uSkyHorizonScale, uSkyZenithScale;   // the hour's sky against the afternoon's (the sky shader's)
 uniform vec4 uSurfaceAppearance;
 uniform float uSeabedExtent;   // half the terrain mesh's square, where the seabed ends
 
@@ -207,7 +208,8 @@ void main()
     float fresnel = 0.025 + 0.975 * pow(1.0 - viewFacing, 5.0);
     vec3 reflected = reflect(-toEye, normal);
     float horizon = pow(1.0 - clamp(reflected.y, 0.0, 1.0), 1.7);
-    vec3 reflectedSky = mix(vec3(0.22, 0.60, 0.82), vec3(0.72, 0.89, 0.95), horizon);
+    // the sky the sea mirrors is the hour's: pink at dusk, deep blue at night
+    vec3 reflectedSky = mix(vec3(0.22, 0.60, 0.82) * uSkyZenithScale, vec3(0.72, 0.89, 0.95) * uSkyHorizonScale, horizon);
 
     vec3 deepWater = vec3(0.015, 0.245, 0.385);
     vec3 lagoonWater = vec3(0.070, 0.625, 0.610);
@@ -665,6 +667,9 @@ void main()
                 const float moon = (1.0f - sun) * std::clamp(light.moonLight, 0.0f, 1.0f) * 0.45f;
                 customEffect_->SetUniformVec3("uGlint", 1.00f * sun + 0.62f * moon, 0.91f * sun + 0.68f * moon,
                                               0.68f * sun + 0.80f * moon);
+                const auto scales = sun_light::SkyScalesOf(light);
+                customEffect_->SetUniformVec3("uSkyHorizonScale", scales.horizon.x, scales.horizon.y, scales.horizon.z);
+                customEffect_->SetUniformVec3("uSkyZenithScale", scales.zenith.x, scales.zenith.y, scales.zenith.z);
             }
             customEffect_->SetUniformFloat("uSeabedExtent", TerrainMeshLayout::Extent);
             customEffect_->SetUniformVec4("uCoastalOptics", CoastalWaterOptics::ExtinctionPerMetre,

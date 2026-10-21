@@ -95,6 +95,11 @@ namespace island
         };
         [[nodiscard]] DayVec3 ShadingDirection(const DayLighting& lighting) noexcept;
         [[nodiscard]] const State& Current() noexcept;
+        /** @brief The hour's sky against the reference afternoon's, divided by the night grade so
+         *  what is drawn before the grade comes out at the hour's sky colour after it: the sky's
+         *  horizon and zenith scales, which the sea's reflected sky shares. */
+        struct SkyScales { DayVec3 horizon, zenith; };
+        [[nodiscard]] SkyScales SkyScalesOf(const DayLighting& lighting) noexcept;
         void Set(const DayLighting& lighting) noexcept;
         /** @brief The shading direction scaled to the former constant's length, so at 14:00 the
          *  uploaded uniform equals environment::SunDirection exactly. */

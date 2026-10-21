@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 287 (2026-10-21) — the sea mirrors the hour's sky
+
+Under a pink dusk sky the far sea still showed a band of afternoon blue: the ocean's reflected
+sky was two fixed blues, graded with the frame like everything else, while the sky itself is
+drawn at the hour's colours (its horizon and zenith scaled against the reference afternoon and
+divided by the grade). `sun_light::SkyScalesOf` now computes those scales once; the sky shader
+and the ocean both take them, so the sea mirrors the sky it lies under: pink and mauve at
+sunset, gold at dawn, deep blue at night, and exactly as before at the 14:00 reference.
+`jetty-end` at 18:24 shows the far water taking the pink of the sky where it was blue; at 14:00
+it is unchanged; at 21:30, `flight` at 18:12 and `water` at 06:06 pass, and the tests.
+
 ## Loop pass 286 (2026-10-21) — the caustics fade as the sun sinks
 
 At dusk (`jetty-end` at 18:24, the sun a few degrees up under a pink sky) the lagoon floor still
