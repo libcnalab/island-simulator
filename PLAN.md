@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 405 (2026-10-21) — the boars take the canopy's light at three stations, not every vertex
+
+The operator's 20:22 session showed the boars' render pass at 7.7 ms a frame with the herd close:
+BoarRenderer's ModelBuilder sampled the canopy light field (CanopyLightField::SampleReceiver) for
+every vertex of every boar, as the goats, spiders and snakes did before pass 373. It now samples
+three stations along the body (rump, barrel, head) once per boar and blends them by a point's place
+along it. `boars` differs in 75 pixels (the tint now varies smoothly along the body), its pass
+1.96 -> 1.62 ms under llvmpipe with one boar close. The tests pass.
+
 ## Loop pass 404 (2026-10-21) — a storm's cloud deck hangs in dark rolls
 
 Under a thunderstorm (`distant --weather thunderstorm`) the sky was one flat pale grey sheet (the

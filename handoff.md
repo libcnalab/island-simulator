@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 405: boar canopy tint from three body stations per boar instead of per vertex (operator saw boars 7.7 ms) (PLAN "Loop pass 405").
 - Pass 404: raining closed cloud deck gets noise rolls/billows on the cloud plane, darker base, pale under-edge band at the horizon (PLAN "Loop pass 404").
 - Pass 403: terrain puddles reflect the canopy (dark leaves, 25% sky) by canopy transmission, softer edge, troubled Fresnel (PLAN "Loop pass 403").
 - Pass 402: deer Ellipsoid/LoftTube light each corner once via a scratch grid (bit-identical) (PLAN "Loop pass 402").

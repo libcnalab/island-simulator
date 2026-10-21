@@ -54,10 +54,33 @@ namespace island
             float scale;
             const CanopyLightField& canopyLight;
 
+            // The canopy's light at three stations along the body (rump, barrel, head), blended
+            // by a point's place along it: sampled at every vertex it was most of the boars'
+            // pass (7.7 ms a frame on the operator's machine with the herd close).
+            mutable std::array<CanopyLightTint, 3> stationTints{};
+            mutable bool stationsSampled = false;
+            [[nodiscard]] CanopyLightTint TintAt(const Vector3& world) const
+            {
+                if (!stationsSampled) {
+                    for (std::size_t station = 0; station < stationTints.size(); ++station) {
+                        const Vector3 p = Point(Vector3(0.0f, 0.55f, -0.6f + 0.6f * static_cast<float>(station)));
+                        stationTints[station] = CanopyTransmissionTint(
+                            canopyLight.SampleReceiver(p.X, p.Y, p.Z, origin.Y));
+                    }
+                    stationsSampled = true;
+                }
+                const float along = Vector3::Dot(world - origin, forward) / std::max(scale, 0.01f);
+                const float t = std::clamp((along + 0.6f) / 0.6f, 0.0f, 2.0f);
+                const std::size_t index = std::min<std::size_t>(1U, static_cast<std::size_t>(t));
+                const float f = t - static_cast<float>(index);
+                const auto& a = stationTints[index];
+                const auto& b = stationTints[index + 1U];
+                return {std::lerp(a.red, b.red, f), std::lerp(a.green, b.green, f), std::lerp(a.blue, b.blue, f)};
+            }
+
             Color CanopyColor(const Vector3& world, const Color& color) const
             {
-                const auto tint = CanopyTransmissionTint(
-                    canopyLight.SampleReceiver(world.X, world.Y, world.Z, origin.Y));
+                const auto tint = TintAt(world);
                 // Retain the cool canopy cue without letting the already dark bristle
                 // albedo collapse the animal into a black silhouette.
                 constexpr float visibilityLift = .42f;
