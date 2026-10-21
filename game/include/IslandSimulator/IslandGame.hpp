@@ -554,6 +554,7 @@ namespace island
         std::vector<ButterflyState> awakeButterflies_;
         std::vector<DragonflyState> awakeDragonflies_;
         std::vector<FlyState> awakeFlies_;
+        std::vector<GeckoState> allGeckos_;   // the population's and, at night, the hut wall's
         std::unique_ptr<FireflyRenderer> fireflyRenderer_;
         std::unique_ptr<MorningMistField> morningMist_;
         std::unique_ptr<MistBankRenderer> mistBankRenderer_;

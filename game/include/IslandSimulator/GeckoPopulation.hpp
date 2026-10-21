@@ -44,6 +44,10 @@ namespace island
          *  up) the tongue comes out over the lips for a moment and is drawn in. */
         float lipLick = 0.0f;
         float scale = 1.0f;
+        /** @brief A gecko clinging to a wall: the wall's outward normal (horizontal; zero on
+         *  the ground). On a wall the heading turns from straight up the wall towards the
+         *  normal's left-hand side (the wall's tangent (normal z, 0, -normal x)). */
+        float wallNormalX = 0.0f, wallNormalZ = 0.0f;
         GeckoBehavior behavior = GeckoBehavior::Rest;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
         std::uint8_t colorVariant = 0U;

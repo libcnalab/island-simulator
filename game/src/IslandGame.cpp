@@ -14,6 +14,7 @@
 #include "IslandSimulator/WreckScourPatch.hpp"
 #include "IslandSimulator/CanopyLighting.hpp"
 #include "IslandSimulator/CampfireLighting.hpp"
+#include "IslandSimulator/HutGeckos.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
 #include "IslandSimulator/CoastalWindResponse.hpp"
 
@@ -5558,10 +5559,17 @@ namespace island
             const auto butterflies = awake(butterflyMeadow_.Butterflies(), awakeButterflies_);
             const auto dragonflies = awake(dragonflySwarm_.Dragonflies(), awakeDragonflies_);
             const auto flies = awake(flySwarms_.Flies(), awakeFlies_);
+            // At night two house geckos come out on the hut's wall by the lantern.
+            allGeckos_.assign(geckoPopulation_.Geckos().begin(), geckoPopulation_.Geckos().end());
+            if (hutPlacement_) {
+                const float night = 1.0f - std::clamp((sun_light::Current().lighting.sunElevationDegrees + 4.0f) / 12.0f, 0.0f, 1.0f);
+                if (night > 0.45f)
+                    for (const auto& gecko : hut_geckos::At(*hutPlacement_, timeSeconds, night)) allGeckos_.push_back(gecko);
+            }
             butterflyRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
                                      butterflies,
                                      butterflyMeadow_.FlowerPatches(),
-                                     geckoPopulation_.Geckos(), skinkPopulation_.Skinks(),
+                                     allGeckos_, skinkPopulation_.Skinks(),
                                      dragonflies, frogPopulation_.Frogs(),
                                      rodentPopulation_.Rodents(), flies,
                                      antTrails_.Ants(), cicadaColony_.Cicadas(),

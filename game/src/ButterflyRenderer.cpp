@@ -1,6 +1,7 @@
 #include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/ButterflyRenderer.hpp"
+#include "IslandSimulator/HutGeckos.hpp"
 
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 
@@ -37,7 +38,7 @@ namespace island
         constexpr int MaximumVerticesPerButterfly = 408;
         constexpr int MaximumFlowerVertices = 1800;
         // Headroom for the gecko's eye-lick tongue (loop 156) and the skink's tongue flick (loop 161).
-        constexpr int MaximumGeckoVertices = static_cast<int>(GeckoPopulation::Count) * 2400;
+        constexpr int MaximumGeckoVertices = static_cast<int>(GeckoPopulation::Count + hut_geckos::Count) * 2400;
         constexpr int MaximumSkinkVertices = static_cast<int>(SkinkPopulation::Count) * 1760;
         constexpr int MaximumDragonflyVertices =
             static_cast<int>(DragonflySwarm::Count) * 1500;
@@ -400,11 +401,14 @@ namespace island
             const Color eye(207, 171, 55, 255);
             const Color pupil(8, 11, 7, 255);
             const float scale = gecko.scale * std::clamp(gecko.visibility, 0.0f, 1.0f);
-            const Vector3 centre(gecko.x, gecko.y + .072f * scale, gecko.z);
-            const Vector3 forward(std::cos(gecko.headingRadians), 0,
-                                  std::sin(gecko.headingRadians));
-            const Vector3 right(-forward.Z, 0, forward.X);
-            const Vector3 up = Vector3::Up;
+            const bool onWall = gecko.wallNormalX != 0.0f || gecko.wallNormalZ != 0.0f;
+            // on the ground the body's up is the world's; on a wall it is the wall's normal
+            const Vector3 up = onWall ? Vector3::Normalize(Vector3(gecko.wallNormalX, 0.0f, gecko.wallNormalZ)) : Vector3::Up;
+            const Vector3 forward = onWall
+                ? Vector3::Up * std::cos(gecko.headingRadians) + Vector3(up.Z, 0.0f, -up.X) * std::sin(gecko.headingRadians)
+                : Vector3(std::cos(gecko.headingRadians), 0, std::sin(gecko.headingRadians));
+            const Vector3 right = Vector3::Cross(forward, up);
+            const Vector3 centre = Vector3(gecko.x, gecko.y, gecko.z) + up * (.072f * scale);
             const Vector3 body=centre;
             constexpr std::array<float,6> BodyStations={{-.24f,-.16f,-.04f,.08f,.18f,.24f}};
             constexpr std::array<float,6> BodyWidths={{.045f,.110f,.135f,.140f,.120f,.065f}};

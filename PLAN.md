@@ -233,6 +233,21 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 283 (2026-10-21) — house geckos at the lantern
+
+On tropical islands the geckos come out on the walls by any light at night to hunt the
+insects it draws. Two now do so on the hut's front wall beside the lantern (whose moths pass
+258 added): `hut_geckos::At` (header-only, deterministic in the clock) gives each a cycle of
+19 or 25 s: it rests at its spot on the boards, creeps 0.3-0.4 m towards the light over 6 s with
+its tail twitching, darts 6 cm at a moth and back, licks its lips, rests, and creeps home. They
+fade in from dusk (the lantern's darkness above 0.45) and are gone by day. `GeckoState` gains
+an optional wall normal: on a wall the gecko's frame is built on the wall's plane (its up the
+normal, its heading turned from straight up the wall), on the ground nothing changes; the
+shared insect batch makes room for the two. About 17 cm nose to tail (tokay-sized), tan and
+brown. A probe at four times the size showed both on the boards below the lantern, the right
+way round; at their real size they are a detail to find walking up to the hut at night.
+`hut` at 21:30 and by day and `geckos` pass, and the tests.
+
 ## Loop pass 282 (2026-10-21) — the Milky Way
 
 Far from any lights, a tropical island's moonless night shows the Milky Way arching over it;

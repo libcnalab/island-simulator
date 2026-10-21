@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 283: two house geckos come out on the hut wall by the lantern at night and hunt its moths (PLAN "Loop pass 283").
 - Pass 282: the Milky Way arches over the island on dark moonless nights (PLAN "Loop pass 282").
 - Pass 281: the shore's breaking foam is broken into irregular runs instead of a dashed line seen from the air (PLAN "Loop pass 281").
 - Pass 280: a storm's wind tears leaves loose, carries them far downwind and shakes the coconuts down (PLAN "Loop pass 280").
