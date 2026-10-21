@@ -233,6 +233,22 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 310 (2026-10-21) — eyeshine in the quad's headlights
+
+Riding the quad at night, an animal's eyes should shine back out of the dark: the reflecting
+layer behind a deer's, goat's or boar's retina returns the light towards its source. The deer,
+goat and boar renderers now record each near animal's eye centres in the world as they build
+it (`Eyes()`: the deer's eye ellipsoid, the mean of the goat mesh's eye vertices per side, the
+boar's eye pupil centre through its model frame). `EyeshineRenderer` draws, after the night
+grade, a small additive glow at each eye that lies in the quad's headlight beam (within 40 m
+and its cone), brightest the closer the viewer's line to the eye runs to the lamp's
+(retro-reflection: full within about 6 degrees, gone past 30) and fading with the distance;
+the colour by species (deer a pale green-white, goats a warm yellow, boars a dull orange-red).
+An eye turned away is hidden by its own head (depth-tested). A probe that lit the eyes from a
+lamp at the camera in `deer`, `goats` and `boars` at 21:30 put the glints exactly on the eyes;
+the game wires only the quad's beam. The views, `quad-chase` at 21:30 and the tests pass.
+(Also this turn: seven screenshots of the quad sent to the operator on request.)
+
 ## Loop pass 309 (2026-10-21) — the swash foam rides a sheet of water
 
 The shore's advancing swash foam (`jetty`) lay on the sand as a white lace of cell rims with

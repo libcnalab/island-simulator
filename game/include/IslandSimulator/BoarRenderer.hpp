@@ -1,4 +1,6 @@
 #pragma once
+#include "IslandSimulator/EyeshineRenderer.hpp"
+#include <span>
 
 #include <memory>
 #include <span>
@@ -35,6 +37,8 @@ namespace island
                   const Microsoft::Xna::Framework::Vector3& camera,
                   std::span<const BoarState> boars);
         [[nodiscard]] int VisibleCount() const noexcept { return visibleCount_; }
+        /** The near boars' eyes as drawn this frame (for the eyeshine). */
+        [[nodiscard]] std::span<const EyeGlint> Eyes() const noexcept { return eyes_; }
         [[nodiscard]] int DrawCallCount() const noexcept { return drawCalls_; }
     private:
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
@@ -48,6 +52,7 @@ namespace island
         float maximumDistance_;
         int visibleCount_ = 0;
         int drawCalls_ = 0;
+        std::vector<EyeGlint> eyes_;
         bool reportedContactLimit_ = false;
     };
 }

@@ -2486,6 +2486,7 @@ namespace island
         waterspoutRenderer_ = std::make_unique<WaterspoutRenderer>(device);
         seagrassRenderer_ = std::make_unique<SeagrassRenderer>(device, terrain_);
         swimGlowRenderer_ = std::make_unique<SwimGlowRenderer>(device);
+        eyeshineRenderer_ = std::make_unique<EyeshineRenderer>(device);
         sunbeamMotes_ = std::make_unique<SunbeamMoteRenderer>(device, terrain_, canopyLightField_);
         whaleBlowRenderer_ = std::make_unique<CascadeMistRenderer>(device,
             "island-simulator: a humpback's blow stands up five metres far offshore, drifts downwind and thins away", WhalePod::PuffCount);
@@ -6007,6 +6008,18 @@ namespace island
                     1.0f - std::clamp((light.sunElevationDegrees + 4.0f) / 12.0f, 0.0f, 1.0f), timeSeconds);
             if (quadRenderer_ && quadEngineOn_)
                 quadRenderer_->DrawLights(cameraView_, cameraProjection_, renderCameraPosition_, quad_, QuadLampNightness());
+            // the animals' eyes shine back in the quad's beam
+            if (eyeshineRenderer_ && quadRenderer_ && quadEngineOn_ && !quad_.Overturned()) {
+                allEyes_.clear();
+                if (deerRenderer_) allEyes_.insert(allEyes_.end(), deerRenderer_->Eyes().begin(), deerRenderer_->Eyes().end());
+                if (goatRenderer_) allEyes_.insert(allEyes_.end(), goatRenderer_->Eyes().begin(), goatRenderer_->Eyes().end());
+                if (boarRenderer_) allEyes_.insert(allEyes_.end(), boarRenderer_->Eyes().begin(), boarRenderer_->Eyes().end());
+                const BikeVec l = quad_.ToWorld(QuadBikeRenderer::HeadlightLeft), r = quad_.ToWorld(QuadBikeRenderer::HeadlightRight);
+                const BikeVec f = quad_.Forward(), u = quad_.Up();
+                eyeshineRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, allEyes_,
+                    Vector3((l.x + r.x) * 0.5f, (l.y + r.y) * 0.5f, (l.z + r.z) * 0.5f),
+                    Vector3(f.x - u.x * 0.10f, f.y - u.y * 0.10f, f.z - u.z * 0.10f), 0.86f, 40.0f, QuadLampNightness());
+            }
             if (sailboatRenderer_)
                 sailboatRenderer_->DrawLights(cameraView_, cameraProjection_, renderCameraPosition_,
                     1.0f - std::clamp((light.sunElevationDegrees + 4.0f) / 12.0f, 0.0f, 1.0f));

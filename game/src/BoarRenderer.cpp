@@ -205,7 +205,8 @@ namespace island
         };
 
         void AppendBoar(ModelBuilder& mesh, const BoarState& boar,
-                        const BoarGroundPose& grounded, const bool near)
+                        const BoarGroundPose& grounded, const bool near,
+                        std::vector<EyeGlint>* eyes = nullptr)
         {
             const std::array<Color, 3> coats = {Color(100, 76, 51), Color(79, 66, 51), Color(115, 91, 62)};
             const auto coat = coats[boar.colorVariant % coats.size()];
@@ -307,6 +308,8 @@ namespace island
                     const auto eyePoint=[&](std::size_t i) {
                         const auto p=eye[i];return Vector3(p.x,p.y,p.z);
                     };
+                    // a boar's eyeshine is a dull orange-red
+                    if(eyes) eyes->push_back({mesh.Point(eyePoint(16)),Vector3(1.0f,0.50f,0.30f)});
                     const auto eyeTriangle=[&](std::size_t a,std::size_t b,std::size_t c,const Color& tint) {
                         // Ring angles run around Y/Z with outward -X winding.
                         if(side>0) std::swap(b,c);
@@ -440,6 +443,7 @@ namespace island
                             const Vector3& camera, const std::span<const BoarState> boars)
     {
         staging_.clear();
+        eyes_.clear();
         visibleCount_ = drawCalls_ = 0;
         const BoundingFrustum frustum(view * projection);
         for (const auto& boar : boars) {
@@ -465,7 +469,7 @@ namespace island
             ModelBuilder mesh{staging_, vector(grounded.origin), right,
                               up, vector(grounded.forward), boar.scale, canopyLight_};
             const auto vertexStart=staging_.size();
-            AppendBoar(mesh, boar, grounded, distance < 55.0f * 55.0f);
+            AppendBoar(mesh, boar, grounded, distance < 55.0f * 55.0f, &eyes_);
             vegetation_fade::ShrinkAbout(staging_, vertexStart, origin.X, origin.Y, origin.Z,
                 vegetation_fade::FarShrink(std::sqrt(distance), maximumDistance_, vegetation_fade::TreeShrinkFraction));
             if(staging_.size()-vertexStart>6000U)

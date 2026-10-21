@@ -129,7 +129,7 @@ void GoatRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector
     std::span<const GoatState> goats)
 {
     if(goats.size()>GoatHabitat::Count)throw std::length_error("Goat population exceeds render capacity");
-    vertices_.clear();solidVertices_.clear();visible_=draws_=0;
+    vertices_.clear();solidVertices_.clear();visible_=draws_=0;eyes_.clear();
     const BoundingFrustum frustum(view*projection);
     for(std::size_t goatIndex=0;goatIndex<goats.size();++goatIndex) {
         const auto& goat=goats[goatIndex];
@@ -143,8 +143,13 @@ void GoatRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector
         const std::size_t firstCoat=vertices_.size(),firstSolid=solidVertices_.size();
         const auto& pose=goat.pose;
         const auto mesh=BuildGoatMesh(pose,goat.grazingPose,distanceSquared<30*30,goat.tailSwing,goat.earFlick,goat.chew);
+        std::array<Vector3,2> eyeSum{};std::array<int,2> eyeCount{};
         for(const auto& vertex:mesh.vertices) {
             const auto world=Point(pose.ToWorld(vertex.position));
+            if(vertex.part==GoatPart::Eye) {
+                const std::size_t side=vertex.position.x<0.0f?0U:1U;
+                eyeSum[side]+=world;++eyeCount[side];
+            }
             const auto n=Vector3::Normalize(Point(pose.right)*vertex.normal.x
                 +Point(pose.up)*vertex.normal.y+Point(pose.forward)*vertex.normal.z);
             const float light=.61f+.37f*std::max(0.0f,Vector3::Dot(n,wildlife_render::FixedSunDirection))
@@ -165,6 +170,9 @@ void GoatRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector
             target.emplace_back(world,Color(channel(color.getRProperty(),tint.red),
                 channel(color.getGProperty(),tint.green),channel(color.getBProperty(),tint.blue)),Vector2(uv[0],uv[1]));
         }
+        // a goat's eyeshine is a warm yellow
+        for(std::size_t side=0;side<2;++side)
+            if(eyeCount[side]>0)eyes_.push_back({eyeSum[side]/static_cast<float>(eyeCount[side]),Vector3(1.0f,0.90f,0.50f)});
         vegetation_fade::ShrinkAbout(vertices_,firstCoat,goat.x,goat.y,goat.z,shrink);
         vegetation_fade::ShrinkAbout(solidVertices_,firstSolid,goat.x,goat.y,goat.z,shrink);
         ++visible_;

@@ -574,6 +574,8 @@ namespace island
         std::unique_ptr<SeagrassRenderer> seagrassRenderer_;
         SwimGlowField swimGlow_{};
         std::unique_ptr<SwimGlowRenderer> swimGlowRenderer_;
+        std::unique_ptr<EyeshineRenderer> eyeshineRenderer_;
+        std::vector<EyeGlint> allEyes_;
         float swimGlowStrength_ = 0.0f;
         WhalePod whales_{};
         std::unique_ptr<WhaleRenderer> whaleRenderer_;

@@ -276,7 +276,8 @@ namespace island
         }
 
         void AppendDeer(std::vector<VertexPositionColor>& out, const DeerState& deer,
-                        const float transmission, const bool near, const Vector3& watcher)
+                        const float transmission, const bool near, const Vector3& watcher,
+                        std::vector<EyeGlint>* eyes = nullptr)
         {
             const std::array<Color, 3> coats = {{Color(151, 103, 58), Color(130, 82, 48),
                                                  Color(170, 121, 69)}};
@@ -364,6 +365,8 @@ namespace island
                         + earRight * (sideSign * .148f * scale) + up * (.030f * scale);
                     Ellipsoid(out, eyeCentre, earRight, up, earForward, .022f * scale,
                               .026f * scale, .016f * scale, eye, transmission, 4, 10);
+                    // a deer's eyeshine is a pale green-white
+                    if (eyes) eyes->push_back({eyeCentre, Vector3(0.80f, 1.0f, 0.70f)});
                     const Vector3 glint=eyeCentre+earForward*(.010f*scale)
                         +earRight*(sideSign*.014f*scale)+up*(.008f*scale);
                     Ellipsoid(out,glint,earRight,up,earForward,.005f*scale,.006f*scale,
@@ -523,6 +526,7 @@ namespace island
     {
         if (deer.size() > DeerHerd::Count) throw std::length_error("Deer render capacity exceeded");
         staging_.clear();visibleCount_ = drawCallCount_ = 0;
+        eyes_.clear();
         const BoundingFrustum frustum(view * projection);
         for (const DeerState& animal : deer) {
             const Vector3 centre(animal.x, animal.y + 1.1f * animal.scale, animal.z);
@@ -535,7 +539,7 @@ namespace island
             const float transmission = canopy_.SampleReceiver(
                 animal.x, animal.y + 1.0f, animal.z, animal.y);
             const std::size_t first = staging_.size();
-            AppendDeer(staging_, animal, transmission, distanceSquared < 48.0f * 48.0f, camera);
+            AppendDeer(staging_, animal, transmission, distanceSquared < 48.0f * 48.0f, camera, &eyes_);
             vegetation_fade::ShrinkAbout(staging_, first, animal.x, animal.y, animal.z, shrink);
             ++visibleCount_;
         }

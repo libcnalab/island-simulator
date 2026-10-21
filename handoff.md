@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 310: animals' eyes shine back in the quad's headlights at night (PLAN "Loop pass 310").
 - Pass 309: the swash foam rides a dark wet sheet of water instead of lying on dry sand (the pale strip beyond it in `jetty` is clear shallow water over the lagoon sand; darkening it was tried and dropped) (PLAN "Loop pass 309").
 - Pass 308: the spider webs bead with the morning dew and after rain (PLAN "Loop pass 308").
 - Pass 307: a before/after audit of 106 views; the ground-dove close-up no longer has the resident's leg filling a third of the frame (PLAN "Loop pass 307").

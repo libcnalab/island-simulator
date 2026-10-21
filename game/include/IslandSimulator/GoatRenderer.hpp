@@ -1,4 +1,6 @@
 #pragma once
+#include "IslandSimulator/EyeshineRenderer.hpp"
+#include <span>
 #include "IslandSimulator/GoatHerd.hpp"
 #include "Microsoft/Xna/Framework/Matrix.hpp"
 #include "Microsoft/Xna/Framework/Vector3.hpp"
@@ -18,6 +20,8 @@ public:
         const Microsoft::Xna::Framework::Matrix& projection,
         const Microsoft::Xna::Framework::Vector3& camera,std::span<const GoatState> goats);
     [[nodiscard]] int VisibleCount() const noexcept {return visible_;}
+    /** The near goats' eyes as drawn this frame (for the eyeshine). */
+    [[nodiscard]] std::span<const EyeGlint> Eyes() const noexcept {return eyes_;}
     [[nodiscard]] int DrawCallCount() const noexcept {return draws_;}
 private:
     Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
@@ -28,5 +32,6 @@ private:
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> coat_;
     std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColorTexture> vertices_,solidVertices_;
     int visible_=0,draws_=0;
+    std::vector<EyeGlint> eyes_;
 };
 }
