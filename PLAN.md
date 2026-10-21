@@ -233,6 +233,22 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 282 (2026-10-21) — the Milky Way
+
+Far from any lights, a tropical island's moonless night shows the Milky Way arching over it;
+the sky had only its 1100 stars. `TimeOfDayRenderer` now builds a fixed band along a great
+circle tilted to arch to 63 degrees (180 segments by 10 rows, about 20 degrees wide and wider
+towards its core): its brightness falls off softly across the band, is mottled into star clouds
+by two scales of value noise wrapped round the ring, split by a dark dust rift that wanders
+across the band and is deepest near the core, and is brightest and warmest at the core (44
+degrees up) and bluish-white along the arms; low down it is lost in the haze. 600 fainter stars
+are crowded into it, half near the core and half along the arc above the horizon. It is drawn
+additively under the stars and fades with the stars' visibility (the clouds and the dawn) and
+far sooner than them with the moon (by 90 % of the moonlight). A first strength put its core
+only 9 levels above the night sky; it now stands about 15 above. `palms` at 23:00 on a moonless
+day 8 shows the soft arch rising behind the crowns; on day 4 the moonlit sky washes it out;
+`flight` passes too. The field stars and their diagnostic are unchanged.
+
 ## Loop pass 281 (2026-10-21) — the shore's foam no longer reads as a dashed line
 
 From the air (`headland` at sunset) the breaking foam along the beach read as a dashed white

@@ -76,6 +76,32 @@ namespace island
         {
             return static_cast<float>(Mix(i * 0x9e3779b9U ^ salt) >> 8U) * (1.0f / 16777216.0f);
         }
+        // The Milky Way's frame: the pole of its great circle (tilted so the band arches to 63
+        // degrees), two axes in its plane, and the angle along it of its bright core.
+        struct GalaxyFrame { Vector3 pole, u, w; };
+        [[nodiscard]] GalaxyFrame Galaxy() noexcept
+        {
+            const Vector3 pole = Vector3::Normalize(Vector3(0.62f, 0.45f, -0.64f));
+            const Vector3 u = Vector3::Normalize(Vector3::Cross(pole, Vector3::Up));
+            return {pole, u, Vector3::Cross(pole, u)};
+        }
+        constexpr float GalaxyCoreAngle = 0.9f;
+        // Smooth value noise on a lattice wrapped every `period` cells along x (a ring of sky).
+        [[nodiscard]] float RingNoise(const float x, const float y, const int period, const std::uint32_t salt) noexcept
+        {
+            const float fx = std::floor(x), fy = std::floor(y);
+            float tx = x - fx, ty = y - fy;
+            tx = tx * tx * (3.0f - 2.0f * tx);
+            ty = ty * ty * (3.0f - 2.0f * ty);
+            const auto at = [&](const int a, const int b) {
+                const int wrapped = ((a % period) + period) % period;
+                return Unit(static_cast<std::uint32_t>(wrapped * 7919 + b * 104729), salt);
+            };
+            const int ix = static_cast<int>(fx), iy = static_cast<int>(fy);
+            const float bottom = at(ix, iy) + (at(ix + 1, iy) - at(ix, iy)) * tx;
+            const float top = at(ix, iy + 1) + (at(ix + 1, iy + 1) - at(ix, iy + 1)) * tx;
+            return bottom + (top - bottom) * ty;
+        }
         [[nodiscard]] Color Premultiplied(const float r, const float g, const float b, const float a) noexcept
         {
             const auto c = [](const float v) { return static_cast<int>(std::lround(std::clamp(v, 0.0f, 1.0f) * 255.0f)); };
@@ -120,14 +146,29 @@ namespace island
 
         // The stars: fixed directions above the horizon, a few bright and many faint, each a
         // small square facing its own direction; translated with the camera each frame.
+        // After them, fainter ones crowded into the Milky Way's band, thickest towards its core.
         std::vector<VertexPositionColor> stars;
-        stars.reserve(static_cast<std::size_t>(StarCount) * 6U);
-        for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(StarCount); ++i) {
-            const float y = 0.04f + 0.96f * std::sqrt(Unit(i, 0x5a17u));
-            const float azimuth = 2.0f * std::numbers::pi_v<float> * Unit(i, 0x5a18u);
-            const float horizontal = std::sqrt(std::max(0.0f, 1.0f - y * y));
-            const Vector3 direction(horizontal * std::cos(azimuth), y, horizontal * std::sin(azimuth));
-            const float magnitude = std::pow(Unit(i, 0x5a19u), 3.2f);          // most faint
+        stars.reserve(static_cast<std::size_t>(StarCount + BandStarCount) * 6U);
+        const GalaxyFrame galaxy = Galaxy();
+        for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(StarCount + BandStarCount); ++i) {
+            const bool inBand = i >= static_cast<std::uint32_t>(StarCount);
+            Vector3 direction;
+            if (inBand) {
+                // half near the core, half anywhere along the arc above the horizon (0..pi)
+                const float theta = Unit(i, 0x5a1bu) < 0.5f ? GalaxyCoreAngle + 0.8f * (Unit(i, 0x5a1cu) * 2.0f - 1.0f)
+                                                            : std::numbers::pi_v<float> * Unit(i, 0x5a1cu);
+                // roughly normal across the band: the sum of three uniform draws
+                const float across = (Unit(i, 0x5a1du) + Unit(i, 0x5a1eu) + Unit(i, 0x5a1fu) - 1.5f) * 0.20f;
+                direction = Vector3::Normalize(galaxy.u * std::cos(theta) + galaxy.w * std::sin(theta) + galaxy.pole * across);
+                if (direction.Y < 0.04f) direction = Vector3::Normalize(Vector3(direction.X, 0.04f + 0.3f * Unit(i, 0x5a20u), direction.Z));
+            } else {
+                const float y = 0.04f + 0.96f * std::sqrt(Unit(i, 0x5a17u));
+                const float azimuth = 2.0f * std::numbers::pi_v<float> * Unit(i, 0x5a18u);
+                const float horizontal = std::sqrt(std::max(0.0f, 1.0f - y * y));
+                direction = Vector3(horizontal * std::cos(azimuth), y, horizontal * std::sin(azimuth));
+            }
+            const float y = direction.Y;
+            const float magnitude = std::pow(Unit(i, 0x5a19u), inBand ? 5.0f : 3.2f) * (inBand ? 0.5f : 1.0f);   // most faint
             const float brightness = 0.25f + 0.75f * magnitude;
             // the low sky is behind the cumulus band and the haze
             const float low = 0.35f + 0.65f * std::clamp((y - 0.10f) / 0.35f, 0.0f, 1.0f);
@@ -149,7 +190,7 @@ namespace island
         }
         starVertexCount_ = static_cast<int>(stars.size());
         starBase_ = stars;
-        for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(StarCount); ++i) {
+        for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(StarCount + BandStarCount); ++i) {
             const Vector3 centre = (stars[i * 6U].Position + stars[i * 6U + 2U].Position) * 0.5f;
             if (centre.Y / StarDistance < 0.46f) lowStars_.push_back(i);
         }
@@ -159,6 +200,48 @@ namespace island
         stars_ = std::make_unique<VertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(),
                                                 starVertexCount_, BufferUsage::WriteOnly);
         stars_->SetData(stars.data(), starVertexCount_);
+        {
+            // The Milky Way: a faint band along a great circle arching to 63 degrees, mottled
+            // into star clouds, split by a dark dust rift and brightest and widest towards its
+            // core, low down near the horizon lost in the haze; fixed in the sky like the stars.
+            constexpr int Segments = 180, Rows = 10;
+            constexpr float Tau = 2.0f * std::numbers::pi_v<float>, CoreAngle = GalaxyCoreAngle;
+            const Vector3 pole = galaxy.pole, u = galaxy.u, w = galaxy.w;
+            std::vector<VertexPositionColor> band;
+            band.reserve(static_cast<std::size_t>(Segments * Rows * 6));
+            const auto vertex = [&](const int segment, const int row) {
+                const float theta = Tau * static_cast<float>(segment) / Segments;
+                const float b = -1.0f + 2.0f * static_cast<float>(row) / Rows;
+                float fromCore = std::remainder(theta - CoreAngle, Tau);
+                const float core = std::exp(-fromCore * fromCore / 0.35f);
+                const float halfWidth = 0.16f * (1.0f + 0.7f * core);
+                const Vector3 centre = u * std::cos(theta) + w * std::sin(theta);
+                const Vector3 direction = Vector3::Normalize(centre + pole * (b * halfWidth));
+                const float profile = std::exp(-b * b * 2.2f);
+                const float mottle = 0.55f + 0.30f * RingNoise(theta * 24.0f / Tau, (b + 1.0f) * 3.0f, 24, 0x3a01u)
+                    + 0.25f * RingNoise(theta * 60.0f / Tau, (b + 1.0f) * 7.5f, 60, 0x3a02u);
+                const float laneCentre = 0.12f * std::sin(2.0f * theta + 0.5f);
+                const float lane = std::exp(-((b - laneCentre) / 0.16f) * ((b - laneCentre) / 0.16f));
+                const float rift = (0.20f + 0.65f * std::exp(-fromCore * fromCore / 1.2f)) * lane;
+                const float low = std::clamp((direction.Y - 0.02f) / 0.28f, 0.0f, 1.0f);
+                const float brightness = 0.085f * profile * mottle * (1.0f - rift) * (1.0f + 1.3f * core) * low * low * (3.0f - 2.0f * low);
+                const float r = brightness * (0.80f + 0.20f * core), g = brightness * (0.86f + 0.07f * core),
+                            bl = brightness * (1.00f - 0.18f * core);
+                const auto c = [](const float v) { return static_cast<int>(std::lround(std::clamp(v, 0.0f, 1.0f) * 255.0f)); };
+                return VertexPositionColor(direction * StarDistance * 1.01f, Color(c(r), c(g), c(bl), 255));
+            };
+            for (int s = 0; s < Segments; ++s) {
+                for (int row = 0; row < Rows; ++row) {
+                    const auto a = vertex(s, row), b = vertex(s + 1, row), c = vertex(s + 1, row + 1), d = vertex(s, row + 1);
+                    band.push_back(a); band.push_back(b); band.push_back(c);
+                    band.push_back(a); band.push_back(c); band.push_back(d);
+                }
+            }
+            milkyWayVertexCount_ = static_cast<int>(band.size());
+            milkyWay_ = std::make_unique<VertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(),
+                                                       milkyWayVertexCount_, BufferUsage::WriteOnly);
+            milkyWay_->SetData(band.data(), milkyWayVertexCount_);
+        }
         moon_ = std::make_unique<DynamicVertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(),
                                                       MoonVertexCapacity, BufferUsage::WriteOnly);
         moonStaging_.reserve(static_cast<std::size_t>(MoonVertexCapacity));
@@ -177,6 +260,10 @@ namespace island
             + " stars and a phased moon over the graded sky; the scene is graded by the hour (golden hours, a dark blue night)";
         std::cout << message << '\n';
         MirrorRuntimeDiagnosticToPlatformLog(message);
+        const std::string galaxyMessage = "island-simulator: on dark moonless nights the Milky Way arches across the sky, mottled, rifted and brightest at its core, with "
+            + std::to_string(BandStarCount) + " faint stars crowded into it";
+        std::cout << galaxyMessage << '\n';
+        MirrorRuntimeDiagnosticToPlatformLog(galaxyMessage);
     }
 
     TimeOfDayRenderer::~TimeOfDayRenderer() = default;
@@ -501,9 +588,18 @@ namespace island
                                          scaled(vertex.Color.getBProperty()), 255);
                 }
             }
+            skyEffect_->setWorldProperty(Matrix::CreateTranslation(camera));
+            // the Milky Way first, under the stars: a moon washes it out far sooner than them
+            const float galaxy = std::clamp(light.starVisibility * (1.0f - 0.9f * light.moonLight), 0.0f, 1.0f);
+            if (galaxy > 0.02f) {
+                device_.SetVertexBuffer(milkyWay_.get());
+                skyEffect_->setDiffuseColorProperty(Vector3(galaxy, galaxy, galaxy));
+                skyEffect_->Apply();
+                device_.DrawPrimitives(PrimitiveType::TriangleList, 0, milkyWayVertexCount_ / 3);
+                ++drawCalls_;
+            }
             starsInSky_->SetData(starStaging_.data(), 0, static_cast<int>(starStaging_.size()), SetDataOptions::Discard);
             device_.SetVertexBuffer(starsInSky_.get());
-            skyEffect_->setWorldProperty(Matrix::CreateTranslation(camera));
             const float v = std::clamp(light.starVisibility * (1.0f - 0.55f * light.moonLight), 0.0f, 1.0f);
             skyEffect_->setDiffuseColorProperty(Vector3(v, v, v));
             skyEffect_->Apply();
