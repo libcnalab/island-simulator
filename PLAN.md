@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 273 (2026-10-21) — no rain under the hut's roof
+
+The rain streaks fell straight through the hut's thatch onto the veranda and into the room.
+`RainRenderer::SetShelter` now takes a gabled roof (its centre, its turn, the half-span out to
+each eave, the half-length along the ridge and the heights of the eaves and the ridge), and no
+drop is drawn below its slopes, tested in the roof's own frame; the game gives it the hut's
+thatch (2.73 m out from the ridge, 2.32 m along it, 2.08 m above the floor at the eaves and
+3.62 m at the ridge). With the eave drips (pass 272), the water now comes off the roof at its
+edge instead of through it. A probe counted 24-28 drops a frame kept out from under the roof in
+`hut` in a thunderstorm (of about 4350 drawn); the capture and the tests pass.
+
 ## Loop pass 272 (2026-10-21) — the hut's eaves drip in the rain
 
 In rain the hut's thatch now sheds its water as a real roof does, off the drip edge: a new

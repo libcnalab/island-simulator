@@ -2457,6 +2457,10 @@ namespace island
         underwaterEffect_ = std::make_unique<UnderwaterEffectRenderer>(device);
         timeOfDay_ = std::make_unique<TimeOfDayRenderer>(device);
         rain_ = std::make_unique<RainRenderer>(device);
+        // no rain under the hut's thatch (its leaf tips reach about 2.73 m out and 2.3 m along
+        // the ridge, 3.6 m above the floor at the ridge and 2.1 m at the eaves)
+        if (hutPlacement_) rain_->SetShelter(hutPlacement_->x, hutPlacement_->z, hutPlacement_->yawRadians, 2.73f, 2.32f,
+                                             hutPlacement_->floorY + 2.08f, hutPlacement_->floorY + 3.62f);
         rainRings_ = std::make_unique<RainRingRenderer>(device, terrain_);
         fireflies_ = std::make_unique<FireflySwarm>(terrain_);
         fireflyRenderer_ = std::make_unique<FireflyRenderer>(device);

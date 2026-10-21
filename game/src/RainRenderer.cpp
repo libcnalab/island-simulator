@@ -51,6 +51,13 @@ namespace island
 
     RainRenderer::~RainRenderer() = default;
 
+    void RainRenderer::SetShelter(const float x, const float z, const float yawRadians, const float halfSpan,
+                                  const float halfLength, const float eaveY, const float ridgeY) noexcept
+    {
+        shelter_ = {x, z, std::cos(yawRadians), std::sin(yawRadians), halfSpan, halfLength, eaveY, ridgeY};
+        sheltered_ = std::isfinite(x) && std::isfinite(z) && halfSpan > 0.0f && halfLength > 0.0f;
+    }
+
     void RainRenderer::Draw(const Matrix& view, const Matrix& projection, const Vector3& camera,
                             const float rain, const float wind, const float seconds)
     {
@@ -86,6 +93,14 @@ namespace island
                     const float edge = std::clamp((1.0f - horizontal / Radius) * 4.0f, 0.0f, 1.0f)
                         * std::clamp((1.0f - vertical) * 4.0f, 0.0f, 1.0f);
                     if (edge <= 0.01f) continue;
+                    if (sheltered_) {
+                        // under the roof: in the roof's own frame, below its slope there
+                        const float dx = x - shelter_.x, dz = z - shelter_.z;
+                        const float across = std::abs(shelter_.cosYaw * dx - shelter_.sinYaw * dz);
+                        const float along = std::abs(shelter_.sinYaw * dx + shelter_.cosYaw * dz);
+                        if (across < shelter_.halfSpan && along < shelter_.halfLength
+                            && y < shelter_.ridgeY - (shelter_.ridgeY - shelter_.eaveY) * across / shelter_.halfSpan) continue;
+                    }
                     const Vector3 top(x, y, z);
                     const Vector3 bottom = top + fall * StreakLength;
                     const Vector3 toCamera = camera - top;

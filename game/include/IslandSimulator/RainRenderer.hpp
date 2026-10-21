@@ -32,6 +32,12 @@ namespace island
         void Draw(const Microsoft::Xna::Framework::Matrix& view, const Microsoft::Xna::Framework::Matrix& projection,
                   const Microsoft::Xna::Framework::Vector3& camera, float rain, float wind, float seconds);
         [[nodiscard]] int VisibleDrops() const noexcept { return visible_; }
+        /** @brief A gabled roof the rain does not fall through: centred at (@p x, @p z), turned
+         *  by @p yawRadians, its ridge along the local z axis, @p halfSpan out to each eave and
+         *  @p halfLength along the ridge; no drop is drawn below its slopes (from @p ridgeY at
+         *  the ridge down to @p eaveY at the eaves). */
+        void SetShelter(float x, float z, float yawRadians, float halfSpan, float halfLength, float eaveY,
+                        float ridgeY) noexcept;
 
     private:
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
@@ -39,5 +45,8 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> vertices_;
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> staging_;
         int visible_ = 0;
+        struct Shelter { float x, z, cosYaw, sinYaw, halfSpan, halfLength, eaveY, ridgeY; };
+        bool sheltered_ = false;
+        Shelter shelter_{};
     };
 }
