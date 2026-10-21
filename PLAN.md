@@ -233,6 +233,23 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 326 (2026-10-21) — coconut fronds of long hanging leaflets
+
+Close up the coconut palms' fronds read as thorny fishbones: sixteen short, broad triangles a
+side, a quarter-metre apart. A coconut frond carries a hundred or more leaflets a side, long
+narrow straps that leave the rachis in a shallow V and hang down along their length, which is
+what makes the crown feathery. The near frond mesh now carries 34 leaflets a side, each a strap
+of two segments about 4 cm wide and up to 80 cm long that rises a little off the rachis and then
+bends down to its tip (emerging spears hold theirs up); the wind weights run along the strap.
+Thin straps break into sparkling, dotted fronds once they fall below a pixel, and the near mesh
+is drawn out to 125-145 m, so each leaflet's edge corners carry their half-width across the strap
+in the frond's otherwise zero normal, and the vertex shader widens a receding strap to about half
+a pixel either side (at most five times its width, `uPixelSpan` from the projection): the
+mid-distance crowns in `bay-ground` stay full and feathered rather than dotted. The far ribbons
+are unchanged. Cost: the near palm mesh is 4,663 corners (about three times the old), and the
+busiest view (`beach`) draws 59 near palms, about 290,000 corners. `palms` (also in a
+thunderstorm and at 21:30), `beach`, `bay-ground`, `flight`, `shipwreck-wide` and the tests pass.
+
 ## Loop pass 325 (2026-10-21) — steep hillsides lose the cartoon green
 
 Pass 323 found that the cave's steep shoulders kept the terrain's bare vertex palette (a flat

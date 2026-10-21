@@ -72,6 +72,10 @@ namespace island
             // A unit normal tags trunk/root wood; zero keeps the fronds' two-sided facet light.
             std::vector<Color> albedo;
             std::vector<Vector3> normals;
+            // Parallel too, for the leaflets' edge corners only: the half-width across the strap,
+            // packed into the frond's otherwise zero normal so the shader can keep a receding
+            // leaflet about a pixel wide.
+            std::vector<Vector3> across;
         };
 
         struct PalmGpuVertex
@@ -136,6 +140,8 @@ layout(location = 7) in vec4 aInstance3;
 uniform mat4 uViewProjection;
 uniform float uTime;
 uniform vec3 uStormWind;   // xy: the direction the wind blows toward (x, z); z: the weather's wind (1 the trade wind)
+uniform vec3 uCameraPosition;
+uniform float uPixelSpan;   // radians one screen pixel spans
 
 out vec3 vColor;
 out vec3 vWorld;
@@ -185,6 +191,15 @@ void main()
     // Every vertex of a trunk or root primitive carries a unit normal; fronds carry zero.
     vSolid = step(0.25, dot(aNormal, aNormal));
     if (vSolid > 0.5) vColor *= 0.92 + 0.16 * tintSeed;
+    // A leaflet's edge corners carry its half-width across the strap: as the palm recedes the
+    // strap keeps about half a pixel either side, thinning into the crown smoothly instead of
+    // breaking into sparkling sub-pixel slivers.
+    float halfWidth = length(aNormal);
+    if (vSolid < 0.5 && halfWidth > 0.0001) {
+        float pixel = length(world.xyz - uCameraPosition) * uPixelSpan;
+        float widen = min(max(0.0, 0.5 * pixel - halfWidth) / halfWidth, 4.0);
+        world.xyz += mat3(instanceTransform) * aNormal * widen;
+    }
     // Uniform positive scale and yaw: no inverse-transpose is needed.
     vNormal = mat3(instanceTransform) * aNormal;
     vLocal = aPosition;
@@ -673,9 +688,13 @@ void main()
                     continue;
                 }
 
-                constexpr int LeafletStations = 16;
+                // A coconut frond carries a hundred or more leaflets a side: long narrow straps
+                // that leave the rachis in a shallow V and hang down along their length. Short
+                // broad triangles at a quarter-metre spacing read as a thorny fishbone instead.
+                constexpr int LeafletStations = 34;
                 for (int station = 0; station < LeafletStations; ++station) {
-                    const float t = 0.075f + static_cast<float>(station) * 0.058f;
+                    const float t = 0.060f + static_cast<float>(station)
+                        * (0.895f / static_cast<float>(LeafletStations - 1));
                     const float radial = length * t;
                     const float arch = lift * std::sin(t * std::numbers::pi_v<float>)
                         - drop * t * t;
@@ -685,20 +704,23 @@ void main()
                                          crownY + arch,
                                          crownZ + direction.Z * radial + side.Z * lateral);
                     const float envelope = std::pow(
-                        std::sin(t * std::numbers::pi_v<float>), 0.56f);
-                    const float lengthVariation = 0.91f + 0.055f
+                        std::sin(t * std::numbers::pi_v<float>), 0.50f);
+                    const float lengthVariation = 0.90f + 0.06f
                         * static_cast<float>((station + frond + variant) % 3);
-                    const float leafletLength = 0.64f * envelope * lengthVariation
-                        * (emerging ? 0.82f : 1.0f);
-                    const float sweep = 0.09f + 0.11f * (1.0f - t);
-                    const float droop = (emerging ? 0.025f : 0.055f) + 0.20f * t;
+                    const float leafletLength = 0.82f * envelope * lengthVariation
+                        * (emerging ? 0.78f : 1.0f);
+                    const float sweep = 0.10f + 0.14f * (1.0f - t);
+                    // emerging spears hold their leaflets up; mature fronds let them hang
+                    const float rise = emerging ? 0.10f : 0.07f * (1.0f - t);
+                    const float droop = (emerging ? 0.04f : 0.10f) + 0.30f * t;
                     const float pairVariation = std::sin(
                         static_cast<float>(station + 1) * 2.17f
                         + static_cast<float>(frond + 1) * 1.43f
                         + static_cast<float>(variant) * 0.79f);
                     const float rootWeight = t * t;
-                    const float tipT = std::min(1.0f, t + 0.07f);
+                    const float midT = std::min(1.0f, t + 0.04f), tipT = std::min(1.0f, t + 0.08f);
                     const Vector2 rootWind(rootWeight, windPhase);
+                    const Vector2 midWind(midT * midT, windPhase);
                     const Vector2 tipWind(tipT * tipT, windPhase);
 
                     for (int sideIndex = 0; sideIndex < 2; ++sideIndex) {
@@ -709,33 +731,37 @@ void main()
                             + static_cast<float>(variant) * 0.83f
                             + static_cast<float>(sideIndex) * 2.11f);
                         const Vector3 outward = side * sideSign;
-                        const float stagger = sideSign * (0.025f + pairVariation * 0.012f);
+                        const float stagger = sideSign * (0.012f + pairVariation * 0.008f);
                         const float sideLength = leafletLength * (0.97f + sideVariation * 0.075f);
-                        const Vector3 staggeredCentre = centre + direction * stagger;
-                        const Vector3 rootBack = staggeredCentre
-                            - direction * (0.070f + sideVariation * 0.009f)
-                            + outward * 0.030f;
-                        const Vector3 rootFront = staggeredCentre
-                            + direction * (0.065f - sideVariation * 0.008f)
-                            + outward * 0.043f;
-                        const Vector3 tip = staggeredCentre + outward * sideLength
-                            + direction * (sweep + pairVariation * 0.045f
-                                           + sideVariation * 0.035f)
-                            - Vector3::Up * droop * (0.94f + sideVariation * 0.12f);
+                        const Vector3 root = centre + direction * stagger + outward * 0.02f;
+                        const Vector3 reach = outward * sideLength
+                            + direction * (sweep + pairVariation * 0.05f + sideVariation * 0.04f) * sideLength;
+                        const float hang = droop * (0.94f + sideVariation * 0.14f);
+                        // the strap rises a little off the rachis, then bends down to its tip
+                        const Vector3 mid = root + reach * 0.5f + Vector3::Up * (rise - hang * 0.28f);
+                        const Vector3 tip = root + reach - Vector3::Up * hang;
+                        const float halfWidth = 0.021f + 0.004f * sideVariation;
+                        const Vector3 across = direction * halfWidth;
                         const float sideShade = sideIndex == 0 ? 0.90f : 1.02f;
                         const Color leafletColor = ShadeColor(
                             leafBase, frondShade * sideShade * (0.96f + 0.05f * t));
                         const auto leafletBase = static_cast<std::uint16_t>(
                             geometry.vertices.size());
-                        geometry.vertices.emplace_back(
-                            rootBack, ShadeColor(leafletColor, 0.90f), rootWind);
+                        geometry.vertices.emplace_back(root - across, ShadeColor(leafletColor, 0.88f), rootWind);
+                        geometry.vertices.emplace_back(root + across, ShadeColor(leafletColor, 0.94f), rootWind);
+                        geometry.vertices.emplace_back(mid - across * 0.9f, ShadeColor(leafletColor, 1.02f), midWind);
+                        geometry.vertices.emplace_back(mid + across * 0.9f, ShadeColor(leafletColor, 1.06f), midWind);
                         geometry.vertices.emplace_back(tip, leafletColor, tipWind);
-                        geometry.vertices.emplace_back(
-                            rootFront, ShadeColor(leafletColor, 1.04f), rootWind);
+                        const auto at = [leafletBase](const unsigned offset) {
+                            return static_cast<std::uint16_t>(leafletBase + offset);
+                        };
                         geometry.indices.insert(geometry.indices.end(), {
-                            leafletBase,
-                            static_cast<std::uint16_t>(leafletBase + 1U),
-                            static_cast<std::uint16_t>(leafletBase + 2U)});
+                            at(0U), at(1U), at(3U), at(0U), at(3U), at(2U), at(2U), at(3U), at(4U)});
+                        geometry.across.resize(geometry.vertices.size(), Vector3::Zero);
+                        geometry.across[at(0U)] = -across;
+                        geometry.across[at(1U)] = across;
+                        geometry.across[at(2U)] = -across * 0.9f;
+                        geometry.across[at(3U)] = across * 0.9f;
                     }
                 }
             }
@@ -1016,7 +1042,8 @@ void main()
                     const auto& vertex = geometry.vertices[i];
                     const bool solid = i < geometry.normals.size()
                         && geometry.normals[i].LengthSquared() > 0.25f;
-                    const Vector3 normal = solid ? Vector3::Normalize(geometry.normals[i]) : Vector3::Zero;
+                    const Vector3 normal = solid ? Vector3::Normalize(geometry.normals[i])
+                        : (i < geometry.across.size() ? geometry.across[i] : Vector3::Zero);
                     if (!std::isfinite(normal.X) || !std::isfinite(normal.Y) || !std::isfinite(normal.Z))
                         throw std::runtime_error(std::string(label) + " contains an invalid solid normal");
                     const Color& color = solid ? geometry.albedo[i] : vertex.Color;
@@ -1305,6 +1332,8 @@ void main()
                 "uToSun", sun_light::UniformDirection().x, sun_light::UniformDirection().y,
                 sun_light::UniformDirection().z);
             customEffect_->SetUniformFloat("uTime", timeSeconds);
+            customEffect_->SetUniformFloat("uPixelSpan", 2.0f / std::max(1.0f, projection.M22
+                * static_cast<float>(device_.getViewportProperty().getHeightProperty())));
             {
                 const auto& gusts = WindGust::Live();
                 customEffect_->SetUniformVec4("uGustClock", gusts.travelled, gusts.spacing, gusts.floor, gusts.live ? 1.0f : 0.0f);
