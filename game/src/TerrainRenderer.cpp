@@ -544,7 +544,9 @@ void main()
             * vGroundLight;
         color = mix(color, lagoonBed, lagoonZone
             * (0.20 + sandChannel * 0.20) * (1.0 - meadow * 0.45));
-        color = mix(color, grassBed, meadow * habitatCoverage * 0.86);
+        // the seagrass renderer plants its blades thick wherever the meadow passes 0.4, thinning
+        // only at the fringe: the bed under them is the meadow's own dark, not bare sand
+        color = mix(color, grassBed, smoothstep(0.08, 0.40, meadow) * habitatCoverage * 0.86);
         color = mix(color, reefBed, reefCover * habitatCoverage);
         float macroCrest = smoothstep(62.0, 69.0, offshore)
             * (1.0 - smoothstep(79.0, 86.0, offshore))

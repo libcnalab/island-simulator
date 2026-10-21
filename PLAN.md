@@ -233,6 +233,27 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 319 (2026-10-21) — the seagrass closes into a meadow
+
+Pass 303's seagrass stood as scattered tufts: every frame the CPU rebuilt the blades within 24 m
+into one 60,000-vertex buffer, which capped it at a few hundred clumps, and clumps were planted
+with a probability equal to the meadow's strength, which inside most beds is only 0.2-0.4. The
+lagoon is now cut into 8 m beds, each grown when the eye first comes within reach of it (nearest
+first, twelve a frame, all of them on the first frame) on a fixed 0.3 m grid that hashes the
+same way every time, kept as a static mesh, and let go 600 frames after the eye leaves. A blade
+is seven corners (two tapering quads and a tip) drawn through one shared index pattern, 32 bytes
+a corner; the surge sway and the far blades shrinking into the bed (a thinning share of them
+sooner) moved into a small vertex shader, so a frame uploads nothing. Clumps are planted thick
+wherever the meadow passes 0.4 and thin out only at its fringe, 4-7 flat straps each, splaying
+outward and bending across their face, one in five older and yellowing at its tip: up to some
+eighty blades a square metre. The terrain darkens the bed under the meadow on the same curve, so
+the gaps between the blades are meadow and not bare sand, and from the air the lagoon's seagrass
+patches now read dark against the sand. A probe counted the load: about 490,000 resident corners
+(16 MB) and 13,000 drawn blades in `turtles`, the densest view, 140,000 corners in `jetty-end`.
+A first planting curve (from 0.08) left the fringe bare in `reef-habitat`; from 0 it keeps its
+scattered tufts. `turtles` (also at 21:30), `jetty-end`, `reef-habitat`, `overview`, `water`,
+`fish`, `stingrays`, `octopuses`, `jetty-water` and the tests pass.
+
 ## Loop pass 318 (2026-10-21) — touch buttons for the quad and the torch
 
 The quad and the hand torch answered only the keyboard's F and H, so on a phone or a touch
