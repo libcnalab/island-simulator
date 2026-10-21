@@ -53,6 +53,9 @@ class CaptureValidatorTests(unittest.TestCase):
             validate_capture(image, profile="unknown")
         self.assertEqual(profile_for_viewpoint("litter"), "shaded-detail")
         self.assertEqual(profile_for_viewpoint("spiders"), "close-natural-detail")
+        # The rat on the forest floor: reviewed 2026-10-21, a close natural detail view whose
+        # litter and fur sat at 63-65 colour bins against the scene floor of 64.
+        self.assertEqual(profile_for_viewpoint("rats"), "close-natural-detail")
         self.assertEqual(profile_for_viewpoint("spiders-bright"), "close-natural-detail")
         self.assertEqual(profile_for_viewpoint("snake-head"), "close-natural-detail")
         self.assertEqual(profile_for_viewpoint("snakes"), "close-natural-detail")

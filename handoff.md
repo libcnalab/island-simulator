@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Capture sweep 2026-10-21 (after passes 225-266): 113 of 116 views pass. `rats` sat at 63-65 colour bins against the scene floor of 64 and was reviewed into the close-natural-detail profile like `ants` and `beetles`; `bunker-computers` fails the colour-bin floor as it already did on 2026-10-14 (a grey interior: a correct render, left as a known failure); `canopy` needs `--canopy-lod-inspection`.
 - Pass 266: a bright moon casts soft shadows (PLAN "Loop pass 266").
 - Pass 265: a storm's surf breaks harder along the shore: fuller crests and a whiter, wider wash (PLAN "Loop pass 265").
 - Pass 264: humpback whales pass far offshore: a blow, a rolling back and now and then raised flukes (PLAN "Loop pass 264").
