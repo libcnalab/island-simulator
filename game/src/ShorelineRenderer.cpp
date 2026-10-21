@@ -1,5 +1,6 @@
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/ShorelineRenderer.hpp"
+#include "IslandSimulator/WeatherSystem.hpp"
 
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/OceanWaveSpectrum.hpp"
@@ -98,6 +99,7 @@ in float vWindExposure;
 
 uniform vec3 uCameraPosition;
 uniform float uGlow;   // 0 the foam; above 0 the night glow pass (its strength)
+uniform float uSeaState;   // the weather's sea: 1 the trade wind, more in a storm (unset reads as 1)
 uniform float uTime;
 
 out vec4 fragColor;
@@ -180,7 +182,9 @@ void main()
     float edgeMask = smoothstep(0.015, 0.16, vAcross)
         * (1.0 - smoothstep(0.80, 0.995, vAcross));
     distanceFade = 1.0 - smoothstep(320.0, 680.0, distanceToCamera);
-    float alpha = clamp((crest * 0.76 + wash) * envelope * edgeMask * distanceFade, 0.0, 0.82);
+    // a storm's sea breaks harder: fuller crests and a wider, whiter wash
+    float sea = max(uSeaState, 1.0);
+    float alpha = clamp((crest * 0.76 * (0.7 + 0.3 * sea) + wash * sea) * envelope * edgeMask * distanceFade, 0.0, 0.82 + 0.1 * (sea - 1.0));
     alpha *= mix(.75,1.25,vWindExposure);
     alpha *= mix(0.72, 1.0, clamp(vBaseMask * 2.0, 0.0, 1.0));
 
@@ -381,6 +385,7 @@ void main()
             customEffect_->SetUniformVec3("uCameraPosition", cameraPosition.X,
                                           cameraPosition.Y, cameraPosition.Z);
             customEffect_->SetUniformFloat("uTime", timeSeconds);
+            customEffect_->SetUniformFloat("uSeaState", weather_now::SeaState());
             customEffect_->SetUniformFloat("uGlow", 0.0f);
             device_.DrawIndexedPrimitives(PrimitiveType::TriangleList, 0, 0, vertexCount_, 0,
                                           primitiveCount_);
@@ -416,6 +421,7 @@ void main()
         customEffect_->SetUniformMat4("uViewProjection", viewProjection);
         customEffect_->SetUniformVec3("uCameraPosition", cameraPosition.X, cameraPosition.Y, cameraPosition.Z);
         customEffect_->SetUniformFloat("uTime", timeSeconds);
+            customEffect_->SetUniformFloat("uSeaState", weather_now::SeaState());
         customEffect_->SetUniformFloat("uGlow", strength);
         device_.DrawIndexedPrimitives(PrimitiveType::TriangleList, 0, 0, vertexCount_, 0, primitiveCount_);
         ++drawCallCount_;

@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 265 (2026-10-20) — a storm's surf breaks harder
+
+The shoreline's breaking foam (the crest and the wash behind it) now follows the weather's sea
+too (`uSeaState`, the same state that raises the waves): in a storm's 1.7 the crests run up to
+1.2 times as full and the wash 1.7 times as white and wide, with a slightly higher ceiling; at
+the trade wind's 1 nothing changes (the calm `jetty` is identical). `jetty` in a thunderstorm
+shows the whiter surf. (The white lace lying on the flat sand some metres from the visible water
+there is the swash over a few centimetres of water, too shallow for the sea's colour to show;
+it was left as it is.)
+
 ## Loop pass 264 (2026-10-20) — whales offshore
 
 Life on the open sea beyond the reef. A core `WhalePod` (a function of the clock, deterministic)
