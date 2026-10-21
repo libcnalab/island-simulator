@@ -33,6 +33,9 @@ namespace island
     namespace
     {
         constexpr float NearDistance = 110.0f;
+        // Past this a bat is a hand's breadth on screen: coarser ellipsoids, three-sided bones,
+        // and no eyes or claws (the full near model to 110 m was most of the bats' pass).
+        constexpr float DetailDistance = 30.0f;
         constexpr int MaximumVerticesPerBat = 2700;   // the near mesh, 2628 with the roosting cloak
         constexpr int MaximumVertices = static_cast<int>(FruitBatColony::Count)
             * MaximumVerticesPerBat;
@@ -165,8 +168,12 @@ namespace island
             }
         }
 
-        void AppendNear(std::vector<VertexPositionColor>& out, const FruitBatState& bat)
+        void AppendNear(std::vector<VertexPositionColor>& out, const FruitBatState& bat,
+                        const bool coarse=false)
         {
+            const int bone=coarse?3:6;
+            const auto rings=[coarse](const int full){return coarse?3:full;};
+            const auto segments=[coarse](const int full){return coarse?6:full;};
             const std::size_t firstVertex=out.size();
             const Palette& p = Palettes[bat.colorVariant % Palettes.size()];
             const Vector3 horizontalForward(std::cos(bat.headingRadians), 0.0f,
@@ -179,7 +186,7 @@ namespace island
             const Vector3 centre(bat.x, bat.y, bat.z);
             const float s = bat.scale;
             AppendEllipsoid(out,Point(centre,right,up,forward,0,0,-.02f,s),
-                right,up,forward,.19f,.16f,.34f,s,p.fur,p.chest,5,12);
+                right,up,forward,.19f,.16f,.34f,s,p.fur,p.chest,rings(5),segments(12));
             // Roosting, a flying fox hangs wrapped in its wings like a leathery cloak, only the
             // rusty collar and the fox's head showing below it; as it fans or stretches the
             // cloak opens (folded flat beside it the wings read as two thin spikes). The cloak
@@ -190,17 +197,18 @@ namespace island
                 const Color cloakOuter=Color::Lerp(p.membrane,Color(30,24,22,255),.25f);
                 const Color cloakInner=Color::Lerp(p.membrane,p.finger,.30f);
                 AppendEllipsoid(out,Point(centre,right,up,forward,0,.005f,-.10f*wrap-.02f,s),
-                    right,up,forward,.255f*grow,.215f*grow,.365f*grow,s,cloakOuter,cloakInner,5,12);
+                    right,up,forward,.255f*grow,.215f*grow,.365f*grow,s,cloakOuter,cloakInner,
+                    rings(5),segments(12));
             }
             const Vector3 head = Point(centre,right,up,forward,0,.015f,.38f,s);
             AppendEllipsoid(out,head,right,up,forward,.15f,.135f,.16f,s,
-                p.face,p.fur,5,12);
+                p.face,p.fur,rings(5),segments(12));
             const Vector3 muzzle = Point(centre,right,up,forward,0,-.025f,.55f,s);
             AppendEllipsoid(out,muzzle,right,up,forward,.075f,.058f,.11f,s,
-                p.face,Color::Lerp(p.face,p.fur,.22f),4,10);
+                p.face,Color::Lerp(p.face,p.fur,.22f),rings(4),segments(10));
             const Vector3 nose=Point(centre,right,up,forward,0,-.030f,.655f,s);
             AppendEllipsoid(out,nose,right,up,forward,.060f,.040f,.035f,s,
-                p.finger,Color(25,20,20,255),3,8);
+                p.finger,Color(25,20,20,255),rings(3),segments(8));
             for (const float side : {-1.0f, 1.0f}) {
                 const Vector3 earRoot=Point(centre,right,up,forward,side*.095f,.08f,.43f,s);
                 const Vector3 earOuter=Point(centre,right,up,forward,side*.25f,.105f,.40f,s);
@@ -209,13 +217,15 @@ namespace island
                 const std::array<Vector3,4> ear{{earRoot,earOuter,earTip,earInner}};
                 AppendClosedSurface(out,ear,forward*(.010f*s),p.face,p.chest);
                 const Vector3 eye=Point(centre,right,up,forward,side*.137f,.068f,.505f,s);
-                AppendEllipsoid(out,eye,right,up,forward,.027f,.024f,.020f,s,
-                    p.eye,Color::Lerp(p.eye,p.finger,.30f),3,8);
-                const Vector3 eyeGlint=eye+right*(side*.025f*s)+up*(.009f*s)
-                    +forward*(.004f*s);
-                DoubleTriangle(out,eyeGlint+up*(.005f*s),
-                    eyeGlint-forward*(.005f*s)-up*(.003f*s),
-                    eyeGlint+forward*(.005f*s)-up*(.003f*s),Color(236,207,139,255));
+                if(!coarse) {
+                    AppendEllipsoid(out,eye,right,up,forward,.027f,.024f,.020f,s,
+                        p.eye,Color::Lerp(p.eye,p.finger,.30f),3,8);
+                    const Vector3 eyeGlint=eye+right*(side*.025f*s)+up*(.009f*s)
+                        +forward*(.004f*s);
+                    DoubleTriangle(out,eyeGlint+up*(.005f*s),
+                        eyeGlint-forward*(.005f*s)-up*(.003f*s),
+                        eyeGlint+forward*(.005f*s)-up*(.003f*s),Color(236,207,139,255));
+                }
 
                 // Fanning, a hanging bat half-opens its wings and beats them slowly;
                 // stretching, the one wing opens most of the way out and drops.
@@ -237,15 +247,15 @@ namespace island
                 const Color outerMembrane=Color::Lerp(p.membrane,Color(34,29,29,255),.12f);
                 const std::array<Vector3,6> wing{{shoulder,elbow,wrist,fingerA,fingerB,hip}};
                 AppendClosedSurface(out,wing,up*(.012f*s),outerMembrane,innerMembrane);
-                AppendTube(out,shoulder,elbow,.016f*s,.013f*s,p.finger,6);
-                AppendTube(out,elbow,wrist,.013f*s,.010f*s,p.finger,6);
-                AppendTube(out,wrist,fingerA,.010f*s,.005f*s,p.finger,6);
-                AppendTube(out,elbow,fingerB,.009f*s,.004f*s,p.finger,6);
-                AppendTube(out,shoulder,hip,.012f*s,.006f*s,p.finger,6);
+                AppendTube(out,shoulder,elbow,.016f*s,.013f*s,p.finger,bone);
+                AppendTube(out,elbow,wrist,.013f*s,.010f*s,p.finger,bone);
+                AppendTube(out,wrist,fingerA,.010f*s,.005f*s,p.finger,bone);
+                AppendTube(out,elbow,fingerB,.009f*s,.004f*s,p.finger,bone);
+                AppendTube(out,shoulder,hip,.012f*s,.006f*s,p.finger,bone);
                 const Vector3 ankle=Point(centre,right,up,forward,
                     side*.08f,-.08f,-.25f,s);
-                AppendTube(out,hip,ankle,.026f*s,.015f*s,p.finger,6);
-                for (const Vector3 clawOffset : {
+                AppendTube(out,hip,ankle,.026f*s,.015f*s,p.finger,bone);
+                if (!coarse) for (const Vector3 clawOffset : {
                          Vector3(side*.07f,-.15f,-.30f), Vector3(side*.13f,-.18f,-.33f)}) {
                     const Vector3 claw=Point(centre,right,up,forward,
                         clawOffset.X,clawOffset.Y,clawOffset.Z,s);
@@ -255,7 +265,7 @@ namespace island
                     AppendTube(out,claw,toe,.007f*s,.003f*s,p.finger,5);
                 }
             }
-            if(out.size()-firstVertex!=2268U+360U)
+            if(coarse?out.size()-firstVertex>2268U+360U:out.size()-firstVertex!=2268U+360U)
                 throw std::runtime_error("Fruit-bat near mesh does not match its fixed vertex budget");
         }
 
@@ -312,7 +322,10 @@ namespace island
             const float distanceSquared=Vector3::DistanceSquared(centre,cameraPosition);
             if(distanceSquared>maximumDistance_*maximumDistance_
                 ||!frustum.Intersects(BoundingSphere(centre,1.5f*bat.scale))) continue;
-            if(distanceSquared<=NearDistance*NearDistance) { AppendNear(staging_,bat); ++nearCount_; }
+            if(distanceSquared<=NearDistance*NearDistance) {
+                AppendNear(staging_,bat,distanceSquared>DetailDistance*DetailDistance);
+                ++nearCount_;
+            }
             else { AppendFar(staging_,bat); ++farCount_; }
             ++visibleCount_;
         }

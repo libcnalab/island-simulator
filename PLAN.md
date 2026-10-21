@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 383 (2026-10-21) — fruit bats past 30 m are built coarser
+
+The fruit bats' render pass (0.2-1.3 ms a frame for the operator) built every bat within 110 m as
+the near model, 2,628 CPU-lit vertices since the roosting cloak (pass 375). Between 30 m and 110 m
+a bat now has three-ring, six-segment ellipsoids, three-sided wing bones, and no eyes, glints or
+claws (a flying fox is a hand's breadth on screen there); within 30 m it is unchanged and is still
+held to its fixed vertex budget, the coarse one to no more. `bats` and `bat-roost` show the same
+bats (both within 30 m) and differ from their last runs only where the vegetation passes since then
+and the wind do. The tests pass.
+
 ## Loop pass 382 (2026-10-21) — the quad's suspension is rebuilt only when it moves
 
 The quad bike's render pass cost the operator 0.8-1.0 ms a frame even parked: its moving parts
