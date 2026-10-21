@@ -283,10 +283,33 @@ void main()
             barkAngle * 8.0 + vLocal.x * 3.5 + sin(vLocal.x * 12.0) * 0.45);
         float fissure = 1.0 - smoothstep(0.02, 0.24, abs(sin(
             barkAngle * 11.0 + sin(vLocal.x * 13.0) * 0.55)));
-        vec3 detailedColor = vColor
-            * (0.94 + 0.09 * coarseGroove) * (1.0 - 0.15 * fissure);
-        materialColor = mix(vColor, detailedColor,
-                            1.0 - smoothstep(42.0, 70.0, distanceToCamera));
+        // A log that has lain a few years is grey-brown, not timber-red: its bark furrowed in
+        // deep broken fissures, peeled away in patches to silvery bare wood, felted with moss
+        // where the rain sits on top and freckled with pale lichen on its flanks. (One smooth
+        // red-brown with faint grain read as a polished beam.)
+        float nearDetail = 1.0 - smoothstep(42.0, 70.0, distanceToCamera);
+        vec3 weathered = mix(vColor, vec3(dot(vColor, vec3(0.30, 0.59, 0.11))) * vec3(1.06, 0.98, 0.88), 0.45);
+        // (in the log's own frame: x runs along it, the angle round it, so patches stretch
+        // along the grain as bark splits and peels, instead of world-space blobs)
+        // (local x spans the log's whole length, -0.5 to 0.5; the angle a radius' arc)
+        vec3 barkCoordinate = vec3(vLocal.x * 5.0, barkAngle * 2.4, 0.0);
+        float deepFurrow = 1.0 - smoothstep(0.0, 0.20 + worldFootprint * 2.0, abs(sin(
+            barkAngle * 7.0 + sin(vLocal.x * 9.0 + barkAngle * 2.0) * 0.8)));
+        float furrowBreak = smoothstep(0.30, 0.50, filteredStoneNoise(barkCoordinate * vec3(1.5, 3.0, 1.0), worldFootprint * 4.0));
+        vec3 bark = weathered * (0.90 + 0.14 * coarseGroove) * (1.0 - 0.13 * fissure)
+            * (1.0 - 0.50 * deepFurrow * furrowBreak * nearDetail);
+        float barkLoss = smoothstep(0.69, 0.75, filteredStoneNoise(barkCoordinate + vec3(4.1, 0.0, -2.7), worldFootprint * 2.0));
+        vec3 bareWood = vec3(0.40, 0.37, 0.33) * (0.92 + 0.10 * coarseGroove);
+        materialColor = mix(bark, bareWood, barkLoss * 0.80);
+        vec3 woodNormal = normalize(vNormal + vec3(0.0, 0.00001, 0.0));
+        float mossField = filteredStoneNoise(barkCoordinate * vec3(1.0, 2.5, 1.0) + vec3(-3.3, 1.1, 7.7), worldFootprint * 2.0);
+        float moss = smoothstep(0.25, 0.65, woodNormal.y) * smoothstep(0.48, 0.62, mossField) * (1.0 - barkLoss);
+        materialColor = mix(materialColor, vec3(0.20, 0.31, 0.11) * (0.80 + 0.40 * mossField), moss * 0.70);
+        // lichen in small freckles a few centimetres across
+        float lichen = smoothstep(0.72, 0.80, filteredStoneNoise(vWorld * 24.0 + vec3(9.0, 3.0, 1.0), worldFootprint * 24.0))
+            * (1.0 - smoothstep(0.55, 0.85, abs(woodNormal.y))) * nearDetail;
+        materialColor = mix(materialColor, vec3(0.58, 0.62, 0.52), lichen * 0.50);
+        materialColor = mix(vColor, materialColor, max(nearDetail, 0.65));
     } else if (vMaterialDetail < 0.875) {
         float cutRadius = length(vLocal.yz);
         float cutAngle = atan(vLocal.y, vLocal.z);

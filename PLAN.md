@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 376 (2026-10-21) — the fallen logs are weathered, furrowed and mossed
+
+A fallen log (`log`) read as a polished beam: one smooth timber-red with faint straight grain. The
+log bark shader now greys it toward a weathered grey-brown, cuts deep broken longitudinal furrows
+round it, peels the bark away in long strips along the grain to silvery bare wood (in the log's
+own frame: local x spans its length, so the noise is stretched along it), felts moss on the
+up-facing top and freckles the flanks with small pale lichen spots; the near detail fades with
+distance as before. (A first lichen at 18 cm noise cells painted grey camouflage blobs over the
+log.) `log`, `east`, `stream`, `props` and the tests pass.
+
 ## Loop pass 375 (2026-10-21) — a roosting flying fox hangs wrapped in its wings
 
 At the roost (`bat-roost`) the fruit bat read as a faceted orange fox hanging from a branch: its
