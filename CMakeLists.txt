@@ -159,6 +159,7 @@ add_library(island_core STATIC
     game/src/CoconutCrabGroup.cpp
     game/src/SharkPatrol.cpp
     game/src/StingrayGroup.cpp
+    game/src/ReefHeronGroup.cpp
     game/src/ShipwreckLayout.cpp
     game/src/SoundscapeModel.cpp
     game/src/TouchControls.cpp
@@ -762,6 +763,7 @@ if(ISLAND_BUILD_GAME)
         game/src/SeaTurtleRenderer.cpp
         game/src/SharkRenderer.cpp
         game/src/StingrayRenderer.cpp
+        game/src/ReefHeronRenderer.cpp
         game/src/ShipwreckRenderer.cpp
         game/src/HutRenderer.cpp
         game/src/JettyRenderer.cpp

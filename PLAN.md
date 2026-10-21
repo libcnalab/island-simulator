@@ -233,6 +233,28 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 336 (2026-10-21) — reef herons wade the lagoon's edge
+
+The lagoon's edge, between the swash and the seagrass, had no life of its own. Four Pacific reef
+herons now work it (`ReefHeronGroup`, renderer-independent; `ReefHeronRenderer`, one draw). Each
+has a stretch of shore round the island and stands in the wading band, 10-28 cm of water found
+by searching outward from the shore where the bed shelves gently (no drop-off); it stalks slowly
+along its stretch, turning back at the ends, freezes half turned to the open water with the neck
+craned out, and now and then strikes, the head thrown forward and down (the strike is noted where
+the bill went in); a walker within thirteen metres flushes it off along the shore, away from the
+walker, to land in the shallows 45-70 m further on and stay alert a while; at night it stands
+hunched on one leg, the head sunk on the shoulders. Two are the dark slate morph with a white
+chin, two the white morph. The bird is a slim body tilted up at the breast, an S-curved neck
+lofted as one tube in the bird's own plane (separate tube segments, each picking its own side
+axis, met in light seams), a dagger bill, yellow eyes, long legs bent back at the ankle with
+toes, and in flight the neck drawn in, the legs trailing and broad slow wings; shaded at its
+corners. A new `herons` capture viewpoint frames the first bird on the watch broadside from the
+landward side, held there (the QA camera stands close, so it does not flush it); the capture
+tool checks its diagnostics. Core tests cover the wading band, stalking and strikes, the flush
+and the landing in the shallows, and the night's rest. `herons` (also at 07:30 and 21:30, the
+white morph checked by a probe), `beach`, `wet-sand`, `jetty`, `mangroves`, `crabs`,
+`hermit-crabs`, `tide-pools`, `headland`, `overview`, `bay-ground` and the tests pass.
+
 ## Loop pass 335 (2026-10-21) — a smooth turtle shell
 
 Close up the sea turtle's carapace read as a checkerboard: every triangle of its 20-by-16 dome

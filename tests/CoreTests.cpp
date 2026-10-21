@@ -131,6 +131,7 @@
 #include "IslandSimulator/TidePoolLayout.hpp"
 #include "IslandSimulator/TouchControls.hpp"
 #include "IslandSimulator/UnderwaterFog.hpp"
+#include "IslandSimulator/ReefHeronGroup.hpp"
 #include "IslandSimulator/UserSettings.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
 #include "IslandSimulator/WaterRippleModel.hpp"
@@ -10891,6 +10892,51 @@ int main()
             const auto& b=poolFrogs.Homes()[island::FrogPopulation::Count-1];
             Check(std::abs(std::hypot(a.x-pool.x,a.z-pool.z)-2.4f)<0.01f&&std::abs(std::hypot(b.x-pool.x,b.z-pool.z)-2.4f)<0.01f
                   &&std::hypot(a.x-b.x,a.z-b.z)>4.7f,"two frogs have the plunge pool's banks for their homes");
+        }
+        // The reef herons wade the shallows: each stands in the wading band, works its stretch
+        // of shore, freezes and strikes at fish; a walker close by flushes it off along the
+        // shore to land in the shallows again; at night they stand hunched at rest.
+        {
+            island::ReefHeronGroup herons(terrain);
+            bool inBand=true;
+            for(const auto& heron:herons.Herons()) {
+                const float depth=-terrain.Height(heron.x,heron.z);
+                if(depth<island::ReefHeronGroup::MinimumDepth-0.02f||depth>island::ReefHeronGroup::MaximumDepth+0.02f) inBand=false;
+            }
+            Check(inBand,"each reef heron starts in the wading band of the lagoon's edge");
+            float startX=herons.Herons()[1].x,startZ=herons.Herons()[1].z;
+            float wandered=0.0f;
+            for(int step=0;step<1200;++step) {
+                herons.Update(0.05f,0.0f,1000.0f,0.0f);
+                for(const auto& heron:herons.Herons()) {
+                    if(heron.behavior==island::ReefHeronBehavior::Fly) continue;
+                    const float depth=-terrain.Height(heron.x,heron.z);
+                    if(depth<island::ReefHeronGroup::MinimumDepth-0.03f||depth>island::ReefHeronGroup::MaximumDepth+0.03f) inBand=false;
+                }
+                wandered=std::max(wandered,std::hypot(herons.Herons()[1].x-startX,herons.Herons()[1].z-startZ));
+            }
+            Check(inBand&&wandered>2.0f&&herons.StrikeCount()>0U,
+                  "the herons stalk along the shore in the wading band and strike at fish");
+            const auto before=herons.Herons()[2];
+            const std::uint32_t flushes=herons.FlushCount();
+            for(int step=0;step<10;++step) herons.Update(0.05f,before.x+3.0f,before.y+1.6f,before.z);
+            Check(herons.FlushCount()>flushes&&herons.Herons()[2].behavior==island::ReefHeronBehavior::Fly,
+                  "a walker three metres off flushes the heron");
+            bool landed=false;
+            for(int step=0;step<600&&!landed;++step) {
+                herons.Update(0.05f,before.x+3.0f,before.y+1.6f,before.z);
+                const auto& heron=herons.Herons()[2];
+                landed=heron.behavior!=island::ReefHeronBehavior::Fly
+                    &&std::hypot(heron.x-before.x,heron.z-before.z)>20.0f
+                    &&-terrain.Height(heron.x,heron.z)>=island::ReefHeronGroup::MinimumDepth-0.03f;
+            }
+            Check(landed,"the flushed heron lands in the shallows further along the shore");
+            herons.SetNightness(1.0f);
+            for(int step=0;step<200;++step) herons.Update(0.05f,0.0f,1000.0f,0.0f);
+            bool resting=true;
+            for(const auto& heron:herons.Herons())
+                if(heron.behavior!=island::ReefHeronBehavior::Rest||heron.rest<0.9f) resting=false;
+            Check(resting,"at night the reef herons stand hunched at rest");
         }
         // A settled stingray bursts away from the swimmer: with the observer two metres from
         // the settled ray it glides off at once, the burst is noted where it lay, and a ring of

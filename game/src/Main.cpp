@@ -84,6 +84,7 @@ namespace
         case FixedViewpoint::FruitBatRoostDetail: return "bat-roost";
         case FixedViewpoint::FishDetail: return "fish";
         case FixedViewpoint::StingrayDetail: return "stingrays";
+        case FixedViewpoint::ReefHeronDetail: return "herons";
         case FixedViewpoint::StingrayBuriedDetail: return "stingray-buried";
         case FixedViewpoint::OctopusDetail: return "octopuses";
         case FixedViewpoint::SharkDetail: return "shark";
@@ -214,7 +215,7 @@ int main(const int argc, char* argv[])
             if (++index >= argc) {
                 std::cerr << "island-simulator: --viewpoint requires overview, bay, bay-ground, beach, jungle, snags, sapling, "
                              "east, headland, tide-pools, turtle-nest, cave, cave-top, cave-inside, cave-back, bunker, bunker-corridor, bunker-computers, bunker-reactor, bunker-service, bunker-end, campfire, campfire-wide, resident, bear, clearing-edge, canopy (inspection only), west, stream, wetland, mangroves, grass, ground, ground-broadleaf, bush, litter, contact, movement, palms, fallen-palm, broken-palm, water, "
-                             "wet-sand, current, distant, props, driftwood, reef, reef-habitat, fronds, birds, bats, bat-roost, fish, "
+                             "wet-sand, current, distant, props, driftwood, reef, reef-habitat, fronds, birds, herons, bats, bat-roost, fish, "
                              "shark, dolphins, monkeys, monkey-tree, monkey-climb, shipwreck, shipwreck-wide, tracks, fruit, cascade, jetty, bridge, lookout, log, hut, hut-material, helicopter, helicopter-inside, helicopter-approach, crabs, hermit-crabs, coconut-crabs, crocodiles, boars, goats, spiders, spiders-bright, spider-web, snakes, snake-head, tree-snakes, butterflies, geckos, skinks, dragonflies, frogs, mice, rats, flies, ants, cicadas, turtles, or traversal\n";
                 return 2;
             }
@@ -339,6 +340,8 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::FishDetail;
             } else if (name == "stingrays") {
                 viewpoint = island::FixedViewpoint::StingrayDetail;
+            } else if (name == "herons") {
+                viewpoint = island::FixedViewpoint::ReefHeronDetail;
             } else if (name == "stingray-buried") {
                 viewpoint = island::FixedViewpoint::StingrayBuriedDetail;
             } else if(name=="octopuses") {

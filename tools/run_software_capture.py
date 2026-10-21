@@ -1792,6 +1792,11 @@ def main():
                     raise RuntimeError("current crocodile rounded surface pass is missing")
                 if "crocodiles use broad low barrels, continuous heavy tail roots, returning splayed forearms, and flat substantial feet" not in diagnostics:
                     raise RuntimeError("current crocodile low-body and foot anatomy pass is missing")
+            if args.viewpoint == "herons":
+                if "four reef herons, dark slate and white, wade the lagoon's edge" not in diagnostics:
+                    raise RuntimeError("current reef-heron renderer is missing; check for a stale executable")
+                if "reef-heron QA camera frames one bird on the watch in the shallows" not in diagnostics:
+                    raise RuntimeError("reef-heron capture did not frame the heron")
             if args.viewpoint == "hermit-crabs":
                 if "ten sheltered-beach hermit crabs pause, forage, and retreat in the shared crab batch" not in diagnostics:
                     raise RuntimeError("current hermit-crab renderer is missing; check for a stale executable")

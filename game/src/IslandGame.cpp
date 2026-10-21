@@ -195,6 +195,7 @@ namespace island
             case FixedViewpoint::FruitBatRoostDetail: return "bat-roost";
             case FixedViewpoint::FishDetail: return "fish";
             case FixedViewpoint::StingrayDetail: return "stingrays";
+            case FixedViewpoint::ReefHeronDetail: return "herons";
             case FixedViewpoint::StingrayBuriedDetail: return "stingray-buried";
             case FixedViewpoint::OctopusDetail: return "octopuses";
             case FixedViewpoint::SharkDetail: return "shark";
@@ -301,6 +302,7 @@ namespace island
           boarHerd_(terrain_),
           fishSchools_(terrain_),
           stingrayGroup_(terrain_),
+          reefHeronGroup_(terrain_),
           octopusGroup_(terrain_),
           seaTurtleGroup_(terrain_),
           sharkPatrol_(terrain_),
@@ -1871,6 +1873,22 @@ namespace island
             std::cout << "island-simulator: crab QA camera frames a debris-linked burrow and its foraging colony\n";
             std::cout << "island-simulator: crab QA subject " << crabViewSubject_
                       << " is " << nearestBurrow << "m from the burrow\n";
+        } else if (viewpoint_ == FixedViewpoint::ReefHeronDetail) {
+            // Beside the first heron on the watch, broadside, from a wader's eye height.
+            const ReefHeronState& heron = reefHeronGroup_.Herons().front();
+            const Vector3 forward(std::cos(heron.headingRadians), 0.0f, std::sin(heron.headingRadians));
+            const Vector3 side(-forward.Z, 0.0f, forward.X);
+            // from the landward side, broadside to the bird, the water behind it
+            const Vector3 seaward(heron.x, 0.0f, heron.z);
+            const float landSide = Vector3::Dot(side, seaward) > 0.0f ? -1.0f : 1.0f;
+            const float cameraX = heron.x + side.X * 1.45f * landSide + forward.X * 0.25f;
+            const float cameraZ = heron.z + side.Z * 1.45f * landSide + forward.Z * 0.25f;
+            cameraPosition_ = Vector3(cameraX, std::max(terrain_.Height(cameraX, cameraZ), 0.0f) + 0.55f, cameraZ);
+            const Vector3 target(heron.x + forward.X * 0.12f, heron.y + 0.42f * heron.scale, heron.z + forward.Z * 0.12f);
+            const Vector3 direction = target - cameraPosition_;
+            yaw_ = std::atan2(direction.X, direction.Z);
+            pitch_ = std::atan2(direction.Y, std::hypot(direction.X, direction.Z));
+            std::cout << "island-simulator: reef-heron QA camera frames one bird on the watch in the shallows\n";
         } else if (viewpoint_ == FixedViewpoint::HermitCrabDetail
                    && !hermitCrabGroup_.Crabs().empty()) {
             const HermitCrabState& crab = hermitCrabGroup_.Crabs()[3U];
@@ -2267,6 +2285,8 @@ namespace island
             device, 215.0f * qualityProfile_.wildlifeMaximumDistanceScale);
         stingrayRenderer_ = std::make_unique<StingrayRenderer>(
             device, 220.0f * qualityProfile_.wildlifeMaximumDistanceScale);
+        reefHeronRenderer_ = std::make_unique<ReefHeronRenderer>(
+            device, 170.0f * qualityProfile_.wildlifeMaximumDistanceScale);
         octopusRenderer_=std::make_unique<OctopusRenderer>(device,180.0f*qualityProfile_.wildlifeMaximumDistanceScale);
         seaTurtleRenderer_ = std::make_unique<SeaTurtleRenderer>(
             device, 190.0f * qualityProfile_.wildlifeMaximumDistanceScale);
@@ -3215,6 +3235,7 @@ namespace island
             boarHerd_.SetNightness(dark);
             if (bear_) bear_->SetNightness(dark);
             coconutCrabGroup_.SetNightness(dark);
+            reefHeronGroup_.SetNightness(dark);
             crabColony_.SetNightness(dark);
             hermitCrabGroup_.SetNightness(dark);
             fruitBatColony_.SetNightness(dark * (1.0f - downpour));
@@ -3890,6 +3911,11 @@ namespace island
         if(viewpoint_==FixedViewpoint::StingrayBuriedDetail) stingrayGroup_.PreviewBury(2U);
         stingrayGroup_.Update(viewpoint_==FixedViewpoint::StingrayDetail||viewpoint_==FixedViewpoint::StingrayBuriedDetail?0.0f:deltaSeconds,
                               cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z);
+        if (viewpoint_ == FixedViewpoint::ReefHeronDetail) reefHeronGroup_.PreviewFreeze(0U);
+        // the QA camera stands close: it must not flush the bird it frames
+        reefHeronGroup_.Update(deltaSeconds, cameraPosition_.X,
+                               viewpoint_ == FixedViewpoint::ReefHeronDetail ? cameraPosition_.Y + 100.0f : cameraPosition_.Y,
+                               cameraPosition_.Z);
         stingraySand_.Update(deltaSeconds,stingrayGroup_.LastBurst());
         // The sand a settling ray flicks over its back rises in the same puffs.
         stingrayFlickSand_.Update(deltaSeconds,stingrayGroup_.LastFlick());
@@ -5098,7 +5124,7 @@ namespace island
             + bearRenderer_->DrawCallCount()
             + snakeRenderer_->DrawCallCount()
             + fishRenderer_->DrawCallCount()
-            + stingrayRenderer_->DrawCallCount()
+            + stingrayRenderer_->DrawCallCount() + reefHeronRenderer_->DrawCallCount()
             + octopusRenderer_->DrawCallCount()
             + seaTurtleRenderer_->DrawCallCount()
             + sharkRenderer_->DrawCallCount()+dolphinRenderer_->DrawCallCount()
@@ -5788,6 +5814,10 @@ namespace island
             GpuDiagnosticScope gpuPass("stingrays");
             stingrayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,
                                     stingrayGroup_.Stingrays());
+        }
+        {
+            GpuDiagnosticScope gpuPass("reef-herons");
+            reefHeronRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, reefHeronGroup_.Herons());
         }
         {GpuDiagnosticScope gpuPass("octopuses");octopusRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,octopusGroup_.Octopuses());}
 
