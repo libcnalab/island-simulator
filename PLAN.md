@@ -242,7 +242,9 @@ a little oblong, lighter at the crown, lying in wet grit and sand speckled with 
 version that used the cells' own edges as stones read as crazy paving), the detail fading to the
 wet margin colour before it could shimmer. The water's body is a third clearer, so the bed shows
 except where it mirrors the sky. `stream`, `bridge`, `cascade` and the tests pass; the Chrome
-`fish` scope passed for pass 359.
+`fish` scope passed for pass 359, `stream` for this one. (Follow-up: at `cascade` the first stones
+were pale polka dots; they are now larger and packed closer, wet-dark, many with a brown-green
+algal film, a few dark basalt, and the grit between them close to their tone.)
 
 ## Loop pass 359 (2026-10-21) — wind ripples near the eye break the sun's glitter into sparkles
 
