@@ -233,6 +233,22 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 380 (2026-10-21) — the shore test and the quad's grip stop evaluating the coastline
+
+A snake's body check measured 21.6 us, two thirds of it in IslandTerrain::SignedShoreDistance
+(163 ns: an atan2, the coast's sines and lobes and four octaves of noise) asked for every one of
+its 41 stations and 40 segment midpoints each step. The coastline never comes nearer the centre
+than IslandTerrain::MinimumShoreRadius (138 m: the nominal 230 m less the broad swell's, the
+noise's and the sheltered bay's deepest cuts, with a margin; a new CoreTests check sweeps 200,000
+angles), so IsInlandBy(x, z, d) answers deep inside it from the radius alone and otherwise
+evaluates the coast; the snakes' habitat test and the goats' ground test use it, with the same
+answers (checked against the evaluated distance at 40,000 points). The snakes' update in a probe
+fell from 0.48 to 0.24 ms (7 full-rate and 9 reduced-rate snakes). The quad bike asked the full
+analytic terrain sample for the ground's kind (the tyres' grip) at fourteen points in each of eight
+physics substeps; the kind is now taken at the centre of each quarter-metre cell and remembered in
+a 1,024-entry direct-mapped memo. `goats` and `snakes` are pixel-identical; `quad-drive` ends at
+the same 39 km/h, place, ruts and dust as before. The tests pass.
+
 ## Loop pass 379 (2026-10-21) — the goats, spiders and snakes simulate for less CPU
 
 The frame profile's Update side, after pass 373, was led by the goats (0.5-1.5 ms an update for

@@ -617,6 +617,9 @@ namespace island
         float quadOrbit_ = 0.0f, quadCameraYaw_ = 0.0f, quadPreviousYaw_ = 0.0f, quadOrbitIdle_ = 0.0f;
         Microsoft::Xna::Framework::Vector3 quadCamera_{};
         [[nodiscard]] BikeGround QuadGround(float x, float z) const noexcept;
+        // The ground's kind under the tyres, per quarter-metre cell (direct-mapped memo).
+        struct QuadSurfaceMemo { std::int32_t cellX = INT32_MIN, cellZ = INT32_MIN; TerrainSurface surface{}; };
+        mutable std::array<QuadSurfaceMemo, 1024> quadSurfaceMemo_{};
         [[nodiscard]] bool QuadObstacle(float x, float z, float radius, float& pushX, float& pushZ) const noexcept;
         void PlaceQuadNear(float x, float z, float yawRadians);
         [[nodiscard]] float QuadLampNightness() const noexcept;

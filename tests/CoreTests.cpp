@@ -6072,6 +6072,25 @@ int main()
           "out-of-domain terrain queries avoid procedural-noise conversion and remain water");
     CheckNear(terrain.ShoreRadius(quietNan), terrain.ShoreRadius(0.0f), 0.0001f,
               "non-finite shoreline angles use the deterministic zero-angle profile");
+    {
+        float leastShoreRadius = std::numeric_limits<float>::max();
+        for (int step = 0; step < 200000; ++step) {
+            const float angle = -std::numbers::pi_v<float> + 2.0f * std::numbers::pi_v<float> * static_cast<float>(step) / 200000.0f;
+            leastShoreRadius = std::min(leastShoreRadius, terrain.ShoreRadius(angle));
+        }
+        Check(leastShoreRadius >= island::IslandTerrain::MinimumShoreRadius,
+              "the shoreline never comes inside the documented least shore radius");
+        bool inlandAgrees = true;
+        for (int step = 0; step < 40000 && inlandAgrees; ++step) {
+            const float angle = 0.000157f * static_cast<float>(step * 7);
+            const float radius = 300.0f * static_cast<float>((step * 37) % 1000) / 1000.0f;
+            const float x = radius * std::cos(angle), z = radius * std::sin(angle);
+            for (const float distance : {0.0f, 10.0f, 20.0f, 35.0f, 90.0f})
+                inlandAgrees = inlandAgrees
+                    && terrain.IsInlandBy(x, z, distance) == (terrain.SignedShoreDistance(x, z) >= distance);
+        }
+        Check(inlandAgrees, "IsInlandBy answers exactly as the evaluated shore distance does");
+    }
 
     const island::TerrainSample centreSample = terrain.Sample(0.0f, 0.0f);
     const float centreNormalLength = std::hypot(

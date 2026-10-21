@@ -72,6 +72,23 @@ namespace island
         [[nodiscard]] float SignedShoreDistance(float x, float z) const noexcept;
 
         /**
+         * @brief The shore's least radius: the nominal radius less the broad swell's (12.5 m),
+         * the coastal noise's (9 m) and the sheltered bay's (70 m) deepest cuts, with a margin.
+         */
+        static constexpr float MinimumShoreRadius = NominalDiameter * 0.46f - 12.5f - 9.0f - 70.0f - 0.5f;
+
+        /**
+         * @brief Whether SignedShoreDistance(x, z) >= distance, without evaluating the coastline
+         * when the point lies so deep inside MinimumShoreRadius that the answer is certain.
+         */
+        [[nodiscard]] bool IsInlandBy(float x, float z, float distance) const noexcept
+        {
+            const float within = MinimumShoreRadius - distance;
+            return (within > 0.0f && x * x + z * z <= within * within)
+                || SignedShoreDistance(x, z) >= distance;
+        }
+
+        /**
          * @brief Samples terrain or seabed height.
          * @param x World x coordinate in metres.
          * @param z World z coordinate in metres.

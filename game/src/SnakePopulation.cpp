@@ -50,7 +50,7 @@ namespace island
             || CaveSite::Reserves(x,z,radius))
             return false;
         const auto ground = surface_->Sample(x,z);
-        return terrain_.SignedShoreDistance(x,z) >= 20.0f && ground.height >= 1.0f
+        return terrain_.IsInlandBy(x,z,20.0f) && ground.height >= 1.0f
             && ground.normal.y >= 0.913089f && !obstacles_.IntersectsCircle(x,z,radius);
     }
 

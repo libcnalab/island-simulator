@@ -28,7 +28,7 @@ bool GoatHabitat::AcceptsGround(const IslandTerrain& terrain,const RenderedTerra
         const auto sample=surface.Sample(px,pz);
         if(!std::isfinite(sample.height)||sample.height<6 || sample.normal.y<.90f
             ||std::abs(sample.height-centre.height)>.55f
-            ||terrain.SignedShoreDistance(px,pz)<35) return false;
+            ||!terrain.IsInlandBy(px,pz,35)) return false;
     }
     return true;
 }

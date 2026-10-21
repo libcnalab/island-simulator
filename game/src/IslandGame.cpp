@@ -4379,8 +4379,22 @@ namespace island
         } else {
             ground.height = terrain_.Height(std::clamp(x, -900.0f, 900.0f), std::clamp(z, -900.0f, 900.0f));
         }
-        // Tyre grip by the ground, less in the wet: loose sand, firm soil, grippy rock.
-        const auto surface = terrain_.Sample(x, z).surface;
+        // Tyre grip by the ground, less in the wet: loose sand, firm soil, grippy rock. The kind
+        // is the analytic terrain's at the centre of the quarter-metre cell, remembered: a full
+        // terrain sample (five height evaluations and the coast) for each of the fourteen ground
+        // queries of each of the eight physics substeps was most of the quad's update.
+        const float cellSize = 0.25f;
+        const float qx = std::isfinite(x) ? std::clamp(x, -900.0f, 900.0f) : 0.0f;
+        const float qz = std::isfinite(z) ? std::clamp(z, -900.0f, 900.0f) : 0.0f;
+        const auto cellX = static_cast<std::int32_t>(std::floor(qx / cellSize));
+        const auto cellZ = static_cast<std::int32_t>(std::floor(qz / cellSize));
+        auto& memo = quadSurfaceMemo_[(static_cast<std::uint32_t>(cellX) * 73856093U
+            ^ static_cast<std::uint32_t>(cellZ) * 19349663U) % quadSurfaceMemo_.size()];
+        if (memo.cellX != cellX || memo.cellZ != cellZ) {
+            memo = {cellX, cellZ, terrain_.Sample((static_cast<float>(cellX) + 0.5f) * cellSize,
+                                                  (static_cast<float>(cellZ) + 0.5f) * cellSize).surface};
+        }
+        const auto surface = memo.surface;
         switch (surface) {
         case TerrainSurface::DrySand: ground.grip = 0.75f; break;
         case TerrainSurface::WetSand: ground.grip = 0.85f; break;
