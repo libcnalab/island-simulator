@@ -36,7 +36,9 @@ namespace island::MonkeyTailProfile
         // A capuchin-like prehensile tail is muscular at the root and remains
         // visibly fur-bearing through the hook.  Keep the terminal closure rapid
         // so the larger profile does not end as a blunt open hose.
-        const float radius=(.040f+.045f*(1-t))*std::sqrt(std::max(0.0f,1.0f-std::pow(t,18.0f)));
+        // (Its root no thicker than two thirds of a thigh: at .085 it matched the legs and the
+        // tail read as a fifth limb.)
+        const float radius=(.048f+.017f*(1-t))*std::sqrt(std::max(0.0f,1.0f-std::pow(t,18.0f)));
         return {centre, tangent, radius, u2*(3-2*u),
                 segment, std::min(2, segment+1)};
     }

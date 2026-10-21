@@ -233,6 +233,14 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 422 (2026-10-21) — the monkey's tail is slimmer at its root
+
+At 1:1 in `monkeys` the capuchin's tail root (radius .085) was as thick as its thigh (.092) and the
+tail read as a fifth limb. MonkeyTailProfile now tapers from .065 at the root to .048 before the
+rounded tip (was .085 to .040), inside the tail tests' fur-bearing floor (over .048 to t = 0.8, over
+.038 to 0.9) and their ceiling. A small change at the camera's distance; the monkey's bulk otherwise
+belongs to its anatomy tests and was left alone.
+
 ## Loop pass 421 (2026-10-21) — frogs have round bronze eyes and smooth skin
 
 At 1:1 in `frogs` the frog was a cut green stone (eight-sided lofts) whose eyes were octahedra on the

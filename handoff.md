@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 422: monkey tail radius .065 -> .048 (was .085 -> .040), within the tail tests (PLAN "Loop pass 422").
 - Pass 421: frogs: 14-sided body/head lofts, round eyes on top of the head with bronze iris + horizontal pupil, blotches (AppendGeckoLoft<N, Sides>) (PLAN "Loop pass 421").
 - Pass 420: ground doves stand on visible legs, breast up 0.20 rad (stanceLift 0.075), longer bill (PLAN "Loop pass 420").
 - Pass 419: reef heron slimmer body, folded wings (coverts/primaries), back and breast plumes, tapered neck (PLAN "Loop pass 419").
