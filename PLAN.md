@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 420 (2026-10-21) — ground doves stand on their legs, breast up
+
+At 1:1 in `ground-doves` the foraging dove lay flat on the ground like a pillow: its feet were only
+0.02 body units below its belly, so the legs vanished into the body, which was level, and its bill
+hardly cleared its round head. Standing on the ground (GroundApproach, GroundForage, GroundDepart,
+perched), the dove's body, head, wings and tail now stand 0.075 units higher on the legs (the leg
+roots with them, the feet where the flock puts them) and are pitched breast up by 0.20 rad; the
+dove's bill reaches 0.64 (from 0.584) clear of the head. Vertex budgets unchanged; `bird-preen`
+(perched in a tree) is unaffected.
+
 ## Loop pass 419 (2026-10-21) — reef herons have folded wings and plumes
 
 At 1:1 in `herons` the dark reef heron's body was a smooth slate egg (0.21 by 0.092 by 0.10) with a

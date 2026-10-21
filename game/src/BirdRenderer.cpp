@@ -384,8 +384,9 @@ namespace island
                 }
             }
             const float beakWidth = parrot ? .046f : (dove ? .026f : .038f);
-            const float beakBase = parrot ? .526f : (dove ? .510f : .520f);
-            const float beakReach = parrot ? .616f : (dove ? .584f : .625f);
+            // (a dove's slender bill stands clear of its round head)
+            const float beakBase = parrot ? .526f : (dove ? .520f : .520f);
+            const float beakReach = parrot ? .616f : (dove ? .640f : .625f);
             const float baseTop=parrot?.098f:.078f;
             const float baseBottom=parrot?.025f:.026f;
             const float midZ=beakBase+(beakReach-beakBase)*.58f;
@@ -472,7 +473,17 @@ namespace island
             const Vector3 right = levelRight * bankCosine + Vector3::Up * bankSine;
             const Vector3 up = Vector3::Up * bankCosine - levelRight * bankSine;
             const float scale = bird.scale;
-            AppendNearBody(vertices,centre,right,up,forward,scale,palette,bird.species,bird.ruffleAmount,
+            // A dove on the ground stands on its legs with its breast raised: sat down on its
+            // folded toes, level, it read as a bird lying flat. The body, head, wings and tail
+            // stand on the legs (the feet stay where the flock puts them).
+            const bool groundStance = (bird.behavior == BirdBehavior::GroundApproach
+                || bird.behavior == BirdBehavior::GroundForage
+                || bird.behavior == BirdBehavior::GroundDepart) && bird.perchAmount > 0.35f;
+            const float stanceLift = groundStance ? 0.075f : 0.0f, stancePitch = groundStance ? 0.20f : 0.0f;
+            const Vector3 bodyCentre = centre + Vector3::Up * (stanceLift * scale);
+            const Vector3 bodyForward = forward * std::cos(stancePitch) + up * std::sin(stancePitch);
+            const Vector3 bodyUp = up * std::cos(stancePitch) - forward * std::sin(stancePitch);
+            AppendNearBody(vertices,bodyCentre,right,bodyUp,bodyForward,scale,palette,bird.species,bird.ruffleAmount,
                            coarse?6:16);
             // The walking dove's head thrusts forward and dips slightly with each step.
             // Preening, the head turns back over one shoulder (a hundred and twenty degrees)
@@ -480,13 +491,13 @@ namespace island
             const float preen = std::clamp(bird.preenAmount, 0.0f, 1.0f);
             const float preenSide = bird.preenSide < 0.0f ? -1.0f : 1.0f;
             const float turn = preen * 2.1f * preenSide, dip = preen * 0.55f;
-            const Vector3 turnedForward = forward * std::cos(turn) + right * std::sin(turn);
-            const Vector3 turnedRight = right * std::cos(turn) - forward * std::sin(turn);
-            const Vector3 headForward = turnedForward * std::cos(dip) - up * std::sin(dip);
-            const Vector3 headUp = up * std::cos(dip) + turnedForward * std::sin(dip);
+            const Vector3 turnedForward = bodyForward * std::cos(turn) + right * std::sin(turn);
+            const Vector3 turnedRight = right * std::cos(turn) - bodyForward * std::sin(turn);
+            const Vector3 headForward = turnedForward * std::cos(dip) - bodyUp * std::sin(dip);
+            const Vector3 headUp = bodyUp * std::cos(dip) + turnedForward * std::sin(dip);
             const float pivotZ = (bird.species == BirdSpecies::FruitDove ? .365f : .34f) * scale;
-            const Vector3 headCentre = centre + forward * (bird.headBob * 0.055f * scale + pivotZ)
-                - headForward * pivotZ - up * (bird.headBob * 0.018f * scale);
+            const Vector3 headCentre = bodyCentre + bodyForward * (bird.headBob * 0.055f * scale + pivotZ)
+                - headForward * pivotZ - bodyUp * (bird.headBob * 0.018f * scale);
             AppendNearHead(vertices,headCentre,turnedRight,headUp,headForward,scale,palette,bird.species,
                            cameraPosition,coarse);
 
@@ -497,13 +508,13 @@ namespace island
             const float baseWingLift = std::lerp(bird.wingPose * 0.38f, -0.025f, perch);
             const float stretchSide = bird.stretchSide < 0.0f ? -1.0f : 1.0f;
             const Vector3 leftFront = LocalPoint(
-                centre, right, up, forward, -0.06f, 0.035f, 0.20f, scale);
+                bodyCentre, right, bodyUp, bodyForward, -0.06f, 0.035f, 0.20f, scale);
             const Vector3 leftBack = LocalPoint(
-                centre, right, up, forward, -0.08f, 0.015f, -0.24f, scale);
+                bodyCentre, right, bodyUp, bodyForward, -0.08f, 0.015f, -0.24f, scale);
             const Vector3 rightFront = LocalPoint(
-                centre, right, up, forward, 0.06f, 0.035f, 0.20f, scale);
+                bodyCentre, right, bodyUp, bodyForward, 0.06f, 0.035f, 0.20f, scale);
             const Vector3 rightBack = LocalPoint(
-                centre, right, up, forward, 0.08f, 0.015f, -0.24f, scale);
+                bodyCentre, right, bodyUp, bodyForward, 0.08f, 0.015f, -0.24f, scale);
             for(const float side:{-1.0f,1.0f}) {
                 // Stretching, the one wing opens out and down from its perch fold by the
                 // stretch amount; the other keeps its fold.
@@ -513,30 +524,30 @@ namespace island
                 const float wingSpan=std::lerp(.96f,0.21f,sidePerch);
                 const float wingRear=std::lerp(-0.08f,-0.29f,sidePerch);
                 if(groundDove) {
-                    const Vector3 foldedWing=LocalPoint(centre,right,up,forward,
+                    const Vector3 foldedWing=LocalPoint(bodyCentre,right,bodyUp,bodyForward,
                         side*.145f,.045f,-.055f,scale);
-                    AppendEllipsoid(vertices,foldedWing,right,up,forward,
+                    AppendEllipsoid(vertices,foldedWing,right,bodyUp,bodyForward,
                         .105f*scale,.100f*scale,.345f*scale,
                         palette.upperWing,wildlife_render::ScaleColor(palette.upperWing,.82f));
                     continue;
                 }
                 const Vector3 front=side<0.0f?leftFront:rightFront;
                 const Vector3 back=side<0.0f?leftBack:rightBack;
-                const Vector3 elbow=LocalPoint(centre,right,up,forward,side*.40f,
+                const Vector3 elbow=LocalPoint(bodyCentre,right,bodyUp,bodyForward,side*.40f,
                     wingLift*.30f+.035f,std::lerp(.055f,-.20f,sidePerch),scale);
                 const Vector3 tip=LocalPoint(
-                    centre,right,up,forward,side*wingSpan,wingLift,wingRear,scale);
-                const Vector3 outerTrailing=LocalPoint(centre,right,up,forward,
+                    bodyCentre,right,bodyUp,bodyForward,side*wingSpan,wingLift,wingRear,scale);
+                const Vector3 outerTrailing=LocalPoint(bodyCentre,right,bodyUp,bodyForward,
                     side*std::lerp(.62f,.17f,sidePerch),wingLift*.62f-.018f,
                     std::lerp(-.39f,-.48f,sidePerch),scale);
-                const Vector3 innerTrailing=LocalPoint(centre,right,up,forward,
+                const Vector3 innerTrailing=LocalPoint(bodyCentre,right,bodyUp,bodyForward,
                     side*std::lerp(.25f,.11f,sidePerch),wingLift*.20f-.010f,
                     std::lerp(-.34f,-.43f,sidePerch),scale);
                 // Spread, the outer trailing edge splits into three primaries, the feather tips
                 // standing out behind the notches between them; folded they close up.
                 const float spread=1.0f-sidePerch;
                 const auto edge=[&](const float t,const float out) {
-                    return Vector3::Lerp(tip,outerTrailing,t)-forward*(out*spread*scale);
+                    return Vector3::Lerp(tip,outerTrailing,t)-bodyForward*(out*spread*scale);
                 };
                 const std::array<Vector3,12> wingOutline{
                     front,elbow,tip,edge(.14f,-.018f),edge(.26f,.060f),edge(.40f,-.012f),
@@ -555,7 +566,7 @@ namespace island
                     .022f*s,.020f*s+.065f*bend,.006f*s-.045f*bend,
                     handDroop(.14f),handDroop(.26f),handDroop(.40f),handDroop(.52f),
                     handDroop(.66f),handDroop(.78f),.030f*bend,.034f*bend,.004f*s};
-                AppendProfiledSurface(vertices,wingOutline,up,wingThickness,wingCamber,
+                AppendProfiledSurface(vertices,wingOutline,bodyUp,wingThickness,wingCamber,
                                       palette.upperWing,palette.lowerWing);
             }
 
@@ -567,11 +578,11 @@ namespace island
             for(const float side:{-1.0f,1.0f}) {
                 const float tipZ=tailLength-(side>0.0f&&bird.species==BirdSpecies::Parrot?.055f:0.0f);
                 const std::array<Vector3,4> feather{
-                    LocalPoint(centre,right,up,forward,side*.025f,0.0f,-.35f,scale),
-                    LocalPoint(centre,right,up,forward,side*featherRoot,-.006f,-.47f,scale),
-                    LocalPoint(centre,right,up,forward,side*tailHalfWidth,side*.012f,tipZ,scale),
-                    LocalPoint(centre,right,up,forward,side*.018f,side*.018f,tipZ+.10f,scale)};
-                AppendClosedSurface(vertices,feather,up*(.010f*scale),palette.tail,
+                    LocalPoint(bodyCentre,right,bodyUp,bodyForward,side*.025f,0.0f,-.35f,scale),
+                    LocalPoint(bodyCentre,right,bodyUp,bodyForward,side*featherRoot,-.006f,-.47f,scale),
+                    LocalPoint(bodyCentre,right,bodyUp,bodyForward,side*tailHalfWidth,side*.012f,tipZ,scale),
+                    LocalPoint(bodyCentre,right,bodyUp,bodyForward,side*.018f,side*.018f,tipZ+.10f,scale)};
+                AppendClosedSurface(vertices,feather,bodyUp*(.010f*scale),palette.tail,
                     wildlife_render::ScaleColor(palette.tail,.84f));
             }
 
@@ -583,7 +594,7 @@ namespace island
                         ? std::clamp(bird.scratchAmount, 0.0f, 1.0f) : 0.0f;
                     const float lift = scratch * 0.24f, ahead = scratch * 0.19f, in = scratch * 0.02f;
                     const Vector3 leg = LocalPoint(
-                        centre, right, up, forward, side * 0.055f, -0.075f + lift * 0.4f, 0.01f + ahead * 0.4f, scale);
+                        centre, right, up, forward, side * 0.055f, -0.075f + stanceLift + lift * 0.4f, 0.01f + ahead * 0.4f, scale);
                     const Vector3 foot = LocalPoint(
                         centre, right, up, forward, side * (0.055f - in),
                         (groundDove ? -0.20f : -0.12f) + lift, 0.01f + ahead, scale);
