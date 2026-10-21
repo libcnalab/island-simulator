@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 348 (2026-10-21) — a middle LOD for the palm crowns
+
+Pass 326's leaflet straps (34 a side per frond, three triangles each) made the near palm mesh six
+times the triangles, and every palm within 125-145 m drew it: the native `water` capture's palm
+pass went from about 7 ms to about 20 ms, and the Chrome `coast` scope ran past its 900 s limit.
+Past a few tens of metres the straps are a pixel or two wide and closer together than that, so
+a middle LOD (living palms 26-34 m out, the distance jittered per palm so no ring forms, up to
+the far LOD) draws every other strap, set between the near mesh's pairs, twice as wide; its
+shader keeps a receding strap a full pixel either side instead of half, so the crown's coverage
+matches. Measured natively: `water` palms 20 ms -> 12 ms, `palms` (close crowns, near mesh)
+unchanged at 8-9 ms; 1:1 crops of the 30-40 m crowns in `water` and the background palms in
+`palms` match the near mesh. Tests pass.
+
 ## Loop pass 347 (2026-10-21) — shells and turtle marks rest on the drawn sand
 
 After pass 346 an audit compared every placed prop with the rendered ground. Rocks, trees, palms,

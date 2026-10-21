@@ -62,6 +62,12 @@ namespace island
     {
         constexpr float NearLodMinimumDistance = 125.0f;
         constexpr float NearLodDistanceRange = 20.0f;
+        // Past a few tens of metres a crown's leaflets are a pixel or two wide and closer
+        // together than that: the middle LOD draws every other strap at twice the width.
+        constexpr float MidLodMinimumDistance = 26.0f;
+        constexpr float MidLodDistanceRange = 8.0f;
+        constexpr int NearLeafletStations = 34;
+        constexpr int MidLeafletStations = NearLeafletStations / 2;
         constexpr float MaximumDistance = 520.0f;
 
         struct PalmGeometry
@@ -142,6 +148,7 @@ uniform float uTime;
 uniform vec3 uStormWind;   // xy: the direction the wind blows toward (x, z); z: the weather's wind (1 the trade wind)
 uniform vec3 uCameraPosition;
 uniform float uPixelSpan;   // radians one screen pixel spans
+uniform float uLeafletPixels;   // the half-width in pixels a receding leaflet keeps
 
 out vec3 vColor;
 out vec3 vWorld;
@@ -197,7 +204,7 @@ void main()
     float halfWidth = length(aNormal);
     if (vSolid < 0.5 && halfWidth > 0.0001) {
         float pixel = length(world.xyz - uCameraPosition) * uPixelSpan;
-        float widen = min(max(0.0, 0.5 * pixel - halfWidth) / halfWidth, 4.0);
+        float widen = min(max(0.0, uLeafletPixels * pixel - halfWidth) / halfWidth, 4.0);
         world.xyz += mat3(instanceTransform) * aNormal * widen;
     }
     // Uniform positive scale and yaw: no inverse-transpose is needed.
@@ -612,7 +619,8 @@ void main()
         }
 
         void AppendFronds(PalmGeometry& geometry, const int variant, const bool farMesh,
-                          const float crownX, const float crownY, const float crownZ)
+                          const float crownX, const float crownY, const float crownZ,
+                          const int leafletStations = NearLeafletStations)
         {
             const int segments = farMesh ? 5 : 9;
             const int frondCount = farMesh ? 12 : 12 + variant % 3;
@@ -691,10 +699,13 @@ void main()
                 // A coconut frond carries a hundred or more leaflets a side: long narrow straps
                 // that leave the rachis in a shallow V and hang down along their length. Short
                 // broad triangles at a quarter-metre spacing read as a thorny fishbone instead.
-                constexpr int LeafletStations = 34;
-                for (int station = 0; station < LeafletStations; ++station) {
-                    const float t = 0.060f + static_cast<float>(station)
-                        * (0.895f / static_cast<float>(LeafletStations - 1));
+                // the middle LOD's straps stand between the near mesh's pairs, as wide as both
+                const int stride = NearLeafletStations / leafletStations;
+                const float widthScale = static_cast<float>(stride);
+                for (int station = 0; station < leafletStations; ++station) {
+                    const float t = 0.060f + (static_cast<float>(station * stride)
+                                              + 0.5f * static_cast<float>(stride - 1))
+                        * (0.895f / static_cast<float>(NearLeafletStations - 1));
                     const float radial = length * t;
                     const float arch = lift * std::sin(t * std::numbers::pi_v<float>)
                         - drop * t * t;
@@ -740,7 +751,7 @@ void main()
                         // the strap rises a little off the rachis, then bends down to its tip
                         const Vector3 mid = root + reach * 0.5f + Vector3::Up * (rise - hang * 0.28f);
                         const Vector3 tip = root + reach - Vector3::Up * hang;
-                        const float halfWidth = 0.021f + 0.004f * sideVariation;
+                        const float halfWidth = (0.021f + 0.004f * sideVariation) * widthScale;
                         const Vector3 across = direction * halfWidth;
                         const float sideShade = sideIndex == 0 ? 0.90f : 1.02f;
                         const Color leafletColor = ShadeColor(
@@ -872,7 +883,8 @@ void main()
             }
         }
 
-        [[nodiscard]] PalmGeometry CreatePalmGeometry(const int variant, const bool farMesh)
+        [[nodiscard]] PalmGeometry CreatePalmGeometry(const int variant, const bool farMesh,
+                                                      const int leafletStations = NearLeafletStations)
         {
             PalmGeometry geometry;
             geometry.vertices.reserve(farMesh ? 160U : 1200U);
@@ -884,7 +896,7 @@ void main()
             float crownY = 0.0f;
             float crownZ = 0.0f;
             AppendTrunk(geometry, variant, farMesh, crownX, crownY, crownZ);
-            AppendFronds(geometry, variant, farMesh, crownX, crownY, crownZ);
+            AppendFronds(geometry, variant, farMesh, crownX, crownY, crownZ, leafletStations);
             if (!farMesh) {
                 AppendDryFronds(geometry, variant, crownX, crownY, crownZ);
                 AppendCoconuts(geometry, variant, crownX, crownY, crownZ);
@@ -980,6 +992,7 @@ void main()
         if (customShaderReady_) {
             std::cout << "island-simulator: palm portable wind shader with near/far mesh LOD\n";
             std::cout << "island-simulator: palm near mesh segmented fuller leaflet silhouettes\n";
+            std::cout << "island-simulator: palm middle LOD draws every other leaflet strap twice as wide past 26-34 m\n";
             constexpr const char* leafletDiagnostic =
                 "island-simulator: palm near leaflets use staggered asymmetric silhouettes";
             std::cout << leafletDiagnostic << '\n';
@@ -1070,6 +1083,8 @@ void main()
         for (std::size_t variant = 0; variant < nearMeshes_.size(); ++variant) {
             upload(CreatePalmGeometry(static_cast<int>(variant), false), nearMeshes_[variant],
                    "palm near LOD");
+            upload(CreatePalmGeometry(static_cast<int>(variant), false, MidLeafletStations),
+                   midMeshes_[variant], "palm middle LOD");
             upload(CreatePalmGeometry(static_cast<int>(variant), true), farMeshes_[variant],
                    "palm far LOD");
             upload(CreateBrokenPalmGeometry(static_cast<int>(variant), false),
@@ -1111,6 +1126,9 @@ void main()
             const float nearLodDistance = NearLodMinimumDistance
                 + NearLodDistanceRange * normalizedYaw;
             instance.nearLodDistanceSquared = nearLodDistance * nearLodDistance;
+            const float midLodDistance = MidLodMinimumDistance
+                + MidLodDistanceRange * std::fmod(normalizedYaw * 7.0f + 0.37f, 1.0f);
+            instance.midLodDistanceSquared = midLodDistance * midLodDistance;
             instance.variant = palm.variant;
             instance.condition = palm.condition;
             cell.instances.push_back(instance);
@@ -1138,6 +1156,9 @@ void main()
         }
 
         for (auto& transforms : visibleNearTransforms_) {
+            transforms.reserve(static_cast<std::size_t>(totalPalmCount_));
+        }
+        for (auto& transforms : visibleMidTransforms_) {
             transforms.reserve(static_cast<std::size_t>(totalPalmCount_));
         }
         for (auto& transforms : visibleFarTransforms_) {
@@ -1263,6 +1284,7 @@ void main()
         for (auto& transforms : visibleNearTransforms_) {
             transforms.clear();
         }
+        for (auto& transforms : visibleMidTransforms_) transforms.clear();
         for (auto& transforms : visibleFarTransforms_) {
             transforms.clear();
         }
@@ -1304,7 +1326,9 @@ void main()
                 if (nearLod) {
                     (instance.condition == PalmCondition::Broken
                          ? visibleBrokenNearTransforms_[instance.variant]
-                         : visibleNearTransforms_[instance.variant]).push_back(transform);
+                         : instanceDistanceSquared <= instance.midLodDistanceSquared
+                         ? visibleNearTransforms_[instance.variant]
+                         : visibleMidTransforms_[instance.variant]).push_back(transform);
                     ++visibleNearPalmCount_;
                 } else {
                     (instance.condition == PalmCondition::Broken
@@ -1352,7 +1376,10 @@ void main()
             customEffect_->SetUniformVec3("uStormWind", wind::DirectionX, wind::DirectionZ, weather_now::Current().wind);
         }
         for (std::size_t variant = 0; variant < nearMeshes_.size(); ++variant) {
+            if (customShaderReady_) customEffect_->SetUniformFloat("uLeafletPixels", 0.5f);
             DrawVariant(nearMeshes_[variant], visibleNearTransforms_[variant]);
+            if (customShaderReady_) customEffect_->SetUniformFloat("uLeafletPixels", 1.0f);
+            DrawVariant(midMeshes_[variant], visibleMidTransforms_[variant]);
             DrawVariant(farMeshes_[variant], visibleFarTransforms_[variant]);
             DrawVariant(brokenNearMeshes_[variant], visibleBrokenNearTransforms_[variant]);
             DrawVariant(brokenFarMeshes_[variant], visibleBrokenFarTransforms_[variant]);
