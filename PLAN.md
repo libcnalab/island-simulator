@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 332 (2026-10-21) — the wrack line is weed, not black wedges
+
+Across the beaches in `shipwreck` and `driftwood` long, dark, soft-edged wedges lay on the sand
+that no object cast: probes with the sun shadow map off and then the contact-shadow batch off left
+them in place, and they were the high-tide wrack line (pass 4), painted near-black (0.16, 0.14,
+0.07) at 90 % over some two fifths of its three-metre band in strips that a low eye foreshortens
+into wedges. A real wrack line is a thin, broken line of drying weed with bare sand between. The
+strands are now about twice as fine across the shore, gathered into clumps by a second, broader
+field so whole stretches stay bare, cover far less of the band, and dry from rust-brown to dark
+brown at 80 %; the shell grit, twigs and the band's slight dampness are unchanged. `shipwreck`,
+`driftwood`, `crabs`, `hermit-crabs`, `coconut-crabs`, `bay-ground`, `wet-sand` and the tests
+pass.
+
 ## Loop pass 331 (2026-10-21) — the dry backshore is dry sand
 
 The coastal sand palette (`CoastalSandColor`) ran from wet at the waterline to dry only at 1.4 m,

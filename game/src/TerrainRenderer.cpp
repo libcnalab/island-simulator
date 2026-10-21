@@ -478,12 +478,19 @@ void main()
             // distance, so each reads as a stranded ribbon of weed.
             vec2 wrackArc = p / max(length(p), 1.0) * 250.0;
             vec2 strandGrid = vec2(wrackArc.x * 0.42 + wrackArc.y * 0.17 + signedShoreDistance * 0.9,
-                                   signedShoreDistance * 6.5 + broad * 3.0);
+                                   signedShoreDistance * 11.0 + broad * 3.0);
             float strand = valueNoise(strandGrid + vec2(7.7, 2.1));
-            float weed = smoothstep(0.02, 0.24, strand) * (1.0 - smoothstep(0.03, 0.10, groundPixelWidth));
+            // Thin broken strands over mostly bare sand, the weed drying from rust-brown to
+            // dark: a near-black strip over two fifths of the band read from a low eye as
+            // heavy dark wedges.
+            float clump = smoothstep(-0.08, 0.18, valueNoise(strandGrid * vec2(0.35, 0.22) + vec2(-3.9, 11.4)));
+            float weed = smoothstep(0.12, 0.26, strand) * clump
+                * (1.0 - smoothstep(0.03, 0.10, groundPixelWidth));
             float shellGrit = groundFleck(p, 2.4, vec2(5.9, -21.3), 0.72) * fleckVisibility;
             float twig = groundFleck(p, 0.65, vec2(-13.1, 8.4), 0.90) * fleckVisibility;
-            color = mix(color, vec3(0.16, 0.14, 0.07) * vGroundLight, weed * wrack * 0.90);
+            vec3 weedColor = mix(vec3(0.20, 0.15, 0.08), vec3(0.36, 0.24, 0.11),
+                                 0.5 + valueNoise(strandGrid * vec2(1.7, 0.6) + vec2(2.2, -6.1)));
+            color = mix(color, weedColor * vGroundLight, weed * wrack * 0.80);
             color = mix(color, vec3(0.86, 0.80, 0.64) * vGroundLight, shellGrit * wrack * 0.55);
             color = mix(color, vec3(0.38, 0.30, 0.19) * vGroundLight, twig * wrack * 0.65);
             // The band itself is a little darker and damper than the dry sand around it.
