@@ -1,5 +1,7 @@
 #pragma once
 
+#include "IslandSimulator/FrameSectionProfile.hpp"
+
 #include <array>
 #include <chrono>
 #include <cstddef>
@@ -599,6 +601,11 @@ namespace island
         bool quadEngineOn_ = false;
         float quadFlushSeconds_ = 0.0f;
         float quadIdleSeconds_ = 0.0f;
+        // A parked quad that has settled sleeps (see UpdateQuad): how long it has been still,
+        // and its wheels on the ground as they were when it fell asleep.
+        float quadRestSeconds_ = 0.0f;
+        BikeVec quadRestAnchor_{};
+        std::array<WheelOnGround, 4> quadWheels_{};
         static constexpr float QuadIdleOffSeconds = 90.0f;
         std::unique_ptr<RenderedTerrainSurface> quadSurface_;
         BikeControls quadControls_{};
@@ -800,6 +807,7 @@ namespace island
         std::chrono::steady_clock::time_point runtimeTimingWindowStarted_{};
         std::uint64_t runtimeTimingFrames_ = 0, runtimeTimingUpdates_ = 0;
         double runtimeUpdateMilliseconds_ = 0, runtimeDrawMilliseconds_ = 0;
+        FrameSectionProfile updateProfile_; // the parts of an Update, for the frame report
         std::array<double,4> runtimeWildlifeMilliseconds_{}; // spiders, goats, snakes, monkeys
         std::chrono::steady_clock::time_point benchmarkPreviousFrameTime_;
         std::vector<double> benchmarkFrameMilliseconds_;

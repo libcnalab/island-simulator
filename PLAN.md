@@ -233,6 +233,55 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 373 (2026-10-21) — why the game ran at 12-40 fps, and the first fixes
+
+The operator asked why the game runs at about 20 fps, sometimes 12, sometimes 40, and whether
+the machine is that weak. Their own play session (2026-10-21, native, Radeon 780M / Ryzen 7 PRO
+7840U, the native-performance profile at 1280x720 without MSAA) logged the frame-window report
+every five seconds: 57-60 fps in the open (one Update a frame, 4-6 ms of Update and 7-10 ms of
+Draw), 15-22 fps along the coast and 12 fps in the jungle near (-42, 13, -66), where each drawn
+frame ran 4.8-5.2 Updates (26-34 ms) besides 45-60 ms of Draw.
+
+- **The fixed time step's catch-up spiral.** With XNA's fixed 60 Hz step a slow frame runs as
+  many Updates as the time it took covers before the next Draw, and those make it slower still:
+  with an Update of U ms and a Draw of D ms a frame settles at D/(16.7-U) Updates - 49/10.2 = 4.8
+  in the jungle, exactly as measured. Interactive play now steps the world once per drawn frame
+  by the real elapsed time (every system already clamps its step to 0.1 s; the walker's slide,
+  the quad's eight substeps and the goats' and spiders' own substeps keep their physics fine);
+  QA captures, smoke runs, startup reports and the benchmark keep their deterministic clocks.
+  In the jungle frame that is 6.5 + 49 ms instead of 81: about 18 fps instead of 12, without the
+  stutter of the catch-up.
+- **The rest is CPU.** Update plus Draw summed to the whole frame, so the GPU never held the CPU
+  at present; the Draw time is the CPU rebuilding every animal and figure each frame and driving
+  the GL calls (no per-frame texture uploads or buffer stalls were found; vertex uploads orphan).
+  A section profiler (`FrameSectionProfile`) now reports, every five seconds next to the
+  frame-window line, the costliest parts of an Update (61 marks) and the CPU time of every
+  render pass (from the existing pass scopes), and a capture logs the same at its frame.
+  Measured in 64-frame software captures on this machine: the goats' draw 12.8 ms a frame, the
+  resident 7-9, the small-fauna batch 4-7, spiders 3.5-8.5, snakes 1.5-5; per Update the goats
+  1.7-1.9 ms, the parked quad 1.6, snakes 0.7-1.6, spiders 0.6-1.2.
+- **Fixes:** a parked quad that has stayed within 2 cm for a second sleeps (it trembled on its
+  springs forever, 0.06 m/s and 0.23 rad/s, and its eight physics substeps cost 1.6 ms an
+  Update): 1.6 -> 0.3 ms. The goats sample the canopy light three times a goat instead of at
+  every vertex, and keep the detailed mesh within 14 m instead of 30: 12.8 -> 6.4-7.8 ms. The
+  spiders take one canopy sample a spider, the snakes one a ring. The resident's figure, rebuilt
+  each frame at full detail at any distance, keeps it within 6 m, 60 % of the segments to 15 m
+  and 40 % beyond, leaving out parts under 1.2 / 3 cm (eyes, brows, curls): 7-9 -> 1.3 ms in
+  `campfire-wide`. The small animals in the shared batch are drawn only as far as they still
+  cover a pixel or two (ants 8 m, flies 10, beetles 16, cicadas 18, mice 22, frogs 26, geckos
+  28, skinks and rats 32, dragonflies 34; they were drawn to the batch's 50-72 m - a fly at
+  34 m), shrinking out over the last quarter of that reach.
+- **The machine:** the 7840U is a 15-28 W laptop chip whose CPU and iGPU share one power budget
+  and one memory bus; with about ten agents compiling on it (load 8-16 on 16 threads) the game's
+  main thread competes for a core and the iGPU's clock and bandwidth drop. That is part of the
+  spread between windows, not the cause of the 12 fps.
+- **Found outside this repo:** CNA's EasyGL effect renderer looks every uniform up by name with
+  glGetUniformLocation (and re-binds the program) on each SetUniform* call, uncached; the game
+  makes several hundred such calls a frame. A per-program location cache belongs in cna-next.
+
+`goats`, `goat-lying`, `spiders`, `resident`, `snakes`, `snake-head`, `mice`, `flies`, `ants`,
+`campfire-wide`, `deer`, `quad` and the tests pass; the frames match the previous ones.
+
 ## Loop pass 372 (2026-10-21) — the goats' thighs grow out of the barrel
 
 Each goat leg's flesh tube begins with a buried station 14 cm above the hip, its ends capped. At

@@ -143,11 +143,17 @@ std::unique_ptr<Texture2D> CreateMaterialAtlas(GraphicsDevice& device) {
 
 class HumanMeshBuilder {
 public:
-    HumanMeshBuilder(std::vector<VertexPositionColorTexture>& output,CanopyLightTint canopy,float wetness)
-        :output_(output),canopy_(canopy),wetness_(std::clamp(wetness,0.0f,1.0f)){}
+    // detail scales the segment counts (1 near); parts smaller than minimumFeature (metres)
+    // are left out: at a distance an eye, a brow or a curl is under a pixel.
+    HumanMeshBuilder(std::vector<VertexPositionColorTexture>& output,CanopyLightTint canopy,float wetness,
+                     float detail=1.0f,float minimumFeature=0.0f)
+        :output_(output),canopy_(canopy),wetness_(std::clamp(wetness,0.0f,1.0f)),
+         detail_(std::clamp(detail,.25f,1.0f)),minimumFeature_(std::max(minimumFeature,0.0f)){}
 
     void Ellipsoid(Vector3 centre,Vector3 right,Vector3 up,Vector3 forward,
         float rx,float ry,float rz,Material material,int longitude=12,int latitude=8) {
+        if(std::max({rx,ry,rz})<minimumFeature_)return;
+        longitude=Scaled(longitude,5);latitude=Scaled(latitude,3);
         right=SafeUnit(right);up=SafeUnit(up);forward=SafeUnit(forward);
         const auto point=[&](float a,float b){const float c=std::cos(a);return centre
             +right*(rx*c*std::cos(b))+up*(ry*std::sin(a))+forward*(rz*c*std::sin(b));};
@@ -166,6 +172,8 @@ public:
     }
 
     void Tube(Vector3 a,Vector3 b,float radiusA,float radiusB,Material material,int segments=10) {
+        if(std::max(radiusA,radiusB)*2.0f<minimumFeature_)return;
+        segments=Scaled(segments,4);
         const Vector3 axis=SafeUnit(b-a);
         Vector3 side=SafeUnit(Vector3::Cross(axis,std::abs(axis.Y)<.85f?Vector3::Up:Vector3::Right));
         const Vector3 other=SafeUnit(Vector3::Cross(side,axis));
@@ -182,6 +190,7 @@ public:
 
     void Loft(std::span<const Vector3> centres,std::span<const float> rx,std::span<const float> rz,
         Vector3 right,Vector3 forward,Material material,int segments=14) {
+        segments=Scaled(segments,6);
         right=SafeUnit(right);forward=SafeUnit(forward);
         for(std::size_t ring=0;ring+1<centres.size();++ring)for(int i=0;i<segments;++i) {
             const float a0=2*Pi*i/segments,a1=2*Pi*(i+1)/segments;
@@ -199,6 +208,9 @@ public:
         Quad(a,normal,{0,0},b,normal,{1,0},c,normal,{1,1},d,normal,{0,1},material);
     }
 private:
+    [[nodiscard]] int Scaled(const int count,const int minimum) const noexcept {
+        return std::max(minimum,static_cast<int>(std::lround(static_cast<float>(count)*detail_)));
+    }
     void Vertex(Vector3 p,Vector3 normal,Vector2 uv,Material material) {
         const auto base=BaseColor(material);
         const float direct=std::max(0.0f,Vector3::Dot(SafeUnit(normal),wildlife_render::FixedSunDirection));
@@ -224,11 +236,12 @@ private:
     std::vector<VertexPositionColorTexture>& output_;
     CanopyLightTint canopy_;
     float wetness_;
+    float detail_=1.0f,minimumFeature_=0.0f;
 };
 
 void BuildHuman(std::vector<VertexPositionColorTexture>& vertices,const ResidentState& state,
-    CanopyLightTint canopy,float wetness) {
-    HumanMeshBuilder mesh(vertices,canopy,wetness);const auto& pose=state.pose;
+    CanopyLightTint canopy,float wetness,float detail=1.0f,float minimumFeature=0.0f) {
+    HumanMeshBuilder mesh(vertices,canopy,wetness,detail,minimumFeature);const auto& pose=state.pose;
     const Vector3 up=Vector3::Up;
     const Vector3 right(std::cos(pose.heading),0,-std::sin(pose.heading));
     const Vector3 forward(std::sin(pose.heading),0,std::cos(pose.heading));
@@ -489,7 +502,12 @@ void ResidentRenderer::Draw(const Matrix& view,const Matrix& projection,const Ve
     vertices_.clear();visible_=0;triangles_=0;
     if(!IsVisible(view,projection,camera,resident,maximumDistance_))return;
     const auto tint=CanopyTransmissionTint(canopy_.SampleReceiver(resident.x,resident.y+1.0f,resident.z,resident.y));
-    BuildHuman(vertices_,resident,tint,wetness_);
+    // Rebuilt every frame: full detail up close, fewer segments and no centimetre parts
+    // further off (the whole figure was some seven milliseconds a frame at any distance).
+    const float distance=Vector3::Distance({resident.x,resident.y+1.0f,resident.z},camera);
+    const float detail=distance<6.0f?1.0f:distance<15.0f?.6f:.4f;
+    const float minimumFeature=distance<6.0f?0.0f:distance<15.0f?.012f:.03f;
+    BuildHuman(vertices_,resident,tint,wetness_,detail,minimumFeature);
     vegetation_fade::ShrinkAbout(vertices_,0,resident.x,resident.y,resident.z,vegetation_fade::FarShrink(
         Vector3::Distance({resident.x,resident.y+1.0f,resident.z},camera),maximumDistance_,
         vegetation_fade::TreeShrinkFraction));

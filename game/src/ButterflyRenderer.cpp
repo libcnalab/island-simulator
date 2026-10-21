@@ -1983,65 +1983,77 @@ namespace island
                     vegetation_fade::FarShrink(Vector3::Distance(centre, cameraPosition), maximumDistance_));
             }
         }
+        // Each small animal is drawn only as far as it still covers a pixel or two at 720p
+        // (about 300 times its length), shrinking to nothing over the last quarter of that
+        // reach. Every one is rebuilt on the CPU each frame, and they were all drawn to the
+        // batch's full 50-72 m: a centimetre fly 34 m off, a mouse of four thousand vertices
+        // at 50.
+        float shrink = 1.0f;
+        const auto within = [&](const Vector3& centre, const float reach, const float radius) {
+            const float limit = std::min(reach, maximumDistance_);
+            const float distanceSquared = Vector3::DistanceSquared(centre, cameraPosition);
+            if (distanceSquared > limit * limit || !frustum.Intersects(BoundingSphere(centre, radius)))
+                return false;
+            shrink = vegetation_fade::FarShrink(std::sqrt(distanceSquared), limit, .25f);
+            return shrink > 0.0f;
+        };
+        const auto shrinkFrom = [&](const std::size_t first, const Vector3& foot) {
+            if (shrink < 1.0f)
+                vegetation_fade::ShrinkAbout(stagingVertices_, first, foot.X, foot.Y, foot.Z, shrink);
+        };
         for (const GeckoState& gecko : geckos) {
             if (gecko.visibility <= .035f) continue;
             const Vector3 centre(gecko.x, gecko.y + .08f, gecko.z);
-            if (Vector3::DistanceSquared(centre, cameraPosition)
-                    > maximumDistance_ * maximumDistance_
-                || !frustum.Intersects(BoundingSphere(centre, gecko.scale * .55f))) {
-                continue;
-            }
+            if (!within(centre, 28.0f, gecko.scale * .55f)) continue;
+            const std::size_t first = stagingVertices_.size();
             AppendGecko(stagingVertices_, gecko);
+            shrinkFrom(first, Vector3(gecko.x, gecko.y, gecko.z));
             ++visibleGeckoCount_;
         }
         for (const SkinkState& skink : skinks) {
             const Vector3 centre(skink.x, skink.y + .07f, skink.z);
-            if (Vector3::DistanceSquared(centre, cameraPosition)
-                    > maximumDistance_ * maximumDistance_
-                || !frustum.Intersects(BoundingSphere(centre, skink.scale * .65f))) {
-                continue;
-            }
+            if (!within(centre, 32.0f, skink.scale * .65f)) continue;
+            const std::size_t first = stagingVertices_.size();
             AppendSkink(stagingVertices_, skink);
+            shrinkFrom(first, Vector3(skink.x, skink.y, skink.z));
             ++visibleSkinkCount_;
         }
         for(const DragonflyState& fly:dragonflies){
             const Vector3 centre(fly.x,fly.y,fly.z);
-            if(Vector3::DistanceSquared(centre,cameraPosition)>maximumDistance_*maximumDistance_
-                ||!frustum.Intersects(BoundingSphere(centre,.46f*fly.scale)))continue;
-            AppendDragonfly(stagingVertices_,fly);++visibleDragonflyCount_;
+            if(!within(centre,34.0f,.46f*fly.scale))continue;
+            const std::size_t first=stagingVertices_.size();
+            AppendDragonfly(stagingVertices_,fly);shrinkFrom(first,centre);++visibleDragonflyCount_;
         }
         for (const FrogState& frog : frogs) {
             const Vector3 centre(frog.x, frog.y + .08f, frog.z);
-            if (Vector3::DistanceSquared(centre, cameraPosition)
-                    > maximumDistance_ * maximumDistance_
-                || !frustum.Intersects(BoundingSphere(centre, frog.scale * .75f))) {
-                continue;
-            }
+            if (!within(centre, 26.0f, frog.scale * .75f)) continue;
+            const std::size_t first = stagingVertices_.size();
             AppendFrog(stagingVertices_, frog);
+            shrinkFrom(first, Vector3(frog.x, frog.y, frog.z));
             ++visibleFrogCount_;
         }
         for (const RodentState& rodent : rodents) {
             if (rodent.visibility <= .035f) continue;
             const Vector3 centre(rodent.x, rodent.y + .08f, rodent.z);
-            if (Vector3::DistanceSquared(centre, cameraPosition)
-                    > maximumDistance_ * maximumDistance_
-                || !frustum.Intersects(BoundingSphere(centre,
-                    rodent.species == RodentSpecies::Rat ? .55f : .38f))) continue;
+            const bool rat = rodent.species == RodentSpecies::Rat;
+            if (!within(centre, rat ? 32.0f : 22.0f, rat ? .55f : .38f)) continue;
+            const std::size_t first = stagingVertices_.size();
             AppendRodent(stagingVertices_, rodent);
+            shrinkFrom(first, Vector3(rodent.x, rodent.y, rodent.z));
             if (rodent.species == RodentSpecies::Mouse) ++visibleMouseCount_;
             else ++visibleRatCount_;
         }
         for (const FlyState& fly : flies) {
             const Vector3 centre(fly.x, fly.y, fly.z);
-            if (Vector3::DistanceSquared(centre, cameraPosition) > 34.0f * 34.0f
-                || !frustum.Intersects(BoundingSphere(centre, .08f))) continue;
+            if (!within(centre, 10.0f, .08f)) continue;
+            const std::size_t first = stagingVertices_.size();
             AppendFly(stagingVertices_, fly);
+            shrinkFrom(first, centre);
             ++visibleFlyCount_;
         }
         for(const AntState& ant:ants) {
             const Vector3 centre(ant.x,ant.y,ant.z);
-            if(Vector3::DistanceSquared(centre,cameraPosition)>12.0f*12.0f
-                ||!frustum.Intersects(BoundingSphere(centre,.045f)))continue;
+            if(!within(centre,8.0f,.045f))continue;
             const std::size_t firstVertex = stagingVertices_.size();
             AppendAnt(stagingVertices_,ant);
             const std::size_t expectedVertexCount = ant.behavior == AntBehavior::Carry
@@ -2049,25 +2061,27 @@ namespace island
             if (stagingVertices_.size() - firstVertex != expectedVertexCount) {
                 throw std::logic_error("Ant geometry violated its exact vertex budget");
             }
+            shrinkFrom(firstVertex, centre);
             ++visibleAntCount_;
         }
         for (const CicadaState& cicada : cicadas) {
             const Vector3 centre(cicada.x, cicada.y, cicada.z);
-            if (Vector3::DistanceSquared(centre, cameraPosition) > 26.0f * 26.0f
-                || !frustum.Intersects(BoundingSphere(centre, .12f))) continue;
+            if (!within(centre, 18.0f, .12f)) continue;
+            const std::size_t first = stagingVertices_.size();
             AppendCicada(stagingVertices_, cicada);
+            shrinkFrom(first, centre);
             ++visibleCicadaCount_;
         }
         for (const BeetleState& beetle : beetles) {
             if (beetle.visibility <= .035f) continue;
             const Vector3 centre(beetle.x, beetle.y + .04f, beetle.z);
-            if (Vector3::DistanceSquared(centre, cameraPosition) > 24.0f * 24.0f
-                || !frustum.Intersects(BoundingSphere(centre, .16f))) continue;
+            if (!within(centre, 16.0f, .16f)) continue;
             const std::size_t firstVertex = stagingVertices_.size();
             AppendBeetle(stagingVertices_, beetle);
             if (stagingVertices_.size() - firstVertex != BeetleVertexCount) {
                 throw std::logic_error("Beetle geometry violated its exact vertex budget");
             }
+            shrinkFrom(firstVertex, Vector3(beetle.x, beetle.y, beetle.z));
             ++visibleBeetleCount_;
         }
         for (const ButterflyState& butterfly : butterflies) {

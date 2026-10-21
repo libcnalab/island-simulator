@@ -192,8 +192,15 @@ namespace island
         }
     }
 
+    FrameSectionProfile& RenderPassCpuProfile() noexcept
+    {
+        static FrameSectionProfile profile;
+        return profile;
+    }
+
     GpuDiagnosticScope::GpuDiagnosticScope(const std::string_view name) noexcept
-        : name_(name), active_(enabled), cpuBreadcrumbs_(cpuBreadcrumbs)
+        : name_(name), started_(std::chrono::steady_clock::now()), active_(enabled),
+          cpuBreadcrumbs_(cpuBreadcrumbs)
     {
         if (cpuBreadcrumbs_) {
             try {
@@ -218,6 +225,8 @@ namespace island
 
     GpuDiagnosticScope::~GpuDiagnosticScope() noexcept
     {
+        RenderPassCpuProfile().Add(name_, std::chrono::duration<double, std::milli>(
+            std::chrono::steady_clock::now() - started_).count());
         if (cpuBreadcrumbs_) {
             try {
                 MirrorRuntimeDiagnosticToPlatformLog(

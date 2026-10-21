@@ -93,11 +93,12 @@ void SpiderRenderer::Draw(const Matrix& view,const Matrix& projection,const Vect
         const auto& pose=spider.pose;
         const std::size_t firstTextured=vertices_.size(),firstSolid=solid_.size();
         const auto mesh=BuildSpiderMesh(pose.legs,distance<5*5);
+        // one canopy-light sample for a spider a hand across (per vertex it was most of the cost)
+        const auto tint=CanopyTransmissionTint(canopy_.SampleReceiver(spider.x,spider.y+.04f,spider.z,spider.y));
         for(const auto& vertex:mesh.vertices) {
             const auto p=Point(pose.ToWorld(vertex.position));
             const auto n=Vector3::Normalize(Point(pose.right)*vertex.normal.x+Point(pose.up)*vertex.normal.y+Point(pose.forward)*vertex.normal.z);
             const float light=.61f+.37f*std::max(0.0f,Vector3::Dot(n,wildlife_render::FixedSunDirection))+.10f*std::max(0.0f,n.Y);
-            const auto tint=CanopyTransmissionTint(canopy_.SampleReceiver(p.X,p.Y,p.Z,spider.y));
             const auto color=Materials.at(static_cast<std::size_t>(vertex.material));
             const auto channel=[light](int value,float transmission){return static_cast<int>(std::clamp(std::lround(value*light*transmission),0L,255L));};
             auto& destination=vertex.material==SpiderMaterial::Eye

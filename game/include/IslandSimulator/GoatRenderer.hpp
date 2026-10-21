@@ -14,6 +14,7 @@ namespace island {
 class CanopyLightField;
 class GoatRenderer final {
 public:
+    static constexpr float DetailDistance=14.0f;   // the detailed mesh within this distance
     GoatRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
         const CanopyLightField& canopy,float maximumDistance);
     ~GoatRenderer();

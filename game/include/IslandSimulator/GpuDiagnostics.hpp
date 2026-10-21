@@ -1,7 +1,10 @@
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <string_view>
+
+#include "IslandSimulator/FrameSectionProfile.hpp"
 
 namespace island
 {
@@ -20,6 +23,10 @@ namespace island
     /** @brief Finishes a frame in the opt-in GPU diagnostic stream. */
     void EndGpuDiagnosticFrame() noexcept;
 
+    /** @brief The CPU wall time of every render pass since the last reset (always recorded:
+     *  two clock reads a pass), for the runtime frame report. */
+    [[nodiscard]] FrameSectionProfile& RenderPassCpuProfile() noexcept;
+
     /** @brief RAII KHR_debug group and GL-error checkpoint for one high-level render pass. */
     class GpuDiagnosticScope final
     {
@@ -32,6 +39,7 @@ namespace island
 
     private:
         std::string_view name_;
+        std::chrono::steady_clock::time_point started_{};
         bool active_ = false;
         bool cpuBreadcrumbs_ = false;
         bool groupPushed_ = false;

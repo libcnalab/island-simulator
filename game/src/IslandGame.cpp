@@ -2198,8 +2198,16 @@ namespace island
 #endif
         getWindowProperty().setTitleProperty("island-simulator");
         setIsMouseVisibleProperty(true);
+        // Interactive play steps the world once per drawn frame by the real elapsed time (every
+        // system clamps its own step to 0.1 s; the walker's slide and the quad substep inside it).
+        // The fixed 60 Hz step made a slow frame run several catch-up Updates before the next
+        // Draw, each making it slower still: measured on 2026-10-21 on a Radeon 780M, 4.8 Updates
+        // per drawn frame and 12 fps in the jungle, where one Update per frame would have given 18.
+        // QA captures, smoke runs and startup reports keep the deterministic fixed step.
+        const bool interactivePlay = viewpoint_ == FixedViewpoint::None && capturePath_.empty()
+            && !smokeTest_ && startupReportPath_.empty();
         // Capture-only clock: no wall-time catch-up updates between recorded frames.
-        setIsFixedTimeStepProperty(benchmarkPath_.empty() && !UsesSnakeCaptureClock() && !UsesGoatCaptureClock() && !UsesSpiderCaptureClock() && !UsesBoarCaptureClock()&&!UsesCampfireCaptureClock()&&!UsesResidentCaptureClock()&&!UsesBearCaptureClock()&&!(viewpoint_==FixedViewpoint::QuadDriveDetail&&!capturePath_.empty()));
+        setIsFixedTimeStepProperty(!interactivePlay && benchmarkPath_.empty() && !UsesSnakeCaptureClock() && !UsesGoatCaptureClock() && !UsesSpiderCaptureClock() && !UsesBoarCaptureClock()&&!UsesCampfireCaptureClock()&&!UsesResidentCaptureClock()&&!UsesBearCaptureClock()&&!(viewpoint_==FixedViewpoint::QuadDriveDetail&&!capturePath_.empty()));
         InitializeUserSettings();
 #if defined(__EMSCRIPTEN__)
         soundscapeNeedsGesture_ = true;
@@ -3222,6 +3230,7 @@ namespace island
     void IslandGame::Update(GameTime& gameTime)
     {
         const auto updateStarted = std::chrono::steady_clock::now();
+        updateProfile_.Begin("input, weather and walker");
         const auto measureWildlife = [this](std::size_t species, auto&& update) {
             const auto started = std::chrono::steady_clock::now();
             update();
@@ -3354,8 +3363,11 @@ namespace island
         if (!smokeTest_ && viewpoint_ == FixedViewpoint::None) {
             UpdateCamera(deltaSeconds);
         }
+        updateProfile_.Mark("UpdateQuad");
         UpdateQuad(deltaSeconds);
+        updateProfile_.Mark("whales");
         whales_.Update(deltaSeconds, wind::DirectionX, wind::DirectionZ);
+        updateProfile_.Mark("sailboat");
         sailboat_.Update(deltaSeconds);
         {
             // a swimmer stirs the plankton into light on a dark night (as the surf does)
@@ -3373,6 +3385,7 @@ namespace island
             waterspout_.Update(deltaSeconds, std::clamp((w.rain - 0.45f) / 0.30f, 0.0f, 1.0f) * std::clamp((w.wind - 1.2f) / 0.4f, 0.0f, 1.0f),
                                wind::DirectionX, wind::DirectionZ);
         }
+        updateProfile_.Mark("summitCloud");
         summitCloud_.Update(deltaSeconds, SummitCloudField::Cover(weather_now::Current().cloudCover,
                                                                   weather_now::Current().rain, dayNight_.Hour()),
                             wind::DirectionX, wind::DirectionZ, weather_now::Current().wind);
@@ -3391,6 +3404,7 @@ namespace island
             || viewpoint_ == FixedViewpoint::CurrentBoundaryDetail
             || viewpoint_ == FixedViewpoint::ReefHabitatDetail
             || viewpoint_ == FixedViewpoint::BenchmarkTraversal;
+        updateProfile_.Mark("waterViewModel");
         (void)waterViewModel_.Update(
             waterViewAllowed && !flightMotion_.IsActive() && playerMotion_.Mode() == LocomotionMode::Swimming,
             playerMotion_.GroundHeight(), playerMotion_.OceanCurrentStrength(terrain_),
@@ -3407,6 +3421,7 @@ namespace island
             : (viewpoint_ == FixedViewpoint::BenchmarkTraversal
                    ? benchmarkTraversalPresentationSpeed_
                    : std::hypot(playerMotion_.VelocityX(), playerMotion_.VelocityZ()));
+        updateProfile_.Mark("waterRippleModel");
         (void)waterRippleModel_.Update(
             !flightMotion_.IsActive() && playerMotion_.Mode() == LocomotionMode::Swimming,
             playerMotion_.GroundHeight(), rippleSpeed, deltaSeconds);
@@ -3415,6 +3430,7 @@ namespace island
             : (viewpoint_ == FixedViewpoint::BenchmarkTraversal
                    ? benchmarkTraversalPresentationSpeed_
                    : std::hypot(playerMotion_.VelocityX(), playerMotion_.VelocityZ()));
+        updateProfile_.Mark("grassInteractionModel");
         (void)grassInteractionModel_.Update(grassInteractionSpeed, deltaSeconds);
         {
             // The walker's prints: laid every stride while the feet are on sand.
@@ -3428,6 +3444,7 @@ namespace island
         const auto& observer=playerMotion_.Position();
         if(viewpoint_==FixedViewpoint::ResidentTendDetail) resident_->PreviewTending();
         if(viewpoint_==FixedViewpoint::ResidentFishDetail) resident_->PreviewFishing();
+        updateProfile_.Mark("resident");
         resident_->Update(viewpoint_==FixedViewpoint::ResidentTendDetail||viewpoint_==FixedViewpoint::ResidentFishDetail?0.0f:deltaSeconds,
             {observer.x,observer.y,observer.z});
         {
@@ -3471,6 +3488,7 @@ namespace island
         const auto previousBear=bear_->State();
         bear_->SetLyingFruit(fallingFruit_.Fruit());
         if(viewpoint_==FixedViewpoint::BearLyingDetail) bear_->PreviewLie();
+        updateProfile_.Mark("bear");
         bear_->Update(viewpoint_==FixedViewpoint::BearLyingDetail?0.0f:deltaSeconds,bearCaptureClock?BearPoint{NAN,NAN,NAN}
             :BearPoint{observer.x,observer.y,observer.z});
         for (const std::size_t eaten : bear_->EatenFruit()) fallingFruit_.Consume(eaten);
@@ -3482,9 +3500,12 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
         }
+        updateProfile_.Mark("fallingFruit");
         fallingFruit_.Update(deltaSeconds, monkeyTroop_.Monkeys());
+        updateProfile_.Mark("streamDrift");
         streamDrift_.Update(deltaSeconds);
         canopyLeafFall_.SetWind(weather_.State().wind);
+        updateProfile_.Mark("canopyLeafFall");
         canopyLeafFall_.Update(seaForageSeconds_,deltaSeconds,cameraPosition_.X,cameraPosition_.Z);
         // A leaf or feather that lands on the stream is taken by the current.
         if(canopyLeafFall_.LastLanding().count!=notedLeafLandings_) {
@@ -3498,14 +3519,21 @@ namespace island
         // the clutches break out after dark (the turtle-nest QA view keeps its daytime clutch)
         if (viewpoint_ != FixedViewpoint::TurtleNestDetail)
             hatchlings_.SetNightness(1.0f - std::clamp((sun_light::Current().lighting.sunElevationDegrees + 2.0f) / 10.0f, 0.0f, 1.0f));
+        updateProfile_.Mark("hatchlings");
         hatchlings_.Update(deltaSeconds);
+        updateProfile_.Mark("cascadeMist");
         cascadeMist_.Update(deltaSeconds,seaForageSeconds_);
+        updateProfile_.Mark("wetlandMist");
         wetlandMist_.Update(deltaSeconds,seaForageSeconds_);
+        updateProfile_.Mark("surfSpray");
         surfSpray_.Update(deltaSeconds,seaForageSeconds_,cameraPosition_.X,cameraPosition_.Z);
+        updateProfile_.Mark("dolphinBlows");
         dolphinBlows_.Update(deltaSeconds,seaForageSeconds_,dolphinPod_.Dolphins());
         streamFish_.SetLeaves(streamDrift_.Leaves());
+        updateProfile_.Mark("streamFish");
         streamFish_.Update(deltaSeconds,playerMotion_.Position().x,playerMotion_.Position().z);
         fallingFruit_.SetWind(weather_.State().wind);
+        updateProfile_.Mark("fallingFruit.UpdateCoconuts");
         fallingFruit_.UpdateCoconuts(seaForageSeconds_, cameraPosition_.X, cameraPosition_.Z);
         if (soundscape_ && fallingFruit_.LastCoconutLanding().count != notedThudCount_) {
             const auto& landing = fallingFruit_.LastCoconutLanding();
@@ -3552,6 +3580,7 @@ namespace island
         // The preen view holds the wreck's perched bird mid-preen every frame (the perch
         // sites are seeded after the camera is placed).
         if(viewpoint_ == FixedViewpoint::BirdPreenDetail) birdFlock_.PreviewPreen(0U);
+        updateProfile_.Mark("birdFlock");
         birdFlock_.Update((viewpoint_ == FixedViewpoint::BirdDetail
                               || viewpoint_ == FixedViewpoint::BirdPreenDetail
                               || viewpoint_ == FixedViewpoint::GroundDoveDetail)
@@ -3595,6 +3624,7 @@ namespace island
                 canopyLeafFall_.Shake(monkey.x, monkey.y, monkey.z, static_cast<std::uint32_t>(i) * 7919U + (++monkeyShakes_) * 104729U);
             }
         }
+        updateProfile_.Mark("fruitBatColony");
         fruitBatColony_.Update((viewpoint_ == FixedViewpoint::FruitBatDetail
                                    || viewpoint_ == FixedViewpoint::FruitBatRoostDetail)
                                   ? 0.0f : deltaSeconds,
@@ -3626,6 +3656,7 @@ namespace island
         const std::array<GrassWalker, GrassWalkers::Slots> butterflyWalkers = GatherWalkers(butterflyObserver.X, butterflyObserver.Z);
         butterflyMeadow_.SetWalkers(butterflyWalkers);
         butterflyMeadow_.SetCloudClock(seaForageSeconds_);
+        updateProfile_.Mark("butterflyMeadow");
         butterflyMeadow_.Update(deltaSeconds,butterflyObserver.X,butterflyObserver.Y,
             butterflyObserver.Z);
         if(viewpoint_==FixedViewpoint::ButterflyDetail) {
@@ -3647,6 +3678,7 @@ namespace island
         const std::array<GrassWalker, GrassWalkers::Slots> smallFaunaWalkers = GatherWalkers(cameraPosition_.X, cameraPosition_.Z);
         geckoPopulation_.SetWalkers(smallFaunaWalkers);
         geckoPopulation_.SetFlies(flySwarms_.Flies());
+        updateProfile_.Mark("geckoPopulation");
         geckoPopulation_.Update(viewpoint_==FixedViewpoint::GeckoDetail?0.0f:deltaSeconds,
                                 geckoObserver.X,geckoObserver.Y,
                                 geckoObserver.Z);
@@ -3673,12 +3705,15 @@ namespace island
         }
         skinkPopulation_.SetWalkers(smallFaunaWalkers);
         skinkPopulation_.SetCloudClock(seaForageSeconds_);
+        updateProfile_.Mark("skinkPopulation");
         skinkPopulation_.Update(viewpoint_ == FixedViewpoint::SkinkDetail ? 0.0f : deltaSeconds,
                                 skinkObserver.X, skinkObserver.Y, skinkObserver.Z);
         Vector3 dragonflyObserver=cameraPosition_;
         if(viewpoint_==FixedViewpoint::DragonflyDetail){const auto& fly=dragonflySwarm_.Dragonflies()[1U];dragonflyObserver=Vector3(fly.x,fly.y+20,fly.z);}
+        updateProfile_.Mark("dragonflySwarm");
         dragonflySwarm_.Update(viewpoint_==FixedViewpoint::DragonflyDetail?0.0f:deltaSeconds,
             dragonflyObserver.X,dragonflyObserver.Y,dragonflyObserver.Z);
+        updateProfile_.Mark("dragonflyDips");
         dragonflyDips_.Update(deltaSeconds,dragonflySwarm_.LastDip());
         Vector3 frogObserver = cameraPosition_;
         if (viewpoint_ == FixedViewpoint::FrogDetail) {
@@ -3690,6 +3725,7 @@ namespace island
             notedFrogCalls_ = soundscape_->PlayedFrogCallCount();
             frogPopulation_.NoteCall(soundscape_->ActiveFrogCall().animalIndex);
         }
+        updateProfile_.Mark("frogPopulation");
         frogPopulation_.Update(viewpoint_ == FixedViewpoint::FrogDetail ? 0.0f : deltaSeconds,
                                frogObserver.X, frogObserver.Y, frogObserver.Z);
         // A frog's dive into the plunge pool scatters the fish holding there.
@@ -3709,6 +3745,7 @@ namespace island
         rodentPopulation_.SetWalkers(smallFaunaWalkers);
         rodentPopulation_.SetLyingFruit(fallingFruit_.Fruit());
         rodentPopulation_.SetSnakes(snakes_->Snakes());
+        updateProfile_.Mark("rodentPopulation");
         rodentPopulation_.Update(
             viewpoint_ == FixedViewpoint::MouseDetail
                     || viewpoint_ == FixedViewpoint::RatDetail
@@ -3720,6 +3757,7 @@ namespace island
             flyObserver = Vector3(fly.x, fly.y + 12.0f, fly.z);
         }
         flySwarms_.SetLyingFruit(fallingFruit_.Fruit());
+        updateProfile_.Mark("flySwarms");
         flySwarms_.Update(viewpoint_ == FixedViewpoint::FlyDetail ? 0.0f : deltaSeconds,
                           flyObserver.X, flyObserver.Y, flyObserver.Z);
         Vector3 antObserver=cameraPosition_;
@@ -3728,6 +3766,7 @@ namespace island
             antObserver=Vector3(ant.x,ant.y+10.0f,ant.z);
         }
         antTrails_.SetLyingFruit(fallingFruit_.Fruit());
+        updateProfile_.Mark("antTrails");
         antTrails_.Update(viewpoint_==FixedViewpoint::AntDetail?0.0f:deltaSeconds,
                           antObserver.X,antObserver.Y,antObserver.Z);
         Vector3 cicadaObserver = cameraPosition_;
@@ -3736,6 +3775,7 @@ namespace island
             cicadaObserver = Vector3(cicada.x, cicada.y + 20.0f, cicada.z);
         }
         cicadaColony_.SetWalkers(smallFaunaWalkers);
+        updateProfile_.Mark("cicadaColony");
         cicadaColony_.Update(viewpoint_ == FixedViewpoint::CicadaDetail ? 0.0f : deltaSeconds,
                              cicadaObserver.X, cicadaObserver.Y, cicadaObserver.Z);
         Vector3 beetleObserver = cameraPosition_;
@@ -3743,6 +3783,7 @@ namespace island
             const auto& beetle = beetlePopulation_.Beetles()[2U];
             beetleObserver = Vector3(beetle.x, beetle.y + 14.0f, beetle.z);
         }
+        updateProfile_.Mark("beetlePopulation");
         beetlePopulation_.Update(viewpoint_ == FixedViewpoint::BeetleDetail ? 0.0f : deltaSeconds,
                                  beetleObserver.X, beetleObserver.Y, beetleObserver.Z);
         const CrabState previousCrabSubject = crabColony_.Crabs()[crabViewSubject_];
@@ -3754,16 +3795,20 @@ namespace island
                 +outward*18.0f+Vector3::Up*1.5f;
         }
         crabColony_.SetWalker(resident_->State().x, resident_->State().z, true);
+        updateProfile_.Mark("crabColony");
         crabColony_.Update(deltaSeconds, crabObserver.X, crabObserver.Y, crabObserver.Z);
+        updateProfile_.Mark("crabBubbles");
         crabBubbles_.Update(deltaSeconds, crabColony_.Crabs());
         Vector3 hermitCrabObserver = cameraPosition_;
         if (viewpoint_ == FixedViewpoint::HermitCrabDetail) {
             const auto& crab = hermitCrabGroup_.Crabs()[3U];
             hermitCrabObserver = Vector3(crab.x, crab.y + 20.0f, crab.z);
         }
+        updateProfile_.Mark("hermitCrabGroup");
         hermitCrabGroup_.Update(
             viewpoint_ == FixedViewpoint::HermitCrabDetail ? 0.0f : deltaSeconds,
             hermitCrabObserver.X, hermitCrabObserver.Y, hermitCrabObserver.Z);
+        updateProfile_.Mark("shellDrags");
         shellDrags_.Update(deltaSeconds, hermitCrabGroup_.Crabs());
         Vector3 coconutCrabObserver = cameraPosition_;
         if (viewpoint_ == FixedViewpoint::CoconutCrabDetail) {
@@ -3771,6 +3816,7 @@ namespace island
             coconutCrabObserver = Vector3(crab.x, crab.y + 20.0f, crab.z);
         }
         coconutCrabGroup_.SetLyingCoconuts(fallingFruit_.Fruit());
+        updateProfile_.Mark("coconutCrabGroup");
         coconutCrabGroup_.Update(
             viewpoint_ == FixedViewpoint::CoconutCrabDetail ? 0.0f : deltaSeconds,
             coconutCrabObserver.X, coconutCrabObserver.Y, coconutCrabObserver.Z);
@@ -3792,8 +3838,10 @@ namespace island
         if(viewpoint_==FixedViewpoint::CrocodileDetail)
             crocodileObserver=Vector3(previousCrocodile.x,previousCrocodile.y+20.0f,
                                       previousCrocodile.z);
+        updateProfile_.Mark("crocodileGroup");
         crocodileGroup_.Update(deltaSeconds,crocodileObserver.X,crocodileObserver.Y,
                                crocodileObserver.Z);
+        updateProfile_.Mark("crocodileWake");
         crocodileWake_.Update(deltaSeconds,crocodileGroup_.Crocodiles());
         // A crocodile coming alert on its bank hisses at the walker.
         if(soundscape_&&crocodileGroup_.LastHiss().count!=notedCrocHisses_) {
@@ -3836,7 +3884,9 @@ namespace island
             notedBearRetreats_ = boarHerd_.BearRetreatCount();
             soundscape_->NoteBoarAlarm(boarHerd_.LastBearRetreatIndex());
         }
+        updateProfile_.Mark("rootingDust");
         rootingDust_.Update(deltaSeconds, seaForageSeconds_, boarHerd_.Boars());
+        updateProfile_.Mark("mudFlecks");
         mudFlecks_.Update(deltaSeconds, boarHerd_.LastShake());
         // The dust the running animals kick up: a boar trotting off, a deer bounding, a goat
         // sidestepping, on dry sand or bare soil, puffs of earth behind the hooves.
@@ -3851,7 +3901,9 @@ namespace island
             hoofDustRunners_.push_back({d.x,d.y,d.z,d.headingRadians,d.speed,d.scale,dryUnder(d.x,d.z)});
         for(const auto& g:goats_->Goats())
             hoofDustRunners_.push_back({g.x,g.y,g.z,g.heading,g.speed,g.scale,dryUnder(g.x,g.z)});
+        updateProfile_.Mark("hoofDust");
         hoofDust_.Update(deltaSeconds, seaForageSeconds_, hoofDustRunners_);
+        updateProfile_.Mark("blownSand");
         blownSand_.Update(deltaSeconds, seaForageSeconds_, cameraPosition_.X, cameraPosition_.Z);
         if(viewpoint_==FixedViewpoint::BoarDetail) {
             const auto& current=boarHerd_.Boars().front();
@@ -3880,6 +3932,7 @@ namespace island
             const auto& subject=spiders_->Spiders()[spiderViewSubject_];
             spiderObserver={subject.x,subject.y+3.0f,subject.z};
         }
+        updateProfile_.Mark("spiders");
         measureWildlife(0, [&] {
             spiders_->Update(deltaSeconds,spiderObserver);
         });
@@ -3900,6 +3953,7 @@ namespace island
             ?GoatPoint{std::numeric_limits<float>::quiet_NaN(),0,0}
             :GoatPoint{cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z};
         if(viewpoint_==FixedViewpoint::GoatLyingDetail) goats_->PreviewLie(1U);
+        updateProfile_.Mark("goats");
         measureWildlife(1, [&] { goats_->Update(viewpoint_==FixedViewpoint::GoatLyingDetail?0.0f:deltaSeconds,goatObserver); });
         // The sentinel coming alert at the walker gives the alarm bleat.
         if(soundscape_&&goats_->SentinelAlert()&&!goatSentinelWasAlert_) soundscape_->NoteGoatAlarm(0U);
@@ -3908,6 +3962,7 @@ namespace island
             const auto& current=goats_->Goats().front();
             cameraPosition_+=Vector3(current.x-previousGoat.x,current.y-previousGoat.y,current.z-previousGoat.z);
         }
+        updateProfile_.Mark("deer");
         deer_->Update(viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail?0.0f:deltaSeconds,
             cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z);
         // The deer sentinel coming alert at the walker snorts the alarm.
@@ -3960,6 +4015,7 @@ namespace island
             const Vector3 neck(subject.body[1].x,subject.body[1].y,subject.body[1].z);
             snakeObserver=head+Vector3::Normalize(head-neck)*12.0f+Vector3::Up*1.7f;
         }
+        updateProfile_.Mark("snakes");
         measureWildlife(2, [&] {
             snakes_->Update(deltaSeconds,snakeObserver.X,snakeObserver.Y,snakeObserver.Z);
         });
@@ -3988,6 +4044,7 @@ namespace island
             const SharkState& shark = sharkPatrol_.State();
             fishSchools_.SetThreat(shark.x, shark.y, shark.z, shark.present && shark.visible);
         }
+        updateProfile_.Mark("fishSchools");
         fishSchools_.Update(deltaSeconds, cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
         // A fish breaking the surface draws the shark that way.
         if (fishSchools_.LastBreach().count != notedSharkBreach_) {
@@ -4010,6 +4067,7 @@ namespace island
             stingrayGroup_.SetThreat(shark.x,shark.z,shark.present&&shark.visible);
         }
         if(viewpoint_==FixedViewpoint::StingrayBuriedDetail) stingrayGroup_.PreviewBury(2U);
+        updateProfile_.Mark("stingrayGroup");
         stingrayGroup_.Update(viewpoint_==FixedViewpoint::StingrayDetail||viewpoint_==FixedViewpoint::StingrayBuriedDetail?0.0f:deltaSeconds,
                               cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z);
         if (viewpoint_ == FixedViewpoint::ReefHeronDetail) reefHeronGroup_.PreviewFreeze(0U);
@@ -4031,11 +4089,14 @@ namespace island
             reefHeronGroup_.SetDisturbers(disturbers);
         }
         // the QA camera stands close: it must not flush the bird it frames
+        updateProfile_.Mark("reefHeronGroup");
         reefHeronGroup_.Update(deltaSeconds, cameraPosition_.X,
                                viewpoint_ == FixedViewpoint::ReefHeronDetail ? cameraPosition_.Y + 100.0f : cameraPosition_.Y,
                                cameraPosition_.Z);
+        updateProfile_.Mark("stingraySand");
         stingraySand_.Update(deltaSeconds,stingrayGroup_.LastBurst());
         // The sand a settling ray flicks over its back rises in the same puffs.
+        updateProfile_.Mark("stingrayFlickSand");
         stingrayFlickSand_.Update(deltaSeconds,stingrayGroup_.LastFlick());
         if(viewpoint_==FixedViewpoint::StingrayDetail) {
             const StingrayState& subject=stingrayGroup_.Stingrays().front();
@@ -4044,7 +4105,9 @@ namespace island
                                      subject.z-previousStingraySubject.z);
         }
         const auto previousOctopus=octopusGroup_.Octopuses().front();
+        updateProfile_.Mark("octopusGroup");
         octopusGroup_.Update(viewpoint_==FixedViewpoint::OctopusDetail?0.0f:deltaSeconds,cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z);
+        updateProfile_.Mark("octopusInk");
         octopusInk_.Update(deltaSeconds,octopusGroup_.LastInk());
         if(viewpoint_==FixedViewpoint::OctopusDetail){const auto& o=octopusGroup_.Octopuses().front();cameraPosition_+=Vector3(o.x-previousOctopus.x,o.y-previousOctopus.y,o.z-previousOctopus.z);}
         const SeaTurtleState previousTurtleSubject = seaTurtleGroup_.Turtles()[2U];
@@ -4052,9 +4115,12 @@ namespace island
             const SharkState& shark = sharkPatrol_.State();
             seaTurtleGroup_.SetThreat(shark.x, shark.z, shark.present && shark.visible);
         }
+        updateProfile_.Mark("seaTurtleGroup");
         seaTurtleGroup_.Update(
             deltaSeconds, cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
+        updateProfile_.Mark("turtleBreaths");
         turtleBreaths_.Update(deltaSeconds,seaForageSeconds_,seaTurtleGroup_.LastBreath());
+        updateProfile_.Mark("turtleGraze");
         turtleGraze_.Update(deltaSeconds,seaTurtleGroup_.LastBite());
         if (viewpoint_ == FixedViewpoint::SeaTurtleDetail) {
             // Follow translation only. A CPU-rendered 60-frame audit spans enough simulation
@@ -4065,7 +4131,9 @@ namespace island
                                        subject.z - previousTurtleSubject.z);
         }
         const SharkState previousSharkSubject = sharkPatrol_.State();
+        updateProfile_.Mark("sharkPatrol");
         sharkPatrol_.Update(deltaSeconds, cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
+        updateProfile_.Mark("finWake");
         finWake_.Update(deltaSeconds, sharkPatrol_.State());
         if (viewpoint_ == FixedViewpoint::SharkDetail) {
             // Keep the occasional close subject framed without freezing its live patrol pose.
@@ -4078,6 +4146,7 @@ namespace island
             const SharkState& shark=sharkPatrol_.State();
             dolphinPod_.SetThreat(shark.x,shark.z,shark.present&&shark.visible);
         }
+        updateProfile_.Mark("dolphinPod");
         dolphinPod_.Update(deltaSeconds,cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z);
         // The pod's leap tells the seabirds where the fish are.
         if(dolphinPod_.LeapCount()!=notedDolphinLeaps_) {
@@ -4137,6 +4206,7 @@ namespace island
                                        subject.y - previousMonkeySubject.y,
                                        subject.z - previousMonkeySubject.z);
         }
+        updateProfile_.Mark("UpdateSoundscape");
         UpdateSoundscape(deltaSeconds);
         if (soundscape_ && worldDebugVisible_) {
             soundscape_->RefreshDebugSources(
@@ -4228,6 +4298,7 @@ namespace island
                 std::cout << std::flush;
             }
         }
+        updateProfile_.End();
         ++runtimeTimingUpdates_;
         runtimeUpdateMilliseconds_ += std::chrono::duration<double, std::milli>(
             std::chrono::steady_clock::now() - updateStarted).count();
@@ -4242,6 +4313,8 @@ namespace island
             runtimeTimingFrames_ = runtimeTimingUpdates_ = 0;
             runtimeUpdateMilliseconds_ = runtimeDrawMilliseconds_ = 0;
             runtimeWildlifeMilliseconds_.fill(0);
+            updateProfile_.Reset();
+            RenderPassCpuProfile().Reset();
         };
         if (runtimeTimingWindowStarted_ == std::chrono::steady_clock::time_point{}) {
             reset(); // Exclude world loading and the first shader compilation from play timings.
@@ -4274,6 +4347,14 @@ namespace island
         }
         std::cout << report.str() << '\n';
         MirrorRuntimeDiagnosticToPlatformLog(report.str());
+        // Where the time goes: the costliest parts of an Update (ms per Update) and of a frame's
+        // render passes (CPU ms per drawn frame; a pass that waits on the GPU shows that too).
+        std::ostringstream profile;
+        profile << "island-simulator: frame-profile update-ms-per-update "
+                << updateProfile_.Top(updates, 14) << " | render-pass-cpu-ms-per-frame "
+                << RenderPassCpuProfile().Top(frames, 16);
+        std::cout << profile.str() << '\n';
+        MirrorRuntimeDiagnosticToPlatformLog(profile.str());
         reset();
     }
 
@@ -4381,6 +4462,8 @@ namespace island
     {
         quad_.Place({x, 0.0f, z}, yawRadians, [this](float px, float pz) { return QuadGround(px, pz); });
         quadPlaced_ = true;
+        quadRestSeconds_ = 0.0f;
+        quadRestAnchor_ = quad_.Position();
     }
 
     void IslandGame::ToggleQuad()
@@ -4431,13 +4514,34 @@ namespace island
         const auto ground = [this](float x, float z) { return QuadGround(x, z); };
         const auto obstacles = [this](float x, float z, float r, float& px, float& pz) { return QuadObstacle(x, z, r, px, pz); };
         const BikeControls controls = riding_ ? quadControls_ : BikeControls{0.0f, 0.0f, true};
-        quad_.Step(deltaSeconds, controls, ground, obstacles);
+        // A parked quad that has settled sleeps: its physics (eight substeps, each sampling the
+        // ground and the obstacles under four wheels) cost about 1.5 ms an update for a machine
+        // standing still, and on its springs it never quite stopped (a few cm/s and a fifth of a
+        // radian a second of tremble), so it is judged by where it is: still within 2 cm of
+        // where it stood a second ago. Getting on, or placing it, wakes it.
+        if (riding_) {
+            quadRestSeconds_ = 0.0f;
+            quadRestAnchor_ = quad_.Position();
+        } else if (quadRestSeconds_ <= 1.0f) {
+            const BikeVec p = quad_.Position();
+            const float dx = p.x - quadRestAnchor_.x, dy = p.y - quadRestAnchor_.y, dz = p.z - quadRestAnchor_.z;
+            if (dx * dx + dy * dy + dz * dz > 0.0004f) {
+                quadRestSeconds_ = 0.0f;
+                quadRestAnchor_ = p;
+            } else {
+                quadRestSeconds_ += deltaSeconds;
+            }
+        }
+        const bool asleep = quadRestSeconds_ > 1.0f;
+        updateProfile_.Mark(asleep ? "quad (asleep)" : "quad physics");
+        if (!asleep) quad_.Step(deltaSeconds, controls, ground, obstacles);
+        updateProfile_.Mark("quad wheels");
         // What the wheels leave and throw: ruts in sand and soil, dust off dry ground, spray in
         // the shallows.
-        std::array<WheelOnGround, 4> wheels{};
+        std::array<WheelOnGround, 4> wheels = quadWheels_;
         const BikeVec up = quad_.Up();
         const float wetness = weather_now::Current().wetness;
-        for (int w = 0; w < 4; ++w) {
+        for (int w = 0; w < 4 && !asleep; ++w) {
             const BikeVec hub = quad_.WheelHub(w);
             WheelOnGround& wheel = wheels[static_cast<std::size_t>(w)];
             wheel.x = hub.x - up.x * QuadBike::WheelRadius;
@@ -4461,6 +4565,7 @@ namespace island
             wheel.dusty = (wetness < 0.35f && (surface == TerrainSurface::DrySand || surface == TerrainSurface::CoastalGround))
                 || (wetness < 0.1f && surface == TerrainSurface::InteriorGround);
         }
+        quadWheels_ = wheels;
         // The quad gathers dirt: mud off wet ground and dust off dry, thrown up by the wheels
         // the faster it goes; wading the sea washes it off, and the rain rinses it slowly. The
         // mud stays dark while fresh or rained on and dries pale over a few minutes.
@@ -4479,7 +4584,9 @@ namespace island
             if ((freshen > 0.0f && speed > 0.5f) || rain > 0.3f) quadDirtWet_ = std::min(1.0f, quadDirtWet_ + deltaSeconds * 0.5f);
             else quadDirtWet_ = std::max(0.0f, quadDirtWet_ - deltaSeconds / 300.0f);
         }
+        updateProfile_.Mark("quad tyre tracks");
         tyreTracks_.Update(deltaSeconds, wheels);
+        updateProfile_.Mark("quad dust and spray");
         wheelDust_.Update(deltaSeconds, wheels, quad_.Velocity(), wind::DirectionX, wind::DirectionZ);
         wheelSpray_.Update(deltaSeconds, wheels, quad_.Velocity(), wind::DirectionX, wind::DirectionZ);
         // A hard knock (a trunk, a rock, the chassis on the ground, a heavy landing) or the
@@ -4519,6 +4626,7 @@ namespace island
         }
         const BikeVec tip = quad_.ToWorld(QuadBikeRenderer::ExhaustTip);
         const BikeVec back{-quad_.Forward().x, -quad_.Forward().y, -quad_.Forward().z};
+        updateProfile_.Mark("quad exhaust and sound");
         exhaust_.Update(deltaSeconds, quadEngineOn_, quad_.Throttle(), tip, back, quad_.Velocity(), wind::DirectionX, wind::DirectionZ);
         if (soundscape_) {
             const auto p = quad_.Position();
@@ -7204,6 +7312,17 @@ namespace island
                 && (viewpoint_ == FixedViewpoint::MonkeyDetail || viewpoint_ == FixedViewpoint::MonkeyTreeDetail || viewpoint_ == FixedViewpoint::MonkeyClimbDetail)
             ? MonkeyCaptureFrames : SmokeTestFrames;
         if (!capturePath_.empty() && drawnFrames_ == targetFrames) {
+            {
+                // the frames so far (in the software renderer: CPU work and its vertex shading)
+                std::ostringstream profile;
+                profile << "island-simulator: capture-profile frames=" << drawnFrames_
+                        << " updates=" << runtimeTimingUpdates_ << " update-ms-per-update "
+                        << updateProfile_.Top(static_cast<double>(std::max<std::uint64_t>(1, runtimeTimingUpdates_)), 20)
+                        << " | render-pass-cpu-ms-per-frame "
+                        << RenderPassCpuProfile().Top(static_cast<double>(std::max<std::uint32_t>(1, drawnFrames_)), 24);
+                std::cout << profile.str() << '\n';
+                MirrorRuntimeDiagnosticToPlatformLog(profile.str());
+            }
             {
                 GpuDiagnosticScope gpuPass("capture-readback");
                 CaptureFrame(capturePath_);

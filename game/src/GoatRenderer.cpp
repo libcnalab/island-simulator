@@ -146,7 +146,24 @@ void GoatRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector
         if(shrink<=0.0f)continue;
         const std::size_t firstCoat=vertices_.size(),firstSolid=solidVertices_.size();
         const auto& pose=goat.pose;
-        const auto mesh=BuildGoatMesh(pose,goat.grazingPose,distanceSquared<30*30,goat.tailSwing,goat.earFlick,goat.chew);
+        // The detailed mesh (three times the vertices) only where it shows: a metre-tall goat
+        // 14 m off stands some fifty pixels high at 720p, 20 at the old 30 m limit.
+        const auto mesh=BuildGoatMesh(pose,goat.grazingPose,distanceSquared<DetailDistance*DetailDistance,
+                                      goat.tailSwing,goat.earFlick,goat.chew);
+        // The canopy's light over the goat, taken at its rump, middle and shoulder and blended
+        // along the body: per vertex, these lookups were most of a frame's goat cost.
+        std::array<CanopyLightTint,3> canopyTints{};
+        for(std::size_t station=0;station<canopyTints.size();++station) {
+            const auto point=Point(pose.ToWorld({0.0f,.80f,-.55f+.55f*static_cast<float>(station)}));
+            canopyTints[station]=CanopyTransmissionTint(canopy_.SampleReceiver(point.X,point.Y,point.Z,goat.y));
+        }
+        const auto tintAt=[&canopyTints](const float localZ) {
+            const float t=std::clamp((localZ+.55f)/.55f,0.0f,2.0f);
+            const std::size_t first=std::min<std::size_t>(static_cast<std::size_t>(t),1U);
+            const float f=t-static_cast<float>(first);
+            const auto& a=canopyTints[first];const auto& b=canopyTints[first+1U];
+            return CanopyLightTint{std::lerp(a.red,b.red,f),std::lerp(a.green,b.green,f),std::lerp(a.blue,b.blue,f)};
+        };
         std::array<Vector3,2> eyeSum{};std::array<int,2> eyeCount{};
         for(const auto& vertex:mesh.vertices) {
             const auto world=Point(pose.ToWorld(vertex.position));
@@ -158,7 +175,7 @@ void GoatRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector
                 +Point(pose.up)*vertex.normal.y+Point(pose.forward)*vertex.normal.z);
             const float light=.61f+.37f*std::max(0.0f,Vector3::Dot(n,wildlife_render::FixedSunDirection))
                 +.10f*std::max(0.0f,n.Y);
-            const auto tint=CanopyTransmissionTint(canopy_.SampleReceiver(world.X,world.Y,world.Z,goat.y));
+            const auto tint=tintAt(vertex.position.z);
             const auto color=vertex.material==GoatMaterial::Coat
                 ?CoatPalettes[goatIndex%CoatPalettes.size()]
                 :Materials.at(static_cast<std::size_t>(vertex.material));

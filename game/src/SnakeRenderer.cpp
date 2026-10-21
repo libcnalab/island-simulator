@@ -100,8 +100,10 @@ void SnakeRenderer::Draw(const Matrix& view,const Matrix& projection,const Vecto
         const auto origin=station(0);
         using Ring=std::array<VertexPositionColorTexture,Sides+1>;
         std::array<Ring,SnakeState::StationCount> rings;
+        // The canopy's light is taken once a ring (the body crosses the sun flecks along its
+        // length, not around its girth): per vertex it was most of a snake's cost.
+        CanopyLightTint tint{1.0f,1.0f,1.0f};
         auto vertex=[&](Vector3 point,Vector3 normal,Color color,Vector2 uv) {
-            const auto tint=CanopyTransmissionTint(canopy_.SampleReceiver(point.X,point.Y,point.Z,origin.Y));
             const float light=0.58f+0.38f*std::max(0.0f,Vector3::Dot(normal,wildlife_render::FixedSunDirection));
             return VertexPositionColorTexture(point,Color(
                 static_cast<int>(color.getRProperty()*light*tint.red),
@@ -110,6 +112,7 @@ void SnakeRenderer::Draw(const Matrix& view,const Matrix& projection,const Vecto
         };
         for (std::size_t j=0;j<snake.body.size();++j) {
             const auto centre=station(j);
+            tint=CanopyTransmissionTint(canopy_.SampleReceiver(centre.X,centre.Y,centre.Z,origin.Y));
             const auto before=station(j==0 ? 0 : j-1);
             const auto after=station(std::min(j+1,snake.body.size()-1));
             const auto tangent=Vector3::Normalize(before-after);
@@ -154,6 +157,8 @@ void SnakeRenderer::Draw(const Matrix& view,const Matrix& projection,const Vecto
             triangle(rings[j-1][a],rings[j][a],rings[j][b]);
             triangle(rings[j-1][a],rings[j][b],rings[j-1][b]);
         }
+        // the head, its eyes and tongue in the light at the head
+        tint=CanopyTransmissionTint(canopy_.SampleReceiver(origin.X,origin.Y,origin.Z,origin.Y));
         const auto forward=Vector3::Normalize(station(0)-station(1));
         Vector3 right;
         if(snake.arboreal) {

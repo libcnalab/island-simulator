@@ -71,6 +71,7 @@ namespace island
 
         [[nodiscard]] BikeVec Position() const noexcept { return position_; }
         [[nodiscard]] BikeVec Velocity() const noexcept { return velocity_; }
+        [[nodiscard]] BikeVec AngularVelocity() const noexcept { return angular_; }
         /** @brief The body's axes in the world: right, up, forward. */
         [[nodiscard]] BikeVec Right() const noexcept { return axisX_; }
         [[nodiscard]] BikeVec Up() const noexcept { return axisY_; }
