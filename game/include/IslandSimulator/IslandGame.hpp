@@ -677,6 +677,7 @@ namespace island
         // The deer's and the boars' cloven prints on wet sand and the stream's mud.
         std::array<FootprintTrail,DeerHerd::Count> deerPrints_{};
         std::array<FootprintTrail,BoarHerd::BoarCount> boarPrints_{};
+        FootprintTrail residentPrints_{};   // the resident's bare feet on the sand
         std::unique_ptr<FootprintTrailRenderer> footprintRenderer_;
         std::unique_ptr<WaterholeRenderer> waterholeRenderer_;
         RootingDustField rootingDust_{terrain_};

@@ -3577,8 +3577,15 @@ namespace island
             // The resident's footfalls: one every 0.68 m of their walk, on the ground under them.
             const auto& walker=resident_->State();
             const bool walking=walker.mode==ResidentMode::Walking&&walker.speed>0.1f;
+            const FootstepSurface underfoot=FootstepGroundAt(walker.x,walker.z);
             if(residentSteps_.Step(walker.x,walker.z,walking)&&soundscape_)
-                soundscape_->NoteResidentStep(walker.x,walker.y,walker.z,FootstepGroundAt(walker.x,walker.z));
+                soundscape_->NoteResidentStep(walker.x,walker.y,walker.z,underfoot);
+            // and the bare feet print the sand (on the walk to the jetty), the wet sand's sooner gone
+            residentPrints_.SetStride(0.68f);
+            residentPrints_.Update(deltaSeconds,walker.x,walker.z,
+                walking?std::sin(walker.heading)*walker.speed:0.0f,walking?std::cos(walker.heading)*walker.speed:0.0f,
+                underfoot==FootstepSurface::Sand||underfoot==FootstepSurface::Shallows,
+                underfoot==FootstepSurface::Shallows||terrain_.Sample(walker.x,walker.z).surface==TerrainSurface::WetSand);
             // On the walk the resident whistles a phrase every half minute or so.
             residentWhistleClock_=walking?residentWhistleClock_+deltaSeconds:std::min(residentWhistleClock_,6.0f);
             if(walking&&residentWhistleClock_>=28.0f&&soundscape_) {
@@ -6303,6 +6310,7 @@ namespace island
             if(turtleTrackRenderer_) turtleTrackRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
             for(const auto& trail:deerPrints_) if(trail.ActiveCount()>0U) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,trail.Prints());
             for(const auto& trail:boarPrints_) if(trail.ActiveCount()>0U) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,trail.Prints());
+            if(residentPrints_.ActiveCount()>0U) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,residentPrints_.Prints());
             shellDragRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,shellDrags_.Segments());
             wallowScarRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }

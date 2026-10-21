@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 440 (2026-10-22) — the resident leaves footprints in the sand
+
+The walker, the deer and the boars print the sand and the mud as they go; the resident, who walks
+barefoot down to the jetty's foot on every tour, left none (only the authored lines of old prints lie
+there). A FootprintTrail of bare-foot prints (the walker's kind, at the resident's 0.68 m stride)
+now follows the resident on sand and in the shallows, the wet sand's prints taken back by the swash
+sooner, drawn with the others. (A probe checked the heading convention: prints alternate 0.11 m either
+side of the line of walk and point along it.) `resident` and `jetty` pass.
+
 ## Loop pass 439 (2026-10-22) — the ground spiders keep to their retreats by day
 
 At 1:1 in `grass` five large black spiders crossed one open patch of forest floor at noon, reading as an
