@@ -152,7 +152,8 @@ namespace island
                         const float a = clump.phase * 3.0f + 2.39996f * static_cast<float>(blade);
                         const float spread = 0.05f + 0.05f * static_cast<float>(blade % 3);
                         const Vector3 root = base + Vector3(std::cos(a) * spread, 0.01f, std::sin(a) * spread);
-                        const float height = clump.size * (0.75f + 0.35f * static_cast<float>((blade * 7) % 5) / 4.0f);
+                        // towards the edge of the radius the blades shrink into the bed (no popping)
+                        const float height = clump.size * fade * (0.75f + 0.35f * static_cast<float>((blade * 7) % 5) / 4.0f);
                         const float width = 0.012f + 0.004f * static_cast<float>(blade % 2);
                         const Vector3 lean(std::cos(a) * 0.12f + sway, 0.0f, std::sin(a) * 0.12f + sway * 0.6f);
                         Vector3 previous = root;
@@ -161,8 +162,8 @@ namespace island
                             const Vector3 p1 = root + Vector3(0.0f, height * t1, 0.0f) + lean * (height * t1 * t1);
                             const auto shade = [&](float t) {
                                 const float g = lit * (0.55f + 0.45f * t);
-                                const auto c = [g, fade](float v) { return static_cast<int>(std::lround(std::clamp(v * g, 0.0f, 1.0f) * 255.0f)); };
-                                return Color(c(0.22f), c(0.30f), c(0.11f), static_cast<int>(std::lround(255.0f * fade)));
+                                const auto c = [g](float v) { return static_cast<int>(std::lround(std::clamp(v * g, 0.0f, 1.0f) * 255.0f)); };
+                                return Color(c(0.22f), c(0.30f), c(0.11f), 255);
                             };
                             const Color c0 = shade(t0), c1 = shade(t1);
                             const float w0 = width * (1.0f - 0.35f * t0), w1 = width * (1.0f - 0.35f * t1);

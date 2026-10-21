@@ -243,7 +243,9 @@ the meadow, depth and sand-channel terms recomputed, so the blades stand on the 
 not on the bare sand (a first draft placed them by the turtles' separate habitat field and they
 stood on bare sand while the dark beds stayed bare). Placed once on a 0.6 m grid thinned by the
 meadow's strength (58,610 clumps), bucketed in 8 m cells so each frame builds only the buckets
-within 24 m; the clumps lean back and forth with the swell's surge (stronger in a heavy sea);
+within 24 m, shrinking into the bed over its last 30 % (the blades are opaque: a first alpha
+fade did nothing, and clang's unused-capture warning on it broke the Web build, fixed in a
+follow-up commit); the clumps lean back and forth with the swell's surge (stronger in a heavy sea);
 drawn with the underwater things before the sea so the water covers them. The scan costs about
 0.15 s at start. `jetty-end` and `turtles` show tufts across the meadow patches (a first step;
 a full carpet would need several times the density); `water`, `fish`, `reef-habitat` and
