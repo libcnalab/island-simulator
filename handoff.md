@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 389: driftwood material bleached silver-tan, damp underside, sand dust, long grain streaks, footprint-faded checks, knots (PLAN "Loop pass 389"). Next idea: driftwood shape (taper, broken ends, partly buried; watch web-smoke grounding).
 - Pass 388: crab palm is a 3-ring ellipsoid; shore-crab palm flattened/elongated (budgets 2112/3120) (PLAN "Loop pass 388").
 - Pass 387: crab palms 12-sided and smooth-lit, octahedral joints lit per corner (SmoothLit); budgets 1968/2760 (PLAN "Loop pass 387"). Next idea: shore-crab claw palms are squat discs in shape.
 - Pass 386: crab limb segments are 6-sided smooth-lit elliptical tubes (budgets 1872/2520/3000) (PLAN "Loop pass 386").

@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 389 (2026-10-21) — driftwood is bleached, checked and damp underneath
+
+The beach driftwood (`driftwood`) read as smooth beige pipes: its material only rippled the
+colour by 6%. Both LODs now start from a sun-bleached warm silver-tan, and the near material
+(local x along the piece) darkens and warms the underside where the wood lies damp in the sand,
+dusts the lowest side with sand, streaks the grain long along the piece (low frequency along it,
+high round it), opens it into a few long dark checks and adds the odd dark knot. The checks widen
+and fade with the pixel footprint: narrow ones first drew as dotted lines (3x zoom), as do any
+thinner than about a pixel. The near detail still fades out by 56 m. The tests pass.
+
 ## Loop pass 388 (2026-10-21) — crab claws are flattened, elongated palms, not drums
 
 The rounded crab palm was two rings at +-0.45 of its height with a cone above and below: a drum

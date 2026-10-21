@@ -331,13 +331,30 @@ void main()
         materialColor = mix(vColor, detailedColor,
                             1.0 - smoothstep(42.0, 70.0, distanceToCamera));
     } else if (vMaterialDetail < 0.9375) {
+        // Driftwood (local x along the piece): bleached on top, still damp and warmer below
+        // where it lies in the sand, with sand dusting its lowest side; the grain opened into
+        // long dark checks with streaks between them, and here and there a dark knot. (A 6%
+        // ripple of the colour read as a smooth painted pipe.)
         float woodAngle = atan(vLocal.y, vLocal.z);
-        float weathering = 0.5 + 0.5 * sin(
-            woodAngle * 6.0 + sin(vLocal.x * 13.0) * 0.62);
-        float dryCrease = 1.0 - smoothstep(0.03, 0.21, abs(sin(
-            woodAngle * 9.0 + sin(vLocal.x * 8.0) * 0.48)));
-        vec3 detailedColor = vColor
-            * (0.96 + 0.06 * weathering) * (1.0 - 0.07 * dryCrease);
+        float along = vLocal.x;
+        float upward = vLocal.y * inversesqrt(max(dot(vLocal.yz, vLocal.yz), 0.000001));
+        // streaks long along the grain, many round it
+        float streak = stoneNoise(vec3(along * 2.2, woodAngle * 9.0, 3.1));
+        float fine = stoneNoise(vec3(along * 5.0, woodAngle * 34.0, 8.7));
+        float wander = stoneNoise(vec3(along * 2.6, woodAngle * 0.8, 1.7));
+        // the checks soften and fade as they narrow toward a pixel (no dotted lines)
+        float checkFootprint = localHeightFootprint * 6.0;
+        float check = 1.0 - smoothstep(0.08, 0.26 + checkFootprint, abs(sin(woodAngle * 5.0 + wander * 1.8)));
+        check *= smoothstep(0.30, 0.55, stoneNoise(vec3(along * 3.4, woodAngle * 2.0, 5.3)))
+            * (1.0 - smoothstep(0.12, 0.40, checkFootprint));
+        float knot = smoothstep(0.87, 0.95, stoneNoise(vec3(along * 3.0, woodAngle * 1.3, 11.0)));
+        vec3 damp = vColor * vec3(0.82, 0.74, 0.62);
+        vec3 detailedColor = mix(damp, vColor * 1.04, smoothstep(-0.45, 0.45, upward));
+        detailedColor *= 0.86 + 0.22 * streak + 0.12 * (fine - 0.5);
+        detailedColor *= 1.0 - 0.34 * check;
+        detailedColor = mix(detailedColor, detailedColor * vec3(0.48, 0.42, 0.36), knot * 0.75);
+        detailedColor = mix(detailedColor, vec3(0.78, 0.68, 0.50),
+                            (1.0 - smoothstep(-0.92, -0.62, upward)) * 0.50);
         materialColor = mix(vColor, detailedColor,
                             1.0 - smoothstep(30.0, 56.0, distanceToCamera));
     } else if (vMaterialDetail < 0.99) {
@@ -931,9 +948,10 @@ void main()
             PropGeometry geometry;
             const int sections = farMesh ? 2 : 4;
             const int sides = farMesh ? 5 : 7;
-            const Color woodBase = variant == 0 ? Color(157, 137, 103, 255)
-                : (variant == 1 ? Color(171, 148, 109, 255)
-                                : Color(142, 126, 98, 255));
+            // sun-bleached silver-grey, a little warm, in both LODs
+            const Color woodBase = variant == 0 ? Color(170, 157, 135, 255)
+                : (variant == 1 ? Color(182, 168, 144, 255)
+                                : Color(154, 141, 121, 255));
             const Color wood(static_cast<int>(woodBase.getRProperty()),
                              static_cast<int>(woodBase.getGProperty()),
                              static_cast<int>(woodBase.getBProperty()),
