@@ -164,6 +164,7 @@ uniform vec3 uCameraPosition;
 uniform vec3 uToSun;
 uniform float uWetness;   // 0..1 rain-wet ground (WeatherSystem)
 uniform float uCausticSun;   // 0..1 the sun high enough to throw caustics (a low sun's light spreads)
+uniform vec3 uSkyTint;   // the hour's low sky against the afternoon's (sun_light::SkyScalesOf), for what mirrors it
 uniform float uRain;      // 0..1 rain falling now: drops ring the puddles
 uniform vec2 uSandWind;
 uniform float uSeaSeconds;
@@ -1068,7 +1069,8 @@ void main()
                 + broad * 2.1));
         color = mix(color, color * vec3(0.72, 0.77, 0.73),
                     wetEdge * drainageThread * 0.42);
-        float wetSheen = wetEdge * (sunSheen * 0.48 * uDirectSun + grazingSheen * 0.135)
+        // the sun's sheen, and at a glance the hour's sky
+        vec3 wetSheen = wetEdge * (vec3(sunSheen * 0.48 * uDirectSun) + grazingSheen * 0.135 * uSkyTint)
             * (1.0 + drainageThread * 0.22);
         color += vec3(0.14, 0.20, 0.21) * wetSheen;
     }
@@ -1178,7 +1180,7 @@ void main()
         if (puddle > 0.0) {
             vec3 toEye = normalize(uCameraPosition - vWorld);
             float fresnel = 0.03 + 0.97 * pow(1.0 - max(toEye.y, 0.0), 5.0);
-            vec3 skyMirror = vec3(0.52, 0.62, 0.72) * (0.55 + 0.45 * vGroundLight);
+            vec3 skyMirror = vec3(0.52, 0.62, 0.72) * uSkyTint * (0.55 + 0.45 * vGroundLight);
             vec3 waterOverSoil = color * vec3(0.52, 0.55, 0.58);
             vec3 halfway = normalize(normalize(uToSun) + toEye);
             // the sun's glint only as strong as the direct sun is (the clouds hide it in a storm)
@@ -1663,6 +1665,8 @@ void main()
             {
                 const float t = std::clamp((sun_light::Current().lighting.sunElevationDegrees - 3.0f) / 27.0f, 0.0f, 1.0f);
                 materialEffect_->SetUniformFloat("uCausticSun", t * t * (3.0f - 2.0f * t));
+                const auto sky = sun_light::SkyScalesOf(sun_light::Current().lighting).horizon;
+                materialEffect_->SetUniformVec3("uSkyTint", sky.x, sky.y, sky.z);
             }
             materialEffect_->SetUniformVec4(
                 "uPrimaryPathShape", VegetationLayout::PrimaryPathBaseX,

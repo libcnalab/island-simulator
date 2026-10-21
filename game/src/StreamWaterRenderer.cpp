@@ -1,5 +1,6 @@
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "IslandSimulator/StreamWaterRenderer.hpp"
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "CNA/Graphics/ShaderCodeEXT.hpp"
 #include "CNA/Graphics/ShaderPackageEXT.hpp"
 #include "CNA/ShaderLanguageEXT.hpp"
@@ -54,6 +55,7 @@ void main(){
 constexpr const char* fragment=R"(
 in vec3 world;in vec2 flow;in float courseDistance;in float opacity;in float lateral;
 uniform float uTime;uniform vec3 uCamera;uniform vec2 uCascade;
+uniform vec3 uSkyTint;   // the hour's low sky against the afternoon's, for the mirrored sky
 out vec4 fragColor;
 void main(){
     vec2 downstream=normalize(flow);
@@ -84,7 +86,7 @@ void main(){
     vec3 shallow=vec3(.205,.430,.315);
     vec3 deep=vec3(.055,.315,.285);
     vec3 water=mix(shallow,deep,centreDepth*.82);
-    water=mix(water,vec3(.38,.68,.72),fresnel*.78);
+    water=mix(water,vec3(.38,.68,.72)*uSkyTint,fresnel*.78);
     water*=mix(.93,1.07,broad);
     water+=vec3(.22,.36,.32)*streak*.30+vec3(.48,.45,.33)*glint*.44;
     water+=vec3(.52,.60,.46)*(bankBand*(.24+.14*streak)+riffle*.24);
@@ -155,6 +157,10 @@ void StreamWaterRenderer::Draw(const Matrix& view,const Matrix& projection,const
     effect_->SetUniformFloat("uTime",std::isfinite(seconds)?seconds:0);
     effect_->SetUniformVec3("uCamera",camera.X,camera.Y,camera.Z);
     effect_->SetUniformVec2("uCascade",cascadeDistance_,cascadeDrop_);
+    {
+        const auto sky=sun_light::SkyScalesOf(sun_light::Current().lighting).horizon;
+        effect_->SetUniformVec3("uSkyTint",sky.x,sky.y,sky.z);
+    }
     device_.setBlendStateProperty(BlendState::AlphaBlend);device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
     device_.setRasterizerStateProperty(RasterizerState::CullNone);
     device_.SetVertexBuffer(vertices_.get());device_.setIndicesProperty(indices_.get());

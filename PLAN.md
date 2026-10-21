@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 288 (2026-10-21) — the puddles, the stream and the wet sand mirror the hour's sky
+
+As the sea now does (pass 287), the other mirrors take the hour's sky: the terrain's rain
+puddles (their mirrored grey-blue), the wet sand's grazing sky sheen (split from the sun's
+sheen, which keeps its own colour) and the stream's reflected sky are scaled by the low sky's
+`sun_light::SkyScalesOf` horizon scale (`uSkyTint`), so after a dusk shower the puddles hold
+the mauve of the sky and at night they stay dark instead of glowing afternoon blue; at the
+14:00 reference nothing changes. `stream` and `wet-sand` at 14:00 and 18:18 and `campfire` at
+18:00 in showers pass, and the tests.
+
 ## Loop pass 287 (2026-10-21) — the sea mirrors the hour's sky
 
 Under a pink dusk sky the far sea still showed a band of afternoon blue: the ocean's reflected
