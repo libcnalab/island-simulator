@@ -908,7 +908,7 @@ def validate_deer_report(report):
     frame = view.get("screenshot")
     if (view.get("passed") is not True or view.get("glError") != 0
         or view.get("contextLost") is not False or result.get("error") or result.get("exited")
-        or not re.search(r"deer [1-4]/4 visible, 1 draw", log)
+        or not re.search(r"deer [1-4]/4 visible, 2 draw", log)
         or "four inland deer use long legs, pointed ears, spotted coats and one antlered silhouette" not in log
         or "near deer use vertex-blended ellipsoid light, curved tapered necks, articulated hocks, fitted muzzles, and smooth antler beams, with continuous five-ring necks, separate nasal pads, and surface-fitted oval coat spots" not in log
         or "deer use separated chest and haunch masses, muscle-profiled upper legs, and normal-driven dorsal-to-belly coat tone" not in log

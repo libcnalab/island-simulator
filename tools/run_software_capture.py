@@ -1894,13 +1894,13 @@ def main():
             if args.viewpoint == "goats" and not re.search(r"goats [1-6]/6 visible, 2 draw", diagnostics):
                 raise RuntimeError("goat capture did not submit the live population")
             if args.viewpoint == "deer-bedded":
-                if not re.search(r"deer [1-4]/4 visible, 1 draw", diagnostics):
-                    raise RuntimeError("bedded deer capture did not submit the live one-batch population")
+                if not re.search(r"deer [1-4]/4 visible, 2 draw", diagnostics):
+                    raise RuntimeError("bedded deer capture did not submit the live coat-and-bare-parts population")
                 if "deer QA camera frames one antlered clearing animal bedded down broadside" not in diagnostics:
                     raise RuntimeError("bedded deer capture did not set the deer down")
             if args.viewpoint == "deer":
-                if not re.search(r"deer [1-4]/4 visible, 1 draw", diagnostics):
-                    raise RuntimeError("deer capture did not submit the live one-batch population")
+                if not re.search(r"deer [1-4]/4 visible, 2 draw", diagnostics):
+                    raise RuntimeError("deer capture did not submit the live coat-and-bare-parts population")
                 for marker in (
                     "four inland deer use long legs, pointed ears, spotted coats and one antlered silhouette",
                     "near deer use vertex-blended ellipsoid light, curved tapered necks, articulated hocks, fitted muzzles, and smooth antler beams, with continuous five-ring necks, separate nasal pads, and surface-fitted oval coat spots",

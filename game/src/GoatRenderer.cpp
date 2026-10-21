@@ -99,6 +99,10 @@ GoatRenderer::GoatRenderer(GraphicsDevice& device,
     solidVertices_.reserve(Capacity);
     constexpr int size=GeneratedTextureBudget::GoatFurSize;
     const auto levels=LoadOpaqueImageMips(device_,"Content/wildlife/goat-fur.png",size);
+    {
+        const auto& mean=levels.back().pixels[0];
+        for(std::size_t channel=0;channel<3;++channel) coatMean_[channel]=std::max(mean[channel]/255.0f,.05f);
+    }
     coat_=std::make_unique<Texture2D>(device_,size,size,true,SurfaceFormat::Color);
     for(std::size_t level=0;level<levels.size();++level) {
         const auto& pixels=levels[level].pixels;

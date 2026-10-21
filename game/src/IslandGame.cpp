@@ -2259,7 +2259,7 @@ namespace island
         auto goatRenderer = std::make_unique<GoatRenderer>(device,canopyLighting->Field(),
             120.0f*qualityProfile_.wildlifeMaximumDistanceScale);
         auto deerRenderer = std::make_unique<DeerRenderer>(device,canopyLighting->Field(),
-            190.0f*qualityProfile_.wildlifeMaximumDistanceScale);
+            190.0f*qualityProfile_.wildlifeMaximumDistanceScale,goatRenderer->CoatTexture(),goatRenderer->CoatMean());
         auto spiderRenderer = std::make_unique<SpiderRenderer>(device,canopyLighting->Field());
         auto spiderWebRenderer=std::make_unique<SpiderWebRenderer>(device,terrain_,jungleLayout_,spiderWebSites_);
         fishRenderer_ = std::make_unique<FishRenderer>(

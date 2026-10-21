@@ -825,7 +825,7 @@ try {
               && log.includes("near deer use a continuous sectioned torso, slender shoulder-grown neck, compact tapered face, leaf-shaped ears, split hooves, and curved multi-tine antlers")
               && log.includes("deer use ten-stage rounded rump and chest contours, fuller hock joints, and five-station tufted tails")
               && log.includes("deer QA camera frames one antlered clearing animal broadside")
-              && /deer [1-4]\/4 visible, 1 draw/.test(log)))
+              && /deer [1-4]\/4 visible, 2 draw/.test(log)))
             && (!focusedHutCheck || (log.includes("hut beam-aligned weathered grain and filtered thatch fibres")
               && log.includes("hut timber material uses coarse warped grain, recessed dark fibres, knot bands, and sun-bleached board variation")
               && log.includes("hut four-pane muted glazing and braced plank door")

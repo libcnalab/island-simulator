@@ -233,6 +233,21 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 324 (2026-10-21) — the deer get a coat of hair
+
+Beside the goat, boar and bear, whose coats carry strand textures, the deer were plain smooth
+brown plastic with a few pale dots. Their coat now carries the goats' short straight-hair strand
+texture (`goat-fur.png`, borrowed from the goat renderer rather than loaded twice, so the texture
+budget is unchanged), multiplied under each deer's own vertex tones, which are divided by the
+texture's mean colour so the browns stay the deer's. Each part lays the strands by its own
+surface coordinates, one repeat per 26 cm: the barrel along its length and down either flank
+from the spine (both flanks meet the same way at the belly, so there is no wrap seam), the neck,
+legs and tail along their length, the head down from the crown, and the spots by the barrel's
+own coordinates. The art does not tile seamlessly (its edge jump is two to three times its
+inner contrast), so it is sampled with mirrored repeats. Eyes, nose, ears, hooves and antlers stay
+untextured in a second draw, so the deer now take two draws like the goats; the capture, browser
+and web-smoke checks expect two. `deer`, `deer-bedded`, `deer` at 21:30, `goats` and the tests pass.
+
 ## Loop pass 323 (2026-10-21) — the cave mouth loses its green glow and grey haze
 
 Round the cave mouth (`cave`, `cave-top`) the hillside wore a translucent-looking grey skirt and

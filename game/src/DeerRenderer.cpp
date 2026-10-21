@@ -17,7 +17,12 @@
 #include "Microsoft/Xna/Framework/Graphics/PrimitiveType.hpp"
 #include "Microsoft/Xna/Framework/Graphics/RasterizerState.hpp"
 #include "Microsoft/Xna/Framework/Graphics/SetDataOptions.hpp"
-#include "Microsoft/Xna/Framework/Graphics/VertexPositionColor.hpp"
+#include "Microsoft/Xna/Framework/Graphics/SamplerState.hpp"
+#include "Microsoft/Xna/Framework/Graphics/Texture2D.hpp"
+#include "Microsoft/Xna/Framework/Graphics/TextureAddressMode.hpp"
+#include "Microsoft/Xna/Framework/Graphics/TextureFilter.hpp"
+#include "Microsoft/Xna/Framework/Graphics/VertexPositionColorTexture.hpp"
+#include "Microsoft/Xna/Framework/Vector2.hpp"
 
 #include <algorithm>
 #include <array>
@@ -37,10 +42,17 @@ namespace island
         constexpr int MaximumVerticesPerDeer = 7200;
         constexpr int Capacity = static_cast<int>(DeerHerd::Count) * MaximumVerticesPerDeer;
 
-        void Triangle(std::vector<VertexPositionColor>& out, const Vector3& a,
+        using DeerVertex = VertexPositionColorTexture;
+        // Metres of coat one repeat of the shared short-hair strand texture covers. Each part
+        // lays it by its own surface coordinates, the strands running down the flanks from
+        // the spine and along the neck, legs and tail.
+        constexpr float CoatTile = .26f;
+
+        void Triangle(std::vector<DeerVertex>& out, const Vector3& a,
                       const Vector3& b, const Vector3& c, const Color color)
         {
-            out.emplace_back(a, color);out.emplace_back(b, color);out.emplace_back(c, color);
+            out.emplace_back(a, color, Vector2());out.emplace_back(b, color, Vector2());
+            out.emplace_back(c, color, Vector2());
         }
 
         Color Lit(const Color base, const Vector3& normal, const float transmission)
@@ -65,7 +77,7 @@ namespace island
                                std::clamp(amount * std::abs(normal.Y), 0.0f, 1.0f));
         }
 
-        void Ellipsoid(std::vector<VertexPositionColor>& out, const Vector3& centre,
+        void Ellipsoid(std::vector<DeerVertex>& out, const Vector3& centre,
                        const Vector3& right, const Vector3& up, const Vector3& forward,
                        const float rx, const float ry, const float rz, const Color color,
                        const float transmission, const int rings = 5, const int sides = 10,
@@ -80,10 +92,19 @@ namespace island
                     + up * (std::sin(latitude) * ry)
                     + forward * (std::cos(latitude) * std::sin(longitude) * rz);
             };
+            // around the girth and down from the crown, in strand-texture repeats
+            const float girth = 3.14159265359f * (rx + rz) / CoatTile;
+            const float meridian = 3.14159265359f * .5f * (ry + .5f * (rx + rz)) / CoatTile;
+            const auto uv = [&](const int ring, const int side) {
+                return Vector2(girth * static_cast<float>(side) / static_cast<float>(sides),
+                               meridian * (1.0f - static_cast<float>(ring) / static_cast<float>(rings)));
+            };
             for (int ring = 0; ring < rings; ++ring) for (int side = 0; side < sides; ++side) {
                 const int next = (side + 1) % sides;
                 const Vector3 a = point(ring, side), b = point(ring + 1, side);
                 const Vector3 c = point(ring + 1, next), d = point(ring, next);
+                const Vector2 ta = uv(ring, side), tb = uv(ring + 1, side);
+                const Vector2 tc = uv(ring + 1, side + 1), td = uv(ring, side + 1);
                 const auto normal = [&](const int latitudeRing, const int longitudeSide) {
                     const float latitude = -1.57079632679f
                         + 3.14159265359f * static_cast<float>(latitudeRing)
@@ -102,12 +123,12 @@ namespace island
                 const Color cb=Lit(CoatTone(color,nb,coatTone),nb,transmission);
                 const Color cc=Lit(CoatTone(color,nc,coatTone),nc,transmission);
                 const Color cd=Lit(CoatTone(color,nd,coatTone),nd,transmission);
-                out.emplace_back(a,ca);out.emplace_back(b,cb);out.emplace_back(c,cc);
-                out.emplace_back(a,ca);out.emplace_back(c,cc);out.emplace_back(d,cd);
+                out.emplace_back(a,ca,ta);out.emplace_back(b,cb,tb);out.emplace_back(c,cc,tc);
+                out.emplace_back(a,ca,ta);out.emplace_back(c,cc,tc);out.emplace_back(d,cd,td);
             }
         }
 
-        void Tube(std::vector<VertexPositionColor>& out, const Vector3& a, const Vector3& b,
+        void Tube(std::vector<DeerVertex>& out, const Vector3& a, const Vector3& b,
                   const float radiusA, const float radiusB, const Color color,
                   const float transmission, const int sides = 7)
         {
@@ -119,7 +140,11 @@ namespace island
                 ? Vector3::Up : Vector3::Right);
             side.Normalize();
             const Vector3 other = Vector3::Cross(axis, side);
+            const float girth = 3.14159265359f * (radiusA + radiusB) / CoatTile;
+            const float along = length / CoatTile;
             for (int index = 0; index < sides; ++index) {
+                const float u0 = girth * static_cast<float>(index) / sides;
+                const float u1 = girth * static_cast<float>(index + 1) / sides;
                 const float first = 6.28318530718f * static_cast<float>(index) / sides;
                 const float second = 6.28318530718f * static_cast<float>(index + 1) / sides;
                 const Vector3 radialA = side * std::cos(first) + other * std::sin(first);
@@ -128,13 +153,15 @@ namespace island
                 const Color shadeB = Lit(color, radialB, transmission);
                 const Vector3 p0 = a + radialA * radiusA, p1 = b + radialA * radiusB;
                 const Vector3 p2 = b + radialB * radiusB, p3 = a + radialB * radiusA;
-                out.emplace_back(p0,shadeA);out.emplace_back(p1,shadeA);out.emplace_back(p2,shadeB);
-                out.emplace_back(p0,shadeA);out.emplace_back(p2,shadeB);out.emplace_back(p3,shadeB);
+                out.emplace_back(p0,shadeA,Vector2(u0,0.0f));out.emplace_back(p1,shadeA,Vector2(u0,along));
+                out.emplace_back(p2,shadeB,Vector2(u1,along));
+                out.emplace_back(p0,shadeA,Vector2(u0,0.0f));out.emplace_back(p2,shadeB,Vector2(u1,along));
+                out.emplace_back(p3,shadeB,Vector2(u1,0.0f));
             }
         }
 
         template<std::size_t RingCount>
-        void LoftTube(std::vector<VertexPositionColor>& out,
+        void LoftTube(std::vector<DeerVertex>& out,
                       const std::array<Vector3,RingCount>& centres,
                       const std::array<float,RingCount>& radii,
                       Vector3 right,const Color color,const float transmission,
@@ -156,6 +183,16 @@ namespace island
                     /static_cast<float>(sides);
                 return right*std::cos(angle)+basis(ring)*std::sin(angle);
             };
+            // around the mean girth, and along the length from the first ring
+            float meanRadius=0.0f;
+            for(const float radius:radii) meanRadius+=radius/static_cast<float>(RingCount);
+            const float girth=6.28318530718f*meanRadius/CoatTile;
+            std::array<float,RingCount> along{};
+            for(std::size_t ring=1;ring<RingCount;++ring)
+                along[ring]=along[ring-1]+Vector3::Distance(centres[ring],centres[ring-1])/CoatTile;
+            const auto uv=[&](const std::size_t ring,const int side) {
+                return Vector2(girth*static_cast<float>(side)/static_cast<float>(sides),along[ring]);
+            };
             for(std::size_t ring=0;ring+1<RingCount;++ring) {
                 for(int side=0;side<sides;++side) {
                     const int next=(side+1)%sides;
@@ -167,12 +204,13 @@ namespace island
                     const Vector3 b=centres[ring+1]+radialB*radii[ring+1];
                     const Vector3 c=centres[ring+1]+radialC*radii[ring+1];
                     const Vector3 d=centres[ring]+radialD*radii[ring];
-                    out.emplace_back(a,Lit(CoatTone(color,radialA,coatTone),radialA,transmission));
-                    out.emplace_back(b,Lit(CoatTone(color,radialB,coatTone),radialB,transmission));
-                    out.emplace_back(c,Lit(CoatTone(color,radialC,coatTone),radialC,transmission));
-                    out.emplace_back(a,Lit(CoatTone(color,radialA,coatTone),radialA,transmission));
-                    out.emplace_back(c,Lit(CoatTone(color,radialC,coatTone),radialC,transmission));
-                    out.emplace_back(d,Lit(CoatTone(color,radialD,coatTone),radialD,transmission));
+                    const Vector2 ta=uv(ring,side),tb=uv(ring+1,side),tc=uv(ring+1,side+1),td=uv(ring,side+1);
+                    out.emplace_back(a,Lit(CoatTone(color,radialA,coatTone),radialA,transmission),ta);
+                    out.emplace_back(b,Lit(CoatTone(color,radialB,coatTone),radialB,transmission),tb);
+                    out.emplace_back(c,Lit(CoatTone(color,radialC,coatTone),radialC,transmission),tc);
+                    out.emplace_back(a,Lit(CoatTone(color,radialA,coatTone),radialA,transmission),ta);
+                    out.emplace_back(c,Lit(CoatTone(color,radialC,coatTone),radialC,transmission),tc);
+                    out.emplace_back(d,Lit(CoatTone(color,radialD,coatTone),radialD,transmission),td);
                 }
             }
         }
@@ -215,7 +253,7 @@ namespace island
             return radius*std::sqrt(std::max(0.0f,1.0f-normalized*normalized));
         }
 
-        void AppendBody(std::vector<VertexPositionColor>& out,const Vector3& centre,
+        void AppendBody(std::vector<DeerVertex>& out,const Vector3& centre,
                         const Vector3& right,const Vector3& up,const Vector3& forward,
                         const float scale,const Color coat,const float transmission,
                         const bool near)
@@ -239,6 +277,16 @@ namespace island
                 result.Normalize();
                 return result;
             };
+            // along the barrel, and down either flank from the spine (the two flanks meet the
+            // same way at the belly, so there is no wrap seam)
+            const auto uv=[&](const std::size_t section,const int side) {
+                const auto& profile=DeerBodySections[section];
+                float fromSpine=6.28318530718f*static_cast<float>(side)/static_cast<float>(sides)
+                    -1.57079632679f;
+                if(fromSpine>3.14159265359f) fromSpine-=6.28318530718f;
+                const float radius=.5f*(profile.halfWidth+profile.halfHeight)*scale;
+                return Vector2(profile.forward*scale/CoatTile,std::abs(fromSpine)*radius/CoatTile);
+            };
             const auto colour=[&](const std::size_t section,const int side,const Vector3& n) {
                 const float mottle=.5f+.5f*std::sin(
                     static_cast<float>(section)*2.17f+static_cast<float>(side)*1.31f);
@@ -252,12 +300,14 @@ namespace island
                     const Vector3 c=point(section+1,next),d=point(section,next);
                     const Vector3 na=normal(section,side),nb=normal(section+1,side);
                     const Vector3 nc=normal(section+1,next),nd=normal(section,next);
-                    out.emplace_back(a,colour(section,side,na));
-                    out.emplace_back(b,colour(section+1,side,nb));
-                    out.emplace_back(c,colour(section+1,next,nc));
-                    out.emplace_back(a,colour(section,side,na));
-                    out.emplace_back(c,colour(section+1,next,nc));
-                    out.emplace_back(d,colour(section,next,nd));
+                    const Vector2 ta=uv(section,side),tb=uv(section+1,side);
+                    const Vector2 tc=uv(section+1,side+1),td=uv(section,side+1);
+                    out.emplace_back(a,colour(section,side,na),ta);
+                    out.emplace_back(b,colour(section+1,side,nb),tb);
+                    out.emplace_back(c,colour(section+1,next,nc),tc);
+                    out.emplace_back(a,colour(section,side,na),ta);
+                    out.emplace_back(c,colour(section+1,next,nc),tc);
+                    out.emplace_back(d,colour(section,next,nd),td);
                 }
             }
             for(const auto& [section,reverse]:{
@@ -269,13 +319,17 @@ namespace island
                 const Color capColor=Lit(CoatTone(coat,capNormal,.30f),capNormal,transmission);
                 for(int side=0;side<sides;++side) {
                     const int next=(side+1)%sides;
-                    Triangle(out,capCentre,point(section,reverse?next:side),
-                             point(section,reverse?side:next),capColor);
+                    const Vector2 capUv(DeerBodySections[section].forward*scale/CoatTile,0.0f);
+                    out.emplace_back(capCentre,capColor,capUv);
+                    out.emplace_back(point(section,reverse?next:side),capColor,capUv);
+                    out.emplace_back(point(section,reverse?side:next),capColor,capUv);
                 }
             }
         }
 
-        void AppendDeer(std::vector<VertexPositionColor>& out, const DeerState& deer,
+        // `out` takes the coat (drawn over the strand texture), `bare` the eyes, nose, ears,
+        // hooves and antlers.
+        void AppendDeer(std::vector<DeerVertex>& out, std::vector<DeerVertex>& bare, const DeerState& deer,
                         const float transmission, const bool near, const Vector3& watcher,
                         std::vector<EyeGlint>* eyes = nullptr)
         {
@@ -324,7 +378,7 @@ namespace island
                       .17f * scale, Color::Lerp(coat,dark,.25f), transmission,
                       near ? 6 : 2, near ? 12 : 6);
             const Vector3 nose=muzzle+forward*(.16f*scale)-up*(.010f*scale);
-            Ellipsoid(out,nose,right,up,forward,.086f*scale,.058f*scale,.052f*scale,
+            Ellipsoid(bare,nose,right,up,forward,.086f*scale,.058f*scale,.052f*scale,
                       dark,transmission,near?5:2,near?12:6);
             // Long pointed ears establish a deer rather than goat silhouette.
             // An alert deer (standing, the watcher within its alert range) swings both ears
@@ -354,22 +408,22 @@ namespace island
                 const Vector3 earBack=earRoot-twitchForward*(.070f*scale)
                     -twitchRight*(sideSign*.014f*scale);
                 const Color earOuter=Lit(Color::Lerp(coat,dark,.22f),up,transmission);
-                Triangle(out,earBack,earTip,earFront,earOuter);
-                Triangle(out,earFront,earTip,earBack,earOuter);
+                Triangle(bare,earBack,earTip,earFront,earOuter);
+                Triangle(bare,earFront,earTip,earBack,earOuter);
                 const Vector3 innerRoot=Vector3::Lerp(earBack,earFront,.52f)+up*(.018f*scale);
                 const Vector3 innerTip=Vector3::Lerp(earRoot,earTip,.78f);
-                Triangle(out,innerRoot-twitchRight*(sideSign*.022f*scale),innerTip,
+                Triangle(bare,innerRoot-twitchRight*(sideSign*.022f*scale),innerTip,
                          innerRoot+twitchRight*(sideSign*.022f*scale),Lit(pale,up,transmission));
                 if (near) {
                     const Vector3 eyeCentre = head + earForward * (.12f * scale)
                         + earRight * (sideSign * .148f * scale) + up * (.030f * scale);
-                    Ellipsoid(out, eyeCentre, earRight, up, earForward, .022f * scale,
+                    Ellipsoid(bare, eyeCentre, earRight, up, earForward, .022f * scale,
                               .026f * scale, .016f * scale, eye, transmission, 4, 10);
                     // a deer's eyeshine is a pale green-white
                     if (eyes) eyes->push_back({eyeCentre, Vector3(0.80f, 1.0f, 0.70f)});
                     const Vector3 glint=eyeCentre+earForward*(.010f*scale)
                         +earRight*(sideSign*.014f*scale)+up*(.008f*scale);
-                    Ellipsoid(out,glint,earRight,up,earForward,.005f*scale,.006f*scale,
+                    Ellipsoid(bare,glint,earRight,up,earForward,.005f*scale,.006f*scale,
                               .004f*scale,Color(225,205,145),transmission,3,8);
                 }
             }
@@ -412,7 +466,7 @@ namespace island
                 const Vector3 groundedHoof(hoofPoint.X, deer.y + .060f * scale + lift, hoofPoint.Z);
                 for(const float toeSide:{-.018f,.018f}) {
                     const Vector3 offset=right*(toeSide*scale);
-                    Tube(out,groundedHoof-forward*(.042f*scale)+offset,
+                    Tube(bare,groundedHoof-forward*(.042f*scale)+offset,
                          groundedHoof+forward*(.085f*scale)+offset,
                          .032f*scale,.022f*scale,hoof,transmission,near?8:6);
                 }
@@ -451,9 +505,12 @@ namespace island
                             +forward*(std::cos(a)*.034f*scale);
                         const Vector3 second=centre+up*(std::sin(b)*.024f*scale)
                             +forward*(std::cos(b)*.034f*scale);
-                        Triangle(out,centre,sideSign>0?first:second,
-                                 sideSign>0?second:first,
-                                 Lit(spotColor,right*sideSign,transmission));
+                        const Color shade=Lit(spotColor,right*sideSign,transmission);
+                        const Vector2 at(z*scale/CoatTile,(.36f-y)*scale/CoatTile);
+                        const Vector3 p1=sideSign>0?first:second,p2=sideSign>0?second:first;
+                        out.emplace_back(centre,shade,at);
+                        out.emplace_back(p1,shade,at+Vector2(Vector3::Dot(p1-centre,forward),-Vector3::Dot(p1-centre,up))/CoatTile);
+                        out.emplace_back(p2,shade,at+Vector2(Vector3::Dot(p2-centre,forward),-Vector3::Dot(p2-centre,up))/CoatTile);
                     }
                 }
             }
@@ -467,16 +524,16 @@ namespace island
                         +right*(sideSign*.040f*scale)+up*(.20f*scale);
                     const Vector3 crown=upperBeam+forward*(.18f*scale)
                         +right*(sideSign*.025f*scale)+up*(.16f*scale);
-                    Tube(out,base,lowerBeam,.030f*scale,.024f*scale,antler,transmission,8);
-                    Tube(out,lowerBeam,upperBeam,.025f*scale,.018f*scale,antler,transmission,8);
-                    Tube(out,upperBeam,crown,.019f*scale,.010f*scale,antler,transmission,8);
-                    Tube(out,lowerBeam+forward*(.010f*scale),
+                    Tube(bare,base,lowerBeam,.030f*scale,.024f*scale,antler,transmission,8);
+                    Tube(bare,lowerBeam,upperBeam,.025f*scale,.018f*scale,antler,transmission,8);
+                    Tube(bare,upperBeam,crown,.019f*scale,.010f*scale,antler,transmission,8);
+                    Tube(bare,lowerBeam+forward*(.010f*scale),
                          lowerBeam+forward*(.16f*scale)+up*(.09f*scale),
                          .017f*scale,.008f*scale,antler,transmission,8);
-                    Tube(out,upperBeam+forward*(.035f*scale),
+                    Tube(bare,upperBeam+forward*(.035f*scale),
                          upperBeam+forward*(.15f*scale)+up*(.12f*scale),
                          .014f*scale,.006f*scale,antler,transmission,8);
-                    Tube(out,crown-forward*(.035f*scale),
+                    Tube(bare,crown-forward*(.035f*scale),
                          crown+forward*(.015f*scale)+up*(.14f*scale),
                          .011f*scale,.005f*scale,antler,transmission,8);
                 }
@@ -485,13 +542,19 @@ namespace island
     }
 
     DeerRenderer::DeerRenderer(GraphicsDevice& device, const CanopyLightField& canopy,
-                               const float maximumDistance)
+                               const float maximumDistance, Texture2D& coat,
+                               const std::array<float, 3>& coatMean)
         : device_(device), canopy_(canopy), maximumDistance_(maximumDistance),
           effect_(std::make_unique<BasicEffect>(device)),
           buffer_(std::make_unique<DynamicVertexBuffer>(device,
-              VertexPositionColor::getVertexDeclarationStatic(), Capacity, BufferUsage::WriteOnly))
+              VertexPositionColorTexture::getVertexDeclarationStatic(), Capacity, BufferUsage::WriteOnly)),
+          coat_(coat), coatMean_(coatMean), mirrored_(std::make_unique<SamplerState>())
     {
-        staging_.reserve(Capacity);
+        staging_.reserve(Capacity);solid_.reserve(Capacity / 4);
+        // The strand art does not tile seamlessly: mirrored repeats hide its edges.
+        mirrored_->setFilterProperty(TextureFilter::Linear);
+        mirrored_->setAddressUProperty(TextureAddressMode::Mirror);
+        mirrored_->setAddressVProperty(TextureAddressMode::Mirror);
         effect_->setVertexColorEnabledProperty(true);effect_->setLightingEnabledProperty(false);
         effect_->setFogEnabledProperty(true);
         effect_->setFogColorProperty(Vector3(environment::FogColorRed,
@@ -513,6 +576,10 @@ namespace island
             "island-simulator: near deer use a continuous sectioned torso, slender shoulder-grown neck, compact tapered face, leaf-shaped ears, split hooves, and curved multi-tine antlers";
         std::cout << silhouetteDiagnostic << '\n';
         MirrorRuntimeDiagnosticToPlatformLog(silhouetteDiagnostic);
+        constexpr auto coatDiagnostic =
+            "island-simulator: deer coats carry short-hair strands (the goats' strand texture under each deer's own tones), running down the flanks and along the neck, legs and tail";
+        std::cout << coatDiagnostic << '\n';
+        MirrorRuntimeDiagnosticToPlatformLog(coatDiagnostic);
         constexpr auto contourDiagnostic =
             "island-simulator: deer use ten-stage rounded rump and chest contours, fuller hock joints, and five-station tufted tails";
         std::cout << contourDiagnostic << '\n';
@@ -525,7 +592,7 @@ namespace island
                             const Vector3& camera, const std::span<const DeerState> deer)
     {
         if (deer.size() > DeerHerd::Count) throw std::length_error("Deer render capacity exceeded");
-        staging_.clear();visibleCount_ = drawCallCount_ = 0;
+        staging_.clear();solid_.clear();visibleCount_ = drawCallCount_ = 0;
         eyes_.clear();
         const BoundingFrustum frustum(view * projection);
         for (const DeerState& animal : deer) {
@@ -538,12 +605,22 @@ namespace island
             if (shrink <= 0.0f) continue;
             const float transmission = canopy_.SampleReceiver(
                 animal.x, animal.y + 1.0f, animal.z, animal.y);
-            const std::size_t first = staging_.size();
-            AppendDeer(staging_, animal, transmission, distanceSquared < 48.0f * 48.0f, camera, &eyes_);
+            const std::size_t first = staging_.size(), firstBare = solid_.size();
+            AppendDeer(staging_, solid_, animal, transmission, distanceSquared < 48.0f * 48.0f, camera, &eyes_);
+            // the strand texture multiplies the coat: divided by its mean, the coat keeps its tones
+            for (std::size_t i = first; i < staging_.size(); ++i) {
+                Color& c = staging_[i].Color;
+                c = Color(static_cast<int>(std::min(255.0f, c.getRProperty() / coatMean_[0])),
+                          static_cast<int>(std::min(255.0f, c.getGProperty() / coatMean_[1])),
+                          static_cast<int>(std::min(255.0f, c.getBProperty() / coatMean_[2])), 255);
+            }
             vegetation_fade::ShrinkAbout(staging_, first, animal.x, animal.y, animal.z, shrink);
+            vegetation_fade::ShrinkAbout(solid_, firstBare, animal.x, animal.y, animal.z, shrink);
             ++visibleCount_;
         }
         if (staging_.empty()) return;
+        const int coatVertices = static_cast<int>(staging_.size());
+        staging_.insert(staging_.end(), solid_.begin(), solid_.end());
         if (staging_.size() > static_cast<std::size_t>(Capacity))
             throw std::length_error("Deer vertex upload exceeds capacity");
         device_.setRasterizerStateProperty(RasterizerState::CullNone);
@@ -553,9 +630,16 @@ namespace island
                          SetDataOptions::Discard);
         device_.SetVertexBuffer(buffer_.get());device_.setIndicesProperty(nullptr);
         effect_->setWorldProperty(Matrix::getIdentityProperty());effect_->setViewProperty(view);
-        effect_->setProjectionProperty(projection);effect_->Apply();
-        device_.DrawPrimitives(PrimitiveType::TriangleList, 0,
-                               static_cast<int>(staging_.size() / 3U));
+        effect_->setProjectionProperty(projection);
+        device_.getSamplerStatesProperty()[0] = *mirrored_;
+        effect_->setTextureEnabledProperty(true);effect_->setTextureProperty(&coat_);effect_->Apply();
+        device_.DrawPrimitives(PrimitiveType::TriangleList, 0, coatVertices / 3);
         drawCallCount_ = 1;
+        if (!solid_.empty()) {
+            effect_->setTextureEnabledProperty(false);effect_->Apply();
+            device_.DrawPrimitives(PrimitiveType::TriangleList, coatVertices,
+                                   static_cast<int>(solid_.size() / 3U));
+            ++drawCallCount_;
+        }
     }
 }

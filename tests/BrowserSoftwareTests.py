@@ -135,7 +135,7 @@ class BrowserSoftwareTests(unittest.TestCase):
             "near deer use a continuous sectioned torso, slender shoulder-grown neck, compact tapered face, leaf-shaped ears, split hooves, and curved multi-tine antlers",
             "deer use ten-stage rounded rump and chest contours, fuller hock joints, and five-station tufted tails",
             "deer QA camera frames one antlered clearing animal broadside",
-            "deer 2/4 visible, 1 draw"))
+            "deer 2/4 visible, 2 draw"))
         def report():
             return {"passed": True, "views": [{"mode": "deer", "passed": True,
                 "glError": 0, "contextLost": False, "screenshot": "deer.png",
