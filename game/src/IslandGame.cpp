@@ -2475,6 +2475,7 @@ namespace island
         whaleRenderer_ = std::make_unique<WhaleRenderer>(device);
         sailboatRenderer_ = std::make_unique<SailboatRenderer>(device);
         waterspoutRenderer_ = std::make_unique<WaterspoutRenderer>(device);
+        seagrassRenderer_ = std::make_unique<SeagrassRenderer>(device, terrain_);
         sunbeamMotes_ = std::make_unique<SunbeamMoteRenderer>(device, terrain_, canopyLightField_);
         whaleBlowRenderer_ = std::make_unique<CascadeMistRenderer>(device,
             "island-simulator: a humpback's blow stands up five metres far offshore, drifts downwind and thins away", WhalePod::PuffCount);
@@ -5734,6 +5735,8 @@ namespace island
         {
             GpuDiagnosticScope gpuPass("dolphins");
             if (whaleRenderer_) whaleRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, whales_.Surfacing());
+            if (seagrassRenderer_) seagrassRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, timeSeconds,
+                                                           weather_now::SeaState());
             if (sailboatRenderer_) {
                 const auto& boat = sailboat_.State();
                 const float swell = boat.active ? SampleOceanWaves(boat.x, boat.z, timeSeconds).height * weather_now::SeaState() : 0.0f;

@@ -233,6 +233,22 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 303 (2026-10-21) — seagrass on the lagoon floor
+
+The terrain painted dark seagrass meadow beds on the lagoon floor, and the turtles grazed a
+seagrass field, but nothing grew there. `SeagrassRenderer` stands clumps of ribbon blades (7-11
+blades each, 0.2-0.45 m, dark olive and paler at the tips, darker the deeper they stand) where
+the terrain paints its meadow: the shader's `hash12`/`valueNoise` are mirrored on the CPU and
+the meadow, depth and sand-channel terms recomputed, so the blades stand on the dark beds and
+not on the bare sand (a first draft placed them by the turtles' separate habitat field and they
+stood on bare sand while the dark beds stayed bare). Placed once on a 0.6 m grid thinned by the
+meadow's strength (58,610 clumps), bucketed in 8 m cells so each frame builds only the buckets
+within 24 m; the clumps lean back and forth with the swell's surge (stronger in a heavy sea);
+drawn with the underwater things before the sea so the water covers them. The scan costs about
+0.15 s at start. `jetty-end` and `turtles` show tufts across the meadow patches (a first step;
+a full carpet would need several times the density); `water`, `fish`, `reef-habitat` and
+`stingrays` pass, and the tests.
+
 ## Loop pass 302 (2026-10-21) — the stream's margins are wet mud, not a green film
 
 In `tracks`, `stream` and `cascade` a smooth green band lay along the water, reading as a film
