@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 291: a yacht sails past well offshore every nine minutes, its navigation lights burning at night (PLAN "Loop pass 291").
 - Pass 290: most mice and rats stay hidden by day and come out at night (PLAN "Loop pass 290").
 - Pass 289: the day geckos and skinks go in at dusk; the frogs hide by day and come out at night or in the rain (PLAN "Loop pass 289").
 - Pass 288: the puddles, the stream and the wet sand mirror the hour's sky (PLAN "Loop pass 288").

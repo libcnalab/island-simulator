@@ -233,6 +233,26 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 291 (2026-10-21) — a yacht sails past offshore
+
+Now and then a cruising yacht passes the island well offshore. `SailboatPassage`
+(header-only, deterministic in its own clock): every 540 s, starting 40 s in, one sails a
+straight chord of the sea whose nearest point lies 560-680 m from the island's centre (all of
+it inside 720 m, on the ocean mesh and well within the far plane), from a fresh bearing and
+either way each time, at 2.6 m/s (five knots), out for three to six minutes; between passages
+the sea is empty. `SailboatRenderer` draws an 11 m sloop: a white hull with a dark boot stripe
+above the waterline (the sea covers what lies below), the deck, a cabin with a band of windows,
+the mast and the boom swung out to leeward (close in heading towards the wind, eased out
+running before it), the mainsail and the jib with their bellies filled to leeward, lit from
+either face as sailcloth is; the whole boat heeled to leeward by the wind (most on a reach,
+more in a strong wind, with a slow roll), riding the swell's height, shaded by the hour's light
+and hazed with the distance like the whales. At night its navigation lights burn after the
+grade: white at the masthead and the stern, red to port, green to starboard, never smaller
+than a couple of pixels. A probe set the boat 300 m in front of `jetty-end`: a clear little sloop
+on the horizon by day, the masthead and green lights at 21:30. A new core check sails three
+periods: three passages, always 555-725 m out, a steady five knots on a straight line, a fresh
+line each time. `jetty-end`, `beach` and `flight` pass, and the tests.
+
 ## Loop pass 290 (2026-10-21) — the mice and rats come out at night
 
 With the frogs (pass 289), the island's rodents keep a forager's hours: by day about three in

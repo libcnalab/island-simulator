@@ -15,6 +15,7 @@
 #include "IslandSimulator/CanopyLighting.hpp"
 #include "IslandSimulator/CampfireLighting.hpp"
 #include "IslandSimulator/HutGeckos.hpp"
+#include "IslandSimulator/OceanWaveSpectrum.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
 #include "IslandSimulator/CoastalWindResponse.hpp"
 
@@ -2471,6 +2472,7 @@ namespace island
         fireflyRenderer_ = std::make_unique<FireflyRenderer>(device);
         morningMist_ = std::make_unique<MorningMistField>(terrain_);
         whaleRenderer_ = std::make_unique<WhaleRenderer>(device);
+        sailboatRenderer_ = std::make_unique<SailboatRenderer>(device);
         sunbeamMotes_ = std::make_unique<SunbeamMoteRenderer>(device, terrain_, canopyLightField_);
         whaleBlowRenderer_ = std::make_unique<CascadeMistRenderer>(device,
             "island-simulator: a humpback's blow stands up five metres far offshore, drifts downwind and thins away", WhalePod::PuffCount);
@@ -3211,6 +3213,7 @@ namespace island
         }
         UpdateQuad(deltaSeconds);
         whales_.Update(deltaSeconds, wind::DirectionX, wind::DirectionZ);
+        sailboat_.Update(deltaSeconds);
         if (morningMist_)
             morningMist_->Update(deltaSeconds, MorningMistField::Thickness(dayNight_.Hour(), weather_now::Current().wind,
                                                                            weather_now::Current().rain),
@@ -5685,6 +5688,12 @@ namespace island
         {
             GpuDiagnosticScope gpuPass("dolphins");
             if (whaleRenderer_) whaleRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, whales_.Surfacing());
+            if (sailboatRenderer_) {
+                const auto& boat = sailboat_.State();
+                const float swell = boat.active ? SampleOceanWaves(boat.x, boat.z, timeSeconds).height * weather_now::SeaState() : 0.0f;
+                sailboatRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, boat, swell,
+                                        weather_now::Current().wind, timeSeconds);
+            }
             dolphinRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,
                 dolphinPod_.Dolphins(),timeSeconds);
         }
@@ -5885,6 +5894,9 @@ namespace island
                     1.0f - std::clamp((light.sunElevationDegrees + 4.0f) / 12.0f, 0.0f, 1.0f), timeSeconds);
             if (quadRenderer_ && quadEngineOn_)
                 quadRenderer_->DrawLights(cameraView_, cameraProjection_, renderCameraPosition_, quad_, QuadLampNightness());
+            if (sailboatRenderer_)
+                sailboatRenderer_->DrawLights(cameraView_, cameraProjection_, renderCameraPosition_,
+                    1.0f - std::clamp((light.sunElevationDegrees + 4.0f) / 12.0f, 0.0f, 1.0f));
         }
         {
             GpuDiagnosticScope gpuPass("campfire-effects");

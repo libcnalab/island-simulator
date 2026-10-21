@@ -71,6 +71,7 @@
 #include "IslandSimulator/FireflySwarm.hpp"
 #include "IslandSimulator/MorningMistField.hpp"
 #include "IslandSimulator/WhalePod.hpp"
+#include "IslandSimulator/SailboatPassage.hpp"
 #include "IslandSimulator/ShootingStars.hpp"
 #include "IslandSimulator/CrabBubbleField.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
@@ -6927,6 +6928,30 @@ int main()
             }
             Check(surfacings >= 7 && surfacings <= 16 && farOut && blowRose && blowGone,
                   "whales surface every minute or so far offshore, their blows standing up and thinning away");
+        }
+        // A yacht now and then: out part of the time, always 560-720 m off the island's
+        // centre, sailing a straight line at its five knots; a fresh line each passage.
+        {
+            island::SailboatPassage passage;
+            int outFrames = 0, passages = 0;
+            bool offshore = true, steady = true, was = false;
+            float lastX = 0.0f, lastZ = 0.0f, firstHeading = 0.0f, secondHeading = 0.0f;
+            for (int step = 0; step < 2 * 3 * 540; ++step) {   // three periods at half a second
+                passage.Update(0.5f);
+                const auto& boat = passage.State();
+                if (boat.active) {
+                    ++outFrames;
+                    const float r = std::hypot(boat.x, boat.z);
+                    offshore = offshore && r > 555.0f && r < 725.0f;
+                    if (!was) { ++passages; (passages == 1 ? firstHeading : secondHeading) = boat.headingRadians; }
+                    else steady = steady && std::abs(std::hypot(boat.x - lastX, boat.z - lastZ) - 0.5f * island::SailboatPassage::Speed) < 0.01f;
+                    lastX = boat.x; lastZ = boat.z;
+                }
+                was = boat.active;
+            }
+            Check(passages == 3 && outFrames > 3 * 300 && outFrames < 3 * 1000 && offshore && steady
+                      && std::abs(std::remainder(firstHeading - secondHeading, 6.2831853f)) > 0.05f,
+                  "a yacht passes well offshore once a period, sailing a straight line at its speed, a fresh line each time");
         }
         // Rain rings on the sea: world-anchored and repeatable, each inside its own cell,
         // more cells striking in heavier rain, none in no rain.
