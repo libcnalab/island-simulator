@@ -4,6 +4,7 @@
 #include "IslandSimulator/TerrainMeshLayout.hpp"
 
 #include "IslandSimulator/EnvironmentLighting.hpp"
+#include "IslandSimulator/UnderwaterFog.hpp"
 #include "IslandSimulator/CoastalMaterial.hpp"
 
 #include "IslandSimulator/IslandTerrain.hpp"
@@ -443,6 +444,24 @@ void main()
     if (bedRay.y < -0.01) bedPoint += bedRay.xz * min(waterDepth / -bedRay.y, 400.0 / max(length(bedRay.xz), 0.01));
     float meshEdge = max(abs(bedPoint.x), abs(bedPoint.y));
     alpha = mix(alpha, 1.0, smoothstep(uSeabedExtent - 45.0, uSeabedExtent - 2.0, meshEdge));
+    // Seen from below: only within Snell's window (some 48 degrees of the vertical) does the
+    // sky show through; beyond it the surface reflects the water itself, and with distance the
+    // water hides the surface as it hides the seabed, so the far bed and the far surface meet
+    // in one blue-green instead of a bright line.
+    if (uUnderwaterFog.w > 0.0) {
+        float submerged = clamp(uUnderwaterFog.w / 0.06, 0.0, 1.0);
+        float upward = (vWorld.y - uCameraPosition.y) / max(distanceToCamera, 0.0001);
+        float outsideWindow = (1.0 - smoothstep(0.60, 0.72, upward)) * submerged;
+        // Outside the window the surface mirrors the dim water below, silvery, the waves'
+        // pattern still on it.
+        float luma = dot(water, vec3(0.30, 0.55, 0.15));
+        vec3 mirror = uUnderwaterFog.rgb * (0.62 + 0.95 * luma);
+        water = mix(water, mirror, outsideWindow);
+        alpha = mix(alpha, 1.0, outsideWindow);
+        float haze = 1.0 - exp(-distanceToCamera * uUnderwaterFog.w);
+        water = mix(water, uUnderwaterFog.rgb, haze);
+        alpha = mix(alpha, 1.0, haze);
+    }
     // BlendState::AlphaBlend uses premultiplied colour, matching XNA semantics.
     fragColor = vec4(water * alpha, alpha);
 }
@@ -452,10 +471,12 @@ void main()
         {
             if (embedded) {
                 return std::string("#version 300 es\nprecision highp float;\n")
-                    + environment::FogShaderDefinition + WindGust::Shader + CloudShadow::Shader + body;
+                    + environment::FogShaderDefinition + underwater_fog::ShaderDefinition
+                    + WindGust::Shader + CloudShadow::Shader + body;
             }
             return std::string("#version 330 core\n")
-                + environment::FogShaderDefinition + WindGust::Shader + CloudShadow::Shader + body;
+                + environment::FogShaderDefinition + underwater_fog::ShaderDefinition
+                + WindGust::Shader + CloudShadow::Shader + body;
         }
 
         [[nodiscard]] CNA::Graphics::ShaderPackageEXT CreateShaderPackage()
@@ -654,6 +675,7 @@ void main()
             (view * projection).ToColumnMajor(viewProjection);
             customEffect_->Apply();
             customEffect_->SetUniformMat4("uViewProjection", viewProjection);
+            underwater_fog::Bind(*customEffect_);
             customEffect_->SetUniformVec3("uCameraPosition", cameraPosition.X,
                                           cameraPosition.Y, cameraPosition.Z);
             customEffect_->SetUniformVec3(

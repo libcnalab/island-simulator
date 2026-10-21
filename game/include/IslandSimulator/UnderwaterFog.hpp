@@ -5,11 +5,11 @@
 
 namespace island::underwater_fog
 {
-    /** Seawater limits a swimmer's sight: a few clear metres, then the seabed, the reef and the
-     *  fish fade into the water's own blue-green, mostly gone by thirty-five metres. Above the
+    /** A clear lagoon limits a swimmer's sight: a few clear metres, then the seabed, the reef and
+     *  the fish fade into the water's own blue-green, mostly gone by fifty metres. Above the
      *  surface nothing changes. */
-    inline constexpr float Density = 0.085f;                       // per metre, exponential (custom shaders)
-    inline constexpr float LinearStart = 2.0f, LinearEnd = 38.0f;  // BasicEffect's linear fog
+    inline constexpr float Density = 0.06f;                        // per metre, exponential (custom shaders)
+    inline constexpr float LinearStart = 2.0f, LinearEnd = 52.0f;  // BasicEffect's linear fog
 
     struct State
     {
@@ -31,7 +31,7 @@ namespace island::underwater_fog
         const float depth = std::isfinite(cameraDepth) ? cameraDepth : 0.0f;
         const float t = std::clamp(depth / 0.8f, 0.0f, 1.0f);
         state.amount = t * t * (3.0f - 2.0f * t);
-        const float dim = std::exp(-0.05f * std::clamp(depth, 0.0f, 20.0f));
+        const float dim = std::exp(-0.03f * std::clamp(depth, 0.0f, 20.0f));
         state.red = 0.17f * dim * dim;
         state.green = 0.50f * dim;
         state.blue = 0.55f * dim;

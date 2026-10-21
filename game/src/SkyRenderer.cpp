@@ -3,6 +3,7 @@
 #include "IslandSimulator/SkyRenderer.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "IslandSimulator/SkyCloudDrift.hpp"
+#include "IslandSimulator/UnderwaterFog.hpp"
 
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/ProceduralMeshValidation.hpp"
@@ -241,6 +242,13 @@ void main()
     // Under a closed deck the fair-weather masses are gone.
     color = mix(color, beforeMasses, closed);
 
+    // From under the sea only Snell's window, some 48 degrees round the zenith, shows the
+    // sky; every other direction ends in water (where neither the seabed nor the surface mesh
+    // reaches, a band of bright sky showed at the horizon).
+    if (uUnderwaterFog.w > 0.0) {
+        float submerged = clamp(uUnderwaterFog.w / 0.06, 0.0, 1.0);
+        color = mix(color, uUnderwaterFog.rgb, submerged * (1.0 - smoothstep(0.62, 0.74, direction.y)));
+    }
     fragColor = vec4(color, 1.0);
 }
 )";
@@ -249,10 +257,10 @@ void main()
         {
             if (embedded) {
                 return std::string("#version 300 es\nprecision highp float;\n")
-                    + environment::FogShaderDefinition + body;
+                    + environment::FogShaderDefinition + underwater_fog::ShaderDefinition + body;
             }
             return std::string("#version 330 core\n")
-                + environment::FogShaderDefinition + body;
+                + environment::FogShaderDefinition + underwater_fog::ShaderDefinition + body;
         }
 
         [[nodiscard]] CNA::Graphics::ShaderPackageEXT CreateShaderPackage()
@@ -423,6 +431,7 @@ void main()
             const auto& light = sun_light::Current().lighting;
             const Vector3 sun = Vector3::Normalize(Vector3(light.toSun.x, light.toSun.y, light.toSun.z));
             customEffect_->SetUniformVec3("uSunDirection", sun.X, sun.Y, sun.Z);
+            underwater_fog::Bind(*customEffect_);
             const auto scales = sun_light::SkyScalesOf(light);
             customEffect_->SetUniformVec4("uSkyHorizonScale", scales.horizon.x, scales.horizon.y, scales.horizon.z,
                                           light.sunVisibility);

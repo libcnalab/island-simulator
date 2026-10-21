@@ -61,8 +61,26 @@ class CaptureValidatorTests(unittest.TestCase):
         self.assertEqual(profile_for_viewpoint("snakes"), "close-natural-detail")
         self.assertEqual(profile_for_viewpoint("tree-snakes"), "close-natural-detail")
         self.assertEqual(profile_for_viewpoint("cave-back"), "dark-cave-detail")
+        # Underwater views: reviewed 2026-10-21, the water's haze lowers the luminance spread.
+        self.assertEqual(profile_for_viewpoint("fish"), "underwater-scene")
+        self.assertEqual(profile_for_viewpoint("reef-habitat"), "underwater-scene")
+        self.assertEqual(profile_for_viewpoint("dolphins"), "underwater-scene")
+        self.assertEqual(profile_for_viewpoint("fish", 21.0), "night-scene")
         for name in ("", "overview", "grass", "wet-sand", "litter-other", "interactive"):
             self.assertEqual(profile_for_viewpoint(name), "scene")
+
+    def test_underwater_scene_relaxes_only_the_luminance_spread(self):
+        image = PpmImage(640, 360, b"")
+        metrics = {"luminanceMean": 150.0, "luminanceStandardDeviation": 12.5,
+                   "quantizedColorBins": 120, "spatialContrast": 80.0,
+                   "darkPixelFraction": 0.0, "brightPixelFraction": 0.0}
+        with patch("tools.validate_capture.analyze_capture", return_value=metrics):
+            self.assertTrue(validate_capture(image, profile="underwater-scene")["valid"])
+            self.assertFalse(validate_capture(image, profile="scene")["valid"])
+        for key, bad in (("luminanceStandardDeviation", 11.5), ("quantizedColorBins", 63),
+                         ("spatialContrast", 29.0)):
+            with patch("tools.validate_capture.analyze_capture", return_value={**metrics, key: bad}):
+                self.assertFalse(validate_capture(image, profile="underwater-scene")["valid"])
 
     def test_close_natural_detail_retains_bounded_non_degenerate_thresholds(self):
         image = PpmImage(640, 360, b"")

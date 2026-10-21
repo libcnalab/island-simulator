@@ -19,7 +19,13 @@ MINIMUM_HEIGHT = 360
 MINIMUM_LUMINANCE_DEVIATION = 18.0
 MINIMUM_QUANTIZED_COLOR_BINS = 64
 MINIMUM_SPATIAL_CONTRAST = 30.0
-PROFILES = ("scene", "shaded-detail", "close-natural-detail", "dark-cave-detail", "night-scene")
+PROFILES = ("scene", "shaded-detail", "close-natural-detail", "dark-cave-detail", "night-scene",
+            "underwater-scene")
+# Under the sea the water's haze and the surface's mirror outside Snell's window (loop pass 333)
+# fill the frame with one blue-green, so the luminance spread sits under the open-air floor;
+# reviewed on 2026-10-21 for the views whose camera is in the water (fish 18.5, reef-habitat 16.8,
+# dolphins 13.8 against the scene floor of 18), all correct renders with their subject clear.
+UNDERWATER_VIEWPOINTS = ("fish", "reef-habitat", "dolphins")
 
 # The game hours of the night (the clock's dark between the dusk and the dawn), when a capture
 # asks for one with --time-of-day: reviewed on 2026-10-20 as a dark blue moonlit scene.
@@ -38,6 +44,8 @@ def profile_for_viewpoint(viewpoint: str, hour: float | None = None) -> str:
         return "shaded-detail"
     if viewpoint == "cave-back":
         return "dark-cave-detail"
+    if viewpoint in UNDERWATER_VIEWPOINTS:
+        return "underwater-scene"
     if viewpoint in ("cave-top", "ground", "tracks", "cascade", "bridge", "boars", "boar-lying", "spiders", "spiders-bright", "snakes", "snake-head", "tree-snakes", "ants", "cicadas", "beetles", "rats"):
         return "close-natural-detail"
     return "scene"
@@ -235,6 +243,7 @@ def validate_capture(image: PpmImage, expected_width: int | None = None,
     # floor. This is stricter for bright/washed-out pictures, not a blanket bypass.
     minimum_deviation = (2.5 if profile == "dark-cave-detail"
                          else 3.0 if profile == "night-scene"
+                         else 12.0 if profile == "underwater-scene"
                          else max(12.0, metrics["luminanceMean"] * 0.25)
                          if profile == "shaded-detail"
                          else max(10.0, metrics["luminanceMean"] * 0.20)

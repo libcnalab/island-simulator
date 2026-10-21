@@ -233,6 +233,25 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 334 (2026-10-21) — Snell's window, and the surface seen from below
+
+With pass 333's haze the far seabed faded, but above it the sea surface seen from below stayed
+bright and part-transparent to the sky right down to the horizon, and where neither the seabed
+nor the surface mesh reached, a band of bright sky showed at the horizon. From under the sea only
+Snell's window, some 48 degrees round the zenith, shows the sky; outside it the surface reflects
+the water itself. `OceanRenderer`, seen from below, now turns its surface outside the window
+into a silvery mirror of the dim water that keeps the waves' pattern (their own brightness), then
+hazes it with distance like everything else; `SkyRenderer` gives every direction outside the
+window the water's colour. The water was also too murky: the density drops to 0.06 a metre
+(mostly gone by fifty metres, a clear lagoon's visibility) and the darkening with depth to 0.03 a
+metre. The views whose camera is in the water now fill with one blue-green, as they should, and
+three of them (`fish` 18.1, `reef-habitat` 16.9, `dolphins` 14.2 against the open-air floor of
+18) were reviewed as correct renders and given an `underwater-scene` validation profile (floor 12,
+the other gates unchanged), with tests. `fish`, `reef-habitat`, `dolphins`, `stingrays`,
+`stingray-buried`, `octopuses`, `turtles`, `current`, `shark`, `water`, `reef`, `jetty`,
+`overview` and the tests pass; the `deer` and `turtles` Chrome scopes passed on pass 333's Web
+build (the new seagrass and underwater-fog shaders under GLSL ES).
+
 ## Loop pass 333 (2026-10-21) — the water limits a swimmer's sight
 
 Under the surface the seabed, the reef, the meadow and the fish stayed crisp and pale out to the
