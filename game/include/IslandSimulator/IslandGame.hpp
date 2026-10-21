@@ -598,6 +598,10 @@ namespace island
         std::unique_ptr<RenderedTerrainSurface> quadSurface_;
         BikeControls quadControls_{};
         bool riding_ = false, quadKeyWasDown_ = false, quadRightKeyWasDown_ = false, quadPlaced_ = false;
+        bool torchOn_ = false, torchKeyWasDown_ = false;   // H: the walker's hand torch
+        /** The hand torch's spot: from the walker's hand along the view. */
+        [[nodiscard]] Microsoft::Xna::Framework::Vector3 TorchLamp() const noexcept;
+        [[nodiscard]] Microsoft::Xna::Framework::Vector3 TorchAxis() const noexcept;
         float quadOrbit_ = 0.0f, quadCameraYaw_ = 0.0f, quadPreviousYaw_ = 0.0f, quadOrbitIdle_ = 0.0f;
         Microsoft::Xna::Framework::Vector3 quadCamera_{};
         [[nodiscard]] BikeGround QuadGround(float x, float z) const noexcept;

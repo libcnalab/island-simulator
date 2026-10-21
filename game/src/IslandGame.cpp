@@ -4173,6 +4173,22 @@ namespace island
         return hit;
     }
 
+    Vector3 IslandGame::TorchAxis() const noexcept
+    {
+        // along the view, held a little low
+        Vector3 forward(-cameraView_.M13, -cameraView_.M23, -cameraView_.M33);
+        if (forward.LengthSquared() < 1e-6f) forward = Vector3::UnitZ;
+        forward.Normalize();
+        return Vector3::Normalize(forward - Vector3::Up * 0.10f);
+    }
+
+    Vector3 IslandGame::TorchLamp() const noexcept
+    {
+        // in the right hand at the chest, a little ahead
+        const Vector3 right(cameraView_.M11, cameraView_.M21, cameraView_.M31);
+        return renderCameraPosition_ + TorchAxis() * 0.25f + right * 0.18f - Vector3::Up * 0.35f;
+    }
+
     float IslandGame::QuadLampNightness() const noexcept
     {
         // How dark it is for the lamps: the sun's height, and a heavy sky.
@@ -4778,6 +4794,13 @@ namespace island
                 -1.48f, 1.48f);
         }
 
+        // H: the hand torch on or off (on foot; the quad has its lamps).
+        const bool torchKeyDown = keyboard.IsKeyDown(Keys::H);
+        if (torchKeyDown && !torchKeyWasDown_ && getIsActiveProperty()) {
+            torchOn_ = !torchOn_;
+            std::cout << "island-simulator: hand torch " << (torchOn_ ? "on" : "off") << '\n';
+        }
+        torchKeyWasDown_ = torchKeyDown;
         // F: ride the quad or step off it.
         const bool quadKeyDown = keyboard.IsKeyDown(Keys::F);
         if (quadKeyDown && !quadKeyWasDown_ && getIsActiveProperty()) ToggleQuad();
@@ -5919,7 +5942,8 @@ namespace island
                 const bool lanternLit = hutRenderer_ && night > 0.02f
                     && (hutRenderer_->LanternPosition() - renderCameraPosition_).LengthSquared() < 120.0f * 120.0f;
                 const bool lampsLit = quadRenderer_ && quadEngineOn_ && !quad_.Overturned();
-                if (fireLit || lampsLit || lanternLit) {
+                const bool torchLit = torchOn_ && !riding_ && night > 0.02f && !underground;
+                if (fireLit || lampsLit || lanternLit || torchLit) {
                     timeOfDay_->ResetAlpha();
                     localLit = true;
                 }
@@ -5946,6 +5970,11 @@ namespace island
                         localLights_->DrawPlane(cameraView_, cameraProjection_, renderCameraPosition_, hutRenderer_->LanternPosition(),
                                                 4.0f, plane.triangles, plane.normal, 1.0f * night * flicker, Vector3(1.0f, 0.74f, 0.44f));
                 }
+                if (torchLit) {
+                    // the walker's hand torch: a cool white beam from the hand along the view
+                    localLights_->DrawSpot(cameraView_, cameraProjection_, renderCameraPosition_, TorchLamp(), TorchAxis(),
+                                           ground, 0.85f * night, Vector3(0.96f, 0.98f, 1.0f));
+                }
                 if (lampsLit) {
                     const BikeVec l = quad_.ToWorld(QuadBikeRenderer::HeadlightLeft), r = quad_.ToWorld(QuadBikeRenderer::HeadlightRight);
                     const BikeVec f = quad_.Forward(), u = quad_.Up();
@@ -5965,7 +5994,7 @@ namespace island
             // the hut's lantern, the fire.
             if (!underground && renderCameraPosition_.Y > 0.0f && weather.rain > 0.05f) {
                 const float night = 1.0f - std::clamp((light.sunElevationDegrees + 4.0f) / 12.0f, 0.0f, 1.0f);
-                std::array<RainLight, 3> lamps{};
+                std::array<RainLight, 4> lamps{};
                 std::size_t count = 0;
                 if (night > 0.05f) {
                     if (quadRenderer_ && quadEngineOn_ && !quad_.Overturned()) {
@@ -5978,6 +6007,15 @@ namespace island
                         beam.reach = 26.0f;
                         beam.strength = 0.9f * QuadLampNightness();
                         beam.tint = Vector3(1.0f, 0.97f, 0.90f);
+                    }
+                    if (torchOn_ && !riding_) {
+                        RainLight& torch = lamps[count++];
+                        torch.position = TorchLamp();
+                        torch.axis = TorchAxis();
+                        torch.cosCone = 0.93f;
+                        torch.reach = 18.0f;
+                        torch.strength = 0.8f * night;
+                        torch.tint = Vector3(0.96f, 0.98f, 1.0f);
                     }
                     if (hutRenderer_) {
                         RainLight& lantern = lamps[count++];
@@ -6020,17 +6058,24 @@ namespace island
                 quadRenderer_->DrawLights(cameraView_, cameraProjection_, renderCameraPosition_, quad_, QuadLampNightness());
             }
             // the animals' eyes shine back in the quad's beam
-            if (eyeshineRenderer_ && quadRenderer_ && quadEngineOn_ && !quad_.Overturned()) {
+            const bool torchShines = torchOn_ && !riding_ && !underground;
+            if (eyeshineRenderer_ && (torchShines || (quadRenderer_ && quadEngineOn_ && !quad_.Overturned()))) {
                 allEyes_.clear();
                 if (deerRenderer_) allEyes_.insert(allEyes_.end(), deerRenderer_->Eyes().begin(), deerRenderer_->Eyes().end());
                 if (goatRenderer_) allEyes_.insert(allEyes_.end(), goatRenderer_->Eyes().begin(), goatRenderer_->Eyes().end());
                 if (boarRenderer_) allEyes_.insert(allEyes_.end(), boarRenderer_->Eyes().begin(), boarRenderer_->Eyes().end());
                 if (crocodileRenderer_) allEyes_.insert(allEyes_.end(), crocodileRenderer_->Eyes().begin(), crocodileRenderer_->Eyes().end());
-                const BikeVec l = quad_.ToWorld(QuadBikeRenderer::HeadlightLeft), r = quad_.ToWorld(QuadBikeRenderer::HeadlightRight);
-                const BikeVec f = quad_.Forward(), u = quad_.Up();
-                eyeshineRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, allEyes_,
-                    Vector3((l.x + r.x) * 0.5f, (l.y + r.y) * 0.5f, (l.z + r.z) * 0.5f),
-                    Vector3(f.x - u.x * 0.10f, f.y - u.y * 0.10f, f.z - u.z * 0.10f), 0.86f, 40.0f, QuadLampNightness());
+                if (torchShines) {
+                    // the walker's torch, right by the eye: the strongest eyeshine of all
+                    eyeshineRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, allEyes_,
+                        TorchLamp(), TorchAxis(), 0.90f, 35.0f, QuadLampNightness());
+                } else {
+                    const BikeVec l = quad_.ToWorld(QuadBikeRenderer::HeadlightLeft), r = quad_.ToWorld(QuadBikeRenderer::HeadlightRight);
+                    const BikeVec f = quad_.Forward(), u = quad_.Up();
+                    eyeshineRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, allEyes_,
+                        Vector3((l.x + r.x) * 0.5f, (l.y + r.y) * 0.5f, (l.z + r.z) * 0.5f),
+                        Vector3(f.x - u.x * 0.10f, f.y - u.y * 0.10f, f.z - u.z * 0.10f), 0.86f, 40.0f, QuadLampNightness());
+                }
             }
             if (sailboatRenderer_)
                 sailboatRenderer_->DrawLights(cameraView_, cameraProjection_, renderCameraPosition_,

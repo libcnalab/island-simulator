@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 315 (2026-10-21) — a hand torch for the walker
+
+Under a new moon the island's night is truly dark, and on foot there was no light at all. H now
+switches a hand torch on and off (on foot; on the quad its lamps serve). At night it lights the
+ground ahead through the night grade as the quad's lamps do (`LocalLightRenderer::DrawSpot`
+from the right hand at the chest, aimed along the view and a little low, a cool white), it
+joins the night's lamps that make the falling rain glitter (an 18 m spot), and it makes the
+eyes of the deer, goats, boars and crocodiles it finds shine back: held right by the eye it
+gives the strongest eyeshine of all. It stays off underground and by default. The README's
+controls name it. A probe with the torch on at 22:00 on a moonless night showed its pool of
+light on the forest floor ahead in `jungle` and `litter` (in showers too) and lit the deer in
+`deer`; with it off `jungle` and `quad-chase` at night are as before; the tests pass.
+
 ## Loop pass 314 (2026-10-21) — the monkeys sleep up in the trees
 
 The deferred item from pass 239: at night the troop rested on the ground, where monkeys never

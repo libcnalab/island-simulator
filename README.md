@@ -499,6 +499,8 @@ Space is the handbrake, and Backspace sets it back on its wheels after a rollove
 follows it; the mouse swings the camera round, and it settles back behind when the mouse rests.
 Its top speed is a real utility quad's 80 km/h, its engine note follows the revs and the
 throttle, its exhaust smokes, and its headlights burn by day and light the ground at night.
+On foot, H switches a hand torch on and off: at night it lights the ground ahead, the rain in
+its beam and the eyes of the animals it finds.
 The executable may be launched from any working directory; current runtime content is embedded or
 generated and does not depend on a repository-relative asset path.
 On Linux, press Escape once to release the mouse and again to exit. In a browser, Escape only
