@@ -143,6 +143,34 @@ uniform vec3 uSkyHorizonScale, uSkyZenithScale;   // the hour's sky against the 
 uniform vec3 uSkyAntiHorizonScale;                 // and its horizon opposite the sun
 uniform vec4 uSurfaceAppearance;
 uniform float uSeabedExtent;   // half the terrain mesh's square, where the seabed ends
+uniform float uRain;           // 0..1 the weather's rain, ringing the surface near the eye
+// Rain on water: each drop rings the surface, the ring widening and fading in under a second,
+// the drops falling at random across two offset grids of cells, with a pale splash at a drop's
+// centre the instant it strikes. One drop per cell, its ring kept inside it.
+float rainRingsAt(vec2 world, float time, float rain, float footprint)
+{
+    float rings = 0.0;
+    for (int layer = 0; layer < 3; ++layer) {
+        float size = layer == 0 ? 0.32 : (layer == 1 ? 0.23 : 0.17);
+        // a layer's rings go once its cells span too few pixels to draw them
+        float visible = 1.0 - smoothstep(size / 12.0, size / 5.0, footprint);
+        if (visible <= 0.0) continue;
+        vec2 grid = world / size + vec2(0.37, 0.71) * float(layer);
+        vec2 cell = floor(grid);
+        vec2 local = fract(grid);
+        float h = fract(sin(dot(cell + float(layer) * 17.0, vec2(127.1, 311.7))) * 43758.5453);
+        float h2 = fract(h * 13.37 + 0.21);
+        float h3 = fract(h * 71.9 + 0.53);
+        if (h3 > rain) continue;   // the harder it rains, the more cells take drops
+        vec2 drop = vec2(0.25) + 0.5 * vec2(h, h2);
+        float t = fract(time * (0.9 + 0.5 * h2) + h * 7.0);
+        float r = length(local - drop);
+        float x = (r - (0.06 + 0.34 * t)) / 0.05;
+        rings += visible * (exp(-x * x) * (1.0 - t) * (1.0 - t)
+            + 0.5 * (1.0 - smoothstep(0.0, 0.06, r)) * (1.0 - smoothstep(0.0, 0.12, t)));
+    }
+    return clamp(rings, 0.0, 1.0);
+}
 
 out vec4 fragColor;
 
@@ -449,6 +477,14 @@ void main()
     }
     foam = clamp(foam, 0.0, 0.86);
     water = mix(water, vec3(0.82, 0.94, 0.91), foam);
+    // The rain rings the water near the eye (gone where a cell spans too few pixels to show
+    // its ring) and dulls the whole surface a little.
+    if (uRain > 0.0) {
+        float rainFootprint = max(length(dFdx(vWorld.xz)), length(dFdy(vWorld.xz)));
+        water = mix(water, reflectedSky * 1.05 + vec3(0.04),
+                    rainRingsAt(vWorld.xz, uTime, uRain, rainFootprint) * 0.45);
+        water *= 1.0 - 0.06 * uRain;
+    }
 
     // Cumulus shadows darken the body colour and the glints but not the reflected sky, which
     // the cloud itself still lights from above.
@@ -726,6 +762,7 @@ void main()
             }
             customEffect_->SetUniformFloat("uCloudCoverage", weather_now::Current().cloudCover);
             customEffect_->SetUniformFloat("uSeaState", weather_now::SeaState());
+            customEffect_->SetUniformFloat("uRain", weather_now::Current().rain);
             {
                 const auto& light = sun_light::Current().lighting;
                 const float sun = std::clamp(light.sunVisibility, 0.0f, 1.0f);

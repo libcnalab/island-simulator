@@ -1,6 +1,7 @@
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "IslandSimulator/StreamWaterRenderer.hpp"
 #include "IslandSimulator/DayNightCycle.hpp"
+#include "IslandSimulator/WeatherSystem.hpp"
 #include "CNA/Graphics/ShaderCodeEXT.hpp"
 #include "CNA/Graphics/ShaderPackageEXT.hpp"
 #include "CNA/ShaderLanguageEXT.hpp"
@@ -57,7 +58,36 @@ in vec3 world;in vec2 flow;in float courseDistance;in float opacity;in float lat
 uniform float uTime;uniform vec3 uCamera;uniform vec2 uCascade;
 uniform vec3 uSkyTint;   // the hour's low sky against the afternoon's, for the mirrored sky
 uniform vec4 uRings[16];   // rings spreading on the water: x, z, age (s), strength (0: none)
+uniform float uRain;       // 0..1 the weather's rain, ringing the water
 out vec4 fragColor;
+// Rain on water: each drop rings the surface, the ring widening and fading in under a second,
+// the drops falling at random across two offset grids of cells, with a pale splash at a drop's
+// centre the instant it strikes. One drop per cell, its ring kept inside it.
+float rainRingsAt(vec2 world, float time, float rain, float footprint)
+{
+    float rings = 0.0;
+    for (int layer = 0; layer < 3; ++layer) {
+        float size = layer == 0 ? 0.32 : (layer == 1 ? 0.23 : 0.17);
+        // a layer's rings go once its cells span too few pixels to draw them
+        float visible = 1.0 - smoothstep(size / 12.0, size / 5.0, footprint);
+        if (visible <= 0.0) continue;
+        vec2 grid = world / size + vec2(0.37, 0.71) * float(layer);
+        vec2 cell = floor(grid);
+        vec2 local = fract(grid);
+        float h = fract(sin(dot(cell + float(layer) * 17.0, vec2(127.1, 311.7))) * 43758.5453);
+        float h2 = fract(h * 13.37 + 0.21);
+        float h3 = fract(h * 71.9 + 0.53);
+        if (h3 > rain) continue;   // the harder it rains, the more cells take drops
+        vec2 drop = vec2(0.25) + 0.5 * vec2(h, h2);
+        float t = fract(time * (0.9 + 0.5 * h2) + h * 7.0);
+        float r = length(local - drop);
+        float x = (r - (0.06 + 0.34 * t)) / 0.05;
+        rings += visible * (exp(-x * x) * (1.0 - t) * (1.0 - t)
+            + 0.5 * (1.0 - smoothstep(0.0, 0.06, r)) * (1.0 - smoothstep(0.0, 0.12, t)));
+    }
+    return clamp(rings, 0.0, 1.0);
+}
+
 void main(){
     vec2 downstream=normalize(flow);
     vec2 bankNormal=vec2(-downstream.y,downstream.x);
@@ -81,6 +111,10 @@ void main(){
         float wave=(-outer*exp(-outer*outer)-.45*inner*exp(-inner*inner))*fade;
         ringLight+=crest;
         slope+=away/max(r,.001)*wave*.9;
+    }
+    if(uRain>0.0) {
+        float rainFootprint=max(length(dFdx(world.xz)),length(dFdy(world.xz)));
+        ringLight+=rainRingsAt(world.xz,uTime,uRain,rainFootprint)*.65;
     }
     ringLight=min(ringLight,1.0);
     vec3 n=normalize(vec3(slope.x,1.0,slope.y));
@@ -185,6 +219,7 @@ void StreamWaterRenderer::Draw(const Matrix& view,const Matrix& projection,const
         const auto sky=sun_light::SkyScalesOf(sun_light::Current().lighting).horizon;
         effect_->SetUniformVec3("uSkyTint",sky.x,sky.y,sky.z);
     }
+    effect_->SetUniformFloat("uRain",weather_now::Current().rain);
     for(std::size_t slot=0;slot<StreamRingField::Capacity;++slot) {
         static const auto names=[] {
             std::array<std::string,StreamRingField::Capacity> result;

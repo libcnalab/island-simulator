@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 427 (2026-10-22) — rain rings the sea and the stream
+
+Rain fell on the water without a mark. The sea's and the stream's shaders take the weather's rain
+(uRain) and ring their surfaces with rainRingsAt: three offset grids of cells (0.32, 0.23 and 0.17 m),
+a drop in a cell (as many cells as the rain is heavy: a shower takes about half), its ring widening and
+fading in under a second at its own rate and phase and a pale splash at its centre the instant it
+strikes; a layer goes once its cells span too few pixels to draw its rings (no shimmer far out). On
+the sea the rings take the reflected sky (0.45) and the rain dulls the surface by up to 6 %; on the
+stream they light its ring term. Judged in `water` and `stream` with showers and a thunderstorm: in the
+storm the near water is covered in rings thinning with distance; clear weather is unchanged.
+
 ## Loop pass 426 (2026-10-22) — coconut crabs stand tall on long, fanned legs
 
 At 1:1 in `coconut-crabs` the robber crab was a round blue dome (0.34 wide by 0.29 long) on short legs
