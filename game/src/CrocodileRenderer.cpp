@@ -284,8 +284,11 @@ namespace island
                                          -1.04f-2.66f*t,scale);
                 const float width=TailHalfWidth(t)*scale;
                 const float height=TailHalfHeight(t)*scale;
+                // dark crossbands on the tail, bolder toward its tip
+                const float band=std::pow(.5f+.5f*std::cos(t*3.2f*2.0f*std::numbers::pi_v<float>),2.0f);
                 AppendTailSegment(vertices,previous,next,axes,previousWidth,previousHeight,
-                                  width,height,palette.side,.10f,section);
+                                  width,height,ScalePigment(palette.side,1.0f-.34f*band*(.35f+.65f*t)),
+                                  .10f,section);
                 previous=next;previousWidth=width;previousHeight=height;
             }
 
@@ -526,6 +529,17 @@ namespace island
                 throw std::logic_error("One crocodile exceeded its vertex budget");
             vegetation_fade::ShrinkAbout(stagingVertices_,first,crocodile.x,crocodile.y,crocodile.z,
                 vegetation_fade::FarShrink(std::sqrt(distanceSquared),maximumDistance_,vegetation_fade::TreeShrinkFraction));
+            // Below the sea surface the body takes the water's colour: afloat, a crocodile
+            // shows its back, eyes and nostrils, the rest seen through the water (drawn crisp
+            // it lay on top of the sea like a raft).
+            const Color water(52,118,112);
+            for(std::size_t i=first;i<stagingVertices_.size();++i) {
+                auto& vertex=stagingVertices_[i];
+                if(vertex.Position.Y<0.0f) {
+                    const float under=std::clamp(-vertex.Position.Y/.30f,0.0f,1.0f);
+                    vertex.Color=Color::Lerp(vertex.Color,water,.30f+.38f*under);
+                }
+            }
             ++visibleCount_;
         }
         if(stagingVertices_.empty())return;

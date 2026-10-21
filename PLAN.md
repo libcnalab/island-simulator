@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 351 (2026-10-21) — the crocodile lies in the water, not on it
+
+A swimming crocodile floated with its centre at -0.18 m (and, in the shallows, 0.2 m times its
+scale above the bed): its back stood 0.3-0.5 m proud of the sea and its belly hovered over the
+sand, and as nothing below the surface was tinted it lay on top of the water like a raft. Afloat it
+now carries its centre at half its scale under the surface (`CrocodileGroup::SwimDepth`), the back,
+eyes and nostrils awash; in water too shallow to float its belly rests on the bed
+(`BedClearance`, 0.06 x scale). As with the herons' legs, vertices below the sea surface take the
+water's colour (30 % at the surface to 68 % from 0.3 m down), so the flanks, tail and feet show a
+waterline. The tail carries dark crossbands, bolder toward the tip. `crocodiles`, `mangroves` and
+the tests pass.
+
 ## Loop pass 350 (2026-10-21) — the campfire plume is one rising column; the east camera leaves the fire
 
 The campfire's upper plume was twelve billboards in six bands, each with a round alpha blob, its

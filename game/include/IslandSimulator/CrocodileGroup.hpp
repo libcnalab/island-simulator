@@ -47,6 +47,11 @@ public:
     static constexpr std::size_t CrocodileCount=3;
     // Within this range a crocodile lies facing the player; closer than 14 m it slides off obliquely.
     static constexpr float AlertDistance=24.0f;
+    /** @brief Afloat where the water is deep enough, the body's centre this far under the
+     *  surface (times the scale): the back, eyes and nostrils awash, the rest below. */
+    static constexpr float SwimDepth=-.50f;
+    /** @brief In the shallows, too shallow to float, the belly rests on the bed. */
+    static constexpr float BedClearance=.06f;
     static constexpr float FullSimulationDistance=150;
     static constexpr float ReducedSimulationDistance=360;
 
