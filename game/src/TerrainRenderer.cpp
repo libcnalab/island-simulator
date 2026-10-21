@@ -163,6 +163,7 @@ uniform vec4 uBunkerFrame;
 uniform vec3 uCameraPosition;
 uniform vec3 uToSun;
 uniform float uWetness;   // 0..1 rain-wet ground (WeatherSystem)
+uniform float uCausticSun;   // 0..1 the sun high enough to throw caustics (a low sun's light spreads)
 uniform float uRain;      // 0..1 rain falling now: drops ring the puddles
 uniform vec2 uSandWind;
 uniform float uSeaSeconds;
@@ -599,8 +600,9 @@ void main()
         float lineB = pow(max(0.0, 1.0 - webB * 1.8), 3.0);
         float lineC = pow(max(0.0, 1.0 - webC * 1.8), 3.0);
         float web = min(1.0, (lineA + lineB + lineC) * 0.8);
-        // refracted direct sunlight: gone once the sun is down or behind the overcast
-        color += vec3(0.17, 0.21, 0.19) * web * causticVisibility * vGroundLight * uDirectSun;
+        // refracted direct sunlight: gone once the sun is down or behind the overcast, and
+        // fading as it sinks (a glancing sun's light spreads into a faint, smeared net)
+        color += vec3(0.17, 0.21, 0.19) * web * causticVisibility * vGroundLight * uDirectSun * uCausticSun;
     }
 
     float groundVariation = (broad * 0.160 + landMiddle * 0.075
@@ -1658,6 +1660,10 @@ void main()
             materialEffect_->SetUniformVec2("uSandWind", wind::DirectionX, wind::DirectionZ);
             materialEffect_->SetUniformFloat("uWetness", weather_now::Current().wetness);
             materialEffect_->SetUniformFloat("uRain", weather_now::Current().rain);
+            {
+                const float t = std::clamp((sun_light::Current().lighting.sunElevationDegrees - 3.0f) / 27.0f, 0.0f, 1.0f);
+                materialEffect_->SetUniformFloat("uCausticSun", t * t * (3.0f - 2.0f * t));
+            }
             materialEffect_->SetUniformVec4(
                 "uPrimaryPathShape", VegetationLayout::PrimaryPathBaseX,
                 VegetationLayout::PrimaryPathAmplitude,

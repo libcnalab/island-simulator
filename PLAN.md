@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 286 (2026-10-21) — the caustics fade as the sun sinks
+
+At dusk (`jetty-end` at 18:24, the sun a few degrees up under a pink sky) the lagoon floor still
+carried the full bright net of caustics: they were gated only by the direct sun's shadow
+strength, which holds near full until the sun is down. Caustics are the sun focused by the
+waves onto the bed; a low sun's light comes in at a glancing angle and spreads into a faint
+smear. The terrain shader's caustics now also take `uCausticSun`, rising smoothly from the
+sun at 3 degrees to 30: gone at sunset, full by mid-morning. `jetty-end` at 18:24 shows a plain
+dusky bed where the net was; at 16:30 a softer net under the sun's glitter path; at 14:00 and
+`reef` as before; all pass, and the tests.
+
 ## Loop pass 285 (2026-10-21) — the resident tends the fire at its edge, lit by it
 
 Two things kept the night at the campfire from reading true. The route's campfire call stood
