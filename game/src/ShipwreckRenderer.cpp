@@ -171,6 +171,20 @@ void main()
     iron = mix(vColor, iron, detailFade);
     materialColor = mix(materialColor, iron, metal);
 
+    // Years of tropical sun and salt bleach the exposed timber silver-grey: most on the decks,
+    // rails and topsides high up, least low on the hull where the sea keeps it dark and brown
+    // (uniform fresh brown read as a film prop). Broken ends stay raw; iron is apart.
+    float exposure = smoothstep(0.25, 1.9, vWorld.y) * (1.0 - freshBreak * 0.8) * (1.0 - metal);
+    float bleach = exposure * (0.62 + 0.28 * abs(faceNormal.y)) * (0.80 + 0.20 * longGrain);
+    // weathered grey wood is paler than the brown it was, not the same tone desaturated
+    vec3 silver = min(vec3(dot(materialColor, vec3(0.30, 0.59, 0.11))) * vec3(1.04, 1.03, 1.00) * 1.75,
+                      vec3(0.80));
+    materialColor = mix(materialColor, silver, clamp(bleach, 0.0, 0.85));
+    // and the band the tide washes, black-green with algae
+    float algae = exp(-abs(vWorld.y - 0.05) * 6.0) * (1.0 - metal) * detailFade
+        * (0.75 + 0.25 * fineGrain);
+    materialColor = mix(materialColor, materialColor * vec3(0.42, 0.50, 0.38), algae * 0.42);
+
     float wetBand = (1.0 - smoothstep(-0.14, 0.38, vWorld.y))
         * (1.0 - freshBreak * 0.25);
     float submerged = 1.0 - smoothstep(-0.52, 0.05, vWorld.y);

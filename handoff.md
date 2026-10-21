@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 363: shipwreck timbers sun-bleached above the tide, algae band at it (PLAN "Loop pass 363"). Chrome `rodents` passed for 361.
 - Pass 362: shared AppendShadedLoft lights the gecko/skink/frog and beetle/cicada lofts too (PLAN "Loop pass 362").
 - Pass 361: rodent bodies per-corner lit and graded (no flat bands); `mice` joins the close-natural-detail profile (PLAN "Loop pass 361").
 - Pass 360: gravel stream bed in the terrain shader, clearer stream water (PLAN "Loop pass 360"). Chrome `fish` passed for 359.

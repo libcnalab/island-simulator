@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 363 (2026-10-21) — the wreck's timbers are sun-bleached above the tide
+
+The shipwreck's wood was one fresh warm brown from keel to rail, so the hull read as a film prop
+set down on the sand. Its shader now bleaches the exposed timber silver-grey - paler than the
+brown it was, not the same tone desaturated - from just above the tide band up, most on the
+decks, rails and other up-facing faces, with the grain still showing; broken ends stay raw and
+the iron apart. The band the tide washes is stained black-green with algae, under the existing
+wet band, salt line and sand packing. `shipwreck`, `shipwreck-wide` and the tests pass; the
+Chrome `rodents` scope passed for pass 361.
+
 ## Loop pass 362 (2026-10-21) — geckos, skinks, frogs and beetles are lit too
 
 The other small fauna's lofts (the gecko loft also shapes the skinks and frogs; the beetle loft
