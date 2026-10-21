@@ -58,12 +58,10 @@ namespace island
         sheltered_ = std::isfinite(x) && std::isfinite(z) && halfSpan > 0.0f && halfLength > 0.0f;
     }
 
-    void RainRenderer::Draw(const Matrix& view, const Matrix& projection, const Vector3& camera,
-                            const float rain, const float wind, const float seconds)
+    template <class Emit>
+    void RainRenderer::ForEachDrop(const Vector3& camera, const float rain, const float wind, const float seconds,
+                                   Emit&& emit) const
     {
-        visible_ = 0;
-        if (!(rain > 0.01f) || !std::isfinite(camera.X) || !std::isfinite(seconds)) return;
-        staging_.clear();
         const float slant = 0.10f + 0.12f * std::clamp(wind, 0.0f, 2.5f);   // horizontal metres per metre of fall
         Vector3 fall(wind::DirectionX * slant, -1.0f, wind::DirectionZ * slant);
         fall.Normalize();
@@ -76,7 +74,6 @@ namespace island
         for (int cz = minZ; cz <= maxZ; ++cz) {
             for (int cx = minX; cx <= maxX; ++cx) {
                 for (int k = 0; k < DropsPerCell; ++k) {
-                    if (staging_.size() + 6U > static_cast<std::size_t>(MaximumDrops) * 6U) break;   // never past the buffer
                     if (Unit(cx, cz, k, 0x4a1u) >= density) continue;   // light rain: fewer drops
                     const float x = (static_cast<float>(cx) + Unit(cx, cz, k, 0x4a2u)) * CellSize;
                     const float z = (static_cast<float>(cz) + Unit(cx, cz, k, 0x4a3u)) * CellSize;
@@ -101,29 +98,90 @@ namespace island
                         if (across < shelter_.halfSpan && along < shelter_.halfLength
                             && y < shelter_.ridgeY - (shelter_.ridgeY - shelter_.eaveY) * across / shelter_.halfSpan) continue;
                     }
-                    const Vector3 top(x, y, z);
-                    const Vector3 bottom = top + fall * StreakLength;
-                    const Vector3 toCamera = camera - top;
-                    Vector3 side = Vector3::Cross(fall, toCamera);
-                    const float distance = toCamera.Length();
-                    if (side.LengthSquared() < 1e-6f || distance < 0.3f) continue;
-                    side.Normalize();
-                    side *= 0.006f + distance * 0.0011f;   // about a pixel wide at any distance
-                    const float alpha = std::clamp(0.40f * edge * (0.6f + 0.4f * density), 0.0f, 1.0f);
-                    const auto c = [alpha](const float v) { return static_cast<int>(std::lround(v * alpha * 255.0f)); };
-                    const Color colour(c(0.74f), c(0.78f), c(0.83f), static_cast<int>(std::lround(alpha * 255.0f)));
-                    const Color tail(c(0.40f), c(0.43f), c(0.47f), static_cast<int>(std::lround(alpha * 0.4f * 255.0f)));
-                    staging_.emplace_back(top - side, tail); staging_.emplace_back(top + side, tail);
-                    staging_.emplace_back(bottom + side, colour);
-                    staging_.emplace_back(top - side, tail); staging_.emplace_back(bottom + side, colour);
-                    staging_.emplace_back(bottom - side, colour);
-                    ++visible_;
+                    if (!emit(Vector3(x, y, z), fall, edge)) return;
                 }
             }
         }
+    }
+
+    namespace
+    {
+        // one streak: from `top` down along `fall`, about a pixel wide at any distance
+        bool Streak(std::vector<VertexPositionColor>& staging, const Vector3& camera, const Vector3& top,
+                    const Vector3& fall, const float length, const Color& head, const Color& tail)
+        {
+            const Vector3 bottom = top + fall * length;
+            const Vector3 toCamera = camera - top;
+            Vector3 side = Vector3::Cross(fall, toCamera);
+            const float distance = toCamera.Length();
+            if (side.LengthSquared() < 1e-6f || distance < 0.3f) return false;
+            side.Normalize();
+            side *= 0.006f + distance * 0.0011f;
+            staging.emplace_back(top - side, tail); staging.emplace_back(top + side, tail);
+            staging.emplace_back(bottom + side, head);
+            staging.emplace_back(top - side, tail); staging.emplace_back(bottom + side, head);
+            staging.emplace_back(bottom - side, head);
+            return true;
+        }
+    }
+
+    void RainRenderer::Draw(const Matrix& view, const Matrix& projection, const Vector3& camera,
+                            const float rain, const float wind, const float seconds)
+    {
+        visible_ = 0;
+        if (!(rain > 0.01f) || !std::isfinite(camera.X) || !std::isfinite(seconds)) return;
+        staging_.clear();
+        const float density = std::clamp(rain, 0.0f, 1.0f);
+        ForEachDrop(camera, rain, wind, seconds, [&](const Vector3& top, const Vector3& fall, const float edge) {
+            if (staging_.size() + 6U > static_cast<std::size_t>(MaximumDrops) * 6U) return false;   // never past the buffer
+            const float alpha = std::clamp(0.40f * edge * (0.6f + 0.4f * density), 0.0f, 1.0f);
+            const auto c = [alpha](const float v) { return static_cast<int>(std::lround(v * alpha * 255.0f)); };
+            const Color colour(c(0.74f), c(0.78f), c(0.83f), static_cast<int>(std::lround(alpha * 255.0f)));
+            const Color tail(c(0.40f), c(0.43f), c(0.47f), static_cast<int>(std::lround(alpha * 0.4f * 255.0f)));
+            if (Streak(staging_, camera, top, fall, StreakLength, colour, tail)) ++visible_;
+            return true;
+        });
+        Flush(view, projection, BlendState::AlphaBlend);
+    }
+
+    void RainRenderer::DrawLit(const Matrix& view, const Matrix& projection, const Vector3& camera, const float rain,
+                               const float wind, const float seconds, const std::span<const RainLight> lights)
+    {
+        litVisible_ = 0;
+        if (!(rain > 0.01f) || lights.empty() || !std::isfinite(camera.X) || !std::isfinite(seconds)) return;
+        staging_.clear();
+        ForEachDrop(camera, rain, wind, seconds, [&](const Vector3& top, const Vector3& fall, const float edge) {
+            if (staging_.size() + 6U > static_cast<std::size_t>(MaximumDrops) * 6U) return false;
+            // how strongly the lamps light this drop: within reach, and for a spot inside its cone
+            Vector3 lit = Vector3::Zero;
+            for (const RainLight& light : lights) {
+                const Vector3 toDrop = top - light.position;
+                const float d = toDrop.Length();
+                if (d > light.reach || d < 0.05f) continue;
+                float cone = 1.0f;
+                if (light.cosCone > -1.0f) {
+                    const float axial = Vector3::Dot(toDrop / d, light.axis);
+                    cone = std::clamp((axial - light.cosCone) / (1.0f - light.cosCone) * 3.0f, 0.0f, 1.0f);
+                }
+                const float falloff = (1.0f - d / light.reach) * (1.0f - d / light.reach);
+                lit += light.tint * (cone * falloff * light.strength);
+            }
+            const float strength = std::max({lit.X, lit.Y, lit.Z});
+            if (strength < 0.03f) return true;
+            const float a = std::clamp(edge, 0.0f, 1.0f) * 0.85f;
+            const auto c = [a](const float v) { return static_cast<int>(std::lround(std::clamp(v * a, 0.0f, 1.0f) * 255.0f)); };
+            const Color head(c(lit.X), c(lit.Y), c(lit.Z), 255), tail(c(lit.X * 0.3f), c(lit.Y * 0.3f), c(lit.Z * 0.3f), 255);
+            if (Streak(staging_, camera, top, fall, StreakLength, head, tail)) ++litVisible_;
+            return true;
+        });
+        Flush(view, projection, BlendState::Additive);
+    }
+
+    void RainRenderer::Flush(const Matrix& view, const Matrix& projection, const BlendState& blend)
+    {
         if (staging_.empty()) return;
         device_.setRasterizerStateProperty(RasterizerState::CullNone);
-        device_.setBlendStateProperty(BlendState::AlphaBlend);
+        device_.setBlendStateProperty(blend);
         device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
         vertices_->SetData(staging_.data(), 0, static_cast<int>(staging_.size()), SetDataOptions::Discard);
         device_.SetVertexBuffer(vertices_.get());

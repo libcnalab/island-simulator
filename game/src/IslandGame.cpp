@@ -5896,6 +5896,40 @@ namespace island
             if (!underground)
                 timeOfDay_->DrawRainbow(cameraView_, cameraProjection_, renderCameraPosition_, light,
                                         TimeOfDayRenderer::RainbowStrength(light, weather.rain));
+            // Rain falling through the night's lamps glitters in their light: the quad's beams,
+            // the hut's lantern, the fire.
+            if (!underground && renderCameraPosition_.Y > 0.0f && weather.rain > 0.05f) {
+                const float night = 1.0f - std::clamp((light.sunElevationDegrees + 4.0f) / 12.0f, 0.0f, 1.0f);
+                std::array<RainLight, 3> lamps{};
+                std::size_t count = 0;
+                if (night > 0.05f) {
+                    if (quadRenderer_ && quadEngineOn_ && !quad_.Overturned()) {
+                        const BikeVec l = quad_.ToWorld(QuadBikeRenderer::HeadlightLeft), r = quad_.ToWorld(QuadBikeRenderer::HeadlightRight);
+                        const BikeVec f = quad_.Forward(), u = quad_.Up();
+                        RainLight& beam = lamps[count++];
+                        beam.position = Vector3((l.x + r.x) * 0.5f, (l.y + r.y) * 0.5f, (l.z + r.z) * 0.5f);
+                        beam.axis = Vector3::Normalize(Vector3(f.x - u.x * 0.10f, f.y - u.y * 0.10f, f.z - u.z * 0.10f));
+                        beam.cosCone = 0.93f;
+                        beam.reach = 26.0f;
+                        beam.strength = 0.9f * QuadLampNightness();
+                        beam.tint = Vector3(1.0f, 0.97f, 0.90f);
+                    }
+                    if (hutRenderer_) {
+                        RainLight& lantern = lamps[count++];
+                        lantern.position = hutRenderer_->LanternPosition();
+                        lantern.reach = 5.0f;
+                        lantern.strength = 0.8f * night;
+                        lantern.tint = Vector3(1.0f, 0.74f, 0.44f);
+                    }
+                    RainLight& fire = lamps[count++];
+                    fire.position = Vector3(CampfireSite::X, CampfireLayout::GroundY() + 0.6f, CampfireSite::Z);
+                    fire.reach = 7.0f;
+                    fire.strength = 0.9f * night * CampfireLighting::Strength();
+                    fire.tint = Vector3(1.0f, 0.62f, 0.34f);
+                }
+                rain_->DrawLit(cameraView_, cameraProjection_, renderCameraPosition_, weather.rain, weather.wind, timeSeconds,
+                               std::span<const RainLight>(lamps.data(), count));
+            }
             timeOfDay_->DrawFlash(weather.flash);
             if (!underground)
                 timeOfDay_->DrawBolt(cameraView_, cameraProjection_, renderCameraPosition_, weather.strikes,

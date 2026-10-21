@@ -233,6 +233,21 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 293 (2026-10-21) — rain glitters in the lamps at night
+
+At night the rain streaks, drawn before the grade like the rest of the scene, came out as
+dark as everything else even where they fell through the quad's beams or past the fire: a
+lamp in the rain should show its drops. `RainRenderer` now walks its drops through one
+`ForEachDrop` (the world-anchored cells, the layer about the camera, the hut's roof
+sheltering what falls under it) for both passes; `DrawLit` takes the night's lamps
+(`RainLight`: a point, or a spot with its cone) and, after the grade, draws additively the
+drops they reach in the lamp's colour, falling off with the distance and, for a spot, with the
+angle off its axis. The game passes the quad's headlight beam (when its engine runs, 26 m, a
+22 degree cone), the hut's lantern (5 m) and the campfire (7 m, beaten down with it by a
+downpour), all scaled by the night. `quad-drive` at 21:30 in showers shows the streaks
+glittering white in the beam ahead of the quad; `campfire` and `hut` at 21:30 in showers and
+`campfire` in daytime showers pass, and the tests.
+
 ## Loop pass 292 (2026-10-21) — the quad gets dirty
 
 Ridden anywhere, the quad stayed showroom-clean. It now gathers dirt: each wheel down on wet
