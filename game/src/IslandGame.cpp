@@ -3161,10 +3161,12 @@ namespace island
                     soundscape_->SetDawn(smooth(5.3f, 5.9f, hour) * (1.0f - smooth(7.0f, 7.8f, hour)) * (1.0f - weather_.State().rain));
                 }
             }
-            // the birds go to roost at dusk; the fruit bats come out
+            // the birds go to roost at dusk and sit out a downpour, the monkeys too; the fruit
+            // bats come out, but not into a storm's rain
             const float dark = 1.0f - std::clamp((light.sunElevationDegrees + 2.0f) / 10.0f, 0.0f, 1.0f);
-            birdFlock_.SetNightness(dark);
-            monkeyTroop_.SetNightness(dark);
+            const float downpour = std::clamp((weather_.State().rain - 0.5f) / 0.4f, 0.0f, 1.0f);
+            birdFlock_.SetNightness(std::max(dark, downpour));
+            monkeyTroop_.SetNightness(std::max(dark, downpour));
             if (deer_) deer_->SetNightness(dark);
             if (goats_) goats_->SetNightness(dark);
             boarHerd_.SetNightness(dark);
@@ -3172,7 +3174,7 @@ namespace island
             coconutCrabGroup_.SetNightness(dark);
             crabColony_.SetNightness(dark);
             hermitCrabGroup_.SetNightness(dark);
-            fruitBatColony_.SetNightness(dark);
+            fruitBatColony_.SetNightness(dark * (1.0f - downpour));
             const auto shading = sun_light::Current().shading;
             wildlife_render::FixedSunDirection = Vector3(shading.x, shading.y, shading.z);
         }
@@ -5535,8 +5537,10 @@ namespace island
         {
             GpuDiagnosticScope gpuPass("butterflies");
             // The day fliers (butterflies, dragonflies, flies) go to roost in the leaves at dusk,
-            // one by one as the light goes, and come out again in the morning.
-            const float dusk = std::clamp((-sun_light::Current().lighting.sunElevationDegrees + 1.0f) / 6.0f, 0.0f, 1.0f);
+            // one by one as the light goes, and come out again in the morning; they take
+            // shelter from the rain the same way, most of them already in a shower's.
+            const float dusk = std::max(std::clamp((-sun_light::Current().lighting.sunElevationDegrees + 1.0f) / 6.0f, 0.0f, 1.0f),
+                                        std::clamp((weather_now::Current().rain - 0.15f) / 0.45f, 0.0f, 1.0f));
             const auto awake = [dusk](const auto& all, auto& kept) {
                 kept.clear();
                 for (std::size_t i = 0; i < all.size(); ++i)

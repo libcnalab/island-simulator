@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 271 (2026-10-21) — wildlife takes shelter from the rain
+
+The animals now take cover from the rain as they do from the dark. The day fliers (butterflies,
+dragonflies, flies) drop out one by one from a light rain of 0.15 and are all in the leaves at
+0.6, so most are gone in a shower's rain; the birds and the monkeys sit out a downpour (the
+storm's rain above 0.5, full at 0.9; the shower's 0.55 hardly reaches it) through the same
+path as the night: their nightness is the larger of the dark and the downpour, so the birds
+take a perch apiece and the monkeys rest; and the fruit bats, which come out at night, stay
+in their roost in a storm (only the few day fliers move). `butterflies` in showers shows the
+meadow empty; `birds` and `monkeys` hold a staged animal for their close-ups and look as
+before in a thunderstorm; all five weather captures and the tests pass.
+
 ## Loop pass 270 (2026-10-21) — the rain beats the campfire down
 
 The campfire now answers the rain. A shared `weather_now::FireDousing()` is 0 when dry and in a
