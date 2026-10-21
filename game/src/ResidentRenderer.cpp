@@ -456,7 +456,8 @@ void ResidentRenderer::DrawShadow(const Matrix& view,const Matrix& projection,co
     for(const auto& leg:resident.pose.legs) {
         const Vector3 c=Point(leg.foot.centre)+Point(leg.foot.up)*.006f;
         const Vector3 r=Point(leg.foot.right)*.085f,f=Point(leg.foot.forward)*.19f;
-        constexpr int segments=12;const Color edge(22,19,15,0),centre(22,19,15,54);
+        // premultiplied: black at the alpha wanted (a tinted zero-alpha rim only added light)
+        constexpr int segments=12;const Color edge(0,0,0,0),centre(0,0,0,62);
         for(int i=0;i<segments;++i) {
             const float a0=2*Pi*i/segments,a1=2*Pi*(i+1)/segments;
             shadows_.emplace_back(c,centre,Vector2(.5f,.5f));

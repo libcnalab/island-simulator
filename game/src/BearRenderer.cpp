@@ -423,7 +423,9 @@ void BearRenderer::DrawShadow(const Matrix& view,const Matrix& projection,const 
     draws_=triangles_=shadowTriangles_=visible_=0;shadows_.clear();
     if(!IsVisible(view,projection,camera,bear,maximumDistance_))return;
     const Vector3 origin(bear.x,bear.y+.012f,bear.z),right=Point(bear.pose.right),forward=Point(bear.pose.forward);
-    constexpr int segments=18;const Color centre(20,17,14,62),edge(20,17,14,0);
+    // Premultiplied alpha, as every blend here: a tinted rim at zero alpha only added light,
+    // and on dark forest soil the "shadow" drew a pale disc round the bear.
+    constexpr int segments=18;const Color centre(0,0,0,70),edge(0,0,0,0);
     for(int i=0;i<segments;++i) {
         const float a0=2*Pi*i/segments,a1=2*Pi*(i+1)/segments;
         shadows_.emplace_back(origin,centre,Vector2(.5f,.5f));

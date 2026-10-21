@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 367 (2026-10-21) — the bear's and the resident's ground shadows darken
+
+Under the bear (`bear`) a pale disc lay on the forest floor. Its contact shadow was tinted
+brown at 24 % alpha with a zero-alpha brown rim, but every blend here is premultiplied: the tint
+added 8 % light where the alpha took 24 % away, so on soil darker than a third the "shadow"
+brightened the ground, and the rim only added light, drawing a pale ring. The resident's ground
+shadow had the same colours. Both are now black at the alpha wanted (the bear's 27 %, the
+resident's 24 %) with black zero-alpha rims, as the other contact shadows are; a search found
+no other tinted zero-alpha colours. `bear`, `resident` and the tests pass; the Chrome
+`campfire` scope passed for pass 366.
+
 ## Loop pass 366 (2026-10-21) — the campfire's ring stones are rounded field stones
 
 The pit's twelve ring stones were three rings of ten, each facet lit flat, and the fragment
