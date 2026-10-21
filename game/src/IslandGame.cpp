@@ -2577,6 +2577,7 @@ namespace island
             {
                 auto light = dayNight_.Lighting();
                 WeatherSystem::ApplyTo(light, weather_.State());
+                weather_now::AddMoonShadows(light);
                 sun_light::Set(light);
             }
             std::cout << "island-simulator: weather: spells of 1.5-5 game hours of clear, partly cloudy, overcast, showers "
@@ -3144,6 +3145,7 @@ namespace island
             WindGust::Advance(deltaSeconds, weather_.State().wind);
             auto light = dayNight_.Lighting();
             WeatherSystem::ApplyTo(light, weather_.State());
+            weather_now::AddMoonShadows(light);
             sun_light::Set(light);
             if (soundscape_) {
                 soundscape_->SetWeather(weather_.State().rain, weather_.State().strikes, weather_.State().lastStrikeDistance);

@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 266 (2026-10-20) — moon shadows
+
+A bright moon casts soft shadows, but the hour's shadow strength fell to nothing at night (the
+core clock's own contract, checked by its tests). The game now adds the moon's
+(`weather_now::AddMoonShadows`, after the weather): 40 % of the moonlight (which carries the
+phase, the moon's height and the clouds' cover) while the sun is down, along the shading
+direction that at night already follows the moon; the shadow map and every receiver take it,
+and the direct-sun highlights it gates take the moon's faint share. Under a high full moon the
+trees, the hut and the tower lay soft shadows; on a moonless or clouded night nothing changes.
+`hut` and `flight` at 02:50 on day 3 (a full moon) pass; the day is unchanged.
+
 ## Loop pass 265 (2026-10-20) — a storm's surf breaks harder
 
 The shoreline's breaking foam (the crest and the wash behind it) now follows the weather's sea

@@ -50,6 +50,13 @@ namespace island
         [[nodiscard]] std::optional<WeatherKind> Requested() noexcept;
         /** @brief How high the sea runs with this weather's wind: 1 in the trade wind (and below),
          *  up to 1.7 in a storm's; the waves' heights and slopes scale by it. */
+        /** @brief A bright moon casts soft shadows: the night's shadow strength from the
+         *  moonlight (which the clouds already take down), up to 40 % under a full moon high. */
+        inline void AddMoonShadows(DayLighting& light) noexcept
+        {
+            light.shadowStrength = std::max(light.shadowStrength,
+                0.40f * std::clamp(light.moonLight, 0.0f, 1.0f) * (1.0f - std::clamp(light.sunVisibility, 0.0f, 1.0f)));
+        }
         [[nodiscard]] inline float SeaState() noexcept
         {
             const float wind = Current().wind;
