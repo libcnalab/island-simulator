@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 278 (2026-10-21) — the forest and the grass in a storm's wind
+
+As the palms (pass 277), the forest trees and the grass now answer the weather's wind
+(`uStormWind`: the wind's direction and strength). Above the trade wind the crowns sway up to
+1.7 times as far and lean downwind in world space (by up to about half a metre at the crowns'
+highest wind weight, 0.9, in a storm's wind of 2), tossing on their own beat and pressed further by each gust front;
+the grass blades whip up to twice as far and lie over downwind by 6-11 % of their height,
+flattened by the gusts. In the trade wind nothing changes. `grass` and `jungle` calm and
+`jungle` in a thunderstorm pass; `grass` in a thunderstorm fails the luminance floor as a dark
+scene under the trees, and fails the same way without this change (checked by capturing it
+with the change stashed), like `jetty-end` in a storm.
+
 ## Loop pass 277 (2026-10-21) — palms blown in a storm's wind
 
 The palms swayed the same in a storm as in the trade wind (only the gust fronts came faster).

@@ -2,6 +2,7 @@
 #include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/JungleRenderer.hpp"
 #include "IslandSimulator/WeatherSystem.hpp"
+#include "IslandSimulator/PrevailingWind.hpp"
 #include "IslandSimulator/WindGust.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/CampfireLighting.hpp"
@@ -148,6 +149,7 @@ layout(location = 8) in vec4 aInstance3;
 
 uniform mat4 uViewProjection;
 uniform float uTime;
+uniform vec3 uStormWind;   // xy: the direction the wind blows toward (x, z); z: the weather's wind (1 the trade wind)
 uniform vec4 uWalkers[6];   // bodies in the low growth: x, z, radius squared, strength (0: none)
 
 out vec3 vColor;
@@ -183,12 +185,18 @@ void main()
     float gust = windGust(aInstance3.xz, uTime);
     broad = mix(broad, 1.0, gust * 0.85);
     detail *= 1.0 - 0.4 * gust;
-    float sway = (broad * jungleBroadWind + detail * jungleDetailWind) * aWindData.x;
+    // Above the trade wind the crowns sway harder and lean downwind, tossing in the gusts.
+    float storm = clamp(uStormWind.z - 1.0, 0.0, 1.2);
+    float sway = (broad * jungleBroadWind + detail * jungleDetailWind) * aWindData.x * (1.0 + 0.7 * storm);
     local.x += sway;
     local.z += sway * jungleWindZ;
     local.y -= abs(sway) * jungleWindLowering * aWindData.x;
 
     vec4 world = instanceTransform * vec4(local, 1.0);
+    if (storm > 0.0) {
+        float toss = 0.5 + 0.5 * sin(uTime * 2.3 + phase * 1.9 + local.y * 0.21);
+        world.xz += uStormWind.xy * storm * aWindData.x * (0.25 + 0.12 * toss + 0.20 * gust);
+    }
     float groundHeight = aInstance3.y;
     // The animals and the resident brush through the bushes and understory: foliage within
     // 1.7 m of the ground near a body is pushed away from it and down, by its wind weight.
@@ -2834,6 +2842,7 @@ void main()
                 sun_light::UniformDirection().z);
             customEffect_->SetUniformFloat("uTime", timeSeconds);
             customEffect_->SetUniformFloat("uWetness", weather_now::Current().wetness);
+            customEffect_->SetUniformVec3("uStormWind", wind::DirectionX, wind::DirectionZ, weather_now::Current().wind);
             {
                 const auto& gusts = WindGust::Live();
                 customEffect_->SetUniformVec4("uGustClock", gusts.travelled, gusts.spacing, gusts.floor, gusts.live ? 1.0f : 0.0f);

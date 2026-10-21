@@ -1,6 +1,8 @@
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/GrassRenderer.hpp"
 #include "IslandSimulator/WindGust.hpp"
+#include "IslandSimulator/PrevailingWind.hpp"
+#include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/CampfireLighting.hpp"
 #include "IslandSimulator/GpuDiagnostics.hpp"
@@ -186,6 +188,7 @@ layout(location = 9) in vec2 aTintRank;   // x: biome tint, y: the patch's LOD r
 
 uniform mat4 uViewProjection;
 uniform float uTime;
+uniform vec3 uStormWind;   // xy: the direction the wind blows toward (x, z); z: the weather's wind (1 the trade wind)
 uniform vec3 uCameraPosition;
 uniform vec2 uGrassFadeRange;
 uniform vec4 uGrassLodBands;   // NearOnly, MiddleOnlyStart, MiddleOnlyEnd, FarOnly (GrassLod)
@@ -284,11 +287,16 @@ void main()
     float gust = windGust(world.xz, uTime);
     broad = mix(broad, 1.0, gust * 0.85);
     detail *= 1.0 - 0.4 * gust;
+    // Above the trade wind the blades whip harder and lie over downwind, flattened by the gusts.
+    float storm = clamp(uStormWind.z - 1.0, 0.0, 1.2);
     float sway = (broad * grassBroadWind + detail * grassDetailWind) * heightWeight * aVariation.x
-        * mix(grassMinimumWindGain, grassMaximumWindGain, bladeRandom) * visibility;
+        * mix(grassMinimumWindGain, grassMaximumWindGain, bladeRandom) * visibility * (1.0 + storm);
     world.x += sway;
     world.z += sway * grassWindZ;
     world.y -= abs(sway) * grassWindLowering * heightWeight;
+    float laid = storm * heightWeight * aVariation.x * visibility * (0.06 + 0.05 * gust);
+    world.xz += uStormWind.xy * laid;
+    world.y -= laid * 0.35;
 
     // Inverse transpose of the rest-shape scale, yaw and terrain basis. Shared mesh normals
     // follow curvature/folds instead of assigning the same artificial tilt to every level.
@@ -1065,6 +1073,7 @@ void main()
                     valid ? body.radius * body.radius : 0.0f, valid ? std::clamp(body.strength, 0.0f, 1.0f) : 0.0f);
             }
             customEffect_->SetUniformFloat("uTime", timeSeconds);
+            customEffect_->SetUniformVec3("uStormWind", wind::DirectionX, wind::DirectionZ, weather_now::Current().wind);
             {
                 const auto& gusts = WindGust::Live();
                 customEffect_->SetUniformVec4("uGustClock", gusts.travelled, gusts.spacing, gusts.floor, gusts.live ? 1.0f : 0.0f);
