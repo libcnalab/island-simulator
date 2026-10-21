@@ -23,14 +23,15 @@ using namespace Microsoft::Xna::Framework::Graphics;
 
 namespace island {
 namespace {
+// Each strand's ribbon, and with dew up to two drops on it.
 constexpr int Capacity=static_cast<int>(SpiderWebLayout::MaximumSites
-    *SpiderWebGeometry::MaximumStrands*6U);
+    *SpiderWebGeometry::MaximumStrands*18U);
 constexpr float MaximumDistance=48.0f;
 
 Vector3 Point(BranchPoint p){return {p[0],p[1],p[2]};}
 
 void AddSilkRibbon(std::vector<VertexPositionColor>& vertices,Vector3 from,Vector3 to,
-    const Vector3& camera,WebStrandKind kind,std::size_t identity) {
+    const Vector3& camera,WebStrandKind kind,std::size_t identity,float dew) {
     const Vector3 delta=to-from;
     const float length=delta.Length();
     if(!std::isfinite(length)||length<1e-5f)return;
@@ -42,7 +43,7 @@ void AddSilkRibbon(std::vector<VertexPositionColor>& vertices,Vector3 from,Vecto
     side.Normalize();
     const float halfWidth=kind==WebStrandKind::Frame?.0026f:
         kind==WebStrandKind::Spiral?.00175f:.00145f;
-    side*=halfWidth;
+    side*=halfWidth*(1.0f+.8f*dew);
     const Vector3 toCamera=camera-middle;
     const Vector3 viewDirection=toCamera.LengthSquared()>1e-8f
         ?Vector3::Normalize(toCamera):Vector3::Up;
@@ -50,11 +51,27 @@ void AddSilkRibbon(std::vector<VertexPositionColor>& vertices,Vector3 from,Vecto
     const float glint=.72f+.28f*std::sin(static_cast<float>(identity)*1.618f
         +middle.X*.19f+middle.Y*.37f+middle.Z*.13f);
     const float base=kind==WebStrandKind::Frame?112.0f:kind==WebStrandKind::Spiral?104.0f:88.0f;
-    const int alpha=static_cast<int>(std::clamp(base*(.60f+.40f*facing)*glint,38.0f,126.0f));
+    const int alpha=static_cast<int>(std::clamp(base*(.60f+.40f*facing)*glint*(1.0f+.5f*dew),38.0f,126.0f+50.0f*dew));
     const Color silk=Color::FromNonPremultiplied(226,235,224,alpha);
     vertices.emplace_back(from-side,silk);vertices.emplace_back(from+side,silk);
     vertices.emplace_back(to+side,silk);vertices.emplace_back(from-side,silk);
     vertices.emplace_back(to+side,silk);vertices.emplace_back(to-side,silk);
+    // Dew: tiny bright drops strung on the sticky spiral and the radii, a few millimetres
+    // across, each a small diamond facing the eye.
+    if(dew>.05f&&kind!=WebStrandKind::Frame) {
+        const Vector3 up=Vector3::Normalize(Vector3::Cross(viewDirection,side));
+        const float size=(.0028f+.0018f*dew)*(.8f+.4f*glint);
+        const Color drop=Color::FromNonPremultiplied(246,250,252,static_cast<int>(std::clamp(210.0f*dew,0.0f,230.0f)));
+        const Vector3 across=side/std::max(side.Length(),1e-6f);
+        const int drops=length>.05f?2:1;
+        for(int k=0;k<drops;++k) {
+            const float t=drops==1?.5f:(k==0?.32f:.71f)+.04f*std::sin(static_cast<float>(identity)*2.3f);
+            const Vector3 at=from+delta*t;
+            vertices.emplace_back(at-across*size,drop);vertices.emplace_back(at+up*size,drop);
+            vertices.emplace_back(at+across*size,drop);vertices.emplace_back(at-across*size,drop);
+            vertices.emplace_back(at+across*size,drop);vertices.emplace_back(at-up*size,drop);
+        }
+    }
 }
 }
 
@@ -96,7 +113,7 @@ void SpiderWebRenderer::Draw(const Matrix& view,const Matrix& projection,const V
         for(std::size_t strandIndex=0;strandIndex<strands.size();++strandIndex) {
             const auto& strand=strands[strandIndex];
             AddSilkRibbon(vertices_,Point(nodes[strand.from]),Point(nodes[strand.to]),camera,
-                strand.kind,siteIndex*SpiderWebGeometry::MaximumStrands+strandIndex);
+                strand.kind,siteIndex*SpiderWebGeometry::MaximumStrands+strandIndex,dew_);
         }
         ++visible_;strands_+=static_cast<int>(strands.size());
     }

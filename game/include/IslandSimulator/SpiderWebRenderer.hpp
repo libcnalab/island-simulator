@@ -1,4 +1,6 @@
 #pragma once
+#include <algorithm>
+#include <cmath>
 
 #include "IslandSimulator/SpiderWebGeometry.hpp"
 #include "IslandSimulator/SpiderWebLayout.hpp"
@@ -29,6 +31,9 @@ public:
     void Draw(const Microsoft::Xna::Framework::Matrix& view,
         const Microsoft::Xna::Framework::Matrix& projection,
         const Microsoft::Xna::Framework::Vector3& camera,float timeSeconds);
+    /** Dew or rain on the silk, 0 dry .. 1 beaded: the threads thicken and brighten a little
+     *  and carry rows of tiny bright drops, as webs show at dawn and after a shower. */
+    void SetDew(float dew) noexcept{dew_=std::isfinite(dew)?std::clamp(dew,0.0f,1.0f):0.0f;}
     [[nodiscard]] int VisibleCount() const noexcept{return visible_;}
     [[nodiscard]] int StrandCount() const noexcept{return strands_;}
     [[nodiscard]] int DrawCallCount() const noexcept{return draws_;}
@@ -43,6 +48,7 @@ private:
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> buffer_;
     std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> vertices_;
     int visible_=0,strands_=0,draws_=0;
+    float dew_=0.0f;
 };
 
 }

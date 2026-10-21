@@ -5774,6 +5774,9 @@ namespace island
         }
         {
             GpuDiagnosticScope gpuPass("spider-webs");
+            // the webs bead with the morning dew and after rain
+            spiderWebRenderer_->SetDew(std::max(2.0f * weather_now::Dew(dayNight_.Hour(), weather_now::Current().cloudCover),
+                                                0.8f * weather_now::Current().wetness));
             spiderWebRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,timeSeconds);
         }
 

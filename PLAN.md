@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 308 (2026-10-21) — dew on the spider webs
+
+An orb web is never so plain to see as at dawn, beaded with dew. `SpiderWebRenderer::SetDew`
+takes the dew or rain on the silk (twice the shared morning dew curve, or 0.8 of the rain's
+wetness, whichever is more): the threads thicken by up to 80 % and brighten, and each spiral and
+radial thread carries one or two tiny bright drops (small diamonds facing the eye, a few
+millimetres across), strung all round the web; the frame threads stay bare. The vertex budget
+makes room for two drops per strand. `spider-web` at 06:48 shows the web standing out bright,
+beaded like a necklace; at 14:00 it is as before; `spiders`, `spiders-bright` and the tests pass.
+
 ## Loop pass 307 (2026-10-21) — a regression audit of the views
 
 The false star of pass 306 was found by chance, so this pass compared every view's last capture
