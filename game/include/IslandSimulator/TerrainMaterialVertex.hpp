@@ -42,4 +42,16 @@ namespace island
             + normal.y * (y * reciprocalLength) + normal.z * (z * reciprocalLength);
         return std::clamp(0.52f + 0.48f * dot, 0.34f, 1.0f);
     }
+
+    /** @brief The fixed-sun irradiance packed with the normal's horizontal bearing in 1024
+     *  steps (light + 2 x step): the terrain shader recovers the normal from the bearing and the
+     *  slope beside it and relights the ground by the hour's sun, exactly as baked at 14:00. */
+    inline constexpr int TerrainBearingSteps = 1024;
+    [[nodiscard]] inline float PackTerrainLight(const float light, const TerrainNormal& normal)
+    {
+        const float bearing = std::atan2(normal.z, normal.x);
+        const float turn = bearing / 6.28318530718f + (bearing < 0.0f ? 1.0f : 0.0f);
+        const long step = std::lround(turn * static_cast<float>(TerrainBearingSteps)) % TerrainBearingSteps;
+        return light + 2.0f * static_cast<float>(step);
+    }
 }

@@ -135,6 +135,7 @@ layout(location = 1) in vec4 aColor;
 layout(location = 2) in vec3 aTerrainData;
 
 uniform mat4 uViewProjection;
+uniform vec3 uToSun;
 
 out vec3 vWorld;
 out vec3 vBaseColor;
@@ -144,9 +145,19 @@ out float vGroundLight;
 void main()
 {
     vWorld = aPosition;
-    vBaseColor = aColor.rgb;
     vTerrainData = aTerrainData.xy;
-    vGroundLight = aTerrainData.z;
+    // The ground's light was baked for the fixed afternoon sun; its normal comes back from the
+    // slope and the bearing packed with that light, and the hour's sun relights it (the change
+    // from the fixed sun's light added to the baked, so at 14:00 it is exactly as baked).
+    float bearingStep = floor(aTerrainData.z * 0.5);
+    float bakedLight = aTerrainData.z - 2.0 * bearingStep;
+    float bearing = bearingStep * (6.28318530718 / 1024.0);
+    float slope = aTerrainData.y;
+    vec3 groundNormal = vec3(sin(slope) * cos(bearing), cos(slope), sin(slope) * sin(bearing));
+    float fixedLight = clamp(0.52 + 0.48 * dot(groundNormal, normalize(vec3(-0.45, 0.82, -0.34))), 0.34, 1.0);
+    float hourLight = clamp(0.52 + 0.48 * dot(groundNormal, normalize(uToSun)), 0.34, 1.0);
+    vGroundLight = clamp(bakedLight + hourLight - fixedLight, 0.34, 1.0);
+    vBaseColor = aColor.rgb * (vGroundLight / max(bakedLight, 0.01));
     gl_Position = uViewProjection * vec4(aPosition, 1.0);
     gl_Position.z = 2.0 * gl_Position.z - gl_Position.w;
 }
@@ -1629,7 +1640,7 @@ void main()
                 const Color color = TerrainColor(sample, light);
                 vertices.push_back({{x, sample.height, z},
                                     {color.getRProperty(), color.getGProperty(), color.getBProperty(), 255},
-                                    {sample.signedShoreDistance, sample.slopeRadians, light}});
+                                    {sample.signedShoreDistance, sample.slopeRadians, PackTerrainLight(light, sample.normal)}});
             }
         }
 
@@ -1706,7 +1717,7 @@ void main()
             sample.slopeRadians=std::acos(std::clamp(sample.normal.y,-1.0f,1.0f));
             const float light=TerrainDaylight(sample.normal);const auto color=TerrainColor(sample,light);
             vertices.push_back({{p.x,p.y,p.z},{color.getRProperty(),color.getGProperty(),color.getBProperty(),255},
-                {sample.signedShoreDistance,sample.slopeRadians,light}});
+                {sample.signedShoreDistance,sample.slopeRadians,PackTerrainLight(light,sample.normal)}});
             minimum=Vector3::Min(minimum,Vector3(p.x,p.y,p.z));
             maximum=Vector3::Max(maximum,Vector3(p.x,p.y,p.z));
         }
@@ -1731,7 +1742,7 @@ void main()
             sample.slopeRadians=std::acos(std::clamp(sample.normal.y,-1.0f,1.0f));
             const float light=TerrainDaylight(sample.normal);const auto color=TerrainColor(sample,light);
             vertices.push_back({{p.x,p.y,p.z},{color.getRProperty(),color.getGProperty(),color.getBProperty(),255},
-                {sample.signedShoreDistance,sample.slopeRadians,light}});
+                {sample.signedShoreDistance,sample.slopeRadians,PackTerrainLight(light,sample.normal)}});
             minimum=Vector3::Min(minimum,Vector3(p.x,p.y,p.z));
             maximum=Vector3::Max(maximum,Vector3(p.x,p.y,p.z));
         }
@@ -1758,7 +1769,7 @@ void main()
             sample.slopeRadians=std::acos(std::clamp(sample.normal.y,-1.0f,1.0f));
             const float light=TerrainDaylight(sample.normal);const auto color=TerrainColor(sample,light);
             vertices.push_back({{p.x,p.y,p.z},{color.getRProperty(),color.getGProperty(),color.getBProperty(),255},
-                {sample.signedShoreDistance,sample.slopeRadians,light}});
+                {sample.signedShoreDistance,sample.slopeRadians,PackTerrainLight(light,sample.normal)}});
             minimum=Vector3::Min(minimum,Vector3(p.x,p.y,p.z));maximum=Vector3::Max(maximum,Vector3(p.x,p.y,p.z));
         }
         std::vector<std::uint16_t> caveIndices(caveGround_->Indices().begin(),
@@ -1788,7 +1799,7 @@ void main()
                 const float light=TerrainDaylight(sample.normal);const auto color=TerrainColor(sample,light);
                 vertices.push_back({{p.x,p.y,p.z},
                     {color.getRProperty(),color.getGProperty(),color.getBProperty(),255},
-                    {sample.signedShoreDistance,sample.slopeRadians,light}});
+                    {sample.signedShoreDistance,sample.slopeRadians,PackTerrainLight(light,sample.normal)}});
             }
         for(const auto index:caveGround_->CoverIndices())
             caveIndices.push_back(static_cast<std::uint16_t>(coverBase+index));

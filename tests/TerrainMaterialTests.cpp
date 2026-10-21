@@ -117,6 +117,22 @@ try
         Require(std::abs(std::lerp(base, albedo * light, t) - base) < 0.000001f,
                 "Replacement and baked colour with equal albedo must not double-light");
     }
+    // The packed light gives back the baked light and the normal's bearing (the shader's
+    // decode, mirrored), within a step of 1024.
+    for (int step = 0; step < 64; ++step) {
+        const float slope = 0.05f + 0.6f * static_cast<float>(step % 8) / 8.0f;
+        const float bearing = -3.1f + 6.2f * static_cast<float>(step) / 63.0f;
+        const island::TerrainNormal normal{std::sin(slope) * std::cos(bearing), std::cos(slope),
+                                           std::sin(slope) * std::sin(bearing)};
+        const float light = island::TerrainDaylight(normal);
+        const float packed = island::PackTerrainLight(light, normal);
+        const float code = std::floor(packed * 0.5f);
+        const float baked = packed - 2.0f * code;
+        const float decoded = code * (6.28318530718f / 1024.0f);
+        const float difference = std::remainder(decoded - bearing, 6.28318530718f);
+        Require(std::abs(baked - light) < 0.0005f && std::abs(difference) < 0.004f,
+                "Packed terrain light must return the baked light and the normal's bearing");
+    }
     std::cout << "Terrain material: " << vertices << " legacy-equivalent light samples, range "
               << minimum << ".." << maximum << "; opaque 28-byte layout verified\n";
     return 0;

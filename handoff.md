@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 430: terrain relit by the hour's sun in its vertex shader (PackTerrainLight bearing in data.z; exact at 14:00) (PLAN "Loop pass 430").
 - Pass 429: quad engine floods in water over the airbox (QuadBike::AirboxFlooded, quadFlooded_, 2 s restart); QA view quad-sea (PLAN "Loop pass 429").
 - Pass 428: stream-bank stones darkened (wet) in the props rock shader via StreamRoute in GLSL (PLAN "Loop pass 428").
 - Pass 427: rain rings on the sea and the stream (rainRingsAt, uRain from weather_now) (PLAN "Loop pass 427").

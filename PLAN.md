@@ -233,6 +233,21 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 430 (2026-10-22) — the ground is lit by the hour's sun
+
+Open since the day/night pass: the terrain's light was baked into its vertex colours for the fixed
+14:00 sun, so at the golden hours the hillsides were shaded as in the afternoon while the trees, the
+props and the animals followed the sun (at 07:00 the west-facing beach shone as at 14:00 under shadows
+cast from the east). The terrain vertex's light float now also carries the normal's horizontal bearing
+(PackTerrainLight: light + 2 x one of 1024 steps; the vertex layout is unchanged), and the terrain's
+vertex shader rebuilds the normal from it and the slope beside it and relights the ground: the baked
+light plus the hour's light less the fixed sun's light for that normal, the vertex colour scaled with
+it. At 14:00 the `beach` capture is unchanged (mean difference 0.001); at 07:00 the beach and the
+west-facing slopes lie in the morning shade (`bay-ground`, `flight`), and the night is as before. The
+stream bed, cave floor, wreck scour and bunker patches pack the same way. New test: the packed light
+returns the baked light and the bearing. Still on the fixed sun: the hut, jetty, bridge, lookout,
+helicopter, wreck, campfire stones and the canopy light field.
+
 ## Loop pass 429 (2026-10-22) — the quad's engine floods in deep water
 
 The quad's engine ran on under the sea: lamps lit, exhaust puffing from under the water, its sound
