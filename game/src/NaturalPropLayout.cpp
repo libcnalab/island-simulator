@@ -213,7 +213,7 @@ namespace island
             const auto& pool=TidePoolLayout::Definitions[poolIndex];
             for (int accent=0;accent<2;++accent) {
                 const float angle=.62f+static_cast<float>(poolIndex)*.91f+accent*2.47f;
-                const float radius=pool.radius*(.86f+.08f*accent);
+                const float radius=pool.radius*(.86f+.08f*accent)*TidePoolLayout::OutlineScale(poolIndex,angle);
                 RockPlacement rock;
                 rock.x=poolX+std::cos(angle)*radius;
                 rock.z=poolZ+std::sin(angle)*radius;
@@ -872,8 +872,9 @@ namespace island
             const auto& pool=TidePoolLayout::Definitions[poolIndex];
             const float angle=2.15f+static_cast<float>(poolIndex)*1.07f;
             BeachDetailPlacement detail;
-            detail.x=poolX+std::cos(angle)*pool.radius*.82f;
-            detail.z=poolZ+std::sin(angle)*pool.radius*.82f;
+            const float rim=pool.radius*.82f*TidePoolLayout::OutlineScale(poolIndex,angle);
+            detail.x=poolX+std::cos(angle)*rim;
+            detail.z=poolZ+std::sin(angle)*rim;
             detail.y=terrain.Height(detail.x,detail.z)+.012f;
             detail.yawRadians=angle-.7f;
             detail.scale=.82f+.07f*static_cast<float>(poolIndex%3U);

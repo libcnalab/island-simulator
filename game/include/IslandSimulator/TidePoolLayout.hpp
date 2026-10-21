@@ -27,13 +27,17 @@ namespace island
             TidePoolDefinition{-2.42f,24.0f,4.7f,.66f},
             TidePoolDefinition{-2.53f,33.0f,3.8f,.48f},
         };
-        static constexpr int RimSegments = 20;
+        static constexpr int RimSegments = 40;
 
         [[nodiscard]] static std::pair<float,float> Centre(
             const IslandTerrain& terrain, std::size_t index) noexcept;
         [[nodiscard]] static float Depression(
             const IslandTerrain& terrain, float x, float z) noexcept;
         [[nodiscard]] static float WaterRadius(std::size_t index) noexcept;
+        /** @brief The basin's lobed outline: its radius toward a bearing from the centre as a
+         *  share of the authored radius (0.78-1.22). The depression, the water and the stones
+         *  round the rim all follow it. */
+        [[nodiscard]] static float OutlineScale(std::size_t index, float angleRadians) noexcept;
         [[nodiscard]] static float WaterLevel(
             const IslandTerrain& terrain, std::size_t index) noexcept;
     };

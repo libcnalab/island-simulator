@@ -6228,6 +6228,20 @@ int main()
         Check(island::TidePoolLayout::WaterRadius(index)>1.0f
                 && island::TidePoolLayout::WaterRadius(index)<pool.radius,
             "tide-pool water disc remains visibly broad and inside its basin");
+        float narrowest=2.0f,widest=0.0f;
+        for (int step=0;step<72;++step) {
+            const float bearing=static_cast<float>(step)*0.0872665f;
+            const float scale=island::TidePoolLayout::OutlineScale(index,bearing);
+            narrowest=std::min(narrowest,scale);
+            widest=std::max(widest,scale);
+            // the depression follows the lobes: at the lobed waterline it stands where the round
+            // basin's did
+            const float reach=pool.radius*scale*.5f;
+            CheckNear(island::TidePoolLayout::Depression(terrain,x+std::cos(bearing)*reach,z+std::sin(bearing)*reach),
+                pool.depth*.5625f,.002f,"the tide-pool bowl follows its lobed outline");
+        }
+        Check(narrowest>=.77f && widest<=1.23f && widest-narrowest>.18f,
+            "each tide pool's outline is lobed within bounds rather than round");
         for (std::size_t other=index+1;other<island::TidePoolLayout::Definitions.size();++other) {
             const auto [otherX,otherZ]=island::TidePoolLayout::Centre(terrain,other);
             Check(std::hypot(x-otherX,z-otherZ)>pool.radius

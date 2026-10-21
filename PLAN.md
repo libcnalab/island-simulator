@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 321 (2026-10-21) — lobed tide pools that thin to the waterline
+
+The five rocky-shore tide pools read as hard-edged octagons. Their basins were perfectly round,
+and their water was a flat 20-sided disc sized to the waterline, so where the disc met the
+terrain's coarse triangles the waterline ran in straight segments. Each basin now has a lobed
+outline (`TidePoolLayout::OutlineScale`, three low harmonics per pool, 0.78-1.22 of its radius)
+that the depression, the water and the stones and shell landmark round its rim all follow. The
+water is six rings of 40 corners out to a little past the waterline, each corner carrying as its
+alpha how deep the water stands over the rock there (full from 16 cm), so it thins into clear
+shallows and to nothing at the true waterline, and the terrain's edges no longer show. Core tests
+check that the outline stays within its bounds yet lobed, and that the bowl follows it. `tide-pools`
+(also at 19:00), `hermit-crabs`, `crabs` and the tests pass.
+
 ## Loop pass 320 (2026-10-21) — no checkerboard on the far sea
 
 From the shore (`tide-pools`, `headland`) the sea between about 30 and 300 m was tiled with a

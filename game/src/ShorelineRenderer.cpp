@@ -147,7 +147,7 @@ void main()
     if (vPool > 0.5) {
         // the tide pools are still water: nothing breaks there to glow
         if (uGlow > 0.0) discard;
-        float edge = 1.0-smoothstep(0.72,1.0,vAcross);
+        float edge = vBaseMask;   // how deep the water stands there, thinning to the waterline
         float ripple = 0.5+0.5*sin(dot(vWorld.xz,vec2(2.1,-1.7))+uTime*.24);
         float glint = pow(max(0.0,0.5+0.5*sin(dot(vWorld.xz,vec2(.73,.41))-uTime*.18)),5.0);
         float alpha = edge*distanceFade*(0.70+0.10*ripple);
@@ -307,10 +307,11 @@ void main()
     {
         std::vector<VertexPositionColorTexture> vertices;
         std::vector<std::uint16_t> indices;
+        constexpr int PoolRings=6;
         vertices.reserve(ShorelineMeshLayout::VertexCount
-            + TidePoolLayout::Definitions.size()*(TidePoolLayout::RimSegments+1U));
+            + TidePoolLayout::Definitions.size()*(PoolRings*TidePoolLayout::RimSegments+1U));
         indices.reserve((ShorelineMeshLayout::TriangleCount
-            + TidePoolLayout::Definitions.size()*TidePoolLayout::RimSegments)*3U);
+            + TidePoolLayout::Definitions.size()*(2*PoolRings-1)*TidePoolLayout::RimSegments)*3U);
 
         for (int segment = 0; segment <= ShorelineMeshLayout::SegmentCount; ++segment) {
             const float phase = static_cast<float>(segment)
@@ -347,20 +348,37 @@ void main()
             const float radius=TidePoolLayout::WaterRadius(poolIndex);
             const auto centre=static_cast<std::uint16_t>(vertices.size());
             const float marker=-.1f-static_cast<float>(poolIndex)*.1f;
+            // Rings out to a little past the lobed waterline. Each corner carries how deep the
+            // water stands over the rock there as its alpha, so the water thins to nothing at the
+            // true waterline: a flat disc met the terrain's coarse triangles in straight edges.
+            const auto depthFade=[&](const float x,const float z) {
+                const float depth=level-terrain.Height(x,z);
+                const float t=std::clamp(depth/.16f,0.0f,1.0f);
+                return static_cast<int>(std::lround(255.0f*t*t*(3.0f-2.0f*t)));
+            };
             vertices.emplace_back(Vector3(centreX,level,centreZ),
-                Color::FromNonPremultiplied(51,130,119,158),Vector2(0.0f,marker));
-            for (int segment=0;segment<TidePoolLayout::RimSegments;++segment) {
-                const float angle=2.0f*std::numbers::pi_v<float>
-                    *static_cast<float>(segment)/TidePoolLayout::RimSegments;
-                vertices.emplace_back(Vector3(centreX+std::cos(angle)*radius,level,
-                    centreZ+std::sin(angle)*radius),
-                    Color::FromNonPremultiplied(45,116,108,18),Vector2(1.0f,marker));
+                Color::FromNonPremultiplied(51,130,119,depthFade(centreX,centreZ)),Vector2(0.0f,marker));
+            for (int ring=1;ring<=PoolRings;++ring) {
+                const float fraction=static_cast<float>(ring)/PoolRings;
+                for (int segment=0;segment<TidePoolLayout::RimSegments;++segment) {
+                    const float angle=2.0f*std::numbers::pi_v<float>
+                        *static_cast<float>(segment)/TidePoolLayout::RimSegments;
+                    const float reach=radius*1.10f*TidePoolLayout::OutlineScale(poolIndex,angle)*fraction;
+                    const float x=centreX+std::cos(angle)*reach,z=centreZ+std::sin(angle)*reach;
+                    vertices.emplace_back(Vector3(x,level,z),
+                        Color::FromNonPremultiplied(48,123,113,depthFade(x,z)),Vector2(fraction,marker));
+                }
             }
+            const auto corner=[&](const int ring,const int segment) {
+                return static_cast<std::uint16_t>(centre+1U+(ring-1)*TidePoolLayout::RimSegments
+                    +segment%TidePoolLayout::RimSegments);
+            };
             for (int segment=0;segment<TidePoolLayout::RimSegments;++segment) {
-                const auto current=static_cast<std::uint16_t>(centre+1U+segment);
-                const auto next=static_cast<std::uint16_t>(centre+1U
-                    +(segment+1)%TidePoolLayout::RimSegments);
-                indices.insert(indices.end(),{centre,next,current});
+                indices.insert(indices.end(),{centre,corner(1,segment+1),corner(1,segment)});
+                for (int ring=1;ring<PoolRings;++ring) {
+                    indices.insert(indices.end(),{corner(ring,segment),corner(ring,segment+1),corner(ring+1,segment+1),
+                                                  corner(ring,segment),corner(ring+1,segment+1),corner(ring+1,segment)});
+                }
             }
             ++tidePoolCount_;
         }
