@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 281 (2026-10-21) — the shore's foam no longer reads as a dashed line
+
+From the air (`headland` at sunset) the breaking foam along the beach read as a dashed white
+road marking: evenly spaced runs with even gaps. The crest is broken up by a mask, and that
+mask was one world-space sine (about 7.1 m wavelength, gently warped), so along a straight
+beach its gaps repeated every 7 m. It is now the sum of three incommensurate wavelengths (7.1,
+13.4 and 3.2 m, the shortest warped too), each drifting at its own pace, normalised to the same
+range so the foam's overall coverage is unchanged: the runs and gaps come in uneven lengths.
+`headland` at 18:12 shows irregular runs where the dashes were; `jetty` and `beach` close up
+pass and look as before.
+
 ## Loop pass 280 (2026-10-21) — a storm tears leaves loose and shakes the coconuts down
 
 The gust fronts already came faster in a storm (pass 234), but each front shed leaves and

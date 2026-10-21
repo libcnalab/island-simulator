@@ -170,8 +170,12 @@ void main()
     float width = 0.025 + 0.012 * (0.5 + 0.5 * edgeVariation);
     float crest = 1.0 - smoothstep(width, width + acrossFootprint + 0.022,
                                     abs(vAcross - front));
-    float brokenEdge = 0.5 + 0.5 * sin(dot(vWorld.xz, vec2(0.72, -0.51))
-        + sin(dot(vWorld.xz, vec2(0.17, 0.23))) * 1.7 + uTime * 0.16);
+    // Three incommensurate wavelengths (7.1, 13.4 and 3.2 m) break the crest into irregular
+    // runs; one sine alone repeated its gaps every 7 m and read from the air as a dashed line.
+    float brokenEdge = 0.5 + 0.5 / 1.1 * (0.55 * sin(dot(vWorld.xz, vec2(0.72, -0.51))
+            + sin(dot(vWorld.xz, vec2(0.17, 0.23))) * 1.7 + uTime * 0.16)
+        + 0.30 * sin(dot(vWorld.xz, vec2(-0.23, 0.41)) + 1.7 - uTime * 0.11)
+        + 0.25 * sin(dot(vWorld.xz, vec2(1.63, 1.12)) + sin(dot(vWorld.xz, vec2(-0.31, 0.09))) * 2.1 - uTime * 0.2));
     float brokenMask = smoothstep(0.12, 0.64, brokenEdge);
     vec2 shoreNormal = vec2(cos(vPhase * tau), sin(vPhase * tau));
     float cells = porousFoam(vWorld.xz + shoreNormal * advance * 1.7, footprint);
