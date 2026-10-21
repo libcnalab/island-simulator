@@ -578,9 +578,10 @@ namespace island
                              :"island-simulator: bear QA camera frames and follows the single peaceful adult\n");
         } else if(viewpoint_==FixedViewpoint::HelicopterApproach) {
             // An ordinary first-person sight of the aircraft: eye height on the real ground
-            // about eight metres off its front-left quarter, not an elevated QA frame.  The
-            // vegetation clearing is only 6.2 m, so a farther stance is screened by plants.
-            const auto foot=helicopterPlacement_->World(-7.0f,0.0f,4.5f);
+            // just inside the clearing off its front-left quarter, not an elevated QA frame.
+            // The vegetation clearing is only 6.2 m: from the old eight metres the plants at
+            // its edge filled half the frame.
+            const auto foot=helicopterPlacement_->World(-4.9f,0.0f,3.3f);
             cameraPosition_=Vector3(foot.x,terrain_.Height(foot.x,foot.z)+PlayerMotion::EyeHeight,foot.z);
             const auto target=helicopterPlacement_->World(0.0f,1.35f,0.0f);
             const Vector3 direction=Vector3(target.x,target.y,target.z)-cameraPosition_;

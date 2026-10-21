@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 345 (2026-10-21) — the fishing resident at the jetty, the helicopter in its clearing
+
+A contact sheet of every view from the last sweep showed two more framings that hid their
+subject. `resident-fishing` held the rod out wherever the resident happened to stand, the campfire
+(the tour's first call), so the line ran off over the grass; `PreviewFishing` now moves the
+resident to the tour's pause nearest the fishing spot (the jetty foot) and turns them the way
+that pause looks, out along the deck to sea, on re-planted feet (the pose is solved against the
+feet, so they are planted first; the pause's facing is numbered by pause, not by route point,
+which a first try got wrong and turned the resident inland). `helicopter-approach` stood eight
+metres off the aircraft in a 6.2 m clearing, so the plants at its edge filled half the frame;
+it now stands just inside the clearing, 5.9 m off the same quarter, at eye height, and the whole
+aircraft shows. `resident-fishing`, `resident`, `resident-tending`, `helicopter-approach`,
+`helicopter`, `helicopter-inside` and the tests pass.
+
 ## Loop pass 344 (2026-10-21) — the scratching monkey is framed in the clear
 
 The `monkey-scratch` QA view stood at a fixed offset from the troop's first monkey: a broad leaf

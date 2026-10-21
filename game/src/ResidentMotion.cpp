@@ -248,6 +248,40 @@ void ResidentMotion::SetFishingSpot(float x,float z) noexcept {
     fishSpotX_=fishSpotValid_?x:0;fishSpotZ_=fishSpotValid_?z:0;
 }
 void ResidentMotion::PreviewFishing() {
+    // Held as at the jetty foot: moved to the tour's pause nearest the fishing spot and turned
+    // the way that pause looks, on re-planted feet (held where they happened to stand, the rod
+    // and line hung over the campfire's grass).
+    if(fishSpotValid_) {
+        // the pause (its facings are numbered by pause, not by route point) nearest the spot
+        const auto points=route_.Points();
+        const auto pauses=route_.PausePoints();
+        std::size_t best=pauses.size();float bestDistance=FishingReach;
+        for(std::size_t k=0;k<pauses.size();++k) {
+            if(pauses[k]>=points.size()) continue;
+            const auto point=points[pauses[k]];
+            const float distance=std::hypot(point.x-fishSpotX_,point.z-fishSpotZ_);
+            if(distance<bestDistance){bestDistance=distance;best=k;}
+        }
+        if(best<pauses.size()) {
+            const auto spot=points[pauses[best]];
+            float heading=state_.heading;
+            if(best<route_.PauseFacings().size()&&std::isfinite(route_.PauseFacings()[best].x))
+                heading=std::atan2(route_.PauseFacings()[best].x,route_.PauseFacings()[best].z);
+            // the feet first: the pose is solved against where they stand
+            const auto previousFeet=feet_;
+            for(std::size_t leg=0;leg<2;++leg) {
+                const auto p=Add(spot,Add(Mul(Right(heading),leg==0?-.095f:.095f),Mul(Forward(heading),.025f)));
+                feet_[leg].current=feet_[leg].start=feet_[leg].target=GroundFoot(p.x,p.z,heading);
+            }
+            ResidentPose pose;
+            if(FitPose(spot.x,spot.z,heading,0,pose)) {
+                state_.x=spot.x;state_.z=spot.z;state_.y=ground_.Sample(spot.x,spot.z).height;
+                state_.heading=heading;state_.pose=pose;
+            } else {
+                feet_=previousFeet;
+            }
+        }
+    }
     fishing_=true;state_.fishing=1;fishClock_=1;state_.floatBob=.02f;state_.rodLift=0;
     ResidentPose pose;
     if(FitPose(state_.x,state_.z,state_.heading,0,pose))state_.pose=pose;
