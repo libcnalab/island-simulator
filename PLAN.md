@@ -299,12 +299,14 @@ Pass 326's leaflet straps (34 a side per frond, three triangles each) made the n
 times the triangles, and every palm within 125-145 m drew it: the native `water` capture's palm
 pass went from about 7 ms to about 20 ms, and the Chrome `coast` scope ran past its 900 s limit.
 Past a few tens of metres the straps are a pixel or two wide and closer together than that, so
-a middle LOD (living palms 26-34 m out, the distance jittered per palm so no ring forms, up to
+a middle LOD (living palms 36-44 m out, the distance jittered per palm so no ring forms, up to
 the far LOD) draws every other strap, set between the near mesh's pairs, twice as wide; its
 shader keeps a receding strap a full pixel either side instead of half, so the crown's coverage
 matches. Measured natively: `water` palms 20 ms -> 12 ms, `palms` (close crowns, near mesh)
 unchanged at 8-9 ms; 1:1 crops of the 30-40 m crowns in `water` and the background palms in
-`palms` match the near mesh. Tests pass.
+`palms` match the near mesh. Tests pass. (Correction after pass 352: those were 4-frame averages
+that include frame 0's shader JIT; frame by frame the 36-44 m switch already gave 11 ms against 20
+before, the same as 26-34 m, so the switch is back at 36-44 m and keeps full detail on more crowns.)
 
 ## Loop pass 347 (2026-10-21) — shells and turtle marks rest on the drawn sand
 

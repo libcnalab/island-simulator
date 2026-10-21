@@ -325,7 +325,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 351: crocodiles float low / rest on the bed in the shallows, below-surface vertices water-tinted, banded tail (PLAN "Loop pass 351"). Chrome `campfire` scope passed for pass 350.
 - Pass 350: campfire plume as one continuous widening column (tent-weighted strips, height-only sway/drift, paler); `east` camera moved out of the fire pit (PLAN "Loop pass 350").
 - Pass 349: fallen palms laid flat on the drawn ground with collapsed, dried crowns (per-palm meshes) (PLAN "Loop pass 349"). Chrome `coast` scope: still past 900 s under load ~15 - uniform 2x slowdown across views (shipwreck too), so load not a regression; rerun with a longer limit when quiet.
-- Pass 348: palm middle LOD (half the leaflet straps, twice as wide, 26-34 m out); `water` palm pass 20 -> 12 ms (PLAN "Loop pass 348").
+- Pass 348: palm middle LOD (half the leaflet straps, twice as wide, 36-44 m out); `water` palm pass 20 -> 11-14 ms (steady frames) (PLAN "Loop pass 348").
 - Pass 347: beach details seated on the rendered ground (were floating up to 0.23 m); prop grounding audit otherwise clean (PLAN "Loop pass 347").
 - Pass 346: authored clearing landmark logs turned along the contour (were floating up to 1.9 m at their low ends) (PLAN "Loop pass 346").
 - Pass 345: resident-fishing QA held at the jetty-foot pause facing the sea; helicopter-approach camera inside the clearing (PLAN "Loop pass 345").

@@ -65,7 +65,7 @@ namespace island
         constexpr float NearLodDistanceRange = 20.0f;
         // Past a few tens of metres a crown's leaflets are a pixel or two wide and closer
         // together than that: the middle LOD draws every other strap at twice the width.
-        constexpr float MidLodMinimumDistance = 26.0f;
+        constexpr float MidLodMinimumDistance = 36.0f;
         constexpr float MidLodDistanceRange = 8.0f;
         constexpr int NearLeafletStations = 34;
         constexpr int MidLeafletStations = NearLeafletStations / 2;
@@ -1188,7 +1188,7 @@ void main()
         if (customShaderReady_) {
             std::cout << "island-simulator: palm portable wind shader with near/far mesh LOD\n";
             std::cout << "island-simulator: palm near mesh segmented fuller leaflet silhouettes\n";
-            std::cout << "island-simulator: palm middle LOD draws every other leaflet strap twice as wide past 26-34 m\n";
+            std::cout << "island-simulator: palm middle LOD draws every other leaflet strap twice as wide past 36-44 m\n";
             constexpr const char* leafletDiagnostic =
                 "island-simulator: palm near leaflets use staggered asymmetric silhouettes";
             std::cout << leafletDiagnostic << '\n';
