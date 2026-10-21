@@ -74,6 +74,32 @@ public:
         lateral=across/std::max(station.halfWidth,0.01f);
         return true;
     }
+    // The stream's water level at a point in its channel (its open water, from the water
+    // mesh's first row to the mouth), by the nearest stretch of the course: the stations lie
+    // a metre apart along x, so only those near the point's own are looked at.
+    [[nodiscard]] bool WaterLevel(const float x,const float z,float& level) const noexcept {
+        if(!std::isfinite(x)||!std::isfinite(z)||count_<4) return false;
+        const int approximate=static_cast<int>(StreamRoute::Along(x));
+        const int first=std::max(3,approximate-6),last=std::min(static_cast<int>(count_)-2,approximate+6);
+        float nearest=std::numeric_limits<float>::max(),t=0,across=0;
+        std::size_t best=count_;
+        for(int candidate=first;candidate<=last;++candidate) {
+            const StreamStation& a=stations_[static_cast<std::size_t>(candidate)];
+            const StreamStation& b=stations_[static_cast<std::size_t>(candidate)+1];
+            const float segmentX=b.x-a.x,segmentZ=b.z-a.z;
+            const float u=std::clamp(((x-a.x)*segmentX+(z-a.z)*segmentZ)/(segmentX*segmentX+segmentZ*segmentZ),0.0f,1.0f);
+            const float dx=x-std::lerp(a.x,b.x,u),dz=z-std::lerp(a.z,b.z,u);
+            const float squared=dx*dx+dz*dz;
+            if(squared<nearest) {nearest=squared;best=static_cast<std::size_t>(candidate);t=u;across=std::sqrt(squared);}
+        }
+        if(best>=count_) return false;
+        const StreamStation& a=stations_[best];
+        const StreamStation& b=stations_[best+1];
+        // the bank's widest reach (each bank's own swing is within a quarter of the half width)
+        if(across>1.25f*std::lerp(a.halfWidth,b.halfWidth,t)) return false;
+        level=std::lerp(a.water,b.water,t);
+        return true;
+    }
     [[nodiscard]] const StreamStation& Station(std::size_t i) const {return stations_.at(i);}
     // Lip station: the water holds level here and drops to the next station.
     [[nodiscard]] std::size_t CascadeIndex() const noexcept {return cascade_;}

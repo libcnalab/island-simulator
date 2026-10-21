@@ -233,6 +233,21 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 411 (2026-10-21) — the quad bike fords the stream
+
+Over the stream the quad drove on the rendered surface, which runs on level over the carved channel,
+so it floated across above the water, and its water depth was the sea's only (height below zero).
+Now in the channel the carved bed (StreamBedPatch) is its ground, with the normal from the bed, and
+StreamCourse::WaterLevel (the nearest stretch of the course, within its banks) gives the water over
+it: the wheels drop into the bed, throw spray and leave no rut there (a rut would be laid on the
+uncut ground above), and the quad comes out muddy. QuadBike adds the water piled against each
+wetted tyre (300 x tyre width x wetted depth x speed², at the hub): crossing at 30 km/h takes about
+2 m/s off it. A new QA view `quad-stream` stands 1.1 s, then crosses square to the middle reach from
+nine metres off: the capture has the rear wheels in the water throwing spray, the front ones up the
+far bank. `quad-drive` and `quad-jetty` end exactly as before. New tests: the water level is the
+course's in the channel and none two half widths beside it; wading slows the quad at full throttle
+without stopping or tipping it.
+
 ## Loop pass 410 (2026-10-21) — the quad bike bumps into the animals and the resident
 
 The quad's obstacles were the world's fixed circles: it drove through the bear, a boar, a goat, a

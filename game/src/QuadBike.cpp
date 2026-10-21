@@ -223,6 +223,13 @@ namespace island
             }
             if (!contact_[w]) previousLength_[w] = SuspensionRest;
             hub_[w] = Sub(mount, Mul(axisY_, length));
+            // Wading: the water piled against the tyre's wetted face (a stream, the shallows).
+            if (g.waterDepth > 0.0f) {
+                const float wetted = std::clamp(g.height + g.waterDepth - (hub_[w].y - WheelRadius), 0.0f, 2.0f * WheelRadius);
+                const BikeVec v = pointVelocity(hub_[w]);
+                const float drag = WadingDrag * (wheel < 2 ? 0.20f : 0.245f) * wetted * std::hypot(v.x, v.z);
+                if (drag > 0.0f) apply({-v.x * drag, 0.0f, -v.z * drag}, hub_[w]);
+            }
             compression_[w] = std::clamp((SuspensionRest - length) / SuspensionTravel, 0.0f, 1.0f);
         }
 

@@ -51,6 +51,7 @@ namespace island
          *  rollover threshold on flat ground (half the track over the centre of mass, 0.86 g),
          *  so it rolls on a steep side slope or off a bump, not in every hard turn. */
         static constexpr float TyreFriction = 0.78f;
+        static constexpr float WadingDrag = 300.0f;          // half water's density by a tyre's drag coefficient
         static constexpr float MountHeight = -0.10f;         // the wheel mounts below the centre of mass
         static constexpr float SuspensionTravel = 0.24f, SuspensionRest = 0.30f;
         static constexpr float SpringRate = 12500.0f, DamperRate = 1500.0f;

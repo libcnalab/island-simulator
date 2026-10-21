@@ -7276,6 +7276,22 @@ int main()
             turnSlide = std::max(turnSlide, skid.SlideSpeed());
         }
         Check(straightSlide < 0.3f && turnSlide > 1.0f, "the tyres slide in a hard turn at speed, not rolling straight");
+        // Wading: the water against the tyres takes the speed of a quad running into a stream.
+        const auto wading = [](float, float) { BikeGround g; g.height = 0.0f; g.waterDepth = 0.25f; return g; };
+        QuadBike dryRun({0.0f, 0.0f, 0.0f}, 0.0f), wet({0.0f, 0.0f, 0.0f}, 0.0f);
+        dryRun.Place({0.0f, 0.0f, 0.0f}, 0.0f, flat);
+        wet.Place({0.0f, 0.0f, 0.0f}, 0.0f, flat);
+        for (int i = 0; i < 60 * 3; ++i) {
+            dryRun.Step(1.0f / 60.0f, {1.0f, 0.0f, false}, flat);
+            wet.Step(1.0f / 60.0f, {1.0f, 0.0f, false}, flat);
+        }
+        const float wadeEntry = wet.Speed();
+        for (int i = 0; i < 60; ++i) {
+            dryRun.Step(1.0f / 60.0f, {1.0f, 0.0f, false}, flat);
+            wet.Step(1.0f / 60.0f, {1.0f, 0.0f, false}, wading);
+        }
+        Check(wet.Speed() < wadeEntry - 1.5f && wet.Speed() > 1.0f && dryRun.Speed() > wadeEntry && wet.Up().y > 0.9f,
+              "wading a stream slows the quad at full throttle without stopping it dead or tipping it");
         // The night chorus: an audible eight-second loop whose crickets live in the treble.
         const auto chorus = island::GenerateNightChorusLoop();
         double chorusEnergy = 0.0, chorusHigh = 0.0;
@@ -10215,6 +10231,26 @@ int main()
         for (const auto& bird : doves.Birds())
             if (bird.bathAmount > 0.0f && bird.behavior != island::BirdBehavior::GroundForage) stuck = true;
         Check(!stuck, "a dove leaving the bath carries no bathing pose into the air");
+    }
+
+    {
+        // The stream's water level is the nearest stretch's in its channel (what the quad's
+        // wheels wade), and none out on the ground beside it.
+        const island::IslandTerrain terrain;
+        const island::StreamCourse course(terrain);
+        bool level = true, beside = true;
+        for (std::size_t i = 4; i + 2 < course.Count(); ++i) {
+            const auto& a = course.Station(i);
+            const auto& b = course.Station(i + 1);
+            const float midX = 0.5f * (a.x + b.x), midZ = 0.5f * (a.z + b.z);
+            float water = 0.0f;
+            if (!course.WaterLevel(midX, midZ, water) || std::abs(water - 0.5f * (a.water + b.water)) > 1e-3f) level = false;
+            const float length = std::hypot(b.x - a.x, b.z - a.z), off = 2.0f * std::max(a.halfWidth, b.halfWidth);
+            if (course.WaterLevel(midX - (b.z - a.z) / length * off, midZ + (b.x - a.x) / length * off, water)
+                || course.WaterLevel(midX + (b.z - a.z) / length * off, midZ - (b.x - a.x) / length * off, water)) beside = false;
+        }
+        Check(level, "the stream's water level in its channel is its course's there");
+        Check(beside, "two half widths off the stream's line there is no stream water");
     }
 
     {

@@ -280,6 +280,7 @@ namespace island
         QuadHelicopterDetail,
         QuadLookoutDetail,
         QuadBearDetail,
+        QuadStreamDetail,
         CrabDetail,
         HermitCrabDetail,
         CoconutCrabDetail,
@@ -640,12 +641,14 @@ namespace island
             return viewpoint_ == FixedViewpoint::QuadDriveDetail || viewpoint_ == FixedViewpoint::QuadBunkerDetail
                 || viewpoint_ == FixedViewpoint::QuadCaveDetail || viewpoint_ == FixedViewpoint::QuadJettyDetail
                 || viewpoint_ == FixedViewpoint::QuadHelicopterDetail || viewpoint_ == FixedViewpoint::QuadLookoutDetail
-                || viewpoint_ == FixedViewpoint::QuadBearDetail;
+                || viewpoint_ == FixedViewpoint::QuadBearDetail || viewpoint_ == FixedViewpoint::QuadStreamDetail;
         }
         float quadSiteFloorY_ = 0.0f;
+        int quadStreamWaitUpdates_ = 11;   // QA: the stream view stands this many updates before setting off
         void UpdateQuadSite();
         [[nodiscard]] bool QuadWallBlocked(float x, float z) const noexcept;
         [[nodiscard]] bool QuadOnShelterFloor(float x, float z) const noexcept;
+        [[nodiscard]] bool QuadStreamBed(float x, float z, float& bed, float& waterDepth) const noexcept;
         void PlaceQuadNear(float x, float z, float yawRadians);
         [[nodiscard]] float QuadLampNightness() const noexcept;
         [[nodiscard]] bool TouchRideOffered() const noexcept;   // the touch action buttons shown

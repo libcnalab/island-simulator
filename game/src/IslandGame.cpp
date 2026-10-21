@@ -8,6 +8,7 @@
 #include "IslandSimulator/BridgeLayout.hpp"
 #include "IslandSimulator/LookoutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
+#include "IslandSimulator/StreamBedPatch.hpp"
 #include "IslandSimulator/StreamCourse.hpp"
 #include "IslandSimulator/CloudShadow.hpp"
 #include "IslandSimulator/CanopyShafts.hpp"
@@ -229,6 +230,7 @@ namespace island
             case FixedViewpoint::QuadJettyDetail: return "quad-jetty";
             case FixedViewpoint::QuadHelicopterDetail: return "quad-helicopter";
             case FixedViewpoint::QuadLookoutDetail: return "quad-lookout";
+            case FixedViewpoint::QuadStreamDetail: return "quad-stream";
             case FixedViewpoint::QuadBearDetail: return "quad-bear";
             case FixedViewpoint::CrabDetail: return "crabs";
             case FixedViewpoint::HermitCrabDetail: return "hermit-crabs";
@@ -2707,6 +2709,20 @@ namespace island
                     const float rampX = lookout.x + lookout.dirX * u, rampZ = lookout.z + lookout.dirZ * u;
                     const float fromX = rampX + lookout.AcrossX() * 4.5f, fromZ = rampZ + lookout.AcrossZ() * 4.5f;
                     PlaceQuadNear(fromX, fromZ, std::atan2(rampX - fromX, rampZ - fromZ));
+                } else if (viewpoint_ == FixedViewpoint::QuadStreamDetail) {
+                    // across the stream's middle reach, square to it from nine metres off its
+                    // south bank
+                    const StreamCourse& course = streamDrift_.Course();
+                    const auto& a = course.Station(44);
+                    const auto& b = course.Station(46);
+                    const auto& centre = course.Station(45);
+                    const float length = std::hypot(b.x - a.x, b.z - a.z);
+                    float acrossX = -(b.z - a.z) / length, acrossZ = (b.x - a.x) / length;
+                    if (acrossZ > 0.0f) { acrossX = -acrossX; acrossZ = -acrossZ; }
+                    const float fromX = centre.x + acrossX * 9.0f, fromZ = centre.z + acrossZ * 9.0f;
+                    PlaceQuadNear(fromX, fromZ, std::atan2(centre.x - fromX, centre.z - fromZ));
+                    std::cout << "island-simulator: quad QA stream start: " << std::hypot(quad_.Position().x - centre.x,
+                        quad_.Position().z - centre.z) << " m from the centreline\n";
                 } else if (viewpoint_ == FixedViewpoint::QuadBearDetail && bear_) {
                     // straight at the bear from eight metres off
                     const auto& bear = bear_->State();
@@ -2720,7 +2736,8 @@ namespace island
                 }
                 riding_ = true;
                 quadControls_ = {viewpoint_ == FixedViewpoint::QuadDriveDetail ? 0.8f
-                    : viewpoint_ == FixedViewpoint::QuadJettyDetail ? 0.4f : 1.0f, 0.0f, false};
+                    : viewpoint_ == FixedViewpoint::QuadJettyDetail ? 0.4f
+                    : 1.0f, 0.0f, false};
                 quadCameraYaw_ = quad_.YawRadians();
                 const auto start = quad_.Position();
                 quadCamera_ = Vector3(start.x - std::sin(quadCameraYaw_) * 4.8f, start.y + 1.9f, start.z - std::cos(quadCameraYaw_) * 4.8f);
@@ -4535,6 +4552,18 @@ namespace island
         } else {
             ground.height = terrain_.Height(std::clamp(x, -900.0f, 900.0f), std::clamp(z, -900.0f, 900.0f));
         }
+        float streamDepth = 0.0f;
+        if (float bed = 0.0f; QuadStreamBed(x, z, bed, streamDepth)) {
+            const auto bedAt = [this, &ground](const float px, const float pz) {
+                float height = 0.0f, depth = 0.0f;
+                return QuadStreamBed(px, pz, height, depth) ? height : ground.height;
+            };
+            ground.height = bed;
+            const float slopeX = (bedAt(x + 0.25f, z) - bedAt(x - 0.25f, z)) / 0.5f;
+            const float slopeZ = (bedAt(x, z + 0.25f) - bedAt(x, z - 0.25f)) / 0.5f;
+            const float length = std::sqrt(slopeX * slopeX + 1.0f + slopeZ * slopeZ);
+            ground.normal = {-slopeX / length, 1.0f / length, -slopeZ / length};
+        }
         // The jetty's deck carries the quad as it does the walker, up its ramp from the sand
         // (off its side, the sea).
         if (jettyPlacement_) {
@@ -4570,8 +4599,22 @@ namespace island
         default: ground.grip = 1.0f; break;
         }
         ground.grip *= 1.0f - 0.25f * weather_now::Current().wetness;
-        ground.waterDepth = std::max(0.0f, -ground.height);
+        ground.waterDepth = std::max(streamDepth, -ground.height);
         return ground;
+    }
+
+    bool IslandGame::QuadStreamBed(const float x, const float z, float& bed, float& waterDepth) const noexcept
+    {
+        // In the stream's channel its carved bed is the ground, under the stream's own water
+        // (the rendered surface the quad otherwise drives on runs on level over the channel).
+        if (!terrainRenderer_ || !std::isfinite(x) || !std::isfinite(z) || std::abs(z - StreamRoute::CentreZ(x)) > 6.0f)
+            return false;
+        const StreamBedPatch& patch = terrainRenderer_->StreamBed();
+        if (!patch.Contains(x, z)) return false;
+        bed = patch.SampleHeight(x, z);
+        float level = 0.0f;
+        waterDepth = streamDrift_.Course().WaterLevel(x, z, level) ? std::max(0.0f, level - bed) : 0.0f;
+        return true;
     }
 
     bool IslandGame::QuadObstacle(const float x, const float z, const float radius, float& pushX, float& pushZ) const noexcept
@@ -4751,7 +4794,9 @@ namespace island
                 + (q.z - jettyPlacement_->rootZ) * jettyPlacement_->dirZ;
             if (along > 6.0f) quadControls_ = {0.0f, 0.0f, true};
         }
-        const BikeControls controls = riding_ ? quadControls_ : BikeControls{0.0f, 0.0f, true};
+        // the stream view stands a moment, so that it is in the water as the capture is taken
+        const bool standing = viewpoint_ == FixedViewpoint::QuadStreamDetail && quadStreamWaitUpdates_-- > 0;
+        const BikeControls controls = riding_ && !standing ? quadControls_ : BikeControls{0.0f, 0.0f, true};
         // A parked quad that has settled sleeps: its physics (eight substeps, each sampling the
         // ground and the obstacles under four wheels) cost about 1.5 ms an update for a machine
         // standing still, and on its springs it never quite stopped (a few cm/s and a fifth of a
@@ -4804,14 +4849,23 @@ namespace island
             wheel.load = quad_.Compression(w);
             wheel.down = quad_.WheelContact(w);
             wheel.waterDepth = std::max(0.0f, -sample.height);
+            // in the stream's channel: its bed and its water (and no rut: one would be laid on
+            // the ground above, uncut by the channel)
+            float streamBed = 0.0f, streamDepth = 0.0f;
+            const bool inChannel = QuadStreamBed(wheel.x, wheel.z, streamBed, streamDepth)
+                && streamBed < sample.height - 0.03f;
+            if (inChannel) {
+                wheel.y = streamBed;
+                wheel.waterDepth = std::max(wheel.waterDepth, streamDepth);
+            }
             const auto surface = sample.surface;
             // a rain puddle (where the terrain shader paints one): a few centimetres of water
             // that the tyres throw up as spray
             const float puddle = terrain_noise::PuddleAt(wheel.x, wheel.z, sample.height, sample.slopeRadians,
                 sample.signedShoreDistance, surface == TerrainSurface::DrySand || surface == TerrainSurface::WetSand, wetness);
             if (puddle > 0.35f && wheel.waterDepth < 0.05f) wheel.waterDepth = 0.035f + 0.03f * puddle;
-            wheel.wet = surface == TerrainSurface::WetSand || wetness > 0.6f;
-            wheel.soft = wheel.waterDepth < 0.05f && (surface == TerrainSurface::DrySand || surface == TerrainSurface::WetSand
+            wheel.wet = inChannel || surface == TerrainSurface::WetSand || wetness > 0.6f;
+            wheel.soft = !inChannel && wheel.waterDepth < 0.05f && (surface == TerrainSurface::DrySand || surface == TerrainSurface::WetSand
                 || surface == TerrainSurface::CoastalGround || surface == TerrainSurface::InteriorGround);
             // the forest floor stays damp under the canopy: it dusts only after a dry spell
             wheel.dusty = (wetness < 0.35f && (surface == TerrainSurface::DrySand || surface == TerrainSurface::CoastalGround))
@@ -7601,7 +7655,16 @@ namespace island
             }
             if (QuadDriveView()) {
                 const auto q = quad_.Position();
-                if (viewpoint_ == FixedViewpoint::QuadBearDetail && bear_) {
+                if (viewpoint_ == FixedViewpoint::QuadStreamDetail) {
+                    const StreamCourse& course = streamDrift_.Course();
+                    const auto& centre = course.Station(45);
+                    float bed = 0.0f, depth = 0.0f;
+                    const bool channel = QuadStreamBed(q.x, q.z, bed, depth);
+                    std::cout << "island-simulator: quad QA stream: from the centreline "
+                              << std::hypot(q.x - centre.x, q.z - centre.z) << " m, ground "
+                              << QuadGround(q.x, q.z).height << ", water depth " << (channel ? depth : 0.0f)
+                              << ", body " << q.y << '\n';
+                } else if (viewpoint_ == FixedViewpoint::QuadBearDetail && bear_) {
                     std::cout << "island-simulator: quad QA body: bear, distance "
                               << std::hypot(q.x - bear_->State().x, q.z - bear_->State().z) << " m\n";
                 } else if (viewpoint_ == FixedViewpoint::QuadJettyDetail || viewpoint_ == FixedViewpoint::QuadHelicopterDetail
