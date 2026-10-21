@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 296 (2026-10-21) — wet grass after rain and with the morning dew
+
+The ground, the trees, the palms and the hut darkened in the wet; the grass stayed as dry as
+noon. Its shader now takes a wetness (`GrassRenderer::SetWetness`, `uWetness`): wet blades
+darken by 16 % and take a soft sheen from the sky at a glancing view (a broad sheen, never
+sparkles). The game feeds it the larger of the rain's wetness and the dew: up to 0.5, settling
+through the night from 21:00, burning off between 07:00 and 09:30, a third as much under full
+cloud. `grass` at 14:00 and 06:48 and `east` at 06:48 pass; `grass` in showers fails the
+luminance floor as a dark scene, as it already did before this change (checked with it
+stashed: luminance spread 17.2 before, 16.8 after), like `grass` in a thunderstorm.
+
 ## Loop pass 295 (2026-10-21) — the forest drips after the rain
 
 A forest goes on raining under its crowns long after a shower has passed. `CanopyDripRenderer`

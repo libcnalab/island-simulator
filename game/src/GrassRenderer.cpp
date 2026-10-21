@@ -342,6 +342,7 @@ in vec2 vBladeSurface;
 
 uniform vec3 uCameraPosition;
 uniform vec3 uToSun;
+uniform float uWetness;   // 0..1 rain or dew on the blades
 
 out vec4 fragColor;
 
@@ -374,6 +375,10 @@ void main()
             + (midrib * grassMidribStrength - edge * grassEdgeStrength) * resolved;
     }
     vec3 color = vColor * (vec3(1.0) + grassBasalShift * basalWeight) * light * surface;
+    // Wet blades (after rain, or with the dew before mid-morning) darken a little and take a
+    // soft sheen from the sky at a glance; a broad sheen, never sparkles.
+    float wetBlade = clamp(uWetness, 0.0, 1.0);
+    color = color * (1.0 - 0.16 * wetBlade) + vec3(0.05, 0.06, 0.06) * wetBlade * pow(1.0 - abs(dot(normal, toCamera)), 3.0);
     // Map elevated blades back along the fixed sun ray to the ground transmission field.
     vec2 receiver = canopyGroundReceiver(vWorld, vGroundHeight, uToSun);
     // Same blend as the terrain beneath: the shadow map supplies direct sun, the baked
@@ -1074,6 +1079,7 @@ void main()
             }
             customEffect_->SetUniformFloat("uTime", timeSeconds);
             customEffect_->SetUniformVec3("uStormWind", wind::DirectionX, wind::DirectionZ, weather_now::Current().wind);
+            customEffect_->SetUniformFloat("uWetness", std::isfinite(wetness_) ? wetness_ : 0.0f);
             {
                 const auto& gusts = WindGust::Live();
                 customEffect_->SetUniformVec4("uGustClock", gusts.travelled, gusts.spacing, gusts.floor, gusts.live ? 1.0f : 0.0f);

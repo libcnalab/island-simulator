@@ -73,6 +73,9 @@ namespace island
         [[nodiscard]] int VisibleCellCount() const noexcept { return visibleCellCount_; }
         /** Receives the fixed-sun shadow map; nullptr keeps only the baked canopy field. */
         void SetSunShadowMap(const SunShadowMap* map) noexcept { sunShadow_ = map; }
+        /** @brief How wet the blades are, 0 dry .. 1 soaked (rain or dew): they darken a little
+         *  and take a soft sheen from the sky at a glance. */
+        void SetWetness(float wetness) noexcept { wetness_ = wetness; }
         [[nodiscard]] int DrawCallCount() const noexcept { return drawCallCount_; }
         [[nodiscard]] const std::string& FallbackReason() const noexcept { return fallbackReason_; }
 
@@ -134,6 +137,7 @@ namespace island
         int visibleCellCount_ = 0;
         int drawCallCount_ = 0;
         const SunShadowMap* sunShadow_ = nullptr;
+        float wetness_ = 0.0f;
         float maximumDrawDistance_ = 135.0f;
         bool customShaderReady_ = false;
         float meshRadius_ = 0.0f;
