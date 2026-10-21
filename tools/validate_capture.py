@@ -46,7 +46,7 @@ def profile_for_viewpoint(viewpoint: str, hour: float | None = None) -> str:
         return "dark-cave-detail"
     if viewpoint in UNDERWATER_VIEWPOINTS:
         return "underwater-scene"
-    if viewpoint in ("cave-top", "ground", "tracks", "cascade", "bridge", "boars", "boar-lying", "spiders", "spiders-bright", "snakes", "snake-head", "tree-snakes", "ants", "cicadas", "beetles", "rats"):
+    if viewpoint in ("cave-top", "ground", "tracks", "cascade", "bridge", "boars", "boar-lying", "spiders", "spiders-bright", "snakes", "snake-head", "tree-snakes", "ants", "cicadas", "beetles", "rats", "mice"):
         return "close-natural-detail"
     return "scene"
 

@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 361 (2026-10-21) — the mice and rats are lit and rounded, not three flat bands
+
+The rodents' lofted bodies took no light at all: each facet one of three flat colours by its
+angle (a pale back, a flank, a belly), which read as moulded plastic in the `mice` and `rats`
+close-ups. Each corner of the loft (body and head) is now lit at the ring's own elliptical
+normal by the day's sun (the shared wildlife sun), the coat darkest along the spine and paling
+down the flanks to the belly, with a faint agouti grizzle. The grey-brown mouse now sits closer
+in tone to the olive grass, and the `mice` frame's luminance spread fell to 17.7 against the
+open-scene floor of 18: reviewed, it joins `rats` in the close-natural-detail profile. `mice`,
+`rats` and the tests pass.
+
 ## Loop pass 360 (2026-10-21) — the stream runs over gravel
 
 The stream read as a painted channel: its bed was wet mud from bank to bank under fairly opaque

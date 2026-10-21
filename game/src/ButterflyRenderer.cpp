@@ -4,6 +4,7 @@
 #include "IslandSimulator/HutGeckos.hpp"
 
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
+#include "IslandSimulator/WildlifeRenderLighting.hpp"
 
 #include <algorithm>
 #include <array>
@@ -1484,28 +1485,35 @@ namespace island
                     + right * (std::cos(angle) * halfWidths[station] * scale)
                     + up * (std::sin(angle) * halfHeights[station] * scale);
             };
+            // Each corner lit at the ring's own (elliptical) normal by the day's sun, the coat
+            // darkest along the spine and paling down the flanks to the belly, with a faint
+            // agouti grizzle: three flat unlit bands of colour read as moulded plastic.
+            const Color spine = wildlife_render::ScaleColor(dorsal, .94f);
+            const Color side = Color::Lerp(dorsal, underside, .30f);
+            const auto corner = [&](const std::size_t station, const int index) {
+                const float angle = 6.28318530718f * static_cast<float>(index) / Sides;
+                const float vertical = std::sin(angle);
+                const Color base = vertical > 0.0f
+                    ? Color::Lerp(side, spine, std::clamp(vertical / .8f, 0.0f, 1.0f))
+                    : Color::Lerp(side, underside, std::clamp(-vertical / .6f, 0.0f, 1.0f));
+                Vector3 normal = right * (std::cos(angle) / std::max(halfWidths[station], 1.0e-4f))
+                    + up * (vertical / std::max(halfHeights[station], 1.0e-4f));
+                normal.Normalize();
+                const float direct = std::max(0.0f, Vector3::Dot(normal, wildlife_render::FixedSunDirection));
+                const float sky = std::max(0.0f, normal.Y);
+                const float grizzle = 1.0f + .07f * std::sin(static_cast<float>(station) * 3.7f
+                    + static_cast<float>(index) * 2.3f + static_cast<float>(colorVariant) * 1.31f);
+                return VertexPositionColor(ringPoint(station, index), wildlife_render::ScaleColor(
+                    base, (.80f + .30f * direct + .08f * sky) * grizzle));
+            };
             for (std::size_t station = 0; station + 1U < StationCount; ++station) {
-                for (int side = 0; side < Sides; ++side) {
-                    const int next = (side + 1) % Sides;
-                    const float angle = 6.28318530718f
-                        * (static_cast<float>(side) + .5f) / Sides;
-                    const float vertical = std::sin(angle);
-                    const float lateralLight = std::max(0.0f, std::cos(angle)) * .08f;
-                    const float furVariation = .018f * std::sin(
-                        static_cast<float>(station) * 2.17f
-                        + static_cast<float>(colorVariant) * 1.31f);
-                    Color color = vertical > .24f
-                        ? Color::Lerp(dorsal, Color(211, 194, 157),
-                                      .10f + lateralLight + furVariation)
-                        : (vertical < -.24f ? underside
-                            : Color::Lerp(flank, Color(194, 174, 139),
-                                          lateralLight + std::max(0.0f, furVariation)));
-                    const Vector3 a = ringPoint(station, side);
-                    const Vector3 b = ringPoint(station + 1U, side);
-                    const Vector3 c = ringPoint(station + 1U, next);
-                    const Vector3 d = ringPoint(station, next);
-                    AddTriangle(vertices, a, b, c, color);
-                    AddTriangle(vertices, a, c, d, color);
+                for (int index = 0; index < Sides; ++index) {
+                    const int next = (index + 1) % Sides;
+                    const VertexPositionColor a = corner(station, index);
+                    const VertexPositionColor b = corner(station + 1U, index);
+                    const VertexPositionColor c = corner(station + 1U, next);
+                    const VertexPositionColor d = corner(station, next);
+                    vertices.insert(vertices.end(), {a, b, c, a, c, d});
                 }
             }
             const Vector3 rear = centre + forward * (stations.front() * scale);
