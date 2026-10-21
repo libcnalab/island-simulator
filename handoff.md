@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 299: in a storm a waterspout now and then stands offshore for a few minutes (PLAN "Loop pass 299").
 - Pass 298: satellites glide across the twilight sky after dusk and before dawn (PLAN "Loop pass 298").
 - Pass 297: the morning dew wets the forest's leaves too (shared `weather_now::Dew`) (PLAN "Loop pass 297").
 - Pass 296: the grass darkens and takes a sky sheen when wet, after rain and with the morning dew (PLAN "Loop pass 296"; `grass` in showers fails the luminance floor with or without it).

@@ -233,6 +233,24 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 299 (2026-10-21) — waterspouts in a storm
+
+Waterspouts are common round tropical islands in squally weather. `Waterspout` (header-only,
+deterministic in its clock): in each ten-minute window, a bit over half the time, while it is
+squally (heavy rain in a strong wind: the storm's rain and wind together), a funnel reaches
+down from the 260 m cloud base 620-780 m offshore, downwind of the island or off to its side,
+stands four minutes drifting away from the island at 1.5 m/s, and ropes out; if the weather
+settles it fades away early. `WaterspoutRenderer` draws the grey condensation funnel as a
+ribbon facing the eye, sinuous and tapering from 27 m at the cloud to 3 m at the sea, denser
+at its edges as a hollow funnel looks, with slow bands turning up it; it reaches down over
+the first tenth of its life, thins to a bending rope over the last fifth, and has a low pale
+bush of spray where it meets the sea; hazed with the distance, before the grade. A probe set
+a mature spout 550 m in front of `jetty-end`: dark against a storm's grey sky, a grey rope under
+a clear one. The first draft let a spout born upwind drift 960 m with the wind straight over
+the island; the new core check (several in ten stormy windows, always offshore, none in
+settled weather, gone once the storm passes) caught it. `flight` in a thunderstorm and the
+tests pass (`jetty-end` in a thunderstorm fails its colour floor as it already did).
+
 ## Loop pass 298 (2026-10-21) — satellites in the twilight sky
 
 From a dark island, in the hours after dusk and before dawn, satellites glide across the

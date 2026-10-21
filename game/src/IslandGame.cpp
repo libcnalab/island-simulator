@@ -2474,6 +2474,7 @@ namespace island
         morningMist_ = std::make_unique<MorningMistField>(terrain_);
         whaleRenderer_ = std::make_unique<WhaleRenderer>(device);
         sailboatRenderer_ = std::make_unique<SailboatRenderer>(device);
+        waterspoutRenderer_ = std::make_unique<WaterspoutRenderer>(device);
         sunbeamMotes_ = std::make_unique<SunbeamMoteRenderer>(device, terrain_, canopyLightField_);
         whaleBlowRenderer_ = std::make_unique<CascadeMistRenderer>(device,
             "island-simulator: a humpback's blow stands up five metres far offshore, drifts downwind and thins away", WhalePod::PuffCount);
@@ -3227,6 +3228,12 @@ namespace island
         UpdateQuad(deltaSeconds);
         whales_.Update(deltaSeconds, wind::DirectionX, wind::DirectionZ);
         sailboat_.Update(deltaSeconds);
+        {
+            // squalls breed waterspouts: heavy rain in a strong wind
+            const auto& w = weather_now::Current();
+            waterspout_.Update(deltaSeconds, std::clamp((w.rain - 0.45f) / 0.30f, 0.0f, 1.0f) * std::clamp((w.wind - 1.2f) / 0.4f, 0.0f, 1.0f),
+                               wind::DirectionX, wind::DirectionZ);
+        }
         summitCloud_.Update(deltaSeconds, SummitCloudField::Cover(weather_now::Current().cloudCover,
                                                                   weather_now::Current().rain, dayNight_.Hour()),
                             wind::DirectionX, wind::DirectionZ, weather_now::Current().wind);
@@ -5830,6 +5837,7 @@ namespace island
             if (wheelSprayRenderer_) wheelSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,wheelSpray_.Puffs());
             // the morning mist last of the translucent things, over everything solid it lies among
             if (mistBankRenderer_ && morningMist_) mistBankRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,morningMist_->Puffs());
+            if (waterspoutRenderer_) waterspoutRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,waterspout_.State(),timeSeconds);
             if (summitCloudRenderer_) summitCloudRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,summitCloud_.Puffs());
         }
         {

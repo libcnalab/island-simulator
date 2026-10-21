@@ -73,6 +73,7 @@
 #include "IslandSimulator/WhalePod.hpp"
 #include "IslandSimulator/SailboatPassage.hpp"
 #include "IslandSimulator/Satellites.hpp"
+#include "IslandSimulator/Waterspout.hpp"
 #include "IslandSimulator/ShootingStars.hpp"
 #include "IslandSimulator/CrabBubbleField.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
@@ -6979,6 +6980,34 @@ int main()
             Check(passages == 3 && outFrames > 3 * 300 && outFrames < 3 * 1000 && offshore && steady
                       && std::abs(std::remainder(firstHeading - secondHeading, 6.2831853f)) > 0.05f,
                   "a yacht passes well offshore once a period, sailing a straight line at its speed, a fresh line each time");
+        }
+        // Waterspouts: in a storm one now and then, offshore, for its few minutes; in settled
+        // weather none, and one already standing fades away when the storm passes.
+        {
+            island::Waterspout stormy, settled;
+            int spouts = 0, stormyFrames = 0;
+            bool offshore = true, was = false;
+            for (int step = 0; step < 2 * 10 * 600; ++step) {   // ten windows at half a second
+                stormy.Update(0.5f, 1.0f, -1.0f, 0.0f);
+                settled.Update(0.5f, 0.0f, -1.0f, 0.0f);
+                const auto& s = stormy.State();
+                if (s.active) {
+                    ++stormyFrames;
+                    const float r = std::hypot(s.x, s.z);
+                    offshore = offshore && r > 600.0f - 1.0f && r < 780.0f + island::Waterspout::DriftSpeed * island::Waterspout::LifeSeconds + 1.0f;
+                    if (!was) ++spouts;
+                }
+                was = s.active;
+                Check(!settled.State().active, "no waterspout in settled weather");
+            }
+            island::Waterspout passing;
+            bool faded = false;
+            for (int step = 0; step < 2 * 10 * 600 && !faded; ++step) {
+                passing.Update(0.5f, step < 2 * 600 * 10 / 2 ? 1.0f : 0.0f, -1.0f, 0.0f);
+                if (step > 2 * 600 * 10 / 2 + 2 * 120) faded = !passing.State().active;
+            }
+            Check(spouts >= 2 && spouts <= 10 && stormyFrames > 2 * 200 && offshore && faded,
+                  "in a storm waterspouts stand offshore now and then for a few minutes, and go when the storm passes");
         }
         // Rain rings on the sea: world-anchored and repeatable, each inside its own cell,
         // more cells striking in heavier rain, none in no rain.

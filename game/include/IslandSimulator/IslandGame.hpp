@@ -19,6 +19,7 @@
 #include "IslandSimulator/WhaleRenderer.hpp"
 #include "IslandSimulator/SailboatRenderer.hpp"
 #include "IslandSimulator/SummitCloudField.hpp"
+#include "IslandSimulator/WaterspoutRenderer.hpp"
 #include "IslandSimulator/SunbeamMoteRenderer.hpp"
 #include "IslandSimulator/EaveDripRenderer.hpp"
 #include "IslandSimulator/RainSplashRenderer.hpp"
@@ -566,6 +567,8 @@ namespace island
         std::unique_ptr<MorningMistField> morningMist_;
         std::unique_ptr<MistBankRenderer> mistBankRenderer_, summitCloudRenderer_;
         SummitCloudField summitCloud_{};
+        Waterspout waterspout_{};
+        std::unique_ptr<WaterspoutRenderer> waterspoutRenderer_;
         WhalePod whales_{};
         std::unique_ptr<WhaleRenderer> whaleRenderer_;
         SailboatPassage sailboat_{};
