@@ -39,26 +39,42 @@ CampfireLayout::CampfireLayout(const IslandTerrain& terrain) {
         const std::array p{a,b,c};
         for(int i=0;i<3;++i)vertices_.push_back({p[i],n,uv[i][0],uv[i][1],material});
     };
+    // A rounded field stone: an ellipsoid of five rings, its surface gently irregular, each
+    // corner carrying the smooth normal of the ellipsoid (lit per facet, three rings of ten
+    // read as cut gems round the pit). The smooth normals light it; winding faces outward.
+    // (The small coals keep three rings of ten, within the geometry budget.)
     const auto stone=[&](FirePoint centre,FirePoint size,float phase,FireMaterial material) {
-        constexpr int sides=10;
-        std::array<std::array<FirePoint,sides>,3> rings{};
-        for(int row=0;row<3;++row)for(int side=0;side<sides;++side) {
-            const float a=Tau*side/sides,t=std::numbers::pi_v<float>*(row+1)/4;
-            const float irregular=1+.07f*std::sin(side*2.7f+row*1.9f+phase);
-            rings[row][side]=Add(centre,{size.x*std::sin(t)*std::cos(a)*irregular,
-                size.y*std::cos(t),size.z*std::sin(t)*std::sin(a)*irregular});
+        constexpr int MaximumSides=12,MaximumRows=5;
+        const bool coal=material!=FireMaterial::Stone;
+        const int sides=coal?10:MaximumSides,rows=coal?3:MaximumRows;
+        std::array<std::array<FirePoint,MaximumSides>,MaximumRows> rings{},normals{};
+        for(int row=0;row<rows;++row)for(int side=0;side<sides;++side) {
+            const float a=Tau*side/sides,t=std::numbers::pi_v<float>*(row+1)/(rows+1);
+            const float irregular=1+.06f*std::sin(side*2.7f+row*1.9f+phase)
+                +.03f*std::sin(side*5.3f-row*2.6f+phase*1.7f);
+            const FirePoint local{size.x*std::sin(t)*std::cos(a)*irregular,
+                size.y*std::cos(t),size.z*std::sin(t)*std::sin(a)*irregular};
+            rings[row][side]=Add(centre,local);
+            normals[row][side]=Unit({local.x/(size.x*size.x),local.y/(size.y*size.y),local.z/(size.z*size.z)});
         }
-        const auto tri=[&](FirePoint a,FirePoint b,FirePoint c) {
-            const auto desired=Sub(Mul(Add(Add(a,b),c),1.0f/3),centre);
-            emit(a,b,c,desired,material,{{{0,0},{1,0},{.5f,1}}});
+        const FirePoint top=Add(centre,{0,size.y,0}),bottom=Add(centre,{0,-size.y,0});
+        const auto tri=[&](FirePoint a,FirePoint b,FirePoint c,FirePoint na,FirePoint nb,FirePoint nc) {
+            if(Dot(Cross(Sub(b,a),Sub(c,a)),Add(Add(na,nb),nc))<0){std::swap(b,c);std::swap(nb,nc);}
+            if(Dot(Cross(Sub(b,a),Sub(c,a)),Cross(Sub(b,a),Sub(c,a)))<1e-12f)
+                throw std::runtime_error("Degenerate campfire surface");
+            vertices_.push_back({a,na,0,0,material});
+            vertices_.push_back({b,nb,1,0,material});
+            vertices_.push_back({c,nc,.5f,1,material});
         };
         for(int side=0;side<sides;++side) {
             const int next=(side+1)%sides;
-            tri(Add(centre,{0,size.y,0}),rings[0][side],rings[0][next]);
-            tri(Add(centre,{0,-size.y,0}),rings[2][next],rings[2][side]);
-            for(int row=0;row<2;++row) {
-                tri(rings[row][side],rings[row+1][side],rings[row+1][next]);
-                tri(rings[row][side],rings[row+1][next],rings[row][next]);
+            tri(top,rings[0][side],rings[0][next],{0,1,0},normals[0][side],normals[0][next]);
+            tri(bottom,rings[rows-1][next],rings[rows-1][side],{0,-1,0},normals[rows-1][next],normals[rows-1][side]);
+            for(int row=0;row+1<rows;++row) {
+                tri(rings[row][side],rings[row+1][side],rings[row+1][next],
+                    normals[row][side],normals[row+1][side],normals[row+1][next]);
+                tri(rings[row][side],rings[row+1][next],rings[row][next],
+                    normals[row][side],normals[row+1][next],normals[row][next]);
             }
         }
     };

@@ -672,7 +672,7 @@ def main():
                 # Capture mode intentionally disables audio; real backend switching is
                 # exercised by IslandSoundscapeRuntimeTests, not a visual smoke run.
                 for marker in ("campfire first visible animated draw",
-                               "1992 solid triangles, 66 flame/smoke/spark triangles",
+                               "2712 solid triangles, 66 flame/smoke/spark triangles",
                                "campfire flame material uses broken translucent tongues, pale cores, a restrained blue base, and layered smoke",
                                "campfire smoke uses 12 bounded upper quads in the existing moving draw, rising 15m and drifting west with the trade wind",
                                "campfire bed uses a pale mottled ash centre, scorched rim, and mixed glowing charcoal",

@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 366 (2026-10-21) — the campfire's ring stones are rounded field stones
+
+The pit's twelve ring stones were three rings of ten, each facet lit flat, and the fragment
+shader turned each facet to the fire by its own normal: close up they read as cut gems. Each
+stone is now five rings of twelve with the smooth normals of its ellipsoid and a little more
+irregularity (the ten coals keep three rings of ten, within the 9000-vertex budget); and since
+the fire stands still, how squarely a surface faces it is baked from those normals into the
+vertex colour's green channel (red and blue carry the sun) instead of being taken per facet in
+the shader. 2712 solid triangles, 8136 vertices (was 1992 / 5976; the campfire core test and
+the four tool and test diagnostic checks updated). `campfire`, `campfire-wide`, `butterflies`,
+the 21:00 campfire and the tests pass; the Android debug build passed after pass 365.
+
 ## Loop pass 365 (2026-10-21) — the deer's shanks keep the coat
 
 Below the knee the deer's legs were 58 % of the way to near-black, so the shanks stood under the

@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 366: campfire ring stones smooth and rounded, fire facing baked per vertex; campfire now 2712 solid triangles (PLAN "Loop pass 366"). Android debug build passed after 365.
 - Pass 365: deer shanks keep the coat (no near-black posts) (PLAN "Loop pass 365").
 - Pass 364: shoreline foam lace irregular (rim weight, beads, coarse net, filled patches) (PLAN "Loop pass 364").
 - Pass 363: shipwreck timbers sun-bleached above the tide, algae band at it (PLAN "Loop pass 363"). Chrome `rodents` passed for 361.

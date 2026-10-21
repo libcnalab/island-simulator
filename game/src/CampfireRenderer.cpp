@@ -116,11 +116,9 @@ void main(){
         // The ring stones, the ash and the stacked wood take the flames' light on the faces
         // turned to the fire (the facet's own normal; they are flat-faceted): lit all round,
         // the stones glowed like coals.
-        vec3 facet=normalize(cross(dFdx(world),dFdy(world)));
-        vec3 toFire=normalize(uCampfire.xyz-world);
-        float facing=.10+.90*abs(dot(facet,toFire));
+        float facing=pigment.g;
         if(tag==1||tag>5)facing=1.0;   // the burning logs sit in the flames
-        if(tag!=5)color=applyCampfireLightFacing(color*pigment.rgb,world,facing);
+        if(tag!=5)color=applyCampfireLightFacing(color*pigment.rrr,world,facing);
         fragColor=vec4(color,1);return;
     }
     vec2 p=vec2((uv.x-.5)*2.0,uv.y);
@@ -207,12 +205,19 @@ CampfireRenderer::CampfireRenderer(GraphicsDevice& device,const CampfireLayout& 
     effect_=std::make_unique<ShaderEffect>(device,package);
     if(!effect_->IsEffectValid())throw std::runtime_error("Campfire shader failed: "+effect_->GetCompileErrorEXT());
     std::vector<VertexPositionColorTexture> vertices;
+    // The fire stands still, so how squarely a surface faces it is baked with the sun's light:
+    // red and blue carry the sun, green the facing (from the layout's own normals, smooth on the
+    // rounded stones; per facet in the shader it cut every stone into gem facets).
+    const Vector3 fire(layout.Centre().x,layout.Centre().y+.45f,layout.Centre().z);
     for(const auto v:layout.Vertices()) {
         const float light=.43f+.57f*std::max(0.0f,v.normal.x*environment::SunDirectionX
             +v.normal.y*environment::SunDirectionY+v.normal.z*environment::SunDirectionZ);
         const int value=static_cast<int>(light*255);
+        Vector3 toFire=fire-Vector3(v.position.x,v.position.y,v.position.z);
+        toFire.Normalize();
+        const float facing=.10f+.90f*std::abs(v.normal.x*toFire.X+v.normal.y*toFire.Y+v.normal.z*toFire.Z);
         vertices.emplace_back(Vector3(v.position.x,v.position.y,v.position.z),
-            Color(value,value,value,static_cast<int>(v.material)*36),Vector2(v.u,v.v));
+            Color(value,static_cast<int>(facing*255),value,static_cast<int>(v.material)*36),Vector2(v.u,v.v));
     }
     solidCount_=static_cast<int>(vertices.size());
     solid_=std::make_unique<VertexBuffer>(device,VertexPositionColorTexture::getVertexDeclarationStatic(),solidCount_,BufferUsage::WriteOnly);

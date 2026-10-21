@@ -35,7 +35,7 @@ int main() {
     float peakGust=0;
     for(float t=0;t<WindGust::FrontSpacing/WindGust::FrontSpeed;t+=0.25f) peakGust=std::max(peakGust,WindGust::Strength(centre.x,centre.z,t));
     Check(peakGust>0.9f,"a gust front passes over the fire within one spacing");
-    Check(fire.Vertices().size()==5976&&fire.Vertices().size()==repeat.Vertices().size(),"fire geometry budget changed");
+    Check(fire.Vertices().size()==8136&&fire.Vertices().size()==repeat.Vertices().size(),"fire geometry budget changed");
     std::array<int,7> materials{};
     for(std::size_t i=0;i<fire.Vertices().size();i+=3) {
         const auto a=fire.Vertices()[i],b=fire.Vertices()[i+1],c=fire.Vertices()[i+2];

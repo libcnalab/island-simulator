@@ -864,7 +864,7 @@ try {
               && log.includes("campfire smoke uses 12 bounded upper quads in the existing moving draw, rising 15m and drifting west with the trade wind")
               && log.includes("campfire bed uses a pale mottled ash centre, scorched rim, and mixed glowing charcoal")
               && log.includes("campfire and stored firewood stand in the qualified east inland clearing")
-              && log.includes("campfire 1992 solid triangles, 66 flame/smoke/spark triangles in two culled draws")))
+              && log.includes("campfire 2712 solid triangles, 66 flame/smoke/spark triangles in two culled draws")))
             && (!focusedCaveCheck || (log.includes(`cave QA camera ${mode === "cave-inside" ? "inside" : mode === "cave-top" ? "overhead" : "outside"}`)
               && log.includes("cave rock first visible draw")
               && log.includes("cave rock 5292 triangles in one shared draw; 20m walkable interior")
