@@ -22,8 +22,12 @@ namespace island
     class StructureShadowReceiver final
     {
     public:
+        /** `bakedAmbient`, when positive, is the share of a face's light the build gave it
+         *  regardless of the fixed sun (the rest by max(0, n.s)): each face is then relit by the
+         *  hour's sun, exactly as baked at 14:00. */
         StructureShadowReceiver(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                                const std::string& name, bool textured, float fogStart, float fogEnd);
+                                const std::string& name, bool textured, float fogStart, float fogEnd,
+                                float bakedAmbient = 0.0f);
         ~StructureShadowReceiver();
         StructureShadowReceiver(const StructureShadowReceiver&) = delete;
         StructureShadowReceiver& operator=(const StructureShadowReceiver&) = delete;
@@ -37,5 +41,6 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> effect_;
         bool textured_;
         float fogStart_, fogEnd_;
+        float bakedAmbient_;
     };
 }

@@ -1,4 +1,5 @@
 #include "IslandSimulator/StructureShadowReceiver.hpp"
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
 #include "CNA/GraphicsCapability.hpp"
@@ -48,6 +49,8 @@ uniform sampler2D uTexture;
 #endif
 uniform vec3 uCameraPosition;
 uniform vec2 uFogRange;
+uniform vec3 uToSun;          // the hour's shading direction (at 14:00 the fixed sun)
+uniform float uBakedAmbient;  // the build's sun-independent share of a face's light (0: not relit)
 out vec4 fragColor;
 void main()
 {
@@ -55,6 +58,15 @@ void main()
 #ifdef STRUCTURE_TEXTURED
     color *= texture(uTexture, vTextureCoordinate);
 #endif
+    if (uBakedAmbient > 0.0) {
+        // Each face's light was baked for the fixed afternoon sun: the face (its normal from
+        // the world position's derivatives, turned to the eye) is relit by the hour's sun.
+        vec3 faceNormal = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
+        if (dot(faceNormal, uCameraPosition - vWorld) < 0.0) faceNormal = -faceNormal;
+        float direct = 1.0 - uBakedAmbient;
+        color.rgb *= (uBakedAmbient + direct * max(0.0, dot(faceNormal, normalize(uToSun))))
+            / (uBakedAmbient + direct * max(0.0, dot(faceNormal, normalize(vec3(-0.45, 0.82, -0.34)))));
+    }
     color.rgb *= mix(vec3(0.56, 0.60, 0.66), vec3(1.0), sunShadowVisibility(vWorld));
     float fog = clamp((length(vWorld - uCameraPosition) - uFogRange.x) / (uFogRange.y - uFogRange.x), 0.0, 1.0);
     fragColor = vec4(mix(color.rgb, islandAtmosphereFog, fog), color.a);
@@ -63,8 +75,9 @@ void main()
     }
 
     StructureShadowReceiver::StructureShadowReceiver(GraphicsDevice& device, const std::string& name,
-                                                     const bool textured, const float fogStart, const float fogEnd)
-        : textured_(textured), fogStart_(fogStart), fogEnd_(fogEnd)
+                                                     const bool textured, const float fogStart, const float fogEnd,
+                                                     const float bakedAmbient)
+        : textured_(textured), fogStart_(fogStart), fogEnd_(fogEnd), bakedAmbient_(bakedAmbient)
     {
         if (!device.SupportsCapability(CNA::GraphicsCapability::CustomEffects))
             throw std::runtime_error("custom effects unavailable");
@@ -102,6 +115,9 @@ void main()
         effect_->SetUniformMat4("uViewProjection", matrix);
         effect_->SetUniformVec3("uCameraPosition", camera.X, camera.Y, camera.Z);
         effect_->SetUniformVec2("uFogRange", fogStart_, fogEnd_);
+        effect_->SetUniformFloat("uBakedAmbient", bakedAmbient_);
+        effect_->SetUniformVec3("uToSun", sun_light::UniformDirection().x, sun_light::UniformDirection().y,
+                                sun_light::UniformDirection().z);
         if (textured_ && texture) {
             effect_->SetTexture(0, *texture);
             effect_->SetUniformInt("uTexture", 0);

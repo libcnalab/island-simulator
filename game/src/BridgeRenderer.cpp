@@ -72,7 +72,7 @@ BridgeRenderer::BridgeRenderer(GraphicsDevice& device,const BridgePlacement& bri
     effect_->setFogEnabledProperty(true);
     effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
     effect_->setFogStartProperty(300.0f);effect_->setFogEndProperty(760.0f);
-    try { receiver_=std::make_unique<StructureShadowReceiver>(device,"bridge",false,300.0f,760.0f); }
+    try { receiver_=std::make_unique<StructureShadowReceiver>(device,"bridge",false,300.0f,760.0f,0.46f); }
     catch(const std::exception& error) {
         std::cout<<"island-simulator: bridge sun shadow receiver unavailable: "<<error.what()<<'\n';
     }

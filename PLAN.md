@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 432 (2026-10-22) — the jetty, the rope bridge and the lookout are lit by the hour's sun
+
+The structures StructureMeshBuilder bakes (jetty, rope bridge, lookout) took the fixed 14:00 sun once
+at build time. Their shared StructureShadowReceiver now takes the baking's sun-independent share
+(0.46 for these three) and relights each face as the hut's material does: the derivative face normal
+turned to the eye, the colour scaled by the hour's light over the fixed sun's for it. At 14:00 the
+`jetty` capture differs only in the water's and foliage's animation; `lookout` at 07:00 and 17:30,
+`bridge` and `helicopter` (left on the fixed sun: its surfaces bake different shares, emissive
+instruments among them) pass.
+
 ## Loop pass 431 (2026-10-22) — the hut is lit by the hour's sun
 
 The hut's faces had their light baked for the fixed 14:00 sun. Its material shader now relights each

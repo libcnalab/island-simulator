@@ -110,7 +110,7 @@ JettyRenderer::JettyRenderer(GraphicsDevice& device,const JettyPlacement& jetty)
     effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
     // The same linear band the ocean and terrain fade across, so the deck dissolves with them.
     effect_->setFogStartProperty(300.0f);effect_->setFogEndProperty(760.0f);
-    try { receiver_=std::make_unique<StructureShadowReceiver>(device,"jetty",false,300.0f,760.0f); }
+    try { receiver_=std::make_unique<StructureShadowReceiver>(device,"jetty",false,300.0f,760.0f,0.46f); }
     catch(const std::exception& error) {
         std::cout<<"island-simulator: jetty sun shadow receiver unavailable: "<<error.what()<<'\n';
     }

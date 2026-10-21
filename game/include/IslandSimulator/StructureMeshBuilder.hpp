@@ -10,7 +10,8 @@
 
 namespace island {
 // Flat-lit vertex-coloured primitives for the small built structures (jetty, rope bridge):
-// every face takes the fixed sun once at build time, so the renderer is one opaque draw.
+// every face takes the fixed sun once at build time, so the renderer is one opaque draw (the
+// structure shadow receiver relights each face by the hour's sun with the same 0.46 + 0.54 rule).
 struct StructureMeshBuilder {
     using Vector3=Microsoft::Xna::Framework::Vector3;
     using Color=Microsoft::Xna::Framework::Color;
