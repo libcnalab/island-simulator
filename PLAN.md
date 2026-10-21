@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 305 (2026-10-21) — the cave's walls no longer streak towards the mouth
+
+Inside the cave (`cave-inside`) the walls showed long streaks radiating towards the mouth, as if
+the rock were motion-blurred. Anisotropic filtering changed nothing; switching off the rock
+texture removed them. The cave's triplanar rock projection samples in the cave's own frame
+(the shell's local coordinates, turned by the site's -0.6 rad), but weighted its three planes
+by the world-space normal, so on the tunnel's walls it took the plane across the tunnel and
+the texture stretched along it. The shader now turns the normal into the cave's frame
+(`uCaveAxis`) for the weights (the lighting keeps the world normal). The walls read as stone
+grain; `cave-inside`, `cave`, `cave-back` and `cave-top` pass, and the tests.
+
 ## Loop pass 304 (2026-10-21) — plankton light round a swimmer at night
 
 The surf glittered blue on dark nights (pass 243) but a swimmer stirred nothing. `SwimGlowField`
@@ -244,9 +255,7 @@ of them in the wake behind; each flashes and fades within 0.8-1.8 s where it was
 3 m in front of `jetty-end` at 22:00 on a moonless night showed the sparks on the dark water (a
 first, sparser and smaller glow was raised in rate, size and brightness). New core check: more
 sparks swimming hard than treading water, none by day or ashore, all gone within two seconds of
-stopping. `water` at 22:00 and `jetty-end` pass, and the tests. (Open: the cave's interior walls
-streak radially towards the mouth; not the texture filter, which was checked and ruled out;
-probably the tunnel's long facets or the rock texture.)
+stopping. `water` at 22:00 and `jetty-end` pass, and the tests.
 
 ## Loop pass 303 (2026-10-21) — seagrass on the lagoon floor
 

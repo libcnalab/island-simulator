@@ -1,5 +1,6 @@
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/CaveRenderer.hpp"
+#include "IslandSimulator/CaveSite.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/OpaqueImageLoader.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
@@ -66,6 +67,7 @@ in vec3 world;in vec3 normal;in vec4 localMaterial;
 uniform vec3 uToSun;
 uniform sampler2D uRockTexture;
 uniform vec3 uRockMean;
+uniform vec2 uCaveAxis;   // cos and sin of the cave's turn: world normals into its local frame
 out vec4 fragColor;
 float hash(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}
 float noise(vec3 p){
@@ -92,7 +94,12 @@ void main(){
     vec3 stone=mix(vec3(.27,.285,.29),vec3(.52,.47,.38),broad);
     stone*=.87+.18*grain;
     stone*=1.0-.105*fracture;
-    vec3 weights=pow(abs(normalize(normal)),vec3(4.0));
+    // The projection follows the local coordinates, so its weights take the normal in the same
+    // frame: weighted by the world normal the tunnel walls took the plane across the tunnel and
+    // the rock streaked along it towards the mouth.
+    vec3 n=normalize(normal);
+    vec3 localNormal=vec3(-uCaveAxis.y*n.x+uCaveAxis.x*n.z,n.y,-uCaveAxis.x*n.x-uCaveAxis.y*n.z);
+    vec3 weights=pow(abs(localNormal),vec3(4.0));
     weights/=max(weights.x+weights.y+weights.z,.0001);
     vec3 rockSample=texture(uRockTexture,mirrored(local.yz*.72+vec2(.17,.31))).rgb*weights.x
         +texture(uRockTexture,mirrored(local.xz*.72+vec2(.43,.11))).rgb*weights.y
@@ -501,6 +508,7 @@ void CaveRenderer::Draw(const Matrix& view,const Matrix& projection) {
     device_.getSamplerStatesProperty()[0]=SamplerState::LinearClamp;
     effect_->SetTexture(0,*rockTexture_);effect_->SetUniformInt("uRockTexture",0);
     effect_->SetUniformVec3("uRockMean",rockMean_[0],rockMean_[1],rockMean_[2]);
+    effect_->SetUniformVec2("uCaveAxis",std::cos(CaveSite::Angle),std::sin(CaveSite::Angle));
     device_.setBlendStateProperty(BlendState::Opaque);
     device_.setDepthStencilStateProperty(DepthStencilState::Default);
     device_.setRasterizerStateProperty(RasterizerState::CullNone);
