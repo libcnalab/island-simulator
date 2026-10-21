@@ -143,8 +143,8 @@ std::unique_ptr<Texture2D> CreateMaterialAtlas(GraphicsDevice& device) {
 
 class HumanMeshBuilder {
 public:
-    HumanMeshBuilder(std::vector<VertexPositionColorTexture>& output,CanopyLightTint canopy)
-        :output_(output),canopy_(canopy){}
+    HumanMeshBuilder(std::vector<VertexPositionColorTexture>& output,CanopyLightTint canopy,float wetness)
+        :output_(output),canopy_(canopy),wetness_(std::clamp(wetness,0.0f,1.0f)){}
 
     void Ellipsoid(Vector3 centre,Vector3 right,Vector3 up,Vector3 forward,
         float rx,float ry,float rz,Material material,int longitude=12,int latitude=8) {
@@ -203,7 +203,10 @@ private:
         const auto base=BaseColor(material);
         const float direct=std::max(0.0f,Vector3::Dot(SafeUnit(normal),wildlife_render::FixedSunDirection));
         const float sky=std::max(0.0f,normal.Y);
-        const float light=.57f+.35f*direct+.10f*sky;
+        // soaked cloth, hair and fibre darken (water fills the weave); skin barely
+        const float soaked=material==Material::Cloth?.36f:material==Material::Hair?.30f
+            :material==Material::Fibre?.24f:material==Material::Skin?.05f:0.0f;
+        const float light=(.57f+.35f*direct+.10f*sky)*(1.0f-soaked*wetness_);
         const auto channel=[&](std::uint8_t value,float tint){return static_cast<int>(std::clamp(
             std::lround(value*light*tint),0L,255L));};
         output_.emplace_back(p,Color(channel(base.getRProperty(),canopy_.red),
@@ -220,11 +223,12 @@ private:
     }
     std::vector<VertexPositionColorTexture>& output_;
     CanopyLightTint canopy_;
+    float wetness_;
 };
 
 void BuildHuman(std::vector<VertexPositionColorTexture>& vertices,const ResidentState& state,
-    CanopyLightTint canopy) {
-    HumanMeshBuilder mesh(vertices,canopy);const auto& pose=state.pose;
+    CanopyLightTint canopy,float wetness) {
+    HumanMeshBuilder mesh(vertices,canopy,wetness);const auto& pose=state.pose;
     const Vector3 up=Vector3::Up;
     const Vector3 right(std::cos(pose.heading),0,-std::sin(pose.heading));
     const Vector3 forward(std::sin(pose.heading),0,std::cos(pose.heading));
@@ -479,7 +483,7 @@ void ResidentRenderer::Draw(const Matrix& view,const Matrix& projection,const Ve
     vertices_.clear();visible_=0;triangles_=0;
     if(!IsVisible(view,projection,camera,resident,maximumDistance_))return;
     const auto tint=CanopyTransmissionTint(canopy_.SampleReceiver(resident.x,resident.y+1.0f,resident.z,resident.y));
-    BuildHuman(vertices_,resident,tint);
+    BuildHuman(vertices_,resident,tint,wetness_);
     vegetation_fade::ShrinkAbout(vertices_,0,resident.x,resident.y,resident.z,vegetation_fade::FarShrink(
         Vector3::Distance({resident.x,resident.y+1.0f,resident.z},camera),maximumDistance_,
         vegetation_fade::TreeShrinkFraction));

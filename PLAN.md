@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 269 (2026-10-21) — the resident's clothes soak in the rain
+
+Out in the rain the resident's clothes and hair now darken as they soak, as wet cotton does:
+the renderer takes the weather's wetness (1.2 times it, so a shower soon drenches them; it
+rises with the rain and dries over the next few hours like the ground) and darkens the cloth by
+up to 36 %, the hair by 30 %, the fibre belt and sandals by 24 % and the skin only by 5 %,
+baked into the vertex colours with the rest of the lighting. `resident` in showers shows the
+darker shirt and shorts against the skin; the dry day is unchanged (wetness 0).
+
 ## Loop pass 268 (2026-10-21) — dust in the forest's sunbeams
 
 Under the trees the air now carries dust and pollen that glints where the sun comes through: a

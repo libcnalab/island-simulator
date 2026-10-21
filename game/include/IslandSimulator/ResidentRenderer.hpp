@@ -34,6 +34,8 @@ public:
         const Microsoft::Xna::Framework::Matrix& projection,
         const Microsoft::Xna::Framework::Vector3& camera,const ResidentState& resident);
 
+    /** @brief How soaked the clothes and hair are, 0 dry .. 1 drenched (they darken). */
+    void SetWetness(float wetness)noexcept{wetness_=wetness;}
     [[nodiscard]] int VisibleCount()const noexcept{return visible_;}
     [[nodiscard]] int DrawCallCount()const noexcept{return draws_;}
     [[nodiscard]] int TriangleCount()const noexcept{return triangles_;}
@@ -42,6 +44,7 @@ private:
     Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
     const CanopyLightField& canopy_;
     float maximumDistance_;
+    float wetness_=0.0f;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> buffer_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> shadowBuffer_;

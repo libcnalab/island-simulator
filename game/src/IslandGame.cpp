@@ -5585,6 +5585,7 @@ namespace island
         }
         {
             GpuDiagnosticScope gpuPass("resident");
+            residentRenderer_->SetWetness(std::min(1.0f, 1.2f * weather_now::Current().wetness));
             residentRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,resident_->State());
         }
         {
