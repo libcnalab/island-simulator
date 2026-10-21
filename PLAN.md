@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 424 (2026-10-21) — hermit crabs carry coiled gastropod shells
+
+At 1:1 in `hermit-crabs` the shell was a body of revolution banded in rings with a wire spiral laid on
+its side: a beehive. Near (the far LOD keeps the six-station shell), the shell is now a whorl tube
+winding three turns up to the spire, each whorl 2.1 times the one before (a logarithmic coil about the
+tilted shell axis, the tube's radius and its distance from the axis growing together, the spire rising
+0.25 units), so each whorl laps over the last; the open end is the aperture, at the front where the
+crab comes out (the dark aperture disc moved to it). Colour bands spiral along the whorls and the inner
+side of each whorl darkens into the suture. 30 rings by 9 sides; the hermit's exact budget follows it
+(3120 - 732 + 1620 = 4008).
+
 ## Loop pass 423 (2026-10-21) — tyres out of the water leave damp prints
 
 A tyre run out of a ford or a puddle printed nothing on firm ground and left the same rut on sand as

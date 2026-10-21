@@ -41,7 +41,7 @@ namespace island
         constexpr int FarCrabVertexCount = 12;
         constexpr int MaximumVerticesPerCrab = NearCrabVertexCount;
         constexpr int MaximumBurrowVertices = 1024;
-        constexpr int HermitCrabVertexCount = 3120;
+        constexpr int HermitCrabVertexCount = 3120 - 732 + 30 * 9 * 6;   // the near shell a whorl tube
         // Past this a hermit crab is its shell, a few pixels across: a six-sided shell alone
         // (out to the crabs' 92 m every one was built whole, legs, eyes and spiral marks).
         constexpr float HermitDetailDistance = 18.0f;
@@ -459,48 +459,89 @@ namespace island
                 return VertexPositionColor(shellPoint(station, segment), wildlife_render::ScaleColor(
                     base, .72f + .30f * direct + .06f * std::max(0.0f, normal.Y)));
             };
-            for (std::size_t station = 0; station + 1U < ShellStations.size(); ++station) {
+            if (far) {
+                for (std::size_t station = 0; station + 1U < ShellStations.size(); ++station) {
+                    for (int segment = 0; segment < RingSegments; ++segment) {
+                        const int next = (segment + 1) % RingSegments;
+                        const Color band = station % 2U == 0U ? shell : shellShade;
+                        const Color base = segment < RingSegments / 2
+                            ? Color::Lerp(band, shellRidge, .10f) : band;
+                        const VertexPositionColor a = shellVertex(station, segment, base);
+                        const VertexPositionColor b = shellVertex(station + 1U, segment, base);
+                        const VertexPositionColor c = shellVertex(station + 1U, next, base);
+                        const VertexPositionColor d = shellVertex(station, next, base);
+                        vertices.insert(vertices.end(), {a, b, c, a, c, d});
+                    }
+                }
+                const Vector3 shellRear = shellCentre
+                    + shellAxis * (ShellStations.front() * scale);
+                const Vector3 shellApex = shellCentre
+                    + shellAxis * (ShellStations.back() * scale);
                 for (int segment = 0; segment < RingSegments; ++segment) {
                     const int next = (segment + 1) % RingSegments;
-                    const Color band = station % 2U == 0U ? shell : shellShade;
-                    const Color base = segment < RingSegments / 2
-                        ? Color::Lerp(band, shellRidge, .10f) : band;
-                    const VertexPositionColor a = shellVertex(station, segment, base);
-                    const VertexPositionColor b = shellVertex(station + 1U, segment, base);
-                    const VertexPositionColor c = shellVertex(station + 1U, next, base);
-                    const VertexPositionColor d = shellVertex(station, next, base);
-                    vertices.insert(vertices.end(), {a, b, c, a, c, d});
+                    AddTriangle(vertices, shellRear, shellPoint(0U, next),
+                                shellPoint(0U, segment), shellShade);
+                    AddTriangle(vertices, shellApex, shellPoint(5U, segment),
+                                shellPoint(5U, next), shellRidge);
+                }
+                return;
+            }
+            // Near, a gastropod's shell: a whorl tube winding three turns up to the spire, each
+            // whorl 2.1 times the one before it and lapping over it, the aperture at the front
+            // where the crab comes out; colour bands spiral along the whorls and the sutures
+            // between them lie in shade. (A body of revolution banded in rings, with a wire
+            // spiral laid on its side, read as a beehive.)
+            {
+                constexpr int Turns = 3, RingsPerTurn = 10, TubeSides = 9;
+                constexpr int Rings = Turns * RingsPerTurn;
+                const float growth = std::log(2.1f) / TwoPi;
+                const float thetaEnd = TwoPi * static_cast<float>(Turns);
+                const Vector3 opening = Vector3::Normalize(forward - shellAxis * Vector3::Dot(forward, shellAxis));
+                const Vector3 aside = Vector3::Normalize(Vector3::Cross(shellAxis, opening));
+                constexpr float ApertureRadius = .108f, ApertureOffset = .072f, SpireHeight = .25f;
+                const Vector3 apertureTarget = shellBase + forward * (.060f * scale)
+                    + up * ((.105f + .030f * carry) * scale);
+                const Vector3 origin = apertureTarget - aside * (ApertureOffset * scale);
+                const auto whorlPoint = [&](const int ring, const int side, Vector3& normal, float& band) {
+                    const float theta = thetaEnd * static_cast<float>(ring) / static_cast<float>(Rings);
+                    const float g = std::exp(growth * (theta - thetaEnd));
+                    const float phi = TwoPi * static_cast<float>(side) / static_cast<float>(TubeSides);
+                    const float turn = theta - thetaEnd;
+                    const Vector3 radial = aside * std::cos(turn) + opening * std::sin(turn);
+                    const Vector3 tubeCentre = origin + radial * (ApertureOffset * g * scale)
+                        + shellAxis * (SpireHeight * (1.0f - g) * scale);
+                    normal = radial * std::cos(phi) + shellAxis * std::sin(phi);
+                    band = phi;
+                    return tubeCentre + normal * (ApertureRadius * g * scale);
+                };
+                const auto whorlVertex = [&](const int ring, const int side) {
+                    Vector3 normal;
+                    float phi = 0.0f;
+                    const Vector3 position = whorlPoint(ring, side, normal, phi);
+                    // spiral bands along the whorl; the inner side, toward the axis and under
+                    // the next whorl, darkens into the suture
+                    const float bandWave = std::sin(phi * 3.0f + .6f);
+                    Color base = bandWave > .25f ? shellShade : (bandWave < -.55f ? shellRidge : shell);
+                    const float inward = std::max(0.0f, -std::cos(phi));
+                    base = Color::Lerp(base, Color(49, 39, 31, 255), .45f * inward * inward);
+                    const float direct = std::max(0.0f, Vector3::Dot(normal, wildlife_render::FixedSunDirection));
+                    return VertexPositionColor(position, wildlife_render::ScaleColor(
+                        base, .72f + .30f * direct + .06f * std::max(0.0f, normal.Y)));
+                };
+                for (int ring = 0; ring < Rings; ++ring) {
+                    for (int side = 0; side < TubeSides; ++side) {
+                        const int next = (side + 1) % TubeSides;
+                        const VertexPositionColor a = whorlVertex(ring, side);
+                        const VertexPositionColor b = whorlVertex(ring + 1, side);
+                        const VertexPositionColor c = whorlVertex(ring + 1, next);
+                        const VertexPositionColor d = whorlVertex(ring, next);
+                        vertices.insert(vertices.end(), {a, c, b, a, d, c});
+                    }
                 }
             }
-            const Vector3 shellRear = shellCentre
-                + shellAxis * (ShellStations.front() * scale);
-            const Vector3 shellApex = shellCentre
-                + shellAxis * (ShellStations.back() * scale);
-            for (int segment = 0; segment < RingSegments; ++segment) {
-                const int next = (segment + 1) % RingSegments;
-                AddTriangle(vertices, shellRear, shellPoint(0U, next),
-                            shellPoint(0U, segment), shellShade);
-                AddTriangle(vertices, shellApex, shellPoint(5U, segment),
-                            shellPoint(5U, next), shellRidge);
-            }
-            if (far) return;
 
-            const Vector3 spiralCentre = shellCentre + right * (.157f * scale)
-                - shellAxis * (.005f * scale);
-            Vector3 previousSpiral = spiralCentre + shellOther * (.105f * scale);
-            for (int mark = 1; mark <= 13; ++mark) {
-                const float angle = .20f + static_cast<float>(mark) * .72f;
-                const float radius = .105f - static_cast<float>(mark) * .0067f;
-                const Vector3 point = spiralCentre
-                    + shellOther * (std::cos(angle) * radius * scale)
-                    + shellAxis * (std::sin(angle) * radius * scale);
-                AppendCrossedSegment(vertices, previousSpiral, point,
-                                     .0042f * scale, shellRidge);
-                previousSpiral = point;
-            }
-
-            const Vector3 aperture = shellCentre + forward * (.105f * scale)
-                - up * (.045f * scale);
+            const Vector3 aperture = shellBase + forward * (.105f * scale)
+                + up * ((.090f + .030f * carry) * scale);
             AppendRoundedCrabPalm(vertices, aperture, right, up, forward,
                 .070f * scale, .058f * scale, .026f * scale,
                 Color(54, 38, 29, 255), Color(28, 23, 19, 255));
