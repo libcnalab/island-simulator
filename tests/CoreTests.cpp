@@ -7435,6 +7435,29 @@ int main()
         }
         Check(perWheel[0] >= 20 && perWheel[0] <= 32 && perWheel[3] == 0 && wetLife == island::TyreTrackField::WetLifeSeconds,
               "tyres leave a rut piece every third of a metre on sand, none on rock, short-lived on wet sand");
+        {
+            // a tyre wet from a ford prints even rock, fainter and briefly; a dry one does not
+            std::array<island::WheelOnGround, 4> onRock = wheels;
+            island::TyreTrackField damp;
+            for (int i = 0; i <= 100; ++i) {
+                for (std::size_t w = 0; w < onRock.size(); ++w) {
+                    onRock[w].z = static_cast<float>(i) * 0.1f + (w < 2 ? 0.625f : -0.625f);
+                    onRock[w].soft = false;
+                    onRock[w].wet = false;
+                    onRock[w].wetTread = w == 0 ? 1.0f : 0.0f;
+                }
+                damp.Update(1.0f / 60.0f, onRock);
+            }
+            std::size_t dampPrints[4] = {0, 0, 0, 0};
+            bool briefAndFaint = true;
+            for (const auto& track : damp.Tracks()) {
+                if (!track.active) continue;
+                ++dampPrints[(track.x0 < 0.0f ? 0U : 1U) + (std::abs(track.x0) > 0.7f ? 2U : 0U)];
+                briefAndFaint = briefAndFaint && track.life == island::TyreTrackField::DampPrintLifeSeconds && track.strength < 0.7f;
+            }
+            Check(dampPrints[0] >= 20 && dampPrints[1] + dampPrints[2] + dampPrints[3] == 0 && briefAndFaint,
+                  "a tyre wet from the water prints even rock, faintly and briefly; dry ones do not");
+        }
         for (auto& wheel : wheels) wheel.soft = true;
         island::WheelThrowField dust(island::WheelThrowField::Kind::Dust), walk(island::WheelThrowField::Kind::Dust),
             spray(island::WheelThrowField::Kind::Spray), dry(island::WheelThrowField::Kind::Spray);

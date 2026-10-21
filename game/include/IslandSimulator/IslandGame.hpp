@@ -617,6 +617,7 @@ namespace island
         float quadRestSeconds_ = 0.0f;
         BikeVec quadRestAnchor_{};
         std::array<WheelOnGround, 4> quadWheels_{};
+        std::array<float, 4> quadTreadWater_{};   // the water each tyre still carries out of a ford or a puddle
         static constexpr float QuadIdleOffSeconds = 90.0f;
         std::unique_ptr<RenderedTerrainSurface> quadSurface_;
         std::unique_ptr<RenderedTerrainSurface> drawnGround_;   // the per-frame ground marks' surface

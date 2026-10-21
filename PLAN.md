@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 423 (2026-10-21) — tyres out of the water leave damp prints
+
+A tyre run out of a ford or a puddle printed nothing on firm ground and left the same rut on sand as
+a dry one. Each wheel now carries the water it ran through (quadTreadWater_: 1 in water deeper than
+3 cm, drying over some fourteen metres of travel) as WheelOnGround::wetTread; TyreTrackField lays a
+piece on firm ground while the tread is wet (strength 0.25-0.65, DampPrintLifeSeconds 75 s, drying
+off) and presses a wet tyre's rut in sand or soil a little darker (+0.15). New test: a wet tyre prints
+rock faintly and briefly, dry ones do not. `quad-drive` lays its 100 pieces as before; on the soft
+far bank of `quad-stream` the ruts were laid anyway (47 either way at an earlier capture moment).
+
 ## Loop pass 422 (2026-10-21) — the monkey's tail is slimmer at its root
 
 At 1:1 in `monkeys` the capuchin's tail root (radius .085) was as thick as its thigh (.092) and the

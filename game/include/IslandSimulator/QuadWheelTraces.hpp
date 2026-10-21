@@ -21,6 +21,7 @@ namespace island
         bool wet = false;           // the wet sand the swash smooths
         bool dusty = false;         // dry enough to throw dust
         float waterDepth = 0.0f;    // metres of water over the ground
+        float wetTread = 0.0f;      // 0..1 the water still on the tyre out of the water: it prints even firm ground
     };
 
     /** A piece of a tyre's track: a rut from one point to the next, as wide as the tyre. */
@@ -37,12 +38,15 @@ namespace island
 
     /** The quad's tyre tracks: every third of a metre a wheel rolls on sand or soil a piece of
      *  rut is laid behind it, pressed deeper under load; the dry ground keeps them five
-     *  minutes, the wet sand at the water's edge one. Renderer-independent, deterministic. */
+     *  minutes, the wet sand at the water's edge one. A tyre come out of the water prints even
+     *  firm ground, fainter as it runs dry, and those damp prints dry off in a minute and a
+     *  quarter. Renderer-independent, deterministic. */
     class TyreTrackField final
     {
     public:
         static constexpr std::size_t Capacity = 480, Wheels = 4;
         static constexpr float SegmentLength = 0.32f, LifeSeconds = 300.0f, WetLifeSeconds = 60.0f;
+        static constexpr float DampPrintLifeSeconds = 75.0f;
 
         void Update(float seconds, std::span<const WheelOnGround> wheels) noexcept;
         [[nodiscard]] std::span<const TyreTrack> Tracks() const noexcept { return tracks_; }

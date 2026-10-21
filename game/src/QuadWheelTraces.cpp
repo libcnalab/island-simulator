@@ -26,7 +26,8 @@ namespace island
                 continue;
             }
             const WheelOnGround& wheel = wheels[w];
-            if (!wheel.down || !wheel.soft || !std::isfinite(wheel.x) || !std::isfinite(wheel.z)) {
+            const float wetTread = std::isfinite(wheel.wetTread) ? std::clamp(wheel.wetTread, 0.0f, 1.0f) : 0.0f;
+            if (!wheel.down || (!wheel.soft && wetTread < 0.1f) || !std::isfinite(wheel.x) || !std::isfinite(wheel.z)) {
                 tracker.valid = false;
                 continue;
             }
@@ -42,9 +43,11 @@ namespace island
             if (moved < SegmentLength) continue;
             TyreTrack& track = tracks_[next_];
             next_ = (next_ + 1) % tracks_.size();
-            track = {tracker.x, tracker.z, wheel.x, wheel.z, wheel.width,
-                     std::clamp(0.45f + 0.55f * wheel.load, 0.0f, 1.0f), 0.0f, 0.0f,
-                     wheel.wet ? WetLifeSeconds : LifeSeconds, true};
+            // pressed into sand or soil (darker still, wet), or only wetting firm ground
+            const float pressed = wheel.soft ? std::clamp(0.45f + 0.55f * wheel.load + 0.15f * wetTread, 0.0f, 1.0f)
+                                             : 0.25f + 0.40f * wetTread;
+            track = {tracker.x, tracker.z, wheel.x, wheel.z, wheel.width, pressed, 0.0f, 0.0f,
+                     !wheel.soft ? DampPrintLifeSeconds : wheel.wet ? WetLifeSeconds : LifeSeconds, true};
             track.density = track.strength;
             tracker = {wheel.x, wheel.z, true};
             ++laid_;

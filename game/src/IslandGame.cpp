@@ -4909,6 +4909,11 @@ namespace island
                 sample.signedShoreDistance, surface == TerrainSurface::DrySand || surface == TerrainSurface::WetSand, wetness);
             if (puddle > 0.35f && wheel.waterDepth < 0.05f) wheel.waterDepth = 0.035f + 0.03f * puddle;
             wheel.wet = inChannel || surface == TerrainSurface::WetSand || wetness > 0.6f;
+            // out of the water the tyre stays wet for some fourteen metres, printing as it dries
+            float& treadWater = quadTreadWater_[static_cast<std::size_t>(w)];
+            treadWater = wheel.waterDepth > 0.03f ? 1.0f
+                : std::max(0.0f, treadWater - quad_.Speed() * deltaSeconds / 14.0f);
+            wheel.wetTread = wheel.waterDepth > 0.03f ? 0.0f : treadWater;
             wheel.soft = wheel.waterDepth < 0.05f && (surface == TerrainSurface::DrySand || surface == TerrainSurface::WetSand
                 || surface == TerrainSurface::CoastalGround || surface == TerrainSurface::InteriorGround);
             // the forest floor stays damp under the canopy: it dusts only after a dry spell
