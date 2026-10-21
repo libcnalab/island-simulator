@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 429 (2026-10-22) — the quad's engine floods in deep water
+
+The quad's engine ran on under the sea: lamps lit, exhaust puffing from under the water, its sound
+going. QuadBike::AirboxFlooded tells when the water over the ground under the quad stands above its air
+intake (0.25 m over the body's centre); IslandGame then kills the engine (quadFlooded_: lamps, exhaust,
+sound and drive gone, the rider can only steer the drifting quad), and it catches again two seconds
+after the airbox is clear. (Driven in from the shallows the water holds the quad to a crawl at about
+0.7 m, below its seat; set down deeper it floods.) New QA view `quad-sea` sets the quad down off the
+beach path's foot in 1.26 m of water: airbox flooded, engine dead. `quad-drive`, `quad-jetty` and
+`quad-stream` end as before. New test: water over the seat floods the airbox, a stream's ford and dry
+ground do not.
+
 ## Loop pass 428 (2026-10-22) — stones by the stream are wet
 
 At 1:1 in `bridge` and `stream` the stones on the stream's banks were pale mint-grey (their cool

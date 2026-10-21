@@ -282,6 +282,7 @@ namespace island
         QuadLookoutDetail,
         QuadBearDetail,
         QuadStreamDetail,
+        QuadSeaDetail,
         CrabDetail,
         HermitCrabDetail,
         CoconutCrabDetail,
@@ -612,6 +613,8 @@ namespace island
         bool quadEngineOn_ = false;
         float quadFlushSeconds_ = 0.0f;
         float quadIdleSeconds_ = 0.0f;
+        bool quadFlooded_ = false;          // the airbox under water: the engine dead until it clears
+        float quadRestartSeconds_ = 0.0f;   // and catches again this long after it does
         // A parked quad that has settled sleeps (see UpdateQuad): how long it has been still,
         // and its wheels on the ground as they were when it fell asleep.
         float quadRestSeconds_ = 0.0f;
@@ -644,7 +647,8 @@ namespace island
             return viewpoint_ == FixedViewpoint::QuadDriveDetail || viewpoint_ == FixedViewpoint::QuadBunkerDetail
                 || viewpoint_ == FixedViewpoint::QuadCaveDetail || viewpoint_ == FixedViewpoint::QuadJettyDetail
                 || viewpoint_ == FixedViewpoint::QuadHelicopterDetail || viewpoint_ == FixedViewpoint::QuadLookoutDetail
-                || viewpoint_ == FixedViewpoint::QuadBearDetail || viewpoint_ == FixedViewpoint::QuadStreamDetail;
+                || viewpoint_ == FixedViewpoint::QuadBearDetail || viewpoint_ == FixedViewpoint::QuadStreamDetail
+                || viewpoint_ == FixedViewpoint::QuadSeaDetail;
         }
         float quadSiteFloorY_ = 0.0f;
         int quadStreamWaitUpdates_ = 13;   // QA: the stream view stands this many updates before setting off

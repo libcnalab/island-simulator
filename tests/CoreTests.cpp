@@ -7277,6 +7277,14 @@ int main()
             turnSlide = std::max(turnSlide, skid.SlideSpeed());
         }
         Check(straightSlide < 0.3f && turnSlide > 1.0f, "the tyres slide in a hard turn at speed, not rolling straight");
+        // The airbox: water over the seat floods it, wading a stream does not.
+        {
+            BikeGround deep; deep.height = -1.0f; deep.waterDepth = 1.0f;
+            BikeGround ford; ford.height = 4.7f; ford.waterDepth = 0.29f;
+            Check(QuadBike::AirboxFlooded({0.0f, -0.40f, 0.0f}, deep) && !QuadBike::AirboxFlooded({0.0f, 5.3f, 0.0f}, ford)
+                      && !QuadBike::AirboxFlooded({0.0f, 1.0f, 0.0f}, BikeGround{}),
+                  "water over the seat floods the quad's airbox; a stream's ford and dry ground do not");
+        }
         // Wading: the water against the tyres takes the speed of a quad running into a stream.
         const auto wading = [](float, float) { BikeGround g; g.height = 0.0f; g.waterDepth = 0.25f; return g; };
         QuadBike dryRun({0.0f, 0.0f, 0.0f}, 0.0f), wet({0.0f, 0.0f, 0.0f}, 0.0f);

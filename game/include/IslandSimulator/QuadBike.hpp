@@ -52,6 +52,13 @@ namespace island
          *  so it rolls on a steep side slope or off a bump, not in every hard turn. */
         static constexpr float TyreFriction = 0.78f;
         static constexpr float WadingDrag = 300.0f;          // half water's density by a tyre's drag coefficient
+        static constexpr float AirboxHeight = 0.25f;         // the engine's air intake, under the seat, over the centre of mass
+        /** @brief Whether water over the ground under the quad stands above its air intake: the
+         *  engine floods and dies (driven in over the seat). */
+        [[nodiscard]] static bool AirboxFlooded(const BikeVec& position, const BikeGround& under) noexcept
+        {
+            return under.waterDepth > 0.0f && under.height + under.waterDepth > position.y + AirboxHeight;
+        }
         static constexpr float MountHeight = -0.10f;         // the wheel mounts below the centre of mass
         static constexpr float SuspensionTravel = 0.24f, SuspensionRest = 0.30f;
         static constexpr float SpringRate = 12500.0f, DamperRate = 1500.0f;

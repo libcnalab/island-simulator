@@ -232,6 +232,7 @@ namespace island
             case FixedViewpoint::QuadHelicopterDetail: return "quad-helicopter";
             case FixedViewpoint::QuadLookoutDetail: return "quad-lookout";
             case FixedViewpoint::QuadStreamDetail: return "quad-stream";
+            case FixedViewpoint::QuadSeaDetail: return "quad-sea";
             case FixedViewpoint::QuadBearDetail: return "quad-bear";
             case FixedViewpoint::CrabDetail: return "crabs";
             case FixedViewpoint::HermitCrabDetail: return "hermit-crabs";
@@ -2748,6 +2749,12 @@ namespace island
                     PlaceQuadNear(fromX, fromZ, std::atan2(centre.x - fromX, centre.z - fromZ));
                     std::cout << "island-simulator: quad QA stream start: " << std::hypot(quad_.Position().x - centre.x,
                         quad_.Position().z - centre.z) << " m from the centreline\n";
+                } else if (viewpoint_ == FixedViewpoint::QuadSeaDetail) {
+                    // set down in water over its seat off the beach path's foot (it can not wade there: the water
+                    // holds it to a crawl past some 0.7 m), its airbox flooded
+                    constexpr float startZ = -266.0f;
+                    const float x0 = VegetationLayout::PrimaryPathCenterX(startZ);
+                    PlaceQuadNear(x0, startZ, std::atan2(0.0f, -1.0f));
                 } else if (viewpoint_ == FixedViewpoint::QuadBearDetail && bear_) {
                     // straight at the bear from eight metres off
                     const auto& bear = bear_->State();
@@ -4841,7 +4848,10 @@ namespace island
         }
         // the stream view stands a moment, so that it is in the water as the capture is taken
         const bool standing = viewpoint_ == FixedViewpoint::QuadStreamDetail && quadStreamWaitUpdates_-- > 0;
-        const BikeControls controls = riding_ && !standing ? quadControls_ : BikeControls{0.0f, 0.0f, true};
+        // (flooded, the dead engine drives nothing: the rider can only steer it as it drifts)
+        const BikeControls controls = riding_ && !standing
+            ? (quadFlooded_ ? BikeControls{0.0f, quadControls_.steer, false} : quadControls_)
+            : BikeControls{0.0f, 0.0f, true};
         // A parked quad that has settled sleeps: its physics (eight substeps, each sampling the
         // ground and the obstacles under four wheels) cost about 1.5 ms an update for a machine
         // standing still, and on its springs it never quite stopped (a few cm/s and a fifth of a
@@ -4958,14 +4968,27 @@ namespace island
             soundscape_->NoteQuadImpact(rolled ? 1.0f : std::clamp((knock - 2.0f) / 6.0f, 0.0f, 1.0f), p.x, p.y, p.z, riding_);
             quadImpactCooldown_ = 0.35f;
         }
+        // Driven into water over the seat the airbox floods and the engine dies (its lamps out,
+        // its exhaust and its sound gone); it catches again two seconds after the airbox is clear.
+        {
+            const auto q = quad_.Position();
+            if (QuadBike::AirboxFlooded(q, QuadGround(q.x, q.z))) {
+                if (!quadFlooded_ && quadEngineOn_) std::cout << "island-simulator: the quad's airbox floods and the engine dies\n";
+                quadFlooded_ = true;
+                quadRestartSeconds_ = 2.0f;
+            } else if (quadFlooded_ && (quadRestartSeconds_ -= deltaSeconds) <= 0.0f) {
+                quadFlooded_ = false;
+                if (riding_) std::cout << "island-simulator: out of the water the quad's engine catches again\n";
+            }
+        }
         // The engine: started when the rider gets on, idling on after the rider steps off until
         // it is switched off a minute and a half later (or the quad lies on its side).
         if (riding_) {
-            quadEngineOn_ = true;
+            quadEngineOn_ = !quadFlooded_;
             quadIdleSeconds_ = 0.0f;
         } else if (quadEngineOn_) {
             quadIdleSeconds_ += deltaSeconds;
-            if (quadIdleSeconds_ > QuadIdleOffSeconds || quad_.Overturned()) quadEngineOn_ = false;
+            if (quadIdleSeconds_ > QuadIdleOffSeconds || quad_.Overturned() || quadFlooded_) quadEngineOn_ = false;
         }
         // The wildlife hears it: a rider on the roaring quad alarms the deer, goats and boars
         // from up to two and a half times as far as a walker, and the perched birds flush as
@@ -7712,7 +7735,12 @@ namespace island
             }
             if (QuadDriveView()) {
                 const auto q = quad_.Position();
-                if (viewpoint_ == FixedViewpoint::QuadStreamDetail) {
+                if (viewpoint_ == FixedViewpoint::QuadSeaDetail) {
+                    const BikeGround under = QuadGround(q.x, q.z);
+                    std::cout << "island-simulator: quad QA sea: water depth " << under.waterDepth << ", body " << q.y
+                              << ", airbox " << (QuadBike::AirboxFlooded(q, under) ? "flooded" : "clear")
+                              << ", engine " << (quadEngineOn_ ? "running" : "dead") << '\n';
+                } else if (viewpoint_ == FixedViewpoint::QuadStreamDetail) {
                     const StreamCourse& course = streamDrift_.Course();
                     const auto& centre = course.Station(45);
                     float bed = 0.0f, depth = 0.0f;
