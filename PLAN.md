@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 375 (2026-10-21) — a roosting flying fox hangs wrapped in its wings
+
+At the roost (`bat-roost`) the fruit bat read as a faceted orange fox hanging from a branch: its
+folded wings were two thin panels beside the body (0.23 of the span) showing as dark spikes, and
+every ellipsoid was lit per facet. A roosting flying fox hangs wrapped in its wings like a leathery
+cloak, only the rusty collar and the fox's head showing below. The near mesh now carries a cloak
+of dark membrane round the body, opening as the bat fans or stretches a wing and shrinking inside
+the body in flight (always built: the fixed near budget is 2628 vertices, was 2268); the body,
+head, muzzle, nose, eyes and cloak are lit at each corner from the ellipsoid's own normal.
+`bat-roost`, `bats` and the tests pass.
+
 ## Loop pass 374 (2026-10-21) — the frame profile names the calls inside blocks
 
 The Update profile marks only top-level calls, so a call inside an `if` or a lambda was billed to

@@ -33,7 +33,7 @@ namespace island
     namespace
     {
         constexpr float NearDistance = 110.0f;
-        constexpr int MaximumVerticesPerBat = 2300;
+        constexpr int MaximumVerticesPerBat = 2700;   // the near mesh, 2628 with the roosting cloak
         constexpr int MaximumVertices = static_cast<int>(FruitBatColony::Count)
             * MaximumVerticesPerBat;
 
@@ -93,11 +93,23 @@ namespace island
                             +up*(std::sin(v)*ry*scale)
                             +forward*(std::cos(v)*std::sin(u)*rz*scale);
                     };
+                    // lit at each corner from the ellipsoid's own normal: per facet the body
+                    // and head read as cut wood
+                    const auto lit=[&](const float u,const float v) {
+                        Vector3 normal=right*(std::cos(v)*std::cos(u)/std::max(rx,1e-4f))
+                            +up*(std::sin(v)/std::max(ry,1e-4f))
+                            +forward*(std::cos(v)*std::sin(u)/std::max(rz,1e-4f));
+                        if(normal.LengthSquared()>1e-12f)normal.Normalize();else normal=up;
+                        const Color base=Color::Lerp(lower,upper,std::clamp(.5f+std::sin(v)*1.4f,0.0f,1.0f));
+                        const float direct=std::max(0.0f,Vector3::Dot(normal,wildlife_render::FixedSunDirection));
+                        return VertexPositionColor(Vector3::Zero,
+                            wildlife_render::ScaleColor(base,.80f+.28f*direct+.08f*std::max(0.0f,normal.Y)));
+                    };
                     const Vector3 a=point(u0,v0),b=point(u0,v1);
                     const Vector3 c=point(u1,v1),d=point(u1,v0);
-                    const Color base=(v0+v1)*.5f>0.0f?upper:lower;
-                    Triangle(out,a,b,c,wildlife_render::FacetColor(a,b,c,base,true));
-                    Triangle(out,a,c,d,wildlife_render::FacetColor(a,c,d,base,true));
+                    const Color ca=lit(u0,v0).Color,cb=lit(u0,v1).Color,cc=lit(u1,v1).Color,cd=lit(u1,v0).Color;
+                    out.emplace_back(a,ca);out.emplace_back(b,cb);out.emplace_back(c,cc);
+                    out.emplace_back(a,ca);out.emplace_back(c,cc);out.emplace_back(d,cd);
                 }
             }
         }
@@ -168,6 +180,18 @@ namespace island
             const float s = bat.scale;
             AppendEllipsoid(out,Point(centre,right,up,forward,0,0,-.02f,s),
                 right,up,forward,.19f,.16f,.34f,s,p.fur,p.chest,5,12);
+            // Roosting, a flying fox hangs wrapped in its wings like a leathery cloak, only the
+            // rusty collar and the fox's head showing below it; as it fans or stretches the
+            // cloak opens (folded flat beside it the wings read as two thin spikes). The cloak
+            // is always built and shrinks inside the body when open: a fixed vertex budget.
+            {
+                const float wrap=hang*(1.0f-std::clamp(std::max(bat.fan*.9f,bat.stretch),0.0f,1.0f));
+                const float grow=std::lerp(.55f,1.0f,wrap);
+                const Color cloakOuter=Color::Lerp(p.membrane,Color(30,24,22,255),.25f);
+                const Color cloakInner=Color::Lerp(p.membrane,p.finger,.30f);
+                AppendEllipsoid(out,Point(centre,right,up,forward,0,.005f,-.10f*wrap-.02f,s),
+                    right,up,forward,.255f*grow,.215f*grow,.365f*grow,s,cloakOuter,cloakInner,5,12);
+            }
             const Vector3 head = Point(centre,right,up,forward,0,.015f,.38f,s);
             AppendEllipsoid(out,head,right,up,forward,.15f,.135f,.16f,s,
                 p.face,p.fur,5,12);
@@ -231,7 +255,7 @@ namespace island
                     AppendTube(out,claw,toe,.007f*s,.003f*s,p.finger,5);
                 }
             }
-            if(out.size()-firstVertex!=2268U)
+            if(out.size()-firstVertex!=2268U+360U)
                 throw std::runtime_error("Fruit-bat near mesh does not match its fixed vertex budget");
         }
 
