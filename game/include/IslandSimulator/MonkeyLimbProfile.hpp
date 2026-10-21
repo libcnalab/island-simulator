@@ -12,8 +12,10 @@ namespace island::MonkeyLimbProfile
     inline constexpr Mantle ShoulderMantle{{.140f,.655f,.245f},{.105f,.095f,.125f},.16f};
     inline constexpr Mantle HipMantle{{.140f,.635f,-.335f},{.115f,.105f,.135f},.14f};
     inline constexpr std::array<float,10> Fractions{0,.0625f,.125f,.25f,.375f,.5f,.625f,.75f,.875f,1};
+    // Upper limb full where it leaves the mantle, then a monkey's slim forearm and shank: the
+    // elbow and knee were twelve centimetres through, which read as balloon limbs close up.
     inline constexpr std::array<float,10> Radii{
-        .040f,.080f,.095f,.090f,.073f,.063f,.055f,.048f,.042f,.038f};
+        .040f,.080f,.092f,.082f,.062f,.050f,.044f,.040f,.036f,.033f};
     struct Section { Point centre; float radius, bodyWeight, lowerWeight; };
     inline Section Sample(const MonkeyGroundGait::Limb& limb, std::size_t row, float thickness)
     {

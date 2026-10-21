@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 399 (2026-10-21) — the monkeys' forearms and shanks are slimmer
+
+Close up (`monkeys`, now deterministic) the monkey's limbs read as balloons: past the shoulder
+and hip the sleeve stayed twelve centimetres through at the elbow and knee and nearly eight at the
+wrist and ankle. MonkeyLimbProfile::Radii now taper from the full upper limb (unchanged where it
+leaves the shoulder and hip mantles, which the gait tests hold broad) to a slimmer elbow and knee
+(0.050 of the limb thickness, from 0.063) and wrist and ankle (0.033, from 0.038). `monkeys` and
+`monkey-tree` show the slimmer forearms; the tests pass.
+
 ## Loop pass 398 (2026-10-21) — the monkey close-up runs on the QA clock
 
 The `monkeys` capture ran on the wall clock with fixed-step catch-up: under llvmpipe its subject
