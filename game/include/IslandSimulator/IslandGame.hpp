@@ -31,6 +31,7 @@
 #include "IslandSimulator/RainRingRenderer.hpp"
 #include "IslandSimulator/QuadWheelTraces.hpp"
 #include "IslandSimulator/TyreTrackRenderer.hpp"
+#include "IslandSimulator/TurtleTrackRenderer.hpp"
 #include "IslandSimulator/RainRenderer.hpp"
 #include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/TimeOfDayRenderer.hpp"
@@ -593,6 +594,7 @@ namespace island
         TyreTrackField tyreTracks_;
         WheelThrowField wheelDust_{WheelThrowField::Kind::Dust}, wheelSpray_{WheelThrowField::Kind::Spray};
         std::unique_ptr<TyreTrackRenderer> tyreTrackRenderer_;
+        std::unique_ptr<TurtleTrackRenderer> turtleTrackRenderer_;
         std::unique_ptr<RootingDustRenderer> wheelDustRenderer_, wheelSprayRenderer_;
         std::uint32_t quadPreviousRollovers_ = 0;
         float quadImpactCooldown_ = 0.0f;

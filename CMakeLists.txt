@@ -713,6 +713,7 @@ if(ISLAND_BUILD_GAME)
         game/src/QuadBikeRenderer.cpp
         game/src/QuadRider.cpp
         game/src/TyreTrackRenderer.cpp
+        game/src/TurtleTrackRenderer.cpp
         game/src/LocalLightRenderer.cpp
         game/src/RainRingRenderer.cpp
         game/src/FireflyRenderer.cpp

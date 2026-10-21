@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 391 (2026-10-21) — the nesting turtles' crawls are soft troughs, not railway sleepers
+
+Each nest's crawl up the beach was seven opaque beach-detail meshes: a 9 cm stripe down the middle
+and four pairs of hard flat flipper rectangles, gapped between pieces, which read as a railway
+line (`turtle-nest`, `driftwood`). A new TurtleTrackRenderer joins each nest's trace pieces into
+one continuous ribbon (half a spacing beyond either end, fading into the wet sand seaward and
+short of the nest): a soft-edged trough pressed by the plastron, its width wandering a little, a
+faint wavering tail drag, and paired flipper gouges every 0.25-0.32 m, each a bowed, tapered
+stroke of its own length, width, sweep and depth with its outer end swept back toward the sea, now
+and then one missing. It is premultiplied black, so it only darkens the sand and never glows under
+the night grade, drawn with depth read beside the tyre ruts and fading out by 75 m.
+NaturalPropRenderer no longer draws the trace pieces (still counted; the nests stay its props).
+The tests pass.
+
 ## Loop pass 390 (2026-10-21) — driftwood thickens to a flared root and ends in a broken tip
 
 The driftwood was a uniform tube with sawn ends. Its girth now runs from a flared root (1.40 of

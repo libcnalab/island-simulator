@@ -1928,6 +1928,12 @@ void main()
             ++totalDriftwoodCount_;
         }
         for (const BeachDetailPlacement& detail : layout.BeachDetails()) {
+            // the nesting turtles' crawls are soft blended ribbons (TurtleTrackRenderer), not
+            // these opaque strokes; the nests stay here
+            if (detail.turtleTrace && !detail.turtleNest) {
+                ++totalBeachDetailCount_;
+                continue;
+            }
             PropCell& cell = cells_[CellIndex(detail.x, detail.z)];
             // laid along the ground under it (the turtle traces carry its normal)
             Matrix lay = Matrix::getIdentityProperty();

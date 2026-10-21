@@ -2527,6 +2527,7 @@ namespace island
         if (jettyPlacement_)
             for (const auto& line : jettyPlacement_->FootprintLines(terrain_, RenderedTerrainSurface(terrain_)))
                 residentFootprints.push_back(line);
+        turtleTrackRenderer_ = std::make_unique<TurtleTrackRenderer>(device, naturalPropLayout_.BeachDetails());
         naturalPropRenderer_ = std::make_unique<NaturalPropRenderer>(device, naturalPropLayout_, residentFootprints,
                                                                      &canopyLightField_);
         shipwreckRenderer_ = std::make_unique<ShipwreckRenderer>(device, shipwreckLayout_);
@@ -5885,6 +5886,7 @@ namespace island
             if (waterholeRenderer_) waterholeRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
             footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,footprints_.Prints());
             if(tyreTrackRenderer_) tyreTrackRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,tyreTracks_.Tracks());
+            if(turtleTrackRenderer_) turtleTrackRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
             for(const auto& trail:deerPrints_) if(trail.ActiveCount()>0U) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,trail.Prints());
             for(const auto& trail:boarPrints_) if(trail.ActiveCount()>0U) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,trail.Prints());
             shellDragRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,shellDrags_.Segments());
