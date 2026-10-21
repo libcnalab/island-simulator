@@ -40,6 +40,7 @@ uniform vec3 uHutCentre;
 uniform sampler2D uThatchTexture;
 uniform vec3 uThatchMean;
 uniform float uWetness;   // 0..1 rain-wet (WeatherSystem)
+uniform vec3 uToSun;      // the hour's shading direction (at 14:00 the fixed sun the faces were baked for)
 out vec4 fragColor;
 // Fade unresolved cycles to their mean; no texture, loops or dependent sampling.
 float resolvedWave(float phase) {
@@ -89,6 +90,13 @@ void main() {
     // Rain soaks the hut: the thatch goes dark, the weathered boards less so (the walls stand
     // under the eaves), the glass not at all.
     color*=1.0-clamp(uWetness,0.0,1.0)*(1.0-glassClass)*(vColor.a>0.7?0.38:0.17);
+    // Each face's light was baked for the fixed afternoon sun: the face (its normal from the
+    // world position's derivatives, turned to the eye) is relit by the hour's sun, exactly as
+    // baked at 14:00.
+    vec3 faceNormal=normalize(cross(dFdx(vWorld),dFdy(vWorld)));
+    if(dot(faceNormal,uCameraPosition-vWorld)<0.0) faceNormal=-faceNormal;
+    color*=(0.48+0.52*max(0.0,dot(faceNormal,uToSun)))
+        /(0.48+0.52*max(0.0,dot(faceNormal,vec3(-0.45,0.82,-0.34))));
     // The sun shadow map and the cumulus shade, with the same cool shadow tint as the palms.
     color*=mix(vec3(0.56,0.60,0.66),vec3(1.0),sunShadowVisibility(vWorld));
     color=mix(color,islandAtmosphereFog,smoothstep(180.0,300.0,length(vWorld-uCameraPosition)));

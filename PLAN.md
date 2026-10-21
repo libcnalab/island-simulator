@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 431 (2026-10-22) — the hut is lit by the hour's sun
+
+The hut's faces had their light baked for the fixed 14:00 sun. Its material shader now relights each
+face by the hour: the face's normal from the world position's derivatives (exact for a flat
+triangle), turned to the eye, and the colour scaled by the hour's light over the fixed sun's for that
+normal (0.48 + 0.52 max(0, n.s), the baking's own rule), so at 14:00 the ratio is one and the hut is
+as before (the 14:00 capture differs only in the wind-blown foliage). At 07:00 the sun stands behind
+the hut and its front is in the shade; at 17:30 the front takes the low western sun. Swinging fish and
+net are relit by their swung faces. `hut` and `hut-material` pass.
+
 ## Loop pass 430 (2026-10-22) — the ground is lit by the hour's sun
 
 Open since the day/night pass: the terrain's light was baked into its vertex colours for the fixed

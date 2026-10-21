@@ -1,4 +1,5 @@
 #include "IslandSimulator/HutRenderer.hpp"
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/HutThatch.hpp"
 #include "IslandSimulator/HutMaterial.hpp"
@@ -602,6 +603,8 @@ void HutRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector3
         material_->SetUniformFloat("uSeconds",std::isfinite(seconds)?seconds:0.0f);
         material_->SetUniformVec2("uHangTop",fishBarY_,netRailY_);
         material_->SetUniformFloat("uWetness",weather_now::Current().wetness);
+        material_->SetUniformVec3("uToSun",sun_light::UniformDirection().x,sun_light::UniformDirection().y,
+            sun_light::UniformDirection().z);
         if(sunShadow_) sunShadow_->Bind(*material_);
         else SunShadowMap::BindDisabled(*material_);
     } else {
