@@ -33,6 +33,9 @@ namespace island
     namespace
     {
         constexpr float NearLodDistance = 255.0f;
+        // Past this a bird is a few pixels long: six sides round the body and head, no eyes
+        // and no feet (sixteen sides and every detail out to 255 m was the birds' pass cost).
+        constexpr float DetailLodDistance = 35.0f;
         constexpr int MaximumVerticesPerBird = 1986;
         constexpr int MaximumVertexCount = static_cast<int>(BirdFlock::BirdCount)
             * MaximumVerticesPerBird;
@@ -275,9 +278,9 @@ namespace island
                             const Vector3& centre,const Vector3& right,
                             const Vector3& up,const Vector3& forward,const float scale,
                             const BirdPalette& palette,const BirdSpecies species,
-                            const float ruffle=0.0f)
+                            const float ruffle=0.0f,const int sides=16)
         {
-            constexpr int Sides=16;
+            const int Sides=sides;
             const bool dove=species==BirdSpecies::FruitDove;
             // Ruffled, the body's rings puff out by up to a fifth; the same vertices.
             const float puff=1.0f+.20f*std::clamp(ruffle,0.0f,1.0f);
@@ -328,9 +331,9 @@ namespace island
                             const Vector3& centre,const Vector3& right,
                             const Vector3& up,const Vector3& forward,const float scale,
                             const BirdPalette& palette, const BirdSpecies species,
-                            const Vector3& cameraPosition)
+                            const Vector3& cameraPosition, const bool coarse=false)
         {
-            constexpr int Sides=16;
+            const int Sides=coarse?6:16;
             const float headScale = species == BirdSpecies::Parrot ? .88f
                 : (species == BirdSpecies::FruitDove ? .82f : .90f);
             const bool parrot = species == BirdSpecies::Parrot;
@@ -345,7 +348,7 @@ namespace island
                 const Vector3 doveHead=LocalPoint(centre,right,up,forward,0,.042f,.415f,scale);
                 AppendEllipsoid(vertices,doveHead,right,up,forward,
                     .108f*scale,.126f*scale,.140f*scale,palette.head,
-                    wildlife_render::ScaleColor(palette.head,.90f),6,12);
+                    wildlife_render::ScaleColor(palette.head,.90f),coarse?4:6,coarse?6:12);
             } else {
                 // four rings, rounded crown to throat, shaded at the corners
                 struct HeadRing { float x, z, y, tilt; };
@@ -410,6 +413,7 @@ namespace island
                 addBeakTriangle(beakRoot[face],beakMiddle[next],beakRoot[next]);
                 addBeakTriangle(beakMiddle[face],beakTip,beakMiddle[next]);
             }
+            if(coarse) return;
             constexpr int EyeSides=6;
             const float eyeSide=Vector3::Dot(cameraPosition-centre,right)>=0.0f?1.0f:-1.0f;
             const float eyeX=eyeSide*(dove?.109f:.106f*headScale);
@@ -454,7 +458,8 @@ namespace island
         }
 
         void AppendNearBird(std::vector<VertexPositionColor>& vertices,
-                            const BirdState& bird,const Vector3& cameraPosition)
+                            const BirdState& bird,const Vector3& cameraPosition,
+                            const bool coarse=false)
         {
             const std::size_t startingVertexCount=vertices.size();
             const BirdPalette& palette = PaletteForBird(bird);
@@ -467,7 +472,8 @@ namespace island
             const Vector3 right = levelRight * bankCosine + Vector3::Up * bankSine;
             const Vector3 up = Vector3::Up * bankCosine - levelRight * bankSine;
             const float scale = bird.scale;
-            AppendNearBody(vertices,centre,right,up,forward,scale,palette,bird.species,bird.ruffleAmount);
+            AppendNearBody(vertices,centre,right,up,forward,scale,palette,bird.species,bird.ruffleAmount,
+                           coarse?6:16);
             // The walking dove's head thrusts forward and dips slightly with each step.
             // Preening, the head turns back over one shoulder (a hundred and twenty degrees)
             // and down into the wing, pivoting about the neck root.
@@ -482,7 +488,7 @@ namespace island
             const Vector3 headCentre = centre + forward * (bird.headBob * 0.055f * scale + pivotZ)
                 - headForward * pivotZ - up * (bird.headBob * 0.018f * scale);
             AppendNearHead(vertices,headCentre,turnedRight,headUp,headForward,scale,palette,bird.species,
-                           cameraPosition);
+                           cameraPosition,coarse);
 
             const float perch = std::clamp(bird.perchAmount, 0.0f, 1.0f);
             const bool groundDove = bird.behavior == BirdBehavior::GroundApproach
@@ -569,7 +575,7 @@ namespace island
                     wildlife_render::ScaleColor(palette.tail,.84f));
             }
 
-            if (perch > 0.35f) {
+            if (perch > 0.35f && !coarse) {
                 for (const float side : {-1.0f, 1.0f}) {
                     // Scratching, the one foot comes up past the wing to the head by the
                     // scratch amount; the same points either way.
@@ -616,7 +622,8 @@ namespace island
             expected+=384U;
             if(bird.species!=BirdSpecies::FruitDove)expected+=96U;
             if(!groundDove)expected+=144U;
-            if(vertices.size()-startingVertexCount!=expected) {
+            if(coarse?vertices.size()-startingVertexCount>expected
+                     :vertices.size()-startingVertexCount!=expected) {
                 throw std::runtime_error("Bird near mesh does not match its fixed vertex budget");
             }
         }
@@ -704,7 +711,8 @@ namespace island
                 continue;
             }
             if (distanceSquared <= NearLodDistance * NearLodDistance) {
-                AppendNearBird(stagingVertices_, bird, cameraPosition);
+                AppendNearBird(stagingVertices_, bird, cameraPosition,
+                               distanceSquared > DetailLodDistance * DetailLodDistance);
                 ++visibleNearBirdCount_;
             } else {
                 AppendFarBird(stagingVertices_, bird);

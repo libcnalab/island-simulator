@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 381 (2026-10-21) — birds past 35 m are built with six sides
+
+The birds' render pass cost the operator 0.7-1.7 ms a frame: every bird within 255 m was built as
+the near model, a sixteen-sided lofted body and four-ring head with eyes and perching feet (up to
+1,986 vertices, each placed and lit on the CPU), though past 35 m a bird is a few pixels long.
+Between 35 m and 255 m the near model now has six sides round the body and the head (the dove's
+head ellipsoid 4 x 6), no eyes and no feet; the wings, beak and tail are unchanged, and the
+two-triangle far silhouette still begins at 255 m. The near model's fixed vertex budget is checked
+as before; the coarse one must stay within it. In `birds` the near parrot is unchanged and a
+distant bird is the same 4 x 2 pixels; `bird-preen` differs only where the grass and rock passes
+since its last run did. The tests pass.
+
 ## Loop pass 380 (2026-10-21) — the shore test and the quad's grip stop evaluating the coastline
 
 A snake's body check measured 21.6 us, two thirds of it in IslandTerrain::SignedShoreDistance
