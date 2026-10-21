@@ -233,6 +233,11 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+(Tried after pass 312 and dropped: the headlight beams drawn as soft cones in hazy night air.
+From the chase camera a cone is seen end-on and from the side it mostly points at the eye, so
+even at 2.5 times the first strength it only brightened the haze a little ahead of the quad in
+`quad-drive` in night showers; not worth its drawing.)
+
 ## Loop pass 312 (2026-10-21) — the quad's brake light
 
 A real ATV's tail lamp brightens when the brakes go on. The quad now shows it: while the rider
