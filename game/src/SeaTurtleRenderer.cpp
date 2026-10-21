@@ -242,14 +242,17 @@ namespace island
                     dome[static_cast<std::size_t>(i)][c] = local(sPos * halfWidth, CarapaceHeight(u, sPos), z);
                 }
             }
-            const auto scuteColor = [&](const float u, const float sMid, const int row, const int column) {
+            // The scute's colour from its plate (sMid, uMid), its mottle from the corner's own
+            // place on the dome (u, s), so it runs smoothly across each plate: a mottle stepped per
+            // grid quad drew a checkerboard over the shell.
+            const auto scuteColor = [&](const float u, const float s, const float uMid, const float sMid) {
                 const Scute scute = ScuteAt(sMid);
-                const float broad = 0.95f + 0.070f * std::sin(u * 15.0f + sMid * 8.0f
+                const float broad = 0.95f + 0.070f * std::sin(u * 15.0f + s * 8.0f
                     + static_cast<float>(turtle.colorVariant) * 1.7f);
-                const float fine = 0.99f + 0.040f * std::sin(u * 37.0f - sMid * 21.0f
-                    + static_cast<float>((row + 3) * (column + 5)) * 0.17f);
+                const float fine = 0.99f + 0.040f * std::sin(u * 37.0f - s * 21.0f
+                    + std::sin(u * 11.0f + s * 13.0f) * 1.3f);
                 const float mottle = broad * fine;
-                const float rowTone = (ScuteRow(u) % 2 == 0) ? 1.0f : 0.985f;
+                const float rowTone = (ScuteRow(uMid) % 2 == 0) ? 1.0f : 0.985f;
                 if (scute == Scute::Vertebral)
                     return ToneColor(palette.scute, 1.025f * rowTone * mottle);
                 if (scute == Scute::Marginal)
@@ -257,15 +260,43 @@ namespace island
                 const bool inner = std::abs(sMid) < 0.52f;
                 return ToneColor(palette.shell, (inner ? 1.055f : 0.96f) * rowTone * mottle);
             };
+            // Each corner lit by the dome's own normal there (from its grid neighbours), so the
+            // shell shades smoothly instead of in flat facets.
+            std::array<std::array<Vector3, Columns + 1>, Rows + 1> domeNormal{};
+            for (int i = 0; i <= Rows; ++i) {
+                for (int column = 0; column <= Columns; ++column) {
+                    const auto r = static_cast<std::size_t>(i), c = static_cast<std::size_t>(column);
+                    const auto rPrev = static_cast<std::size_t>(std::max(i - 1, 0));
+                    const auto rNext = static_cast<std::size_t>(std::min(i + 1, Rows));
+                    const auto cPrev = static_cast<std::size_t>(std::max(column - 1, 0));
+                    const auto cNext = static_cast<std::size_t>(std::min(column + 1, Columns));
+                    Vector3 normal = Vector3::Cross(dome[rNext][c] - dome[rPrev][c], dome[r][cNext] - dome[r][cPrev]);
+                    if (Vector3::Dot(normal, dome[r][c] - bodyInside) < 0.0f) normal = -normal;
+                    domeNormal[r][c] = normal.LengthSquared() > 1.0e-12f ? Vector3::Normalize(normal) : axes.up;
+                }
+            }
+            const Vector3 sheenHalf = Vector3::Normalize(wildlife_render::FixedSunDirection + Vector3::Up);
+            const auto shellCorner = [&](const std::size_t r, const std::size_t c, const float uMid, const float sMid) {
+                const Vector3& n = domeNormal[r][c];
+                const float light = 0.72f + std::max(0.0f, Vector3::Dot(n, wildlife_render::FixedSunDirection)) * 0.30f
+                    + std::max(0.0f, n.Y) * 0.06f;
+                // the wet carapace's narrow glossy lobe toward the sun
+                const float gloss = 1.0f + 0.35f * std::pow(std::max(0.0f, Vector3::Dot(n, sheenHalf)), 12.0f);
+                return VertexPositionColor(dome[r][c], wildlife_render::ScaleColor(
+                    scuteColor(stations[r], columns[c], uMid, sMid), light * gloss));
+            };
             for (int row = 0; row < Rows; ++row) {
                 const float u = 0.5f * (stations[static_cast<std::size_t>(row)] + stations[static_cast<std::size_t>(row + 1)]);
                 for (int column = 0; column < Columns; ++column) {
                     const auto c0 = static_cast<std::size_t>(column), c1 = c0 + 1U;
                     const auto r0 = static_cast<std::size_t>(row), r1 = r0 + 1U;
                     const float sMid = 0.5f * (columns[c0] + columns[c1]);
-                    const Color color = scuteColor(u, sMid, row, column);
-                    AddOutwardTriangle(vertices, dome[r0][c0], dome[r1][c0], dome[r1][c1], color, bodyInside, 0.35f);
-                    AddOutwardTriangle(vertices, dome[r0][c0], dome[r1][c1], dome[r0][c1], color, bodyInside, 0.35f);
+                    vertices.push_back(shellCorner(r0, c0, u, sMid));
+                    vertices.push_back(shellCorner(r1, c0, u, sMid));
+                    vertices.push_back(shellCorner(r1, c1, u, sMid));
+                    vertices.push_back(shellCorner(r0, c0, u, sMid));
+                    vertices.push_back(shellCorner(r1, c1, u, sMid));
+                    vertices.push_back(shellCorner(r0, c1, u, sMid));
                 }
             }
             const Vector3 rearPoint = local(0.0f, CarapaceRimY + 0.012f, LengthToZ(-1.0f) - 0.01f);

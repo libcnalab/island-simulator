@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 335 (2026-10-21) — a smooth turtle shell
+
+Close up the sea turtle's carapace read as a checkerboard: every triangle of its 20-by-16 dome
+was lit flat by its own facet normal, and the scute mottle stepped per grid quad. Each dome corner
+is now lit by the dome's own normal there (from its grid neighbours, the same light terms and wet
+gloss as before) and takes its mottle from its own place on the shell, while each quad keeps its
+plate's colour (vertebral, costal or marginal) and the seam strips still draw the plates'
+outlines: the shell shades smoothly with soft mottling over each plate. The triangles and the
+fixed vertex budget are unchanged. Pass 334's `fish` and `dolphins` Chrome scopes passed on its
+Web build (the underwater surface, sky and fog under GLSL ES). `turtles` (also at 21:30),
+`turtle-nest` and the tests pass.
+
 ## Loop pass 334 (2026-10-21) — Snell's window, and the surface seen from below
 
 With pass 333's haze the far seabed faded, but above it the sea surface seen from below stayed

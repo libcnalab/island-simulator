@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 335: turtle carapace lit per corner (smooth), mottle per corner; no checkerboard (PLAN "Loop pass 335").
 - Pass 334: Snell's window: ocean surface from below mirrors the water outside 48°, sky takes the water colour outside the window; fog 0.06/m; `underwater-scene` validation profile for fish/reef-habitat/dolphins (PLAN "Loop pass 334").
 - Pass 333: underwater distance fog (UnderwaterFog.hpp): terrain/seagrass/props shaders + sea-fauna BasicEffects, ramped over the first 0.8 m of depth (PLAN "Loop pass 333").
 - Pass 332: wrack line thin, clumped, brown strands instead of near-black wedges (PLAN "Loop pass 332").
