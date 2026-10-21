@@ -6014,6 +6014,7 @@ namespace island
                 if (deerRenderer_) allEyes_.insert(allEyes_.end(), deerRenderer_->Eyes().begin(), deerRenderer_->Eyes().end());
                 if (goatRenderer_) allEyes_.insert(allEyes_.end(), goatRenderer_->Eyes().begin(), goatRenderer_->Eyes().end());
                 if (boarRenderer_) allEyes_.insert(allEyes_.end(), boarRenderer_->Eyes().begin(), boarRenderer_->Eyes().end());
+                if (crocodileRenderer_) allEyes_.insert(allEyes_.end(), crocodileRenderer_->Eyes().begin(), crocodileRenderer_->Eyes().end());
                 const BikeVec l = quad_.ToWorld(QuadBikeRenderer::HeadlightLeft), r = quad_.ToWorld(QuadBikeRenderer::HeadlightRight);
                 const BikeVec f = quad_.Forward(), u = quad_.Up();
                 eyeshineRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, allEyes_,

@@ -1,4 +1,6 @@
 #pragma once
+#include "IslandSimulator/EyeshineRenderer.hpp"
+#include <span>
 
 #include <memory>
 #include <span>
@@ -36,6 +38,8 @@ namespace island
                   std::span<const CrocodileState> crocodiles);
 
         [[nodiscard]] int VisibleCount() const noexcept { return visibleCount_; }
+        /** The near crocodiles' open eyes as drawn this frame (for the eyeshine). */
+        [[nodiscard]] std::span<const EyeGlint> Eyes() const noexcept { return eyes_; }
         [[nodiscard]] int VisibleNearCount() const noexcept { return visibleNearCount_; }
         [[nodiscard]] int VisibleFarCount() const noexcept { return visibleFarCount_; }
         [[nodiscard]] int DrawCallCount() const noexcept { return drawCallCount_; }
@@ -50,5 +54,6 @@ namespace island
         int visibleFarCount_ = 0;
         int drawCallCount_ = 0;
         float maximumDistance_ = 220.0f;
+        std::vector<EyeGlint> eyes_;
     };
 }

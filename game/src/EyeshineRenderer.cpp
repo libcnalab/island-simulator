@@ -34,7 +34,7 @@ namespace island
         effect_->setVertexColorEnabledProperty(true);
         effect_->setLightingEnabledProperty(false);
         effect_->setFogEnabledProperty(false);
-        const char* message = "island-simulator: at night the eyes of deer, goats and boars shine back in the quad's headlights";
+        const char* message = "island-simulator: at night the eyes of deer, goats, boars and crocodiles shine back in the quad's headlights";
         std::cout << message << '\n';
         MirrorRuntimeDiagnosticToPlatformLog(message);
     }

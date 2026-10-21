@@ -233,6 +233,14 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 311 (2026-10-21) — the crocodiles' red eyeshine
+
+The best-known eyeshine of all, the crocodile's red glow in a torch beam on dark water, joins
+pass 310: the crocodile renderer records each near crocodile's open eye (its iris, only while
+the lid is up, not mid-blink), and the quad's beam makes it glow a strong red-orange. A probe
+lighting the eyes from a lamp at the camera in `crocodiles` at 21:30 put the glint on the eye;
+`crocodiles` by day and the tests pass.
+
 ## Loop pass 310 (2026-10-21) — eyeshine in the quad's headlights
 
 Riding the quad at night, an animal's eyes should shine back out of the dark: the reflecting

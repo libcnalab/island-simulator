@@ -208,7 +208,8 @@ namespace island
         }
 
         void AppendNearCrocodile(std::vector<VertexPositionColor>& vertices,
-                                 const CrocodileState& crocodile)
+                                 const CrocodileState& crocodile,
+                                 std::vector<EyeGlint>* eyes=nullptr)
         {
             const std::size_t firstVertex=vertices.size();
             const Palette& palette=Palettes[crocodile.colorVariant%Palettes.size()];
@@ -309,6 +310,8 @@ namespace island
                 // Embedding the thin axis into the socket also removes the old
                 // stalk-eyed toy silhouette in broadside views.
                 const Vector3 iris=eye+axes.right*(side*.092f*scale)+axes.up*.006f*scale;
+                // a crocodile's eyeshine is a strong red-orange, the famous glow in a torch beam
+                if(eyes&&blink<0.5f) eyes->push_back({iris,Vector3(1.0f,0.32f,0.12f)});
                 AppendEllipsoid(vertices,iris,axes,scale,.018f,.036f*(1.0f-.9f*blink),.038f,
                                 palette.eye,palette.eye,3,8);
                 const Vector3 pupil=iris+axes.right*(side*.017f*scale);
@@ -457,7 +460,7 @@ namespace island
                                   const Vector3& cameraPosition,
                                   const std::span<const CrocodileState> crocodiles)
     {
-        stagingVertices_.clear();visibleCount_=visibleNearCount_=visibleFarCount_=drawCallCount_=0;
+        stagingVertices_.clear();visibleCount_=visibleNearCount_=visibleFarCount_=drawCallCount_=0;eyes_.clear();
         const BoundingFrustum frustum(view*projection);
         for(const CrocodileState& crocodile:crocodiles) {
             const Vector3 centre(crocodile.x,crocodile.y+.35f*crocodile.scale,crocodile.z);
@@ -466,7 +469,7 @@ namespace island
                ||!frustum.Intersects(BoundingSphere(centre,4.3f*crocodile.scale)))continue;
             const std::size_t first=stagingVertices_.size();
             if(distanceSquared<=NearLodDistance*NearLodDistance) {
-                AppendNearCrocodile(stagingVertices_,crocodile);++visibleNearCount_;
+                AppendNearCrocodile(stagingVertices_,crocodile,&eyes_);++visibleNearCount_;
             } else {AppendFarCrocodile(stagingVertices_,crocodile);++visibleFarCount_;}
             if(stagingVertices_.size()-first>MaximumVerticesPerCrocodile)
                 throw std::logic_error("One crocodile exceeded its vertex budget");
