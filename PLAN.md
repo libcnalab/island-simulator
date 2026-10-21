@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 354 (2026-10-21) — the monkey close-up is framed in the clear; sweep after 342-353
+
+The `monkeys` QA camera stood at one fixed spot 1.2 m off the subject's shoulder, and a ground
+plant's broad leaf crossed half the frame in front of the monkey. Of six places on the same open
+side (three along, two out) it now takes the first that sees the body and head half a metre clear
+of the ground plants, understory, bushes and trunks (`QaSightClearance`), else the clearest; the
+original spot wins whenever it is clear. A full capture sweep after passes 342-353 passed 116 of
+117 viewpoints (`canopy` needs `--canopy-lod-inspection`). `monkeys` and the tests pass.
+
 ## Loop pass 353 (2026-10-21) — a bird's spread wing is a cambered, bent blade
 
 Close past the eye (`birds`) a flying parrot's wings were flat slabs 2.8 cm thick: level with

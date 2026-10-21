@@ -1576,9 +1576,22 @@ namespace island
             } else if (viewpoint_ == FixedViewpoint::MonkeyDetail) {
                 // View across the shoulder from the open side of the deterministic route.
                 // This exposes the face and the full quadrupedal silhouette without putting
-                // the camera between the subject and its selected tree.
-                cameraPosition_ = Vector3(monkey.x, monkey.y, monkey.z)
-                    + forward * 0.35f + side * 1.15f + Vector3::Up * 0.94f;
+                // the camera between the subject and its selected tree. Of a few such places
+                // the first that sees the body and head half a metre clear of the ground plants
+                // (a broad leaf once crossed half the frame in front of it), else the clearest.
+                const Vector3 base(monkey.x, monkey.y, monkey.z);
+                const Vector3 target = base + Vector3::Up * 0.82f;
+                const Vector3 head = base + forward * 0.45f + Vector3::Up * 0.75f;
+                float best = -1.0e6f;
+                for (const float along : {0.35f, 0.0f, 0.75f}) {
+                    for (const float out : {1.15f, 1.5f}) {
+                        const Vector3 eye = base + forward * along + side * out + Vector3::Up * 0.94f;
+                        const float clear = std::min(QaSightClearance(eye, target), QaSightClearance(eye, head));
+                        const float score = std::min(clear, 0.5f)
+                            - 0.05f * std::abs(along - 0.35f) - 0.04f * (out - 1.15f);
+                        if (score > best) { best = score; cameraPosition_ = eye; }
+                    }
+                }
             } else {
                 cameraPosition_ = Vector3(monkey.x, monkey.y, monkey.z)
                     + forward * 0.6f - side * 2.1f + Vector3::Up * 1.10f;
