@@ -270,7 +270,9 @@ namespace island
                 normal.Normalize();
                 const float direct = std::max(0.0f, Vector3::Dot(normal, wildlife_render::FixedSunDirection));
                 const float sky = std::max(0.0f, normal.Y);
-                float light = .80f + .30f * direct + .08f * sky + shading.gloss * std::pow(sky, 8.0f);
+                // centred on the unlit legs, wings and heads beside it: a cicada on a trunk, its
+                // back turned from the sun, went darker than its own wings at .80
+                float light = .90f + .24f * direct + .06f * sky + shading.gloss * std::pow(sky, 8.0f);
                 light *= 1.0f + shading.grizzle * std::sin(static_cast<float>(station) * 3.7f
                     + static_cast<float>(index) * 2.3f + shading.seed * 1.31f);
                 if (station % 2U == 1U) light *= 1.0f + shading.banding;

@@ -240,8 +240,10 @@ the beetles and cicadas) were three flat colours by facet angle like the rodents
 rodents' per-corner lighting is now one shared `AppendShadedLoft`: each corner lit at its ring's
 elliptical normal by the day's sun, the colour graded spine to flank to belly, with optional fur
 grizzle (rodents), a sky gloss on the crown (a little for the moist frog and lizard skins, more
-for the beetles' hard shells) and alternate-segment banding (beetles). `geckos`, `skinks`,
-`frogs`, `beetles`, `mice`, `rats` and the tests pass.
+for the beetles' hard shells) and alternate-segment banding (beetles). The light is centred on
+the unlit legs, wings and heads beside the lofts (0.90 + 0.24 direct + 0.06 sky): at 0.80 a
+cicada on a trunk, its back turned from the sun, went darker than its own wings. `geckos`,
+`skinks`, `frogs`, `beetles`, `cicadas`, `ants`, `mice`, `rats` and the tests pass.
 
 ## Loop pass 361 (2026-10-21) — the mice and rats are lit and rounded, not three flat bands
 
