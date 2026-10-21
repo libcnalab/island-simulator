@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 323: cave mouth terrain: bare steep shoulders get soil instead of the raw green palette, ragged rock apron edges (PLAN "Loop pass 323"). Open: steep non-rock faces elsewhere (summit, stream banks) still show the vertex palette.
 - Pass 322: the cascade spray mist thinned (density, growth, near-eye fade); the haze over the stream bank is gone (PLAN "Loop pass 322").
 - Pass 321: lobed tide-pool basins; the pool water fades by its depth to the true waterline (PLAN "Loop pass 321").
 - Pass 320: the ocean colour carriers get their own footprint filter and a 30-90 m reach; the far-sea checkerboard is gone (a first, looser filter only weakened it; PLAN "Loop pass 320").

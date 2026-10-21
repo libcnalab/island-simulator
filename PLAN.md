@@ -233,6 +233,23 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 323 (2026-10-21) — the cave mouth loses its green glow and grey haze
+
+Round the cave mouth (`cave`, `cave-top`) the hillside wore a translucent-looking grey skirt and
+soft, glowing green smears. Mask probes (painting the cave's masks, then everything outside them,
+in flat colours) showed the green to be terrain the cave paint never reached: the replacement
+patch's steep shoulders are too steep for the turf undercoat and too low for the ridge rock, so
+they kept the raw green vertex palette, and the mantle's height gate (meant to keep the turf off
+the tunnel floor) also left out the hillside in front of and beside the portal, which falls below
+the floor's height. Within the cave's surroundings those bare steep faces now get soil with a
+little dry turf (plain turf at full light still glowed beside the litter-darkened field), and the
+height gate applies only directly over the tunnel. The grey was the portal apron's stone, blended
+in over a metre-wide airbrushed fade; it now ends in ragged, hand-wide edges driven by metre-scale
+noise (the broad fields alone drew two straight-edged rectangles from above), so the shoulders
+read as weathered rock outcrops. Steep non-rock faces elsewhere (the summit, the stream's banks, a
+hillside by the stream) keep the vertex palette for now. `cave`, `cave-top`, `cave-inside`,
+`cave-back`, `overview` and the tests pass.
+
 ## Loop pass 322 (2026-10-21) — the cascade's spray is a thin mist, not a fog
 
 In `stream` a large pale-green haze lay over the bank beside the water near the eye. Probes

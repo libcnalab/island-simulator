@@ -1142,10 +1142,15 @@ void main()
     // trench from above instead of ordinary soil continuing over a hillside opening.
     float caveAxis=abs(caveAcross-.22*sin(caveDepth*.31));
     float apronNoise=broad*.72+medium*.35;
-    float caveApron=smoothstep(-5.5,-2.0,caveDepth)
-        *(1.0-smoothstep(1.8,5.2,caveDepth))
-        *smoothstep(caveWidth-.30+apronNoise*.22,caveWidth+.72+apronNoise*.22,caveAxis)
-        *(1.0-smoothstep(6.1+apronNoise*.55,7.45+apronNoise*.55,caveAxis));
+    // Exposed rock ends in broken edges a hand wide, not a metre-wide airbrushed fade, so
+    // the shoulders read as weathered stone rather than a grey haze over the turf.
+    // The edge noise is metre-scale, finer than the broad fields, or the outline runs straight.
+    float apronEdge=valueNoise(vWorld.xz*.85+vec2(3.1,-7.4))*.70
+        +valueNoise(vWorld.xz*2.3+vec2(-5.2,1.9))*.30;
+    float caveApron=smoothstep(-4.4+apronEdge*2.4,-4.0+apronEdge*2.4,caveDepth)
+        *(1.0-smoothstep(3.0+apronEdge*2.2,3.4+apronEdge*2.2,caveDepth))
+        *smoothstep(caveWidth-.10+apronEdge*.50,caveWidth+.15+apronEdge*.50,caveAxis)
+        *(1.0-smoothstep(6.0+apronEdge*2.0,6.3+apronEdge*2.0,caveAxis));
     vec3 apronStone=mix(vec3(.265,.27,.245),vec3(.405,.37,.30),
         clamp(caveGrain*.72+.18+medium*.18,0.0,1.0))*vGroundLight;
     // The buried shell and its soil bank are one hillside.  Bright biome rails on the
@@ -1170,7 +1175,19 @@ void main()
     const vec3 mantleLuminance=vec3(0.30,0.55,0.15);
     vec3 mantleTurf=mix(dot(color,mantleLuminance)*turf/max(dot(turf,mantleLuminance),0.0001),
         turf*vGroundLight,0.35)*(.86+.26*caveGrain);
-    color=mix(color,mix(mantleTurf,shoulderEarth,earthExposure),caveMantle*.72);
+    // The replacement mesh's steep shoulders round the portal are too steep for the turf
+    // undercoat and too low for the ridge rock, so they kept the raw green vertex palette and
+    // glowed through the mantle. A cut shoulder shows soil with a little dry turf on it
+    // (plain turf at full light still glowed beside the litter-darkened field).
+    // (kept clear of the cave floor itself, over the tunnel; in front of the portal and to its
+    // sides the hillside falls below the floor's height)
+    float overTunnel=smoothstep(-1.0,.5,caveDepth)*(1.0-smoothstep(caveWidth+.3,caveWidth+1.2,caveAxis));
+    float caveVicinity=smoothstep(-16.0,-12.0,caveDepth)*(1.0-smoothstep(20.0,24.0,caveDepth))
+        *(1.0-smoothstep(12.0,15.0,caveAxis))
+        *mix(1.0,smoothstep(.55,1.25,vWorld.y-caveFloorHeight),overTunnel);
+    float bareShoulder=steep*caveVicinity;
+    mantleTurf=mix(mantleTurf,mix(shoulderEarth,turf*vGroundLight*.78,.38)*(.90+.20*caveGrain),bareShoulder);
+    color=mix(color,mix(mantleTurf,shoulderEarth,earthExposure),max(caveMantle*.72,bareShoulder*.92));
     color=mix(color,apronStone,caveApron*.86);
     color=mix(color,caveStone,caveFloor);
     color=mix(color,closureStone,caveClosure);
