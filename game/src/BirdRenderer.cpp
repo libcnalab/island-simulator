@@ -33,7 +33,7 @@ namespace island
     namespace
     {
         constexpr float NearLodDistance = 255.0f;
-        constexpr int MaximumVerticesPerBird = 1602;
+        constexpr int MaximumVerticesPerBird = 1986;
         constexpr int MaximumVertexCount = static_cast<int>(BirdFlock::BirdCount)
             * MaximumVerticesPerBird;
         constexpr std::string_view NearBirdFeatherDiagnostic =
@@ -122,6 +122,18 @@ namespace island
             AddTriangle(vertices, c, b, a, color);
         }
 
+        [[nodiscard]] Color Lit(const Color& base,const Vector3& normal)
+        {
+            const float light=.62f+.30f*std::max(0.0f,
+                Vector3::Dot(normal,wildlife_render::FixedSunDirection))
+                +.08f*std::max(0.0f,normal.Y);
+            const auto channel=[light](int value) {
+                return static_cast<int>(std::clamp(std::lround(value*light),0L,255L));
+            };
+            return Color(channel(base.getRProperty()),channel(base.getGProperty()),
+                channel(base.getBProperty()),static_cast<int>(base.getAProperty()));
+        }
+
         void AppendEllipsoid(std::vector<VertexPositionColor>& vertices,
                              const Vector3& centre,const Vector3& right,
                              const Vector3& up,const Vector3& forward,
@@ -141,13 +153,20 @@ namespace island
                             +up*(std::sin(v)*radiusY)
                             +forward*(std::cos(v)*std::sin(u)*radiusZ);
                     };
-                    const Vector3 a=point(u0,v0),b=point(u0,v1);
-                    const Vector3 c=point(u1,v1),d=point(u1,v0);
-                    const Color base=(v0+v1)*.5f>0.0f?upper:lower;
-                    AddTriangle(vertices,a,b,c,
-                        wildlife_render::FacetColor(a,b,c,base,true));
-                    AddTriangle(vertices,a,c,d,
-                        wildlife_render::FacetColor(a,c,d,base,true));
+                    // shaded at each corner from the surface's own normal, the upper colour
+                    // blending into the lower round the middle: no facets
+                    const auto shade=[&](const float u,const float v) {
+                        Vector3 normal=right*(std::cos(v)*std::cos(u)/radiusX)+up*(std::sin(v)/radiusY)
+                            +forward*(std::cos(v)*std::sin(u)/radiusZ);
+                        if(normal.LengthSquared()>1e-10f) normal.Normalize(); else normal=up;
+                        return Lit(Color::Lerp(lower,upper,std::clamp(.5f+std::sin(v)*1.6f,0.0f,1.0f)),normal);
+                    };
+                    vertices.emplace_back(point(u0,v0),shade(u0,v0));
+                    vertices.emplace_back(point(u0,v1),shade(u0,v1));
+                    vertices.emplace_back(point(u1,v1),shade(u1,v1));
+                    vertices.emplace_back(point(u0,v0),shade(u0,v0));
+                    vertices.emplace_back(point(u1,v1),shade(u1,v1));
+                    vertices.emplace_back(point(u1,v0),shade(u1,v0));
                 }
             }
         }
@@ -207,18 +226,6 @@ namespace island
             }
         }
 
-        [[nodiscard]] Color Lit(const Color& base,const Vector3& normal)
-        {
-            const float light=.62f+.30f*std::max(0.0f,
-                Vector3::Dot(normal,wildlife_render::FixedSunDirection))
-                +.08f*std::max(0.0f,normal.Y);
-            const auto channel=[light](int value) {
-                return static_cast<int>(std::clamp(std::lround(value*light),0L,255L));
-            };
-            return Color(channel(base.getRProperty()),channel(base.getGProperty()),
-                channel(base.getBProperty()),static_cast<int>(base.getAProperty()));
-        }
-
         [[nodiscard]] Vector3 LocalPoint(const Vector3& centre, const Vector3& right,
                                          const Vector3& up, const Vector3& forward,
                                          const float localX,
@@ -243,30 +250,42 @@ namespace island
                 dove?-.45f:-.49f,scale);
             const Vector3 neck=LocalPoint(centre,right,up,forward,0,dove?.030f:.015f,
                 dove?.365f:.34f,scale);
-            const auto ring=[&](float angle,float xRadius,float yRadius,float z) {
-                return LocalPoint(centre,right,up,forward,std::cos(angle)*xRadius*puff,
-                    std::sin(angle)*yRadius*puff,z,scale);
+            // A smooth spindle from the tail root to the neck, shaded at its corners: the old
+            // three rings read as a cut diamond, each facet one flat colour.
+            struct Section { float z, halfWidth, halfHeight; };
+            constexpr std::array<Section,7> Sections{{
+                {-.42f,.045f,.040f},{-.33f,.100f,.088f},{-.20f,.155f,.132f},{-.04f,.190f,.160f},
+                {.12f,.178f,.150f},{.24f,.138f,.122f},{.31f,.088f,.082f}}};
+            const float wide=dove?1.17f:1.0f,tall=dove?1.12f:1.0f;
+            const auto corner=[&](const std::size_t section,const int side) {
+                const float angle=6.28318530718f*static_cast<float>(side)/Sides;
+                const auto& at=Sections[section];
+                return LocalPoint(centre,right,up,forward,std::cos(angle)*at.halfWidth*wide*puff,
+                    std::sin(angle)*at.halfHeight*tall*puff,at.z,scale);
             };
+            const auto shade=[&](const int side) {
+                const float angle=6.28318530718f*static_cast<float>(side)/Sides;
+                const Vector3 normal=Vector3::Normalize(right*std::cos(angle)+up*std::sin(angle));
+                return Lit(Color::Lerp(palette.lowerWing,palette.body,
+                    std::clamp((std::sin(angle)+.35f)/.45f,0.0f,1.0f)),normal);
+            };
+            const Color tailColor=Lit(palette.body,-forward),neckColor=Lit(palette.body,forward);
             for(int side=0;side<Sides;++side) {
-                const float a0=6.28318530718f*static_cast<float>(side)/Sides;
-                const float a1=6.28318530718f*static_cast<float>(side+1)/Sides;
-                const Vector3 rear0=ring(a0,dove?.15f:.12f,dove?.13f:.105f,-.31f);
-                const Vector3 rear1=ring(a1,dove?.15f:.12f,dove?.13f:.105f,-.31f);
-                const Vector3 middle0=ring(a0,dove?.22f:.19f,dove?.18f:.16f,-.02f);
-                const Vector3 middle1=ring(a1,dove?.22f:.19f,dove?.18f:.16f,-.02f);
-                const Vector3 front0=ring(a0,dove?.15f:.115f,dove?.14f:.105f,.27f);
-                const Vector3 front1=ring(a1,dove?.15f:.115f,dove?.14f:.105f,.27f);
-                const float middleAngle=(a0+a1)*.5f;
-                const Vector3 normal=Vector3::Normalize(
-                    right*std::cos(middleAngle)+up*std::sin(middleAngle));
-                const Color color=Lit(std::sin(middleAngle)<-.05f
-                    ?palette.lowerWing:palette.body,normal);
-                AddTriangle(vertices,tail,rear1,rear0,color);
-                AddTriangle(vertices,rear0,rear1,middle1,color);
-                AddTriangle(vertices,rear0,middle1,middle0,color);
-                AddTriangle(vertices,middle0,middle1,front1,color);
-                AddTriangle(vertices,middle0,front1,front0,color);
-                AddTriangle(vertices,neck,front0,front1,color);
+                const int next=side+1;
+                vertices.emplace_back(tail,tailColor);
+                vertices.emplace_back(corner(0,next),shade(next));
+                vertices.emplace_back(corner(0,side),shade(side));
+                for(std::size_t section=0;section+1<Sections.size();++section) {
+                    vertices.emplace_back(corner(section,side),shade(side));
+                    vertices.emplace_back(corner(section,next),shade(next));
+                    vertices.emplace_back(corner(section+1,next),shade(next));
+                    vertices.emplace_back(corner(section,side),shade(side));
+                    vertices.emplace_back(corner(section+1,next),shade(next));
+                    vertices.emplace_back(corner(section+1,side),shade(side));
+                }
+                vertices.emplace_back(neck,neckColor);
+                vertices.emplace_back(corner(Sections.size()-1,side),shade(side));
+                vertices.emplace_back(corner(Sections.size()-1,next),shade(next));
             }
         }
 
@@ -293,22 +312,37 @@ namespace island
                     .108f*scale,.126f*scale,.140f*scale,palette.head,
                     wildlife_render::ScaleColor(palette.head,.90f),6,12);
             } else {
+                // four rings, rounded crown to throat, shaded at the corners
+                struct HeadRing { float x, z, y, tilt; };
+                constexpr std::array<HeadRing,4> HeadRings{{
+                    {.072f,.085f,.142f,.62f},{.114f,.134f,.088f,.25f},{.124f,.144f,.022f,-.10f},
+                    {.088f,.104f,-.038f,-.55f}}};
+                const auto at=[&](const std::size_t r,const int side) {
+                    const float angle=6.28318530718f*static_cast<float>(side)/Sides;
+                    return ring(angle,HeadRings[r].x,HeadRings[r].z,HeadRings[r].y);
+                };
+                const auto shade=[&](const std::size_t r,const int side) {
+                    const float angle=6.28318530718f*static_cast<float>(side)/Sides;
+                    return Lit(palette.head,Vector3::Normalize(right*std::cos(angle)+forward*std::sin(angle)
+                        +up*HeadRings[r].tilt));
+                };
+                const Color topColor=Lit(palette.head,up),bottomColor=Lit(palette.head,-up);
                 for(int side=0;side<Sides;++side) {
-                    const float a0=6.28318530718f*static_cast<float>(side)/Sides;
-                    const float a1=6.28318530718f*static_cast<float>(side+1)/Sides;
-                    const Vector3 upper0=ring(a0,.098f,.115f,.112f),upper1=ring(a1,.098f,.115f,.112f);
-                    const Vector3 middle0=ring(a0,.125f,.145f,.040f),middle1=ring(a1,.125f,.145f,.040f);
-                    const Vector3 lower0=ring(a0,.100f,.112f,-.025f),lower1=ring(a1,.100f,.112f,-.025f);
-                    const float middleAngle=(a0+a1)*.5f;
-                    const Vector3 normal=Vector3::Normalize(
-                        right*std::cos(middleAngle)+forward*std::sin(middleAngle));
-                    const Color color=Lit(palette.head,normal);
-                    AddTriangle(vertices,top,upper0,upper1,color);
-                    AddTriangle(vertices,upper0,middle0,middle1,color);
-                    AddTriangle(vertices,upper0,middle1,upper1,color);
-                    AddTriangle(vertices,middle0,lower0,lower1,color);
-                    AddTriangle(vertices,middle0,lower1,middle1,color);
-                    AddTriangle(vertices,bottom,lower1,lower0,color);
+                    const int next=side+1;
+                    vertices.emplace_back(top,topColor);
+                    vertices.emplace_back(at(0,side),shade(0,side));
+                    vertices.emplace_back(at(0,next),shade(0,next));
+                    for(std::size_t r=0;r+1<HeadRings.size();++r) {
+                        vertices.emplace_back(at(r,side),shade(r,side));
+                        vertices.emplace_back(at(r+1,side),shade(r+1,side));
+                        vertices.emplace_back(at(r+1,next),shade(r+1,next));
+                        vertices.emplace_back(at(r,side),shade(r,side));
+                        vertices.emplace_back(at(r+1,next),shade(r+1,next));
+                        vertices.emplace_back(at(r,next),shade(r,next));
+                    }
+                    vertices.emplace_back(bottom,bottomColor);
+                    vertices.emplace_back(at(HeadRings.size()-1,next),shade(HeadRings.size()-1,next));
+                    vertices.emplace_back(at(HeadRings.size()-1,side),shade(HeadRings.size()-1,side));
                 }
             }
             const float beakWidth = parrot ? .046f : (dove ? .026f : .038f);
@@ -457,8 +491,15 @@ namespace island
                 const Vector3 innerTrailing=LocalPoint(centre,right,up,forward,
                     side*std::lerp(.25f,.11f,sidePerch),wingLift*.20f-.010f,
                     std::lerp(-.34f,-.43f,sidePerch),scale);
-                const std::array<Vector3,6> wingOutline{
-                    front,elbow,tip,outerTrailing,innerTrailing,back};
+                // Spread, the outer trailing edge splits into three primaries, the feather tips
+                // standing out behind the notches between them; folded they close up.
+                const float spread=1.0f-sidePerch;
+                const auto edge=[&](const float t,const float out) {
+                    return Vector3::Lerp(tip,outerTrailing,t)-forward*(out*spread*scale);
+                };
+                const std::array<Vector3,12> wingOutline{
+                    front,elbow,tip,edge(.14f,-.018f),edge(.26f,.060f),edge(.40f,-.012f),
+                    edge(.52f,.050f),edge(.66f,-.008f),edge(.78f,.036f),outerTrailing,innerTrailing,back};
                 AppendClosedSurface(vertices,wingOutline,up*(.014f*scale),
                                     palette.upperWing,palette.lowerWing);
             }
@@ -521,6 +562,11 @@ namespace island
                 expected+=360U;
                 if(perch>0.35f)expected+=216U;
             }
+            // the seven-ring body (+384), the four-ring head (+96, not the doves' ellipsoid),
+            // and the notched wings (+144, not the ground doves' folded ellipsoids)
+            expected+=384U;
+            if(bird.species!=BirdSpecies::FruitDove)expected+=96U;
+            if(!groundDove)expected+=144U;
             if(vertices.size()-startingVertexCount!=expected) {
                 throw std::runtime_error("Bird near mesh does not match its fixed vertex budget");
             }

@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 327: birds get smooth-shaded seven-ring bodies, four-ring heads and split primaries (PLAN "Loop pass 327").
 - Pass 326: coconut fronds of 34 long hanging leaflets a side, widened to about a pixel at distance in the shader (PLAN "Loop pass 326").
 - Pass 325: steep vegetated banks take the turf hue instead of the bare green vertex palette (closes pass 323's open item; PLAN "Loop pass 325").
 - Pass 324: deer coats carry the shared goat strand texture (mirrored, per-part UVs); deer now 2 draws (PLAN "Loop pass 324").

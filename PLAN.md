@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 327 (2026-10-21) — smooth birds with split primaries
+
+Close up the birds were the crudest animals left: the body a three-ring loft that read as a cut
+diamond, the head three rings, every facet one flat colour, and the wings plain plates. The body
+is now a seven-ring spindle from the tail root to the neck, shaded at its corners from its own
+normal with the back colour blending into the belly round the flanks (the parrot's green into its
+yellow); the head four rings, crown to throat, shaded the same way; the ellipsoids (the doves'
+heads and the ground doves' folded wings) are corner-shaded too. Spread, the outer trailing edge
+of each wing splits into three primaries standing out behind the notches between them, closing up
+as the wing folds on a perch. The near bird's fixed vertex budget grows by the exact parts (+384
+body, +96 head except the doves, +144 wings except the ground doves; at most 1,986 a bird).
+`birds`, `bird-preen`, `ground-doves`, `fruit`, `bats` at 21:30, `lookout`, `jetty-end` and the
+tests pass.
+
 ## Loop pass 326 (2026-10-21) — coconut fronds of long hanging leaflets
 
 Close up the coconut palms' fronds read as thorny fishbones: sixteen short, broad triangles a
