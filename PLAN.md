@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 277 (2026-10-21) — palms blown in a storm's wind
+
+The palms swayed the same in a storm as in the trade wind (only the gust fronts came faster).
+Their vertex shader now takes the weather's wind with the wind's direction (`uStormWind`):
+above the trade wind (1, a shower's 1.35, a storm's 2) the fronds sway up to 1.8 times as far,
+and are blown downwind in world space by up to about 1.2 m at their tips in a storm, thrashing
+(a faster per-frond beat) and pressed further by each passing gust front, sagging a little as
+they go. The trunks stand (their wind weight is 0); in the trade wind nothing changes. `palms`
+in a thunderstorm shows the crowns swept downwind; the calm and showers captures and the tests
+pass. (The sun shadow casters stay unswayed, as before; in a storm the shadows are gone.)
+
 ## Loop pass 276 (2026-10-21) — the quad bike wet in the rain
 
 The quad's material takes the weather's wetness too: its rough parts (the knobby tyres, the

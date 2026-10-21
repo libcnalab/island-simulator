@@ -135,6 +135,7 @@ layout(location = 7) in vec4 aInstance3;
 
 uniform mat4 uViewProjection;
 uniform float uTime;
+uniform vec3 uStormWind;   // xy: the direction the wind blows toward (x, z); z: the weather's wind (1 the trade wind)
 
 out vec3 vColor;
 out vec3 vWorld;
@@ -155,13 +156,21 @@ void main()
     float gust = windGust(aInstance3.xz, uTime);
     broad = mix(broad, 1.0, gust * 0.85);
     detail *= 1.0 - 0.4 * gust;
-    float sway = (broad * 0.115 + detail * 0.032) * aWindData.x;
+    // Above the trade wind the fronds sway harder and, below, blow downwind and thrash.
+    float storm = clamp(uStormWind.z - 1.0, 0.0, 1.2);
+    float sway = (broad * 0.115 + detail * 0.032) * aWindData.x * (1.0 + 0.8 * storm);
     local.x += sway;
     local.z += sway * 0.37;
     local.y -= abs(sway) * 0.045 * aWindData.x;
 
     mat4 instanceTransform = mat4(aInstance0, aInstance1, aInstance2, aInstance3);
     vec4 world = instanceTransform * vec4(local, 1.0);
+    if (storm > 0.0) {
+        float thrash = 0.5 + 0.5 * sin(uTime * 3.1 + phase * 2.3 + aPosition.x * 0.9 - aPosition.z * 0.7);
+        float blown = storm * aWindData.x * (0.55 + 0.30 * thrash + 0.40 * gust);
+        world.xz += uStormWind.xy * blown;
+        world.y -= blown * 0.22;
+    }
     // Reuse deterministic scale/yaw coefficients as a stable per-palm colour seed. The
     // green-only mask leaves trunk, root, and coconut materials unchanged, while near/far
     // meshes preserve one tint identity without another instance attribute.
@@ -1311,6 +1320,7 @@ void main()
             customEffect_->SetUniformVec2("uFaceDetailFade", NearLodMinimumDistance - 10.0f,
                                           NearLodMinimumDistance + NearLodDistanceRange + 10.0f);
             customEffect_->SetUniformFloat("uWetness", weather_now::Current().wetness);
+            customEffect_->SetUniformVec3("uStormWind", wind::DirectionX, wind::DirectionZ, weather_now::Current().wind);
         }
         for (std::size_t variant = 0; variant < nearMeshes_.size(); ++variant) {
             DrawVariant(nearMeshes_[variant], visibleNearTransforms_[variant]);
