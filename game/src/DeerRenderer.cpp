@@ -43,6 +43,13 @@ namespace island
         constexpr int Capacity = static_cast<int>(DeerHerd::Count) * MaximumVerticesPerDeer;
 
         using DeerVertex = VertexPositionColorTexture;
+        // A placed and lit surface corner, shared by the quads round it.
+        struct Corner { Vector3 position; Color color; };
+        std::vector<Corner>& CornerScratch()
+        {
+            static thread_local std::vector<Corner> scratch;
+            return scratch;
+        }
         // Metres of coat one repeat of the shared short-hair strand texture covers. Each part
         // lays it by its own surface coordinates, the strands running down the flanks from
         // the spine and along the neck, legs and tail.
@@ -99,32 +106,39 @@ namespace island
                 return Vector2(girth * static_cast<float>(side) / static_cast<float>(sides),
                                meridian * (1.0f - static_cast<float>(ring) / static_cast<float>(rings)));
             };
+            const auto normal = [&](const int latitudeRing, const int longitudeSide) {
+                const float latitude = -1.57079632679f
+                    + 3.14159265359f * static_cast<float>(latitudeRing)
+                        / static_cast<float>(rings);
+                const float longitude = 6.28318530718f
+                    * static_cast<float>(longitudeSide) / static_cast<float>(sides);
+                Vector3 result = right * (std::cos(latitude) * std::cos(longitude) / rx)
+                    + up * (std::sin(latitude) / ry)
+                    + forward * (std::cos(latitude) * std::sin(longitude) / rz);
+                if (result.LengthSquared() > 1e-8f) result.Normalize(); else result = up;
+                return result;
+            };
+            // Each corner placed and lit once (it served four quads, each computing it again);
+            // the texture coordinates still run on past the seam as before.
+            std::vector<Corner>& corners = CornerScratch();
+            corners.clear();
+            for (int ring = 0; ring <= rings; ++ring) for (int side = 0; side < sides; ++side) {
+                const Vector3 n = normal(ring, side);
+                corners.push_back({point(ring, side), Lit(CoatTone(color, n, coatTone), n, transmission)});
+            }
+            const auto at = [&](const int ring, const int side) -> const Corner& {
+                return corners[static_cast<std::size_t>(ring * sides + side)];
+            };
             for (int ring = 0; ring < rings; ++ring) for (int side = 0; side < sides; ++side) {
                 const int next = (side + 1) % sides;
-                const Vector3 a = point(ring, side), b = point(ring + 1, side);
-                const Vector3 c = point(ring + 1, next), d = point(ring, next);
+                const Corner &a = at(ring, side), &b = at(ring + 1, side);
+                const Corner &c = at(ring + 1, next), &d = at(ring, next);
                 const Vector2 ta = uv(ring, side), tb = uv(ring + 1, side);
                 const Vector2 tc = uv(ring + 1, side + 1), td = uv(ring, side + 1);
-                const auto normal = [&](const int latitudeRing, const int longitudeSide) {
-                    const float latitude = -1.57079632679f
-                        + 3.14159265359f * static_cast<float>(latitudeRing)
-                            / static_cast<float>(rings);
-                    const float longitude = 6.28318530718f
-                        * static_cast<float>(longitudeSide) / static_cast<float>(sides);
-                    Vector3 result = right * (std::cos(latitude) * std::cos(longitude) / rx)
-                        + up * (std::sin(latitude) / ry)
-                        + forward * (std::cos(latitude) * std::sin(longitude) / rz);
-                    if (result.LengthSquared() > 1e-8f) result.Normalize(); else result = up;
-                    return result;
-                };
-                const Vector3 na=normal(ring,side),nb=normal(ring+1,side);
-                const Vector3 nc=normal(ring+1,next),nd=normal(ring,next);
-                const Color ca=Lit(CoatTone(color,na,coatTone),na,transmission);
-                const Color cb=Lit(CoatTone(color,nb,coatTone),nb,transmission);
-                const Color cc=Lit(CoatTone(color,nc,coatTone),nc,transmission);
-                const Color cd=Lit(CoatTone(color,nd,coatTone),nd,transmission);
-                out.emplace_back(a,ca,ta);out.emplace_back(b,cb,tb);out.emplace_back(c,cc,tc);
-                out.emplace_back(a,ca,ta);out.emplace_back(c,cc,tc);out.emplace_back(d,cd,td);
+                out.emplace_back(a.position,a.color,ta);out.emplace_back(b.position,b.color,tb);
+                out.emplace_back(c.position,c.color,tc);
+                out.emplace_back(a.position,a.color,ta);out.emplace_back(c.position,c.color,tc);
+                out.emplace_back(d.position,d.color,td);
             }
         }
 
@@ -193,24 +207,25 @@ namespace island
             const auto uv=[&](const std::size_t ring,const int side) {
                 return Vector2(girth*static_cast<float>(side)/static_cast<float>(sides),along[ring]);
             };
+            // each corner placed and lit once (it was six times over, the ring's basis with it)
+            std::vector<Corner>& corners=CornerScratch();
+            corners.clear();
+            for(std::size_t ring=0;ring<RingCount;++ring) for(int side=0;side<sides;++side) {
+                const Vector3 r=radial(ring,side);
+                corners.push_back({centres[ring]+r*radii[ring],Lit(CoatTone(color,r,coatTone),r,transmission)});
+            }
+            const auto at=[&](const std::size_t ring,const int side)->const Corner& {
+                return corners[ring*static_cast<std::size_t>(sides)+static_cast<std::size_t>(side)];
+            };
             for(std::size_t ring=0;ring+1<RingCount;++ring) {
                 for(int side=0;side<sides;++side) {
                     const int next=(side+1)%sides;
-                    const Vector3 radialA=radial(ring,side);
-                    const Vector3 radialB=radial(ring+1,side);
-                    const Vector3 radialC=radial(ring+1,next);
-                    const Vector3 radialD=radial(ring,next);
-                    const Vector3 a=centres[ring]+radialA*radii[ring];
-                    const Vector3 b=centres[ring+1]+radialB*radii[ring+1];
-                    const Vector3 c=centres[ring+1]+radialC*radii[ring+1];
-                    const Vector3 d=centres[ring]+radialD*radii[ring];
+                    const Corner &a=at(ring,side),&b=at(ring+1,side),&c=at(ring+1,next),&d=at(ring,next);
                     const Vector2 ta=uv(ring,side),tb=uv(ring+1,side),tc=uv(ring+1,side+1),td=uv(ring,side+1);
-                    out.emplace_back(a,Lit(CoatTone(color,radialA,coatTone),radialA,transmission),ta);
-                    out.emplace_back(b,Lit(CoatTone(color,radialB,coatTone),radialB,transmission),tb);
-                    out.emplace_back(c,Lit(CoatTone(color,radialC,coatTone),radialC,transmission),tc);
-                    out.emplace_back(a,Lit(CoatTone(color,radialA,coatTone),radialA,transmission),ta);
-                    out.emplace_back(c,Lit(CoatTone(color,radialC,coatTone),radialC,transmission),tc);
-                    out.emplace_back(d,Lit(CoatTone(color,radialD,coatTone),radialD,transmission),td);
+                    out.emplace_back(a.position,a.color,ta);out.emplace_back(b.position,b.color,tb);
+                    out.emplace_back(c.position,c.color,tc);
+                    out.emplace_back(a.position,a.color,ta);out.emplace_back(c.position,c.color,tc);
+                    out.emplace_back(d.position,d.color,td);
                 }
             }
         }

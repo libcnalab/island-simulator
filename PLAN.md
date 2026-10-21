@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 402 (2026-10-21) — the deer's mesh lights each corner once
+
+The deer's ellipsoids placed and lit each corner (normal, coat tone, canopy light) once for each of
+its four quads, and its lofted tubes six times over, rebuilding the ring's frame each time. Both
+now place and light each corner once into a shared scratch grid and copy it into the quads in the
+same order, the texture coordinates still running on past the seam as before: the vertices are
+bit-identical (a difference map of `deer` is black over the deer; only the wind-swayed grass, the
+fire, the resident and a gecko, which move, differ). The tests pass.
+
 ## Loop pass 401 (2026-10-21) — the resident's mesh lights each grid corner once
 
 The resident's render pass cost the operator 0.85-1.6 ms a frame. Like the bear's (pass 378), the
