@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 369 (2026-10-21) — rocks lose their green skirt; rock moss in patches
+
+From above (`tracks`) an inland rock stood in a dark-green ring. Probed with magenta and a
+material-tag colouring, it was not the rock's moss but an opaque dark-green disk (0.76 x the
+rock's scale across, 5.5 cm up) emitted under every rock mesh since the first natural-prop pass,
+from before the ground had contact shadows; on sand and bare soil it ringed each rock. It is
+gone - the contact-shadow patches darken the ground round a rock's foot. The rock moss also
+grows in patches, a little favouring the low damp foot, instead of as a band round it. `tracks`,
+`props`, `wet-sand`, `bay-ground`, `east`, `cave` and the tests pass.
+
 ## Loop pass 368 (2026-10-21) — grass blades are creased along the midrib; sweep after 354-367
 
 Seen from a hand's height (`snake-head`) the grass blades were flat ribbons of one tone across.

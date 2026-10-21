@@ -260,9 +260,12 @@ void main()
         // ground, strongest in the damp interior; beach and shoreline stone stays bare.
         float mossNoise = filteredStoneNoise(vWorld * 1.9 + vec3(3.1, 0.7, 5.3), worldFootprint * 1.9);
         float shadeSide = smoothstep(0.25, -0.45, dot(normal, normalize(uToSun)));
-        float moss = smoothstep(0.40, 0.70, mossNoise) * (0.25 + 0.75 * shadeSide)
+        // Moss grows in patches, not as a band round the foot: on the shaded faces and in the
+        // damp low hollows, broken by its own noise, so the rock does not stand in a green skirt.
+        float lowFoot = 1.0 - smoothstep(0.08, 0.40, vLocal.y);
+        float moss = smoothstep(0.48, 0.74, mossNoise + 0.10 * lowFoot) * (0.20 + 0.80 * shadeSide)
             * smoothstep(1.6, 4.5, vWorld.y) * (1.0 - smoothstep(0.55, 1.0, vLocal.y));
-        albedo = mix(albedo, vec3(0.27, 0.40, 0.15) * (0.75 + 0.5 * mossNoise), moss * 0.78);
+        albedo = mix(albedo, vec3(0.25, 0.33, 0.15) * (0.75 + 0.5 * mossNoise), moss * 0.72);
         float soilStain=1.0-smoothstep(0.055,0.29,vLocal.y);
         albedo=mix(albedo,albedo*vec3(0.67,0.76,0.64),soilStain*0.58);
         float wetBand = 1.0 - smoothstep(-0.10, 0.26 + 0.10*grain, vWorld.y);
@@ -373,32 +376,12 @@ void main()
                          channel(color.getBProperty()), color.getAProperty());
         }
 
-        void AppendContactDisk(PropGeometry& geometry, const int sides)
-        {
-            const auto centre = static_cast<std::uint16_t>(geometry.vertices.size());
-            geometry.vertices.emplace_back(Vector3(0.0f, 0.055f, 0.0f),
-                                           Color(38, 63, 37, 255));
-            for (int side = 0; side < sides; ++side) {
-                const float angle = 2.0f * std::numbers::pi_v<float>
-                    * static_cast<float>(side) / static_cast<float>(sides);
-                geometry.vertices.emplace_back(
-                    Vector3(std::cos(angle) * 0.76f, 0.055f, std::sin(angle) * 0.76f),
-                    Color(38, 63, 37, 255));
-            }
-            for (int side = 0; side < sides; ++side) {
-                geometry.indices.insert(geometry.indices.end(),
-                                        {centre,
-                                         static_cast<std::uint16_t>(centre + 1U + side),
-                                         static_cast<std::uint16_t>(
-                                             centre + 1U + (side + 1) % sides)});
-            }
-        }
-
         [[nodiscard]] PropGeometry CreateRockGeometry(const int variant, const bool farMesh)
         {
             PropGeometry geometry;
-            const int slices = farMesh ? 7 : 24;
-            AppendContactDisk(geometry, slices);
+            // (An opaque dark-green disk once lay under every rock, from before the ground had
+            // contact shadows: on sand and bare soil it ringed each rock in a green skirt. The
+            // contact-shadow patches darken the ground round a rock's foot now.)
             const auto base = static_cast<std::uint16_t>(geometry.vertices.size());
             geometry.normals.resize(base, Vector3::Zero);
             for (const auto& vertex : geometry.vertices) geometry.albedos.push_back(vertex.Color);
