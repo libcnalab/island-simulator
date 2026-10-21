@@ -39,6 +39,7 @@ uniform vec3 uCameraPosition;
 uniform vec3 uHutCentre;
 uniform sampler2D uThatchTexture;
 uniform vec3 uThatchMean;
+uniform float uWetness;   // 0..1 rain-wet (WeatherSystem)
 out vec4 fragColor;
 // Fade unresolved cycles to their mean; no texture, loops or dependent sampling.
 float resolvedWave(float phase) {
@@ -85,6 +86,9 @@ void main() {
     color=mix(vColor.rgb,color,detail);
     float base=(1.0-smoothstep(-0.3,0.25,vWorld.y-uHutCentre.y))*(1.0-step(0.7,vColor.a));
     color*=1.0-base*0.12;
+    // Rain soaks the hut: the thatch goes dark, the weathered boards less so (the walls stand
+    // under the eaves), the glass not at all.
+    color*=1.0-clamp(uWetness,0.0,1.0)*(1.0-glassClass)*(vColor.a>0.7?0.38:0.17);
     // The sun shadow map and the cumulus shade, with the same cool shadow tint as the palms.
     color*=mix(vec3(0.56,0.60,0.66),vec3(1.0),sunShadowVisibility(vWorld));
     color=mix(color,islandAtmosphereFog,smoothstep(180.0,300.0,length(vWorld-uCameraPosition)));

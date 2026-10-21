@@ -7,6 +7,7 @@
 #include "IslandSimulator/JungleMaterial.hpp"
 #include "IslandSimulator/PrevailingWind.hpp"
 #include "IslandSimulator/WindGust.hpp"
+#include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/ProceduralMeshValidation.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "IslandSimulator/SurfaceNormals.hpp"
@@ -200,6 +201,7 @@ in float vLocalHeight;
 uniform vec3 uCameraPosition;
 uniform vec3 uToSun;
 uniform vec2 uFaceDetailFade;   // the frond face shading fades out between these distances
+uniform float uWetness;         // 0..1 rain-wet (WeatherSystem)
 
 out vec4 fragColor;
 
@@ -238,6 +240,8 @@ void main()
                                             length(vWorld.xz - uCameraPosition.xz));
         material *= mix(1.0, 0.88 + twoSidedDiffuse * 0.16 + upwardFill * 0.04, faceDetail);
     }
+    // Rain soaks the palms: the grey bark goes dark, the fronds a little.
+    material *= 1.0 - clamp(uWetness, 0.0, 1.0) * (vSolid > 0.5 ? 0.28 : 0.10);
     // Directional sun shadow from neighbouring palms, crowns and structures.
     material *= mix(vec3(0.56, 0.60, 0.66), vec3(1.0), sunShadowVisibility(vWorld));
     vec3 color = mix(material, islandAtmosphereFog, fog);
@@ -1306,6 +1310,7 @@ void main()
         if (customShaderReady_) {
             customEffect_->SetUniformVec2("uFaceDetailFade", NearLodMinimumDistance - 10.0f,
                                           NearLodMinimumDistance + NearLodDistanceRange + 10.0f);
+            customEffect_->SetUniformFloat("uWetness", weather_now::Current().wetness);
         }
         for (std::size_t variant = 0; variant < nearMeshes_.size(); ++variant) {
             DrawVariant(nearMeshes_[variant], visibleNearTransforms_[variant]);

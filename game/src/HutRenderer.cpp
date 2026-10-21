@@ -3,6 +3,7 @@
 #include "IslandSimulator/HutThatch.hpp"
 #include "IslandSimulator/HutMaterial.hpp"
 #include "IslandSimulator/WindGust.hpp"
+#include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/OpaqueImageLoader.hpp"
 #include "Microsoft/Xna/Framework/Graphics/Texture2D.hpp"
 #include "Microsoft/Xna/Framework/Graphics/SurfaceFormat.hpp"
@@ -581,6 +582,7 @@ void HutRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector3
         material_->SetUniformFloat("uGust",std::isfinite(seconds)?WindGust::Strength(centre_.X,centre_.Z,seconds):0.0f);
         material_->SetUniformFloat("uSeconds",std::isfinite(seconds)?seconds:0.0f);
         material_->SetUniformVec2("uHangTop",fishBarY_,netRailY_);
+        material_->SetUniformFloat("uWetness",weather_now::Current().wetness);
         if(sunShadow_) sunShadow_->Bind(*material_);
         else SunShadowMap::BindDisabled(*material_);
     } else {

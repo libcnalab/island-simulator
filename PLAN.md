@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 274 (2026-10-21) — the hut and the palms soak in the rain
+
+The ground and the forest trees already darkened in the rain; the hut and the palms stayed
+dry-looking. Both shaders now take the weather's wetness (`uWetness`): the hut's thatch goes up
+to 38 % darker as it soaks, its weathered boards 17 % (the walls stand under the eaves), its
+window glass not at all; the palms' grey bark goes 28 % darker and the fronds 10 %. `hut` and
+`palms` in a thunderstorm show the dark wet thatch and trunks; dry, both are unchanged; all four
+captures and the tests pass.
+
 ## Loop pass 273 (2026-10-21) — no rain under the hut's roof
 
 The rain streaks fell straight through the hut's thatch onto the veranda and into the room.
