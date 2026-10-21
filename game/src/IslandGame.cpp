@@ -2519,7 +2519,8 @@ namespace island
         if (jettyPlacement_)
             for (const auto& line : jettyPlacement_->FootprintLines(terrain_, RenderedTerrainSurface(terrain_)))
                 residentFootprints.push_back(line);
-        naturalPropRenderer_ = std::make_unique<NaturalPropRenderer>(device, naturalPropLayout_, residentFootprints);
+        naturalPropRenderer_ = std::make_unique<NaturalPropRenderer>(device, naturalPropLayout_, residentFootprints,
+                                                                     &canopyLightField_);
         shipwreckRenderer_ = std::make_unique<ShipwreckRenderer>(device, shipwreckLayout_);
         if(hutPlacement_) hutRenderer_=std::make_unique<HutRenderer>(device,*hutPlacement_);
         if(hutPlacement_) eaveDrips_=std::make_unique<EaveDripRenderer>(device,*hutPlacement_,terrain_);

@@ -28,6 +28,8 @@ namespace island
 {
     class SunShadowMap;
 
+    class CanopyLightField;
+
     /** @brief Portable instanced rocks, wood, and small beach details with distance reduction. */
     class NaturalPropRenderer final
     {
@@ -36,7 +38,8 @@ namespace island
         // jetty), drawn with the same batches as the layout's own.
         NaturalPropRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                             const NaturalPropLayout& layout,
-                            std::span<const AnimalTrackPlacement> extraTracks = {});
+                            std::span<const AnimalTrackPlacement> extraTracks = {},
+                            const CanopyLightField* canopy = nullptr);
         ~NaturalPropRenderer();
 
         NaturalPropRenderer(const NaturalPropRenderer&) = delete;

@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 371 (2026-10-21) — rocks and logs under the crowns take the canopy's sky shade
+
+The terrain and the grass under the crowns take the canopy's sky occlusion (the baked
+`CanopyLightField`) besides the sun's shadow map; the natural props - rocks, logs, driftwood,
+beach details, tracks, fallen fronds and coconuts - took only the shadow map, so under trees
+they stood a little brighter than the ground beside them. Each static instance now carries the
+field's transmission over its placement in its matrix's otherwise zero projection slot (M14,
+1 + T; cleared in the vertex shader before the affine transform, kept through the far-distance
+shrink), and the prop shader shades with min(sun visibility, sky occlusion) exactly as the
+terrain does. The effect is small: most rocks stand in clearings. (The pale rock in `tracks`
+turned out to stand in the open; it is pale granite against dark soil.) `tracks`, `log`,
+`ground`, `east`, `beach`, `props`, `contact`, `jungle` and the tests pass.
+
 ## Loop pass 370 (2026-10-21) — the stream's stones are lit domes, packed close
 
 Seen from above (`tracks`) pass 360's gravel was pale flat coins of one tone each on dark grit,

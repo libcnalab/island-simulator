@@ -2,6 +2,7 @@
 #include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/NaturalPropRenderer.hpp"
+#include "IslandSimulator/CanopyLightField.hpp"
 
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/UnderwaterFog.hpp"
@@ -140,10 +141,14 @@ out vec3 vLocal;
 out vec3 vWorld;
 out float vMaterialDetail;
 out vec3 vNormal;
+out float vCanopy;
 
 void main()
 {
-    mat4 instanceTransform = mat4(aInstance0, aInstance1, aInstance2, aInstance3);
+    // The first row's otherwise zero projection slot carries 1 + the canopy's transmission over
+    // the placement (0: none recorded, full sky); clear it before the affine transform.
+    vCanopy = aInstance0.w > 0.5 ? clamp(aInstance0.w - 1.0, 0.0, 1.0) : 1.0;
+    mat4 instanceTransform = mat4(vec4(aInstance0.xyz, 0.0), aInstance1, aInstance2, aInstance3);
     vec4 world = instanceTransform * vec4(aPosition, 1.0);
     // Neutral stone is identifiable from the existing vertex colour, including the far LOD.
     // Reuse scale/yaw coefficients as a stable per-placement seed so copies of one rock mesh
@@ -178,6 +183,7 @@ in vec3 vLocal;
 in vec3 vWorld;
 in float vMaterialDetail;
 in vec3 vNormal;
+in float vCanopy;
 
 uniform vec3 uCameraPosition;
 uniform vec3 uToSun;
@@ -327,7 +333,11 @@ void main()
     }
     // The sun shadow map and the cumulus shade, with the palms' cool shadow tint: a rock or a
     // log in a tree's shadow is shaded with the ground around it.
-    materialColor *= mix(vec3(0.56, 0.60, 0.66), vec3(1.0), sunShadowVisibility(vWorld));
+    // Under the crowns the sky is mostly hidden too: the ground beside a rock takes the canopy's
+    // sky occlusion (TerrainRenderer), and without it a forest rock glowed against the soil.
+    float propSkyOcclusion = mix(vCanopy, 1.0, uSunShadowParams.x * 0.55);
+    materialColor *= mix(vec3(0.56, 0.60, 0.66), vec3(1.0),
+                         min(sunShadowVisibility(vWorld), propSkyOcclusion));
     vec3 color = applyUnderwaterFog(mix(materialColor, islandAtmosphereFog, fog), distanceToCamera);
     fragColor = vec4(color, 1.0);
 }
@@ -1568,7 +1578,8 @@ void main()
 
     NaturalPropRenderer::NaturalPropRenderer(GraphicsDevice& device,
                                              const NaturalPropLayout& layout,
-                                             const std::span<const AnimalTrackPlacement> extraTracks)
+                                             const std::span<const AnimalTrackPlacement> extraTracks,
+                                             const CanopyLightField* canopy)
         : device_(device)
     {
         instancingSupported_ = device_.SupportsCapability(CNA::GraphicsCapability::Instancing);
@@ -1603,6 +1614,17 @@ void main()
 
         CreateMeshes();
         CreateCells(layout, extraTracks);
+        if (canopy != nullptr && customShaderReady_ && instancingSupported_) {
+            for (PropCell& cell : cells_) {
+                for (auto* list : {&cell.rocks, &cell.logs, &cell.driftwood, &cell.beachDetails,
+                                   &cell.animalTracks, &cell.fallenFronds, &cell.fallenCoconuts,
+                                   &cell.reefHabitat}) {
+                    for (DrawInstance& instance : *list)
+                        instance.transform.M14 = 1.0f + std::clamp(canopy->Sample(instance.x, instance.z), 0.0f, 1.0f);
+                }
+            }
+            std::cout << "island-simulator: rocks, logs and ground props take the canopy's sky occlusion\n";
+        }
         const int clearingRockCount = static_cast<int>(std::count_if(
             layout.Rocks().begin(), layout.Rocks().end(),
             [](const RockPlacement& rock) { return rock.clearingLandmark; }));
@@ -2035,7 +2057,10 @@ void main()
             // Every prop shrinks to nothing over the last part of its range instead of popping,
             // and the larger ones swap meshes at their own staggered distances.
             const auto shrunk = [](const Matrix& transform, const float scale) {
-                return scale < 1.0f ? Matrix::CreateScale(scale) * transform : transform;
+                if (scale >= 1.0f) return transform;
+                Matrix result = Matrix::CreateScale(scale) * transform;
+                result.M14 = transform.M14;   // the canopy tag is not a scale
+                return result;
             };
             const auto staggeredNear = [](const DrawInstance& instance, const float base) {
                 const float d = vegetation_fade::StaggeredNearDistance(base, instance.x, instance.z);
