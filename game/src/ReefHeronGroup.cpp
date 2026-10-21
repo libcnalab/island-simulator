@@ -161,6 +161,7 @@ namespace island
                 agent.flightKind = Agent::Flight::Flush;
                 agent.roost = roosts_.size();
                 agent.roosted = false;
+                lastFlush_ = Takeoff{agent.state.x, agent.state.y + 0.5f, agent.state.z, lastFlush_.count + 1U};
                 FlyTo(agent, x, terrain_.Height(x, z), z);
                 ++flushes_;
                 return true;

@@ -71,6 +71,9 @@ namespace island
         [[nodiscard]] std::span<const ReefHeronState> Herons() const noexcept { return states_; }
         [[nodiscard]] std::uint32_t StrikeCount() const noexcept { return strikes_; }
         [[nodiscard]] std::uint32_t FlushCount() const noexcept { return flushes_; }
+        /** @brief Where the last heron to flush took off (it croaks as it goes). */
+        struct Takeoff { float x = 0.0f, y = 0.0f, z = 0.0f; std::uint32_t count = 0U; };
+        [[nodiscard]] const Takeoff& LastFlush() const noexcept { return lastFlush_; }
         /** @brief The last strike: where the bill went into the water, counted once, and how
          *  long ago (its fleck and ring last StrikeSeconds). */
         struct Strike { float x = 0.0f, y = 0.0f, z = 0.0f; std::uint32_t count = 0U; float ageSeconds = 0.0f; bool valid = false; };
@@ -119,6 +122,7 @@ namespace island
         std::vector<Roost> roosts_;
         std::uint32_t strikes_ = 0U, flushes_ = 0U;
         Strike lastStrike_;
+        Takeoff lastFlush_;
         std::size_t frozen_ = Count;   // the previewed heron, Count for none
     };
 }

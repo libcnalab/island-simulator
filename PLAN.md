@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 342 (2026-10-21) — the heron croaks as it flushes
+
+A reef heron flushed in silence. `GenerateHeronCroak` synthesises its harsh, guttural alarm, about
+0.46 s: a buzzy throat source of sixteen harmonics falling from 460 to 350 Hz, its loudness
+jittered period to period (the rasp), lifted round two formants near 1.1 and 2.4 kHz, with a
+breath of noise, a quick attack and a falling end. `ReefHeronGroup::LastFlush` notes where the
+last heron took off; the game passes it to the soundscape (`NoteHeronCroak`), which plays the croak
+through the shared wildlife voice within a second, at 0.42 falling to nothing between 15 and 95 m,
+holding the slot half a second, or drops it. A core test covers the croak's length, energy,
+harshness (the sample-to-sample difference energy), determinism and quiet ends, and that the
+flush is noted where the heron took off; it is not checked by ear. The capture sweep after passes
+326-341 passed 115 of 117 views (the two known exceptions; the new `herons` view passes).
+`herons`, `beach`, `overview` and the tests pass.
+
 ## Loop pass 341 (2026-10-21) — the herons roost in the shore's palms at night
 
 Reef herons roost off the water at night, in mangroves and coastal trees, but pass 336's stood

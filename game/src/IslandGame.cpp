@@ -3457,6 +3457,11 @@ namespace island
             notedBreachCount_ = fishSchools_.LastBreach().count;
             soundscape_->NoteFishBreach(fishSchools_.LastBreach().x, 0.0f, fishSchools_.LastBreach().z);
         }
+        if (soundscape_ && reefHeronGroup_.LastFlush().count != notedHeronFlushes_) {
+            notedHeronFlushes_ = reefHeronGroup_.LastFlush().count;
+            const auto& takeoff = reefHeronGroup_.LastFlush();
+            soundscape_->NoteHeronCroak(takeoff.x, takeoff.y, takeoff.z);
+        }
         // a heron's bill going into the water makes the same small plip
         if (soundscape_ && reefHeronGroup_.LastStrike().count != notedHeronStrikes_) {
             notedHeronStrikes_ = reefHeronGroup_.LastStrike().count;

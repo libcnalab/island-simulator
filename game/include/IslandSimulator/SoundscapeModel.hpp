@@ -80,6 +80,8 @@ namespace island
     [[nodiscard]] AmbientLoop GenerateNightChorusLoop();
     /** @brief A scops owl in the dark: three soft whistled toots, a couple of seconds apart. */
     [[nodiscard]] AmbientLoop GenerateScopsOwlCall();
+    /** @brief A reef heron's harsh, guttural alarm croak as it flushes, about 0.4 s. */
+    [[nodiscard]] AmbientLoop GenerateHeronCroak();
 
     /** @brief Generates one four-second stronger-wave wash for sparse shoreline accents. */
     [[nodiscard]] AmbientLoop GenerateWaveAccent();
@@ -364,7 +366,8 @@ namespace island
         Chatter,
         Hoofbeats,
         ClawKnock,
-        Owl
+        Owl,
+        Heron
     };
 
     /** @brief Nearest currently eligible world-space source for one wildlife species. */

@@ -541,6 +541,42 @@ namespace island
         return Quantize(samples, 0.6f);
     }
 
+    AmbientLoop GenerateHeronCroak()
+    {
+        constexpr float seconds = 0.46f;
+        const auto frameCount = static_cast<std::size_t>(AmbientSampleRate * seconds);
+        std::vector<float> samples(frameCount, 0.0f);
+        constexpr float Tau = 2.0f * std::numbers::pi_v<float>;
+        DeterministicNoise rng(0x5e1a77c3U);
+        // A buzzy throat source falling from 460 to 350 Hz, its period-to-period loudness
+        // jittered (the rasp), its harmonics lifted round two formants near 1.1 and 2.4 kHz,
+        // with a breath of noise; a quick attack and a falling end.
+        float phase = 0.0f, jitter = 1.0f;
+        float breath = 0.0f;
+        for (std::size_t i = 0; i < frameCount; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            const float u = t / seconds;
+            const float f0 = 460.0f - 110.0f * std::min(1.0f, u / 0.8f);
+            phase += f0 / static_cast<float>(AmbientSampleRate);
+            if (phase >= 1.0f) {
+                phase -= 1.0f;
+                jitter = 0.72f + 0.28f * (rng.Next() * 0.5f + 0.5f);
+            }
+            float voice = 0.0f;
+            for (int k = 1; k <= 16; ++k) {
+                const float f = f0 * static_cast<float>(k);
+                const float formant = 0.35f + std::exp(-std::pow((f - 1100.0f) / 380.0f, 2.0f))
+                    + 0.7f * std::exp(-std::pow((f - 2400.0f) / 520.0f, 2.0f));
+                voice += std::sin(Tau * static_cast<float>(k) * phase) * formant / std::pow(static_cast<float>(k), 0.55f);
+            }
+            breath += (rng.Next() - breath) * 0.35f;
+            const float attack = std::clamp(t / 0.018f, 0.0f, 1.0f);
+            const float release = 1.0f - std::clamp((u - 0.55f) / 0.40f, 0.0f, 1.0f);
+            samples[i] = attack * release * release * (voice * jitter + 0.55f * breath);
+        }
+        return Quantize(samples, 0.62f);
+    }
+
     AmbientLoop GenerateNightChorusLoop()
     {
         constexpr int loopSeconds = 8;

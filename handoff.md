@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 342: heron alarm croak on flush (GenerateHeronCroak, NoteHeronCroak, WildlifeCallType::Heron); untested by ear (PLAN "Loop pass 342").
 - Pass 341: herons roost at night in shore palm crowns / coastal perches, back to wading at dawn (PLAN "Loop pass 341").
 - Pass 340: herons flush from the resident, the quad, the bear, boars and moving crocodiles too (PLAN "Loop pass 340").
 - Pass 339: crocodile body/skull/tail lit per corner (smooth), pigment per quad (PLAN "Loop pass 339").
@@ -369,6 +370,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 296: the grass darkens and takes a sky sheen when wet, after rain and with the morning dew (PLAN "Loop pass 296"; `grass` in showers fails the luminance floor with or without it).
 - Pass 295: the forest drips from its crowns through and long after the rain (`CanopyDripRenderer`) (PLAN "Loop pass 295").
 - Pass 294: a cloud cap forms on the summit in moist air (`SummitCloudField`) (PLAN "Loop pass 294").
+- Capture sweep 2026-10-21 (after passes 326-341): 115 of 117 views pass (the new `herons` included); `bunker-computers` and `canopy` as before.
 - Capture sweep 2026-10-21 (after passes 294-325, three of them terrain colour): 114 of 116 views pass; `bunker-computers` fails its colour-bin floor as before, `canopy` needs `--canopy-lod-inspection`.
 - Capture sweep 2026-10-21 (after passes 268-293): 114 of 116 views pass; `bunker-computers` fails its colour-bin floor as before (a grey interior), `canopy` needs `--canopy-lod-inspection X_MM Z_MM near|far`.
 - Pass 293: at night the rain glitters in the quad's beams, the lantern's and the fire's light (`RainRenderer::DrawLit`) (PLAN "Loop pass 293").

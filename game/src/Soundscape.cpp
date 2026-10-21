@@ -157,6 +157,13 @@ namespace island
         pendingSplashSeconds_ = 1.5f;
     }
 
+    void Soundscape::NoteHeronCroak(const float x, const float y, const float z) noexcept
+    {
+        if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) return;
+        pendingCroak_ = {true, x, y, z, 0U};
+        pendingCroakSeconds_ = 1.0f;
+    }
+
     void Soundscape::NoteCoconutThud(const float x, const float y, const float z) noexcept
     {
         if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) return;
@@ -579,6 +586,8 @@ namespace island
             doveCallAlternateEffect_->setNameProperty("Procedural fruit dove coo alternate");
             birdSplashEffect_ = CreateOneShotSoundEffect(GenerateBirdSplash());
             birdSplashEffect_->setNameProperty("Procedural seabird plunge splash");
+            heronCroakEffect_ = CreateOneShotSoundEffect(GenerateHeronCroak());
+            heronCroakEffect_->setNameProperty("Procedural reef heron alarm croak");
             for (std::size_t i = 0; i < deerSnortEffects_.size(); ++i) {
                 deerSnortEffects_[i] = CreateOneShotSoundEffect(GenerateDeerSnort(static_cast<std::uint8_t>(i)));
                 deerSnortEffects_[i]->setNameProperty("Original procedural deer snort " + std::to_string(i));
@@ -810,6 +819,7 @@ namespace island
             doveCallAlternateEffect_.reset();
             doveCallEffect_.reset();
             birdSplashEffect_.reset();
+            heronCroakEffect_.reset();
             for (auto& effect : deerSnortEffects_) effect.reset();
             for (auto& effect : residentWhistleEffects_) effect.reset();
             for (auto& effect : wingClapEffects_) effect.reset();
@@ -1453,6 +1463,20 @@ namespace island
                 pendingSplash_.available = false;
             }
         }
+        // A reef heron's croak as it flushes: loud, carrying across the lagoon's edge, played
+        // within a second or dropped.
+        if (pendingCroak_.available) {
+            pendingCroakSeconds_ -= safeDelta;
+            const float distance = std::hypot(std::hypot(pendingCroak_.x - listenerState.x,
+                pendingCroak_.z - listenerState.z), pendingCroak_.y - listenerState.y);
+            const float falloff = 1.0f - std::clamp((distance - 15.0f) / 80.0f, 0.0f, 1.0f);
+            if (wildlifeSlotAvailable && wildlifeCall.type == WildlifeCallType::None && falloff > 0.02f) {
+                wildlifeCall = {WildlifeCallType::Heron, 0U, 0.42f * falloff, 0.0f, pendingCroak_};
+                pendingCroak_.available = false;
+            } else if (pendingCroakSeconds_ <= 0.0f || falloff <= 0.02f) {
+                pendingCroak_.available = false;
+            }
+        }
         // A fish breaking the surface: the splash clip small, quick and high, within about
         // twenty-five metres, dropped if the slot is busy for most of a second.
         if (pendingPlip_.available) {
@@ -1679,6 +1703,8 @@ namespace island
             wildlifeEffect = coconutThudEffect_.get();
         } else if (wildlifeCall.type == WildlifeCallType::Owl) {
             wildlifeEffect = owlEffect_.get();
+        } else if (wildlifeCall.type == WildlifeCallType::Heron) {
+            wildlifeEffect = heronCroakEffect_.get();
         }
         if (!wildlifeEffect) {
             return;
@@ -1743,7 +1769,8 @@ namespace island
                 :wildlifeCall.type==WildlifeCallType::ClawKnock?.40f
                 :wildlifeCall.type==WildlifeCallType::Splash?.75f
                 :wildlifeCall.type==WildlifeCallType::Thud?.50f
-                :wildlifeCall.type==WildlifeCallType::Owl?5.60f:1.50f;
+                :wildlifeCall.type==WildlifeCallType::Owl?5.60f
+                :wildlifeCall.type==WildlifeCallType::Heron?.50f:1.50f;
             if (wildlifeCall.type == WildlifeCallType::Bird) {
                 ++playedBirdCallCount_;
                 if (playedBirdCallCount_ == 1) {
@@ -1967,6 +1994,7 @@ namespace island
         doveCallAlternateEffect_.reset();
         doveCallEffect_.reset();
         birdSplashEffect_.reset();
+        heronCroakEffect_.reset();
         for (auto& effect : deerSnortEffects_) effect.reset();
         for (auto& effect : residentWhistleEffects_) effect.reset();
         for (auto& effect : wingClapEffects_) effect.reset();

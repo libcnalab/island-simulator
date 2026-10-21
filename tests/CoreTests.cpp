@@ -7268,6 +7268,23 @@ int main()
         Check(chorus.sampleRate > 0 && chorus.samples.size() == static_cast<std::size_t>(chorus.sampleRate) * 8U
                   && chorusEnergy / static_cast<double>(chorus.samples.size()) > 1.0e5 && chorusHigh > chorusEnergy * 0.3,
               "the night chorus is an audible eight-second loop with its crickets high in the treble");
+        // The reef heron's croak: a short harsh call, bright with harmonics, silent at its ends.
+        {
+            const auto croak = island::GenerateHeronCroak();
+            const auto again = island::GenerateHeronCroak();
+            double energy = 0.0, rough = 0.0;
+            for (std::size_t i = 1; i < croak.samples.size(); ++i) {
+                const double s = croak.samples[i], d = static_cast<double>(croak.samples[i]) - croak.samples[i - 1];
+                energy += s * s;
+                rough += d * d;
+            }
+            const double seconds = static_cast<double>(croak.samples.size()) / croak.sampleRate;
+            Check(croak.sampleRate > 0 && seconds > 0.3 && seconds < 0.6 && croak.samples == again.samples
+                      && std::abs(static_cast<int>(croak.samples.front())) < 600
+                      && std::abs(static_cast<int>(croak.samples.back())) < 600
+                      && energy / static_cast<double>(croak.samples.size()) > 2.0e6 && rough > energy * 0.15,
+                  "the reef heron croaks a short, harsh, deterministic call that starts and ends quiet");
+        }
         // The scops owl: three soft toots, each a fifth of a second, a couple of seconds apart.
         {
             const auto owl = island::GenerateScopsOwlCall();
@@ -10933,8 +10950,10 @@ int main()
             const auto before=herons.Herons()[2];
             const std::uint32_t flushes=herons.FlushCount();
             for(int step=0;step<10;++step) herons.Update(0.05f,before.x+3.0f,before.y+1.6f,before.z);
-            Check(herons.FlushCount()>flushes&&herons.Herons()[2].behavior==island::ReefHeronBehavior::Fly,
-                  "a walker three metres off flushes the heron");
+            Check(herons.FlushCount()>flushes&&herons.Herons()[2].behavior==island::ReefHeronBehavior::Fly
+                      &&herons.LastFlush().count==herons.FlushCount()
+                      &&std::hypot(herons.LastFlush().x-before.x,herons.LastFlush().z-before.z)<1.0f,
+                  "a walker three metres off flushes the heron, noted where it took off");
             bool landed=false;
             for(int step=0;step<600&&!landed;++step) {
                 herons.Update(0.05f,before.x+3.0f,before.y+1.6f,before.z);

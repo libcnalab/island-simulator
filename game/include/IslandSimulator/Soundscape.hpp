@@ -107,6 +107,8 @@ namespace island
         void SetStreamCascade(float x, float z) noexcept;
         /** @brief A seabird has just struck the water here; played once when the slot is free. */
         void NoteBirdSplash(float x, float y, float z) noexcept;
+        /** @brief A reef heron flushing with its alarm croak at (x, y, z). */
+        void NoteHeronCroak(float x, float y, float z) noexcept;
         /** @brief A coconut has just hit the ground here; played once when the slot is free. */
         void NoteCoconutThud(float x, float y, float z) noexcept;
         /** @brief A fish breaking the surface: the splash clip, small, quick and high, heard
@@ -352,6 +354,7 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> doveCallEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> doveCallAlternateEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> birdSplashEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> heronCroakEffect_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> deerSnortEffects_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> residentWhistleEffects_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> wingClapEffects_;
@@ -362,6 +365,8 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> coconutThudEffect_;
         WildlifeAudioSource pendingSplash_;
         float pendingSplashSeconds_ = 0.0f;
+        WildlifeAudioSource pendingCroak_;
+        float pendingCroakSeconds_ = 0.0f;
         WildlifeAudioSource pendingPlip_;
         float pendingPlipSeconds_ = 0.0f;
         WildlifeAudioSource pendingAlarm_;
