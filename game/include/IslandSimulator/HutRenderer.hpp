@@ -1,5 +1,6 @@
 #pragma once
 #include "Microsoft/Xna/Framework/Graphics/VertexPositionColor.hpp"
+#include <array>
 #include <vector>
 #include "IslandSimulator/HutLayout.hpp"
 #include "Microsoft/Xna/Framework/BoundingBox.hpp"
@@ -28,6 +29,10 @@ public:
     void DrawNightLights(const Microsoft::Xna::Framework::Matrix& view,const Microsoft::Xna::Framework::Matrix& projection,
                          const Microsoft::Xna::Framework::Vector3& camera,float nightness,float seconds);
     [[nodiscard]] Microsoft::Xna::Framework::Vector3 LanternPosition() const noexcept { return lantern_; }
+    /** The surfaces the lantern lights beside it, as triangles a little in front of them with
+     *  their normal: the front wall with its gable, and the veranda's floor. */
+    struct LitPlane { std::vector<Microsoft::Xna::Framework::Vector3> triangles; Microsoft::Xna::Framework::Vector3 normal; };
+    [[nodiscard]] const std::array<LitPlane,2>& LanternPlanes() const noexcept { return lanternPlanes_; }
 private:
     Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
@@ -42,6 +47,7 @@ private:
     Microsoft::Xna::Framework::Vector3 centre_;
     float fishBarY_=0,netRailY_=0;
     Microsoft::Xna::Framework::Vector3 lantern_;
+    std::array<LitPlane,2> lanternPlanes_;
     std::vector<Microsoft::Xna::Framework::Vector3> windowCorners_;   // four per front window
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> glowEffect_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> glow_;

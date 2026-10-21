@@ -236,6 +236,25 @@ HutRenderer::HutRenderer(GraphicsDevice& device,const HutPlacement& hut)
             beam({.80f+dx,1.95f,1.98f+dz},{.80f+dx,1.75f,1.98f+dz},.012f,.012f,iron);
         beam({.80f,1.76f,1.98f},{.80f,1.70f,1.98f},.14f,.14f,iron);
         lantern_=world({.80f,1.85f,1.98f});
+        {
+            // The lantern's light on the front wall and gable (just in front of the door's
+            // face, behind the posts) and on the veranda floor.
+            const Vector3 outward=Vector3::Normalize(world({0,0,1})-world({0,0,0}));
+            auto& wall=lanternPlanes_[0];
+            wall.normal=outward;
+            constexpr float face=1.77f;
+            const std::array<Vector3,5> outline{{{-2.1f,.10f,face},{2.1f,.10f,face},{2.1f,2.25f,face},{0.0f,3.35f,face},{-2.1f,2.25f,face}}};
+            const Vector3 middle=world({0.0f,1.4f,face});
+            for(std::size_t i=0;i<outline.size();++i) {
+                wall.triangles.push_back(middle);
+                wall.triangles.push_back(world(outline[i]));
+                wall.triangles.push_back(world(outline[(i+1)%outline.size()]));
+            }
+            auto& floor=lanternPlanes_[1];
+            floor.normal=Vector3::Up;
+            const Vector3 a=world({-2.1f,.012f,1.78f}),b=world({2.1f,.012f,1.78f}),c=world({2.1f,.012f,2.30f}),d=world({-2.1f,.012f,2.30f});
+            floor.triangles={a,b,c,a,c,d};
+        }
         for(const float x:{-1.26f,1.26f})
             for(const auto& corner:{Vector3(x-.43f,.55f,1.709f),Vector3(x+.43f,.55f,1.709f),
                                     Vector3(x+.43f,1.35f,1.709f),Vector3(x-.43f,1.35f,1.709f)})

@@ -5815,6 +5815,10 @@ namespace island
                     const float flicker = 0.90f + 0.06f * std::sin(timeSeconds * 5.3f) + 0.04f * std::sin(timeSeconds * 11.7f + 0.8f);
                     localLights_->DrawPoint(cameraView_, cameraProjection_, renderCameraPosition_, hutRenderer_->LanternPosition(),
                                             6.0f, ground, 1.0f * night * flicker, Vector3(1.0f, 0.74f, 0.44f));
+                    // and the boards beside it: the front wall, its gable and the veranda floor
+                    for (const auto& plane : hutRenderer_->LanternPlanes())
+                        localLights_->DrawPlane(cameraView_, cameraProjection_, renderCameraPosition_, hutRenderer_->LanternPosition(),
+                                                4.0f, plane.triangles, plane.normal, 1.0f * night * flicker, Vector3(1.0f, 0.74f, 0.44f));
                 }
                 if (lampsLit) {
                     const BikeVec l = quad_.ToWorld(QuadBikeRenderer::HeadlightLeft), r = quad_.ToWorld(QuadBikeRenderer::HeadlightRight);

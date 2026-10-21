@@ -54,17 +54,19 @@ in float vReach;
 uniform vec3 uCamera;
 uniform vec3 uLight;
 uniform vec3 uAxis;
-uniform vec3 uShape;   // x: 0 a spot, 1 a point; y: the reach in metres; z: the strength
+uniform vec3 uShape;   // x: 0 a spot, 1 a point, 2 a point on a plane; y: the reach in metres; z: the strength
 uniform vec3 uTint;    // the light's colour: the lit pixels are tinted toward it before the lift
 out vec4 fragColor;
 void main()
 {
     // The surface this pixel shows lies on, or stands near, the ground where its view ray
     // comes down to it beyond the slab: the light reaches it as it reaches that ground.
+    // (On a plane the pixel is lit where it lies.)
     vec3 ray = vWorld - uCamera;
     float fall = uCamera.y - vWorld.y;
     vec3 lit = uCamera + ray * vReach;
-    if (fall > 0.02) lit = uCamera + ray * min((uCamera.y - vGround) / fall, 60.0 / max(length(ray), 0.01));
+    if (uShape.x > 1.5) lit = vWorld;
+    else if (fall > 0.02) lit = uCamera + ray * min((uCamera.y - vGround) / fall, 60.0 / max(length(ray), 0.01));
     vec3 toLit = lit - uLight;
     float d = max(length(toLit), 0.05);
     vec3 dir = toLit / d;
@@ -182,6 +184,17 @@ void main()
         Submit(view, projection, camera, light, Vector3::Up, 1.0f, radius, strength, tint, PointRings, PointSpokes + 1);
     }
 
+    void LocalLightRenderer::DrawPlane(const Matrix& view, const Matrix& projection, const Vector3& camera,
+                                       const Vector3& light, const float radius, const std::span<const Vector3> triangles,
+                                       const Vector3& normal, const float strength, const Vector3& tint)
+    {
+        if (!(strength > 0.01f) || !(radius > 0.5f) || triangles.size() < 3U
+            || (light - camera).LengthSquared() > 120.0f * 120.0f) return;
+        staging_.clear();
+        for (const Vector3& corner : triangles) staging_.emplace_back(corner, normal, Vector2(0.0f, 1.0f));
+        Flush(view, projection, camera, light, Vector3::Up, 2.0f, radius, strength, tint);
+    }
+
     void LocalLightRenderer::Submit(const Matrix& view, const Matrix& projection, const Vector3& camera,
                                     const Vector3& light, const Vector3& axis, const float kind, const float radius,
                                     const float strength, const Vector3& tint, const int rings, const int spokes)
@@ -198,6 +211,13 @@ void main()
                 staging_.push_back(at(ring, spoke + 1));
             }
         }
+        Flush(view, projection, camera, light, axis, kind, radius, strength, tint);
+    }
+
+    void LocalLightRenderer::Flush(const Matrix& view, const Matrix& projection, const Vector3& camera,
+                                   const Vector3& light, const Vector3& axis, const float kind, const float radius,
+                                   const float strength, const Vector3& tint)
+    {
         const int count = static_cast<int>(std::min<std::size_t>(staging_.size(), static_cast<std::size_t>(Capacity)) / 3U * 3U);
         if (count <= 0) return;
         mesh_->SetData(staging_.data(), 0, count, SetDataOptions::Discard);

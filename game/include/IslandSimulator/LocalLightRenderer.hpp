@@ -6,6 +6,7 @@
 #include "Microsoft/Xna/Framework/Graphics/VertexPositionNormalTexture.hpp"
 #include <functional>
 #include <memory>
+#include <span>
 #include <vector>
 
 namespace Microsoft::Xna::Framework::Graphics
@@ -51,6 +52,14 @@ namespace island
                        const Microsoft::Xna::Framework::Vector3& camera, const Microsoft::Xna::Framework::Vector3& light,
                        float radius, const GroundSampler& ground, float strength,
                        const Microsoft::Xna::Framework::Vector3& tint);
+        /** @brief A point lighting a flat surface it stands by (the hut's lantern on the boards
+         *  of its wall and veranda): `triangles` lie a little in front of that surface, facing
+         *  along `normal`, and each of their pixels is lit where it lies. */
+        void DrawPlane(const Microsoft::Xna::Framework::Matrix& view, const Microsoft::Xna::Framework::Matrix& projection,
+                       const Microsoft::Xna::Framework::Vector3& camera, const Microsoft::Xna::Framework::Vector3& light,
+                       float radius, std::span<const Microsoft::Xna::Framework::Vector3> triangles,
+                       const Microsoft::Xna::Framework::Vector3& normal, float strength,
+                       const Microsoft::Xna::Framework::Vector3& tint);
         [[nodiscard]] int DrawCallCount() const noexcept { return drawCalls_; }
         void ResetCounts() noexcept { drawCalls_ = 0; }
 
@@ -60,6 +69,10 @@ namespace island
                     const Microsoft::Xna::Framework::Vector3& camera, const Microsoft::Xna::Framework::Vector3& light,
                     const Microsoft::Xna::Framework::Vector3& axis, float kind, float radius, float strength,
                     const Microsoft::Xna::Framework::Vector3& tint, int rings, int spokes);
+        void Flush(const Microsoft::Xna::Framework::Matrix& view, const Microsoft::Xna::Framework::Matrix& projection,
+                   const Microsoft::Xna::Framework::Vector3& camera, const Microsoft::Xna::Framework::Vector3& light,
+                   const Microsoft::Xna::Framework::Vector3& axis, float kind, float radius, float strength,
+                   const Microsoft::Xna::Framework::Vector3& tint);
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> effect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BlendState> blend_;

@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 284 (2026-10-21) — the lantern lights the hut's boards
+
+The hurricane lantern hung on the veranda lit only the ground below it (the local light's
+slab follows the ground), so at night the boards it hangs in front of stayed as dark as the
+rest of the wall. `LocalLightRenderer::DrawPlane` lights a flat surface a point stands by:
+triangles laid a little in front of the surface, facing along its normal, each of whose pixels
+is lit where it lies (a third mode of the same shader, through the night grade like the
+others), depth-tested so what stands in front (the posts, the rail) stays unlit.
+`HutRenderer::LanternPlanes` gives the front wall with its gable (a pentagon 4 cm in front of
+the boards and the door) and the veranda floor; the game lights both from the lantern over
+4 m with its flicker and colour. `hut` at 21:30 shows a warm pool on the door, the boards and
+the lower gable round the lantern, fading out towards the corners; `hut` at 19:12 and by day
+pass and look as before.
+
 ## Loop pass 283 (2026-10-21) — house geckos at the lantern
 
 On tropical islands the geckos come out on the walls by any light at night to hunt the
