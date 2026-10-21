@@ -3,6 +3,7 @@
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
+#include "IslandSimulator/WeatherSystem.hpp"
 #include "CNA/GraphicsCapability.hpp"
 #include "CNA/Graphics/ShaderCodeEXT.hpp"
 #include "CNA/Graphics/ShaderPackageEXT.hpp"
@@ -519,12 +520,17 @@ uniform float uMetal[16];
 uniform vec3 uToSun;
 uniform vec3 uCameraPosition;
 uniform vec2 uEmissive;       // x: one over the night grade, y: the lamps lit
+uniform float uWetness;       // 0..1 rain-wet (WeatherSystem)
 out vec4 fragColor;
 void main()
 {
     int index = int(vMaterial.x + 0.5);
     vec3 albedo = uPalette[index];
     vec3 material = uMaterial[index];
+    // Rain-wet, the rough parts (tyres, plastic, the seat, cloth) darken and every surface
+    // carries a film of water that mirrors the sky at a glancing view.
+    float wet = clamp(uWetness, 0.0, 1.0);
+    albedo *= 1.0 - wet * 0.25 * (1.0 - uMetal[index]) * (1.0 - smoothstep(20.0, 60.0, material.y));
     vec3 n = normalize(vNormal);
     vec3 toEye = normalize(uCameraPosition - vWorld);
     if (dot(n, toEye) < 0.0) n = -n;
@@ -537,7 +543,8 @@ void main()
     float fresnel = 0.04 + 0.96 * pow(1.0 - max(dot(n, toEye), 0.0), 5.0);
     float specular = pow(max(dot(n, halfway), 0.0), material.y) * material.x * shadow * max(uDirectSun, 0.12);
     color += mix(vec3(1.0), albedo, uMetal[index]) * specular;
-    color += mix(vec3(0.30, 0.40, 0.50), albedo, uMetal[index]) * fresnel * material.x * 0.18 * vMaterial.y;
+    color += mix(vec3(0.30, 0.40, 0.50), albedo, uMetal[index]) * fresnel * max(material.x, 0.55 * wet)
+        * (0.18 + 0.30 * wet) * vMaterial.y;
     color = mix(color, albedo * uEmissive.x, material.z * uEmissive.y);
     float fog = smoothstep(260.0, 720.0, length(vWorld - uCameraPosition));
     fragColor = vec4(mix(color, islandAtmosphereFog, fog), 1.0);
@@ -787,6 +794,7 @@ void main()
         const auto& light = sun_light::Current().lighting;
         const float grade = std::max(0.08f, std::min({light.grade.x, light.grade.y, light.grade.z}));
         material_->SetUniformVec2("uEmissive", 1.0f / grade, lightsOn ? 1.0f : 0.0f);
+        material_->SetUniformFloat("uWetness", weather_now::Current().wetness);
         if (sunShadow_) sunShadow_->Bind(*material_);
         else SunShadowMap::BindDisabled(*material_);
         DrawAll(*material_, pose, dynamicCount);

@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 276 (2026-10-21) — the quad bike wet in the rain
+
+The quad's material takes the weather's wetness too: its rough parts (the knobby tyres, the
+black plastic, the seat vinyl, the stand-in rider's cloth) darken by up to 25 %, the metals and
+the glossy paint not, and every surface carries a film of water that mirrors the sky at a
+glancing view (the fresnel reflection's strength at least 0.55 of the wetness and up to 2.7
+times as strong). `quad` in a thunderstorm shows the darker tyres and the wet sheen along the
+red fenders against the dry `quad` overcast (no rain yet, so dry); all three captures and the
+tests pass.
+
 ## Loop pass 275 (2026-10-21) — a closed sky under overcast and in a storm
 
 A storm's sky showed blue-teal holes overhead and bluish cumulus smears along the horizon: the
