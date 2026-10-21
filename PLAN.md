@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 377 (2026-10-21) — the spiders and the contact shadows cost less per frame
+
+The operator's 17:56 session (Radeon 780M, 720p, after pass 373's one-Update-per-frame fix) ran
+at 38-70 fps; its `frame-profile` lines named the remaining CPU hot spots per drawn frame:
+spiders 5.5-7.1 ms, contact shadows 1.5-2.8 ms, snakes 1.2-2.4 ms. Spiders are now drawn within
+14 m instead of 24 m (a hand-sized spider covers a few pixels there), at most 16 instead of 24,
+with the detailed mesh within 3 m instead of 5 m; they shrink away over the last quarter of the
+reach. The contact-shadow batch is split: the static shadows (palms, crowns, rocks, wood, the
+hut, structures, the coast) lead the vertex batch and are rebuilt only when the camera moves or
+turns past the thresholds; an animal or the walker moving rebuilds only the dynamic tail (a
+spider stepping by used to re-drape hundreds of static patches over the terrain). The camera
+reference moves only with a static rebuild, so a slowly drifting camera cannot leave the static
+part stale. `contact`, `boars`, `goats`, `monkeys`, `spiders` and the tests pass.
+
 ## Loop pass 376 (2026-10-21) — the fallen logs are weathered, furrowed and mossed
 
 A fallen log (`log`) read as a polished beam: one smooth timber-red with faint straight grain. The

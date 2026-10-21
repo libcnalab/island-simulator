@@ -11,7 +11,9 @@ namespace island {
 class CanopyLightField;
 class SpiderRenderer final {
 public:
-    static constexpr std::size_t MaximumVisibleCount=24;
+    static constexpr std::size_t MaximumVisibleCount=16;
+    static constexpr float Reach=14.0f;          // drawn within this distance
+    static constexpr float DetailDistance=3.0f;  // the detailed mesh within this distance
     SpiderRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,const CanopyLightField& canopy);
     ~SpiderRenderer();
     void Draw(const Microsoft::Xna::Framework::Matrix& view,const Microsoft::Xna::Framework::Matrix& projection,

@@ -149,6 +149,8 @@ namespace island
         std::vector<SpiderState> cachedSpiders_;
         std::vector<Microsoft::Xna::Framework::Vector3> cachedSnakePoints_;
         bool cacheValid_ = false;
+        bool staticValid_ = false;            // the static shadows' vertices lead the batch
+        std::size_t staticVertexCount_ = 0;
         int visibleShadowCount_ = 0;
         int visiblePalmShadowCount_ = 0;
         int visibleCanopyShadowCount_ = 0;

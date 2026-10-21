@@ -321,7 +321,10 @@ namespace island
         }
         // Contact shadows are diffuse enough to tolerate sub-decimetre refresh thresholds. This
         // avoids repeating culling and a dynamic-buffer orphan for nearly identical frames.
-        bool rebuild = !cacheValid_
+        // The static shadows (palms, crowns, rocks, wood, structures, the coast) depend only on
+        // the view; the animals' and the walker's on their own movement. A spider stepping by
+        // used to rebuild the whole batch, hundreds of terrain-draped static patches included.
+        const bool cameraRebuild = !cacheValid_
             || Vector3::DistanceSquared(cameraPosition, cachedCameraPosition_)
                 > CameraRefreshDistanceSquared
             || std::abs(view.M11 - cachedView_.M11) > ViewRefreshThreshold
@@ -336,7 +339,8 @@ namespace island
             || std::abs(projection.M11 - cachedProjection_.M11)
                 > ProjectionRefreshThreshold
             || std::abs(projection.M22 - cachedProjection_.M22)
-                > ProjectionRefreshThreshold
+                > ProjectionRefreshThreshold;
+        bool rebuild = cameraRebuild
             || cachedMonkeyPositions_.size() != monkeys.size()
             || cachedBoarPoses_.size() != boars.size()
             || cachedGoatPoses_.size() != goats.size()
@@ -412,21 +416,26 @@ namespace island
             }
         }
         if (rebuild) {
-            stagingVertices_.clear();
+            const bool staticRebuild = cameraRebuild || !staticValid_;
+            if (staticRebuild) {
+                stagingVertices_.clear();
+                visiblePalmShadowCount_ = 0;
+                visibleCanopyShadowCount_ = 0;
+                visibleRockShadowCount_ = 0;
+                visibleWoodShadowCount_ = 0;
+                visibleHutShadowCount_ = 0;
+                visibleStructureShadowCount_ = 0;
+                visibleCoastalShadowCount_ = 0;
+            } else {
+                stagingVertices_.resize(staticVertexCount_);
+            }
             visibleShadowCount_ = 0;
-            visiblePalmShadowCount_ = 0;
-            visibleCanopyShadowCount_ = 0;
-            visibleRockShadowCount_ = 0;
-            visibleWoodShadowCount_ = 0;
-            visibleHutShadowCount_ = 0;
-            visibleStructureShadowCount_ = 0;
             visibleMonkeyShadowCount_ = 0;
             visibleBoarShadowCount_ = 0;
             visibleGoatShadowCount_ = 0;
             visiblePlayerShadowCount_ = 0;
             visibleSpiderShadowCount_ = 0;
             visibleSnakeShadowCount_ = 0;
-            visibleCoastalShadowCount_ = 0;
             primitiveCount_ = 0;
             const BoundingFrustum frustum(view * projection);
 
@@ -436,6 +445,7 @@ namespace island
             const float shadowDirectionZ = -environment::SunDirectionZ / horizontalSunLength;
 
             for (const StaticShadow& shadow : staticShadows_) {
+                if (!staticRebuild) break;
                 // A structure's mass shadow under an active sun shadow map takes the share of
                 // the shadow the map has faded out at each of its vertices.
                 const bool beyondMapOnly = shadow.kind == StaticShadowKind::Structure && sunShadowMapActive_;
@@ -488,6 +498,10 @@ namespace island
                     ++visibleStructureShadowCount_;
                     break;
                 }
+            }
+            if (staticRebuild) {
+                staticVertexCount_ = stagingVertices_.size();
+                staticValid_ = true;
             }
 
             for (const MonkeyState& monkey : monkeys) {
@@ -592,9 +606,11 @@ namespace island
                                    static_cast<int>(stagingVertices_.size()),
                                    SetDataOptions::Discard);
             }
-            cachedView_ = view;
-            cachedProjection_ = projection;
-            cachedCameraPosition_ = cameraPosition;
+            if (staticRebuild) {   // the camera reference the static shadows were culled for
+                cachedView_ = view;
+                cachedProjection_ = projection;
+                cachedCameraPosition_ = cameraPosition;
+            }
             cachedMonkeyPositions_.clear();
             cachedMonkeyPositions_.reserve(monkeys.size());
             for (const MonkeyState& monkey : monkeys) {

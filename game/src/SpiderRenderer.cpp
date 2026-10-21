@@ -82,7 +82,9 @@ void SpiderRenderer::Draw(const Matrix& view,const Matrix& projection,const Vect
     for(const auto& spider:spiders) {
         const Vector3 centre(spider.x,spider.y+.04f,spider.z);
         const float distance=Vector3::DistanceSquared(centre,camera);
-        if(distance>24*24||!frustum.Intersects(BoundingSphere(centre,.21f)))continue;
+        // A spider a hand across covers a few pixels at 14 m (at 720p); drawn out to 24 m, up
+        // to 24 rebuilt each frame were the costliest pass on the operator's machine (5.5-7 ms).
+        if(distance>Reach*Reach||!frustum.Intersects(BoundingSphere(centre,.21f)))continue;
         candidates.emplace_back(distance,&spider);
     }
     std::sort(candidates.begin(),candidates.end(),[](const auto& a,const auto& b){return a.first<b.first;});
@@ -92,7 +94,7 @@ void SpiderRenderer::Draw(const Matrix& view,const Matrix& projection,const Vect
         const auto& spider=*candidate.second;
         const auto& pose=spider.pose;
         const std::size_t firstTextured=vertices_.size(),firstSolid=solid_.size();
-        const auto mesh=BuildSpiderMesh(pose.legs,distance<5*5);
+        const auto mesh=BuildSpiderMesh(pose.legs,distance<DetailDistance*DetailDistance);
         // one canopy-light sample for a spider a hand across (per vertex it was most of the cost)
         const auto tint=CanopyTransmissionTint(canopy_.SampleReceiver(spider.x,spider.y+.04f,spider.z,spider.y));
         for(const auto& vertex:mesh.vertices) {
@@ -106,7 +108,7 @@ void SpiderRenderer::Draw(const Matrix& view,const Matrix& projection,const Vect
                 ||vertex.material==SpiderMaterial::Hair?solid_:vertices_;
             destination.emplace_back(p,Color(channel(color.getRProperty(),tint.red),channel(color.getGProperty(),tint.green),channel(color.getBProperty(),tint.blue)),Vector2(vertex.u,vertex.v));
         }
-        const float shrink=vegetation_fade::FarShrink(std::sqrt(distance),24.0f);
+        const float shrink=vegetation_fade::FarShrink(std::sqrt(distance),Reach,.25f);
         vegetation_fade::ShrinkAbout(vertices_,firstTextured,spider.x,spider.y,spider.z,shrink);
         vegetation_fade::ShrinkAbout(solid_,firstSolid,spider.x,spider.y,spider.z,shrink);
         ++visible_;
