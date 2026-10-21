@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 355 (2026-10-21) — monkeys in shade keep their form
+
+The monkey skinning shader lit everything not facing the sun with one flat ambient, so a monkey in
+the canopy's shade (most of them, most of the time) was a single tone: the face a flat grey-brown
+mask, the flanks and limbs without form. The ambient is now a hemisphere - skylight from above,
+the forest floor's dim bounce from below - averaging the old value, so the brow, cheeks, muzzle,
+back and belly separate in shade. `monkeys`, `monkey-scratch` and the tests pass. (The face is
+still shallow; its geometry is the next thing to look at.)
+
 ## Loop pass 354 (2026-10-21) — the monkey close-up is framed in the clear; sweep after 342-353
 
 The `monkeys` QA camera stood at one fixed spot 1.2 m off the subject's shoulder, and a ground

@@ -62,7 +62,10 @@ void main() {
     float faceEdge = aTexCoord.y < 0.0 && aTexCoord.x >= 0.0
         ? smoothstep(0.28, 0.50, abs(aTexCoord.x - 0.5)) : 0.0;
     vec3 faceContour = mix(vec3(1.0), vec3(0.78, 0.76, 0.72), faceEdge);
-    vDiffuse = clamp(uDiffuse * faceFeature * faceContour * (vec3(0.47, 0.50, 0.42) * faceAmbient
+    // Skylight from above, the forest floor's dim bounce from below: one flat ambient left a
+    // monkey in shade (the brow, cheeks, muzzle and flanks) a single tone, a flat mask.
+    vec3 ambient = mix(vec3(0.30, 0.29, 0.22), vec3(0.58, 0.62, 0.56), 0.5 + 0.5 * normal.y);
+    vDiffuse = clamp(uDiffuse * faceFeature * faceContour * (ambient * faceAmbient
                      + vec3(0.78, 0.74, 0.62) * max(sunDot, 0.0)), 0.0, 1.0);
     vSpecular = clamp(uSpecular * uLightSpecular * specular, 0.0, 1.0);
     float depth = -(uView * world).z;
