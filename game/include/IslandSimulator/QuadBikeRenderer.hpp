@@ -59,6 +59,9 @@ namespace island
         void DrawShadow(const Microsoft::Xna::Framework::Matrix& view, const Microsoft::Xna::Framework::Matrix& projection,
                         const Microsoft::Xna::Framework::Vector3& camera, const QuadBike& bike, bool rider,
                         const BikeVec& groundPoint, const BikeVec& groundNormal, float sunStrength);
+        /** @brief The brakes on (the rider pulling back while it rolls, or the handbrake): the
+         *  brake light glows red behind, by day as well as by night. */
+        void SetBraking(bool braking) noexcept { braking_ = braking; }
         /** @brief The lamps' glow, after the night grade (additive). */
         void DrawLights(const Microsoft::Xna::Framework::Matrix& view, const Microsoft::Xna::Framework::Matrix& projection,
                         const Microsoft::Xna::Framework::Vector3& camera, const QuadBike& bike, float nightness);
@@ -100,5 +103,6 @@ namespace island
         const SunShadowMap* sunShadow_ = nullptr;
         int triangles_ = 0, drawCalls_ = 0;
         float dirt_ = 0.0f, dirtWet_ = 0.0f;
+        bool braking_ = false;
     };
 }

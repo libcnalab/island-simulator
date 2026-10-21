@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 312 (2026-10-21) — the quad's brake light
+
+A real ATV's tail lamp brightens when the brakes go on. The quad now shows it: while the rider
+pulls back on the throttle with the quad still rolling forward, or holds the handbrake on the
+move, the brake light flares red behind (`QuadBikeRenderer::SetBraking`: a wider, brighter red
+glow at the tail lamp, by day as well as by night, where the plain tail lamp shows only at
+night). A probe that held the brakes on in `quad-chase` showed the red flare at the tail by
+day and at 21:30; `quad`, `quad-ride`, `quad-chase`, `quad-drive` and the tests pass.
+
 ## Loop pass 311 (2026-10-21) — the crocodiles' red eyeshine
 
 The best-known eyeshine of all, the crocodile's red glow in a torch beam on dark water, joins

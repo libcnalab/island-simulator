@@ -926,7 +926,9 @@ void main()
         const float day = 1.0f - std::clamp(nightness, 0.0f, 1.0f);
         add(HeadlightLeft, 0.11f + 0.20f * nightness, 1.0f, 0.95f, 0.85f, 0.45f + 0.55f * nightness - 0.2f * day);
         add(HeadlightRight, 0.11f + 0.20f * nightness, 1.0f, 0.95f, 0.85f, 0.45f + 0.55f * nightness - 0.2f * day);
-        if (nightness > 0.05f) add(Taillight, 0.16f, 1.0f, 0.10f, 0.06f, 0.7f * nightness);
+        // the tail lamp at night; braking, the brake light flares red behind by day and night
+        if (braking_) add(Taillight, 0.27f + 0.05f * nightness, 1.0f, 0.10f, 0.06f, 0.9f + 0.1f * nightness);
+        else if (nightness > 0.05f) add(Taillight, 0.16f, 1.0f, 0.10f, 0.06f, 0.7f * nightness);
         if (glowStaging_.empty()) return;
         device_.setRasterizerStateProperty(RasterizerState::CullNone);
         device_.setBlendStateProperty(BlendState::Additive);

@@ -6006,8 +6006,13 @@ namespace island
             if (hutRenderer_)
                 hutRenderer_->DrawNightLights(cameraView_, cameraProjection_, renderCameraPosition_,
                     1.0f - std::clamp((light.sunElevationDegrees + 4.0f) / 12.0f, 0.0f, 1.0f), timeSeconds);
-            if (quadRenderer_ && quadEngineOn_)
+            if (quadRenderer_ && quadEngineOn_) {
+                // braking: pulling back while it still rolls forward, or the handbrake on the move
+                const float rolling = quad_.Speed();
+                quadRenderer_->SetBraking(riding_ && ((quadControls_.throttle < -0.05f && rolling > 0.3f)
+                                                      || (quadControls_.handbrake && std::abs(rolling) > 0.3f)));
                 quadRenderer_->DrawLights(cameraView_, cameraProjection_, renderCameraPosition_, quad_, QuadLampNightness());
+            }
             // the animals' eyes shine back in the quad's beam
             if (eyeshineRenderer_ && quadRenderer_ && quadEngineOn_ && !quad_.Overturned()) {
                 allEyes_.clear();
