@@ -21,6 +21,9 @@ namespace island
     inline constexpr float GrassGrainStrength = 0.045f;
     inline constexpr float GrassMidribStrength = 0.06f;
     inline constexpr float GrassEdgeStrength = 0.025f;
+    // A blade is creased along its midrib: one half turned a little more to the light than the
+    // other. Up close, flat blades with one tone across read as cut green ribbons.
+    inline constexpr float GrassFoldStrength = 0.07f;
 
     [[nodiscard]] inline float GrassSmoothStep(float start, float end, float value)
     {
@@ -54,8 +57,10 @@ namespace island
         const float veins = std::cos((across * GrassGrainCycles + phase) * tau);
         const float midrib = 1 - GrassSmoothStep(0.015f, 0.13f, std::abs(across));
         const float edge = GrassSmoothStep(0.7f, 1, std::abs(across));
+        const float fold = (across < 0 ? -1.0f : 1.0f) * GrassSmoothStep(0.02f, 0.15f, std::abs(across));
         return 1 + veins * GrassGrainStrength * veinResolved
-            + (midrib * GrassMidribStrength - edge * GrassEdgeStrength) * resolved;
+            + (midrib * GrassMidribStrength - edge * GrassEdgeStrength
+               + fold * GrassFoldStrength) * resolved;
     }
     /** @brief Restrained basal pigment; independent of distance, LOD and wind amplitude.
      * Pass each blade's normalized geometric height, including short turf. Upper leaf and seed
@@ -92,7 +97,8 @@ namespace island
                << "const float grassGrainCycles = " << GrassGrainCycles << ";\n"
                << "const float grassGrainStrength = " << GrassGrainStrength << ";\n"
                << "const float grassMidribStrength = " << GrassMidribStrength << ";\n"
-               << "const float grassEdgeStrength = " << GrassEdgeStrength << ";\n";
+               << "const float grassEdgeStrength = " << GrassEdgeStrength << ";\n"
+               << "const float grassFoldStrength = " << GrassFoldStrength << ";\n";
         return source.str();
     }
 }

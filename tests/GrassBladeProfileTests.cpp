@@ -100,7 +100,8 @@ int main()
             for (int phase = 0; phase <= 10; ++phase) {
                 for (float footprint : {0.0f, 0.01f, 0.05f, 0.1f, 0.25f, 0.5f, 1.0f, 100.0f}) {
                     const float surface = island::GrassSurfaceResponse(across, phase / 10.0f, footprint);
-                    Check(std::isfinite(surface) && surface >= 0.929999f && surface <= 1.105001f,
+                    // grain, midrib, edge and the midrib fold (0.93 - 0.07 .. 1.105 + 0.07)
+                    Check(std::isfinite(surface) && surface >= 0.859999f && surface <= 1.175001f,
                           "grain and midrib modulation remain within the analytic bound");
                     if (footprint >= 0.5f) Check(surface == 1,
                         "unresolved blade detail is exactly neutral, independent of phase");

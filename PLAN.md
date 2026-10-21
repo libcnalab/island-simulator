@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 368 (2026-10-21) — grass blades are creased along the midrib; sweep after 354-367
+
+Seen from a hand's height (`snake-head`) the grass blades were flat ribbons of one tone across.
+A blade is creased along its midrib, one half turned a little more to the light than the other:
+the surface response (shader and its CPU reference, `GrassFoldStrength` 0.07) now lightens one
+half and darkens the other, footprint-filtered with the midrib and edge so it is neutral where
+unresolved; the analytic bound in the blade-profile test widens by the fold. A full capture sweep
+after passes 354-367 passed 116 of 117 viewpoints (`canopy` needs its flag); a contact-sheet
+review found no regression. `snake-head`, `grass`, `ground` and the tests pass.
+
 ## Loop pass 367 (2026-10-21) — the bear's and the resident's ground shadows darken
 
 Under the bear (`bear`) a pale disc lay on the forest floor. Its contact shadow was tinted

@@ -371,8 +371,10 @@ void main()
         float veins = cos((vBladeSurface.x * grassGrainCycles + vBladeSurface.y) * 6.28318530718);
         float midrib = 1.0 - smoothstep(0.015, 0.13, abs(vBladeSurface.x));
         float edge = smoothstep(0.7, 1.0, abs(vBladeSurface.x));
+        float fold = (vBladeSurface.x < 0.0 ? -1.0 : 1.0) * smoothstep(0.02, 0.15, abs(vBladeSurface.x));
         surface += veins * grassGrainStrength * veinResolved
-            + (midrib * grassMidribStrength - edge * grassEdgeStrength) * resolved;
+            + (midrib * grassMidribStrength - edge * grassEdgeStrength
+               + fold * grassFoldStrength) * resolved;
     }
     vec3 color = vColor * (vec3(1.0) + grassBasalShift * basalWeight) * light * surface;
     // Wet blades (after rain, or with the dew before mid-morning) darken a little and take a
