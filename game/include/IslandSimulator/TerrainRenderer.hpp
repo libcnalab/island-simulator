@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <memory>
 #include <vector>
 
@@ -92,6 +93,9 @@ namespace island
         Microsoft::Xna::Framework::BoundingBox scourBounds_;
         int scourVertexCount_=0,scourPrimitiveCount_=0;
         std::unique_ptr<CaveLayout> cave_;
+        std::array<float,15> tidePools_{};   // the five tide pools: centre x, z and radius
+        std::array<float,15> tidePoolPhaseCos_{};   // and their outline harmonics' phases
+        std::array<float,15> tidePoolPhaseSin_{};
         std::unique_ptr<CaveGroundPatch> caveGround_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> caveVertices_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::IndexBuffer> caveIndices_;

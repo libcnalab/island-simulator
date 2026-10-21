@@ -233,6 +233,22 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 352 (2026-10-21) — the tide pools lie in a rock bench
+
+The five tide pools lie 24-34 m back from the beach on the coastal flat, and in plain turf they
+read as rain puddles: a teal blob on dark olive grass. The terrain shader now wears each basin
+into a weathered limestone shelf: an outcrop, not a ring - broad lobes reach out on some sides and
+barely clear the rim on others, the edge ragged at the hand scale, turf cushions in its hollows -
+warm grey with broad grey-black biofilm stains, solution pits and hairline joints (faded before
+they would shimmer); toward the water the rock is wet and darker, barnacle-flecked above the
+waterline and green with an algal film at it, the basin floor algae-brown. The outline follows
+`TidePoolLayout::OutlineScale` from the pools' centres and radii (uniform arrays), its harmonics
+taken from the bearing's direction by the multiple-angle identities with the phases' cosines and
+sines from the CPU, so no trigonometry runs per pixel. (A timing scare along the way: the
+captures' per-pass averages include frame 0, where Mesa JIT-compiles a shader text it has not
+cached, about half a second for the terrain; steady frames are unchanged, 0-1 ms in
+`tide-pools`.) `tide-pools`, `headland`, `water`, `beach` and the tests pass.
+
 ## Loop pass 351 (2026-10-21) — the crocodile lies in the water, not on it
 
 A swimming crocodile floated with its centre at -0.18 m (and, in the shallows, 0.2 m times its

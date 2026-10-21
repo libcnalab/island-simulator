@@ -21,6 +21,7 @@
 #include "IslandSimulator/ProceduralMeshValidation.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "IslandSimulator/TerrainMeshLayout.hpp"
+#include "IslandSimulator/TidePoolLayout.hpp"
 #include "IslandSimulator/TerrainMaterialVertex.hpp"
 #include "IslandSimulator/TerrainSurfaceFrame.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
@@ -159,6 +160,28 @@ in float vGroundLight;
 uniform vec3 uCaveEntrance;
 uniform vec2 uCaveForward;
 uniform vec3 uBunkerEntrance;
+uniform vec3 uTidePools[5];   // the tide pools' centres (x, z) and authored radii
+// The cosines and sines of each outline harmonic's phase (TidePoolLayout::OutlineScale).
+uniform vec3 uTidePoolPhaseCos[5];
+uniform vec3 uTidePoolPhaseSin[5];
+// A point's distance from a tide pool's centre as a share of its lobed outline; 9 beyond the
+// reach of its rock bench. The harmonics come from the bearing's direction by the multiple-
+// angle identities: per-pixel atan and sin cost the software renderers some thirty times the
+// whole terrain pass where a pool filled the view.
+float tidePoolReach(vec2 point,vec3 pool,vec3 phaseCos,vec3 phaseSin)
+{
+    vec2 offset=point-pool.xy;
+    float distance=length(offset);
+    if (distance>pool.z*2.7) return 9.0;
+    vec2 bearing=offset/max(distance,0.0001);
+    float c=bearing.x,s=bearing.y;
+    float s2=2.0*s*c,c2=c*c-s*s;
+    float s3=s*(3.0-4.0*s*s),c3=c*(4.0*c*c-3.0);
+    float s5=s2*c3+c2*s3,c5=c2*c3-s2*s3;
+    float outline=1.0+.11*(s2*phaseCos.x+c2*phaseSin.x)+.07*(s3*phaseCos.y+c3*phaseSin.y)
+        +.04*(s5*phaseCos.z+c5*phaseSin.z);
+    return distance/(pool.z*outline);
+}
 uniform vec4 uBunkerFrame;
 
 uniform vec3 uCameraPosition;
@@ -1123,6 +1146,47 @@ void main()
         color += vec3(0.14, 0.20, 0.21) * wetSheen;
     }
 
+    // Tide-pool benches: each basin is worn into a weathered limestone shelf, a lobed bench
+    // about a third again the basin's size that breaks into the turf at a ragged edge (the
+    // pools lie back from the beach, and in plain turf they read as rain puddles). Toward the
+    // water the rock is wet and darker, barnacle-flecked above the waterline, green with an
+    // algal film at it; the basin floor under the water is algae-brown. The outline follows
+    // TidePoolLayout::OutlineScale; the water stands to 0.67 of it.
+    float poolReach=9.0;
+    for (int i=0;i<5;++i)
+        poolReach=min(poolReach,tidePoolReach(p,uTidePools[i],uTidePoolPhaseCos[i],uTidePoolPhaseSin[i]));
+    if (poolReach<2.2) {
+        // an outcrop, not a ring: broad lobes reach out on some sides and barely clear the
+        // rim on others, the edge itself ragged at the hand scale; turf cushions fill hollows
+        float benchLobe=valueNoise(p*.32+vec2(-6.3,2.8))*.70+valueNoise(p*.75+vec2(4.4,-9.1))*.30;
+        float benchEdge=valueNoise(p*2.2+vec2(8.1,-3.6));
+        float benchExtent=.86+benchLobe*1.10+benchEdge*.12;
+        float bench=1.0-smoothstep(benchExtent-.03,benchExtent+.03,poolReach);
+        float cushion=smoothstep(.64,.72,valueNoise(p*.95+vec2(-12.4,6.6))*.75+benchEdge*.25)
+            *smoothstep(.95,1.10,poolReach);
+        bench*=1.0-cushion;
+        float benchGrain=valueNoise(p*3.7+vec2(1.7,5.3))*.6+valueNoise(p*11.0-vec2(3.2,8.8))*.4;
+        // solution pits and hairline joints, gone before they would shimmer
+        float benchDetail=1.0-smoothstep(.03,.09,groundPixelWidth);
+        float pits=smoothstep(.62,.80,valueNoise(p*7.5+vec2(9.4,-1.3)))*benchDetail;
+        float joint=(1.0-smoothstep(.0,.035,abs(valueNoise(p*1.6+vec2(-2.2,7.7))-.5)))*benchDetail;
+        vec3 benchRock=mix(vec3(.47,.45,.39),vec3(.63,.60,.52),benchGrain);
+        // grey-black biofilm stains the weathered limestone in broad patches
+        float biofilm=smoothstep(.45,.75,valueNoise(p*.55+vec2(3.3,14.1)));
+        benchRock=mix(benchRock,vec3(.30,.30,.28)+benchGrain*.06,biofilm*.55);
+        benchRock*=1.0-.30*pits-.38*joint;
+        float benchWet=1.0-smoothstep(.62,.98,poolReach);
+        benchRock=mix(benchRock,benchRock*vec3(.62,.62,.60),benchWet);
+        float barnacle=smoothstep(.70,.86,valueNoise(p*19.0+vec2(2.9,-4.6)))*benchDetail
+            *smoothstep(.62,.70,poolReach)*(1.0-smoothstep(.86,1.02,poolReach));
+        benchRock=mix(benchRock,vec3(.70,.68,.62),barnacle*.65);
+        float algalFilm=smoothstep(.56,.66,poolReach)*(1.0-smoothstep(.70,.80,poolReach));
+        benchRock=mix(benchRock,vec3(.16,.27,.13),algalFilm*(.55+.30*benchGrain));
+        float basinFloor=1.0-smoothstep(.56,.64,poolReach);
+        benchRock=mix(benchRock,mix(vec3(.22,.21,.13),vec3(.16,.24,.12),benchGrain),basinFloor);
+        color=mix(color,benchRock*vGroundLight,bench);
+    }
+
     // Same texel as the cover sample above; retains cool skylight in canopy shade.
     float terrainTransmission=canopyDappleTransmission(vWorld.xz,groundField.x);
     // Direct sun now arrives through the shadow map: the baked field keeps only the sky
@@ -1482,6 +1546,19 @@ void main()
         streamBed_=std::make_unique<StreamBedPatch>(StreamCourse(terrain),*original);
         wreckScour_=std::make_unique<WreckScourPatch>(ShipwreckLayout(terrain),*original);
         cave_=std::make_unique<CaveLayout>(terrain);
+        for (std::size_t index=0;index<TidePoolLayout::Definitions.size();++index) {
+            const auto [poolX,poolZ]=TidePoolLayout::Centre(terrain,index);
+            tidePools_[index*3U]=poolX;
+            tidePools_[index*3U+1U]=poolZ;
+            tidePools_[index*3U+2U]=TidePoolLayout::Definitions[index].radius;
+            // the phases of OutlineScale's three harmonics
+            const float seed=static_cast<float>(index)*2.399963f;
+            const std::array<float,3> phases{seed,1.7f*seed+.6f,-seed+2.1f};
+            for (std::size_t harmonic=0;harmonic<3U;++harmonic) {
+                tidePoolPhaseCos_[index*3U+harmonic]=std::cos(phases[harmonic]);
+                tidePoolPhaseSin_[index*3U+harmonic]=std::sin(phases[harmonic]);
+            }
+        }
         caveGround_=std::make_unique<CaveGroundPatch>(*cave_,*original);
         cells_.clear();
         cells_.reserve(TerrainMeshLayout::CellCount);
@@ -1711,6 +1788,12 @@ void main()
             materialEffect_->SetUniformMat4("uViewProjection", viewProjection);
             const auto entrance=cave_->Entrance(),forward=cave_->World(0,0,1);
             materialEffect_->SetUniformVec3("uCaveEntrance",entrance.x,entrance.y,entrance.z);
+            materialEffect_->SetUniformVec3Array("uTidePools",tidePools_.data(),
+                                                 static_cast<int>(TidePoolLayout::Definitions.size()));
+            materialEffect_->SetUniformVec3Array("uTidePoolPhaseCos",tidePoolPhaseCos_.data(),
+                                                 static_cast<int>(TidePoolLayout::Definitions.size()));
+            materialEffect_->SetUniformVec3Array("uTidePoolPhaseSin",tidePoolPhaseSin_.data(),
+                                                 static_cast<int>(TidePoolLayout::Definitions.size()));
             materialEffect_->SetUniformVec2("uCaveForward",forward.x-entrance.x,forward.z-entrance.z);
             const auto bunkerEntrance=bunker_.Entrance();
             const auto bunkerAcross=bunker_.World(1,0,0);
