@@ -242,7 +242,10 @@ fading in under a second at its own rate and phase and a pale splash at its cent
 strikes; a layer goes once its cells span too few pixels to draw its rings (no shimmer far out). On
 the sea the rings take the reflected sky (0.45) and the rain dulls the surface by up to 6 %; on the
 stream they light its ring term. Judged in `water` and `stream` with showers and a thunderstorm: in the
-storm the near water is covered in rings thinning with distance; clear weather is unchanged.
+storm the near water is covered in rings thinning with distance; clear weather is unchanged. On the
+sea they add the drops' density to RainRingRenderer's world-anchored mesh rings round the walker (alone,
+a handful even in a thunderstorm); the stream had none. The Chrome `stream` scope passes (WebGL2
+compiles both shaders).
 
 ## Loop pass 426 (2026-10-22) — coconut crabs stand tall on long, fanned legs
 
