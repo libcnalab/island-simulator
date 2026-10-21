@@ -648,7 +648,8 @@ namespace island
         void UpdateQuadSite();
         [[nodiscard]] bool QuadWallBlocked(float x, float z) const noexcept;
         [[nodiscard]] bool QuadOnShelterFloor(float x, float z) const noexcept;
-        [[nodiscard]] bool QuadStreamBed(float x, float z, float& bed, float& waterDepth) const noexcept;
+        [[nodiscard]] bool StreamWaterAt(float x, float z, float& bed, float& waterDepth) const noexcept;
+        [[nodiscard]] float WalkerWaterDepth() const noexcept;
         void PlaceQuadNear(float x, float z, float yawRadians);
         [[nodiscard]] float QuadLampNightness() const noexcept;
         [[nodiscard]] bool TouchRideOffered() const noexcept;   // the touch action buttons shown

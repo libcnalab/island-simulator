@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 413 (2026-10-21) — the walker wades the stream
+
+The walker's water was the sea's alone (the ground below zero): in the stream its steps sounded as
+dry soil and the water-movement layer stayed silent. FootstepGroundAt now gives the shallows where
+the stream's water over its bed is more than 4 cm deep (the walker's steps, and the deer's, boars'
+and goats' footfalls and prints, splash there; their hoof dust already kept to dry ground), and the
+soundscape's water depth is IslandGame::WalkerWaterDepth, the sea's or the stream's, so wading it
+starts the wading layer and the entry splash. QuadStreamBed is renamed StreamWaterAt. The startup
+footstep probe adds the stream's middle reach (shallows) and the ground beside it (soil), checked by
+the capture runner.
+
 ## Loop pass 412 (2026-10-21) — marks and shadows lie in the stream's channel and the wreck's scour
 
 The drawn ground the per-frame marks and shadows are laid on (drawnGround_: footprints, contact

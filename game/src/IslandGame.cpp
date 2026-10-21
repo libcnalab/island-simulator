@@ -2487,6 +2487,11 @@ namespace island
                       << ", water beside its end " << name(FootstepGroundAt(j.rootX + j.dirX * 12.0f + j.AcrossX() * 3.0f,
                                                                              j.rootZ + j.dirZ * 12.0f + j.AcrossZ() * 3.0f));
             }
+            {
+                const auto& reach = streamDrift_.Course().Station(45);
+                probe << ", the stream's middle reach " << name(FootstepGroundAt(reach.x, reach.z))
+                      << ", beside it " << name(FootstepGroundAt(reach.x, reach.z - 3.0f * reach.halfWidth - 1.0f));
+            }
             const char* rock = "none";
             const char* inland = "none";
             const char* sand = "none";
@@ -3263,7 +3268,7 @@ namespace island
         const float windExposure=CoastalWindResponse::Exposure(
             position.x,position.z,shoreDistance);
         const bool swimming = playerMotion_.Mode() == LocomotionMode::Swimming;
-        const float waterDepth = std::max(0.0f, -playerMotion_.GroundHeight());
+        const float waterDepth = WalkerWaterDepth();
         const float horizontalSpeed = std::hypot(playerMotion_.VelocityX(),
                                                  playerMotion_.VelocityZ());
         (void)soundscape_->Start(
@@ -4558,7 +4563,7 @@ namespace island
         }
         // the stream's water over its bed (which the surface gives in its channel)
         float streamBed = 0.0f, streamDepth = 0.0f;
-        (void)QuadStreamBed(x, z, streamBed, streamDepth);
+        (void)StreamWaterAt(x, z, streamBed, streamDepth);
         // The jetty's deck carries the quad as it does the walker, up its ramp from the sand
         // (off its side, the sea).
         if (jettyPlacement_) {
@@ -4598,7 +4603,7 @@ namespace island
         return ground;
     }
 
-    bool IslandGame::QuadStreamBed(const float x, const float z, float& bed, float& waterDepth) const noexcept
+    bool IslandGame::StreamWaterAt(const float x, const float z, float& bed, float& waterDepth) const noexcept
     {
         // Near the stream: its carved bed, and the stream's own water over it.
         if (!terrainRenderer_ || !std::isfinite(x) || !std::isfinite(z) || std::abs(z - StreamRoute::CentreZ(x)) > 6.0f)
@@ -4609,6 +4614,15 @@ namespace island
         float level = 0.0f;
         waterDepth = streamDrift_.Course().WaterLevel(x, z, level) ? std::max(0.0f, level - bed) : 0.0f;
         return true;
+    }
+
+    float IslandGame::WalkerWaterDepth() const noexcept
+    {
+        // the sea's, or the stream's where the walker wades it
+        const PlayerPosition& position = playerMotion_.Position();
+        float bed = 0.0f, stream = 0.0f;
+        (void)StreamWaterAt(position.x, position.z, bed, stream);
+        return std::max(std::max(0.0f, -playerMotion_.GroundHeight()), stream);
     }
 
     bool IslandGame::QuadObstacle(const float x, const float z, const float radius, float& pushX, float& pushZ) const noexcept
@@ -4845,7 +4859,7 @@ namespace island
             wheel.waterDepth = std::max(0.0f, -sample.height);
             // in the stream's channel: its bed and its water
             float streamBed = 0.0f, streamDepth = 0.0f;
-            const bool inChannel = QuadStreamBed(wheel.x, wheel.z, streamBed, streamDepth)
+            const bool inChannel = StreamWaterAt(wheel.x, wheel.z, streamBed, streamDepth)
                 && streamBed < sample.height - 0.03f;
             if (inChannel) {
                 wheel.y = streamBed;
@@ -5516,7 +5530,7 @@ namespace island
         soundscape_->Update(
             shoreDistance,
             !flightMotion_.IsActive() && playerMotion_.Mode() == LocomotionMode::Swimming,
-            flightMotion_.IsActive() ? 0.0f : std::max(0.0f, -playerMotion_.GroundHeight()),
+            flightMotion_.IsActive() ? 0.0f : WalkerWaterDepth(),
             flightMotion_.IsActive() ? 0.0f
                 : std::hypot(playerMotion_.VelocityX(), playerMotion_.VelocityZ()),
             flightMotion_.IsActive() ? 0.0f : playerMotion_.OceanCurrentStrength(terrain_),
@@ -5557,8 +5571,9 @@ namespace island
             return FootstepSurface::Wood;
         const TerrainSample sample = terrain_.Sample(x, z);
         // Ankle-deep water before the swim threshold wades; the scheduler stays silent once
-        // the player is actually swimming.
+        // the player is actually swimming. The stream's water is waded too.
         if (sample.height < -0.06f) return FootstepSurface::Shallows;
+        if (float bed = 0.0f, stream = 0.0f; StreamWaterAt(x, z, bed, stream) && stream > 0.04f) return FootstepSurface::Shallows;
         switch (sample.surface) {
         case TerrainSurface::DeepSeabed:
         case TerrainSurface::ShallowSeabed:
@@ -7652,7 +7667,7 @@ namespace island
                     const StreamCourse& course = streamDrift_.Course();
                     const auto& centre = course.Station(45);
                     float bed = 0.0f, depth = 0.0f;
-                    const bool channel = QuadStreamBed(q.x, q.z, bed, depth);
+                    const bool channel = StreamWaterAt(q.x, q.z, bed, depth);
                     std::cout << "island-simulator: quad QA stream: from the centreline "
                               << std::hypot(q.x - centre.x, q.z - centre.z) << " m, ground "
                               << QuadGround(q.x, q.z).height << ", water depth " << (channel ? depth : 0.0f)

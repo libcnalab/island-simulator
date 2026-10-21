@@ -1512,8 +1512,8 @@ def main():
                 raise RuntimeError("current bird head scratch is missing; check for a stale executable")
             if "a dolphin's blowhole opens as its back breaks the surface for the breath and closes as it goes under" not in diagnostics:
                 raise RuntimeError("current dolphin blowhole is missing; check for a stale executable")
-            if not re.search(r"footstep ground probe: jetty deck wood, water beside its end shallows, nearest beach sand, nearest rock rock, nearest inland ground (grass|soil)", diagnostics):
-                raise RuntimeError("the walker's footstep ground does not resolve wood, shallows, sand, rock and inland ground; check for a stale executable")
+            if not re.search(r"footstep ground probe: jetty deck wood, water beside its end shallows, the stream's middle reach shallows, beside it (grass|soil|rock|sand), nearest beach sand, nearest rock rock, nearest inland ground (grass|soil)", diagnostics):
+                raise RuntimeError("the walker's footstep ground does not resolve wood, shallows (the sea's and the stream's), sand, rock and inland ground; check for a stale executable")
             if not re.search(r"contact shadows \d+ \(walker's own shadow [01]\)", diagnostics):
                 raise RuntimeError("the walker's own shadow count is missing from the inventory; check for a stale executable")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
