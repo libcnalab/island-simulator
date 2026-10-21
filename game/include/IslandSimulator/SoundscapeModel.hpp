@@ -74,6 +74,12 @@ namespace island
     /** @brief Knobby tyres rolling over sand, soil and grit: a low rumble under a crunch of
      *  grains; looped, played louder with the speed and the sliding. */
     [[nodiscard]] AmbientLoop GenerateTyreRollLoop();
+    /** @brief The quad's tyres churning water: a three-second loop of rushing, gurgling wash
+     *  with the slap of the water each tread lug throws. */
+    [[nodiscard]] AmbientLoop GenerateQuadWadeLoop();
+    /** @brief The quad running into water: a heavy splash, its spray hissing down and its
+     *  drops pattering after it. */
+    [[nodiscard]] AmbientLoop GenerateQuadSplash();
     /** @brief The tropical night: a chorus of crickets (each chirping its own pulse train high
      *  in the treble) and a few tree frogs calling in bouts, over a faint night air; an
      *  eight-second seamless loop. */

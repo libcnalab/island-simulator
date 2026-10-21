@@ -252,16 +252,54 @@ namespace island
         }
     }
 
-    void Soundscape::SetTyres(const float rolling, const float sliding, const float x, const float y, const float z,
-                              const bool riding) noexcept
+    void Soundscape::SetTyres(const float rolling, const float sliding, const float wading, const float x, const float y,
+                              const float z, const bool riding) noexcept
     {
         (void)y;
         if (!available_ || !tyreInstance_) return;
         const float roll = std::isfinite(rolling) ? std::clamp(std::abs(rolling), 0.0f, 30.0f) : 0.0f;
         const float slide = std::isfinite(sliding) ? std::clamp(sliding, 0.0f, 10.0f) : 0.0f;
-        float volume = (std::clamp(roll / 18.0f, 0.0f, 1.0f) * 0.30f + std::clamp((slide - 0.4f) / 3.0f, 0.0f, 1.0f) * 0.45f)
-            * (muted_ ? 0.0f : 1.0f) * underwaterAudio_.airGain;
-        if (!riding) volume *= std::clamp(1.0f - (std::hypot(x - listenerX_, z - listenerZ_) - 4.0f) / 40.0f, 0.0f, 1.0f);
+        const float wade = std::isfinite(wading) ? std::clamp(wading, 0.0f, 1.0f) : 0.0f;
+        const float distance = riding ? 1.0f
+            : std::clamp(1.0f - (std::hypot(x - listenerX_, z - listenerZ_) - 4.0f) / 40.0f, 0.0f, 1.0f);
+        const float gain = (muted_ ? 0.0f : 1.0f) * underwaterAudio_.airGain * distance;
+        // In the water the tyres churn it: its rush with the speed and the depth, their crunch
+        // drowned; running into it fast, a splash.
+        if (quadWadeInstance_) {
+            const float wadeVolume = std::clamp(roll / 8.0f, 0.0f, 1.0f) * std::min(1.0f, wade * 2.5f) * 0.55f * gain;
+            try {
+                if (wadeVolume > 0.01f && !quadWadePlaying_) {
+                    quadWadeInstance_->Play();
+                    quadWadePlaying_ = true;
+                } else if (wadeVolume <= 0.01f && quadWadePlaying_) {
+                    quadWadeInstance_->Stop();
+                    quadWadePlaying_ = false;
+                }
+                if (quadWadePlaying_) {
+                    quadWadeInstance_->setVolumeProperty(wadeVolume);
+                    quadWadeInstance_->setPitchProperty(std::clamp(-0.3f + roll / 25.0f, -0.3f, 0.4f));
+                }
+            } catch (const std::exception&) {
+                quadWadePlaying_ = false;
+            }
+        }
+        if (quadSplashEffect_ && wade >= 0.12f && quadWading_ < 0.12f && roll > 2.5f) {
+            const float splashVolume = std::clamp(0.3f + roll / 12.0f, 0.0f, 1.0f) * gain;
+            if (splashVolume > 0.02f) {
+                try {
+                    quadSplashInstance_ = std::make_unique<SoundEffectInstance>(quadSplashEffect_->CreateInstance());
+                    quadSplashInstance_->setVolumeProperty(splashVolume);
+                    quadSplashInstance_->setPitchProperty(std::clamp(0.15f - roll / 40.0f, -0.25f, 0.15f));   // faster, deeper
+                    quadSplashInstance_->Play();
+                    ++playedQuadSplashCount_;
+                } catch (const std::exception&) {
+                    quadSplashInstance_.reset();
+                }
+            }
+        }
+        quadWading_ = wade;
+        const float volume = (std::clamp(roll / 18.0f, 0.0f, 1.0f) * 0.30f + std::clamp((slide - 0.4f) / 3.0f, 0.0f, 1.0f) * 0.45f)
+            * (1.0f - std::min(1.0f, wade * 2.0f)) * gain;
         try {
             if (volume > 0.01f && !tyrePlaying_) {
                 tyreInstance_->Play();
@@ -490,6 +528,12 @@ namespace island
             tyreEffect_->setNameProperty("Procedural tyres on the ground");
             tyreInstance_ = std::make_unique<SoundEffectInstance>(tyreEffect_->CreateInstance());
             tyreInstance_->setIsLoopedProperty(true);
+            quadWadeEffect_ = CreateLoopedSoundEffect(GenerateQuadWadeLoop());
+            quadWadeEffect_->setNameProperty("Procedural quad tyres churning water");
+            quadWadeInstance_ = std::make_unique<SoundEffectInstance>(quadWadeEffect_->CreateInstance());
+            quadWadeInstance_->setIsLoopedProperty(true);
+            quadSplashEffect_ = CreateOneShotSoundEffect(GenerateQuadSplash());
+            quadSplashEffect_->setNameProperty("Procedural quad splash");
             impactEffect_ = CreateOneShotSoundEffect(GenerateQuadImpact());
             impactEffect_->setNameProperty("Procedural quad impact");
             owlEffect_ = CreateOneShotSoundEffect(GenerateScopsOwlCall());

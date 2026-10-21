@@ -660,6 +660,72 @@ namespace island
         return Quantize(samples, 0.7f, true);
     }
 
+    AmbientLoop GenerateQuadWadeLoop()
+    {
+        constexpr int loopSeconds = 3;
+        constexpr std::size_t frameCount = static_cast<std::size_t>(AmbientSampleRate * loopSeconds);
+        const std::vector<float> noise = Noise(0x7d3e91c5U, frameCount);
+        const std::vector<float> droplets = CircularSmooth(noise, 3U);
+        const std::vector<float> wash = CircularSmooth(noise, 22U);
+        const std::vector<float> body = CircularSmooth(noise, 260U);
+        std::vector<float> samples(frameCount, 0.0f);
+        for (std::size_t i = 0; i < frameCount; ++i) {
+            // the rush surging with the tyres' churn, never still (whole cycles in the loop)
+            const float phase = static_cast<float>(i) / static_cast<float>(frameCount);
+            const float surge = 0.62f + 0.20f * std::sin(2.0f * std::numbers::pi_v<float> * (7.0f * phase + 0.3f))
+                + 0.12f * std::sin(2.0f * std::numbers::pi_v<float> * (17.0f * phase + 0.8f));
+            // the spray's hiss over the rush, and the water's heavy body under it
+            samples[i] = ((droplets[i] - wash[i]) * 0.55f + wash[i] * 0.85f) * surge + body[i] * 0.55f;
+        }
+        // the slaps and gurgles: the water a lug flings, each a short hollow plop
+        DeterministicNoise slaps(0x1f83d9abU);
+        for (int slap = 0; slap < 260; ++slap) {
+            const auto at = static_cast<std::size_t>((slaps.Next() * 0.5f + 0.5f) * static_cast<float>(frameCount - 1U));
+            const float strength = 0.05f + 0.10f * (slaps.Next() * 0.5f + 0.5f);
+            const float pitch = 220.0f + 520.0f * (slaps.Next() * 0.5f + 0.5f);
+            for (std::size_t k = 0; k < 900U; ++k) {
+                const float t = static_cast<float>(k) / static_cast<float>(AmbientSampleRate);
+                // a bubble's note rising as it closes
+                samples[(at + k) % frameCount] += strength * std::exp(-t * 55.0f)
+                    * std::sin(2.0f * std::numbers::pi_v<float> * pitch * t * (1.0f + 6.0f * t));
+            }
+        }
+        return Quantize(samples, 0.72f, true);
+    }
+
+    AmbientLoop GenerateQuadSplash()
+    {
+        constexpr float seconds = 1.6f;
+        const auto frameCount = static_cast<std::size_t>(AmbientSampleRate * seconds);
+        const std::vector<float> noise = Noise(0x4b1c66e7U, frameCount);
+        const std::vector<float> spray = CircularSmooth(noise, 2U);
+        const std::vector<float> wash = CircularSmooth(noise, 18U);
+        const std::vector<float> body = CircularSmooth(noise, 150U);
+        std::vector<float> samples(frameCount, 0.0f);
+        for (std::size_t i = 0; i < frameCount; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            const float attack = SmoothStep(0.0f, 0.012f, t);
+            // the water struck and thrown up, its spray coming down over the next second
+            samples[i] = attack * (body[i] * 2.6f * std::exp(-t * 9.0f) + wash[i] * 1.1f * std::exp(-t * 4.5f)
+                                   + spray[i] * 0.55f * std::exp(-t * 2.4f));
+        }
+        DeterministicNoise drops(0x9e2a51d3U);
+        for (int drop = 0; drop < 120; ++drop) {
+            // the drops falling back, most of them in the first half second
+            const float when = 0.15f + 1.1f * std::pow(drops.Next() * 0.5f + 0.5f, 1.8f);
+            const auto at = static_cast<std::size_t>(when * AmbientSampleRate);
+            const float strength = 0.05f + 0.10f * (drops.Next() * 0.5f + 0.5f);
+            const float pitch = 700.0f + 1500.0f * (drops.Next() * 0.5f + 0.5f);
+            for (std::size_t k = 0; k < 500U && at + k < frameCount; ++k) {
+                const float t = static_cast<float>(k) / static_cast<float>(AmbientSampleRate);
+                samples[at + k] += strength * std::exp(-t * 90.0f) * std::sin(2.0f * std::numbers::pi_v<float> * pitch * t);
+            }
+        }
+        samples.front() = 0.0f;
+        samples.back() = 0.0f;
+        return Quantize(samples, 0.9f);
+    }
+
     AmbientLoop GenerateQuadImpact()
     {
         constexpr float seconds = 0.9f;

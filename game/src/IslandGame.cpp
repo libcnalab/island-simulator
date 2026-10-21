@@ -4946,8 +4946,12 @@ namespace island
             soundscape_->SetEngine(quadEngineOn_, quad_.EngineRpm(), quad_.Throttle(), p.x, p.y, p.z, riding_);
             bool anyDown = false;
             for (int w = 0; w < 4; ++w) anyDown = anyDown || quad_.WheelContact(w);
+            // how deep the wheels wade: their water over the hubs' height, the four averaged
+            float wading = 0.0f;
+            for (const auto& wheel : quadWheels_) wading += std::clamp(wheel.waterDepth / QuadBike::WheelRadius, 0.0f, 1.0f) * 0.25f;
             const auto v = quad_.Velocity();
-            soundscape_->SetTyres(anyDown ? std::hypot(v.x, v.z) : 0.0f, anyDown ? quad_.SlideSpeed() : 0.0f, p.x, p.y, p.z, riding_);
+            soundscape_->SetTyres(anyDown ? std::hypot(v.x, v.z) : 0.0f, anyDown ? quad_.SlideSpeed() : 0.0f, wading,
+                                  p.x, p.y, p.z, riding_);
         }
         if (riding_) {
             // The walker goes where the quad goes (the wildlife and the sounds follow).
@@ -7710,7 +7714,7 @@ namespace island
                           << " km/h at (" << static_cast<int>(q.x) << ", " << static_cast<int>(q.z) << "), "
                           << tyreTracks_.LaidCount() << " rut pieces laid, " << wheelDust_.Emitted() << " dust puffs, "
                           << wheelSpray_.Emitted() << " spray puffs, " << (soundscape_ ? soundscape_->PlayedQuadImpactCount() : 0)
-                          << " knocks\n";
+                          << " knocks, " << (soundscape_ ? soundscape_->PlayedQuadSplashCount() : 0) << " splashes\n";
             }
             if (viewpoint_ == FixedViewpoint::MonkeyDetail || viewpoint_ == FixedViewpoint::MonkeyTreeDetail || viewpoint_ == FixedViewpoint::MonkeyClimbDetail) {
                 const auto& subject = monkeyTroop_.Monkeys()[monkeyQaSubjectIndex_];

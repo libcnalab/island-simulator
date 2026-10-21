@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 414 (2026-10-21) — the quad sounds in the water
+
+Driven through the sea's shallows or the stream the quad sounded as on dry ground: the tyres'
+gravel crunch, no water. Soundscape::SetTyres takes how deep the wheels wade (each wheel's water
+over its radius, the four averaged): the crunch fades out by half depth, a new looped churning
+(GenerateQuadWadeLoop: a three-second surging rush of wash and spray hiss over the water's body,
+with 260 rising bubble plops; spectral centroid 2.5 kHz like the walker's wading loop) rises with
+the speed and the depth, its pitch with the speed, and running into the water faster than 2.5 m/s
+plays a splash (GenerateQuadSplash: a heavy struck-water thump, its spray hissing down over a second
+and 120 drops pattering back; loud at once, a tenth of its first energy by its last fifth). Tests:
+the churning is an audible three-second loop, the splash dies away and is silent at its ends, and
+on the dummy driver the quad splashes once running into water, not on dry ground, not creeping in
+and not muted. (Captures run without audio: the QA line's "splashes" stays 0 there, like "knocks".)
+
 ## Loop pass 413 (2026-10-21) — the walker wades the stream
 
 The walker's water was the sea's alone (the ground below zero): in the stream its steps sounded as

@@ -110,6 +110,28 @@ void ExerciseBunkerHum() {
     Check(!debug.bunkerHumPlaying&&debug.bunkerHumVolume<.01f,
         "Bunker hum leaked onto the ridge above");
 }
+void ExerciseQuadWade() {
+    using namespace island;
+    Soundscape sound;
+    SoundscapeListenerState listener;listener.x=0;listener.y=1.5f;listener.z=0;
+    Check(sound.Start(80,false,0,0,0,.5f,listener.x,listener.z),
+        "Quad wading dummy audio startup failed: "+sound.Error());
+    const auto ride=[&](float speed,float wading,int ticks) {
+        for(int tick=0;tick<ticks;++tick) {
+            sound.SetTyres(speed,0,wading,0,1,0,true);
+            sound.Update(80,false,0,0,0,1.0f/60,.5f,listener,{},{},{},{},{});
+            Check(sound.IsAvailable()&&sound.Error().empty(),"Quad wading disabled the soundscape: "+sound.Error());
+        }
+    };
+    ride(8,0,60);
+    Check(sound.PlayedQuadSplashCount()==0,"The quad on dry ground splashed");
+    ride(8,.5f,120);
+    Check(sound.PlayedQuadSplashCount()==1,"The quad running into water did not splash once");
+    ride(8,0,30);ride(1,.5f,60);
+    Check(sound.PlayedQuadSplashCount()==1,"The quad creeping into water splashed");
+    ride(8,0,30);sound.SetMuted(true);ride(8,.5f,60);
+    Check(sound.PlayedQuadSplashCount()==1,"The muted quad splashed");
+}
 void ExerciseBearVoice() {
     using namespace island;
     Soundscape sound;
@@ -309,6 +331,7 @@ int main(int argc, char** argv) {
         ExerciseCampfire(true);
         ExerciseBunkerHum();
         ExerciseBearVoice();
+        ExerciseQuadWade();
         ExerciseGoatVoice();
         ExerciseFrogVoice();
         ExerciseCicadaVoice();

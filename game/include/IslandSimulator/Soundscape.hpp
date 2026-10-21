@@ -147,8 +147,10 @@ namespace island
         void SetEngine(bool running, float rpm, float load, float x, float y, float z, bool riding) noexcept;
         /** @brief The quad struck something (strength 0..1); heard close when riding. */
         void NoteQuadImpact(float strength, float x, float y, float z, bool riding) noexcept;
-        /** @brief The quad's tyres on the ground: rolling speed and sliding speed, m/s. */
-        void SetTyres(float rolling, float sliding, float x, float y, float z, bool riding) noexcept;
+        /** @brief The quad's tyres on the ground: rolling speed and sliding speed, m/s, and how
+         *  far they wade (0 dry .. 1 the wheels in water to the hubs): in water the tyres' crunch
+         *  gives way to the water they churn, and running into it at speed splashes. */
+        void SetTyres(float rolling, float sliding, float wading, float x, float y, float z, bool riding) noexcept;
         /** @brief How dark it is (0 by day .. 1 at night): the night chorus rises, the day's
          *  birds, monkeys and cicadas fall quiet and the jungle's day bed softens. */
         /** @brief The weather's wind (1 the trade wind): the breeze in the trees swells with it. */
@@ -159,6 +161,7 @@ namespace island
         void SetDawn(float dawn) noexcept { dawn_ = std::isfinite(dawn) ? std::clamp(dawn, 0.0f, 1.0f) : 0.0f; }
         void SetNightness(float nightness) noexcept { nightness_ = std::isfinite(nightness) ? std::clamp(nightness, 0.0f, 1.0f) : 0.0f; }
         [[nodiscard]] int PlayedQuadImpactCount() const noexcept { return playedImpactCount_; }
+        [[nodiscard]] int PlayedQuadSplashCount() const noexcept { return playedQuadSplashCount_; }
         [[nodiscard]] int PlayedThunderCount() const noexcept { return playedThunderCount_; }
         [[nodiscard]] int PlayedClawKnockCount() const noexcept { return playedClawKnockCount_; }
         [[nodiscard]] int PlayedCrocodileHissCount() const noexcept { return playedCrocodileHissCount_; }
@@ -304,6 +307,11 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> impactEffect_, tyreEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> tyreInstance_;
         bool tyrePlaying_ = false;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> quadWadeEffect_, quadSplashEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> quadWadeInstance_, quadSplashInstance_;
+        bool quadWadePlaying_ = false;
+        float quadWading_ = 0.0f;
+        int playedQuadSplashCount_ = 0;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> impactInstance_;
         int playedImpactCount_ = 0;
         float weatherRain_ = 0.0f;

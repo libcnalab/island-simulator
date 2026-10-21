@@ -7292,6 +7292,27 @@ int main()
         }
         Check(wet.Speed() < wadeEntry - 1.5f && wet.Speed() > 1.0f && dryRun.Speed() > wadeEntry && wet.Up().y > 0.9f,
               "wading a stream slows the quad at full throttle without stopping it dead or tipping it");
+        // The quad in water: its churning a three-second loop, its splash loud at once and dying
+        // away, silent at its ends.
+        {
+            const auto wade = island::GenerateQuadWadeLoop();
+            double wadeEnergy = 0.0;
+            for (const auto sample : wade.samples) wadeEnergy += static_cast<double>(sample) * sample;
+            Check(wade.sampleRate > 0 && wade.samples.size() == static_cast<std::size_t>(wade.sampleRate) * 3U
+                      && wadeEnergy / static_cast<double>(wade.samples.size()) > 1.0e5,
+                  "the quad's tyres churning water are an audible three-second loop");
+            const auto splash = island::GenerateQuadSplash();
+            const std::size_t fifth = splash.samples.size() / 5U;
+            double head = 0.0, tail = 0.0;
+            for (std::size_t i = 0; i < fifth; ++i) {
+                head += static_cast<double>(splash.samples[i]) * splash.samples[i];
+                const auto last = splash.samples[splash.samples.size() - 1U - i];
+                tail += static_cast<double>(last) * last;
+            }
+            Check(head > tail * 8.0 && head / static_cast<double>(fifth) > 1.0e5 && splash.samples.front() == 0
+                      && splash.samples.back() == 0,
+                  "the quad's splash is loud at once, dies away and is silent at its ends");
+        }
         // The night chorus: an audible eight-second loop whose crickets live in the treble.
         const auto chorus = island::GenerateNightChorusLoop();
         double chorusEnergy = 0.0, chorusHigh = 0.0;
