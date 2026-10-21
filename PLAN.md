@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 302 (2026-10-21) — the stream's margins are wet mud, not a green film
+
+In `tracks`, `stream` and `cascade` a smooth green band lay along the water, reading as a film
+spread over the bank. Two causes: the stream bed's own mesh takes its colours from the
+terrain's classification, which is grass along the banks, and the water's shallow colour was a
+saturated green laid at fair opacity right out to its margins. The terrain shader now lays a
+wet margin of dark mud and grit (varied by its medium field) from the water's edge out about a
+metre along the stream's route; and the stream's shallow water is nearly clear over its bed
+(a darker, barely green shallow colour, the body's opacity eased to 55 % at the margins, the
+bank sheen's share lowered), its green deepening only towards the middle. `tracks` shows dark
+wet ground beside the water where the green band was; `stream` and `cascade` pass with browner
+margins, and the tests.
+
 ## Loop pass 301 (2026-10-21) — rounded hoof prints
 
 Close up (`tracks`), each deer and boar print sat on a square patch of pressed soil with two

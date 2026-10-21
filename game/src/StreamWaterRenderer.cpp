@@ -83,7 +83,9 @@ void main(){
         *(1.0-smoothstep(.90,.99,abs(lateral)))*bankBreak;
     float riffleCarrier=.5+.5*sin(courseDistance*1.17+sin(across*4.1)*.7);
     float riffle=smoothstep(.78,.95,riffleCarrier)*(.5+.5*sin(courseDistance*12.4-uTime*3.0+across*7.0));
-    vec3 shallow=vec3(.205,.430,.315);
+    // Shallow water is nearly clear over its bed: a little darker and only faintly green; the
+    // green deepens towards the middle (a strong green in the margins read as a film).
+    vec3 shallow=vec3(.150,.230,.170);
     vec3 deep=vec3(.055,.315,.285);
     vec3 water=mix(shallow,deep,centreDepth*.82);
     water=mix(water,vec3(.38,.68,.72)*uSkyTint,fresnel*.78);
@@ -91,7 +93,7 @@ void main(){
     water+=vec3(.22,.36,.32)*streak*.30+vec3(.48,.45,.33)*glint*.44;
     water+=vec3(.52,.60,.46)*(bankBand*(.24+.14*streak)+riffle*.24);
     water+=vec3(.40,.68,.59)*braided*.29;
-    float alpha=opacity*(.57+fresnel*.36+streak*.065+bankBand*.17+riffle*.11
+    float alpha=opacity*(.57*mix(.55,1.0,centreDepth)+fresnel*.36+streak*.065+bankBand*.10+riffle*.11
         +centreDepth*.055+braided*.055);
     // White water: the sheet over the lip, the plunge below it and a foam raft that the
     // pool carries downstream and lets dissolve, all pulsing with the drop height.

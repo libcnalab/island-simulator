@@ -1022,6 +1022,12 @@ void main()
                            0.38 + bankStrata * 0.28) * vGroundLight;
     exposedBank *= 1.0 + fine * 0.10;
     color = mix(color, exposedBank, bankFace * 0.52);
+    // The stream's margin is wet mud and grit along the water, not the bank's grass colour
+    // (a smooth green band read as a film beside the water).
+    float streamMargin = streamGeometry.x * (1.0 - smoothstep(streamGeometry.z * 0.9 + 0.25,
+                                                              streamGeometry.z * 0.9 + 1.1, streamGeometry.y));
+    vec3 wetMargin = mix(vec3(0.150, 0.122, 0.086), vec3(0.205, 0.170, 0.118), 0.5 + 0.5 * medium) * vGroundLight;
+    color = mix(color, wetMargin, streamMargin * 0.72);
 
     float wetHeight = vWorld.y + broad * 0.06 + medium * 0.025;
     float wetEdge = (1.0 - smoothstep(0.06, 0.68, wetHeight))
