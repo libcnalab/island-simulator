@@ -2460,6 +2460,7 @@ namespace island
         fireflyRenderer_ = std::make_unique<FireflyRenderer>(device);
         morningMist_ = std::make_unique<MorningMistField>(terrain_);
         whaleRenderer_ = std::make_unique<WhaleRenderer>(device);
+        sunbeamMotes_ = std::make_unique<SunbeamMoteRenderer>(device, terrain_, canopyLightField_);
         whaleBlowRenderer_ = std::make_unique<CascadeMistRenderer>(device,
             "island-simulator: a humpback's blow stands up five metres far offshore, drifts downwind and thins away", WhalePod::PuffCount);
         whaleBlowRenderer_->SetRange(700.0f, 200.0f, 2.2f);
@@ -5721,6 +5722,11 @@ namespace island
             surfSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,surfSpray_.Puffs());
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,dolphinBlows_.Puffs());
             if (whaleBlowRenderer_) whaleBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,whales_.Blow());
+            if (sunbeamMotes_) {
+                const auto& sun = sun_light::Current().lighting;
+                sunbeamMotes_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,timeSeconds,
+                                    sun.shadowStrength * sun.sunVisibility,Vector3(sun.toSun.x,sun.toSun.y,sun.toSun.z));
+            }
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,dragonflyDips_.Puffs());
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,crabBubbles_.Puffs());
             turtleBreathRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,turtleBreaths_.Puffs());

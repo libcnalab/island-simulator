@@ -17,6 +17,7 @@
 #include "IslandSimulator/MistBankRenderer.hpp"
 #include "IslandSimulator/MorningMistField.hpp"
 #include "IslandSimulator/WhaleRenderer.hpp"
+#include "IslandSimulator/SunbeamMoteRenderer.hpp"
 #include "IslandSimulator/RainRingRenderer.hpp"
 #include "IslandSimulator/QuadWheelTraces.hpp"
 #include "IslandSimulator/TyreTrackRenderer.hpp"
@@ -555,6 +556,7 @@ namespace island
         WhalePod whales_{};
         std::unique_ptr<WhaleRenderer> whaleRenderer_;
         std::unique_ptr<CascadeMistRenderer> whaleBlowRenderer_;
+        std::unique_ptr<SunbeamMoteRenderer> sunbeamMotes_;
         TyreTrackField tyreTracks_;
         WheelThrowField wheelDust_{WheelThrowField::Kind::Dust}, wheelSpray_{WheelThrowField::Kind::Spray};
         std::unique_ptr<TyreTrackRenderer> tyreTrackRenderer_;

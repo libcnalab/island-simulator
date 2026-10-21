@@ -233,6 +233,22 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 268 (2026-10-21) — dust in the forest's sunbeams
+
+Under the trees the air now carries dust and pollen that glints where the sun comes through: a
+new `SunbeamMoteRenderer` sets specks on a fixed 0.8 m world grid round the walker (about two
+cells in three, 0.3-2.5 m above the ground, out to 8 m), each wandering slowly and turning so
+it glints, lit only where the canopy light field lets the direct sun through to it and only
+while the walker's own neighbourhood is shaded (the field's mean 5 m around below 0.98, full
+below 0.78), so they show against the forest's shade and never in the open meadows or on the
+beach. They are tiny warm additive discs (at least 1 cm, about 2 px at a distance), brightest
+looking into the light because dust scatters forwards, and they fade with the distance and
+with the direct sun (none at night or under overcast). A first gate wanted the neighbourhood
+below 0.45 and never opened: the island's forest still passes 0.7-0.95 of the sun to its floor.
+Probes showed about 35 motes in frame in `litter` and `ground-broadleaf` (soft specks against
+the trunks); `jungle`, `beach` and `clearing-edge` stand in the open and show none. `litter`,
+`hut`, `jungle`, `beach` and `ground-broadleaf` pass.
+
 ## Loop pass 267 (2026-10-21) — whitecaps in a strong wind
 
 In a strong wind the open sea now breaks into scattered whitecaps: from a sea state of 1.15
