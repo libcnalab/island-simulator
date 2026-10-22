@@ -687,5 +687,50 @@ class CaptureMonitorTests(unittest.TestCase):
         self.stop.assert_called_once_with(self.process)
 
 
+class CaptureRetentionTests(unittest.TestCase):
+    def test_ppm_becomes_an_identical_png(self):
+        import struct, zlib
+        from capture_retention import compress_captures
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            pixels = bytes((x * 7 + y * 3 + c) % 256 for y in range(5) for x in range(6) for c in range(3))
+            (folder / "capture.ppm").write_bytes(b"P6\n6 5\n255\n" + pixels)
+            (folder / "capture.ppm.fire-stage-0.ppm").write_bytes(b"P6\n6 5\n255\n" + pixels)
+            self.assertEqual(compress_captures(folder), 2)
+            self.assertFalse(list(folder.glob("*.ppm")))
+            data = (folder / "capture.png").read_bytes()
+            self.assertTrue(data.startswith(b"\x89PNG\r\n\x1a\n"))
+            width, height = struct.unpack(">II", data[16:24])
+            start = data.index(b"IDAT") + 4
+            length = struct.unpack(">I", data[start - 8:start - 4])[0]
+            raw = zlib.decompress(data[start:start + length])
+            rows = [raw[row * 19 + 1:(row + 1) * 19] for row in range(5)]
+            self.assertEqual((width, height), (6, 5))
+            self.assertEqual(b"".join(rows), pixels)
+            self.assertTrue((folder / "capture.ppm.fire-stage-0.png").is_file())
+
+    def test_prune_keeps_the_newest_and_the_cited_sets(self):
+        from capture_retention import prune_sets
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            names = [f"2026101{day}T0{hour}0000.000000Z-view" for day in range(3) for hour in range(3)]
+            for name in names:
+                (folder / name).mkdir()
+            (folder / "state").mkdir()
+            removed = prune_sets(folder, 4, {"20261010T000000"})
+            left = sorted(entry.name for entry in folder.iterdir())
+            self.assertEqual(left, sorted(names[-4:] + [names[0], "state"]))
+            self.assertEqual(len(removed), 4)
+
+    def test_left_over_browser_profiles_are_removed(self):
+        from capture_retention import remove_browser_profiles
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            (folder / "chrome-profile-AbC123" / "Default").mkdir(parents=True)
+            (folder / "island-browser-coast-water.png").write_bytes(b"x")
+            self.assertEqual(remove_browser_profiles(folder), 1)
+            self.assertEqual([entry.name for entry in folder.iterdir()], ["island-browser-coast-water.png"])
+
+
 if __name__ == "__main__":
     unittest.main()

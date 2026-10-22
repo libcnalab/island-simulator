@@ -17,6 +17,8 @@ import subprocess
 import sys
 import time
 from validate_capture import profile_for_viewpoint
+from capture_retention import (KEEP_SOFTWARE_CAPTURE_SETS, cited_stamps, compress_captures,
+                               prune_sets)
 
 from gpu_incident_qualification import (
     CAPTURE_VIEWPOINTS, FAULT, GL_ERROR, Journal, MonitorError, stop_process_group,
@@ -1171,7 +1173,7 @@ def main():
                 raise RuntimeError("current quad bike is missing; check for a stale executable")
             if not re.search(r"quad bike: a utility quad of \d+ triangles", diagnostics):
                 raise RuntimeError("current quad bike model is missing; check for a stale executable")
-            if "night sky: 1100 stars and a phased moon over the graded sky" not in diagnostics:
+            if "night sky: 2200 stars wheeling about the celestial pole with the hour, and a phased moon over the graded sky" not in diagnostics:
                 raise RuntimeError("current night sky is missing; check for a stale executable")
             if "the hut receives the sun shadows: its eaves shade its walls and the trees' shadows and the cumulus shade fall across it" not in diagnostics:
                 raise RuntimeError("current hut sun-shadow receiving is missing; check for a stale executable")
@@ -1995,6 +1997,12 @@ def main():
             failure = failure or str(error)
         metadata["failure"] = failure
         (evidence / "run.json").write_text(json.dumps(metadata, indent=2) + "\n")
+        # validated, the frames are kept as PNG, and only the newest sets (and those handoff.md cites)
+        try:
+            compress_captures(evidence)
+            prune_sets(evidence.parent, KEEP_SOFTWARE_CAPTURE_SETS, cited_stamps(root))
+        except (OSError, ValueError) as error:
+            print(f"Software capture evidence retention failed: {error}", file=sys.stderr)
     print(f"Software capture {'FAILED: ' + failure if failure else 'passed'}; evidence: {evidence}")
     return 1 if failure else 0
 

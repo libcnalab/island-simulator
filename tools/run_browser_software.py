@@ -15,6 +15,7 @@ import subprocess
 import sys
 
 from gpu_incident_qualification import FAULT, Journal, MonitorError, artifact_identity
+from capture_retention import KEEP_BROWSER_SETS, cited_stamps, prune_sets, remove_browser_profiles
 from run_software_capture import (run_monitored_capture, validate_monkey_climb_stages,
     validate_snake_runtime_samples, validate_spider_render_log, validate_spider_lighting)
 
@@ -1363,6 +1364,12 @@ def main(argv=None):
             if failure:
                 metadata.update(result="failed", error=str(failure))
             report.write_text(json.dumps(metadata, indent=2) + "\n")
+            # a run cut short leaves its Chrome profile behind; only the newest sets are kept
+            try:
+                remove_browser_profiles(evidence)
+                prune_sets(evidence.parent, KEEP_BROWSER_SETS, cited_stamps(root))
+            except OSError as error:
+                print(f"Browser evidence retention failed: {error}", file=sys.stderr)
         if failure:
             raise failure
         print("Software browser suite passed; no new kernel GPU faults detected.")

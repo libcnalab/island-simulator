@@ -233,6 +233,34 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 482 (2026-10-22) — capture evidence is kept as PNG and pruned to the newest sets
+
+Operator request: the capture directories had grown to 25.7 GB. `build-consumer/software-captures`
+alone was 20 GB in 3,788 sets, each with one or more raw 2.7 MB PPM frames.
+`build/browser-software` was 5.4 GB, 4 GB of it Chrome profiles left behind by runs cut short.
+
+**One-off cleanup.** Removed:
+
+- 739 sets older than three days that `handoff.md` does not cite (3.6 GB);
+- the left-over Chrome profiles;
+- the native sets beyond the newest 400.
+
+The retained sets' PPMs were converted to PNG. The directories now hold 0.9 GB (422 native sets),
+0.1 GB (`build/software-captures`) and 0.9 GB (138 browser sets).
+
+**Permanent change.** New `tools/capture_retention.py`:
+
+- `run_software_capture.py`, once a run is validated (pass or fail), replaces every PPM in its
+  evidence with a lossless PNG of the same name: `capture.png` is 1.3 MB against the PPM's 2.7 MB.
+  It then keeps only the newest `KEEP_SOFTWARE_CAPTURE_SETS` (400, some three sweeps) plus any set
+  whose stamp `handoff.md` cites.
+- `run_browser_software.py` removes a left-over `chrome-profile-*` from its evidence and keeps the
+  newest `KEEP_BROWSER_SETS` (100) plus the cited ones.
+- `build/gpu-incident-evidence` (with the latch) and `build/android-software` are not touched.
+
+Reviews read `capture.png`. Tests cover the PNG round trip (pixels identical), pruning (newest and
+cited kept) and profile removal.
+
 ## Loop pass 481 (2026-10-22) — the firelit resident's smooth normals are no longer hashed every frame
 
 At night the campfire's light falls on the resident by it (`LocalLightRenderer::DrawMesh`). Their
