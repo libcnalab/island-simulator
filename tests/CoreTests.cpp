@@ -129,6 +129,7 @@
 #include "IslandSimulator/OceanMeshLayout.hpp"
 #include "IslandSimulator/PerformanceStatistics.hpp"
 #include "IslandSimulator/PlayerMotion.hpp"
+#include "IslandSimulator/PassingShip.hpp"
 #include "IslandSimulator/SwimDepth.hpp"
 #include "IslandSimulator/ProceduralMeshValidation.hpp"
 #include "IslandSimulator/RockSurface.hpp"
@@ -9669,6 +9670,16 @@ int main()
                       && std::abs(out - (island::LighthousePlacement::GalleryRadius - island::LighthousePlacement::RailInset)) < 0.01f,
                   "the lighthouse's perch is not on the gallery's top rail over the sea");
         }
+    }
+    {
+        // The freighter passing offshore: half way down its lane as the island loads, closest
+        // there at its lane's distance, moving along it, gone between passes, back a period on.
+        using Ship = island::PassingShip;
+        const auto now = Ship::At(0.0f), later = Ship::At(10.0f), between = Ship::At(Ship::Period * 0.6f), next = Ship::At(Ship::Period);
+        Check(now.visible && std::abs(std::hypot(now.x, now.z) - Ship::Offshore) < 0.5f
+                  && later.visible && std::abs(std::hypot(later.x - now.x, later.z - now.z) - Ship::Speed * 10.0f) < 0.1f
+                  && !between.visible && next.visible && std::abs(next.x - now.x) < 0.5f && std::abs(next.z - now.z) < 0.5f,
+              "the passing freighter does not keep to its lane and its schedule");
     }
     {
         // The lighthouse is walked: from the steps' foot up to the plinth, in at the door, up the

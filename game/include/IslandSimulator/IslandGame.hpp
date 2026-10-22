@@ -70,6 +70,7 @@
 #include "IslandSimulator/SkinkPopulation.hpp"
 #include "IslandSimulator/DistantSceneryLayout.hpp"
 #include "IslandSimulator/DistantSceneryRenderer.hpp"
+#include "IslandSimulator/PassingShipRenderer.hpp"
 #include "IslandSimulator/DolphinPod.hpp"
 #include "IslandSimulator/DolphinRenderer.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
@@ -277,6 +278,7 @@ namespace island
         LighthouseGalleryDetail,
         LighthouseLanternDetail,
         LighthouseCottageDetail,
+        PassingShipDetail,
         PlaneWreckDetail,
         PlaneCockpitDetail,
         BeachLitterDetail,
@@ -588,6 +590,7 @@ namespace island
         std::unique_ptr<SnakeRenderer> snakeRenderer_;
         std::unique_ptr<DebugOverlay> debugOverlay_;
         std::unique_ptr<DistantSceneryRenderer> distantSceneryRenderer_;
+        std::unique_ptr<PassingShipRenderer> passingShipRenderer_;
         std::unique_ptr<FishRenderer> fishRenderer_;
         std::unique_ptr<StingrayRenderer> stingrayRenderer_;
         std::unique_ptr<ReefHeronRenderer> reefHeronRenderer_;

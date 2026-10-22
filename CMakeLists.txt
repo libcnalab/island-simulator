@@ -767,6 +767,7 @@ if(ISLAND_BUILD_GAME)
         game/src/SpiderWebRenderer.cpp
         game/src/DebugOverlay.cpp
         game/src/DistantSceneryRenderer.cpp
+        game/src/PassingShipRenderer.cpp
         game/src/DolphinRenderer.cpp
         game/src/DeerRenderer.cpp
         game/src/FishRenderer.cpp

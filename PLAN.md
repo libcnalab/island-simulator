@@ -233,6 +233,27 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 541 (2026-10-22) — a freighter passes far offshore
+
+The sea round the island was empty to the horizon.
+
+- **Route.** Every 12 minutes a coastal freighter now crosses far offshore (`PassingShip`,
+  header-only and deterministic in the render clock). Its straight lane is some 860 m out, square
+  to the bearing it passes closest at. At 6.5 m/s the crossing takes about four minutes, and the
+  first pass is half done as the island loads.
+- **Model.** About 60 m: a dark hull with a red boot-top, a raked bow with its sheer rising, three
+  hatches, two yellow cranes, a foremast, and the white bridge house aft with its band of windows
+  and a blue funnel. It is softened by the haze of its distance like the far islets, and a pale V
+  of wake spreads behind its stern (`PassingShipRenderer`).
+- **Night.** Over the grade burn its navigation lights: two white masthead lights, red to port or
+  green to starboard (each seen only from its own side), white astern, and a row of lit windows.
+- **New QA view.** `passing-ship` looks from the shore at its lane's bearing (`20261022T144633`,
+  and at 21:00 `20261022T144702`).
+- **Tests.** CoreTests check the lane's distance, its speed, the gap between passes and the
+  period.
+
+The suite is 76/76.
+
 ## Loop pass 540 (2026-10-22) — dust in the lanterns' light
 
 The adit's air was empty between its lanterns.

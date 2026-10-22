@@ -206,6 +206,7 @@ namespace island
             case FixedViewpoint::LighthouseGalleryDetail: return "lighthouse-gallery";
             case FixedViewpoint::LighthouseLanternDetail: return "lighthouse-lantern";
             case FixedViewpoint::LighthouseCottageDetail: return "lighthouse-cottage";
+            case FixedViewpoint::PassingShipDetail: return "passing-ship";
             case FixedViewpoint::PlaneWreckDetail: return "plane-wreck";
             case FixedViewpoint::PlaneCockpitDetail: return "plane-cockpit";
             case FixedViewpoint::BeachLitterDetail: return "beach-litter";
@@ -2096,6 +2097,17 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: lighthouse QA camera looks up at the tower from the land beside it\n";
+        } else if (viewpoint_ == FixedViewpoint::PassingShipDetail) {
+            // On the shore at the bearing the freighter's lane passes closest, out at it.
+            const float bearing=PassingShip::Bearing;
+            const float reach=terrain_.ShoreRadius(bearing)-4.0f;
+            const float eyeX=std::cos(bearing)*reach,eyeZ=std::sin(bearing)*reach;
+            cameraPosition_=Vector3(eyeX,std::max(terrain_.Height(eyeX,eyeZ),0.0f)+PlayerMotion::EyeHeight,eyeZ);
+            const PassingShip::State ship=PassingShip::At(0.0f);
+            const Vector3 direction=Vector3(ship.x,6.0f,ship.z)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: passing-ship QA camera looks out from the shore at the freighter passing offshore\n";
         } else if (viewpoint_ == FixedViewpoint::LighthouseCottageDetail) {
             // Off the ruined cottage's fallen end, across its walls to its chimney and the tower.
             if(!cottagePlacement_) throw std::runtime_error("Cottage QA requires the keepers' cottage");
@@ -2861,6 +2873,7 @@ namespace island
             device, terrain_, *canopyLighting, bunkerLayout_);
         distantSceneryRenderer_ = std::make_unique<DistantSceneryRenderer>(
             device, distantSceneryLayout_);
+        passingShipRenderer_ = std::make_unique<PassingShipRenderer>(device);
         // The per-frame ground marks and shadows lie on the drawn mesh: its height costs ~10 ns,
         // the analytic terrain's microseconds a vertex.
         drawnGround_=std::make_unique<RenderedTerrainSurface>(terrain_);
@@ -6536,7 +6549,7 @@ namespace island
             + shipwreckRenderer_->DrawCallCount()
             + (hutRenderer_?hutRenderer_->DrawCallCount():0)
             + helicopterRenderer_->DrawCallCount()
-            + distantSceneryRenderer_->DrawCallCount()
+            + distantSceneryRenderer_->DrawCallCount() + passingShipRenderer_->DrawCallCount()
             + contactShadowRenderer_->DrawCallCount()
             + birdRenderer_->DrawCallCount() + fruitBatRenderer_->DrawCallCount() + mineBatRenderer_->DrawCallCount()
             + butterflyRenderer_->DrawCallCount()
@@ -7038,6 +7051,7 @@ namespace island
         {
             GpuDiagnosticScope gpuPass("distant-scenery");
             distantSceneryRenderer_->Draw(cameraView_, cameraProjection_);
+            passingShipRenderer_->Draw(cameraView_, cameraProjection_, timeSeconds);
         }
         {
             GpuDiagnosticScope gpuPass("contact-shadows");
@@ -7716,6 +7730,10 @@ namespace island
             if (volcanoRenderer_)
                 volcanoRenderer_->DrawGlow(cameraView_, cameraProjection_, renderCameraPosition_, timeSeconds,
                                            1.0f - std::clamp((light.sunElevationDegrees + 3.0f) / 9.0f, 0.0f, 1.0f));
+            // the passing freighter's navigation lights, over the grade
+            if (!underground)
+                passingShipRenderer_->DrawLights(cameraView_, cameraProjection_, renderCameraPosition_, timeSeconds,
+                                                 1.0f - std::clamp((light.sunElevationDegrees + 3.0f) / 9.0f, 0.0f, 1.0f));
             if (lighthouseRenderer_ && !underground) {
                 // the lighthouse's lamp and its sweeping beams, over the graded night
                 const float lampNight = 1.0f - std::clamp((light.sunElevationDegrees + 3.0f) / 9.0f, 0.0f, 1.0f);
