@@ -18,6 +18,13 @@ namespace island::wildlife_render
                 environment::SunDirectionX, environment::SunDirectionY,
                 environment::SunDirectionZ));
 
+    // Set each frame from the weather's wetness: a coat or a hide out in the rain darkens.
+    inline float CoatWetness = 0.0f;
+    [[nodiscard]] inline float WetCoatFactor() noexcept
+    {
+        return 1.0f - 0.22f * std::clamp(CoatWetness, 0.0f, 1.0f);
+    }
+
     [[nodiscard]] inline Microsoft::Xna::Framework::Color ScaleColor(
         const Microsoft::Xna::Framework::Color& color, const float brightness)
     {

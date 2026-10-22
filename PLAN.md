@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 475 (2026-10-22) — the animals' coats darken in the rain
+
+The deer, the goats, the boars and the bear kept their dry coats through any downpour. A shared
+`wildlife_render::CoatWetness`, set each frame from the weather's wetness, darkens a coat out in
+the rain by up to 22 % (`WetCoatFactor`). It applies to the deer's and boars' coat colours, the
+goats' coat (not their horns and hooves) through their canopy tint, and the bear's fur tint. In
+`deer` and `bear` under `--weather showers` both stand visibly darker and soaked beside the
+clear-weather captures, with the rain's puddles round them.
+
 ## Loop pass 474 (2026-10-22) — rained on, planks, stone and logs darken
 
 The hut already darkened in the rain, but the jetty, the rope bridge and the lookout stayed dry, and

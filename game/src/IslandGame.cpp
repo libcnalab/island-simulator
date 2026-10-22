@@ -3483,6 +3483,7 @@ namespace island
             fruitBatColony_.SetNightness(dark * (1.0f - downpour));
             const auto shading = sun_light::Current().shading;
             wildlife_render::FixedSunDirection = Vector3(shading.x, shading.y, shading.z);
+            wildlife_render::CoatWetness = weather_now::Current().wetness;
         }
         const bool debugOverlayToggleDown = frameKeyboard.IsKeyDown(Keys::F1);
         if (debugOverlayToggleDown && !debugOverlayToggleWasDown_) {

@@ -1,5 +1,6 @@
 #include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/DeerRenderer.hpp"
+#include "IslandSimulator/WildlifeRenderLighting.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 
 #include "IslandSimulator/CanopyLightField.hpp"
@@ -350,7 +351,8 @@ namespace island
         {
             const std::array<Color, 3> coats = {{Color(151, 103, 58), Color(130, 82, 48),
                                                  Color(170, 121, 69)}};
-            const Color coat = coats[deer.coatVariant % coats.size()];
+            const Color coat = wildlife_render::ScaleColor(coats[deer.coatVariant % coats.size()],
+                                                           wildlife_render::WetCoatFactor());
             const Color dark = Color::Lerp(coat, Color(42, 31, 24), .58f);
             const Color pale = Color::Lerp(coat, Color(231, 214, 177), .68f);
             const Color eye(24, 17, 11), antler(103, 82, 57), hoof(31, 27, 24);

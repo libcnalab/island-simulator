@@ -446,7 +446,11 @@ void BearRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector
     if(!IsVisible(view,projection,camera,bear,maximumDistance_))return;
     const float distanceSquared=Vector3::DistanceSquared({bear.x,bear.y+1,bear.z},camera);
     nearDetail_=distanceSquared<55*55;
-    const auto tint=CanopyTransmissionTint(canopy_.SampleReceiver(bear.x,bear.y+1,bear.z,bear.y));
+    auto tint=CanopyTransmissionTint(canopy_.SampleReceiver(bear.x,bear.y+1,bear.z,bear.y));
+    {   // rain-soaked fur darkens
+        const float wet=wildlife_render::WetCoatFactor();
+        tint={tint.red*wet,tint.green*wet,tint.blue*wet};
+    }
     BuildBear(vertices_,bear,tint,nearDetail_);
     vegetation_fade::ShrinkAbout(vertices_,0,bear.x,bear.y,bear.z,vegetation_fade::FarShrink(
         std::sqrt(distanceSquared),maximumDistance_,vegetation_fade::TreeShrinkFraction));

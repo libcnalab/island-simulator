@@ -232,7 +232,8 @@ namespace island
                         std::vector<EyeGlint>* eyes = nullptr)
         {
             const std::array<Color, 3> coats = {Color(100, 76, 51), Color(79, 66, 51), Color(115, 91, 62)};
-            const auto coat = coats[boar.colorVariant % coats.size()];
+            const auto coat = wildlife_render::ScaleColor(coats[boar.colorVariant % coats.size()],
+                                                          wildlife_render::WetCoatFactor());
             const auto dark = wildlife_render::ScaleColor(coat, 0.63f);
             const int sides = near ? 16 : 6;
             const float bob = grounded.bodyBob;

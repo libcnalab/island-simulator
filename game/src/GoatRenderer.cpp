@@ -175,7 +175,11 @@ void GoatRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector
                 +Point(pose.up)*vertex.normal.y+Point(pose.forward)*vertex.normal.z);
             const float light=.61f+.37f*std::max(0.0f,Vector3::Dot(n,wildlife_render::FixedSunDirection))
                 +.10f*std::max(0.0f,n.Y);
-            const auto tint=tintAt(vertex.position.z);
+            auto tint=tintAt(vertex.position.z);
+            if(vertex.material==GoatMaterial::Coat) {   // rain-soaked hair darkens
+                const float wet=wildlife_render::WetCoatFactor();
+                tint={tint.red*wet,tint.green*wet,tint.blue*wet};
+            }
             const auto color=vertex.material==GoatMaterial::Coat
                 ?CoatPalettes[goatIndex%CoatPalettes.size()]
                 :Materials.at(static_cast<std::size_t>(vertex.material));
