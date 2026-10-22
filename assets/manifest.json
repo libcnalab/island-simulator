@@ -373,6 +373,24 @@
       "path": "assets/presentation/gallery/coconut-crab.png",
       "sha256": "ecb5960c36caa4f07161f33b7a49afff09f1bc7f07e1762d5e80e31312730406",
       "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-grounded-coaster",
+      "path": "assets/presentation/gallery/grounded-coaster.png",
+      "sha256": "9faefe9c12177471dab5da855851d873288c1cdd1c982a94724d53ed5ab1b497",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-coaster-hold",
+      "path": "assets/presentation/gallery/coaster-hold.png",
+      "sha256": "fc4fd018eaffc9fb6dfb45b7ea89c55f13f14ffad9eb4a6927b0503c15250b54",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-coaster-crew",
+      "path": "assets/presentation/gallery/coaster-crew.png",
+      "sha256": "e99d7692e3933c924c76c0918e50cbaba03e48462ad40f0b4739cff575ed68de",
+      "licenseRecord": "Native README gallery additions"
     }
   ],
   "proceduralGenerators": [

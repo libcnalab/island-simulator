@@ -60,6 +60,8 @@ Captured on 2026-10-22 from the same deterministic native QA viewpoints.
 | ![A whitewashed lighthouse with red bands on a coastal rise](assets/presentation/gallery/lighthouse.png) | ![The lighthouse's two beams sweeping under the stars](assets/presentation/gallery/lighthouse-night.png) | ![A camouflaged fighter wreck nose-down in a clearing](assets/presentation/gallery/plane-wreck.png) |
 | Washed-up PET bottles | Jetty | Quad bike |
 | ![Two see-through plastic bottles washed up on the sand](assets/presentation/gallery/beach-bottles.png) | ![A wooden jetty running out from the beach with a canoe beside it](assets/presentation/gallery/jetty.png) | ![The rider on the red quad bike beside the hut](assets/presentation/gallery/quad-bike.png) |
+| Grounded coaster | Down in its hold | One of its crew |
+| ![A rusting 30 m coaster driven up the beach, its ladder down to the sand](assets/presentation/gallery/grounded-coaster.png) | ![The coaster's dim hold under the open hatch, a stair and two skeletons](assets/presentation/gallery/coaster-hold.png) | ![A sailor's skeleton in boots and a watch cap on the coaster's foredeck](assets/presentation/gallery/coaster-crew.png) |
 
 ### Times of day, weather and more wildlife
 

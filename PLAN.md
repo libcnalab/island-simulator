@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 505 (2026-10-22) — the README gallery shows the grounded coaster
+
+The README's "Newer landmarks" table has a fourth row from the pass-504 captures: the coaster
+from the beach with its ladder down to the sand (`20261022T094410`), down in its hold with two of
+the dead crew (`094427`), and the sailor in boots and watch cap on the foredeck (`094435`). The
+frames are 960x540 and palette-compressed, 188 KiB together, and come under the same
+`ASSET_LICENSES.md` record. Each is hash-gated in the manifest and listed in the Linux package;
+`tools/validate_assets.py` passes.
+
 ## Loop pass 504 (2026-10-22) — five of the coaster's crew lie dead aboard
 
 The grounded coaster now has its sailors' skeletons, completing the operator's ship item. Five of

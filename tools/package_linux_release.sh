@@ -81,6 +81,9 @@ readonly packaged_files=(
     share/island-simulator/assets/presentation/gallery/frigatebird.png
     share/island-simulator/assets/presentation/gallery/octopus.png
     share/island-simulator/assets/presentation/gallery/coconut-crab.png
+    share/island-simulator/assets/presentation/gallery/grounded-coaster.png
+    share/island-simulator/assets/presentation/gallery/coaster-hold.png
+    share/island-simulator/assets/presentation/gallery/coaster-crew.png
     share/island-simulator/licenses/CNA/LICENSE
     share/island-simulator/licenses/CNA/NOTICE.md
     share/island-simulator/licenses/Sharp-Runtime/LICENSE
