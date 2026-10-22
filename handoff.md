@@ -133,14 +133,19 @@ in Czech in the operator's message; the intent is kept here.
    showing through the island, gaps or floating edges, as the mine's cutting did (pass 548, see
    the memory note on terrain cut coverage). Keep a permanent QA view for each fix.
 
+5. [ ] **Appearance inventory.** Capture all ~150 QA viewpoints in one sweep, judge them side by
+   side (at 1:1 crops where detail matters) and rank them from the weakest. The older models have
+   fallen behind the newer ones in the ~550 passes since. Record the ranking in `PLAN.md`, then
+   improve the weakest first.
+
 **Then: a living island, spectacular and realistic.**
-5. [ ] **Land crab migration after rain.** On nights after rain, thousands of land crabs march
+6. [ ] **Land crab migration after rain.** On nights after rain, thousands of land crabs march
    from the forest to the sea (as on Christmas Island). It builds on the existing weather and
    crabs.
-6. [ ] **Winged termites swarming.** At dusk after rain, winged termites stream out of the
+7. [ ] **Winged termites swarming.** At dusk after rain, winged termites stream out of the
    arboreal nests (`TermiteNestLayout`, pass 545), and the bats and geckos come to feed on them.
-7. [ ] **A seabird colony.** Boobies nesting on a rocky islet offshore.
-8. [ ] **Mudskippers.** Mudskippers hopping on the mud among the mangroves.
+8. [ ] **A seabird colony.** Boobies nesting on a rocky islet offshore.
+9. [ ] **Mudskippers.** Mudskippers hopping on the mud among the mangroves.
 
 ## Backlog (agent-actionable, 2026-10-19)
 
