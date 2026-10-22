@@ -1,4 +1,5 @@
 #pragma once
+#include "IslandSimulator/BirdPerchLayout.hpp"
 #include "IslandSimulator/WorldCollision.hpp"
 #include <array>
 #include <optional>
@@ -20,6 +21,16 @@ struct LifeboatPlacement {
     }
     /** The hull blocks the way: bow, middle and stern. */
     [[nodiscard]] std::array<CircularObstacle,3> Obstacles() const noexcept;
+    /** The upright hull's depth from the keel to the gunwale at `along`, the sheer rising to the ends. */
+    [[nodiscard]] static float HullDepth(float along) noexcept {
+        const float e=2.0f*along/Length;return Depth*(1.0f+0.18f*e*e);
+    }
+    /** The keel's rocker at `along`, rising toward the ends (upright). */
+    [[nodiscard]] static float KeelRocker(float along) noexcept {
+        const float e=2.0f*along/Length;return 0.38f*e*e*e*e;
+    }
+    /** Where a bird stands on the keel along the top of the upturned hull, facing the bow. */
+    [[nodiscard]] BirdPerchSite KeelPerch() const noexcept;
 };
 
 class LifeboatLayout final {

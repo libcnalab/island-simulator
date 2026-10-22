@@ -9627,6 +9627,15 @@ int main()
             sound = sound && moved && std::hypot(moved->x - light->x, moved->z - light->z) > 5.0f;
         }
         Check(light && sound, "the lighthouse stands on a coastal rise of rock or turf with its lantern high over the sea");
+        if (light) {
+            // a bird's perch on the gallery's top rail, over the sea side
+            const auto perch = light->RailPerch();
+            const float out = (perch.x - light->x) * light->seaX + (perch.z - light->z) * light->seaZ;
+            Check(std::abs(perch.y - (light->GalleryY() + island::LighthousePlacement::RailHeight
+                                      + island::LighthousePlacement::RailRadius)) < 0.001f
+                      && std::abs(out - (island::LighthousePlacement::GalleryRadius - island::LighthousePlacement::RailInset)) < 0.01f,
+                  "the lighthouse's perch is not on the gallery's top rail over the sea");
+        }
     }
     {
         // The fighter's wreck lies inland on level ground in the open, the most open spot clear of
@@ -9756,6 +9765,10 @@ int main()
             const std::array<std::array<float, 2>, 1> avoid{{found->At(5.0f, 0.0f)}};
             const auto elsewhere = island::WhaleSkeletonLayout::FindInWorld(terrain, none, avoid);
             blocked = blocked && elsewhere && std::hypot(elsewhere->x - found->x, elsewhere->z - found->z) > 10.0f;
+            // a bird's perch on the skull's crest, well clear of the terrain's own clearance
+            const auto perch = found->SkullPerch(terrain);
+            blocked = blocked && perch.y > terrain.Height(perch.x, perch.z) + 0.6f
+                && std::hypot(perch.x - found->x, perch.z - found->z) < 0.01f;
         }
         Check(found && fitsAgain && onSand && blocked,
               "the whale skeleton lies on level dry beach sand clear of obstacles, kept off the sea, a rock and the avoided points");

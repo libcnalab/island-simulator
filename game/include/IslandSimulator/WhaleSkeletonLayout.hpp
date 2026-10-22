@@ -1,4 +1,5 @@
 #pragma once
+#include "IslandSimulator/BirdPerchLayout.hpp"
 #include "IslandSimulator/WorldCollision.hpp"
 #include <array>
 #include <optional>
@@ -25,6 +26,8 @@ struct WhaleSkeletonPlacement {
     }
     /** The spine's line across the sand, seaward of the axis: a lazy S as the carcass settled. */
     [[nodiscard]] static float SpineAcross(float along) noexcept;
+    /** Where a bird stands on the crest of the skull's occipital shield, facing down the rostrum. */
+    [[nodiscard]] BirdPerchSite SkullPerch(const IslandTerrain& terrain) const;
 };
 
 class WhaleSkeletonLayout final {

@@ -10,6 +10,15 @@ std::array<CircularObstacle,3> LifeboatPlacement::Obstacles() const noexcept {
     return {{{bow[0],bow[1],1.0f},{middle[0],middle[1],1.2f},{stern[0],stern[1],1.0f}}};
 }
 
+BirdPerchSite LifeboatPlacement::KeelPerch() const noexcept {
+    // the keel's top a little aft of the middle, the hull turned keel up on the sand (sunk 0.12 m
+    // into it) and rolled by its list, as the renderer places it
+    constexpr float Along=-0.8f,KeelRadius=0.055f;
+    const float h=HullDepth(Along)-(KeelRocker(Along)-0.04f);
+    const auto p=At(Along,-h*std::sin(list));
+    return {p[0],groundY-0.12f+h*std::cos(list)+KeelRadius,p[1],std::atan2(dirZ,dirX),BirdPerchKind::Wreck};
+}
+
 std::optional<LifeboatPlacement> LifeboatLayout::FindNear(const IslandTerrain& terrain,const FreighterPlacement& ship,
         const std::span<const CircularObstacle> obstacles,const std::span<const std::array<float,2>> avoid,const float keepAway) {
     using P=FreighterPlacement;

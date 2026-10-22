@@ -156,6 +156,8 @@ namespace island
 
         /** @brief Installs static anchors after world layouts have been constructed. */
         void SetPerchSites(std::span<const BirdPerchSite> sites);
+        /** @brief Seats one bird on a perch as the island loads (after SetPerchSites). */
+        void SettlePerched(std::size_t agentIndex, std::size_t siteIndex) noexcept;
         /** @brief The fish school the seabirds may work this moment; invalid clears it. */
         void SetSeaForage(float x, float z, bool valid) noexcept;
         [[nodiscard]] std::size_t HuntingCount() const noexcept;

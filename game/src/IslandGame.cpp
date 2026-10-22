@@ -208,6 +208,7 @@ namespace island
             case FixedViewpoint::FreighterHoldDetail: return "freighter-hold";
             case FixedViewpoint::FreighterCrewDetail: return "freighter-crew";
             case FixedViewpoint::FreighterMessDetail: return "freighter-mess";
+            case FixedViewpoint::FreighterBirdsDetail: return "freighter-birds";
             case FixedViewpoint::MineExterior: return "mine";
             case FixedViewpoint::MineAdit: return "mine-adit";
             case FixedViewpoint::MineChamber: return "mine-chamber";
@@ -429,31 +430,6 @@ namespace island
             stoneSignPlacement_=StoneSignLayout::FindInWorld(terrain_,worldObstacles,avoid,10.0f);
             if(stoneSignPlacement_) for(const auto& obstacle:stoneSignPlacement_->FireObstacles()) worldObstacles.push_back(obstacle);
         }
-        birdFlock_.SetPerchSites(birdPerchLayout_.Sites());
-        {
-            // The reef herons roost on the coast: in the crowns of the shore's palms (the crown
-            // anchor the canopy light field uses: the curved stem and the wind's lean) and on
-            // the perches near the water, the wreck, the rocks, the jetty's post.
-            std::vector<ReefHeronGroup::Roost> roosts;
-            for (const PalmPlacement& palm : vegetationLayout_.Palms()) {
-                if (palm.condition != PalmCondition::Living || palm.shoreDistance > 35.0f) continue;
-                const float variant = static_cast<float>(palm.variant);
-                const float height = 9.4f + variant * 0.55f;
-                const float curveAngle = 0.72f + variant * 1.37f;
-                const float internalLean = 0.55f + static_cast<float>((palm.variant * 5U) % 3U) * 0.25f;
-                const float localX = std::cos(curveAngle) * internalLean, localZ = std::sin(curveAngle) * internalLean;
-                const float cosine = std::cos(palm.yawRadians), sine = std::sin(palm.yawRadians);
-                const float windLean = wind::PalmLeanRadians(wind::Exposure(palm.x, palm.z, palm.shoreDistance));
-                roosts.push_back({palm.x + (localX * cosine + localZ * sine) * palm.scale
-                                      + wind::DirectionX * std::sin(windLean) * height * palm.scale,
-                                  palm.y + std::cos(windLean) * height * palm.scale + 0.35f * palm.scale,
-                                  palm.z + (-localX * sine + localZ * cosine) * palm.scale
-                                      + wind::DirectionZ * std::sin(windLean) * height * palm.scale});
-            }
-            for (const BirdPerchSite& site : birdPerchLayout_.Sites())
-                if (terrain_.SignedShoreDistance(site.x, site.z) < 40.0f) roosts.push_back({site.x, site.y, site.z});
-            reefHeronGroup_.SetRoosts(roosts);
-        }
         {
             // The plunge pool's lower bank, a little outside the water's edge, is where the
             // fruit doves come down to bathe.
@@ -521,6 +497,57 @@ namespace island
             // its lifeboat, gone from the davits, keel up on the sand along the beach from it
             if(freighterPlacement_) lifeboatPlacement_=LifeboatLayout::FindNear(terrain_,*freighterPlacement_,solid,avoid);
             if(lifeboatPlacement_) for(const auto& obstacle:lifeboatPlacement_->Obstacles()) worldObstacles.push_back(obstacle);
+        }
+        {
+            // The coast's birds settle on the landmarks too: the coaster's mastheads and bow rail,
+            // its lifeboat's keel, the lighthouse's gallery rail and the whale's skull. As the
+            // island loads a bird already stands on the foremast, the bow rail, the gallery rail
+            // and the keel.
+            const std::size_t before=birdPerchLayout_.Sites().size();
+            std::vector<std::size_t> seated;
+            if(freighterPlacement_) {
+                for(const BirdPerchSite& site:freighterPlacement_->BirdPerches()) birdPerchLayout_.AddSite(site);
+                seated.push_back(before);seated.push_back(before+2U);
+            }
+            if(lifeboatPlacement_) {
+                seated.push_back(birdPerchLayout_.Sites().size());
+                birdPerchLayout_.AddSite(lifeboatPlacement_->KeelPerch());
+            }
+            if(lighthousePlacement_) {
+                seated.push_back(birdPerchLayout_.Sites().size());
+                birdPerchLayout_.AddSite(lighthousePlacement_->RailPerch());
+            }
+            if(whalePlacement_) birdPerchLayout_.AddSite(whalePlacement_->SkullPerch(terrain_));
+            landmarkPerchCount_=birdPerchLayout_.Sites().size()-before;
+            landmarkSeatedCount_=seated.size();
+            birdFlock_.SetPerchSites(birdPerchLayout_.Sites());
+            // agent 0 keeps the old wreck's perch; agents 1 to 4 are shore birds too
+            for(std::size_t i=0;i<seated.size();++i) birdFlock_.SettlePerched(1U+i,seated[i]);
+        }
+        {
+            // The reef herons roost on the coast: in the crowns of the shore's palms (the crown
+            // anchor the canopy light field uses: the curved stem and the wind's lean) and on
+            // the perches near the water, the wreck, the rocks, the jetty's post, the coaster's
+            // mastheads and the lighthouse's rail.
+            std::vector<ReefHeronGroup::Roost> roosts;
+            for (const PalmPlacement& palm : vegetationLayout_.Palms()) {
+                if (palm.condition != PalmCondition::Living || palm.shoreDistance > 35.0f) continue;
+                const float variant = static_cast<float>(palm.variant);
+                const float height = 9.4f + variant * 0.55f;
+                const float curveAngle = 0.72f + variant * 1.37f;
+                const float internalLean = 0.55f + static_cast<float>((palm.variant * 5U) % 3U) * 0.25f;
+                const float localX = std::cos(curveAngle) * internalLean, localZ = std::sin(curveAngle) * internalLean;
+                const float cosine = std::cos(palm.yawRadians), sine = std::sin(palm.yawRadians);
+                const float windLean = wind::PalmLeanRadians(wind::Exposure(palm.x, palm.z, palm.shoreDistance));
+                roosts.push_back({palm.x + (localX * cosine + localZ * sine) * palm.scale
+                                      + wind::DirectionX * std::sin(windLean) * height * palm.scale,
+                                  palm.y + std::cos(windLean) * height * palm.scale + 0.35f * palm.scale,
+                                  palm.z + (-localX * sine + localZ * cosine) * palm.scale
+                                      + wind::DirectionZ * std::sin(windLean) * height * palm.scale});
+            }
+            for (const BirdPerchSite& site : birdPerchLayout_.Sites())
+                if (terrain_.SignedShoreDistance(site.x, site.z) < 40.0f) roosts.push_back({site.x, site.y, site.z});
+            reefHeronGroup_.SetRoosts(roosts);
         }
         {
             // The plastic the sea washes up along the strandline, clear of the obstacles, the
@@ -1913,7 +1940,8 @@ namespace island
                    || viewpoint_ == FixedViewpoint::FreighterDeckDetail
                    || viewpoint_ == FixedViewpoint::FreighterHoldDetail
                    || viewpoint_ == FixedViewpoint::FreighterCrewDetail
-                   || viewpoint_ == FixedViewpoint::FreighterMessDetail) {
+                   || viewpoint_ == FixedViewpoint::FreighterMessDetail
+                   || viewpoint_ == FixedViewpoint::FreighterBirdsDetail) {
             if(!freighterPlacement_) throw std::runtime_error("Freighter QA requires the coaster");
             const auto& ship=*freighterPlacement_;
             FreighterPoint eye,look;
@@ -1939,6 +1967,12 @@ namespace island
                 eye=ship.World(2.95f,FreighterPlacement::DeckUp(2.95f)+1.65f,0.35f);
                 look=ship.World(6.3f,FreighterPlacement::DeckUp(6.3f)+0.95f,-0.7f);
                 what="freighter-mess QA camera looks into the deckhouse's mess at the skeleton slumped over the table";
+            } else if(viewpoint_==FixedViewpoint::FreighterBirdsDetail) {
+                // from the sand off the port bow, up at the birds on the bow rail and the foremast's truck
+                const auto stand=ship.World(31.5f,0.0f,-7.5f);
+                eye={stand.x,terrain_.Height(stand.x,stand.z)+PlayerMotion::EyeHeight,stand.z};
+                look=ship.World(25.5f,FreighterPlacement::DeckUp(25.5f)+4.5f,-1.5f);
+                what="freighter-birds QA camera looks up from the beach at the birds on the coaster's bow rail and foremast";
             } else {
                 // in the hold, from its after end toward the light through the hatch and the stair
                 eye=ship.World(10.9f,FreighterPlacement::HoldFloor+PlayerMotion::EyeHeight,-2.2f);
@@ -3331,6 +3365,9 @@ namespace island
                   << "island-simulator: birds use " << birdFlock_.PerchSites().size()
                   << " real branch, rock, and wreck perches with approach and departure; "
                      "a perched bird flushes when the walker comes within 9 m or a coconut thuds within 30 m\n"
+                  << "island-simulator: the coast's birds perch on the landmarks too, " << landmarkPerchCount_
+                  << " perches on the coaster's mastheads and bow rail, the lifeboat's keel, the lighthouse's gallery rail and the whale's skull; "
+                  << landmarkSeatedCount_ << " birds stand on them as the island loads\n"
                   << "island-simulator: bird flight uses slow radial drift, banking, and "
                      "intermittent glide\n"
                   << "island-simulator: seabirds break from their high orbits to circle low over the fish school of the moment\n"
@@ -4120,16 +4157,19 @@ namespace island
         // sites are seeded after the camera is placed).
         if(viewpoint_ == FixedViewpoint::BirdPreenDetail) birdFlock_.PreviewPreen(0U);
         updateProfile_.Mark("birdFlock");
+        const bool birdsHeld = viewpoint_ == FixedViewpoint::BirdPreenDetail
+            || viewpoint_ == FixedViewpoint::FreighterBirdsDetail;
         birdFlock_.Update((viewpoint_ == FixedViewpoint::BirdDetail
                               || viewpoint_ == FixedViewpoint::FrigatebirdDetail
                               || viewpoint_ == FixedViewpoint::BirdPreenDetail
+                              || viewpoint_ == FixedViewpoint::FreighterBirdsDetail
                               || viewpoint_ == FixedViewpoint::GroundDoveDetail)
                                  ? 0.0f : deltaSeconds,
-                          // The preen view's camera sits inside the flush distance, so the
-                          // flock sees the walker far off and the bird keeps its perch.
-                          viewpoint_ == FixedViewpoint::BirdPreenDetail ? 1.0e4f : cameraPosition_.X,
+                          // The preen and the coaster's birds views sit inside the flush distance,
+                          // so the flock sees the walker far off and the birds keep their perches.
+                          birdsHeld ? 1.0e4f : cameraPosition_.X,
                           cameraPosition_.Y,
-                          viewpoint_ == FixedViewpoint::BirdPreenDetail ? 1.0e4f : cameraPosition_.Z);
+                          birdsHeld ? 1.0e4f : cameraPosition_.Z);
         // A bird settling on a branch, and a monkey moving through a crown every few
         // seconds, shake a leaf loose.
         // A bird mobbing a snake chatters the alarm over it every couple of seconds.

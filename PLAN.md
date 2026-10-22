@@ -233,6 +233,34 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 520 (2026-10-22) — the coast's birds perch on the new landmarks
+
+The shore birds perched only on the old wreck, two rocks, the jetty's mooring post, the hut's
+ridge and the lookout's rail. The landmarks since (the coaster, its lifeboat, the lighthouse,
+the whale's bones) stood empty: the perch sites were installed before those were placed.
+
+- **New perches.** The perch sites are now installed after the landmarks, and six join them:
+  - the trucks of the coaster's two masts and the port bow's bulwark rail
+    (`FreighterPlacement::BirdPerches`);
+  - the lifeboat's keel (`LifeboatPlacement::KeelPerch`; the hull's depth and the keel's rocker
+    are now shared with the renderer);
+  - the lighthouse's top gallery rail over the sea (`LighthousePlacement::RailPerch`, with the
+    rail's height, inset and radius now named constants);
+  - the crest of the whale's skull (`WhaleSkeletonPlacement::SkullPerch`).
+- **Birds on them at load.** `BirdFlock::SettlePerched` seats shore birds 1 to 4 on the foremast,
+  the bow rail, the keel and the gallery rail. The reef herons roost on the coastal ones too.
+- **Startup report.** It reads "the coast's birds perch on the landmarks too, 6 perches ...; 4
+  birds stand on them as the island loads", and the capture gate checks it.
+- **New QA view.** `freighter-birds` looks up from the sand off the port bow at a gull on the
+  rail and a bird on the foremast's truck (`20261022T121321`). The flock is held as in the
+  preen view.
+- **Flushing.** In the `lifeboat` view the keel's bird flushes, since the camera stands inside
+  9 m.
+- **Tests.** FreighterLayoutTests check the perch heights (mastheads, rail cap, keel) and that a
+  settled bird stands on the keel. CoreTests check the lighthouse rail perch and the skull perch.
+
+The suite is 76/76.
+
 ## Loop pass 519 (2026-10-22) — the inventory names the large-object sun shadows
 
 The operator's item 1 read "large-object sun shadows 0" in the frame inventory. The directional

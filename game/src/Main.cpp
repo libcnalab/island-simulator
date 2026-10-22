@@ -92,6 +92,7 @@ namespace
         case FixedViewpoint::FreighterDeckDetail: return "freighter-deck";
         case FixedViewpoint::FreighterHoldDetail: return "freighter-hold";
         case FixedViewpoint::FreighterCrewDetail: return "freighter-crew";
+        case FixedViewpoint::FreighterBirdsDetail: return "freighter-birds";
         case FixedViewpoint::FreighterMessDetail: return "freighter-mess";
         case FixedViewpoint::MineExterior: return "mine";
         case FixedViewpoint::MineAdit: return "mine-adit";
@@ -388,6 +389,8 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::FreighterHoldDetail;
             } else if (name == "freighter-crew") {
                 viewpoint = island::FixedViewpoint::FreighterCrewDetail;
+            } else if (name == "freighter-birds") {
+                viewpoint = island::FixedViewpoint::FreighterBirdsDetail;
             } else if (name == "freighter-mess") {
                 viewpoint = island::FixedViewpoint::FreighterMessDetail;
             } else if (name == "mine") {

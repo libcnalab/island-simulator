@@ -1,3 +1,4 @@
+#include "IslandSimulator/BirdFlock.hpp"
 #include "IslandSimulator/FreighterLayout.hpp"
 #include "IslandSimulator/LifeboatLayout.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
@@ -5,6 +6,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <vector>
 #include <stdexcept>
 #include <string>
 
@@ -95,5 +97,24 @@ int main() {
               "the lifeboat does not lie on dry sand clear of the ship");
     }
     Check(boat->Obstacles().size()==3U&&std::hypot(boat->x-foot.x,boat->z-foot.z)<60.0f,"the lifeboat lies far from its ship");
+    // the birds' perches on her: the mastheads high over the deck, the bow rail on the bulwark's
+    // cap over the port bow, the lifeboat's keel a metre over the sand
+    const auto perches=ship.BirdPerches();
+    const auto deckAt=[&](const island::BirdPerchSite& site) {return Ship::DeckUp(ship.Local({site.x,site.y,site.z}).x);};
+    Check(ship.Local({perches[0].x,perches[0].y,perches[0].z}).y>deckAt(perches[0])+7.5f
+          &&ship.Local({perches[1].x,perches[1].y,perches[1].z}).y>deckAt(perches[1])+8.5f,"the mastheads' perches are not up at the trucks");
+    const auto rail=ship.Local({perches[2].x,perches[2].y,perches[2].z});
+    Check(std::abs(rail.y-(Ship::DeckUp(rail.x)+Ship::Bulwark+0.02f))<0.01f&&rail.z<0.0f
+          &&std::abs(-rail.z-Ship::HalfBreadth(rail.x))<0.1f,"the bow rail's perch is not on the port bulwark's cap");
+    const auto keel=boat->KeelPerch();
+    const float keelOver=keel.y-terrain.Height(keel.x,keel.z);
+    Check(keelOver>0.8f&&keelOver<1.1f&&std::hypot(keel.x-boat->x,keel.z-boat->z)<1.0f,"the keel's perch is not on the upturned lifeboat");
+    // the flock takes them all and seats a bird on one as the island loads
+    island::BirdFlock birds(terrain);
+    const std::vector<island::BirdPerchSite> sites{perches[0],perches[1],perches[2],keel};
+    birds.SetPerchSites(sites);
+    birds.SettlePerched(1U,3U);
+    Check(birds.Birds()[1].behavior==island::BirdBehavior::Perched&&birds.Birds()[1].perchSiteIndex==3U
+          &&std::abs(birds.Birds()[1].y-keel.y-birds.Birds()[1].scale*0.12f)<0.001f,"a bird settled on the keel does not stand on it");
     std::cout<<"Freighter on the beach: ladder, deck, hatch, stair, hold and deckhouse routes valid\n";
 }

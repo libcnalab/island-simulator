@@ -124,8 +124,10 @@ LighthouseRenderer::LighthouseRenderer(GraphicsDevice& device,const LighthousePl
         std::vector<Vector3> top,mid;std::vector<float> radii;
         for(int k=0;k<=36;++k) {
             const float a=2.0f*Pi*static_cast<float>(k)/36.0f;
-            top.push_back(around(a,outer-0.08f,galleryY+1.0f));mid.push_back(around(a,outer-0.08f,galleryY+0.5f));radii.push_back(0.035f);
-            if(k<36&&k%2==0) b.Tube({around(a,outer-0.08f,galleryY),around(a,outer-0.08f,galleryY+1.0f)},{0.025f,0.025f},5,Iron);
+            const float rail=outer-LighthousePlacement::RailInset;
+            top.push_back(around(a,rail,galleryY+LighthousePlacement::RailHeight));
+            mid.push_back(around(a,rail,galleryY+LighthousePlacement::RailHeight*0.5f));radii.push_back(LighthousePlacement::RailRadius);
+            if(k<36&&k%2==0) b.Tube({around(a,rail,galleryY),around(a,rail,galleryY+LighthousePlacement::RailHeight)},{0.025f,0.025f},5,Iron);
         }
         b.Tube(top,radii,5,Iron);b.Tube(mid,radii,5,Iron);
     }

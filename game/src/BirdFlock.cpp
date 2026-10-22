@@ -181,26 +181,10 @@ namespace island
                 perchSites_.begin(), perchSites_.end(), [kind](const BirdPerchSite& candidate) {
                     return candidate.kind == kind;
                 });
-            if (site == perchSites_.end() || agentIndex >= agents_.size()) {
-                return;
+            if (site != perchSites_.end()) {
+                SettlePerched(agentIndex, static_cast<std::size_t>(
+                    std::distance(perchSites_.begin(), site)));
             }
-            Agent& bird = agents_[agentIndex];
-            const std::size_t siteIndex = static_cast<std::size_t>(
-                std::distance(perchSites_.begin(), site));
-            bird.state.x = site->x;
-            bird.state.y = site->y + bird.state.scale * 0.12f;
-            bird.state.z = site->z;
-            bird.state.headingRadians = site->headingRadians;
-            bird.state.speed = 0.0f;
-            bird.state.wingPose = 0.0f;
-            bird.state.bankRadians = 0.0f;
-            bird.state.glideAmount = 0.0f;
-            bird.state.perchAmount = 1.0f;
-            bird.state.behavior = BirdBehavior::Perched;
-            bird.state.perchSiteIndex = static_cast<std::uint8_t>(siteIndex);
-            bird.behaviorSeconds = 0.0f;
-            bird.perchCycle = 1U;
-            states_[agentIndex] = bird.state;
         };
         seedPerchedBird(0U, BirdPerchKind::Wreck);
         Agent& dove = agents_[14U];
@@ -645,6 +629,29 @@ namespace island
         for (const Agent& agent : agents_)
             count += agent.preening && agent.state.behavior == BirdBehavior::Perched ? 1U : 0U;
         return count;
+    }
+
+    void BirdFlock::SettlePerched(const std::size_t agentIndex, const std::size_t siteIndex) noexcept
+    {
+        if (siteIndex >= perchSites_.size() || agentIndex >= agents_.size()) {
+            return;
+        }
+        const BirdPerchSite& site = perchSites_[siteIndex];
+        Agent& bird = agents_[agentIndex];
+        bird.state.x = site.x;
+        bird.state.y = site.y + bird.state.scale * 0.12f;
+        bird.state.z = site.z;
+        bird.state.headingRadians = site.headingRadians;
+        bird.state.speed = 0.0f;
+        bird.state.wingPose = 0.0f;
+        bird.state.bankRadians = 0.0f;
+        bird.state.glideAmount = 0.0f;
+        bird.state.perchAmount = 1.0f;
+        bird.state.behavior = BirdBehavior::Perched;
+        bird.state.perchSiteIndex = static_cast<std::uint8_t>(siteIndex);
+        bird.behaviorSeconds = 0.0f;
+        bird.perchCycle = 1U;
+        states_[agentIndex] = bird.state;
     }
 
     void BirdFlock::PreviewPreen(const std::size_t index) noexcept

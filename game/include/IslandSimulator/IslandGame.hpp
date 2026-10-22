@@ -278,6 +278,7 @@ namespace island
         FreighterHoldDetail,
         FreighterCrewDetail,
         FreighterMessDetail,
+        FreighterBirdsDetail,
         MineExterior,
         MineAdit,
         MineChamber,
@@ -508,6 +509,7 @@ namespace island
         NaturalPropLayout naturalPropLayout_;
         ShipwreckLayout shipwreckLayout_;
         BirdPerchLayout birdPerchLayout_;
+        std::size_t landmarkPerchCount_ = 0U, landmarkSeatedCount_ = 0U;
         SunShadeField sunShade_;
         std::optional<HutPlacement> hutPlacement_;
         std::optional<JettyPlacement> jettyPlacement_;

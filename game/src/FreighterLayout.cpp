@@ -102,6 +102,18 @@ FreighterPoint FreighterPlacement::World(const float along,const float up,const 
     return {x+dirX*along+AcrossX()*across,baseY+up+along*tanPitch+across*tanHeel,z+dirZ*along+AcrossZ()*across};
 }
 
+std::array<BirdPerchSite,3> FreighterPlacement::BirdPerches() const noexcept {
+    // the masts' heights over the deck and the bulwark rail's cap as the renderer builds them
+    const float heading=std::atan2(dirZ,dirX);
+    const FreighterPoint fore=World(ForeMast,DeckUp(ForeMast)+8.0f,0.0f);
+    const FreighterPoint main=World(MainMast,DeckUp(MainMast)+9.0f,0.0f);
+    constexpr float RailAlong=27.6f;
+    const FreighterPoint rail=World(RailAlong,DeckUp(RailAlong)+Bulwark+0.02f,-(HalfBreadth(RailAlong)-0.04f));
+    return {{{fore.x,fore.y,fore.z,heading,BirdPerchKind::Wreck},
+             {main.x,main.y,main.z,heading+0.7f,BirdPerchKind::Wreck},
+             {rail.x,rail.y,rail.z,std::atan2(-AcrossZ(),-AcrossX()),BirdPerchKind::Wreck}}};
+}
+
 FreighterPoint FreighterPlacement::Local(const FreighterPoint world) const noexcept {
     const float dx=world.x-x,dz=world.z-z;
     const float along=dx*dirX+dz*dirZ,across=dx*AcrossX()+dz*AcrossZ();

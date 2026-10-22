@@ -1,4 +1,5 @@
 #pragma once
+#include "IslandSimulator/BirdPerchLayout.hpp"
 #include "IslandSimulator/WorldCollision.hpp"
 #include <array>
 #include <optional>
@@ -60,6 +61,9 @@ struct FreighterPlacement {
     [[nodiscard]] std::vector<CircularObstacle> Obstacles() const;
     /** Where a walker stands on the sand at the ladder's foot. */
     [[nodiscard]] FreighterPoint LadderFoot() const noexcept;
+    /** Where the coast's birds settle on her: the trucks of her two masts and the port bow's
+     *  bulwark rail, facing out over it. */
+    [[nodiscard]] std::array<BirdPerchSite,3> BirdPerches() const noexcept;
 };
 
 class FreighterLayout final {

@@ -5,6 +5,13 @@
 #include <numbers>
 
 namespace island {
+BirdPerchSite WhaleSkeletonPlacement::SkullPerch(const IslandTerrain& terrain) const {
+    // the skull's highest point, the occipital crest at the skull's back: 0.68 m over the sand in
+    // the renderer's skull profile
+    constexpr float Crest=0.68f;
+    return {x,terrain.Height(x,z)+Crest,z,std::atan2(-dirZ,-dirX),BirdPerchKind::Wreck};
+}
+
 float WhaleSkeletonPlacement::SpineAcross(const float along) noexcept {
     return 0.55f*std::sin(along*0.33f)-0.25f*along/SpineLength;
 }

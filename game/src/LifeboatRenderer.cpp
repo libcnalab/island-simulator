@@ -39,9 +39,9 @@ LifeboatRenderer::LifeboatRenderer(GraphicsDevice& device,const LifeboatPlacemen
     const float baseY=groundAt(boat.x,boat.z)-0.12f;
     // the hull's half breadth and depth along it, double-ended, the sheer rising to the ends
     const auto breadth=[](const float x) {return L::HalfBeam*std::pow(std::max(0.0f,1.0f-(2.0f*x/L::Length)*(2.0f*x/L::Length)),0.75f);};
-    const auto depth=[](const float x) {return L::Depth*(1.0f+0.18f*(2.0f*x/L::Length)*(2.0f*x/L::Length));};
+    const auto depth=[](const float x) {return L::HullDepth(x);};
     // the keel's rocker, rising toward the ends (upright), and the stem and stern raked out
-    const auto keelUp=[](const float x) {const float e=2.0f*x/L::Length;return 0.38f*e*e*e*e;};
+    const auto keelUp=[](const float x) {return L::KeelRocker(x);};
     const auto section=[&](const float a,const float t,float& along,float& up,float& across) {
         along=a*(0.80f+0.20f*t);
         up=keelUp(along)+(depth(along)-keelUp(along))*t;
