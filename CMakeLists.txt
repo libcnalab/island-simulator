@@ -793,6 +793,7 @@ if(ISLAND_BUILD_GAME)
         game/src/PlaneWreckRenderer.cpp
         game/src/BeachLitterRenderer.cpp
         game/src/FreighterRenderer.cpp
+        game/src/HumanSkeleton.cpp
         game/src/BridgeRenderer.cpp
         game/src/LookoutRenderer.cpp
         game/src/FallingFruitRenderer.cpp

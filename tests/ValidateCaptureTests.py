@@ -69,6 +69,10 @@ class CaptureValidatorTests(unittest.TestCase):
         # The walker's own shadow on open sand: reviewed 2026-10-22, the sand fills the frame.
         self.assertEqual(profile_for_viewpoint("walker-shadow"), "sand-shadow-detail")
         self.assertEqual(profile_for_viewpoint("walker-shadow", 21.0), "night-scene")
+        # The coaster's mess, lit only through its door: reviewed 2026-10-22.
+        self.assertEqual(profile_for_viewpoint("freighter-mess"), "dim-interior-scene")
+        self.assertEqual(profile_for_viewpoint("freighter-mess", 21.0), "night-scene")
+        self.assertEqual(profile_for_viewpoint("freighter-hold"), "scene")
         for name in ("", "overview", "grass", "wet-sand", "litter-other", "interactive"):
             self.assertEqual(profile_for_viewpoint(name), "scene")
 
@@ -84,6 +88,19 @@ class CaptureValidatorTests(unittest.TestCase):
                          ("spatialContrast", 29.0)):
             with patch("tools.validate_capture.analyze_capture", return_value={**metrics, key: bad}):
                 self.assertFalse(validate_capture(image, profile="underwater-scene")["valid"])
+
+    def test_dim_interior_scene_relaxes_only_the_luminance_spread(self):
+        image = PpmImage(640, 360, b"")
+        metrics = {"luminanceMean": 76.0, "luminanceStandardDeviation": 15.2,
+                   "quantizedColorBins": 128, "spatialContrast": 84.0,
+                   "darkPixelFraction": 0.0, "brightPixelFraction": 0.0}
+        with patch("tools.validate_capture.analyze_capture", return_value=metrics):
+            self.assertTrue(validate_capture(image, profile="dim-interior-scene")["valid"])
+            self.assertFalse(validate_capture(image, profile="scene")["valid"])
+        for key, bad in (("luminanceStandardDeviation", 11.5), ("quantizedColorBins", 63),
+                         ("spatialContrast", 29.0)):
+            with patch("tools.validate_capture.analyze_capture", return_value={**metrics, key: bad}):
+                self.assertFalse(validate_capture(image, profile="dim-interior-scene")["valid"])
 
     def test_sand_shadow_detail_relaxes_only_the_spread_and_the_colour_bins(self):
         image = PpmImage(640, 360, b"")

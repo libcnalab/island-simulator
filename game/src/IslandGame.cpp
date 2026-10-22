@@ -206,6 +206,8 @@ namespace island
             case FixedViewpoint::FreighterDetail: return "freighter";
             case FixedViewpoint::FreighterDeckDetail: return "freighter-deck";
             case FixedViewpoint::FreighterHoldDetail: return "freighter-hold";
+            case FixedViewpoint::FreighterCrewDetail: return "freighter-crew";
+            case FixedViewpoint::FreighterMessDetail: return "freighter-mess";
             case FixedViewpoint::GroundDoveDetail: return "ground-doves";
             case FixedViewpoint::FruitBatDetail: return "bats";
             case FixedViewpoint::FruitBatRoostDetail: return "bat-roost";
@@ -1827,7 +1829,9 @@ namespace island
             std::cout<<"island-simulator: plane-wreck QA camera looks at the fighter's broken fuselage from ahead of its nose\n";
         } else if (viewpoint_ == FixedViewpoint::FreighterDetail
                    || viewpoint_ == FixedViewpoint::FreighterDeckDetail
-                   || viewpoint_ == FixedViewpoint::FreighterHoldDetail) {
+                   || viewpoint_ == FixedViewpoint::FreighterHoldDetail
+                   || viewpoint_ == FixedViewpoint::FreighterCrewDetail
+                   || viewpoint_ == FixedViewpoint::FreighterMessDetail) {
             if(!freighterPlacement_) throw std::runtime_error("Freighter QA requires the coaster");
             const auto& ship=*freighterPlacement_;
             FreighterPoint eye,look;
@@ -1843,6 +1847,16 @@ namespace island
                 eye=ship.World(10.3f,FreighterPlacement::DeckUp(10.3f)+PlayerMotion::EyeHeight,2.7f);
                 look=ship.World(27.0f,FreighterPlacement::DeckUp(27.0f)+0.4f,-0.6f);
                 what="freighter-deck QA camera looks forward along the coaster's deck over the open hatch";
+            } else if(viewpoint_==FixedViewpoint::FreighterCrewDetail) {
+                // standing over the sailor who died on the foredeck by the windlass
+                eye=ship.World(23.4f,FreighterPlacement::DeckUp(23.4f)+1.45f,-0.5f);
+                look=ship.World(24.4f,FreighterPlacement::DeckUp(24.4f)+0.1f,-1.75f);
+                what="freighter-crew QA camera looks down at a dead sailor's skeleton on the coaster's foredeck";
+            } else if(viewpoint_==FixedViewpoint::FreighterMessDetail) {
+                // from the mess's after corner: the table, the sailor slumped over it, the open door
+                eye=ship.World(2.95f,FreighterPlacement::DeckUp(2.95f)+1.65f,0.35f);
+                look=ship.World(6.3f,FreighterPlacement::DeckUp(6.3f)+0.95f,-0.7f);
+                what="freighter-mess QA camera looks into the deckhouse's mess at the skeleton slumped over the table";
             } else {
                 // in the hold, from its after end toward the light through the hatch and the stair
                 eye=ship.World(10.9f,FreighterPlacement::HoldFloor+PlayerMotion::EyeHeight,-2.2f);

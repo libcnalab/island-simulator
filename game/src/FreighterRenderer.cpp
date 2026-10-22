@@ -1,4 +1,5 @@
 #include "IslandSimulator/FreighterRenderer.hpp"
+#include "IslandSimulator/HumanSkeleton.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
@@ -42,7 +43,7 @@ FreighterRenderer::FreighterRenderer(GraphicsDevice& device,const FreighterPlace
 {
     SculptMeshBuilder b;
     const auto groundAt=[&](const float x,const float z) {return DrawnOrAnalyticHeight(ground,terrain,x,z);};
-    b.ground=groundAt;b.stainColour=Vector3(196,178,140);b.stainHeight=0.5f;b.stainAmount=0.55f;
+    b.stainColour=Vector3(196,178,140);b.stainHeight=0.5f;b.stainAmount=0.55f;
     b.tintPerQuad=true;
     // rust streaking down from the deck edge and the scuppers, blistered patches, weed at the
     // waterline; the glass and the brass left as they are
@@ -100,7 +101,9 @@ FreighterRenderer::FreighterRenderer(GraphicsDevice& device,const FreighterPlace
         return 0.26f+0.74f*std::exp(-std::hypot(da,dc)/1.4f);
     };
 
-    // ---- the hull's shell: red below the waterline's white boot-top, black above
+    // ---- the hull's shell: red below the waterline's white boot-top, black above; sanded where
+    // it meets the beach
+    b.ground=groundAt;
     {
         const auto keelUp=[](const float a) {
             if(a<2.5f) return (2.5f-a)/2.5f*2.0f;
@@ -149,6 +152,7 @@ FreighterRenderer::FreighterRenderer(GraphicsDevice& device,const FreighterPlace
             b.Quad(W(0.0f,u0,-breadth(0.0f,u0)),W(0.0f,u0,breadth(0.0f,u0)),W(0.0f,u1,breadth(0.0f,u1)),W(0.0f,u1,-breadth(0.0f,u1)),pigment);
         }
     }
+    b.ground=nullptr;
     // ---- the bulwarks: black outside, buff inside, a capping rail; the gangway's opening
     for(float a=0.0f;a<P::Length-1e-3f;a+=0.25f) {
         const float a1=a+0.25f;
@@ -193,7 +197,7 @@ FreighterRenderer::FreighterRenderer(GraphicsDevice& device,const FreighterPlace
             const auto clampC=[&](const float c,const float limit) {return std::clamp(c,-limit,limit);};
             const float c00=clampC(C[j],limit0),c01=clampC(C[j+1],limit0),c10=clampC(C[j],limit1),c11=clampC(C[j+1],limit1);
             const bool roofed=am>P::HouseAft&&am<P::HouseFore&&std::abs(cm)<P::HouseHalf;
-            face(W(a0,D(a0),c00),W(a1,D(a1),c10),W(a1,D(a1),c11),W(a0,D(a0),c01),W(am,D(am)+3.0f,cm),Deck*(roofed?0.55f:1.0f));
+            face(W(a0,D(a0),c00),W(a1,D(a1),c10),W(a1,D(a1),c11),W(a0,D(a0),c01),W(am,D(am)+3.0f,cm),Deck*(roofed?0.8f:1.0f));
             if(am>P::HoldAft&&am<P::HoldFore) {
                 const float under=-P::DeckThickness;
                 face(W(a0,D(a0)+under,c00),W(a1,D(a1)+under,c10),W(a1,D(a1)+under,c11),W(a0,D(a0)+under,c01),
@@ -345,7 +349,7 @@ FreighterRenderer::FreighterRenderer(GraphicsDevice& device,const FreighterPlace
                 const Vector3 mid=(q0+q1+q2+q3)/4.0f;
                 const bool inward=Vector3::Dot(mid-centre,within-centre)>0.0f
                     &&Vector3::DistanceSquared(mid,within)<Vector3::DistanceSquared(centre,within);
-                b.inside=centre;b.Quad(q0,q1,q2,q3,inward?HouseInside*0.62f:House);
+                b.inside=centre;b.Quad(q0,q1,q2,q3,inward?HouseInside*0.9f:House);
             };
             quad(p[4],p[5],p[6],p[7]);quad(p[0],p[1],p[2],p[3]);
             for(int k=0;k<4;++k) quad(p[k],p[(k+1)%4],p[4+(k+1)%4],p[4+k]);
@@ -509,6 +513,35 @@ FreighterRenderer::FreighterRenderer(GraphicsDevice& device,const FreighterPlace
         b.Tube({W(a,d,c),W(a,d+1.1f,c),W(a+0.2f,d+1.45f,c),W(a+0.5f,d+1.55f,c)},{0.17f,0.17f,0.2f,0.3f},10,House*0.9f);
     }
 
+    // ---- the crew, dead where they lay: one on the foredeck by the windlass, one sitting against
+    // the hold's side, one fallen at the stair's foot, one slumped over the mess table, one curled
+    // up on the after deck. Each pose is set out in the ship's frame and sheared onto its floors.
+    int skeletonTriangles=0;
+    {
+        b.tint=nullptr;
+        const auto toWorld=[&](SkeletonPose pose) {
+            const auto point=[&](Vector3& v) {v=W(v.X,v.Y,v.Z);};
+            const Vector3 origin=W(0.0f,0.0f,0.0f);
+            const auto direction=[&](Vector3& v) {v=W(v.X,v.Y,v.Z)-origin;};
+            point(pose.pelvis);point(pose.chest);point(pose.neck);point(pose.head);
+            direction(pose.front);direction(pose.face);direction(pose.headUp);
+            for(int i=0;i<2;++i) {
+                point(pose.elbow[i]);point(pose.wrist[i]);point(pose.knee[i]);point(pose.ankle[i]);
+                direction(pose.fingers[i]);direction(pose.toes[i]);
+            }
+            return pose;
+        };
+        const auto lay=[&](SkeletonPose pose,const bool boots,const bool cap,const float shade,const std::uint32_t seed) {
+            pose.boots=boots;pose.cap=cap;
+            skeletonTriangles+=BuildSkeleton(b,toWorld(pose),shade,seed);
+        };
+        lay(LyingSkeleton(Vector3(24.3f,D(24.3f),-1.75f),Vector3(1.0f,0.0f,0.08f),false,0.9f),true,true,1.0f,11U);
+        lay(SittingSkeleton(Vector3(14.6f,P::HoldFloor,-P::HalfBeam+0.17f),Vector3(0.0f,0.0f,1.0f)),false,false,holdShade(14.6f,-2.9f),23U);
+        lay(LyingSkeleton(Vector3(15.25f,P::HoldFloor,2.45f),Vector3(-1.0f,0.0f,-0.15f),true,1.2f),true,false,holdShade(15.6f,2.45f),37U);
+        lay(SlumpedSkeleton(Vector3(4.6f,D(4.6f)+0.45f,-2.3f),Vector3(0.0f,0.0f,1.0f),D(4.6f),D(4.6f)+0.78f),false,true,0.95f,41U);
+        lay(CurledSkeleton(Vector3(1.15f,D(1.15f),1.1f),Vector3(0.0f,0.0f,-1.0f)),true,false,0.95f,53U);
+    }
+
     auto& mesh=b.builder.mesh;
     triangles_=static_cast<int>(mesh.size()/3);
     Vector3 low(1e9f,1e9f,1e9f),high(-1e9f,-1e9f,-1e9f);
@@ -531,7 +564,8 @@ FreighterRenderer::FreighterRenderer(GraphicsDevice& device,const FreighterPlace
     message<<"island-simulator: a rusting 30 m coaster lies driven up the beach at ("
         <<static_cast<int>(std::lround(centre_.X))<<", "<<static_cast<int>(std::lround(centre_.Z))
         <<"), its stern in the surf at ("<<static_cast<int>(std::lround(stern.x))<<", "<<static_cast<int>(std::lround(stern.z))
-        <<"); a ladder to its deck, a stair to its hold; "<<triangles_<<" triangles in one draw";
+        <<"); a ladder to its deck, a stair to its hold; five of its crew lie dead aboard ("<<skeletonTriangles
+        <<" triangles of bone); "<<triangles_<<" triangles in one draw";
     std::cout<<message.str()<<'\n';MirrorRuntimeDiagnosticToPlatformLog(message.str());
 }
 

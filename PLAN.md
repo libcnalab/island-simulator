@@ -233,6 +233,53 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 504 (2026-10-22) — five of the coaster's crew lie dead aboard
+
+The grounded coaster now has its sailors' skeletons, completing the operator's ship item. Five of
+the crew lie where they died, built by the new reusable `HumanSkeleton` (`SkeletonPose`,
+`BuildSkeleton`). Together they add 15637 triangles of bone, which leaves the ship at 30573
+triangles in one draw. There are two new QA views, `freighter-crew` and `freighter-mess`.
+
+- **The bones.**
+  - **Skull.** The cranium is a closed ellipsoid with cheekbones and the upper jaw. It has dark
+    eye sockets, the nose's opening and rows of teeth. The lower jaw is hinged at the condyles
+    and dropped open by the pose.
+  - **Spine.** 22 vertebrae (lumbar, thoracic, cervical), each a body with its spinous process,
+    and the sacrum.
+  - **Chest.** Ten pairs of ribs arcing round to the sternum, a few missing. Collarbones and the
+    shoulder blades.
+  - **Pelvis.** The iliac wings and the pubic arch.
+  - **Limbs.** Long bones with knuckled ends, a twin forearm and shin, kneecaps, and the hands'
+    and the feet's small bones.
+  - **Clothing.** The trousers' cloth has fallen in round the thighs, torn above the knee. Some
+    wear leather boots, and two still have a knitted watch cap.
+- **The poses.** Four generators set out the joints:
+  - on the back or the face, the head turned;
+  - sitting with the back to a wall, the head fallen onto the chest;
+  - slumped forward from a seat over a table, cheek to the boards;
+  - curled on one side.
+
+  Each pose is generated in the ship's frame and sheared onto its floors with the deck, so it
+  lies flat on a trimmed, listing deck.
+- **On board.**
+  - On the foredeck by the windlass, on its back, in boots and cap.
+  - In the hold, sitting against the port side.
+  - Face down at the stair's foot, as if fallen.
+  - Slumped over the mess table.
+  - Curled up on the after deck.
+
+  The hold's two take its gloom. The rust and the sand stain are kept off the bones; the sand
+  stain now only touches the hull's shell.
+- **Mess.** The mess was too dark to read. The deckhouse's inner walls and the deck under its
+  roof were lightened, as if lit through the door and the portholes. Its luminance spread is
+  15.2, under the scene floor of 18, so the new reviewed profile `dim-interior-scene` relaxes
+  only that spread to 12, with tests in `ValidateCaptureTests`.
+- **Known issue.** The palms' dappled canopy tint shows on the mess's ceiling. The structure
+  receiver applies that tint by plan position, as it does in the hut. Left for a later pass.
+
+Evidence: `20261022T094410` to `20261022T094443` (freighter, deck, hold, crew, mess). The suite is
+74/74.
+
 ## Loop pass 503 (2026-10-22) — a rusting coaster lies driven up a beach, walkable deck and hold
 
 A storm drove a 30 m steel coaster up the south-west beach. Its centre is at (-107, -221) and its

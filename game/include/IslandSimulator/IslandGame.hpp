@@ -271,6 +271,8 @@ namespace island
         FreighterDetail,
         FreighterDeckDetail,
         FreighterHoldDetail,
+        FreighterCrewDetail,
+        FreighterMessDetail,
         GroundDoveDetail,
         FruitBatDetail,
         FruitBatRoostDetail,

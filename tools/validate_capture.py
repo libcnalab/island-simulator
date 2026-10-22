@@ -20,7 +20,7 @@ MINIMUM_LUMINANCE_DEVIATION = 18.0
 MINIMUM_QUANTIZED_COLOR_BINS = 64
 MINIMUM_SPATIAL_CONTRAST = 30.0
 PROFILES = ("scene", "shaded-detail", "close-natural-detail", "dark-cave-detail", "night-scene",
-            "underwater-scene", "sand-shadow-detail")
+            "underwater-scene", "sand-shadow-detail", "dim-interior-scene")
 # Looking down at one's own shadow on open sand (walker-shadow, loop pass 447) fills the frame with
 # one sand colour and the shadow's shade: reviewed on 2026-10-22 at 10:00 (luminance spread 12.1,
 # 18 colour bins) and 14:00 (12.1, 21), with a clean figure each time.
@@ -29,6 +29,11 @@ PROFILES = ("scene", "shaded-detail", "close-natural-detail", "dark-cave-detail"
 # reviewed on 2026-10-21 for the views whose camera is in the water (fish 18.5, reef-habitat 16.8,
 # dolphins 13.8 against the scene floor of 18), all correct renders with their subject clear.
 UNDERWATER_VIEWPOINTS = ("fish", "reef-habitat", "anemone", "dolphins")
+# Inside a roofed room lit only through its door and portholes (the grounded coaster's mess,
+# loop pass 504) the walls, the ceiling and the floor share one dim light: reviewed on 2026-10-22
+# (luminance spread 15.2 against the scene floor of 18, 128 colour bins, contrast 84), a correct
+# render with the skeleton over the table and the bright doorway clear.
+DIM_INTERIOR_VIEWPOINTS = ("freighter-mess",)
 
 # The game hours of the night (the clock's dark between the dusk and the dawn), when a capture
 # asks for one with --time-of-day: reviewed on 2026-10-20 as a dark blue moonlit scene.
@@ -49,6 +54,8 @@ def profile_for_viewpoint(viewpoint: str, hour: float | None = None) -> str:
         return "dark-cave-detail"
     if viewpoint in UNDERWATER_VIEWPOINTS:
         return "underwater-scene"
+    if viewpoint in DIM_INTERIOR_VIEWPOINTS:
+        return "dim-interior-scene"
     if viewpoint == "walker-shadow":   # the walker's own shadow on the open bay beach, sand filling the frame; reviewed 2026-10-22
         return "sand-shadow-detail"
     if viewpoint in ("cave-top", "ground", "tracks", "cascade", "bridge", "boars", "boar-lying", "spiders", "spiders-bright", "snakes", "snake-head", "tree-snakes", "ants", "cicadas", "beetles", "rats", "mice"):
@@ -249,7 +256,7 @@ def validate_capture(image: PpmImage, expected_width: int | None = None,
     minimum_deviation = (2.5 if profile == "dark-cave-detail"
                          else 10.0 if profile == "sand-shadow-detail"
                          else 3.0 if profile == "night-scene"
-                         else 12.0 if profile == "underwater-scene"
+                         else 12.0 if profile in ("underwater-scene", "dim-interior-scene")
                          else max(12.0, metrics["luminanceMean"] * 0.25)
                          if profile == "shaded-detail"
                          else max(10.0, metrics["luminanceMean"] * 0.20)

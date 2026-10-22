@@ -595,7 +595,7 @@ def run_monitored_capture(command, root, environment, evidence, journal, baselin
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("build", type=Path)
-    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "quad", "quad-ride", "quad-chase", "quad-drive", "quad-bunker", "quad-cave", "quad-jetty", "quad-helicopter", "quad-lookout", "quad-bear", "quad-stream", "quad-sea", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "jetty-end", "anemone", "walker-shadow", "flight", "bridge", "lookout", "log", "beach-vine", "hut", "hut-material", "helicopter", "helicopter-inside", "resident", "resident-tending", "resident-fishing", "bear", "bear-lying", "boars", "boar-lying", "goats", "goat-lying", "deer", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "monkey-scratch", "ground-doves", "bird-preen", "frigatebird", "whale-skeleton", "idol", "help-sign", "lighthouse", "plane-wreck", "beach-litter", "freighter", "freighter-deck", "freighter-hold", "stingray-buried"}))
+    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "quad", "quad-ride", "quad-chase", "quad-drive", "quad-bunker", "quad-cave", "quad-jetty", "quad-helicopter", "quad-lookout", "quad-bear", "quad-stream", "quad-sea", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "jetty-end", "anemone", "walker-shadow", "flight", "bridge", "lookout", "log", "beach-vine", "hut", "hut-material", "helicopter", "helicopter-inside", "resident", "resident-tending", "resident-fishing", "bear", "bear-lying", "boars", "boar-lying", "goats", "goat-lying", "deer", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "monkey-scratch", "ground-doves", "bird-preen", "frigatebird", "whale-skeleton", "idol", "help-sign", "lighthouse", "plane-wreck", "beach-litter", "freighter", "freighter-deck", "freighter-hold", "freighter-crew", "freighter-mess", "stingray-buried"}))
     parser.add_argument("--canopy-lod-inspection", nargs=3, metavar=("X_MM", "Z_MM", "TIER"))
     parser.add_argument("--time-of-day", type=float, default=None,
                         help="QA: the game hour to hold the clock at (default: the 14:00 the views were made at)")
@@ -1558,11 +1558,13 @@ def main():
                 raise RuntimeError("current beach litter is missing; check for a stale executable")
             if args.viewpoint == "beach-litter" and "beach-litter QA camera looks down at washed-up bottles" not in diagnostics:
                 raise RuntimeError("beach-litter capture did not frame the bottles")
-            if not re.search(r"a rusting 30 m coaster lies driven up the beach at \(-?\d+, -?\d+\)", diagnostics):
+            if not re.search(r"a rusting 30 m coaster lies driven up the beach at \(-?\d+, -?\d+\).*five of its crew lie dead aboard", diagnostics):
                 raise RuntimeError("current grounded freighter is missing; check for a stale executable")
             for view, phrase in (("freighter", "freighter QA camera looks at the grounded coaster"),
                                  ("freighter-deck", "freighter-deck QA camera looks forward along the coaster's deck"),
-                                 ("freighter-hold", "freighter-hold QA camera looks forward through the hold")):
+                                 ("freighter-hold", "freighter-hold QA camera looks forward through the hold"),
+                                 ("freighter-crew", "freighter-crew QA camera looks down at a dead sailor's skeleton"),
+                                 ("freighter-mess", "freighter-mess QA camera looks into the deckhouse's mess")):
                 if args.viewpoint == view and phrase not in diagnostics:
                     raise RuntimeError(f"{view} capture did not frame the coaster")
             if args.viewpoint == "lighthouse" and "lighthouse QA camera looks up at the tower" not in diagnostics:
