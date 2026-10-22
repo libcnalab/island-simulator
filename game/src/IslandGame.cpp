@@ -205,6 +205,7 @@ namespace island
             case FixedViewpoint::LighthouseStairDetail: return "lighthouse-stair";
             case FixedViewpoint::LighthouseGalleryDetail: return "lighthouse-gallery";
             case FixedViewpoint::LighthouseLanternDetail: return "lighthouse-lantern";
+            case FixedViewpoint::LighthouseCottageDetail: return "lighthouse-cottage";
             case FixedViewpoint::PlaneWreckDetail: return "plane-wreck";
             case FixedViewpoint::BeachLitterDetail: return "beach-litter";
             case FixedViewpoint::FreighterDetail: return "freighter";
@@ -485,6 +486,9 @@ namespace island
             if(idolPlacement_) avoid.push_back({{idolPlacement_->x,idolPlacement_->z}});
             lighthousePlacement_=LighthouseLayout::FindInWorld(terrain_,worldObstacles,avoid);
             if(lighthousePlacement_) worldObstacles.push_back(lighthousePlacement_->Obstacle());
+            // and beside it its keepers' cottage, a ruin; its walls stop the walker and the animals
+            if(lighthousePlacement_) cottagePlacement_=LighthouseLayout::FindCottage(terrain_,*lighthousePlacement_,worldObstacles);
+            if(cottagePlacement_) for(const auto& circle:cottagePlacement_->WallObstacles()) worldObstacles.push_back(circle);
             // A Second World War fighter down in the most open clearing inland.
             if(lighthousePlacement_) avoid.push_back({{lighthousePlacement_->x,lighthousePlacement_->z}});
             planeWreckPlacement_=PlaneWreckLayout::FindInWorld(terrain_,worldObstacles,avoid);
@@ -2080,6 +2084,17 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: lighthouse QA camera looks up at the tower from the land beside it\n";
+        } else if (viewpoint_ == FixedViewpoint::LighthouseCottageDetail) {
+            // Off the ruined cottage's fallen end, across its walls to its chimney and the tower.
+            if(!cottagePlacement_) throw std::runtime_error("Cottage QA requires the keepers' cottage");
+            const auto& c=*cottagePlacement_;
+            const auto stand=c.At(-CottagePlacement::HalfLength-4.5f,-CottagePlacement::HalfWidth-2.5f);
+            cameraPosition_=Vector3(stand[0],terrain_.Height(stand[0],stand[1])+PlayerMotion::EyeHeight,stand[1]);
+            const auto middle=c.At(0.6f,0.0f);
+            const Vector3 direction=Vector3(middle[0],c.groundY+1.2f,middle[1])-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: lighthouse-cottage QA camera looks across the keepers' ruined cottage\n";
         } else if (viewpoint_ == FixedViewpoint::LighthouseStairDetail
                    || viewpoint_ == FixedViewpoint::LighthouseGalleryDetail
                    || viewpoint_ == FixedViewpoint::LighthouseLanternDetail) {
@@ -3058,7 +3073,8 @@ namespace island
         if(whalePlacement_) whaleSkeletonRenderer_=std::make_unique<WhaleSkeletonRenderer>(device,*whalePlacement_,terrain_,*drawnGround_);
         if(idolPlacement_) idolRenderer_=std::make_unique<IdolStatueRenderer>(device,*idolPlacement_,terrain_,*drawnGround_);
         if(stoneSignPlacement_) stoneSignRenderer_=std::make_unique<StoneSignRenderer>(device,*stoneSignPlacement_,terrain_,*drawnGround_);
-        if(lighthousePlacement_) lighthouseRenderer_=std::make_unique<LighthouseRenderer>(device,*lighthousePlacement_,terrain_,*drawnGround_);
+        if(lighthousePlacement_) lighthouseRenderer_=std::make_unique<LighthouseRenderer>(device,*lighthousePlacement_,terrain_,*drawnGround_,
+            cottagePlacement_?&*cottagePlacement_:nullptr);
         if(planeWreckPlacement_) planeWreckRenderer_=std::make_unique<PlaneWreckRenderer>(device,*planeWreckPlacement_,terrain_,*drawnGround_);
         beachLitterRenderer_=std::make_unique<BeachLitterRenderer>(device,beachBottles_,terrain_,*drawnGround_);
         if(freighterPlacement_) freighterRenderer_=std::make_unique<FreighterRenderer>(device,*freighterPlacement_,terrain_,*drawnGround_);

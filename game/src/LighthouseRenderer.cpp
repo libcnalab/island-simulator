@@ -28,11 +28,17 @@ constexpr float Pi=std::numbers::pi_v<float>;
 // pigments past full for the build's light (0.46 + 0.54 n.s)
 const Vector3 Whitewash(300,296,286),BandRed(236,62,48),Stone(210,202,186),Iron(66,66,70),Glass(64,84,92),
     Frame(280,278,270),Dome(220,58,44),Hollow(30,28,26),Rust(170,110,72),Plaster(200,194,180),Tread(176,168,152),
-    Daylight(320,330,336),Brass(196,158,84),Lens(150,176,170),RailGreen(52,92,64);
+    Daylight(320,330,336),Brass(196,158,84),Lens(150,176,170),RailGreen(52,92,64),
+    CottageStone(176,164,146),Soot(40,36,34),Beam(96,80,62);
+float Hash(std::uint32_t v) {
+    v^=v>>16U;v*=0x7feb352dU;v^=v>>15U;v*=0x846ca68bU;v^=v>>16U;
+    return static_cast<float>(v>>8U)*(1.0f/16777216.0f);
+}
 }
 
 LighthouseRenderer::LighthouseRenderer(GraphicsDevice& device,const LighthousePlacement& placement,
-                                       const IslandTerrain& terrain,const RenderedTerrainSurface& ground)
+                                       const IslandTerrain& terrain,const RenderedTerrainSurface& ground,
+                                       const CottagePlacement* cottage)
     :device_(device),effect_(std::make_unique<BasicEffect>(device))
 {
     SculptMeshBuilder b,clear;   // the stone and the iron; the lantern's glass, drawn see-through
@@ -358,6 +364,107 @@ LighthouseRenderer::LighthouseRenderer(GraphicsDevice& device,const LighthousePl
         b.Tube({axis+Vector3::Up*(glassTop+0.9f),axis+Vector3::Up*(glassTop+1.15f)},{0.08f,0.08f},8,Iron);
         b.Tube({axis+Vector3::Up*(glassTop+1.12f),axis+Vector3::Up*(glassTop+1.38f)},{0.16f,0.02f},10,Dome*0.95f);
         b.Tube({axis+Vector3::Up*(glassTop+1.3f),axis+Vector3::Up*(glassTop+2.1f)},{0.02f,0.012f},4,Iron);
+    }
+
+    // the keepers' cottage: roofless, its walls of rough stone fallen ragged, the door facing the
+    // tower, two windows at the back, the chimney gable still up with its hearth, the other gable
+    // down to a stump; the roof's beams fallen in among the rubble; moss along the walls' tops
+    if(cottage) {
+        using K=CottagePlacement;
+        const K& c=*cottage;
+        const Vector3 along(c.dirX,0.0f,c.dirZ),acrossDir(c.AcrossX(),0.0f,c.AcrossZ());
+        const auto at=[&](const float a,const float cc,const float u) {const auto p=c.At(a,cc);return Vector3(p[0],c.groundY+u,p[1]);};
+        b.tintPerVertex=true;
+        b.tint=[&](const Vector3& pigment,const Vector3& normal,const Vector3& p) {
+            if(pigment.X!=CottageStone.X||pigment.Y!=CottageStone.Y||pigment.Z!=CottageStone.Z) return pigment;
+            const float blotch=0.5f+0.5f*std::sin(p.X*2.3f+p.Y*1.7f)*std::sin(p.Z*2.9f-p.Y*1.3f);
+            const float grain=0.5f+0.5f*std::sin(p.X*9.1f+p.Z*7.3f+p.Y*5.0f);
+            Vector3 colour=pigment*(0.82f+0.2f*blotch+0.06f*grain);
+            // moss on the tops and the damp foot
+            const float moss=std::clamp((normal.Y-0.55f)*3.0f,0.0f,1.0f)*0.7f
+                +std::clamp(1.0f-(p.Y-c.groundY)/0.5f,0.0f,1.0f)*0.35f;
+            return Vector3::Lerp(colour,Vector3(84,110,58),std::min(moss,0.8f));
+        };
+        const float ia=K::HalfLength-K::Wall*0.5f,ic=K::HalfWidth-K::Wall*0.5f;
+        // one wall: a stone prism whose top is broken off ragged, its height sampled every 0.22 m
+        // with stones knocked out here and there; an opening's sides and sill cut square
+        const auto wall=[&](const Vector3& from,const Vector3& to,const Vector3& thickness,const auto& top,const auto& opening,const std::uint32_t seed) {
+            Vector3 dir=to-from;const float length=dir.Length();dir/=length;
+            const int count=std::max(2,static_cast<int>(std::ceil(length/0.22f)));
+            std::vector<float> heights(static_cast<std::size_t>(count)+1U);
+            for(int k=0;k<=count;++k) {
+                const float t=static_cast<float>(k)/count;
+                const float knocked=Hash(seed*977U+static_cast<std::uint32_t>(k))>0.82f?0.25f+0.2f*Hash(seed*31U+static_cast<std::uint32_t>(k)):0.0f;
+                heights[static_cast<std::size_t>(k)]=std::max(0.2f,top(t)+0.12f*(Hash(seed*131U+static_cast<std::uint32_t>(k))-0.5f)-knocked);
+            }
+            const Vector3 half=thickness*(K::Wall*0.5f);
+            const auto prism=[&](const Vector3& p0,const Vector3& p1,const float u0,const float h0,const float h1) {
+                if(std::max(h0,h1)-u0<0.04f) return;
+                const Vector3 b0(p0.X,c.groundY+u0,p0.Z),b1(p1.X,c.groundY+u0,p1.Z);
+                const Vector3 t0(p0.X,c.groundY+std::max(h0,u0),p0.Z),t1(p1.X,c.groundY+std::max(h1,u0),p1.Z);
+                b.inside=(b0+b1+t0+t1)*0.25f;
+                b.Quad(b0-half,b1-half,t1-half,t0-half,CottageStone);
+                b.Quad(b1+half,b0+half,t0+half,t1+half,CottageStone);
+                b.Quad(t0-half,t1-half,t1+half,t0+half,CottageStone);
+                b.Quad(b0+half,b0-half,t0-half,t0+half,CottageStone);
+                b.Quad(b1-half,b1+half,t1+half,t1-half,CottageStone);
+            };
+            for(int k=0;k<count;++k) {
+                const float ta=static_cast<float>(k)/count,tb=static_cast<float>(k+1)/count;
+                const Vector3 p0=from+dir*(length*ta),p1=from+dir*(length*tb);
+                const float h0=heights[static_cast<std::size_t>(k)],h1=heights[static_cast<std::size_t>(k+1)];
+                const auto gap=opening((ta+tb)*0.5f);
+                if(gap[0]>=std::max(h0,h1)) {prism(p0,p1,-0.3f,h0,h1);continue;}
+                prism(p0,p1,-0.3f,gap[0],gap[0]);
+                if(std::min(h0,h1)>gap[1]+0.1f) prism(p0,p1,gap[1],h0,h1);
+            }
+        };
+        const auto none=[](float) {return std::array<float,2>{{99.0f,99.0f}};};
+        const float length=2.0f*ia,width=2.0f*ic;
+        // the front, its door open to the sky (the lintel gone with the wall over it)
+        wall(at(-ia,-ic,0.0f),at(ia,-ic,0.0f),acrossDir,[](const float t) {return 1.6f+0.5f*std::sin(t*7.0f+1.0f);},
+             [&](const float t) {
+                 const float a=-ia+t*length;
+                 return std::abs(a-K::DoorAlong)<K::DoorHalf?std::array<float,2>{{-0.3f,99.0f}}:std::array<float,2>{{99.0f,99.0f}};
+             },11U);
+        // the back with its two windows
+        wall(at(-ia,ic,0.0f),at(ia,ic,0.0f),acrossDir,[](const float t) {return 1.9f+0.45f*std::sin(t*5.3f+2.0f);},
+             [&](const float t) {
+                 const float a=-ia+t*length;
+                 return std::abs(std::abs(a)-K::WindowAlong)<K::WindowHalf?std::array<float,2>{{K::WindowSill,K::WindowTop}}
+                                                                           :std::array<float,2>{{99.0f,99.0f}};
+             },23U);
+        // the chimney gable, still standing to its peak; the far gable fallen to a stump
+        wall(at(ia,-ic+0.4f,0.0f),at(ia,ic-0.4f,0.0f),along,[&](const float t) {return 2.3f+1.4f*(1.0f-std::abs(t*2.0f-1.0f));},none,37U);
+        wall(at(-ia,-ic+0.4f,0.0f),at(-ia,ic-0.4f,0.0f),along,[](const float t) {return 0.7f+0.5f*std::sin(t*4.0f+0.3f);},none,41U);
+        (void)width;
+        // the chimney stack over the gable and the hearth inside it, black with old soot
+        b.Box(at(ia+0.05f,0.0f,2.25f),acrossDir,Vector3::Up,along,0.45f,2.25f,0.38f,CottageStone,CottageStone);
+        b.Box(at(ia-K::Wall*0.5f-0.02f,0.0f,0.42f),acrossDir,Vector3::Up,along,0.42f,0.4f,0.03f,Soot,Soot);
+        b.Box(at(ia-K::Wall*0.5f-0.2f,0.0f,0.86f),acrossDir,Vector3::Up,along,0.55f,0.06f,0.22f,CottageStone,CottageStone);
+        // the roof's beams fallen in, rotten grey, and rubble inside and by the fallen gable
+        b.tint=nullptr;
+        for(int k=0;k<3;++k) {
+            const float a=-1.6f+1.5f*static_cast<float>(k);
+            const Vector3 high=at(a+0.3f,ic-0.3f,1.9f-0.3f*static_cast<float>(k)),low=at(a-0.4f,-ic+0.8f,0.1f);
+            b.Tube({high,(high+low)*0.5f,low},{0.09f,0.1f,0.09f},6,Beam*(0.9f+0.1f*static_cast<float>(k)));
+        }
+        b.tint=[&](const Vector3& pigment,const Vector3&,const Vector3& p) {
+            return pigment*(0.84f+0.2f*(0.5f+0.5f*std::sin(p.X*5.1f+p.Z*3.7f)));
+        };
+        for(int k=0;k<26;++k) {
+            const auto seed=static_cast<std::uint32_t>(k)*2654435761U+0x1234U;
+            const bool outside=k<10;
+            const float a=outside?-ia-0.3f-1.2f*Hash(seed):-ia+0.4f+2.6f*Hash(seed);
+            const float cc=-ic+0.3f+(width-0.6f)*Hash(seed^0x5U);
+            const float size=0.12f+0.14f*Hash(seed^0x9U);
+            const auto p=c.At(a,cc);
+            const float y=terrain.Height(p[0],p[1]);
+            const float spin=Hash(seed^0x3U)*Pi;
+            const Vector3 r(std::cos(spin),0.0f,std::sin(spin));
+            b.Box(Vector3(p[0],y+size*0.45f,p[1]),r,Vector3::Up,Vector3(-r.Z,0.0f,r.X),size*1.3f,size*0.6f,size,CottageStone*0.92f,CottageStone);
+        }
+        b.tint=nullptr;b.tintPerVertex=false;
     }
 
     auto& mesh=b.builder.mesh;

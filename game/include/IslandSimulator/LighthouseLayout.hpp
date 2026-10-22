@@ -6,6 +6,7 @@
 #include <cmath>
 #include <optional>
 #include <span>
+#include <vector>
 
 namespace island {
 class IslandTerrain;
@@ -85,8 +86,31 @@ struct LighthousePlacement {
     }
 };
 
+/** The keepers' cottage beside the lighthouse, long a roofless ruin: stone walls half fallen,
+ *  its door facing the tower, two windows in its back wall, the chimney gable still standing at
+ *  one end and the other gable down. Local (along, across): along its length, across from its
+ *  front (the door's wall, toward the lighthouse) to its back. */
+struct CottagePlacement {
+    static constexpr float HalfLength=3.2f,HalfWidth=2.3f,Wall=0.5f,DoorAlong=0.6f,DoorHalf=0.5f;
+    static constexpr float WindowAlong=1.4f,WindowHalf=0.4f,WindowSill=0.9f,WindowTop=1.8f;
+    float x=0,z=0,groundY=0;   // its middle; the lowest ground at its corners
+    float dirX=1,dirZ=0;       // unit direction along its length
+    [[nodiscard]] float AcrossX() const noexcept {return -dirZ;}
+    [[nodiscard]] float AcrossZ() const noexcept {return dirX;}
+    /** A point `along` its length and `across` from its middle (positive: toward its back). */
+    [[nodiscard]] std::array<float,2> At(float along,float across) const noexcept {
+        return {{x+dirX*along+AcrossX()*across,z+dirZ*along+AcrossZ()*across}};
+    }
+    /** Circles down the middle of its walls, the doorway left open. */
+    [[nodiscard]] std::vector<CircularObstacle> WallObstacles() const;
+};
+
 class LighthouseLayout final {
 public:
+    /** The flattest spot a little to one side of the lighthouse's steps, 9 to 12 m from the
+     *  tower, its front facing the tower, clear of the obstacles. */
+    [[nodiscard]] static std::optional<CottagePlacement> FindCottage(const IslandTerrain& terrain,
+        const LighthousePlacement& lighthouse,std::span<const CircularObstacle> obstacles);
     static constexpr float MinimumHeight=3.0f,MaximumHeight=24.0f,ClearRadius=3.0f,MaximumRise=1.2f;
     /** The highest level spot of rock or turf 10 to 25 m up from the shore round the island, clear
      *  of the obstacles by ClearRadius beyond the plinth and `keepAway` metres from each `avoid`

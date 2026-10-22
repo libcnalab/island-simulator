@@ -276,6 +276,7 @@ namespace island
         LighthouseStairDetail,
         LighthouseGalleryDetail,
         LighthouseLanternDetail,
+        LighthouseCottageDetail,
         PlaneWreckDetail,
         BeachLitterDetail,
         FreighterDetail,
@@ -526,6 +527,7 @@ namespace island
         std::optional<IdolStatuePlacement> idolPlacement_;   // the island's stone god on its platform
         std::optional<StoneSignPlacement> stoneSignPlacement_;   // the castaway's HELP ME in stones on a beach
         std::optional<LighthousePlacement> lighthousePlacement_;   // the lighthouse on a coastal rise
+        std::optional<CottagePlacement> cottagePlacement_;         // its keepers' ruined cottage
         std::optional<PlaneWreckPlacement> planeWreckPlacement_;   // a WWII fighter down in a clearing
         std::vector<BeachBottle> beachBottles_;   // washed-up PET bottles along the strandline
         std::optional<FreighterPlacement> freighterPlacement_;   // the coaster driven up a beach

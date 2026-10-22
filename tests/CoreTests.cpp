@@ -9728,6 +9728,25 @@ int main()
         Check(light.IntersectsCapsule(lamp, radius, height), "the lamp's lens does not stop a walker");
         const auto underStair = light.At(L::StairStart - 3.0f, 1.0f, light.TowerBaseY() + 0.001f);
         Check(light.IntersectsCapsule(underStair, radius, height), "a walker stands upright under the stair's first turn");
+        // the keepers' ruined cottage beside it: walked into through its door, its back wall shut
+        const std::vector<island::CircularObstacle> round{light.Obstacle()};
+        const auto cottage = island::LighthouseLayout::FindCottage(terrain, light, round);
+        Check(cottage.has_value(), "the lighthouse has no keepers' cottage beside it");
+        using K = island::CottagePlacement;
+        const auto walls = cottage->WallObstacles();
+        Check(walls.size() > 30U && std::hypot(cottage->x - light.x, cottage->z - light.z) > 8.0f
+                  && std::hypot(cottage->x - light.x, cottage->z - light.z) < 13.0f,
+              "the cottage's walls are missing or it stands away from the lighthouse");
+        const auto blocked = [&](const float along, const float across) {
+            const auto p = cottage->At(along, across);
+            for (const auto& circle : walls)
+                if (std::hypot(p[0] - circle.x, p[1] - circle.z) < circle.radius + radius) return true;
+            return false;
+        };
+        bool doorOpen = true, backShut = false;
+        for (float c = -K::HalfWidth - 1.0f; c <= 0.0f; c += 0.05f) doorOpen = doorOpen && !blocked(K::DoorAlong, c);
+        for (float c = 0.0f; c <= K::HalfWidth + 1.0f; c += 0.05f) backShut = backShut || blocked(-1.0f, c);
+        Check(doorOpen && backShut, "the cottage's door does not let a walker in, or its back wall lets one through");
     }
     {
         // The fighter's wreck lies inland on level ground in the open, the most open spot clear of

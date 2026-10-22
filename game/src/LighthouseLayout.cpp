@@ -140,6 +140,59 @@ float LighthousePlacement::SafeTravelFraction(const LighthousePoint from,const L
     return 1.0f;
 }
 
+std::vector<CircularObstacle> CottagePlacement::WallObstacles() const {
+    std::vector<CircularObstacle> circles;
+    constexpr float Radius=0.32f,Spacing=0.45f;
+    const float ia=HalfLength-Wall*0.5f,ic=HalfWidth-Wall*0.5f;
+    const auto add=[&](const float along,const float across) {
+        const auto p=At(along,across);
+        circles.push_back({p[0],p[1],Radius});
+    };
+    for(float a=-ia;a<=ia+1e-3f;a+=Spacing) {
+        if(std::abs(a-DoorAlong)>DoorHalf+0.3f) add(a,-ic);   // the front, open at the door
+        add(a,ic);                                              // the back
+    }
+    for(float c=-ic+Spacing;c<ic-1e-3f;c+=Spacing) {add(-ia,c);add(ia,c);}
+    return circles;
+}
+
+std::optional<CottagePlacement> LighthouseLayout::FindCottage(const IslandTerrain& terrain,const LighthousePlacement& lighthouse,
+                                                              const std::span<const CircularObstacle> obstacles) {
+    std::optional<CottagePlacement> best;
+    float bestRange=0.9f;
+    for(const float distance:{9.5f,11.0f,12.5f})
+    for(const float offset:{0.75f,-0.75f,1.1f,-1.1f,1.5f,-1.5f}) {
+        const LighthousePoint centre=lighthouse.At(LighthousePlacement::Pi+offset,distance,0.0f);
+        CottagePlacement cottage;
+        cottage.x=centre.x;cottage.z=centre.z;
+        // the front faces the tower: across runs away from it, along square to that
+        const float awayX=centre.x-lighthouse.x,awayZ=centre.z-lighthouse.z,norm=std::hypot(awayX,awayZ);
+        cottage.dirX=awayZ/norm;cottage.dirZ=-awayX/norm;
+        float low=1e9f,high=-1e9f;
+        bool dry=true;
+        for(const float a:{-1.0f,0.0f,1.0f}) for(const float c:{-1.0f,0.0f,1.0f}) {
+            const auto p=cottage.At(a*(CottagePlacement::HalfLength+0.4f),c*(CottagePlacement::HalfWidth+0.4f));
+            const TerrainSample sample=terrain.Sample(p[0],p[1]);
+            low=std::min(low,sample.height);high=std::max(high,sample.height);
+            dry=dry&&sample.height>0.6f&&sample.surface!=TerrainSurface::DrySand&&sample.surface!=TerrainSurface::WetSand;
+        }
+        if(!dry||high-low>=bestRange) continue;
+        bool clear=true;
+        for(const CircularObstacle& o:obstacles)
+            clear=clear&&std::hypot(o.x-cottage.x,o.z-cottage.z)-o.radius>CottagePlacement::HalfLength+0.8f;
+        // and clear of the lighthouse's plinth and steps
+        for(float run=0.0f;run<=lighthouse.stepsRun+0.6f;run+=0.5f) {
+            const LighthousePoint s=lighthouse.At(LighthousePlacement::Pi,LighthousePlacement::PlinthRadius+run,0.0f);
+            clear=clear&&std::hypot(s.x-cottage.x,s.z-cottage.z)>CottagePlacement::HalfLength+1.6f;
+        }
+        if(!clear) continue;
+        cottage.groundY=low;
+        bestRange=high-low;
+        best=cottage;
+    }
+    return best;
+}
+
 std::optional<LighthousePlacement> LighthouseLayout::FindInWorld(
         const IslandTerrain& terrain,const std::span<const CircularObstacle> obstacles,
         const std::span<const std::array<float,2>> avoid,const float keepAway) {

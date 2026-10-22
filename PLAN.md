@@ -233,6 +233,30 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 538 (2026-10-22) — the keepers' ruined cottage
+
+A lighthouse has its keepers' house. Ours is a roofless ruin beside it, 9.5-12.5 m from the
+tower and a little to one side of its steps, its front and door facing the tower
+(`LighthouseLayout::FindCottage`). Of the candidate spots, it takes the flattest dry one clear of
+the obstacles and the steps.
+
+- **Walls.** Rough stone half a metre thick. Their tops are broken ragged, with heights sampled
+  every 0.22 m and stones knocked out here and there. The front has its door open to the sky;
+  the back has two windows on square sills. The chimney gable still stands to its peak with its
+  stack and a sooted hearth; the far gable is down to a stump.
+- **Inside and round it.** Three fallen roof beams lie inside, with rubble inside and by the
+  fallen gable, and moss along the walls' tops and their damp feet. It is built into the
+  lighthouse's one draw.
+- **Walls block.** The walls are chains of 0.32 m circles down their middles
+  (`CottagePlacement::WallObstacles`). They stop the walker and the animals, with the doorway
+  left open.
+- **New QA view.** `lighthouse-cottage` (`20261022T143002`). The `lighthouse` view now shows the
+  ruin beside the tower (`20261022T143211`).
+- **Tests.** CoreTests check that the cottage is found 8-13 m from the tower with its walls,
+  that a walker's capsule fits through its door all the way in, and that its back wall stops one.
+
+The suite is 76/76.
+
 ## Loop pass 537 (2026-10-22) — the README gallery shows passes 520-536
 
 Twelve new images in four rows of the README's landmark gallery:

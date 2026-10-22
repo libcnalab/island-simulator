@@ -26,9 +26,10 @@ class SunShadowMap;
 // shadows like the jetty.
 class LighthouseRenderer final {
 public:
+    /** With the keepers' ruined cottage beside it when there is one. */
     LighthouseRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                        const LighthousePlacement& placement,const IslandTerrain& terrain,
-                       const RenderedTerrainSurface& ground);
+                       const RenderedTerrainSurface& ground,const CottagePlacement* cottage=nullptr);
     void Draw(const Microsoft::Xna::Framework::Matrix& view,
               const Microsoft::Xna::Framework::Matrix& projection,
               const Microsoft::Xna::Framework::Vector3& camera);
