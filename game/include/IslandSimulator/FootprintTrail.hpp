@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -38,11 +39,16 @@ public:
      *  deer's and boars' hooves use the same trail with their own. */
     void SetKind(std::uint8_t kind) noexcept {kind_=kind;}
     void SetStride(float stride) noexcept {if(std::isfinite(stride)&&stride>0.05f) stride_=stride;}
+    /** @brief The rain (0..1) beating the prints out: they age 1 + RainErosion times as fast in
+     *  a downpour (a dry print lasts some forty seconds instead of four minutes). */
+    static constexpr float RainErosion=5.0f;
+    void SetRain(float rain) noexcept {rain_=std::isfinite(rain)?std::clamp(rain,0.0f,1.0f):0.0f;}
     [[nodiscard]] std::uint8_t Kind() const noexcept {return kind_;}
 private:
     std::array<Footprint,Capacity> prints_{};
     std::uint8_t kind_=0;
     float stride_=Stride;
+    float rain_=0;
     float travelled_=0;
     bool nextLeft_=true;
     std::uint32_t laid_=0;

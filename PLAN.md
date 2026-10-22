@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 469 (2026-10-22) — the rain beats the prints out
+
+Footprints on sand lasted their four minutes whatever the weather. `FootprintTrail::SetRain`
+makes a trail's prints age `1 + RainErosion` (5) times as fast in a downpour, scaled by the rain.
+A dry print is gone in some forty seconds of heavy rain, a wet one sooner still. The game sets the
+rain on every trail each frame: the walker's, the resident's, and the deer's, boars' and goats'
+hooves. A core test walks two trails, one in a downpour: after 45 s the dry one keeps its prints
+and the rained one has none.
+
 ## Loop pass 468 (2026-10-22) — steps in mud squelch
 
 Where the feet now print the mud (pass 466) they still sounded like dry soil. A procedural mud

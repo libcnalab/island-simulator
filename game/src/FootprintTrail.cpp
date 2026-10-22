@@ -15,7 +15,7 @@ void FootprintTrail::Update(const float deltaSeconds,const float x,const float z
     if(dt<=0.0f) return;
     for(Footprint& print:prints_) {
         if(!print.active) continue;
-        print.age+=dt;
+        print.age+=dt*(1.0f+RainErosion*rain_);
         const float life=print.life>0.0f?print.life:LifeSeconds;
         print.density=1.0f-print.age/life;
         if(print.age>=life) print.active=false;

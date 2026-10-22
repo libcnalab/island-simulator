@@ -3589,6 +3589,14 @@ namespace island
             const bool onSand=underfoot==FootstepSurface::Sand;
             const bool inMud=footprint_ground::Muddy(underfoot,walker.x,walker.z,weather_now::Current().wetness);
             updateProfile_.Mark("footprints");
+            {
+                // the rain beats every trail's prints out of the ground, the walker's and the animals'
+                const float rain=weather_now::Current().rain;
+                footprints_.SetRain(rain);residentPrints_.SetRain(rain);
+                for(auto& trail:deerPrints_) trail.SetRain(rain);
+                for(auto& trail:boarPrints_) trail.SetRain(rain);
+                for(auto& trail:goatPrints_) trail.SetRain(rain);
+            }
             footprints_.Update(deltaSeconds,walker.x,walker.z,playerMotion_.VelocityX(),playerMotion_.VelocityZ(),onSand||inMud,
                 inMud||(onSand&&terrain_.Sample(walker.x,walker.z).surface==TerrainSurface::WetSand));
             // The shadow figure's gait: a turn of the phase per stride walked, the limbs swinging

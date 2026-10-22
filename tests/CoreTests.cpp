@@ -10892,6 +10892,15 @@ int main()
             for(int step=0;step<2500;++step) trail.Update(0.1f,wx,wz,0.0f,0.0f,true);
             Check(trail.ActiveCount()==0U,"the sand takes the prints back within the trail's life");
         }
+        // In a downpour the rain beats the prints out within a minute; in the dry they last.
+        {
+            island::FootprintTrail dry,rained;
+            rained.SetRain(1.0f);
+            float wx=0;
+            for(int step=0;step<60;++step) { wx+=0.05f; dry.Update(0.05f,wx,0,1.0f,0.0f,true); rained.Update(0.05f,wx,0,1.0f,0.0f,true); }
+            for(int step=0;step<450;++step) { dry.Update(0.1f,wx,0,0.0f,0.0f,true); rained.Update(0.1f,wx,0,0.0f,0.0f,true); }
+            Check(dry.ActiveCount()>=4U&&rained.ActiveCount()==0U,"a downpour beats the prints out within a minute");
+        }
         // A hoofed trail: cloven prints at the animal's own stride, laid only on the ground
         // the caller says is printable.
         {
