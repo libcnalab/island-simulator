@@ -62,6 +62,10 @@ Captured on 2026-10-22 from the same deterministic native QA viewpoints.
 | ![Two see-through plastic bottles washed up on the sand](assets/presentation/gallery/beach-bottles.png) | ![A wooden jetty running out from the beach with a canoe beside it](assets/presentation/gallery/jetty.png) | ![The rider on the red quad bike beside the hut](assets/presentation/gallery/quad-bike.png) |
 | Grounded coaster | Down in its hold | One of its crew |
 | ![A rusting 30 m coaster driven up the beach, its ladder down to the sand](assets/presentation/gallery/grounded-coaster.png) | ![The coaster's dim hold under the open hatch, a stair and two skeletons](assets/presentation/gallery/coaster-hold.png) | ![A sailor's skeleton in boots and a watch cap on the coaster's foredeck](assets/presentation/gallery/coaster-crew.png) |
+| Old mine | Its lantern-lit adit | The crystal chamber |
+| ![A timbered mine portal cut into the main mountain's slope](assets/presentation/gallery/mine-portal.png) | ![A timbered adit with rails, lit by oil lanterns](assets/presentation/gallery/mine-adit.png) | ![A domed chamber of glowing cyan and violet crystals, an ore cart tipped over](assets/presentation/gallery/mine-crystals.png) |
+| Small volcano | Lava in its crater | The volcano at night |
+| ![A small ash cone on the eastern foothills, steam rising from its crater](assets/presentation/gallery/volcano.png) | ![Looking down from the rim into a churning lava lake](assets/presentation/gallery/volcano-lava.png) | ![The volcano at night, its crater glowing orange into the steam](assets/presentation/gallery/volcano-night.png) |
 
 ### Times of day, weather and more wildlife
 

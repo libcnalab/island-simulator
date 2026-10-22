@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 510 (2026-10-22) — the README gallery shows the mine and the volcano
+
+The README's "Newer landmarks" table now has two more rows, freshly captured at pass 509:
+- the old mine's portal, its lantern-lit adit and the crystal chamber (`20261022T111703` to
+  `111729`);
+- the volcano by day, its lava lake from the rim and the volcano at night (`111741` to
+  `111807`).
+
+The frames are 960x540, under the same asset record. The mine-interior and lava frames are kept
+truecolor for their gradients. Each is hash-gated in the manifest and listed in the Linux
+package.
+
 ## Loop pass 509 (2026-10-22) — the mine drips and echoes, the volcano rumbles
 
 The old mine and the volcano now have sounds of their own.

@@ -391,6 +391,42 @@
       "path": "assets/presentation/gallery/coaster-crew.png",
       "sha256": "e99d7692e3933c924c76c0918e50cbaba03e48462ad40f0b4739cff575ed68de",
       "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-mine-portal",
+      "path": "assets/presentation/gallery/mine-portal.png",
+      "sha256": "a8b91a78f6f70b2fa3d5a8daebc105e5c284f40e0b18796bf977b26a62263c26",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-mine-adit",
+      "path": "assets/presentation/gallery/mine-adit.png",
+      "sha256": "6fc32abb2c45c8864c0479a2093a92a6ea654279a31c1409d288a6937fdf14d8",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-mine-crystals",
+      "path": "assets/presentation/gallery/mine-crystals.png",
+      "sha256": "340302121bc20ac4d85ea13e00e7b1385327bbbde7dcab57bf882cc66dd1ca24",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-volcano",
+      "path": "assets/presentation/gallery/volcano.png",
+      "sha256": "2c8264c8a83093ffb4b0ab3806e3e58155ee352ce3c35862457c068b5f27ddba",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-volcano-lava",
+      "path": "assets/presentation/gallery/volcano-lava.png",
+      "sha256": "4e58bbf1a7984455d87e67b1b3b4c243a1e626f7739f7531676e112c16bc0bb0",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-volcano-night",
+      "path": "assets/presentation/gallery/volcano-night.png",
+      "sha256": "985245bc273a39bfbb5cfaa81dfdac5ee2ce33c3f28f9111af2c6cf51df6e30f",
+      "licenseRecord": "Native README gallery additions"
     }
   ],
   "proceduralGenerators": [
