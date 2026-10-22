@@ -233,6 +233,25 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 450 (2026-10-22) — goats and boars cast their figures too
+
+The goats and the boars had only their contact ellipses, laid along their heading, not along the
+sun. They now cast figures from the poses their renderers draw, through the same renderer within
+60 m.
+
+- `GoatLimbs` works in GoatMesh's body frame. The barrel and neck ride the gait's bob. The head, with
+  its horns, side ears and beard, pitches down about the neck by the graze. The legs are the
+  planted-foot chain the pose carries, folded under the lowered body when the goat lies down.
+- `BoarLimbs` works on the boar's fitted ground pose (fitted again for the shadow, as the renderer
+  fits it). It covers the rump, the high shoulder mantle, the cheek and the snout lowered by rooting,
+  the fitted legs, the ears and the tail. Two of the seventeen slots stay empty (`UnusedRadius`, never
+  nearest).
+
+The contact ellipses stay as the occluded pool under the body. In `goats`, `goat-lying`, `boars` and
+`boar-lying` at 14:00 the figures lie beside and under the animals. The goat and boar pose tests
+check that the limbs lie about the body, the hooves are near the ground (within a slope's 15 cm),
+the horn tips or back are the highest, and the barrel's or mantle's shadow is inside the figure.
+
 ## Loop pass 449 (2026-10-22) — the deer cast their figures along the hour's sun
 
 The four deer stood on the ground with no shadow at all: no contact pool, no sun shadow. They are

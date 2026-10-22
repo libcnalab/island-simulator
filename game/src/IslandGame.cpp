@@ -1,3 +1,4 @@
+#include "IslandSimulator/BoarGroundPose.hpp"
 #include "IslandSimulator/PrevailingWind.hpp"
 #include "IslandSimulator/QuadBike.hpp"
 #include "IslandSimulator/WindGust.hpp"
@@ -45,6 +46,7 @@
 #include <locale>
 #include <limits>
 #include <numbers>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -6388,6 +6390,27 @@ namespace island
                 walkerShadowRenderer_->Draw(cameraView_, cameraProjection_,
                     walker_shadow::Lay(walker_shadow::DeerLimbs(deer), deer.x, ground, deer.z, toSun.x, toSun.y, toSun.z, stature),
                     Vector3(deer.x, ground, deer.z), Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength, groundAt);
+            }
+            for (const GoatState& goat : goats_->Goats()) {
+                // the goats' and the boars' too, from the poses their renderers draw
+                const float ground = groundAt(goat.x, goat.z);
+                if (Vector3::DistanceSquared(Vector3(goat.x, goat.y, goat.z), renderCameraPosition_) > 60.0f * 60.0f
+                    || std::abs(goat.y - ground) > 0.25f) continue;
+                walkerShadowRenderer_->Draw(cameraView_, cameraProjection_,
+                    walker_shadow::Lay(walker_shadow::GoatLimbs(goat), goat.x, ground, goat.z, toSun.x, toSun.y, toSun.z,
+                                       1.5f * goat.scale),
+                    Vector3(goat.x, ground, goat.z), Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength, groundAt);
+            }
+            for (const BoarState& boar : boarHerd_.Boars()) {
+                const float ground = groundAt(boar.x, boar.z);
+                if (Vector3::DistanceSquared(Vector3(boar.x, boar.y, boar.z), renderCameraPosition_) > 60.0f * 60.0f
+                    || std::abs(boar.y - ground) > 0.25f) continue;
+                std::optional<BoarGroundPose> fitted;
+                try { fitted = FitBoarGroundPose(terrain_, *drawnGround_, boar); } catch (const std::exception&) { continue; }
+                walkerShadowRenderer_->Draw(cameraView_, cameraProjection_,
+                    walker_shadow::Lay(walker_shadow::BoarLimbs(boar, *fitted), boar.x, ground, boar.z, toSun.x, toSun.y, toSun.z,
+                                       1.1f * boar.scale),
+                    Vector3(boar.x, ground, boar.z), Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength, groundAt);
             }
             if (playerShadow.visible) {
                 // ...and the figure the sun lays from the walker's feet, where the feet stand on the

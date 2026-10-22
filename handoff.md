@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 450: goat and boar sun shadows (GoatLimbs on GoatGroundPose, BoarLimbs on FitBoarGroundPose) (PLAN "Loop pass 450").
 - Pass 449: deer sun shadows (DeerLimbs from DeerRenderer joints; grid extent from the capsules) (PLAN "Loop pass 449").
 - Pass 448: resident sun shadow = same renderer, limbs from the posed skeleton (walker_shadow::Lay/ResidentLimbs) (PLAN "Loop pass 448").
 - Pass 447: walker sun shadow = 17-capsule figure along the hour's light (WalkerShadow/WalkerShadowRenderer, multiply by crown-shade tint only where sunlit); QA view walker-shadow (PLAN "Loop pass 447").

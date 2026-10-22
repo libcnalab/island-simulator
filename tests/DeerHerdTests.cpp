@@ -94,7 +94,7 @@ int main()
             island::DeerState standing;
             standing.antlered = true;
             const auto limbs = island::walker_shadow::DeerLimbs(standing);
-            float lowest = 10.0f, highest = -10.0f;
+            float lowest = 1e9f, highest = -1e9f;
             for (const auto& limb : limbs) {
                 lowest = std::min({lowest, limb.ay - limb.radius, limb.by - limb.radius});
                 highest = std::max({highest, limb.ay + limb.radius, limb.by + limb.radius});

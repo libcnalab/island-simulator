@@ -1,5 +1,9 @@
 #include "IslandSimulator/WalkerShadow.hpp"
+#include "IslandSimulator/BoarGroundPose.hpp"
+#include "IslandSimulator/BoarHerd.hpp"
+#include "IslandSimulator/BoarPose.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
+#include "IslandSimulator/GoatHerd.hpp"
 #include "IslandSimulator/ResidentMotion.hpp"
 
 #include <algorithm>
@@ -220,6 +224,72 @@ namespace island::walker_shadow
                 add(root, root - forward * (0.075f * s) + right * (sideSign * 0.16f * s) + up * (0.23f * s), 0.040f * s);
             }
         }
+        return limbs;
+    }
+
+    std::array<Limb, CapsuleCount> GoatLimbs(const GoatState& goat) noexcept
+    {
+        // GoatMesh's body frame: the barrel and neck ride the gait's bob, the head (with its
+        // horns, ears and beard) pitches down by the graze about the neck, and the legs are the
+        // planted-foot chain the pose carries (lying, folded under the lowered body).
+        const GoatGroundPose& pose = goat.pose;
+        const float bob = pose.bodyBob;
+        const float graze = std::clamp(goat.grazingPose, 0.0f, 1.0f);
+        const float pitch = graze * 0.85f, lower = graze * 0.18f;
+        const float c = std::cos(pitch), s = std::sin(pitch);
+        const auto head = [&](const GoatPoint p) {
+            const float y = p.y - 0.72f, z = p.z - 0.25f;
+            return GoatPoint{p.x, 0.72f + c * y - s * z - lower + bob, 0.25f + s * y + c * z};
+        };
+        const auto body = [&](const GoatPoint p) { return GoatPoint{p.x, p.y + bob, p.z}; };
+        std::array<Limb, CapsuleCount> limbs{};
+        std::size_t next = 0;
+        const auto add = [&](const GoatPoint a, const GoatPoint b, const float radius) {
+            const GoatPoint wa = pose.ToWorld(a), wb = pose.ToWorld(b);
+            limbs[next++] = {wa.x, wa.y, wa.z, wb.x, wb.y, wb.z, radius * pose.scale};
+        };
+        add(body({0.0f, 0.845f, -0.42f}), body({0.0f, 0.865f, 0.40f}), 0.26f);   // the barrel
+        for (std::size_t leg = 0; leg < pose.legs.size(); ++leg) {
+            const bool front = leg % 2 == 1;
+            add(pose.legs[leg].root, pose.legs[leg].knee, front ? 0.085f : 0.10f);
+            add(pose.legs[leg].knee, pose.legs[leg].hoof, 0.045f);
+        }
+        add(body({0.0f, 0.87f, 0.22f}), head({0.0f, 1.07f, 0.45f}), 0.12f);       // neck
+        add(head({0.0f, 1.08f, 0.42f}), head({0.0f, 0.87f, 0.74f}), 0.095f);      // head to the nose
+        for (const float side : {-1.0f, 1.0f}) {
+            add(head({side * 0.062f, 1.18f, 0.42f}), head({side * 0.13f, 1.46f, 0.10f}), 0.025f);   // horn
+            add(head({side * 0.10f, 1.095f, 0.44f}), head({side * 0.32f, 1.05f, 0.42f}), 0.030f);  // ear
+        }
+        add(head({0.0f, 0.83f, 0.68f}), head({0.0f, 0.70f, 0.66f}), 0.035f);      // beard
+        add(body({0.0f, 0.88f, -0.52f}), body({0.0f, 0.94f, -0.61f}), 0.040f);    // tail
+        return limbs;
+    }
+
+    std::array<Limb, CapsuleCount> BoarLimbs(const BoarState& boar, const BoarGroundPose& pose) noexcept
+    {
+        // BoarRenderer's frame: the rump and the high shoulder mantle, the cheek and the long
+        // snout lowered by the rooting dip, the fitted legs, the ears and the tail.
+        const float bob = pose.bodyBob;
+        const float dip = std::clamp(boar.rootingPose, 0.0f, 1.0f) * 0.15f;
+        std::array<Limb, CapsuleCount> limbs{};
+        std::size_t next = 0;
+        const auto add = [&](const BoarJoint a, const BoarJoint b, const float radius) {
+            const BoarJoint wa = pose.ToWorld(a), wb = pose.ToWorld(b);
+            limbs[next++] = {wa.x, wa.y, wa.z, wb.x, wb.y, wb.z, radius * pose.scale};
+        };
+        add({0.0f, 0.66f + bob, -0.45f}, {0.0f, 0.70f + bob, -0.05f}, 0.28f);    // rump
+        add({0.0f, 0.70f + bob, -0.05f}, {0.0f, 0.76f + bob, 0.30f}, 0.33f);     // shoulder mantle
+        add({0.0f, 0.68f - 0.3f * dip + bob, 0.47f}, {0.0f, 0.55f - 0.8f * dip + bob, BoarMuzzleZ(0.78f)}, 0.24f);   // cheek
+        add({0.0f, 0.55f - 0.8f * dip + bob, BoarMuzzleZ(0.78f)}, {0.0f, 0.435f - dip + bob, BoarMuzzleZ(1.04f)}, 0.11f);
+        for (std::size_t leg = 0; leg < pose.legs.size(); ++leg) {
+            const auto& chain = pose.legs[leg];
+            add(chain.root, chain.knee, leg % 2 == 1 ? 0.11f : 0.115f);
+            add(chain.knee, chain.hoof, 0.045f);
+        }
+        for (const float side : {-1.0f, 1.0f})
+            add({side * 0.17f, 0.83f - 0.5f * dip + bob, 0.54f}, {side * 0.24f, 1.08f - 0.5f * dip + bob, 0.565f}, 0.045f);
+        add({0.0f, 0.66f + bob, -0.70f}, {0.0f, 0.58f + bob, -0.80f}, 0.03f);   // tail
+        for (; next < limbs.size(); ++next) limbs[next].radius = UnusedRadius;
         return limbs;
     }
 

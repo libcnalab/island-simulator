@@ -6,6 +6,7 @@
 #include "IslandSimulator/BoarGroundPose.hpp"
 #include "IslandSimulator/BoarHerd.hpp"
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
+#include "IslandSimulator/WalkerShadow.hpp"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -340,6 +341,32 @@ int main()
             check(lain.ToWorld(lain.legs[foot].knee).y < stood.ToWorld(stood.legs[foot].knee).y - 0.08f,
                   "a lying boar's knees fold below the standing knees");
         }
+    }
+    {
+        // A boar's sun shadow is laid from its fitted pose: the limbs about its body, the hooves
+        // on the ground, the back below a metre, the shoulder's shadow inside the figure.
+        BoarState standing;
+        standing.headingRadians = 0.8f;
+        const auto fitted = FitBoarGroundPose(terrain, surface, standing);
+        const auto limbs = walker_shadow::BoarLimbs(standing, fitted);
+        const float ground = surface.Sample(standing.x, standing.z).height;
+        float lowest = 1e9f, highest = -1e9f, farthest = 0.0f;
+        for (const auto& limb : limbs) {
+            if (!(limb.radius > 0.0f)) continue;
+            lowest = std::min({lowest, limb.ay - limb.radius, limb.by - limb.radius});
+            highest = std::max({highest, limb.ay + limb.radius, limb.by + limb.radius});
+            farthest = std::max({farthest, std::hypot(limb.ax - standing.x, limb.az - standing.z),
+                                 std::hypot(limb.bx - standing.x, limb.bz - standing.z)});
+        }
+        const float sx = -0.45f, sy = 0.82f, sz = -0.34f;
+        const auto& mantle = limbs[1];
+        const auto figure = walker_shadow::Lay(limbs, standing.x, ground, standing.z, sx, sy, sz, 1.1f);
+        const float height = mantle.by - ground;
+        check(lowest - ground > -0.15f && lowest - ground < 0.08f && highest - ground > 0.8f && highest - ground < 1.3f
+                  && farthest < 1.3f
+                  && walker_shadow::SignedDistance(figure, mantle.bx - standing.x - sx / sy * height,
+                                                   mantle.bz - standing.z - sz / sy * height) < -0.1f,
+              "a boar's sun shadow is laid from its fitted pose");
     }
     for (int field = 0; field < 5; ++field) {
         BoarState bad;

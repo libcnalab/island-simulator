@@ -6,6 +6,9 @@ namespace island
 {
     struct ResidentState;
     struct DeerState;
+    struct GoatState;
+    struct BoarState;
+    struct BoarGroundPose;
 
     /**
      * The walking player's own sun shadow, the figure rather than a blot: the body as seventeen
@@ -22,6 +25,7 @@ namespace island
     {
         inline constexpr int CapsuleCount = 17;
         inline constexpr float JointBlend = 0.03f;      // metres of the smooth union at the joints
+        inline constexpr float UnusedRadius = -1.0f;    // a capsule slot a figure leaves empty: never nearest
         inline constexpr float StrideMetres = 1.40f;    // one full gait cycle: a step with each foot
         inline constexpr float MinimumSunSine = 0.12f;  // a sun lower than some 7 degrees lays none
 
@@ -66,6 +70,12 @@ namespace island
          *  the bed and the stamp, the neck and head by the graze, and the stag's antler beams or
          *  a doe's long ears. */
         [[nodiscard]] std::array<Limb, CapsuleCount> DeerLimbs(const DeerState& deer) noexcept;
+        /** A goat's limbs in GoatMesh's frame: the barrel, the planted legs, the neck, the head
+         *  pitched by the graze with its horns, ears and beard, and the tail. */
+        [[nodiscard]] std::array<Limb, CapsuleCount> GoatLimbs(const GoatState& goat) noexcept;
+        /** A boar's limbs on its fitted ground pose: rump, shoulder mantle, cheek and snout
+         *  (lowered rooting), the legs, ears and tail; two slots left empty. */
+        [[nodiscard]] std::array<Limb, CapsuleCount> BoarLimbs(const BoarState& boar, const BoarGroundPose& pose) noexcept;
         /** The silhouette's signed distance, metres in shadow space, at an offset from the feet on
          *  their plane (negative inside): the CPU mirror of the shader's, for the tests. */
         [[nodiscard]] float SignedDistance(const Shape& shape, float offsetX, float offsetZ) noexcept;

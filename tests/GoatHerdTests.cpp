@@ -1,5 +1,6 @@
 #include "IslandSimulator/GoatHerd.hpp"
 #include "IslandSimulator/GoatMesh.hpp"
+#include "IslandSimulator/WalkerShadow.hpp"
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
 #include "IslandSimulator/NaturalPropLayout.hpp"
@@ -30,6 +31,30 @@ int main() {
     occupied.push_back({hut->x,hut->z,HutLayout::CollisionRadius});
     const WorldCollisionGrid grid(occupied);
     GoatHerd herd(terrain,jungle,occupied),repeat(terrain,jungle,occupied);
+    {
+        // A goat's sun shadow is laid from the pose it is drawn in: the limbs about its body,
+        // the hooves on the ground, the horns' tips the highest, the barrel's shadow inside.
+        GoatHerd posed(terrain,jungle,occupied);
+        for(int frame=0;frame<40;++frame) posed.Update(.05f,GoatPoint{std::numeric_limits<float>::quiet_NaN(),0,0});
+        for(const auto& goat:posed.Goats()) {
+            const auto limbs=walker_shadow::GoatLimbs(goat);
+            const float ground=surface.Sample(goat.x,goat.z).height;
+            float lowest=1e9f,highest=-1e9f,farthest=0;
+            for(const auto& limb:limbs) {
+                lowest=std::min({lowest,limb.ay-limb.radius,limb.by-limb.radius});
+                highest=std::max({highest,limb.ay+limb.radius,limb.by+limb.radius});
+                farthest=std::max({farthest,std::hypot(limb.ax-goat.x,limb.az-goat.z),std::hypot(limb.bx-goat.x,limb.bz-goat.z)});
+            }
+            const float sx=-.45f,sy=.82f,sz=-.34f;
+            const auto figure=walker_shadow::Lay(limbs,goat.x,ground,goat.z,sx,sy,sz,1.5f*goat.scale);
+            const auto& barrel=limbs[0];
+            const float mx=(barrel.ax+barrel.bx)*.5f,my=(barrel.ay+barrel.by)*.5f-ground,mz=(barrel.az+barrel.bz)*.5f;
+            check(lowest-ground>-.15f&&lowest-ground<.1f&&highest-ground>1.1f*goat.scale&&highest-ground<1.8f*goat.scale
+                &&farthest<1.3f*goat.scale
+                &&walker_shadow::SignedDistance(figure,mx-goat.x-sx/sy*my,mz-goat.z-sz/sy*my)<-.1f,
+                "a goat's sun shadow is laid from the pose it is drawn in");
+        }
+    }
     {
         // A coconut's thud twelve metres from a goat, no observer about: it stands facing the
         // fall and turns toward it; after the startle fades it wanders on.
