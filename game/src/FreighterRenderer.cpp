@@ -34,7 +34,7 @@ const Vector3 AntiFouling(158,64,48),Boot(236,232,220),Topside(50,54,58),Bulwark
     Deck(118,104,88),Hold(128,98,72),House(244,240,226),HouseInside(222,210,182),Glass(36,48,54),
     Funnel(222,174,74),FunnelTop(34,34,34),Mast(214,190,134),Coaming(88,116,98),Steel(146,134,116),
     Tread(104,96,86),Iron(66,68,70),Chain(84,70,60),Rust(150,78,42),Weed(70,88,52),Wood(146,112,78),
-    Brass(180,140,72);
+    Brass(180,140,72),Guano(236,234,224);
 }
 
 FreighterRenderer::FreighterRenderer(GraphicsDevice& device,const FreighterPlacement& ship,
@@ -51,7 +51,7 @@ FreighterRenderer::FreighterRenderer(GraphicsDevice& device,const FreighterPlace
     // its own strength and length, widening and fading as it runs down the black (the topsides
     // and the bulwarks are built fine enough to carry them)
     struct Streak {float along,top,length,width,strength,side;};
-    std::vector<Streak> streaks;
+    std::vector<Streak> streaks,droppings;
     {
         std::uint32_t seed=0x51a7U;
         const auto next=[&seed]() {seed=seed*1664525U+1013904223U;return static_cast<float>(seed>>8U)*(1.0f/16777216.0f);};
@@ -64,10 +64,14 @@ FreighterRenderer::FreighterRenderer(GraphicsDevice& device,const FreighterPlace
         }
         // each ends on the black, above the boot-top
         for(Streak& streak:streaks) streak.length=std::min(streak.length,streak.top-BootTop-0.08f);
+        // and white down the port bow from the rail where the gulls stand (FreighterPlacement::
+        // BirdPerches): the droppings of the birds
+        for(const float a:{27.35f,27.6f,27.8f})
+            droppings.push_back({a+0.06f*(next()-0.5f),P::DeckUp(a)+P::Bulwark+0.02f,0.5f+0.8f*next(),0.035f+0.02f*next(),0.75f+0.2f*next(),-1.0f});
     }
-    const auto weeping=[&streaks](const float along,const float up,const float across) {
+    const auto field=[](const std::vector<Streak>& list,const float along,const float up,const float across) {
         float rust=0.0f;
-        for(const Streak& s:streaks) {
+        for(const Streak& s:list) {
             if(s.side*across<=0.0f) continue;
             const float below=s.top-up;
             if(below<-0.02f||below>s.length) continue;
@@ -79,9 +83,11 @@ FreighterRenderer::FreighterRenderer(GraphicsDevice& device,const FreighterPlace
         }
         return rust;
     };
+    const auto weeping=[&streaks,field](const float along,const float up,const float across) {return field(streaks,along,up,across);};
+    const auto whitewash=[&droppings,field](const float along,const float up,const float across) {return field(droppings,along,up,across);};
     // blistered rust patches, the black faded chalky by the sun, weed at the waterline; the glass
-    // and the brass left as they are
-    b.tint=[&ship,weeping](const Vector3& paint,const Vector3& normal,const Vector3& centre) {
+    // and the brass left as they are; the birds' droppings white under their perches
+    b.tint=[&ship,weeping,whitewash](const Vector3& paint,const Vector3& normal,const Vector3& centre) {
         const FreighterPoint local=ship.Local({centre.X,centre.Y,centre.Z});
         const auto is=[](const Vector3& a,const Vector3& b) {return a.X==b.X&&a.Y==b.Y&&a.Z==b.Z;};
         const Vector3& pigment=paint;
@@ -100,7 +106,17 @@ FreighterRenderer::FreighterRenderer(GraphicsDevice& device,const FreighterPlace
             colour=Vector3::Lerp(colour,Vector3(104,106,108),0.14f+0.22f*high*blotch);
         }
         colour=Vector3::Lerp(colour,Rust,std::min(rust,0.75f));
-        if(same(Topside)&&std::abs(normal.Y)<0.6f) colour=Vector3::Lerp(colour,Rust*1.15f,std::min(0.9f,weeping(local.x,local.y,local.z)));
+        if(same(Topside)&&std::abs(normal.Y)<0.6f) {
+            colour=Vector3::Lerp(colour,Rust*1.15f,std::min(0.9f,weeping(local.x,local.y,local.z)));
+            colour=Vector3::Lerp(colour,Guano,std::min(0.9f,whitewash(local.x,local.y,local.z)));
+        }
+        // the mastheads whitewashed where the birds stand on the trucks
+        if(same(Mast)) {
+            const float a=std::abs(local.x-P::ForeMast)<std::abs(local.x-P::MainMast)?P::ForeMast:P::MainMast;
+            const float top=P::DeckUp(a)+(a==P::ForeMast?8.0f:9.0f);
+            if(std::abs(local.x-a)<0.4f&&std::abs(local.z)<0.4f)
+                colour=Vector3::Lerp(colour,Guano,std::clamp(1.0f-(top-local.y)/0.55f,0.0f,1.0f)*0.85f);
+        }
         const float weed=1.0f-std::clamp(std::abs(centre.Y+0.05f)/0.45f,0.0f,1.0f);
         colour=Vector3::Lerp(colour,Weed,weed*0.6f);
         return colour*(0.97f+0.03f*std::sin(local.x*3.1f+local.y*2.3f+local.z*1.7f));
@@ -548,7 +564,8 @@ FreighterRenderer::FreighterRenderer(GraphicsDevice& device,const FreighterPlace
     // ---- the masts with their derricks and stays
     {
         const auto mast=[&](const float a,const float height,const float boomTo,const float boomUp) {
-            b.Tube({W(a,D(a)-0.1f,0.0f),W(a,D(a)+height*0.6f,0.0f),W(a,D(a)+height,0.0f)},{0.2f,0.16f,0.11f},10,Mast);
+            b.Tube({W(a,D(a)-0.1f,0.0f),W(a,D(a)+height*0.6f,0.0f),W(a,D(a)+height-0.5f,0.0f),W(a,D(a)+height,0.0f)},
+                   {0.2f,0.16f,0.115f,0.11f},10,Mast);
             box(a-0.08f,a+0.08f,D(a)+height*0.7f,D(a)+height*0.7f+0.12f,-0.95f,0.95f,Mast,Mast);
             b.Tube({W(a+(boomTo>a?0.25f:-0.25f),D(a)+1.2f,0.0f),W(boomTo,D(boomTo)+boomUp,0.0f)},{0.13f,0.08f},8,Mast*0.95f);
             const Vector3 top=W(a,D(a)+height*0.95f,0.0f);

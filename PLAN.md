@@ -233,6 +233,22 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 527 (2026-10-22) — where the gulls stand, the droppings show
+
+Since pass 520 the coast's birds perch on the coaster's mastheads and bow rail and on the
+lifeboat's keel, but nothing they left showed there.
+
+- **Bow rail.** Three white streaks of droppings now run down the port bow from the rail where
+  the gulls stand. They use the same field as the rust weeps: their own list of sources, widening
+  and fading as they run, on the fine topside grid. They show plainly under the standing gull in
+  `freighter-birds` (`20261022T130516`).
+- **Mastheads.** The top half-metre of each mast is whitewashed. The mast tube gains a ring half a
+  metre under its truck, so the white stays at the top.
+- **Lifeboat.** The keel and the upturned red bottom whiten round the keel's perch, the white
+  running down and spreading below it (`lifeboat` `20261022T130550`).
+
+The suite is 76/76.
+
 ## Loop pass 526 (2026-10-22) — the coaster's rust weeps
 
 The coaster's black topsides were striped with evenly spaced orange-brown bars, like ticking.

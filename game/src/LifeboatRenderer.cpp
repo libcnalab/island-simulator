@@ -29,7 +29,7 @@ constexpr float Pi=std::numbers::pi_v<float>;
 // marker pigments for the hull's three painted strakes: the antifouling, the white topsides and the
 // band under the gunwale (the tint gives each its colour and its peeling)
 const Vector3 PaintBottom(1,2,3),PaintWhite(1,2,4),PaintBand(1,2,5),White(240,236,224),Wood(134,122,104),Bottom(156,78,60),Band(212,104,60),
-    Oar(150,116,80),RingOrange(226,104,52),RingWhite(236,232,222);
+    Oar(150,116,80),RingOrange(226,104,52),RingWhite(236,232,222),Guano(236,234,224);
 float Wave(const float x,const float y) {return std::sin(x*1.7f+std::sin(y*2.3f))*std::sin(y*1.3f-x*0.7f);}
 }
 
@@ -62,17 +62,29 @@ LifeboatRenderer::LifeboatRenderer(GraphicsDevice& device,const LifeboatPlacemen
     b.ground=groundAt;b.stainColour=Vector3(200,182,142);b.stainHeight=0.18f;b.stainAmount=0.6f;
     // the tint is taken corner by corner, so the peeling runs smoothly across the planks; each
     // strake is built apart, so the edges between the paints stay sharp
+    // where a gull stands on the keel (LifeboatPlacement::KeelPerch), its droppings whiten the
+    // keel and run down the upturned bottom below it
+    const BirdPerchSite perch=boat.KeelPerch();
+    const float perchAlong=Vector3::Dot(Vector3(perch.x,0.0f,perch.z)-Vector3(boat.x,0.0f,boat.z),forward);
+    const auto droppings=[&](const Vector3& corner,const float along) {
+        const float below=std::max(0.0f,perch.y-corner.Y);
+        const float spread=0.18f+0.25f*below;
+        const float x=(along-perchAlong-0.1f*std::sin(below*5.0f))/spread;
+        return 0.85f*std::exp(-x*x)*std::exp(-below/0.45f);
+    };
     b.tint=[&](const Vector3& pigment,const Vector3&,const Vector3& corner) {
         const auto same=[&](const Vector3& other) {return pigment.X==other.X&&pigment.Y==other.Y&&pigment.Z==other.Z;};
         const bool bottom=same(PaintBottom);
-        if(!bottom&&!same(PaintWhite)&&!same(PaintBand)) return pigment;
         const Vector3 d=corner-Vector3(boat.x,baseY,boat.z);
         const float along=Vector3::Dot(d,forward);
+        if(!bottom&&!same(PaintWhite)&&!same(PaintBand))
+            return same(Bottom*0.85f)?Vector3::Lerp(pigment,Guano,droppings(corner,along)):pigment;
         Vector3 colour=bottom?Bottom:(same(PaintBand)?Band:White);
         // the paint peeling off to the bare grey planks in patches, more on the white
         const float peel=Wave(along*1.9f,d.Y*5.0f+Vector3::Dot(d,side)*1.3f);
         colour=Vector3::Lerp(colour,Wood,std::clamp((peel-0.55f)*3.0f,0.0f,1.0f)*(bottom?0.35f:0.65f));
-        return colour*(0.96f+0.04f*Wave(along*4.0f,d.Y*7.0f));
+        colour=colour*(0.96f+0.04f*Wave(along*4.0f,d.Y*7.0f));
+        return Vector3::Lerp(colour,Guano,droppings(corner,along));
     };
     // the hull's skin, outside and (a little in) inside, from one gunwale over the keel to the other
     constexpr int Stations=28,Rows=7;
