@@ -212,6 +212,8 @@ namespace island
             case FixedViewpoint::MineExterior: return "mine";
             case FixedViewpoint::MineAdit: return "mine-adit";
             case FixedViewpoint::MineChamber: return "mine-chamber";
+            case FixedViewpoint::MineBatsDetail: return "mine-bats";
+            case FixedViewpoint::MineBatsNightDetail: return "mine-bats-night";
             case FixedViewpoint::VolcanoExterior: return "volcano";
             case FixedViewpoint::VolcanoCrater: return "volcano-crater";
             case FixedViewpoint::LifeboatDetail: return "lifeboat";
@@ -815,7 +817,9 @@ namespace island
             std::cout<<"island-simulator: bunker QA camera "<<ViewpointName(viewpoint_)<<'\n';
         } else if(viewpoint_==FixedViewpoint::MineExterior
                   ||viewpoint_==FixedViewpoint::MineAdit
-                  ||viewpoint_==FixedViewpoint::MineChamber) {
+                  ||viewpoint_==FixedViewpoint::MineChamber
+                  ||viewpoint_==FixedViewpoint::MineBatsDetail
+                  ||viewpoint_==FixedViewpoint::MineBatsNightDetail) {
             MinePoint camera,target;
             const char* what=nullptr;
             if(viewpoint_==FixedViewpoint::MineExterior) {
@@ -828,6 +832,19 @@ namespace island
                 camera=mineLayout_.World(0.25f,MineLayout::FloorRelative(9.0f)+PlayerMotion::EyeHeight,9.0f);
                 target=mineLayout_.World(0.0f,MineLayout::FloorRelative(30.0f)+1.3f,30.0f);
                 what="mine-adit QA camera looks down the lantern-lit adit";
+            } else if(viewpoint_==FixedViewpoint::MineBatsDetail) {
+                // in from the adit's mouth, up across the chamber's crystals at the first cluster
+                // of bats hanging from the dome
+                const MinePoint roost=mineBats_.Roost(1U);
+                camera=mineLayout_.World(-1.2f,MineLayout::FloorRelative(49.4f)+PlayerMotion::EyeHeight,49.4f);
+                target={roost.x,roost.y-1.0f,roost.z};
+                what="mine-bats QA camera looks up at the bats hanging under the chamber's dome";
+            } else if(viewpoint_==FixedViewpoint::MineBatsNightDetail) {
+                // on the approach below the portal, out and up at the bats hunting against the sky
+                camera=mineLayout_.World(0.3f,PlayerMotion::EyeHeight,-3.0f);
+                const MinePoint out=mineLayout_.World(0.0f,0.0f,-14.0f);
+                target={out.x,terrain_.Height(out.x,out.z)+7.0f,out.z};
+                what="mine-bats-night QA camera looks out from below the portal at the bats hunting over the clearing";
             } else {
                 camera=mineLayout_.World(-0.6f,MineLayout::FloorRelative(48.6f)+PlayerMotion::EyeHeight,48.6f);
                 target=mineLayout_.World(0.5f,MineLayout::FloorRelative(54.5f)+0.9f,54.5f);
@@ -2758,6 +2775,8 @@ namespace island
             device, 690.0f * qualityProfile_.wildlifeMaximumDistanceScale);
         fruitBatRenderer_ = std::make_unique<FruitBatRenderer>(
             device, 300.0f * qualityProfile_.wildlifeMaximumDistanceScale);
+        mineBatRenderer_ = std::make_unique<FruitBatRenderer>(
+            device, 120.0f * qualityProfile_.wildlifeMaximumDistanceScale, MineBatColony::Count, false);
         butterflyRenderer_ = std::make_unique<ButterflyRenderer>(
             device, 72.0f * qualityProfile_.wildlifeMaximumDistanceScale);
         crabRenderer_ = std::make_unique<CrabRenderer>(
@@ -3409,6 +3428,9 @@ namespace island
                      "a roosting bat's stir in its crown lets a fruit drop and a leaf come loose; "
                      "a hanging bat fans its half-opened wings for a few seconds every quarter minute to cool; "
                      "and stretches one wing out and down for a couple of seconds now and then, the wings taking turns\n"
+                  << "island-simulator: the old mine's " << mineBats_.Bats().size()
+                  << " small bats hang in three clusters under the chamber's dome by day and fly round it when a walker comes under them; "
+                     "at dusk they leave one by one down the adit to hunt over the clearing before the portal, and come home at dawn\n"
                   << "island-simulator: clearing butterflies "
                   << butterflyMeadow_.Butterflies().size()
                   << " agents in deterministic low-altitude habitats; "
@@ -3847,6 +3869,7 @@ namespace island
             crabColony_.SetNightness(dark);
             hermitCrabGroup_.SetNightness(dark);
             fruitBatColony_.SetNightness(dark * (1.0f - downpour));
+            mineBats_.SetNightness(dark);
             const auto shading = sun_light::Current().shading;
             wildlife_render::FixedSunDirection = Vector3(shading.x, shading.y, shading.z);
             wildlife_render::CoatWetness = weather_now::Current().wetness;
@@ -4204,6 +4227,12 @@ namespace island
                 canopyLeafFall_.Shake(monkey.x, monkey.y, monkey.z, static_cast<std::uint32_t>(i) * 7919U + (++monkeyShakes_) * 104729U);
             }
         }
+        updateProfile_.Mark("mineBats");
+        // the bats' view stands under a cluster: the colony sees the walker far off, so it hangs
+        mineBats_.Update(deltaSeconds,
+                         viewpoint_ == FixedViewpoint::MineBatsDetail ? 1.0e4f : cameraPosition_.X,
+                         cameraPosition_.Y,
+                         viewpoint_ == FixedViewpoint::MineBatsDetail ? 1.0e4f : cameraPosition_.Z);
         updateProfile_.Mark("fruitBatColony");
         fruitBatColony_.Update((viewpoint_ == FixedViewpoint::FruitBatDetail
                                    || viewpoint_ == FixedViewpoint::FruitBatRoostDetail)
@@ -6344,7 +6373,7 @@ namespace island
             + helicopterRenderer_->DrawCallCount()
             + distantSceneryRenderer_->DrawCallCount()
             + contactShadowRenderer_->DrawCallCount()
-            + birdRenderer_->DrawCallCount() + fruitBatRenderer_->DrawCallCount()
+            + birdRenderer_->DrawCallCount() + fruitBatRenderer_->DrawCallCount() + mineBatRenderer_->DrawCallCount()
             + butterflyRenderer_->DrawCallCount()
             + crabRenderer_->DrawCallCount()
             + crocodileRenderer_->DrawCallCount()
@@ -7251,6 +7280,8 @@ namespace island
             GpuDiagnosticScope gpuPass("fruit-bats");
             fruitBatRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
                                     fruitBatColony_.Bats());
+            mineBatRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
+                                   mineBats_.Bats());
         }
 
         {

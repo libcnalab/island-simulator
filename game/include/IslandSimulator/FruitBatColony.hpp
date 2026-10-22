@@ -48,6 +48,8 @@ namespace island
         float stretch = 0.0f;
         float stretchSide = 1.0f;
         float scale = 1.0f;
+        /** @brief 0..1 how much light reaches the bat (1 in the open; less deep in the mine). */
+        float light = 1.0f;
         FruitBatBehavior behavior = FruitBatBehavior::Roost;
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
         std::uint8_t colorVariant = 0U;

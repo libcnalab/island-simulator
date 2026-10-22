@@ -1,3 +1,4 @@
+#include "IslandSimulator/MineBatColony.hpp"
 #include "IslandSimulator/MineLayout.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/PlayerMotion.hpp"
@@ -73,5 +74,57 @@ int main() {
     Check(std::abs(local().y-island::MineLayout::FloorRelative(53.5f))<0.08f,"the walker is not on the chamber's floor");
     walkTo(0.0f,48.5f,"return to the adit");
     walkTo(0.0f,-3.0f,"walk back out of the mine");
-    std::cout<<"Mine under the main mountain: portal, adit, chamber and exit routes valid\n";
+    // the bats: hanging just under the dome by day, flying round under it when a walker comes,
+    // out down the adit at dusk to hunt over the clearing, home again at dawn
+    using Bats=island::MineBatColony;
+    Bats bats(terrain,mine);
+    for(std::size_t i=0;i<Bats::Count;++i) {
+        const auto roost=mine.Local(bats.Roost(i));
+        const float under=island::MineLayout::FloorRelative(roost.z)+Bats::DomeUp(roost.x,roost.z)-roost.y;
+        Check(under>0.03f&&under<0.1f&&Bats::DomeUp(roost.x,roost.z)>2.8f,"a bat's roost is not just under the chamber's dome");
+    }
+    const auto run=[&](const float seconds,const island::MinePoint observer) {
+        for(float t=0.0f;t<seconds;t+=1.0f/30.0f) bats.Update(1.0f/30.0f,observer.x,observer.y,observer.z);
+    };
+    const island::MinePoint far{1.0e4f,0.0f,1.0e4f};
+    run(5.0f,far);
+    Check(bats.HangingCount()==Bats::Count,"the bats do not hang by day");
+    const auto underCluster=mine.World(0.0f,island::MineLayout::FloorRelative(island::MineSite::ChamberCentre)+1.7f,island::MineSite::ChamberCentre);
+    bool insideChamber=true;
+    for(float t=0.0f;t<4.0f;t+=1.0f/30.0f) {
+        bats.Update(1.0f/30.0f,underCluster.x,underCluster.y,underCluster.z);
+        for(const auto& bat:bats.Bats()) {
+            const auto local=mine.Local({bat.x,bat.y,bat.z});
+            const float up=local.y-island::MineLayout::FloorRelative(local.z);
+            insideChamber=insideChamber&&up>0.4f&&up<Bats::DomeUp(local.x,local.z)+0.01f;
+        }
+    }
+    Check(bats.FlutteringCount()>=4U&&bats.FlushCount()>=4U&&insideChamber,"a walker under the bats does not set them flying round under the dome");
+    run(25.0f,far);
+    Check(bats.HangingCount()==Bats::Count,"the flushed bats do not settle back when the chamber is quiet");
+    bats.SetNightness(0.9f);
+    bool inAdit=true;
+    for(float t=0.0f;t<45.0f;t+=1.0f/30.0f) {
+        bats.Update(1.0f/30.0f,far.x,far.y,far.z);
+        for(const auto& bat:bats.Bats()) {
+            const auto local=mine.Local({bat.x,bat.y,bat.z});
+            if(local.z>1.0f&&local.z<island::MineSite::AditLength-1.0f) {
+                const float up=local.y-island::MineLayout::FloorRelative(local.z);
+                inAdit=inAdit&&std::abs(local.x)<island::MineSite::PostInner-0.3f&&up>0.8f&&up<island::MineSite::Height-0.3f;
+            }
+        }
+    }
+    Check(inAdit,"a bat leaving down the adit strays into its walls or roof");
+    Check(bats.HuntingCount()==Bats::Count,"the bats are not all out hunting by night");
+    for(const auto& bat:bats.Bats())
+        Check(mine.Local({bat.x,bat.y,bat.z}).z<0.0f&&bat.y>terrain.Height(bat.x,bat.z)+2.0f,"a hunting bat is not out over the clearing");
+    bats.SetNightness(0.1f);
+    run(60.0f,far);
+    Check(bats.HangingCount()==Bats::Count,"the bats are not home at dawn");
+    // the island loading at night finds them out already
+    Bats night(terrain,mine);
+    night.SetNightness(1.0f);
+    night.Update(1.0f/30.0f,far.x,far.y,far.z);
+    Check(night.HuntingCount()==Bats::Count,"the island loading at night does not find the bats out");
+    std::cout<<"Mine under the main mountain: portal, adit, chamber and exit routes valid; its bats roost, flush, leave and return\n";
 }

@@ -233,6 +233,44 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 522 (2026-10-22) — bats in the old mine
+
+The mine's chamber had glowing crystals and a lantern, but nothing lived in it. Now twelve small
+insect-eating bats live there (`MineBatColony`, in the core library).
+
+- **Roosts.** By day the bats hang in three clusters of four under the chamber's dome: their feet
+  6 cm under the dome's ellipsoid, clear of the rock's roughness.
+- **Flushing.** A walker who comes under a cluster (within 4.5 m and below the roof) sets those
+  bats flying round under the dome. They rise and dip, always below it. They keep flying while
+  the walker stays, then settle back to their places one by one.
+- **Dusk.** From a darkness of 0.55 the bats leave one after another, 1.4 s apart. Each flies
+  down the adit's centreline at 5 m/s with a little weave, never near the walls or the roof, and
+  out of the portal. They then hunt in loose, varying circles 5-11 m round the clearing in front
+  of it, at least 2.2 m over the ground.
+- **Dawn.** Below a darkness of 0.35 they fly home the same way and hang again. If the island
+  loads at night, they are already out.
+- **Drawing.** A second `FruitBatRenderer` (with a capacity and an `announce` switch) draws them
+  at a scale of 0.22. They use a new dusky grey-brown palette with a paler belly and dark eyes.
+  A new `FruitBatState::light` dims each bat to the light the mine gives it: full at the portal,
+  0.38 deep in the adit, 0.6 in the crystals' glow. The fruit bats keep 1.
+- **New QA views.**
+  - `mine-bats` looks up from the adit's mouth across the crystals at the three clusters
+    (`20261022T123437`).
+  - `mine-bats-night` looks out from below the portal at the bats against the dusk sky
+    (`--time-of-day 18.6`, `20261022T123534`). Close up, they show as silhouettes with their
+    wings spread.
+- **Tests.** MineLayoutTests check:
+  - the roosts sit just under the dome;
+  - the bats hang by day;
+  - a walker sets four or more flying, all inside the chamber, and they settle back once it is
+    quiet;
+  - at night all twelve are out hunting over the clearing, having kept clear of the adit's walls
+    and roof on the way;
+  - at dawn they are all home;
+  - an island loaded at night finds them out.
+
+The suite is 76/76.
+
 ## Loop pass 521 (2026-10-22) — the volcano's bombs, crusts and lit steam
 
 Four things on the volcano looked artificial at 2x crops of the `volcano` and `volcano-crater`

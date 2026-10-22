@@ -115,6 +115,7 @@
 #include "IslandSimulator/CaveRenderer.hpp"
 #include "IslandSimulator/BunkerLayout.hpp"
 #include "IslandSimulator/BunkerRenderer.hpp"
+#include "IslandSimulator/MineBatColony.hpp"
 #include "IslandSimulator/MineLayout.hpp"
 #include "IslandSimulator/MineRenderer.hpp"
 #include "IslandSimulator/VolcanoRenderer.hpp"
@@ -282,6 +283,8 @@ namespace island
         MineExterior,
         MineAdit,
         MineChamber,
+        MineBatsDetail,
+        MineBatsNightDetail,
         VolcanoExterior,
         VolcanoCrater,
         LifeboatDetail,
@@ -527,6 +530,7 @@ namespace island
         CampfireLayout campfireLayout_{terrain_};
         BunkerLayout bunkerLayout_{terrain_};
         MineLayout mineLayout_{terrain_};
+        MineBatColony mineBats_{terrain_, mineLayout_};
         WorldCollisionGrid worldCollisionGrid_;
         std::unique_ptr<ResidentMotion> resident_;
         std::unique_ptr<BearMotion> bear_;
@@ -559,6 +563,7 @@ namespace island
         std::unique_ptr<RenderedTerrainHeightMap> terrainHeightMap_;
         std::unique_ptr<BirdRenderer> birdRenderer_;
         std::unique_ptr<FruitBatRenderer> fruitBatRenderer_;
+        std::unique_ptr<FruitBatRenderer> mineBatRenderer_;
         std::unique_ptr<ButterflyRenderer> butterflyRenderer_;
         std::unique_ptr<ContactShadowRenderer> contactShadowRenderer_;
         std::unique_ptr<WalkerShadowRenderer> walkerShadowRenderer_;

@@ -37,22 +37,31 @@ namespace island
         // and no eyes or claws (the full near model to 110 m was most of the bats' pass).
         constexpr float DetailDistance = 30.0f;
         constexpr int MaximumVerticesPerBat = 2700;   // the near mesh, 2628 with the roosting cloak
-        constexpr int MaximumVertices = static_cast<int>(FruitBatColony::Count)
-            * MaximumVerticesPerBat;
 
         struct Palette
         {
             Color fur, chest, membrane, finger, face, eye;
         };
 
-        const std::array<Palette, 3> Palettes{{
+        const std::array<Palette, 4> Palettes{{
             {Color(86, 58, 39, 255), Color(126, 88, 55, 255), Color(63, 43, 37, 255),
              Color(48, 34, 31, 255), Color(117, 76, 50, 255), Color(184, 137, 51, 255)},
             {Color(72, 50, 38, 255), Color(146, 99, 58, 255), Color(55, 42, 40, 255),
              Color(43, 34, 33, 255), Color(135, 86, 51, 255), Color(205, 151, 55, 255)},
             {Color(98, 70, 45, 255), Color(157, 111, 66, 255), Color(70, 48, 42, 255),
-             Color(51, 37, 34, 255), Color(145, 94, 58, 255), Color(198, 145, 48, 255)}
+             Color(51, 37, 34, 255), Color(145, 94, 58, 255), Color(198, 145, 48, 255)},
+            // the mine's small insect-eating bats: dusky grey-brown, a paler belly, dark eyes
+            {Color(62, 52, 46, 255), Color(96, 80, 68, 255), Color(42, 36, 35, 255),
+             Color(36, 31, 30, 255), Color(74, 60, 52, 255), Color(32, 26, 24, 255)}
         }};
+
+        [[nodiscard]] Palette Lit(const Palette& palette, const float light)
+        {
+            const float l = std::clamp(light, 0.0f, 1.0f);
+            const auto scale = [l](const Color c) {return Color::Lerp(Color(0, 0, 0, 255), c, l);};
+            return {scale(palette.fur), scale(palette.chest), scale(palette.membrane), scale(palette.finger),
+                    scale(palette.face), scale(palette.eye)};
+        }
 
         void Triangle(std::vector<VertexPositionColor>& out, const Vector3& a,
                       const Vector3& b, const Vector3& c, const Color color)
@@ -175,7 +184,7 @@ namespace island
             const auto rings=[coarse](const int full){return coarse?3:full;};
             const auto segments=[coarse](const int full){return coarse?6:full;};
             const std::size_t firstVertex=out.size();
-            const Palette& p = Palettes[bat.colorVariant % Palettes.size()];
+            const Palette p = Lit(Palettes[bat.colorVariant % Palettes.size()], bat.light);
             const Vector3 horizontalForward(std::cos(bat.headingRadians), 0.0f,
                                             std::sin(bat.headingRadians));
             const Vector3 right(-horizontalForward.Z, 0.0f, horizontalForward.X);
@@ -271,7 +280,7 @@ namespace island
 
         void AppendFar(std::vector<VertexPositionColor>& out, const FruitBatState& bat)
         {
-            const Palette& p = Palettes[bat.colorVariant % Palettes.size()];
+            const Palette p = Lit(Palettes[bat.colorVariant % Palettes.size()], bat.light);
             const Vector3 forward(std::cos(bat.headingRadians),0,std::sin(bat.headingRadians));
             const Vector3 right(-forward.Z,0,forward.X);
             const Vector3 centre(bat.x,bat.y,bat.z);
@@ -285,11 +294,12 @@ namespace island
         }
     }
 
-    FruitBatRenderer::FruitBatRenderer(GraphicsDevice& device, const float maximumDistance)
+    FruitBatRenderer::FruitBatRenderer(GraphicsDevice& device, const float maximumDistance,
+                                       const std::size_t capacity, const bool announce)
         : device_(device), effect_(std::make_unique<BasicEffect>(device)),
           vertices_(std::make_unique<DynamicVertexBuffer>(device,
-              VertexPositionColor::getVertexDeclarationStatic(), MaximumVertices,
-              BufferUsage::WriteOnly)), maximumDistance_(maximumDistance)
+              VertexPositionColor::getVertexDeclarationStatic(), static_cast<int>(capacity) * MaximumVerticesPerBat,
+              BufferUsage::WriteOnly)), maximumDistance_(maximumDistance), capacity_(capacity)
     {
         if (!std::isfinite(maximumDistance_) || maximumDistance_ <= 0.0f)
             throw std::invalid_argument("Fruit-bat maximum distance must be finite and positive");
@@ -299,7 +309,8 @@ namespace island
         effect_->setFogColorProperty(Vector3(environment::FogColorRed,
             environment::FogColorGreen, environment::FogColorBlue));
         effect_->setFogStartProperty(180.0f); effect_->setFogEndProperty(390.0f);
-        staging_.reserve(MaximumVertices);
+        staging_.reserve(capacity_ * static_cast<std::size_t>(MaximumVerticesPerBat));
+        if (!announce) return;
         constexpr auto diagnostic =
             "island-simulator: fruit bats use furred bodies, pointed ears, muzzles, eyes, fingered membranes, and hanging claws in one draw";
         std::cout << diagnostic << '\n'; MirrorRuntimeDiagnosticToPlatformLog(diagnostic);
@@ -318,6 +329,7 @@ namespace island
         staging_.clear(); visibleCount_=nearCount_=farCount_=drawCallCount_=0;
         const BoundingFrustum frustum(view*projection);
         for(const FruitBatState& bat:bats) {
+            if(static_cast<std::size_t>(visibleCount_)>=capacity_) break;
             const Vector3 centre(bat.x,bat.y,bat.z);
             const float distanceSquared=Vector3::DistanceSquared(centre,cameraPosition);
             if(distanceSquared>maximumDistance_*maximumDistance_

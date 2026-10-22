@@ -95,6 +95,7 @@ add_library(island_core STATIC
     game/src/BeachLitterLayout.cpp
     game/src/FreighterLayout.cpp
     game/src/MineLayout.cpp
+    game/src/MineBatColony.cpp
     game/src/LifeboatLayout.cpp
     game/src/BridgeLayout.cpp
     game/src/LookoutLayout.cpp

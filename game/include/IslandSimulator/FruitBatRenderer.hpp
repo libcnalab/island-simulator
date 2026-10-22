@@ -22,8 +22,11 @@ namespace island
     class FruitBatRenderer final
     {
     public:
+        /** @brief Room for `capacity` bats; `announce` prints the renderer's diagnostics (the
+         *  fruit bats' renderer does, a second one for the mine's bats does not). */
         explicit FruitBatRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                                  float maximumDistance = 300.0f);
+                                  float maximumDistance = 300.0f,
+                                  std::size_t capacity = FruitBatColony::Count, bool announce = true);
         ~FruitBatRenderer();
 
         FruitBatRenderer(const FruitBatRenderer&) = delete;
@@ -45,6 +48,7 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> vertices_;
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> staging_;
         float maximumDistance_ = 300.0f;
+        std::size_t capacity_ = FruitBatColony::Count;
         int visibleCount_ = 0;
         int nearCount_ = 0;
         int farCount_ = 0;
