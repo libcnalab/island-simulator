@@ -233,6 +233,22 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 494 (2026-10-22) — the whale's bones in more detail
+
+The operator's second ask on the skeleton: its realism.
+
+- **Vertebrae.** The neural spines and the lumbar transverse processes were square boxes, a comb
+  down the back. They are now tapering blades (`Bones::Blade`): wide at the root, a third of that
+  at the tip, thinning toward it. The spines lean back toward the tail.
+- **Jaws.** Each jaw ends behind in its condyle's knob and carries the low coronoid hook rising a
+  little ahead of it.
+- **Skull.** It has the two occipital condyles at the back, where the spine met.
+- **Ribs.** Every rib starts in its head, a knob against its vertebra.
+- **Scattered bones.** Small bones lie where the scavengers and the tides left them: chevrons from
+  under the tail, a finger bone, an epiphysis's disc.
+
+`whale-skeleton` (`20261022T074841`) and the tests pass.
+
 ## Loop pass 493 (2026-10-22) — a stranded whale's skeleton lies on the beach
 
 Operator request: a whale skeleton somewhere on a beach, then work on its realism. A rorqual's

@@ -112,6 +112,19 @@ struct Bones {
         Quad(p[0],p[1],p[2],p[3],bone);Quad(p[5],p[4],p[7],p[6],bone);
         Quad(p[4],p[0],p[3],p[7],bone);Quad(p[1],p[5],p[6],p[2],bone);
     }
+    // A tapering blade of bone (a vertebra's spine or process, a jaw's coronoid): from its root
+    // at `base` out along `up` for `length`, `halfBase` wide along `forward` at the root and
+    // `halfTop` at the tip, `halfThick` thick along `right`, thinning a little toward the tip.
+    void Blade(const Vector3& base,const Vector3& right,const Vector3& up,const Vector3& forward,
+               const float halfThick,const float length,const float halfBase,const float halfTop,const Vector3& bone) {
+        inside=base+up*(length*0.5f);
+        const Vector3 tip=base+up*length;
+        const Vector3 r0=right*halfThick,r1=right*(halfThick*0.6f),f0=forward*halfBase,f1=forward*halfTop;
+        const Vector3 p[8]={base-r0-f0,base+r0-f0,base+r0+f0,base-r0+f0,tip-r1-f1,tip+r1-f1,tip+r1+f1,tip-r1+f1};
+        Quad(p[0],p[1],p[5],p[4],bone);Quad(p[1],p[2],p[6],p[5],bone);
+        Quad(p[2],p[3],p[7],p[6],bone);Quad(p[3],p[0],p[4],p[7],bone);
+        Quad(p[4],p[5],p[6],p[7],bone*1.02f);Quad(p[0],p[3],p[2],p[1],bone);
+    }
 };
 
 float SpineAcross(const float along) {return WhaleSkeletonPlacement::SpineAcross(along);}
@@ -189,7 +202,18 @@ WhaleSkeletonRenderer::WhaleSkeletonRenderer(GraphicsDevice& device,const WhaleS
             points.push_back(bones.At(a,side*(1.0f*(1.0f-t)+0.32f*t+0.42f*std::sin(Pi*t)),r*0.45f));
             radii.push_back(r);
         }
-        bones.Tube(points,radii,8,Bone*(side<0.0f?0.95f:0.99f),0.8f);
+        const Vector3 jawShade=Bone*(side<0.0f?0.95f:0.99f);
+        bones.Tube(points,radii,8,jawShade,0.8f);
+        // the condyle's knob at its back end and the low coronoid hook rising a little ahead of it
+        const Vector3 back=points.front(),ahead=points[2];
+        Vector3 run=ahead-back;run.Normalize();
+        bones.Tube({back-run*0.10f,back+run*0.06f},{0.15f,0.14f},9,jawShade*0.96f);
+        const Vector3 across(run.Z,0.0f,-run.X);
+        bones.Blade(points[2]+Vector3::Up*(radii[2]*0.6f),across,Vector3::Up*0.94f+run*0.34f,run,0.025f,0.20f,0.11f,0.035f,jawShade);
+    }
+    // the two occipital condyles, the knobs at the skull's back the spine met
+    for(const float side:{-1.0f,1.0f}) {
+        bones.Tube({bones.At(0.38f,side*0.19f,0.20f),bones.At(0.56f,side*0.19f,0.20f)},{0.13f,0.11f},9,Bone*0.95f);
     }
     // The spine: cervical discs, the thoracic vertebrae the ribs hang from, the lumbar ones
     // with tall spines and broad transverse processes, the tail's shrinking to nothing; each a
@@ -230,12 +254,12 @@ WhaleSkeletonRenderer::WhaleSkeletonRenderer(GraphicsDevice& device,const WhaleS
         if(spine>0.02f) {
             // the neural spine, leaning back toward the tail
             Vector3 rise=Vector3::Up-axis*0.45f;rise.Normalize();
-            bones.Plate(centre+Vector3::Up*(radius*0.85f)+rise*(spine*0.5f),side,rise,axis,0.022f,spine*0.5f,0.22f*spacing,shade);
+            bones.Blade(centre+Vector3::Up*(radius*0.80f),side,rise,axis,0.024f,spine,0.26f*spacing,0.11f*spacing,shade);
         }
         if(process>0.02f) {
             for(const float s:{-1.0f,1.0f}) {
                 Vector3 out=side*s-Vector3::Up*0.18f;out.Normalize();
-                bones.Plate(centre+out*(radius+process*0.5f),out,Vector3::Up,axis,process*0.5f,0.02f,0.24f*spacing,shade);
+                bones.Blade(centre+out*(radius*0.85f),Vector3::Up,out,axis,0.022f,process,0.27f*spacing,0.13f*spacing,shade);
             }
         }
         // The ribs from the thoracic vertebrae: splayed out over the sand either side, the
@@ -271,6 +295,8 @@ WhaleSkeletonRenderer::WhaleSkeletonRenderer(GraphicsDevice& device,const WhaleS
                     radii.push_back(0.055f*(1.0f-0.45f*t));
                 }
                 bones.Tube(points,radii,6,shade,0.65f);
+                // the rib's head, a knob where it met its vertebra
+                bones.Tube({points[0]-Vector3::Up*0.02f,points[0]+(points[1]-points[0])*0.4f},{0.07f,0.06f},7,shade*0.97f);
                 if(broken) {
                     points.clear();radii.clear();
                     for(int n=0;n<=5;++n) {
@@ -325,6 +351,22 @@ WhaleSkeletonRenderer::WhaleSkeletonRenderer(GraphicsDevice& device,const WhaleS
         }
     }
 
+    // a few small bones scattered by the scavengers and the tides: chevrons from under the
+    // tail, a finger bone and an epiphysis's disc
+    {
+        const auto scatter=[&](const float a,const float c,const float length,const float yaw,const float r) {
+            const auto p=placement.At(a,c);
+            const Vector3 dir(placement.dirX*std::cos(yaw)-placement.seaX*std::sin(yaw),0.0f,placement.dirZ*std::cos(yaw)-placement.seaZ*std::sin(yaw));
+            const Vector3 centre=bones.At(a,c,r*0.5f);
+            static_cast<void>(p);
+            bones.Tube({centre-dir*(length*0.5f),centre+dir*(length*0.5f)},{r,r*0.8f},6,Bone*0.93f);
+        };
+        scatter(9.6f,1.6f,0.22f,0.7f,0.04f);
+        scatter(10.3f,-1.1f,0.18f,2.1f,0.035f);
+        scatter(11.6f,0.9f,0.15f,1.2f,0.03f);
+        scatter(3.4f,3.6f,0.11f,0.4f,0.022f);
+        scatter(6.8f,-2.9f,0.04f,0.0f,0.11f);
+    }
     auto& mesh=bones.builder.mesh;
     triangles_=static_cast<int>(mesh.size()/3);
     Vector3 low(1e9f,1e9f,1e9f),high(-1e9f,-1e9f,-1e9f);
