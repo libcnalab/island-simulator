@@ -32,8 +32,11 @@ UNDERWATER_VIEWPOINTS = ("fish", "reef-habitat", "anemone", "dolphins")
 # Inside a roofed room lit only through its door and portholes (the grounded coaster's mess,
 # loop pass 504) the walls, the ceiling and the floor share one dim light: reviewed on 2026-10-22
 # (luminance spread 15.2 against the scene floor of 18, 128 colour bins, contrast 84), a correct
-# render with the skeleton over the table and the bright doorway clear.
-DIM_INTERIOR_VIEWPOINTS = ("freighter-mess",)
+# render with the skeleton over the table and the bright doorway clear. The mine's chamber seen
+# from the adit's mouth up into its dome (loop pass 523), lit only by its crystals and a lantern:
+# reviewed on 2026-10-22 (luminance spread 17.96 against 18, 111 colour bins, contrast 76), a
+# correct render with the bats' three clusters under the rough dome clear.
+DIM_INTERIOR_VIEWPOINTS = ("freighter-mess", "mine-bats")
 
 # The game hours of the night (the clock's dark between the dusk and the dawn), when a capture
 # asks for one with --time-of-day: reviewed on 2026-10-20 as a dark blue moonlit scene.

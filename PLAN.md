@@ -233,6 +233,33 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 523 (2026-10-22) — the mine's chamber hewn rough
+
+Seen from below with the bats, the chamber read as a regular faceted tent. There were three
+causes:
+- the dome had 28 × 8 quads, each with one normal and one stain;
+- the floor was a radial fan converging on a point;
+- the cart's spilled ore was cubes.
+
+Changes:
+- **Dome.** It is now 64 × 16, hewn rough: broad bulges, recesses and smaller knobs. The
+  recesses only stand back from the oval, never in on the walker's floor, and they are gentler
+  toward the crown so the bats' roosts keep their few centimetres. Each vertex has its own normal
+  (from the surface's derivatives) and its own tone (blotched, banded, a little darker low down),
+  lit corner by corner by the day and the lamps. A new `smoothTri` does this.
+- **Crown.** Where the segments meet, one normal (straight down) and one tone are taken, so no
+  star of shading shows.
+- **Crystals.** They root in the rock's real surface, so a recess does not leave them standing
+  off it.
+- **Floor.** It is a 0.35 m grid of gravel over gently hummocky rock (±2 cm), reaching under the
+  walls' foot. It starts where the adit's floor ends, so the two no longer overlap coplanar.
+- **Ore.** The spilled ore is knobbly lumps (a `lump` of 6 × 3 faces) half sunk in the gravel.
+- **Validation.** `mine-bats` joins the reviewed `dim-interior-scene` profile: luminance spread
+  17.96 against 18, 111 bins, contrast 76.
+- **Evidence.** `mine-chamber` `20261022T124334`, `mine-bats` `20261022T124326`.
+
+The suite is 76/76.
+
 ## Loop pass 522 (2026-10-22) — bats in the old mine
 
 The mine's chamber had glowing crystals and a lantern, but nothing lived in it. Now twelve small

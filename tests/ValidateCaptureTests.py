@@ -72,6 +72,7 @@ class CaptureValidatorTests(unittest.TestCase):
         # The coaster's mess, lit only through its door: reviewed 2026-10-22.
         self.assertEqual(profile_for_viewpoint("freighter-mess"), "dim-interior-scene")
         self.assertEqual(profile_for_viewpoint("freighter-mess", 21.0), "night-scene")
+        self.assertEqual(profile_for_viewpoint("mine-bats"), "dim-interior-scene")
         self.assertEqual(profile_for_viewpoint("freighter-hold"), "scene")
         for name in ("", "overview", "grass", "wet-sand", "litter-other", "interactive"):
             self.assertEqual(profile_for_viewpoint(name), "scene")

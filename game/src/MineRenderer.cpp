@@ -145,6 +145,43 @@ MineRenderer::MineRenderer(GraphicsDevice& device,const MineLayout& layout,const
                         const Vector3& albedo,const Vector3& emissive=Vector3(0,0,0)) {
         tri(a,b,c,n,albedo,emissive);tri(a,c,d,n,albedo,emissive);
     };
+    // one triangle with its own normal and albedo at each corner, so rough rock shades smoothly
+    // across its faces instead of in flat facets
+    const auto smoothTri=[&](const std::array<Vector3,3>& p,const std::array<Vector3,3>& n,const std::array<Vector3,3>& albedo) {
+        Color lit[3];bool any=false;
+        for(std::size_t k=0;k<3;++k) {
+            base.emplace_back(p[k],colour(albedo[k]*daylight(p[k],n[k])));
+            const Vector3 l=lampLight(p[k],n[k]);
+            const Vector3 add(albedo[k].X*l.X,albedo[k].Y*l.Y,albedo[k].Z*l.Z);
+            lit[k]=colour(add);
+            any=any||add.X>2.0f||add.Y>2.0f||add.Z>2.0f;
+        }
+        if(any) for(std::size_t k=0;k<3;++k) light.emplace_back(p[k],lit[k]);
+    };
+    // a lump of rock: a flattened, knobbly polyhedron round `centre`, each face lit by its own normal
+    const auto lump=[&](const Vector3& centre,const float size,const Vector3& albedo,const std::uint32_t seed) {
+        constexpr int Around=6,Bands=3;
+        const auto point=[&](const int band,const int around) {
+            const float lat=Pi*(static_cast<float>(band)/Bands-0.5f),lon=2.0f*Pi*static_cast<float>(around%Around)/Around;
+            const float bump=band==0||band==Bands?1.0f
+                :0.75f+0.45f*Hash(seed^static_cast<std::uint32_t>(band*31+(around%Around)*7+1));
+            return centre+(acrossDir*(std::cos(lat)*std::cos(lon))+inward*(std::cos(lat)*std::sin(lon)))*(size*bump)
+                +Vector3::Up*(std::sin(lat)*size*0.65f*bump);
+        };
+        const auto face=[&](const Vector3& a,const Vector3& b,const Vector3& c) {
+            Vector3 n=Vector3::Cross(b-a,c-a);
+            if(n.LengthSquared()<1e-12f) return;
+            n.Normalize();
+            if(Vector3::Dot(n,(a+b+c)/3.0f-centre)<0.0f) n=-n;
+            tri(a,b,c,n,albedo*(0.9f+0.2f*Hash(seed^static_cast<std::uint32_t>(static_cast<int>(n.X*7.0f+n.Z*13.0f)+40))),Vector3(0,0,0));
+        };
+        for(int band=0;band<Bands;++band) for(int a=0;a<Around;++a) {
+            const Vector3 p00=point(band,a),p01=point(band,a+1),p10=point(band+1,a),p11=point(band+1,a+1);
+            if(band==0) face(p00,p11,p10);
+            else if(band==Bands-1) face(p00,p01,p10);
+            else {face(p00,p01,p11);face(p00,p11,p10);}
+        }
+    };
     // a box in the frame, its faces lit by their own normals
     const auto box=[&](const float a0,const float a1,const float u0,const float u1,const float d0,const float d1,
                        const Vector3& albedo) {
@@ -336,15 +373,44 @@ MineRenderer::MineRenderer(GraphicsDevice& device,const MineLayout& layout,const
     }
     // ---- the chamber: a rough dome round an oval floor, open where the adit comes in
     {
-        constexpr int Around=28,Rise=8;
+        constexpr int Around=64,Rise=16;
+        // the rock's surface: hewn out rough, broad bulges and smaller knobs, the wall standing
+        // back from the oval in recesses (never in on the walker's floor) and gentler toward the
+        // crown, where the bats hang; periodic round the oval, so the seam at a full turn closes
         const auto wallPoint=[&](const float theta,const float rise) {
             const float up=MineSite::ChamberHeight*std::sin(rise*Pi*0.5f);
             float a=0,d=0;chamberWall(theta,up,a,d);
-            // periodic round the oval, so the seam at a full turn closes
-            const float rough=1.0f+0.08f*(Noise(std::cos(theta)*2.6f+7.0f,std::sin(theta)*2.6f+7.0f+rise*4.3f)-0.5f);
+            const float c=std::cos(theta),s=std::sin(theta);
+            const float broad=Noise(c*2.6f+7.0f,s*2.6f+7.0f+rise*4.3f)-0.5f;
+            const float recess=std::max(0.0f,Noise(c*4.1f+11.0f,s*4.1f+5.0f+rise*6.7f)-0.4f);
+            const float knobs=Noise(c*7.0f+3.0f,s*7.0f+1.0f+rise*11.0f);
+            const float low=(1.0f-rise)*(1.0f-rise);
+            const float rough=1.0f+0.08f*broad+(0.2f*recess+0.06f*knobs)*low;
             return W(a*rough,up,MineSite::ChamberCentre+(d-MineSite::ChamberCentre)*rough);
         };
         const Vector3 middle=W(0.0f,1.2f,MineSite::ChamberCentre);
+        const auto wallNormal=[&](const float theta,const float rise) {
+            const Vector3 p=wallPoint(theta,rise);
+            const float r0=std::max(0.0f,rise-0.02f),r1=std::min(1.0f,rise+0.02f);
+            Vector3 n=Vector3::Cross(wallPoint(theta+0.02f,rise)-wallPoint(theta-0.02f,rise),wallPoint(theta,r1)-wallPoint(theta,r0));
+            if(n.LengthSquared()<1e-10f) n=middle-p;
+            n.Normalize();
+            if(Vector3::Dot(n,middle-p)<0.0f) n=-n;
+            // the crown's segments all meet at one point: one normal there, straight down, so no
+            // star of shading shows round it
+            n=Vector3::Lerp(n,-Vector3::Up,std::clamp((rise-0.8f)/0.2f,0.0f,1.0f));
+            n.Normalize();
+            return n;
+        };
+        // the rock's tone: blotched and banded, a little darker low down where the damp gets in
+        const auto wallTone=[&](const float theta,const float rise) {
+            // read across the plan (shrinking to the crown), so the segments agree where they meet
+            const float reach=std::cos(rise*Pi*0.5f);
+            const float c=std::cos(theta)*reach,s=std::sin(theta)*reach;
+            const float blotch=Noise(c*3.1f+2.0f,s*3.1f+rise*5.2f),grain=Noise(c*9.0f+1.0f,s*9.0f+rise*13.0f);
+            const float band=0.94f+0.06f*std::sin(rise*19.0f+blotch*4.0f);
+            return Rock*((0.8f+0.28f*blotch+0.1f*grain)*band*(0.86f+0.14f*rise)*0.95f);
+        };
         for(int i=0;i<Around;++i) for(int j=0;j<Rise;++j) {
             const float t0=2.0f*Pi*static_cast<float>(i)/Around,t1=2.0f*Pi*static_cast<float>(i+1)/Around;
             const float r0=static_cast<float>(j)/Rise,r1=static_cast<float>(j+1)/Rise;
@@ -352,8 +418,10 @@ MineRenderer::MineRenderer(GraphicsDevice& device,const MineLayout& layout,const
             const Vector3 c=(p00+p10+p11+p01)*0.25f;
             const auto local=layout.Local({c.X,c.Y,c.Z});
             if(std::abs(local.x)<MineSite::HalfWidth+0.15f&&local.z<48.6f&&local.y-MineLayout::FloorRelative(local.z)<2.75f) continue;
-            Vector3 n=middle-c;n.Normalize();
-            quad(p00,p10,p11,p01,n,Rock*stain(t0,r0*3.0f,52.0f)*0.95f);
+            const Vector3 n00=wallNormal(t0,r0),n10=wallNormal(t1,r0),n11=wallNormal(t1,r1),n01=wallNormal(t0,r1);
+            const Vector3 c00=wallTone(t0,r0),c10=wallTone(t1,r0),c11=wallTone(t1,r1),c01=wallTone(t0,r1);
+            smoothTri({{p00,p10,p11}},{{n00,n10,n11}},{{c00,c10,c11}});
+            smoothTri({{p00,p11,p01}},{{n00,n11,n01}},{{c00,c11,c01}});
         }
         // the headwall round the adit's mouth, closing the dome down to it
         {
@@ -363,23 +431,43 @@ MineRenderer::MineRenderer(GraphicsDevice& device,const MineLayout& layout,const
             quad(W(MineSite::HalfWidth+0.15f,0.0f,d),W(side,0.0f,d),W(side,top,d),W(MineSite::HalfWidth+0.15f,top,d),n,RockDark);
             quad(W(-MineSite::HalfWidth-0.15f,roof,d),W(MineSite::HalfWidth+0.15f,roof,d),W(MineSite::HalfWidth+0.15f,top,d),W(-MineSite::HalfWidth-0.15f,top,d),n,RockDark);
         }
-        // the floor
-        for(int i=0;i<Around;++i) {
-            const float t0=2.0f*Pi*static_cast<float>(i)/Around,t1=2.0f*Pi*static_cast<float>(i+1)/Around;
-            for(int ring=0;ring<3;++ring) {
-                const float f0=static_cast<float>(ring)/3.0f,f1=static_cast<float>(ring+1)/3.0f;
-                const auto at=[&](const float t,const float f) {
-                    return W(MineSite::ChamberHalfWidth*std::cos(t)*f*1.07f,0.0f,MineSite::ChamberCentre+MineSite::ChamberHalfLength*std::sin(t)*f*1.07f);
-                };
-                quad(at(t0,f0),at(t1,f0),at(t1,f1),at(t0,f1),Vector3(0,1,0),Gravel*stain(t0,0.0f,f0*4.0f));
-            }
+        // the floor: gravel over uneven rock, a little hummocky, in a grid reaching under the
+        // walls' foot (it starts where the adit's floor ends)
+        {
+            constexpr float Cell=0.35f;
+            const float reachA=MineSite::ChamberHalfWidth*1.32f,reachD=MineSite::ChamberHalfLength*1.32f;
+            const auto bump=[](const float a,const float d) {
+                return 0.025f*(Noise(a*2.3f+4.0f,d*2.3f)-0.5f)+0.012f*(Noise(a*6.1f,d*6.1f+2.0f)-0.5f);
+            };
+            const auto floorAt=[&](const float a,const float d) {return W(a,bump(a,d),d);};
+            const auto floorNormal=[&](const float a,const float d) {
+                Vector3 n(-(bump(a+0.05f,d)-bump(a-0.05f,d))/0.1f,1.0f,-(bump(a,d+0.05f)-bump(a,d-0.05f))/0.1f);
+                n.Normalize();
+                return n;
+            };
+            const auto floorTone=[&](const float a,const float d) {
+                const float damp=std::clamp((Noise(a*0.9f+8.0f,d*0.9f)-0.62f)*3.0f,0.0f,1.0f);
+                return Gravel*((0.84f+0.24f*Noise(a*1.7f,d*1.7f+3.0f)+0.08f*Noise(a*7.3f,d*7.3f))*(1.0f-0.25f*damp));
+            };
+            for(float d=48.0f;d<MineSite::ChamberCentre+reachD;d+=Cell)
+                for(float a=-reachA;a<reachA;a+=Cell) {
+                    const float ca=(a+Cell*0.5f)/reachA,cd=(d+Cell*0.5f-MineSite::ChamberCentre)/reachD;
+                    if(ca*ca+cd*cd>1.0f) continue;
+                    const float a1=a+Cell,d1=d+Cell;
+                    const std::array<Vector3,4> p{{floorAt(a,d),floorAt(a1,d),floorAt(a1,d1),floorAt(a,d1)}};
+                    const std::array<Vector3,4> n{{floorNormal(a,d),floorNormal(a1,d),floorNormal(a1,d1),floorNormal(a,d1)}};
+                    const std::array<Vector3,4> t{{floorTone(a,d),floorTone(a1,d),floorTone(a1,d1),floorTone(a,d1)}};
+                    smoothTri({{p[0],p[1],p[2]}},{{n[0],n[1],n[2]}},{{t[0],t[1],t[2]}});
+                    smoothTri({{p[0],p[2],p[3]}},{{n[0],n[2],n[3]}},{{t[0],t[2],t[3]}});
+                }
         }
         // the crystals: hexagonal prisms with pointed tips growing from the wall, glowing
         for(std::size_t ci=0;ci<clusters.size();++ci) {
             const Cluster& c=clusters[ci];
             const Vector3 colourOf=c.violet?CrystalViolet:CrystalBlue;
-            float a=0,d=0;chamberWall(c.theta,c.up,a,d);
-            const Vector3 root=W(a,c.up,d);
+            // rooted in the rock's real surface, a little into it
+            const Vector3 surface=wallPoint(c.theta,std::asin(std::clamp(c.up/MineSite::ChamberHeight,0.0f,1.0f))/(Pi*0.5f));
+            const Vector3 root=surface+(surface-middle)*0.03f;
             Vector3 out=middle-root;out.Normalize();
             const int count=4+static_cast<int>(Hash(static_cast<std::uint32_t>(ci)*131U)*4.0f);
             for(int k=0;k<count;++k) {
@@ -413,10 +501,11 @@ MineRenderer::MineRenderer(GraphicsDevice& device,const MineLayout& layout,const
             for(const float e:{-0.55f,0.55f}) box(ca-0.3f,ca+0.36f,0.0f,0.7f,e>0?cd+0.5f:cd-0.55f,e>0?cd+0.55f:cd-0.5f,CartIron*0.95f);
             for(const float w:{-0.35f,0.35f}) for(const float h:{0.12f,0.58f})
                 box(ca+0.36f,ca+0.42f,h-0.12f,h+0.12f,cd+w-0.12f,cd+w+0.12f,RailIron*0.8f);
+            // the spilled ore: knobbly lumps strewn out of the tub's mouth, half sunk in the gravel
             for(int k=0;k<14;++k) {
                 const auto seed=static_cast<std::uint32_t>(k)*2654435761U;
                 const float oa=ca-0.4f-0.9f*Hash(seed),od=cd-0.6f+1.2f*Hash(seed^0x9U),size=0.06f+0.08f*Hash(seed^0x3U);
-                box(oa-size,oa+size,0.0f,size*1.3f,od-size,od+size,Ore*(0.8f+0.4f*Hash(seed^0x5U)));
+                lump(W(oa,size*0.3f,od),size,Ore*(0.8f+0.4f*Hash(seed^0x5U)),seed);
             }
         }
     }
