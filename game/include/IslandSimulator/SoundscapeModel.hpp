@@ -138,6 +138,9 @@ namespace island
     /** @brief Generates a hollow plank footstep for the jetty and the rope bridge. */
     [[nodiscard]] AmbientLoop GenerateWoodFootstep();
     [[nodiscard]] AmbientLoop GenerateWoodFootstepAlternate();
+    // A boot on a steel deck: a dull knock and the plate ringing away (the grounded coaster).
+    [[nodiscard]] AmbientLoop GenerateMetalFootstep();
+    [[nodiscard]] AmbientLoop GenerateMetalFootstepAlternate();
     /** @brief Wading splash for ankle-deep water. */
     /** @brief A footstep in mud (the stream's banks, soil soaked by rain): a soft wet smack
      *  and the suck of the sole pulling free. */
@@ -295,7 +298,8 @@ namespace island
         Grass,
         Rock,
         Shallows,
-        Wood
+        Wood,
+        Metal
     };
 
     /** @brief One distance-scheduled land footstep with bounded playback variation. */

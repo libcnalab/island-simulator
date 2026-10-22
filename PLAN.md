@@ -233,6 +233,26 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 508 (2026-10-22) — the coaster's steel rings underfoot
+
+Walking aboard the grounded coaster now sounds like walking on a ship.
+
+- **The new surface.** A new footstep surface, `FootstepSurface::Metal`, uses
+  `GenerateMetalFootstep` and its alternate. A boot lands on a steel deck plate with the heel's
+  dull knock. The plate then rings on five inharmonic partials (182 or 196 Hz base, ratios 1 to
+  7.1), each dying away at its own rate, with a little rust grit. The clip lasts 0.55 s, longer
+  than a plank's knock, and its pitch varies a little from step to step.
+- **Where it plays.** `IslandGame::FootstepGroundUnderPlayer` now picks the ground by where the
+  walker's feet actually are:
+  - the coaster's deck, ladder, stair, hold and deckhouse are steel;
+  - the old mine's floor is gravel, using the rock step;
+  - the volcano's cone above the foothills is grey ash (the sand step) high up and rock lower
+    down;
+  - everywhere else keeps the ground under the analytic terrain.
+- **Test.** `CoreTests` checks the metal step against a plank's knock. It is deterministic, its
+  variants differ, it is silent at both ends and longer than the plank's. The plate still sounds
+  a fifth of a second after the heel, more quietly than the knock. The suite is 76/76.
+
 ## Loop pass 507 (2026-10-22) — a small volcano with lava in its crater
 
 A small volcano stands on the eastern foothills over the sea at (174, 0) (`VolcanoSite`,

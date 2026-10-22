@@ -273,6 +273,37 @@ namespace island
             return Quantize(samples, profile.gain);
         }
 
+        [[nodiscard]] AmbientLoop GenerateMetalClip(const std::uint32_t seed, const bool alternate)
+        {
+            // A boot on a steel deck plate: the heel's dull knock, then the plate ringing on a
+            // few inharmonic partials that die away at their own rates, and a little rust grit.
+            constexpr std::size_t frameCount = static_cast<std::size_t>(AmbientSampleRate * 11 / 20);
+            const std::vector<float> noise = Noise(seed, frameCount);
+            const std::vector<float> grit = CircularSmooth(noise, 3U);
+            const std::vector<float> knock = CircularSmooth(noise, 14U);
+            const float base = alternate ? 196.0f : 182.0f;
+            constexpr std::array<float, 5> ratio{{1.0f, 2.32f, 3.71f, 5.43f, 7.1f}};
+            constexpr std::array<float, 5> weight{{0.55f, 0.42f, 0.26f, 0.16f, 0.09f}};
+            constexpr std::array<float, 5> decay{{7.0f, 9.0f, 12.0f, 16.0f, 22.0f}};
+            std::vector<float> samples(frameCount);
+            for (std::size_t index = 0; index < samples.size(); ++index) {
+                const float unit = static_cast<float>(index) / static_cast<float>(samples.size() - 1U);
+                const float seconds = static_cast<float>(index) / static_cast<float>(AmbientSampleRate);
+                float ring = 0.0f;
+                for (std::size_t k = 0; k < ratio.size(); ++k)
+                    ring += weight[k] * std::sin(2.0f * std::numbers::pi_v<float> * base * ratio[k] * seconds
+                                                 + static_cast<float>(k) * 1.3f)
+                        * std::exp(-seconds * decay[k]);
+                const float heel = std::exp(-seconds * 55.0f) * knock[index] * 1.4f;
+                const float rust = std::exp(-seconds * 30.0f) * (noise[index] - grit[index]) * 0.25f;
+                samples[index] = SmoothStep(0.0f, 0.008f, unit) * (heel + ring * 0.6f + rust)
+                    * (1.0f - SmoothStep(0.85f, 1.0f, unit));
+            }
+            samples.front() = 0.0f;
+            samples.back() = 0.0f;
+            return Quantize(samples, 0.62f);
+        }
+
         [[nodiscard]] AmbientLoop GenerateMudClip(const std::uint32_t seed, const bool alternate)
         {
             // A step in mud: a dull wet smack as the sole lands (low-passed noise over a low,
@@ -1073,6 +1104,16 @@ namespace island
         return GenerateFootstepClip(0xc8427a16U, FootstepMaterial::Wood, true);
     }
 
+    AmbientLoop GenerateMetalFootstep()
+    {
+        return GenerateMetalClip(0x6d2b79f5U, false);
+    }
+
+    AmbientLoop GenerateMetalFootstepAlternate()
+    {
+        return GenerateMetalClip(0x1b873593U, true);
+    }
+
     AmbientLoop GenerateMudFootstep()
     {
         return GenerateMudClip(0x5a1e7c03U, false);
@@ -1637,6 +1678,9 @@ namespace island
             break;
         case FootstepSurface::Wood:
             request.pitch = 0.010f + NextUnit() * 0.07f + runBlend * 0.020f;
+            break;
+        case FootstepSurface::Metal:
+            request.pitch = -0.020f + NextUnit() * 0.06f + runBlend * 0.020f;
             break;
         case FootstepSurface::Soil:
         default:

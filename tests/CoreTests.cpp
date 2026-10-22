@@ -1185,6 +1185,28 @@ int main()
                   && energy(mudFootstep, 0.45f, 0.60f) > 2.0 * energy(mudFootstep, 0.25f, 0.38f),
               "the mud step is a smack, a lull and the suck of the sole pulling free");
     }
+    {
+        // The steel deck's step: deterministic, the variants distinct, silent at both ends, and
+        // ringing on: longer than a plank's knock, the plate still sounding a fifth of a second
+        // after the heel, more quietly than the heel's knock.
+        const island::AmbientLoop metal = island::GenerateMetalFootstep();
+        const island::AmbientLoop metalAlternate = island::GenerateMetalFootstepAlternate();
+        const island::AmbientLoop wood = island::GenerateWoodFootstep();
+        const auto level = [](const island::AmbientLoop& clip, const float fromSeconds, const float toSeconds) {
+            const auto a = static_cast<std::size_t>(fromSeconds * static_cast<float>(clip.sampleRate));
+            const auto b = std::min(clip.samples.size(), static_cast<std::size_t>(toSeconds * static_cast<float>(clip.sampleRate)));
+            double sum = 0.0;
+            for (std::size_t i = a; i < b; ++i) sum += std::abs(static_cast<double>(clip.samples[i]));
+            return sum / static_cast<double>(std::max<std::size_t>(1U, b - a));
+        };
+        Check(metal.sampleRate == 22050 && metal.samples == island::GenerateMetalFootstep().samples
+                  && metal.samples != metalAlternate.samples
+                  && metal.samples.front() == 0 && metal.samples.back() == 0
+                  && metal.samples.size() > wood.samples.size()
+                  && level(metal, 0.20f, 0.30f) > 0.12 * level(metal, 0.0f, 0.03f)
+                  && level(metal, 0.0f, 0.03f) > level(metal, 0.20f, 0.30f),
+              "a step on the coaster's steel deck knocks and the plate rings on");
+    }
     const island::AmbientLoop birdCall = island::GenerateBirdCall();
     const island::AmbientLoop birdCallAlternate = island::GenerateBirdCallAlternate();
     const island::AmbientLoop parrotCall = island::GenerateParrotCall();

@@ -625,6 +625,10 @@ namespace island
             woodFootstepEffect_->setNameProperty("Procedural plank footstep");
             woodFootstepAlternateEffect_ = CreateOneShotSoundEffect(GenerateWoodFootstepAlternate());
             woodFootstepAlternateEffect_->setNameProperty("Procedural plank footstep alternate");
+            metalFootstepEffect_ = CreateOneShotSoundEffect(GenerateMetalFootstep());
+            metalFootstepEffect_->setNameProperty("Procedural steel deck footstep");
+            metalFootstepAlternateEffect_ = CreateOneShotSoundEffect(GenerateMetalFootstepAlternate());
+            metalFootstepAlternateEffect_->setNameProperty("Procedural steel deck footstep alternate");
             mudFootstepEffect_ = CreateOneShotSoundEffect(GenerateMudFootstep());
             mudFootstepEffect_->setNameProperty("Procedural mud footstep");
             mudFootstepAlternateEffect_ = CreateOneShotSoundEffect(GenerateMudFootstepAlternate());
@@ -870,6 +874,8 @@ namespace island
             rockFootstepEffect_.reset();
             woodFootstepAlternateEffect_.reset();
             woodFootstepEffect_.reset();
+            metalFootstepAlternateEffect_.reset();
+            metalFootstepEffect_.reset();
             grassFootstepAlternateEffect_.reset();
             grassFootstepEffect_.reset();
             soilFootstepAlternateEffect_.reset();
@@ -1351,6 +1357,9 @@ namespace island
             break;
         case FootstepSurface::Wood:
             footstepEffect = alternateStep ? woodFootstepAlternateEffect_.get() : woodFootstepEffect_.get();
+            break;
+        case FootstepSurface::Metal:
+            footstepEffect = alternateStep ? metalFootstepAlternateEffect_.get() : metalFootstepEffect_.get();
             break;
         case FootstepSurface::None:
         default:
@@ -2104,6 +2113,8 @@ namespace island
         rockFootstepEffect_.reset();
         woodFootstepAlternateEffect_.reset();
         woodFootstepEffect_.reset();
+        metalFootstepAlternateEffect_.reset();
+        metalFootstepEffect_.reset();
         grassFootstepAlternateEffect_.reset();
         grassFootstepEffect_.reset();
         soilFootstepEffect_.reset();

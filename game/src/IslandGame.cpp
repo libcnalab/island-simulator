@@ -2812,6 +2812,7 @@ namespace island
                 case FootstepSurface::Rock: return "rock";
                 case FootstepSurface::Shallows: return "shallows";
                 case FootstepSurface::Wood: return "wood";
+                case FootstepSurface::Metal: return "metal";
                 default: return "none";
                 }
             };
@@ -6134,6 +6135,16 @@ namespace island
     {
         if (flightMotion_.IsActive() || IsDebugFreeCameraActive()) return FootstepSurface::None;
         const PlayerPosition& position = playerMotion_.Position();
+        // the grounded coaster's steel underfoot, the mine's gravel, the volcano's ash and rock
+        const float feet = position.y - PlayerMotion::EyeHeight;
+        float support = 0.0f;
+        if (freighterPlacement_ && freighterPlacement_->SupportHeight(position.x, position.z, feet, support))
+            return FootstepSurface::Metal;
+        if (mineLayout_.SupportHeight(position.x, position.z, feet, support)) return FootstepSurface::Rock;
+        if (VolcanoSite::Radius(position.x, position.z) < VolcanoSite::BaseRadius
+            && VolcanoSite::SurfaceY(position.x, position.z) > terrain_.Height(position.x, position.z) + 0.2f)
+            return VolcanoSite::SurfaceY(position.x, position.z) - VolcanoSite::BaseY > 12.0f
+                ? FootstepSurface::Sand : FootstepSurface::Rock;
         return FootstepGroundAt(position.x, position.z);
     }
 

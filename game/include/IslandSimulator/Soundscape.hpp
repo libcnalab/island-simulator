@@ -372,6 +372,8 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> rockFootstepAlternateEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> woodFootstepEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> woodFootstepAlternateEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> metalFootstepEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> metalFootstepAlternateEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> mudFootstepEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> mudFootstepAlternateEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> wadeFootstepEffect_;
