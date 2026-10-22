@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 457 (2026-10-22) — the deer stand on the drawn stream banks
+
+After the crocodiles (pass 456), a probe measured how far the analytic terrain lies from the drawn
+ground (with the stream's carved bed) beside the channel. Along the whole stream the worst gap is
+0.45 m at half-width + 0.6 m, 0.26 m at half-width + 1.05 m (the deer's drinking points), and
+0.07 m at + 1.6 m. A drinking deer could stand a quarter metre off the bank it was drawn on.
+`DeerHerd::SetGround` gives the herd the drawn ground (`StandHeight`), and the deer are set on it at
+once. The deer test runs a herd for 30 s on a drawn surface carrying the stream bed and checks that
+every deer stands on what is drawn. The `deer` and `deer-bedded` captures pass.
+
 ## Loop pass 456 (2026-10-22) — basking crocodiles lie on the carved bed and cast their figures
 
 The basking pair had no shadow. Laying their figures (`CrocodileLimbs`) showed why none drew: the two

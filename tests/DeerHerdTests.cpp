@@ -1,5 +1,7 @@
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/WalkerShadow.hpp"
+#include "IslandSimulator/RenderedTerrainSurface.hpp"
+#include "IslandSimulator/StreamBedPatch.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -25,6 +27,23 @@ int main()
         island::DeerHerd herd(terrain, obstacles), repeated(terrain, obstacles);
         Check(herd.Deer().size() == island::DeerHerd::Count, "wrong deer count");
         Check(herd.Deer().front().antlered, "lead deer should supply antlered silhouette");
+        {
+            // On the drawn ground (the stream's carved bed and banks among its patches) the deer
+            // stand on what is drawn, also at the drinking points on the bank.
+            const island::RenderedTerrainSurface plain(terrain);
+            const island::StreamBedPatch bed(island::StreamCourse(terrain), plain);
+            island::RenderedTerrainSurface drawn(terrain);
+            drawn.SetLocalPatches({&bed, nullptr});
+            island::DeerHerd standing(terrain, obstacles);
+            standing.SetGround(&drawn);
+            bool onDrawn = true;
+            for (int step = 0; step < 600; ++step) {
+                standing.Update(0.05f, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
+                for (const auto& deer : standing.Deer())
+                    onDrawn = onDrawn && std::abs(deer.y - island::DrawnOrAnalyticHeight(drawn, terrain, deer.x, deer.z)) < 1e-4f;
+            }
+            Check(onDrawn, "a deer does not stand on the drawn ground");
+        }
         for (std::size_t index = 0; index < herd.Deer().size(); ++index) {
             const auto& deer = herd.Deer()[index];
             Check(herd.IsValidPosition(index, deer.x, deer.z), "initial deer habitat invalid");

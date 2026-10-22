@@ -1,6 +1,7 @@
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/CampfireSite.hpp"
 #include "IslandSimulator/CanopyLightField.hpp"
+#include "IslandSimulator/RenderedTerrainSurface.hpp"
 
 #include "IslandSimulator/StreamRoute.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
@@ -121,7 +122,7 @@ namespace island
         if (!found) throw std::runtime_error("No safe open inland deer habitat");
         agent.state.x = agent.home.x;
         agent.state.z = agent.home.z;
-        agent.state.y = terrain_.Height(agent.state.x, agent.state.z);
+        agent.state.y = StandHeight(agent.state.x, agent.state.z);
         agent.state.headingRadians = Wrap(.4f + static_cast<float>(index) * 1.45f);
         agent.targetHeadingRadians = agent.state.headingRadians;
         agent.state.scale = index == 3U ? .84f : .94f + .035f * static_cast<float>(index);
@@ -132,6 +133,18 @@ namespace island
         agent.state.grazeAmount = agent.state.behavior == DeerBehavior::Graze ? 1.0f : 0.0f;
         agent.behaviorSeconds = 3.5f + static_cast<float>(index) * 1.2f;
         agent.state.gaitPhase = static_cast<float>(index) * 1.4f;
+    }
+
+    float DeerHerd::StandHeight(const float x, const float z) const noexcept
+    {
+        return ground_ ? DrawnOrAnalyticHeight(*ground_, terrain_, x, z) : terrain_.Height(x, z);
+    }
+
+    void DeerHerd::SetGround(const RenderedTerrainSurface* ground) noexcept
+    {
+        ground_ = ground;
+        for (Agent& agent : agents_) agent.state.y = StandHeight(agent.state.x, agent.state.z);
+        for (std::size_t index = 0; index < Count; ++index) states_[index] = agents_[index].state;
     }
 
     float DeerHerd::LightAt(const float x, const float z) const noexcept
@@ -464,6 +477,6 @@ namespace island
         }
         agent.state.gaitPhase = std::fmod(agent.state.gaitPhase
             + deltaSeconds * (1.4f + agent.state.speed * 4.2f), TwoPi);
-        agent.state.y = terrain_.Height(agent.state.x, agent.state.z);
+        agent.state.y = StandHeight(agent.state.x, agent.state.z);
     }
 }

@@ -2478,6 +2478,7 @@ namespace island
         // the marks and shadows laid on the ground follow the channel and the scour too
         drawnGround_->SetLocalPatches({&terrainRenderer_->StreamBed(), &terrainRenderer_->WreckScour()});
         crocodileGroup_.SetGround(drawnGround_.get());   // they lie on the carved bed at the mouth
+        deer_->SetGround(drawnGround_.get());   // and the deer stand on its banks to drink
         playerMotion_.SetCave(&terrainRenderer_->Cave(),&terrainRenderer_->CaveGround());
         playerMotion_.SetBunker(&bunkerLayout_);
         flightMotion_.SetCave(&terrainRenderer_->Cave(),&terrainRenderer_->CaveGround());

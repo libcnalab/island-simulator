@@ -14,6 +14,7 @@
 namespace island
 {
     class CanopyLightField;
+    class RenderedTerrainSurface;
     enum class DeerBehavior : std::uint8_t { Graze, Walk, Rest, Retreat, Drink };
 
     struct DeerState
@@ -116,6 +117,10 @@ namespace island
          *  a deer whose rest comes on sunlit ground first walks to the shadiest valid spot
          *  within ShadeSeekRadius and lies up there. Null keeps the deer resting where it is. */
         void SetLight(const CanopyLightField* light) noexcept { light_ = light; }
+        /** @brief The drawn ground the hooves stand on (with the stream's carved bed, whose
+         *  banks at the drinking points lie up to a quarter metre off the analytic terrain);
+         *  without it, the analytic terrain. Sets the deer on it at once. */
+        void SetGround(const RenderedTerrainSurface* ground) noexcept;
         [[nodiscard]] std::uint32_t ShadeRestCount() const noexcept { return shadeRests_; }
         /** @brief Bolts begun from the walker, and the deer that last began one: its
          *  hoofbeats drum where it goes. */
@@ -174,6 +179,8 @@ namespace island
         void UpdateAgent(Agent&, float, float, float, bool) noexcept;
 
         const IslandTerrain& terrain_;
+        const RenderedTerrainSurface* ground_ = nullptr;
+        [[nodiscard]] float StandHeight(float x, float z) const noexcept;
         WorldCollisionGrid obstacles_;
         std::array<Agent, Count> agents_{};
         std::array<DeerState, Count> states_{};
