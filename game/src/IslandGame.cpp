@@ -203,6 +203,9 @@ namespace island
             case FixedViewpoint::LighthouseDetail: return "lighthouse";
             case FixedViewpoint::PlaneWreckDetail: return "plane-wreck";
             case FixedViewpoint::BeachLitterDetail: return "beach-litter";
+            case FixedViewpoint::FreighterDetail: return "freighter";
+            case FixedViewpoint::FreighterDeckDetail: return "freighter-deck";
+            case FixedViewpoint::FreighterHoldDetail: return "freighter-hold";
             case FixedViewpoint::GroundDoveDetail: return "ground-doves";
             case FixedViewpoint::FruitBatDetail: return "bats";
             case FixedViewpoint::FruitBatRoostDetail: return "bat-roost";
@@ -492,6 +495,19 @@ namespace island
             if(planeWreckPlacement_) for(const auto& obstacle:planeWreckPlacement_->Obstacles()) worldObstacles.push_back(obstacle);
         }
         {
+            // A rusting coaster a storm drove up a broad beach, well away from the old wreck, the
+            // jetty, the whale, the sign and the lighthouse; the turtles' nests stay clear of it.
+            std::vector<std::array<float,2>> avoid{{{shipwreckLayout_.Ship().x,shipwreckLayout_.Ship().z}}};
+            if(jettyPlacement_) avoid.push_back({{jettyPlacement_->rootX,jettyPlacement_->rootZ}});
+            if(whalePlacement_) avoid.push_back(whalePlacement_->At(4.0f,0.0f));
+            if(stoneSignPlacement_) avoid.push_back(stoneSignPlacement_->At(StoneSignPlacement::Length()*0.5f,3.5f));
+            if(lighthousePlacement_) avoid.push_back({{lighthousePlacement_->x,lighthousePlacement_->z}});
+            std::vector<CircularObstacle> solid(worldObstacles);
+            for(const auto& detail:naturalPropLayout_.BeachDetails())
+                if(detail.turtleNest||detail.turtleTrace) solid.push_back({detail.x,detail.z,1.0f});
+            freighterPlacement_=FreighterLayout::FindInWorld(terrain_,solid,avoid);
+        }
+        {
             // The plastic the sea washes up along the strandline, clear of the obstacles, the
             // jetty's root, the turtles' nests and crawls, the whale's bones and the HELP ME.
             std::vector<std::array<float,2>> avoid;
@@ -504,7 +520,9 @@ namespace island
             if(stoneSignPlacement_)
                 for(float along=0.0f;along<=StoneSignPlacement::Length();along+=4.0f)
                     avoid.push_back(stoneSignPlacement_->At(along,3.5f));
-            beachBottles_=BeachLitterLayout::Scatter(terrain_,worldObstacles,avoid);
+            std::vector<CircularObstacle> solid(worldObstacles);
+            if(freighterPlacement_) for(const auto& circle:freighterPlacement_->Obstacles()) solid.push_back(circle);
+            beachBottles_=BeachLitterLayout::Scatter(terrain_,solid,avoid);
         }
         // The animals' lighting reads the solid casters the sun shadow map draws: the jungle's
         // snags, understory and bushes (baked with the field) and the structures, so a goat
@@ -522,7 +540,12 @@ namespace island
         if(jettyPlacement_) playerMotion_.SetJetty(&*jettyPlacement_);
         if(bridgePlacement_) playerMotion_.SetBridge(&*bridgePlacement_);
         if(lookoutPlacement_) playerMotion_.SetLookout(&*lookoutPlacement_);
+        if(freighterPlacement_) playerMotion_.SetFreighter(&*freighterPlacement_);
         std::vector<CircularObstacle> wildlifeObstacles(worldObstacles);
+        // The coaster's hull and ladder keep the animals and the resident out; the walker meets
+        // its own walls instead, so it can climb aboard.
+        if(freighterPlacement_)
+            for(const auto& circle:freighterPlacement_->Obstacles()) wildlifeObstacles.push_back(circle);
         // Keep complete animal bodies out of the authored rotor/clearing footprint,
         // not merely outside the fuselage collision proxy. Goat habitat selection
         // previously accepted a home under an open cabin door because 3.2 m only
@@ -1802,6 +1825,35 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: plane-wreck QA camera looks at the fighter's broken fuselage from ahead of its nose\n";
+        } else if (viewpoint_ == FixedViewpoint::FreighterDetail
+                   || viewpoint_ == FixedViewpoint::FreighterDeckDetail
+                   || viewpoint_ == FixedViewpoint::FreighterHoldDetail) {
+            if(!freighterPlacement_) throw std::runtime_error("Freighter QA requires the coaster");
+            const auto& ship=*freighterPlacement_;
+            FreighterPoint eye,look;
+            const char* what=nullptr;
+            if(viewpoint_==FixedViewpoint::FreighterDetail) {
+                // from the sand off the starboard bow: the side, the ladder, the deckhouse aft
+                const auto stand=ship.World(31.0f,0.0f,15.0f);
+                eye={stand.x,terrain_.Height(stand.x,stand.z)+PlayerMotion::EyeHeight,stand.z};
+                look=ship.World(13.0f,3.4f,0.0f);
+                what="freighter QA camera looks at the grounded coaster's side and ladder from the beach";
+            } else if(viewpoint_==FixedViewpoint::FreighterDeckDetail) {
+                // from abaft the hatch, forward over the open hold to the foremast and the bow
+                eye=ship.World(10.3f,FreighterPlacement::DeckUp(10.3f)+PlayerMotion::EyeHeight,2.7f);
+                look=ship.World(27.0f,FreighterPlacement::DeckUp(27.0f)+0.4f,-0.6f);
+                what="freighter-deck QA camera looks forward along the coaster's deck over the open hatch";
+            } else {
+                // in the hold, from its after end toward the light through the hatch and the stair
+                eye=ship.World(10.9f,FreighterPlacement::HoldFloor+PlayerMotion::EyeHeight,-2.2f);
+                look=ship.World(18.5f,FreighterPlacement::HoldFloor+1.1f,1.6f);
+                what="freighter-hold QA camera looks forward through the hold to the stair and the open hatch";
+            }
+            cameraPosition_=Vector3(eye.x,eye.y,eye.z);
+            const Vector3 direction=Vector3(look.x,look.y,look.z)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: "<<what<<'\n';
         } else if (viewpoint_ == FixedViewpoint::BeachLitterDetail) {
             // Close over the first bottles washed up together, looking down at them on the sand.
             if(beachBottles_.empty()) throw std::runtime_error("Beach litter QA requires the bottles");
@@ -2770,6 +2822,7 @@ namespace island
         if(lighthousePlacement_) lighthouseRenderer_=std::make_unique<LighthouseRenderer>(device,*lighthousePlacement_,terrain_,*drawnGround_);
         if(planeWreckPlacement_) planeWreckRenderer_=std::make_unique<PlaneWreckRenderer>(device,*planeWreckPlacement_,terrain_,*drawnGround_);
         beachLitterRenderer_=std::make_unique<BeachLitterRenderer>(device,beachBottles_,terrain_,*drawnGround_);
+        if(freighterPlacement_) freighterRenderer_=std::make_unique<FreighterRenderer>(device,*freighterPlacement_,terrain_,*drawnGround_);
         if(bridgePlacement_) bridgeRenderer_=std::make_unique<BridgeRenderer>(device,*bridgePlacement_);
         if(lookoutPlacement_) lookoutRenderer_=std::make_unique<LookoutRenderer>(device,*lookoutPlacement_);
         fallingFruitRenderer_=std::make_unique<FallingFruitRenderer>(device);
@@ -4878,6 +4931,8 @@ namespace island
         // The helicopter's airframe (its doorways are a walker's, not a quad's), and the rope
         // bridge with its end posts: its plank walk is narrower than the quad's track.
         if (helicopterPlacement_ && helicopterPlacement_->IntersectsCapsule(x, z, 0.95f)) return true;
+        // The grounded coaster's hull and its ladder (the ladder is a walker's, not a quad's).
+        if (freighterPlacement_ && freighterPlacement_->Blocks(x, z, 0.95f)) return true;
         if (bridgePlacement_) {
             const auto& bridge = *bridgePlacement_;
             const float dx = x - bridge.ax, dz = z - bridge.az;
@@ -6568,6 +6623,7 @@ namespace island
                 if (lighthouseRenderer_) lighthouseRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (planeWreckRenderer_) planeWreckRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (beachLitterRenderer_) beachLitterRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                if (freighterRenderer_) freighterRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (bridgeRenderer_) bridgeRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (lookoutRenderer_) lookoutRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 helicopterRenderer_->SetSunShadowMap(sunShadowMap_.get());
@@ -6592,6 +6648,7 @@ namespace island
                 if (stoneSignRenderer_) stoneSignRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (lighthouseRenderer_) lighthouseRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (planeWreckRenderer_) planeWreckRenderer_->DrawSunShadow(*sunShadowMap_);
+                if (freighterRenderer_) freighterRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (bridgeRenderer_) bridgeRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (lookoutRenderer_) lookoutRenderer_->DrawSunShadow(*sunShadowMap_);
                 shipwreckRenderer_->DrawSunShadow(*sunShadowMap_);
@@ -6853,6 +6910,10 @@ namespace island
         if(planeWreckRenderer_) {
             GpuDiagnosticScope gpuPass("plane-wreck");
             planeWreckRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
+        }
+        if(freighterRenderer_) {
+            GpuDiagnosticScope gpuPass("freighter");
+            freighterRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }
         if(beachLitterRenderer_) {
             GpuDiagnosticScope gpuPass("beach-litter");

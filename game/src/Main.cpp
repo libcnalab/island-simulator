@@ -88,6 +88,9 @@ namespace
         case FixedViewpoint::LighthouseDetail: return "lighthouse";
         case FixedViewpoint::PlaneWreckDetail: return "plane-wreck";
         case FixedViewpoint::BeachLitterDetail: return "beach-litter";
+        case FixedViewpoint::FreighterDetail: return "freighter";
+        case FixedViewpoint::FreighterDeckDetail: return "freighter-deck";
+        case FixedViewpoint::FreighterHoldDetail: return "freighter-hold";
         case FixedViewpoint::GroundDoveDetail: return "ground-doves";
         case FixedViewpoint::FruitBatDetail: return "bats";
         case FixedViewpoint::FruitBatRoostDetail: return "bat-roost";
@@ -368,6 +371,12 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::PlaneWreckDetail;
             } else if (name == "beach-litter") {
                 viewpoint = island::FixedViewpoint::BeachLitterDetail;
+            } else if (name == "freighter") {
+                viewpoint = island::FixedViewpoint::FreighterDetail;
+            } else if (name == "freighter-deck") {
+                viewpoint = island::FixedViewpoint::FreighterDeckDetail;
+            } else if (name == "freighter-hold") {
+                viewpoint = island::FixedViewpoint::FreighterHoldDetail;
             } else if (name == "ground-doves") {
                 viewpoint = island::FixedViewpoint::GroundDoveDetail;
             } else if (name == "bats") {

@@ -233,6 +233,62 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 503 (2026-10-22) — a rusting coaster lies driven up a beach, walkable deck and hold
+
+A storm drove a 30 m steel coaster up the south-west beach. Its centre is at (-107, -221) and its
+stern is in the surf (`FreighterLayout`, `FreighterRenderer`; 14774 triangles in one draw; QA
+views `freighter`, `freighter-deck` and `freighter-hold`). This is the operator's ship backlog
+item; the sailors' skeletons follow next.
+
+- **Placement.** The ship lies on the first broad sandy beach, sunwise from the south-west, at
+  least 45 m from the old wreck, the jetty, the whale, the sign and the lighthouse, and clear of
+  every obstacle and turtle nest. It is square to the shoreline with the stem 13 m up the sand.
+  - **Trim and list.** It is trimmed by the stern up to 5 deg and lists 2.2 deg to port.
+  - **Bedding.** The flat bottom is bedded 0.45 m into the sand wherever the beach is above the
+    sea.
+  - **Clearances.** The hold's floor stays dry above the sea, and the ladder's foot lands on dry
+    sand no steeper than a stair.
+- **Frame.** The ship's frame is sheared, not rotated, by the trim and the list. Walls stay
+  plumb and floors tilt, so collision and drawing agree exactly.
+- **Walking aboard** (`PlayerMotion::SetFreighter`).
+  - **Ladder.** An accommodation ladder runs down the starboard side to the sand, with a landing
+    at the gangway's opening in the bulwark.
+  - **Deck and deckhouse.** The deck rises with its sheer to the bow. Inside the deckhouse's open
+    door are a mess table, benches and a locker.
+  - **Hold.** A stair beside the open hatch leads down into the hold, 2.6 m below the deck and
+    reached round the hatch from the foredeck.
+  - **Support.** At each point the ship returns the highest floor the feet can step onto, so the
+    deck never captures a walker in the hold beneath it.
+  - **Walls.** The hull's shell, the bulwarks, the coaming, the railings, the bulkheads, the
+    deckhouse, the table, the windlass, the masts and the ventilators block walker and swimmer
+    alike.
+  - **Everyone else.** Animals and the resident get circles round the hull. The quad bike is
+    kept off the hull and the ladder. The washed-up bottles keep clear of it.
+- **Look.**
+  - **Hull.** It is flat-bottomed with a tight bilge, a fine bow entrance and a cruiser stern.
+    It is painted red below a white boot-top and black above, with weed at the waterline.
+  - **Rust.** Sparse streaks of their own strength and length weep down from the scuppers, and
+    blistered patches dot the plating. Rust is lighter on the white paint.
+    `SculptMeshBuilder::tintPerQuad` tints each quad from its centre, so no diagonal steps show.
+  - **Deck fittings.**
+    - Buff bulwarks with a white capping rail.
+    - The green coaming, with the after hatch covers still on and one of them lifted; their
+      rust-brown webs show from below.
+    - Masts with crosstrees, derricks, stays and topping lifts.
+    - A windlass whose chains run link by link to the hawse pipes.
+    - The starboard anchor stowed; the port chain run out to the sand.
+    - Bollards and cowl ventilators.
+  - **Superstructure.**
+    - The deckhouse, with portholes in brass rims, windows and a door swung open.
+    - The wheelhouse, with windows all round under an overhanging roof.
+    - A raked funnel with a black top, and empty lifeboat davits.
+  - **Hold.** The floor, the framed sides and the stiffened bulkheads fade from full light under
+    the open hatch into gloom under the deck. The sun shadow map adds the deck's shadow.
+- **Tests.** `IslandFreighterLayoutTests` drives the real controller through a full circuit: up
+  the ladder, through the gangway, round the hatch, down the stair into the hold, back up, and
+  in at the deckhouse's door. It also checks walls, supports and the placement's clearances. The
+  suite is 74/74.
+
 ## Loop pass 502 (2026-10-22) — the README gallery shows the newer landmarks
 
 At the operator's request, the README gallery now shows what was added since its first pass on

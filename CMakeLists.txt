@@ -93,6 +93,7 @@ add_library(island_core STATIC
     game/src/LighthouseLayout.cpp
     game/src/PlaneWreckLayout.cpp
     game/src/BeachLitterLayout.cpp
+    game/src/FreighterLayout.cpp
     game/src/BridgeLayout.cpp
     game/src/LookoutLayout.cpp
     game/src/FallingFruitField.cpp
@@ -293,6 +294,11 @@ if(ISLAND_BUILD_TESTS AND NOT CMAKE_CROSSCOMPILING)
     island_enable_first_party_warnings(island_bunker_tests)
     island_enable_first_party_sanitizers(island_bunker_tests)
     add_test(NAME IslandBunkerLayoutTests COMMAND island_bunker_tests)
+    add_executable(island_freighter_tests tests/FreighterLayoutTests.cpp)
+    target_link_libraries(island_freighter_tests PRIVATE IslandSimulator::Core)
+    island_enable_first_party_warnings(island_freighter_tests)
+    island_enable_first_party_sanitizers(island_freighter_tests)
+    add_test(NAME IslandFreighterLayoutTests COMMAND island_freighter_tests)
     add_executable(island_crocodile_tests tests/CrocodileGroupTests.cpp)
     target_link_libraries(island_crocodile_tests PRIVATE IslandSimulator::Core)
     island_enable_first_party_warnings(island_crocodile_tests)
@@ -786,6 +792,7 @@ if(ISLAND_BUILD_GAME)
         game/src/LighthouseRenderer.cpp
         game/src/PlaneWreckRenderer.cpp
         game/src/BeachLitterRenderer.cpp
+        game/src/FreighterRenderer.cpp
         game/src/BridgeRenderer.cpp
         game/src/LookoutRenderer.cpp
         game/src/FallingFruitRenderer.cpp

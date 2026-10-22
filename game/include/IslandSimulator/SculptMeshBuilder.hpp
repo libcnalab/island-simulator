@@ -20,10 +20,13 @@ struct SculptMeshBuilder {
     // optional: the face's colour from its pigment, its outward normal and its centre (weathering)
     std::function<Vector3(const Vector3&,const Vector3&,const Vector3&)> tint;
     float stainHeight=0.14f,stainAmount=0.75f;
+    // when set, a quad's two triangles take their tint and stain from the quad's centre, so its
+    // diagonal never shows as a step in the weathering
+    bool tintPerQuad=false;
 
     void Face(const Vector3& a,const Vector3& b,const Vector3& c,const Vector3& pigment) {
         Vector3 colour=pigment;
-        const Vector3 m=(a+b+c)/3.0f;
+        const Vector3 m=quadCentre_?*quadCentre_:(a+b+c)/3.0f;
         Vector3 normal=Vector3::Cross(b-a,c-a);
         const bool outward=Vector3::Dot(normal,m-inside)>=0.0f;
         if(!outward) normal=-normal;
@@ -37,7 +40,11 @@ struct SculptMeshBuilder {
         else builder.Tri(a,c,b,colour);
     }
     void Quad(const Vector3& a,const Vector3& b,const Vector3& c,const Vector3& d,const Vector3& pigment) {
+        if(!tintPerQuad) {Face(a,b,c,pigment);Face(a,c,d,pigment);return;}
+        const Vector3 centre=(a+b+c+d)/4.0f;
+        quadCentre_=&centre;
         Face(a,b,c,pigment);Face(a,c,d,pigment);
+        quadCentre_=nullptr;
     }
     // A box: centre, its three axes, half extents; `top` for the face along +up.
     void Box(const Vector3& centre,const Vector3& right,const Vector3& up,const Vector3& forward,
@@ -117,5 +124,7 @@ struct SculptMeshBuilder {
             if(capEnd) {inside=centres[n-2];Face(centres.back(),rings.back()[k],rings.back()[k1],pigment(n-2U,k));}
         }
     }
+private:
+    const Vector3* quadCentre_=nullptr;
 };
 }

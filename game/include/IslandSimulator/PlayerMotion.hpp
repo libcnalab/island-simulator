@@ -19,6 +19,7 @@ namespace island
     class CaveGroundPatch;
     class BunkerLayout;
     struct HelicopterPlacement;
+    struct FreighterPlacement;
 
     /** @brief Physical movement state relevant to animation, audio, and camera presentation. */
     enum class LocomotionMode
@@ -127,6 +128,9 @@ namespace island
         void SetJetty(const JettyPlacement* jetty) noexcept {jetty_=jetty;}
         void SetBridge(const BridgePlacement* bridge) noexcept {bridge_=bridge;}
         void SetLookout(const LookoutPlacement* lookout) noexcept {lookout_=lookout;}
+        // The grounded freighter: its ladder, deck, deckhouse and hold carry the walker and its
+        // hull and walls block walker and swimmer alike; null disables it.
+        void SetFreighter(const FreighterPlacement* freighter) noexcept {freighter_=freighter;}
         [[nodiscard]] float SubmergedDepth() const noexcept { return swimDepth_.SubmergedDepth(); }
 
         /**
@@ -228,6 +232,7 @@ namespace island
         const JettyPlacement* jetty_ = nullptr;
         const BridgePlacement* bridge_ = nullptr;
         const LookoutPlacement* lookout_ = nullptr;
+        const FreighterPlacement* freighter_ = nullptr;
         SwimDepth swimDepth_;
         bool swimAscend_ = false, swimDescend_ = false;
         float velocityX_ = 0.0f;

@@ -9,6 +9,7 @@
 #include "IslandSimulator/CaveGroundPatch.hpp"
 #include "IslandSimulator/HelicopterLayout.hpp"
 #include "IslandSimulator/BunkerLayout.hpp"
+#include "IslandSimulator/FreighterLayout.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -71,6 +72,12 @@ namespace island
             const auto local=bunker_->Local({x,bunkerHeight,z});
             contact.maximumSlopeRadians=local.z>0&&local.z<10
                 ?std::atan(.32f):0.0f;
+            return contact;
+        }
+        float shipHeight=0.0f;
+        if(freighter_&&freighter_->SupportHeight(x,z,position_.y-EyeHeight,shipHeight)) {
+            // the ship's floors, the stair and the ladder; the step test limits the climb
+            contact.height=shipHeight;
             return contact;
         }
         contact.height = -std::numeric_limits<float>::infinity();
@@ -207,9 +214,18 @@ namespace island
             }
         }
 
+        if(freighter_&&mode_==LocomotionMode::Swimming&&freighter_->SafeTravelFraction(
+            {position_.x,position_.y-EyeHeight,position_.z},{candidateX,position_.y-EyeHeight,candidateZ},
+            CapsuleRadius,CapsuleHeight)<1.0f)
+            return HorizontalStepResult::ObstacleBlocked;
         if (mode_ == LocomotionMode::Walking) {
             const GroundContact current = SampleGroundContact(terrain, position_.x, position_.z);
             const GroundContact candidate = SampleGroundContact(terrain, candidateX, candidateZ);
+            if(freighter_&&freighter_->SafeTravelFraction(
+                {position_.x,std::max(current.height+.001f,position_.y-EyeHeight),position_.z},
+                {candidateX,std::max(candidate.height+.001f,position_.y-EyeHeight),candidateZ},
+                CapsuleRadius,CapsuleHeight)<1.0f)
+                return HorizontalStepResult::ObstacleBlocked;
             if(cave_&&cave_->SafeTravelFraction(
                 {position_.x,std::max(current.height+.001f,position_.y-EyeHeight),position_.z},
                 {candidateX,std::max(candidate.height+.001f,position_.y-EyeHeight),candidateZ},
@@ -270,6 +286,13 @@ namespace island
             position_.x=safe.x;position_.z=safe.z;
             ResolveModeAndHeight(terrain,std::numeric_limits<float>::infinity());
         }
+        if(freighter_&&freighter_->IntersectsCapsule({position_.x,position_.y-EyeHeight,position_.z},
+            CapsuleRadius,CapsuleHeight)) {
+            const auto safe=freighter_->LadderFoot();
+            position_.x=safe.x;position_.z=safe.z;
+            mode_=LocomotionMode::Walking;
+            ResolveModeAndHeight(terrain,std::numeric_limits<float>::infinity());
+        }
 #ifndef NDEBUG
         assert(std::isfinite(position_.x) && std::isfinite(position_.y)
                && std::isfinite(position_.z));
@@ -327,8 +350,11 @@ namespace island
         const TerrainSample centre = terrain.Sample(position_.x, position_.z);
         // The jetty deck keeps a walker dry over submerged ground; stepping off its end drops
         // them into the water as usual.
+        float shipHeight = 0.0f;
         const bool onDeck = (jetty_ && jetty_->OnDeck(position_.x, position_.z))
-            || (bridge_ && bridge_->OnDeck(position_.x, position_.z));
+            || (bridge_ && bridge_->OnDeck(position_.x, position_.z))
+            || (freighter_ && freighter_->SupportHeight(position_.x, position_.z,
+                                                       position_.y - EyeHeight, shipHeight));
         if (mode_ == LocomotionMode::Walking && centre.height < WaterEntryTerrainHeight && !onDeck) {
             mode_ = LocomotionMode::Swimming;
         } else if (mode_ == LocomotionMode::Swimming && centre.height > WaterExitTerrainHeight) {
