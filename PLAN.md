@@ -247,7 +247,7 @@ coaster's mess ceiling.
   receiver. Ceilings and the lee sides of walls keep their ambient light whatever the shadow map
   says. This also ends the double darkening of shaded back faces.
 - **Check.** The mess's ceiling is now plain. The hut, the jetty, the helicopter's cockpit and the
-  idol are unchanged at a glance (`20261022T1123xx` against their earlier captures). The suite is
+  idol are unchanged at a glance (`20261022T111946` and the four captures after it, against their earlier ones). The suite is
   76/76.
 
 ## Loop pass 510 (2026-10-22) — the README gallery shows the mine and the volcano
