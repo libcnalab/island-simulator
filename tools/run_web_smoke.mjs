@@ -1150,7 +1150,7 @@ try {
             && log.includes("wood uses outward shared normals and scale-correct fixed-sun lighting")
             && log.includes("ocean bounded grazing contrast and depth-limited filtered breaker foam")
             && log.includes("ocean short waves use phased wind packets with analytic envelope gradients")
-            && (!focusedGroundingCheck || mode === "reef" || /contact shadows [1-9][0-9]*(?: \(walker's own shadow [01], sun figure [0-9]+ triangles\))?, [1-9][0-9]* triangles, 1 draw/.test(log))
+            && (!focusedGroundingCheck || mode === "reef" || /contact shadows [1-9][0-9]*(?: \(walker's own shadow [01], sun figure [0-9]+ triangles\))?, [1-9][0-9]* triangles, [12] draw/.test(log))
             && log.includes("rocks use shared smooth normals, scale-correct daylight and filtered mineral weathering")
             && log.includes("near rocks use filtered mineral strata and a local soil-stained base")
             && (mode !== "shipwreck" || /coastal contact shadows [1-9][0-9]*/.test(log))
@@ -2211,7 +2211,7 @@ try {
     && propResult.output?.includes("jungle portable wind shader with canopy/understory/bush/ground LOD")
     && /props [0-9]+\/209 rocks, [0-9]+\/14 reef outcrops, [0-9]+\/314 reef habitat, [1-9][0-9]*\/12 logs/.test(
       propResult.output ?? "")
-    && /contact shadows [1-9][0-9]*(?: \(walker's own shadow [01], sun figure [0-9]+ triangles\))?, [1-9][0-9]* triangles, 1 draw/.test(
+    && /contact shadows [1-9][0-9]*(?: \(walker's own shadow [01], sun figure [0-9]+ triangles\))?, [1-9][0-9]* triangles, [12] draw/.test(
       propResult.output ?? "")
     && !propResult.error;
 

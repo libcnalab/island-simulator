@@ -11,6 +11,7 @@
 #include <stdexcept>
 
 #include "IslandSimulator/DayNightCycle.hpp"
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/SunShadowFade.hpp"
 #include "IslandSimulator/ContactShadowPatch.hpp"
@@ -39,6 +40,15 @@
 #include "Microsoft/Xna/Framework/Graphics/RasterizerState.hpp"
 #include "Microsoft/Xna/Framework/Graphics/SetDataOptions.hpp"
 #include "Microsoft/Xna/Framework/Graphics/VertexPositionColor.hpp"
+#include "Microsoft/Xna/Framework/Graphics/ShaderEffect.hpp"
+#include "Microsoft/Xna/Framework/Graphics/VertexBuffer.hpp"
+#include "Microsoft/Xna/Framework/Graphics/VertexDeclaration.hpp"
+#include "CNA/Graphics/ShaderCodeEXT.hpp"
+#include "CNA/Graphics/ShaderPackageEXT.hpp"
+#include "CNA/ShaderLanguageEXT.hpp"
+#include <iostream>
+#include <string>
+#include <type_traits>
 
 using namespace Microsoft::Xna::Framework;
 using namespace Microsoft::Xna::Framework::Graphics;
@@ -130,6 +140,84 @@ namespace island
                 vertices.emplace_back(edgePoints[static_cast<std::size_t>(nextSegment)], edgeColor);
             }
         }
+
+        // A static shadow's vertex on the GPU: its place, its shadow's centre and reach, its
+        // base opacity and whether it is a structure's mass shadow (which gives way to the sun
+        // shadow map where the map's own shadows reach).
+        struct StaticGpuVertex
+        {
+            float position[3];
+            float centreReach[4];
+            float alphaStructure[2];
+        };
+        static_assert(std::is_trivially_copyable_v<StaticGpuVertex> && sizeof(StaticGpuVertex) == 36);
+
+        const VertexDeclaration& StaticDeclaration()
+        {
+            static const VertexDeclaration declaration{
+                VertexElement(offsetof(StaticGpuVertex, position), VertexElementFormat::Vector3,
+                              VertexElementUsage::Position, 0),
+                VertexElement(offsetof(StaticGpuVertex, centreReach), VertexElementFormat::Vector4,
+                              VertexElementUsage::TextureCoordinate, 0),
+                VertexElement(offsetof(StaticGpuVertex, alphaStructure), VertexElementFormat::Vector2,
+                              VertexElementUsage::TextureCoordinate, 1)};
+            return declaration;
+        }
+
+        // The CPU's DistanceFade and sun_shadow_fade::Strength, per vertex: full to 78 % of the
+        // shadow's reach, nothing past it (the vertex then leaves the clip volume, so a faded
+        // shadow costs no fragments); a structure's mass shadow takes the share of its shadow
+        // that the map has faded out, measured along the hour's shading light as the map is.
+        std::string StaticVertexShader()
+        {
+            namespace f = sun_shadow_fade;
+            return std::string(R"(
+layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec4 aCentreReach;
+layout(location = 2) in vec2 aAlphaStructure;
+uniform mat4 uViewProjection;
+uniform vec3 uCamera;
+uniform vec4 uMap;   // x: 1 while a sun shadow map casts the structures, yz: its anchor (the camera's cell)
+uniform vec3 uSun;   // toward the hour's shading light
+out float vAlpha;
+const float MapRadius = )") + std::to_string(f::MapRadius) + R"(;
+const float TargetHeight = )" + std::to_string(f::TargetHeight) + R"(;
+const float EdgeBand = )" + std::to_string(f::EdgeBand) + R"(;
+const float FarFadeStart = )" + std::to_string(f::FarFadeStart) + R"(;
+const float FarFadeEnd = )" + std::to_string(f::FarFadeEnd) + R"(;
+vec2 lightOffset(vec3 p, vec2 column) {
+    float horizontal = max(length(uSun.xz), 1e-4);
+    vec2 azimuth = uSun.xz / horizontal;
+    vec2 d = p.xz - column;
+    return vec2(d.x * azimuth.y - d.y * azimuth.x, -(d.x * azimuth.x + d.y * azimuth.y) * uSun.y + (p.y - TargetHeight) * horizontal);
+}
+float mapStrength(vec3 p) {
+    vec2 fromAnchor = lightOffset(p, uMap.yz);
+    float edge = (MapRadius - max(abs(fromAnchor.x), abs(fromAnchor.y))) / (2.0 * MapRadius);
+    if (edge <= 0.0) return 0.0;
+    vec2 v = lightOffset(p, uCamera.xz);
+    vec2 v2 = v * v;
+    float far = smoothstep(FarFadeStart, FarFadeEnd, sqrt(sqrt(v2.x * v2.x + v2.y * v2.y)));
+    return smoothstep(0.0, EdgeBand, edge) * (1.0 - far);
+}
+void main() {
+    float reach = aCentreReach.w;
+    float distanceToCamera = distance(aCentreReach.xyz, uCamera);
+    float fade = clamp((reach - distanceToCamera) / (reach * 0.22), 0.0, 1.0);
+    float share = (aAlphaStructure.y > 0.5 && uMap.x > 0.5) ? 1.0 - mapStrength(aPosition) : 1.0;
+    vAlpha = aAlphaStructure.x * fade * share;
+    gl_Position = uViewProjection * vec4(aPosition, 1.0);
+    gl_Position.z = 2.0 * gl_Position.z - gl_Position.w;
+    if (vAlpha < 0.002) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+}
+)";
+        }
+
+        constexpr const char* StaticFragmentShader = R"(
+in float vAlpha;
+out vec4 fragColor;
+void main() { fragColor = vec4(0.0, 0.0, 0.0, vAlpha); }
+)";
 
         [[nodiscard]] bool IsVisible(const BoundingFrustum& frustum,
                                      const Vector3& cameraPosition,
@@ -296,8 +384,43 @@ namespace island
             shadow.centre = (minimum + maximum) * 0.5f;
             shadow.radius = Vector3::Distance(minimum, maximum) * 0.5f + 0.001f;
         }
-        vertexCapacity_ = staticVertices_.size()
-            + (MonkeyTroop::MonkeyCount + BoarHerd::BoarCount + GoatHabitat::Count + 1U) * VerticesPerShadow   // +1: the walker
+        // The static shadows go up once.
+        {
+            std::vector<StaticGpuVertex> gpu;
+            gpu.reserve(staticVertices_.size());
+            for (const StaticShadow& shadow : staticShadows_) {
+                const float structure = shadow.kind == StaticShadowKind::Structure ? 1.0f : 0.0f;
+                for (std::size_t index = shadow.firstVertex; index < shadow.firstVertex + shadow.vertexCount; ++index) {
+                    const auto& vertex = staticVertices_[index];
+                    gpu.push_back({{vertex.Position.X, vertex.Position.Y, vertex.Position.Z},
+                                   {shadow.centre.X, shadow.centre.Y, shadow.centre.Z, shadow.maximumDistance},
+                                   {static_cast<float>(vertex.Color.getAProperty()) / 255.0f, structure}});
+                }
+            }
+            staticVertexTotal_ = static_cast<int>(gpu.size());
+            if (staticVertexTotal_ > 0) {
+                staticBuffer_ = std::make_unique<VertexBuffer>(device, StaticDeclaration(), staticVertexTotal_, BufferUsage::WriteOnly);
+                staticBuffer_->SetData(gpu.data(), staticVertexTotal_);
+            }
+            using CNA::Graphics::ShaderCodeEXT;
+            const auto source = [](const bool es, const std::string& body) {
+                return std::string(es ? "#version 300 es\nprecision highp float;\n" : "#version 330 core\n") + body;
+            };
+            const std::string vertexBody = StaticVertexShader();
+            const CNA::Graphics::ShaderPackageEXT package(
+                {ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslEs, CNA::ShaderStageEXT::Vertex, "main", "contact-static/es.vert", source(true, vertexBody)),
+                 ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslEs, CNA::ShaderStageEXT::Fragment, "main", "contact-static/es.frag", source(true, StaticFragmentShader)),
+                 ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslDesktop, CNA::ShaderStageEXT::Vertex, "main", "contact-static/gl.vert", source(false, vertexBody)),
+                 ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslDesktop, CNA::ShaderStageEXT::Fragment, "main", "contact-static/gl.frag", source(false, StaticFragmentShader))},
+                {CNA::ShaderStageEXT::Vertex, CNA::ShaderStageEXT::Fragment});
+            staticEffect_ = std::make_unique<ShaderEffect>(device, package);
+            if (!staticEffect_->IsEffectValid())
+                throw std::runtime_error("static contact shadow shader failed: " + staticEffect_->GetCompileErrorEXT());
+            std::cout << "island-simulator: contact shadows: " << staticShadows_.size() << " static shadows ("
+                      << staticVertexTotal_ << " vertices) uploaded once, faded by distance in the vertex shader; "
+                         "only the moving ones are restaged\n";
+        }
+        vertexCapacity_ = (MonkeyTroop::MonkeyCount + BoarHerd::BoarCount + GoatHabitat::Count + 1U) * VerticesPerShadow   // +1: the walker
             + MaximumSnakeShadows*SnakeShadowVertexLimit
             + MaximumSpiderShadows*SpiderShadowVertexLimit;
         if (vertexCapacity_ > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
@@ -426,8 +549,9 @@ namespace island
         }
         if (rebuild) {
             const bool staticRebuild = cameraRebuild || !staticValid_;
+            stagingVertices_.clear();
             if (staticRebuild) {
-                stagingVertices_.clear();
+                visibleStaticTriangles_ = 0;
                 visiblePalmShadowCount_ = 0;
                 visibleCanopyShadowCount_ = 0;
                 visibleRockShadowCount_ = 0;
@@ -435,8 +559,6 @@ namespace island
                 visibleHutShadowCount_ = 0;
                 visibleStructureShadowCount_ = 0;
                 visibleCoastalShadowCount_ = 0;
-            } else {
-                stagingVertices_.resize(staticVertexCount_);
             }
             visibleShadowCount_ = 0;
             visibleMonkeyShadowCount_ = 0;
@@ -455,10 +577,12 @@ namespace island
             const float shadowDirectionX = -shading.x / horizontalSunLength;
             const float shadowDirectionZ = -shading.z / horizontalSunLength;
 
+            // The static shadows are drawn from their own buffer (Draw's end); here they are
+            // only counted as the camera moves, for the inventory.
             for (const StaticShadow& shadow : staticShadows_) {
                 if (!staticRebuild) break;
-                // A structure's mass shadow under an active sun shadow map takes the share of
-                // the shadow the map has faded out at each of its vertices.
+                // A structure's mass shadow under an active sun shadow map counts where the map
+                // has faded out at any of its vertices.
                 const bool beyondMapOnly = shadow.kind == StaticShadowKind::Structure && sunShadowMapActive_;
                 float fade = 0.0f;
                 if (!IsVisible(frustum, cameraPosition,
@@ -466,26 +590,17 @@ namespace island
                                shadow.radius, shadow.maximumDistance, fade)) {
                     continue;
                 }
-                const std::size_t firstStaged = stagingVertices_.size();
-                bool anyShare = !beyondMapOnly;
-                for (std::size_t vertexIndex = 0; vertexIndex < shadow.vertexCount; ++vertexIndex) {
-                    const VertexPositionColor& source = staticVertices_[
-                        shadow.firstVertex + vertexIndex];
-                    float share = 1.0f;
-                    if (beyondMapOnly) {
-                        share = 1.0f - sun_shadow_fade::Strength(source.Position.X, source.Position.Y, source.Position.Z,
-                                                                 cameraPosition.X, cameraPosition.Z,
-                                                                 environment::SunDirectionX, environment::SunDirectionY,
-                                                                 environment::SunDirectionZ);
-                        anyShare = anyShare || share > 0.01f;
+                if (beyondMapOnly) {
+                    const auto toSun = sun_light::Current().shading;
+                    bool anyShare = false;
+                    for (std::size_t vertexIndex = 0; vertexIndex < shadow.vertexCount && !anyShare; ++vertexIndex) {
+                        const Vector3& at = staticVertices_[shadow.firstVertex + vertexIndex].Position;
+                        anyShare = 1.0f - sun_shadow_fade::Strength(at.X, at.Y, at.Z, cameraPosition.X, cameraPosition.Z,
+                                                                    toSun.x, toSun.y, toSun.z) > 0.01f;
                     }
-                    stagingVertices_.emplace_back(source.Position,
-                        Color(0, 0, 0, static_cast<int>(FadedAlpha(source.Color.getAProperty(), fade * share))));
+                    if (!anyShare) continue;   // wholly inside the map's shadows
                 }
-                if (!anyShare) {
-                    stagingVertices_.resize(firstStaged);   // wholly inside the map's shadows
-                    continue;
-                }
+                visibleStaticTriangles_ += static_cast<int>(shadow.vertexCount / 3U);
                 switch (shadow.kind) {
                 case StaticShadowKind::Palm:
                     ++visiblePalmShadowCount_;
@@ -510,10 +625,7 @@ namespace island
                     break;
                 }
             }
-            if (staticRebuild) {
-                staticVertexCount_ = stagingVertices_.size();
-                staticValid_ = true;
-            }
+            if (staticRebuild) staticValid_ = true;
 
             for (const MonkeyState& monkey : monkeys) {
                 const auto centre=MonkeyVisualCentre(monkey);
@@ -640,13 +752,30 @@ namespace island
             cacheValid_ = true;
         }
 
-        if (stagingVertices_.empty()) {
-            return;
-        }
-
         device_.setRasterizerStateProperty(RasterizerState::CullNone);
         device_.setBlendStateProperty(BlendState::AlphaBlend);
         device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
+        if (staticBuffer_ && staticEffect_ && staticVertexTotal_ > 0) {
+            float viewProjection[16];
+            (view * projection).ToColumnMajor(viewProjection);
+            const auto shading = sun_light::Current().shading;
+            Vector3 toSun(shading.x, shading.y, shading.z);
+            if (toSun.LengthSquared() < 1e-8f) toSun = Vector3::Up;
+            toSun.Normalize();
+            staticEffect_->Apply();
+            staticEffect_->SetUniformMat4("uViewProjection", viewProjection);
+            staticEffect_->SetUniformVec3("uCamera", cameraPosition.X, cameraPosition.Y, cameraPosition.Z);
+            staticEffect_->SetUniformVec4("uMap", sunShadowMapActive_ ? 1.0f : 0.0f, sun_shadow_fade::AnchorOf(cameraPosition.X),
+                                          sun_shadow_fade::AnchorOf(cameraPosition.Z), 0.0f);
+            staticEffect_->SetUniformVec3("uSun", toSun.X, toSun.Y, toSun.Z);
+            device_.SetVertexBuffer(staticBuffer_.get());
+            device_.setIndicesProperty(nullptr);
+            device_.DrawPrimitives(PrimitiveType::TriangleList, 0, staticVertexTotal_ / 3);
+            ++drawCallCount_;
+        }
+        if (stagingVertices_.empty() || primitiveCount_ <= 0) {
+            return;
+        }
         device_.SetVertexBuffer(vertices_.get());
         device_.setIndicesProperty(nullptr);
         effect_->setWorldProperty(Matrix::getIdentityProperty());
@@ -654,6 +783,6 @@ namespace island
         effect_->setProjectionProperty(projection);
         effect_->Apply();
         device_.DrawPrimitives(PrimitiveType::TriangleList, 0, primitiveCount_);
-        drawCallCount_ = 1;
+        ++drawCallCount_;
     }
 }

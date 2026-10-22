@@ -14,6 +14,8 @@ namespace Microsoft::Xna::Framework::Graphics
 {
     class BasicEffect;
     class DynamicVertexBuffer;
+    class ShaderEffect;
+    class VertexBuffer;
     class GraphicsDevice;
     struct VertexPositionColor;
 }
@@ -96,7 +98,8 @@ namespace island
         {
             return visibleMonkeyShadowCount_;
         }
-        [[nodiscard]] int PrimitiveCount() const noexcept { return primitiveCount_; }
+        /** The triangles drawn: the visible static shadows' and the moving ones'. */
+        [[nodiscard]] int PrimitiveCount() const noexcept { return visibleStaticTriangles_ + primitiveCount_; }
         [[nodiscard]] int VisibleBoarShadowCount() const noexcept { return visibleBoarShadowCount_; }
         [[nodiscard]] int VisibleGoatShadowCount() const noexcept { return visibleGoatShadowCount_; }
         [[nodiscard]] int VisiblePlayerShadowCount() const noexcept { return visiblePlayerShadowCount_; }
@@ -140,6 +143,12 @@ namespace island
         const RenderedTerrainSurface* ground_ = nullptr;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> vertices_;
+        // The static shadows uploaded once; their distance fade and a structure's share beyond
+        // the sun shadow map are the vertex shader's (none of it is restaged as the camera moves).
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> staticEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> staticBuffer_;
+        int staticVertexTotal_ = 0;
+        int visibleStaticTriangles_ = 0;
         std::vector<StaticShadow> staticShadows_;
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> staticVertices_;
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> stagingVertices_;
@@ -152,8 +161,7 @@ namespace island
         std::vector<SpiderState> cachedSpiders_;
         std::vector<Microsoft::Xna::Framework::Vector3> cachedSnakePoints_;
         bool cacheValid_ = false;
-        bool staticValid_ = false;            // the static shadows' vertices lead the batch
-        std::size_t staticVertexCount_ = 0;
+        bool staticValid_ = false;            // the static shadows' visible counts are current
         int visibleShadowCount_ = 0;
         int visiblePalmShadowCount_ = 0;
         int visibleCanopyShadowCount_ = 0;

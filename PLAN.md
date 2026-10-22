@@ -233,6 +233,30 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 464 (2026-10-22) — the static contact shadows stay on the GPU
+
+The operator's last play log (2026-10-21 18:30Z) had `contact-shadows` as the costliest CPU render
+pass: 4.5 ms per frame at the median of 40 windows, against 3.2 ms for the next. The cause: every
+camera move of a quarter metre, and any turn of the view (a 0.008 change in the view matrix),
+restaged all the static contact shadows. That is 867 shadows and 71,820 vertices (palms, crowns,
+rocks, wood, coast, hut, structures), each with its distance fade and a structure's share beyond
+the sun shadow map recomputed per vertex, followed by an upload of about 1.15 MB. Walking or
+looking round, that ran nearly every frame.
+
+The static shadows now go up once into their own vertex buffer (position, the shadow's centre and
+reach, base alpha, a structure flag). A small shader does what the CPU did per vertex:
+
+- the distance fade (full to 78 % of the reach);
+- a structure's share, `1 - sun_shadow_fade::Strength` ported to GLSL, now along the hour's shading
+  light as the map is, where it was the fixed sun.
+
+A faded vertex leaves the clip volume, so a far shadow costs no fragments. On a camera move the CPU
+only counts the visible static shadows for the inventory. The moving shadows (animals, the walker's
+pool) are restaged as before in the small dynamic buffer. The batch is now two draws, and the web
+smoke's regex accepts `[12] draw`. In `contact` the inventory is unchanged (5 shadows, 100
+triangles). `contact`, `shipwreck-wide`, `palms`, `overview` and `jungle` differ from the 02:10
+sweep only by wind-moved fronds and grass.
+
 ## Loop pass 463 (2026-10-22) — beetles on the ground cast their figures
 
 After pass 455, recaptures of `tracks` and `beetles` show no stray walker figure. The beetle's close
