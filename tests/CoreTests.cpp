@@ -133,6 +133,7 @@
 #include "IslandSimulator/PandanusLayout.hpp"
 #include "IslandSimulator/TermiteNestLayout.hpp"
 #include "IslandSimulator/FlyingFishShoal.hpp"
+#include "IslandSimulator/WindthrowLayout.hpp"
 #include "IslandSimulator/SwimDepth.hpp"
 #include "IslandSimulator/ProceduralMeshValidation.hpp"
 #include "IslandSimulator/RockSurface.hpp"
@@ -9708,6 +9709,41 @@ int main()
         bool kept = true;
         for (const auto& tree : moved) kept = kept && std::hypot(tree.x - trees.front().x, tree.z - trees.front().z) > 3.2f;
         Check(kept, "a screw pine grows through an obstacle");
+    }
+    {
+        // The windthrown giant: found deep in the jungle, its trunk, plate and pit clear of every
+        // trunk and rock, blocking the way along its length; somewhere else when told to keep away.
+        const island::IslandTerrain terrain;
+        const island::JungleLayout jungle(terrain);
+        const std::vector<island::CircularObstacle> solid(jungle.Obstacles().begin(), jungle.Obstacles().end());
+        const auto fallen = island::WindthrowLayout::FindInWorld(terrain, jungle.Canopy(), solid, {});
+        Check(fallen.has_value(), "no windthrown giant found a clear lie in the jungle");
+        if (fallen) {
+            using W = island::WindthrowPlacement;
+            bool clear = true;
+            for (const auto& o : solid)
+                for (float along = 0.5f; along <= W::TrunkLength; along += 0.5f) {
+                    const auto p = fallen->At(along, 0.0f);
+                    clear = clear && std::hypot(o.x - p[0], o.z - p[1]) > o.radius + W::RadiusAt(along);
+                }
+            int stand = 0;
+            for (const auto& tree : jungle.Canopy())
+                stand += std::hypot(tree.x - fallen->x, tree.z - fallen->z) < island::WindthrowLayout::StandRadius ? 1 : 0;
+            const auto blocks = fallen->Obstacles();
+            bool along = true;
+            for (float a = 1.0f; a < W::TrunkLength - 1.0f; a += 0.5f) {
+                const auto p = fallen->At(a, 0.0f);
+                bool covered = false;
+                for (const auto& o : blocks) covered = covered || std::hypot(o.x - p[0], o.z - p[1]) < o.radius;
+                along = along && covered;
+            }
+            const std::vector<std::array<float, 2>> keep{{{fallen->x, fallen->z}}};
+            const auto moved = island::WindthrowLayout::FindInWorld(terrain, jungle.Canopy(), solid, keep);
+            Check(clear && stand >= island::WindthrowLayout::MinimumStand && along
+                      && terrain.SignedShoreDistance(fallen->x, fallen->z) >= island::WindthrowLayout::MinimumShoreDistance
+                      && (!moved || std::hypot(moved->x - fallen->x, moved->z - fallen->z) > 14.0f),
+                  "the windthrown giant lies through a trunk, outside the jungle, leaves gaps in its block or ignores a place to keep away from");
+        }
     }
     {
         // The flying fish: by day, for a walker on the beach, a flight every half minute to a

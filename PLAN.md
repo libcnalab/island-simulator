@@ -233,6 +233,53 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 547 (2026-10-22) — a windthrown jungle giant
+
+The jungle's trees all stood. Now one giant lies where a storm threw it, the commonest
+big-scale sight of an old tropical forest floor.
+
+- **Placement** (`WindthrowLayout::FindInWorld`).
+  - The search runs over the island's 5 m grid, at least 40 m inland on gentle ground, and takes
+    the deepest stand of jungle (the most canopy trees within 16 m).
+  - The trunk (17 m), the root plate (4.6 m) and the pit must lie clear of every trunk, bush,
+    rock and structure, with the ground rising no more than 1.6 m along the trunk.
+  - It keeps 14 m from the camp, the walker's start, the hut, the lookout, the cave, the bunker,
+    the mine, the volcano, the helicopter, the god and the stream. 24 headings are tried.
+  - The search takes about 30 ms. The giant lies at (-60, -115).
+- **The trunk.**
+  - It rests on the ground's high points and is held up at its foot by the plate, smooth-shaded
+    with per-corner light.
+  - The bark is furrowed with dark streaks, with cushions of moss over the top, pale lichen
+    patches on the flanks and a darker, earthy underside.
+  - Shelf fungi stand in tiers up its flanks, and ferns root in the moss along the top: a nurse
+    log.
+  - Three branch stubs are snapped short along it.
+  - The snapped end is pale wood with eleven splinters, and the crown's four broken grey limbs
+    and their twigs are strewn beyond it.
+- **The root plate.** It stands on edge at the trunk's foot, leaning back over its pit, with a
+  ragged, jagged rim.
+  - The old underside faces the pit: clods and hollows of soil and clay, dark humus round the
+    taproot's hollow, and stones half sunk in it. 30 broken roots curve out through the earth,
+    weaving in and out of it, and those reaching the rim are snapped off a little past it.
+  - The old forest-floor face is dark litter with a little moss, and the trunk's big flare roots
+    run into it.
+  - Fine roots hang off the upper rim.
+- **The pit.** Wet dark earth darkening from the floor's litter at its rim, a puddle in its
+  bottom, loose stones and root bits.
+- **Drawing and shadows.** One buffer (11,366 triangles), drawn within 180 m. It is relit by the
+  hour's sun, receives the sun shadows and casts them (all but the pit's earth). The plate adds a
+  structure shade disc to the animals' lighting.
+- **Walking.** Circles every 0.6 m along the trunk and across the plate block the walker and the
+  animals.
+- **New QA views.**
+  - `windthrow`: off the pit's corner at the plate and the trunk, from the first of several
+    places whose sight passes clear of the standing trunks (`20261022T161304`).
+  - `windthrow-log`: beside the trunk toward its snapped end (`161313`).
+  - `jungle` still passes (`161322`).
+- **Tests.** CoreTests check that a site is found deep in the jungle, its trunk clear of every
+  obstacle and blocked along its whole length, and that it moves elsewhere when told to keep
+  away.
+
 ## Loop pass 546 (2026-10-22) — flying fish gliding over the open water
 
 The sea off the island had whales, dolphins, a shark and reef fish, but nothing in the air over

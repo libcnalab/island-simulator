@@ -74,6 +74,7 @@
 #include "IslandSimulator/PandanusRenderer.hpp"
 #include "IslandSimulator/TermiteNestRenderer.hpp"
 #include "IslandSimulator/FlyingFishRenderer.hpp"
+#include "IslandSimulator/WindthrowRenderer.hpp"
 #include "IslandSimulator/DolphinPod.hpp"
 #include "IslandSimulator/DolphinRenderer.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
@@ -286,6 +287,8 @@ namespace island
         PandanusDetail,
         TermiteNestDetail,
         FlyingFishDetail,
+        WindthrowDetail,
+        WindthrowLogDetail,
         PlaneWreckDetail,
         PlaneCockpitDetail,
         BeachLitterDetail,
@@ -637,6 +640,8 @@ namespace island
         std::unique_ptr<PandanusRenderer> pandanusRenderer_;
         std::vector<TermiteNest> termiteNests_;     // the arboreal termites' nests on the jungle trunks
         std::unique_ptr<TermiteNestRenderer> termiteNestRenderer_;
+        std::optional<WindthrowPlacement> windthrowPlacement_;  // the windthrown jungle giant
+        std::unique_ptr<WindthrowRenderer> windthrowRenderer_;
         std::unique_ptr<BridgeRenderer> bridgeRenderer_;
         std::unique_ptr<LookoutRenderer> lookoutRenderer_;
         FallingFruitField fallingFruit_{terrain_};

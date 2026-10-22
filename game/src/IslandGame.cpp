@@ -211,6 +211,8 @@ namespace island
             case FixedViewpoint::PandanusDetail: return "pandanus";
             case FixedViewpoint::TermiteNestDetail: return "termite-nest";
             case FixedViewpoint::FlyingFishDetail: return "flying-fish";
+            case FixedViewpoint::WindthrowDetail: return "windthrow";
+            case FixedViewpoint::WindthrowLogDetail: return "windthrow-log";
             case FixedViewpoint::PlaneWreckDetail: return "plane-wreck";
             case FixedViewpoint::PlaneCockpitDetail: return "plane-cockpit";
             case FixedViewpoint::BeachLitterDetail: return "beach-litter";
@@ -609,12 +611,44 @@ namespace island
             for(const PandanusPlacement& tree:pandanus_) worldObstacles.push_back(tree.Obstacle());
         }
         termiteNests_=TermiteNestLayout::Place(jungleLayout_.Canopy());
+        {
+            // A jungle giant the wind threw, in the deepest stand where its trunk, root plate and
+            // pit lie clear, away from the camp, the walker's start, the landmarks inland and the
+            // stream; its trunk and plate stop the walker and the animals.
+            std::vector<std::array<float,2>> avoid{{{CampfireSite::X,CampfireSite::Z}},
+                                                   {{VegetationLayout::PlayerSpawnX,VegetationLayout::PlayerSpawnZ}}};
+            if(hutPlacement_) avoid.push_back({{hutPlacement_->x,hutPlacement_->z}});
+            if(lookoutPlacement_) avoid.push_back({{lookoutPlacement_->x,lookoutPlacement_->z}});
+            {
+                const CaveLayout cave(terrain_);
+                avoid.push_back({{cave.Entrance().x,cave.Entrance().z}});
+            }
+            avoid.push_back({{bunkerLayout_.Entrance().x,bunkerLayout_.Entrance().z}});
+            avoid.push_back({{mineLayout_.Entrance().x,mineLayout_.Entrance().z}});
+            avoid.push_back({{VolcanoSite::X,VolcanoSite::Z}});
+            avoid.push_back({{helicopterPlacement_->x,helicopterPlacement_->z}});
+            if(idolPlacement_) avoid.push_back({{idolPlacement_->x,idolPlacement_->z}});
+            {
+                const StreamCourse course(terrain_);
+                for(std::size_t i=0;i<course.Count();i+=3) avoid.push_back({{course.Station(i).x,course.Station(i).z}});
+            }
+            windthrowPlacement_=WindthrowLayout::FindInWorld(terrain_,jungleLayout_.Canopy(),worldObstacles,avoid);
+            if(windthrowPlacement_) {
+                for(const CircularObstacle& o:windthrowPlacement_->Obstacles()) worldObstacles.push_back(o);
+                std::cout<<"island-simulator: a windthrown giant lies in the jungle at ("<<windthrowPlacement_->x<<", "
+                         <<windthrowPlacement_->z<<")\n";
+            }
+        }
         // The animals' lighting reads the solid casters the sun shadow map draws: the jungle's
         // snags, understory and bushes (baked with the field) and the structures, so a goat
         // under the hut's eave or a boar behind a trunk darkens as the ground there does.
         sunShade_.AddDisc(hutPlacement_->x,hutPlacement_->floorY+1.6f,hutPlacement_->z,2.7f,SunShadeField::StructureShade);
         if(lookoutPlacement_) sunShade_.AddDisc(lookoutPlacement_->x,lookoutPlacement_->platformY+0.3f,lookoutPlacement_->z,
             LookoutPlacement::Half*1.4f,SunShadeField::StructureShade);
+        if(windthrowPlacement_) {
+            const auto plate=windthrowPlacement_->At(-0.2f,0.0f);
+            sunShade_.AddDisc(plate[0],windthrowPlacement_->groundY+1.4f,plate[1],1.9f,SunShadeField::StructureShade);
+        }
         sunShade_.AddDisc(helicopterPlacement_->x,helicopterPlacement_->floorY+1.0f,helicopterPlacement_->z,2.2f,SunShadeField::StructureShade);
         canopyLightField_.SetSunShade(&sunShade_);
         std::cout<<"island-simulator: the animals' lighting reads the sun's solid casters: "<<sunShade_.CasterCount()
@@ -2163,6 +2197,60 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: termite-nest QA camera looks up at a termites' nest on a jungle trunk\n";
+        } else if (viewpoint_ == FixedViewpoint::WindthrowLogDetail) {
+            // Beside the fallen trunk toward its snapped end, along it: its moss, shelf fungi and
+            // ferns, the splintered break and the crown's limbs beyond; from whichever side of it
+            // the sight passes clear of the standing trunks and bushes.
+            if(!windthrowPlacement_) throw std::runtime_error("Windthrow QA requires the fallen giant");
+            const WindthrowPlacement& w=*windthrowPlacement_;
+            const auto clear=[&](const std::array<float,2>& from,const std::array<float,2>& to) {
+                for(const CircularObstacle& o:jungleLayout_.Obstacles()) {
+                    const float dx=to[0]-from[0],dz=to[1]-from[1],length=dx*dx+dz*dz;
+                    const float t=std::clamp(((o.x-from[0])*dx+(o.z-from[1])*dz)/length,0.0f,1.0f);
+                    if(std::hypot(o.x-from[0]-dx*t,o.z-from[1]-dz*t)<o.radius+0.4f) return false;
+                }
+                return true;
+            };
+            std::array<float,2> eye=w.At(10.5f,3.4f);
+            bool found=false;
+            for(const float side:{1.0f,-1.0f}) for(const float along:{10.5f,9.0f,12.0f}) for(const float out:{3.4f,2.6f}) {
+                const auto candidate=w.At(along,side*out);
+                if(!found&&clear(candidate,w.At(WindthrowPlacement::TrunkLength,0.0f))&&clear(candidate,w.At(along+3.0f,0.0f))) {
+                    eye=candidate;found=true;
+                }
+            }
+            cameraPosition_=Vector3(eye[0],terrain_.Height(eye[0],eye[1])+PlayerMotion::EyeHeight,eye[1]);
+            const auto look=w.At(WindthrowPlacement::TrunkLength-2.5f,0.0f);
+            const Vector3 direction=Vector3(look[0],terrain_.Height(look[0],look[1])+0.4f,look[1])-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: windthrow-log QA camera looks along the fallen trunk to its snapped end\n";
+        } else if (viewpoint_ == FixedViewpoint::WindthrowDetail) {
+            // Off the pit's corner, at the torn-up root plate on edge and the trunk lying away
+            // from it along the forest floor: from the first of a few such places whose sight of
+            // the plate and of the trunk's middle passes clear of the standing trunks and bushes.
+            if(!windthrowPlacement_) throw std::runtime_error("Windthrow QA requires the fallen giant");
+            const WindthrowPlacement& w=*windthrowPlacement_;
+            const auto look=w.At(2.0f,0.0f);
+            const auto sightClear=[&](const std::array<float,2>& from,const std::array<float,2>& to) {
+                for(const CircularObstacle& o:jungleLayout_.Obstacles()) {
+                    const float dx=to[0]-from[0],dz=to[1]-from[1],length=dx*dx+dz*dz;
+                    const float t=std::clamp(((o.x-from[0])*dx+(o.z-from[1])*dz)/length,0.0f,1.0f);
+                    if(std::hypot(o.x-from[0]-dx*t,o.z-from[1]-dz*t)<o.radius+0.5f) return false;
+                }
+                return true;
+            };
+            std::array<float,2> eye=w.At(-5.0f,6.2f);
+            bool found=false;
+            for(const float side:{1.0f,-1.0f}) for(const float back:{-5.0f,-3.5f,-6.5f,-2.0f}) for(const float out:{6.2f,8.0f,5.0f,9.5f}) {
+                const auto candidate=w.At(back,side*out);
+                if(!found&&sightClear(candidate,w.At(-0.2f,0.0f))&&sightClear(candidate,w.At(8.0f,0.0f))) {eye=candidate;found=true;}
+            }
+            cameraPosition_=Vector3(eye[0],terrain_.Height(eye[0],eye[1])+PlayerMotion::EyeHeight,eye[1]);
+            const Vector3 direction=Vector3(look[0],w.groundY+1.1f,look[1])-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: windthrow QA camera looks at the torn-up root plate and the fallen trunk\n";
         } else if (viewpoint_ == FixedViewpoint::FlyingFishDetail) {
             // A swimmer's eye out past the shallows off the whale-breach bearing's beach, at a flight
             // of flying fish gliding past along the shore some ten metres off, under a second into it
@@ -3200,6 +3288,7 @@ namespace island
         if(freighterPlacement_) freighterRenderer_=std::make_unique<FreighterRenderer>(device,*freighterPlacement_,terrain_,*drawnGround_);
         if(lifeboatPlacement_) lifeboatRenderer_=std::make_unique<LifeboatRenderer>(device,*lifeboatPlacement_,terrain_,*drawnGround_);
         if(!pandanus_.empty()) pandanusRenderer_=std::make_unique<PandanusRenderer>(device,pandanus_,terrain_,*drawnGround_);
+        if(windthrowPlacement_) windthrowRenderer_=std::make_unique<WindthrowRenderer>(device,*windthrowPlacement_,terrain_,*drawnGround_);
         if(!termiteNests_.empty()) termiteNestRenderer_=std::make_unique<TermiteNestRenderer>(device,termiteNests_,jungleLayout_.Canopy());
         if(bridgePlacement_) bridgeRenderer_=std::make_unique<BridgeRenderer>(device,*bridgePlacement_);
         if(lookoutPlacement_) lookoutRenderer_=std::make_unique<LookoutRenderer>(device,*lookoutPlacement_);
@@ -6673,6 +6762,7 @@ namespace island
             + (pandanusRenderer_ ? pandanusRenderer_->DrawCallCount() : 0)
             + (termiteNestRenderer_ ? termiteNestRenderer_->DrawCallCount() : 0)
             + flyingFishRenderer_->DrawCallCount()
+            + (windthrowRenderer_ ? windthrowRenderer_->DrawCallCount() : 0)
             + contactShadowRenderer_->DrawCallCount()
             + birdRenderer_->DrawCallCount() + fruitBatRenderer_->DrawCallCount() + mineBatRenderer_->DrawCallCount()
             + butterflyRenderer_->DrawCallCount()
@@ -7118,6 +7208,7 @@ namespace island
                 if (volcanoRenderer_) volcanoRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (bridgeRenderer_) bridgeRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (lookoutRenderer_) lookoutRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                if (windthrowRenderer_) windthrowRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 helicopterRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (quadRenderer_) quadRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 shipwreckRenderer_->SetSunShadowMap(sunShadowMap_.get());
@@ -7146,6 +7237,7 @@ namespace island
                 if (volcanoRenderer_) volcanoRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (bridgeRenderer_) bridgeRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (lookoutRenderer_) lookoutRenderer_->DrawSunShadow(*sunShadowMap_);
+                if (windthrowRenderer_) windthrowRenderer_->DrawSunShadow(*sunShadowMap_);
                 shipwreckRenderer_->DrawSunShadow(*sunShadowMap_);
                 helicopterRenderer_->DrawSunShadow(*sunShadowMap_);
                 naturalPropRenderer_->DrawSunShadow(*sunShadowMap_);
@@ -7422,6 +7514,7 @@ namespace island
         if(termiteNestRenderer_) {
             GpuDiagnosticScope gpuPass("termite-nests");
             termiteNestRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
+            if(windthrowRenderer_) windthrowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }
         if(bridgeRenderer_) {
             GpuDiagnosticScope gpuPass("bridge");
