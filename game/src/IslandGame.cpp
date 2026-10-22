@@ -209,6 +209,7 @@ namespace island
             case FixedViewpoint::PassingShipDetail: return "passing-ship";
             case FixedViewpoint::WhaleBreachDetail: return "whale-breach";
             case FixedViewpoint::PandanusDetail: return "pandanus";
+            case FixedViewpoint::TermiteNestDetail: return "termite-nest";
             case FixedViewpoint::PlaneWreckDetail: return "plane-wreck";
             case FixedViewpoint::PlaneCockpitDetail: return "plane-cockpit";
             case FixedViewpoint::BeachLitterDetail: return "beach-litter";
@@ -605,6 +606,7 @@ namespace island
             pandanus_=PandanusLayout::Scatter(terrain_,solid,avoid,4.0f);
             for(const PandanusPlacement& tree:pandanus_) worldObstacles.push_back(tree.Obstacle());
         }
+        termiteNests_=TermiteNestLayout::Place(jungleLayout_.Canopy());
         // The animals' lighting reads the solid casters the sun shadow map draws: the jungle's
         // snags, understory and bushes (baked with the field) and the structures, so a goat
         // under the hut's eave or a boar behind a trunk darkens as the ground there does.
@@ -2132,6 +2134,33 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: pandanus QA camera looks out at a screw pine on the coastal fringe\n";
+        } else if (viewpoint_ == FixedViewpoint::TermiteNestDetail) {
+            // A few metres out from a jungle trunk carrying a termites' nest, up at it, its mud
+            // runways in view down the bark; the nest whose eye point stands clearest of the
+            // other trunks.
+            if(termiteNests_.empty()) throw std::runtime_error("Termite nest QA requires the nests");
+            const auto& canopy=jungleLayout_.Canopy();
+            const auto eyeFor=[&](const TermiteNest& nest) {
+                const float side=nest.seed%2U==0U?1.0f:-1.0f;
+                return Vector3(nest.bark[0]+nest.normal[0]*3.4f-nest.normal[2]*0.9f*side,0.0f,
+                               nest.bark[2]+nest.normal[2]*3.4f+nest.normal[0]*0.9f*side);
+            };
+            std::size_t pick=0;float clearest=-1.0f;
+            for(std::size_t i=0;i<termiteNests_.size();++i) {
+                const Vector3 eye=eyeFor(termiteNests_[i]);
+                float clearance=1e9f;
+                for(std::size_t k=0;k<canopy.size();++k)
+                    clearance=std::min(clearance,std::hypot(canopy[k].x-eye.X,canopy[k].z-eye.Z)-0.43f*canopy[k].scale);
+                if(terrain_.Height(eye.X,eye.Z)<0.5f) continue;
+                if(clearance>clearest) {clearest=clearance;pick=i;}
+            }
+            const TermiteNest& nest=termiteNests_[pick];
+            const Vector3 eye=eyeFor(nest);
+            cameraPosition_=Vector3(eye.X,terrain_.Height(eye.X,eye.Z)+PlayerMotion::EyeHeight,eye.Z);
+            const Vector3 direction=Vector3(nest.bark[0],nest.bark[1]-0.6f,nest.bark[2])-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: termite-nest QA camera looks up at a termites' nest on a jungle trunk\n";
         } else if (viewpoint_ == FixedViewpoint::WhaleBreachDetail) {
             // On the shore at the freighter's lane's bearing, out at a humpback breaching 115 m off
             // it, rising toward the top of its leap (the leap goes on through the capture's half
@@ -3154,6 +3183,7 @@ namespace island
         if(freighterPlacement_) freighterRenderer_=std::make_unique<FreighterRenderer>(device,*freighterPlacement_,terrain_,*drawnGround_);
         if(lifeboatPlacement_) lifeboatRenderer_=std::make_unique<LifeboatRenderer>(device,*lifeboatPlacement_,terrain_,*drawnGround_);
         if(!pandanus_.empty()) pandanusRenderer_=std::make_unique<PandanusRenderer>(device,pandanus_,terrain_,*drawnGround_);
+        if(!termiteNests_.empty()) termiteNestRenderer_=std::make_unique<TermiteNestRenderer>(device,termiteNests_,jungleLayout_.Canopy());
         if(bridgePlacement_) bridgeRenderer_=std::make_unique<BridgeRenderer>(device,*bridgePlacement_);
         if(lookoutPlacement_) lookoutRenderer_=std::make_unique<LookoutRenderer>(device,*lookoutPlacement_);
         fallingFruitRenderer_=std::make_unique<FallingFruitRenderer>(device);
@@ -6603,6 +6633,7 @@ namespace island
             + helicopterRenderer_->DrawCallCount()
             + distantSceneryRenderer_->DrawCallCount() + passingShipRenderer_->DrawCallCount()
             + (pandanusRenderer_ ? pandanusRenderer_->DrawCallCount() : 0)
+            + (termiteNestRenderer_ ? termiteNestRenderer_->DrawCallCount() : 0)
             + contactShadowRenderer_->DrawCallCount()
             + birdRenderer_->DrawCallCount() + fruitBatRenderer_->DrawCallCount() + mineBatRenderer_->DrawCallCount()
             + butterflyRenderer_->DrawCallCount()
@@ -7043,6 +7074,7 @@ namespace island
                 if (freighterRenderer_) freighterRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (lifeboatRenderer_) lifeboatRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (pandanusRenderer_) pandanusRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                if (termiteNestRenderer_) termiteNestRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (volcanoRenderer_) volcanoRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (bridgeRenderer_) bridgeRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (lookoutRenderer_) lookoutRenderer_->SetSunShadowMap(sunShadowMap_.get());
@@ -7346,6 +7378,10 @@ namespace island
         if(beachLitterRenderer_) {
             GpuDiagnosticScope gpuPass("beach-litter");
             beachLitterRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
+        }
+        if(termiteNestRenderer_) {
+            GpuDiagnosticScope gpuPass("termite-nests");
+            termiteNestRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }
         if(bridgeRenderer_) {
             GpuDiagnosticScope gpuPass("bridge");

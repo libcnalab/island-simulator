@@ -233,6 +233,34 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 545 (2026-10-22) — arboreal termites' nests on the jungle trunks
+
+The jungle's trunks were bare bark under the crowns. Now some of them carry an arboreal termites'
+nest, as trees in any tropical forest do.
+
+- **Placement.** 30 nests (`TermiteNestLayout::Place`), on about one grown natural canopy tree in
+  eight (no mangroves, no saplings). Each sits on its tree's rest bark (`SampleCanopyTrunkSurface`
+  through the instance transform the monkeys' climbing uses), 2.5-4.1 m up, clear over a
+  walker's head, facing a deterministic way round the trunk.
+- **The nest.** A dark carton egg, 0.75-1.3 m tall, hugging the bark.
+  - Its back is sunk into the trunk to past the axis, so a nest wider than the trunk wraps round
+    it.
+  - It is pear-shaped, broader and longer below, with a few broad lobes and many small knobs.
+  - The crevices are darker, the knobs' crowns lighter, with a paler fresh repair here and there.
+  - Each corner is lit by the grid's own normal, so the carton shades smoothly instead of in
+    facets.
+- **The runways.** Low, flat ridges of lighter mud a few centimetres wide, pressed onto the bark
+  and meandering round it. Two run down from the nest's foot to the ground and one runs up toward
+  the crown.
+- **Drawing.** One buffer in eight sectors (26,080 triangles), each drawn when in view and within
+  150 m. The nests are relit by the hour's sun and receive the sun shadows, the crowns' dapples
+  among them (`TermiteNestRenderer`).
+- **New QA view.** `termite-nest`, a few metres out from the trunk of the nest whose eye point
+  stands clearest of the other trunks, looking up at it with its runways in view
+  (`20261022T153338`, morning `153219`). `jungle` still passes (`153353`).
+- **Tests.** CoreTests check the count and that every nest is on a grown tree's bark at the
+  height band, facing out from the trunk's axis.
+
 ## Loop pass 544 (2026-10-22) — screw pines on the coastal fringe
 
 The island's coast had coconut palms and the jungle behind them. Now the screw pine is there too

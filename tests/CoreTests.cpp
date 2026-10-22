@@ -131,6 +131,7 @@
 #include "IslandSimulator/PlayerMotion.hpp"
 #include "IslandSimulator/PassingShip.hpp"
 #include "IslandSimulator/PandanusLayout.hpp"
+#include "IslandSimulator/TermiteNestLayout.hpp"
 #include "IslandSimulator/SwimDepth.hpp"
 #include "IslandSimulator/ProceduralMeshValidation.hpp"
 #include "IslandSimulator/RockSurface.hpp"
@@ -9706,6 +9707,28 @@ int main()
         bool kept = true;
         for (const auto& tree : moved) kept = kept && std::hypot(tree.x - trees.front().x, tree.z - trees.front().z) > 3.2f;
         Check(kept, "a screw pine grows through an obstacle");
+    }
+    {
+        // The arboreal termites' nests: a dozen or more on grown natural canopy trees, each on its
+        // tree's bark 2.5-4.1 m up (clear over a walker's head), facing out from the trunk.
+        const island::IslandTerrain terrain;
+        const island::JungleLayout jungle(terrain);
+        const auto nests = island::TermiteNestLayout::Place(jungle.Canopy());
+        bool onBark = true;
+        for (const auto& nest : nests) {
+            const auto& tree = jungle.Canopy()[nest.tree];
+            const float up = nest.bark[1] - tree.y;
+            // from the trunk's axis there (it leans above its straight lower metres)
+            const auto axis = island::SampleCanopyTrunk(tree.variant, nest.localHeight / island::MakeCanopyTrunkProfile(tree.variant).height);
+            const float c = std::cos(tree.yawRadians), s = std::sin(tree.yawRadians);
+            const float ax = tree.x + tree.scale * (axis[0] * c + axis[2] * s), az = tree.z + tree.scale * (-axis[0] * s + axis[2] * c);
+            const float out = std::hypot(nest.bark[0] - ax, nest.bark[2] - az);
+            const float facing = (nest.bark[0] - ax) * nest.normal[0] + (nest.bark[2] - az) * nest.normal[2];
+            onBark = onBark && tree.variant < island::NaturalCanopyFormCount && tree.scale >= 0.7f
+                && up > 2.4f && up < 4.2f && std::abs(out - nest.trunkRadius) < 0.12f * tree.scale + 0.05f && facing > 0.0f;
+        }
+        Check(nests.size() >= 12U && nests.size() <= island::TermiteNestLayout::MaximumCount && onBark,
+              "the termites' nests are too few, too many, or not on a grown tree's bark at head height and over");
     }
     {
         // The freighter passing offshore: half way down its lane as the island loads, closest
