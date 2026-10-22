@@ -23,16 +23,16 @@ struct SculptMeshBuilder {
 
     void Face(const Vector3& a,const Vector3& b,const Vector3& c,const Vector3& pigment) {
         Vector3 colour=pigment;
-        if(ground) {
-            const Vector3 m=(a+b+c)/3.0f;
-            const float stain=1.0f-std::clamp((m.Y-ground(m.X,m.Z)+0.02f)/stainHeight,0.0f,1.0f);
-            colour=Vector3::Lerp(pigment,stainColour,stain*stainAmount);
-        }
         const Vector3 m=(a+b+c)/3.0f;
         Vector3 normal=Vector3::Cross(b-a,c-a);
         const bool outward=Vector3::Dot(normal,m-inside)>=0.0f;
         if(!outward) normal=-normal;
+        // the tint sees the pigment itself (a marker pigment stays recognisable), the stain after it
         if(tint&&normal.LengthSquared()>1e-12f) {normal.Normalize();colour=tint(colour,normal,m);}
+        if(ground) {
+            const float stain=1.0f-std::clamp((m.Y-ground(m.X,m.Z)+0.02f)/stainHeight,0.0f,1.0f);
+            colour=Vector3::Lerp(colour,stainColour,stain*stainAmount);
+        }
         if(outward) builder.Tri(a,b,c,colour);
         else builder.Tri(a,c,b,colour);
     }

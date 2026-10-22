@@ -233,6 +233,30 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 500 (2026-10-22) — a Second World War fighter's wreck lies in a clearing
+
+A Second World War fighter lies wrecked in the most open level spot inland, at (86, 122)
+(`PlaneWreckLayout`, `PlaneWreckRenderer`; 2380 triangles in one draw; QA view `plane-wreck`).
+
+- **Placement.** The spot is at least 30 m from the shore, with no more than 2.6 m of rise over
+  ±6 m. It is the spot furthest from every obstacle (at least 7 m) and 35 m from the hut, the
+  fire and the other landmarks. Four obstacle circles cover the nose, the wing roots, the broken
+  tail and the torn wing.
+- **Fuselage.** A round section is lofted along a profile, lying on its belly nose-down and
+  rolled onto its right wing. The tail section broke off behind the cockpit and lies twisted
+  beside it, with its fin, tailplanes and red discs.
+- **Engine and canopy.** The cowling is open on a nine-cylinder radial engine with a spinner
+  and three prop blades, two of them bent back. The canopy is framed, with its rear panes gone.
+- **Wings.** The right wing is a cambered loft, crumpled down past mid-span, with a red disc and
+  a landing leg with its wheel sticking up. The left wing lies upside down beside the fuselage.
+- **Paint.** Olive on the faces turned up blends smoothly into grey under the wing, worn through
+  to bare aluminium in patches and white with corrosion here and there. The pieces are stained
+  where they meet the ground. They receive and cast the sun shadows like the other landmarks.
+
+`SculptMeshBuilder::Face` now tints the pigment before the ground stain. Before this, a
+stained face lost the skin marker pigment, and the low fuselage and the drooped wing tip came
+out black. The idol's capture is unchanged apart from faint differences at its platform's base.
+
 ## Loop pass 499 (2026-10-22) — the lighthouse's beams sweep the night
 
 At night the lighthouse's lamp burns and its two opposed beams sweep round over the sea every

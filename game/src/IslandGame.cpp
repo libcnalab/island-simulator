@@ -201,6 +201,7 @@ namespace island
             case FixedViewpoint::IdolDetail: return "idol";
             case FixedViewpoint::StoneSignDetail: return "help-sign";
             case FixedViewpoint::LighthouseDetail: return "lighthouse";
+            case FixedViewpoint::PlaneWreckDetail: return "plane-wreck";
             case FixedViewpoint::GroundDoveDetail: return "ground-doves";
             case FixedViewpoint::FruitBatDetail: return "bats";
             case FixedViewpoint::FruitBatRoostDetail: return "bat-roost";
@@ -484,6 +485,10 @@ namespace island
             if(idolPlacement_) avoid.push_back({{idolPlacement_->x,idolPlacement_->z}});
             lighthousePlacement_=LighthouseLayout::FindInWorld(terrain_,worldObstacles,avoid);
             if(lighthousePlacement_) worldObstacles.push_back(lighthousePlacement_->Obstacle());
+            // A Second World War fighter down in the most open clearing inland.
+            if(lighthousePlacement_) avoid.push_back({{lighthousePlacement_->x,lighthousePlacement_->z}});
+            planeWreckPlacement_=PlaneWreckLayout::FindInWorld(terrain_,worldObstacles,avoid);
+            if(planeWreckPlacement_) for(const auto& obstacle:planeWreckPlacement_->Obstacles()) worldObstacles.push_back(obstacle);
         }
         // The animals' lighting reads the solid casters the sun shadow map draws: the jungle's
         // snags, understory and bushes (baked with the field) and the structures, so a goat
@@ -1770,6 +1775,17 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: bridge QA camera looks across the rope bridge from the bank\n";
+        } else if (viewpoint_ == FixedViewpoint::PlaneWreckDetail) {
+            // From ahead and to the right of the nose, the broken fuselage and the torn wing beyond.
+            if(!planeWreckPlacement_) throw std::runtime_error("Plane wreck QA requires the wreck");
+            const auto& w=*planeWreckPlacement_;
+            const auto eye=w.At(9.0f,7.5f);
+            cameraPosition_=Vector3(eye[0],terrain_.Height(eye[0],eye[1])+4.2f,eye[1]);
+            const auto look=w.At(-0.8f,-0.8f);
+            const Vector3 direction=Vector3(look[0],w.groundY+0.6f,look[1])-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: plane-wreck QA camera looks at the fighter's broken fuselage from ahead of its nose\n";
         } else if (viewpoint_ == FixedViewpoint::LighthouseDetail) {
             // From the land a little off to one side, the whole tower against the sky.
             if(!lighthousePlacement_) throw std::runtime_error("Lighthouse QA requires the lighthouse");
@@ -2711,6 +2727,7 @@ namespace island
         if(idolPlacement_) idolRenderer_=std::make_unique<IdolStatueRenderer>(device,*idolPlacement_,terrain_,*drawnGround_);
         if(stoneSignPlacement_) stoneSignRenderer_=std::make_unique<StoneSignRenderer>(device,*stoneSignPlacement_,terrain_,*drawnGround_);
         if(lighthousePlacement_) lighthouseRenderer_=std::make_unique<LighthouseRenderer>(device,*lighthousePlacement_,terrain_,*drawnGround_);
+        if(planeWreckPlacement_) planeWreckRenderer_=std::make_unique<PlaneWreckRenderer>(device,*planeWreckPlacement_,terrain_,*drawnGround_);
         if(bridgePlacement_) bridgeRenderer_=std::make_unique<BridgeRenderer>(device,*bridgePlacement_);
         if(lookoutPlacement_) lookoutRenderer_=std::make_unique<LookoutRenderer>(device,*lookoutPlacement_);
         fallingFruitRenderer_=std::make_unique<FallingFruitRenderer>(device);
@@ -6507,6 +6524,7 @@ namespace island
                 if (idolRenderer_) idolRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (stoneSignRenderer_) stoneSignRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (lighthouseRenderer_) lighthouseRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                if (planeWreckRenderer_) planeWreckRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (bridgeRenderer_) bridgeRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (lookoutRenderer_) lookoutRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 helicopterRenderer_->SetSunShadowMap(sunShadowMap_.get());
@@ -6530,6 +6548,7 @@ namespace island
                 if (idolRenderer_) idolRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (stoneSignRenderer_) stoneSignRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (lighthouseRenderer_) lighthouseRenderer_->DrawSunShadow(*sunShadowMap_);
+                if (planeWreckRenderer_) planeWreckRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (bridgeRenderer_) bridgeRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (lookoutRenderer_) lookoutRenderer_->DrawSunShadow(*sunShadowMap_);
                 shipwreckRenderer_->DrawSunShadow(*sunShadowMap_);
@@ -6787,6 +6806,10 @@ namespace island
         if(lighthouseRenderer_) {
             GpuDiagnosticScope gpuPass("lighthouse");
             lighthouseRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
+        }
+        if(planeWreckRenderer_) {
+            GpuDiagnosticScope gpuPass("plane-wreck");
+            planeWreckRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }
         if(bridgeRenderer_) {
             GpuDiagnosticScope gpuPass("bridge");

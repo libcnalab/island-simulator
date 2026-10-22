@@ -105,6 +105,7 @@
 #include "IslandSimulator/IdolStatueLayout.hpp"
 #include "IslandSimulator/StoneSignLayout.hpp"
 #include "IslandSimulator/LighthouseLayout.hpp"
+#include "IslandSimulator/PlaneWreckLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/LookoutLayout.hpp"
 #include "IslandSimulator/FallingFruitField.hpp"
@@ -9570,6 +9571,28 @@ int main()
             sound = sound && moved && std::hypot(moved->x - light->x, moved->z - light->z) > 5.0f;
         }
         Check(light && sound, "the lighthouse stands on a coastal rise of rock or turf with its lantern high over the sea");
+    }
+    {
+        // The fighter's wreck lies inland on level ground in the open, the most open spot clear of
+        // the obstacles; its pieces block the way, and an obstacle on its spot moves it.
+        const island::IslandTerrain terrain;
+        const std::vector<island::CircularObstacle> none;
+        const auto wreck = island::PlaneWreckLayout::FindInWorld(terrain, none, {});
+        bool sound = false;
+        if (wreck) {
+            sound = terrain.SignedShoreDistance(wreck->x, wreck->z) >= island::PlaneWreckLayout::MinimumShoreDistance
+                && std::abs(std::hypot(wreck->headingX, wreck->headingZ) - 1.0f) < 1e-4f
+                && std::abs(wreck->groundY - terrain.Height(wreck->x, wreck->z)) < 1e-4f;
+            for (const auto& piece : wreck->Obstacles())
+                sound = sound && std::hypot(piece.x - wreck->x, piece.z - wreck->z) < 8.0f && piece.radius >= 1.0f;
+            const std::vector<island::CircularObstacle> taken{{wreck->x, wreck->z, 1.0f}};
+            const auto moved = island::PlaneWreckLayout::FindInWorld(terrain, taken, {});
+            sound = sound && moved && std::hypot(moved->x - wreck->x, moved->z - wreck->z) > 8.0f;
+            const std::vector<std::array<float, 2>> avoid{{{wreck->x, wreck->z}}};
+            const auto away = island::PlaneWreckLayout::FindInWorld(terrain, none, avoid);
+            sound = sound && away && std::hypot(away->x - wreck->x, away->z - wreck->z) > 35.0f;
+        }
+        Check(wreck && sound, "the fighter's wreck lies inland on level open ground clear of the obstacles and avoided points");
     }
     {
         // The castaway's HELP ME, big enough for an aircraft: some 600 stones in double rows along
