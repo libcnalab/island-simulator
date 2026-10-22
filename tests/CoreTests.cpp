@@ -100,6 +100,7 @@
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/HutGeckos.hpp"
+#include "IslandSimulator/SunSteamField.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/LookoutLayout.hpp"
 #include "IslandSimulator/FallingFruitField.hpp"
@@ -12827,6 +12828,33 @@ int main()
             dense = dense && puff.active && puff.density > 0.15f;
         }
         Check(overStream && dense, "the morning mist banks lie over the stream, a knee's to a head's height up");
+    }
+    {
+        // Steam off the sunlit wet ground after rain: only with the ground wet, the rain
+        // stopped and the sun out and up; the wisps start on the open ground round the walker
+        // (none where the ground probe refuses), rise, thin away within their life, and the
+        // first update already shows a full set.
+        using island::SunSteamField;
+        Check(SunSteamField::Strength(0.85f, 0.0f, 1.0f, 50.0f) > 0.95f && SunSteamField::Strength(0.1f, 0.0f, 1.0f, 50.0f) == 0.0f
+                  && SunSteamField::Strength(0.85f, 0.5f, 1.0f, 50.0f) == 0.0f && SunSteamField::Strength(0.85f, 0.0f, 0.0f, 50.0f) == 0.0f
+                  && SunSteamField::Strength(0.85f, 0.0f, 1.0f, 5.0f) == 0.0f,
+              "the wet ground steams only with the rain stopped and the sun out and up");
+        const SunSteamField::GroundProbe open = [](float, float, float& y) { y = 3.0f; return true; };
+        const SunSteamField::GroundProbe shaded = [](float, float, float&) { return false; };
+        SunSteamField steam, refused;
+        steam.Update(0.1f, 10.0f, -20.0f, 1.0f, -1.0f, 0.0f, open);
+        refused.Update(0.1f, 10.0f, -20.0f, 1.0f, -1.0f, 0.0f, shaded);
+        bool round = true;
+        for (const auto& puff : steam.Puffs()) {
+            if (!puff.active) continue;
+            const float distance = std::hypot(puff.x - 10.0f, puff.z + 20.0f);
+            round = round && distance > SunSteamField::NearClear - 0.5f && distance < SunSteamField::Reach + 2.0f
+                && puff.y > 3.0f && puff.y < 5.0f && puff.density >= 0.0f && puff.density < 0.5f;
+        }
+        const std::size_t warm = steam.ActiveCount();
+        for (int step = 0; step < 80; ++step) steam.Update(0.1f, 10.0f, -20.0f, 0.0f, -1.0f, 0.0f, open);
+        Check(warm >= SunSteamField::Capacity * 3 / 4 && round && refused.ActiveCount() == 0 && steam.ActiveCount() == 0,
+              "steam wisps rise from the open ground round the walker, none where refused, all gone a life after the sun goes");
     }
 
     if (failures != 0) {

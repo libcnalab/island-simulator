@@ -233,6 +233,28 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 485 (2026-10-22) — the wet ground steams when the sun breaks out after rain
+
+After a tropical shower, when the sun comes out on the wet ground, thin steam rises off the open
+ground, the planks and the roofs. The island's ground was simply wet, then dry.
+
+- **`SunSteamField`** (new, in the core library). Wisps start round the walker 3–24 m out, up to
+  eight a second at full strength, on spots the game's probe accepts as open, sunlit dry land:
+  above 0.45 m, not under the crowns (canopy light at least 0.7), not in the stream. Each rises
+  about a metre and a half in 5.5 s, slowing as it swells from 0.45 to 1.7 m, leans away
+  downwind, and thins in and out. Its strength is the ground's wetness (0.25–0.7) times the rain
+  stopped, the sun out (`shadowStrength`, which the clouds take down) and the sun above 12–35
+  degrees. Nothing starts underground. The first update runs a wisp's life ahead, so a view does
+  not open on steam just starting.
+- **Drawing.** Its own `CascadeMistRenderer` (capacity 40, range 20 + 8 m, density scale 4.5)
+  draws it after the valley mist.
+- **QA.** `--wet-ground` (and `run_software_capture.py --wet-ground`, sets suffixed `-wet`) holds
+  the ground wet under the held weather. The capture inventory gives `sun steam N wisps`.
+
+`east --weather clear --wet-ground` (`20261022T055602`) shows 40 wisps as faint pale haze over the clearing's
+grass and round the fire. A core test checks the strength's conditions, the wisps' ring and height,
+none on refused ground, the warm start and all gone a life after the sun goes.
+
 ## Loop pass 483 (2026-10-22) — the stars wheel about the celestial pole with the hour
 
 The sun and the moon crossed the sky, but the stars and the Milky Way stood fixed all night. A

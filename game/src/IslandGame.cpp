@@ -2622,6 +2622,11 @@ namespace island
         cascadeMistRenderer_->SetRange(40.0f,20.0f,0.45f);
         wetlandMistRenderer_=std::make_unique<CascadeMistRenderer>(device,
             "island-simulator: a low mist hangs over the seasonal wetland, breathing slowly, drifting with the trade wind and leaning in the gust fronts");
+        sunSteamRenderer_=std::make_unique<CascadeMistRenderer>(device,
+            "island-simulator: when the sun breaks out after rain, steam rises off the open wet ground round the walker and thins away on the breeze",
+            SunSteamField::Capacity);
+        // thin wisps, seen within the near ground they rise from
+        sunSteamRenderer_->SetRange(20.0f,8.0f,4.5f);
         fallingFruit_.SetPalms(vegetationLayout_.Palms());
         coconutCrabGroup_.SetPalms(vegetationLayout_.Palms());
         helicopterRenderer_=std::make_unique<HelicopterRenderer>(device,*helicopterPlacement_);
@@ -3718,6 +3723,22 @@ namespace island
         wetlandMist_.Update(deltaSeconds,seaForageSeconds_);
         valleyMist_.Update(deltaSeconds,dayNight_.Hour(),
             weather_now::Dew(dayNight_.Hour(),weather_now::Current().cloudCover),weather_now::Current().wetness);
+        {
+            // When the sun breaks out after rain the open wet ground steams round the walker
+            // (not under the crowns, not on the water, not underground).
+            const auto& sky=sun_light::Current().lighting;
+            const bool aboveGround=cameraPosition_.Y>terrain_.Height(cameraPosition_.X,cameraPosition_.Z)-0.5f;
+            const float steam=aboveGround?SunSteamField::Strength(weather_now::Current().wetness,weather_now::Current().rain,
+                sky.shadowStrength,sky.sunElevationDegrees):0.0f;
+            sunSteam_.Update(deltaSeconds,cameraPosition_.X,cameraPosition_.Z,steam,wind::DirectionX,wind::DirectionZ,
+                [this](const float px,const float pz,float& groundY) {
+                    if(terrain_.Height(px,pz)<0.45f||canopyLightField_.Sample(px,pz)<0.7f) return false;
+                    float bed=0,depth=0;
+                    if(StreamWaterAt(px,pz,bed,depth)) return false;
+                    groundY=drawnGround_?DrawnOrAnalyticHeight(*drawnGround_,terrain_,px,pz):terrain_.Height(px,pz);
+                    return true;
+                });
+        }
         updateProfile_.Mark("surfSpray");
         surfSpray_.Update(deltaSeconds,seaForageSeconds_,cameraPosition_.X,cameraPosition_.Z);
         updateProfile_.Mark("dolphinBlows");
@@ -6918,6 +6939,7 @@ namespace island
             cascadeMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,cascadeMist_.Puffs());
             wetlandMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,wetlandMist_.Puffs());
             wetlandMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,valleyMist_.Puffs());
+            sunSteamRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,sunSteam_.Puffs());
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,rootingDust_.Puffs());
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,mudFlecks_.Puffs());
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,hoofDust_.Puffs());
@@ -7753,6 +7775,7 @@ namespace island
                       << "; sun shadow map " << (sunShadowMap_ ? sunShadowMap_->RenderCount() : 0)
                       << " renders, " << (sunShadowMap_ ? sunShadowMap_->LastCasterCount() : 0) << " casters"
                       << "; coastal contact shadows " << contactShadowRenderer_->VisibleCoastalShadowCount()
+                      << "; sun steam " << sunSteam_.ActiveCount() << " wisps (" << sunSteam_.StartedCount() << " started)"
                       << "; water view " << waterViewModel_.Intensity()
                       << ", " << waterViewOverlay_->DrawCallCount()
                       << " draw, player ripple " << waterRippleModel_.Intensity()

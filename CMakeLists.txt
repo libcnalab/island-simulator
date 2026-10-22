@@ -111,6 +111,7 @@ add_library(island_core STATIC
     game/src/ReefFishField.cpp
     game/src/WalkerShadow.cpp
     game/src/ValleyMistField.cpp
+    game/src/SunSteamField.cpp
     game/src/SurfSprayField.cpp
     game/src/DolphinBlowField.cpp
     game/src/StingraySandField.cpp

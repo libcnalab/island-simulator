@@ -152,6 +152,7 @@
 #include "IslandSimulator/BlownSandField.hpp"
 #include "IslandSimulator/WetlandMistField.hpp"
 #include "IslandSimulator/ValleyMistField.hpp"
+#include "IslandSimulator/SunSteamField.hpp"
 #include "IslandSimulator/HoofDustField.hpp"
 #include "IslandSimulator/FinWakeField.hpp"
 #include "IslandSimulator/TurtleGrazeField.hpp"
@@ -564,8 +565,10 @@ namespace island
         CascadeMistField cascadeMist_{terrain_};
         WetlandMistField wetlandMist_{terrain_};
         ValleyMistField valleyMist_{terrain_};   // morning mist over the stream after a dewy night
+        SunSteamField sunSteam_;   // steam off the sunlit wet ground after rain
         std::unique_ptr<CascadeMistRenderer> cascadeMistRenderer_;
         std::unique_ptr<CascadeMistRenderer> wetlandMistRenderer_;
+        std::unique_ptr<CascadeMistRenderer> sunSteamRenderer_;
         std::unique_ptr<UnderwaterEffectRenderer> underwaterEffect_;
         std::unique_ptr<TimeOfDayRenderer> timeOfDay_;
         DayNightCycle dayNight_{};

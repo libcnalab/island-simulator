@@ -48,6 +48,9 @@ namespace island
         /** @brief A weather asked for on the command line (--weather); none when empty. */
         void SetRequested(std::optional<WeatherKind> kind) noexcept;
         [[nodiscard]] std::optional<WeatherKind> Requested() noexcept;
+        /** @brief QA (--wet-ground): the ground held wet, as just after rain, whatever weather is held. */
+        void SetRequestedWetGround(bool wet) noexcept;
+        [[nodiscard]] bool RequestedWetGround() noexcept;
         /** @brief A bright moon casts soft shadows: the night's shadow strength from the
          *  moonlight (which the clouds already take down), up to 40 % under a full moon high. */
         inline void AddMoonShadows(DayLighting& light) noexcept

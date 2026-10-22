@@ -601,6 +601,8 @@ def main():
                         help="QA: the game hour to hold the clock at (default: the 14:00 the views were made at)")
     parser.add_argument("--weather", choices=["clear", "partly-cloudy", "overcast", "showers", "thunderstorm"], default=None,
                         help="QA: hold this weather (default: the partly cloudy sky the views were made in)")
+    parser.add_argument("--wet-ground", action="store_true",
+                        help="QA: hold the ground wet, as just after rain, under the held weather")
     parser.add_argument("--game-day", type=int, default=None,
                         help="QA: the game day (the moon's phase follows it)")
     parser.add_argument("--no-sun-shadows", action="store_true",
@@ -623,7 +625,8 @@ def main():
     evidence = build / "software-captures" / (f"{stamp}-{args.viewpoint}" + ("-no-sun-shadows" if args.no_sun_shadows else "")
                                               + (f"-t{args.time_of_day:05.2f}" if args.time_of_day is not None else "")
                                               + (f"-d{args.game_day}" if args.game_day is not None else "")
-                                              + (f"-{args.weather}" if args.weather is not None else ""))
+                                              + (f"-{args.weather}" if args.weather is not None else "")
+                                              + ("-wet" if args.wet_ground else ""))
     evidence.mkdir(parents=True)
     capture = evidence / "capture.ppm"
     platform = dependency / "tools/platform"
@@ -633,7 +636,8 @@ def main():
                "--no-user-settings", *inspection, *(["--no-sun-shadows"] if args.no_sun_shadows else []),
                *(["--time-of-day", str(args.time_of_day)] if args.time_of_day is not None else []),
                *(["--game-day", str(args.game_day)] if args.game_day is not None else []),
-               *(["--weather", args.weather] if args.weather is not None else [])]
+               *(["--weather", args.weather] if args.weather is not None else []),
+               *(["--wet-ground"] if args.wet_ground else [])]
     scope = "single-tree frozen LOD inspection only" if inspection else "software visual validation only"
     # Exercise title-relative content loading from an unrelated, build-owned working directory.
     metadata = {"scope": scope, "command": command, "cwd": str(evidence), "kernel_before": baseline}

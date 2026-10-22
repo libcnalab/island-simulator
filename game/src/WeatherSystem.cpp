@@ -20,11 +20,14 @@ namespace island
         {
             WeatherState& Mutable() noexcept { static WeatherState state; return state; }
             std::optional<WeatherKind>& RequestedKind() noexcept { static std::optional<WeatherKind> kind; return kind; }
+            bool& RequestedWet() noexcept { static bool wet = false; return wet; }
         }
         const WeatherState& Current() noexcept { return Mutable(); }
         void Set(const WeatherState& state) noexcept { Mutable() = state; }
         void SetRequested(const std::optional<WeatherKind> kind) noexcept { RequestedKind() = kind; }
         std::optional<WeatherKind> Requested() noexcept { return RequestedKind(); }
+        void SetRequestedWetGround(const bool wet) noexcept { RequestedWet() = wet; }
+        bool RequestedWetGround() noexcept { return RequestedWet(); }
     }
 
     std::string_view WeatherName(const WeatherKind kind) noexcept
@@ -105,7 +108,7 @@ namespace island
         state_.cloudCover = target.cloudCover;
         state_.rain = target.rain;
         state_.wind = target.wind;
-        state_.wetness = target.rain > 0.0f ? 0.85f : 0.0f;
+        state_.wetness = target.rain > 0.0f || weather_now::RequestedWetGround() ? 0.85f : 0.0f;
         next_ = kind;
     }
 
@@ -133,6 +136,7 @@ namespace island
         state_.wetness = state_.rain > 0.05f
             ? std::min(1.0f, state_.wetness + dt * state_.rain / 55.0f)
             : std::max(0.0f, state_.wetness - dt / 220.0f);
+        if (forced_ && weather_now::RequestedWetGround()) state_.wetness = std::max(state_.wetness, 0.85f);
         // Lightning in a storm: a double flicker of about a fifth of a second.
         flashSeconds_ = std::max(0.0f, flashSeconds_ - dt);
         if (state_.kind == WeatherKind::Thunderstorm && state_.cloudCover > 0.7f) {

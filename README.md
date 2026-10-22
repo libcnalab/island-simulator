@@ -492,7 +492,8 @@ map's tree, hut and tower shadows (`tools/run_software_capture.py <build> <view>
 The island keeps its own clock (24 game hours in 24 real minutes): T moves it an hour on, and
 `--time-of-day H` / `--game-day D` start it at an hour and a day of the moon's month. Y steps
 through the weathers (clear, partly cloudy, overcast, showers, thunderstorm); `--weather NAME`
-starts with one.
+starts with one, and `--wet-ground` holds the ground wet as just after rain (when the sun comes
+out on it, the open ground steams).
 A utility quad bike stands parked beside the hut. F gets on it (from farther away it is brought
 to you) and off again; W and S throttle and brake (S held when stopped reverses), A and D steer,
 Space is the handbrake, and Backspace sets it back on its wheels after a rollover. A chase camera
