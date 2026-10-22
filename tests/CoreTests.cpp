@@ -9671,6 +9671,65 @@ int main()
         }
     }
     {
+        // The lighthouse is walked: from the steps' foot up to the plinth, in at the door, up the
+        // stair round the newel to the lantern, out through its door onto the gallery and round it;
+        // no step higher than a walker's, nothing in the way.
+        const island::IslandTerrain terrain;
+        const std::vector<island::CircularObstacle> none;
+        const auto found = island::LighthouseLayout::FindInWorld(terrain, none, {});
+        Check(found.has_value(), "no lighthouse to walk");
+        const auto& light = *found;
+        using L = island::LighthousePlacement;
+        constexpr float radius = island::PlayerMotion::CapsuleRadius, height = island::PlayerMotion::CapsuleHeight;
+        Check(light.stepsRun > 0.3f && light.stepsRun < 6.0f
+                  && (light.TowerBaseY() - light.stepsFootY) / light.stepsRun <= L::StepsSlope + 0.03f,
+              "the lighthouse's steps do not run down to the ground at a walkable slope");
+        island::LighthousePoint at = light.StepsFoot();
+        at.y = terrain.Height(at.x, at.z);
+        bool walked = true;
+        std::string failure;
+        const auto moveTo = [&](const float tx, const float tz, const char* what) {
+            for (int i = 0; i < 6000 && walked; ++i) {
+                const float dx = tx - at.x, dz = tz - at.z, d = std::hypot(dx, dz);
+                if (d < 0.02f) return;
+                const float step = std::min(0.05f, d);
+                const float nx = at.x + dx / d * step, nz = at.z + dz / d * step;
+                float h = 0.0f;
+                if (!light.SupportHeight(nx, nz, at.y, h)) h = terrain.Height(nx, nz);
+                if (h - at.y > island::PlayerMotion::MaximumStepHeight + 0.001f) {walked = false; failure = std::string("too high a step to ") + what;}
+                else if (light.SafeTravelFraction({at.x, at.y + 0.001f, at.z}, {nx, std::max(h, at.y) + 0.001f, nz}, radius, height) < 1.0f) {
+                    walked = false; failure = std::string("blocked on the way to ") + what;
+                }
+                at = {nx, h, nz};
+            }
+        };
+        const auto toPolar = [&](const float angle, const float r, const char* what) {
+            const auto p = light.At(angle, r, 0.0f);
+            moveTo(p.x, p.z, what);
+        };
+        toPolar(L::Pi, L::PlinthRadius - 0.1f, "the plinth's top");
+        toPolar(L::Pi, 1.2f, "the floor inside the door");
+        Check(walked && std::abs(at.y - light.TowerBaseY()) < 0.01f, "the door does not let the walker in: " + failure);
+        toPolar(L::StairStart + 0.3f, 0.85f, "the stair's foot");
+        // up the stair: clockwise, the angle falling, a little at a time
+        for (float phi = L::StairStart + 0.3f; phi > light.StairEnd() && walked; phi -= 0.04f) toPolar(phi, 0.85f, "the next tread");
+        Check(walked && std::abs(at.y - light.GalleryY()) < 0.12f, "the stair does not climb to the lantern: " + failure);
+        // across the lantern's floor to its door and out onto the gallery
+        toPolar(L::LanternDoorAngle, 0.85f, "the lantern's door");
+        toPolar(L::LanternDoorAngle, 1.8f, "the gallery");
+        Check(walked && std::abs(at.y - light.GalleryY()) < 0.01f, "the lantern's door does not let the walker out: " + failure);
+        for (float a = L::LanternDoorAngle; a < L::LanternDoorAngle + L::Pi && walked; a += 0.05f) toPolar(a, 1.8f, "round the gallery");
+        Check(walked, "the gallery is not walked round: " + failure);
+        // and the walls hold: no walking through the tower or round the lamp or under the stair
+        const auto inside = light.At(L::Pi - 1.0f, 1.0f, light.TowerBaseY() + 0.001f);
+        const auto outsideWall = light.At(L::Pi - 1.0f, L::PlinthRadius - 0.3f, light.TowerBaseY() + 0.001f);
+        Check(light.SafeTravelFraction(outsideWall, inside, radius, height) < 1.0f, "the tower's wall lets a walker through");
+        const auto lamp = light.At(0.0f, 0.4f, light.GalleryY() + 0.001f);
+        Check(light.IntersectsCapsule(lamp, radius, height), "the lamp's lens does not stop a walker");
+        const auto underStair = light.At(L::StairStart - 3.0f, 1.0f, light.TowerBaseY() + 0.001f);
+        Check(light.IntersectsCapsule(underStair, radius, height), "a walker stands upright under the stair's first turn");
+    }
+    {
         // The fighter's wreck lies inland on level ground in the open, the most open spot clear of
         // the obstacles; its pieces block the way, and an obstacle on its spot moves it.
         const island::IslandTerrain terrain;

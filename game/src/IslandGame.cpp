@@ -201,6 +201,8 @@ namespace island
             case FixedViewpoint::IdolDetail: return "idol";
             case FixedViewpoint::StoneSignDetail: return "help-sign";
             case FixedViewpoint::LighthouseDetail: return "lighthouse";
+            case FixedViewpoint::LighthouseStairDetail: return "lighthouse-stair";
+            case FixedViewpoint::LighthouseGalleryDetail: return "lighthouse-gallery";
             case FixedViewpoint::PlaneWreckDetail: return "plane-wreck";
             case FixedViewpoint::BeachLitterDetail: return "beach-litter";
             case FixedViewpoint::FreighterDetail: return "freighter";
@@ -593,13 +595,21 @@ namespace island
         std::cout<<"island-simulator: the animals' lighting reads the sun's solid casters: "<<sunShade_.CasterCount()
                  <<" snag, understory, bush and structure shadows darken a body standing in them by up to "
                  <<static_cast<int>(CanopyLightField::SunShadeDepth*100.0f+0.5f)<<" percent; the ground keeps its porous canopy reading\n";
+        // The walker meets the lighthouse's own walls, steps and doors instead of its round, so it
+        // can climb it; the animals keep the round (below).
+        if(lighthousePlacement_) {
+            const CircularObstacle round=lighthousePlacement_->Obstacle();
+            std::erase_if(worldObstacles,[&](const CircularObstacle& o) {return o.x==round.x&&o.z==round.z&&o.radius==round.radius;});
+        }
         worldCollisionGrid_.Reset(worldObstacles);
         playerMotion_.SetHelicopter(&*helicopterPlacement_);
+        if(lighthousePlacement_) playerMotion_.SetLighthouse(&*lighthousePlacement_);
         if(jettyPlacement_) playerMotion_.SetJetty(&*jettyPlacement_);
         if(bridgePlacement_) playerMotion_.SetBridge(&*bridgePlacement_);
         if(lookoutPlacement_) playerMotion_.SetLookout(&*lookoutPlacement_);
         if(freighterPlacement_) playerMotion_.SetFreighter(&*freighterPlacement_);
         std::vector<CircularObstacle> wildlifeObstacles(worldObstacles);
+        if(lighthousePlacement_) wildlifeObstacles.push_back(lighthousePlacement_->Obstacle());
         // The coaster's hull and ladder keep the animals and the resident out; the walker meets
         // its own walls instead, so it can climb aboard.
         if(freighterPlacement_)
@@ -2068,6 +2078,31 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: lighthouse QA camera looks up at the tower from the land beside it\n";
+        } else if (viewpoint_ == FixedViewpoint::LighthouseStairDetail
+                   || viewpoint_ == FixedViewpoint::LighthouseGalleryDetail) {
+            if(!lighthousePlacement_) throw std::runtime_error("Lighthouse QA requires the lighthouse");
+            const auto& l=*lighthousePlacement_;
+            LighthousePoint eye,look;
+            const char* what=nullptr;
+            if(viewpoint_==FixedViewpoint::LighthouseStairDetail) {
+                // standing on the stair a turn and a quarter up, up its treads winding on round the
+                // newel past a window
+                const float phi=LighthousePlacement::StairStart-2.0f*LighthousePlacement::Pi*0.55f;
+                const float feet=l.TowerBaseY()+l.StairRisePerRadian()*(LighthousePlacement::StairStart-phi);
+                eye=l.At(phi,1.45f,feet+PlayerMotion::EyeHeight);
+                look=l.At(phi-1.25f,1.0f,feet+1.1f);
+                what="lighthouse-stair QA camera looks up the stair winding round the newel inside the tower";
+            } else {
+                // on the gallery beside the lantern's door, along the rail and out over the sea
+                eye=l.At(LighthousePlacement::LanternDoorAngle+0.55f,1.85f,l.GalleryY()+PlayerMotion::EyeHeight);
+                look=l.At(0.35f,9.0f,l.GalleryY()-3.0f);
+                what="lighthouse-gallery QA camera looks out from the gallery along the rail over the sea";
+            }
+            cameraPosition_=Vector3(eye.x,eye.y,eye.z);
+            const Vector3 direction=Vector3(look.x,look.y,look.z)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: "<<what<<'\n';
         } else if (viewpoint_ == FixedViewpoint::StoneSignDetail) {
             // From above the sea's edge before the sign, as from a low pass, looking down on it.
             if(!stoneSignPlacement_) throw std::runtime_error("Help sign QA requires the stone sign");
@@ -5164,6 +5199,9 @@ namespace island
         if (helicopterPlacement_ && helicopterPlacement_->IntersectsCapsule(x, z, 0.95f)) return true;
         // The grounded coaster's hull and its ladder (the ladder is a walker's, not a quad's).
         if (freighterPlacement_ && freighterPlacement_->Blocks(x, z, 0.95f)) return true;
+        // The lighthouse's plinth and its steps (they are a walker's, not a quad's).
+        if (lighthousePlacement_ && (std::hypot(x - lighthousePlacement_->x, z - lighthousePlacement_->z)
+                < LighthousePlacement::PlinthRadius + 0.2f + 0.95f || lighthousePlacement_->OnSteps(x, z, 0.95f))) return true;
         // The volcano's cone, too steep for the quad above its foot.
         if (VolcanoSite::BlocksVehicle(x, z, 0.95f)) return true;
         if (bridgePlacement_) {

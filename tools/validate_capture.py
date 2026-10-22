@@ -38,9 +38,12 @@ UNDERWATER_VIEWPOINTS = ("fish", "reef-habitat", "anemone", "dolphins")
 # correct render with the bats' three clusters under the rough dome clear. The mine's adit between
 # its lanterns, a lantern's flame mirrored in a puddle (loop pass 530): reviewed on 2026-10-22
 # (luminance mean 23.2 against 24, spread 11.1, 148 colour bins), a correct render of a dim
-# tunnel with the lit lantern, the track and the bright reflection clear; the profile's floors
-# are mean 20 and spread 10.
-DIM_INTERIOR_VIEWPOINTS = ("freighter-mess", "mine-bats", "mine-puddle")
+# tunnel with the lit lantern, the track and the bright reflection clear. The lighthouse's stair
+# inside its whitewashed tower (loop pass 533), lit by a window and the door: reviewed on
+# 2026-10-22 (53 colour bins against 64, spread 27.1, contrast 163), a correct render of a nearly
+# one-colour interior with the treads, the newel, the green handrail and the window clear. The
+# profile's floors are mean 20, spread 10 and 40 colour bins.
+DIM_INTERIOR_VIEWPOINTS = ("freighter-mess", "mine-bats", "mine-puddle", "lighthouse-stair")
 
 # The game hours of the night (the clock's dark between the dusk and the dawn), when a capture
 # asks for one with --time-of-day: reviewed on 2026-10-20 as a dark blue moonlit scene.
@@ -272,7 +275,7 @@ def validate_capture(image: PpmImage, expected_width: int | None = None,
                          else MINIMUM_LUMINANCE_DEVIATION)
     minimum_color_bins = (6 if profile == "dark-cave-detail" else 10 if profile == "night-scene"
                           else 16 if profile == "sand-shadow-detail" else 40
-                          if profile == "close-natural-detail" else MINIMUM_QUANTIZED_COLOR_BINS)
+                          if profile in ("close-natural-detail", "dim-interior-scene") else MINIMUM_QUANTIZED_COLOR_BINS)
     minimum_spatial_contrast = (8.0 if profile in ("dark-cave-detail", "night-scene") else 15.0
                                 if profile == "close-natural-detail" else MINIMUM_SPATIAL_CONTRAST)
     errors: list[str] = []

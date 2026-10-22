@@ -21,6 +21,7 @@ namespace island
     class MineLayout;
     struct HelicopterPlacement;
     struct FreighterPlacement;
+    struct LighthousePlacement;
 
     /** @brief Physical movement state relevant to animation, audio, and camera presentation. */
     enum class LocomotionMode
@@ -136,6 +137,8 @@ namespace island
         // The grounded freighter: its ladder, deck, deckhouse and hold carry the walker and its
         // hull and walls block walker and swimmer alike; null disables it.
         void SetFreighter(const FreighterPlacement* freighter) noexcept {freighter_=freighter;}
+        // The lighthouse: its steps, its door, the stair inside its tower, the lantern and the gallery.
+        void SetLighthouse(const LighthousePlacement* lighthouse) noexcept {lighthouse_=lighthouse;}
         [[nodiscard]] float SubmergedDepth() const noexcept { return swimDepth_.SubmergedDepth(); }
 
         /**
@@ -240,6 +243,7 @@ namespace island
         const BridgePlacement* bridge_ = nullptr;
         const LookoutPlacement* lookout_ = nullptr;
         const FreighterPlacement* freighter_ = nullptr;
+        const LighthousePlacement* lighthouse_ = nullptr;
         SwimDepth swimDepth_;
         bool swimAscend_ = false, swimDescend_ = false;
         float velocityX_ = 0.0f;

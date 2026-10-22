@@ -272,6 +272,8 @@ namespace island
         IdolDetail,
         StoneSignDetail,
         LighthouseDetail,
+        LighthouseStairDetail,
+        LighthouseGalleryDetail,
         PlaneWreckDetail,
         BeachLitterDetail,
         FreighterDetail,

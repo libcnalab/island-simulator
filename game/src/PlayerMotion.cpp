@@ -1,4 +1,5 @@
 #include "IslandSimulator/PlayerMotion.hpp"
+#include "IslandSimulator/LighthouseLayout.hpp"
 
 #include "IslandSimulator/WorldCollisionGrid.hpp"
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
@@ -85,6 +86,12 @@ namespace island
         if(freighter_&&freighter_->SupportHeight(x,z,position_.y-EyeHeight,shipHeight)) {
             // the ship's floors, the stair and the ladder; the step test limits the climb
             contact.height=shipHeight;
+            return contact;
+        }
+        float lighthouseHeight=0.0f;
+        if(lighthouse_&&lighthouse_->SupportHeight(x,z,position_.y-EyeHeight,lighthouseHeight)) {
+            // the steps, the plinth, the floor, the stair, the lantern and the gallery
+            contact.height=lighthouseHeight;
             return contact;
         }
         contact.height = -std::numeric_limits<float>::infinity();
@@ -252,6 +259,11 @@ namespace island
                 {candidateX,std::max(candidate.height+.001f,position_.y-EyeHeight),candidateZ},
                 CapsuleRadius,CapsuleHeight)<1)
                 return HorizontalStepResult::ObstacleBlocked;
+            if(lighthouse_&&lighthouse_->SafeTravelFraction(
+                {position_.x,std::max(current.height+.001f,position_.y-EyeHeight),position_.z},
+                {candidateX,std::max(candidate.height+.001f,position_.y-EyeHeight),candidateZ},
+                CapsuleRadius,CapsuleHeight)<1)
+                return HorizontalStepResult::ObstacleBlocked;
             if(helicopter_&&helicopter_->SafeTravelFraction(
                 position_.x,position_.z,candidateX,candidateZ,CapsuleRadius)<1.0f)
                 return HorizontalStepResult::ObstacleBlocked;
@@ -306,6 +318,13 @@ namespace island
             CapsuleRadius,CapsuleHeight)) {
             const auto safe=mine_->World(0,0,-3.0f);
             position_.x=safe.x;position_.z=safe.z;
+            ResolveModeAndHeight(terrain,std::numeric_limits<float>::infinity());
+        }
+        if(lighthouse_&&lighthouse_->IntersectsCapsule({position_.x,position_.y-EyeHeight,position_.z},
+            CapsuleRadius,CapsuleHeight)) {
+            const auto safe=lighthouse_->StepsFoot();
+            position_.x=safe.x;position_.z=safe.z;
+            mode_=LocomotionMode::Walking;
             ResolveModeAndHeight(terrain,std::numeric_limits<float>::infinity());
         }
         if(freighter_&&freighter_->IntersectsCapsule({position_.x,position_.y-EyeHeight,position_.z},

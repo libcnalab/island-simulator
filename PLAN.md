@@ -233,6 +233,62 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 533 (2026-10-22) — the lighthouse is climbed
+
+The lighthouse stood solid: a dark painted door, a wall the walker went round. Now it is walked
+inside, up to the gallery.
+
+- **Steps.** Stone steps run inland from the door to the ground at no more than 0.55 rise per
+  metre, computed per site (`stepsRun`, `stepsFootY`).
+- **Walls and door.** The tower is a wall a third of a metre thick, whitewashed outside and
+  limewashed inside, with a real door through its foot: jambs and a lintel's soffit in the
+  wall's thickness.
+- **Stair.** It winds clockwise round a stone newel, 88 stone treads, 16 a turn, rising 3 m a
+  turn: five and a half turns up the 16.5 m tower. It starts on the floor beside the door and
+  ends 0.75 rad short of the lantern's door. A dark-green iron handrail runs up the wall on
+  brackets.
+- **Lantern.** The stair comes up through the lantern's floor, which is open over the last
+  three quarters of a turn so a climber's head clears it. In the lantern, a brass-ringed lens
+  stands on the newel. A glazed door two panes wide stands open out onto the gallery; the
+  gallery's slab now reaches in to the lantern.
+- **Interior light.** Inside, the sun does not reach. The walls, the treads and the floors are
+  lit corner by corner by a dim warm ambient, by the daylight in at the five windows (a bright
+  pane in each deep embrasure) and the door, and by the light down from the lantern. The build's
+  sun-turned light is divided back out of each face, so the plaster shows no facets.
+- **Walking.** `LighthousePlacement` gains a polar frame and `StairHeights`, `LandingFloor`,
+  `SupportHeight`, `IntersectsCapsule`, `SafeTravelFraction`, `OnSteps` and `StepsFoot`:
+  - the support covers the steps, the plinth, the floor, the stair's ramp, the lantern's floor
+    and the gallery;
+  - the walls stop the walker except through the doors (the walker's capsule must fit the
+    door's passage);
+  - so do the newel and the lens, any turn of the stair overhead, the lantern's floor from
+    below, the lantern's wall but for its door, and the gallery's rail.
+
+  `PlayerMotion::SetLighthouse` wires these in. The walker's round obstacle is gone (the
+  animals keep it), and the quad is kept off the plinth and the steps.
+- **New QA views.**
+  - `lighthouse-stair`: on the stair just over half a turn up, along the treads, the newel, the
+    handrail and a window (`20261022T140728`).
+  - `lighthouse-gallery`: on the gallery beside the lantern's open door, out over the sea
+    (`20261022T140312`).
+  - The outside view shows the open door and the steps (`20261022T140258`), and at night the
+    beams still sweep (`20261022T140826`).
+- **Tests.** CoreTests walk the lighthouse with the walker's capsule and step height:
+  1. from the steps' foot onto the plinth and in at the door;
+  2. up the whole stair in 0.04 rad steps to the lantern's floor (within 0.12 m of it);
+  3. out through the lantern's door onto the gallery and half round it.
+
+  They also check that the tower's wall cannot be walked through, that the lens stops a walker
+  and that a walker cannot stand upright under the stair's first turn.
+- **Validation.** `lighthouse-stair` joins the reviewed `dim-interior-scene` profile, a nearly
+  one-colour interior with 53 colour bins. The profile's colour floor is now 40, and
+  ValidateCaptureTests cover it.
+- **Pass 532's Chrome check.** The `coast` scope rendered the changed ocean shader in WebGL
+  (water with caustics, `build/browser-software/20261022T133910...`). Its gate stopped on the
+  time limit under load.
+
+The suite is 76/76.
+
 ## Loop pass 532 (2026-10-22) — the surf breaks round the coaster's stern
 
 The coaster's stern stood in the surf, but the water round her hull did nothing.
