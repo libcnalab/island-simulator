@@ -4,17 +4,18 @@
 #include <cmath>
 
 namespace island {
-// Where a flying bird's shadow falls: the bird's position carried along the fixed sun's rays
-// down to the rendered ground, refined twice for the ground's own height. Only a bird clear
-// of the ground and not too high, over land, casts one; the sea takes none.
+// Where a flying bird's shadow falls: the bird's position carried along the sun's rays (the
+// hour's: slopeX/slopeZ are the light's horizontal run per metre of fall; the former fixed
+// afternoon sun's by default) down to the rendered ground, refined twice for the ground's own
+// height. Only a bird clear of the ground and not too high, over land, casts one; the sea takes none.
 struct BirdShadowPoint { float x=0,z=0,height=0; bool valid=false; };
 struct BirdShadowProjection {
     static constexpr float MinimumHeight=0.3f,MaximumHeight=40.0f;
-    [[nodiscard]] static BirdShadowPoint Project(const IslandTerrain& terrain,float x,float y,float z) noexcept {
+    [[nodiscard]] static BirdShadowPoint Project(const IslandTerrain& terrain,float x,float y,float z,
+        const float slopeX=environment::SunDirectionX/environment::SunDirectionY,
+        const float slopeZ=environment::SunDirectionZ/environment::SunDirectionY) noexcept {
         BirdShadowPoint point;
-        if(!std::isfinite(x)||!std::isfinite(y)||!std::isfinite(z)) return point;
-        const float slopeX=environment::SunDirectionX/environment::SunDirectionY;
-        const float slopeZ=environment::SunDirectionZ/environment::SunDirectionY;
+        if(!std::isfinite(x)||!std::isfinite(y)||!std::isfinite(z)||!std::isfinite(slopeX)||!std::isfinite(slopeZ)) return point;
         float sx=x,sz=z,height=y-terrain.Height(x,z);
         for(int pass=0;pass<2;++pass) {
             sx=x-slopeX*height;sz=z-slopeZ*height;

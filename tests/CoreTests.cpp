@@ -4857,6 +4857,18 @@ int main()
         const float landX = 0.0f, landZ = 0.0f;
         Check(terrain.Height(landX, landZ) > 0.0f && !island::SeabedShadowProjection::Project(terrain, landX, terrain.Height(landX, landZ) + 1.0f, landZ).valid,
               "ground above the sea takes no seabed shadow");
+        // Under the water the light bends toward the vertical: the afternoon sun's 0.69 m of
+        // run per metre of fall becomes about 0.47 m, a fifteen-degree sun's 3.7 m about 1.05 m,
+        // and the seabed shadow falls nearer under the fish than the unrefracted line put it.
+        const auto afternoon = island::SeabedShadowProjection::Refracted(-0.45f, 0.82f, -0.34f);
+        const float lowElevation = 15.0f * std::numbers::pi_v<float> / 180.0f;
+        const auto evening = island::SeabedShadowProjection::Refracted(std::cos(lowElevation), std::sin(lowElevation), 0.0f);
+        const float afternoonRun = std::hypot(afternoon[0], afternoon[1]);
+        const auto refracted = island::SeabedShadowProjection::Project(terrain, fish.x, bottom + 1.0f, fish.z, afternoon[0], afternoon[1]);
+        Check(std::abs(afternoonRun - 0.47f) < 0.02f && afternoon[0] < 0.0f && afternoon[1] < 0.0f
+                  && evening[0] > 1.0f && evening[0] < 1.4f && std::abs(evening[1]) < 1e-5f
+                  && refracted.valid && std::hypot(refracted.x - fish.x, refracted.z - fish.z) < std::hypot(cast.x - fish.x, cast.z - fish.z),
+              "the light bends toward the vertical under the water, and the seabed shadow falls nearer under the fish");
     }
     bool observedPresentShark = false;
     bool observedHiddenShark = false;

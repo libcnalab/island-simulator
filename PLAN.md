@@ -233,6 +233,26 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 454 (2026-10-22) — birds', sea animals' and monkeys' shadows follow the hour's light
+
+Three projected shadows still used the fixed 14:00 sun and kept their full darkness under an overcast
+and at night: the flying birds' on the ground, the fish's, stingrays', turtles' and shark's on the
+seabed, and the monkeys' contact ellipses.
+
+- `BirdShadowProjection` and `SeabedShadowProjection` take the light's run per metre of fall (the
+  former fixed sun's by default, so the tests' calls keep their meaning).
+- The bird renderer projects along the hour's shading light. The seabed renderer projects along that
+  light refracted at the surface (`SeabedShadowProjection::Refracted`, Snell's law with water's
+  1.333): the afternoon's 0.69 m of run per metre becomes 0.47 m, and a fifteen-degree sun's 3.7 m
+  becomes 1.05 m.
+- Both scale their darkness by the hour's shadow strength, so there are none under an overcast or on
+  a dark night.
+- The monkeys' moving contact ellipses lean away from the hour's light.
+
+In `birds` the parrot's shadow lies on the beach in partly cloudy light and is gone under `--weather
+overcast`. In `stingrays` the caustics and shadows go with the overcast. A core test checks the
+refracted runs and that the seabed shadow now falls nearer under the fish.
+
 ## Loop pass 453 (2026-10-22) — rocks, fallen logs and driftwood cast into the sun shadow map
 
 Only the trees, palms and structures were casters. The land's rocks (not the reef's under the sea),

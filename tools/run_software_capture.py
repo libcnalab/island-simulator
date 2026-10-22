@@ -1132,7 +1132,7 @@ def main():
                 raise RuntimeError("current turtle hatchlings are missing; check for a stale executable")
             if "the hung fish and the net swing in the breeze and lay over in a gust front" not in diagnostics:
                 raise RuntimeError("current hut yard sway is missing; check for a stale executable")
-            if "flying birds cast soft moving shadows on the ground below them, projected along the fixed sun" not in diagnostics:
+            if "flying birds cast soft moving shadows on the ground below them, projected along the hour's sun" not in diagnostics:
                 raise RuntimeError("current bird shadows are missing; check for a stale executable")
             if "a nut that strikes the shallows floats and drifts ashore" not in diagnostics:
                 raise RuntimeError("current floating coconuts are missing; check for a stale executable")
@@ -1388,7 +1388,7 @@ def main():
                 raise RuntimeError("current skink push-up display is missing; check for a stale executable")
             if "a stalking gecko wags its tail, the tip swaying wide and fast until the lunge" not in diagnostics:
                 raise RuntimeError("current gecko tail wag is missing; check for a stale executable")
-            if "cast soft shadows on the sandy seabed below them, projected along the fixed sun" not in diagnostics:
+            if "cast soft shadows on the sandy seabed below them, projected along the hour's sun refracted at the surface" not in diagnostics:
                 raise RuntimeError("current seabed shadows are missing; check for a stale executable")
             if "at the jetty foot the resident casts a line, the rod held out in the right hand" not in diagnostics:
                 raise RuntimeError("current resident fishing is missing; check for a stale executable")

@@ -43,5 +43,7 @@ private:
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> vertices_;
     std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> staging_;
     int drawCalls_=0,visible_=0;
+    // this frame's light under the water: the refracted run per metre of depth, and its strength
+    float slopeX_=0,slopeZ_=0,strength_=1;
 };
 }

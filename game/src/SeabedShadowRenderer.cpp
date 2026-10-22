@@ -1,4 +1,5 @@
 #include "IslandSimulator/SeabedShadowRenderer.hpp"
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
@@ -26,14 +27,14 @@ SeabedShadowRenderer::SeabedShadowRenderer(GraphicsDevice& device,const IslandTe
 {
     staging_.reserve(static_cast<std::size_t>(VerticesPerShadow)*MaximumShadows);
     effect_->setVertexColorEnabledProperty(true);effect_->setLightingEnabledProperty(false);
-    const char* message="island-simulator: the fish, the stingrays, the sea turtles and the shark cast soft shadows on the sandy seabed below them, projected along the fixed sun";
+    const char* message="island-simulator: the fish, the stingrays, the sea turtles and the shark cast soft shadows on the sandy seabed below them, projected along the hour's sun refracted at the surface, as strong as its shadows";
     std::cout<<message<<'\n';MirrorRuntimeDiagnosticToPlatformLog(message);
 }
 
 void SeabedShadowRenderer::AppendShadow(const Vector3& camera,const float x,const float y,const float z,
                                         const float headingRadians,const float forwardRadius,const float sideRadius) noexcept {
     if(visible_>=MaximumShadows) return;
-    const SeabedShadowPoint shadow=SeabedShadowProjection::Project(terrain_,x,y,z);
+    const SeabedShadowPoint shadow=SeabedShadowProjection::Project(terrain_,x,y,z,slopeX_,slopeZ_);
     if(!shadow.valid||!std::isfinite(headingRadians)) return;
     const float distance=std::hypot(std::hypot(shadow.x-camera.X,shadow.z-camera.Z),DrawnOrAnalyticHeight(ground_,terrain_,shadow.x,shadow.z)-camera.Y);
     if(distance>MaximumDistance) return;
@@ -41,7 +42,7 @@ void SeabedShadowRenderer::AppendShadow(const Vector3& camera,const float x,cons
     // takes it with distance.
     const float heightFade=1.0f-std::clamp((shadow.height-1.0f)/(SeabedShadowProjection::MaximumHeight-1.0f),0.0f,1.0f);
     const float distanceFade=1.0f-std::clamp((distance-18.0f)/16.0f,0.0f,1.0f);
-    const int alpha=static_cast<int>(std::lround(84.0f*(0.3f+0.7f*heightFade)*distanceFade));
+    const int alpha=static_cast<int>(std::lround(84.0f*(0.3f+0.7f*heightFade)*distanceFade*strength_));
     if(alpha<4) return;
     const float spread=1.0f+shadow.height*0.10f;
     const float forwardX=std::cos(headingRadians),forwardZ=std::sin(headingRadians);
@@ -68,6 +69,13 @@ void SeabedShadowRenderer::Draw(const Matrix& view,const Matrix& projection,cons
                                 const std::span<const SeaTurtleState> turtles,const SharkState* shark) {
     drawCalls_=0;visible_=0;
     staging_.clear();
+    // The hour's light (the sun by day, a bright moon's by night) bent toward the vertical at
+    // the surface, and as strong as the shadows it casts: none under an overcast or a dark night.
+    const auto& light=sun_light::Current();
+    const auto run=SeabedShadowProjection::Refracted(light.shading.x,light.shading.y,light.shading.z);
+    slopeX_=run[0];slopeZ_=run[1];
+    strength_=std::clamp(light.lighting.shadowStrength,0.0f,1.0f);
+    if(strength_<0.02f) return;
     for(const auto& one:fish) AppendShadow(camera,one.x,one.y,one.z,one.headingRadians,0.16f*one.scale,0.06f*one.scale);
     for(const auto& ray:rays) AppendShadow(camera,ray.x,ray.y,ray.z,ray.headingRadians,0.95f*ray.scale,1.25f*ray.scale);
     for(const auto& turtle:turtles) AppendShadow(camera,turtle.x,turtle.y,turtle.z,turtle.headingRadians,0.62f*turtle.scale,0.50f*turtle.scale);

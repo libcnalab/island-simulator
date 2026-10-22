@@ -1,4 +1,5 @@
 #include "IslandSimulator/BirdShadowRenderer.hpp"
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include "IslandSimulator/BirdShadowProjection.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
@@ -25,7 +26,7 @@ BirdShadowRenderer::BirdShadowRenderer(GraphicsDevice& device,const IslandTerrai
 {
     staging_.reserve(static_cast<std::size_t>(VerticesPerShadow)*MaximumShadows);
     effect_->setVertexColorEnabledProperty(true);effect_->setLightingEnabledProperty(false);
-    const char* message="island-simulator: flying birds cast soft moving shadows on the ground below them, projected along the fixed sun";
+    const char* message="island-simulator: flying birds cast soft moving shadows on the ground below them, projected along the hour's sun, as strong as its shadows";
     std::cout<<message<<'\n';MirrorRuntimeDiagnosticToPlatformLog(message);
 }
 
@@ -33,10 +34,15 @@ void BirdShadowRenderer::Draw(const Matrix& view,const Matrix& projection,const 
                               const std::span<const BirdState> birds) {
     drawCalls_=0;visible_=0;
     staging_.clear();
+    // Along the hour's light, as strong as the shadows it casts (none under an overcast).
+    const auto& light=sun_light::Current();
+    const float strength=std::clamp(light.lighting.shadowStrength,0.0f,1.0f);
+    if(strength<0.02f||!(light.shading.y>0.05f)) return;
+    const float slopeX=light.shading.x/light.shading.y,slopeZ=light.shading.z/light.shading.y;
     for(const auto& bird:birds) {
         if(visible_>=MaximumShadows) break;
         if(bird.behavior==BirdBehavior::Perched||bird.behavior==BirdBehavior::GroundForage) continue;
-        const BirdShadowPoint shadow=BirdShadowProjection::Project(terrain_,bird.x,bird.y,bird.z);
+        const BirdShadowPoint shadow=BirdShadowProjection::Project(terrain_,bird.x,bird.y,bird.z,slopeX,slopeZ);
         if(!shadow.valid) continue;
         const float distance=std::hypot(shadow.x-camera.X,shadow.z-camera.Z);
         if(distance>MaximumDistance) continue;
@@ -44,7 +50,7 @@ void BirdShadowRenderer::Draw(const Matrix& view,const Matrix& projection,const 
         // distance. The ellipse lies along the heading with the wings across it.
         const float heightFade=1.0f-std::clamp((shadow.height-4.0f)/(BirdShadowProjection::MaximumHeight-4.0f),0.0f,1.0f);
         const float distanceFade=1.0f-std::clamp((distance-40.0f)/30.0f,0.0f,1.0f);
-        const int alpha=static_cast<int>(std::lround(96.0f*(0.25f+0.75f*heightFade)*distanceFade));
+        const int alpha=static_cast<int>(std::lround(96.0f*(0.25f+0.75f*heightFade)*distanceFade*strength));
         if(alpha<4) continue;
         const float spread=1.0f+shadow.height*0.06f;
         const float forwardRadius=0.26f*bird.scale*spread,sideRadius=0.48f*bird.scale*spread;

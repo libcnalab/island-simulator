@@ -10,6 +10,7 @@
 #include <limits>
 #include <stdexcept>
 
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/SunShadowFade.hpp"
 #include "IslandSimulator/ContactShadowPatch.hpp"
@@ -447,10 +448,12 @@ namespace island
             primitiveCount_ = 0;
             const BoundingFrustum frustum(view * projection);
 
-            const float horizontalSunLength = std::hypot(environment::SunDirectionX,
-                                                          environment::SunDirectionZ);
-            const float shadowDirectionX = -environment::SunDirectionX / horizontalSunLength;
-            const float shadowDirectionZ = -environment::SunDirectionZ / horizontalSunLength;
+            // The moving shadows lean away from the hour's light (the static ones were laid
+            // once, as soft grounding pools).
+            const auto shading = sun_light::Current().shading;
+            const float horizontalSunLength = std::max(std::hypot(shading.x, shading.z), 1e-4f);
+            const float shadowDirectionX = -shading.x / horizontalSunLength;
+            const float shadowDirectionZ = -shading.z / horizontalSunLength;
 
             for (const StaticShadow& shadow : staticShadows_) {
                 if (!staticRebuild) break;
