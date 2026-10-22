@@ -21,13 +21,22 @@ namespace island
             const float distance = 330.0f + 290.0f * Unit(2U);
             surfacing_ = {std::cos(bearing) * distance, std::sin(bearing) * distance,
                           bearing + (Unit(3U) < 0.5f ? 1.5707963f : -1.5707963f), 0.0f, Unit(4U) < 0.34f, true};
-            blowAge_ = 0.0f;
+            surfacing_.breach = !surfacing_.flukes && Unit(6U) < 0.32f;
+            if (surfacing_.breach) ++breaches_;
+            blowAge_ = surfacing_.breach ? 99.0f : 0.0f;
             blowX_ = surfacing_.x;
             blowZ_ = surfacing_.z;
             ++surfacings_;
         }
         if (surfacing_.active) {
+            const float before = surfacing_.progress;
             surfacing_.progress += dt / RollSeconds;
+            if (surfacing_.breach && before < BreachImpact && surfacing_.progress >= BreachImpact) {
+                // it falls back on its side: the sea bursts up white along it
+                splashAge_ = 0.0f;
+                splashX_ = surfacing_.x + std::cos(surfacing_.headingRadians) * 2.0f;
+                splashZ_ = surfacing_.z + std::sin(surfacing_.headingRadians) * 2.0f;
+            }
             surfacing_.x += std::cos(surfacing_.headingRadians) * 1.6f * dt;
             surfacing_.z += std::sin(surfacing_.headingRadians) * 1.6f * dt;
             if (surfacing_.progress >= 1.0f) {
@@ -57,5 +66,37 @@ namespace island
             puff.density = std::clamp(age * 4.0f, 0.0f, 1.0f) * (1.0f - std::clamp((age - 1.2f) / 4.3f, 0.0f, 1.0f)) * (0.85f - 0.25f * t);
             puff.active = true;
         }
+        // The breach's splash: white water thrown up along the falling body, the middle highest,
+        // spreading and falling back over three and a half seconds.
+        splashAge_ += dt;
+        const float headX = std::cos(surfacing_.headingRadians), headZ = std::sin(surfacing_.headingRadians);
+        for (std::size_t i = 0; i < splash_.size(); ++i) {
+            MistPuff& puff = splash_[i];
+            const float age = splashAge_ - 0.04f * static_cast<float>(i % 4U);
+            if (age < 0.0f || age > 3.6f) {
+                puff.active = false;
+                puff.density = 0.0f;
+                continue;
+            }
+            const float t = (static_cast<float>(i) + 0.5f) / static_cast<float>(splash_.size());   // along the body
+            const float along = (t - 0.5f) * 12.0f, out = (i % 2U == 0U ? 1.0f : -1.0f) * (1.0f + 2.5f * std::min(age, 1.0f));
+            const float peak = 4.0f + 5.0f * std::sin(3.14159265f * t);
+            const float height = peak * std::sin(3.14159265f * std::clamp(age / 2.6f, 0.0f, 1.0f));
+            puff.x = splashX_ + headX * along - headZ * out + windX * age * 0.6f;
+            puff.z = splashZ_ + headZ * along + headX * out + windZ * age * 0.6f;
+            puff.y = 0.3f + height;
+            puff.size = 2.2f + 3.2f * std::min(age, 1.5f);
+            puff.age = age;
+            puff.density = std::clamp(age * 6.0f, 0.0f, 1.0f) * (1.0f - std::clamp((age - 1.4f) / 2.2f, 0.0f, 1.0f));
+            puff.active = true;
+        }
+    }
+
+    void WhalePod::PreviewBreach(const float x, const float z, const float headingRadians, const float progress) noexcept
+    {
+        surfacing_ = {x, z, headingRadians, std::clamp(progress, 0.0f, 0.99f), false, true};
+        surfacing_.breach = true;
+        blowAge_ = 99.0f;
+        nextSurfacing_ = std::max(nextSurfacing_, clock_ + 30.0f);
     }
 }

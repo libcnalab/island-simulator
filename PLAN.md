@@ -233,6 +233,27 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 542 (2026-10-22) — a humpback breaches
+
+The whales offshore blew, rolled their backs and raised their flukes. Now about one surfacing in
+five (one without flukes) is a breach instead (`WhaleSurfacing::breach`).
+
+- **The leap.** No blow. The whale bursts up out of the sea near upright (72°), two thirds of
+  its 13 m clear. It then twists over onto its side as it falls back, striking the sea half way
+  through its run (`WhalePod::BreachImpact`), and is under again.
+- **The body.** `WhaleRenderer` draws the whole body for a breach, pitched and rolled: a dark
+  back and a pale throat and belly, the throat's pleats in light and dark strips. The long white
+  flippers are swept back, and the flukes sit at the tail.
+- **The splash.** A great splash of twelve puffs is thrown up along the falling body, highest at
+  its middle (up to 9 m), spreading and falling back over three and a half seconds
+  (`WhalePod::Splash`, drawn by the blows' mist renderer).
+- **New QA view.** `whale-breach` sets a breach 115 m off the shore with `WhalePod::PreviewBreach`
+  and looks at it rising (`20261022T145734`).
+- **Tests.** CoreTests check that a whale breaches within half an hour, without a blow, and that
+  its splash rises over 6 m.
+
+The suite is 76/76.
+
 ## Loop pass 541 (2026-10-22) — a freighter passes far offshore
 
 The sea round the island was empty to the horizon.

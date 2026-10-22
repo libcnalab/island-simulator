@@ -207,6 +207,7 @@ namespace island
             case FixedViewpoint::LighthouseLanternDetail: return "lighthouse-lantern";
             case FixedViewpoint::LighthouseCottageDetail: return "lighthouse-cottage";
             case FixedViewpoint::PassingShipDetail: return "passing-ship";
+            case FixedViewpoint::WhaleBreachDetail: return "whale-breach";
             case FixedViewpoint::PlaneWreckDetail: return "plane-wreck";
             case FixedViewpoint::PlaneCockpitDetail: return "plane-cockpit";
             case FixedViewpoint::BeachLitterDetail: return "beach-litter";
@@ -2097,6 +2098,20 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: lighthouse QA camera looks up at the tower from the land beside it\n";
+        } else if (viewpoint_ == FixedViewpoint::WhaleBreachDetail) {
+            // On the shore at the freighter's lane's bearing, out at a humpback breaching 115 m off
+            // it, rising toward the top of its leap (the leap goes on through the capture's half
+            // second), turned a little toward the eye so its flippers show.
+            const float bearing=PassingShip::Bearing+0.12f;
+            const float reach=terrain_.ShoreRadius(bearing)-4.0f;
+            const float eyeX=std::cos(bearing)*reach,eyeZ=std::sin(bearing)*reach;
+            cameraPosition_=Vector3(eyeX,std::max(terrain_.Height(eyeX,eyeZ),0.0f)+PlayerMotion::EyeHeight,eyeZ);
+            const float whaleX=std::cos(bearing)*(reach+115.0f),whaleZ=std::sin(bearing)*(reach+115.0f);
+            whales_.PreviewBreach(whaleX,whaleZ,bearing+1.5707963f+0.7f,0.2f);
+            const Vector3 direction=Vector3(whaleX,5.0f,whaleZ)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: whale-breach QA camera looks out from the shore at a humpback breaching\n";
         } else if (viewpoint_ == FixedViewpoint::PassingShipDetail) {
             // On the shore at the bearing the freighter's lane passes closest, out at it.
             const float bearing=PassingShip::Bearing;
@@ -3192,7 +3207,9 @@ namespace island
         eyeshineRenderer_ = std::make_unique<EyeshineRenderer>(device);
         sunbeamMotes_ = std::make_unique<SunbeamMoteRenderer>(device, terrain_, canopyLightField_);
         whaleBlowRenderer_ = std::make_unique<CascadeMistRenderer>(device,
-            "island-simulator: a humpback's blow stands up five metres far offshore, drifts downwind and thins away", WhalePod::PuffCount);
+            "island-simulator: a humpback's blow stands up five metres far offshore, drifts downwind and thins away; "
+            "now and then one breaches instead, bursting clear of the sea and falling back on its side in a great splash",
+            std::max(WhalePod::PuffCount, WhalePod::SplashCount));
         whaleBlowRenderer_->SetRange(700.0f, 200.0f, 2.2f);
         mistBankRenderer_ = std::make_unique<MistBankRenderer>(device, MorningMistField::MaximumSites);
         summitCloudRenderer_ = std::make_unique<MistBankRenderer>(device, SummitCloudField::Count, 1000.0f, 0.6f, 215.0f,
@@ -7614,7 +7631,10 @@ namespace island
             octopusInkRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,octopusInk_.Puffs());
             surfSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,surfSpray_.Puffs());
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,dolphinBlows_.Puffs());
-            if (whaleBlowRenderer_) whaleBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,whales_.Blow());
+            if (whaleBlowRenderer_) {
+                whaleBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,whales_.Blow());
+                whaleBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,whales_.Splash());
+            }
             if (sunbeamMotes_) {
                 const auto& sun = sun_light::Current().lighting;
                 sunbeamMotes_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,timeSeconds,

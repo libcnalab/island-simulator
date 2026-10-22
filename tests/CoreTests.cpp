@@ -7361,6 +7361,20 @@ int main()
             }
             Check(surfacings >= 7 && surfacings <= 16 && farOut && blowRose && blowGone,
                   "whales surface every minute or so far offshore, their blows standing up and thinning away");
+            // and now and then one breaches: no blow, a splash thrown up when it falls back
+            island::WhalePod breaching;
+            bool breached = false, splashRose = false, noBlow = true;
+            for (int step = 0; step < 60 * 1800 && !splashRose; ++step) {
+                breaching.Update(1.0f / 60.0f, 1.0f, 0.0f);
+                const auto& w = breaching.Surfacing();
+                if (w.active && w.breach) {
+                    breached = true;
+                    for (const auto& puff : breaching.Blow()) noBlow = noBlow && !puff.active;
+                }
+                for (const auto& puff : breaching.Splash()) splashRose = splashRose || (puff.active && puff.y > 6.0f);
+            }
+            Check(breached && splashRose && noBlow && breaching.BreachCount() >= 1U,
+                  "no whale breaches, or its breach blows, or it falls back without a splash");
         }
         // A yacht now and then: out part of the time, always 560-720 m off the island's
         // centre, sailing a straight line at its five knots; a fresh line each passage.

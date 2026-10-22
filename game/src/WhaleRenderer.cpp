@@ -25,7 +25,7 @@ namespace island
     namespace
     {
         constexpr int Rings = 14, Segments = 12;
-        constexpr int Capacity = Rings * Segments * 6 + 2 * 3 * 12;
+        constexpr int Capacity = Rings * Segments * 2 * 6 + 2 * 3 * 12 + 120;
     }
 
     WhaleRenderer::WhaleRenderer(GraphicsDevice& device)
@@ -69,6 +69,71 @@ namespace island
         };
         const Vector3 skin(0.20f, 0.23f, 0.26f), belly(0.40f, 0.42f, 0.44f);
         staging_.clear();
+        if (whale.breach) {
+            // A breach: up out of the sea near upright, two thirds of its length clear, then
+            // twisting over and falling back on its side; under again once it has struck.
+            if (p > WhalePod::BreachImpact + 0.02f) return;
+            const float t = std::clamp((p - 0.08f) / (WhalePod::BreachImpact - 0.08f), 0.0f, 1.0f);
+            float pitch = 1.25f, roll = 0.0f, height = 0.0f;
+            if (t < 0.5f) height = -7.0f + 16.0f * (t / 0.5f) - std::sin(pitch) * 6.5f;
+            else {
+                const float s2 = (t - 0.5f) / 0.5f;
+                pitch = 1.25f * (1.0f - s2) - 0.1f * s2;
+                roll = 1.5f * s2 * s2 * (3.0f - 2.0f * s2);
+                height = (9.0f - std::sin(1.25f) * 6.5f) + 1.5f * s2 - 5.5f * s2 * s2;
+            }
+            const Vector3 centre = base + forward * (3.0f * t) + Vector3(0.0f, height, 0.0f);
+            const Vector3 axis = forward * std::cos(pitch) + Vector3::Up * std::sin(pitch);
+            const Vector3 dorsal0 = Vector3::Up * std::cos(pitch) - forward * std::sin(pitch);
+            const Vector3 lateral = side * std::cos(roll) + dorsal0 * std::sin(roll);
+            const Vector3 dorsal = dorsal0 * std::cos(roll) - side * std::sin(roll);
+            constexpr float BodyLength = 13.0f, BodyHalf = 1.6f;
+            const auto bodyPoint = [&](const float u, const float a) {
+                const float girth = std::sqrt(std::max(0.0f, 1.0f - u * u)) * (u < 0.0f ? 1.0f + 0.4f * u : 1.0f);
+                return centre + axis * (u * BodyLength * 0.5f) + lateral * (std::cos(a) * BodyHalf * girth)
+                    + dorsal * (std::sin(a) * BodyHalf * 1.1f * girth);
+            };
+            const auto face = [&](const Vector3& a, const Vector3& b, const Vector3& c, const Vector3& albedo, const Vector3& outward) {
+                Vector3 n = Vector3::Cross(b - a, c - a);
+                if (n.LengthSquared() < 1e-8f) return;
+                n.Normalize();
+                if (Vector3::Dot(n, outward) < 0.0f) n = -n;
+                const Color colour = shade(n, albedo);
+                staging_.emplace_back(a, colour); staging_.emplace_back(b, colour); staging_.emplace_back(c, colour);
+            };
+            constexpr int Round = Segments * 2;
+            for (int r = 0; r < Rings; ++r) {
+                const float u0 = -1.0f + 2.0f * static_cast<float>(r) / Rings, u1 = -1.0f + 2.0f * static_cast<float>(r + 1) / Rings;
+                for (int k = 0; k < Round; ++k) {
+                    const float a0 = 2.0f * std::numbers::pi_v<float> * static_cast<float>(k) / Round;
+                    const float a1 = 2.0f * std::numbers::pi_v<float> * static_cast<float>(k + 1) / Round;
+                    const Vector3 v00 = bodyPoint(u0, a0), v01 = bodyPoint(u0, a1), v10 = bodyPoint(u1, a0), v11 = bodyPoint(u1, a1);
+                    const Vector3 middle = centre + axis * ((u0 + u1) * 0.25f * BodyLength);
+                    const Vector3 outward = (v00 + v11) * 0.5f - middle;
+                    // the pale throat and belly, its pleats in light and dark strips forward
+                    const float am = (a0 + a1) * 0.5f;
+                    Vector3 albedo = std::sin(am) > -0.25f ? skin : belly;
+                    if (std::sin(am) < -0.25f && u0 > 0.1f && k % 2 == 0) albedo = belly * 0.82f;
+                    face(v00, v10, v11, albedo, outward);
+                    face(v00, v11, v01, albedo, outward);
+                }
+            }
+            // the long white flippers, swept back, and the flukes at the tail
+            const Vector3 pale(0.78f, 0.79f, 0.77f);
+            for (const float sideSign : {-1.0f, 1.0f}) {
+                const Vector3 root = bodyPoint(0.36f, sideSign > 0.0f ? 0.0f : std::numbers::pi_v<float>) - dorsal * 0.4f;
+                const Vector3 tip = root + lateral * (sideSign * 4.0f) - axis * 1.4f - dorsal * 0.6f;
+                const Vector3 lead = root + axis * 0.35f, trail = root - axis * 0.45f;
+                face(lead, tip, trail, pale, dorsal * -1.0f + lateral * sideSign);
+                face(trail, tip, lead, skin, dorsal + lateral * sideSign);
+                const Vector3 stock = bodyPoint(-0.98f, 0.0f) * 0.5f + bodyPoint(-0.98f, std::numbers::pi_v<float>) * 0.5f;
+                const Vector3 flukeTip = stock + lateral * (sideSign * 2.2f) - axis * 0.9f;
+                const Vector3 notch = stock - axis * 0.5f;
+                face(stock, flukeTip, notch, skin, dorsal);
+                face(notch, flukeTip, stock, pale, dorsal * -1.0f);
+            }
+        }
+        if (!whale.breach) {
         // The back: a long half-ellipsoid, 12 m nose to tail and 3 m across, its top risen
         // above the swell by the roll (at most 1.1 m), the crest sliding back as it rolls.
         constexpr float Length = 12.0f, HalfWidth = 1.55f, Height = 1.9f;
@@ -127,6 +192,7 @@ namespace island
             const Color c = shade(side, skin);
             const Vector3 under = stock - forward * 0.0f + Vector3(0.0f, -2.5f, 0.0f) + forward * 1.2f;
             staging_.emplace_back(stock + side * 0.35f, c); staging_.emplace_back(stock - side * 0.35f, c); staging_.emplace_back(under, c);
+        }
         }
         if (staging_.empty()) return;
         vertices_->SetData(staging_.data(), 0, static_cast<int>(staging_.size()), SetDataOptions::Discard);
