@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 465: frame profile splits rain and local-lights out of time-of-day (read the next operator log before optimizing) (PLAN "Loop pass 465").
 - Pass 464: static contact shadows in a GPU buffer (867 shadows / 71,820 vertices no longer restaged per camera move; fade + structure share in the vertex shader) (PLAN "Loop pass 464").
 - Pass 463: beetle figures on level ground (PLAN "Loop pass 463").
 - Pass 462: figure reaches x contactShadowDistanceScale (full 1, mobile .72, native .5); small figures 8/6/4 (PLAN "Loop pass 462").

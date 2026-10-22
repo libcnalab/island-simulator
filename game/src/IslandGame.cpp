@@ -6912,6 +6912,8 @@ namespace island
             const bool underground = renderCameraPosition_.Y < terrain_.Height(renderCameraPosition_.X, renderCameraPosition_.Z) - 0.5f;
             if (!underground && renderCameraPosition_.Y > 0.0f)
             {
+                // (its own CPU line in the frame profile, inside time-of-day's)
+                GpuDiagnosticScope rainPass("rain");
                 timeOfDay_->DrawRainCurtains(cameraView_, cameraProjection_, renderCameraPosition_, light,
                                              std::max(weather.rain, weather.cloudCover > 0.6f ? 0.35f * weather.cloudCover : 0.0f),
                                              timeSeconds);
@@ -6928,6 +6930,7 @@ namespace island
             // grade lifts it there.
             bool localLit = false;
             if (localLights_ && TimeOfDayRenderer::GradeActive(light) && !underground) {
+                GpuDiagnosticScope lightsPass("local-lights");   // (inside time-of-day's line too)
                 localLights_->ResetCounts();
                 const auto ground = [this](float x, float z) {
                     BikeGround g;

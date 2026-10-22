@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 465 (2026-10-22) — the time-of-day pass shows its rain and local lights apart
+
+The operator's profile put 3.2 ms per frame of CPU in `time-of-day`, the second costliest pass. That
+scope holds the rain (curtains, streaks, rings, splashes, canopy and eave drips), the local lights
+(campfire, lantern, the quad's lamps and the torch, each draping its grid on the ground), the grade,
+the night sky, the rainbow and the bolts. Nothing tells which costs what. The rain and the local
+lights now have their own lines in the frame profile (`rain`, `local-lights`, nested inside
+`time-of-day`, whose line still holds the total). The next play log will show where the time goes
+before anything there is changed blind. A capture at 20:00 in showers logs all three passes every
+frame.
+
 ## Loop pass 464 (2026-10-22) — the static contact shadows stay on the GPU
 
 The operator's last play log (2026-10-21 18:30Z) had `contact-shadows` as the costliest CPU render
