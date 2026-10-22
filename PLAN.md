@@ -233,6 +233,22 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 451 (2026-10-22) — the bear casts its figure
+
+The bear's only shadow was its 0.64 x 1.18 m pool. `walker_shadow::BearLimbs` lays sixteen limbs in
+BearRenderer's frame:
+
+- the trunk from the rump to the shoulder hump, and the neck;
+- the skull, lowered and pushed forward by foraging and pitched nose-up by the sniff;
+- the muzzle to the nose, the two round ears and the stub tail;
+- the four fitted legs, folded under the body when it lies.
+
+The figure is drawn like the others within 60 m, and the pool stays as the occluded ground under
+the belly. In `bear` at 14:00 and 16:30 the heavy figure falls to one side, long toward evening. In
+`bear-lying` it is the low outline of the head, ears and back. The bear test checks that the limbs
+lie about the body, the paws are near the ground, the hump is the highest part, and the hump's shadow
+is inside the figure.
+
 ## Loop pass 450 (2026-10-22) — goats and boars cast their figures too
 
 The goats and the boars had only their contact ellipses, laid along their heading, not along the

@@ -1,4 +1,5 @@
 #include "IslandSimulator/WalkerShadow.hpp"
+#include "IslandSimulator/BearMotion.hpp"
 #include "IslandSimulator/BoarGroundPose.hpp"
 #include "IslandSimulator/BoarHerd.hpp"
 #include "IslandSimulator/BoarPose.hpp"
@@ -289,6 +290,44 @@ namespace island::walker_shadow
         for (const float side : {-1.0f, 1.0f})
             add({side * 0.17f, 0.83f - 0.5f * dip + bob, 0.54f}, {side * 0.24f, 1.08f - 0.5f * dip + bob, 0.565f}, 0.045f);
         add({0.0f, 0.66f + bob, -0.70f}, {0.0f, 0.58f + bob, -0.80f}, 0.03f);   // tail
+        for (; next < limbs.size(); ++next) limbs[next].radius = UnusedRadius;
+        return limbs;
+    }
+
+    std::array<Limb, CapsuleCount> BearLimbs(const BearState& bear) noexcept
+    {
+        // BearRenderer's frame: the trunk from the rump to the shoulder hump, the neck, the
+        // head lowered and pushed forward by foraging and pitched nose-up by the sniff, the
+        // muzzle, the ears, the stub tail, and the four fitted legs (folded when lying).
+        const BearPose& pose = bear.pose;
+        const float bob = pose.bodyBob;
+        const float forage = std::clamp(bear.foragePose, 0.0f, 1.0f);
+        const float sniff = std::clamp(bear.sniff, 0.0f, 1.0f) * 0.30f;
+        const BearPoint head{0.0f, 1.30f - forage * 0.48f, 1.15f + forage * 0.18f};
+        const float fy = std::sin(sniff), fz = std::cos(sniff);   // the head's forward, pitched up
+        const auto onHead = [&](const float forward, const float up, const float side) {
+            return BearPoint{side, head.y + forward * fy + up * fz, head.z + forward * fz - up * fy};
+        };
+        std::array<Limb, CapsuleCount> limbs{};
+        std::size_t next = 0;
+        const auto add = [&](const BearPoint a, const BearPoint b, const float radius) {
+            const BearPoint wa = pose.ToWorld(a), wb = pose.ToWorld(b);
+            limbs[next++] = {wa.x, wa.y, wa.z, wb.x, wb.y, wb.z, radius};
+        };
+        add({0.0f, 1.04f + bob, -0.62f}, {0.0f, 1.07f + bob, -0.05f}, 0.53f);                 // rump and belly
+        add({0.0f, 1.07f + bob, -0.05f}, {0.0f, 1.30f + bob, 0.42f}, 0.53f);                  // the shoulder hump
+        add({0.0f, 1.28f + bob - forage * 0.10f, 0.55f}, head, 0.40f);                       // neck
+        add(onHead(-0.05f, 0.0f, 0.0f), onHead(0.20f, -0.02f, 0.0f), 0.36f);                 // the skull
+        add(onHead(0.30f, -0.05f, 0.0f), onHead(0.62f, -0.08f, 0.0f), 0.15f);                // muzzle to nose
+        for (const float side : {-1.0f, 1.0f}) {
+            const BearPoint ear = onHead(-0.045f, 0.285f, side * 0.282f);
+            add(ear, ear, 0.11f);
+        }
+        add({0.0f, 1.10f + bob, -1.08f}, {0.0f, 1.10f + bob, -1.08f}, 0.13f);               // stub tail
+        for (const auto& leg : pose.legs) {
+            add(leg.root, leg.joint, 0.17f);
+            add(leg.joint, BearPoint{leg.paw.x, leg.paw.y, leg.paw.z + 0.06f}, 0.12f);
+        }
         for (; next < limbs.size(); ++next) limbs[next].radius = UnusedRadius;
         return limbs;
     }

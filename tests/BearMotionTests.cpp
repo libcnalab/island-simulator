@@ -1,3 +1,4 @@
+#include "IslandSimulator/WalkerShadow.hpp"
 #include "IslandSimulator/BearMotion.hpp"
 #include "IslandSimulator/CampfireLayout.hpp"
 #include "IslandSimulator/HutLayout.hpp"
@@ -108,6 +109,26 @@ int main() {
     Check(std::all_of(swings.begin(),swings.end(),[](std::size_t value){return value>50;}),
         "one or more bear legs never step");
 
+    {
+        // The bear's sun shadow is laid from its fitted pose: the limbs about the body, the paws
+        // near the ground, the hump the highest, the hump's shadow inside the figure.
+        const auto& state=bear.State();
+        const auto limbs=walker_shadow::BearLimbs(state);
+        float lowest=1e9f,highest=-1e9f,farthest=0;
+        for(const auto& limb:limbs) {
+            if(!(limb.radius>0))continue;
+            lowest=std::min({lowest,limb.ay-limb.radius,limb.by-limb.radius});
+            highest=std::max({highest,limb.ay+limb.radius,limb.by+limb.radius});
+            farthest=std::max({farthest,std::hypot(limb.ax-state.x,limb.az-state.z),std::hypot(limb.bx-state.x,limb.bz-state.z)});
+        }
+        const float sx=-.45f,sy=.82f,sz=-.34f;
+        const auto figure=walker_shadow::Lay(limbs,state.x,state.y,state.z,sx,sy,sz,1.8f);
+        const auto& hump=limbs[1];
+        const float height=hump.by-state.y;
+        Check(lowest-state.y>-.2f&&lowest-state.y<.12f&&highest-state.y>1.4f&&highest-state.y<2.1f&&farthest<2.0f
+            &&walker_shadow::SignedDistance(figure,hump.bx-state.x-sx/sy*height,hump.bz-state.z-sz/sy*height)<-.2f,
+            "the bear's sun shadow is not laid from its fitted pose");
+    }
     const auto unchanged=bear.State();bear.Update(0,distant);bear.Update(-1,distant);
     bear.Update(std::numeric_limits<float>::quiet_NaN(),distant);
     Check(bear.State()==unchanged,"invalid elapsed time moves bear");

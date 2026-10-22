@@ -6391,6 +6391,16 @@ namespace island
                     walker_shadow::Lay(walker_shadow::DeerLimbs(deer), deer.x, ground, deer.z, toSun.x, toSun.y, toSun.z, stature),
                     Vector3(deer.x, ground, deer.z), Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength, groundAt);
             }
+            {
+                // and the bear's
+                const BearState& bear = bear_->State();
+                const float ground = groundAt(bear.x, bear.z);
+                if (Vector3::DistanceSquared(Vector3(bear.x, bear.y, bear.z), renderCameraPosition_) < 60.0f * 60.0f
+                    && std::abs(bear.y - ground) < 0.25f)
+                    walkerShadowRenderer_->Draw(cameraView_, cameraProjection_,
+                        walker_shadow::Lay(walker_shadow::BearLimbs(bear), bear.x, ground, bear.z, toSun.x, toSun.y, toSun.z, 1.8f),
+                        Vector3(bear.x, ground, bear.z), Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength, groundAt);
+            }
             for (const GoatState& goat : goats_->Goats()) {
                 // the goats' and the boars' too, from the poses their renderers draw
                 const float ground = groundAt(goat.x, goat.z);
