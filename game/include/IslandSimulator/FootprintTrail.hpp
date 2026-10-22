@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <span>
 
 namespace island {
@@ -18,6 +19,8 @@ struct Footprint {
     bool active=false;
     std::uint8_t kind=0;   // 0 the walker's bare foot, 1 a cloven hoof
     float life=240.0f;     // how long the ground keeps this print (the swash takes wet sand's sooner)
+    float strength=1.0f;   // how dark it was laid (a wet foot's print on planks, as wet as the foot)
+    float y=std::numeric_limits<float>::quiet_NaN();   // laid on planks at this height; NaN: on the ground
 };
 
 // The walker's trail on the sand: a print every stride while walking on sand, alternating
@@ -31,7 +34,12 @@ public:
     static constexpr float WetLifeSeconds=45.0f;
     // onSand: the walker's feet are on sand this frame (not swimming, not on a deck);
     // wetSand: that sand is the wet strip at the water's edge, whose prints go sooner.
-    void Update(float deltaSeconds,float x,float z,float velocityX,float velocityZ,bool onSand,bool wetSand=false) noexcept;
+    /** @brief deckY: finite when the feet are on planks (the jetty, the bridge, the lookout), whose
+     *  prints are only the wet marks of feet come out of the water: laid at that height, as dark
+     *  as deckWetness (0..1, none below 0.05), and drying off in DeckLifeSeconds. */
+    void Update(float deltaSeconds,float x,float z,float velocityX,float velocityZ,bool onSand,bool wetSand=false,
+                float deckY=std::numeric_limits<float>::quiet_NaN(),float deckWetness=0.0f) noexcept;
+    static constexpr float DeckLifeSeconds=30.0f;
     [[nodiscard]] std::span<const Footprint> Prints() const noexcept {return prints_;}
     [[nodiscard]] std::uint32_t PrintCount() const noexcept {return laid_;}
     [[nodiscard]] std::size_t ActiveCount() const noexcept;

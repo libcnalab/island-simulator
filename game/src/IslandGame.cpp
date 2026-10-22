@@ -3610,8 +3610,14 @@ namespace island
                 for(auto& trail:goatPrints_) trail.SetRain(rain);
                 deer_->SetRain(rain);   // and sends the deer under the crowns
             }
+            // Out of the water the feet stay wet for some twenty-five seconds: on the planks (the
+            // jetty, the bridge, the lookout) they leave dark wet prints that dry off.
+            walkerFeetWet_=playerMotion_.Mode()==LocomotionMode::Swimming||WalkerWaterDepth()>0.05f
+                ?1.0f:std::max(0.0f,walkerFeetWet_-deltaSeconds/25.0f);
+            const bool onPlanks=underfoot==FootstepSurface::Wood;
             footprints_.Update(deltaSeconds,walker.x,walker.z,playerMotion_.VelocityX(),playerMotion_.VelocityZ(),onSand||inMud,
-                inMud||(onSand&&terrain_.Sample(walker.x,walker.z).surface==TerrainSurface::WetSand));
+                inMud||(onSand&&terrain_.Sample(walker.x,walker.z).surface==TerrainSurface::WetSand),
+                onPlanks?walker.y-PlayerMotion::EyeHeight:std::numeric_limits<float>::quiet_NaN(),walkerFeetWet_);
             // The shadow figure's gait: a turn of the phase per stride walked, the limbs swinging
             // wider with the pace and settling when the walker stops, the body turning to the way
             // it walks (or, standing, to the view) over some few tenths of a second.

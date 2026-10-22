@@ -13,6 +13,7 @@
 #include <array>
 #include <cmath>
 #include <iostream>
+#include <limits>
 #include <numbers>
 using namespace Microsoft::Xna::Framework;
 using namespace Microsoft::Xna::Framework::Graphics;
@@ -33,16 +34,21 @@ void FootprintTrailRenderer::Draw(const Matrix& view,const Matrix& projection,co
                                   const std::span<const Footprint> prints) {
     drawCalls_=0;visible_=0;
     staging_.clear();
+    // a print on planks lies on the deck at its own height, not on the ground under it
+    float deck=std::numeric_limits<float>::quiet_NaN();
+    const auto heightAt=[&](const float x,const float z){
+        return std::isfinite(deck)?deck+0.006f:DrawnOrAnalyticHeight(ground_,terrain_,x,z)+0.012f;
+    };
     const auto fan=[&](float cx,float cz,float forwardX,float forwardZ,float forwardRadius,float sideRadius,int alpha){
         const float sideX=-forwardZ,sideZ=forwardX;
-        const Vector3 centre(cx,DrawnOrAnalyticHeight(ground_,terrain_,cx,cz)+0.012f,cz);
+        const Vector3 centre(cx,heightAt(cx,cz),cz);
         const Color core(0,0,0,alpha),rim(0,0,0,0);
         std::array<Vector3,Segments> edge;
         for(int segment=0;segment<Segments;++segment) {
             const float angle=static_cast<float>(segment)*2.0f*std::numbers::pi_v<float>/static_cast<float>(Segments);
             const float along=std::cos(angle)*forwardRadius,across=std::sin(angle)*sideRadius;
             const float ex=cx+forwardX*along+sideX*across,ez=cz+forwardZ*along+sideZ*across;
-            edge[static_cast<std::size_t>(segment)]=Vector3(ex,DrawnOrAnalyticHeight(ground_,terrain_,ex,ez)+0.012f,ez);
+            edge[static_cast<std::size_t>(segment)]=Vector3(ex,heightAt(ex,ez),ez);
         }
         for(int segment=0;segment<Segments;++segment) {
             staging_.emplace_back(centre,core);
@@ -57,6 +63,7 @@ void FootprintTrailRenderer::Draw(const Matrix& view,const Matrix& projection,co
         const int alpha=static_cast<int>(std::lround(78.0f*std::clamp(print.density,0.0f,1.0f)*(1.0f-std::clamp((distance-30.0f)/15.0f,0.0f,1.0f))));
         if(alpha<3) continue;
         const float fx=std::cos(print.headingRadians),fz=std::sin(print.headingRadians);
+        deck=print.y;
         if(print.kind==1U) {
             // A cloven hoof: two narrow toes side by side, splayed a little at the front.
             for(const float toe:{-1.0f,1.0f}) {

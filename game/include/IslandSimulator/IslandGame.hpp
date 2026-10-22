@@ -745,6 +745,7 @@ namespace island
         std::uint32_t notedClawKnocks_ = 0U;
         float geckoChirpClock_ = -1.0f;   // the clock at the last look for a hut gecko's chirp
         float palmClatterSeconds_ = 3.0f;   // until the next gust may clatter a palm's fronds
+        float walkerFeetWet_ = 0.0f;   // 0..1 the walker's feet still wet from the water, drying as they walk
         std::uint32_t palmClatters_ = 0U;
         std::uint32_t notedDeerBolts_ = 0U;
         std::uint32_t notedSharkBreach_ = 0U;

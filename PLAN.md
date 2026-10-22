@@ -233,6 +233,24 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 491 (2026-10-22) — wet feet print the jetty's planks
+
+Come out of the sea onto the jetty, and real wet feet leave dark prints on the boards that dry
+off within a minute. The walker's feet printed only sand and mud.
+
+- **Wet feet.** `IslandGame` keeps `walkerFeetWet_`: 1 while swimming or wading (water over
+  5 cm), drying to 0 over 25 s of walking.
+- **Prints on planks.** On planks (`FootstepSurface::Wood`: the jetty, the rope bridge, the
+  lookout) the trail lays a print as dark as the feet are still wet (`Footprint::strength`), at
+  the deck's height (`Footprint::y`, from the walker's eye less `EyeHeight`). These dry off in
+  `FootprintTrail::DeckLifeSeconds` (30 s, sooner in rain). Dry feet print nothing there.
+- **Drawing.** `FootprintTrailRenderer` lays a print with a height on the deck (+6 mm) instead of
+  the ground under it.
+
+A core test checks the prints' deck height and life, their fading strength, none from dry feet,
+and all gone within half a minute. No capture shows them yet: the QA views keep the walker
+standing. The drawing is the sand prints' path with the deck's height.
+
 ## Loop pass 490 (2026-10-22) — a gust clatters the palms' dry fronds
 
 A coconut palm's stiff fronds rattle and clack in a strong gust: one of the most recognisable

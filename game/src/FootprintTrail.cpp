@@ -10,17 +10,19 @@ std::size_t FootprintTrail::ActiveCount() const noexcept {
 }
 
 void FootprintTrail::Update(const float deltaSeconds,const float x,const float z,
-                            const float velocityX,const float velocityZ,const bool onSand,const bool wetSand) noexcept {
+                            const float velocityX,const float velocityZ,const bool onSand,const bool wetSand,
+                            const float deckY,const float deckWetness) noexcept {
     const float dt=std::isfinite(deltaSeconds)?std::clamp(deltaSeconds,0.0f,0.1f):0.0f;
     if(dt<=0.0f) return;
     for(Footprint& print:prints_) {
         if(!print.active) continue;
         print.age+=dt*(1.0f+RainErosion*rain_);
         const float life=print.life>0.0f?print.life:LifeSeconds;
-        print.density=1.0f-print.age/life;
+        print.density=print.strength*(1.0f-print.age/life);
         if(print.age>=life) print.active=false;
     }
-    if(!onSand||!std::isfinite(x)||!std::isfinite(z)||!std::isfinite(velocityX)||!std::isfinite(velocityZ)) return;
+    const bool onDeck=std::isfinite(deckY)&&std::isfinite(deckWetness)&&deckWetness>0.05f;
+    if((!onSand&&!onDeck)||!std::isfinite(x)||!std::isfinite(z)||!std::isfinite(velocityX)||!std::isfinite(velocityZ)) return;
     const float speed=std::hypot(velocityX,velocityZ);
     if(speed<MinimumSpeed) return;
     travelled_+=speed*dt;
@@ -37,8 +39,11 @@ void FootprintTrail::Update(const float deltaSeconds,const float x,const float z
     slot->x=x-std::sin(heading)*FootAcross*side;
     slot->z=z+std::cos(heading)*FootAcross*side;
     slot->headingRadians=heading+side*0.10f;
-    slot->age=0;slot->density=1;slot->left=nextLeft_;slot->active=true;slot->kind=kind_;
-    slot->life=wetSand?WetLifeSeconds:LifeSeconds;
+    slot->age=0;slot->left=nextLeft_;slot->active=true;slot->kind=kind_;
+    slot->life=onDeck?DeckLifeSeconds:wetSand?WetLifeSeconds:LifeSeconds;
+    slot->strength=onDeck?std::min(deckWetness,1.0f):1.0f;
+    slot->density=slot->strength;
+    slot->y=onDeck?deckY:std::numeric_limits<float>::quiet_NaN();
     nextLeft_=!nextLeft_;
     ++laid_;
 }

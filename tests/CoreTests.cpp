@@ -10997,6 +10997,29 @@ int main()
             for(int step=0;step<2500;++step) trail.Update(0.1f,wx,wz,0.0f,0.0f,true);
             Check(trail.ActiveCount()==0U,"the sand takes the prints back within the trail's life");
         }
+        // Wet feet on planks: prints on the deck only while the feet are wet, laid at the
+        // deck's height as dark as the feet are wet, and dried off within half a minute; dry
+        // feet leave none there.
+        {
+            island::FootprintTrail planks,dryFeet;
+            float px=0;
+            for(int step=0;step<80;++step) {
+                px+=0.05f;
+                planks.Update(0.05f,px,0.0f,1.0f,0.0f,false,false,1.4f,1.0f-static_cast<float>(step)/100.0f);
+                dryFeet.Update(0.05f,px,0.0f,1.0f,0.0f,false,false,1.4f,0.0f);
+            }
+            bool onDeck=planks.ActiveCount()>=4U,fading=true;
+            float previous=2.0f;
+            for(const auto& print:planks.Prints()) {
+                if(!print.active) continue;
+                onDeck=onDeck&&print.y==1.4f&&print.life==island::FootprintTrail::DeckLifeSeconds;
+                fading=fading&&print.strength<=previous+1e-4f;
+                previous=print.strength;
+            }
+            for(int step=0;step<310;++step) planks.Update(0.1f,px,0.0f,0.0f,0.0f,false);
+            Check(onDeck&&fading&&dryFeet.PrintCount()==0U&&planks.ActiveCount()==0U,
+                  "wet feet print the planks at the deck's height, fainter as they dry, gone within half a minute; dry feet none");
+        }
         // In a downpour the rain beats the prints out within a minute; in the dry they last.
         {
             island::FootprintTrail dry,rained;
