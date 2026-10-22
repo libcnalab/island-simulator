@@ -274,6 +274,7 @@ namespace island
             case FixedViewpoint::QuadBunkerDetail: return "quad-bunker";
             case FixedViewpoint::QuadCaveDetail: return "quad-cave";
             case FixedViewpoint::QuadMineDetail: return "quad-mine";
+            case FixedViewpoint::QuadVolcanoDetail: return "quad-volcano";
             case FixedViewpoint::QuadJettyDetail: return "quad-jetty";
             case FixedViewpoint::QuadHelicopterDetail: return "quad-helicopter";
             case FixedViewpoint::QuadLookoutDetail: return "quad-lookout";
@@ -3484,6 +3485,19 @@ namespace island
                 if (viewpoint_ == FixedViewpoint::QuadBunkerDetail) {
                     const auto from = bunkerLayout_.World(0.0f, 0.0f, -6.0f), to = bunkerLayout_.World(0.0f, 0.0f, 0.0f);
                     PlaceQuadNear(from.x, from.z, std::atan2(to.x - from.x, to.z - from.z));
+                } else if (viewpoint_ == FixedViewpoint::QuadVolcanoDetail) {
+                    // The walker high on the volcano's steep cone presses F, the quad far off: it
+                    // comes to the nearest place it can stand below the steep part (it had been
+                    // set on the lowland's ground under the cone, inside the volcano).
+                    const float a = VolcanoSite::FlowAngle + 2.2f, r = 24.0f;
+                    const float wx = VolcanoSite::X + std::cos(a) * r, wz = VolcanoSite::Z + std::sin(a) * r;
+                    playerMotion_.SetPosition(terrain_, wx, wz);
+                    yaw_ = std::atan2(VolcanoSite::X - wx, VolcanoSite::Z - wz);   // facing up the cone
+                    ToggleQuad();
+                    const auto q = quad_.Position();
+                    std::cout << "island-simulator: quad QA volcano: the walker on the cone " << r << " m from the crater, the quad brought "
+                              << VolcanoSite::Radius(q.x, q.z) << " m from it, ground " << QuadGround(q.x, q.z).height
+                              << " against the cone's " << OpenGround(q.x, q.z) << '\n';
                 } else if (viewpoint_ == FixedViewpoint::QuadMineDetail) {
                     // up the approach into the old mine's cutting and its adit
                     const auto from = mineLayout_.World(0.25f, 0.0f, -7.0f), to = mineLayout_.World(0.25f, 0.0f, 0.0f);
@@ -3542,7 +3556,8 @@ namespace island
                 riding_ = true;
                 quadControls_ = {viewpoint_ == FixedViewpoint::QuadDriveDetail ? 0.8f
                     : viewpoint_ == FixedViewpoint::QuadJettyDetail ? 0.4f
-                    : 1.0f, 0.0f, false};
+                    : viewpoint_ == FixedViewpoint::QuadVolcanoDetail ? 0.0f
+                    : 1.0f, 0.0f, viewpoint_ == FixedViewpoint::QuadVolcanoDetail};
                 quadCameraYaw_ = quad_.YawRadians();
                 const auto start = quad_.Position();
                 quadCamera_ = Vector3(start.x - std::sin(quadCameraYaw_) * 4.8f, start.y + 1.9f, start.z - std::cos(quadCameraYaw_) * 4.8f);
@@ -5638,6 +5653,19 @@ namespace island
         } else {
             ground.height = terrain_.Height(std::clamp(x, -900.0f, 900.0f), std::clamp(z, -900.0f, 900.0f));
         }
+        // The volcano's cone where it stands above the lowland (the walker's ground there too):
+        // the quad had driven, and been brought, on the lowland's ground under it, inside it.
+        if (VolcanoSite::Radius(x, z) < VolcanoSite::BaseRadius) {
+            const auto coneAt = [](const float px, const float pz) { return VolcanoSite::SurfaceY(px, pz); };
+            const float cone = coneAt(x, z);
+            if (cone > ground.height) {
+                ground.height = cone;
+                const float slopeX = (coneAt(x + 0.25f, z) - coneAt(x - 0.25f, z)) / 0.5f;
+                const float slopeZ = (coneAt(x, z + 0.25f) - coneAt(x, z - 0.25f)) / 0.5f;
+                const float length = std::sqrt(slopeX * slopeX + 1.0f + slopeZ * slopeZ);
+                ground.normal = {-slopeX / length, 1.0f / length, -slopeZ / length};
+            }
+        }
         // the stream's water over its bed (which the surface gives in its channel)
         float streamBed = 0.0f, streamDepth = 0.0f;
         (void)StreamWaterAt(x, z, streamBed, streamDepth);
@@ -5825,6 +5853,41 @@ namespace island
         quadRestAnchor_ = quad_.Position();
     }
 
+    float IslandGame::OpenGround(const float x, const float z) const noexcept
+    {
+        return VolcanoSite::SupportHeight(x, z, DrawnOrAnalyticHeight(*drawnGround_, terrain_, x, z));
+    }
+
+    bool IslandGame::QuadSummonSpot(const PlayerPosition& walker, float& x, float& z) const
+    {
+        const float feet = walker.y - PlayerMotion::EyeHeight;
+        // on the open ground (not up a structure, on a deck or down a tunnel)
+        const bool open = std::abs(feet - OpenGround(walker.x, walker.z)) < 0.6f;
+        const auto fits = [&](const float cx, const float cz) {
+            if (!std::isfinite(cx) || !std::isfinite(cz)) return false;
+            if (DrawnOrAnalyticHeight(*drawnGround_, terrain_, cx, cz) <= 0.05f) return false;   // the sea
+            if (worldCollisionGrid_.IntersectsCircle(cx, cz, 1.2f)) return false;
+            if (VolcanoSite::BlocksVehicle(cx, cz, 0.95f) || VolcanoSite::OnLavaFlow(cx, cz, 1.5f)) return false;
+            if (QuadWallBlocked(cx, cz)) return false;
+            // the cave's, the bunker's and the mine's floors and the decks are not open ground
+            const float ground = OpenGround(cx, cz);
+            if (std::abs(QuadGround(cx, cz).height - ground) > 0.3f) return false;
+            // from inside a structure or a tunnel, open ground at the walker's own level
+            return open || std::abs(ground - feet) < 1.5f;
+        };
+        const float ax = walker.x + std::sin(yaw_) * 3.5f, az = walker.z + std::cos(yaw_) * 3.5f;
+        if (fits(ax, az)) { x = ax; z = az; return true; }
+        if (fits(walker.x, walker.z)) { x = walker.x; z = walker.z; return true; }
+        for (float radius = 2.0f; radius <= 60.0f; radius += 2.0f) {
+            for (int k = 0; k < 24; ++k) {
+                const float angle = yaw_ + 6.2831853f * static_cast<float>(k) / 24.0f;
+                const float cx = walker.x + std::sin(angle) * radius, cz = walker.z + std::cos(angle) * radius;
+                if (fits(cx, cz)) { x = cx; z = cz; return true; }
+            }
+        }
+        return false;
+    }
+
     void IslandGame::ToggleQuad()
     {
         if (!quadRenderer_) return;
@@ -5850,10 +5913,15 @@ namespace island
             if (flightMotion_.IsActive() || playerMotion_.Mode() == LocomotionMode::Swimming) return;
             const auto& position = playerMotion_.Position();
             if (std::hypot(position.x - p.x, position.z - p.z) > 9.0f) {
-                // Far from it: the quad is brought to the walker, a few metres ahead.
-                const float ax = position.x + std::sin(yaw_) * 3.5f, az = position.z + std::cos(yaw_) * 3.5f;
-                const bool clear = !worldCollisionGrid_.IntersectsCircle(ax, az, 1.2f) && terrain_.Height(ax, az) > 0.0f;
-                PlaceQuadNear(clear ? ax : position.x, clear ? az : position.z, yaw_);
+                // Far from it: the quad is brought to the walker, a few metres ahead, or to the
+                // nearest place it can stand. (It had been set on the lowland's ground wherever
+                // the walker stood: on the volcano's steep cone that was inside the volcano.)
+                float qx = 0.0f, qz = 0.0f;
+                if (!QuadSummonSpot(position, qx, qz)) {
+                    std::cout << "island-simulator: there is no place near enough for the quad to come to\n";
+                    return;
+                }
+                PlaceQuadNear(qx, qz, yaw_);
             }
             riding_ = true;
             quadEngineOn_ = true;
@@ -9161,6 +9229,10 @@ namespace island
                                   << jetty.SupportHeight(q.x, q.z, -100.0f);
                     }
                     std::cout << '\n';
+                } else if (viewpoint_ == FixedViewpoint::QuadVolcanoDetail) {
+                    std::cout << "island-simulator: quad QA volcano stands " << VolcanoSite::Radius(q.x, q.z)
+                              << " m from the crater, body " << q.y << " over the cone's " << OpenGround(q.x, q.z)
+                              << (q.y - OpenGround(q.x, q.z) > 0.2f ? ", on it" : ", inside it") << '\n';
                 } else if (viewpoint_ == FixedViewpoint::QuadMineDetail) {
                     const MinePoint local = mineLayout_.Local({q.x, q.y, q.z});
                     std::cout << "island-simulator: quad QA shelter: mine, site "

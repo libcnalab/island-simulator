@@ -233,6 +233,32 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 550 (2026-10-22) — the quad no longer comes to you inside the volcano
+
+The operator reported that walking up the volcano and pressing F put them on the quad inside
+the volcano.
+
+- **Cause.** The volcano's cone is its own surface (`VolcanoSite::SurfaceY`): the walker stands
+  on it (`VolcanoSite::SupportHeight`), but the quad's ground was the lowland's heightfield under
+  it. F far from the quad brought it 3.5 m ahead of the walker onto that lowland ground, inside
+  the cone. This also bypassed the vehicle block on the steep cone.
+- **Fixes.**
+  - The quad's ground (`QuadGround`) includes the cone where it stands above the lowland, with
+    its slope, so on the cone's lower drivable slopes the quad drives on it, not under it.
+  - The quad comes to the walker at a place found by `QuadSummonSpot`: 3.5 m ahead, or the
+    walker's own spot, or the nearest place within 60 m (in 2 m rings) where it can stand. Such
+    a place is:
+    - not the sea, and clear of the obstacles and the walls;
+    - off the steep cone and the live lava flow;
+    - on the open ground, not the cave's, the bunker's or the mine's floor, nor a deck;
+    - from inside a structure or a tunnel, at the walker's own level.
+  - With no such place within 60 m (say high on the lighthouse), the quad does not come (logged).
+- **New QA view.** `quad-volcano`, with the walker on the steep cone 24 m from the crater
+  pressing F (`20261022T172746`). The quad comes to 40.6 m, just below the steep part, on the
+  cone's surface (body 0.63 m over it). The capture fails if the log says the quad is inside it.
+  `quad-drive`, `quad-mine`, `quad-bunker`, `quad-cave` and `volcano` still pass (`172908` ..
+  `173005`).
+
 ## Loop pass 549 (2026-10-22) — foxfire: glowing mushrooms on the dead wood
 
 The night jungle had fireflies and the sea's glow. Now there is the foxfire on the dead wood too:

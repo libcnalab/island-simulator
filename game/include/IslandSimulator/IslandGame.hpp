@@ -351,6 +351,7 @@ namespace island
         QuadBunkerDetail,
         QuadCaveDetail,
         QuadMineDetail,
+        QuadVolcanoDetail,
         QuadJettyDetail,
         QuadHelicopterDetail,
         QuadLookoutDetail,
@@ -762,7 +763,8 @@ namespace island
                 || viewpoint_ == FixedViewpoint::QuadCaveDetail || viewpoint_ == FixedViewpoint::QuadJettyDetail
                 || viewpoint_ == FixedViewpoint::QuadHelicopterDetail || viewpoint_ == FixedViewpoint::QuadLookoutDetail
                 || viewpoint_ == FixedViewpoint::QuadBearDetail || viewpoint_ == FixedViewpoint::QuadStreamDetail
-                || viewpoint_ == FixedViewpoint::QuadSeaDetail || viewpoint_ == FixedViewpoint::QuadMineDetail;
+                || viewpoint_ == FixedViewpoint::QuadSeaDetail || viewpoint_ == FixedViewpoint::QuadMineDetail
+                || viewpoint_ == FixedViewpoint::QuadVolcanoDetail;
         }
         float quadSiteFloorY_ = 0.0f;
         int quadStreamWaitUpdates_ = 13;   // QA: the stream view stands this many updates before setting off
@@ -785,6 +787,13 @@ namespace island
         void UpdateQuad(float deltaSeconds);
         void UpdateQuadChaseCamera(float deltaSeconds);
         void ToggleQuad();
+        // The open ground under (x, z): the drawn terrain, or the volcano's cone where it stands
+        // above it.
+        [[nodiscard]] float OpenGround(float x, float z) const noexcept;
+        // Where the quad is brought to a walker far from it: a few metres ahead, or the nearest
+        // place it can stand (off the volcano's steep cone, out of a structure or a tunnel, at
+        // the walker's level); false when there is none within 60 m.
+        [[nodiscard]] bool QuadSummonSpot(const PlayerPosition& walker, float& x, float& z) const;
         std::unique_ptr<RainRenderer> rain_;
         bool weatherKeyWasDown_ = false;
         FootprintTrail footprints_;
