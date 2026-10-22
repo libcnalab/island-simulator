@@ -52,7 +52,7 @@ public:
 private:
     [[nodiscard]] bool Visible(const Microsoft::Xna::Framework::Matrix& view,const Microsoft::Xna::Framework::Matrix& projection,
                                const Microsoft::Xna::Framework::Vector3& camera) const;
-    static constexpr std::size_t ReflectionCapacity=1200;
+    static constexpr std::size_t ReflectionCapacity=4800;
     Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
     const MineLayout& layout_;
     std::vector<Puddle> puddles_;

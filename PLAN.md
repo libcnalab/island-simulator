@@ -233,6 +233,21 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 540 (2026-10-22) — dust in the lanterns' light
+
+The adit's air was empty between its lanterns.
+
+- **Dust.** Round each lantern within 14 m of the eye, 36 specks now drift slowly on their own
+  Lissajous paths, within about 1.2 m of the flame. They glint by how close they float to it and
+  fade out at the light's edge and with the eye's distance, each to itself (no screen-locked
+  effect, nothing pops). Only those in the adit's air are drawn, not those in its rock.
+- **Drawing.** They are camera-facing 1.4-2.4 cm glints added over the grade with the puddles'
+  glints, in a buffer raised to 4,800 vertices.
+- **Evidence.** `mine-adit` `20261022T144012`, faint sparkles round the near lantern at a 2x
+  crop.
+
+The suite is 76/76.
+
 ## Loop pass 539 (2026-10-22) — the fighter's cockpit under a clear canopy
 
 The fighter's canopy had opaque blue-grey panes over a closed fuselage top.

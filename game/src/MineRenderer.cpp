@@ -741,6 +741,47 @@ void MineRenderer::DrawLight(const Matrix& view,const Matrix& projection,const V
             oval(0.22f,0.3f/grazing,0.3f*strength,0.2f*strength,0.09f*strength);
         }
     }
+    // the dust hanging in the lanterns' light: specks drifting slowly round each flame near the
+    // eye, lit by how close they float to it, fading out at the light's edge (each to itself, so
+    // nothing pops)
+    {
+        for(std::size_t li=0;li<lanternPositions_.size();++li) {
+            const Vector3& lamp=lanternPositions_[li];
+            const float away=Vector3::Distance(lamp,camera);
+            if(away>14.0f) continue;
+            const float nearFade=1.0f-SmoothStep(9.0f,14.0f,away);
+            Vector3 toEye=camera-lamp;toEye.Normalize();
+            Vector3 right=Vector3::Cross(toEye,Vector3::Up);
+            if(right.LengthSquared()<1e-6f) right=Vector3::UnitX;
+            right.Normalize();
+            const Vector3 up=Vector3::Cross(right,toEye);
+            constexpr int Motes=36;
+            for(int k=0;k<Motes&&reflectionStaging_.size()+12U<=ReflectionCapacity;++k) {
+                const auto seed=static_cast<std::uint32_t>(li*977U+static_cast<std::size_t>(k)*131U);
+                const float phase=6.2831853f*Hash(seed),rate=0.05f+0.07f*Hash(seed^0x5U);
+                const float t=seconds*rate+phase;
+                const Vector3 offset(1.1f*std::sin(t*1.3f+Hash(seed^0x9U)*6.0f),0.55f*std::sin(t*0.7f+phase)-0.1f,
+                                     1.1f*std::cos(t*1.1f+Hash(seed^0x3U)*6.0f));
+                const Vector3 at=lamp+offset;
+                // only in the adit's air, not in its rock
+                const auto local=layout_.Local({at.X,at.Y,at.Z});
+                if(std::abs(local.x)>MineSite::PostInner-0.05f||local.y-MineLayout::FloorRelative(local.z)<0.2f
+                   ||local.y-MineLayout::FloorRelative(local.z)>2.5f) continue;
+                const float glow=std::max(0.0f,1.0f-offset.Length()/1.3f);
+                const float strength=glow*glow*nearFade*flicker*(0.5f+0.5f*Hash(seed^0x7U));
+                if(strength<0.02f) continue;
+                const Color core(static_cast<int>(std::min(255.0f,330.0f*strength)),static_cast<int>(std::min(255.0f,250.0f*strength)),
+                                 static_cast<int>(std::min(255.0f,150.0f*strength))),edge(0,0,0);
+                const float size=0.014f+0.01f*Hash(seed^0x11U);
+                for(int q=0;q<4;++q) {
+                    const float a0=1.5707963f*static_cast<float>(q),a1=a0+1.5707963f;
+                    reflectionStaging_.emplace_back(at,core);
+                    reflectionStaging_.emplace_back(at+(right*std::cos(a0)+up*std::sin(a0))*size,edge);
+                    reflectionStaging_.emplace_back(at+(right*std::cos(a1)+up*std::sin(a1))*size,edge);
+                }
+            }
+        }
+    }
     if(!reflectionStaging_.empty()) {
         effect_->setDiffuseColorProperty(Vector3(1.0f,1.0f,1.0f));effect_->Apply();
         reflections_->SetData(reflectionStaging_.data(),0,static_cast<int>(reflectionStaging_.size()),SetDataOptions::Discard);
