@@ -22,6 +22,19 @@ ReefFishField::ReefFishField(const std::span<const ReefHabitatPlacement> habitat
         head.x=coral.x;head.y=coral.y;head.z=coral.z;head.top=top;
         head.seed=static_cast<std::uint32_t>(i)*2654435761U+0x9e3779b9U;
         head.tangs=Unit(head.seed^0x5bd1e995U)<0.3f;
+        if(Unit(head.seed^0x2c1b3c6dU)<AnemoneShare) {
+            // on the seabed a little off the coral, at its foot
+            const float around=Unit(head.seed^0x297a2d39U)*2.0f*std::numbers::pi_v<float>;
+            const float off=0.55f*coral.scale+0.35f;
+            ReefAnemone anemone;
+            anemone.x=coral.x+std::cos(around)*off;anemone.z=coral.z+std::sin(around)*off;
+            anemone.y=coral.y-0.01f;
+            anemone.radius=0.16f+0.08f*Unit(head.seed^0x7a1e5eedU);
+            anemone.surgeHeading=Unit(head.seed^0x0f1bbcdcU)*std::numbers::pi_v<float>;
+            anemone.phase=Unit(head.seed^0x3e5f1a2bU)*2.0f*std::numbers::pi_v<float>;
+            head.anemone=static_cast<int>(anemones_.size());
+            anemones_.push_back(anemone);
+        }
         heads_.push_back(head);
     }
 }
@@ -56,13 +69,13 @@ void ReefFishField::Update(const float deltaSeconds,const float observerX,const 
             }
         }
         std::array<std::size_t,HeadCount> next{};
-        std::array<float,HeadCount> nextHide{},nextHidden{};
+        std::array<float,HeadCount> nextHide{},nextHidden{},nextClown{};
         for(std::size_t k=0;k<found;++k) {
             next[k]=best[k];
             for(std::size_t s=0;s<chosenCount_;++s)
-                if(chosen_[s]==best[k]) {nextHide[k]=hide_[s];nextHidden[k]=hiddenFor_[s];}
+                if(chosen_[s]==best[k]) {nextHide[k]=hide_[s];nextHidden[k]=hiddenFor_[s];nextClown[k]=clownHide_[s];}
         }
-        chosen_=next;hide_=nextHide;hiddenFor_=nextHidden;chosenCount_=found;
+        chosen_=next;hide_=nextHide;hiddenFor_=nextHidden;clownHide_=nextClown;chosenCount_=found;
     }
     count_=0;
     for(std::size_t s=0;s<chosenCount_;++s) {
@@ -102,6 +115,36 @@ void ReefFishField::Update(const float deltaSeconds,const float observerX,const 
             fish.simulationTier=WildlifeSimulationTier::Full;
             fish.schoolIndex=0U;
             fish.colorVariant=head.tangs?TangVariant:ChromisVariant;
+        }
+        // the pair of clownfish in its anemone, darting down among the tentacles from a close
+        // swimmer and out again as soon as the swimmer has passed
+        if(head.anemone>=0) {
+            const ReefAnemone& anemone=anemones_[static_cast<std::size_t>(head.anemone)];
+            const float close=std::hypot(anemone.x-observerX,anemone.y+0.2f-observerY,anemone.z-observerZ);
+            clownHide_[s]+=std::clamp((close<ClownHideDistance?1.0f:0.0f)-clownHide_[s],-dt*1.2f,dt*4.0f);
+            for(std::size_t j=0;j<ClownfishPerAnemone&&count_<fish_.size();++j) {
+                const std::uint32_t seed=head.seed+0x51ed270bU*static_cast<std::uint32_t>(j+1);
+                const float phase=Unit(seed)*2.0f*std::numbers::pi_v<float>;
+                const float hidden=clownHide_[s];
+                const float angle=phase+clock_*(0.9f+0.3f*static_cast<float>(j))*(j==0?1.0f:-1.0f);
+                const float radius=anemone.radius*(0.55f+0.25f*Unit(seed^0x85ebca6bU))*(1.0f-0.6f*hidden);
+                FishState& fish=fish_[count_++];
+                fish.x=anemone.x+std::cos(angle)*radius;
+                fish.z=anemone.z+std::sin(angle)*radius;
+                fish.y=std::min(anemone.y+anemone.radius*(1.45f-0.95f*hidden)+0.03f*std::sin(clock_*2.1f+phase),-0.1f);
+                fish.headingRadians=angle+(j==0?1.0f:-1.0f)*0.5f*std::numbers::pi_v<float>;
+                fish.pitchRadians=0.15f*std::sin(clock_*1.7f+phase);
+                fish.bankRadians=0.0f;
+                fish.speed=0.15f+0.4f*hidden;
+                fish.bodyWave=clock_*11.0f+phase;
+                fish.finFan=0.8f*(1.0f-hidden);
+                fish.finPhase=clock_*8.0f+phase;
+                fish.flash=0.0f;
+                fish.scale=0.085f+0.015f*Unit(seed^0x9e3779b9U);
+                fish.simulationTier=WildlifeSimulationTier::Full;
+                fish.schoolIndex=0U;
+                fish.colorVariant=ClownfishVariant;
+            }
         }
     }
 }

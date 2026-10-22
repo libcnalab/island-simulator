@@ -108,6 +108,7 @@
 #include "IslandSimulator/GroundCoverField.hpp"
 #include "IslandSimulator/GrassRenderer.hpp"
 #include "IslandSimulator/OceanRenderer.hpp"
+#include "IslandSimulator/AnemoneRenderer.hpp"
 #include "IslandSimulator/ReefFishField.hpp"
 #include "IslandSimulator/StreamWaterRenderer.hpp"
 #include "IslandSimulator/CaveRenderer.hpp"
@@ -238,6 +239,7 @@ namespace island
         DriftwoodDetail,
         ReefDetail,
         ReefHabitatDetail,
+        AnemoneDetail,
         FallenFrondDetail,
         BirdDetail,
         BirdPreenDetail,
@@ -691,6 +693,7 @@ namespace island
         ShellDragTrail shellDrags_;
         CrocodileDragTrail crocodileDrags_;
         std::unique_ptr<ReefFishField> reefFish_;
+        std::unique_ptr<AnemoneRenderer> anemoneRenderer_;
         std::unique_ptr<ShellDragRenderer> shellDragRenderer_;
         std::unique_ptr<WallowScarRenderer> wallowScarRenderer_;
         ForestTwigLayout forestTwigs_{terrain_, jungleLayout_};

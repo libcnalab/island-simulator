@@ -188,6 +188,7 @@ namespace island
             case FixedViewpoint::DriftwoodDetail: return "driftwood";
             case FixedViewpoint::ReefDetail: return "reef";
             case FixedViewpoint::ReefHabitatDetail: return "reef-habitat";
+            case FixedViewpoint::AnemoneDetail: return "anemone";
             case FixedViewpoint::FallenFrondDetail: return "fronds";
             case FixedViewpoint::BirdDetail: return "birds";
             case FixedViewpoint::BirdPreenDetail: return "bird-preen";
@@ -1257,6 +1258,17 @@ namespace island
             pitch_ = std::atan2(direction.Y, std::hypot(direction.X, direction.Z));
             std::cout << "island-simulator: reef habitat QA camera underwater with "
                       << selectedNeighbours << " neighbours\n";
+        } else if (viewpoint_ == FixedViewpoint::AnemoneDetail) {
+            // Hover a metre off the reef's first anemone, a little above it, looking down on its
+            // tentacles and the pair of clownfish in them.
+            const ReefFishField reef(naturalPropLayout_.ReefHabitat());
+            if (reef.Anemones().empty()) throw std::runtime_error("Anemone QA camera found no anemone");
+            const ReefAnemone& anemone = reef.Anemones().front();
+            cameraPosition_ = Vector3(anemone.x + 1.40f, std::min(-0.3f, anemone.y + 0.65f), anemone.z + 0.50f);
+            const Vector3 direction = Vector3(anemone.x, anemone.y + 0.12f, anemone.z) - cameraPosition_;
+            yaw_ = std::atan2(direction.X, direction.Z);
+            pitch_ = std::atan2(direction.Y, std::hypot(direction.X, direction.Z));
+            std::cout << "island-simulator: anemone QA camera hovers by a sea anemone at depth " << -anemone.y << " m\n";
         } else if (viewpoint_ == FixedViewpoint::FallenFrondDetail
                    && !naturalPropLayout_.FallenFronds().empty()) {
             const auto closestToShore = std::min_element(
@@ -2408,6 +2420,7 @@ namespace island
             device, 215.0f * qualityProfile_.wildlifeMaximumDistanceScale);
         stingrayRenderer_ = std::make_unique<StingrayRenderer>(
             device, 220.0f * qualityProfile_.wildlifeMaximumDistanceScale);
+        anemoneRenderer_ = std::make_unique<AnemoneRenderer>(device);
         reefHeronRenderer_ = std::make_unique<ReefHeronRenderer>(
             device, 170.0f * qualityProfile_.wildlifeMaximumDistanceScale);
         octopusRenderer_=std::make_unique<OctopusRenderer>(device,180.0f*qualityProfile_.wildlifeMaximumDistanceScale);
@@ -2918,7 +2931,7 @@ namespace island
         const bool waterViewAllowed = viewpoint_ == FixedViewpoint::None
             || viewpoint_ == FixedViewpoint::WaterlineDetail
             || viewpoint_ == FixedViewpoint::CurrentBoundaryDetail
-            || viewpoint_ == FixedViewpoint::ReefHabitatDetail
+            || viewpoint_ == FixedViewpoint::ReefHabitatDetail || viewpoint_ == FixedViewpoint::AnemoneDetail
             || viewpoint_ == FixedViewpoint::BenchmarkTraversal;
         waterViewModel_.Reset(waterViewAllowed
                                   && playerMotion_.Mode() == LocomotionMode::Swimming,
@@ -3512,7 +3525,7 @@ namespace island
         const bool waterViewAllowed = viewpoint_ == FixedViewpoint::None
             || viewpoint_ == FixedViewpoint::WaterlineDetail
             || viewpoint_ == FixedViewpoint::CurrentBoundaryDetail
-            || viewpoint_ == FixedViewpoint::ReefHabitatDetail
+            || viewpoint_ == FixedViewpoint::ReefHabitatDetail || viewpoint_ == FixedViewpoint::AnemoneDetail
             || viewpoint_ == FixedViewpoint::BenchmarkTraversal;
         updateProfile_.Mark("waterViewModel");
         (void)waterViewModel_.Update(
@@ -5841,6 +5854,7 @@ namespace island
             + snakeRenderer_->DrawCallCount()
             + fishRenderer_->DrawCallCount()
             + stingrayRenderer_->DrawCallCount() + reefHeronRenderer_->DrawCallCount()
+            + (anemoneRenderer_ ? anemoneRenderer_->DrawCallCount() : 0)
             + octopusRenderer_->DrawCallCount()
             + seaTurtleRenderer_->DrawCallCount()
             + sharkRenderer_->DrawCallCount()+dolphinRenderer_->DrawCallCount()
@@ -6529,7 +6543,10 @@ namespace island
 
         {
             GpuDiagnosticScope gpuPass("fish");
-            // the reef's small fish first (the schools' draw keeps the renderer's counts)
+            // the anemones on the reef, then its small fish (the schools' draw last keeps the
+            // fish renderer's counts)
+            if (reefFish_ && anemoneRenderer_)
+                anemoneRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, reefFish_->Anemones(), timeSeconds);
             if (reefFish_ && !reefFish_->Fish().empty())
                 fishRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
                                     reefFish_->Fish(), timeSeconds);

@@ -766,6 +766,7 @@ if(ISLAND_BUILD_GAME)
         game/src/SharkRenderer.cpp
         game/src/StingrayRenderer.cpp
         game/src/ReefHeronRenderer.cpp
+        game/src/AnemoneRenderer.cpp
         game/src/ShipwreckRenderer.cpp
         game/src/HutRenderer.cpp
         game/src/JettyRenderer.cpp

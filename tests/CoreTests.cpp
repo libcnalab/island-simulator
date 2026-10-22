@@ -8247,6 +8247,22 @@ int main()
         for (int step = 0; step < 80; ++step) reefFish.Update(0.1f, first.x + 12.0f, first.y, first.z);
         Check(hiding >= 1U && stillHiding >= 1U && reefFish.HidingCount() < hiding,
               "a cloud hides in its coral from a close swimmer and comes out some seconds after");
+        // About one coral head in six has an anemone at its foot, and a pair of clownfish in it.
+        const auto anemones = reefFish.Anemones();
+        Check(anemones.size() * 10U > reefFish.HeadPool() && anemones.size() * 4U < reefFish.HeadPool(),
+              "about one coral head in six has a sea anemone beside it");
+        const auto& home = anemones.front();
+        island::ReefFishField clowns(props.ReefHabitat());
+        for (int step = 0; step < 20; ++step) clowns.Update(0.1f, home.x + 6.0f, home.y + 1.0f, home.z);
+        std::size_t clownfish = 0;
+        bool atHome = true;
+        for (const auto& fish : clowns.Fish())
+            if (fish.colorVariant == island::ReefFishField::ClownfishVariant) {
+                ++clownfish;
+                atHome = atHome && std::hypot(fish.x - home.x, fish.z - home.z) < 0.6f && fish.y > home.y && fish.y < -0.1f;
+            }
+        Check(clownfish >= 2U && clownfish % 2U == 0U && atHome,
+              "a pair of clownfish hovers in each anemone near the observer");
     }
     Check(std::all_of(reefHabitatVariants.begin(), reefHabitatVariants.end(),
                       [](const std::size_t count) { return count >= 30U; }),

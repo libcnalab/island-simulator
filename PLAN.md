@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 445 (2026-10-22) — sea anemones with their clownfish
+
+About one coral head in six (98 of the 505) has a sea anemone on the seabed at its foot (0.32-0.48 m
+across): a new AnemoneRenderer draws, within 25 m, a short purple column and oral disc crowned by
+forty tentacles in two rings, tan with pink tips, rocking together in the surge each a little out of
+step, in the fish's own underwater light (one draw, 1548 vertices an anemone, eight at most). In each
+anemone near the observer ReefFishField keeps a pair of clownfish (the fish renderer's seventh palette:
+orange, its three white bars drawn all round the body) hovering just over the tentacles; a swimmer
+within 1.2 m sends them down among the tentacles. New QA view `anemone` (1.5 m off the reef's first
+anemone, 1.55 m deep) judged at 2x: the anemone and its two barred clownfish read at once. New test:
+one head in four to ten has an anemone; a pair of clownfish hovers in it near the observer.
+`reef-habitat` and `fish` pass.
+
 ## Loop pass 444 (2026-10-22) — small reef fish over the coral heads
 
 The coral patches stood empty: the island's fish were its eight schools of mid-water fish. A new

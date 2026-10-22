@@ -25,7 +25,7 @@ PROFILES = ("scene", "shaded-detail", "close-natural-detail", "dark-cave-detail"
 # fill the frame with one blue-green, so the luminance spread sits under the open-air floor;
 # reviewed on 2026-10-21 for the views whose camera is in the water (fish 18.5, reef-habitat 16.8,
 # dolphins 13.8 against the scene floor of 18), all correct renders with their subject clear.
-UNDERWATER_VIEWPOINTS = ("fish", "reef-habitat", "dolphins")
+UNDERWATER_VIEWPOINTS = ("fish", "reef-habitat", "anemone", "dolphins")
 
 # The game hours of the night (the clock's dark between the dusk and the dawn), when a capture
 # asks for one with --time-of-day: reviewed on 2026-10-20 as a dark blue moonlit scene.

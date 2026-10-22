@@ -1,5 +1,6 @@
 #include "IslandSimulator/UnderwaterFog.hpp"
 #include "IslandSimulator/FishRenderer.hpp"
+#include "IslandSimulator/ReefFishField.hpp"
 
 #include "IslandSimulator/WildlifeRenderLighting.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
@@ -38,7 +39,7 @@ namespace island
         constexpr float NearLodDistance = 28.0f;
         constexpr int MaximumVerticesPerFish = FishRenderer::NearVertexCount;
         // (the schools and, in a second draw, the reef's small fish)
-        constexpr int MaximumVertexCount = static_cast<int>(std::max<std::size_t>(FishSchools::FishCount, 72U))
+        constexpr int MaximumVertexCount = static_cast<int>(std::max(FishSchools::FishCount, ReefFishField::Capacity))
             * MaximumVerticesPerFish;
 
         struct FishPalette
@@ -56,7 +57,7 @@ namespace island
             Vector3 forward;
         };
 
-        const std::array<FishPalette, 6> Palettes = {{
+        const std::array<FishPalette, 7> Palettes = {{
             {Color(48, 96, 112, 255), Color(126, 174, 168, 255),
              Color(220, 221, 187, 255), Color(201, 164, 65, 255)},
             {Color(16, 72, 96, 255), Color(30, 139, 157, 255),
@@ -69,7 +70,10 @@ namespace island
             {Color(40, 132, 150, 255), Color(86, 196, 196, 255),
              Color(170, 226, 214, 255), Color(64, 150, 196, 255)},
             {Color(214, 178, 22, 255), Color(244, 214, 40, 255),
-             Color(250, 232, 120, 255), Color(236, 196, 30, 255)}
+             Color(250, 232, 120, 255), Color(236, 196, 30, 255)},
+            // the clownfish: orange, its white bars drawn by the body's own pattern
+            {Color(214, 92, 24, 255), Color(236, 116, 32, 255),
+             Color(244, 150, 70, 255), Color(222, 98, 28, 255)}
         }};
 
         struct BodySection
@@ -195,6 +199,15 @@ namespace island
             // after shared underwater attenuation, without adding a texture or geometry.
             const float flank = 1.0f - std::clamp((std::abs(std::sin(angle)) - .18f) / .42f,
                                                   0.0f, 1.0f);
+            if (variant == 6U) {
+                // the clownfish's three white bars, head, middle and tail, all round the body
+                const float bars = std::max({SoftBand(longitudinal, .26f, .07f), SoftBand(longitudinal, .0f, .08f),
+                                             SoftBand(longitudinal, -.30f, .05f)});
+                // (white, keeping a share of the water's tint the palette carries)
+                patterned = Color::Lerp(patterned, Color::Lerp(palette.belly, Color(236, 232, 224, 255), .75f), bars * .92f);
+                const float light = .72f + .26f * direct + .06f * sky;
+                return wildlife_render::ScaleColor(patterned, light);
+            }
             switch (variant % 4U) {
             case 0U: {
                 const float line = flank * SoftBand(std::sin(angle), 0.0f, .20f)
