@@ -600,7 +600,7 @@ class BrowserSoftwareTests(unittest.TestCase):
                   "curled arms, and pale sucker rows in one draw")
         profile = ("near octopuses use a rear-swept mantle, smooth analytic skin light, "
                    "and thicker tapered arms")
-        geometry = "octopus near/far geometry 3186/24 vertices in one bounded batch"
+        geometry = "octopus near/far geometry 4326/24 vertices in one bounded batch"
         eyes = ("near octopuses use raised ocular bulbs, horizontal pupils, and fitted "
                 "eye highlights")
         anatomy = ("near octopuses use a narrow rear mantle, hooded inset eyes, and "

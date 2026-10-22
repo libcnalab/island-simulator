@@ -989,7 +989,7 @@ try {
               && /stingrays [1-5]\/5 visible \(near [1-5], far [0-5]\), 1 draw/.test(log)))
             && (!focusedOctopusCheck || (log.includes("octopuses use pulsing mantles, expressive eyes, eight independently curled arms, and pale sucker rows in one draw")
               && log.includes("near octopuses use a rear-swept mantle, smooth analytic skin light, and thicker tapered arms")
-              && log.includes("octopus near/far geometry 3186/24 vertices in one bounded batch")
+              && log.includes("octopus near/far geometry 4326/24 vertices in one bounded batch")
               && log.includes("near octopuses use raised ocular bulbs, horizontal pupils, and fitted eye highlights")
               && log.includes("near octopuses use a narrow rear mantle, hooded inset eyes, and pinched arm tips")
               && log.includes("octopuses 4 agents den, crawl, forage, and swim in reef and rocky shallows")

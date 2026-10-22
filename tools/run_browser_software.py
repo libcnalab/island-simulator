@@ -431,7 +431,7 @@ def validate_octopus_report(report):
         or not isinstance(frame,str) or not frame.endswith(".png")
         or "octopuses use pulsing mantles, expressive eyes, eight independently curled arms, and pale sucker rows in one draw" not in log
         or "near octopuses use a rear-swept mantle, smooth analytic skin light, and thicker tapered arms" not in log
-        or "octopus near/far geometry 3186/24 vertices in one bounded batch" not in log
+        or "octopus near/far geometry 4326/24 vertices in one bounded batch" not in log
         or "near octopuses use raised ocular bulbs, horizontal pupils, and fitted eye highlights" not in log
         or "near octopuses use a narrow rear mantle, hooded inset eyes, and pinched arm tips" not in log
         or "octopuses 4 agents den, crawl, forage, and swim in reef and rocky shallows" not in log

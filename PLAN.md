@@ -233,6 +233,25 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 489 (2026-10-22) — the octopus's arms are round, mottled and carry their suckers
+
+In `octopuses` the octopus read as a cartoon: a smooth, evenly orange body. Its arms were
+four-faced tubes coloured flat face by face (arm, highlight, shadow) instead of lit, with a sucker
+pair on only every third segment. Their "lateral" vector, r·cos a − f·sin a, is not square to the
+arm's run (r·cos a + f·sin a; the dot is cos 2a), so the cross-section flattened with each arm's
+bearing.
+
+- **Arms** (new `Arms`). Six-sided tubes, a little flattened, the cross-section now square to the
+  run. Each corner is lit by its own normal (`LitColor`). The upper side runs toward the
+  highlight, with dark patches and pale flecks along it; the underside is paler. They still taper
+  to pinched tips and keep the same curl, probe and jet.
+- **Suckers.** Two rows of pale discs down every station's underside but the tip's, shrinking with
+  the arm.
+- **Mantle and body.** They carry darker reticulated patches and a few pale spots.
+
+The near budget grows from 3,186 to 4,326 vertices, and the geometry diagnostic and its four
+checks follow it. `octopuses` (`20261022T062233`) passes, as do the tests.
+
 ## Loop pass 488 (2026-10-22) — the sea turtle's paddles shade smoothly
 
 After pass 487 the paddles were the turtle's faceted part: every triangle of their upper and lower
