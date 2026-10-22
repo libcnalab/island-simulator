@@ -27,6 +27,20 @@ struct MineSite final {
     [[nodiscard]] static float Depth(const float x,const float z) noexcept {
         return std::cos(Angle)*(x-X)+std::sin(Angle)*(z-Z);
     }
+    /** How much a listener at (x, y, z) is inside the mine: none at the portal or on the
+     *  mountain above, all of it a few metres in at walking height. */
+    [[nodiscard]] static float SoundPresence(const float x,const float y,const float z,const float entranceY) noexcept {
+        if(!std::isfinite(x)||!std::isfinite(y)||!std::isfinite(z)||!std::isfinite(entranceY)) return 0.0f;
+        const float across=Across(x,z),depth=Depth(x,z);
+        const float chamberA=across/ChamberHalfWidth,chamberD=(depth-ChamberCentre)/ChamberHalfLength;
+        const bool inside=(std::abs(across)<=HalfWidth+0.2f&&depth>=0.0f&&depth<=AditLength+0.5f)
+            ||chamberA*chamberA+chamberD*chamberD<=1.0f;
+        if(!inside) return 0.0f;
+        const float eye=entranceY+Grade*std::max(depth,0.0f)+1.72f;
+        const float vertical=std::clamp((std::abs(y-eye)-0.7f)/1.35f,0.0f,1.0f);
+        const float in=std::clamp((depth-0.5f)/4.5f,0.0f,1.0f);
+        return in*in*(3.0f-2.0f*in)*(1.0f-vertical*vertical*(3.0f-2.0f*vertical));
+    }
     [[nodiscard]] static bool Reserves(const float x,const float z,float margin=0.0f) noexcept {
         if(!std::isfinite(x)||!std::isfinite(z)||!std::isfinite(margin)) return false;
         margin=std::max(0.0f,margin);

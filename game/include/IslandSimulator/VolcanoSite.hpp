@@ -65,6 +65,14 @@ struct VolcanoSite final {
         if(Radius(x,z)>=BaseRadius) return terrainHeight;
         return std::max(terrainHeight,SurfaceY(x,z));
     }
+    /** How loud the volcano is to a listener at (x, y, z): all of it at the rim, fading out
+     *  over the lowland some 90 m from the crater. */
+    [[nodiscard]] static float SoundPresence(const float x,const float y,const float z) noexcept {
+        if(!std::isfinite(x)||!std::isfinite(y)||!std::isfinite(z)) return 0.0f;
+        const float distance=std::hypot(Radius(x,z),y-LavaY());
+        const float near=std::clamp((90.0f-distance)/75.0f,0.0f,1.0f);
+        return near*near*(3.0f-2.0f*near);
+    }
     /** The forest and the grass keep off the cone. */
     [[nodiscard]] static bool Reserves(const float x,const float z,float margin=0.0f) noexcept {
         if(!std::isfinite(x)||!std::isfinite(z)||!std::isfinite(margin)) return false;

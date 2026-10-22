@@ -1,5 +1,7 @@
 #include "IslandSimulator/Soundscape.hpp"
 #include "IslandSimulator/WindGust.hpp"
+#include "IslandSimulator/MineSite.hpp"
+#include "IslandSimulator/VolcanoSite.hpp"
 #include "IslandSimulator/BunkerSite.hpp"
 #include "IslandSimulator/CampfireLayout.hpp"
 #include "IslandSimulator/WeatherSystem.hpp"
@@ -435,6 +437,12 @@ namespace island
         if(hasBunkerSource_)bunkerEntranceGroundY_=entranceGroundY;
     }
 
+    void Soundscape::SetMineSource(const float entranceGroundY) noexcept
+    {
+        hasMineSource_=std::isfinite(entranceGroundY);
+        if(hasMineSource_)mineEntranceGroundY_=entranceGroundY;
+    }
+
     SoundscapeDebugState Soundscape::DebugState() const noexcept
     {
         SoundscapeDebugState state;
@@ -447,7 +455,8 @@ namespace island
             // Query actual playback: an owned instance does not prove an audible/live track.
             for (const auto* instance : {surfInstance_.get(), breezeInstance_.get(),
                     jungleInstance_.get(), streamInstance_.get(), campfireInstance_.get(),
-                    bunkerHumInstance_.get(),waterMovementInstance_.get(),
+                    bunkerHumInstance_.get(),mineAmbienceInstance_.get(),volcanoRumbleInstance_.get(),
+                    waterMovementInstance_.get(),
                     waveInstance_.get(), waterTransitionInstance_.get(), footstepInstance_.get(),
                     wildlifeInstance_.get()}) {
                 try {
@@ -500,6 +509,10 @@ namespace island
         bunkerPresence_=hasBunkerSource_
             ?BunkerSite::SoundPresence(playerX,playerY,playerZ,bunkerEntranceGroundY_):0.0f;
         bunkerHumVolume_=bunkerPresence_*.20f;
+        minePresence_=hasMineSource_?MineSite::SoundPresence(playerX,playerY,playerZ,mineEntranceGroundY_):0.0f;
+        mineVolume_=minePresence_*.30f;
+        volcanoPresence_=VolcanoSite::SoundPresence(playerX,playerY,playerZ);
+        volcanoVolume_=volcanoPresence_*.34f;
         const float seasonalWetland=IslandEnvironmentField::SeasonalWetlandPotential(
             playerX,playerZ,signedShoreDistance);
         model_.Reset(signedShoreDistance, swimming, coastalWindExposure,
@@ -573,6 +586,14 @@ namespace island
             bunkerHumInstance_=std::make_unique<SoundEffectInstance>(
                 bunkerHumEffect_->CreateInstance());
             bunkerHumInstance_->setIsLoopedProperty(true);
+            mineAmbienceEffect_=CreateLoopedSoundEffect(GenerateMineAmbienceLoop());
+            mineAmbienceEffect_->setNameProperty("Procedural mine drips and echo");
+            mineAmbienceInstance_=std::make_unique<SoundEffectInstance>(mineAmbienceEffect_->CreateInstance());
+            mineAmbienceInstance_->setIsLoopedProperty(true);
+            volcanoRumbleEffect_=CreateLoopedSoundEffect(GenerateVolcanoRumbleLoop());
+            volcanoRumbleEffect_->setNameProperty("Procedural volcano rumble and lava bubbles");
+            volcanoRumbleInstance_=std::make_unique<SoundEffectInstance>(volcanoRumbleEffect_->CreateInstance());
+            volcanoRumbleInstance_->setIsLoopedProperty(true);
 
             waveEffect_ = CreateOneShotSoundEffect(GenerateWaveAccent());
             waveEffect_->setNameProperty("Procedural stronger wave");
@@ -756,12 +777,19 @@ namespace island
             rainInstance_->Play();
             if (nightChorusInstance_) nightChorusInstance_->Play();
             bunkerHumPlaybackActive_=!swimming&&bunkerPresence_>.015f;
-            campfirePlaybackActive_=!bunkerHumPlaybackActive_&&!swimming&&campfirePresence_>.015f;
-            streamPlaybackActive_ = !bunkerHumPlaybackActive_&&!campfirePlaybackActive_
+            minePlaybackActive_=!bunkerHumPlaybackActive_&&!swimming&&minePresence_>.015f;
+            volcanoPlaybackActive_=!bunkerHumPlaybackActive_&&!minePlaybackActive_&&!swimming&&volcanoPresence_>.015f;
+            const bool regionalTaken=bunkerHumPlaybackActive_||minePlaybackActive_||volcanoPlaybackActive_;
+            campfirePlaybackActive_=!regionalTaken&&!swimming&&campfirePresence_>.015f;
+            streamPlaybackActive_ = !regionalTaken&&!campfirePlaybackActive_
                 &&StreamSoundField::ShouldUseStreamPlayback(
                 swimming, streamSound_.presence, false);
             if(bunkerHumPlaybackActive_) {
                 bunkerHumInstance_->Play();
+            } else if(minePlaybackActive_) {
+                mineAmbienceInstance_->Play();
+            } else if(volcanoPlaybackActive_) {
+                volcanoRumbleInstance_->Play();
             } else if(campfirePlaybackActive_) {
                 AudioListener listener;
                 listener.setPositionProperty(Vector3(playerX,CampfireLayout::GroundY()+PlayerMotion::EyeHeight,playerZ));
@@ -780,6 +808,8 @@ namespace island
                 || jungleInstance_->getStateProperty() != SoundState::Playing
                 || (bunkerHumPlaybackActive_
                     ?bunkerHumInstance_->getStateProperty()!=SoundState::Playing
+                    :minePlaybackActive_?mineAmbienceInstance_->getStateProperty()!=SoundState::Playing
+                    :volcanoPlaybackActive_?volcanoRumbleInstance_->getStateProperty()!=SoundState::Playing
                     :campfirePlaybackActive_?campfireInstance_->getStateProperty()!=SoundState::Playing:streamPlaybackActive_
                     ? streamInstance_->getStateProperty() != SoundState::Playing
                     : waterMovementInstance_->getStateProperty() != SoundState::Playing)) {
@@ -865,6 +895,8 @@ namespace island
             streamPlaybackActive_ = false;
             campfireInstance_.reset();campfireEffect_.reset();campfirePlaybackActive_=false;
             bunkerHumInstance_.reset();bunkerHumEffect_.reset();bunkerHumPlaybackActive_=false;
+            mineAmbienceInstance_.reset();mineAmbienceEffect_.reset();minePlaybackActive_=false;
+            volcanoRumbleInstance_.reset();volcanoRumbleEffect_.reset();volcanoPlaybackActive_=false;
             waterMovementInstance_.reset();
             waterTransitionInstance_.reset();
             footstepInstance_.reset();
@@ -1056,6 +1088,11 @@ namespace island
             listenerState.x,listenerState.y,listenerState.z,bunkerEntranceGroundY_):0.0f;
         bunkerHumVolume_+=(bunkerPresence_*.20f-bunkerHumVolume_)
             *(1.0f-std::exp(-safeDelta*3.2f));
+        minePresence_=hasMineSource_?MineSite::SoundPresence(
+            listenerState.x,listenerState.y,listenerState.z,mineEntranceGroundY_):0.0f;
+        mineVolume_+=(minePresence_*.30f-mineVolume_)*(1.0f-std::exp(-safeDelta*3.2f));
+        volcanoPresence_=VolcanoSite::SoundPresence(listenerState.x,listenerState.y,listenerState.z);
+        volcanoVolume_+=(volcanoPresence_*.34f-volcanoVolume_)*(1.0f-std::exp(-safeDelta*2.0f));
         const float seasonalWetland=IslandEnvironmentField::SeasonalWetlandPotential(
             listenerState.x,listenerState.z,signedShoreDistance);
         gustStrength_ = std::isfinite(listenerState.x) && std::isfinite(listenerState.z)
@@ -1075,9 +1112,14 @@ namespace island
         }
         const bool wantsBunkerPlayback=!swimming
             &&bunkerPresence_>(bunkerHumPlaybackActive_?.005f:.015f);
-        const bool wantsCampfirePlayback=!wantsBunkerPlayback&&!swimming
+        const bool wantsMinePlayback=!wantsBunkerPlayback&&!swimming
+            &&minePresence_>(minePlaybackActive_?.005f:.015f);
+        const bool wantsVolcanoPlayback=!wantsBunkerPlayback&&!wantsMinePlayback&&!swimming
+            &&volcanoPresence_>(volcanoPlaybackActive_?.005f:.015f);
+        const bool regionalWanted=wantsBunkerPlayback||wantsMinePlayback||wantsVolcanoPlayback;
+        const bool wantsCampfirePlayback=!regionalWanted&&!swimming
             &&campfirePresence_>(campfirePlaybackActive_?.005f:.015f);
-        const bool wantsStreamPlayback = !wantsBunkerPlayback&&!wantsCampfirePlayback
+        const bool wantsStreamPlayback = !regionalWanted&&!wantsCampfirePlayback
             &&StreamSoundField::ShouldUseStreamPlayback(
             swimming, streamSound_.presence, streamPlaybackActive_);
         AudioListener listener;
@@ -1103,12 +1145,16 @@ namespace island
             }
         }
         if (available_ && (wantsBunkerPlayback!=bunkerHumPlaybackActive_
+            ||wantsMinePlayback!=minePlaybackActive_||wantsVolcanoPlayback!=volcanoPlaybackActive_
             ||wantsStreamPlayback != streamPlaybackActive_
             ||wantsCampfirePlayback!=campfirePlaybackActive_)) {
             try {
                 streamInstance_->Stop();campfireInstance_->Stop();bunkerHumInstance_->Stop();
+                mineAmbienceInstance_->Stop();volcanoRumbleInstance_->Stop();
                 waterMovementInstance_->Stop();
                 if(wantsBunkerPlayback)bunkerHumInstance_->Play();
+                else if(wantsMinePlayback)mineAmbienceInstance_->Play();
+                else if(wantsVolcanoPlayback)volcanoRumbleInstance_->Play();
                 else if(wantsCampfirePlayback)campfireInstance_->Play();
                 else if (wantsStreamPlayback) {
                     streamInstance_->Play();
@@ -1118,6 +1164,8 @@ namespace island
                 streamPlaybackActive_ = wantsStreamPlayback;
                 campfirePlaybackActive_=wantsCampfirePlayback;
                 bunkerHumPlaybackActive_=wantsBunkerPlayback;
+                minePlaybackActive_=wantsMinePlayback;
+                volcanoPlaybackActive_=wantsVolcanoPlayback;
             } catch (const std::exception& exception) {
                 DisableAfterRuntimeFailure(exception.what());
                 return;
@@ -1128,6 +1176,8 @@ namespace island
             // the cached active flags then prevented any restart until the player crossed another
             // stream/fire/water boundary, leaving that layer silent indefinitely.
             SoundEffectInstance* desiredLoop = wantsBunkerPlayback?bunkerHumInstance_.get()
+                :wantsMinePlayback?mineAmbienceInstance_.get()
+                :wantsVolcanoPlayback?volcanoRumbleInstance_.get()
                 :wantsCampfirePlayback ? campfireInstance_.get()
                 : wantsStreamPlayback ? streamInstance_.get() : waterMovementInstance_.get();
             try {
@@ -2046,13 +2096,16 @@ namespace island
     {
         if (!available_ || !surfInstance_ || !breezeInstance_ || !jungleInstance_
             || !streamInstance_ || !campfireInstance_ || !bunkerHumInstance_
+            || !mineAmbienceInstance_ || !volcanoRumbleInstance_
             || !waterMovementInstance_) {
             return;
         }
         try {
             const float gain = muted_ ? 0.0f : 1.0f;
-            const float enclosureAir=std::lerp(1.0f,.20f,bunkerPresence_);
-            const float enclosureSurf=std::lerp(1.0f,.08f,bunkerPresence_);
+            // under the ground (the bunker, the mine) the open air and the surf fall away
+            const float underground=std::max(bunkerPresence_,minePresence_);
+            const float enclosureAir=std::lerp(1.0f,.20f,underground);
+            const float enclosureSurf=std::lerp(1.0f,.08f,underground);
             // the surf pounds harder as the weather's wind raises the sea
             surfInstance_->setVolumeProperty(std::min(1.0f, model_.Mix().surfVolume
                 *std::clamp(1.0f+0.45f*(weatherWind_-1.0f),0.85f,1.45f)
@@ -2062,7 +2115,7 @@ namespace island
                 *underwaterAudio_.airGain*enclosureAir*gain));
             if (rainInstance_) {
                 // drumming on the leaves under the crowns, a muffled hiss in the cave
-                const RainHearing hearing = RainUnderShelter(weatherRain_, rainCanopy_, std::max(rainEnclosed_, bunkerPresence_), rainMetal_);
+                const RainHearing hearing = RainUnderShelter(weatherRain_, rainCanopy_, std::max({rainEnclosed_, bunkerPresence_, minePresence_}), rainMetal_);
                 rainInstance_->setVolumeProperty(hearing.volume*underwaterAudio_.airGain*gain);
                 rainInstance_->setPitchProperty(hearing.pitch);
             }
@@ -2080,6 +2133,8 @@ namespace island
             campfireInstance_->setVolumeProperty(campfireVolume_*(1.0f-0.45f*weather_now::FireDousing())
                 *underwaterAudio_.airGain*gain);
             bunkerHumInstance_->setVolumeProperty(bunkerHumVolume_*gain);
+            mineAmbienceInstance_->setVolumeProperty(mineVolume_*gain);
+            volcanoRumbleInstance_->setVolumeProperty(volcanoVolume_*underwaterAudio_.airGain*gain);
             const float underwaterBed=.025f*underwaterAudio_.immersion;
             waterMovementInstance_->setVolumeProperty(std::min(1.0f,
                 (waterMovementModel_.Mix().volume+underwaterBed)
@@ -2103,6 +2158,8 @@ namespace island
         streamPlaybackActive_ = false;
         campfireInstance_.reset();campfireEffect_.reset();campfirePlaybackActive_=false;
         bunkerHumInstance_.reset();bunkerHumEffect_.reset();bunkerHumPlaybackActive_=false;
+        mineAmbienceInstance_.reset();mineAmbienceEffect_.reset();minePlaybackActive_=false;
+        volcanoRumbleInstance_.reset();volcanoRumbleEffect_.reset();volcanoPlaybackActive_=false;
         waterMovementInstance_.reset();
         waterTransitionInstance_.reset();
         footstepInstance_.reset();

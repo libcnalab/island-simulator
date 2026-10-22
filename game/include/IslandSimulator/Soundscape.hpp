@@ -192,6 +192,8 @@ namespace island
 
         /** @brief Supplies the sampled portal elevation for underground acoustic zoning. */
         void SetBunkerSource(float entranceGroundY) noexcept;
+        /** @brief Supplies the old mine's portal elevation for its acoustic zone. */
+        void SetMineSource(float entranceGroundY) noexcept;
 
         /** @brief Toggles user-requested silence without destroying the active loops. */
         void ToggleMuted() noexcept;
@@ -345,6 +347,12 @@ namespace island
         bool bunkerHumPlaybackActive_=false;
         float bunkerPresence_=0,bunkerHumVolume_=0,bunkerEntranceGroundY_=0;
         bool hasBunkerSource_=false;
+        // the old mine's drips and echo, the volcano's rumble: they share the regional loop's
+        // slot with the bunker's hum, the campfire and the stream (one plays at a time)
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> mineAmbienceEffect_,volcanoRumbleEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> mineAmbienceInstance_,volcanoRumbleInstance_;
+        bool minePlaybackActive_=false,volcanoPlaybackActive_=false,hasMineSource_=false;
+        float minePresence_=0,mineVolume_=0,mineEntranceGroundY_=0,volcanoPresence_=0,volcanoVolume_=0;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> waveEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> waveAlternateEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> waveInstance_;

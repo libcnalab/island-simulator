@@ -233,6 +233,31 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 509 (2026-10-22) — the mine drips and echoes, the volcano rumbles
+
+The old mine and the volcano now have sounds of their own.
+
+- **The mine.** `GenerateMineAmbienceLoop` is an 11 s loop. The still air has a low murmur and a
+  faint 38 Hz drone. Nine water drips fall from the timbers. Each drip is a falling plink
+  followed by three echoes off the adit's walls; late echoes wrap round the loop, so it stays
+  seamless.
+- **The volcano.** `GenerateVolcanoRumbleLoop` is a 13 s loop. The vent's deep rumble swells and
+  rolls. Sixteen thick lava bubbles rise in pitch as each swells and bursts. Steam hisses at the
+  top.
+- **Where they play.** Both loops join the regional loop slot that the bunker's hum, the campfire
+  and the stream share; one plays at a time, so the source budget is unchanged. The order is
+  bunker, mine, volcano, campfire, then stream.
+  - **Mine.** `MineSite::SoundPresence` is zero at the portal and on the mountain above, and full
+    a few metres in at walking height.
+  - **Volcano.** `VolcanoSite::SoundPresence` is full on the rim and fades out about 90 m from
+    the crater.
+  - **Underground.** Inside the mine, as in the bunker, the open air and the surf fall away, and
+    the rain is heard as from shelter.
+- **Wiring.** The game hands the soundscape the mine's portal height with `SetMineSource`.
+- **Tests.** `CoreTests` checks that both loops are deterministic, seamless, centred, unclipped
+  and audible. Each presence is checked inside and outside its place, and on the mountain above
+  the mine. The suite is 76/76.
+
 ## Loop pass 508 (2026-10-22) — the coaster's steel rings underfoot
 
 Walking aboard the grounded coaster now sounds like walking on a ship.

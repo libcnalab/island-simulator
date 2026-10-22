@@ -105,6 +105,8 @@
 #include "IslandSimulator/IdolStatueLayout.hpp"
 #include "IslandSimulator/StoneSignLayout.hpp"
 #include "IslandSimulator/LighthouseLayout.hpp"
+#include "IslandSimulator/MineSite.hpp"
+#include "IslandSimulator/VolcanoSite.hpp"
 #include "IslandSimulator/PlaneWreckLayout.hpp"
 #include "IslandSimulator/BeachLitterLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
@@ -1470,6 +1472,37 @@ int main()
              &bunkerHumLoop}) {
         Check(std::abs(island::AnalyzeAudioSignal(*loop).mean) <= 0.0001,
               "persistent ambience removes material DC before PCM quantization");
+    }
+    {
+        // The old mine's drips and the volcano's rumble: deterministic, seamless round the loop,
+        // free of DC, neither clipped nor silent; each heard only where it belongs.
+        const island::AmbientLoop mine = island::GenerateMineAmbienceLoop();
+        const island::AmbientLoop volcano = island::GenerateVolcanoRumbleLoop();
+        for (const island::AmbientLoop* loop : {&mine, &volcano}) {
+            Check(loop->sampleRate == 22050
+                      && std::abs(static_cast<int>(loop->samples.front()) - static_cast<int>(loop->samples.back())) < 8000
+                      && std::abs(island::AnalyzeAudioSignal(*loop).mean) <= 0.0001
+                      && peakMagnitude(*loop) < 32767 && rootMeanSquare(*loop) > 500.0,
+                  "the mine's and the volcano's loops are seamless, centred and audible");
+        }
+        Check(mine.samples == island::GenerateMineAmbienceLoop().samples
+                  && volcano.samples == island::GenerateVolcanoRumbleLoop().samples,
+              "the mine's and the volcano's loops regenerate deterministically");
+        const island::IslandTerrain presenceTerrain;
+        const float entranceY = presenceTerrain.Height(island::MineSite::X, island::MineSite::Z);
+        const float inX = island::MineSite::X + std::cos(island::MineSite::Angle) * 20.0f;
+        const float inZ = island::MineSite::Z + std::sin(island::MineSite::Angle) * 20.0f;
+        const float outX = island::MineSite::X - std::cos(island::MineSite::Angle) * 6.0f;
+        const float outZ = island::MineSite::Z - std::sin(island::MineSite::Angle) * 6.0f;
+        Check(island::MineSite::SoundPresence(inX, entranceY + 0.2f + 1.72f, inZ, entranceY) > 0.95f
+                  && island::MineSite::SoundPresence(outX, entranceY + 1.72f, outZ, entranceY) == 0.0f
+                  && island::MineSite::SoundPresence(inX, presenceTerrain.Height(inX, inZ) + 1.72f, inZ, entranceY) == 0.0f,
+              "the mine's ambience is heard inside the adit, not outside it or on the mountain above");
+        const float rimX = island::VolcanoSite::X + island::VolcanoSite::RimRadius + 0.5f;
+        Check(island::VolcanoSite::SoundPresence(rimX, island::VolcanoSite::SurfaceY(rimX, island::VolcanoSite::Z) + 1.7f,
+                                                 island::VolcanoSite::Z) > 0.9f
+                  && island::VolcanoSite::SoundPresence(island::VolcanoSite::X + 120.0f, 5.0f, island::VolcanoSite::Z) == 0.0f,
+              "the volcano rumbles loud on its rim and is silent far off");
     }
 
     const island::SoundscapeMix beachMix = island::SoundscapeModel::TargetMix(2.0f, false);

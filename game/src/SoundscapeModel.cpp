@@ -883,6 +883,75 @@ namespace island
         return Quantize(samples,.62f,true);
     }
 
+    AmbientLoop GenerateMineAmbienceLoop()
+    {
+        constexpr int loopSeconds=11;
+        constexpr std::size_t count=AmbientSampleRate*loopSeconds;
+        const auto noise=Noise(0x5e1d0a7bU,count);
+        const auto murmur=CircularSmooth(noise,900U);
+        const auto air=CircularSmooth(noise,140U);
+        std::vector<float> samples(count);
+        for(std::size_t i=0;i<count;++i) {
+            const float seconds=static_cast<float>(i)/AmbientSampleRate;
+            samples[i]=murmur[i]*.55f+air[i]*.05f+.035f*std::sin(TwoPi*38.0f*seconds);
+        }
+        // the drips, each with the echo coming back off the adit's walls; written round the
+        // loop so a late echo wraps to its start
+        DeterministicNoise random(0x0d21c9a3U);
+        constexpr int Drips=9;
+        for(int k=0;k<Drips;++k) {
+            const float start=(static_cast<float>(k)+.5f+.35f*random.Next())/Drips*loopSeconds;
+            const float pitch=1500.0f+450.0f*(random.Next()+1.0f);
+            const float loudness=.35f+.2f*(random.Next()+1.0f);
+            for(int echo=0;echo<4;++echo) {
+                const float delay=.11f*static_cast<float>(echo)+.02f*static_cast<float>(echo*echo);
+                const float gain=loudness*std::pow(.42f,static_cast<float>(echo));
+                const auto first=static_cast<std::size_t>((start+delay)*AmbientSampleRate);
+                const auto length=static_cast<std::size_t>(.09f*AmbientSampleRate);
+                for(std::size_t j=0;j<length;++j) {
+                    const float x=static_cast<float>(j)/AmbientSampleRate;
+                    const float plink=std::sin(TwoPi*(pitch*x-1600.0f*x*x))*std::exp(-x*55.0f);
+                    samples[(first+j)%count]+=gain*plink;
+                }
+            }
+        }
+        return Quantize(samples,.55f,true);
+    }
+
+    AmbientLoop GenerateVolcanoRumbleLoop()
+    {
+        constexpr int loopSeconds=13;
+        constexpr std::size_t count=AmbientSampleRate*loopSeconds;
+        const auto noise=Noise(0x7a1c3e55U,count);
+        const auto rumble=CircularSmooth(noise,1400U);
+        const auto roll=CircularSmooth(noise,420U);
+        const auto edge=CircularSmooth(noise,6U);
+        std::vector<float> samples(count);
+        for(std::size_t i=0;i<count;++i) {
+            const float phase=static_cast<float>(i)/count;
+            const float swell=.75f+.25f*std::sin(TwoPi*(2.0f*phase+.3f));
+            const float hiss=(noise[i]-edge[i])*.045f*(.6f+.4f*std::sin(TwoPi*(3.0f*phase+.1f)));
+            samples[i]=rumble[i]*1.6f*swell+roll[i]*.25f+hiss;
+        }
+        // the lake's bubbles: a thick bloop rising in pitch as each swells and bursts
+        DeterministicNoise random(0x3b9ac9ffU);
+        constexpr int Bubbles=16;
+        for(int k=0;k<Bubbles;++k) {
+            const float start=(static_cast<float>(k)+.5f+.4f*random.Next())/Bubbles*loopSeconds;
+            const float pitch=70.0f+45.0f*(random.Next()+1.0f);
+            const float length=.12f+.065f*(random.Next()+1.0f);
+            const float loudness=.25f+.15f*(random.Next()+1.0f);
+            const auto first=static_cast<std::size_t>(start*AmbientSampleRate);
+            const auto frames=static_cast<std::size_t>(length*AmbientSampleRate);
+            for(std::size_t j=0;j<frames;++j) {
+                const float x=static_cast<float>(j)/AmbientSampleRate;
+                const float envelope=std::sin(std::numbers::pi_v<float>*x/length);
+                samples[(first+j)%count]+=loudness*envelope*std::sin(TwoPi*(pitch*x+300.0f*x*x));
+            }
+        }
+        return Quantize(samples,.6f,true);
+    }
+
     AmbientLoop GenerateWaveAccent()
     {
         constexpr std::size_t frameCount = static_cast<std::size_t>(AmbientSampleRate * 4);

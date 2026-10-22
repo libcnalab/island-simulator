@@ -3279,6 +3279,7 @@ namespace island
         const StreamCourse streamCourse(terrain_);
         soundscape_->SetStreamCascade(streamCourse.CascadeX(), streamCourse.CascadeZ());
         soundscape_->SetBunkerSource(bunkerLayout_.EntranceGroundY());
+        soundscape_->SetMineSource(mineLayout_.Entrance().y);
         if (userSettings_.audioMuted) soundscape_->SetMuted(true);
         if (!smokeTest_ && !soundscapeNeedsGesture_) {
             TryStartSoundscape();

@@ -60,6 +60,12 @@ namespace island
 
     /** @brief Original seamless seventeen-second underground electrical-generator hum. */
     [[nodiscard]] AmbientLoop GenerateBunkerHumLoop();
+    // Inside the old mine: the still air's low murmur, water dripping off the timbers, each
+    // plink answered by the adit's echo.
+    [[nodiscard]] AmbientLoop GenerateMineAmbienceLoop();
+    // At the volcano: the vent's deep rumble swelling and rolling, the lava lake's thick bubbles
+    // bursting, steam hissing out of the crater.
+    [[nodiscard]] AmbientLoop GenerateVolcanoRumbleLoop();
     /** @brief Rain: a broadband hiss over a patter of drops, looped (eight seconds). */
     [[nodiscard]] AmbientLoop GenerateRainLoop();
     /** @brief The rain as heard where the listener stands: under the crowns (canopy 0..1) it
