@@ -1913,6 +1913,12 @@ def main():
                 raise RuntimeError("current land shadow geometry is missing; check for a stale executable")
             if "wreck, hut, and helicopter project bounded fixed-sun mass shadows in the shared contact batch" not in diagnostics:
                 raise RuntimeError("current large-object sun shadows are missing; check for a stale executable")
+            # with the sun shadow map on, the frame inventory counts the large objects casting into it
+            if (args.viewpoint in ("hut", "jungle", "shipwreck", "helicopter", "freighter", "plane-wreck")
+                    and not args.no_sun_shadows and (args.time_of_day is None or 7.0 <= args.time_of_day <= 17.0)):
+                casting = re.search(r"large-object sun shadows (\d+)", diagnostics)
+                if casting is None or int(casting.group(1)) == 0:
+                    raise RuntimeError("the frame inventory reports no large-object sun shadows")
             if "rocks use shared smooth normals, scale-correct daylight and filtered mineral weathering" not in diagnostics:
                 raise RuntimeError("current stone surface is missing; check for a stale executable")
             if "near rocks use filtered mineral strata and a local soil-stained base" not in diagnostics:

@@ -233,6 +233,25 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 519 (2026-10-22) — the inventory names the large-object sun shadows
+
+The operator's item 1 read "large-object sun shadows 0" in the frame inventory. The directional
+sun shadow map has long been in (loop passes 205 and 216-218). The inventory now names it in the
+operator's own words: after "sun shadow map N renders, M casters" it reads "large-object sun
+shadows M". M counts the trees, the palms, the hut, the wrecks, the helicopter and the landmarks
+drawn into the map that frame, each casting its real shadow over the ground.
+
+- **Capture gate.** The software capture now fails if that count is zero in a daytime capture
+  with shadows on, in the views where large objects stand: hut, jungle, shipwreck, helicopter,
+  freighter and plane-wreck.
+- **Counts.** Hut 832, jungle 1620, shipwreck 355, helicopter 1832, freighter 419, plane-wreck
+  813.
+- **Comparison.** The `hut` view with and without the map shows it plainly. With the map, the
+  trees, the palms and the hut throw their shadows across the clearing. Without it, the ground
+  lies flat under them (`20261022T115858` against `20261022T115953`, `--no-sun-shadows`).
+
+The suite is 76/76.
+
 ## Loop pass 518 (2026-10-22) — the jungle takes the fighter's wreck back
 
 The fighter's wreck has lain eighty years under the jungle, and now it shows it

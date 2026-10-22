@@ -32,7 +32,7 @@ here as done with their `PLAN.md` evidence reference.
 1. [x] Directional sun shadows (`SunShadowMap`, PLAN "Latest lighting pass — directional sun shadow
    map"); the wreck, hut, props, jetty, bridge, lookout and helicopter receive it since loop
    passes 216-218, a with/without comparison is pass 205, the animals read a CPU sun-shade field,
-   and water receiving was measured and dropped (pass 219).
+   and water receiving was measured and dropped (pass 219). The frame inventory names it "large-object sun shadows N" since loop pass 519 (hut 832 casters).
 2. [x] Mid-distance hillside grain (PLAN "Latest hillside pass — mid-distance tussock grain").
 3. [x] Wreck scour bar (PLAN "Latest wreck-grounding pass — sand scour bar against the hull").
 4. [x] Sand streak audit (PLAN "Latest beach-streak audit — seabed ripples confined below the waterline").
@@ -351,6 +351,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 519: frame inventory reads "large-object sun shadows N" (hut 832, jungle 1620, shipwreck 355, helicopter 1832, freighter 419, plane-wreck 813), capture gate fails on zero; hut with/without map `20261022T115858`/`115953` (PLAN "Loop pass 519").
 - Pass 518: the fighter wreck overgrown: creepers with leaves over the fuselage and tail, moss on the upturned skin, ferns round the belly (PLAN "Loop pass 518").
 - Pass 517: the castaway's signal fire stacked ready (driftwood poles, palm fronds) and a burnt-out fire ring by HELP ME; QA view `signal-fire` (PLAN "Loop pass 517").
 - Pass 516: four sulphur-crusted fumaroles steaming on the volcano's slopes (PLAN "Loop pass 516").

@@ -8197,6 +8197,9 @@ namespace island
                       << (sunShadowMap_ ? " (only where the sun shadow map's shadows fade out)" : "")
                       << "; sun shadow map " << (sunShadowMap_ ? sunShadowMap_->RenderCount() : 0)
                       << " renders, " << (sunShadowMap_ ? sunShadowMap_->LastCasterCount() : 0) << " casters"
+                      // the trees, the palms, the hut, the wrecks, the helicopter and the landmarks
+                      // drawn into the sun shadow map: each casts its real shadow over the ground
+                      << "; large-object sun shadows " << (sunShadowMap_ ? sunShadowMap_->LastCasterCount() : 0)
                       << "; coastal contact shadows " << contactShadowRenderer_->VisibleCoastalShadowCount()
                       << "; sun steam " << sunSteam_.ActiveCount() << " wisps (" << sunSteam_.StartedCount() << " started)"
                       << "; water view " << waterViewModel_.Intensity()
