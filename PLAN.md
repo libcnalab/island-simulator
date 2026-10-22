@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 452 (2026-10-22) — the underwater light shafts follow the hour's sun
+
+The diver's light shafts still leaned to the fixed 14:00 sun and shone at their full strength under
+an overcast and at night. They now lean to the hour's shading light (the sun by day, the moon by
+night, never under 15 degrees, as every shadow does), and their strength is the hour's shadow
+strength (`uDirect`). That strength is gone under an overcast, at most 0.4 from a high full moon,
+and full in clear sun. In `reef-habitat` the 14:00 frame matches the earlier one (the hour's sun
+there is the former fixed sun, -0.452, 0.824, -0.342 by probe). At 08:30 the shafts lean the other
+way, under an overcast they are nearly gone, and at 21:00 only a faint moonlit trace remains. The
+seabed caustics already followed the hour (`uDirectSun`, `uCausticSun`).
+
 ## Loop pass 451 (2026-10-22) — the bear casts its figure
 
 The bear's only shadow was its 0.64 x 1.18 m pool. `walker_shadow::BearLimbs` lays sixteen limbs in

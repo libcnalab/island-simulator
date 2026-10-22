@@ -1,4 +1,5 @@
 #include "IslandSimulator/UnderwaterEffectRenderer.hpp"
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "CNA/Graphics/ShaderCodeEXT.hpp"
@@ -34,6 +35,7 @@ constexpr const char* FragmentBody=R"(
 in vec2 vUv;
 uniform vec4 uWater;      // camera depth, swim intensity, bubble burst, seconds
 uniform vec4 uView;       // sun screen tilt x, sun facing 0..1, aspect, sun height above view
+uniform float uDirect;    // 0..1 the light that makes shafts: the hour's shadow strength (a high moon's faintly)
 out vec4 fragColor;
 float hash12(vec2 p){
     vec3 p3=fract(vec3(p.xyx)*0.1031);
@@ -53,7 +55,7 @@ void main(){
     float carrier2=0.5+0.5*sin(x*47.0-t*0.37+sin(x*9.1+t*0.16)*2.2);
     float shaft=smoothstep(0.62,0.98,carrier*0.7+carrier2*0.3);
     float height=pow(clamp(vUv.y,0.0,1.0),1.5);
-    float shaftStrength=shaft*height*exp(-depth*0.16)*mix(0.35,1.0,uView.y)*(0.55+0.45*uView.w);
+    float shaftStrength=shaft*height*exp(-depth*0.16)*mix(0.35,1.0,uView.y)*(0.55+0.45*uView.w)*uDirect;
     light+=vec3(0.30,0.42,0.44)*shaftStrength*0.55;
     // Bubbles: the diver's breath rising past the camera in a few lanes, more after a descent.
     float swim=uWater.y;
@@ -110,6 +112,8 @@ UnderwaterEffectRenderer::UnderwaterEffectRenderer(GraphicsDevice& device):devic
     vertices_=std::make_unique<VertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),3,BufferUsage::WriteOnly);
     vertices_->SetData(triangle.data(),3);
     const char* message="island-simulator: underwater view adds sun-tilted light shafts, the diver's rising bubbles and moving seabed caustics";
+    const char* hourMessage="island-simulator: the underwater shafts lean to the hour's sun (a high moon's at night) and are as strong as its shadows: none under an overcast";
+    std::cout<<hourMessage<<'\n';MirrorRuntimeDiagnosticToPlatformLog(hourMessage);
     std::cout<<message<<'\n';MirrorRuntimeDiagnosticToPlatformLog(message);
 }
 
@@ -118,7 +122,11 @@ void UnderwaterEffectRenderer::Draw(const float cameraDepth,const float swimInte
                                     const int viewportHeight) {
     drawCalls_=0;
     if(!effect_||!std::isfinite(cameraDepth)||cameraDepth<=0.03f||viewportWidth<=0||viewportHeight<=0) return;
-    Vector3 sun(environment::SunDirectionX,environment::SunDirectionY,environment::SunDirectionZ);
+    // The hour's light: the sun by day, the moon by night (the shading direction), the shafts as
+    // strong as the shadows it casts, so none under an overcast and only a high moon's at night.
+    const auto& hour=sun_light::Current();
+    Vector3 sun(hour.shading.x,hour.shading.y,hour.shading.z);
+    if(sun.LengthSquared()<1e-8f) sun=Vector3(environment::SunDirectionX,environment::SunDirectionY,environment::SunDirectionZ);
     sun.Normalize();
     const Vector3 sunView=Vector3::TransformNormal(sun,view);
     // The view looks down -Z: the sun ahead of the camera means shafts lean little and glow more.
@@ -133,6 +141,7 @@ void UnderwaterEffectRenderer::Draw(const float cameraDepth,const float swimInte
     effect_->SetUniformVec4("uWater",cameraDepth,std::clamp(swimIntensity,0.0f,1.0f),
         std::clamp(bubbleBurst,0.0f,1.0f),std::isfinite(seconds)?std::remainder(seconds,628.31853f):0.0f);
     effect_->SetUniformVec4("uView",tilt,facing,static_cast<float>(viewportWidth)/static_cast<float>(viewportHeight),above);
+    effect_->SetUniformFloat("uDirect",std::clamp(hour.lighting.shadowStrength,0.0f,1.0f));
     device_.DrawPrimitives(PrimitiveType::TriangleList,0,1);
     drawCalls_=1;
 }
