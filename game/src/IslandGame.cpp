@@ -6323,6 +6323,7 @@ namespace island
                 if (lookoutRenderer_) lookoutRenderer_->DrawSunShadow(*sunShadowMap_);
                 shipwreckRenderer_->DrawSunShadow(*sunShadowMap_);
                 helicopterRenderer_->DrawSunShadow(*sunShadowMap_);
+                naturalPropRenderer_->DrawSunShadow(*sunShadowMap_);
                 sunShadowMap_->End();
             }
         }

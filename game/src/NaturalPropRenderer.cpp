@@ -2286,6 +2286,82 @@ void main()
         }
     }
 
+    namespace
+    {
+        // The props' instance rows, the first row's spare slot (the canopy tag) cleared.
+        constexpr const char* PropSunShadowVertex = R"(
+layout(location = 0) in vec3 aPosition;
+layout(location = 3) in vec4 aInstance0;
+layout(location = 4) in vec4 aInstance1;
+layout(location = 5) in vec4 aInstance2;
+layout(location = 6) in vec4 aInstance3;
+uniform mat4 uSunViewProjection;
+out float vSunDepth;
+void main()
+{
+    mat4 instanceTransform = mat4(vec4(aInstance0.xyz, 0.0), aInstance1, aInstance2, aInstance3);
+    vec4 clip = uSunViewProjection * (instanceTransform * vec4(aPosition, 1.0));
+    vSunDepth = clip.z / clip.w;
+    gl_Position = clip;
+    gl_Position.z = 2.0 * gl_Position.z - gl_Position.w;
+}
+)";
+    }
+
+    void NaturalPropRenderer::DrawSunShadow(SunShadowMap& map)
+    {
+        if (!customShaderReady_ || !instancingSupported_ || sunShadowUnavailable_) return;
+        if (!sunShadowEffect_) {
+            try {
+                sunShadowEffect_ = map.CreateCasterEffect(PropSunShadowVertex, "natural-props");
+            } catch (const std::exception& error) {
+                std::cout << "island-simulator: rock and log sun shadow casters unavailable: " << error.what() << '\n';
+                sunShadowUnavailable_ = true;
+                return;
+            }
+        }
+        // The far meshes cast (their silhouettes are the near ones'): the land's rocks (not
+        // the reef's under the sea), the fallen logs and the driftwood within the map's reach.
+        for (auto& transforms : visibleRockFar_) transforms.clear();
+        for (auto& transforms : visibleLogFar_) transforms.clear();
+        for (auto& transforms : visibleDriftwoodFar_) transforms.clear();
+        int casters = 0;
+        for (const PropCell& cell : cells_) {
+            if (!cell.occupied) continue;
+            for (const DrawInstance& instance : cell.rocks)
+                if (!instance.offshore && map.CastsInto(instance.x, instance.z)) {
+                    visibleRockFar_[instance.variant].push_back(instance.transform);
+                    ++casters;
+                }
+            for (const DrawInstance& instance : cell.logs)
+                if (map.CastsInto(instance.x, instance.z)) {
+                    visibleLogFar_[instance.variant].push_back(instance.transform);
+                    ++casters;
+                }
+            for (const DrawInstance& instance : cell.driftwood)
+                if (map.CastsInto(instance.x, instance.z)) {
+                    visibleDriftwoodFar_[instance.variant].push_back(instance.transform);
+                    ++casters;
+                }
+        }
+        float matrix[16];
+        map.LightViewProjectionColumnMajor(matrix);
+        sunShadowEffect_->Apply();
+        sunShadowEffect_->SetUniformMat4("uSunViewProjection", matrix);
+        for (std::size_t variant = 0; variant < rockFarMeshes_.size(); ++variant)
+            DrawInstances(rockFarMeshes_[variant], visibleRockFar_[variant]);
+        for (std::size_t variant = 0; variant < logFarMeshes_.size(); ++variant)
+            DrawInstances(logFarMeshes_[variant], visibleLogFar_[variant]);
+        for (std::size_t variant = 0; variant < driftwoodFarMeshes_.size(); ++variant)
+            DrawInstances(driftwoodFarMeshes_[variant], visibleDriftwoodFar_[variant]);
+        device_.SetVertexBuffers({});
+        device_.setIndicesProperty(nullptr);
+        map.CountCasters(casters);
+        for (auto& transforms : visibleRockFar_) transforms.clear();
+        for (auto& transforms : visibleLogFar_) transforms.clear();
+        for (auto& transforms : visibleDriftwoodFar_) transforms.clear();
+    }
+
     void NaturalPropRenderer::Draw(const Matrix& view, const Matrix& projection,
                                    const Vector3& cameraPosition)
     {

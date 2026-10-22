@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 453: land rocks, logs, driftwood cast into the sun shadow map (small visible effect: 0.45 m bias) (PLAN "Loop pass 453").
 - Pass 452: underwater shafts lean to the hour's shading light, strength = shadow strength (PLAN "Loop pass 452").
 - Pass 451: bear sun shadow (BearLimbs on BearPose; head by forage and sniff) (PLAN "Loop pass 451").
 - Pass 450: goat and boar sun shadows (GoatLimbs on GoatGroundPose, BoarLimbs on FitBoarGroundPose) (PLAN "Loop pass 450").

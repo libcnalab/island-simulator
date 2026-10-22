@@ -233,6 +233,22 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 453 (2026-10-22) — rocks, fallen logs and driftwood cast into the sun shadow map
+
+Only the trees, palms and structures were casters. The land's rocks (not the reef's under the sea),
+the fallen logs and the driftwood now cast into the map too, through their far meshes and the props'
+own instance rows (`NaturalPropRenderer::DrawSunShadow`, after the helicopter). Like every caster
+they only draw when the map re-renders, so they follow the hour's sun as the trees' shadows do.
+Casters rose from 698 to 725 in `props` and from 746 to 808 in `driftwood`.
+
+The visible effect in the reviewed views is small, and that is recorded as found. The map's
+constant depth bias (about 0.45 m along the light) swallows the shadow of anything lower than
+that. Driftwood and most logs keep only their contact patches, and only a low sun lays the far part
+of a log's shadow. An A/B at 16:30 (the call commented out, then restored) changed 170 pixels in
+`tide-pools`: small new shadows by the shore rocks. In `east` and `west` it changed nothing beyond
+the moving resident and deer. Boulders taller than half a metre now throw shadows along the hour's
+sun.
+
 ## Loop pass 452 (2026-10-22) — the underwater light shafts follow the hour's sun
 
 The diver's light shafts still leaned to the fixed 14:00 sun and shone at their full strength under

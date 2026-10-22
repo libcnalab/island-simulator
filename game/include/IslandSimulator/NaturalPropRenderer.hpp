@@ -103,9 +103,14 @@ namespace island
         [[nodiscard]] int DrawCallCount() const noexcept { return drawCallCount_; }
         /** The map the rocks, logs, driftwood and beach details receive. */
         void SetSunShadowMap(const SunShadowMap* map) noexcept { sunShadow_ = map; }
+        /** Casts the land's rocks, the fallen logs and the driftwood into the sun shadow map
+         *  (their far meshes), so they throw shadows along the hour's sun like the trees. */
+        void DrawSunShadow(SunShadowMap& map);
 
     private:
         const SunShadowMap* sunShadow_ = nullptr;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> sunShadowEffect_;
+        bool sunShadowUnavailable_ = false;
         struct PropMesh
         {
             std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> vertices;
