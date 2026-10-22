@@ -153,6 +153,69 @@ FreighterRenderer::FreighterRenderer(GraphicsDevice& device,const FreighterPlace
         }
     }
     b.ground=nullptr;
+    // ---- her name, painted in white on both bows and across the transom over her port of
+    // registry: strokes laid on the plating, rusting with it
+    {
+        struct Stroke {float x0,y0,x1,y1;};
+        const auto letter=[](const char c)->std::vector<Stroke> {
+            switch(c) {
+            case 'M': return {{0,0,0,1.5f},{0,1.5f,0.5f,0.8f},{0.5f,0.8f,1,1.5f},{1,1.5f,1,0}};
+            case 'A': return {{0,0,0.5f,1.5f},{0.5f,1.5f,1,0},{0.22f,0.6f,0.78f,0.6f}};
+            case 'R': return {{0,0,0,1.5f},{0,1.5f,0.75f,1.5f},{0.75f,1.5f,1,1.28f},{1,1.28f,1,0.97f},
+                              {1,0.97f,0.75f,0.75f},{0.75f,0.75f,0,0.75f},{0.45f,0.75f,1,0}};
+            case 'I': return {{0.5f,0,0.5f,1.5f}};
+            case 'K': return {{0,0,0,1.5f},{1,1.5f,0,0.6f},{0.3f,0.85f,1,0}};
+            case 'P': return {{0,0,0,1.5f},{0,1.5f,0.75f,1.5f},{0.75f,1.5f,1,1.28f},{1,1.28f,1,0.97f},
+                              {1,0.97f,0.75f,0.75f},{0.75f,0.75f,0,0.75f}};
+            case 'N': return {{0,0,0,1.5f},{0,1.5f,1,0},{1,0,1,1.5f}};
+            default: return {};
+            }
+        };
+        const Vector3 paint(236,232,218);
+        // the text's strokes mapped onto a surface: (position along the text, height) to the world
+        const auto write=[&](const char* text,const float height,const float width,const auto& onHull,const Vector3& hollow) {
+            const float scale=height/1.5f,advance=(width+0.35f)*scale/0.6f*0.6f,stroke=0.12f*scale;
+            float origin=0.0f;
+            for(const char* c=text;*c;++c) {
+                for(const Stroke& s:letter(*c)) {
+                    const float ax=origin+s.x0*width*scale/0.6f*0.6f,ay=s.y0*scale,bx=origin+s.x1*width*scale/0.6f*0.6f,by=s.y1*scale;
+                    float nx=-(by-ay),ny=bx-ax;
+                    const float n=std::hypot(nx,ny);
+                    if(n<1e-5f) continue;
+                    nx*=stroke*0.5f/n;ny*=stroke*0.5f/n;
+                    // reach a little past each end so the strokes join at the corners
+                    const float ex=(bx-ax)/std::hypot(bx-ax,by-ay)*stroke*0.4f,ey=(by-ay)/std::hypot(bx-ax,by-ay)*stroke*0.4f;
+                    b.inside=hollow;
+                    b.Quad(onHull(ax-ex-nx,ay-ey-ny),onHull(bx+ex-nx,by+ey-ny),onHull(bx+ex+nx,by+ey+ny),onHull(ax-ex+nx,ay-ey+ny),paint);
+                }
+                origin+=*c==' '?advance*0.8f:advance;
+            }
+            return origin;
+        };
+        const char* name="MARIA K";
+        const float letterHeight=0.75f,nameUp=D(26.0f)-1.05f;
+        // the width of the name in metres, for starting the starboard side's text aft of the bow
+        float nameLength=0.0f;
+        {
+            const float scale=letterHeight/1.5f,advance=(0.6f+0.35f)*scale;
+            for(const char* c=name;*c;++c) nameLength+=*c==' '?advance*0.8f:advance;
+        }
+        for(const float side:{-1.0f,1.0f}) {
+            // read left to right from outside: from the bow aft on the port side, toward the bow on the starboard
+            const float start=side<0.0f?27.6f:27.6f-nameLength;
+            const auto onSide=[&](const float x,const float y) {
+                const float along=side<0.0f?start-x:start+x;
+                return W(along,nameUp+y,side*(P::HalfBreadth(along)+0.012f));
+            };
+            write(name,letterHeight,0.6f,onSide,W(24.0f,nameUp,0.0f));
+        }
+        const auto onTransom=[&](const float y0,const float length) {
+            return [=,&W](const float x,const float y) {return W(-0.012f,y0+y,-length*0.5f+x);};
+        };
+        // centred on the transom: six letters and a space, then six letters
+        write(name,0.6f,0.6f,onTransom(D(0.0f)-0.95f,2.58f),W(1.5f,3.4f,0.0f));
+        write("PANAMA",0.42f,0.6f,onTransom(D(0.0f)-1.65f,1.6f),W(1.5f,3.0f,0.0f));
+    }
     // ---- the bulwarks: black outside, buff inside, a capping rail; the gangway's opening
     for(float a=0.0f;a<P::Length-1e-3f;a+=0.25f) {
         const float a1=a+0.25f;

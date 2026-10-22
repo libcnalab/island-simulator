@@ -233,6 +233,22 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 515 (2026-10-22) — the coaster carries her name
+
+The grounded coaster now carries her name, MARIA K, painted in white on both bows and across her
+transom, with her port of registry, PANAMA, under it (`FreighterRenderer`).
+
+- **Letters.** A small stroke font covers M, A, R, I, K, P and N, the same kind of unit-cell
+  strokes as the HELP ME stones. Each stroke is a thin band laid on the plating, reaching a
+  little past its ends so the strokes join at the corners.
+- **Placement.** On the bows the letters follow the hull's curve; they are 0.75 m tall, a metre
+  under the deck edge. They read left to right from outside: from the bow aft on the port side,
+  and aft toward the bow on the starboard side. The transom's name (0.6 m) and PANAMA (0.42 m)
+  are centred across it.
+- **Weathering.** The paint is faded white and rusts with the plating through the hull's tint.
+
+Evidence: `20261022T114045` (freighter, the starboard bow's name). The suite is 76/76.
+
 ## Loop pass 514 (2026-10-22) — what the miners left in the old mine
 
 The old mine now holds what its miners left behind (`MineRenderer`, `MineLayout`).
