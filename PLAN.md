@@ -233,6 +233,25 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 456 (2026-10-22) — basking crocodiles lie on the carved bed and cast their figures
+
+The basking pair had no shadow. Laying their figures (`CrocodileLimbs`) showed why none drew: the two
+stood 0.45-0.48 m above the drawn ground (probe). Pass 412 carved the stream's bed into the drawn
+ground at the mouth, but the crocodiles took their height from the analytic sheet the bed was carved
+from. A camera on crocodile 0 showed both lying across the gravel channel, hanging over it.
+
+`CrocodileGroup::SetGround` now gives them the drawn ground with its patches. The body lies on it
+(bed + 0.10 m) and swims over it, and the hauled-out animals settle at once when it is set, so the
+first frames show no slow sinking. The crocodile test lays the stream bed into a drawn surface and
+checks that the two crocodiles hauled out on it lie on what is drawn.
+
+The figure takes CrocodileRenderer's frame: the low barrel as two capsules side by side, the skull to
+the snout's tip and the broad jaw, the tail in three swinging with the body's wave, and the four
+splayed legs (folded for the swim). It is drawn for crocodiles hauled out (not afloat) within 60 m.
+On crocodile 0 at 14:00 they now lie in the channel, and the figure falls on the gravel and the bank.
+The crocodile test checks the figure's reach (snout 2.15 m ahead, tail tip 3.7 m behind), that it
+stays below 0.8 m, and that the barrel's shadow is inside it.
+
 ## Loop pass 455 (2026-10-22) — sweep after the shadow passes; figures on decks and off their edges
 
 A full capture sweep after passes 447-454 passed 127 of 127 (canopy skipped as always). The most

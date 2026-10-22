@@ -12,6 +12,7 @@
 namespace island {
 
 class IslandTerrain;
+class RenderedTerrainSurface;
 
 enum class CrocodileBehavior : std::uint8_t {Bask,Crawl,Swim,Retreat};
 
@@ -57,6 +58,10 @@ public:
 
     explicit CrocodileGroup(const IslandTerrain& terrain);
     void SetObstacles(std::span<const CircularObstacle> obstacles);
+    /** @brief The drawn ground (its local patches: the stream's carved bed at the mouth) the
+     *  bodies lie on and swim over; without it, the analytic terrain. Settles the hauled-out
+     *  crocodiles onto it at once. */
+    void SetGround(const RenderedTerrainSurface* ground) noexcept;
     void Update(float deltaSeconds,float observerX,float observerY,float observerZ) noexcept;
 
     [[nodiscard]] std::span<const CrocodileState> Crocodiles()const noexcept{return states_;}
@@ -92,6 +97,8 @@ public:
     [[nodiscard]] bool IsValidHabitat(float x,float z,const CrocodileHome& home)const noexcept;
 
 private:
+    [[nodiscard]] float BedHeight(float x,float z,float analytic) const noexcept;
+    const RenderedTerrainSurface* ground_=nullptr;
     struct Agent {
         CrocodileState state;
         CrocodileHome home;

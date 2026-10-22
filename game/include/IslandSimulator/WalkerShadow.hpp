@@ -10,6 +10,7 @@ namespace island
     struct BoarState;
     struct BoarGroundPose;
     struct BearState;
+    struct CrocodileState;
 
     /**
      * The walking player's own sun shadow, the figure rather than a blot: the body as seventeen
@@ -80,6 +81,9 @@ namespace island
         /** The bear's limbs in BearRenderer's frame: trunk and hump, neck, the head by the forage
          *  and the sniff, muzzle, ears, tail and the fitted legs; one slot left empty. */
         [[nodiscard]] std::array<Limb, CapsuleCount> BearLimbs(const BearState& bear) noexcept;
+        /** A crocodile's limbs in CrocodileRenderer's frame: the wide barrel, skull and jaw, the
+         *  tail swinging with the body's wave, and the splayed (or folded) legs. */
+        [[nodiscard]] std::array<Limb, CapsuleCount> CrocodileLimbs(const CrocodileState& crocodile) noexcept;
         /** The silhouette's signed distance, metres in shadow space, at an offset from the feet on
          *  their plane (negative inside): the CPU mirror of the shader's, for the tests. */
         [[nodiscard]] float SignedDistance(const Shape& shape, float offsetX, float offsetZ) noexcept;

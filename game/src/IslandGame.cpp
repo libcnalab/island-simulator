@@ -2477,6 +2477,7 @@ namespace island
         playerMotion_.SetGroundPatches(&terrainRenderer_->StreamBed(),&terrainRenderer_->WreckScour());
         // the marks and shadows laid on the ground follow the channel and the scour too
         drawnGround_->SetLocalPatches({&terrainRenderer_->StreamBed(), &terrainRenderer_->WreckScour()});
+        crocodileGroup_.SetGround(drawnGround_.get());   // they lie on the carved bed at the mouth
         playerMotion_.SetCave(&terrainRenderer_->Cave(),&terrainRenderer_->CaveGround());
         playerMotion_.SetBunker(&bunkerLayout_);
         flightMotion_.SetCave(&terrainRenderer_->Cave(),&terrainRenderer_->CaveGround());
@@ -6409,6 +6410,17 @@ namespace island
                     walkerShadowRenderer_->Draw(cameraView_, cameraProjection_,
                         walker_shadow::Lay(walker_shadow::BearLimbs(bear), bear.x, ground, bear.z, toSun.x, toSun.y, toSun.z, 1.8f),
                         Vector3(bear.x, ground, bear.z), Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength, groundAt);
+            }
+            for (const CrocodileState& crocodile : crocodileGroup_.Crocodiles()) {
+                // the crocodiles' hauled out on the bank (not afloat)
+                const float ground = groundAt(crocodile.x, crocodile.z);
+                if (crocodile.submerged > 0.5f
+                    || Vector3::DistanceSquared(Vector3(crocodile.x, crocodile.y, crocodile.z), renderCameraPosition_) > 60.0f * 60.0f
+                    || std::abs(crocodile.y - ground) > 0.25f) continue;
+                walkerShadowRenderer_->Draw(cameraView_, cameraProjection_,
+                    walker_shadow::Lay(walker_shadow::CrocodileLimbs(crocodile), crocodile.x, ground, crocodile.z,
+                                       toSun.x, toSun.y, toSun.z, 0.7f * crocodile.scale),
+                    Vector3(crocodile.x, ground, crocodile.z), Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength, groundAt);
             }
             for (const GoatState& goat : goats_->Goats()) {
                 // the goats' and the boars' too, from the poses their renderers draw

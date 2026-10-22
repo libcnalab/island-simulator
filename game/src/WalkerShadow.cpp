@@ -3,6 +3,7 @@
 #include "IslandSimulator/BoarGroundPose.hpp"
 #include "IslandSimulator/BoarHerd.hpp"
 #include "IslandSimulator/BoarPose.hpp"
+#include "IslandSimulator/CrocodileGroup.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/GoatHerd.hpp"
 #include "IslandSimulator/ResidentMotion.hpp"
@@ -327,6 +328,54 @@ namespace island::walker_shadow
         for (const auto& leg : pose.legs) {
             add(leg.root, leg.joint, 0.17f);
             add(leg.joint, BearPoint{leg.paw.x, leg.paw.y, leg.paw.z + 0.06f}, 0.12f);
+        }
+        for (; next < limbs.size(); ++next) limbs[next].radius = UnusedRadius;
+        return limbs;
+    }
+
+    std::array<Limb, CapsuleCount> CrocodileLimbs(const CrocodileState& crocodile) noexcept
+    {
+        // CrocodileRenderer's frame: the low wide barrel as two capsules side by side, the long
+        // skull and snout, the tail in three swinging with the body's wave, and the four
+        // splayed legs (folded back along the flanks for the swim).
+        const float s = crocodile.scale;
+        const float fx = std::cos(crocodile.headingRadians), fz = std::sin(crocodile.headingRadians);
+        const float rx = -fz, rz = fx;
+        const float cy = crocodile.y - 0.04f * crocodile.submerged;
+        const auto local = [&](const float x, const float y, const float z) {
+            return std::array<float, 3>{crocodile.x + (rx * x + fx * z) * s, cy + y * s, crocodile.z + (rz * x + fz * z) * s};
+        };
+        std::array<Limb, CapsuleCount> limbs{};
+        std::size_t next = 0;
+        const auto add = [&](const std::array<float, 3>& a, const std::array<float, 3>& b, const float radius) {
+            limbs[next++] = {a[0], a[1], a[2], b[0], b[1], b[2], radius * s};
+        };
+        for (const float side : {-0.25f, 0.25f})
+            add(local(side, 0.34f, -1.0f), local(side * 0.8f, 0.35f, 0.95f), 0.35f);           // the barrel
+        add(local(0.0f, 0.37f, 0.95f), local(0.0f, 0.30f, 2.15f), 0.21f);                     // skull to the snout's tip
+        for (const float side : {-0.20f, 0.20f})
+            add(local(side, 0.36f, 1.0f), local(side * 0.6f, 0.33f, 1.55f), 0.16f);            // the broad jaw
+        const auto tailAt = [&](const float t) {
+            const float wave = std::sin(t * 4.2f + crocodile.gaitPhase) * crocodile.bodyWave * t * t * 0.55f;
+            return local(wave, 0.22f - 0.17f * t, -1.04f - 2.66f * t);
+        };
+        add(local(0.0f, 0.27f, -1.12f), tailAt(0.33f), 0.24f);   // (round: as wide as the flat tail is high)
+        add(tailAt(0.33f), tailAt(0.66f), 0.16f);
+        add(tailAt(0.66f), tailAt(1.0f), 0.08f);
+        const float fold = std::clamp(crocodile.legFold, 0.0f, 1.0f);
+        for (int pair = 0; pair < 2; ++pair) {
+            const float rootZ = pair == 0 ? 0.64f : -0.66f;
+            for (int sideIndex = -1; sideIndex <= 1; sideIndex += 2) {
+                const float side = static_cast<float>(sideIndex);
+                const float stride = std::sin(crocodile.gaitPhase + (pair * 2 + (sideIndex > 0 ? 1 : 0)) * std::numbers::pi_v<float>)
+                    * 0.13f * (1.0f - crocodile.submerged);
+                const auto shoulder = local(side * 0.52f, 0.34f, rootZ);
+                const auto elbow = local(side * std::lerp(0.83f, 0.62f, fold), std::lerp(0.18f, 0.22f, fold), rootZ + stride - 0.28f * fold);
+                const auto foot = local(side * std::lerp(0.78f, 0.56f, fold), std::lerp(0.025f, 0.14f, fold) + 0.018f,
+                                        rootZ + 0.24f + stride - 0.62f * fold + 0.20f);
+                add(shoulder, elbow, 0.15f);
+                add(elbow, foot, 0.10f);
+            }
         }
         for (; next < limbs.size(); ++next) limbs[next].radius = UnusedRadius;
         return limbs;

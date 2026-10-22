@@ -2,6 +2,7 @@
 
 #include "IslandSimulator/IslandEnvironmentField.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
+#include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include "IslandSimulator/StreamRoute.hpp"
 
 #include <algorithm>
@@ -60,6 +61,21 @@ void CrocodileGroup::InitializeAgents() {
             ?std::max(sample.height+BedClearance*agent.state.scale,SwimDepth*agent.state.scale)
             :sample.height+.10f*agent.state.scale;
         states_[i]=agent.state;homes_[i]=agent.home;
+    }
+}
+
+float CrocodileGroup::BedHeight(const float x,const float z,const float analytic) const noexcept {
+    return ground_?DrawnOrAnalyticHeight(*ground_,terrain_,x,z):analytic;
+}
+
+void CrocodileGroup::SetGround(const RenderedTerrainSurface* ground) noexcept {
+    ground_=ground;
+    for(std::size_t i=0;i<agents_.size();++i) {
+        Agent& agent=agents_[i];
+        if(agent.state.submerged>0.0f) continue;
+        agent.state.y=BedHeight(agent.state.x,agent.state.z,terrain_.Height(agent.state.x,agent.state.z))
+            +.10f*agent.state.scale;
+        states_[i]=agent.state;
     }
 }
 
@@ -246,8 +262,12 @@ void CrocodileGroup::UpdateAgent(Agent& agent,float dt,float observerX,float obs
     agent.state.submerged+=std::clamp(targetSubmerged-agent.state.submerged,-dt*.8f,dt*.8f);
     // The slide off the bank: the moment the body goes under is the splash.
     if(previousSubmerged<.2f&&agent.state.submerged>=.2f) entry_={agent.state.x,agent.state.z,0.0f,entry_.count+1U,true};
-    const float groundY=sample.height+.10f*agent.state.scale;
-    const float swimY=std::max(sample.height+BedClearance*agent.state.scale,SwimDepth*agent.state.scale);
+    // The body lies on, and swims over, the ground as it is drawn: at the mouth the stream's
+    // carved bed lies some 0.4 m under the analytic terrain, and a crocodile hauled out across
+    // the channel hung over the gravel.
+    const float bed=BedHeight(agent.state.x,agent.state.z,sample.height);
+    const float groundY=bed+.10f*agent.state.scale;
+    const float swimY=std::max(bed+BedClearance*agent.state.scale,SwimDepth*agent.state.scale);
     agent.state.y+=std::clamp(std::lerp(groundY,swimY,agent.state.submerged)-agent.state.y,
                               -dt*.55f,dt*.55f);
     agent.state.gaitPhase=std::fmod(agent.state.gaitPhase+dt*(1.1f+agent.state.speed*2.2f),Tau);
