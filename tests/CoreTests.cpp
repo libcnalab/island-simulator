@@ -130,6 +130,7 @@
 #include "IslandSimulator/PerformanceStatistics.hpp"
 #include "IslandSimulator/PlayerMotion.hpp"
 #include "IslandSimulator/PassingShip.hpp"
+#include "IslandSimulator/PandanusLayout.hpp"
 #include "IslandSimulator/SwimDepth.hpp"
 #include "IslandSimulator/ProceduralMeshValidation.hpp"
 #include "IslandSimulator/RockSurface.hpp"
@@ -9684,6 +9685,27 @@ int main()
                       && std::abs(out - (island::LighthousePlacement::GalleryRadius - island::LighthousePlacement::RailInset)) < 0.01f,
                   "the lighthouse's perch is not on the gallery's top rail over the sea");
         }
+    }
+    {
+        // The screw pines of the coastal fringe: a few dozen in groups, each on dry sand or coastal
+        // turf 5-33 m up from the shore, apart, clear of an obstacle in their way.
+        const island::IslandTerrain terrain;
+        const std::vector<island::CircularObstacle> none;
+        const auto trees = island::PandanusLayout::Scatter(terrain, none, {});
+        bool fringe = true, apart = true;
+        for (std::size_t i = 0; i < trees.size(); ++i) {
+            const float shore = terrain.SignedShoreDistance(trees[i].x, trees[i].z);
+            fringe = fringe && shore > 4.9f && shore < 33.1f && trees[i].height > 4.0f && trees[i].forks >= 1;
+            for (std::size_t j = 0; j < i; ++j)
+                apart = apart && std::hypot(trees[i].x - trees[j].x, trees[i].z - trees[j].z) > island::PandanusLayout::MinimumSpacing;
+        }
+        Check(trees.size() >= 20U && trees.size() <= island::PandanusLayout::MaximumCount && fringe && apart,
+              "the screw pines are too few, too many, off the coastal fringe or crowded");
+        const std::vector<island::CircularObstacle> rock{{trees.front().x, trees.front().z, 2.0f}};
+        const auto moved = island::PandanusLayout::Scatter(terrain, rock, {});
+        bool kept = true;
+        for (const auto& tree : moved) kept = kept && std::hypot(tree.x - trees.front().x, tree.z - trees.front().z) > 3.2f;
+        Check(kept, "a screw pine grows through an obstacle");
     }
     {
         // The freighter passing offshore: half way down its lane as the island loads, closest

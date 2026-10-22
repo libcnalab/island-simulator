@@ -71,6 +71,7 @@
 #include "IslandSimulator/DistantSceneryLayout.hpp"
 #include "IslandSimulator/DistantSceneryRenderer.hpp"
 #include "IslandSimulator/PassingShipRenderer.hpp"
+#include "IslandSimulator/PandanusRenderer.hpp"
 #include "IslandSimulator/DolphinPod.hpp"
 #include "IslandSimulator/DolphinRenderer.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
@@ -280,6 +281,7 @@ namespace island
         LighthouseCottageDetail,
         PassingShipDetail,
         WhaleBreachDetail,
+        PandanusDetail,
         PlaneWreckDetail,
         PlaneCockpitDetail,
         BeachLitterDetail,
@@ -626,6 +628,8 @@ namespace island
         std::unique_ptr<BeachLitterRenderer> beachLitterRenderer_;
         std::unique_ptr<FreighterRenderer> freighterRenderer_;
         std::unique_ptr<LifeboatRenderer> lifeboatRenderer_;
+        std::vector<PandanusPlacement> pandanus_;   // the screw pines of the coastal fringe
+        std::unique_ptr<PandanusRenderer> pandanusRenderer_;
         std::unique_ptr<BridgeRenderer> bridgeRenderer_;
         std::unique_ptr<LookoutRenderer> lookoutRenderer_;
         FallingFruitField fallingFruit_{terrain_};

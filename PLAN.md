@@ -233,6 +233,34 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 544 (2026-10-22) — screw pines on the coastal fringe
+
+The island's coast had coconut palms and the jungle behind them. Now the screw pine is there too
+(Pandanus tectorius), the tree of every Pacific island's beach fringe.
+
+- **Placement.** 55 trees in groups of one to four round the coast (`PandanusLayout::Scatter`),
+  6-30 m up from the shoreline on dry sand or coastal turf and on gentle ground. They stand
+  4.5 m apart, clear of the palms, the trees and the props, and away from the beaches'
+  landmarks, bottles, the lifeboat, the coaster's ladder, the lighthouse and its cottage, and
+  the hut. Each leans a little out to sea, more nearer the water.
+- **The tree.**
+  - A cone of 10-16 stout stilt roots, some orange-tipped, set steep like a tent's guys.
+  - A grey trunk forking into one to three branches.
+  - At each branch tip, a spiral tuft of thirty long sword-like leaves arching and drooping in
+    thirds: the oldest low, yellowed and most drooped, the youngest erect.
+  - A skirt of dead brown leaves hanging below each tuft.
+  - On 21 of them, an orange or green pineapple-like fruit under the first tuft.
+- **Drawing.** One buffer in eight sectors round the island (46,752 triangles), each drawn when
+  in view and within 260 m; they receive and cast the sun shadows (`PandanusRenderer`).
+- **Walking.** Each root cone is a 0.7 m obstacle for the walker and the animals; the quad keeps
+  off it too.
+- **New QA view.** `pandanus`, inland of a forked, fruiting tree out at the group against the sea
+  (`20261022T151916`). `beach` and `jungle` still pass (`20261022T152020`, `152029`).
+- **Tests.** CoreTests check the count, the fringe band, the spacing and that an obstacle keeps a
+  tree off.
+
+The suite is 76/76.
+
 ## Loop pass 543 (2026-10-22) — a live lava flow down the volcano's flank
 
 - **Flow.** Lava now spills over the crater's lip and runs 22 m down the old flow's crest

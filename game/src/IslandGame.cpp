@@ -208,6 +208,7 @@ namespace island
             case FixedViewpoint::LighthouseCottageDetail: return "lighthouse-cottage";
             case FixedViewpoint::PassingShipDetail: return "passing-ship";
             case FixedViewpoint::WhaleBreachDetail: return "whale-breach";
+            case FixedViewpoint::PandanusDetail: return "pandanus";
             case FixedViewpoint::PlaneWreckDetail: return "plane-wreck";
             case FixedViewpoint::PlaneCockpitDetail: return "plane-cockpit";
             case FixedViewpoint::BeachLitterDetail: return "beach-litter";
@@ -593,6 +594,16 @@ namespace island
             std::vector<CircularObstacle> solid(worldObstacles);
             if(freighterPlacement_) for(const auto& circle:freighterPlacement_->Obstacles()) solid.push_back(circle);
             beachBottles_=BeachLitterLayout::Scatter(terrain_,solid,avoid);
+            // screw pines in groups on the coastal fringe, clear of the landmarks on the beaches;
+            // their stilt roots stop the walker and the animals
+            for(const BeachBottle& bottle:beachBottles_) avoid.push_back({{bottle.x,bottle.z}});
+            if(lifeboatPlacement_) avoid.push_back({{lifeboatPlacement_->x,lifeboatPlacement_->z}});
+            if(freighterPlacement_) {const auto foot=freighterPlacement_->LadderFoot();avoid.push_back({{foot.x,foot.z}});}
+            if(lighthousePlacement_) avoid.push_back({{lighthousePlacement_->x,lighthousePlacement_->z}});
+            if(cottagePlacement_) avoid.push_back({{cottagePlacement_->x,cottagePlacement_->z}});
+            if(hutPlacement_) avoid.push_back({{hutPlacement_->x,hutPlacement_->z}});
+            pandanus_=PandanusLayout::Scatter(terrain_,solid,avoid,4.0f);
+            for(const PandanusPlacement& tree:pandanus_) worldObstacles.push_back(tree.Obstacle());
         }
         // The animals' lighting reads the solid casters the sun shadow map draws: the jungle's
         // snags, understory and bushes (baked with the field) and the structures, so a goat
@@ -2109,6 +2120,18 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: lighthouse QA camera looks up at the tower from the land beside it\n";
+        } else if (viewpoint_ == FixedViewpoint::PandanusDetail) {
+            // Inland of a group of screw pines, out at them against the sea.
+            if(pandanus_.empty()) throw std::runtime_error("Pandanus QA requires the screw pines");
+            std::size_t pick=0;
+            for(std::size_t i=0;i<pandanus_.size();++i) if(pandanus_[i].forks>=2&&pandanus_[i].fruiting) {pick=i;break;}
+            const PandanusPlacement& tree=pandanus_[pick];
+            const float eyeX=tree.x-tree.seaX*7.5f+tree.seaZ*2.5f,eyeZ=tree.z-tree.seaZ*7.5f-tree.seaX*2.5f;
+            cameraPosition_=Vector3(eyeX,terrain_.Height(eyeX,eyeZ)+PlayerMotion::EyeHeight,eyeZ);
+            const Vector3 direction=Vector3(tree.x,tree.groundY+tree.height*0.55f,tree.z)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: pandanus QA camera looks out at a screw pine on the coastal fringe\n";
         } else if (viewpoint_ == FixedViewpoint::WhaleBreachDetail) {
             // On the shore at the freighter's lane's bearing, out at a humpback breaching 115 m off
             // it, rising toward the top of its leap (the leap goes on through the capture's half
@@ -3130,6 +3153,7 @@ namespace island
         beachLitterRenderer_=std::make_unique<BeachLitterRenderer>(device,beachBottles_,terrain_,*drawnGround_);
         if(freighterPlacement_) freighterRenderer_=std::make_unique<FreighterRenderer>(device,*freighterPlacement_,terrain_,*drawnGround_);
         if(lifeboatPlacement_) lifeboatRenderer_=std::make_unique<LifeboatRenderer>(device,*lifeboatPlacement_,terrain_,*drawnGround_);
+        if(!pandanus_.empty()) pandanusRenderer_=std::make_unique<PandanusRenderer>(device,pandanus_,terrain_,*drawnGround_);
         if(bridgePlacement_) bridgeRenderer_=std::make_unique<BridgeRenderer>(device,*bridgePlacement_);
         if(lookoutPlacement_) lookoutRenderer_=std::make_unique<LookoutRenderer>(device,*lookoutPlacement_);
         fallingFruitRenderer_=std::make_unique<FallingFruitRenderer>(device);
@@ -6578,6 +6602,7 @@ namespace island
             + (hutRenderer_?hutRenderer_->DrawCallCount():0)
             + helicopterRenderer_->DrawCallCount()
             + distantSceneryRenderer_->DrawCallCount() + passingShipRenderer_->DrawCallCount()
+            + (pandanusRenderer_ ? pandanusRenderer_->DrawCallCount() : 0)
             + contactShadowRenderer_->DrawCallCount()
             + birdRenderer_->DrawCallCount() + fruitBatRenderer_->DrawCallCount() + mineBatRenderer_->DrawCallCount()
             + butterflyRenderer_->DrawCallCount()
@@ -7017,6 +7042,7 @@ namespace island
                 if (beachLitterRenderer_) beachLitterRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (freighterRenderer_) freighterRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (lifeboatRenderer_) lifeboatRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                if (pandanusRenderer_) pandanusRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (volcanoRenderer_) volcanoRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (bridgeRenderer_) bridgeRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (lookoutRenderer_) lookoutRenderer_->SetSunShadowMap(sunShadowMap_.get());
@@ -7044,6 +7070,7 @@ namespace island
                 if (planeWreckRenderer_) planeWreckRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (freighterRenderer_) freighterRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (lifeboatRenderer_) lifeboatRenderer_->DrawSunShadow(*sunShadowMap_);
+                if (pandanusRenderer_) pandanusRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (volcanoRenderer_) volcanoRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (bridgeRenderer_) bridgeRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (lookoutRenderer_) lookoutRenderer_->DrawSunShadow(*sunShadowMap_);
@@ -7314,6 +7341,7 @@ namespace island
             GpuDiagnosticScope gpuPass("freighter");
             freighterRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
             if(lifeboatRenderer_) lifeboatRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
+            if(pandanusRenderer_) pandanusRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }
         if(beachLitterRenderer_) {
             GpuDiagnosticScope gpuPass("beach-litter");
