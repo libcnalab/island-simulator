@@ -52,7 +52,7 @@ private:
     std::unique_ptr<StructureShadowReceiver> receiver_;
     const SunShadowMap* sunShadow_=nullptr;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> sunShadowEffect_;
-    std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> vertices_;
+    std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> vertices_,glass_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> lightEffect_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> light_;
     std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> lightStaging_;
@@ -60,7 +60,7 @@ private:
     float flare_=0;
     Microsoft::Xna::Framework::BoundingBox bounds_;
     Microsoft::Xna::Framework::Vector3 centre_;
-    int triangles_=0,drawCalls_=0;
+    int triangles_=0,glassTriangles_=0,drawCalls_=0;
     bool sunShadowUnavailable_=false;
 };
 }

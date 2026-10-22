@@ -233,6 +233,22 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 534 (2026-10-22) — the lantern's glass is clear
+
+With the lighthouse climbable, the lantern's opaque blue-grey panes walled in the walker at the
+top and hid the lens from outside.
+
+- **Glass.** The panes and the open door's glazing are now their own see-through mesh, drawn
+  after the stone and iron with premultiplied alpha and no depth write. Each pane carries a
+  faint green-grey (alpha 0.22) and a glint where it turns to the sun.
+- **What it shows.** From inside, the sea, the beach and the gallery's rail show through the
+  glass between the white mullions. From outside, the lantern's frames, its far side and the
+  open door read through the near panes.
+- **New QA view.** `lighthouse-lantern` stands by the lens on the lantern's floor and looks out
+  through the glass (`20261022T141144`). `lighthouse` `20261022T141151`.
+
+The suite is 76/76.
+
 ## Loop pass 533 (2026-10-22) — the lighthouse is climbed
 
 The lighthouse stood solid: a dark painted door, a wall the walker went round. Now it is walked

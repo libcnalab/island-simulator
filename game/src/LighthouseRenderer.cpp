@@ -35,7 +35,7 @@ LighthouseRenderer::LighthouseRenderer(GraphicsDevice& device,const LighthousePl
                                        const IslandTerrain& terrain,const RenderedTerrainSurface& ground)
     :device_(device),effect_(std::make_unique<BasicEffect>(device))
 {
-    SculptMeshBuilder b;
+    SculptMeshBuilder b,clear;   // the stone and the iron; the lantern's glass, drawn see-through
     const auto groundAt=[&](const float x,const float z) {return DrawnOrAnalyticHeight(ground,terrain,x,z);};
     b.ground=groundAt;b.stainColour=Vector3(120,112,96);b.stainHeight=0.4f;b.stainAmount=0.5f;
     const Vector3 sea(placement.seaX,0.0f,placement.seaZ),side(placement.seaZ,0.0f,-placement.seaX);
@@ -300,9 +300,9 @@ LighthouseRenderer::LighthouseRenderer(GraphicsDevice& device,const LighthousePl
             const float a0=2.0f*Pi*static_cast<float>(k)/Panes,a1=2.0f*Pi*static_cast<float>(k+1)/Panes;
             b.inside=axis+Vector3::Up*(galleryY+wall*0.5f);
             b.Quad(around(a0,r,galleryY),around(a1,r,galleryY),around(a1,r,galleryY+wall),around(a0,r,galleryY+wall),Iron*1.4f);
-            b.inside=axis+Vector3::Up*(galleryY+1.2f);
-            b.Quad(around(a0,r*0.98f,galleryY+wall),around(a1,r*0.98f,galleryY+wall),around(a1,r*0.98f,glassTop),around(a0,r*0.98f,glassTop),
-                   Glass*(0.9f+0.25f*static_cast<float>(k%3)));
+            clear.inside=axis+Vector3::Up*(galleryY+1.2f);
+            clear.Quad(around(a0,r*0.98f,galleryY+wall),around(a1,r*0.98f,galleryY+wall),around(a1,r*0.98f,glassTop),around(a0,r*0.98f,glassTop),
+                       Glass*(0.9f+0.25f*static_cast<float>(k%3)));
         }
         for(int k=0;k<Panes;++k) {
             if(k==9) continue;
@@ -334,7 +334,7 @@ LighthouseRenderer::LighthouseRenderer(GraphicsDevice& device,const LighthousePl
             const Vector3 across(open.Z,0.0f,-open.X);
             const float h=LighthousePlacement::LanternDoorHeight-0.03f;
             b.Box(hinge+open*(width*0.5f)+Vector3::Up*(wall*0.5f+0.02f),open,Vector3::Up,across,width*0.5f,wall*0.5f,0.02f,Iron*1.4f,Iron*1.4f);
-            b.Box(hinge+open*(width*0.5f)+Vector3::Up*((wall+h)*0.5f+0.02f),open,Vector3::Up,across,width*0.5f-0.05f,(h-wall)*0.5f,0.012f,Glass*1.2f,Glass*1.2f);
+            clear.Box(hinge+open*(width*0.5f)+Vector3::Up*((wall+h)*0.5f+0.02f),open,Vector3::Up,across,width*0.5f-0.05f,(h-wall)*0.5f,0.012f,Glass*1.2f,Glass*1.2f);
             for(const float e:{0.03f,width-0.03f})
                 b.Tube({hinge+open*e+Vector3::Up*0.02f,hinge+open*e+Vector3::Up*(h+0.02f)},{0.03f,0.03f},5,Frame);
             b.Tube({hinge+Vector3::Up*(h+0.02f),hinge+open*width+Vector3::Up*(h+0.02f)},{0.03f,0.03f},5,Frame);
@@ -369,6 +369,32 @@ LighthouseRenderer::LighthouseRenderer(GraphicsDevice& device,const LighthousePl
     vertices_=std::make_unique<VertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),
         static_cast<int>(mesh.size()),BufferUsage::WriteOnly);
     vertices_->SetData(mesh.data(),static_cast<int>(mesh.size()));
+    // the glass: its own faint green-grey over what lies behind (premultiplied), a glint where a
+    // pane turns to the sun
+    {
+        auto& panes=clear.builder.mesh;
+        Vector3 sun(environment::SunDirectionX,environment::SunDirectionY,environment::SunDirectionZ);sun.Normalize();
+        for(std::size_t tri=0;tri<panes.size()/3U;++tri) {
+            const Vector3 a=panes[tri*3U].Position,bb=panes[tri*3U+1U].Position,c=panes[tri*3U+2U].Position;
+            Vector3 normal=Vector3::Cross(bb-a,c-a);
+            if(normal.LengthSquared()<1e-14f) continue;
+            normal.Normalize();
+            const float glint=std::clamp((std::abs(Vector3::Dot(normal,sun))-0.7f)/0.2f,0.0f,1.0f);
+            const float alpha=0.22f+0.45f*glint;
+            for(std::size_t v=0;v<3U;++v) {
+                const Color lit=panes[tri*3U+v].Color;
+                const auto channel=[&](const int value) {return static_cast<int>(std::lround(std::min(255.0f,static_cast<float>(value)*alpha+255.0f*0.35f*glint)));};
+                panes[tri*3U+v].Color=Color(channel(lit.getRProperty()),channel(lit.getGProperty()),channel(lit.getBProperty()),
+                                            static_cast<int>(std::lround(alpha*255.0f)));
+            }
+        }
+        glassTriangles_=static_cast<int>(panes.size()/3U);
+        if(glassTriangles_>0) {
+            glass_=std::make_unique<VertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),
+                static_cast<int>(panes.size()),BufferUsage::WriteOnly);
+            glass_->SetData(panes.data(),static_cast<int>(panes.size()));
+        }
+    }
     effect_->setVertexColorEnabledProperty(true);effect_->setLightingEnabledProperty(false);
     effect_->setFogEnabledProperty(true);
     effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
@@ -406,6 +432,17 @@ void LighthouseRenderer::Draw(const Matrix& view,const Matrix& projection,const 
         effect_->setViewProperty(view);effect_->setProjectionProperty(projection);effect_->Apply();
     }
     device_.DrawPrimitives(PrimitiveType::TriangleList,0,triangles_);drawCalls_=1;
+    if(glass_) {
+        // the lantern's glass over what lies behind it, without hiding what lies past it
+        device_.setBlendStateProperty(BlendState::AlphaBlend);
+        device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
+        effect_->setWorldProperty(Matrix::getIdentityProperty());
+        effect_->setViewProperty(view);effect_->setProjectionProperty(projection);effect_->Apply();
+        device_.SetVertexBuffer(glass_.get());device_.setIndicesProperty(nullptr);
+        device_.DrawPrimitives(PrimitiveType::TriangleList,0,glassTriangles_);++drawCalls_;
+        device_.setBlendStateProperty(BlendState::Opaque);
+        device_.setDepthStencilStateProperty(DepthStencilState::Default);
+    }
 }
 
 Vector3 LighthouseRenderer::BeamDirection(const float seconds) noexcept {

@@ -203,6 +203,7 @@ namespace island
             case FixedViewpoint::LighthouseDetail: return "lighthouse";
             case FixedViewpoint::LighthouseStairDetail: return "lighthouse-stair";
             case FixedViewpoint::LighthouseGalleryDetail: return "lighthouse-gallery";
+            case FixedViewpoint::LighthouseLanternDetail: return "lighthouse-lantern";
             case FixedViewpoint::PlaneWreckDetail: return "plane-wreck";
             case FixedViewpoint::BeachLitterDetail: return "beach-litter";
             case FixedViewpoint::FreighterDetail: return "freighter";
@@ -2079,7 +2080,8 @@ namespace island
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: lighthouse QA camera looks up at the tower from the land beside it\n";
         } else if (viewpoint_ == FixedViewpoint::LighthouseStairDetail
-                   || viewpoint_ == FixedViewpoint::LighthouseGalleryDetail) {
+                   || viewpoint_ == FixedViewpoint::LighthouseGalleryDetail
+                   || viewpoint_ == FixedViewpoint::LighthouseLanternDetail) {
             if(!lighthousePlacement_) throw std::runtime_error("Lighthouse QA requires the lighthouse");
             const auto& l=*lighthousePlacement_;
             LighthousePoint eye,look;
@@ -2092,6 +2094,11 @@ namespace island
                 eye=l.At(phi,1.45f,feet+PlayerMotion::EyeHeight);
                 look=l.At(phi-1.25f,1.0f,feet+1.1f);
                 what="lighthouse-stair QA camera looks up the stair winding round the newel inside the tower";
+            } else if(viewpoint_==FixedViewpoint::LighthouseLanternDetail) {
+                // in the lantern by the lens, out through its glass over the sea
+                eye=l.At(l.StairEnd()-0.45f,0.82f,l.GalleryY()+PlayerMotion::EyeHeight);
+                look=l.At(l.StairEnd()-0.25f,12.0f,l.GalleryY()-1.5f);
+                what="lighthouse-lantern QA camera looks out from beside the lens through the lantern's glass";
             } else {
                 // on the gallery beside the lantern's door, along the rail and out over the sea
                 eye=l.At(LighthousePlacement::LanternDoorAngle+0.55f,1.85f,l.GalleryY()+PlayerMotion::EyeHeight);
