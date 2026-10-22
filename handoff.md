@@ -106,6 +106,7 @@ realism pass):
       below deck too, with several sailors' skeletons aboard.
 - [ ] A mine entrance somewhere on the island, a tunnel several tens of metres long or more,
       lit inside by lanterns or something else that glows.
+- [ ] A small volcano somewhere on the island, with lava visible inside its crater.
 
 Loop log (propose → implement, continues until the operator stops the session):
 - Pass 1: dappled leaf-gap sun flecks on the shaded forest floor; `ground` view reclassified
