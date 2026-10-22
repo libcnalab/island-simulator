@@ -6279,6 +6279,25 @@ namespace island
                 ? 0.0f : playerMotion_.VelocityZ(),
         };
         soundscape_->SetFootstepGround(FootstepGroundUnderPlayer());
+        if (lighthousePlacement_) {
+            // inside the lighthouse's tower the wind and the surf come muffled through its walls,
+            // less so near the open door and up in the glazed lantern
+            const PlayerPosition& eye = playerMotion_.Position();
+            const float feet = eye.y - PlayerMotion::EyeHeight;
+            const LighthousePlacement& light = *lighthousePlacement_;
+            const auto polar = light.Polar(eye.x, eye.z);
+            float presence = 0.0f;
+            if (!flightMotion_.IsActive() && !IsDebugFreeCameraActive()
+                && feet > light.TowerBaseY() - 0.2f && polar[0] < light.InnerRadius(std::max(feet, light.TowerBaseY()))) {
+                if (feet > light.GalleryY() - 0.3f) presence = 0.45f;
+                else {
+                    const auto door = light.At(LighthousePlacement::Pi, light.InnerRadius(light.TowerBaseY()), light.TowerBaseY());
+                    const float fromDoor = std::hypot(std::hypot(eye.x - door.x, eye.z - door.z), feet - light.TowerBaseY());
+                    presence = std::lerp(0.35f, 1.0f, std::clamp(fromDoor / 3.0f, 0.0f, 1.0f));
+                }
+            }
+            soundscape_->SetTowerPresence(presence);
+        }
         {
             const PlayerPosition& feet = playerMotion_.Position();
             soundscape_->SetFootstepMud(footprint_ground::Muddy(FootstepGroundUnderPlayer(), feet.x, feet.z,
@@ -6342,6 +6361,9 @@ namespace island
         if (freighterPlacement_ && freighterPlacement_->SupportHeight(position.x, position.z, feet, support))
             return FootstepSurface::Metal;
         if (mineLayout_.SupportHeight(position.x, position.z, feet, support)) return FootstepSurface::Rock;
+        // the lighthouse's stone: its steps, its plinth, its floor and stair, the lantern and gallery
+        if (lighthousePlacement_ && lighthousePlacement_->SupportHeight(position.x, position.z, feet, support))
+            return FootstepSurface::Rock;
         if (VolcanoSite::Radius(position.x, position.z) < VolcanoSite::BaseRadius
             && VolcanoSite::SurfaceY(position.x, position.z) > terrain_.Height(position.x, position.z) + 0.2f)
             return VolcanoSite::SurfaceY(position.x, position.z) - VolcanoSite::BaseY > 12.0f

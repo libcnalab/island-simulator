@@ -2139,7 +2139,7 @@ namespace island
         try {
             const float gain = muted_ ? 0.0f : 1.0f;
             // under the ground (the bunker, the mine) the open air and the surf fall away
-            const float underground=std::max(bunkerPresence_,minePresence_);
+            const float underground=std::max({bunkerPresence_,minePresence_,towerPresence_*0.75f});
             const float enclosureAir=std::lerp(1.0f,.20f,underground);
             const float enclosureSurf=std::lerp(1.0f,.08f,underground);
             // the surf pounds harder as the weather's wind raises the sea
@@ -2151,7 +2151,7 @@ namespace island
                 *underwaterAudio_.airGain*enclosureAir*gain));
             if (rainInstance_) {
                 // drumming on the leaves under the crowns, a muffled hiss in the cave
-                const RainHearing hearing = RainUnderShelter(weatherRain_, rainCanopy_, std::max({rainEnclosed_, bunkerPresence_, minePresence_}), rainMetal_);
+                const RainHearing hearing = RainUnderShelter(weatherRain_, rainCanopy_, std::max({rainEnclosed_, bunkerPresence_, minePresence_, towerPresence_}), rainMetal_);
                 rainInstance_->setVolumeProperty(hearing.volume*underwaterAudio_.airGain*gain);
                 rainInstance_->setPitchProperty(hearing.pitch);
             }

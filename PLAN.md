@@ -233,6 +233,21 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 535 (2026-10-22) — the lighthouse sounds like stone, and shuts out the wind
+
+- **Footsteps.** The walker's steps on the lighthouse are now stone (`FootstepSurface::Rock`):
+  its steps, plinth, floor, stair, lantern and gallery. Before, they played the turf or the
+  rock under the tower.
+- **Muffling.** Inside the tower, the outdoor air and surf muffle as they do in the bunker and
+  the mine (`Soundscape::SetTowerPresence`, counted at three quarters):
+  - 0.35 at the open door, rising to full 3 m in;
+  - 0.45 up in the glazed lantern;
+  - the rain is heard as from under a roof.
+- **Not verified in a capture.** This is sound only, so there is nothing to see in a capture
+  (the QA cameras do not move the walker there).
+
+The suite is 76/76.
+
 ## Loop pass 534 (2026-10-22) — the lantern's glass is clear
 
 With the lighthouse climbable, the lantern's opaque blue-grey panes walled in the walker at the

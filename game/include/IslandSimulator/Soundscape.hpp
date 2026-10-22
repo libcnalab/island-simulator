@@ -1,5 +1,7 @@
 #pragma once
+#include <algorithm>
 #include <array>
+#include <cmath>
 
 #include <memory>
 #include <limits>
@@ -92,6 +94,12 @@ namespace island
 
         /** @brief Names the ground under the player's feet for the next footsteps (None = shore rule). */
         void SetFootstepGround(FootstepSurface ground) noexcept { footstepGround_ = ground; }
+        /** @brief 0..1 how far inside the lighthouse's tower the listener is: the outdoor air and
+         *  surf muffle with it, and the rain is heard as from under a roof. */
+        void SetTowerPresence(float presence) noexcept
+        {
+            towerPresence_ = std::isfinite(presence) ? std::clamp(presence, 0.0f, 1.0f) : 0.0f;
+        }
         /** @brief The soil underfoot is mud (the stream's banks, rain-soaked ground): its steps squelch. */
         void SetFootstepMud(bool mud) noexcept { footstepMud_ = mud; }
         /** @brief A footfall of the resident, where it landed and on what: played through the
@@ -357,6 +365,7 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> mineAmbienceInstance_,volcanoRumbleInstance_;
         bool minePlaybackActive_=false,volcanoPlaybackActive_=false,hasMineSource_=false;
         float minePresence_=0,mineVolume_=0,mineEntranceGroundY_=0,volcanoPresence_=0,volcanoVolume_=0;
+        float towerPresence_=0;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> waveEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> waveAlternateEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> waveInstance_;
