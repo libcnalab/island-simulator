@@ -101,7 +101,7 @@ realism pass):
 - [x] On a beach, HELP ME (or similar) laid out in stones, as a castaway would: pass 497 made it 7 m letters across the south beach at (0, -231), 580 stones, readable from aircraft; (PLAN "Loop pass 496", `help-sign` view, `20261022T080350`).
 - [x] A lighthouse: whitewashed with red bands on the east coast's rise at (225, 73)  (PLAN "Loop pass 498"; night beams pass 499; `lighthouse` view, `20261022T082109`); its night light next.
 - [x] A Second World War aircraft wreck: a fighter nose-down in a clearing at (86, 122), tail broken off, a wing torn away (PLAN "Loop pass 500", `plane-wreck` view, `20261022T083752`).
-- [ ] Washed-up plastic PET bottles now and then on the beaches.
+- [x] Washed-up plastic PET bottles now and then on the beaches: 39 along the strandline, see-through plastic, caps, faded labels (PLAN "Loop pass 501", `beach-litter` view, `20261022T085855`).
 - [ ] A real large ship, about 30 m long, near the island: enterable and walkable, the hold
       below deck too, with several sailors' skeletons aboard.
 - [ ] A mine entrance somewhere on the island, a tunnel several tens of metres long or more,
@@ -343,6 +343,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 501: washed-up PET bottles (BeachLitterLayout/Renderer: 39 on the strandline, four kinds, two-pass see-through plastic, caps, torn labels, sand shade, 17 culled stretches); QA view `beach-litter` (`20261022T085855`) (PLAN "Loop pass 501").
 - Pass 500: WWII fighter wreck (PlaneWreckLayout/Renderer: fuselage loft, broken tail, radial engine, bent prop, framed canopy, crumpled and torn wings with hinomaru, camo worn to aluminium); SculptMeshBuilder tints before staining; QA view `plane-wreck` (`20261022T083752`) (PLAN "Loop pass 500").
 - Pass 499: lighthouse night light: lamp glow flaring as the two soft beams (140 m, 12 s a turn) sweep past (`20261022T082725` lighthouse at 21:30) (PLAN "Loop pass 499").
 - Pass 498: lighthouse on the east coast rise (LighthouseLayout/Renderer: plinth, banded tower, door, windows, gallery, lantern, dome); QA view `lighthouse` (`20261022T082109`) (PLAN "Loop pass 498").

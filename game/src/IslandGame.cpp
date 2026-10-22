@@ -202,6 +202,7 @@ namespace island
             case FixedViewpoint::StoneSignDetail: return "help-sign";
             case FixedViewpoint::LighthouseDetail: return "lighthouse";
             case FixedViewpoint::PlaneWreckDetail: return "plane-wreck";
+            case FixedViewpoint::BeachLitterDetail: return "beach-litter";
             case FixedViewpoint::GroundDoveDetail: return "ground-doves";
             case FixedViewpoint::FruitBatDetail: return "bats";
             case FixedViewpoint::FruitBatRoostDetail: return "bat-roost";
@@ -489,6 +490,21 @@ namespace island
             if(lighthousePlacement_) avoid.push_back({{lighthousePlacement_->x,lighthousePlacement_->z}});
             planeWreckPlacement_=PlaneWreckLayout::FindInWorld(terrain_,worldObstacles,avoid);
             if(planeWreckPlacement_) for(const auto& obstacle:planeWreckPlacement_->Obstacles()) worldObstacles.push_back(obstacle);
+        }
+        {
+            // The plastic the sea washes up along the strandline, clear of the obstacles, the
+            // jetty's root, the turtles' nests and crawls, the whale's bones and the HELP ME.
+            std::vector<std::array<float,2>> avoid;
+            if(jettyPlacement_) avoid.push_back({{jettyPlacement_->rootX,jettyPlacement_->rootZ}});
+            for(const auto& detail:naturalPropLayout_.BeachDetails())
+                if(detail.turtleNest||detail.turtleTrace) avoid.push_back({{detail.x,detail.z}});
+            if(whalePlacement_)
+                for(float along=-WhaleSkeletonPlacement::SkullLength;along<=WhaleSkeletonPlacement::SpineLength;along+=2.5f)
+                    avoid.push_back(whalePlacement_->At(along,0.0f));
+            if(stoneSignPlacement_)
+                for(float along=0.0f;along<=StoneSignPlacement::Length();along+=4.0f)
+                    avoid.push_back(stoneSignPlacement_->At(along,3.5f));
+            beachBottles_=BeachLitterLayout::Scatter(terrain_,worldObstacles,avoid);
         }
         // The animals' lighting reads the solid casters the sun shadow map draws: the jungle's
         // snags, understory and bushes (baked with the field) and the structures, so a goat
@@ -1786,6 +1802,31 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: plane-wreck QA camera looks at the fighter's broken fuselage from ahead of its nose\n";
+        } else if (viewpoint_ == FixedViewpoint::BeachLitterDetail) {
+            // Close over the first bottles washed up together, looking down at them on the sand.
+            if(beachBottles_.empty()) throw std::runtime_error("Beach litter QA requires the bottles");
+            std::size_t chosen=0;
+            float closest=1e9f;
+            for(std::size_t i=0;i+1<beachBottles_.size();++i) {
+                const float gap=std::hypot(beachBottles_[i].x-beachBottles_[i+1].x,beachBottles_[i].z-beachBottles_[i+1].z);
+                if(gap<closest) {closest=gap;chosen=i;}
+            }
+            const BeachBottle& bottle=beachBottles_[chosen];
+            const BeachBottle& next=beachBottles_[std::min(chosen+1,beachBottles_.size()-1)];
+            const float midX=(bottle.x+next.x)*0.5f,midZ=(bottle.z+next.z)*0.5f;
+            const float inland=terrain_.SignedShoreDistance(midX,midZ);
+            // stand seaward of it, a little to one side, and look inland and down
+            const float gx=terrain_.SignedShoreDistance(midX+0.5f,midZ)-terrain_.SignedShoreDistance(midX-0.5f,midZ);
+            const float gz=terrain_.SignedShoreDistance(midX,midZ+0.5f)-terrain_.SignedShoreDistance(midX,midZ-0.5f);
+            const float norm=std::max(1e-4f,std::hypot(gx,gz));
+            const float sx=-gx/norm,sz=-gz/norm;   // toward the sea
+            const float back=std::min(1.9f,std::max(0.8f,inland-0.5f));
+            const float eyeX=midX+sx*back-sz*0.5f,eyeZ=midZ+sz*back+sx*0.5f;
+            cameraPosition_=Vector3(eyeX,terrain_.Height(eyeX,eyeZ)+0.8f,eyeZ);
+            const Vector3 direction=Vector3(midX,terrain_.Height(midX,midZ)+0.05f,midZ)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: beach-litter QA camera looks down at washed-up bottles in the sand\n";
         } else if (viewpoint_ == FixedViewpoint::LighthouseDetail) {
             // From the land a little off to one side, the whole tower against the sky.
             if(!lighthousePlacement_) throw std::runtime_error("Lighthouse QA requires the lighthouse");
@@ -2728,6 +2769,7 @@ namespace island
         if(stoneSignPlacement_) stoneSignRenderer_=std::make_unique<StoneSignRenderer>(device,*stoneSignPlacement_,terrain_,*drawnGround_);
         if(lighthousePlacement_) lighthouseRenderer_=std::make_unique<LighthouseRenderer>(device,*lighthousePlacement_,terrain_,*drawnGround_);
         if(planeWreckPlacement_) planeWreckRenderer_=std::make_unique<PlaneWreckRenderer>(device,*planeWreckPlacement_,terrain_,*drawnGround_);
+        beachLitterRenderer_=std::make_unique<BeachLitterRenderer>(device,beachBottles_,terrain_,*drawnGround_);
         if(bridgePlacement_) bridgeRenderer_=std::make_unique<BridgeRenderer>(device,*bridgePlacement_);
         if(lookoutPlacement_) lookoutRenderer_=std::make_unique<LookoutRenderer>(device,*lookoutPlacement_);
         fallingFruitRenderer_=std::make_unique<FallingFruitRenderer>(device);
@@ -6525,6 +6567,7 @@ namespace island
                 if (stoneSignRenderer_) stoneSignRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (lighthouseRenderer_) lighthouseRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (planeWreckRenderer_) planeWreckRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                if (beachLitterRenderer_) beachLitterRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (bridgeRenderer_) bridgeRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (lookoutRenderer_) lookoutRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 helicopterRenderer_->SetSunShadowMap(sunShadowMap_.get());
@@ -6810,6 +6853,10 @@ namespace island
         if(planeWreckRenderer_) {
             GpuDiagnosticScope gpuPass("plane-wreck");
             planeWreckRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
+        }
+        if(beachLitterRenderer_) {
+            GpuDiagnosticScope gpuPass("beach-litter");
+            beachLitterRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }
         if(bridgeRenderer_) {
             GpuDiagnosticScope gpuPass("bridge");

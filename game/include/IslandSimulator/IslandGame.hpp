@@ -163,6 +163,8 @@
 #include "IslandSimulator/LighthouseRenderer.hpp"
 #include "IslandSimulator/PlaneWreckLayout.hpp"
 #include "IslandSimulator/PlaneWreckRenderer.hpp"
+#include "IslandSimulator/BeachLitterLayout.hpp"
+#include "IslandSimulator/BeachLitterRenderer.hpp"
 #include "IslandSimulator/HoofDustField.hpp"
 #include "IslandSimulator/FinWakeField.hpp"
 #include "IslandSimulator/TurtleGrazeField.hpp"
@@ -263,6 +265,7 @@ namespace island
         StoneSignDetail,
         LighthouseDetail,
         PlaneWreckDetail,
+        BeachLitterDetail,
         GroundDoveDetail,
         FruitBatDetail,
         FruitBatRoostDetail,
@@ -494,6 +497,7 @@ namespace island
         std::optional<StoneSignPlacement> stoneSignPlacement_;   // the castaway's HELP ME in stones on a beach
         std::optional<LighthousePlacement> lighthousePlacement_;   // the lighthouse on a coastal rise
         std::optional<PlaneWreckPlacement> planeWreckPlacement_;   // a WWII fighter down in a clearing
+        std::vector<BeachBottle> beachBottles_;   // washed-up PET bottles along the strandline
         std::optional<BridgePlacement> bridgePlacement_;
         std::optional<LookoutPlacement> lookoutPlacement_;
         std::optional<HelicopterPlacement> helicopterPlacement_;
@@ -574,6 +578,7 @@ namespace island
         std::unique_ptr<StoneSignRenderer> stoneSignRenderer_;
         std::unique_ptr<LighthouseRenderer> lighthouseRenderer_;
         std::unique_ptr<PlaneWreckRenderer> planeWreckRenderer_;
+        std::unique_ptr<BeachLitterRenderer> beachLitterRenderer_;
         std::unique_ptr<BridgeRenderer> bridgeRenderer_;
         std::unique_ptr<LookoutRenderer> lookoutRenderer_;
         FallingFruitField fallingFruit_{terrain_};

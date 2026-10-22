@@ -106,6 +106,7 @@
 #include "IslandSimulator/StoneSignLayout.hpp"
 #include "IslandSimulator/LighthouseLayout.hpp"
 #include "IslandSimulator/PlaneWreckLayout.hpp"
+#include "IslandSimulator/BeachLitterLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/LookoutLayout.hpp"
 #include "IslandSimulator/FallingFruitField.hpp"
@@ -9593,6 +9594,39 @@ int main()
             sound = sound && away && std::hypot(away->x - wreck->x, away->z - wreck->z) > 35.0f;
         }
         Check(wreck && sound, "the fighter's wreck lies inland on level open ground clear of the obstacles and avoided points");
+    }
+    {
+        // The washed-up PET bottles: a few dozen along the strandline's dry sand, each kind among
+        // them, none on another, the same every time, and clear of the obstacles and the
+        // avoided points.
+        const island::IslandTerrain terrain;
+        const std::vector<island::CircularObstacle> none;
+        const auto bottles = island::BeachLitterLayout::Scatter(terrain, none, {});
+        bool sound = bottles.size() >= 25U && bottles.size() <= 80U;
+        std::array<bool, 4> kinds{};
+        for (std::size_t i = 0; i < bottles.size(); ++i) {
+            const auto& bottle = bottles[i];
+            const float shore = terrain.SignedShoreDistance(bottle.x, bottle.z);
+            sound = sound && terrain.Sample(bottle.x, bottle.z).surface == island::TerrainSurface::DrySand
+                && shore >= island::BeachLitterLayout::MinimumShore && shore <= island::BeachLitterLayout::MaximumShore
+                && bottle.sink >= 0.0f && bottle.sink < 0.6f && bottle.tint < 4U && bottle.capColour < 4U
+                && bottle.labelColour < 4U && bottle.label >= 0.0f && bottle.label <= 1.0f;
+            kinds[static_cast<std::size_t>(bottle.kind)] = true;
+            for (std::size_t j = i + 1; j < bottles.size(); ++j)
+                sound = sound && std::hypot(bottles[j].x - bottle.x, bottles[j].z - bottle.z)
+                    >= (bottle.Length() + bottles[j].Length()) * 0.5f;
+        }
+        sound = sound && kinds[0] && kinds[1] && kinds[2] && kinds[3];
+        const auto again = island::BeachLitterLayout::Scatter(terrain, none, {});
+        sound = sound && again.size() == bottles.size() && !again.empty() && again.front().x == bottles.front().x;
+        if (!bottles.empty()) {
+            const std::vector<island::CircularObstacle> taken{{bottles.front().x, bottles.front().z, 1.0f}};
+            const std::vector<std::array<float, 2>> avoid{{{bottles.back().x, bottles.back().z}}};
+            for (const auto& bottle : island::BeachLitterLayout::Scatter(terrain, taken, avoid))
+                sound = sound && std::hypot(bottle.x - bottles.front().x, bottle.z - bottles.front().z) > 1.0f
+                    && std::hypot(bottle.x - bottles.back().x, bottle.z - bottles.back().z) >= 5.0f;
+        }
+        Check(sound, "a few dozen washed-up PET bottles lie along the strandline's dry sand, clear of the obstacles");
     }
     {
         // The castaway's HELP ME, big enough for an aircraft: some 600 stones in double rows along

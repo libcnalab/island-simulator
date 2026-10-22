@@ -92,6 +92,7 @@ add_library(island_core STATIC
     game/src/StoneSignLayout.cpp
     game/src/LighthouseLayout.cpp
     game/src/PlaneWreckLayout.cpp
+    game/src/BeachLitterLayout.cpp
     game/src/BridgeLayout.cpp
     game/src/LookoutLayout.cpp
     game/src/FallingFruitField.cpp
@@ -784,6 +785,7 @@ if(ISLAND_BUILD_GAME)
         game/src/StoneSignRenderer.cpp
         game/src/LighthouseRenderer.cpp
         game/src/PlaneWreckRenderer.cpp
+        game/src/BeachLitterRenderer.cpp
         game/src/BridgeRenderer.cpp
         game/src/LookoutRenderer.cpp
         game/src/FallingFruitRenderer.cpp

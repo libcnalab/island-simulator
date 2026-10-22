@@ -233,6 +233,28 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 501 (2026-10-22) — washed-up PET bottles on the beaches
+
+There are now 39 washed-up plastic bottles here and there round the island's strandline
+(`BeachLitterLayout`, `BeachLitterRenderer`; QA view `beach-litter`).
+
+- **Placement.** The bottles sit on dry level sand 2.5-9.5 m inland of the shoreline. They are
+  more frequent where the coastal debris field gathers flotsam, and now and then lie two or three
+  together. They stay clear of the obstacles, the jetty's root, the turtles' nests and crawls,
+  the whale's bones and the HELP ME. Each lies on its side, sunk 8-48 % of its radius into the
+  sand, its axis following the sand from end to end.
+- **Kinds.** A 1.5 l water bottle with grip ribs and a neck ring, a 0.5 l bottle, a 2 l soda
+  bottle with its five-lobed foot, and a crushed bottle trodden flat and creased.
+- **Look.** The plastic is clear, blue, green or frosted with age. Caps are blue, white, red or
+  green, and missing from some bottles. Labels are sun-faded, some with a stripe, whole, torn
+  half away or gone.
+- **Drawing.** The caps and labels are opaque. The plastic is see-through, premultiplied: first
+  each bottle's far wall, then its near wall, so the sand and a label on the underside show
+  through. A glint runs along the faces turned to the sun, and a soft shade lies on the sand
+  under each bottle. The bottles are drawn in 17 stretches of beach, each only within 140 m of
+  the eye (past that a bottle is under a pixel thick). They receive the sun shadows; they are
+  too small to cast into the map.
+
 ## Loop pass 500 (2026-10-22) — a Second World War fighter's wreck lies in a clearing
 
 A Second World War fighter lies wrecked in the most open level spot inland, at (86, 122)
