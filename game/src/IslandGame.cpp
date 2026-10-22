@@ -2490,6 +2490,9 @@ namespace island
         grassRenderer_ = std::move(grassRenderer);
         jungleRenderer_ = std::move(jungleRenderer);
         boarRenderer_ = std::move(boarRenderer);
+        // the boars' legs and the goats' feet fit the drawn ground: the carved bed's banks where they drink
+        boarRenderer_->SetGroundPatches({&terrainRenderer_->StreamBed(), &terrainRenderer_->WreckScour()});
+        goats_->SetGroundPatches({&terrainRenderer_->StreamBed(), &terrainRenderer_->WreckScour()});
         snakeRenderer_ = std::move(snakeRenderer);
         goatRenderer_ = std::move(goatRenderer);
         deerRenderer_ = std::move(deerRenderer);

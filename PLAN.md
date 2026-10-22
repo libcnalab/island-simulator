@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 458 (2026-10-22) — goats' and boars' feet fit the drawn stream banks too
+
+Goats drink at half-width + 1.05 m from the stream's centre and boars at + 1.1 m, where the drawn
+ground with the carved bed lies up to a quarter metre off the analytic and unpatched surfaces
+(pass 457's probe). The goats fit their planted feet to `GoatHerd`'s own unpatched
+RenderedTerrainSurface, and the boars' legs fit `BoarRenderer`'s. Both now take the drawn ground's
+patches: `GoatHerd::SetGroundPatches` and `BoarRenderer::SetGroundPatches`, set where the terrain
+renderer is built, the same pair the marks and the figures' shadows use. A goat test runs a patched
+herd for 20 s and finds every planted sole on the drawn ground to 0.0001 m. `goats`, `boars` and
+`boar-lying` pass.
+
 ## Loop pass 457 (2026-10-22) — the deer stand on the drawn stream banks
 
 After the crocodiles (pass 456), a probe measured how far the analytic terrain lies from the drawn

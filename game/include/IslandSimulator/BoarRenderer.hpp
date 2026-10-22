@@ -30,6 +30,12 @@ namespace island
                      const IslandTerrain& terrain, const CanopyLightField& canopyLight,
                      float maximumDistance = 135.0f);
         ~BoarRenderer();
+        /** The drawn ground's local patches (the stream's carved bed and banks, the wreck's scour)
+         *  the boars' legs are fitted to, as the marks and shadows are. */
+        void SetGroundPatches(const std::array<const LocalTerrainPatch*, 2>& patches) noexcept
+        {
+            renderedTerrain_.SetLocalPatches(patches);
+        }
         BoarRenderer(const BoarRenderer&) = delete;
         BoarRenderer& operator=(const BoarRenderer&) = delete;
         void Draw(const Microsoft::Xna::Framework::Matrix& view,

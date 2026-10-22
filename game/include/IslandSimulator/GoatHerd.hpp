@@ -29,6 +29,9 @@ struct GoatState {
 // Deterministic peaceful herd; simulation remains independent of the renderer.
 class GoatHerd final {
 public:
+    /** @brief The drawn ground's local patches (the stream's carved bed and banks) the goats'
+     *  feet are fitted to where they drink; unset, the mesh alone. */
+    void SetGroundPatches(const std::array<const LocalTerrainPatch*,2>& patches) noexcept {surface_.SetLocalPatches(patches);}
     static constexpr float HomeRadius=14,MaximumSpeed=1.2f;
     // Within this range a goat stops and faces the player; closer than 7 m it sidesteps away.
     static constexpr float AlertDistance=14.0f;

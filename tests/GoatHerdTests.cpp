@@ -1,6 +1,7 @@
 #include "IslandSimulator/GoatHerd.hpp"
 #include "IslandSimulator/GoatMesh.hpp"
 #include "IslandSimulator/WalkerShadow.hpp"
+#include "IslandSimulator/StreamBedPatch.hpp"
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
 #include "IslandSimulator/NaturalPropLayout.hpp"
@@ -31,6 +32,26 @@ int main() {
     occupied.push_back({hut->x,hut->z,HutLayout::CollisionRadius});
     const WorldCollisionGrid grid(occupied);
     GoatHerd herd(terrain,jungle,occupied),repeat(terrain,jungle,occupied);
+    {
+        // With the drawn ground's patches (the stream's carved bed and banks) the planted hooves
+        // stand on what is drawn, where the goats drink by the stream as anywhere else.
+        const StreamBedPatch bed(StreamCourse(terrain),surface);
+        RenderedTerrainSurface drawn(terrain);
+        drawn.SetLocalPatches({&bed,nullptr});
+        GoatHerd patched(terrain,jungle,occupied);
+        patched.SetGroundPatches({&bed,nullptr});
+        float worst=0;
+        for(int frame=0;frame<400;++frame) {
+            patched.Update(.05f,GoatPoint{std::numeric_limits<float>::quiet_NaN(),0,0});
+            for(const auto& goat:patched.Goats()) for(const auto& leg:goat.pose.legs) {
+                if(!leg.stance) continue;
+                const auto sole=goat.pose.ToWorld({leg.hoof.x,leg.hoof.y-GoatLegPose::HoofHeight,leg.hoof.z+GoatLegPose::SoleForward});
+                worst=std::max(worst,std::abs(sole.y-DrawnOrAnalyticHeight(drawn,terrain,sole.x,sole.z)));
+            }
+        }
+        std::cout<<"goat planted soles off the drawn ground at most "<<worst<<" m\n";
+        check(worst<.06f,"a goat's planted hoof is not on the drawn ground");
+    }
     {
         // A goat's sun shadow is laid from the pose it is drawn in: the limbs about its body,
         // the hooves on the ground, the horns' tips the highest, the barrel's shadow inside.
