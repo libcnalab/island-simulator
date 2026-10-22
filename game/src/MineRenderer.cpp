@@ -343,15 +343,35 @@ MineRenderer::MineRenderer(GraphicsDevice& device,const MineLayout& layout,const
             // the rock roof above the lagging
             quad(W(a,2.68f,d),W(a1,2.68f,d),W(a1,2.68f,d1),W(a,2.68f,d1),Vector3(0,-1,0),RockDark*stain(a,2.7f,d));
         }
-        for(const float s:{-1.0f,1.0f}) {
-            const auto bump=[&](const float u,const float dd) {return 0.14f*Noise(dd*0.9f+(s>0?11.0f:0.0f),u*1.4f);};
-            const std::array<float,6> ups{{0.0f,0.5f,1.0f,1.5f,2.1f,2.68f}};
-            for(std::size_t k=0;k+1<ups.size();++k) {
-                const float u0=ups[k],u1=ups[k+1];
-                const Vector3 n=acrossDir*(-s);
-                quad(W(s*(MineSite::HalfWidth+bump(u0,d)),u0,d),W(s*(MineSite::HalfWidth+bump(u0,d1)),u0,d1),
-                     W(s*(MineSite::HalfWidth+bump(u1,d1)),u1,d1),W(s*(MineSite::HalfWidth+bump(u1,d)),u1,d),n,
-                     Rock*stain(s,(u0+u1)*0.5f,d));
+    }
+    // the rock walls, hewn rough: broad swellings and smaller knobs, each corner lit by the
+    // wall's own slope there and toned for itself, so the rock reads round, not in flat panels
+    for(const float s:{-1.0f,1.0f}) {
+        const auto bump=[&](const float u,const float dd) {
+            return 0.14f*Noise(dd*0.9f+(s>0?11.0f:0.0f),u*1.4f)+0.05f*Noise(dd*3.1f+(s>0?5.0f:2.0f),u*3.7f+1.0f);
+        };
+        const auto wall=[&](const float u,const float dd) {return W(s*(MineSite::HalfWidth+bump(u,dd)),u,dd);};
+        const auto wallNormal=[&](const float u,const float dd) {
+            Vector3 n=Vector3::Cross(wall(u+0.04f,dd)-wall(u-0.04f,dd),wall(u,dd+0.04f)-wall(u,dd-0.04f));
+            if(Vector3::Dot(n,acrossDir*(-s))<0.0f) n=-n;
+            n.Normalize();
+            return n;
+        };
+        const auto wallTone=[&](const float u,const float dd) {
+            const float blotch=Noise(dd*1.3f+s*0.7f,u*1.9f+s*2.1f),grain=Noise(dd*5.1f+s,u*4.7f);
+            // damp darkening the foot of the wall
+            return Rock*((0.82f+0.3f*blotch+0.08f*grain)*(0.86f+0.14f*std::clamp(u/0.9f,0.0f,1.0f)));
+        };
+        constexpr int Rows=10;
+        for(float d=portal-0.1f;d<aditEnd-1e-3f;d+=0.25f) {
+            const float d1=std::min(d+0.25f,aditEnd);
+            for(int k=0;k<Rows;++k) {
+                const float u0=2.68f*static_cast<float>(k)/Rows,u1=2.68f*static_cast<float>(k+1)/Rows;
+                const std::array<Vector3,4> p{{wall(u0,d),wall(u0,d1),wall(u1,d1),wall(u1,d)}};
+                const std::array<Vector3,4> n{{wallNormal(u0,d),wallNormal(u0,d1),wallNormal(u1,d1),wallNormal(u1,d)}};
+                const std::array<Vector3,4> t{{wallTone(u0,d),wallTone(u0,d1),wallTone(u1,d1),wallTone(u1,d)}};
+                smoothTri({{p[0],p[1],p[2]}},{{n[0],n[1],n[2]}},{{t[0],t[1],t[2]}});
+                smoothTri({{p[0],p[2],p[3]}},{{n[0],n[2],n[3]}},{{t[0],t[2],t[3]}});
             }
         }
     }

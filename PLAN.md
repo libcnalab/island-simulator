@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 531 (2026-10-22) — the adit's rock walls shaded round
+
+The adit's walls had geometric bumps but were lit with one flat normal per 0.5 m × 0.5 m panel,
+so they read as flat boards between the timber sets.
+
+- **Walls.** They are now a 0.25 m × 0.27 m grid (ten rows to the roof) with a second, finer
+  layer of knobs. Each corner takes its normal from the wall's own slope there and its own tone:
+  blotched and grained, a little darker and damp at the foot. So the lanterns' light falls off
+  round the swellings instead of filling panels.
+- **Evidence.** 1:1 crop, before and after (`mine-adit` `20261022T132643` against
+  `20261022T132848`). `mine-puddle` still passes (`20261022T132953`).
+
+The suite is 76/76.
+
 ## Loop pass 530 (2026-10-22) — puddles down the adit, the lanterns in them
 
 The adit's "puddles" were darker floor quads, 0.75 × 0.5 m rectangles.
