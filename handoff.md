@@ -87,6 +87,13 @@ Operator request 2026-10-20 (the next task after the weather): ride a quad bike 
       90 s later or when the quad lies on its side; tyres crunch louder with the speed and the
       sliding (PLAN "Quad bike pass 3").
 
+Operator request 2026-10-22 (future task, taken next in the loop): a whale skeleton somewhere
+on a beach.
+- [ ] A stranded whale's bleached skeleton on a quiet stretch of beach, half sunk in the sand.
+      Skull with its curved jaws, vertebral column tapering to the tail, rib arcs (some fallen),
+      shoulder blades and the flipper bones, a few vertebrae scattered. Weathered ivory-grey bone,
+      receiving and casting sun shadows, with a QA view.
+
 Loop log (propose → implement, continues until the operator stops the session):
 - Pass 1: dappled leaf-gap sun flecks on the shaded forest floor; `ground` view reclassified
   (PLAN "Loop pass 1").
