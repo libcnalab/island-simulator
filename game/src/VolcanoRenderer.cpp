@@ -120,6 +120,12 @@ VolcanoRenderer::VolcanoRenderer(GraphicsDevice& device,const IslandTerrain& ter
         const float rim=std::clamp((h-23.0f)/2.5f,0.0f,1.0f);
         colour=Vector3::Lerp(colour,Scoria,rim*std::clamp((n-0.4f)*3.0f,0.0f,1.0f)*0.7f);
         colour=Vector3::Lerp(colour,Sulphur,rim*std::clamp((fine-0.7f)*4.0f,0.0f,1.0f)*0.8f);
+        // the fumaroles' crusts: bright sulphur round each vent, fading out over two metres
+        for(int k=0;k<4;++k) {
+            const float vx=V::X+std::cos(V::VentBearings[k])*V::VentRadii[k],vz=V::Z+std::sin(V::VentBearings[k])*V::VentRadii[k];
+            const float reach=std::hypot(centre.X-vx,centre.Z-vz)/(1.6f+0.6f*n);
+            colour=Vector3::Lerp(colour,Sulphur*1.15f,std::clamp(1.0f-reach,0.0f,1.0f)*0.85f);
+        }
         // the gullies hold the darker wet grit
         const float gully=0.5f+0.5f*std::cos(11.0f*theta+2.0f*std::sin(3.0f*theta)+r*0.07f);
         colour*=1.0f-0.12f*std::pow(gully,4.0f)*std::sin(Pi*std::clamp((V::BaseRadius-r)/(V::BaseRadius-V::RimRadius),0.0f,1.0f));
@@ -145,6 +151,23 @@ VolcanoRenderer::VolcanoRenderer(GraphicsDevice& device,const IslandTerrain& ter
             const float tm=(t0+t1)*0.5f;
             b.inside=Vector3(V::X+std::cos(tm)*(V::RimRadius+6.0f),(p00.Y+p11.Y)*0.5f,V::Z+std::sin(tm)*(V::RimRadius+6.0f));
             b.Quad(p00,p10,p11,p01,Wall);
+        }
+    }
+    // the fumaroles' mouths: a dark hole ringed with crusted stones
+    for(int k=0;k<4;++k) {
+        const float vx=V::X+std::cos(V::VentBearings[k])*V::VentRadii[k],vz=V::Z+std::sin(V::VentBearings[k])*V::VentRadii[k];
+        const Vector3 mouth(vx,V::SurfaceY(vx,vz)+0.03f,vz);
+        constexpr int Rim=10;
+        b.inside=mouth-Vector3::Up;
+        for(int i=0;i<Rim;++i) {
+            const float a0=2.0f*Pi*static_cast<float>(i)/Rim,a1=2.0f*Pi*static_cast<float>(i+1)/Rim;
+            const Vector3 r0(std::cos(a0)*0.35f,0.0f,std::sin(a0)*0.35f),r1(std::cos(a1)*0.35f,0.0f,std::sin(a1)*0.35f);
+            b.Face(mouth,mouth+r0+Vector3::Up*(V::SurfaceY(vx+r0.X,vz+r0.Z)-mouth.Y+0.02f),
+                   mouth+r1+Vector3::Up*(V::SurfaceY(vx+r1.X,vz+r1.Z)-mouth.Y+0.02f),Vector3(30,26,22));
+            const Vector3 stone=mouth+(r0+r1)*1.25f;
+            const float size=0.12f+0.06f*static_cast<float>((i*7+k)%3);
+            b.Box(Vector3(stone.X,V::SurfaceY(stone.X,stone.Z)+size*0.4f,stone.Z),Vector3::Normalize(r0),Vector3::Up,
+                  Vector3::Normalize(Vector3::Cross(r0,Vector3::Up)),size,size*0.7f,size,Sulphur*0.95f,Sulphur*1.1f);
         }
     }
     // blocks of black lava and scoria scattered down the slopes, half bedded in the ash
@@ -240,8 +263,8 @@ VolcanoRenderer::VolcanoRenderer(GraphicsDevice& device,const IslandTerrain& ter
     }
     halo_=std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),256,BufferUsage::WriteOnly);
     haloStaging_.reserve(256);
-    plume_=std::make_unique<CascadeMistRenderer>(device,"island-simulator: steam rises out of the volcano's crater in a plume leaning downwind",
-                                                 static_cast<std::size_t>(PlumePuffs));
+    plume_=std::make_unique<CascadeMistRenderer>(device,"island-simulator: steam rises out of the volcano's crater in a plume leaning downwind, and out of four sulphur-crusted fumaroles on its slopes",
+                                                 static_cast<std::size_t>(PlumePuffs+4*VentPuffs));
     plume_->SetRange(260.0f,240.0f,1.5f);
     std::ostringstream message;
     message<<"island-simulator: a small volcano rises "<<static_cast<int>(std::lround(V::Height))<<" m from the eastern foothills at ("
@@ -301,6 +324,22 @@ void VolcanoRenderer::DrawPlume(const Matrix& view,const Matrix& projection,cons
         puff.size=2.6f+0.6f*age;puff.age=age;
         puff.density=std::clamp(age/2.0f,0.0f,1.0f)*std::pow(1.0f-phase,1.4f);
         puff.active=true;
+    }
+    // the fumaroles: thin wisps out of the slope, a few metres up before they thin away
+    constexpr float VentLife=6.0f;
+    for(int v=0;v<4;++v) {
+        const float vx=V::X+std::cos(V::VentBearings[v])*V::VentRadii[v],vz=V::Z+std::sin(V::VentBearings[v])*V::VentRadii[v];
+        const Vector3 vent(vx,V::SurfaceY(vx,vz)+0.2f,vz);
+        for(int k=0;k<VentPuffs;++k) {
+            const float phase=std::fmod(seconds/VentLife+static_cast<float>(k)/VentPuffs+static_cast<float>(v)*0.37f,1.0f);
+            const float age=phase*VentLife;
+            const Vector3 p=vent+Vector3::Up*(0.9f*age)+wind*(0.18f*age*age);
+            MistPuff& puff=puffs_[static_cast<std::size_t>(PlumePuffs+v*VentPuffs+k)];
+            puff.x=p.X;puff.y=p.Y;puff.z=p.Z;
+            puff.size=0.5f+0.35f*age;puff.age=age;
+            puff.density=0.55f*std::clamp(age/0.8f,0.0f,1.0f)*std::pow(1.0f-phase,1.6f);
+            puff.active=true;
+        }
     }
     plume_->Draw(view,projection,camera,puffs_);
     drawCalls_+=plume_->DrawCallCount();

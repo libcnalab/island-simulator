@@ -233,6 +233,24 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 516 (2026-10-22) — fumaroles steam on the volcano's slopes
+
+Four fumaroles now steam out of the volcano's upper slopes (`VolcanoSite::VentBearings` and
+`VentRadii`, `VolcanoRenderer`).
+
+- **Vents.** Each is a dark mouth ringed with crusted sulphur stones. The cone's tint paints a
+  bright sulphur crust round it, fading out over about two metres.
+- **Steam.** Each vent breathes four thin wisps. They rise a few metres, lean downwind and thin
+  away over six seconds. They go through the plume's own mist renderer, which now holds 38 puffs.
+- **Diagnostic.** It now reads "...and out of four sulphur-crusted fumaroles on its slopes".
+- **Blotches checked.** The dark blotches on the cone's sunlit slopes in the `volcano` view were
+  checked with `--no-sun-shadows`. They are the drifting cumulus shadows (`cloudCover` in
+  `sunShadowVisibility`) falling across the bare cone, and no stray caster. Nothing stands in
+  the cone's footprint.
+
+Evidence: `20261022T114448` (volcano, a fumarole's crust on the sunlit flank). The suite is
+76/76.
+
 ## Loop pass 515 (2026-10-22) — the coaster carries her name
 
 The grounded coaster now carries her name, MARIA K, painted in white on both bows and across her

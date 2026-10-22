@@ -18,6 +18,9 @@ struct VolcanoSite final {
     static constexpr float BaseY=2.0f;          // the foot's level, under the foothills, so the cone rises out of them
     static constexpr float BaseRadius=55.0f,Height=25.0f,RimRadius=11.0f,CraterDepth=9.0f,LavaRadius=6.0f;
     static constexpr float FlowAngle=0.25f;     // the old lava flow's bearing from the crater, down toward the sea
+    // fumaroles steaming out of the upper slopes: their bearings and radii from the crater
+    static constexpr float VentBearings[4]={1.05f,2.25f,4.0f,5.35f};
+    static constexpr float VentRadii[4]={19.0f,23.0f,17.5f,21.0f};
 
     /** How far out the foot reaches on a bearing, as a share of BaseRadius (0.94 to 1). */
     [[nodiscard]] static float Spread(const float theta) noexcept {

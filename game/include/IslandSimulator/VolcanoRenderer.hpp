@@ -42,7 +42,7 @@ public:
                   const Microsoft::Xna::Framework::Vector3& camera,float seconds,float night);
     [[nodiscard]] int DrawCallCount() const noexcept {return drawCalls_;}
     [[nodiscard]] int TriangleCount() const noexcept {return coneTriangles_;}
-    static constexpr int PlumePuffs=22;
+    static constexpr int PlumePuffs=22,VentPuffs=4;
 private:
     [[nodiscard]] bool Visible(const Microsoft::Xna::Framework::Matrix& view,const Microsoft::Xna::Framework::Matrix& projection,
                                const Microsoft::Xna::Framework::Vector3& camera) const;
@@ -55,7 +55,7 @@ private:
     std::unique_ptr<CascadeMistRenderer> plume_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> halo_;
     std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> haloStaging_;
-    std::array<MistPuff,PlumePuffs> puffs_{};
+    std::array<MistPuff,PlumePuffs+4*VentPuffs> puffs_{};
     Microsoft::Xna::Framework::BoundingBox bounds_;
     int coneTriangles_=0,glowTriangles_=0,lavaTriangles_=0,drawCalls_=0;
     bool sunShadowUnavailable_=false;
