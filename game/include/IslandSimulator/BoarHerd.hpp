@@ -99,11 +99,17 @@ namespace island
         [[nodiscard]] std::size_t LastRetreatIndex() const noexcept { return lastRetreat_; }
         /** @brief Fruit and coconuts lying on the ground this frame; a forage may go to one. */
         void SetLyingFruit(std::span<const FallingFruit> fruit) noexcept { lyingFruit_ = fruit; }
+        /** @brief The rain's wetness (0..1): on soaked ground every rest of a boar with a bank
+         *  becomes a wallow, walking cakes its legs with mud (up to WetGroundMud) and its mud dries
+         *  slower. */
+        static constexpr float WetGroundMud = 0.45f;
+        void SetWetness(float wetness) noexcept { wetness_ = std::isfinite(wetness) ? std::clamp(wetness, 0.0f, 1.0f) : 0.0f; }
         /** @brief Indices into that span the boars ate during the last update. */
         [[nodiscard]] std::span<const std::size_t> EatenFruit() const noexcept { return eatenFruit_; }
         [[nodiscard]] std::uint32_t EatCount() const noexcept { return eatCount_; }
         static constexpr float WallowSeconds = 14.0f;
         static constexpr float MudDrySeconds = 150.0f;
+        float wetness_ = 0.0f;
         /** @brief Lie-downs begun: a rest LieDelaySeconds in, undisturbed, settles the boar
          *  onto folded legs and lengthens the rest by LieBonusSeconds; an alert at the walker
          *  or the bear, or the next forage, has it up at RiseRate. */

@@ -4066,6 +4066,7 @@ namespace island
         }
         boarHerd_.SetLyingFruit(fallingFruit_.Fruit());
         boarHerd_.SetBear(bear_->State().x, bear_->State().z, true);
+        boarHerd_.SetWetness(weather_now::Current().wetness);
         if (viewpoint_ == FixedViewpoint::BoarLyingDetail) boarHerd_.PreviewLie(1U);
         updateProfile_.Mark("boarHerd");
         if (UsesBoarCaptureClock())

@@ -109,6 +109,21 @@ int main()
         for (const auto& boar : sleepy.Boars()) allResting = allResting && boar.behavior == island::BoarBehavior::Rest;
         Check(allResting, "after dark every boar should be resting");
     }
+    {
+        // On rain-soaked ground the boars come up muddy: walking cakes their legs (or they go
+        // wallowing at every rest); in the dry over the same two minutes much less so.
+        island::BoarHerd wet(terrain, obstacles), dry(terrain, obstacles);
+        wet.SetWetness(1.0f);
+        float wetMud = 0.0f, dryMud = 0.0f;
+        for (int step = 0; step < 60 * 120; ++step) {
+            wet.Update(1.0f / 60.0f, nan, nan, nan);
+            dry.Update(1.0f / 60.0f, nan, nan, nan);
+        }
+        for (const auto& boar : wet.Boars()) wetMud += boar.mudAmount;
+        for (const auto& boar : dry.Boars()) dryMud += boar.mudAmount;
+        std::cout << "boar mud after two minutes: soaked ground " << wetMud << ", dry " << dryMud << '\n';
+        Check(wetMud > 0.3f && wetMud > dryMud + 0.2f, "on rain-soaked ground the boars come up muddy");
+    }
     if (failures) return 1;
     std::cout << "BoarHerdTests: all checks passed (12000 frames with world obstacles)\n";
 }

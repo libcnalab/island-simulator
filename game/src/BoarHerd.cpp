@@ -336,7 +336,9 @@ namespace island
             }
             // Every third rest of a boar with a reachable bank becomes a walk to the water
             // to wallow: the trip plus the time in the mud.
-            if (state.behavior == BoarBehavior::Rest && agent.hasWallow && agent.decisions % 3U == 0U) {
+            // (on rain-soaked ground, every rest)
+            if (state.behavior == BoarBehavior::Rest && agent.hasWallow
+                && (agent.decisions % 3U == 0U || wetness_ > 0.6f)) {
                 state.behavior = BoarBehavior::Wallow;
                 agent.remainingSeconds = WallowSeconds
                     + std::hypot(agent.wallowX - state.x, agent.wallowZ - state.z) / 0.5f;
@@ -427,8 +429,12 @@ namespace island
         const float snoutWork = std::clamp((state.rootingPose - 0.6f) / 0.3f, 0.0f, 1.0f);
         if (snoutWork > 0.0f) agent.snoutPhase = std::fmod(agent.snoutPhase + dt * SnoutSwayRate, Tau);
         state.snoutSway = std::sin(agent.snoutPhase) * snoutWork;
-        state.mudAmount = wallowing ? std::min(1.0f, state.mudAmount + dt / 6.0f)
-            : std::max(0.0f, state.mudAmount - dt / MudDrySeconds);
+        // Walking soaked ground cakes the legs (the renderer's mud is on the legs and the belly);
+        // the mud dries slower while the ground is wet.
+        if (wallowing) state.mudAmount = std::min(1.0f, state.mudAmount + dt / 6.0f);
+        else if (wetness_ > 0.5f && state.speed > 0.1f && state.mudAmount < WetGroundMud * wetness_)
+            state.mudAmount = std::min(WetGroundMud * wetness_, state.mudAmount + dt / 20.0f);
+        else state.mudAmount = std::max(0.0f, state.mudAmount - dt / MudDrySeconds * (1.0f - 0.8f * wetness_));
         // Out of the mud with the coat wet, the boar stands and shakes, side to side, for a
         // second and a bit; the shake is noted where it stands for the mud it flings.
         if (agent.wasWallowing && !wallowing && state.mudAmount > 0.5f) {

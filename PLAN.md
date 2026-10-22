@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 479 (2026-10-22) — boars come up muddy from rain-soaked ground
+
+Boars love mud, and after rain there is mud everywhere. `BoarHerd::SetWetness` (from the weather
+every frame) changes three things on soaked ground:
+
+- every rest of a boar with a bank becomes a wallow (in the dry, every third);
+- walking cakes its legs and belly with mud, up to `WetGroundMud` (0.45) scaled by the wetness;
+- its mud dries slower while the ground is wet.
+
+The boar renderer already draws the mud on the legs and belly. A boar test runs two herds for two
+minutes: the soaked herd's mud sums to 4.2, the dry herd's to 1.7.
+
 ## Loop pass 478 (2026-10-22) — the deer sit a downpour out under the crowns
 
 Deer took no notice of the rain. `DeerHerd::SetRain` now changes their routine in a downpour (rain
