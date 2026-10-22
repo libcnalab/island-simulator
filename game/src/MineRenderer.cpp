@@ -71,6 +71,20 @@ MineRenderer::MineRenderer(GraphicsDevice& device,const MineLayout& layout,const
         lanternAt.push_back(p);
         lamps.push_back({p,Vector3(1.0f,0.70f,0.36f),1.5f,1.35f,7.5f});
     }
+    // one more set down on the chamber's floor by the cart, still burning
+    struct LanternSpot {float a,d,u;bool hanging;};
+    std::vector<LanternSpot> spots;
+    for(const Vector3& p:lanternAt) {
+        const auto local=layout.Local({p.X,p.Y,p.Z});
+        spots.push_back({local.x,local.z,1.72f,true});
+    }
+    {
+        const float a=0.85f,d=50.1f;
+        spots.push_back({a,d,0.12f,false});
+        const Vector3 p=W(a,0.12f,d);
+        lanternAt.push_back(p);
+        lamps.push_back({p,Vector3(1.0f,0.70f,0.36f),1.3f,1.3f,7.0f});
+    }
     lanterns_=static_cast<int>(lanternAt.size());
     // the crystal clusters on the chamber's walls, each throwing its own cold light
     struct Cluster {float theta,up,lean;bool violet;};
@@ -234,11 +248,9 @@ MineRenderer::MineRenderer(GraphicsDevice& device,const MineLayout& layout,const
     for(float d=-0.4f;d<51.0f;d+=0.65f) box(-0.55f,0.55f,0.0f,0.07f,d-0.08f,d+0.08f,TimberDark*0.9f);
     for(const float a:{-0.3f,0.3f}) box(a-0.025f,a+0.025f,0.07f,0.14f,-0.45f,50.4f,RailIron);
     // ---- the lanterns: frame, glowing glass and flame, a wire handle on a nail in the post
-    for(const Vector3& p:lanternAt) {
-        const float a=layout.Local({p.X,p.Y,p.Z}).x;
-        const float d=layout.Local({p.X,p.Y,p.Z}).z;
+    for(const LanternSpot& spot:spots) {
+        const float a=spot.a,d=spot.d,u=spot.u;
         const float s=a>0.0f?1.0f:-1.0f;
-        const float u=1.72f;
         box(a-0.07f,a+0.07f,u-0.12f,u-0.10f,d-0.07f,d+0.07f,Glass*1.2f);
         box(a-0.06f,a+0.06f,u+0.10f,u+0.13f,d-0.06f,d+0.06f,Glass*1.2f);
         box(a-0.04f,a+0.04f,u+0.13f,u+0.17f,d-0.04f,d+0.04f,Glass*1.2f);
@@ -253,9 +265,74 @@ MineRenderer::MineRenderer(GraphicsDevice& device,const MineLayout& layout,const
             quad(W(a+da,u-0.09f,d-0.055f),W(a+da,u-0.09f,d+0.055f),W(a+da,u+0.09f,d+0.055f),W(a+da,u+0.09f,d-0.055f),
                  acrossDir*(da>0?1.0f:-1.0f),Glass,glow);
         quad(W(a-0.012f,u-0.05f,d),W(a+0.012f,u-0.05f,d),W(a+0.008f,u+0.04f,d),W(a-0.008f,u+0.04f,d),-inward,Glass,Vector3(255,236,170));
-        // the handle up to the nail in the post
+        // the handle up to the nail in the post, or the bail standing over it on the floor
         box(a-0.006f,a+0.006f,u+0.17f,u+0.26f,d-0.006f,d+0.006f,Glass);
-        box(std::min(a,s*MineSite::PostInner)-0.006f,std::max(a,s*MineSite::PostInner)+0.006f,u+0.25f,u+0.27f,d-0.006f,d+0.006f,Glass);
+        if(spot.hanging)
+            box(std::min(a,s*MineSite::PostInner)-0.006f,std::max(a,s*MineSite::PostInner)+0.006f,u+0.25f,u+0.27f,d-0.006f,d+0.006f,Glass);
+        else box(a-0.05f,a+0.05f,u+0.25f,u+0.262f,d-0.006f,d+0.006f,Glass);
+    }
+    // ---- what the miners left: crates against the left wall, a pickaxe and a shovel against a
+    // post, a fall of rubble with a broken cap beam against the right wall, a smashed lantern
+    {
+        const float c0=MineLayout::CrateFrom,c1=MineLayout::CrateTo,inner=MineLayout::CrateInner;
+        const Vector3 crate(150,116,76);
+        box(-MineSite::HalfWidth+0.05f,inner,0.0f,0.52f,c0+0.05f,c0+0.6f,crate*0.92f);
+        box(-MineSite::HalfWidth+0.05f,inner,0.0f,0.5f,c0+0.62f,c1-0.05f,crate*1.02f);
+        box(-MineSite::HalfWidth+0.08f,inner-0.04f,0.52f,1.0f,c0+0.12f,c0+0.62f,crate*0.85f);
+        for(const float d:{c0+0.06f,c0+0.58f,c0+0.64f,c1-0.07f})
+            box(inner-0.005f,inner+0.012f,0.03f,0.48f,d-0.03f,d+0.03f,TimberDark);
+        // the tools leaning on the set nearest twenty metres in
+        float toolSet=sets.front();
+        for(const float d:sets) if(std::abs(d-20.0f)<std::abs(toolSet-20.0f)) toolSet=d;
+        {
+            const float d=toolSet+0.16f,a=MineSite::PostInner-0.05f;
+            // a pickaxe: its haft leaning to the post, its iron head across the top
+            const Vector3 foot=W(a-0.35f,0.0f,d),top=W(a-0.02f,0.86f,d);
+            Vector3 up=top-foot;const float length=up.Length();up.Normalize();
+            const Vector3 across=Vector3::Cross(up,inward);
+            for(int k=0;k<6;++k) {
+                const Vector3 p0=foot+up*(length*static_cast<float>(k)/6.0f),p1=foot+up*(length*static_cast<float>(k+1)/6.0f);
+                quad(p0-across*0.018f,p1-across*0.018f,p1+across*0.018f,p0+across*0.018f,-acrossDir,Timber*1.1f);
+                quad(p0-inward*0.018f,p1-inward*0.018f,p1+inward*0.018f,p0+inward*0.018f,-inward,Timber*1.05f);
+            }
+            box(a-0.06f,a+0.0f,0.84f,0.9f,d-0.28f,d+0.28f,RailIron*0.9f);
+            // a shovel beside it
+            const float d2=d+0.32f;
+            box(a-0.42f,a-0.38f,0.0f,1.0f,d2-0.015f,d2+0.015f,Timber);
+            box(a-0.46f,a-0.36f,0.02f,0.32f,d2-0.11f,d2+0.11f,RailIron*0.75f);
+        }
+        // the fall: blocks of rock heaped against the right wall, a cap beam come down across it
+        const float r0=MineLayout::RubbleFrom,r1=MineLayout::RubbleTo,rin=MineLayout::RubbleInner;
+        for(int k=0;k<16;++k) {
+            const float t=static_cast<float>(k)/15.0f;
+            const float d=r0+0.15f+(r1-r0-0.3f)*Noise(static_cast<float>(k)*1.7f,3.1f);
+            const float across=rin+0.1f+(MineSite::HalfWidth-rin-0.15f)*Noise(static_cast<float>(k)*2.3f,7.7f);
+            const float size=0.14f+0.18f*Noise(static_cast<float>(k)*3.1f,1.3f);
+            const float lift=std::max(0.0f,0.55f*(1.0f-std::abs(across-MineSite::HalfWidth)/0.9f))*(0.4f+0.6f*t);
+            box(across-size,across+size,lift,lift+size*1.4f,d-size,d+size,Rock*(0.7f+0.4f*Noise(static_cast<float>(k),9.0f)));
+        }
+        {
+            const Vector3 high=W(MineSite::HalfWidth-0.05f,1.9f,r0+0.3f),low=W(rin+0.05f,0.12f,r1-0.2f);
+            Vector3 along=low-high;const float length=along.Length();along.Normalize();
+            Vector3 side=Vector3::Cross(along,Vector3::Up);side.Normalize();
+            const Vector3 up=Vector3::Cross(side,along);
+            for(int k=0;k<4;++k) {
+                const Vector3 p0=high+along*(length*static_cast<float>(k)/4.0f),p1=high+along*(length*static_cast<float>(k+1)/4.0f);
+                quad(p0+up*0.1f-side*0.1f,p1+up*0.1f-side*0.1f,p1+up*0.1f+side*0.1f,p0+up*0.1f+side*0.1f,up,Timber*0.8f);
+                quad(p0-side*0.1f-up*0.1f,p1-side*0.1f-up*0.1f,p1-side*0.1f+up*0.1f,p0-side*0.1f+up*0.1f,-side,Timber*0.75f);
+                quad(p0+side*0.1f-up*0.1f,p1+side*0.1f-up*0.1f,p1+side*0.1f+up*0.1f,p0+side*0.1f+up*0.1f,side,Timber*0.75f);
+            }
+        }
+        // a lantern dropped and smashed, lying on its side by the track
+        {
+            const float a=-0.75f,d=36.2f;
+            box(a-0.11f,a+0.09f,0.0f,0.12f,d-0.07f,d+0.07f,Glass*1.1f);
+            box(a+0.09f,a+0.13f,0.01f,0.11f,d-0.06f,d+0.06f,Glass*1.3f);
+            for(int k=0;k<6;++k) {
+                const float sx=a+0.25f*(Noise(static_cast<float>(k)*4.1f,2.2f)-0.3f),sz=d+0.3f*(Noise(static_cast<float>(k)*5.3f,6.6f)-0.5f);
+                quad(W(sx,0.005f,sz),W(sx+0.03f,0.005f,sz+0.01f),W(sx+0.02f,0.005f,sz+0.035f),W(sx-0.01f,0.005f,sz+0.02f),Vector3(0,1,0),Vector3(120,124,118));
+            }
+        }
     }
     // ---- the chamber: a rough dome round an oval floor, open where the adit comes in
     {

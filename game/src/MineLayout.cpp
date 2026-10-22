@@ -50,6 +50,8 @@ bool MineLayout::WalkableLocal(const float across,const float depth) noexcept {
     const float a=across/(MineSite::ChamberHalfWidth-0.25f),d=(depth-MineSite::ChamberCentre)/(MineSite::ChamberHalfLength-0.25f);
     const bool chamber=a*a+d*d<=1.0f;
     if(!(adit||chamber)) return false;
+    if(depth>CrateFrom&&depth<CrateTo&&across<CrateInner) return false;
+    if(depth>RubbleFrom&&depth<RubbleTo&&across>RubbleInner) return false;
     return std::hypot(across-CartAcross,depth-CartDepth)>CartRadius;
 }
 

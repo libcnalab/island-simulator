@@ -233,6 +233,26 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 514 (2026-10-22) — what the miners left in the old mine
+
+The old mine now holds what its miners left behind (`MineRenderer`, `MineLayout`).
+
+- **Crates.** Crates are stacked against the left wall twelve metres in, with dark battens.
+- **Tools.** A pickaxe, its iron head across the top, leans on the timber set nearest twenty
+  metres, with a shovel beside it.
+- **The fall.** Sixteen blocks of rock lie heaped against the right wall at thirty metres, with a
+  broken cap beam come down across them.
+- **Lanterns.** A dropped lantern lies smashed on its side by the track at thirty-six metres, its
+  glass shards on the gravel. One more lantern stands still burning on the chamber's floor by the
+  cart; it lights the floor warm under the crystals' cold light and has its own halo. That makes
+  nine lit lanterns.
+- **Walking.** The crates and the fall are in the walkable plan: the walker goes round them along
+  the track. `IslandMineLayoutTests` still walks in to the chamber and back out. The suite is
+  76/76.
+
+Evidence: `20261022T113651` (adit, the crates by the first lantern) and `20261022T113659`
+(chamber).
+
 ## Loop pass 513 (2026-10-22) — the coaster's lifeboat lies keel up on the beach
 
 The coaster's davits stand empty (pass 503). Its lifeboat has now washed up on the beach at

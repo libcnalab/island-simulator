@@ -31,6 +31,9 @@ public:
     [[nodiscard]] float SafeTravelFraction(MinePoint from,MinePoint to,float radius,float height) const noexcept;
     // where the old cart lies tipped on its side in the chamber
     static constexpr float CartAcross=1.9f,CartDepth=51.0f,CartRadius=0.75f;
+    // the crates stacked against the left wall, the fall of rubble and a broken cap against the right
+    static constexpr float CrateFrom=11.6f,CrateTo=12.7f,CrateInner=-0.5f;
+    static constexpr float RubbleFrom=30.2f,RubbleTo=31.9f,RubbleInner=0.45f;
 private:
     [[nodiscard]] static bool WalkableCircle(float across,float depth,float radius) noexcept;
     MinePoint entrance_;
