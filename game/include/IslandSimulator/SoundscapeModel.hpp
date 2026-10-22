@@ -416,8 +416,14 @@ namespace island
         [[nodiscard]] FrogCallRequest Update(float deltaSeconds, float listenerX,
             float listenerY, float listenerZ, std::span<const FrogState> frogs,
             bool playbackSlotAvailable) noexcept;
+        /** @brief How eagerly the frogs call: 1 by a dry day, up to ChorusMaximum by a wet night
+         *  (the night and the soaked ground each raise it); the gaps between calls shrink by it. */
+        static constexpr float ChorusMaximum = 4.0f;
+        void SetChorus(float nightness, float wetness) noexcept;
+        [[nodiscard]] float Chorus() const noexcept { return chorus_; }
     private:
         [[nodiscard]] float NextUnit() noexcept;
+        float chorus_ = 1.0f;
         std::uint32_t randomState_ = 0xf206ca11U;
         float cooldown_ = 0.0f;
         std::size_t nextAnimal_ = 0U;

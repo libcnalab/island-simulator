@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 472: frog chorus x(1 + 1.5 night + 1.5 wet), up to 4 (FrogCallScheduler::SetChorus) (PLAN "Loop pass 472").
 - Pass 471: silty stream after rain (uSilt from wetness) (PLAN "Loop pass 471").
 - Pass 470: rain erodes tyre ruts, shell drags, crocodile grooves (SetRain) (PLAN "Loop pass 470").
 - Pass 469: rain erodes footprints (FootprintTrail::SetRain, x6 at full rain) (PLAN "Loop pass 469").

@@ -1481,6 +1481,8 @@ namespace island
                 listenerState.x, listenerState.y, listenerState.z, nearestBirdSource_,
                 nearestMonkeySource_, false);
         }
+        // the frogs call most on a wet night
+        frogCallScheduler_.SetChorus(nightness_, weatherWetness_);
         const FrogCallRequest frogCall = frogCallScheduler_.Update(safeDelta,
             listenerState.x, listenerState.y, listenerState.z, frogs,
             wildlifeSlotAvailable && wildlifeCall.type == WildlifeCallType::None);

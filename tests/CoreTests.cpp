@@ -12689,6 +12689,26 @@ int main()
               "footprints press into the stream's muddy banks and into rain-soaked soil, not grass or rock");
     }
 
+    {
+        // The frogs call most on a wet night: one frog by the listener, five minutes each.
+        island::FrogState frog;
+        frog.x = 3.0f; frog.y = 0.0f; frog.z = 0.0f;
+        frog.simulationTier = island::WildlifeSimulationTier::Full;
+        const std::array<island::FrogState, 1> frogs{frog};
+        const auto calls = [&](const float nightness, const float wetness) {
+            island::FrogCallScheduler scheduler;
+            scheduler.SetChorus(nightness, wetness);
+            int count = 0;
+            for (int step = 0; step < 3000; ++step)
+                count += scheduler.Update(0.1f, 0.0f, 1.6f, 0.0f, frogs, true).trigger ? 1 : 0;
+            return count;
+        };
+        const int dryDay = calls(0.0f, 0.0f), wetNight = calls(1.0f, 1.0f);
+        std::cout << "frog calls in five minutes: dry day " << dryDay << ", wet night " << wetNight << '\n';
+        Check(dryDay >= 15 && dryDay <= 45 && wetNight >= 3 * dryDay,
+              "the frogs call several times as often on a wet night as by a dry day");
+    }
+
     if (failures != 0) {
         std::cerr << failures << " core test assertion(s) failed\n";
         return EXIT_FAILURE;

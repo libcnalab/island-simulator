@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 472 (2026-10-22) — the frogs call most on a wet night
+
+The frogs called every 7 to 15 seconds by day and night, wet or dry. Real tree and stream frogs
+chorus at night, and most after rain. `FrogCallScheduler::SetChorus(nightness, wetness)` raises
+their eagerness from 1 by a dry day by 1.5 for the night and 1.5 for soaked ground, up to 4. The
+gaps between calls shrink by that factor. The soundscape sets it every update from the hour's
+nightness and the weather's wetness. A core test runs one frog by the listener for five minutes:
+30 calls by a dry day, 108 on a wet night.
+
 ## Loop pass 471 (2026-10-22) — the stream runs cloudy brown after the rain
 
 The stream stayed clear over its gravel through any downpour. The runoff now carries silt

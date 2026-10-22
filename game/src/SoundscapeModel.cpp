@@ -2400,6 +2400,13 @@ namespace island
             / static_cast<float>(0x01000000U);
     }
 
+    void FrogCallScheduler::SetChorus(const float nightness, const float wetness) noexcept
+    {
+        const float night = std::isfinite(nightness) ? std::clamp(nightness, 0.0f, 1.0f) : 0.0f;
+        const float wet = std::isfinite(wetness) ? std::clamp(wetness, 0.0f, 1.0f) : 0.0f;
+        chorus_ = std::min(ChorusMaximum, 1.0f + 1.5f * night + 1.5f * wet);
+    }
+
     FrogCallRequest FrogCallScheduler::Update(
         const float deltaSeconds, const float listenerX, const float listenerY,
         const float listenerZ, const std::span<const FrogState> frogs,
@@ -2440,7 +2447,7 @@ namespace island
         request.pitch = -0.07f + NextUnit() * 0.15f;
         request.source = {true, frog.x, frog.y + 0.05f, frog.z};
         nextAnimal_ = (bestIndex + 1U) % frogs.size();
-        cooldown_ = 7.0f + NextUnit() * 8.0f;
+        cooldown_ = (7.0f + NextUnit() * 8.0f) / chorus_;
         return request;
     }
 
