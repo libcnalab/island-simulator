@@ -19,7 +19,8 @@
   - the whale skeleton, idol, HELP ME, lighthouse, WWII plane, PET bottles, the 30 m enterable
     coaster with skeletons, the lantern-lit mine, the volcano with lava, and the README gallery.
 - The standing operator instruction is an endless loop: invent an improvement, implement it,
-  test it, commit, repeat. A new session should resume that loop unless the operator says
+  test it, commit, repeat. A new session should first work through the operator's task list
+  of 2026-10-22 (the next section) in its order, then resume that loop unless the operator says
   otherwise. Talk to the operator in Czech.
 
 **Ask the operator to confirm in play** (pass 548, an operator bug report):
@@ -99,6 +100,47 @@ in `PLAN.md`:
 - the passing freighter, the breaching humpback and the live lava flow;
 - screw pines, termite nests and flying fish;
 - the windthrown giant, the mine/quad fix and the foxfire.
+
+## Operator task list 2026-10-22 — work in this order, then resume the loop
+
+The operator chose these after a short analysis of what the island lacks: much to look at, little
+to do. Mark each `[x]` with its `PLAN.md` evidence (the loop pass) when done. They are written
+in Czech in the operator's message; the intent is kept here.
+
+**First: make the island a game** (the operator's recommendation: these two first).
+1. [ ] **Rescue by signal fire.** Tie together what is already there: the HELP ME in stones, the
+   castaway's signal fire stacked on the beach (`StoneSignPlacement::SignalFire`) and the
+   freighter passing offshore on its lane (`PassingShip`, every 720 s).
+   - The player lights the signal fire at night (an interaction key near it). It burns with
+     flame, smoke and light through the night grade.
+   - If the freighter passes while it burns, the ship answers with its horn and a flashing
+     light, which gives the game an ending (a rescue moment).
+2. [ ] **Discovery journal.** A journal that fills as the player finds the landmarks (the mine,
+   the volcano, the wrecks, the lighthouse, the idol, the windthrow and others) and meets the
+   species (the island has dozens). Most of what ~550 passes added is otherwise never
+   discovered. Small interactions belong with it: taking a lantern from the mine, lighting the
+   lighthouse, collecting shells and coconuts.
+
+**Then: audit what exists** (the mine's bug was probably not the only one of its kind).
+3. [ ] **The quad at every landmark.** Drive the quad into and against each landmark: the
+   lighthouse and its cottage, the coaster and its lifeboat, the plane wreck, the windthrow, the
+   idol, the whale skeleton, the HELP ME stones, the screw pines, the jetty and the bridge.
+   Check its ground, its walls and its chase camera, and fix what it climbs through or over.
+   Add `quad-*` QA views where useful.
+4. [ ] **Oblique views of everything set into the terrain.** View every landmark that hides or
+   replaces terrain (the cave, the bunker, the mine, the volcano's crater and lava flow, the
+   windthrow's pit, the wreck scour, the stream bed) from the side and from above for the sky
+   showing through the island, gaps or floating edges, as the mine's cutting did (pass 548, see
+   the memory note on terrain cut coverage). Keep a permanent QA view for each fix.
+
+**Then: a living island, spectacular and realistic.**
+5. [ ] **Land crab migration after rain.** On nights after rain, thousands of land crabs march
+   from the forest to the sea (as on Christmas Island). It builds on the existing weather and
+   crabs.
+6. [ ] **Winged termites swarming.** At dusk after rain, winged termites stream out of the
+   arboreal nests (`TermiteNestLayout`, pass 545), and the bats and geckos come to feed on them.
+7. [ ] **A seabird colony.** Boobies nesting on a rocky islet offshore.
+8. [ ] **Mudskippers.** Mudskippers hopping on the mud among the mangroves.
 
 ## Backlog (agent-actionable, 2026-10-19)
 
