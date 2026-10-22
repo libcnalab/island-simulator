@@ -2,7 +2,9 @@
 
 #include "IslandSimulator/QuadBike.hpp"
 #include "IslandSimulator/RootingDustField.hpp"
+#include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <span>
@@ -49,6 +51,8 @@ namespace island
         static constexpr float DampPrintLifeSeconds = 75.0f;
 
         void Update(float seconds, std::span<const WheelOnGround> wheels) noexcept;
+        /** @brief The rain (0..1): the ruts age as the footprints do in it (FootprintTrail::RainErosion). */
+        void SetRain(float rain) noexcept { rain_ = std::isfinite(rain) ? std::clamp(rain, 0.0f, 1.0f) : 0.0f; }
         [[nodiscard]] std::span<const TyreTrack> Tracks() const noexcept { return tracks_; }
         [[nodiscard]] std::uint32_t LaidCount() const noexcept { return laid_; }
         [[nodiscard]] std::size_t ActiveCount() const noexcept;
@@ -59,6 +63,7 @@ namespace island
         std::array<Tracker, Wheels> trackers_{};
         std::size_t next_ = 0;
         std::uint32_t laid_ = 0;
+        float rain_ = 0.0f;
     };
 
     /** What the quad's wheels throw: on dry sand and soil a plume of dust behind each tyre,

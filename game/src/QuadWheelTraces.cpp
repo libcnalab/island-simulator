@@ -1,4 +1,5 @@
 #include "IslandSimulator/QuadWheelTraces.hpp"
+#include "IslandSimulator/FootprintTrail.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -9,7 +10,7 @@ namespace island
         const float dt = std::isfinite(seconds) ? std::clamp(seconds, 0.0f, 0.25f) : 0.0f;
         for (auto& track : tracks_) {
             if (!track.active) continue;
-            track.age += dt;
+            track.age += dt * (1.0f + FootprintTrail::RainErosion * rain_);
             if (track.age >= track.life) {
                 track.active = false;
                 track.density = 0.0f;

@@ -233,6 +233,14 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 470 (2026-10-22) — the rain levels the ruts and the drag grooves too
+
+Pass 469 made the rain erode the footprints. The quad's tyre ruts (`TyreTrackField`), the hermit
+crabs' shell drags (`ShellDragTrail`) and the crocodiles' belly grooves (`CrocodileDragTrail`) kept
+their full lives in any weather. Each now takes the rain (`SetRain`) and ages `1 + RainErosion` times
+as fast in it, set from the weather every frame where it is updated. A core test drags a crab's
+line in the dry and in a downpour: after 30 s the dry line still shows and the rained one is gone.
+
 ## Loop pass 469 (2026-10-22) — the rain beats the prints out
 
 Footprints on sand lasted their four minutes whatever the weather. `FootprintTrail::SetRain`

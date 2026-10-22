@@ -1,7 +1,9 @@
 #pragma once
 #include "IslandSimulator/CrocodileGroup.hpp"
 #include "IslandSimulator/HermitCrabGroup.hpp"
+#include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <span>
@@ -24,6 +26,8 @@ public:
     static constexpr std::size_t Capacity=200;
     static constexpr float SegmentLength=0.08f,LifeSeconds=90.0f,MinimumSpeed=0.015f;
     void Update(float deltaSeconds,std::span<const HermitCrabState> crabs) noexcept;
+    /** @brief The rain (0..1): the grooves age as the footprints do in it (FootprintTrail::RainErosion). */
+    void SetRain(float rain) noexcept {rain_=std::isfinite(rain)?std::clamp(rain,0.0f,1.0f):0.0f;}
     [[nodiscard]] std::span<const DragSegment> Segments() const noexcept {return segments_;}
     [[nodiscard]] std::uint32_t LaidCount() const noexcept {return laid_;}
     [[nodiscard]] std::size_t ActiveCount() const noexcept;
@@ -32,6 +36,7 @@ private:
     std::array<DragSegment,Capacity> segments_{};
     std::array<Tracker,HermitCrabGroup::Count> trackers_{};
     std::uint32_t laid_=0;
+    float rain_=0;
 };
 
 // The crocodiles' slides on the estuary's sand and mud: hauled out and crawling, a crocodile's
@@ -43,6 +48,7 @@ public:
     static constexpr float SegmentLength=0.25f,LifeSeconds=300.0f,MinimumSpeed=0.04f,HalfWidth=0.07f;
     // dryGround: the ground under each crocodile this frame takes a mark (sand or mud, not water)
     void Update(float deltaSeconds,std::span<const CrocodileState> crocodiles,std::span<const bool> dryGround) noexcept;
+    void SetRain(float rain) noexcept {rain_=std::isfinite(rain)?std::clamp(rain,0.0f,1.0f):0.0f;}
     [[nodiscard]] std::span<const DragSegment> Segments() const noexcept {return segments_;}
     [[nodiscard]] std::uint32_t LaidCount() const noexcept {return laid_;}
 private:
@@ -50,5 +56,6 @@ private:
     std::array<DragSegment,Capacity> segments_{};
     std::array<Tracker,CrocodileGroup::CrocodileCount> trackers_{};
     std::uint32_t laid_=0;
+    float rain_=0;
 };
 }

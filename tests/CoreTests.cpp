@@ -11073,6 +11073,15 @@ int main()
             Check(drags.LaidCount()==before,"a paused crab drags no line");
             for(int step=0;step<1000;++step) drags.Update(0.1f,crabs);
             Check(drags.ActiveCount()==0U,"the sand levels the drag lines within their life");
+            // and the rain levels them sooner: after half a minute in a downpour none are left,
+            // where in the dry they still show
+            island::ShellDragTrail dryDrags,wetDrags;
+            wetDrags.SetRain(1.0f);
+            std::vector<island::HermitCrabState> walking{crab};
+            for(int step=0;step<200;++step) { walking[0].x+=0.005f; dryDrags.Update(0.05f,walking); wetDrags.Update(0.05f,walking); }
+            walking[0].behavior=island::HermitCrabBehavior::Pause;walking[0].speed=0.0f;
+            for(int step=0;step<300;++step) { dryDrags.Update(0.1f,walking); wetDrags.Update(0.1f,walking); }
+            Check(dryDrags.ActiveCount()>0U&&wetDrags.ActiveCount()==0U,"a downpour levels the drag lines sooner");
         }
         // Fish breaking the surface: with the observer over a school (full simulation) a
         // breach is noted within a minute, on the water within two metres of a school's

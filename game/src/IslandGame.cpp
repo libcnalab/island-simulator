@@ -3998,6 +3998,7 @@ namespace island
             viewpoint_ == FixedViewpoint::HermitCrabDetail ? 0.0f : deltaSeconds,
             hermitCrabObserver.X, hermitCrabObserver.Y, hermitCrabObserver.Z);
         updateProfile_.Mark("shellDrags");
+        shellDrags_.SetRain(weather_now::Current().rain);
         shellDrags_.Update(deltaSeconds, hermitCrabGroup_.Crabs());
         Vector3 coconutCrabObserver = cameraPosition_;
         if (viewpoint_ == FixedViewpoint::CoconutCrabDetail) {
@@ -4040,6 +4041,7 @@ namespace island
                 const FootstepSurface ground=FootstepGroundAt(crocodile.x,crocodile.z);
                 dry[i]=ground==FootstepSurface::Sand||ground==FootstepSurface::Soil;
             }
+            crocodileDrags_.SetRain(weather_now::Current().rain);
             crocodileDrags_.Update(deltaSeconds,crocodileGroup_.Crocodiles(),dry);
         }
         // A crocodile coming alert on its bank hisses at the walker.
@@ -5065,6 +5067,7 @@ namespace island
             else quadDirtWet_ = std::max(0.0f, quadDirtWet_ - deltaSeconds / 300.0f);
         }
         updateProfile_.Mark("quad tyre tracks");
+        tyreTracks_.SetRain(weather_now::Current().rain);
         tyreTracks_.Update(deltaSeconds, wheels);
         updateProfile_.Mark("quad dust and spray");
         wheelDust_.Update(deltaSeconds, wheels, quad_.Velocity(), wind::DirectionX, wind::DirectionZ);

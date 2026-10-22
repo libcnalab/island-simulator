@@ -1,4 +1,5 @@
 #include "IslandSimulator/ShellDragTrail.hpp"
+#include "IslandSimulator/FootprintTrail.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -14,7 +15,7 @@ void ShellDragTrail::Update(const float deltaSeconds,const std::span<const Hermi
     if(dt<=0.0f) return;
     for(DragSegment& segment:segments_) {
         if(!segment.active) continue;
-        segment.age+=dt;
+        segment.age+=dt*(1.0f+FootprintTrail::RainErosion*rain_);
         segment.density=1.0f-segment.age/LifeSeconds;
         if(segment.age>=LifeSeconds) segment.active=false;
     }
@@ -46,7 +47,7 @@ void CrocodileDragTrail::Update(const float deltaSeconds,const std::span<const C
     if(dt<=0.0f) return;
     for(DragSegment& segment:segments_) {
         if(!segment.active) continue;
-        segment.age+=dt;
+        segment.age+=dt*(1.0f+FootprintTrail::RainErosion*rain_);
         // fresh and dark for a minute, then the sand dries and the wind softens it
         segment.density=1.0f-std::clamp((segment.age-60.0f)/(LifeSeconds-60.0f),0.0f,1.0f);
         if(segment.age>=LifeSeconds) segment.active=false;
