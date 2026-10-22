@@ -233,6 +233,43 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 495 (2026-10-22) — a stone god stands on a rise inland
+
+Operator request: a statue of some god somewhere on the island. A weathered basalt tiki idol
+(about 3.4 m with its topknot) stands on an ahu platform on the highest clear rise inland at
+(76, −26), looking out to sea.
+
+**`IdolStatueLayout`.** It searches the island's 6 m grid for the highest spot that is:
+
+- at least 25 m inland and 8–45 m up;
+- level within 0.7 m over ±3.5 m;
+- clear of every obstacle by 4.5 m beyond the platform's half width;
+- at least 30 m from the fire, the hut, the lookout, the cave's and the bunker's entrances and the
+  helicopter.
+
+It runs after the helicopter: placed before it, it took the helicopter's central site. The god
+faces out from the island's centre. Its platform is an obstacle (3.1 m).
+
+**`IdolStatueRenderer`.** One opaque draw of 3,901 triangles on the new shared
+`SculptMeshBuilder`: the whale's outward-wound faces, tubes, blades and boxes, plus a loft of
+rings, a ground stain and a weathering tint.
+
+- **Platform.** A 5 × 3.4 m ahu, 0.55 m above its highest ground and sunk below its lowest. Two
+  courses of fitted blocks of varied length and tone face a core, and the top is paved with slabs.
+- **Figure.** The body and the great head are a loft of superelliptic rings, the belly and the face
+  carried forward.
+- **Face.** A heavy brow, two ringed staring eyes and the grimacing mouth (dark recesses inside
+  raised rims), a broad nose with nostrils, and the tongue out over the lower lip.
+- **Head.** Ears, a band round the head and a topknot.
+- **Arms and legs.** The arms fold to the belly over hands with grooved fingers, above bent legs
+  and feet on a carved base, and the navel is carved.
+- **Weathering.** Moss on the faces turned up, lichen in patches and rain streaks down the sides.
+- **Light.** Relit by the hour, receiving and casting the sun shadows.
+
+QA view `idol` (`20261022T075641`) looks up at its face from before the platform. A core test checks the
+rise, the height, the shore distance and facing the sea, and that an obstacle or an avoided point
+moves it. The validator requires the diagnostic line in every capture.
+
 ## Loop pass 494 (2026-10-22) — the whale's bones in more detail
 
 The operator's second ask on the skeleton: its realism.

@@ -198,6 +198,7 @@ namespace island
             case FixedViewpoint::BirdPreenDetail: return "bird-preen";
             case FixedViewpoint::FrigatebirdDetail: return "frigatebird";
             case FixedViewpoint::WhaleSkeletonDetail: return "whale-skeleton";
+            case FixedViewpoint::IdolDetail: return "idol";
             case FixedViewpoint::GroundDoveDetail: return "ground-doves";
             case FixedViewpoint::FruitBatDetail: return "bats";
             case FixedViewpoint::FruitBatRoostDetail: return "bat-roost";
@@ -454,6 +455,21 @@ namespace island
         bridgePlacement_=BridgeLayout::FindInWorld(terrain_,StreamCourse(terrain_));
         helicopterPlacement_=HelicopterLayout::FindInWorld(terrain_,jungleLayout_,worldObstacles);
         if(!helicopterPlacement_)throw std::runtime_error("No valid central helicopter site");
+        {
+            // The island's stone god on the highest clear rise inland, away from the hut, the
+            // fire, the cave, the bunker and the other landmarks.
+            std::vector<std::array<float,2>> avoid{{{CampfireSite::X,CampfireSite::Z}}};
+            if(hutPlacement_) avoid.push_back({{hutPlacement_->x,hutPlacement_->z}});
+            if(lookoutPlacement_) avoid.push_back({{lookoutPlacement_->x,lookoutPlacement_->z}});
+            {
+                const CaveLayout cave(terrain_);
+                avoid.push_back({{cave.Entrance().x,cave.Entrance().z}});
+            }
+            avoid.push_back({{bunkerLayout_.Entrance().x,bunkerLayout_.Entrance().z}});
+            avoid.push_back({{helicopterPlacement_->x,helicopterPlacement_->z}});
+            idolPlacement_=IdolStatueLayout::FindInWorld(terrain_,worldObstacles,avoid);
+            if(idolPlacement_) worldObstacles.push_back(idolPlacement_->Obstacle());
+        }
         // The animals' lighting reads the solid casters the sun shadow map draws: the jungle's
         // snags, understory and bushes (baked with the field) and the structures, so a goat
         // under the hut's eave or a boar behind a trunk darkens as the ground there does.
@@ -1739,6 +1755,16 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: bridge QA camera looks across the rope bridge from the bank\n";
+        } else if (viewpoint_ == FixedViewpoint::IdolDetail) {
+            // Before the god, a little to one side, looking up at its face.
+            if(!idolPlacement_) throw std::runtime_error("Idol QA requires the stone god");
+            const auto& g=*idolPlacement_;
+            const float eyeX=g.x+g.faceX*8.0f+g.faceZ*2.5f,eyeZ=g.z+g.faceZ*8.0f-g.faceX*2.5f;
+            cameraPosition_=Vector3(eyeX,terrain_.Height(eyeX,eyeZ)+PlayerMotion::EyeHeight,eyeZ);
+            const Vector3 direction=Vector3(g.x,g.TopY()+1.9f,g.z)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: idol QA camera looks up at the stone god's face from before its platform\n";
         } else if (viewpoint_ == FixedViewpoint::WhaleSkeletonDetail) {
             // From the seaward side of the ribcage, a few steps down the beach toward the skull,
             // looking up the beach across the ribs to the spine.
@@ -2647,6 +2673,7 @@ namespace island
         if(hutPlacement_) eaveDrips_=std::make_unique<EaveDripRenderer>(device,*hutPlacement_,terrain_);
         if(jettyPlacement_) jettyRenderer_=std::make_unique<JettyRenderer>(device,*jettyPlacement_);
         if(whalePlacement_) whaleSkeletonRenderer_=std::make_unique<WhaleSkeletonRenderer>(device,*whalePlacement_,terrain_,*drawnGround_);
+        if(idolPlacement_) idolRenderer_=std::make_unique<IdolStatueRenderer>(device,*idolPlacement_,terrain_,*drawnGround_);
         if(bridgePlacement_) bridgeRenderer_=std::make_unique<BridgeRenderer>(device,*bridgePlacement_);
         if(lookoutPlacement_) lookoutRenderer_=std::make_unique<LookoutRenderer>(device,*lookoutPlacement_);
         fallingFruitRenderer_=std::make_unique<FallingFruitRenderer>(device);
@@ -6440,6 +6467,7 @@ namespace island
                 naturalPropRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (jettyRenderer_) jettyRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (whaleSkeletonRenderer_) whaleSkeletonRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                if (idolRenderer_) idolRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (bridgeRenderer_) bridgeRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (lookoutRenderer_) lookoutRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 helicopterRenderer_->SetSunShadowMap(sunShadowMap_.get());
@@ -6460,6 +6488,7 @@ namespace island
                 if (hutRenderer_) hutRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (jettyRenderer_) jettyRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (whaleSkeletonRenderer_) whaleSkeletonRenderer_->DrawSunShadow(*sunShadowMap_);
+                if (idolRenderer_) idolRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (bridgeRenderer_) bridgeRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (lookoutRenderer_) lookoutRenderer_->DrawSunShadow(*sunShadowMap_);
                 shipwreckRenderer_->DrawSunShadow(*sunShadowMap_);
@@ -6705,6 +6734,10 @@ namespace island
         if(whaleSkeletonRenderer_) {
             GpuDiagnosticScope gpuPass("whale-skeleton");
             whaleSkeletonRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
+        }
+        if(idolRenderer_) {
+            GpuDiagnosticScope gpuPass("idol");
+            idolRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }
         if(bridgeRenderer_) {
             GpuDiagnosticScope gpuPass("bridge");

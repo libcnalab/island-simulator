@@ -96,8 +96,8 @@ on a beach.
 
 Operator requests 2026-10-22 (future tasks, taken in this order after the whale skeleton and its
 realism pass):
-- [ ] A statue of some god somewhere on the island (a weathered stone idol or deity figure in a
-      fitting place).
+- [x] A statue of some god somewhere on the island: a basalt tiki idol on an ahu platform at
+      (76, -26) (PLAN "Loop pass 495", `idol` view, `20261022T075641`).
 - [ ] On a beach, HELP ME (or similar) laid out in stones, as a castaway would.
 - [ ] A lighthouse.
 - [ ] A Second World War aircraft wreck.
@@ -343,6 +343,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 495: stone god (tiki idol on an ahu) on the highest clear inland rise (IdolStatueLayout/Renderer, SculptMeshBuilder); QA view `idol` (`20261022T075641`) (PLAN "Loop pass 495").
 - Pass 494: whale skeleton detail: tapered neural spines/processes (Bones::Blade), jaw condyles and coronoid hooks, occipital condyles, rib heads, scattered small bones (`20261022T074841`) (PLAN "Loop pass 494").
 - Pass 493: stranded whale skeleton on the north beach (WhaleSkeletonLayout/Renderer, 44 vertebrae, 24 ribs, rorqual skull, contact patches, sun map caster); QA view `whale-skeleton` (`20261022T074431`) (PLAN "Loop pass 493").
 - Pass 492: two great frigatebirds (last two high birds) soar at 112-128 m, crooked wings, forked tail, never dive; QA view `frigatebird` (`20261022T070643`); full sweep 127/127 after 456-491 (PLAN "Loop pass 492").

@@ -102,6 +102,7 @@
 #include "IslandSimulator/HutGeckos.hpp"
 #include "IslandSimulator/SunSteamField.hpp"
 #include "IslandSimulator/WhaleSkeletonLayout.hpp"
+#include "IslandSimulator/IdolStatueLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/LookoutLayout.hpp"
 #include "IslandSimulator/FallingFruitField.hpp"
@@ -9549,6 +9550,28 @@ int main()
               "gust fronts travel downwind at the front speed");
     }
 
+    {
+        // The stone god stands on a level rise inland, clear of the obstacles and away from the
+        // avoided points, facing out to sea; an obstacle on its spot moves it elsewhere.
+        const island::IslandTerrain terrain;
+        const std::vector<island::CircularObstacle> none;
+        const auto god = island::IdolStatueLayout::FindInWorld(terrain, none, {});
+        bool sound = false;
+        if (god) {
+            const float h = terrain.Height(god->x, god->z);
+            sound = terrain.SignedShoreDistance(god->x, god->z) >= island::IdolStatueLayout::MinimumShoreDistance
+                && h >= island::IdolStatueLayout::MinimumHeight && h <= island::IdolStatueLayout::MaximumHeight
+                && god->x * god->faceX + god->z * god->faceZ > 0.0f
+                && std::abs(god->faceX * god->faceX + god->faceZ * god->faceZ - 1.0f) < 1e-3f;
+            const std::vector<island::CircularObstacle> taken{{god->x, god->z, 1.0f}};
+            const auto moved = island::IdolStatueLayout::FindInWorld(terrain, taken, {});
+            const std::array<std::array<float, 2>, 1> avoid{{{god->x, god->z}}};
+            const auto away = island::IdolStatueLayout::FindInWorld(terrain, none, avoid);
+            sound = sound && moved && std::hypot(moved->x - god->x, moved->z - god->z) > 5.0f
+                && away && std::hypot(away->x - god->x, away->z - god->z) > 30.0f;
+        }
+        Check(god && sound, "the stone god stands on a level rise inland facing the sea, moved by an obstacle or an avoided point");
+    }
     {
         // The stranded whale's skeleton finds a stretch of level dry sand on the beach, clear of
         // the given obstacles and away from the points to avoid; its skull and jaws block the
