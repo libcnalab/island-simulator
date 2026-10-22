@@ -233,6 +233,26 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 524 (2026-10-22) — the signal fire's wood and the burnt ring's stones
+
+Up close the signal fire's poles were twelve identical straight grey tubes, like plastic pipe.
+The burnt ring beside it was built of boxes: its stones, its charcoal and its sticks.
+
+- **Poles.** Each is now a stick with one gentle bow along its length and a little unevenness,
+  tapering from 6.5-8.5 cm to 3 cm. About 60 % are the sea's driftwood, bleached silver-grey;
+  the rest are fresh branches in brown bark, each with the stub of a snapped side branch. They
+  cross at the peak and stand on past it, as a stack's poles do.
+- **Tinder.** Coconut husks lie heaped inside the stack's foot.
+- **Burnt ring.** Its stones are the sign's own irregular lofted stones, sooted. The ash bed is a
+  ragged mound patchy with charcoal dust, and the charcoal is knobbly black lumps. The sticks
+  the fire did not finish are burnt black at the middle, with the wood showing at their outer
+  ends.
+- **Refactor.** The sign's stone loft became a `stoneAt` lambda, so the HELP ME stones are
+  unchanged.
+- **Evidence.** `signal-fire` `20261022T124750`, `help-sign` `20261022T124810`.
+
+The suite is 76/76.
+
 ## Loop pass 523 (2026-10-22) — the mine's chamber hewn rough
 
 Seen from below with the bats, the chamber read as a regular faceted tent. There were three
