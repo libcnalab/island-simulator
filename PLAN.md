@@ -233,6 +233,21 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 466 (2026-10-22) — the walker and the resident print the mud too
+
+The walker's prints were laid only on sand and the resident's only on sand and the shallows, while
+the deer and the boars already pressed theirs into the stream's mud. `footprint_ground::Muddy`
+(new header `FootprintGround.hpp`) says where bare soil takes a print:
+
+- on the stream's banks, within 1.6 m of the water along the whole route;
+- on any bare soil once the rain has soaked it (wetness 0.45 and over);
+- never on grass, rock or the forest's litter.
+
+Both trails now lay prints on that mud as well. Those prints are marked damp, so they go sooner,
+like the wet sand's. A core test checks the bank and the far ground, dry and wet, against soil,
+grass and rock. The QA views hold the walker still, so no capture shows a trail in mud yet. The
+resident's view in `--weather showers` passes, with the resident on grass there.
+
 ## Loop pass 465 (2026-10-22) — the time-of-day pass shows its rain and local lights apart
 
 The operator's profile put 3.2 ms per frame of CPU in `time-of-day`, the second costliest pass. That

@@ -93,6 +93,7 @@
 #include "IslandSimulator/ShellDragTrail.hpp"
 #include "IslandSimulator/ReefFishField.hpp"
 #include "IslandSimulator/WalkerShadow.hpp"
+#include "IslandSimulator/FootprintGround.hpp"
 #include "IslandSimulator/SurfSprayField.hpp"
 #include "IslandSimulator/DolphinBlowField.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
@@ -12635,6 +12636,19 @@ int main()
         Check(at(stride, 0.25f, 0.0f) > 0.08f && at(still, 0.25f, 0.0f) < 0.05f
                   && at(stride, 1.62f, 0.0f) < 0.0f && at(still, 1.62f, 0.0f) < 0.0f,
               "side-lit, the striding legs part in the walker's shadow and the head stays in it");
+    }
+
+    {
+        // Footprints in mud: the stream's banks always, any bare soil once the rain has soaked
+        // it, and never grass, rock or the open ground far from the stream in the dry.
+        namespace fg = island::footprint_ground;
+        const float x = island::StreamRoute::SourceX - 40.0f, z = island::StreamRoute::CentreZ(x);
+        const float bank = z + island::StreamRoute::HalfWidth(x) + 0.8f, away = z + 25.0f;
+        Check(fg::Muddy(island::FootstepSurface::Soil, x, bank, 0.0f) && !fg::Muddy(island::FootstepSurface::Soil, x, away, 0.0f)
+                  && fg::Muddy(island::FootstepSurface::Soil, x, away, 0.6f) && !fg::Muddy(island::FootstepSurface::Grass, x, bank, 0.6f)
+                  && !fg::Muddy(island::FootstepSurface::Rock, x, away, 0.9f)
+                  && !fg::Muddy(island::FootstepSurface::Soil, island::StreamRoute::SourceX + 30.0f, z, 0.0f),
+              "footprints press into the stream's muddy banks and into rain-soaked soil, not grass or rock");
     }
 
     if (failures != 0) {

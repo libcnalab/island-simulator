@@ -1,4 +1,5 @@
 #include "IslandSimulator/BoarGroundPose.hpp"
+#include "IslandSimulator/FootprintGround.hpp"
 #include "IslandSimulator/PrevailingWind.hpp"
 #include "IslandSimulator/QuadBike.hpp"
 #include "IslandSimulator/WindGust.hpp"
@@ -3579,13 +3580,17 @@ namespace island
         updateProfile_.Mark("grassInteractionModel");
         (void)grassInteractionModel_.Update(grassInteractionSpeed, deltaSeconds);
         {
-            // The walker's prints: laid every stride while the feet are on sand.
+            // The walker's prints: laid every stride while the feet are on sand, or on mud (the
+            // stream's banks, and bare soil soaked by the rain), which keeps them damp.
             const PlayerPosition& walker=playerMotion_.Position();
-            const bool onSand=!flightMotion_.IsActive()&&!IsDebugFreeCameraActive()
-                &&playerMotion_.Mode()!=LocomotionMode::Swimming&&FootstepGroundUnderPlayer()==FootstepSurface::Sand;
+            const bool afoot=!flightMotion_.IsActive()&&!IsDebugFreeCameraActive()
+                &&playerMotion_.Mode()!=LocomotionMode::Swimming;
+            const FootstepSurface underfoot=afoot?FootstepGroundUnderPlayer():FootstepSurface::None;
+            const bool onSand=underfoot==FootstepSurface::Sand;
+            const bool inMud=footprint_ground::Muddy(underfoot,walker.x,walker.z,weather_now::Current().wetness);
             updateProfile_.Mark("footprints");
-            footprints_.Update(deltaSeconds,walker.x,walker.z,playerMotion_.VelocityX(),playerMotion_.VelocityZ(),onSand,
-                onSand&&terrain_.Sample(walker.x,walker.z).surface==TerrainSurface::WetSand);
+            footprints_.Update(deltaSeconds,walker.x,walker.z,playerMotion_.VelocityX(),playerMotion_.VelocityZ(),onSand||inMud,
+                inMud||(onSand&&terrain_.Sample(walker.x,walker.z).surface==TerrainSurface::WetSand));
             // The shadow figure's gait: a turn of the phase per stride walked, the limbs swinging
             // wider with the pace and settling when the walker stops, the body turning to the way
             // it walks (or, standing, to the view) over some few tenths of a second.
@@ -3629,12 +3634,14 @@ namespace island
             const FootstepSurface underfoot=FootstepGroundAt(walker.x,walker.z);
             if(residentSteps_.Step(walker.x,walker.z,walking)&&soundscape_)
                 soundscape_->NoteResidentStep(walker.x,walker.y,walker.z,underfoot);
-            // and the bare feet print the sand (on the walk to the jetty), the wet sand's sooner gone
+            // and the bare feet print the sand (on the walk to the jetty) and the mud (the stream's
+            // banks, bare soil after rain), the damp ones sooner gone
             residentPrints_.SetStride(0.68f);
+            const bool residentInMud=footprint_ground::Muddy(underfoot,walker.x,walker.z,weather_now::Current().wetness);
             residentPrints_.Update(deltaSeconds,walker.x,walker.z,
                 walking?std::sin(walker.heading)*walker.speed:0.0f,walking?std::cos(walker.heading)*walker.speed:0.0f,
-                underfoot==FootstepSurface::Sand||underfoot==FootstepSurface::Shallows,
-                underfoot==FootstepSurface::Shallows||terrain_.Sample(walker.x,walker.z).surface==TerrainSurface::WetSand);
+                underfoot==FootstepSurface::Sand||underfoot==FootstepSurface::Shallows||residentInMud,
+                underfoot==FootstepSurface::Shallows||residentInMud||terrain_.Sample(walker.x,walker.z).surface==TerrainSurface::WetSand);
             // On the walk the resident whistles a phrase every half minute or so.
             residentWhistleClock_=walking?residentWhistleClock_+deltaSeconds:std::min(residentWhistleClock_,6.0f);
             if(walking&&residentWhistleClock_>=28.0f&&soundscape_) {
