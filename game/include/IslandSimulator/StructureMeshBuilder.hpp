@@ -28,6 +28,19 @@ struct StructureMeshBuilder {
             static_cast<int>(std::min(255.0f,pigment.Z*light)),255);
         mesh.emplace_back(a,color);mesh.emplace_back(b,color);mesh.emplace_back(c,color);
     }
+    // A triangle whose pigment runs from corner to corner, lit by the face's own light.
+    void Tri(const Vector3& a,const Vector3& b,const Vector3& c,const Vector3& pigmentA,const Vector3& pigmentB,
+             const Vector3& pigmentC) {
+        Vector3 normal=Vector3::Cross(b-a,c-a);
+        if(normal.LengthSquared()<=1e-10f) return;
+        normal.Normalize();
+        const float light=0.46f+0.54f*std::max(0.0f,Vector3::Dot(normal,sun));
+        const auto lit=[light](const Vector3& pigment) {
+            return Color(static_cast<int>(std::min(255.0f,pigment.X*light)),static_cast<int>(std::min(255.0f,pigment.Y*light)),
+                         static_cast<int>(std::min(255.0f,pigment.Z*light)),255);
+        };
+        mesh.emplace_back(a,lit(pigmentA));mesh.emplace_back(b,lit(pigmentB));mesh.emplace_back(c,lit(pigmentC));
+    }
     void Quad(const Vector3& a,const Vector3& b,const Vector3& c,const Vector3& d,const Vector3& pigment) {
         Tri(a,b,c,pigment);Tri(a,c,d,pigment);
     }

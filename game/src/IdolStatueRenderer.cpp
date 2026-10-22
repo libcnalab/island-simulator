@@ -50,6 +50,9 @@ IdolStatueRenderer::IdolStatueRenderer(GraphicsDevice& device,const IdolStatuePl
     SculptMeshBuilder b;
     const auto groundAt=[&](const float x,const float z) {return DrawnOrAnalyticHeight(ground,terrain,x,z);};
     b.ground=groundAt;b.stainColour=Vector3(86,78,62);b.stainHeight=0.18f;b.stainAmount=0.45f;
+    // weathered corner by corner: tinted at each triangle's own centre, every block's face split
+    // along its diagonal into two shades
+    b.tintPerVertex=true;
     // Moss on the faces turned up, lichen in patches, rain streaks down the sides.
     b.tint=[](const Vector3& pigment,const Vector3& normal,const Vector3& centre) {
         const float patch=std::sin(centre.X*2.3f+centre.Y*1.7f)*std::sin(centre.Z*2.9f-centre.Y*2.1f);

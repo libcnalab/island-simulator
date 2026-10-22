@@ -59,6 +59,9 @@ PlaneWreckRenderer::PlaneWreckRenderer(GraphicsDevice& device,const PlaneWreckPl
     b.ground=groundAt;b.stainColour=Vector3(124,110,84);b.stainHeight=0.6f;b.stainAmount=0.35f;
     // the painted skin: dark green on the faces turned up, grey under, worn through to aluminium
     // in patches and white with corrosion here and there
+    // weathered corner by corner: tinted at each face's centre, the skin broke up into
+    // triangles (or, per quad, tiles) of paint and bare metal
+    b.tintPerVertex=true;
     b.tint=[](const Vector3& pigment,const Vector3& normal,const Vector3& centre) {
         if(pigment.X!=Skin.X||pigment.Y!=Skin.Y||pigment.Z!=Skin.Z) return pigment;
         // the green blends into the grey round the sides, so the two halves of a quad never
@@ -66,7 +69,7 @@ PlaneWreckRenderer::PlaneWreckRenderer(GraphicsDevice& device,const PlaneWreckPl
         const float top=std::clamp((normal.Y+0.25f)/0.7f,0.0f,1.0f);
         Vector3 colour=Vector3::Lerp(Underside,Olive,top*top*(3.0f-2.0f*top));
         const float wear=std::sin(centre.X*3.1f+centre.Z*1.7f)*std::sin(centre.Z*2.3f-centre.Y*4.1f+centre.X*0.7f);
-        colour=Vector3::Lerp(colour,Bare,std::clamp((wear-0.30f)*3.0f,0.0f,1.0f)*0.85f);
+        colour=Vector3::Lerp(colour,Bare,std::clamp((wear-0.30f)*1.8f,0.0f,1.0f)*0.7f);
         const float rot=std::sin(centre.X*11.0f+centre.Y*7.0f)*std::sin(centre.Z*9.0f-centre.X*5.0f);
         colour=Vector3::Lerp(colour,Corroded,std::clamp((rot-0.6f)*3.0f,0.0f,1.0f)*0.6f);
         // eighty years under the jungle: moss and lichen on the faces turned up

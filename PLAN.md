@@ -233,6 +233,31 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 525 (2026-10-22) — weathering that runs across the faces
+
+Three landmarks broke up at 2x crops into the triangles or tiles of their mesh. The weathering
+tint was taken once per face, at its centre:
+- the stone god's ahu showed every block's face split along its diagonal into two shades;
+- the fighter's skin was a camouflage of triangles of paint and bare metal;
+- the lifeboat's white topsides were a checkerboard of grey tiles.
+
+- **Per-corner tint.** `StructureMeshBuilder::Tri` gains an overload with a pigment at each
+  corner (the light stays the face's own). `SculptMeshBuilder::tintPerVertex` takes the tint
+  and the ground stain at each corner instead of at the face's centre, so the weathering runs
+  smoothly across the faces.
+- **Idol and fighter.** Both use it now. The ahu's blocks each read as one stone. The fighter's
+  paint wears through to the aluminium in soft patches; the threshold is softened too.
+- **Lifeboat.** It uses it as well. Its hull is now built in three strakes: the antifouling, the
+  white topsides and the band under the gunwale. Each strake has its own marker pigment and its
+  row edges fall on the strakes' edges, so the lines between the paints stay sharp while the
+  peeling inside each runs smoothly.
+- **Unchanged.** The freighter's rust streaks (cells a quarter-metre wide) and the volcano's cone
+  keep the per-quad tint.
+- **Evidence.** `idol` `20261022T125211`, `plane-wreck` `20261022T125204`, `lifeboat`
+  `20261022T125342`.
+
+The suite is 76/76.
+
 ## Loop pass 524 (2026-10-22) — the signal fire's wood and the burnt ring's stones
 
 Up close the signal fire's poles were twelve identical straight grey tubes, like plastic pipe.

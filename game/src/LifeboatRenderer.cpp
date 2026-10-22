@@ -12,6 +12,7 @@
 #include "Microsoft/Xna/Framework/Graphics/PrimitiveType.hpp"
 #include "Microsoft/Xna/Framework/Graphics/RasterizerState.hpp"
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <iostream>
 #include <numbers>
@@ -25,7 +26,9 @@ namespace {
 using L=LifeboatPlacement;
 constexpr float Pi=std::numbers::pi_v<float>;
 // the paint (its colour from where on the hull a face lies), the wood and the fittings
-const Vector3 Paint(1,2,3),White(240,236,224),Wood(134,122,104),Bottom(156,78,60),Band(212,104,60),
+// marker pigments for the hull's three painted strakes: the antifouling, the white topsides and the
+// band under the gunwale (the tint gives each its colour and its peeling)
+const Vector3 PaintBottom(1,2,3),PaintWhite(1,2,4),PaintBand(1,2,5),White(240,236,224),Wood(134,122,104),Bottom(156,78,60),Band(212,104,60),
     Oar(150,116,80),RingOrange(226,104,52),RingWhite(236,232,222);
 float Wave(const float x,const float y) {return std::sin(x*1.7f+std::sin(y*2.3f))*std::sin(y*1.3f-x*0.7f);}
 }
@@ -55,18 +58,20 @@ LifeboatRenderer::LifeboatRenderer(GraphicsDevice& device,const LifeboatPlacemen
         return Vector3(boat.x,baseY,boat.z)+forward*along+side*a+Vector3::Up*v;
     };
     SculptMeshBuilder b;
-    b.tintPerQuad=true;
+    b.tintPerVertex=true;
     b.ground=groundAt;b.stainColour=Vector3(200,182,142);b.stainHeight=0.18f;b.stainAmount=0.6f;
-    b.tint=[&](const Vector3& pigment,const Vector3&,const Vector3& centre) {
-        if(pigment.X!=Paint.X||pigment.Y!=Paint.Y||pigment.Z!=Paint.Z) return pigment;
-        // height above the sand stands in for how far up the upright hull the face was
-        const Vector3 d=centre-Vector3(boat.x,baseY,boat.z);
+    // the tint is taken corner by corner, so the peeling runs smoothly across the planks; each
+    // strake is built apart, so the edges between the paints stay sharp
+    b.tint=[&](const Vector3& pigment,const Vector3&,const Vector3& corner) {
+        const auto same=[&](const Vector3& other) {return pigment.X==other.X&&pigment.Y==other.Y&&pigment.Z==other.Z;};
+        const bool bottom=same(PaintBottom);
+        if(!bottom&&!same(PaintWhite)&&!same(PaintBand)) return pigment;
+        const Vector3 d=corner-Vector3(boat.x,baseY,boat.z);
         const float along=Vector3::Dot(d,forward);
-        const float fromGunwale=std::clamp(d.Y/depth(along),0.0f,1.0f);
-        Vector3 colour=fromGunwale<0.16f?Band:(fromGunwale>0.62f?Bottom:White);
+        Vector3 colour=bottom?Bottom:(same(PaintBand)?Band:White);
         // the paint peeling off to the bare grey planks in patches, more on the white
         const float peel=Wave(along*1.9f,d.Y*5.0f+Vector3::Dot(d,side)*1.3f);
-        colour=Vector3::Lerp(colour,Wood,std::clamp((peel-0.55f)*3.0f,0.0f,1.0f)*(fromGunwale>0.62f?0.35f:0.65f));
+        colour=Vector3::Lerp(colour,Wood,std::clamp((peel-0.55f)*3.0f,0.0f,1.0f)*(bottom?0.35f:0.65f));
         return colour*(0.96f+0.04f*Wave(along*4.0f,d.Y*7.0f));
     };
     // the hull's skin, outside and (a little in) inside, from one gunwale over the keel to the other
@@ -76,7 +81,10 @@ LifeboatRenderer::LifeboatRenderer(GraphicsDevice& device,const LifeboatPlacemen
             const float a0=-L::Length*0.5f+L::Length*static_cast<float>(i)/Stations;
             const float a1=-L::Length*0.5f+L::Length*static_cast<float>(i+1)/Stations;
             for(const float s:{-1.0f,1.0f}) for(int k=0;k<Rows;++k) {
-                const float t0=static_cast<float>(k)/Rows,t1=static_cast<float>(k+1)/Rows;
+                // rows from the keel to the gunwale, their edges on the strakes' edges
+                constexpr std::array<float,Rows+1> RowAt{{0.0f,0.13f,0.26f,0.38f,0.53f,0.69f,0.84f,1.0f}};
+                const float t0=RowAt[static_cast<std::size_t>(k)],t1=RowAt[static_cast<std::size_t>(k+1)];
+                const Vector3 strake=t1<=0.38f+1e-4f?PaintBottom:(t0>=0.84f-1e-4f?PaintBand:PaintWhite);
                 const auto p=[&](const float a,const float t) {
                     float along=0,up=0,across=0;section(a,t,along,up,across);
                     return place(along,s*across*shell,up+(1.0f-shell)*0.05f);
@@ -86,7 +94,7 @@ LifeboatRenderer::LifeboatRenderer(GraphicsDevice& device,const LifeboatPlacemen
                 const Vector3 hollow=place((a0+a1)*0.5f,0.0f,depth((a0+a1)*0.5f)*0.85f);
                 const Vector3 mid=(q00+q10+q11+q01)*0.25f;
                 b.inside=shell>0.99f?hollow:mid+(mid-hollow);
-                b.Quad(q00,q10,q11,q01,shell>0.99f?Paint:Wood*0.55f);
+                b.Quad(q00,q10,q11,q01,shell>0.99f?strake:Wood*0.55f);
             }
         }
     }

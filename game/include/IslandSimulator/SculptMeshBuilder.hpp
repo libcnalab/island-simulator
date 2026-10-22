@@ -23,6 +23,9 @@ struct SculptMeshBuilder {
     // when set, a quad's two triangles take their tint and stain from the quad's centre, so its
     // diagonal never shows as a step in the weathering
     bool tintPerQuad=false;
+    // when set, the tint and the stain are taken at each corner instead, so the weathering runs
+    // smoothly across the faces (the light stays each face's own)
+    bool tintPerVertex=false;
 
     void Face(const Vector3& a,const Vector3& b,const Vector3& c,const Vector3& pigment) {
         Vector3 colour=pigment;
@@ -30,6 +33,20 @@ struct SculptMeshBuilder {
         Vector3 normal=Vector3::Cross(b-a,c-a);
         const bool outward=Vector3::Dot(normal,m-inside)>=0.0f;
         if(!outward) normal=-normal;
+        if(tintPerVertex) {
+            if(normal.LengthSquared()>1e-12f) normal.Normalize();
+            const auto at=[&](const Vector3& p) {
+                Vector3 c=tint&&normal.LengthSquared()>0.5f?tint(pigment,normal,p):pigment;
+                if(ground) {
+                    const float stain=1.0f-std::clamp((p.Y-ground(p.X,p.Z)+0.02f)/stainHeight,0.0f,1.0f);
+                    c=Vector3::Lerp(c,stainColour,stain*stainAmount);
+                }
+                return c;
+            };
+            if(outward) builder.Tri(a,b,c,at(a),at(b),at(c));
+            else builder.Tri(a,c,b,at(a),at(c),at(b));
+            return;
+        }
         // the tint sees the pigment itself (a marker pigment stays recognisable), the stain after it
         if(tint&&normal.LengthSquared()>1e-12f) {normal.Normalize();colour=tint(colour,normal,m);}
         if(ground) {
