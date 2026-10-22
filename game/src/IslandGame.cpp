@@ -213,6 +213,7 @@ namespace island
             case FixedViewpoint::FlyingFishDetail: return "flying-fish";
             case FixedViewpoint::WindthrowDetail: return "windthrow";
             case FixedViewpoint::WindthrowLogDetail: return "windthrow-log";
+            case FixedViewpoint::GlowingFungiDetail: return "glowing-fungi";
             case FixedViewpoint::PlaneWreckDetail: return "plane-wreck";
             case FixedViewpoint::PlaneCockpitDetail: return "plane-cockpit";
             case FixedViewpoint::BeachLitterDetail: return "beach-litter";
@@ -2206,6 +2207,32 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: termite-nest QA camera looks up at a termites' nest on a jungle trunk\n";
+        } else if (viewpoint_ == FixedViewpoint::GlowingFungiDetail) {
+            // Crouched a metre and a bit from a clump of foxfire on the windthrown giant's flank,
+            // down at it (the capture asks for a dark hour): from whichever clump's side stands
+            // clear of the standing trunks and bushes.
+            // (the clumps themselves are laid on the drawn ground once it is built; the analytic
+            // ground places the eye as well)
+            const auto clumps=GlowingFungusLayout::Place(terrain_,windthrowPlacement_?&*windthrowPlacement_:nullptr,
+                naturalPropLayout_.FallenLogs(),[this](const float x,const float z) {return terrain_.Height(x,z);});
+            if(clumps.empty()) throw std::runtime_error("Glowing fungi QA requires the foxfire clumps");
+            std::size_t pick=0;
+            for(std::size_t i=0;i<clumps.size()&&i<8U;++i) {
+                const FungusCluster& c=clumps[i];
+                const float hx=c.normal[0],hz=c.normal[2],h=std::max(1e-3f,std::hypot(hx,hz));
+                const float ex=c.at[0]+hx/h*1.3f,ez=c.at[2]+hz/h*1.3f;
+                bool clear=true;
+                for(const CircularObstacle& o:jungleLayout_.Obstacles()) clear=clear&&std::hypot(o.x-ex,o.z-ez)>o.radius+0.5f;
+                if(clear) {pick=i;break;}
+            }
+            const FungusCluster& c=clumps[pick];
+            const float hx=c.normal[0],hz=c.normal[2],h=std::max(1e-3f,std::hypot(hx,hz));
+            const float ex=c.at[0]+hx/h*1.3f-hz/h*0.25f,ez=c.at[2]+hz/h*1.3f+hx/h*0.25f;
+            cameraPosition_=Vector3(ex,terrain_.Height(ex,ez)+0.95f,ez);
+            const Vector3 direction=Vector3(c.at[0],c.at[1]+0.02f,c.at[2])-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: glowing-fungi QA camera looks down at a clump of foxfire on the fallen giant\n";
         } else if (viewpoint_ == FixedViewpoint::WindthrowLogDetail) {
             // Beside the fallen trunk toward its snapped end, along it: its moss, shelf fungi and
             // ferns, the splintered break and the crown's limbs beyond; from whichever side of it
@@ -3298,6 +3325,9 @@ namespace island
         if(lifeboatPlacement_) lifeboatRenderer_=std::make_unique<LifeboatRenderer>(device,*lifeboatPlacement_,terrain_,*drawnGround_);
         if(!pandanus_.empty()) pandanusRenderer_=std::make_unique<PandanusRenderer>(device,pandanus_,terrain_,*drawnGround_);
         if(windthrowPlacement_) windthrowRenderer_=std::make_unique<WindthrowRenderer>(device,*windthrowPlacement_,terrain_,*drawnGround_);
+        glowingFungi_=GlowingFungusLayout::Place(terrain_,windthrowPlacement_?&*windthrowPlacement_:nullptr,naturalPropLayout_.FallenLogs(),
+            [this](const float x,const float z) {return DrawnOrAnalyticHeight(*drawnGround_,terrain_,x,z);});
+        if(!glowingFungi_.empty()) glowingFungusRenderer_=std::make_unique<GlowingFungusRenderer>(device,glowingFungi_);
         if(!termiteNests_.empty()) termiteNestRenderer_=std::make_unique<TermiteNestRenderer>(device,termiteNests_,jungleLayout_.Canopy());
         if(bridgePlacement_) bridgeRenderer_=std::make_unique<BridgeRenderer>(device,*bridgePlacement_);
         if(lookoutPlacement_) lookoutRenderer_=std::make_unique<LookoutRenderer>(device,*lookoutPlacement_);
@@ -6839,6 +6869,7 @@ namespace island
             + (termiteNestRenderer_ ? termiteNestRenderer_->DrawCallCount() : 0)
             + flyingFishRenderer_->DrawCallCount()
             + (windthrowRenderer_ ? windthrowRenderer_->DrawCallCount() : 0)
+            + (glowingFungusRenderer_ ? glowingFungusRenderer_->DrawCallCount() : 0)
             + contactShadowRenderer_->DrawCallCount()
             + birdRenderer_->DrawCallCount() + fruitBatRenderer_->DrawCallCount() + mineBatRenderer_->DrawCallCount()
             + butterflyRenderer_->DrawCallCount()
@@ -7285,6 +7316,7 @@ namespace island
                 if (bridgeRenderer_) bridgeRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (lookoutRenderer_) lookoutRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (windthrowRenderer_) windthrowRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                if (glowingFungusRenderer_) glowingFungusRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 helicopterRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (quadRenderer_) quadRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 shipwreckRenderer_->SetSunShadowMap(sunShadowMap_.get());
@@ -7591,6 +7623,7 @@ namespace island
             GpuDiagnosticScope gpuPass("termite-nests");
             termiteNestRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
             if(windthrowRenderer_) windthrowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
+            if(glowingFungusRenderer_) glowingFungusRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }
         if(bridgeRenderer_) {
             GpuDiagnosticScope gpuPass("bridge");
@@ -8106,6 +8139,11 @@ namespace island
             }
             if (fireflyRenderer_ && fireflies_ && fireflies_->Presence() > 0.0f && !underground)
                 fireflyRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, fireflies_->Flies());
+            // the foxfire on the dead wood, brightest on a moonless night
+            if (glowingFungusRenderer_ && !underground) {
+                const float dark = 1.0f - std::clamp((light.sunElevationDegrees + 6.0f) / 8.0f, 0.0f, 1.0f);
+                glowingFungusRenderer_->DrawGlow(cameraView_, cameraProjection_, renderCameraPosition_, dark * (1.0f - 0.4f * light.moonLight));
+            }
             if (hutRenderer_)
                 hutRenderer_->DrawNightLights(cameraView_, cameraProjection_, renderCameraPosition_,
                     1.0f - std::clamp((light.sunElevationDegrees + 4.0f) / 12.0f, 0.0f, 1.0f), timeSeconds);

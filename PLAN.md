@@ -233,6 +233,37 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 549 (2026-10-22) — foxfire: glowing mushrooms on the dead wood
+
+The night jungle had fireflies and the sea's glow. Now there is the foxfire on the dead wood too:
+clumps of Mycena chlorophos, the luminous mushroom of the Pacific islands.
+
+- **Where** (`GlowingFungusLayout::Place`).
+  - Eight clumps sit along the windthrown giant's low flanks, a little below level, in the damp
+    just above the floor.
+  - One or two clumps sit on most of the jungle's fallen logs, but not the wet stream-bank ones
+    nor any within 25 m of the shore.
+  - That makes 16 clumps and 155 caps.
+- **One shared trunk axis.** The windthrown trunk's axis now lives in
+  `WindthrowPlacement::Axis(along, ground)`. The trunk's renderer and the clumps share it, so the
+  mushrooms sit on the drawn bark.
+- **By day** (`GlowingFungusRenderer`).
+  - Each clump has six to fourteen little mushrooms crowded toward its middle.
+  - Each mushroom has a thin pale stalk leaning up off the wood and a shallow buff bell over a
+    ring of paler gills (7,440 triangles).
+  - They are drawn within 90 m and receive the sun shadows.
+- **By night.**
+  - Each cap glows a soft yellow-green, and each clump throws a faint halo over the wood round it.
+  - The glow is additive after the night's grade (they make their own light) and depth-tested
+    against the wood and leaves.
+  - It is strongest on a moonless night, at 60% under a full moon, and fades out from 30 to 45 m.
+- **New QA view.** `glowing-fungi`, crouched a metre and a bit from a clump on the giant's flank,
+  captured at 22:00 (`20261022T164636`). By day the same view shows the pale mushrooms
+  (`164622`, a low-contrast close-up kept as evidence only). `windthrow` and `windthrow-log` still
+  pass (`164816`, `164826`).
+- **Tests.** CoreTests check the giant's eight clumps: on the bark at the trunk's radius, a little
+  below level, facing out.
+
 ## Loop pass 548 (2026-10-22) — the mine's mouth closed all round, and the quad drives in
 
 The operator reported that the old mine's entrance showed a hole out of the island, and that

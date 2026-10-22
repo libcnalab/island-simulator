@@ -100,6 +100,7 @@ add_library(island_core STATIC
     game/src/TermiteNestLayout.cpp
     game/src/FlyingFishShoal.cpp
     game/src/WindthrowLayout.cpp
+    game/src/GlowingFungusLayout.cpp
     game/src/LifeboatLayout.cpp
     game/src/BridgeLayout.cpp
     game/src/LookoutLayout.cpp
@@ -776,6 +777,7 @@ if(ISLAND_BUILD_GAME)
         game/src/TermiteNestRenderer.cpp
         game/src/FlyingFishRenderer.cpp
         game/src/WindthrowRenderer.cpp
+        game/src/GlowingFungusRenderer.cpp
         game/src/DolphinRenderer.cpp
         game/src/DeerRenderer.cpp
         game/src/FishRenderer.cpp

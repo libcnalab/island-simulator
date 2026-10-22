@@ -98,16 +98,8 @@ private:
     }
     // the trunk's axis `along` it: resting on the ground's high points, held up at its foot by the plate
     Vector3 Axis(const float along) const {
-        float sum=0.0f;int count=0;
-        for(float k=-1.5f;k<=1.51f;k+=0.75f) {
-            const float a=std::clamp(along+k,0.0f,WindthrowPlacement::TrunkLength);
-            sum+=Plan(a,0.0f).Y+0.82f*WindthrowPlacement::RadiusAt(a);++count;
-        }
-        const Vector3 ground=Plan(along,0.0f);
-        const float r=WindthrowPlacement::RadiusAt(along);
-        float y=std::max(sum/static_cast<float>(count),ground.Y+0.6f*r);
-        if(along<1.4f) y=std::max(y,w_.groundY+r+0.22f*(1.0f-std::max(along,0.0f)/1.4f));
-        return Vector3(ground.X,y,ground.Z);
+        const auto a=w_.Axis(along,ground_);
+        return Vector3(a[0],a[1],a[2]);
     }
     Vector3 Radial(const float theta) const {return s_*std::cos(theta)+Vector3::Up*std::sin(theta);}
 

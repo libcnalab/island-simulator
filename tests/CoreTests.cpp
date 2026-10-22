@@ -134,6 +134,7 @@
 #include "IslandSimulator/TermiteNestLayout.hpp"
 #include "IslandSimulator/FlyingFishShoal.hpp"
 #include "IslandSimulator/WindthrowLayout.hpp"
+#include "IslandSimulator/GlowingFungusLayout.hpp"
 #include "IslandSimulator/SwimDepth.hpp"
 #include "IslandSimulator/ProceduralMeshValidation.hpp"
 #include "IslandSimulator/RockSurface.hpp"
@@ -9743,6 +9744,22 @@ int main()
                       && terrain.SignedShoreDistance(fallen->x, fallen->z) >= island::WindthrowLayout::MinimumShoreDistance
                       && (!moved || std::hypot(moved->x - fallen->x, moved->z - fallen->z) > 14.0f),
                   "the windthrown giant lies through a trunk, outside the jungle, leaves gaps in its block or ignores a place to keep away from");
+            // the foxfire on its low flanks: on the bark, a little below level, facing out
+            const auto ground = [&terrain](const float x, const float z) { return terrain.Height(x, z); };
+            const auto fungi = island::GlowingFungusLayout::Place(terrain, &*fallen, {}, ground);
+            bool onBark = fungi.size() == 8U;
+            for (const auto& cluster : fungi) {
+                float best = 1e9f;
+                for (float a = 0.0f; a <= W::TrunkLength; a += 0.05f) {
+                    const auto axis = fallen->Axis(a, ground);
+                    best = std::min(best, std::hypot(std::hypot(cluster.at[0] - axis[0], cluster.at[2] - axis[2]), cluster.at[1] - axis[1])
+                                              - W::RadiusAt(a) * 1.04f);
+                }
+                const float length = std::hypot(std::hypot(cluster.normal[0], cluster.normal[1]), cluster.normal[2]);
+                onBark = onBark && std::abs(best) < 0.05f && std::abs(length - 1.0f) < 1e-3f && cluster.normal[1] < 0.35f
+                    && cluster.normal[1] > -0.45f && cluster.count >= 6U;
+            }
+            Check(onBark, "the foxfire clumps are not on the fallen giant's low flanks");
         }
     }
     {

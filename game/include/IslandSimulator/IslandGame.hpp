@@ -75,6 +75,7 @@
 #include "IslandSimulator/TermiteNestRenderer.hpp"
 #include "IslandSimulator/FlyingFishRenderer.hpp"
 #include "IslandSimulator/WindthrowRenderer.hpp"
+#include "IslandSimulator/GlowingFungusRenderer.hpp"
 #include "IslandSimulator/DolphinPod.hpp"
 #include "IslandSimulator/DolphinRenderer.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
@@ -289,6 +290,7 @@ namespace island
         FlyingFishDetail,
         WindthrowDetail,
         WindthrowLogDetail,
+        GlowingFungiDetail,
         PlaneWreckDetail,
         PlaneCockpitDetail,
         BeachLitterDetail,
@@ -644,6 +646,8 @@ namespace island
         std::unique_ptr<TermiteNestRenderer> termiteNestRenderer_;
         std::optional<WindthrowPlacement> windthrowPlacement_;  // the windthrown jungle giant
         std::unique_ptr<WindthrowRenderer> windthrowRenderer_;
+        std::vector<FungusCluster> glowingFungi_;   // the foxfire mushrooms on the dead wood
+        std::unique_ptr<GlowingFungusRenderer> glowingFungusRenderer_;
         std::unique_ptr<BridgeRenderer> bridgeRenderer_;
         std::unique_ptr<LookoutRenderer> lookoutRenderer_;
         FallingFruitField fallingFruit_{terrain_};

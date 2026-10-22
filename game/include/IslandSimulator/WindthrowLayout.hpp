@@ -1,6 +1,7 @@
 #pragma once
 #include "IslandSimulator/JungleLayout.hpp"
 #include "IslandSimulator/WorldCollision.hpp"
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <optional>
@@ -28,6 +29,22 @@ struct WindthrowPlacement {
     }
     /** The trunk's radius `along` it. */
     [[nodiscard]] static float RadiusAt(float along) noexcept;
+    /** The trunk's axis `along` it over `ground` (the drawn ground's height under x, z): resting
+     *  on the ground's high points, held up at its foot by the plate. */
+    template<class Ground>
+    [[nodiscard]] std::array<float,3> Axis(const float along,const Ground& ground) const {
+        float sum=0.0f;int count=0;
+        for(float k=-1.5f;k<=1.51f;k+=0.75f) {
+            const float a=std::clamp(along+k,0.0f,TrunkLength);
+            const auto p=At(a,0.0f);
+            sum+=ground(p[0],p[1])+0.82f*RadiusAt(a);++count;
+        }
+        const auto p=At(along,0.0f);
+        const float r=RadiusAt(along);
+        float y=std::max(sum/static_cast<float>(count),ground(p[0],p[1])+0.6f*r);
+        if(along<1.4f) y=std::max(y,groundY+r+0.22f*(1.0f-std::max(along,0.0f)/1.4f));
+        return {{p[0],y,p[1]}};
+    }
     /** Circles along the trunk and the plate that block the walker and the animals. */
     [[nodiscard]] std::vector<CircularObstacle> Obstacles() const;
 };
