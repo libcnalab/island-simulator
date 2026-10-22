@@ -233,6 +233,14 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 446 (2026-10-22) — the far hermit crab carries the same coiled shell
+
+Since pass 424 a hermit crab's shell changed its form at 18 m: the near coil gave way to the old banded
+body of revolution. The far shell is now the same logarithmic coil, coarser (four rings a turn by five
+sides, 360 vertices, still the shell alone), and the old station shell and its helpers are gone. Judged
+with the detail distance held at 5 cm for one capture (`hermit-crabs`): the coarse coil and its aperture
+read as the near one does.
+
 ## Loop pass 445 (2026-10-22) — sea anemones with their clownfish
 
 About one coral head in six (94 of the 505) has a sea anemone on the seabed at its foot (0.32-0.48 m
