@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 471 (2026-10-22) — the stream runs cloudy brown after the rain
+
+The stream stayed clear over its gravel through any downpour. The runoff now carries silt
+(`uSilt`), taken from the weather's wetness: none until the ground is properly wet (0.25), full once
+it is soaked (0.85), and clearing again as it dries. The water turns a cloudy brown, thickest in
+the middle where the current runs, and grows opaque enough to hide the bed. The cascade's foam
+stays white. In `stream` under `--weather showers` (wetness 0.85 from the start) the channel no
+longer shows its pebbles; the clear-weather `stream` is unchanged.
+
 ## Loop pass 470 (2026-10-22) — the rain levels the ruts and the drag grooves too
 
 Pass 469 made the rain erode the footprints. The quad's tyre ruts (`TyreTrackField`), the hermit

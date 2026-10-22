@@ -15,6 +15,8 @@
 #include "Microsoft/Xna/Framework/Graphics/BlendState.hpp"
 #include "Microsoft/Xna/Framework/Graphics/DepthStencilState.hpp"
 #include "Microsoft/Xna/Framework/Graphics/RasterizerState.hpp"
+#include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <iostream>
 #include <type_traits>
@@ -22,6 +24,11 @@ using namespace Microsoft::Xna::Framework;
 using namespace Microsoft::Xna::Framework::Graphics;
 namespace island {
 namespace {
+// The runoff's silt from the weather's wetness: none until the ground is properly wet, full once
+// it is soaked; it clears again as the ground dries.
+float Silt(const float wetness) noexcept {
+    return std::isfinite(wetness)?std::clamp((wetness-.25f)/.6f,0.0f,1.0f):0.0f;
+}
 struct StreamGpuVertex {
     float position[3];
     float flowDistanceOpacity[4];
@@ -59,6 +66,7 @@ uniform float uTime;uniform vec3 uCamera;uniform vec2 uCascade;
 uniform vec3 uSkyTint;   // the hour's low sky against the afternoon's, for the mirrored sky
 uniform vec4 uRings[16];   // rings spreading on the water: x, z, age (s), strength (0: none)
 uniform float uRain;       // 0..1 the weather's rain, ringing the water
+uniform float uSilt;       // 0..1 the runoff's silt: brown and cloudy while the ground is soaked
 out vec4 fragColor;
 // Rain on water: each drop rings the surface, the ring widening and fading in under a second,
 // the drops falling at random across two offset grids of cells, with a pale splash at a drop's
@@ -147,9 +155,13 @@ void main(){
     water+=vec3(.52,.60,.46)*(bankBand*(.24+.14*streak)+riffle*.24);
     water+=vec3(.40,.68,.59)*braided*.29;
     water+=vec3(.62,.72,.68)*uSkyTint*ringLight*.55;
+    // After the rain the runoff carries the soil down: the water turns a cloudy brown that
+    // hides the bed, thickest in the middle where the current runs.
+    water=mix(water,vec3(.30,.235,.15)*mix(.85,1.05,broad),uSilt*(.55+.20*centreDepth));
     // clear enough to show the gravel bed except where it mirrors the sky
     float alpha=opacity*(.40*mix(.55,1.0,centreDepth)+fresnel*.36+streak*.065+bankBand*.10+riffle*.11
         +centreDepth*.055+braided*.055+ringLight*.30);
+    alpha=mix(alpha,max(alpha,opacity*.86),uSilt);   // silt hides the bed
     // White water: the sheet over the lip, the plunge below it and a foam raft that the
     // pool carries downstream and lets dissolve, all pulsing with the drop height.
     float sinceDrop=courseDistance-uCascade.x;
@@ -220,6 +232,7 @@ void StreamWaterRenderer::Draw(const Matrix& view,const Matrix& projection,const
         effect_->SetUniformVec3("uSkyTint",sky.x,sky.y,sky.z);
     }
     effect_->SetUniformFloat("uRain",weather_now::Current().rain);
+    effect_->SetUniformFloat("uSilt",Silt(weather_now::Current().wetness));
     for(std::size_t slot=0;slot<StreamRingField::Capacity;++slot) {
         static const auto names=[] {
             std::array<std::string,StreamRingField::Capacity> result;
