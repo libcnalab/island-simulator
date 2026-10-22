@@ -9552,7 +9552,8 @@ int main()
     }
 
     {
-        // The castaway's HELP ME: some 150 stones along the strokes on level dry beach sand, the
+        // The castaway's HELP ME, big enough for an aircraft: some 600 stones in double rows along
+        // the strokes on level dry beach sand, the
         // letters' tops inland and the text running left to right for a reader facing inland.
         const island::IslandTerrain terrain;
         const std::vector<island::CircularObstacle> none;
@@ -9573,8 +9574,8 @@ int main()
                 && sign->alongX * rightX + sign->alongZ * rightZ > 0.99f && stones == sign->Stones();
         }
         std::cout << "help sign stones " << count << '\n';
-        Check(sign && sound && count > 120 && count < 200,
-              "the castaway's HELP ME lies in some 150 stones on dry beach sand, reading from the sea");
+        Check(sign && sound && count > 500 && count < 900 && island::StoneSignPlacement::Length() > 35.0f,
+              "the castaway's HELP ME runs some forty metres over dry beach sand in some 600 stones, reading from the sea");
     }
     {
         // The stone god stands on a level rise inland, clear of the obstacles and away from the

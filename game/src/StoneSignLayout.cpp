@@ -42,15 +42,18 @@ std::vector<SignStone> StoneSignPlacement::Stones() const {
         for(const Stroke& stroke:Letter(*c)) {
             const float x0=origin+stroke.x0*LetterWidth,y0=stroke.y0*scale,x1=origin+stroke.x1*LetterWidth,y1=stroke.y1*scale;
             const float length=std::hypot(x1-x0,y1-y0);
-            const int count=std::max(2,static_cast<int>(std::round(length/0.30f))+1);
-            for(int n=0;n<count;++n) {
+            const float acrossX=-(y1-y0)/length,acrossY=(x1-x0)/length;
+            const int count=std::max(2,static_cast<int>(std::round(length/0.42f))+1);
+            for(int n=0;n<count;++n) for(const float row:{-0.24f,0.24f}) {
                 const float t=static_cast<float>(n)/static_cast<float>(count-1);
                 ++index;
-                const float u=x0+(x1-x0)*t+(Hash(index*3U)-0.5f)*0.08f,v=y0+(y1-y0)*t+(Hash(index*3U+1U)-0.5f)*0.08f;
+                const float shift=row+(n%2==0?0.0f:0.06f);
+                const float u=x0+(x1-x0)*t+acrossX*shift+(Hash(index*3U)-0.5f)*0.10f;
+                const float v=y0+(y1-y0)*t+acrossY*shift+(Hash(index*3U+1U)-0.5f)*0.10f;
                 const auto p=At(u,v);
                 SignStone stone;
                 stone.x=p[0];stone.z=p[1];
-                stone.radius=0.11f+0.07f*Hash(index*3U+2U);
+                stone.radius=0.18f+0.12f*Hash(index*3U+2U);
                 stone.yaw=6.2831853f*Hash(index*7U+5U);
                 stone.tone=static_cast<std::uint8_t>(Hash(index*11U+3U)<0.12f?4U:static_cast<unsigned>(Hash(index*13U+1U)*4.0f)%4U);
                 stones.push_back(stone);
@@ -78,20 +81,24 @@ std::optional<StoneSignPlacement> StoneSignLayout::FindInWorld(
         sign.x=seaX*radius-sign.alongX*length*0.5f;sign.z=seaZ*radius-sign.alongZ*length*0.5f;
         bool fits=true;
         float low=1e9f,high=-1e9f;
-        for(float along=-0.5f;along<=length+0.5f&&fits;along+=0.8f) for(const float up:{-0.4f,1.2f,2.8f}) {
+        for(float along=-0.8f;along<=length+0.8f&&fits;along+=1.2f) for(const float up:{-0.4f,2.0f,4.5f,7.4f}) {
             const auto p=sign.At(along,up);
             const TerrainSample sample=terrain.Sample(p[0],p[1]);
-            if(sample.surface!=TerrainSurface::DrySand||sample.slopeRadians>0.14f||sample.height<0.35f) {fits=false;break;}
+            if(sample.surface!=TerrainSurface::DrySand||sample.slopeRadians>0.18f||sample.height<0.35f) {fits=false;break;}
             low=std::min(low,sample.height);high=std::max(high,sample.height);
         }
-        if(!fits||high-low>1.0f) continue;
-        const auto mid=sign.At(length*0.5f,1.2f);
-        for(const auto& point:avoid) fits=fits&&std::hypot(point[0]-mid[0],point[1]-mid[1])>keepAway+length*0.5f;
+        if(!fits||high-low>2.2f) continue;
+        const auto mid=sign.At(length*0.5f,3.5f);
+        // the distance from a point to the sign's rectangle (its stones and a margin round them)
+        const auto outside=[&](const float px,const float pz) {
+            const float dx=px-mid[0],dz=pz-mid[1];
+            const float along=std::abs(dx*sign.alongX+dz*sign.alongZ)-length*0.5f,up=std::abs(dx*sign.upX+dz*sign.upZ)-4.2f;
+            return std::hypot(std::max(along,0.0f),std::max(up,0.0f));
+        };
+        for(const auto& point:avoid) fits=fits&&outside(point[0],point[1])>keepAway;
         for(const CircularObstacle& obstacle:obstacles) {
             if(!fits) break;
-            const float dx=obstacle.x-mid[0],dz=obstacle.z-mid[1];
-            const float along=std::abs(dx*sign.alongX+dz*sign.alongZ)-length*0.5f,up=std::abs(dx*sign.upX+dz*sign.upZ)-1.6f;
-            if(std::hypot(std::max(along,0.0f),std::max(up,0.0f))-obstacle.radius<2.0f) fits=false;
+            if(outside(obstacle.x,obstacle.z)-obstacle.radius<2.0f) fits=false;
         }
         if(fits) return sign;
     }

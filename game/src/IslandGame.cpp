@@ -411,7 +411,7 @@ namespace island
             // The castaway's HELP ME in stones on another beach, away from the whale's bones, the
             // jetty and the nests (the stones are stepped over, not walked round).
             if(whalePlacement_) avoid.push_back(whalePlacement_->At(4.0f,0.0f));
-            stoneSignPlacement_=StoneSignLayout::FindInWorld(terrain_,worldObstacles,avoid,45.0f);
+            stoneSignPlacement_=StoneSignLayout::FindInWorld(terrain_,worldObstacles,avoid,10.0f);
         }
         birdFlock_.SetPerchSites(birdPerchLayout_.Sites());
         {
@@ -1764,12 +1764,12 @@ namespace island
             // From above the sea's edge before the sign, as from a low pass, looking down on it.
             if(!stoneSignPlacement_) throw std::runtime_error("Help sign QA requires the stone sign");
             const auto& s=*stoneSignPlacement_;
-            const auto mid=s.At(StoneSignPlacement::Length()*0.5f,1.2f),eye=s.At(StoneSignPlacement::Length()*0.5f,-9.0f);
-            cameraPosition_=Vector3(eye[0],terrain_.Height(mid[0],mid[1])+8.5f,eye[1]);
+            const auto mid=s.At(StoneSignPlacement::Length()*0.5f,3.5f),eye=s.At(StoneSignPlacement::Length()*0.5f,-34.0f);
+            cameraPosition_=Vector3(eye[0],terrain_.Height(mid[0],mid[1])+30.0f,eye[1]);
             const Vector3 direction=Vector3(mid[0],terrain_.Height(mid[0],mid[1]),mid[1])-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
-            std::cout<<"island-simulator: help-sign QA camera looks down on the castaway's stones from above the sea's edge\n";
+            std::cout<<"island-simulator: help-sign QA camera looks down on the castaway's stones from a low pass over the sea\n";
         } else if (viewpoint_ == FixedViewpoint::IdolDetail) {
             // Before the god, a little to one side, looking up at its face.
             if(!idolPlacement_) throw std::runtime_error("Idol QA requires the stone god");

@@ -233,6 +233,25 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 497 (2026-10-22) — HELP ME across the whole beach, big enough for an aircraft
+
+The operator found pass 496's sign ridiculously small: it has to run across the whole beach, so
+aircraft can see it. A real castaway's sign is laid out to be read from the air.
+
+- **Size.** The letters are now 7 m tall and 4.6 m wide, 1.6 m apart, with a 4 m word gap: some
+  forty metres of HELP ME.
+- **Strokes.** Each stroke is two staggered rows of stones about every 0.42 m (0.36–0.6 m across),
+  580 stones in all, so the letters read bold from above.
+- **`StoneSignLayout`.** The baseline sits 6 m up from the shoreline. The 40 m straight line, a
+  chord of the curving shore, came within reach of the wet sand at its ends when it sat nearer.
+  It needs dry sand from 0.4 m below the baseline to 7.4 m above it (slope under 0.18, a rise
+  under 2.2 m). The avoided points keep 10 m off its rectangle: measured from its middle, the
+  turtle crawls had ruled out every beach. It now lies on the south beach at (0, −231).
+
+QA view `help-sign` (`20261022T081423`) looks down on it from a low pass over the sea, 30 m up and 34 m
+out: HELP ME stretches over the beach between the surf and the palms. The core test checks a 35 m
+line of 500–900 stones.
+
 ## Loop pass 496 (2026-10-22) — a castaway's HELP ME in stones on the beach
 
 Operator request: HELP ME, or something like it, laid out in stones on a beach, as a castaway

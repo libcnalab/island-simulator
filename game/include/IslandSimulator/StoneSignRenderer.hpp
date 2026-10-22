@@ -16,7 +16,7 @@ class RenderedTerrainSurface;
 class SunShadowMap;
 
 // The castaway's HELP ME laid out in stones on the beach, in one opaque vertex-coloured draw:
-// some hundred and seventy irregular, flattened stones (dark volcanic ones and a few white lumps
+// some six hundred irregular, flattened stones in double rows (dark volcanic ones and a few white lumps
 // of dead coral) along the letters' strokes, half sunk in the sand; lit by the hour's sun and
 // receiving and casting the sun shadows.
 class StoneSignRenderer final {
