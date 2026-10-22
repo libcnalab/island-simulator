@@ -233,6 +233,29 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 496 (2026-10-22) — a castaway's HELP ME in stones on the beach
+
+Operator request: HELP ME, or something like it, laid out in stones on a beach, as a castaway
+would. HELP ME is laid out in 149 stones on the north-east beach at (57, 205), each letter 2.4 m
+tall and the line 15 m long. It reads from the sea and from the air.
+
+- **`StoneSignLayout`.** It searches the shore sunwise from the south for the first stretch of
+  level dry sand, 7 m up from the shoreline, that holds the whole line with its margins. It must be
+  clear of every obstacle by 2 m and at least 45 m beyond the whale's bones, the jetty's root and
+  every turtle nest and crawl. The letters' tops point inland, so for a reader facing inland from
+  the sea the text runs to the right.
+- **The stones.** They lie about every 0.3 m along the letters' strokes (H, E, L, P with its
+  bowl, M), jittered a little. Each is 0.11–0.18 m across, with its own turn and tone: four dark
+  volcanic greys, and about one in eight a white lump of dead coral.
+- **`StoneSignRenderer`.** One opaque `SculptMeshBuilder` draw of 8,344 triangles. Each stone is
+  an irregular flattened loft of four rings, every corner pushed in or out, sunk to some forty per
+  cent of its height and stained toward damp sand at its foot. It is relit by the hour, receives
+  and casts the sun shadows, and the walker steps over it.
+
+QA view `help-sign` (`20261022T080350`) looks down on it from above the sea's edge: the words read
+clearly. A core test checks some 150 stones on dry sand, the letters' tops inland, the reading
+direction and determinism. The validator requires the diagnostic line in every capture.
+
 ## Loop pass 495 (2026-10-22) — a stone god stands on a rise inland
 
 Operator request: a statue of some god somewhere on the island. A weathered basalt tiki idol

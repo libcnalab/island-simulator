@@ -103,6 +103,7 @@
 #include "IslandSimulator/SunSteamField.hpp"
 #include "IslandSimulator/WhaleSkeletonLayout.hpp"
 #include "IslandSimulator/IdolStatueLayout.hpp"
+#include "IslandSimulator/StoneSignLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/LookoutLayout.hpp"
 #include "IslandSimulator/FallingFruitField.hpp"
@@ -9550,6 +9551,31 @@ int main()
               "gust fronts travel downwind at the front speed");
     }
 
+    {
+        // The castaway's HELP ME: some 150 stones along the strokes on level dry beach sand, the
+        // letters' tops inland and the text running left to right for a reader facing inland.
+        const island::IslandTerrain terrain;
+        const std::vector<island::CircularObstacle> none;
+        const auto sign = island::StoneSignLayout::FindInWorld(terrain, none, {});
+        bool sound = false;
+        std::size_t count = 0;
+        if (sign) {
+            const auto stones = sign->Stones();
+            count = stones.size();
+            bool onSand = true;
+            for (const auto& stone : stones)
+                onSand = onSand && terrain.Sample(stone.x, stone.z).surface == island::TerrainSurface::DrySand;
+            const auto inland = sign->At(island::StoneSignPlacement::Length() * 0.5f, 3.0f);
+            const auto seaward = sign->At(island::StoneSignPlacement::Length() * 0.5f, -3.0f);
+            // a reader facing inland (along up) has the text running to their right
+            const float rightX = -sign->upZ, rightZ = sign->upX;
+            sound = onSand && terrain.SignedShoreDistance(inland[0], inland[1]) > terrain.SignedShoreDistance(seaward[0], seaward[1])
+                && sign->alongX * rightX + sign->alongZ * rightZ > 0.99f && stones == sign->Stones();
+        }
+        std::cout << "help sign stones " << count << '\n';
+        Check(sign && sound && count > 120 && count < 200,
+              "the castaway's HELP ME lies in some 150 stones on dry beach sand, reading from the sea");
+    }
     {
         // The stone god stands on a level rise inland, clear of the obstacles and away from the
         // avoided points, facing out to sea; an obstacle on its spot moves it elsewhere.

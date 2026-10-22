@@ -89,6 +89,7 @@ add_library(island_core STATIC
     game/src/JettyLayout.cpp
     game/src/WhaleSkeletonLayout.cpp
     game/src/IdolStatueLayout.cpp
+    game/src/StoneSignLayout.cpp
     game/src/BridgeLayout.cpp
     game/src/LookoutLayout.cpp
     game/src/FallingFruitField.cpp
@@ -778,6 +779,7 @@ if(ISLAND_BUILD_GAME)
         game/src/JettyRenderer.cpp
         game/src/WhaleSkeletonRenderer.cpp
         game/src/IdolStatueRenderer.cpp
+        game/src/StoneSignRenderer.cpp
         game/src/BridgeRenderer.cpp
         game/src/LookoutRenderer.cpp
         game/src/FallingFruitRenderer.cpp
