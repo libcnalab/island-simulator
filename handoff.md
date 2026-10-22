@@ -1,5 +1,100 @@
 # island-simulator handoff
 
+## Resume here — session stopped by the operator (2026-10-22, after loop pass 549)
+
+**State.**
+- The operator asked to finish the current task, update this file, commit, push and stop.
+- Loop pass 549 (foxfire mushrooms) is the last completed pass. It is committed with its native
+  tests (76/76), its QA captures, a Web build (`build-probe`, rc 0) and an Android
+  `assembleDebug` (rc 0).
+- The working tree is clean apart from this handoff commit, and `develop` is pushed to `origin`.
+- Every operator request recorded below is done (`[x]`):
+  - the 20-item backlog, re-evidenced in passes 484 and 512;
+  - day/night, weather and the quad bike;
+  - the whale skeleton, idol, HELP ME, lighthouse, WWII plane, PET bottles, the 30 m enterable
+    coaster with skeletons, the lantern-lit mine, the volcano with lava, and the README gallery.
+- The standing operator instruction is an endless loop: invent an improvement, implement it,
+  test it, commit, repeat. A new session should resume that loop unless the operator says
+  otherwise. Talk to the operator in Czech.
+
+**Ask the operator to confirm in play** (pass 548, an operator bug report):
+- The old mine's mouth no longer shows the sky through the island from any side.
+- The quad (F) can now be driven up the approach into the cutting, the adit and the chamber. It
+  must weave past the crates (depth 11.6-12.7, left) and the rubble (30.2-31.9, right).
+- The bunker's apron had the same smaller sky sliver and is fixed too.
+
+**Per-pass procedure** (followed for passes 200-549):
+1. Implement, then build natively (see the build commands below).
+2. Run `./build-consumer/island_core_tests`, then the full ctest:
+   `ctest --test-dir build-consumer -j3 -E '^(IslandGameStartupReportValidation|IslandGameCaptureValidation)$'`
+   (76 tests, all must pass).
+3. Capture a new QA viewpoint, look at the PNG at 1:1 or 2x crops, and fix what looks wrong.
+4. Insert `## Loop pass N (date) — title` in `PLAN.md` above the previous pass entry, and a
+   `- Pass N: …` line in this file above the previous `- Pass` line (search for "- Pass 549").
+5. Commit on `develop`: no attribution lines, only after the tests pass.
+6. Run the Web build, plus the Android build when source files were added.
+7. Never push unless the operator asks.
+
+**Commands** (from the repo root; `export CCACHE_DIR=/rv/cnaccache CCACHE_BASEDIR=/rv` first,
+never set `CCACHE_MAXSIZE`, at most `--parallel 3`):
+- Native build: `cmake --build build-consumer --parallel 3`.
+- Software capture (never the host AMD GPU):
+  - `sg systemd-journal -c "python3 tools/run_software_capture.py build-consumer <view> [--time-of-day H]"`.
+  - Evidence lands in `build-consumer/software-captures/<stamp>-<view>/` (`capture.png`,
+    `workload.log`, `validation.json`).
+- Web: `(source ~/emsdk/emsdk_env.sh; cmake --build build-probe --parallel 3)`.
+- Android:
+  - `cd android && ANDROID_SDK_ROOT=~/Android/Sdk ~/.gradle/wrapper/dists/gradle-8.12-bin/*/gradle-8.12/bin/gradle :app:assembleDebug -PsharpRuntimeRoot=$PWD/../build/dependencies/sharp-runtime-pinned --max-workers=2 -q`.
+
+**Hard constraints.**
+- Never run the game on the host AMD GPU; software runners only. The latch
+  `build/gpu-incident-evidence/QUALIFICATION_STOP.json` must stay.
+- No `tools/run_native_benchmarks.sh` and no `--benchmark`.
+- Build directories: only `build-consumer` (native) and `build-probe` (Web, plus `probe-*`
+  binaries, which must be deleted after use). Never build in `/tmp` or the scratchpad.
+- Never edit sources while a Web or Android build runs.
+- No screen-space flicker effects.
+- Custom GLSL vertex shaders need `gl_Position.z=2.0*gl_Position.z-gl_Position.w`.
+- Terrain the landmarks hide must be fully covered by their own geometry. Check it from the side
+  and from above (pass 548).
+
+**Adding a QA viewpoint.** Every new view touches five places:
+- an enum entry in `IslandGame.hpp` `FixedViewpoint`;
+- a name case in `IslandGame.cpp` `ViewpointName` and in `Main.cpp`;
+- the parse block in `Main.cpp`;
+- the camera code in `IslandGame.cpp`, printing a QA phrase;
+- the viewpoint in the choices set of `tools/run_software_capture.py`, plus a check for its
+  phrase.
+
+Dark views need a reviewed profile in `tools/validate_capture.py` (`DIM_INTERIOR_VIEWPOINTS`, or
+the night profile via `--time-of-day`).
+
+**Known caveats left open.**
+- The `glowing-fungi` view at the default 14:00 fails the scene profile's luminance spread (a
+  low-contrast close-up of the log). The pass captures it at 22:00; the day frame is evidence
+  only.
+- A quad standing on the hillside more than 1.4 m above the mine's floor next to the cutting
+  still meets the hidden heightfield over the cut, an edge case.
+- The QA cameras for the windthrow and the foxfire choose a clear eye from the jungle obstacles
+  only (not the ground plants), so a big leaf can stand in the foreground.
+
+**Ideas not yet done** (candidates for the next loop passes):
+- winged termites swarming out of the pass-545 nests at dusk after rain, with geckos and bats
+  feeding on them;
+- a light gap in the canopy over the windthrown giant, with saplings racing up in it;
+- foxfire also on the standing snags;
+- mudskippers on the mangrove mud;
+- weaver-bird nests hanging from palm fronds;
+- grass kept out of the windthrow's pit;
+- a longer `quad-mine` drive to the crates;
+- a night `glowing-fungi` view on a fallen log away from the giant.
+
+The latest passes (541-549) are the top `- Pass` lines below and the top `## Loop pass` entries
+in `PLAN.md`:
+- the passing freighter, the breaching humpback and the live lava flow;
+- screw pines, termite nests and flying fish;
+- the windthrown giant, the mine/quad fix and the foxfire.
+
 ## Backlog (agent-actionable, 2026-10-19)
 
 Distilled from `PLAN.md` "Latest operator priorities — 2026-10-12" and "Current significant
