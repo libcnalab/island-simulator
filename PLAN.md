@@ -233,6 +233,31 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 521 (2026-10-22) — the volcano's bombs, crusts and lit steam
+
+Four things on the volcano looked artificial at 2x crops of the `volcano` and `volcano-crater`
+views.
+
+- **Bombs.** The 70 lava blocks on the slopes were plain boxes. They read as black rectangles by
+  day and as holes by night. They are now lumpy, flattened, faceted rocks (7 around, 4 bands,
+  each vertex pushed out or in at random), half bedded in the ash. Most are black vesicular lava
+  and a few are red scoria (a `Bomb` marker pigment the cone's tint recognises).
+- **Fumarole crusts.** The sulphur round each vent was a per-quad tint on the cone's ~1 m quads,
+  so it showed as a yellow square. It is now a ragged patch of its own: 18 spokes of random
+  reach, laid 4 cm over the ash. It is brightest at the vent and paler and dirtier at its edge
+  (a `Crust` marker). The crusted stones round the mouths take the same colour.
+- **Crater wall.** The sulphur on the wall's upper ledges had about one noise period per quad
+  behind a steep threshold, so it showed as a scatter of yellow tiles. It now lies in softer
+  patches several quads across.
+- **Night glow.** The 28 m outer halo was a flat, even disc of orange. It drops to a faint sky
+  glow. Instead, each of the plume's 22 puffs is lit by the lake beneath it: its strength falls
+  to 1/e over `PlumeLightFalloff` = 13 m of height. The light now leans and thins with the steam
+  downwind. The 15 m core over the rim stays as it was.
+- **Evidence.** `volcano` `20261022T122201`, `volcano --time-of-day 22` `20261022T122222`,
+  `volcano-crater` `20261022T122259`.
+
+The suite is 76/76.
+
 ## Loop pass 520 (2026-10-22) — the coast's birds perch on the new landmarks
 
 The shore birds perched only on the old wreck, two rocks, the jetty's mooring post, the hut's

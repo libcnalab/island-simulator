@@ -46,7 +46,10 @@ float Noise(const float x,const float y) {
     return (a+(b-a)*tx)+((c+(d-c)*tx)-(a+(b-a)*tx))*ty;
 }
 const Vector3 Soil(112,90,70),Moss(84,104,58),Basalt(72,66,64),Ash(140,136,128),Flow(44,42,44),
-    Sulphur(206,186,80),Scoria(138,70,52),Wall(64,54,50);
+    Sulphur(206,186,80),Scoria(138,70,52),Wall(64,54,50),
+    // marker pigments the cone's tint recognises: the fumaroles' crusts and the lava's bombs
+    Crust(214,196,92),Bomb(50,46,46);
+bool Same(const Vector3& a,const Vector3& b) {return a.X==b.X&&a.Y==b.Y&&a.Z==b.Z;}
 
 constexpr const char* LavaVertex=R"(
 layout(location=0) in vec3 aPosition;
@@ -101,10 +104,25 @@ VolcanoRenderer::VolcanoRenderer(GraphicsDevice& device,const IslandTerrain& ter
     b.tint=[](const Vector3& pigment,const Vector3& normal,const Vector3& centre) {
         const float r=V::Radius(centre.X,centre.Z),theta=V::Bearing(centre.X,centre.Z);
         const float h=centre.Y-V::BaseY;
-        if(pigment.X==Wall.X&&pigment.Y==Wall.Y&&pigment.Z==Wall.Z) {
-            // the crater's wall: dark, with sulphur crusting its upper ledges
-            const float sulphur=std::clamp((Noise(theta*24.0f,h*2.6f)-0.7f)*4.0f,0.0f,1.0f)*std::clamp((h-19.0f)/4.0f,0.0f,1.0f);
-            return Vector3::Lerp(Wall*(0.9f+0.15f*Noise(theta*40.0f,h*3.0f)),Sulphur*0.8f,sulphur*0.45f);
+        if(Same(pigment,Crust)) {
+            // sulphur, brightest at the vent and paler and dirtier out at the crust's ragged edge
+            float reach=1e9f;
+            for(int k=0;k<4;++k)
+                reach=std::min(reach,std::hypot(centre.X-V::X-std::cos(V::VentBearings[k])*V::VentRadii[k],
+                                                centre.Z-V::Z-std::sin(V::VentBearings[k])*V::VentRadii[k]));
+            const Vector3 colour=Vector3::Lerp(Sulphur*1.12f,Vector3(176,166,118),std::clamp(reach/2.4f,0.0f,1.0f));
+            return colour*(0.9f+0.18f*Noise(centre.X*3.1f,centre.Z*3.1f));
+        }
+        if(Same(pigment,Bomb)) {
+            // black vesicular lava, a few of the blocks red scoria
+            const float red=std::clamp((Noise(centre.X*0.31f+7.0f,centre.Z*0.31f)-0.62f)*3.0f,0.0f,1.0f);
+            return Vector3::Lerp(Bomb,Vector3(104,62,50),red)*(0.86f+0.28f*Noise(centre.X*2.3f,centre.Z*2.3f+centre.Y*1.7f));
+        }
+        if(Same(pigment,Wall)) {
+            // the crater's wall: dark, with sulphur crusting its upper ledges in patches several
+            // quads across (a patch per quad read as a scatter of yellow tiles)
+            const float sulphur=std::clamp((Noise(theta*5.0f,h*0.8f)-0.55f)*2.2f,0.0f,1.0f)*std::clamp((h-19.0f)/4.0f,0.0f,1.0f);
+            return Vector3::Lerp(Wall*(0.92f+0.1f*Noise(theta*9.0f,h*1.1f)),Sulphur*0.75f,sulphur*0.4f);
         }
         const float n=Noise(centre.X*0.12f,centre.Z*0.12f),fine=Noise(centre.X*0.5f,centre.Z*0.5f);
         // low down weathered soil going green, then black basalt, grey ash high up
@@ -120,12 +138,6 @@ VolcanoRenderer::VolcanoRenderer(GraphicsDevice& device,const IslandTerrain& ter
         const float rim=std::clamp((h-23.0f)/2.5f,0.0f,1.0f);
         colour=Vector3::Lerp(colour,Scoria,rim*std::clamp((n-0.4f)*3.0f,0.0f,1.0f)*0.7f);
         colour=Vector3::Lerp(colour,Sulphur,rim*std::clamp((fine-0.7f)*4.0f,0.0f,1.0f)*0.8f);
-        // the fumaroles' crusts: bright sulphur round each vent, fading out over two metres
-        for(int k=0;k<4;++k) {
-            const float vx=V::X+std::cos(V::VentBearings[k])*V::VentRadii[k],vz=V::Z+std::sin(V::VentBearings[k])*V::VentRadii[k];
-            const float reach=std::hypot(centre.X-vx,centre.Z-vz)/(1.6f+0.6f*n);
-            colour=Vector3::Lerp(colour,Sulphur*1.15f,std::clamp(1.0f-reach,0.0f,1.0f)*0.85f);
-        }
         // the gullies hold the darker wet grit
         const float gully=0.5f+0.5f*std::cos(11.0f*theta+2.0f*std::sin(3.0f*theta)+r*0.07f);
         colour*=1.0f-0.12f*std::pow(gully,4.0f)*std::sin(Pi*std::clamp((V::BaseRadius-r)/(V::BaseRadius-V::RimRadius),0.0f,1.0f));
@@ -153,10 +165,30 @@ VolcanoRenderer::VolcanoRenderer(GraphicsDevice& device,const IslandTerrain& ter
             b.Quad(p00,p10,p11,p01,Wall);
         }
     }
+    // the fumaroles' crusts: a ragged patch of sulphur laid over the ash round each vent
+    for(int k=0;k<4;++k) {
+        const float vx=V::X+std::cos(V::VentBearings[k])*V::VentRadii[k],vz=V::Z+std::sin(V::VentBearings[k])*V::VentRadii[k];
+        constexpr int Spokes=18,Steps=4;
+        std::array<float,Spokes> reach{};
+        for(int i=0;i<Spokes;++i)
+            reach[static_cast<std::size_t>(i)]=1.2f+1.3f*Hash(static_cast<std::uint32_t>(k*97+i)*2654435761U)
+                *(0.6f+0.4f*std::sin(static_cast<float>(i)*0.9f+static_cast<float>(k)));
+        const auto crustAt=[&](const int spoke,const int step) {
+            const float a=2.0f*Pi*static_cast<float>(spoke%Spokes)/Spokes;
+            const float r=reach[static_cast<std::size_t>(spoke%Spokes)]*static_cast<float>(step)/Steps;
+            const float x=vx+std::cos(a)*r,z=vz+std::sin(a)*r;
+            return Vector3(x,V::SurfaceY(x,z)+0.04f,z);
+        };
+        b.inside=Vector3(vx,V::SurfaceY(vx,vz)-1.0f,vz);
+        for(int i=0;i<Spokes;++i) for(int step=0;step<Steps;++step) {
+            if(step==0) b.Face(crustAt(i,0),crustAt(i,1),crustAt(i+1,1),Crust);
+            else b.Quad(crustAt(i,step),crustAt(i,step+1),crustAt(i+1,step+1),crustAt(i+1,step),Crust);
+        }
+    }
     // the fumaroles' mouths: a dark hole ringed with crusted stones
     for(int k=0;k<4;++k) {
         const float vx=V::X+std::cos(V::VentBearings[k])*V::VentRadii[k],vz=V::Z+std::sin(V::VentBearings[k])*V::VentRadii[k];
-        const Vector3 mouth(vx,V::SurfaceY(vx,vz)+0.03f,vz);
+        const Vector3 mouth(vx,V::SurfaceY(vx,vz)+0.06f,vz);
         constexpr int Rim=10;
         b.inside=mouth-Vector3::Up;
         for(int i=0;i<Rim;++i) {
@@ -167,10 +199,29 @@ VolcanoRenderer::VolcanoRenderer(GraphicsDevice& device,const IslandTerrain& ter
             const Vector3 stone=mouth+(r0+r1)*1.25f;
             const float size=0.12f+0.06f*static_cast<float>((i*7+k)%3);
             b.Box(Vector3(stone.X,V::SurfaceY(stone.X,stone.Z)+size*0.4f,stone.Z),Vector3::Normalize(r0),Vector3::Up,
-                  Vector3::Normalize(Vector3::Cross(r0,Vector3::Up)),size,size*0.7f,size,Sulphur*0.95f,Sulphur*1.1f);
+                  Vector3::Normalize(Vector3::Cross(r0,Vector3::Up)),size,size*0.7f,size,Crust,Crust);
         }
     }
-    // blocks of black lava and scoria scattered down the slopes, half bedded in the ash
+    // blocks of black lava and scoria and the rounder bombs scattered down the slopes, half bedded
+    // in the ash: lumpy, a little flattened, no two alike
+    const auto lump=[&](const Vector3& centre,const Vector3& u,const Vector3& w,const float halfU,const float halfUp,
+                        const float halfW,const std::uint32_t seed) {
+        constexpr int Around=7,Bands=4;
+        const auto point=[&](const int band,const int around) {
+            const float lat=Pi*(static_cast<float>(band)/Bands-0.5f),lon=2.0f*Pi*static_cast<float>(around%Around)/Around;
+            const float bump=band==0||band==Bands?1.0f
+                :0.78f+0.4f*Hash(seed^static_cast<std::uint32_t>(band*31+(around%Around)*7+1));
+            return centre+(u*(std::cos(lat)*std::cos(lon)*halfU)+w*(std::cos(lat)*std::sin(lon)*halfW))*bump
+                +Vector3::Up*(std::sin(lat)*halfUp*bump);
+        };
+        b.inside=centre;
+        for(int band=0;band<Bands;++band) for(int a=0;a<Around;++a) {
+            const Vector3 p00=point(band,a),p01=point(band,a+1),p10=point(band+1,a),p11=point(band+1,a+1);
+            if(band==0) b.Face(p00,p11,p10,Bomb);
+            else if(band==Bands-1) b.Face(p00,p01,p10,Bomb);
+            else b.Quad(p00,p01,p11,p10,Bomb);
+        }
+    };
     for(int k=0;k<70;++k) {
         const auto seed=static_cast<std::uint32_t>(k)*2654435761U+0x3c6ef372U;
         const float theta=2.0f*Pi*Hash(seed);
@@ -180,8 +231,7 @@ VolcanoRenderer::VolcanoRenderer(GraphicsDevice& device,const IslandTerrain& ter
         const Vector3 out(std::cos(theta),0.0f,std::sin(theta)),side(-std::sin(theta),0.0f,std::cos(theta));
         const float spin=Hash(seed^0x77U)*Pi;
         const Vector3 u=out*std::cos(spin)+side*std::sin(spin),w=side*std::cos(spin)-out*std::sin(spin);
-        b.Box(base+Vector3::Up*(size*0.25f),u,Vector3::Up,w,size*(0.8f+0.4f*Hash(seed^0x5U)),size*0.55f,size*(0.6f+0.4f*Hash(seed^0x6U)),
-              Flow*(0.9f+0.4f*Hash(seed^0x8U)),Flow*(1.1f+0.3f*Hash(seed^0x9U)));
+        lump(base+Vector3::Up*(size*0.12f),u,w,size*(0.8f+0.4f*Hash(seed^0x5U)),size*0.5f,size*(0.6f+0.4f*Hash(seed^0x6U)),seed);
     }
     auto& mesh=b.builder.mesh;
     coneTriangles_=static_cast<int>(mesh.size()/3U);
@@ -261,8 +311,8 @@ VolcanoRenderer::VolcanoRenderer(GraphicsDevice& device,const IslandTerrain& ter
     catch(const std::exception& error) {
         std::cout<<"island-simulator: volcano sun shadow receiver unavailable: "<<error.what()<<'\n';
     }
-    halo_=std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),256,BufferUsage::WriteOnly);
-    haloStaging_.reserve(256);
+    halo_=std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),1024,BufferUsage::WriteOnly);
+    haloStaging_.reserve(1024);
     plume_=std::make_unique<CascadeMistRenderer>(device,"island-simulator: steam rises out of the volcano's crater in a plume leaning downwind, and out of four sulphur-crusted fumaroles on its slopes",
                                                  static_cast<std::size_t>(PlumePuffs+4*VentPuffs));
     plume_->SetRange(260.0f,240.0f,1.5f);
@@ -367,7 +417,8 @@ void VolcanoRenderer::DrawGlow(const Matrix& view,const Matrix& projection,const
         device_.SetVertexBuffer(lava_.get());device_.setIndicesProperty(nullptr);
         device_.DrawPrimitives(PrimitiveType::TriangleList,0,lavaTriangles_);++drawCalls_;
     }
-    // at night the lake lights the steam over the crater: a soft glow standing over the rim
+    // at night the lake lights the steam over the crater: a soft glow standing over the rim, and
+    // the plume's puffs lit from beneath, so the light leans and breaks with the steam
     if(night>0.01f) {
         haloStaging_.clear();
         Vector3 toEye=camera-Vector3(V::X,V::LavaY()+8.0f,V::Z);
@@ -377,20 +428,27 @@ void VolcanoRenderer::DrawGlow(const Matrix& view,const Matrix& projection,const
         if(right.LengthSquared()<1e-6f) right=Vector3::UnitX;
         right.Normalize();
         const Vector3 up=Vector3::Cross(right,toEye);
-        const auto fan=[&](const Vector3& centre,const float radius,const Vector3& colour) {
+        const auto fan=[&](const Vector3& centre,const float radius,const float tall,const int segments,const Vector3& colour) {
             const Color core(static_cast<int>(std::min(255.0f,colour.X*255.0f)),static_cast<int>(std::min(255.0f,colour.Y*255.0f)),
                              static_cast<int>(std::min(255.0f,colour.Z*255.0f))),rim(0,0,0);
-            constexpr int Segments=20;
-            for(int k=0;k<Segments;++k) {
-                const float a0=2.0f*Pi*static_cast<float>(k)/Segments,a1=2.0f*Pi*static_cast<float>(k+1)/Segments;
+            for(int k=0;k<segments;++k) {
+                const float a0=2.0f*Pi*static_cast<float>(k)/segments,a1=2.0f*Pi*static_cast<float>(k+1)/segments;
                 haloStaging_.emplace_back(centre,core);
-                haloStaging_.emplace_back(centre+(right*std::cos(a0)+up*std::sin(a0)*1.3f)*radius,rim);
-                haloStaging_.emplace_back(centre+(right*std::cos(a1)+up*std::sin(a1)*1.3f)*radius,rim);
+                haloStaging_.emplace_back(centre+(right*std::cos(a0)+up*std::sin(a0)*tall)*radius,rim);
+                haloStaging_.emplace_back(centre+(right*std::cos(a1)+up*std::sin(a1)*tall)*radius,rim);
             }
         };
         const float glow=night*pulse;
-        fan(Vector3(V::X,V::LavaY()+8.0f,V::Z),15.0f,Vector3(0.55f,0.20f,0.05f)*glow);
-        fan(Vector3(V::X,V::LavaY()+14.0f,V::Z),28.0f,Vector3(0.20f,0.07f,0.02f)*glow);
+        fan(Vector3(V::X,V::LavaY()+8.0f,V::Z),15.0f,1.3f,20,Vector3(0.55f,0.20f,0.05f)*glow);
+        fan(Vector3(V::X,V::LavaY()+14.0f,V::Z),28.0f,1.3f,20,Vector3(0.12f,0.04f,0.012f)*glow);
+        for(int k=0;k<PlumePuffs;++k) {
+            const MistPuff& puff=puffs_[static_cast<std::size_t>(k)];
+            if(!puff.active||puff.density<=0.02f) continue;
+            // the lake's light falls off with the height the puff hangs over it
+            const float lit=puff.density*std::exp(-std::max(0.0f,puff.y-V::LavaY())/PlumeLightFalloff);
+            if(lit<0.01f) continue;
+            fan(Vector3(puff.x,puff.y,puff.z),puff.size*0.6f,1.0f,14,Vector3(0.55f,0.21f,0.06f)*(glow*lit));
+        }
         halo_->SetData(haloStaging_.data(),0,static_cast<int>(haloStaging_.size()),SetDataOptions::Discard);
         device_.setBlendStateProperty(BlendState::Additive);
         device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);

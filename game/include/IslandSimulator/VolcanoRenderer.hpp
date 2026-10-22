@@ -37,12 +37,15 @@ public:
     void DrawPlume(const Microsoft::Xna::Framework::Matrix& view,const Microsoft::Xna::Framework::Matrix& projection,
                    const Microsoft::Xna::Framework::Vector3& camera,float seconds);
     /** The lava lake and its light on the crater's wall, over the hour's grade; at night
-     *  (`night` 0..1) the glow it throws up into the steam over the crater as well. */
+     *  (`night` 0..1) the glow it throws up into the steam over the crater as well, each of the
+     *  plume's puffs (placed by this frame's DrawPlume) lit by how low over the lake it hangs. */
     void DrawGlow(const Microsoft::Xna::Framework::Matrix& view,const Microsoft::Xna::Framework::Matrix& projection,
                   const Microsoft::Xna::Framework::Vector3& camera,float seconds,float night);
     [[nodiscard]] int DrawCallCount() const noexcept {return drawCalls_;}
     [[nodiscard]] int TriangleCount() const noexcept {return coneTriangles_;}
     static constexpr int PlumePuffs=22,VentPuffs=4;
+    /** The height over the lava lake (m) in which the lake's light on the plume falls to 1/e. */
+    static constexpr float PlumeLightFalloff=13.0f;
 private:
     [[nodiscard]] bool Visible(const Microsoft::Xna::Framework::Matrix& view,const Microsoft::Xna::Framework::Matrix& projection,
                                const Microsoft::Xna::Framework::Vector3& camera) const;
