@@ -108,6 +108,7 @@
 #include "IslandSimulator/GroundCoverField.hpp"
 #include "IslandSimulator/GrassRenderer.hpp"
 #include "IslandSimulator/OceanRenderer.hpp"
+#include "IslandSimulator/ReefFishField.hpp"
 #include "IslandSimulator/StreamWaterRenderer.hpp"
 #include "IslandSimulator/CaveRenderer.hpp"
 #include "IslandSimulator/BunkerLayout.hpp"
@@ -689,6 +690,7 @@ namespace island
         std::unique_ptr<RootingDustRenderer> rootingDustRenderer_;
         ShellDragTrail shellDrags_;
         CrocodileDragTrail crocodileDrags_;
+        std::unique_ptr<ReefFishField> reefFish_;
         std::unique_ptr<ShellDragRenderer> shellDragRenderer_;
         std::unique_ptr<WallowScarRenderer> wallowScarRenderer_;
         ForestTwigLayout forestTwigs_{terrain_, jungleLayout_};

@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 444: ReefFishField (new files): chromis/tang clouds over the 12 nearest coral heads, hide within 1.8 m; FishRenderer palettes 4/5, size-scaled near LOD, separate draw (PLAN "Loop pass 444").
 - Pass 443: reef habitat in patches: 2-5 satellite colonies per site (1425 total), reef budget 700-1800 in CoreTests + WorldReport (PLAN "Loop pass 443").
 - Pass 442: CrocodileDragTrail grooves on sand/soil out of water; DragSegment.halfWidth; drag renderer 3-strip groove (PLAN "Loop pass 442").
 - Pass 441: goat cloven prints in the basin's wet soil ring (goatPrints_, forefeet 0.4 m ahead) (PLAN "Loop pass 441").

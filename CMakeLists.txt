@@ -108,6 +108,7 @@ add_library(island_core STATIC
     game/src/FootprintTrail.cpp
     game/src/RootingDustField.cpp
     game/src/ShellDragTrail.cpp
+    game/src/ReefFishField.cpp
     game/src/SurfSprayField.cpp
     game/src/DolphinBlowField.cpp
     game/src/StingraySandField.cpp

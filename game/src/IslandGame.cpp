@@ -4214,6 +4214,8 @@ namespace island
         }
         updateProfile_.Mark("fishSchools");
         fishSchools_.Update(deltaSeconds, cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
+        if (!reefFish_) reefFish_ = std::make_unique<ReefFishField>(naturalPropLayout_.ReefHabitat());
+        reefFish_->Update(deltaSeconds, cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
         // A fish breaking the surface draws the shark that way.
         if (fishSchools_.LastBreach().count != notedSharkBreach_) {
             notedSharkBreach_ = fishSchools_.LastBreach().count;
@@ -6527,6 +6529,10 @@ namespace island
 
         {
             GpuDiagnosticScope gpuPass("fish");
+            // the reef's small fish first (the schools' draw keeps the renderer's counts)
+            if (reefFish_ && !reefFish_->Fish().empty())
+                fishRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
+                                    reefFish_->Fish(), timeSeconds);
             fishRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
                                 fishSchools_.Fish(), timeSeconds);
         }

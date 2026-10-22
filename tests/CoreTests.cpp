@@ -91,6 +91,7 @@
 #include "IslandSimulator/FootprintTrail.hpp"
 #include "IslandSimulator/RootingDustField.hpp"
 #include "IslandSimulator/ShellDragTrail.hpp"
+#include "IslandSimulator/ReefFishField.hpp"
 #include "IslandSimulator/SurfSprayField.hpp"
 #include "IslandSimulator/DolphinBlowField.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
@@ -8226,6 +8227,26 @@ int main()
         Check(habitat.variant < island::NaturalPropLayout::ReefHabitatVariantCount,
               "reef habitat variant index remains in range");
         ++reefHabitatVariants.at(habitat.variant);
+    }
+    {
+        // The reef's small fish: clouds over the coral heads near the observer, under the water,
+        // hiding in the coral from a swimmer at arm's length and out again some seconds after.
+        island::ReefFishField reefFish(props.ReefHabitat());
+        const auto& coral = props.ReefHabitat()[0];
+        for (int step = 0; step < 20; ++step) reefFish.Update(0.1f, coral.x + 10.0f, -1.0f, coral.z);
+        bool underWater = true;
+        for (const auto& fish : reefFish.Fish()) underWater = underWater && fish.y < -0.1f && fish.scale < 0.25f;
+        Check(reefFish.HeadPool() > 100U && reefFish.HeadsPeopled() > 0U && !reefFish.Fish().empty()
+                  && reefFish.Fish().size() <= island::ReefFishField::Capacity && underWater && reefFish.HidingCount() == 0U,
+              "small reef fish people the coral heads near the observer, under the water");
+        const auto& first = reefFish.Fish().front();
+        for (int step = 0; step < 30; ++step) reefFish.Update(0.1f, first.x, first.y, first.z);
+        const std::size_t hiding = reefFish.HidingCount();
+        for (int step = 0; step < 20; ++step) reefFish.Update(0.1f, first.x + 12.0f, first.y, first.z);
+        const std::size_t stillHiding = reefFish.HidingCount();
+        for (int step = 0; step < 80; ++step) reefFish.Update(0.1f, first.x + 12.0f, first.y, first.z);
+        Check(hiding >= 1U && stillHiding >= 1U && reefFish.HidingCount() < hiding,
+              "a cloud hides in its coral from a close swimmer and comes out some seconds after");
     }
     Check(std::all_of(reefHabitatVariants.begin(), reefHabitatVariants.end(),
                       [](const std::size_t count) { return count >= 30U; }),

@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 444 (2026-10-22) — small reef fish over the coral heads
+
+The coral patches stood empty: the island's fish were its eight schools of mid-water fish. A new
+ReefFishField peoples the coral heads near the observer (505 living heads of scale 0.6 or more whose
+tops lie 0.75 m under the surface or deeper; the twelve nearest within 30 m, chosen again each second
+with the kept heads keeping their state): a cloud of six blue-green chromis, or three yellow tangs on
+three heads in ten, milling 0.3-0.75 m above the coral round circles of their own; a swimmer within
+1.8 m of a cloud sends it down into the coral, and four seconds after the swimmer has gone it comes out.
+The fish renderer has the two palettes and gives a fish its near body only within 28 m times its
+size (a 0.12 m chromis within 7 m), drawing the reef's fish in a draw of their own before the schools'
+(whose counts the QA keeps); its buffer holds 72 near fish. New test: the clouds people the heads
+near the observer under the water, hide from a close swimmer and come out again. `reef-habitat`,
+`fish` and `octopuses` pass; the fish pass costs 1.5 ms under llvmpipe in `reef-habitat`.
+
 ## Loop pass 443 (2026-10-22) — the reef grows in coral patches
 
 Under water in `reef-habitat` a single coral stood on bare sand: some 300 colonies were spread round

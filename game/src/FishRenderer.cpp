@@ -37,7 +37,8 @@ namespace island
         // triangle silhouette; the 1,434-vertex body for all 48 out to 72 m was most of the pass.
         constexpr float NearLodDistance = 28.0f;
         constexpr int MaximumVerticesPerFish = FishRenderer::NearVertexCount;
-        constexpr int MaximumVertexCount = static_cast<int>(FishSchools::FishCount)
+        // (the schools and, in a second draw, the reef's small fish)
+        constexpr int MaximumVertexCount = static_cast<int>(std::max<std::size_t>(FishSchools::FishCount, 72U))
             * MaximumVerticesPerFish;
 
         struct FishPalette
@@ -55,7 +56,7 @@ namespace island
             Vector3 forward;
         };
 
-        const std::array<FishPalette, 4> Palettes = {{
+        const std::array<FishPalette, 6> Palettes = {{
             {Color(48, 96, 112, 255), Color(126, 174, 168, 255),
              Color(220, 221, 187, 255), Color(201, 164, 65, 255)},
             {Color(16, 72, 96, 255), Color(30, 139, 157, 255),
@@ -63,7 +64,12 @@ namespace island
             {Color(115, 70, 40, 255), Color(193, 137, 61, 255),
              Color(235, 205, 132, 255), Color(169, 86, 43, 255)},
             {Color(36, 42, 100, 255), Color(68, 79, 148, 255),
-             Color(155, 178, 193, 255), Color(112, 91, 158, 255)}
+             Color(155, 178, 193, 255), Color(112, 91, 158, 255)},
+            // the reef's small fish: blue-green chromis and yellow tangs
+            {Color(40, 132, 150, 255), Color(86, 196, 196, 255),
+             Color(170, 226, 214, 255), Color(64, 150, 196, 255)},
+            {Color(214, 178, 22, 255), Color(244, 214, 40, 255),
+             Color(250, 232, 120, 255), Color(236, 196, 30, 255)}
         }};
 
         struct BodySection
@@ -620,7 +626,9 @@ namespace island
                 || !frustum.Intersects(BoundingSphere(centre, state.scale * 0.85f))) {
                 continue;
             }
-            if (distanceSquared <= NearLodDistance * NearLodDistance) {
+            // a small fish takes the near body only as close as its size warrants
+            const float nearDistance = NearLodDistance * std::clamp(state.scale * 1.6f, 0.25f, 1.0f);
+            if (distanceSquared <= nearDistance * nearDistance) {
                 AppendNearFish(stagingVertices_, state, timeSeconds);
                 ++visibleNearFishCount_;
             } else {
