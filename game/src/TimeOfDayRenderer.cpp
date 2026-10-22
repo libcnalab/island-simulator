@@ -577,9 +577,15 @@ namespace island
             const Vector3 upward(rx.Y, ry.Y, rz.Y);   // a midnight direction's height now is its dot with this
             const auto byte = [](const float v) { return static_cast<int>(std::lround(std::clamp(v, 0.0f, 1.0f) * 255.0f)); };
             // the low stars dim in the haze and are gone under the horizon; the drifting cumulus
-            // stand in front of them
+            // stand in front of them (recoloured once the sky has turned 0.06 degrees or the
+            // cumulus drifted a thousandth of a radian: some four times a second)
             const float starDrift = sky_cloud::DriftAngle(static_cast<float>(seconds));
-            for (std::size_t star = 0; star < starDirection_.size(); ++star) {
+            const bool recolour = std::abs(light.hour - starHour_) > 0.004f || std::abs(starDrift - starDrift_) > 0.001f;
+            if (recolour) {
+                starHour_ = light.hour;
+                starDrift_ = starDrift;
+            }
+            for (std::size_t star = 0; recolour && star < starDirection_.size(); ++star) {
                 const Vector3& d = starDirection_[star];
                 const float y = Vector3::Dot(d, upward);
                 float keep = 0.0f;
@@ -613,7 +619,8 @@ namespace island
                 device_.DrawPrimitives(PrimitiveType::TriangleList, 0, milkyWayVertexCount_ / 3);
                 ++drawCalls_;
             }
-            starsInSky_->SetData(starStaging_.data(), 0, static_cast<int>(starStaging_.size()), SetDataOptions::Discard);
+            if (recolour)
+                starsInSky_->SetData(starStaging_.data(), 0, static_cast<int>(starStaging_.size()), SetDataOptions::Discard);
             device_.SetVertexBuffer(starsInSky_.get());
             const float v = std::clamp(light.starVisibility * (1.0f - 0.55f * light.moonLight), 0.0f, 1.0f);
             skyEffect_->setDiffuseColorProperty(Vector3(v, v, v));

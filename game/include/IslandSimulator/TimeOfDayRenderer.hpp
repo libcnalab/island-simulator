@@ -92,6 +92,7 @@ namespace island
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> starStaging_, bandStaging_;
         std::vector<Microsoft::Xna::Framework::Vector3> starDirection_, starColour_, bandDirection_, bandColour_;
         float bandHour_ = -1000.0f;   // the hour the band was last recoloured for
+        float starHour_ = -1000.0f, starDrift_ = -1000.0f;   // and the stars, and the cumulus drift then
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> boltStaging_;
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> rainbowStaging_;
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> moonStaging_;

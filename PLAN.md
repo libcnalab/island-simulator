@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 486 (2026-10-22) — the stars are recoloured only as the sky moves on
+
+Since pass 483 every night frame recoloured all 3,400 stars and uploaded their 20,400 vertices
+(326 KB). Each star's colour comes from its height in the turned sky (the haze low down, gone
+under the horizon) and the drifting cumulus in front of the low ones. A probe of the loop measured
+0.23 ms per frame before the upload.
+
+The rotation itself stays continuous in the world matrix. The colours change only slowly: a star
+takes some nine seconds to fade through the 2-degree horizon band, and the cumulus drift
+0.00035 rad a second. They are now recoloured and uploaded only once the sky has turned 0.004 h
+(0.06 degrees) or the drift has moved 0.001 rad, some four times a second, and the buffer is
+reused in between. `distant` at 21:00 (new moon) differs from before only as much as two runs of
+one build differ (the sky's and the sea's animation, at most 20 levels).
+
 ## Loop pass 485 (2026-10-22) — the wet ground steams when the sun breaks out after rain
 
 After a tropical shower, when the sun comes out on the wet ground, thin steam rises off the open
