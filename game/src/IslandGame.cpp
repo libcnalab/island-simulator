@@ -3430,7 +3430,8 @@ namespace island
                      "and stretches one wing out and down for a couple of seconds now and then, the wings taking turns\n"
                   << "island-simulator: the old mine's " << mineBats_.Bats().size()
                   << " small bats hang in three clusters under the chamber's dome by day and fly round it when a walker comes under them; "
-                     "at dusk they leave one by one down the adit to hunt over the clearing before the portal, and come home at dawn\n"
+                     "at dusk they leave one by one down the adit to hunt over the clearing before the portal, and come home at dawn; "
+                     "they squeak as they fly, a burst the moment a walker sets them flying\n"
                   << "island-simulator: clearing butterflies "
                   << butterflyMeadow_.Butterflies().size()
                   << " agents in deterministic low-altitude habitats; "
@@ -4233,6 +4234,29 @@ namespace island
                          viewpoint_ == FixedViewpoint::MineBatsDetail ? 1.0e4f : cameraPosition_.X,
                          cameraPosition_.Y,
                          viewpoint_ == FixedViewpoint::MineBatsDetail ? 1.0e4f : cameraPosition_.Z);
+        // The bats squeak: a burst under the dome the moment a walker sets a cluster flying, and
+        // while any are on the wing (round the chamber, along the adit, hunting before the
+        // portal) a burst from one of them every couple of seconds, each in turn.
+        if (soundscape_) {
+            batSqueakClock_ += deltaSeconds;
+            const auto bats = mineBats_.Bats();
+            if (mineBats_.FlushCount() != notedBatFlushes_) {
+                notedBatFlushes_ = mineBats_.FlushCount();
+                const MinePoint dome = mineLayout_.World(0.0f, MineLayout::FloorRelative(MineSite::ChamberCentre) + 2.6f,
+                                                         MineSite::ChamberCentre);
+                soundscape_->NoteBatSqueaks(dome.x, dome.y, dome.z);
+                batSqueakClock_ = 0.0f;
+            } else if (batSqueakClock_ >= 2.3f && !bats.empty()) {
+                for (std::size_t k = 0; k < bats.size(); ++k) {
+                    const FruitBatState& bat = bats[(batSqueakTurn_ + k) % bats.size()];
+                    if (bat.behavior != FruitBatBehavior::DayFlight) continue;
+                    soundscape_->NoteBatSqueaks(bat.x, bat.y, bat.z);
+                    batSqueakTurn_ = (batSqueakTurn_ + k + 1U) % bats.size();
+                    batSqueakClock_ = 0.0f;
+                    break;
+                }
+            }
+        }
         updateProfile_.Mark("fruitBatColony");
         fruitBatColony_.Update((viewpoint_ == FixedViewpoint::FruitBatDetail
                                    || viewpoint_ == FixedViewpoint::FruitBatRoostDetail)

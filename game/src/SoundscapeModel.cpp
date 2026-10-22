@@ -2271,6 +2271,55 @@ namespace island
         return Quantize(samples, .5f);
     }
 
+    AmbientLoop GenerateBatSqueaks(const std::uint8_t variant)
+    {
+        // Small bats set flying in the dark: their squeaks, each eight to sixteen milliseconds
+        // of a tone sweeping down from about nine kilohertz towards five, thin with a little
+        // second harmonic, scattered in quick bursts through the second; under them the soft
+        // whirr of many small wings, a breath of noise beating some twelve times a second; the
+        // whole swells in and dies away as the bats settle.
+        constexpr float Seconds = 1.2f;
+        constexpr std::size_t frames = static_cast<std::size_t>(AmbientSampleRate * Seconds);
+        std::vector<float> samples(frames, 0.0f);
+        const unsigned which = variant % 3U;
+        DeterministicNoise noise(0x5ba7c0deU + which * 2113U);
+        std::uint32_t seed = 0x1b873593U + which * 7919U;
+        const auto next = [&seed] { seed = seed * 1664525U + 1013904223U; return static_cast<float>(seed >> 8U) / 16777216.0f; };
+        std::vector<std::array<float, 4>> squeaks;   // time, length, top pitch, strength
+        for (float t = 0.04f; t < Seconds - 0.1f;) {
+            const int burst = 2 + static_cast<int>(next() * 4.0f);
+            for (int k = 0; k < burst && t < Seconds - 0.1f; ++k) {
+                squeaks.push_back({t, 0.008f + 0.008f * next(), 8200.0f + 1800.0f * next(), 0.5f + 0.5f * next()});
+                t += 0.022f + 0.03f * next();
+            }
+            t += 0.06f + 0.14f * next();
+        }
+        float low = 0.0f, whirrLow = 0.0f;
+        const float beat = 11.0f + 2.0f * static_cast<float>(which);
+        for (std::size_t i = 0; i < frames; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            const float raw = noise.Next();
+            low += 0.35f * (raw - low);
+            whirrLow += 0.08f * (raw - whirrLow);
+            const float swell = SmoothStep(0.0f, 0.12f, t) * (1.0f - SmoothStep(Seconds - 0.35f, Seconds, t));
+            // the wings: soft, low-passed noise beating in two drifting flocks of beats
+            const float beats = 0.5f + 0.25f * std::sin(2.0f * std::numbers::pi_v<float> * beat * t)
+                + 0.25f * std::sin(2.0f * std::numbers::pi_v<float> * (beat * 1.37f) * t + 1.3f);
+            float value = (low - whirrLow) * 0.35f * beats * swell;
+            for (const auto& squeak : squeaks) {
+                const float since = t - squeak[0];
+                if (since < 0.0f || since > squeak[1]) continue;
+                const float envelope = std::sin(std::numbers::pi_v<float> * since / squeak[1]);
+                // the pitch falls linearly by four tenths across the squeak: the phase in closed form
+                const float top = squeak[2], fall = 0.4f * top / squeak[1];
+                const float phase = 2.0f * std::numbers::pi_v<float> * (top * since - 0.5f * fall * since * since);
+                value += squeak[3] * envelope * envelope * (std::sin(phase) * 0.85f + std::sin(2.0f * phase) * 0.12f) * (0.4f + 0.6f * swell);
+            }
+            samples[i] = value * (1.0f - SmoothStep(Seconds - 0.03f, Seconds, t));
+        }
+        return Quantize(samples, .45f);
+    }
+
     AmbientLoop GeneratePalmClatter(const std::uint8_t variant)
     {
         // A palm's fronds in a gust: the stiff leaflets and the dry hanging fronds knock and

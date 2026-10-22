@@ -367,6 +367,14 @@ namespace island
         ++geckoChirpCount_;
     }
 
+    void Soundscape::NoteBatSqueaks(const float x, const float y, const float z) noexcept
+    {
+        if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) return;
+        pendingBatSqueaks_ = {true, x, y, z, 0U};
+        pendingBatSqueaksSeconds_ = 1.0f;
+        ++batSqueaksCount_;
+    }
+
     void Soundscape::NotePalmClatter(const float x, const float y, const float z) noexcept
     {
         if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) return;
@@ -709,6 +717,10 @@ namespace island
                 geckoChirpEffects_[i] = CreateOneShotSoundEffect(GenerateGeckoChirp(static_cast<std::uint8_t>(i)));
                 geckoChirpEffects_[i]->setNameProperty("Original procedural gecko chirp " + std::to_string(i));
             }
+            for (std::size_t i = 0; i < batSqueakEffects_.size(); ++i) {
+                batSqueakEffects_[i] = CreateOneShotSoundEffect(GenerateBatSqueaks(static_cast<std::uint8_t>(i)));
+                batSqueakEffects_[i]->setNameProperty("Original procedural bat squeaks " + std::to_string(i));
+            }
             for (std::size_t i = 0; i < palmClatterEffects_.size(); ++i) {
                 palmClatterEffects_[i] = CreateOneShotSoundEffect(GeneratePalmClatter(static_cast<std::uint8_t>(i)));
                 palmClatterEffects_[i]->setNameProperty("Original procedural palm frond clatter " + std::to_string(i));
@@ -940,6 +952,7 @@ namespace island
             for (auto& effect : hoofbeatEffects_) effect.reset();
             clawKnockEffect_.reset();
             for (auto& effect : geckoChirpEffects_) effect.reset();
+            for (auto& effect : batSqueakEffects_) effect.reset();
             for (auto& effect : palmClatterEffects_) effect.reset();
             coconutThudEffect_.reset();
             birdCallAlternateEffect_.reset();
@@ -1759,6 +1772,21 @@ namespace island
                 pendingGeckoChirp_.available = false;
             }
         }
+        // The mine's bats squeaking as they fly: high and thin, heard within about thirty metres;
+        // dropped if the slot stays busy for a second (the next burst follows).
+        if (pendingBatSqueaks_.available) {
+            pendingBatSqueaksSeconds_ -= safeDelta;
+            const float distance = std::hypot(std::hypot(pendingBatSqueaks_.x - listenerState.x,
+                pendingBatSqueaks_.z - listenerState.z), pendingBatSqueaks_.y - listenerState.y);
+            const float falloff = 1.0f - std::clamp((distance - 3.0f) / 27.0f, 0.0f, 1.0f);
+            if (wildlifeSlotAvailable && wildlifeCall.type == WildlifeCallType::None && falloff > 0.02f) {
+                wildlifeCall = {WildlifeCallType::Bat, static_cast<std::uint8_t>(batSqueaksCount_ % 3U),
+                    0.42f * falloff, 0.0f, pendingBatSqueaks_};
+                pendingBatSqueaks_.available = false;
+            } else if (pendingBatSqueaksSeconds_ <= 0.0f || falloff <= 0.02f) {
+                pendingBatSqueaks_.available = false;
+            }
+        }
         // A palm's fronds clattering in a gust, up in its crown: heard within about thirty-five
         // metres; dropped if the slot stays busy for a second (the gust brings another).
         if (pendingPalmClatter_.available) {
@@ -1870,6 +1898,8 @@ namespace island
             wildlifeEffect = clawKnockEffect_.get();
         } else if (wildlifeCall.type == WildlifeCallType::Gecko) {
             wildlifeEffect = geckoChirpEffects_.at(wildlifeCall.variant).get();
+        } else if (wildlifeCall.type == WildlifeCallType::Bat) {
+            wildlifeEffect = batSqueakEffects_.at(wildlifeCall.variant).get();
         } else if (wildlifeCall.type == WildlifeCallType::PalmClatter) {
             wildlifeEffect = palmClatterEffects_.at(wildlifeCall.variant).get();
         } else if (wildlifeCall.type == WildlifeCallType::Splash) {
@@ -1943,6 +1973,7 @@ namespace island
                 :wildlifeCall.type==WildlifeCallType::Hoofbeats?1.45f
                 :wildlifeCall.type==WildlifeCallType::ClawKnock?.40f
                 :wildlifeCall.type==WildlifeCallType::Gecko?1.10f
+                :wildlifeCall.type==WildlifeCallType::Bat?1.20f
                 :wildlifeCall.type==WildlifeCallType::PalmClatter?1.62f
                 :wildlifeCall.type==WildlifeCallType::Splash?.75f
                 :wildlifeCall.type==WildlifeCallType::Thud?.50f
@@ -2012,6 +2043,11 @@ namespace island
                 ++playedGeckoChirpCount_;
                 if (playedGeckoChirpCount_ == 1) {
                     std::cout << "island-simulator: first positional gecko chirp played\n" << std::flush;
+                }
+            } else if(wildlifeCall.type==WildlifeCallType::Bat) {
+                ++playedBatSqueaksCount_;
+                if (playedBatSqueaksCount_ == 1) {
+                    std::cout << "island-simulator: first positional bat squeaks played\n" << std::flush;
                 }
             } else if(wildlifeCall.type==WildlifeCallType::PalmClatter) {
                 ++playedPalmClatterCount_;
@@ -2203,6 +2239,7 @@ namespace island
         for (auto& effect : hoofbeatEffects_) effect.reset();
         clawKnockEffect_.reset();
         for (auto& effect : geckoChirpEffects_) effect.reset();
+        for (auto& effect : batSqueakEffects_) effect.reset();
         for (auto& effect : palmClatterEffects_) effect.reset();
         coconutThudEffect_.reset();
         birdCallAlternateEffect_.reset();

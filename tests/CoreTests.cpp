@@ -2395,6 +2395,39 @@ int main()
         Check(pcm,"gecko chirp PCM is deterministic, three distinct variants of 1.1 s, silent at the ends");
         Check(counts,"a gecko chirp variant runs five, six or seven chik bursts");
         Check(high,"a gecko's chik is a high tone");
+        // The mine's bats' squeaks: deterministic, three distinct variants of 1.2 s, silent at
+        // both ends; many separate squeaks (bursts), each a high tone (some five to ten thousand
+        // zero crossings a second, halved) over a quiet whirr of wings.
+        {
+            bool batPcm=true,batBursts=true,batHigh=true;
+            for(std::uint8_t variant=0;variant<3;++variant){
+                const auto squeaks=island::GenerateBatSqueaks(variant);
+                batPcm=batPcm&&squeaks.sampleRate==22050&&squeaks.samples.size()==static_cast<std::size_t>(22050*1.2f)
+                    &&squeaks.samples==island::GenerateBatSqueaks(variant).samples
+                    &&squeaks.samples.front()==0&&squeaks.samples.back()==0
+                    &&(variant==0||squeaks.samples!=island::GenerateBatSqueaks(0).samples);
+                int bursts=0;bool loud=false;int peakAll=0;std::size_t loudest=0;
+                for(std::size_t from=0;from<squeaks.samples.size();from+=66){
+                    int peak=0;
+                    for(std::size_t i=from;i<from+66&&i<squeaks.samples.size();++i){
+                        const int v=std::abs(static_cast<int>(squeaks.samples[i]));
+                        peak=std::max(peak,v);
+                        if(v>peakAll){peakAll=v;loudest=i;}
+                    }
+                    if(peak>6000&&!loud)++bursts;
+                    loud=peak>6000;
+                }
+                batBursts=batBursts&&bursts>=10;
+                int crossings=0;
+                const std::size_t from=loudest>60?loudest-60:1;
+                for(std::size_t i=from;i<from+120&&i<squeaks.samples.size();++i)crossings+=(squeaks.samples[i-1]<0)!=(squeaks.samples[i]<0);
+                const float hertz=static_cast<float>(crossings)*0.5f/(120.0f/22050.0f);
+                batHigh=batHigh&&hertz>4500.0f&&hertz<10500.0f;
+            }
+            Check(batPcm,"bat squeak PCM is deterministic, three distinct variants of 1.2 s, silent at the ends");
+            Check(batBursts,"a bat squeak variant runs many separate squeaks");
+            Check(batHigh,"a bat's squeak is a high tone");
+        }
         // A palm's frond clatter: deterministic, three distinct variants of 1.6 s, silent at
         // both ends, a run of separate hard clacks (bursts), loudest in its middle, and dry
         // (bright: many zero crossings).

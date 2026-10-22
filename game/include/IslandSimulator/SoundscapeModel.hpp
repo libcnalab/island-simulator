@@ -396,7 +396,8 @@ namespace island
         Owl,
         Heron,
         Gecko,
-        PalmClatter
+        PalmClatter,
+        Bat
     };
 
     /** @brief Nearest currently eligible world-space source for one wildlife species. */
@@ -612,6 +613,10 @@ namespace island
     /** @brief Original clatter of a palm's dry fronds knocked together by a gust: clusters of
      *  hard little clacks over a dry rustle, swelling and settling, 1.6 s; three variants. */
     [[nodiscard]] AmbientLoop GeneratePalmClatter(std::uint8_t variant);
+    /** @brief Original squeaking of small bats set flying: quick high squeaks, each a few
+     *  milliseconds sweeping down from near the top of hearing, scattered in bursts over the soft
+     *  whirr of many small wings, 1.2 s; three variants. */
+    [[nodiscard]] AmbientLoop GenerateBatSqueaks(std::uint8_t variant);
     [[nodiscard]] float SnakeHissVolume(float distance) noexcept;
 
     struct SnakeHissRequest

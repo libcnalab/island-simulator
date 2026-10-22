@@ -145,6 +145,10 @@ namespace island
          *  within about twenty-five metres. */
         void NoteGeckoChirp(float x, float y, float z) noexcept;
         [[nodiscard]] int PlayedGeckoChirpCount() const noexcept { return playedGeckoChirpCount_; }
+        /** @brief The old mine's bats set flying under the dome, or streaming out of the portal
+         *  at dusk: their squeaks and the whirr of their wings, heard within about thirty metres. */
+        void NoteBatSqueaks(float x, float y, float z) noexcept;
+        [[nodiscard]] int PlayedBatSqueaksCount() const noexcept { return playedBatSqueaksCount_; }
         /** @brief A palm's dry fronds clattering in a gust, at its crown: heard within about
          *  thirty-five metres. */
         void NotePalmClatter(float x, float y, float z) noexcept;
@@ -404,6 +408,7 @@ namespace island
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> hoofbeatEffects_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> clawKnockEffect_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 3> geckoChirpEffects_;
+        std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 3> batSqueakEffects_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 3> palmClatterEffects_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> coconutThudEffect_;
         WildlifeAudioSource pendingSplash_;
@@ -443,6 +448,10 @@ namespace island
         float pendingGeckoChirpSeconds_ = 0.0f;
         std::uint32_t geckoChirpCount_ = 0U;
         int playedGeckoChirpCount_ = 0;
+        WildlifeAudioSource pendingBatSqueaks_;
+        float pendingBatSqueaksSeconds_ = 0.0f;
+        std::uint32_t batSqueaksCount_ = 0U;
+        int playedBatSqueaksCount_ = 0;
         WildlifeAudioSource pendingPalmClatter_;
         float pendingPalmClatterSeconds_ = 0.0f;
         std::uint32_t palmClatterCount_ = 0U;

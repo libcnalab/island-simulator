@@ -233,6 +233,29 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 528 (2026-10-22) — the mine's bats squeak
+
+The bats of pass 522 flew in silence.
+
+- **Sound.** `GenerateBatSqueaks` makes three deterministic 1.2 s variants. Each holds 14-15
+  separate squeaks, 8-16 ms tones sweeping down from about nine kilohertz by four tenths, with a
+  little second harmonic. They come in quick bursts over the soft whirr of many small wings
+  (low-passed noise beating some twelve times a second), and the whole swells in and dies away.
+- **Wiring.** A new `WildlifeCallType::Bat` call, `Soundscape::NoteBatSqueaks`, three effects, a
+  pending source heard within about thirty metres, a 1.2 s slot, and "first positional bat
+  squeaks played" in the log.
+- **When they sound.** In the game a burst sounds under the dome the moment a walker sets a
+  cluster flying. While any bat is on the wing (round the chamber, along the adit, hunting before
+  the portal), one of them, each in turn, squeaks every 2.3 s.
+- **Startup report.** The bats' line adds "they squeak as they fly".
+- **Tests.** CoreTests check the PCM: deterministic, three distinct variants silent at both ends,
+  ten or more separate squeaks each, and the loudest of them a high tone of 4.5-10.5 kHz.
+- **Not verified in a capture.** A software capture runs only 31 updates and plays no wildlife
+  call at all (no "first positional" line for any animal), so playback is not shown there. The
+  operator's logs will show the bats' first line.
+
+The suite is 76/76.
+
 ## Loop pass 527 (2026-10-22) — where the gulls stand, the droppings show
 
 Since pass 520 the coast's birds perch on the coaster's mastheads and bow rail and on the

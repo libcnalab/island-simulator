@@ -823,6 +823,9 @@ namespace island
         std::uint32_t notedCrocHisses_ = 0U;
         std::uint32_t notedDolphinLeaps_ = 0U;
         std::uint32_t notedBirdMobs_ = 0U;
+        std::uint32_t notedBatFlushes_ = 0U;
+        float batSqueakClock_ = 0.0f;
+        std::size_t batSqueakTurn_ = 0U;
         std::uint32_t notedDolphinSplashes_ = 0U;
         std::uint32_t notedHeronStrikes_ = 0U;
         std::uint32_t notedHeronFlushes_ = 0U;
