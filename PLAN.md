@@ -233,6 +233,52 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 493 (2026-10-22) — a stranded whale's skeleton lies on the beach
+
+Operator request: a whale skeleton somewhere on a beach, then work on its realism. A rorqual's
+bleached skeleton, about fifteen metres from the rostrum's tip to the tail, lies half sunk in the
+dry sand of the north beach at (−7, 219), along the shore.
+
+**`WhaleSkeletonLayout`.** It searches the island's shore (144 bearings, from the north-east
+sunwise) for the first stretch where the whole skeleton fits:
+
+- the skull's back 8.5 m up from the shoreline;
+- level dry sand from beyond the rostrum to past the tail and 2.6 m either side (slope under
+  0.16, a rise under 1.1 m);
+- clear of every obstacle by 2.5 m;
+- away from the jetty's root and every turtle nest and crawl.
+
+The skull and the jaws' bow are obstacles for the walker, the quad and the animals.
+
+**`WhaleSkeletonRenderer`.** One opaque `StructureMeshBuilder` draw of 10,414 triangles. Each face
+is wound away from its piece's inside, as the build's light and the hour's relight take the
+normal from the winding.
+
+- **Skull.** A rorqual's: the long flat lens-section rostrum with a low ridge, widening into the
+  thin supraorbital wings (2.35 m, the widest point), then the occipital shield rising to its crest
+  and narrowing to the condyles. The dark nasal openings sit where the rostrum meets the wings.
+- **Jaws.** Two bowed jaws lie splayed beside the rostrum.
+- **Spine.** 44 vertebrae on a lazy S: cervical discs, thoracic, lumbar with tall spines and broad
+  transverse processes, and the tail's shrinking to nothing. Each centrum is waisted, its end
+  plates darker, and the last three are washed out of line.
+- **Ribs.** 13 pairs splayed over the sand: some fallen flat and askew, a few snapped with the
+  outer piece lying below the break, two gone.
+- **The rest.** The shoulder blades as fans on the sand, and a flipper's humerus, radius, ulna and
+  four fingers.
+- **Colour.** Sun-bleached ivory with a weathered mottle and grey patches, stained toward the sand
+  where it meets the beach.
+- **Lighting and shadows.** It is relit by the hour (`StructureShadowReceiver`, 0.46 baked ambient)
+  and receives the sun shadow map. It casts into the map: a dump of the map showed its silhouette.
+  At this bearing the morning and evening sun runs along its axis, so the long shadows fall along
+  the bones. The ribs are thinner than the map's texels.
+- **Contact shadows.** Soft static patches ground it: under the skull and braincase, the jaws, the
+  shoulder blades and down the spine, faint under the ribcage.
+
+QA view `whale-skeleton` (`20261022T074431`) looks up the beach across the ribs to the spine and skull. A
+core test checks that the layout finds level dry sand, fits again, refuses a rock across it or the
+sea, honours the avoided points, and that the skull blocks the way. The validator requires the
+diagnostic line, with 44 vertebrae and 24 ribs, in every capture.
+
 ## Loop pass 492 (2026-10-22) — two frigatebirds soar over the island
 
 The high birds were one generic seabird that dives for fish. Over a tropical island the great

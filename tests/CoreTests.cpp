@@ -101,6 +101,7 @@
 #include "IslandSimulator/HutLayout.hpp"
 #include "IslandSimulator/HutGeckos.hpp"
 #include "IslandSimulator/SunSteamField.hpp"
+#include "IslandSimulator/WhaleSkeletonLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/LookoutLayout.hpp"
 #include "IslandSimulator/FallingFruitField.hpp"
@@ -9548,6 +9549,35 @@ int main()
               "gust fronts travel downwind at the front speed");
     }
 
+    {
+        // The stranded whale's skeleton finds a stretch of level dry sand on the beach, clear of
+        // the given obstacles and away from the points to avoid; its skull and jaws block the
+        // way, and a placement on the sea or across a rock does not fit.
+        const island::IslandTerrain terrain;
+        const std::vector<island::CircularObstacle> none;
+        const auto found = island::WhaleSkeletonLayout::FindInWorld(terrain, none, {});
+        bool onSand = false, fitsAgain = false, blocked = false;
+        if (found) {
+            fitsAgain = island::WhaleSkeletonLayout::Fits(terrain, *found, none);
+            const auto skull = found->At(-1.0f, 0.0f), tail = found->At(island::WhaleSkeletonPlacement::SpineLength, 0.0f);
+            onSand = terrain.Sample(skull[0], skull[1]).surface == island::TerrainSurface::DrySand
+                && terrain.Sample(tail[0], tail[1]).surface == island::TerrainSurface::DrySand;
+            const auto obstacles = found->Obstacles();
+            blocked = std::hypot(obstacles[0].x - skull[0], obstacles[0].z - skull[1]) < 2.5f;
+            const auto mid = found->At(4.0f, 0.0f);
+            const std::vector<island::CircularObstacle> rock{{mid[0], mid[1], 1.0f}};
+            island::WhaleSkeletonPlacement wet = *found;
+            const auto sea = found->At(0.0f, 30.0f);
+            wet.x = sea[0]; wet.z = sea[1];
+            blocked = blocked && !island::WhaleSkeletonLayout::Fits(terrain, *found, rock)
+                && !island::WhaleSkeletonLayout::Fits(terrain, wet, none);
+            const std::array<std::array<float, 2>, 1> avoid{{found->At(5.0f, 0.0f)}};
+            const auto elsewhere = island::WhaleSkeletonLayout::FindInWorld(terrain, none, avoid);
+            blocked = blocked && elsewhere && std::hypot(elsewhere->x - found->x, elsewhere->z - found->z) > 10.0f;
+        }
+        Check(found && fitsAgain && onSand && blocked,
+              "the whale skeleton lies on level dry beach sand clear of obstacles, kept off the sea, a rock and the avoided points");
+    }
     {
         // Two great frigatebirds soar far above the island: over a hundred metres up, gliding
         // nearly all the time, never hunting or sitting on the sea even with a school in play.

@@ -197,6 +197,7 @@ namespace island
             case FixedViewpoint::BirdDetail: return "birds";
             case FixedViewpoint::BirdPreenDetail: return "bird-preen";
             case FixedViewpoint::FrigatebirdDetail: return "frigatebird";
+            case FixedViewpoint::WhaleSkeletonDetail: return "whale-skeleton";
             case FixedViewpoint::GroundDoveDetail: return "ground-doves";
             case FixedViewpoint::FruitBatDetail: return "bats";
             case FixedViewpoint::FruitBatRoostDetail: return "bat-roost";
@@ -395,6 +396,16 @@ namespace island
         if(lookoutPlacement_) {
             for(const auto& obstacle:lookoutPlacement_->PostObstacles()) worldObstacles.push_back(obstacle);
             birdPerchLayout_.AddSite(lookoutPlacement_->RailPerch());
+        }
+        {
+            // A stranded whale's skeleton on a quiet stretch of the beach, clear of the jetty and
+            // the turtles' nests and crawls; its skull and jaws block the way.
+            std::vector<std::array<float,2>> avoid;
+            if(jettyPlacement_) avoid.push_back({{jettyPlacement_->rootX,jettyPlacement_->rootZ}});
+            for(const auto& detail:naturalPropLayout_.BeachDetails())
+                if(detail.turtleNest||detail.turtleTrace) avoid.push_back({{detail.x,detail.z}});
+            whalePlacement_=WhaleSkeletonLayout::FindInWorld(terrain_,worldObstacles,avoid);
+            if(whalePlacement_) for(const auto& obstacle:whalePlacement_->Obstacles()) worldObstacles.push_back(obstacle);
         }
         birdFlock_.SetPerchSites(birdPerchLayout_.Sites());
         {
@@ -1728,6 +1739,18 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: bridge QA camera looks across the rope bridge from the bank\n";
+        } else if (viewpoint_ == FixedViewpoint::WhaleSkeletonDetail) {
+            // From the seaward side of the ribcage, a few steps down the beach toward the skull,
+            // looking up the beach across the ribs to the spine.
+            if(!whalePlacement_) throw std::runtime_error("Whale skeleton QA requires the stranded skeleton");
+            const auto& w=*whalePlacement_;
+            const auto eye=w.At(-0.6f,7.0f);
+            cameraPosition_=Vector3(eye[0],terrain_.Height(eye[0],eye[1])+PlayerMotion::EyeHeight,eye[1]);
+            const auto look=w.At(2.2f,0.0f);
+            const Vector3 direction=Vector3(look[0],terrain_.Height(look[0],look[1])+0.3f,look[1])-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: whale skeleton QA camera looks up the beach across the stranded whale's ribs to its spine and skull\n";
         } else if (viewpoint_ == FixedViewpoint::FlightOverview) {
             // The operator's usual view: flying about forty metres over the forest behind the
             // hut, looking out across the trees, the hut's clearing and the beach to the sea.
@@ -2416,7 +2439,8 @@ namespace island
             device, terrain_, vegetationLayout_, jungleLayout_, naturalPropLayout_,
             shipwreckLayout_, qualityProfile_.contactShadowDistanceScale,
             hutPlacement_?&*hutPlacement_:nullptr,
-            helicopterPlacement_?&*helicopterPlacement_:nullptr, drawnGround_.get());
+            helicopterPlacement_?&*helicopterPlacement_:nullptr, drawnGround_.get(),
+            whalePlacement_?&*whalePlacement_:nullptr);
         walkerShadowRenderer_ = std::make_unique<WalkerShadowRenderer>(device);
         constexpr auto coastalShadowDiagnostic =
             "island-simulator: coastal contact patches follow rendered seabed triangles in the existing batch";
@@ -2622,6 +2646,7 @@ namespace island
         if(hutPlacement_) hutRenderer_=std::make_unique<HutRenderer>(device,*hutPlacement_);
         if(hutPlacement_) eaveDrips_=std::make_unique<EaveDripRenderer>(device,*hutPlacement_,terrain_);
         if(jettyPlacement_) jettyRenderer_=std::make_unique<JettyRenderer>(device,*jettyPlacement_);
+        if(whalePlacement_) whaleSkeletonRenderer_=std::make_unique<WhaleSkeletonRenderer>(device,*whalePlacement_,terrain_,*drawnGround_);
         if(bridgePlacement_) bridgeRenderer_=std::make_unique<BridgeRenderer>(device,*bridgePlacement_);
         if(lookoutPlacement_) lookoutRenderer_=std::make_unique<LookoutRenderer>(device,*lookoutPlacement_);
         fallingFruitRenderer_=std::make_unique<FallingFruitRenderer>(device);
@@ -6414,6 +6439,7 @@ namespace island
                 if (hutRenderer_) hutRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 naturalPropRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (jettyRenderer_) jettyRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                if (whaleSkeletonRenderer_) whaleSkeletonRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (bridgeRenderer_) bridgeRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (lookoutRenderer_) lookoutRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 helicopterRenderer_->SetSunShadowMap(sunShadowMap_.get());
@@ -6433,6 +6459,7 @@ namespace island
                 palmRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (hutRenderer_) hutRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (jettyRenderer_) jettyRenderer_->DrawSunShadow(*sunShadowMap_);
+                if (whaleSkeletonRenderer_) whaleSkeletonRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (bridgeRenderer_) bridgeRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (lookoutRenderer_) lookoutRenderer_->DrawSunShadow(*sunShadowMap_);
                 shipwreckRenderer_->DrawSunShadow(*sunShadowMap_);
@@ -6674,6 +6701,10 @@ namespace island
         if(jettyRenderer_) {
             GpuDiagnosticScope gpuPass("jetty");
             jettyRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
+        }
+        if(whaleSkeletonRenderer_) {
+            GpuDiagnosticScope gpuPass("whale-skeleton");
+            whaleSkeletonRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }
         if(bridgeRenderer_) {
             GpuDiagnosticScope gpuPass("bridge");

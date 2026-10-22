@@ -35,6 +35,7 @@ namespace island
     class SnakePopulation;
     struct HutPlacement;
     struct HelicopterPlacement;
+    struct WhaleSkeletonPlacement;
 
     /**
      * @brief One-batch terrain-conforming grounding shadows for nearby scene objects.
@@ -53,7 +54,8 @@ namespace island
             const ShipwreckLayout& shipwreck,
             float maximumDistanceScale = 1.0f, const HutPlacement* hut = nullptr,
             const HelicopterPlacement* helicopter = nullptr,
-            const RenderedTerrainSurface* ground = nullptr);   // the moving shadows' surface
+            const RenderedTerrainSurface* ground = nullptr,    // the moving shadows' surface
+            const WhaleSkeletonPlacement* whale = nullptr);    // the stranded whale's bones, grounded
         ~ContactShadowRenderer();
 
         ContactShadowRenderer(const ContactShadowRenderer&) = delete;

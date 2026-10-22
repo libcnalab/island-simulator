@@ -153,6 +153,8 @@
 #include "IslandSimulator/WetlandMistField.hpp"
 #include "IslandSimulator/ValleyMistField.hpp"
 #include "IslandSimulator/SunSteamField.hpp"
+#include "IslandSimulator/WhaleSkeletonLayout.hpp"
+#include "IslandSimulator/WhaleSkeletonRenderer.hpp"
 #include "IslandSimulator/HoofDustField.hpp"
 #include "IslandSimulator/FinWakeField.hpp"
 #include "IslandSimulator/TurtleGrazeField.hpp"
@@ -248,6 +250,7 @@ namespace island
         BirdDetail,
         BirdPreenDetail,
         FrigatebirdDetail,
+        WhaleSkeletonDetail,
         GroundDoveDetail,
         FruitBatDetail,
         FruitBatRoostDetail,
@@ -474,6 +477,7 @@ namespace island
         SunShadeField sunShade_;
         std::optional<HutPlacement> hutPlacement_;
         std::optional<JettyPlacement> jettyPlacement_;
+        std::optional<WhaleSkeletonPlacement> whalePlacement_;   // a stranded whale's skeleton on the beach
         std::optional<BridgePlacement> bridgePlacement_;
         std::optional<LookoutPlacement> lookoutPlacement_;
         std::optional<HelicopterPlacement> helicopterPlacement_;
@@ -549,6 +553,7 @@ namespace island
         std::unique_ptr<HutRenderer> hutRenderer_;
         std::unique_ptr<EaveDripRenderer> eaveDrips_;
         std::unique_ptr<JettyRenderer> jettyRenderer_;
+        std::unique_ptr<WhaleSkeletonRenderer> whaleSkeletonRenderer_;
         std::unique_ptr<BridgeRenderer> bridgeRenderer_;
         std::unique_ptr<LookoutRenderer> lookoutRenderer_;
         FallingFruitField fallingFruit_{terrain_};

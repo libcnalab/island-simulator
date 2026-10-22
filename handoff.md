@@ -89,10 +89,23 @@ Operator request 2026-10-20 (the next task after the weather): ride a quad bike 
 
 Operator request 2026-10-22 (future task, taken next in the loop): a whale skeleton somewhere
 on a beach.
-- [ ] A stranded whale's bleached skeleton on a quiet stretch of beach, half sunk in the sand.
+- [x] A stranded whale's bleached skeleton on a quiet stretch of beach, half sunk in the sand (PLAN "Loop pass 493", `whale-skeleton` view, `20261022T074431`).
       Skull with its curved jaws, vertebral column tapering to the tail, rib arcs (some fallen),
       shoulder blades and the flipper bones, a few vertebrae scattered. Weathered ivory-grey bone,
       receiving and casting sun shadows, with a QA view.
+
+Operator requests 2026-10-22 (future tasks, taken in this order after the whale skeleton and its
+realism pass):
+- [ ] A statue of some god somewhere on the island (a weathered stone idol or deity figure in a
+      fitting place).
+- [ ] On a beach, HELP ME (or similar) laid out in stones, as a castaway would.
+- [ ] A lighthouse.
+- [ ] A Second World War aircraft wreck.
+- [ ] Washed-up plastic PET bottles now and then on the beaches.
+- [ ] A real large ship, about 30 m long, near the island: enterable and walkable, the hold
+      below deck too, with several sailors' skeletons aboard.
+- [ ] A mine entrance somewhere on the island, a tunnel several tens of metres long or more,
+      lit inside by lanterns or something else that glows.
 
 Loop log (propose → implement, continues until the operator stops the session):
 - Pass 1: dappled leaf-gap sun flecks on the shaded forest floor; `ground` view reclassified
@@ -329,6 +342,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 493: stranded whale skeleton on the north beach (WhaleSkeletonLayout/Renderer, 44 vertebrae, 24 ribs, rorqual skull, contact patches, sun map caster); QA view `whale-skeleton` (`20261022T074431`) (PLAN "Loop pass 493").
 - Pass 492: two great frigatebirds (last two high birds) soar at 112-128 m, crooked wings, forked tail, never dive; QA view `frigatebird` (`20261022T070643`); full sweep 127/127 after 456-491 (PLAN "Loop pass 492").
 - Pass 491: wet feet (25 s after the water) leave fading prints on the jetty/bridge/lookout planks, dry in 30 s (Footprint::y/strength, FootprintTrail deckY); core test only, no capture (PLAN "Loop pass 491").
 - Pass 490: gusts clatter the nearest palm's fronds (GeneratePalmClatter, Soundscape::NotePalmClatter, every 2.5-5.5 s while gust > 0.5) (PLAN "Loop pass 490").

@@ -1,4 +1,5 @@
 #include "IslandSimulator/ContactShadowRenderer.hpp"
+#include "IslandSimulator/WhaleSkeletonLayout.hpp"
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
 
 #include <algorithm>
@@ -241,7 +242,8 @@ void main() { fragColor = vec4(0.0, 0.0, 0.0, vAlpha); }
         const VegetationLayout& vegetation, const JungleLayout& jungle,
         const NaturalPropLayout& naturalProps, const ShipwreckLayout& shipwreck,
         const float maximumDistanceScale, const HutPlacement* hut,
-        const HelicopterPlacement* helicopter, const RenderedTerrainSurface* ground)
+        const HelicopterPlacement* helicopter, const RenderedTerrainSurface* ground,
+        const WhaleSkeletonPlacement* whale)
         : device_(device),
           terrain_(terrain),
           ground_(ground),
@@ -345,6 +347,26 @@ void main() { fragColor = vec4(0.0, 0.0, 0.0, vAlpha); }
         for (const auto& debris : shipwreck.Debris()) cacheCoastal(DebrisContactFootprint(debris));
         if(hut) for(const auto& footprint:HutContactFootprints(*hut))
             cachePatch(footprint,StaticShadowKind::Hut,90.0f,ContactPatchDetail::Coastal);
+        if(whale) {
+            // The whale's bones lie in the sand: soft dark ground under the skull and its
+            // braincase, the jaws, the shoulder blades and down the spine, faint under the ribs.
+            const auto bonePatch=[&](const float along,const float across,const float alongRadius,
+                                     const float acrossRadius,const float opacity) {
+                const auto p=whale->At(along,across);
+                cachePatch({p[0],p[1],whale->dirX,whale->dirZ,alongRadius,acrossRadius,opacity},
+                           StaticShadowKind::Wood,PropMaximumDistance,ContactPatchDetail::Compact);
+            };
+            bonePatch(-1.9f,0.0f,1.9f,0.75f,0.34f);
+            bonePatch(-0.2f,0.0f,0.75f,1.15f,0.46f);
+            for(const float side:{-1.0f,1.0f}) {
+                bonePatch(-1.9f,side*1.05f,2.1f,0.22f,0.28f);
+                bonePatch(1.35f,WhaleSkeletonPlacement::SpineAcross(1.35f)+side*1.35f,0.55f,0.55f,0.22f);
+            }
+            bonePatch(2.9f,WhaleSkeletonPlacement::SpineAcross(2.9f),2.3f,2.1f,0.14f);
+            for(float along=0.6f;along<WhaleSkeletonPlacement::SpineLength;along+=1.3f)
+                bonePatch(along,WhaleSkeletonPlacement::SpineAcross(along),0.8f,
+                          0.32f*(1.0f-0.6f*along/WhaleSkeletonPlacement::SpineLength),0.34f);
+        }
 
         // Permanent midday and only three landmark receivers make a bounded projected-footprint
         // fallback more useful than a cross-platform shadow-map pass. These broad, low-alpha
