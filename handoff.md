@@ -147,6 +147,24 @@ in Czech in the operator's message; the intent is kept here.
 8. [ ] **A seabird colony.** Boobies nesting on a rocky islet offshore.
 9. [ ] **Mudskippers.** Mudskippers hopping on the mud among the mangroves.
 
+**Operator addition (2026-10-22).**
+10. [ ] **A Tyrannosaurus rex.** It must look realistic and be at real size: about 12 m long and
+    about 3.7-4 m at the hip, some 8 t. Model it on current palaeontology:
+    - a horizontal body balanced over the hips, a deep skull with forward-facing eyes;
+    - tiny two-fingered arms, a massive tail held off the ground;
+    - a scaly hide with no full feather coat, perhaps sparse filaments.
+
+    Behaviour:
+    - It walks the island on its own routes, at a heavy gait with footfalls that shake the
+      camera nearby and leave big three-toed tracks.
+    - It does other things too: sniffs the air, roars, drinks at the stream, rests lying down,
+      watches or follows the walker and the quad from a distance, scatters the other animals.
+
+    Engineering:
+    - Sound for the steps, breathing and roar.
+    - Collision with the walker and the quad, and sun shadows.
+    - QA views (walking, roaring, resting).
+
 ## Backlog (agent-actionable, 2026-10-19)
 
 Distilled from `PLAN.md` "Latest operator priorities — 2026-10-12" and "Current significant
