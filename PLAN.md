@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 478 (2026-10-22) — the deer sit a downpour out under the crowns
+
+Deer took no notice of the rain. `DeerHerd::SetRain` now changes their routine in a downpour (rain
+above 0.5):
+
+- Every turn of their routine becomes a rest (a drink in progress goes on).
+- A rest in the open walks the deer to the nearest cover, exactly as it seeks shade, and it beds
+  down there for some twenty seconds longer than a shade rest.
+- A deer already under cover lies up where it is.
+
+The game sets the rain on the herd each frame. A core test puts one crown near a deer's home in a
+downpour: the deer walks to the crown's cover (`RainShelterCount`) and rests there. The shade and
+night-bedding tests still pass.
+
 ## Loop pass 477 (2026-10-22) — rain drums on the helicopter's skin
 
 The rain was heard the same everywhere except under the crowns (louder, deeper) and in the cave

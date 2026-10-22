@@ -340,14 +340,24 @@ namespace island
                 agent.state.behavior = DeerBehavior::Drink;
                 agent.behaviorSeconds = 22.0f;
             }
-            // A rest that comes on sunlit ground: the deer walks to the nearest shade first
-            // (a crown, a palm head, a snag or a bush within ten metres) and lies up there.
+            // In a downpour every turn is a rest (taken under cover below).
+            const bool downpour = rain_ > RainShelterLevel;
+            if (downpour && agent.state.behavior != DeerBehavior::Drink) {
+                agent.state.behavior = DeerBehavior::Rest;
+                agent.behaviorSeconds = std::max(agent.behaviorSeconds, 12.0f);
+                agent.bedded = light_ != nullptr && LightAt(agent.state.x, agent.state.z) <= SunlitLevel;
+            }
+            // A rest that comes on sunlit ground (or in the open in the rain): the deer walks to
+            // the nearest shade first (a crown, a palm head, a snag or a bush within ten metres)
+            // and lies up there.
             if (agent.state.behavior == DeerBehavior::Rest && light_ != nullptr
                 && LightAt(agent.state.x, agent.state.z) > SunlitLevel
                 && FindShade(agent, index, agent.shadeX, agent.shadeZ)) {
                 agent.state.behavior = DeerBehavior::Walk;
                 agent.seekingShade = true;
+                agent.bedded = false;
                 agent.behaviorSeconds = 30.0f;
+                if (downpour) ++rainShelters_;
                 agent.targetHeadingRadians = std::atan2(agent.shadeZ - agent.state.z,
                                                         agent.shadeX - agent.state.x);
             }
@@ -360,7 +370,8 @@ namespace island
                 agent.seekingShade = false;
                 agent.state.behavior = DeerBehavior::Rest;
                 agent.behaviorSeconds = 6.0f + static_cast<float>((agent.transitions * 5U
-                    + static_cast<std::uint32_t>(index) * 3U) % 30U) * .2f;
+                    + static_cast<std::uint32_t>(index) * 3U) % 30U) * .2f
+                    + (rain_ > RainShelterLevel ? 20.0f : 0.0f);   // sitting the rain out
                 agent.bedded = true;
                 ++shadeRests_;
             } else {

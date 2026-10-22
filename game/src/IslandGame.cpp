@@ -3601,6 +3601,7 @@ namespace island
                 for(auto& trail:deerPrints_) trail.SetRain(rain);
                 for(auto& trail:boarPrints_) trail.SetRain(rain);
                 for(auto& trail:goatPrints_) trail.SetRain(rain);
+                deer_->SetRain(rain);   // and sends the deer under the crowns
             }
             footprints_.Update(deltaSeconds,walker.x,walker.z,playerMotion_.VelocityX(),playerMotion_.VelocityZ(),onSand||inMud,
                 inMud||(onSand&&terrain_.Sample(walker.x,walker.z).surface==TerrainSurface::WetSand));

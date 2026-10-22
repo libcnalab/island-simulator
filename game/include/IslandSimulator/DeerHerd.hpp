@@ -117,6 +117,12 @@ namespace island
          *  a deer whose rest comes on sunlit ground first walks to the shadiest valid spot
          *  within ShadeSeekRadius and lies up there. Null keeps the deer resting where it is. */
         void SetLight(const CanopyLightField* light) noexcept { light_ = light; }
+        /** @brief The rain (0..1): in a downpour (over RainShelterLevel) a deer in the open walks
+         *  to the cover of the nearest crown, as it seeks shade, and beds down under it until
+         *  the rain eases; a deer under cover lies up there. */
+        static constexpr float RainShelterLevel = 0.5f;
+        void SetRain(float rain) noexcept { rain_ = std::isfinite(rain) ? std::clamp(rain, 0.0f, 1.0f) : 0.0f; }
+        [[nodiscard]] std::uint32_t RainShelterCount() const noexcept { return rainShelters_; }
         /** @brief The drawn ground the hooves stand on (with the stream's carved bed, whose
          *  banks at the drinking points lie up to a quarter metre off the analytic terrain);
          *  without it, the analytic terrain. Sets the deer on it at once. */
@@ -180,6 +186,8 @@ namespace island
 
         const IslandTerrain& terrain_;
         const RenderedTerrainSurface* ground_ = nullptr;
+        float rain_ = 0.0f;
+        std::uint32_t rainShelters_ = 0U;
         [[nodiscard]] float StandHeight(float x, float z) const noexcept;
         WorldCollisionGrid obstacles_;
         std::array<Agent, Count> agents_{};

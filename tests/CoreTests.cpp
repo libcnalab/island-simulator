@@ -12365,6 +12365,28 @@ int main()
     }
 
     {
+        // In a downpour a deer in the open walks to the crown's cover and beds down under it.
+        const island::IslandTerrain terrain;
+        island::DeerHerd herd(terrain, {});
+        const island::DeerHome home = herd.Homes()[2];
+        const float slopeX = island::environment::SunDirectionX / island::environment::SunDirectionY;
+        const float slopeZ = island::environment::SunDirectionZ / island::environment::SunDirectionY;
+        const float groundY = terrain.Height(home.x, home.z);
+        const island::CanopyOccluder crown{home.x + 5.0f + slopeX * 6.0f, groundY + 6.0f, home.z + slopeZ * 6.0f,
+                                           3.5f, 2.5f, 3.5f, 0.0f, 3.0f};
+        const island::CanopyLightField light(terrain, std::span<const island::CanopyOccluder>(&crown, 1), 512);
+        herd.SetLight(&light);
+        herd.SetRain(0.9f);
+        bool sheltered = false;
+        for (int step = 0; step < 24000 && !sheltered; ++step) {
+            herd.Update(0.05f, home.x + 60.0f, groundY + 1.6f, home.z);
+            const auto& deer = herd.Deer()[2];
+            sheltered = herd.RainShelterCount() >= 1U && deer.behavior == island::DeerBehavior::Rest
+                && light.Sample(deer.x, deer.z) < island::DeerHerd::ShadedLevel;
+        }
+        Check(sheltered, "in a downpour a deer in the open walks to a crown's cover and rests under it");
+    }
+    {
         // A deer rests in the shade: with one dense crown shading a spot five metres from the
         // third deer's home, a rest that comes on sunlit ground becomes a walk to that
         // shade and the rest is taken there; with no light field the deer rests where it is.
