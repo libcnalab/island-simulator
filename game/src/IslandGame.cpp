@@ -6433,6 +6433,13 @@ namespace island
                 for (const auto& crab : coconutCrabGroup_.Crabs())
                     if (crab.climbAmount < 0.2f)
                         consider(crab.x, crab.y, crab.z, 0.45f * crab.scale, [&] { return walker_shadow::CoconutCrabLimbs(crab); });
+                for (const auto& skink : skinkPopulation_.Skinks())   // the skinks, frogs and rats and mice too
+                    consider(skink.x, skink.y, skink.z, 0.12f * skink.scale, [&] { return walker_shadow::SkinkLimbs(skink); });
+                for (const auto& frog : frogPopulation_.Frogs())
+                    consider(frog.x, frog.y, frog.z, 0.2f * frog.scale, [&] { return walker_shadow::FrogLimbs(frog); });
+                for (const auto& rodent : rodentPopulation_.Rodents())
+                    if (rodent.visibility > 0.3f)
+                        consider(rodent.x, rodent.y, rodent.z, 0.2f, [&] { return walker_shadow::RodentLimbs(rodent); });
                 for (const auto& bird : birdFlock_.Birds())   // and a dove walking on the ground
                     if ((bird.behavior == BirdBehavior::GroundApproach || bird.behavior == BirdBehavior::GroundForage
                          || bird.behavior == BirdBehavior::GroundDepart) && bird.perchAmount > 0.35f)

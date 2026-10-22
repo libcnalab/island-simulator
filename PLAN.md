@@ -233,6 +233,23 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 461 (2026-10-22) — skinks, frogs, rats and mice cast their figures
+
+The small ground animals ButterflyRenderer draws had no shadow. Their figures are now laid in its
+proportions and join the crabs' and doves' nearest-eight within 18 m:
+
+- **Skink:** the low trunk, flattened and spread as it basks, the head, the long tapering tail and
+  the four splayed legs.
+- **Frog:** the squat body, the broad head, the forelegs and the long hind legs folded at the
+  haunches.
+- **Rat or mouse:** the body, the head lifted as it sniffs or grooms, the tail on the ground and the
+  short legs. A mouse is two-thirds of a rat, and a rodent in its burrow casts none.
+
+The beetles, at some five centimetres, are left out. In `skinks` the basking skink's figure lies
+beside it with its tail, and in `rats` and `mice` it lies under and behind the animal. In `frogs`
+the frog sits in the forest's shade, where the figure rightly adds nothing. A core test checks
+that the three figures stand on the ground, stay low, and hold the trunk's shadow inside.
+
 ## Loop pass 460 (2026-10-22) — ground doves and reef herons cast their figures
 
 Bird shadows were drawn only in flight. The doves walking on the ground and the herons wading at the

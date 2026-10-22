@@ -12607,6 +12607,31 @@ int main()
                                             heronLimbs[0].az + 0.34f / 0.82f * bodyHeight) < 0.0f,
                   "a ground dove's and a heron's figures stand on their feet");
         }
+        {
+            // The small ground animals' figures: a skink's, a frog's and a rat's feet on the
+            // ground and their bodies low, the trunk's shadow inside each figure.
+            island::SkinkState skink;
+            skink.scale = 0.4f;
+            island::FrogState frog;
+            frog.scale = 0.33f;
+            island::RodentState rat;
+            rat.species = island::RodentSpecies::Rat;
+            const std::array<std::pair<std::array<ws::Limb, ws::CapsuleCount>, float>, 3> animals{{
+                {ws::SkinkLimbs(skink), 0.06f * 0.4f}, {ws::FrogLimbs(frog), 0.10f * 0.33f}, {ws::RodentLimbs(rat), 0.095f}}};
+            bool low = true;
+            for (const auto& [limbs, bodyHeight] : animals) {
+                float lowest = 1e9f, highest = -1e9f;
+                for (const auto& limb : limbs) {
+                    if (!(limb.radius > 0.0f)) continue;
+                    lowest = std::min({lowest, limb.ay, limb.by});
+                    highest = std::max({highest, limb.ay + limb.radius, limb.by + limb.radius});
+                }
+                const auto figure = ws::Lay(limbs, 0.0f, 0.0f, 0.0f, -0.45f, 0.82f, -0.34f, 0.2f);
+                low = low && std::abs(lowest) < 1e-4f && highest < 0.2f
+                    && ws::SignedDistance(figure, 0.45f / 0.82f * bodyHeight, 0.34f / 0.82f * bodyHeight) < 0.0f;
+            }
+            Check(low, "the skink's, the frog's and the rat's figures stand on the ground, low");
+        }
         Check(at(stride, 0.25f, 0.0f) > 0.08f && at(still, 0.25f, 0.0f) < 0.05f
                   && at(stride, 1.62f, 0.0f) < 0.0f && at(still, 1.62f, 0.0f) < 0.0f,
               "side-lit, the striding legs part in the walker's shadow and the head stays in it");

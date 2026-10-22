@@ -16,6 +16,9 @@ namespace island
     struct CoconutCrabState;
     struct BirdState;
     struct ReefHeronState;
+    struct SkinkState;
+    struct FrogState;
+    struct RodentState;
 
     /**
      * The walking player's own sun shadow, the figure rather than a blot: the body as seventeen
@@ -95,6 +98,12 @@ namespace island
         [[nodiscard]] std::array<Limb, CapsuleCount> GhostCrabLimbs(const CrabState& crab) noexcept;
         [[nodiscard]] std::array<Limb, CapsuleCount> HermitCrabLimbs(const HermitCrabState& crab) noexcept;
         [[nodiscard]] std::array<Limb, CapsuleCount> CoconutCrabLimbs(const CoconutCrabState& crab) noexcept;
+        /** The small ground animals in ButterflyRenderer's proportions: a skink (trunk, head,
+         *  tapering tail, splayed legs), a frog (squat body, forelegs, folded hind legs), a rat or
+         *  a mouse (body, head lifted by the sniff or the groom, tail, short legs). */
+        [[nodiscard]] std::array<Limb, CapsuleCount> SkinkLimbs(const SkinkState& skink) noexcept;
+        [[nodiscard]] std::array<Limb, CapsuleCount> FrogLimbs(const FrogState& frog) noexcept;
+        [[nodiscard]] std::array<Limb, CapsuleCount> RodentLimbs(const RodentState& rodent) noexcept;
         inline constexpr float GroundBirdBodyHeight = 0.20f;   // a ground dove's body over its feet, of its scale
         /** A dove standing on the ground (BirdRenderer's stance: body, head, bill, tail, legs). */
         [[nodiscard]] std::array<Limb, CapsuleCount> GroundBirdLimbs(const BirdState& bird) noexcept;

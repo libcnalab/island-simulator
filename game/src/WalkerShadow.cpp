@@ -8,7 +8,10 @@
 #include "IslandSimulator/CoconutCrabGroup.hpp"
 #include "IslandSimulator/CrabColony.hpp"
 #include "IslandSimulator/CrocodileGroup.hpp"
+#include "IslandSimulator/FrogPopulation.hpp"
 #include "IslandSimulator/HermitCrabGroup.hpp"
+#include "IslandSimulator/RodentPopulation.hpp"
+#include "IslandSimulator/SkinkPopulation.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/GoatHerd.hpp"
 #include "IslandSimulator/ResidentMotion.hpp"
@@ -459,6 +462,58 @@ namespace island::walker_shadow
         f.Legs(0.25f, 0.22f, 0.62f, {0.20f, 0.06f, -0.08f, -0.22f}, 1.3f, 0.045f, crab.legPhase,
                0.06f * std::min(1.0f, crab.speed * 3.0f));
         for (const float side : {-1.0f, 1.0f}) f.Add(side * 0.15f, 0.20f, 0.30f, side * 0.22f, 0.12f, 0.62f, 0.08f);
+        return f.Finish();
+    }
+
+    std::array<Limb, CapsuleCount> SkinkLimbs(const SkinkState& skink) noexcept
+    {
+        // The skink's low trunk (flattened and spread as it basks), the head, the long tapering
+        // tail and the four splayed legs, in ButterflyRenderer's proportions.
+        CrabFrame f{skink.x, skink.y, skink.z, std::cos(skink.headingRadians), std::sin(skink.headingRadians), skink.scale};
+        const float flat = std::clamp(skink.flatten, 0.0f, 1.0f);
+        const float lift = 0.06f * (1.0f - 0.17f * flat), girth = 0.065f * (1.0f + 0.1f * flat);
+        f.Add(0.0f, lift, -0.28f, 0.0f, lift + 0.01f * std::clamp(skink.pushUp, 0.0f, 1.0f), 0.30f, girth);
+        f.Add(0.0f, lift, 0.40f, 0.0f, lift, 0.46f, 0.045f);
+        f.Add(0.0f, 0.045f, -0.30f, 0.0f, 0.02f, -0.62f, 0.035f);
+        f.Add(0.0f, 0.02f, -0.62f, 0.0f, 0.01f, -0.95f, 0.015f);
+        const float stride = 0.04f * std::min(1.0f, skink.speed * 6.0f);
+        for (const float side : {-1.0f, 1.0f})
+            for (const float row : {0.17f, -0.17f}) {
+                const float step = stride * std::sin(skink.gaitPhase + (side * row > 0.0f ? 0.0f : 3.14159f));
+                f.Add(side * 0.07f, 0.045f, row, side * 0.17f, 0.0f, row + 0.05f + step, 0.016f);
+            }
+        return f.Finish();
+    }
+
+    std::array<Limb, CapsuleCount> FrogLimbs(const FrogState& frog) noexcept
+    {
+        // The squat body and broad head, the forelegs propped ahead and the long hind legs
+        // folded at the haunches.
+        CrabFrame f{frog.x, frog.y, frog.z, std::cos(frog.headingRadians), std::sin(frog.headingRadians), frog.scale};
+        f.Add(0.0f, 0.095f, -0.11f, 0.0f, 0.105f, 0.07f, 0.085f);
+        f.Add(0.0f, 0.10f, 0.13f, 0.0f, 0.095f, 0.17f, 0.065f);
+        for (const float side : {-1.0f, 1.0f}) {
+            f.Add(side * 0.06f, 0.06f, 0.08f, side * 0.09f, 0.0f, 0.15f, 0.02f);
+            f.Add(side * 0.08f, 0.07f, -0.08f, side * 0.17f, 0.02f, -0.02f, 0.035f);
+            f.Add(side * 0.17f, 0.02f, -0.02f, side * 0.13f, 0.0f, -0.16f, 0.022f);
+        }
+        return f.Finish();
+    }
+
+    std::array<Limb, CapsuleCount> RodentLimbs(const RodentState& rodent) noexcept
+    {
+        // A rat (a mouse two-thirds its size): the body, the pointed head lifted as it sniffs
+        // or grooms, the long thin tail on the ground, and the short legs.
+        const bool rat = rodent.species == RodentSpecies::Rat;
+        const float unit = (rat ? 1.0f : 0.67f) * std::clamp(rodent.visibility, 0.0f, 1.0f);
+        CrabFrame f{rodent.x, rodent.y, rodent.z, std::cos(rodent.headingRadians), std::sin(rodent.headingRadians), unit};
+        const float body = rat ? 0.095f : 0.072f, groom = std::clamp(rodent.groom, 0.0f, 1.0f);
+        f.Add(0.0f, body, -0.12f, 0.0f, body + 0.01f, 0.12f, 0.062f);
+        f.Add(0.0f, body + 0.02f + 0.075f * groom, 0.18f - 0.055f * groom, 0.0f, body + 0.01f + 0.075f * groom,
+              0.29f - 0.055f * groom, 0.035f);
+        f.Add(0.0f, 0.03f, -0.15f, 0.0f, 0.01f, -0.40f, 0.012f);
+        for (const float side : {-1.0f, 1.0f})
+            for (const float row : {0.09f, -0.09f}) f.Add(side * 0.04f, 0.05f, row, side * 0.05f, 0.0f, row + 0.02f, 0.013f);
         return f.Finish();
     }
 
