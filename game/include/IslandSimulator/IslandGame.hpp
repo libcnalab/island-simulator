@@ -740,6 +740,7 @@ namespace island
         int notedFrogCalls_ = 0;
         std::uint32_t notedBoarRetreats_ = 0U;
         std::uint32_t notedClawKnocks_ = 0U;
+        float geckoChirpClock_ = -1.0f;   // the clock at the last look for a hut gecko's chirp
         std::uint32_t notedDeerBolts_ = 0U;
         std::uint32_t notedSharkBreach_ = 0U;
         bool goatSentinelWasAlert_ = false;

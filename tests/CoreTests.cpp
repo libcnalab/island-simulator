@@ -99,6 +99,7 @@
 #include "IslandSimulator/DolphinBlowField.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/HutLayout.hpp"
+#include "IslandSimulator/HutGeckos.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/LookoutLayout.hpp"
 #include "IslandSimulator/FallingFruitField.hpp"
@@ -2304,6 +2305,52 @@ int main()
             "deer snort PCM is deterministic, distinct, a second long and silent at endpoints");
         Check(peakIn(snortA,0,11025)>8000&&peakIn(snortA,16000,22050)<400&&peakIn(snortB,8800,15500)>6000,
             "the snort's blast lies in the first half second, the doubled variant's second blast after it, and the tail is gone");
+    }
+    {
+        // The house gecko's chirp: deterministic, three distinct variants of 1.1 s, silent at
+        // both ends; its "chik"s, counted as bursts, are five, six and seven, and high: some
+        // three to six thousand zero crossings a second (halved) in the first chirp.
+        bool pcm=true,counts=true,high=true;
+        for(std::uint8_t variant=0;variant<3;++variant){
+            const auto chirp=island::GenerateGeckoChirp(variant);
+            pcm=pcm&&chirp.sampleRate==22050&&chirp.samples.size()==static_cast<std::size_t>(22050*1.1f)
+                &&chirp.samples==island::GenerateGeckoChirp(variant).samples
+                &&chirp.samples.front()==0&&chirp.samples.back()==0
+                &&(variant==0||chirp.samples!=island::GenerateGeckoChirp(0).samples);
+            int bursts=0;bool loud=false;
+            for(std::size_t from=0;from<chirp.samples.size();from+=110){
+                int peak=0;
+                for(std::size_t i=from;i<from+110&&i<chirp.samples.size();++i)peak=std::max(peak,std::abs(static_cast<int>(chirp.samples[i])));
+                if(peak>6000&&!loud)++bursts;
+                loud=peak>6000;
+            }
+            counts=counts&&bursts==5+variant;
+            int crossings=0;
+            for(std::size_t i=662;i<992;++i)crossings+=(chirp.samples[i-1]<0)!=(chirp.samples[i]<0);
+            const float hertz=static_cast<float>(crossings)*0.5f/(330.0f/22050.0f);
+            high=high&&hertz>3000.0f&&hertz<6000.0f;
+        }
+        Check(pcm,"gecko chirp PCM is deterministic, three distinct variants of 1.1 s, silent at the ends");
+        Check(counts,"a gecko chirp variant runs five, six or seven chik bursts");
+        Check(high,"a gecko's chik is a high tone");
+        // Through an hour of night the two house geckos at the hut chirp between sixty and a
+        // hundred and sixty times, both of them, each from home at rest; by day not once.
+        island::HutPlacement hut{};
+        hut.x=10.0f;hut.z=-4.0f;hut.yawRadians=0.6f;hut.floorY=2.0f;
+        std::array<int,island::hut_geckos::Count> chirps{};
+        int byDay=0;bool atRest=true;
+        for(int step=1;step<=3600*30;++step){
+            const float from=static_cast<float>(step-1)/30.0f,to=static_cast<float>(step)/30.0f;
+            const std::size_t night=island::hut_geckos::ChirpBetween(from,to,1.0f);
+            if(night<island::hut_geckos::Count){
+                ++chirps[night];
+                atRest=atRest&&island::hut_geckos::At(hut,to,1.0f)[night].behavior==island::GeckoBehavior::Rest;
+            }
+            byDay+=island::hut_geckos::ChirpBetween(from,to,0.0f)<island::hut_geckos::Count;
+        }
+        std::cout<<"hut gecko chirps in a night hour: "<<chirps[0]<<" + "<<chirps[1]<<'\n';
+        Check(chirps[0]+chirps[1]>=60&&chirps[0]+chirps[1]<=160&&chirps[0]>0&&chirps[1]>0&&atRest&&byDay==0,
+            "the hut's house geckos chirp every half minute or so through the night, from home, and not by day");
     }
     {
         // The resident's stride: a footfall every 0.68 m of walking, left and right in turn;

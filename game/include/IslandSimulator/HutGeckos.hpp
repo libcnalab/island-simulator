@@ -6,6 +6,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 
 namespace island::hut_geckos
 {
@@ -78,5 +79,24 @@ namespace island::hut_geckos
             gecko.wallNormalZ = c;
         }
         return geckos;
+    }
+
+    /** House geckos chirp: now and then through the night a gecko gives its run of sharp
+     *  "chik"s from where it rests at home, ChirpAt seconds into its cycle, on about one cycle
+     *  in three (chosen by a hash of the cycle). Returns the gecko that chirps after `from` and
+     *  up to `to` seconds on the same clock as At, or Count if none does (by day, or with the
+     *  clock running backwards). */
+    inline constexpr float ChirpAt = 2.5f;
+    [[nodiscard]] inline std::size_t ChirpBetween(const float from, const float to, const float nightness) noexcept
+    {
+        if (!(nightness > 0.7f) || !std::isfinite(from) || !std::isfinite(to) || !(to > from) || to < 0.0f) return Count;
+        for (std::size_t i = 0; i < Count; ++i) {
+            const float period = 19.0f + 6.0f * static_cast<float>(i), lead = 7.3f * static_cast<float>(i);
+            const float cycle = std::floor((to + lead) / period);
+            const float at = cycle * period + ChirpAt - lead;
+            const auto chosen = static_cast<std::uint32_t>(cycle) * 2654435761U + static_cast<std::uint32_t>(i) * 40503U;
+            if (at > from && at <= to && (chosen >> 13U) % 3U == 0U) return i;
+        }
+        return Count;
     }
 }

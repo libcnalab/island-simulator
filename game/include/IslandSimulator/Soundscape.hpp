@@ -141,6 +141,10 @@ namespace island
         [[nodiscard]] int PlayedHoofbeatCount() const noexcept { return playedHoofbeatCount_; }
         /** @brief A coconut crab's claws knocking on a shell: heard within about fifteen metres. */
         void NoteClawKnock(float x, float y, float z) noexcept;
+        /** @brief A house gecko at the hut chirping in the night: its run of "chik"s, heard
+         *  within about twenty-five metres. */
+        void NoteGeckoChirp(float x, float y, float z) noexcept;
+        [[nodiscard]] int PlayedGeckoChirpCount() const noexcept { return playedGeckoChirpCount_; }
         /** @brief The weather's sound: the rain's loudness and the lightning strikes so far
          *  (a new strike's thunder follows after its distance over the speed of sound). */
         void SetWeather(float rain, std::uint32_t strikes, float strikeDistance) noexcept;
@@ -385,6 +389,7 @@ namespace island
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> birdChatterEffects_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> hoofbeatEffects_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> clawKnockEffect_;
+        std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 3> geckoChirpEffects_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> coconutThudEffect_;
         WildlifeAudioSource pendingSplash_;
         float pendingSplashSeconds_ = 0.0f;
@@ -419,6 +424,10 @@ namespace island
         WildlifeAudioSource pendingClawKnock_;
         float pendingClawKnockSeconds_ = 0.0f;
         int playedClawKnockCount_ = 0;
+        WildlifeAudioSource pendingGeckoChirp_;
+        float pendingGeckoChirpSeconds_ = 0.0f;
+        std::uint32_t geckoChirpCount_ = 0U;
+        int playedGeckoChirpCount_ = 0;
         int playedResidentWhistleCount_ = 0;
         WildlifeAudioSource pendingThud_;
         float pendingThudSeconds_ = 0.0f;

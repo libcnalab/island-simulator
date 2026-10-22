@@ -233,6 +233,23 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 480 (2026-10-22) — the house geckos at the hut chirp in the night
+
+The two house geckos on the hut's front wall by the lantern were silent. Real ones give a run of
+sharp "chik"s now and then through the night.
+
+- **Schedule.** `hut_geckos::ChirpBetween(from, to, nightness)` picks the chirps on the same
+  clock as their poses. Above nightness 0.7, each gecko calls on about one cycle in three (a
+  hash of the cycle), 2.5 s in, while it rests at home. The core test counts 62 + 52 chirps in
+  a night hour (about one every half minute) and none by day.
+- **Sound.** `GenerateGeckoChirp(variant)` is 1.1 s of five, six or seven 20 ms chirps about
+  eight a second. Each is a high tone near 3.5–4.3 kHz, falling by a fifth and pulsed at
+  380 Hz, over a little breath noise. The run slows and fades. The test counts the bursts and
+  measures the pitch from zero crossings.
+- **Playback.** `Soundscape::NoteGeckoChirp` plays it through the wildlife voice
+  (`WildlifeCallType::Gecko`), heard within about twenty-five metres. `IslandGame` notes it
+  from the chirping gecko's place on the wall.
+
 ## Loop pass 479 (2026-10-22) — boars come up muddy from rain-soaked ground
 
 Boars love mud, and after rain there is mud everywhere. `BoarHerd::SetWetness` (from the weather

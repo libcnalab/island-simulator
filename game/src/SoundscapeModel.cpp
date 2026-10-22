@@ -2124,6 +2124,40 @@ namespace island
         return Quantize(samples, .55f);
     }
 
+    AmbientLoop GenerateGeckoChirp(const std::uint8_t variant)
+    {
+        // A house gecko's call: a run of short "chik"s some eight to the second, each twenty
+        // milliseconds of a high tone falling a little and buzzing with fast pulses, a touch of
+        // breath under it; the run slows and fades towards its end.
+        constexpr std::size_t frames = static_cast<std::size_t>(AmbientSampleRate * 1.1f);
+        std::vector<float> samples(frames, 0.0f);
+        const unsigned which = variant % 3U;
+        const int chirps = 5 + static_cast<int>(which);
+        const float pitch = which == 0U ? 3900.0f : which == 1U ? 3550.0f : 4250.0f;
+        DeterministicNoise noise(0x2b9e6c41U + which * 613U);
+        float low = 0.0f;
+        for (std::size_t i = 0; i < frames; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            const float raw = noise.Next();
+            low += 0.5f * (raw - low);
+            float value = 0.0f, at = 0.03f;
+            for (int chirp = 0; chirp < chirps; ++chirp) {
+                const float since = t - at;
+                at += 0.118f + 0.007f * static_cast<float>(chirp);
+                if (since < 0.0f || since > 0.03f) continue;
+                const float envelope = SmoothStep(0.0f, 0.0015f, since) * std::exp(-since * 150.0f)
+                    * (1.0f - 0.07f * static_cast<float>(chirp));
+                // the tone falls by a fifth across the chirp; its phase is closed form in `since`
+                const float tone = 2.0f * std::numbers::pi_v<float> * pitch * (since - 5.5f * since * since);
+                const float pulses = 0.6f + 0.4f * std::sin(2.0f * std::numbers::pi_v<float> * 380.0f * since);
+                value += envelope * (pulses * (std::sin(tone) * 0.8f + std::sin(2.0f * tone) * 0.15f)
+                    + (raw - low) * 0.25f);
+            }
+            samples[i] = value * (1.0f - SmoothStep(1.0f, 1.1f, t));
+        }
+        return Quantize(samples, .5f);
+    }
+
     AmbientLoop GenerateWingClap(const std::uint8_t variant)
     {
         // A flushing bird's wing clap: six quick beats of air in half a second, each a

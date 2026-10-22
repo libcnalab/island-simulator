@@ -356,6 +356,14 @@ namespace island
         pendingClawKnockSeconds_ = 0.6f;
     }
 
+    void Soundscape::NoteGeckoChirp(const float x, const float y, const float z) noexcept
+    {
+        if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) return;
+        pendingGeckoChirp_ = {true, x, y, z, 0U};
+        pendingGeckoChirpSeconds_ = 0.8f;
+        ++geckoChirpCount_;
+    }
+
     void Soundscape::NoteHoofbeats(const float x, const float y, const float z, const std::uint8_t variant) noexcept
     {
         if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) return;
@@ -663,6 +671,10 @@ namespace island
             }
             clawKnockEffect_ = CreateOneShotSoundEffect(GenerateClawKnock());
             clawKnockEffect_->setNameProperty("Original procedural claw knock");
+            for (std::size_t i = 0; i < geckoChirpEffects_.size(); ++i) {
+                geckoChirpEffects_[i] = CreateOneShotSoundEffect(GenerateGeckoChirp(static_cast<std::uint8_t>(i)));
+                geckoChirpEffects_[i]->setNameProperty("Original procedural gecko chirp " + std::to_string(i));
+            }
             coconutThudEffect_ = CreateOneShotSoundEffect(GenerateCoconutThud());
             coconutThudEffect_->setNameProperty("Procedural coconut thud");
             monkeyCallEffect_ = CreateOneShotSoundEffect(GenerateMonkeyCall());
@@ -876,6 +888,7 @@ namespace island
             for (auto& effect : birdChatterEffects_) effect.reset();
             for (auto& effect : hoofbeatEffects_) effect.reset();
             clawKnockEffect_.reset();
+            for (auto& effect : geckoChirpEffects_) effect.reset();
             coconutThudEffect_.reset();
             birdCallAlternateEffect_.reset();
             birdCallEffect_.reset();
@@ -1658,6 +1671,21 @@ namespace island
                 pendingClawKnock_.available = false;
             }
         }
+        // A house gecko's chirp at the hut: small but sharp, heard within about twenty-five
+        // metres; dropped if the slot stays busy (the next chirp follows).
+        if (pendingGeckoChirp_.available) {
+            pendingGeckoChirpSeconds_ -= safeDelta;
+            const float distance = std::hypot(std::hypot(pendingGeckoChirp_.x - listenerState.x,
+                pendingGeckoChirp_.z - listenerState.z), pendingGeckoChirp_.y - listenerState.y);
+            const float falloff = 1.0f - std::clamp((distance - 3.0f) / 22.0f, 0.0f, 1.0f);
+            if (wildlifeSlotAvailable && wildlifeCall.type == WildlifeCallType::None && falloff > 0.02f) {
+                wildlifeCall = {WildlifeCallType::Gecko, static_cast<std::uint8_t>(geckoChirpCount_ % 3U),
+                    0.38f * falloff, 0.0f, pendingGeckoChirp_};
+                pendingGeckoChirp_.available = false;
+            } else if (pendingGeckoChirpSeconds_ <= 0.0f || falloff <= 0.02f) {
+                pendingGeckoChirp_.available = false;
+            }
+        }
         // A coconut's landing is a short, close thud: heard within about thirty metres.
         if (pendingThud_.available) {
             pendingThudSeconds_ -= safeDelta;
@@ -1752,6 +1780,8 @@ namespace island
             wildlifeEffect = hoofbeatEffects_.at(wildlifeCall.variant).get();
         } else if (wildlifeCall.type == WildlifeCallType::ClawKnock) {
             wildlifeEffect = clawKnockEffect_.get();
+        } else if (wildlifeCall.type == WildlifeCallType::Gecko) {
+            wildlifeEffect = geckoChirpEffects_.at(wildlifeCall.variant).get();
         } else if (wildlifeCall.type == WildlifeCallType::Splash) {
             wildlifeEffect = birdSplashEffect_.get();
         } else if (wildlifeCall.type == WildlifeCallType::Thud) {
@@ -1822,6 +1852,7 @@ namespace island
                 :wildlifeCall.type==WildlifeCallType::Chatter?1.05f
                 :wildlifeCall.type==WildlifeCallType::Hoofbeats?1.45f
                 :wildlifeCall.type==WildlifeCallType::ClawKnock?.40f
+                :wildlifeCall.type==WildlifeCallType::Gecko?1.10f
                 :wildlifeCall.type==WildlifeCallType::Splash?.75f
                 :wildlifeCall.type==WildlifeCallType::Thud?.50f
                 :wildlifeCall.type==WildlifeCallType::Owl?5.60f
@@ -1885,6 +1916,11 @@ namespace island
                 ++playedClawKnockCount_;
                 if (playedClawKnockCount_ == 1) {
                     std::cout << "island-simulator: first positional claw knock played\n" << std::flush;
+                }
+            } else if(wildlifeCall.type==WildlifeCallType::Gecko) {
+                ++playedGeckoChirpCount_;
+                if (playedGeckoChirpCount_ == 1) {
+                    std::cout << "island-simulator: first positional gecko chirp played\n" << std::flush;
                 }
             } else if(wildlifeCall.type==WildlifeCallType::Goat) {
                 ++playedGoatCallCount_;
@@ -2061,6 +2097,7 @@ namespace island
         for (auto& effect : birdChatterEffects_) effect.reset();
         for (auto& effect : hoofbeatEffects_) effect.reset();
         clawKnockEffect_.reset();
+        for (auto& effect : geckoChirpEffects_) effect.reset();
         coconutThudEffect_.reset();
         birdCallAlternateEffect_.reset();
         birdCallEffect_.reset();

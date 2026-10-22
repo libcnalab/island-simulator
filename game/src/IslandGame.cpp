@@ -3119,6 +3119,7 @@ namespace island
                   << "island-simulator: an alert deer swings both ears toward the watcher\n"
                   << "island-simulator: a bolting deer flags its tail up, and a grazing or resting deer flicks it every few seconds\n"
                   << "island-simulator: the deer sentinel coming alert at the walker snorts the alarm, an original short nasal blast heard within fifty metres\n"
+                  << "island-simulator: at night the house geckos by the hut's lantern chirp now and then, an original run of sharp chik-chik calls heard within twenty-five metres\n"
                   << "island-simulator: the resident's pause at the campfire tends the fire, its tongues and plume standing a third taller while they stay\n"
                   << "island-simulator: the resident's footfalls sound on the ground under them, sand, soil, grass, rock, shallows or planks, heard within twenty-four metres\n"
                   << "island-simulator: the resident's head turns to the walker within fourteen metres ahead of them, and back to the front once they leave that\n"
@@ -4024,6 +4025,17 @@ namespace island
             notedClawKnocks_ = coconutCrabGroup_.KnockCount();
             const auto& knock = coconutCrabGroup_.LastKnock();
             soundscape_->NoteClawKnock(knock.x, knock.y, knock.z);
+        }
+        // At night the house geckos on the hut's wall chirp now and then, from where they rest.
+        if (soundscape_ && hutPlacement_) {
+            const float clock = static_cast<float>(gameTime.getTotalGameTimeProperty().getTotalSecondsProperty());
+            const float night = 1.0f - std::clamp((sun_light::Current().lighting.sunElevationDegrees + 4.0f) / 12.0f, 0.0f, 1.0f);
+            const std::size_t chirper = hut_geckos::ChirpBetween(geckoChirpClock_, clock, night);
+            if (chirper < hut_geckos::Count) {
+                const auto geckos = hut_geckos::At(*hutPlacement_, clock, night);
+                soundscape_->NoteGeckoChirp(geckos[chirper].x, geckos[chirper].y, geckos[chirper].z);
+            }
+            geckoChirpClock_ = clock;
         }
         if (viewpoint_ == FixedViewpoint::CrabDetail) {
             const CrabState& subject = crabColony_.Crabs()[crabViewSubject_];

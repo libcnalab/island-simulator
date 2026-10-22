@@ -384,7 +384,8 @@ namespace island
         Hoofbeats,
         ClawKnock,
         Owl,
-        Heron
+        Heron,
+        Gecko
     };
 
     /** @brief Nearest currently eligible world-space source for one wildlife species. */
@@ -593,6 +594,10 @@ namespace island
     /** @brief Original knock of a coconut crab's claws on a shell: two hard short clicks with
      *  a woody ring, 0.35 s. */
     [[nodiscard]] AmbientLoop GenerateClawKnock();
+    /** @brief Original house-gecko chirp: a run of sharp, dry "chik"s, high and pulsed, slowing
+     *  a little and fading towards the end, 1.1 s; the three variants give five, six and seven
+     *  chirps, each its own pitch. */
+    [[nodiscard]] AmbientLoop GenerateGeckoChirp(std::uint8_t variant);
     [[nodiscard]] float SnakeHissVolume(float distance) noexcept;
 
     struct SnakeHissRequest
