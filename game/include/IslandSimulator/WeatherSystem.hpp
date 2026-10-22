@@ -55,6 +55,13 @@ namespace island
             light.shadowStrength = std::max(light.shadowStrength,
                 0.40f * std::clamp(light.moonLight, 0.0f, 1.0f) * (1.0f - std::clamp(light.sunVisibility, 0.0f, 1.0f)));
         }
+        /** @brief The runoff's silt (0..1) from the weather's wetness: none until the ground is
+         *  properly wet (0.25), full once it is soaked (0.85); the stream and the plume off its
+         *  mouth run brown with it. */
+        [[nodiscard]] inline float Silt(const float wetness) noexcept
+        {
+            return std::isfinite(wetness) ? std::clamp((wetness - 0.25f) / 0.6f, 0.0f, 1.0f) : 0.0f;
+        }
         /** @brief How high the sea runs with this weather's wind: 1 in the trade wind (and below),
          *  up to 1.7 in a storm's; the waves' heights and slopes scale by it. */
         [[nodiscard]] inline float SeaState() noexcept

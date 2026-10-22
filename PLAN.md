@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 473 (2026-10-22) — a silt plume fans out from the stream's mouth after rain
+
+Pass 471 made the stream run brown after rain, but it emptied into a clear lagoon. The ocean shader
+now lays the runoff's plume (`uPlume`: the mouth, the silt). It is a brown tongue reaching seaward
+from the mouth, spreading (14 m plus 0.8 m per metre out) and fading over some 90 m, with edges that
+wander with the slow currents. It is laid over the mirrored sky, and opaque enough to hide the bed.
+The silt is the weather's (`weather_now::Silt`, now shared by the stream and the sea). A red debug
+tint first showed the plume as only a small patch at the mouth, so it was lengthened and widened.
+
+In `bay --weather showers` a broad muddy band now fans from the mouth into the lagoon. In clear
+weather the bay is unchanged. In `crocodiles` the estuary's water lies to the side of the plume's
+axis and is only lightly clouded. The Chrome `stream` scope passed with pass 471's silt shader.
+
 ## Loop pass 472 (2026-10-22) — the frogs call most on a wet night
 
 The frogs called every 7 to 15 seconds by day and night, wet or dry. Real tree and stream frogs

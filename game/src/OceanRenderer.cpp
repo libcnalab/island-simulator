@@ -1,6 +1,7 @@
 #include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/OceanRenderer.hpp"
+#include "IslandSimulator/StreamRoute.hpp"
 #include "IslandSimulator/TerrainMeshLayout.hpp"
 
 #include "IslandSimulator/EnvironmentLighting.hpp"
@@ -144,6 +145,7 @@ uniform vec3 uSkyAntiHorizonScale;                 // and its horizon opposite t
 uniform vec4 uSurfaceAppearance;
 uniform float uSeabedExtent;   // half the terrain mesh's square, where the seabed ends
 uniform float uRain;           // 0..1 the weather's rain, ringing the surface near the eye
+uniform vec4 uPlume;           // the stream's mouth (xz), its silt (0..1), unused
 // Rain on water: each drop rings the surface, the ring widening and fading in under a second,
 // the drops falling at random across two offset grids of cells, with a pale splash at a drop's
 // centre the instant it strikes. One drop per cell, its ring kept inside it.
@@ -283,7 +285,22 @@ void main()
     vec3 water = mix(deepWater, lagoonWater, clamp(vShallow, 0.0, 1.0));
     water *= mix(vec3(0.92, 0.97, 1.02), vVertexTint * 1.65, 0.12);
     water += vec3(0.015, 0.070, 0.075) * max(dot(normal, toSun), 0.0);
+    // After rain the stream's silt fans out from its mouth into the lagoon: a brown tongue
+    // reaching seaward and spreading, its edges wandering with the slow currents.
+    float plume = 0.0;
+    if (uPlume.z > 0.0) {
+        vec2 outward = normalize(uPlume.xy);
+        vec2 fromMouth = vWorld.xz - uPlume.xy;
+        float along = dot(fromMouth, outward);
+        float across = dot(fromMouth, vec2(-outward.y, outward.x))
+            + sin(along * 0.15 + uTime * 0.05) * 3.0 + sin(along * 0.41 - uTime * 0.03) * 1.2;
+        float spread = 14.0 + max(along, 0.0) * 0.8;
+        plume = uPlume.z * exp(-(across * across) / (spread * spread)) * exp(-max(along, 0.0) / 90.0)
+            * smoothstep(-8.0, 2.0, along);
+    }
     water = mix(water, reflectedSky, fresnel * 0.72);
+    // (laid over the mirrored sky, which the silty surface still shows at a grazing angle)
+    water = mix(water, vec3(0.36, 0.29, 0.17) * (0.62 + 0.38 * max(dot(normal, toSun), 0.0)), plume * 0.9);
 
     // Evaluate derivatives before player/material branches; unresolved colour waves fade to
     // their mean instead of producing screen-space stripes at grazing angles.
@@ -506,6 +523,7 @@ void main()
     float alpha = uCoastalOptics.w * (1.0 - exp(-waterDepth * uCoastalOptics.x));
     // Grazing sky reflection should not inherit the clear lagoon's downward-view transparency.
     alpha = max(alpha, fresnel * 0.92);
+    alpha = mix(alpha, max(alpha, 0.93), plume);   // the silt hides the bed
     alpha = mix(alpha, 0.95, foam);
     alpha = mix(alpha, 0.96, fog);
     alpha *= contactCoverage;
@@ -763,6 +781,11 @@ void main()
             customEffect_->SetUniformFloat("uCloudCoverage", weather_now::Current().cloudCover);
             customEffect_->SetUniformFloat("uSeaState", weather_now::SeaState());
             customEffect_->SetUniformFloat("uRain", weather_now::Current().rain);
+            {
+                const float mouthX = StreamRoute::SourceX - StreamRoute::NominalLength;
+                customEffect_->SetUniformVec4("uPlume", mouthX, StreamRoute::CentreZ(mouthX),
+                                              weather_now::Silt(weather_now::Current().wetness), 0.0f);
+            }
             {
                 const auto& light = sun_light::Current().lighting;
                 const float sun = std::clamp(light.sunVisibility, 0.0f, 1.0f);

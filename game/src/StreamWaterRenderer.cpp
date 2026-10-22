@@ -24,11 +24,7 @@ using namespace Microsoft::Xna::Framework;
 using namespace Microsoft::Xna::Framework::Graphics;
 namespace island {
 namespace {
-// The runoff's silt from the weather's wetness: none until the ground is properly wet, full once
-// it is soaked; it clears again as the ground dries.
-float Silt(const float wetness) noexcept {
-    return std::isfinite(wetness)?std::clamp((wetness-.25f)/.6f,0.0f,1.0f):0.0f;
-}
+
 struct StreamGpuVertex {
     float position[3];
     float flowDistanceOpacity[4];
@@ -232,7 +228,7 @@ void StreamWaterRenderer::Draw(const Matrix& view,const Matrix& projection,const
         effect_->SetUniformVec3("uSkyTint",sky.x,sky.y,sky.z);
     }
     effect_->SetUniformFloat("uRain",weather_now::Current().rain);
-    effect_->SetUniformFloat("uSilt",Silt(weather_now::Current().wetness));
+    effect_->SetUniformFloat("uSilt",weather_now::Silt(weather_now::Current().wetness));
     for(std::size_t slot=0;slot<StreamRingField::Capacity;++slot) {
         static const auto names=[] {
             std::array<std::string,StreamRingField::Capacity> result;
