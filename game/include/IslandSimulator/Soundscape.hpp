@@ -92,10 +92,12 @@ namespace island
 
         /** @brief Names the ground under the player's feet for the next footsteps (None = shore rule). */
         void SetFootstepGround(FootstepSurface ground) noexcept { footstepGround_ = ground; }
+        /** @brief The soil underfoot is mud (the stream's banks, rain-soaked ground): its steps squelch. */
+        void SetFootstepMud(bool mud) noexcept { footstepMud_ = mud; }
         /** @brief A footfall of the resident, where it landed and on what: played through the
          *  footstep voice when the player's own step does not need it, heard within about
          *  twenty-four metres. */
-        void NoteResidentStep(float x, float y, float z, FootstepSurface surface) noexcept;
+        void NoteResidentStep(float x, float y, float z, FootstepSurface surface, bool mud = false) noexcept;
         [[nodiscard]] int PlayedResidentStepCount() const noexcept { return playedResidentStepCount_; }
         /** @brief The clock the gust fronts run on (the same one the grass and palms use). */
         void SetWindClock(float seconds) noexcept { windSeconds_ = seconds; }
@@ -254,6 +256,8 @@ namespace island
         std::uint8_t residentStepVariant_ = 0U;
         int playedResidentStepCount_ = 0;
         FootstepSurface footstepGround_ = FootstepSurface::None;
+        bool footstepMud_ = false;
+        bool residentStepMud_ = false;
         float windSeconds_ = 0.0f;
         float gustStrength_ = 0.0f;
         WildlifeCallScheduler wildlifeScheduler_;
@@ -359,6 +363,8 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> rockFootstepAlternateEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> woodFootstepEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> woodFootstepAlternateEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> mudFootstepEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> mudFootstepAlternateEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> wadeFootstepEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> wadeFootstepAlternateEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance>

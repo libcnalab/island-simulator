@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 468 (2026-10-22) — steps in mud squelch
+
+Where the feet now print the mud (pass 466) they still sounded like dry soil. A procedural mud
+step (`GenerateMudFootstep` and its alternate, 0.40 s) is a dull wet smack on landing (low-passed
+noise over a falling 95 Hz thump), a lull while the weight is on it, then the suck of the sole
+pulling free: a resonant slurp rising from 260 to 900 Hz, with a drip. The soundscape plays it for
+a soil step flagged as mud. The walker's flag comes from `footprint_ground::Muddy` every frame, and
+the resident's steps carry it with `NoteResidentStep(..., mud)`. The core test checks that the clip
+is deterministic, that the two variants differ, that both ends are silent, and that its energy lies
+in the smack and the suck with a lull between. The audio report and its preview test list the two
+new clips (8820 frames each; PCM total 7,333,824 bytes). Both peak at the shared normalised level,
+unclipped, with an RMS near the soil step's.
+
 ## Loop pass 467 (2026-10-22) — a figure on the shallows' bed is refracted
 
 Seen from the jetty's end, the walker's figure lies on the seabed under a metre of clear water.

@@ -3633,7 +3633,8 @@ namespace island
             const bool walking=walker.mode==ResidentMode::Walking&&walker.speed>0.1f;
             const FootstepSurface underfoot=FootstepGroundAt(walker.x,walker.z);
             if(residentSteps_.Step(walker.x,walker.z,walking)&&soundscape_)
-                soundscape_->NoteResidentStep(walker.x,walker.y,walker.z,underfoot);
+                soundscape_->NoteResidentStep(walker.x,walker.y,walker.z,underfoot,
+                    footprint_ground::Muddy(underfoot,walker.x,walker.z,weather_now::Current().wetness));
             // and the bare feet print the sand (on the walk to the jetty) and the mud (the stream's
             // banks, bare soil after rain), the damp ones sooner gone
             residentPrints_.SetStride(0.68f);
@@ -5701,6 +5702,11 @@ namespace island
                 ? 0.0f : playerMotion_.VelocityZ(),
         };
         soundscape_->SetFootstepGround(FootstepGroundUnderPlayer());
+        {
+            const PlayerPosition& feet = playerMotion_.Position();
+            soundscape_->SetFootstepMud(footprint_ground::Muddy(FootstepGroundUnderPlayer(), feet.x, feet.z,
+                                                                weather_now::Current().wetness));
+        }
         soundscape_->SetWindClock(seaForageSeconds_);
         soundscape_->Update(
             shoreDistance,

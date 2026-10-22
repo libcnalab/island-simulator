@@ -189,11 +189,12 @@ namespace island
     }
 
     void Soundscape::NoteResidentStep(const float x, const float y, const float z,
-                                      const FootstepSurface surface) noexcept
+                                      const FootstepSurface surface, const bool mud) noexcept
     {
         if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z) || surface == FootstepSurface::None) return;
         residentStep_ = {true, x, y, z, 0U};
         residentStepSurface_ = surface;
+        residentStepMud_ = mud && surface == FootstepSurface::Soil;
         residentStepVariant_ = static_cast<std::uint8_t>(1U - residentStepVariant_);
     }
 
@@ -607,6 +608,10 @@ namespace island
             woodFootstepEffect_->setNameProperty("Procedural plank footstep");
             woodFootstepAlternateEffect_ = CreateOneShotSoundEffect(GenerateWoodFootstepAlternate());
             woodFootstepAlternateEffect_->setNameProperty("Procedural plank footstep alternate");
+            mudFootstepEffect_ = CreateOneShotSoundEffect(GenerateMudFootstep());
+            mudFootstepEffect_->setNameProperty("Procedural mud footstep");
+            mudFootstepAlternateEffect_ = CreateOneShotSoundEffect(GenerateMudFootstepAlternate());
+            mudFootstepAlternateEffect_->setNameProperty("Procedural mud footstep alternate");
             wadeFootstepEffect_ = CreateOneShotSoundEffect(GenerateWadeFootstep());
             wadeFootstepEffect_->setNameProperty("Procedural wading footstep");
             wadeFootstepAlternateEffect_ = CreateOneShotSoundEffect(
@@ -1279,6 +1284,7 @@ namespace island
         // The resident's footfall takes the footstep voice when the player's own step does
         // not need it: on its ground, quieter with distance, gone beyond about twenty-four metres.
         bool residentStep = false;
+        bool stepInMud = footstepMud_;
         if (residentStep_.available) {
             if (footstep.surface == FootstepSurface::None) {
                 const float distance = std::hypot(std::hypot(residentStep_.x - listenerState.x,
@@ -1290,6 +1296,7 @@ namespace island
                     footstep.volume = 0.5f * falloff;
                     footstep.pitch = -0.05f;
                     footstep.pan = 0.0f;
+                    stepInMud = residentStepMud_;
                     residentStep = true;
                 }
             }
@@ -1302,7 +1309,9 @@ namespace island
             footstepEffect = alternateStep ? sandFootstepAlternateEffect_.get() : sandFootstepEffect_.get();
             break;
         case FootstepSurface::Soil:
-            footstepEffect = alternateStep ? soilFootstepAlternateEffect_.get() : soilFootstepEffect_.get();
+            footstepEffect = stepInMud
+                ? (alternateStep ? mudFootstepAlternateEffect_.get() : mudFootstepEffect_.get())
+                : (alternateStep ? soilFootstepAlternateEffect_.get() : soilFootstepEffect_.get());
             break;
         case FootstepSurface::Grass:
             footstepEffect = alternateStep ? grassFootstepAlternateEffect_.get() : grassFootstepEffect_.get();

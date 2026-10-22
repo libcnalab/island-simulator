@@ -273,6 +273,40 @@ namespace island
             return Quantize(samples, profile.gain);
         }
 
+        [[nodiscard]] AmbientLoop GenerateMudClip(const std::uint32_t seed, const bool alternate)
+        {
+            // A step in mud: a dull wet smack as the sole lands (low-passed noise over a low,
+            // falling thump), a moment's quiet while the weight is on it, and the suck of the
+            // sole pulling free: a short resonant slurp rising in pitch, with a drip or two.
+            constexpr std::size_t frameCount = static_cast<std::size_t>(AmbientSampleRate * 2 / 5);
+            const std::vector<float> noise = Noise(seed, frameCount);
+            const std::vector<float> wet = CircularSmooth(noise, 9U);
+            const std::vector<float> body = CircularSmooth(noise, 60U);
+            const std::vector<float> drops = CircularSmooth(noise, 2U);
+            std::vector<float> samples(frameCount);
+            const float suckAt = alternate ? 0.58f : 0.52f;
+            float slurpPhase = 0.0f;
+            for (std::size_t index = 0; index < samples.size(); ++index) {
+                const float unit = static_cast<float>(index) / static_cast<float>(samples.size() - 1U);
+                const float seconds = static_cast<float>(index) / static_cast<float>(AmbientSampleRate);
+                const float landing = SmoothStep(0.0f, 0.018f, unit) * std::exp(-unit * 14.0f);
+                const float thump = std::sin(2.0f * std::numbers::pi_v<float> * (95.0f * seconds - 55.0f * seconds * seconds))
+                    * std::exp(-unit * 18.0f);
+                // the slurp: a bell of noise through a resonance climbing from 260 to 900 Hz
+                const float suck = std::exp(-std::pow((unit - suckAt) / 0.075f, 2.0f));
+                const float slurpFrequency = 260.0f + 640.0f * std::clamp((unit - suckAt + 0.12f) / 0.24f, 0.0f, 1.0f);
+                slurpPhase += 2.0f * std::numbers::pi_v<float> * slurpFrequency / static_cast<float>(AmbientSampleRate);
+                const float slurp = std::sin(slurpPhase) * (0.55f + 0.45f * wet[index] * 3.0f);
+                const float drip = std::exp(-std::pow((unit - (alternate ? 0.86f : 0.80f)) / 0.012f, 2.0f));
+                samples[index] = landing * (body[index] * 0.9f + wet[index] * 0.5f) + thump * 0.35f
+                    + suck * slurp * 0.32f + drip * drops[index] * 0.6f;
+                samples[index] *= 1.0f - SmoothStep(0.9f, 1.0f, unit);
+            }
+            samples.front() = 0.0f;
+            samples.back() = 0.0f;
+            return Quantize(samples, 0.62f);
+        }
+
         [[nodiscard]] AmbientLoop GenerateWadeClip(const std::uint32_t seed, const bool alternate)
         {
             // Ankle-deep wading: a brief splash with a few droplets, shorter and lighter than
@@ -1034,6 +1068,16 @@ namespace island
     AmbientLoop GenerateWoodFootstepAlternate()
     {
         return GenerateFootstepClip(0xc8427a16U, FootstepMaterial::Wood, true);
+    }
+
+    AmbientLoop GenerateMudFootstep()
+    {
+        return GenerateMudClip(0x5a1e7c03U, false);
+    }
+
+    AmbientLoop GenerateMudFootstepAlternate()
+    {
+        return GenerateMudClip(0xb3d90e61U, true);
     }
 
     AmbientLoop GenerateWadeFootstep()

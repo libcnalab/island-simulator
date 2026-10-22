@@ -137,6 +137,10 @@ namespace island
     [[nodiscard]] AmbientLoop GenerateWoodFootstep();
     [[nodiscard]] AmbientLoop GenerateWoodFootstepAlternate();
     /** @brief Wading splash for ankle-deep water. */
+    /** @brief A footstep in mud (the stream's banks, soil soaked by rain): a soft wet smack
+     *  and the suck of the sole pulling free. */
+    [[nodiscard]] AmbientLoop GenerateMudFootstep();
+    [[nodiscard]] AmbientLoop GenerateMudFootstepAlternate();
     [[nodiscard]] AmbientLoop GenerateWadeFootstep();
     [[nodiscard]] AmbientLoop GenerateWadeFootstepAlternate();
 

@@ -1156,6 +1156,26 @@ int main()
     const island::AmbientLoop soilFootstep = island::GenerateSoilFootstep();
     const island::AmbientLoop soilFootstepAlternate =
         island::GenerateSoilFootstepAlternate();
+    const island::AmbientLoop mudFootstep = island::GenerateMudFootstep();
+    const island::AmbientLoop mudFootstepAlternate = island::GenerateMudFootstepAlternate();
+    {
+        // The mud step: deterministic, the two variants distinct, silent at both ends, and its
+        // energy in two parts, the landing's smack and, after a lull, the suck of the sole.
+        const auto energy = [&](const island::AmbientLoop& clip, const float from, const float to) {
+            const std::size_t a = static_cast<std::size_t>(from * static_cast<float>(clip.samples.size()));
+            const std::size_t b = static_cast<std::size_t>(to * static_cast<float>(clip.samples.size()));
+            double sum = 0.0;
+            for (std::size_t i = a; i < b; ++i) sum += std::abs(static_cast<double>(clip.samples[i]));
+            return sum / static_cast<double>(std::max<std::size_t>(1U, b - a));
+        };
+        Check(mudFootstep.sampleRate == 22050 && mudFootstep.samples.size() == 8820U
+                  && mudFootstep.samples == island::GenerateMudFootstep().samples
+                  && mudFootstep.samples != mudFootstepAlternate.samples
+                  && mudFootstep.samples.front() == 0 && mudFootstep.samples.back() == 0
+                  && energy(mudFootstep, 0.0f, 0.12f) > 2.0 * energy(mudFootstep, 0.25f, 0.38f)
+                  && energy(mudFootstep, 0.45f, 0.60f) > 2.0 * energy(mudFootstep, 0.25f, 0.38f),
+              "the mud step is a smack, a lull and the suck of the sole pulling free");
+    }
     const island::AmbientLoop birdCall = island::GenerateBirdCall();
     const island::AmbientLoop birdCallAlternate = island::GenerateBirdCallAlternate();
     const island::AmbientLoop parrotCall = island::GenerateParrotCall();
