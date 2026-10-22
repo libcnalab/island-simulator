@@ -90,6 +90,18 @@ readonly packaged_files=(
     share/island-simulator/assets/presentation/gallery/volcano.png
     share/island-simulator/assets/presentation/gallery/volcano-lava.png
     share/island-simulator/assets/presentation/gallery/volcano-night.png
+    share/island-simulator/assets/presentation/gallery/lighthouse-stair.png
+    share/island-simulator/assets/presentation/gallery/lighthouse-gallery.png
+    share/island-simulator/assets/presentation/gallery/lighthouse-lantern.png
+    share/island-simulator/assets/presentation/gallery/mine-bats.png
+    share/island-simulator/assets/presentation/gallery/mine-bats-dusk.png
+    share/island-simulator/assets/presentation/gallery/mine-puddle.png
+    share/island-simulator/assets/presentation/gallery/coaster-gulls.png
+    share/island-simulator/assets/presentation/gallery/coaster-stern-surf.png
+    share/island-simulator/assets/presentation/gallery/idol-offerings.png
+    share/island-simulator/assets/presentation/gallery/lava-spatter.png
+    share/island-simulator/assets/presentation/gallery/coaster-rust.png
+    share/island-simulator/assets/presentation/gallery/signal-fire.png
     share/island-simulator/licenses/CNA/LICENSE
     share/island-simulator/licenses/CNA/NOTICE.md
     share/island-simulator/licenses/Sharp-Runtime/LICENSE

@@ -66,6 +66,14 @@ Captured on 2026-10-22 from the same deterministic native QA viewpoints.
 | ![A timbered mine portal cut into the main mountain's slope](assets/presentation/gallery/mine-portal.png) | ![A timbered adit with rails, lit by oil lanterns](assets/presentation/gallery/mine-adit.png) | ![A domed chamber of glowing cyan and violet crystals, an ore cart tipped over](assets/presentation/gallery/mine-crystals.png) |
 | Small volcano | Lava in its crater | The volcano at night |
 | ![A small ash cone on the eastern foothills, steam rising from its crater](assets/presentation/gallery/volcano.png) | ![Looking down from the rim into a churning lava lake](assets/presentation/gallery/volcano-lava.png) | ![The volcano at night, its crater glowing orange into the steam](assets/presentation/gallery/volcano-night.png) |
+| Up the lighthouse's stair | From its gallery | Inside its lantern |
+| ![A stone spiral stair winding up round a newel inside the whitewashed tower, a green handrail on the wall](assets/presentation/gallery/lighthouse-stair.png) | ![The lighthouse's gallery rail high over the reef and the open sea](assets/presentation/gallery/lighthouse-gallery.png) | ![Looking out through the lantern's glass past a white mullion over the sea and the beach](assets/presentation/gallery/lighthouse-lantern.png) |
+| Bats under the mine's dome | Bats out at dusk | A lantern in a puddle |
+| ![Three clusters of small bats hanging under the rough rock dome of the crystal chamber](assets/presentation/gallery/mine-bats.png) | ![Small bats hunting against the dusk sky in front of the mine's portal](assets/presentation/gallery/mine-bats-dusk.png) | ![A lantern's flame mirrored in a puddle beside the track in the dim adit](assets/presentation/gallery/mine-puddle.png) |
+| Gulls on the coaster | Surf at her stern | Offerings to the god |
+| ![A gull on the coaster's bow rail, droppings streaking the black plating below it, a bird on the foremast](assets/presentation/gallery/coaster-gulls.png) | ![The coaster's stern in the shallow surf, foam breaking round her hull](assets/presentation/gallery/coaster-stern-surf.png) | ![A hibiscus garland, coconut halves, cowries and a conch laid before the stone god](assets/presentation/gallery/idol-offerings.png) |
+| Spatter on the lava lake | Rust weeping down her side | The signal fire |
+| ![Glowing gobbets of lava flung up over the crater's lava lake](assets/presentation/gallery/lava-spatter.png) | ![Rust streaks running down the coaster's sun-faded black topsides under her name](assets/presentation/gallery/coaster-rust.png) | ![A signal fire stacked from driftwood and barked branches, green fronds over it, a burnt ring beside](assets/presentation/gallery/signal-fire.png) |
 
 ### Times of day, weather and more wildlife
 

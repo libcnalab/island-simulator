@@ -427,6 +427,78 @@
       "path": "assets/presentation/gallery/volcano-night.png",
       "sha256": "985245bc273a39bfbb5cfaa81dfdac5ee2ce33c3f28f9111af2c6cf51df6e30f",
       "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-lighthouse-stair",
+      "path": "assets/presentation/gallery/lighthouse-stair.png",
+      "sha256": "f7fbad2ca223e899c153c8dd168bb6abe5b70c3a6e76929c99d963568448d387",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-lighthouse-gallery",
+      "path": "assets/presentation/gallery/lighthouse-gallery.png",
+      "sha256": "e394cb10c8ff1a32821a2580134bf7e817e6a29d97c20925e4b9ba3d8a25aef1",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-lighthouse-lantern",
+      "path": "assets/presentation/gallery/lighthouse-lantern.png",
+      "sha256": "bc0362c3cfb7d40561f70a06191102f7590000c70e2cb27ea4c4bedcca578567",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-mine-bats",
+      "path": "assets/presentation/gallery/mine-bats.png",
+      "sha256": "de2af14dcc30d52605ee5fc3244a3d36c3870f15cd849afb40d3371a044d551e",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-mine-bats-dusk",
+      "path": "assets/presentation/gallery/mine-bats-dusk.png",
+      "sha256": "74ac3610ba7e643835f862e8753d52f35182f9bb3eaa2fc800648219cbaad517",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-mine-puddle",
+      "path": "assets/presentation/gallery/mine-puddle.png",
+      "sha256": "cc1248de671d12ac225b9c9179f9243f6105213926e1c383f84f9ecb64697227",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-coaster-gulls",
+      "path": "assets/presentation/gallery/coaster-gulls.png",
+      "sha256": "79206e646115b7bca18ff64e5da06b7c41e4d38cc4b34446bc8761c79778342f",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-coaster-stern-surf",
+      "path": "assets/presentation/gallery/coaster-stern-surf.png",
+      "sha256": "7b5236da83f89c6c0b2f6b19bd3e4b57f6972cec207156fbc7162921c06f2ab1",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-idol-offerings",
+      "path": "assets/presentation/gallery/idol-offerings.png",
+      "sha256": "11479ef2471df631ad4086a6fea953c11b834c167c88b7ac98bb3b77e1b34f10",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-lava-spatter",
+      "path": "assets/presentation/gallery/lava-spatter.png",
+      "sha256": "e501a1274761ef7c439568ada8cfbf32f9da3377cd40857a2520d9535a119a17",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-coaster-rust",
+      "path": "assets/presentation/gallery/coaster-rust.png",
+      "sha256": "7e8e295d112464f3a177b600f51b09aeb61e8920213eb5b733ebc2014696c517",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-signal-fire",
+      "path": "assets/presentation/gallery/signal-fire.png",
+      "sha256": "247be99f0fab466da6ff91560f3502b8693b38d0cade723ee5c5204fdbdb673b",
+      "licenseRecord": "Native README gallery additions"
     }
   ],
   "proceduralGenerators": [

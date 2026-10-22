@@ -233,6 +233,25 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 537 (2026-10-22) — the README gallery shows passes 520-536
+
+Twelve new images in four rows of the README's landmark gallery:
+- **Lighthouse:** its stair, its gallery and inside its lantern.
+- **Mine:** the bats under the dome, the bats out at dusk, and a lantern mirrored in a puddle.
+- **Coaster and god:** the gulls on the coaster (with their droppings), the surf at her stern,
+  and the offerings before the stone god.
+- **More:** spatter on the lava lake, rust weeping down the coaster's side, and the signal fire.
+
+They come from this session's passing native QA captures:
+`lighthouse-stair` 140728, `lighthouse-gallery` 140312, `lighthouse-lantern` 141144,
+`mine-bats` 124326, `mine-bats-night` 123534, `mine-puddle` 132953, `freighter-birds` 130516,
+`freighter-stern` 133645, `idol-offerings` 142118, `volcano-crater` 131631, `freighter` 130102,
+`signal-fire` 124750.
+
+Each is resized to 960 × 540. Most are palette-compressed with dithering, with no banding seen.
+The stair, the bats, the puddle and the lava are kept truecolor. Each is recorded in
+`assets/manifest.json` (sha256), ASSET_LICENSES.md and the Linux release package list.
+
 ## Loop pass 536 (2026-10-22) — offerings before the stone god
 
 The stone god stood on its ahu with nothing at its feet. Now offerings lie there, as castaways or
