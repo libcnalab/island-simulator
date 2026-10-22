@@ -5,6 +5,7 @@
 namespace island
 {
     struct ResidentState;
+    struct DeerState;
 
     /**
      * The walking player's own sun shadow, the figure rather than a blot: the body as seventeen
@@ -61,6 +62,10 @@ namespace island
         /** The resident's limbs on their posed skeleton: the solved legs and arms (a crouch at the
          *  fire, the rod held out, the stretch), the pelvis, and the neck and head above it. */
         [[nodiscard]] std::array<Limb, CapsuleCount> ResidentLimbs(const ResidentState& resident) noexcept;
+        /** A deer's limbs as DeerRenderer poses it: the barrel, the legs in three by the gait,
+         *  the bed and the stamp, the neck and head by the graze, and the stag's antler beams or
+         *  a doe's long ears. */
+        [[nodiscard]] std::array<Limb, CapsuleCount> DeerLimbs(const DeerState& deer) noexcept;
         /** The silhouette's signed distance, metres in shadow space, at an offset from the feet on
          *  their plane (negative inside): the CPU mirror of the shader's, for the tests. */
         [[nodiscard]] float SignedDistance(const Shape& shape, float offsetX, float offsetZ) noexcept;

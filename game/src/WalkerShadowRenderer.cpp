@@ -31,11 +31,10 @@ namespace island
 {
     namespace
     {
-        constexpr int AcrossCells = 6;
+        constexpr int MaximumAcrossCells = 12;
         constexpr int MaximumAlongCells = 48;
-        constexpr int VertexCapacity = AcrossCells * MaximumAlongCells * 6;
-        constexpr float HalfWidth = 0.85f;        // the arms' reach either side, and the penumbra
-        constexpr float BehindFeet = 0.8f;        // the feet and the forward-swung toe
+        constexpr int VertexCapacity = MaximumAcrossCells * MaximumAlongCells * 6;
+        constexpr float Margin = 0.35f;           // past the figure's own extent: the penumbra and the joints
         constexpr float LongestReach = 14.0f;     // a low sun down a falling bank
         constexpr float SurfaceOffset = 0.03f;
 
@@ -134,27 +133,42 @@ void main() {
         Vector3 light = toSun;
         if (!(light.LengthSquared() > 1e-8f)) return;
         light.Normalize();
-        // The grid under every place the figure can land: from behind the feet to well past the
-        // crown's shadow on level ground (a bank falling away from the sun lengthens it).
-        const float reach = std::min(LongestReach, 1.7f * shape.length + 1.0f);
-        const int alongCells = std::clamp(static_cast<int>(std::ceil((reach + BehindFeet) / 0.30f)), 6, MaximumAlongCells);
+        // The grid under every place the figure can land: the capsules' extent on level ground,
+        // across and along, the far end stretched for a bank falling away from the sun.
+        float nearest = 0.0f, farthest = 0.0f, leftmost = 0.0f, rightmost = 0.0f;
+        for (const auto& capsule : shape.capsules) {
+            if (!(capsule.radius > 0.0f)) continue;
+            for (const float along : {capsule.ax, capsule.bx}) {
+                nearest = std::min(nearest, (along - capsule.radius) / shape.sunSine);
+                farthest = std::max(farthest, (along + capsule.radius) / shape.sunSine);
+            }
+            for (const float across : {capsule.ay, capsule.by}) {
+                leftmost = std::min(leftmost, across - capsule.radius);
+                rightmost = std::max(rightmost, across + capsule.radius);
+            }
+        }
+        const float from = nearest - Margin;
+        const float to = std::min(LongestReach, 1.6f * farthest + Margin);
+        const float acrossFrom = leftmost - Margin, acrossTo = rightmost + Margin;
+        const int alongCells = std::clamp(static_cast<int>(std::ceil((to - from) / 0.30f)), 6, MaximumAlongCells);
+        const int acrossCells = std::clamp(static_cast<int>(std::ceil((acrossTo - acrossFrom) / 0.30f)), 4, MaximumAcrossCells);
         const float acrossX = -shape.alongZ, acrossZ = shape.alongX;
-        std::array<Vector3, (AcrossCells + 1) * (MaximumAlongCells + 1)> grid;
+        std::array<Vector3, (MaximumAcrossCells + 1) * (MaximumAlongCells + 1)> grid;
         for (int j = 0; j <= alongCells; ++j) {
-            const float along = -BehindFeet + (reach + BehindFeet) * static_cast<float>(j) / static_cast<float>(alongCells);
-            for (int i = 0; i <= AcrossCells; ++i) {
-                const float across = HalfWidth * (2.0f * static_cast<float>(i) / AcrossCells - 1.0f);
+            const float along = from + (to - from) * static_cast<float>(j) / static_cast<float>(alongCells);
+            for (int i = 0; i <= acrossCells; ++i) {
+                const float across = acrossFrom + (acrossTo - acrossFrom) * static_cast<float>(i) / static_cast<float>(acrossCells);
                 const float x = feet.X + shape.alongX * along + acrossX * across;
                 const float z = feet.Z + shape.alongZ * along + acrossZ * across;
-                grid[static_cast<std::size_t>(j * (AcrossCells + 1) + i)] = Vector3(x, groundHeight(x, z) + SurfaceOffset, z);
+                grid[static_cast<std::size_t>(j * (acrossCells + 1) + i)] = Vector3(x, groundHeight(x, z) + SurfaceOffset, z);
             }
         }
         staging_.clear();
         const Color white(255, 255, 255, 255);
         for (int j = 0; j < alongCells; ++j) {
-            for (int i = 0; i < AcrossCells; ++i) {
+            for (int i = 0; i < acrossCells; ++i) {
                 const auto at = [&](const int a, const int b) {
-                    return grid[static_cast<std::size_t>((j + a) * (AcrossCells + 1) + i + b)];
+                    return grid[static_cast<std::size_t>((j + a) * (acrossCells + 1) + i + b)];
                 };
                 for (const auto& corner : {at(0, 0), at(1, 0), at(1, 1), at(0, 0), at(1, 1), at(0, 1)})
                     staging_.emplace_back(corner, white);

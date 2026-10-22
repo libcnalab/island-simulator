@@ -1,4 +1,5 @@
 #include "IslandSimulator/DeerHerd.hpp"
+#include "IslandSimulator/WalkerShadow.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -86,6 +87,40 @@ int main()
         bool allBedded = true;
         for (const auto& deer : sleepy.Deer()) allBedded = allBedded && deer.behavior == island::DeerBehavior::Rest && deer.bedAmount > 0.9f;
         Check(allBedded, "after dark every deer should be bedded down");
+        {
+            // A deer's sun shadow is laid from the joints its renderer poses: hooves on the
+            // ground, the head high, the barrel's shadow inside the figure, and a bedded deer's
+            // figure falling shorter than a standing one's.
+            island::DeerState standing;
+            standing.antlered = true;
+            const auto limbs = island::walker_shadow::DeerLimbs(standing);
+            float lowest = 10.0f, highest = -10.0f;
+            for (const auto& limb : limbs) {
+                lowest = std::min({lowest, limb.ay - limb.radius, limb.by - limb.radius});
+                highest = std::max({highest, limb.ay + limb.radius, limb.by + limb.radius});
+            }
+            const float sx = -0.45f, sy = 0.82f, sz = -0.34f;
+            const auto figure = island::walker_shadow::Lay(limbs, 0.0f, 0.0f, 0.0f, sx, sy, sz, 2.6f);
+            const auto shadowOf = [&](const float height) { return std::array<float, 2>{-sx * height / sy, -sz * height / sy}; };
+            const auto barrel = shadowOf(1.03f), beyond = shadowOf(3.2f);
+            const auto& head = limbs[14];
+            const float headX = head.ax - sx / sy * head.ay, headZ = head.az - sz / sy * head.ay;
+            const auto reach = [](const island::walker_shadow::Shape& shape) {
+                float farthest = 0.0f;
+                for (const auto& capsule : shape.capsules)
+                    farthest = std::max({farthest, capsule.ax + capsule.radius, capsule.bx + capsule.radius});
+                return farthest;
+            };
+            auto bedded = standing;
+            bedded.bedAmount = 1.0f;
+            const auto lying = island::walker_shadow::Lay(island::walker_shadow::DeerLimbs(bedded), 0.0f, 0.0f, 0.0f, sx, sy, sz, 2.6f);
+            Check(lowest > -0.01f && lowest < 0.06f && highest > 2.0f && highest < 2.8f
+                      && island::walker_shadow::SignedDistance(figure, barrel[0], barrel[1]) < -0.1f
+                      && island::walker_shadow::SignedDistance(figure, headX, headZ) < 0.0f
+                      && island::walker_shadow::SignedDistance(figure, beyond[0], beyond[1]) > 0.0f
+                      && reach(lying) < reach(figure) - 0.2f,
+                  "a deer's sun shadow is laid from the joints its renderer poses");
+        }
         std::cout << "Four deterministic inland deer graze, walk and retreat safely\n";
         return 0;
     } catch (const std::exception& exception) {

@@ -233,6 +233,25 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 449 (2026-10-22) — the deer cast their figures along the hour's sun
+
+The four deer stood on the ground with no shadow at all: no contact pool, no sun shadow. They are
+not in the sun shadow map, so trees threw shadows beside them and they threw none.
+`walker_shadow::DeerLimbs` now takes seventeen limbs from the joints DeerRenderer poses. The barrel,
+each leg in three (hip to knee, knee to hock, hock to hoof) and the neck follow the gait, the bed and
+the stamp. The head runs to the nose, lowered by the graze and lifted by the toss. The last two limbs
+are the stag's two antler beams or a doe's long ears. WalkerShadowRenderer lays them along the
+hour's light like the walker's and the resident's figures (a draw per deer within 60 m that stands
+on the drawn ground).
+
+The renderer's grid now takes its extent from the figure's own capsules, across and along, instead
+of a human's ±0.85 m. Broadside to the sun a deer reaches about ±1.3 m, and the grid's cells adapt
+(up to 12 x 48). In the `deer` view at 14:00 the figure lies beside the legs, at 17:00 it stretches
+long among the trunks' shadows, and bedded (`deer-bedded`) it is low and short. The walker's
+figures at 10:00 and 17:00 are unchanged. The deer tests check hooves on the ground, the antlers'
+height, the barrel and head inside the figure, nothing past the crown, and a bedded deer's shorter
+figure.
+
 ## Loop pass 448 (2026-10-22) — the resident casts their figure too, from their own skeleton
 
 The resident had only two soft pools under the feet, so beside the walker's new figure (pass 447) they

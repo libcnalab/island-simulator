@@ -1,4 +1,5 @@
 #include "IslandSimulator/WalkerShadow.hpp"
+#include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/ResidentMotion.hpp"
 
 #include <algorithm>
@@ -149,6 +150,76 @@ namespace island::walker_shadow
         add(offset(0.04f, 0.50f), pose.shoulders[1], 0.060f);
         add(offset(0.0f, 0.48f), offset(0.0f, 0.60f), 0.055f);                       // neck
         add(offset(0.0f, 0.67f), offset(0.0f, 0.73f), 0.100f);                       // head
+        return limbs;
+    }
+
+    std::array<Limb, CapsuleCount> DeerLimbs(const DeerState& deer) noexcept
+    {
+        // The joints as DeerRenderer sets them (the body's centre, the neck and head by the
+        // graze and the toss, the four legs by the gait, the bed and the stamp), the parts'
+        // radii their mean girth: the barrel, then the legs in three, the neck, the head to the
+        // nose, and the two antler beams of the stag or a doe's two long ears.
+        struct V
+        {
+            float x, y, z;
+            V operator+(const V& o) const noexcept { return {x + o.x, y + o.y, z + o.z}; }
+            V operator-(const V& o) const noexcept { return {x - o.x, y - o.y, z - o.z}; }
+            V operator*(const float k) const noexcept { return {x * k, y * k, z * k}; }
+        };
+        const auto lerp = [](const V& a, const V& b, const float t) { return a + (b - a) * t; };
+        const float s = deer.scale;
+        const V forward{std::cos(deer.headingRadians), 0.0f, std::sin(deer.headingRadians)};
+        const V right{-forward.z, 0.0f, forward.x}, up{0.0f, 1.0f, 0.0f};
+        const float bed = std::clamp(deer.bedAmount, 0.0f, 1.0f);
+        const V body{deer.x, deer.y + (1.03f - 0.56f * bed) * s, deer.z};
+        std::array<Limb, CapsuleCount> limbs{};
+        std::size_t next = 0;
+        const auto add = [&](const V& a, const V& b, const float radius) {
+            limbs[next++] = {a.x, a.y, a.z, b.x, b.y, b.z, radius};
+        };
+        add(body - forward * (0.42f * s), body + forward * (0.36f * s) + up * (0.05f * s), 0.32f * s);   // the barrel
+        for (int leg = 0; leg < 4; ++leg) {
+            const float fore = leg < 2 ? 0.48f : -0.47f;
+            const float sideSign = leg % 2 == 0 ? -1.0f : 1.0f;
+            const float phase = deer.gaitPhase + ((leg == 0 || leg == 3) ? 0.0f : std::numbers::pi_v<float>);
+            const float swing = std::sin(phase) * std::min(1.0f, deer.speed / 0.8f);
+            const bool hind = leg >= 2;
+            const V hip = body + forward * (fore * s) + right * (sideSign * 0.255f * s) - up * (0.23f * s);
+            const V standingKnee = hip + forward * (((hind ? 0.16f : -0.07f) + swing * 0.13f) * s) - up * (0.37f * s)
+                + right * (sideSign * 0.018f * s);
+            const V standingHock = standingKnee + forward * (((hind ? -0.22f : 0.08f) - swing * 0.15f) * s) - up * (0.34f * s);
+            const V standingHoof = standingHock + forward * (((hind ? 0.18f : 0.04f) - swing * 0.08f) * s);
+            const V foldedKnee = hip + forward * ((hind ? 0.22f : 0.10f) * s) - up * ((hind ? 0.12f : 0.14f) * s)
+                + right * (sideSign * 0.05f * s);
+            const V foldedHock = foldedKnee - forward * ((hind ? 0.28f : 0.30f) * s) - up * ((hind ? 0.05f : 0.03f) * s);
+            const V foldedHoof = foldedHock + forward * ((hind ? 0.30f : -0.05f) * s);
+            const float lift = (leg == 0 ? std::clamp(deer.stamp, 0.0f, 1.0f) : 0.0f) * 0.14f * s;
+            const V knee = lerp(standingKnee, foldedKnee, bed) + up * (lift * 0.35f) + forward * (lift * 0.2f);
+            const V hock = lerp(standingHock, foldedHock, bed) + up * (lift * 0.8f) - forward * (lift * 0.3f);
+            V hoof = lerp(standingHoof, foldedHoof, bed) - forward * (lift * 0.2f);
+            hoof.y = deer.y + 0.060f * s + lift;
+            add(hip, knee, (hind ? 0.095f : 0.085f) * s);
+            add(knee, hock, 0.035f * s);
+            add(hock, hoof, 0.028f * s);
+        }
+        const float graze = deer.grazeAmount;
+        const float toss = std::clamp(deer.headToss, 0.0f, 1.0f);
+        const V neckBase = body + forward * (0.58f * s) + up * (0.24f * s);
+        const V neckTop = neckBase + forward * (0.27f * s) + up * ((0.50f - 0.62f * graze) * s);
+        const V head = neckTop + forward * ((0.22f + 0.035f * toss) * s) + up * ((0.045f - 0.105f * graze + 0.085f * toss) * s);
+        const V nose = head + forward * (0.415f * s) - up * (0.065f * s);
+        add(body + forward * (0.48f * s) + up * (0.17f * s), neckTop, 0.17f * s);
+        add(head - forward * (0.10f * s), nose, 0.105f * s);
+        for (const float sideSign : {-1.0f, 1.0f}) {
+            if (deer.antlered) {
+                const V base = head - forward * (0.12f * s) + right * (sideSign * 0.075f * s) + up * (0.18f * s);
+                const V crown = base + forward * (0.107f * s) + right * (sideSign * 0.11f * s) + up * (0.58f * s);
+                add(base, crown, 0.030f * s);
+            } else {
+                const V root = head - forward * (0.07f * s) + right * (sideSign * 0.105f * s) + up * (0.13f * s);
+                add(root, root - forward * (0.075f * s) + right * (sideSign * 0.16f * s) + up * (0.23f * s), 0.040f * s);
+            }
+        }
         return limbs;
     }
 

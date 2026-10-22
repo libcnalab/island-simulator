@@ -6379,6 +6379,16 @@ namespace island
                         Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength, groundAt);
                 }
             }
+            for (const DeerState& deer : deer_->Deer()) {
+                // and the deer's, which had no shadow at all: within 60 m, on the drawn ground
+                const float ground = groundAt(deer.x, deer.z);
+                if (Vector3::DistanceSquared(Vector3(deer.x, deer.y, deer.z), renderCameraPosition_) > 60.0f * 60.0f
+                    || std::abs(deer.y - ground) > 0.25f) continue;
+                const float stature = (deer.antlered ? 2.6f : 2.1f) * deer.scale * (1.0f - 0.35f * std::clamp(deer.bedAmount, 0.0f, 1.0f));
+                walkerShadowRenderer_->Draw(cameraView_, cameraProjection_,
+                    walker_shadow::Lay(walker_shadow::DeerLimbs(deer), deer.x, ground, deer.z, toSun.x, toSun.y, toSun.z, stature),
+                    Vector3(deer.x, ground, deer.z), Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength, groundAt);
+            }
             if (playerShadow.visible) {
                 // ...and the figure the sun lays from the walker's feet, where the feet stand on the
                 // drawn ground (not on a deck or a rock top above it) and out of the cave.
