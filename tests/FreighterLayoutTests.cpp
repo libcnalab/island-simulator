@@ -1,4 +1,5 @@
 #include "IslandSimulator/FreighterLayout.hpp"
+#include "IslandSimulator/LifeboatLayout.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/PlayerMotion.hpp"
 
@@ -85,5 +86,14 @@ int main() {
     walkTo(8.6f,1.05f,"walk up to the deckhouse's door");
     walkTo(6.5f,1.05f,"enter the deckhouse");
     Check(std::abs(local().y-Ship::DeckUp(6.5f))<0.08f,"the deckhouse's floor does not carry the walker");
+    // its lifeboat, keel up on dry level sand along the beach, clear of the hull
+    const auto boat=island::LifeboatLayout::FindNear(terrain,ship,{},{});
+    Check(boat.has_value(),"the coaster's lifeboat finds no beach beside it");
+    for(const float along:{-3.6f,0.0f,3.6f}) for(const float across:{-1.15f,1.15f}) {
+        const auto p=boat->At(along,across);
+        Check(terrain.Sample(p[0],p[1]).surface==island::TerrainSurface::DrySand&&!ship.Blocks(p[0],p[1],2.5f),
+              "the lifeboat does not lie on dry sand clear of the ship");
+    }
+    Check(boat->Obstacles().size()==3U&&std::hypot(boat->x-foot.x,boat->z-foot.z)<60.0f,"the lifeboat lies far from its ship");
     std::cout<<"Freighter on the beach: ladder, deck, hatch, stair, hold and deckhouse routes valid\n";
 }

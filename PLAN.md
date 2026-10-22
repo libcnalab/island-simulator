@@ -233,6 +233,29 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 513 (2026-10-22) — the coaster's lifeboat lies keel up on the beach
+
+The coaster's davits stand empty (pass 503). Its lifeboat has now washed up on the beach at
+(-119, -199), a little way along from the ship (`LifeboatLayout`, `LifeboatRenderer`; 2600
+triangles; QA view `lifeboat`).
+
+- **Placement.** The boat lies on the first open, level stretch of dry sand along the beach,
+  14-40 m off the hull, on the ladder's side first and the other side failing that. Its bow turns
+  a little up the beach. It is clear of the obstacles, the nests and the ship. Three circles
+  block the way, and the washed-up bottles keep off it.
+- **Hull.** A 7.2 m double-ended hull lies keel up, rolled a little onto one gunwale and bedded
+  in the sand. The keel has a rocker and the stem and the stern are raked, so its back curves
+  down to its ends. The hull has an outer and an inner skin, a keel, a stem and a sternpost, and
+  rubbing strakes.
+- **Paint.** The faded red of its bottom is now on top, white paint peels to grey planks, and the
+  orange sheer band runs down by the sand.
+- **Beside it.** Two oars lie thrown on the sand, and a life ring in orange and white quarters is
+  half sunk by the bow.
+- **Look and tests.** It receives and casts the sun shadows. `IslandFreighterLayoutTests` checks
+  that the boat lies on dry sand clear of the ship. The suite is 76/76.
+
+Evidence: `20261022T113208` (lifeboat).
+
 ## Loop pass 511 (2026-10-22) — shadows no longer dapple faces turned from the sun
 
 This fixes the known issue from pass 504: the palms' dappled canopy shade showed on the

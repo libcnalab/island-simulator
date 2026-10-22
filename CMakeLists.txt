@@ -95,6 +95,7 @@ add_library(island_core STATIC
     game/src/BeachLitterLayout.cpp
     game/src/FreighterLayout.cpp
     game/src/MineLayout.cpp
+    game/src/LifeboatLayout.cpp
     game/src/BridgeLayout.cpp
     game/src/LookoutLayout.cpp
     game/src/FallingFruitField.cpp
@@ -807,6 +808,7 @@ if(ISLAND_BUILD_GAME)
         game/src/HumanSkeleton.cpp
         game/src/MineRenderer.cpp
         game/src/VolcanoRenderer.cpp
+        game/src/LifeboatRenderer.cpp
         game/src/BridgeRenderer.cpp
         game/src/LookoutRenderer.cpp
         game/src/FallingFruitRenderer.cpp

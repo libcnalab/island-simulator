@@ -351,6 +351,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 513: the coaster's lifeboat keel up on the beach at (-119, -199) with oars and a life ring (LifeboatLayout/Renderer, QA view `lifeboat`, `20261022T113208`) (PLAN "Loop pass 513").
 - Pass 512: evidence re-run of operator backlog items 1-20 on build ab4d78b7 (20 native views, all diagnostics present; see the backlog section above).
 - Pass 511: StructureShadowReceiver fades the sun-shadow tint on faces turned from the sun: no canopy dapples on ceilings (the coaster mess), no double-darkened lee faces (PLAN "Loop pass 511").
 - Pass 510: README gallery adds the old mine (portal, adit, crystals) and the volcano (day, lava, night) rows (`20261022T111703`..`111807`) (PLAN "Loop pass 510").
