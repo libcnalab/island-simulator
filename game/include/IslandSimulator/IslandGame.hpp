@@ -284,6 +284,7 @@ namespace island
         VolcanoExterior,
         VolcanoCrater,
         LifeboatDetail,
+        SignalFireDetail,
         GroundDoveDetail,
         FruitBatDetail,
         FruitBatRoostDetail,

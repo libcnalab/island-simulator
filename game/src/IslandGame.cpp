@@ -214,6 +214,7 @@ namespace island
             case FixedViewpoint::VolcanoExterior: return "volcano";
             case FixedViewpoint::VolcanoCrater: return "volcano-crater";
             case FixedViewpoint::LifeboatDetail: return "lifeboat";
+            case FixedViewpoint::SignalFireDetail: return "signal-fire";
             case FixedViewpoint::GroundDoveDetail: return "ground-doves";
             case FixedViewpoint::FruitBatDetail: return "bats";
             case FixedViewpoint::FruitBatRoostDetail: return "bat-roost";
@@ -426,6 +427,7 @@ namespace island
             // jetty and the nests (the stones are stepped over, not walked round).
             if(whalePlacement_) avoid.push_back(whalePlacement_->At(4.0f,0.0f));
             stoneSignPlacement_=StoneSignLayout::FindInWorld(terrain_,worldObstacles,avoid,10.0f);
+            if(stoneSignPlacement_) for(const auto& obstacle:stoneSignPlacement_->FireObstacles()) worldObstacles.push_back(obstacle);
         }
         birdFlock_.SetPerchSites(birdPerchLayout_.Sites());
         {
@@ -809,6 +811,16 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: "<<what<<'\n';
+        } else if(viewpoint_==FixedViewpoint::SignalFireDetail) {
+            // on the sand by the castaway's signal fire, the burnt-out ring behind it
+            if(!stoneSignPlacement_) throw std::runtime_error("Signal fire QA requires the stone sign");
+            const auto& s=*stoneSignPlacement_;
+            const auto stand=s.At(StoneSignPlacement::Length()+7.5f,0.5f),fire=s.SignalFire();
+            cameraPosition_=Vector3(stand[0],terrain_.Height(stand[0],stand[1])+PlayerMotion::EyeHeight,stand[1]);
+            const Vector3 direction=Vector3(fire[0],terrain_.Height(fire[0],fire[1])+0.7f,fire[1])-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: signal-fire QA camera looks at the castaway's signal fire stacked ready on the beach\n";
         } else if(viewpoint_==FixedViewpoint::LifeboatDetail) {
             // from the beach a few metres off its side, the coaster beyond it
             if(!lifeboatPlacement_) throw std::runtime_error("Lifeboat QA requires the lifeboat");

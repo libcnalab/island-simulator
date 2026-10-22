@@ -33,6 +33,14 @@ struct StoneSignPlacement {
     /** The stones along the letters' strokes: two rows, a stone about every 0.42 m in each, a
      *  little jittered, so each stroke reads bold from the air. */
     [[nodiscard]] std::vector<SignStone> Stones() const;
+    /** Past the sign's end the castaway keeps a signal fire stacked ready to light for a passing
+     *  aircraft, and beside it the ring of a fire burnt out: where they stand on the sand. */
+    [[nodiscard]] std::array<float,2> SignalFire() const noexcept {return At(Length()+4.5f,3.5f);}
+    [[nodiscard]] std::array<float,2> BurntFire() const noexcept {return At(Length()+4.0f,7.5f);}
+    [[nodiscard]] std::array<CircularObstacle,2> FireObstacles() const noexcept {
+        const auto a=SignalFire(),b=BurntFire();
+        return {{{a[0],a[1],0.95f},{b[0],b[1],0.75f}}};
+    }
 };
 
 class StoneSignLayout final {

@@ -233,6 +233,23 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 517 (2026-10-22) — the castaway's signal fire stands ready by HELP ME
+
+Past the end of the castaway's HELP ME, the castaway keeps a signal fire stacked ready to light
+for a passing aircraft. A fire burnt out lies beside it (`StoneSignPlacement::SignalFire`,
+`BurntFire` and `FireObstacles`, `StoneSignRenderer`; QA view `signal-fire`).
+
+- **Stack.** Twelve bleached driftwood poles lean to a peak 1.7 m up.
+- **Fronds.** Five green palm fronds are laid over the stack to make smoke. Each is a rib arching
+  down over the poles with leaflets in pairs along it, like the palms' own. The first flat-blade
+  fronds read as stiff strips.
+- **The burnt ring.** Nine stones ring a grey ash bed. Charcoal lies on it and the charred ends
+  of three sticks reach out of it.
+- **Walking.** Both block the walker. The diagnostic reads "...reading from the sea, a signal
+  fire stacked ready beside it by a fire burnt out".
+
+Evidence: `20261022T115135` (signal-fire). The suite is 76/76.
+
 ## Loop pass 516 (2026-10-22) — fumaroles steam on the volcano's slopes
 
 Four fumaroles now steam out of the volcano's upper slopes (`VolcanoSite::VentBearings` and

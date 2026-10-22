@@ -66,6 +66,78 @@ StoneSignRenderer::StoneSignRenderer(GraphicsDevice& device,const StoneSignPlace
         b.Loft(rings,centres,[&](std::size_t,std::size_t) {return tone;});
         ++stones_;
     }
+    // past the sign's end: the signal fire stacked ready, driftwood poles leaning to a peak and
+    // green palm fronds laid over them for smoke, and the ring of a fire burnt out, its charcoal
+    // and grey ash, the ends of sticks it did not finish
+    {
+        const Vector3 drift(178,170,156),charred(46,42,40),ash(120,118,112),frond(80,118,56);
+        const auto at=[&](const std::array<float,2>& p) {return Vector3(p[0],groundAt(p[0],p[1]),p[1]);};
+        const Vector3 fire=at(placement.SignalFire());
+        const Vector3 peak=fire+Vector3::Up*1.7f;
+        for(int k=0;k<12;++k) {
+            const float a=2.0f*Pi*static_cast<float>(k)/12.0f+0.2f*Hash(static_cast<std::uint32_t>(k)*11U);
+            const float r=0.75f+0.15f*Hash(static_cast<std::uint32_t>(k)*13U);
+            const Vector3 foot=fire+Vector3(std::cos(a)*r,-0.05f,std::sin(a)*r);
+            const Vector3 top=peak+Vector3(std::cos(a)*0.12f,0.15f*Hash(static_cast<std::uint32_t>(k)*17U),std::sin(a)*0.12f);
+            b.Tube({foot,(foot+top)*0.5f,top},{0.06f,0.05f,0.035f},6,drift*(0.85f+0.25f*Hash(static_cast<std::uint32_t>(k)*19U)));
+        }
+        // the fronds: a rib arching down over the poles, leaflets in pairs along it
+        for(int k=0;k<5;++k) {
+            const float a=2.0f*Pi*static_cast<float>(k)/5.0f+0.3f;
+            const Vector3 out(std::cos(a),0.0f,std::sin(a)),across(-std::sin(a),0.0f,std::cos(a));
+            const Vector3 tint=frond*(0.85f+0.3f*Hash(static_cast<std::uint32_t>(k)*23U));
+            std::vector<Vector3> rib;std::vector<float> radii;
+            constexpr int Joints=8;
+            for(int j=0;j<=Joints;++j) {
+                const float t=static_cast<float>(j)/Joints;
+                rib.push_back(peak-Vector3::Up*0.05f+out*(1.5f*t)-Vector3::Up*(1.2f*t*t)+across*(0.12f*std::sin(t*2.0f+static_cast<float>(k))));
+                radii.push_back(0.02f-0.012f*t);
+            }
+            b.Tube(rib,radii,4,tint*0.8f);
+            for(int j=1;j<Joints;++j) {
+                const Vector3 at=rib[static_cast<std::size_t>(j)];
+                Vector3 along=rib[static_cast<std::size_t>(j+1)]-rib[static_cast<std::size_t>(j-1)];along.Normalize();
+                const float length=0.42f*std::sin(Pi*(static_cast<float>(j)+0.5f)/Joints)+0.1f;
+                for(const float s:{-1.0f,1.0f}) for(const float shift:{-0.06f,0.06f}) {
+                    const Vector3 base=at+along*shift;
+                    const Vector3 dir=Vector3::Normalize(across*s+along*0.55f-Vector3::Up*0.45f);
+                    const Vector3 width=Vector3::Normalize(Vector3::Cross(dir,Vector3::Up))*0.025f;
+                    const Vector3 tip=base+dir*length;
+                    b.inside=base-Vector3::Up*0.3f;
+                    b.Quad(base-width,base+width,tip+width*0.3f,tip-width*0.3f,tint*(0.9f+0.15f*Hash(static_cast<std::uint32_t>(j*7+k))));
+                }
+            }
+        }
+        const Vector3 pit=at(placement.BurntFire());
+        for(int k=0;k<9;++k) {
+            const float a=2.0f*Pi*static_cast<float>(k)/9.0f;
+            const Vector3 c=pit+Vector3(std::cos(a)*0.62f,0.06f,std::sin(a)*0.62f);
+            const Vector3 out(std::cos(a),0.0f,std::sin(a));
+            b.Box(c,out,Vector3::Up,Vector3::Cross(out,Vector3::Up),0.13f,0.09f,0.16f,Tones[static_cast<std::size_t>(k)%4U]*0.75f,Tones[static_cast<std::size_t>(k)%4U]*0.7f);
+        }
+        {
+            // the ash bed, a low grey disc inside the ring
+            constexpr int Rim=12;
+            b.inside=pit-Vector3::Up;
+            for(int k=0;k<Rim;++k) {
+                const float a0=2.0f*Pi*static_cast<float>(k)/Rim,a1=2.0f*Pi*static_cast<float>(k+1)/Rim;
+                b.Face(pit+Vector3::Up*0.035f,pit+Vector3(std::cos(a0)*0.5f,0.01f,std::sin(a0)*0.5f),
+                       pit+Vector3(std::cos(a1)*0.5f,0.01f,std::sin(a1)*0.5f),ash);
+            }
+        }
+        for(int k=0;k<7;++k) {
+            const float a=2.0f*Pi*Hash(static_cast<std::uint32_t>(k)*29U),r=0.3f*Hash(static_cast<std::uint32_t>(k)*31U);
+            const Vector3 c=pit+Vector3(std::cos(a)*r,0.05f,std::sin(a)*r);
+            const Vector3 dir(std::cos(a*3.0f),0.0f,std::sin(a*3.0f));
+            b.Box(c,dir,Vector3::Up,Vector3::Cross(dir,Vector3::Up),0.08f,0.035f,0.05f,charred,charred*1.1f);
+        }
+        for(int k=0;k<3;++k) {
+            const float a=2.0f*Pi*static_cast<float>(k)/3.0f+0.6f;
+            const Vector3 out(std::cos(a),0.0f,std::sin(a));
+            b.Tube({pit+out*0.15f+Vector3::Up*0.06f,pit+out*0.55f+Vector3::Up*0.1f,pit+out*0.95f+Vector3::Up*0.05f},
+                   {0.045f,0.05f,0.05f},6,charred*1.4f);
+        }
+    }
     auto& mesh=b.builder.mesh;
     triangles_=static_cast<int>(mesh.size()/3);
     Vector3 low(1e9f,1e9f,1e9f),high(-1e9f,-1e9f,-1e9f);
@@ -86,7 +158,7 @@ StoneSignRenderer::StoneSignRenderer(GraphicsDevice& device,const StoneSignPlace
     std::ostringstream message;
     message<<"island-simulator: a castaway's HELP ME is laid out in "<<stones_<<" stones on the beach at ("
         <<static_cast<int>(std::lround(placement.x))<<", "<<static_cast<int>(std::lround(placement.z))
-        <<"), reading from the sea; "<<triangles_<<" triangles in one draw";
+        <<"), reading from the sea, a signal fire stacked ready beside it by a fire burnt out; "<<triangles_<<" triangles in one draw";
     std::cout<<message.str()<<'\n';MirrorRuntimeDiagnosticToPlatformLog(message.str());
 }
 
