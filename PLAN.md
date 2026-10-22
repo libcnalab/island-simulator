@@ -233,6 +233,24 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 536 (2026-10-22) — offerings before the stone god
+
+The stone god stood on its ahu with nothing at its feet. Now offerings lie there, as castaways or
+islanders before them might leave. They are kept apart from the stone's weathering, so no moss
+or lichen.
+
+- **Garland.** Fifteen hibiscus flowers (red, pink, orange, yellow) on their leaves are draped
+  round the front of its base.
+- **On the paving's front.** Two coconut halves show their white flesh inside the brown rim. A
+  row of six cowries lies there, and a conch with a cream body, a stepped spire and its pink lip
+  turned up.
+- **Cairns.** Two small cairns of three flat stones each stand on the ground at the platform's
+  front corners.
+- **New QA view.** `idol-offerings` looks down at them from the platform's edge
+  (`20261022T142118`).
+
+The suite is 76/76.
+
 ## Loop pass 535 (2026-10-22) — the lighthouse sounds like stone, and shuts out the wind
 
 - **Footsteps.** The walker's steps on the lighthouse are now stone (`FootstepSurface::Rock`):

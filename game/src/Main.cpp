@@ -84,6 +84,7 @@ namespace
         case FixedViewpoint::FrigatebirdDetail: return "frigatebird";
         case FixedViewpoint::WhaleSkeletonDetail: return "whale-skeleton";
         case FixedViewpoint::IdolDetail: return "idol";
+        case FixedViewpoint::IdolOfferingsDetail: return "idol-offerings";
         case FixedViewpoint::StoneSignDetail: return "help-sign";
         case FixedViewpoint::LighthouseDetail: return "lighthouse";
         case FixedViewpoint::LighthouseStairDetail: return "lighthouse-stair";
@@ -380,6 +381,8 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::WhaleSkeletonDetail;
             } else if (name == "idol") {
                 viewpoint = island::FixedViewpoint::IdolDetail;
+            } else if (name == "idol-offerings") {
+                viewpoint = island::FixedViewpoint::IdolOfferingsDetail;
             } else if (name == "help-sign") {
                 viewpoint = island::FixedViewpoint::StoneSignDetail;
             } else if (name == "lighthouse") {

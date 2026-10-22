@@ -207,6 +207,63 @@ IdolStatueRenderer::IdolStatueRenderer(GraphicsDevice& device,const IdolStatuePl
         }
     }
 
+    // The offerings left before the god: a garland of hibiscus laid round its feet, two coconut
+    // halves holding their white flesh up, a row of cowries and a conch on the paving's front, and
+    // small cairns of flat stones on the ground at the platform's front corners. They are left as
+    // they are, not weathered with the stone.
+    {
+        const auto weather=b.tint;
+        b.tint=nullptr;
+        const float paving=0.06f;
+        const std::array<Vector3,4> Petals{{Vector3(214,44,52),Vector3(236,92,120),Vector3(244,140,52),Vector3(232,196,64)}};
+        for(int k=0;k<15;++k) {
+            // draped round the front of the god's base
+            const float t=static_cast<float>(k)/14.0f,a=Pi*(0.04f+0.92f*t);
+            const Vector3 at=P(std::cos(a)*0.98f,paving,std::sin(a)*0.8f);
+            const Vector3 colour=Petals[static_cast<std::size_t>(k)%Petals.size()]*(0.92f+0.16f*Hash(static_cast<std::uint32_t>(k)*977U));
+            b.Blade(at,right,face*std::cos(a)+right*std::sin(a)*0.2f,Vector3::Up,0.006f,0.11f,0.035f,0.01f,Vector3(70,118,52));
+            b.Tube({at+Vector3::Up*0.01f,at+Vector3::Up*0.035f,at+Vector3::Up*0.055f},{0.045f,0.058f,0.012f},7,colour);
+        }
+        for(const float side:{-1.0f,1.0f}) {
+            const Vector3 bowl=P(side*0.42f,paving,1.28f);
+            b.Tube({bowl,bowl+Vector3::Up*0.035f,bowl+Vector3::Up*0.075f},{0.03f,0.085f,0.11f},10,Vector3(104,70,44));
+            // the white flesh inside the brown rim, just over the shell's cut
+            b.inside=bowl;
+            for(int k=0;k<10;++k) {
+                const float a0=2.0f*Pi*static_cast<float>(k)/10.0f,a1=2.0f*Pi*static_cast<float>(k+1)/10.0f;
+                b.Face(bowl+Vector3::Up*0.079f,bowl+Vector3::Up*0.079f+(right*std::cos(a0)+face*std::sin(a0))*0.092f,
+                       bowl+Vector3::Up*0.079f+(right*std::cos(a1)+face*std::sin(a1))*0.092f,Vector3(244,238,222));
+            }
+        }
+        for(int k=0;k<6;++k) {
+            const Vector3 at=P(-0.5f+0.2f*static_cast<float>(k),paving,1.5f);
+            const Vector3 along=Vector3::Normalize(face+right*(0.3f*std::sin(static_cast<float>(k)*2.1f)));
+            b.Tube({at-along*0.035f,at+Vector3::Up*0.02f,at+along*0.035f},{0.012f,0.026f,0.012f},7,Vector3(236,226,198));
+        }
+        {
+            // the conch: a cream body swelling at its shoulder, its spire stepping down to a point,
+            // the pink of its flared lip turned up
+            const Vector3 nose=P(0.95f,paving+0.05f,1.36f),spire=P(1.13f,paving+0.06f,1.46f);
+            const Vector3 axis=spire-nose;
+            b.Tube({nose,nose+axis*0.35f,nose+axis*0.62f,nose+axis*0.8f,spire},{0.025f,0.07f,0.06f,0.035f,0.004f},9,Vector3(232,214,184));
+            for(const float t:{0.66f,0.78f})
+                b.Tube({nose+axis*(t-0.02f),nose+axis*(t+0.02f)},{0.05f-0.03f*(t-0.66f)*4.0f,0.045f-0.03f*(t-0.66f)*4.0f},9,Vector3(196,168,132));
+            b.Blade(nose+axis*0.3f+Vector3::Up*0.02f,Vector3::Normalize(axis),Vector3::Up*0.6f+right*0.8f,face,0.006f,0.09f,0.07f,0.03f,
+                    Vector3(240,150,140));
+        }
+        for(const float side:{-1.0f,1.0f}) {
+            const Vector3 corner=P(side*(IdolStatuePlacement::PlatformHalfWidth-0.25f),0.0f,IdolStatuePlacement::PlatformHalfDepth+0.45f);
+            float y=groundAt(corner.X,corner.Z);
+            for(int k=0;k<3;++k) {
+                const float r=0.17f-0.04f*static_cast<float>(k),h=0.06f;
+                const Vector3 base(corner.X+0.02f*static_cast<float>(k),y,corner.Z-0.015f*static_cast<float>(k));
+                b.Tube({base,base+Vector3::Up*h},{r,r*0.92f},8,Stone*(0.88f+0.12f*static_cast<float>(k%2)));
+                y+=h;
+            }
+        }
+        b.tint=weather;
+    }
+
     auto& mesh=b.builder.mesh;
     triangles_=static_cast<int>(mesh.size()/3);
     Vector3 low(1e9f,1e9f,1e9f),high(-1e9f,-1e9f,-1e9f);

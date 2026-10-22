@@ -199,6 +199,7 @@ namespace island
             case FixedViewpoint::FrigatebirdDetail: return "frigatebird";
             case FixedViewpoint::WhaleSkeletonDetail: return "whale-skeleton";
             case FixedViewpoint::IdolDetail: return "idol";
+            case FixedViewpoint::IdolOfferingsDetail: return "idol-offerings";
             case FixedViewpoint::StoneSignDetail: return "help-sign";
             case FixedViewpoint::LighthouseDetail: return "lighthouse";
             case FixedViewpoint::LighthouseStairDetail: return "lighthouse-stair";
@@ -2130,6 +2131,16 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: idol QA camera looks up at the stone god's face from before its platform\n";
+        } else if (viewpoint_ == FixedViewpoint::IdolOfferingsDetail) {
+            // At the platform's edge before the god, down at the offerings laid at its feet.
+            if(!idolPlacement_) throw std::runtime_error("Idol QA requires the stone god");
+            const auto& g=*idolPlacement_;
+            const float eyeX=g.x+g.faceX*2.9f+g.faceZ*0.6f,eyeZ=g.z+g.faceZ*2.9f-g.faceX*0.6f;
+            cameraPosition_=Vector3(eyeX,std::max(terrain_.Height(eyeX,eyeZ),g.groundY)+PlayerMotion::EyeHeight,eyeZ);
+            const Vector3 direction=Vector3(g.x+g.faceX*1.0f,g.TopY()+0.05f,g.z+g.faceZ*1.0f)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: idol-offerings QA camera looks down at the offerings laid before the stone god\n";
         } else if (viewpoint_ == FixedViewpoint::WhaleSkeletonDetail) {
             // From the seaward side of the ribcage, a few steps down the beach toward the skull,
             // looking up the beach across the ribs to the spine.

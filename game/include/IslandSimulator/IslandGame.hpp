@@ -270,6 +270,7 @@ namespace island
         FrigatebirdDetail,
         WhaleSkeletonDetail,
         IdolDetail,
+        IdolOfferingsDetail,
         StoneSignDetail,
         LighthouseDetail,
         LighthouseStairDetail,
