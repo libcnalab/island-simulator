@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 442 (2026-10-22) — crocodiles drag grooves across the estuary's sand
+
+The crocodiles haul out and crawl on the estuary's sand and mud without leaving a mark. A
+CrocodileDragTrail (beside the hermit crabs' ShellDragTrail) lays a piece of groove every quarter
+metre a crocodile crawls out of the water (submerged under 0.1, faster than 0.04 m/s) on sand or soil:
+0.07 m half width by its scale, dark for a minute and softening over five. DragSegment carries its
+half width (a shell's line keeps 0.011); the drag renderer draws a wide groove as a soft lip, a
+pressed floor and a soft lip, seen to some 60 m (a shell's line to 30), the crocodiles' grooves drawn
+before the hermits' so the renderer's counts stay theirs. New test: a crawling crocodile drags a broad
+groove a quarter metre at a time, none afloat or on unmarked ground. `crocodiles` (afloat in its frame)
+and `hermit-crabs` pass.
+
 ## Loop pass 441 (2026-10-22) — goats print the wet soil round their basin
 
 The goats walk to their rain-filled basin to drink, through its ring of wet soil, and left no mark in

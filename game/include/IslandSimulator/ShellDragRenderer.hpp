@@ -16,7 +16,7 @@ class RenderedTerrainSurface;
 // segment, fading with age, alpha-blended with depth read after the contact shadows.
 class ShellDragRenderer final {
 public:
-    static constexpr int VerticesPerSegment=6;
+    static constexpr std::size_t VerticesPerSegment=6;
     ShellDragRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,const IslandTerrain& terrain,
         const RenderedTerrainSurface& ground);   // laid on the drawn ground where the mesh reaches
     void Draw(const Microsoft::Xna::Framework::Matrix& view,

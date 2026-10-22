@@ -3092,6 +3092,24 @@ int main()
                   == island::ButterflyMeadow::HabitatCount,
           "butterfly simulation exposes the intended bounded population and habitats");
     {
+        // A crocodile hauled out and crawling drags a broad groove a quarter metre at a time; afloat
+        // or on ground that takes no mark it drags none.
+        island::CrocodileDragTrail drags;
+        std::array<island::CrocodileState, island::CrocodileGroup::CrocodileCount> crocodiles{};
+        std::array<bool, island::CrocodileGroup::CrocodileCount> dry{true, false, true};
+        for (auto& crocodile : crocodiles) { crocodile.speed = 0.3f; crocodile.scale = 1.2f; }
+        crocodiles[2].submerged = 0.8f;
+        for (int step = 0; step < 100; ++step) {
+            for (auto& crocodile : crocodiles) crocodile.x = 0.03f * static_cast<float>(step);
+            drags.Update(0.1f, crocodiles, dry);
+        }
+        std::size_t wide = 0;
+        for (const auto& segment : drags.Segments())
+            if (segment.active && std::abs(segment.halfWidth - island::CrocodileDragTrail::HalfWidth * 1.2f) < 1e-5f) ++wide;
+        Check(drags.LaidCount() >= 10U && drags.LaidCount() <= 13U && wide == drags.LaidCount(),
+              "a crawling crocodile drags a broad groove on sand, none afloat or on unmarked ground");
+    }
+    {
         // In the rain every dragonfly ends its flight on a perch and holds it; after it they fly.
         island::DragonflySwarm wetDragonflies(terrain);
         for (int step = 0; step < 100; ++step) wetDragonflies.Update(0.05f, 500.0f, 2.0f, 500.0f);

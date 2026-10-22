@@ -3968,6 +3968,16 @@ namespace island
                                crocodileObserver.Z);
         updateProfile_.Mark("crocodileWake");
         crocodileWake_.Update(deltaSeconds,crocodileGroup_.Crocodiles());
+        {
+            // hauled out on the estuary's sand or mud, the crocodiles drag their bellies and tails
+            std::array<bool,CrocodileGroup::CrocodileCount> dry{};
+            for(std::size_t i=0;i<crocodileGroup_.Crocodiles().size()&&i<dry.size();++i) {
+                const auto& crocodile=crocodileGroup_.Crocodiles()[i];
+                const FootstepSurface ground=FootstepGroundAt(crocodile.x,crocodile.z);
+                dry[i]=ground==FootstepSurface::Sand||ground==FootstepSurface::Soil;
+            }
+            crocodileDrags_.Update(deltaSeconds,crocodileGroup_.Crocodiles(),dry);
+        }
         // A crocodile coming alert on its bank hisses at the walker.
         if(soundscape_&&crocodileGroup_.LastHiss().count!=notedCrocHisses_) {
             notedCrocHisses_=crocodileGroup_.LastHiss().count;
@@ -6327,6 +6337,8 @@ namespace island
             for(const auto& trail:boarPrints_) if(trail.ActiveCount()>0U) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,trail.Prints());
             if(residentPrints_.ActiveCount()>0U) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,residentPrints_.Prints());
             for(const auto& trail:goatPrints_) if(trail.ActiveCount()>0U) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,trail.Prints());
+            // (the crocodiles' grooves first: the hermit crabs' draw keeps the renderer's counts)
+            shellDragRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,crocodileDrags_.Segments());
             shellDragRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,shellDrags_.Segments());
             wallowScarRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }

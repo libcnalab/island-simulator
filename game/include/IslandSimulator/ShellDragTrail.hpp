@@ -1,4 +1,5 @@
 #pragma once
+#include "IslandSimulator/CrocodileGroup.hpp"
 #include "IslandSimulator/HermitCrabGroup.hpp"
 #include <array>
 #include <cstddef>
@@ -13,6 +14,7 @@ struct DragSegment {
     float age=0;
     float density=0;
     bool active=false;
+    float halfWidth=0.011f;   // a hermit's shell line; a crocodile's belly and tail drag is wide
 };
 
 // The hermit crabs' drag lines: every few centimetres a foraging crab moves, a segment is
@@ -29,6 +31,24 @@ private:
     struct Tracker { float x=0,z=0; bool valid=false; };
     std::array<DragSegment,Capacity> segments_{};
     std::array<Tracker,HermitCrabGroup::Count> trackers_{};
+    std::uint32_t laid_=0;
+};
+
+// The crocodiles' slides on the estuary's sand and mud: hauled out and crawling, a crocodile's
+// belly and tail drag a broad groove behind it, a piece every quarter metre; the sand keeps it
+// five minutes (the swash or the river's rise takes it then). Renderer-independent.
+class CrocodileDragTrail final {
+public:
+    static constexpr std::size_t Capacity=160;
+    static constexpr float SegmentLength=0.25f,LifeSeconds=300.0f,MinimumSpeed=0.04f,HalfWidth=0.07f;
+    // dryGround: the ground under each crocodile this frame takes a mark (sand or mud, not water)
+    void Update(float deltaSeconds,std::span<const CrocodileState> crocodiles,std::span<const bool> dryGround) noexcept;
+    [[nodiscard]] std::span<const DragSegment> Segments() const noexcept {return segments_;}
+    [[nodiscard]] std::uint32_t LaidCount() const noexcept {return laid_;}
+private:
+    struct Tracker { float x=0,z=0; bool valid=false; };
+    std::array<DragSegment,Capacity> segments_{};
+    std::array<Tracker,CrocodileGroup::CrocodileCount> trackers_{};
     std::uint32_t laid_=0;
 };
 }

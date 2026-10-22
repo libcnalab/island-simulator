@@ -688,6 +688,7 @@ namespace island
         BlownSandField blownSand_{terrain_};
         std::unique_ptr<RootingDustRenderer> rootingDustRenderer_;
         ShellDragTrail shellDrags_;
+        CrocodileDragTrail crocodileDrags_;
         std::unique_ptr<ShellDragRenderer> shellDragRenderer_;
         std::unique_ptr<WallowScarRenderer> wallowScarRenderer_;
         ForestTwigLayout forestTwigs_{terrain_, jungleLayout_};
