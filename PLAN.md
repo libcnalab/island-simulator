@@ -233,6 +233,25 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 460 (2026-10-22) — ground doves and reef herons cast their figures
+
+Bird shadows were drawn only in flight. The doves walking on the ground and the herons wading at the
+lagoon's edge had none.
+
+- **Ground doves.** `GroundBirdLimbs` follows BirdRenderer's stance: the body stood on its legs with
+  the breast raised, the head, the bill, the tail and the legs. A first capture showed the dove
+  without a shadow. A probe found its `y` 0.17 m over the ground: the flock keeps a ground dove's
+  body 0.20 of its scale over its feet (`GroundBirdBodyHeight`), and the figure now stands from
+  there. The doves join the crabs' nearest-eight within 18 m.
+- **Reef herons.** `HeronLimbs` follows ReefHeronRenderer: the slim body tilted up at the breast,
+  the long neck curving up to the head (craned or drawn in by the stretch, thrust out in the
+  strike), the bill, the wingtips and the two wading legs, one drawn up at rest. It is drawn within
+  45 m when standing.
+
+In `herons` the heron's figure lies on the shallows' sand with its neck's curve. In `ground-doves`
+the dove's shadow meets its feet. A core test checks that each figure stands on its feet, how high
+it reaches, and that the heron's body shadow is inside its figure.
+
 ## Loop pass 459 (2026-10-22) — the crabs cast their figures
 
 The beach crabs, the hermit crabs and the coconut crabs had no shadow of any kind, and in close

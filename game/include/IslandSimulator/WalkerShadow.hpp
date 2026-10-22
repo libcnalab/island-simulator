@@ -14,6 +14,8 @@ namespace island
     struct CrabState;
     struct HermitCrabState;
     struct CoconutCrabState;
+    struct BirdState;
+    struct ReefHeronState;
 
     /**
      * The walking player's own sun shadow, the figure rather than a blot: the body as seventeen
@@ -93,6 +95,12 @@ namespace island
         [[nodiscard]] std::array<Limb, CapsuleCount> GhostCrabLimbs(const CrabState& crab) noexcept;
         [[nodiscard]] std::array<Limb, CapsuleCount> HermitCrabLimbs(const HermitCrabState& crab) noexcept;
         [[nodiscard]] std::array<Limb, CapsuleCount> CoconutCrabLimbs(const CoconutCrabState& crab) noexcept;
+        inline constexpr float GroundBirdBodyHeight = 0.20f;   // a ground dove's body over its feet, of its scale
+        /** A dove standing on the ground (BirdRenderer's stance: body, head, bill, tail, legs). */
+        [[nodiscard]] std::array<Limb, CapsuleCount> GroundBirdLimbs(const BirdState& bird) noexcept;
+        /** A standing reef heron (ReefHeronRenderer's: body, curved neck by the stretch and the
+         *  strike, head and bill, wingtips, the two wading legs, one drawn up at rest). */
+        [[nodiscard]] std::array<Limb, CapsuleCount> HeronLimbs(const ReefHeronState& heron) noexcept;
         /** The silhouette's signed distance, metres in shadow space, at an offset from the feet on
          *  their plane (negative inside): the CPU mirror of the shader's, for the tests. */
         [[nodiscard]] float SignedDistance(const Shape& shape, float offsetX, float offsetZ) noexcept;

@@ -1,5 +1,7 @@
 #include "IslandSimulator/WalkerShadow.hpp"
 #include "IslandSimulator/BearMotion.hpp"
+#include "IslandSimulator/BirdFlock.hpp"
+#include "IslandSimulator/ReefHeronGroup.hpp"
 #include "IslandSimulator/BoarGroundPose.hpp"
 #include "IslandSimulator/BoarHerd.hpp"
 #include "IslandSimulator/BoarPose.hpp"
@@ -458,6 +460,76 @@ namespace island::walker_shadow
                0.06f * std::min(1.0f, crab.speed * 3.0f));
         for (const float side : {-1.0f, 1.0f}) f.Add(side * 0.15f, 0.20f, 0.30f, side * 0.22f, 0.12f, 0.62f, 0.08f);
         return f.Finish();
+    }
+
+    std::array<Limb, CapsuleCount> GroundBirdLimbs(const BirdState& bird) noexcept
+    {
+        // BirdRenderer's dove on the ground (the flock keeps its body 0.20 of its scale over the
+        // ground, the stance lifts it 0.075 more): the plump body stood on its legs, breast
+        // raised, the round head ahead with the slender bill, the tail behind, the legs to the feet.
+        CrabFrame f{bird.x, bird.y - GroundBirdBodyHeight * bird.scale, bird.z, std::cos(bird.headingRadians),
+                    std::sin(bird.headingRadians), bird.scale};
+        const float bob = bird.headBob * 0.055f;
+        f.Add(0.0f, 0.24f, -0.25f, 0.0f, 0.31f, 0.25f, 0.15f);                 // the body
+        f.Add(0.0f, 0.36f, 0.40f + bob, 0.0f, 0.36f, 0.40f + bob, 0.11f);      // the head
+        f.Add(0.0f, 0.35f, 0.48f + bob, 0.0f, 0.33f, 0.64f + bob, 0.02f);      // the bill
+        f.Add(0.0f, 0.26f, -0.30f, 0.0f, 0.25f, -0.62f, 0.08f);               // the tail
+        for (const float side : {-1.0f, 1.0f}) f.Add(side * 0.05f, 0.14f, 0.02f, side * 0.05f, 0.0f, 0.05f, 0.02f);
+        return f.Finish();
+    }
+
+    std::array<Limb, CapsuleCount> HeronLimbs(const ReefHeronState& heron) noexcept
+    {
+        // ReefHeronRenderer's standing heron: the slim body tilted up at the breast, the long
+        // neck curving up to the head (craned or drawn in, thrust out in the strike), the dagger
+        // bill, the wingtips over the tail, and the two long legs wading in step.
+        struct V
+        {
+            float x, y, z;
+            V operator+(const V& o) const noexcept { return {x + o.x, y + o.y, z + o.z}; }
+            V operator-(const V& o) const noexcept { return {x - o.x, y - o.y, z - o.z}; }
+            V operator*(const float k) const noexcept { return {x * k, y * k, z * k}; }
+        };
+        const float s = heron.scale;
+        const float rest = std::clamp(heron.rest, 0.0f, 1.0f), neck = std::clamp(heron.neckStretch, 0.0f, 1.0f);
+        const float strike = std::clamp(heron.strike, 0.0f, 1.0f);
+        const V forward{std::cos(heron.headingRadians), 0.0f, std::sin(heron.headingRadians)};
+        const V right{-forward.z, 0.0f, forward.x}, up{0.0f, 1.0f, 0.0f};
+        const V feet{heron.x, heron.y, heron.z};
+        const float tilt = 0.38f - 0.22f * rest;
+        const V axis = forward * std::cos(tilt) + up * std::sin(tilt);
+        const V hip = feet + up * ((0.29f - 0.04f * rest) * s);
+        const V body = hip + up * (0.07f * s);
+        const V neckBase = body + axis * (0.13f * s) + up * (0.025f * s);
+        const V head = body + axis * (0.16f * s) + up * (0.12f * s) + (forward * (0.16f * s) + up * (0.13f * s)) * neck
+            + (forward * (0.22f * s) - up * (0.30f * s)) * strike;
+        const V bend = (neckBase + head) * 0.5f + up * ((0.04f + 0.07f * neck) * s) - forward * (0.04f * neck * s);
+        const float pitch = 0.30f + 0.28f * neck + 0.5f * strike;
+        const V bill = forward * std::cos(pitch) - up * std::sin(pitch);
+        std::array<Limb, CapsuleCount> limbs{};
+        std::size_t next = 0;
+        const auto add = [&](const V& a, const V& b, const float radius) {
+            limbs[next++] = {a.x, a.y, a.z, b.x, b.y, b.z, radius * s};
+        };
+        add(body - axis * (0.13f * s), body + axis * (0.13f * s), 0.085f);
+        add(neckBase, bend, 0.030f);
+        add(bend, head, 0.020f);
+        add(head, head, 0.035f);
+        add(head + bill * (0.036f * s), head + bill * (0.141f * s), 0.006f);
+        add(body - axis * (0.15f * s), body - axis * (0.36f * s), 0.030f);
+        for (const float side : {-1.0f, 1.0f}) {
+            const float phase = heron.stepPhase + (side > 0.0f ? 0.0f : std::numbers::pi_v<float>);
+            const bool stalk = heron.behavior == ReefHeronBehavior::Stalk;
+            V foot = feet + right * (side * 0.045f * s) + forward * (std::cos(phase) * (stalk ? 0.06f : 0.0f) * s)
+                + up * (stalk ? std::max(0.0f, std::sin(phase)) * 0.05f * s : 0.0f);
+            if (side < 0.0f) foot = foot + ((hip - up * (0.10f * s) + forward * (0.02f * s)) - foot) * rest;
+            const V top = hip + right * (side * 0.035f * s);
+            const V ankle = (top + foot) * 0.5f - forward * (0.035f * s);
+            add(top, ankle, 0.011f);
+            add(ankle, foot, 0.008f);
+        }
+        for (; next < limbs.size(); ++next) limbs[next].radius = UnusedRadius;
+        return limbs;
     }
 
     float SignedDistance(const Shape& shape, const float offsetX, const float offsetZ) noexcept

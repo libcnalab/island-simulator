@@ -12579,6 +12579,34 @@ int main()
             }
             Check(grounded, "the crabs' figures stand on the sand, low, with the body's shadow inside");
         }
+        {
+            // A ground dove's figure stands under its body (kept 0.20 of its scale over the
+            // feet), and a heron's on its two long legs with the head above the body.
+            island::BirdState dove;
+            dove.scale = 0.85f;
+            dove.y = ws::GroundBirdBodyHeight * dove.scale;
+            const auto doveLimbs = ws::GroundBirdLimbs(dove);
+            island::ReefHeronState heron;
+            const auto heronLimbs = ws::HeronLimbs(heron);
+            const auto extent = [](const std::array<ws::Limb, ws::CapsuleCount>& limbs) {
+                float lowest = 1e9f, highest = -1e9f;
+                for (const auto& limb : limbs) {
+                    if (!(limb.radius > 0.0f)) continue;
+                    lowest = std::min({lowest, limb.ay, limb.by});
+                    highest = std::max({highest, limb.ay + limb.radius, limb.by + limb.radius});
+                }
+                return std::array<float, 2>{lowest, highest};
+            };
+            const auto doveExtent = extent(doveLimbs), heronExtent = extent(heronLimbs);
+            const auto heronFigure = ws::Lay(heronLimbs, 0.0f, 0.0f, 0.0f, -0.45f, 0.82f, -0.34f, 0.75f);
+            const float bodyHeight = heronLimbs[0].ay;
+            Check(std::abs(doveExtent[0]) < 1e-4f && doveExtent[1] > 0.3f && doveExtent[1] < 0.5f
+                      && std::abs(heronExtent[0]) < 1e-4f && heronExtent[1] > 0.5f && heronExtent[1] < 0.8f
+                      && heronLimbs[3].ay > bodyHeight
+                      && ws::SignedDistance(heronFigure, heronLimbs[0].ax + 0.45f / 0.82f * bodyHeight,
+                                            heronLimbs[0].az + 0.34f / 0.82f * bodyHeight) < 0.0f,
+                  "a ground dove's and a heron's figures stand on their feet");
+        }
         Check(at(stride, 0.25f, 0.0f) > 0.08f && at(still, 0.25f, 0.0f) < 0.05f
                   && at(stride, 1.62f, 0.0f) < 0.0f && at(still, 1.62f, 0.0f) < 0.0f,
               "side-lit, the striding legs part in the walker's shadow and the head stays in it");
