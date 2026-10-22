@@ -322,6 +322,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 487: turtle head smooth-lit with dark-centred, pale-rimmed scale plates and a round eye (pupil, iris, lid ring, highlight); near budget 5274 (`20261022T061343` turtles) (PLAN "Loop pass 487").
 - Pass 486: star colours recoloured/uploaded only every 0.004 h or 0.001 rad of cumulus drift (~4/s), 0.23 ms + 326 KB per frame saved (PLAN "Loop pass 486").
 - Pass 485: steam rises off the sunlit wet ground after rain (SunSteamField, own mist renderer, --wet-ground QA; `20261022T055602` east-clear-wet) (PLAN "Loop pass 485").
 - Pass 484: evidence re-run of operator backlog items 1-20 on build 3e3a0e86 (20 native views, all diagnostics present; see the backlog section above).

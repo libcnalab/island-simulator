@@ -233,6 +233,25 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 487 (2026-10-22) — the sea turtle's head is smooth, scaled and has a real eye
+
+At 4x in `turtles` the turtle's head, the operator's worst-rated animal, was a faceted dome. Each
+triangle was lit flat, with no scales, and the eye was a black diamond with a grey fleck.
+
+- **Smooth shading.** Each head corner is lit by its own normal, from its ring and segment
+  neighbours, by the shell's light rule.
+- **Scales.** The crown and cheeks carry plates two segments by two rings, centred on the
+  midline. Each is dark at its centre corner and pales to a yellowish rim, the skin mixed toward
+  the pale underside, like a green turtle's brown head scales with cream seams. Each quad is
+  split through its plate's centre, so the plate darkens evenly. The throat and the snout's
+  underside keep the pale horny beak.
+- **Eye.** An eight-segment fan laid on the head's surface (from its rings): a black pupil into
+  a dark olive-brown iris, a darker lid ring round it and a wet highlight up and forward. The
+  blink closes the lids and the iris toward the middle line.
+
+The near budget grows from 5,142 to 5,274 vertices. `turtles` (`20261022T061343`) and `turtle-nest` pass,
+as do the tests.
+
 ## Loop pass 486 (2026-10-22) — the stars are recoloured only as the sky moves on
 
 Since pass 483 every night frame recoloured all 3,400 stars and uploaded their 20,400 vertices

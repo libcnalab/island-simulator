@@ -193,7 +193,7 @@ namespace island
                 + SeamRows * CarapaceColumns * 2 + SeamColumns * CarapaceRows * 2 // scute seam strips
                 + CarapaceRows * PlastronColumns * 2 + PlastronColumns * 2    // plastron and caps
                 + HeadSegments * (HeadRings - 1) * 2 + HeadSegments * 2       // neck/skull/crown/brow/snout, nose, neck cap
-                + 6                                                           // paired two-facet eyes and highlights
+                + 2 * (8 + 16 + 1)                                            // paired eyes: iris fans, lid rings, highlights
                 + 4                                                           // paired nostrils and mouth creases
                 + 2 * ((FrontSamples - 1) * 2 * 5)                            // front paddles, faces (two strips above) and edges
                 + 2 * ((RearSamples - 1) * 2 * 5)                             // rear paddles, faces (two strips above) and edges
@@ -410,21 +410,69 @@ namespace island
                 }
             }
             const auto headInside = [&](const std::size_t r) { return headLocal(0.0f, rings[r].y, rings[r].z); };
+            // Each corner lit by the head's own normal there (from its ring and segment
+            // neighbours), so the head shades smoothly instead of facet by facet.
+            std::array<std::array<Vector3, HeadSegments>, NearTurtleBudget::HeadRings> headNormal{};
+            for (std::size_t r = 0; r < rings.size(); ++r) {
+                const std::size_t rPrev = r == 0U ? 0U : r - 1U, rNext = std::min(r + 1U, rings.size() - 1U);
+                for (int segment = 0; segment < HeadSegments; ++segment) {
+                    const auto c = static_cast<std::size_t>(segment);
+                    const auto cPrev = static_cast<std::size_t>((segment + HeadSegments - 1) % HeadSegments);
+                    const auto cNext = static_cast<std::size_t>((segment + 1) % HeadSegments);
+                    Vector3 normal = Vector3::Cross(head[rNext][c] - head[rPrev][c], head[r][cNext] - head[r][cPrev]);
+                    if (Vector3::Dot(normal, head[r][c] - headInside(r)) < 0.0f) normal = -normal;
+                    headNormal[r][c] = normal.LengthSquared() > 1.0e-12f ? Vector3::Normalize(normal) : axes.up;
+                }
+            }
+            // The crown and cheeks carry large scales: plates two segments by two rings, each
+            // dark at its centre corner and paling to a yellowish rim at its edges (centred on
+            // the midline, segment 4 at the top). The throat and the snout's underside keep the
+            // pale horny beak; the neck plain scaled skin.
+            const Color seam = Color::Lerp(palette.skin, palette.underside, 0.55f);
+            const auto headCorner = [&](const std::size_t r, const std::size_t c, const bool lower) {
+                const float skinMottle = 0.965f + 0.040f * std::sin(
+                    static_cast<float>(c) * 2.17f + static_cast<float>(r) * 1.43f + static_cast<float>(turtle.colorVariant));
+                const float angle = (static_cast<float>(c) + 0.5f) * 2.0f * std::numbers::pi_v<float> / static_cast<float>(HeadSegments);
+                Color color;
+                if (r >= 4U && lower) {
+                    color = ToneColor(palette.underside, (r == 4U ? 0.92f : 0.98f) * skinMottle);
+                } else if (r >= 2U && std::sin(angle) > -0.2f) {
+                    const bool centre = r % 2U == 1U && c % 2U == 0U;
+                    color = centre ? ToneColor(palette.skin, 0.62f * skinMottle) : ToneColor(seam, 1.04f * skinMottle);
+                } else {
+                    color = ToneColor(palette.skin, (lower ? 0.92f : 1.0f) * skinMottle);
+                }
+                const Vector3& n = headNormal[r][c];
+                const float light = 0.72f + std::max(0.0f, Vector3::Dot(n, wildlife_render::FixedSunDirection)) * 0.30f
+                    + std::max(0.0f, n.Y) * 0.06f;
+                return VertexPositionColor(head[r][c], wildlife_render::ScaleColor(color, light));
+            };
             for (std::size_t r = 0; r + 1 < rings.size(); ++r) {
                 for (int segment = 0; segment < HeadSegments; ++segment) {
                     const auto s0 = static_cast<std::size_t>(segment);
                     const auto s1 = static_cast<std::size_t>((segment + 1) % HeadSegments);
-                    // Lower brow/snout facets form the pale horny beak; the skull keeps scaled skin.
                     const bool lower = segment >= HeadSegments / 2;
-                    const float skinMottle = 0.965f + 0.040f * std::sin(
-                        static_cast<float>(segment) * 2.17f + static_cast<float>(r) * 1.43f
-                        + static_cast<float>(turtle.colorVariant));
-                    const Color color = r >= 4 && lower
-                        ? ToneColor(palette.underside, (r == 4 ? 0.92f : 0.98f) * skinMottle)
-                        : ToneColor(palette.skin, (lower ? 0.92f : 1.0f) * skinMottle);
-                    const Vector3 inside = (headInside(r) + headInside(r + 1)) * 0.5f;
-                    AddOutwardTriangle(vertices, head[r][s0], head[r + 1][s0], head[r + 1][s1], color, inside);
-                    AddOutwardTriangle(vertices, head[r][s0], head[r + 1][s1], head[r][s1], color, inside);
+                    // the quad is split through its plate's centre corner, so the plate darkens
+                    // evenly round it
+                    const bool flip = (r % 2U == 0U) == (s0 % 2U == 0U);
+                    const VertexPositionColor a = headCorner(r, s0, lower), b = headCorner(r + 1U, s0, lower);
+                    const VertexPositionColor c = headCorner(r + 1U, s1, lower), d = headCorner(r, s1, lower);
+                    // outward winding: the ring runs round the head's axis the same way for every quad
+                    const Vector3 inside = (headInside(r) + headInside(r + 1U)) * 0.5f;
+                    const bool outward = Vector3::Dot(Vector3::Cross(b.Position - a.Position, c.Position - a.Position),
+                                                      (a.Position + b.Position + c.Position) / 3.0f - inside) >= 0.0f;
+                    const auto emit = [&](const VertexPositionColor& p, const VertexPositionColor& q, const VertexPositionColor& t) {
+                        vertices.push_back(p);
+                        vertices.push_back(outward ? q : t);
+                        vertices.push_back(outward ? t : q);
+                    };
+                    if (flip) {
+                        emit(a, b, d);
+                        emit(b, c, d);
+                    } else {
+                        emit(a, b, c);
+                        emit(a, c, d);
+                    }
                 }
             }
             const Vector3 noseUpper = headLocal(0.0f, 0.024f, 0.835f);
@@ -443,27 +491,58 @@ namespace island
                 AddOutwardTriangle(vertices, neckBase, head[0][s1], head[0][s0], palette.skin, headInside(0));
             }
             const Color eye(16, 22, 20, 255);
-            const Color eyeShine(119, 137, 127, 255);
-            // Blinking, the eye's top and bottom facets close toward its middle and the
-            // shine thins, on the same vertices.
+            // a dark olive-brown iris round the black pupil, taking the water's tint with the skin
+            const Color pupil(8, 9, 9, 255), eyeShine(150, 162, 150, 255);
+            const Color iris = Color::Lerp(Color(34, 28, 19, 255), ToneColor(palette.skin, 0.42f), 0.45f);
+            const Color lid = ToneColor(palette.skin, 0.58f);
+            // The head's surface across at (y, z), from its rings: the eye sits on it.
+            const auto surfaceX = [&](const float y, const float z) {
+                std::size_t r = 0;
+                while (r + 2U < rings.size() && rings[r + 1U].z < z) ++r;
+                const float t = std::clamp((z - rings[r].z) / (rings[r + 1U].z - rings[r].z), 0.0f, 1.0f);
+                const float ry = rings[r].y + (rings[r + 1U].y - rings[r].y) * t;
+                const float rx = rings[r].radiusX + (rings[r + 1U].radiusX - rings[r].radiusX) * t;
+                const float rr = rings[r].radiusY + (rings[r + 1U].radiusY - rings[r].radiusY) * t;
+                const float across = std::clamp((y - ry) / rr, -0.95f, 0.95f);
+                return rx * std::sqrt(1.0f - across * across);
+            };
+            // Blinking, the lids close toward the eye's middle line and the iris fan with them.
             const float blink = std::clamp(turtle.blink, 0.0f, 1.0f);
             for (int sideIndex = -1; sideIndex <= 1; sideIndex += 2) {
                 const float side = static_cast<float>(sideIndex);
-                const Vector3 eTop = headLocal(side * 0.122f, 0.095f - 0.024f * blink, 0.644f);
-                const Vector3 eFront = headLocal(side * 0.124f, 0.069f, 0.672f);
-                const Vector3 eBottom = headLocal(side * 0.124f, 0.043f + 0.024f * blink, 0.641f);
-                const Vector3 eRear = headLocal(side * 0.122f, 0.067f, 0.613f);
-                if (side > 0.0f) {
-                    AddTriangle(vertices, eTop, eBottom, eFront, eye);
-                    AddTriangle(vertices, eTop, eRear, eBottom, eye);
-                } else {
-                    AddTriangle(vertices, eTop, eFront, eBottom, eye);
-                    AddTriangle(vertices, eTop, eBottom, eRear, eye);
+                constexpr float eyeY = 0.069f, eyeZ = 0.642f, irisRadius = 0.024f, lidRadius = 0.036f;
+                const auto onHead = [&](const float dz, const float dy, const float lift) {
+                    const float y = eyeY + dy, z = eyeZ + dz;
+                    return headLocal(side * (surfaceX(y, z) + lift), y, z);
+                };
+                const auto wound = [&](const Vector3& a, const Vector3& b, const Vector3& c,
+                                       const Color& ca, const Color& cb, const Color& cc) {
+                    // facing out of the head's side
+                    vertices.emplace_back(a, ca);
+                    if (side > 0.0f) { vertices.emplace_back(b, cb); vertices.emplace_back(c, cc); }
+                    else { vertices.emplace_back(c, cc); vertices.emplace_back(b, cb); }
+                };
+                constexpr int EyeSegments = 8;
+                std::array<Vector3, EyeSegments> irisRim{}, lidInner{}, lidOuter{};
+                for (int k = 0; k < EyeSegments; ++k) {
+                    const float a = static_cast<float>(k) * 2.0f * std::numbers::pi_v<float> / EyeSegments;
+                    const float dz = std::cos(a), dy = std::sin(a) * 0.82f;
+                    const float closed = 1.0f - blink;
+                    irisRim[static_cast<std::size_t>(k)] = onHead(dz * irisRadius, dy * irisRadius * closed, 0.0030f);
+                    lidInner[static_cast<std::size_t>(k)] = onHead(dz * irisRadius, dy * irisRadius * closed, 0.0032f);
+                    lidOuter[static_cast<std::size_t>(k)] = onHead(dz * lidRadius, dy * lidRadius, 0.0012f);
                 }
-                const Vector3 h0 = headLocal(side * 0.126f, 0.084f - 0.012f * blink, 0.644f);
-                const Vector3 h1 = headLocal(side * 0.127f, 0.070f, 0.657f);
-                const Vector3 h2 = headLocal(side * 0.127f, 0.069f, 0.632f);
-                AddTriangle(vertices, h0, side > 0.0f ? h2 : h1, side > 0.0f ? h1 : h2, eyeShine);
+                const Vector3 centre = onHead(0.0f, 0.0f, 0.0034f);
+                for (int k = 0; k < EyeSegments; ++k) {
+                    const auto k0 = static_cast<std::size_t>(k), k1 = static_cast<std::size_t>((k + 1) % EyeSegments);
+                    wound(centre, irisRim[k0], irisRim[k1], pupil, iris, iris);
+                    wound(lidInner[k0], lidOuter[k0], lidOuter[k1], lid, palette.skin, palette.skin);
+                    wound(lidInner[k0], lidOuter[k1], lidInner[k1], lid, palette.skin, lid);
+                }
+                // the wet eye's highlight, up and forward of the pupil
+                const float shine = 1.0f - blink;
+                wound(onHead(0.004f, 0.011f * shine, 0.0040f), onHead(0.012f, 0.004f * shine, 0.0040f),
+                      onHead(0.003f, 0.002f * shine, 0.0040f), eyeShine, eyeShine, eyeShine);
                 const Vector3 n0 = headLocal(side * 0.046f, 0.025f, 0.802f);
                 const Vector3 n1 = headLocal(side * 0.061f, 0.010f, 0.784f);
                 const Vector3 n2 = headLocal(side * 0.038f, 0.008f, 0.808f);
