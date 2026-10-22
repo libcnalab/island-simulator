@@ -19,6 +19,7 @@ namespace island
     struct SkinkState;
     struct FrogState;
     struct RodentState;
+    struct BeetleState;
 
     /**
      * The walking player's own sun shadow, the figure rather than a blot: the body as seventeen
@@ -104,6 +105,8 @@ namespace island
         [[nodiscard]] std::array<Limb, CapsuleCount> SkinkLimbs(const SkinkState& skink) noexcept;
         [[nodiscard]] std::array<Limb, CapsuleCount> FrogLimbs(const FrogState& frog) noexcept;
         [[nodiscard]] std::array<Limb, CapsuleCount> RodentLimbs(const RodentState& rodent) noexcept;
+        /** A beetle on level ground: the wing cases, pronotum, head and the six splayed legs. */
+        [[nodiscard]] std::array<Limb, CapsuleCount> BeetleLimbs(const BeetleState& beetle) noexcept;
         inline constexpr float GroundBirdBodyHeight = 0.20f;   // a ground dove's body over its feet, of its scale
         /** A dove standing on the ground (BirdRenderer's stance: body, head, bill, tail, legs). */
         [[nodiscard]] std::array<Limb, CapsuleCount> GroundBirdLimbs(const BirdState& bird) noexcept;

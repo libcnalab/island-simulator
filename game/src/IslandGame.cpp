@@ -6445,6 +6445,10 @@ namespace island
                 for (const auto& rodent : rodentPopulation_.Rodents())
                     if (rodent.visibility > 0.3f)
                         consider(rodent.x, rodent.y, rodent.z, 0.2f, [&] { return walker_shadow::RodentLimbs(rodent); });
+                for (const auto& beetle : beetlePopulation_.Beetles())   // a beetle on level ground (not up a trunk)
+                    if (beetle.normalY > 0.9f && beetle.visibility > 0.3f)
+                        consider(beetle.x, beetle.y - 0.105f * 0.05f * beetle.scale, beetle.z, 0.05f * beetle.scale,
+                                 [&] { return walker_shadow::BeetleLimbs(beetle); });
                 for (const auto& bird : birdFlock_.Birds())   // and a dove walking on the ground
                     if ((bird.behavior == BirdBehavior::GroundApproach || bird.behavior == BirdBehavior::GroundForage
                          || bird.behavior == BirdBehavior::GroundDepart) && bird.perchAmount > 0.35f)

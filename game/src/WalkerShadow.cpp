@@ -1,5 +1,6 @@
 #include "IslandSimulator/WalkerShadow.hpp"
 #include "IslandSimulator/BearMotion.hpp"
+#include "IslandSimulator/BeetlePopulation.hpp"
 #include "IslandSimulator/BirdFlock.hpp"
 #include "IslandSimulator/ReefHeronGroup.hpp"
 #include "IslandSimulator/BoarGroundPose.hpp"
@@ -514,6 +515,28 @@ namespace island::walker_shadow
         f.Add(0.0f, 0.03f, -0.15f, 0.0f, 0.01f, -0.40f, 0.012f);
         for (const float side : {-1.0f, 1.0f})
             for (const float row : {0.09f, -0.09f}) f.Add(side * 0.04f, 0.05f, row, side * 0.05f, 0.0f, row + 0.02f, 0.013f);
+        return f.Finish();
+    }
+
+    std::array<Limb, CapsuleCount> BeetleLimbs(const BeetleState& beetle) noexcept
+    {
+        // ButterflyRenderer's beetle on level ground (in its own units, a twentieth of its scale;
+        // the feet stand a tenth of a unit under the body's centre): the domed wing cases side
+        // by side, the pronotum and the head ahead, and the six legs splayed out to the ground.
+        const float unit = 0.05f * beetle.scale, lift = 0.105f;
+        CrabFrame f{beetle.x, beetle.y - lift * unit, beetle.z, std::cos(beetle.headingRadians),
+                    std::sin(beetle.headingRadians), unit};
+        for (const float side : {-0.15f, 0.15f}) f.Add(side, 0.45f + lift, -0.80f, side, 0.45f + lift, 0.35f, 0.30f);
+        f.Add(0.0f, 0.30f + lift, 0.63f, 0.0f, 0.30f + lift, 0.63f, 0.28f);
+        f.Add(0.0f, 0.26f + lift, 1.10f, 0.0f, 0.24f + lift, 1.20f, 0.20f);
+        const float gait = std::sin(beetle.gaitPhase);
+        for (const float side : {-1.0f, 1.0f})
+            for (int leg = 0; leg < 3; ++leg) {
+                const float along = 0.48f - 0.52f * static_cast<float>(leg);
+                const float swing = gait * (leg % 2 == 0 ? 1.0f : -1.0f) * 0.13f;
+                f.Add(side * 0.38f, 0.18f + lift, along, side * 1.18f, 0.0f, along + 0.23f - 0.23f * static_cast<float>(leg) + swing,
+                      0.05f);
+            }
         return f.Finish();
     }
 

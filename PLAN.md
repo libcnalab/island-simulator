@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 463 (2026-10-22) — beetles on the ground cast their figures
+
+After pass 455, recaptures of `tracks` and `beetles` show no stray walker figure. The beetle's close
+view still showed it without a shadow. `BeetleLimbs` lays ButterflyRenderer's beetle (in its units,
+a twentieth of its scale; the feet a tenth of a unit under the body's centre): the domed wing cases
+side by side, the pronotum, the head, and the six legs splayed out to the ground, stepping with the
+gait. It is drawn for beetles on level ground (normal above 0.9: not up a trunk) through the small
+animals' list. In `beetles` the beetle's shadow now lies under its body.
+
 ## Loop pass 462 (2026-10-22) — the figures' reach follows the quality profile
 
 With the walker, the resident, the deer, goats, boars, the bear, crocodiles, herons, crabs, doves
