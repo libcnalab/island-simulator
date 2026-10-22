@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 443 (2026-10-22) — the reef grows in coral patches
+
+Under water in `reef-habitat` a single coral stood on bare sand: some 300 colonies were spread round
+the whole shore in the 18-88 m belt, one every 330 m² or so. Each accepted reef site is now a coral
+head with two to five smaller colonies of mixed forms gathered round it (0.7-3 m off, 0.42-0.82 of its
+scale, each on seabed the shared reef suitability field accepts): 1425 colonies in patches with sand
+between. The `reef-habitat` QA camera picks the most populated patch (183 colonies drawn); the props'
+CPU pass under llvmpipe grows from some 2.5 to 3.95 ms there. The core test's and the world report's
+reef budget is 700-1800 (was 180-380); `reef`, `fish` and `octopuses` pass.
+
 ## Loop pass 442 (2026-10-22) — crocodiles drag grooves across the estuary's sand
 
 The crocodiles haul out and crawl on the estuary's sand and mud without leaving a mark. A

@@ -747,8 +747,8 @@ namespace
             && world.props.BeachDetails().size() <= 600U
             && world.props.FallenFronds().size() >= 30U
             && world.props.FallenFronds().size() <= 180U
-            && world.props.ReefHabitat().size() >= 180U
-            && world.props.ReefHabitat().size() <= 380U;
+            && world.props.ReefHabitat().size() >= 700U
+            && world.props.ReefHabitat().size() <= 1800U;
         std::size_t fallenPalmCount = 0U;
         std::size_t brokenPalmCount = 0U;
         for (const island::PalmPlacement& palm : world.palms.Palms()) {

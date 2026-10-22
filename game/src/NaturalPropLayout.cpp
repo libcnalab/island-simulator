@@ -106,7 +106,7 @@ namespace island
                                          const std::uint32_t seed)
     {
         rocks_.reserve(280U);
-        reefHabitat_.reserve(320U);
+        reefHabitat_.reserve(1800U);
         obstacles_.reserve(460U);
         for (int gridZ = -RockRadius; gridZ <= RockRadius; ++gridZ) {
             for (int gridX = -RockRadius; gridX <= RockRadius; ++gridX) {
@@ -349,6 +349,28 @@ namespace island
             habitat.scale = std::clamp(habitat.scale * (habitat.variant == 3U ? .78f : 1.14f),
                 ReefHabitatMinimumScale, ReefHabitatMaximumScale);
             reefHabitat_.push_back(habitat);
+            // A coral head is not alone: round it gather smaller colonies of mixed forms, the
+            // reef in patches with sand between (one lone coral every eighteen metres read as a
+            // bare seabed).
+            const int satellites = 2 + static_cast<int>(random(5) * 4.0f);
+            for (int k = 0; k < satellites; ++k) {
+                const auto channel = static_cast<std::uint32_t>(10 + 4 * k);
+                const float around = random(channel) * 2.0f * std::numbers::pi_v<float>;
+                const float reach = 0.7f + 2.3f * random(channel + 1U);
+                ReefHabitatPlacement colony;
+                colony.x = habitat.x + std::cos(around) * reach;
+                colony.z = habitat.z + std::sin(around) * reach;
+                const auto under = terrain.Sample(colony.x, colony.z);
+                if (IslandEnvironmentField::ReefSuitability(colony.x, colony.z, under.signedShoreDistance, under.height) < .12f)
+                    continue;
+                colony.y = under.height + .025f;
+                colony.yawRadians = random(channel + 2U) * 2.0f * std::numbers::pi_v<float>;
+                colony.variant = static_cast<std::uint8_t>(
+                    Hash(site, 200 + k, seed ^ 0x3c6ef372U) % ReefHabitatVariantCount);
+                colony.scale = std::clamp(habitat.scale * (.42f + .40f * random(channel + 3U)),
+                    ReefHabitatMinimumScale, ReefHabitatMaximumScale);
+                reefHabitat_.push_back(colony);
+            }
         }
 
         struct AuthoredClearingRock

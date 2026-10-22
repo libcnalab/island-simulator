@@ -8196,7 +8196,7 @@ int main()
         Check(clearOfTurtles && props.BeachVines().size() == repeatedProps.BeachVines().size(),
               "beach morning glory keeps clear of the turtles' marks and is deterministic");
     }
-    Check(props.ReefHabitat().size() >= 180U && props.ReefHabitat().size() <= 380U,
+    Check(props.ReefHabitat().size() >= 700U && props.ReefHabitat().size() <= 1800U,
           "spatial reef habitat stays inside its bounded instance budget");
     Check(props.Rocks().size() == repeatedProps.Rocks().size()
               && props.FallenLogs().size() == repeatedProps.FallenLogs().size()
