@@ -49,6 +49,26 @@ performance or resolution parity on every target.
 | Goats | Wild boars | Island resident |
 | ![Goats on an open inland slope](assets/presentation/gallery/goats.png) | ![Wild boar moving through dense ground vegetation](assets/presentation/gallery/boars.png) | ![The peaceful island resident walking near the campfire](assets/presentation/gallery/resident.png) |
 
+### Newer landmarks
+
+Captured on 2026-10-22 from the same deterministic native QA viewpoints.
+
+| Stranded whale skeleton | Stone god | HELP ME in stones |
+|---|---|---|
+| ![A whale's bleached skeleton half sunk in the beach sand](assets/presentation/gallery/whale-skeleton.png) | ![A weathered basalt tiki idol on its stone platform](assets/presentation/gallery/stone-god.png) | ![A castaway's HELP ME laid out in stones across the beach, seen from the air](assets/presentation/gallery/help-me.png) |
+| Lighthouse | Lighthouse at night | Second World War fighter wreck |
+| ![A whitewashed lighthouse with red bands on a coastal rise](assets/presentation/gallery/lighthouse.png) | ![The lighthouse's two beams sweeping under the stars](assets/presentation/gallery/lighthouse-night.png) | ![A camouflaged fighter wreck nose-down in a clearing](assets/presentation/gallery/plane-wreck.png) |
+| Washed-up PET bottles | Jetty | Quad bike |
+| ![Two see-through plastic bottles washed up on the sand](assets/presentation/gallery/beach-bottles.png) | ![A wooden jetty running out from the beach with a canoe beside it](assets/presentation/gallery/jetty.png) | ![The rider on the red quad bike beside the hut](assets/presentation/gallery/quad-bike.png) |
+
+### Times of day, weather and more wildlife
+
+| Sunset | Night | Thunderstorm |
+|---|---|---|
+| ![The island under a pink sunset sky](assets/presentation/gallery/sunset.png) | ![The island at night under the stars, the lighthouse lit](assets/presentation/gallery/night.png) | ![Rain and dark storm clouds over the jetty and the beach](assets/presentation/gallery/thunderstorm.png) |
+| Frigatebird | Octopus | Coconut crab |
+| ![A frigatebird gliding high on crooked wings](assets/presentation/gallery/frigatebird.png) | ![An octopus on the sandy sea floor under shafts of light](assets/presentation/gallery/octopus.png) | ![A blue coconut crab on the sand under the palms](assets/presentation/gallery/coconut-crab.png) |
+
 The project remains under an active long-form development and polish campaign. The full
 rendering profile requests 4x geometric-edge antialiasing on Linux/Web and 2x on Android through
 CNA's existing backbuffer path, with explicit applied-sample diagnostics and device fallback.

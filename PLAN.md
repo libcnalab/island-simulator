@@ -233,6 +233,28 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 502 (2026-10-22) — the README gallery shows the newer landmarks
+
+At the operator's request, the README gallery now shows what was added since its first pass on
+2026-10-17. Fifteen frames were freshly captured from the native llvmpipe build at pass 501 through
+their deterministic QA viewpoints, and every one passed the capture gate.
+
+- **Newer landmarks** (nine frames): the whale skeleton, the stone god, HELP ME from the air, the
+  lighthouse by day and by night with its beams under the stars, the fighter wreck, the
+  washed-up PET bottles, the jetty, and the quad bike with its rider.
+- **Times of day, weather and more wildlife** (six frames): a sunset, the island at night, a
+  thunderstorm over the jetty, a frigatebird, an octopus and a coconut crab.
+
+Two candidates were captured and dropped: a dark, unreadable night view along the jetty, and the
+geckos view, whose gecko is tiny behind a deer.
+
+The derivatives are 960x540 with no compositing or retouching, 2.9 MiB in all. They are
+palette-compressed like the first gallery, except five frames kept truecolor because a palette
+banded their gradients: the sunset, the night, the lit lighthouse, the thunderstorm and the
+underwater octopus. Each frame is hash-gated in `assets/manifest.json` under the new
+`ASSET_LICENSES.md` record "Native README gallery additions" and listed in the Linux release
+package. `tools/validate_assets.py` passes.
+
 ## Loop pass 501 (2026-10-22) — washed-up PET bottles on the beaches
 
 There are now 39 washed-up plastic bottles here and there round the island's strandline

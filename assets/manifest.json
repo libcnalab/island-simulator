@@ -283,6 +283,96 @@
       "path": "assets/presentation/gallery/resident.png",
       "sha256": "cf913b3260852d6d88ef2ecf2ad0600b518e8755861b6dc8de1d4cf42567e88b",
       "licenseRecord": "Native README gallery screenshots"
+    },
+    {
+      "name": "readme-gallery-whale-skeleton",
+      "path": "assets/presentation/gallery/whale-skeleton.png",
+      "sha256": "a63ce9f7830c21d78280e25ca3738578ff2f2e7effeb0d7e1e73cecfc662d23c",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-stone-god",
+      "path": "assets/presentation/gallery/stone-god.png",
+      "sha256": "0412c496f9f9ab3f25af2db285c4ac409d66fac60ac71e0f19a6f4fc3b7e5cd0",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-help-me",
+      "path": "assets/presentation/gallery/help-me.png",
+      "sha256": "4b530ffd2289f2ce451d145d80ae7bf6cdf240fdb3af14f49b685bd9b1ecf64e",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-lighthouse",
+      "path": "assets/presentation/gallery/lighthouse.png",
+      "sha256": "b99732341104afe00d60c7de22f070184ff115dba35ba94122738c14f8c48297",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-lighthouse-night",
+      "path": "assets/presentation/gallery/lighthouse-night.png",
+      "sha256": "4badc679c05622ab0c5af2c314b1f87a69fef97848105a09959037dd4908d448",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-plane-wreck",
+      "path": "assets/presentation/gallery/plane-wreck.png",
+      "sha256": "7004e0bd8b799cf6b378aaaa09c0ff2dbfb5517e5788a64960a97f3bbc1328bd",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-beach-bottles",
+      "path": "assets/presentation/gallery/beach-bottles.png",
+      "sha256": "7735fa24faacb1b9bf77d487c9cb9046f8ed26b765fb398d0c092ea848889dc9",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-jetty",
+      "path": "assets/presentation/gallery/jetty.png",
+      "sha256": "fa0efa6a1f772ea028302c7b99474e9c5993df49ac5d0b0aa6777118378c0220",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-quad-bike",
+      "path": "assets/presentation/gallery/quad-bike.png",
+      "sha256": "db88ee92299e9098f2403dbadd9b90bd50127bc9dcfaf71801d4e54439238d85",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-sunset",
+      "path": "assets/presentation/gallery/sunset.png",
+      "sha256": "1236a32d22cef6a9862b2c14a517155c09bfa0880b42277ea7d9d05492d67d60",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-thunderstorm",
+      "path": "assets/presentation/gallery/thunderstorm.png",
+      "sha256": "26af7ca940461d210fac976c4e135819a06c07e84c8374099de3a76858b0cb2d",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-night",
+      "path": "assets/presentation/gallery/night.png",
+      "sha256": "a23ee23f2067637c848d1441b1be70569b66ab35cb644616614376bf8bd9829c",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-frigatebird",
+      "path": "assets/presentation/gallery/frigatebird.png",
+      "sha256": "c098d0019af2b4bd5bde482c298dcc7bac1388b32b5f031b88419bd5bf5cc118",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-octopus",
+      "path": "assets/presentation/gallery/octopus.png",
+      "sha256": "9e95336ad7bc12669de026089b0d62e93a379b390642b7be8049f2d06a9240a5",
+      "licenseRecord": "Native README gallery additions"
+    },
+    {
+      "name": "readme-gallery-coconut-crab",
+      "path": "assets/presentation/gallery/coconut-crab.png",
+      "sha256": "ecb5960c36caa4f07161f33b7a49afff09f1bc7f07e1762d5e80e31312730406",
+      "licenseRecord": "Native README gallery additions"
     }
   ],
   "proceduralGenerators": [

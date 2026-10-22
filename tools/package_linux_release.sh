@@ -66,6 +66,21 @@ readonly packaged_files=(
     share/island-simulator/assets/presentation/gallery/boars.png
     share/island-simulator/assets/presentation/gallery/fish.png
     share/island-simulator/assets/presentation/gallery/resident.png
+    share/island-simulator/assets/presentation/gallery/whale-skeleton.png
+    share/island-simulator/assets/presentation/gallery/stone-god.png
+    share/island-simulator/assets/presentation/gallery/help-me.png
+    share/island-simulator/assets/presentation/gallery/lighthouse.png
+    share/island-simulator/assets/presentation/gallery/lighthouse-night.png
+    share/island-simulator/assets/presentation/gallery/plane-wreck.png
+    share/island-simulator/assets/presentation/gallery/beach-bottles.png
+    share/island-simulator/assets/presentation/gallery/jetty.png
+    share/island-simulator/assets/presentation/gallery/quad-bike.png
+    share/island-simulator/assets/presentation/gallery/sunset.png
+    share/island-simulator/assets/presentation/gallery/thunderstorm.png
+    share/island-simulator/assets/presentation/gallery/night.png
+    share/island-simulator/assets/presentation/gallery/frigatebird.png
+    share/island-simulator/assets/presentation/gallery/octopus.png
+    share/island-simulator/assets/presentation/gallery/coconut-crab.png
     share/island-simulator/licenses/CNA/LICENSE
     share/island-simulator/licenses/CNA/NOTICE.md
     share/island-simulator/licenses/Sharp-Runtime/LICENSE
