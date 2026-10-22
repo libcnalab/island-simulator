@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 474 (2026-10-22) — rained on, planks, stone and logs darken
+
+The hut already darkened in the rain, but the jetty, the rope bridge and the lookout stayed dry, and
+so did the rocks, fallen logs and driftwood. Water fills the pores of stone and wood and darkens
+them.
+
+- `StructureShadowReceiver` (jetty, bridge, lookout) takes the weather's wetness (`uWetness`) and
+  turns its planks darker and a little cooler (to 0.64-0.68 when soaked).
+- The natural props' shader darkens stone and wood by up to 30 %, above the sea only (under it they
+  are wet anyway, and the reef keeps its colours).
+
+`jetty` and `log` in `--weather showers` show the dark wet deck and log against the sand.
+
 ## Loop pass 473 (2026-10-22) — a silt plume fans out from the stream's mouth after rain
 
 Pass 471 made the stream run brown after rain, but it emptied into a clear lagoon. The ocean shader

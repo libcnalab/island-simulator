@@ -1,3 +1,4 @@
+#include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/StructureShadowReceiver.hpp"
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
@@ -51,6 +52,7 @@ uniform vec3 uCameraPosition;
 uniform vec2 uFogRange;
 uniform vec3 uToSun;          // the hour's shading direction (at 14:00 the fixed sun)
 uniform float uBakedAmbient;  // the build's sun-independent share of a face's light (0: not relit)
+uniform float uWetness;       // 0..1 rain-wet planks: darker, a little cooler
 out vec4 fragColor;
 void main()
 {
@@ -67,6 +69,7 @@ void main()
         color.rgb *= (uBakedAmbient + direct * max(0.0, dot(faceNormal, normalize(uToSun))))
             / (uBakedAmbient + direct * max(0.0, dot(faceNormal, normalize(vec3(-0.45, 0.82, -0.34)))));
     }
+    color.rgb *= mix(vec3(1.0), vec3(0.64, 0.66, 0.68), clamp(uWetness, 0.0, 1.0));
     color.rgb *= mix(vec3(0.56, 0.60, 0.66), vec3(1.0), sunShadowVisibility(vWorld));
     float fog = clamp((length(vWorld - uCameraPosition) - uFogRange.x) / (uFogRange.y - uFogRange.x), 0.0, 1.0);
     fragColor = vec4(mix(color.rgb, islandAtmosphereFog, fog), color.a);
@@ -116,6 +119,7 @@ void main()
         effect_->SetUniformVec3("uCameraPosition", camera.X, camera.Y, camera.Z);
         effect_->SetUniformVec2("uFogRange", fogStart_, fogEnd_);
         effect_->SetUniformFloat("uBakedAmbient", bakedAmbient_);
+        effect_->SetUniformFloat("uWetness", weather_now::Current().wetness);
         effect_->SetUniformVec3("uToSun", sun_light::UniformDirection().x, sun_light::UniformDirection().y,
                                 sun_light::UniformDirection().z);
         if (textured_ && texture) {

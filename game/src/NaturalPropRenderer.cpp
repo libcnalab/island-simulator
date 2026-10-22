@@ -1,3 +1,4 @@
+#include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/VegetationFade.hpp"
@@ -188,6 +189,7 @@ in float vCanopy;
 
 uniform vec3 uCameraPosition;
 uniform vec3 uToSun;
+uniform float uWetness;   // 0..1 the rain's wetness: stone and wood darken with it above the sea
 
 out vec4 fragColor;
 
@@ -390,6 +392,8 @@ void main()
     // log in a tree's shadow is shaded with the ground around it.
     // Under the crowns the sky is mostly hidden too: the ground beside a rock takes the canopy's
     // sky occlusion (TerrainRenderer), and without it a forest rock glowed against the soil.
+    // Rained on, stone and wood darken (the water fills their pores); under the sea they always are.
+    materialColor *= 1.0 - 0.30 * uWetness * smoothstep(-0.10, 0.30, vWorld.y);
     float propSkyOcclusion = mix(vCanopy, 1.0, uSunShadowParams.x * 0.55);
     materialColor *= mix(vec3(0.56, 0.60, 0.66), vec3(1.0),
                          min(sunShadowVisibility(vWorld), propSkyOcclusion));
@@ -2567,6 +2571,7 @@ void main()
             customEffect_->SetUniformVec3(
                 "uToSun", sun_light::UniformDirection().x, sun_light::UniformDirection().y,
                 sun_light::UniformDirection().z);
+            customEffect_->SetUniformFloat("uWetness", weather_now::Current().wetness);
         } else {
             fallbackEffect_->setViewProperty(view);
             fallbackEffect_->setProjectionProperty(projection);
