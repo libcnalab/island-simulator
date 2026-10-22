@@ -6371,6 +6371,11 @@ namespace island
                                          playerShadow);
             residentRenderer_->DrawShadow(cameraView_,cameraProjection_,renderCameraPosition_,resident_->State());
             walkerShadowRenderer_->BeginFrame();
+            // The figures reach as far as the quality's contact shadows do (all of it in the
+            // browser, 72 % on Android, half natively), the walker's own always.
+            const float figureReach = qualityProfile_.contactShadowDistanceScale;
+            const float animalReach = 60.0f * figureReach, smallReach = 18.0f * figureReach;
+            const std::size_t smallFigures = figureReach >= 0.9f ? 8U : figureReach >= 0.7f ? 6U : 4U;
             const auto& light = sun_light::Current();
             const auto toSun = light.shading;
             // the ground the figures fall on: the drawn terrain, or the jetty's, the bridge's or the
@@ -6387,7 +6392,7 @@ namespace island
                 // they stand on the drawn ground (not on the jetty's deck or the lookout).
                 const ResidentState& resident = resident_->State();
                 const float ground = groundAt(resident.x, resident.z);
-                if (Vector3::DistanceSquared(Vector3(resident.x, resident.y, resident.z), renderCameraPosition_) < 80.0f * 80.0f
+                if (Vector3::DistanceSquared(Vector3(resident.x, resident.y, resident.z), renderCameraPosition_) < 80.0f * 80.0f * figureReach * figureReach
                     && std::abs(resident.y - ground) < 0.25f) {
                     const walker_shadow::Shape figure = walker_shadow::Lay(walker_shadow::ResidentLimbs(resident),
                         resident.x, ground, resident.z, toSun.x, toSun.y, toSun.z, resident.pose.pelvisY + 0.83f - ground);
@@ -6398,7 +6403,7 @@ namespace island
             for (const DeerState& deer : deer_->Deer()) {
                 // and the deer's, which had no shadow at all: within 60 m, on the drawn ground
                 const float ground = groundAt(deer.x, deer.z);
-                if (Vector3::DistanceSquared(Vector3(deer.x, deer.y, deer.z), renderCameraPosition_) > 60.0f * 60.0f
+                if (Vector3::DistanceSquared(Vector3(deer.x, deer.y, deer.z), renderCameraPosition_) > animalReach * animalReach
                     || std::abs(deer.y - ground) > 0.25f) continue;
                 const float stature = (deer.antlered ? 2.6f : 2.1f) * deer.scale * (1.0f - 0.35f * std::clamp(deer.bedAmount, 0.0f, 1.0f));
                 walkerShadowRenderer_->Draw(cameraView_, cameraProjection_,
@@ -6409,7 +6414,7 @@ namespace island
                 // and the bear's
                 const BearState& bear = bear_->State();
                 const float ground = groundAt(bear.x, bear.z);
-                if (Vector3::DistanceSquared(Vector3(bear.x, bear.y, bear.z), renderCameraPosition_) < 60.0f * 60.0f
+                if (Vector3::DistanceSquared(Vector3(bear.x, bear.y, bear.z), renderCameraPosition_) < animalReach * animalReach
                     && std::abs(bear.y - ground) < 0.25f)
                     walkerShadowRenderer_->Draw(cameraView_, cameraProjection_,
                         walker_shadow::Lay(walker_shadow::BearLimbs(bear), bear.x, ground, bear.z, toSun.x, toSun.y, toSun.z, 1.8f),
@@ -6417,13 +6422,13 @@ namespace island
             }
             {
                 // the nearest crabs' and ground doves' too (a beach crab's, a hermit's, a coconut
-                // crab's off its palm), eight at most within 18 m: a few centimetres of shadow is
+                // crab's off its palm), the nearest few within 18 m: a few centimetres of shadow is
                 // what grounds them
                 struct CrabFigure { float distanceSquared; std::array<walker_shadow::Limb, walker_shadow::CapsuleCount> limbs; float x, y, z, stature; };
                 std::vector<CrabFigure> crabs;
                 const auto consider = [&](const float x, const float y, const float z, const float stature, const auto& build) {
                     const float d = Vector3::DistanceSquared(Vector3(x, y, z), renderCameraPosition_);
-                    if (d > 18.0f * 18.0f) return;
+                    if (d > smallReach * smallReach) return;
                     crabs.push_back({d, build(), x, y, z, stature});
                 };
                 for (const auto& crab : crabColony_.Crabs())
@@ -6446,7 +6451,7 @@ namespace island
                         consider(bird.x, bird.y - walker_shadow::GroundBirdBodyHeight * bird.scale, bird.z, 0.45f * bird.scale,
                                  [&] { return walker_shadow::GroundBirdLimbs(bird); });
                 std::sort(crabs.begin(), crabs.end(), [](const CrabFigure& a, const CrabFigure& b) { return a.distanceSquared < b.distanceSquared; });
-                if (crabs.size() > 8U) crabs.resize(8U);
+                if (crabs.size() > smallFigures) crabs.resize(smallFigures);
                 for (const CrabFigure& crab : crabs) {
                     const float ground = groundAt(crab.x, crab.z);
                     if (std::abs(crab.y - ground) > 0.15f) continue;   // on a rock, in a burrow
@@ -6459,7 +6464,7 @@ namespace island
                 // the herons' standing at the lagoon's edge, on the shallows' sand or the beach
                 const float ground = groundAt(heron.x, heron.z);
                 if (heron.flight > 0.3f
-                    || Vector3::DistanceSquared(Vector3(heron.x, heron.y, heron.z), renderCameraPosition_) > 45.0f * 45.0f
+                    || Vector3::DistanceSquared(Vector3(heron.x, heron.y, heron.z), renderCameraPosition_) > 45.0f * 45.0f * figureReach * figureReach
                     || std::abs(heron.y - ground) > 0.15f) continue;
                 walkerShadowRenderer_->Draw(cameraView_, cameraProjection_,
                     walker_shadow::Lay(walker_shadow::HeronLimbs(heron), heron.x, ground, heron.z, toSun.x, toSun.y, toSun.z,
@@ -6470,7 +6475,7 @@ namespace island
                 // the crocodiles' hauled out on the bank (not afloat)
                 const float ground = groundAt(crocodile.x, crocodile.z);
                 if (crocodile.submerged > 0.5f
-                    || Vector3::DistanceSquared(Vector3(crocodile.x, crocodile.y, crocodile.z), renderCameraPosition_) > 60.0f * 60.0f
+                    || Vector3::DistanceSquared(Vector3(crocodile.x, crocodile.y, crocodile.z), renderCameraPosition_) > animalReach * animalReach
                     || std::abs(crocodile.y - ground) > 0.25f) continue;
                 walkerShadowRenderer_->Draw(cameraView_, cameraProjection_,
                     walker_shadow::Lay(walker_shadow::CrocodileLimbs(crocodile), crocodile.x, ground, crocodile.z,
@@ -6480,7 +6485,7 @@ namespace island
             for (const GoatState& goat : goats_->Goats()) {
                 // the goats' and the boars' too, from the poses their renderers draw
                 const float ground = groundAt(goat.x, goat.z);
-                if (Vector3::DistanceSquared(Vector3(goat.x, goat.y, goat.z), renderCameraPosition_) > 60.0f * 60.0f
+                if (Vector3::DistanceSquared(Vector3(goat.x, goat.y, goat.z), renderCameraPosition_) > animalReach * animalReach
                     || std::abs(goat.y - ground) > 0.25f) continue;
                 walkerShadowRenderer_->Draw(cameraView_, cameraProjection_,
                     walker_shadow::Lay(walker_shadow::GoatLimbs(goat), goat.x, ground, goat.z, toSun.x, toSun.y, toSun.z,
@@ -6489,7 +6494,7 @@ namespace island
             }
             for (const BoarState& boar : boarHerd_.Boars()) {
                 const float ground = groundAt(boar.x, boar.z);
-                if (Vector3::DistanceSquared(Vector3(boar.x, boar.y, boar.z), renderCameraPosition_) > 60.0f * 60.0f
+                if (Vector3::DistanceSquared(Vector3(boar.x, boar.y, boar.z), renderCameraPosition_) > animalReach * animalReach
                     || std::abs(boar.y - ground) > 0.25f) continue;
                 std::optional<BoarGroundPose> fitted;
                 try { fitted = FitBoarGroundPose(terrain_, *drawnGround_, boar); } catch (const std::exception&) { continue; }

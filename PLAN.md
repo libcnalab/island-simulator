@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 462 (2026-10-22) — the figures' reach follows the quality profile
+
+With the walker, the resident, the deer, goats, boars, the bear, crocodiles, herons, crabs, doves
+and small animals casting figures, a frame could hold some thirty figure draws, each a fragment
+loop of seventeen capsules. Their reach now scales by the quality profile's contact-shadow distance
+(`contactShadowDistanceScale`): all of it in the browser (full), 72 % on Android (mobile), and half
+natively (native-performance, the operator's). The large animals reach 60 m times that, the herons
+45 m, the resident 80 m, and the small animals 18 m. The small animals' list keeps the nearest 8, 6
+or 4 by the same profile. The walker's own figure is always drawn. Native captures (native-
+performance) of `crabs`, `deer` and `goats` keep their subjects' figures.
+
 ## Loop pass 461 (2026-10-22) — skinks, frogs, rats and mice cast their figures
 
 The small ground animals ButterflyRenderer draws had no shadow. Their figures are now laid in its
