@@ -321,6 +321,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 481: LocalLightRenderer::DrawMesh caches the shared-corner map (resident by the fire 0.80 -> 0.14 ms, bit-identical) (PLAN "Loop pass 481").
 - Pass 480: hut house geckos chirp at night (hut_geckos::ChirpBetween, GenerateGeckoChirp, Soundscape::NoteGeckoChirp) (PLAN "Loop pass 480").
 - Pass 479: muddy boars on soaked ground (BoarHerd::SetWetness) (PLAN "Loop pass 479").
 - Pass 478: deer shelter under crowns in a downpour (DeerHerd::SetRain, RainShelterCount) (PLAN "Loop pass 478").

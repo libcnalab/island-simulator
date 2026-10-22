@@ -88,7 +88,11 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BlendState> blend_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> mesh_, figure_;
         std::vector<Vertex> figureStaging_;
-        std::unordered_map<std::uint64_t, Microsoft::Xna::Framework::Vector3> figureNormals_;
+        // The figure's corners that share a position: each vertex's shared corner, each corner's
+        // first vertex, worked out by hashing once and kept while the figure's topology holds.
+        std::vector<std::uint32_t> figureCorner_, figureFirst_;
+        std::unordered_map<std::uint64_t, std::uint32_t> figureLookup_;
+        std::vector<Microsoft::Xna::Framework::Vector3> figureNormals_;
         std::vector<Vertex> grid_, staging_;
         int drawCalls_ = 0;
     };

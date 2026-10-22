@@ -218,17 +218,38 @@ void main()
             const auto q = [](const float v) { return static_cast<std::uint64_t>(static_cast<std::int64_t>(std::lround(v * 1000.0f)) & 0x1fffff); };
             return q(p.X) | (q(p.Y) << 21U) | (q(p.Z) << 42U);
         };
-        figureNormals_.clear();
-        for (std::size_t i = 0; i + 2 < triangles.size(); i += 3) {
+        // Which corners share a position is hashed once and reused while every vertex still
+        // sits where its corner's first vertex does (the figure keeps its topology from frame
+        // to frame as it moves); a changed mesh is hashed afresh.
+        const std::size_t count = triangles.size() / 3U * 3U;
+        bool same = figureCorner_.size() == count;
+        for (std::size_t i = 0; i < count && same; ++i) {
+            const Vector3& p = triangles[i].Position;
+            const Vector3& first = triangles[figureFirst_[figureCorner_[i]]].Position;
+            same = (p.X == first.X && p.Y == first.Y && p.Z == first.Z) || key(p) == key(first);
+        }
+        if (!same) {
+            figureLookup_.clear();
+            figureFirst_.clear();
+            figureCorner_.resize(count);
+            for (std::size_t i = 0; i < count; ++i) {
+                const auto [found, added] = figureLookup_.try_emplace(key(triangles[i].Position),
+                                                                      static_cast<std::uint32_t>(figureFirst_.size()));
+                if (added) figureFirst_.push_back(static_cast<std::uint32_t>(i));
+                figureCorner_[i] = found->second;
+            }
+        }
+        figureNormals_.assign(figureFirst_.size(), Vector3::Zero);
+        for (std::size_t i = 0; i < count; i += 3) {
             const Vector3 a = triangles[i].Position, b = triangles[i + 1].Position, c = triangles[i + 2].Position;
             Vector3 normal = Vector3::Cross(b - a, c - a);
             if (Vector3::Dot(normal, camera - a) < 0.0f) normal = -normal;
-            for (const Vector3* corner : {&a, &b, &c}) figureNormals_[key(*corner)] += normal;
+            for (std::size_t k = 0; k < 3; ++k) figureNormals_[figureCorner_[i + k]] += normal;
         }
-        for (std::size_t i = 0; i + 2 < triangles.size(); i += 3) {
+        for (std::size_t i = 0; i < count; i += 3) {
             for (std::size_t k = 0; k < 3; ++k) {
                 const Vector3 p = triangles[i + k].Position;
-                Vector3 normal = figureNormals_[key(p)];
+                Vector3 normal = figureNormals_[figureCorner_[i + k]];
                 if (normal.LengthSquared() < 1e-12f) normal = Vector3::Up;
                 normal.Normalize();
                 // drawn 1.5 cm nearer along the eye's ray, so it passes the depth test on the

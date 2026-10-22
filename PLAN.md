@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 481 (2026-10-22) — the firelit resident's smooth normals are no longer hashed every frame
+
+At night the campfire's light falls on the resident by it (`LocalLightRenderer::DrawMesh`). Their
+7,150-triangle near mesh is lit with smooth normals: each triangle's normal is summed at every
+corner that shares a position. That sharing was found every frame by hashing all ~21,500 vertices
+into an `unordered_map`, twice. A probe measured 0.80 ms per frame for a mesh of that size.
+
+The sharing (which vertex belongs to which corner, and each corner's first vertex) is now hashed
+once. It is reused while every vertex still sits where its corner's first vertex does: an exact
+compare, or the same 1 mm key when not exact. Any change hashes afresh. The sums then run over a
+flat array in the same order, so the result is bit-identical: the deterministic `campfire` capture
+at 22:00 has the same MD5 before and after. The probe measured 0.14 ms for the same mesh.
+
 ## Loop pass 480 (2026-10-22) — the house geckos at the hut chirp in the night
 
 The two house geckos on the hut's front wall by the lantern were silent. Real ones give a run of
