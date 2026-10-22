@@ -132,6 +132,7 @@
 #include "IslandSimulator/PassingShip.hpp"
 #include "IslandSimulator/PandanusLayout.hpp"
 #include "IslandSimulator/TermiteNestLayout.hpp"
+#include "IslandSimulator/FlyingFishShoal.hpp"
 #include "IslandSimulator/SwimDepth.hpp"
 #include "IslandSimulator/ProceduralMeshValidation.hpp"
 #include "IslandSimulator/RockSurface.hpp"
@@ -9707,6 +9708,36 @@ int main()
         bool kept = true;
         for (const auto& tree : moved) kept = kept && std::hypot(tree.x - trees.front().x, tree.z - trees.front().z) > 3.2f;
         Check(kept, "a screw pine grows through an obstacle");
+    }
+    {
+        // The flying fish: by day, for a walker on the beach, a flight every half minute to a
+        // minute out over the sea, the fish gliding low over it and splashing in and out; none at
+        // night, none for a walker deep inland.
+        const island::IslandTerrain terrain;
+        const float bearing = 0.3f, reach = terrain.ShoreRadius(bearing) - 8.0f;
+        const float beachX = std::cos(bearing) * reach, beachZ = std::sin(bearing) * reach;
+        const auto calm = [](float, float) { return 0.0f; };
+        const auto run = [&](const float x, const float z, const float hour, bool& sound) {
+            island::FlyingFishShoal shoal(terrain);
+            sound = true;
+            for (int step = 0; step < 4000; ++step) {
+                shoal.Update(0.05f, x, z, hour, calm);
+                for (const auto& fish : shoal.Fish()) {
+                    if (!fish.visible) continue;
+                    sound = sound && fish.y >= 0.0f && fish.y < 1.7f && terrain.SignedShoreDistance(fish.x, fish.z) < -5.0f
+                        && fish.wings >= 0.0f && fish.wings <= 1.0f;
+                }
+            }
+            return std::array<std::uint32_t, 2>{{shoal.FlightCount(), shoal.SplashCount()}};
+        };
+        bool daySound = false, nightSound = false, inlandSound = false;
+        const auto day = run(beachX, beachZ, 12.0f, daySound);
+        const auto night = run(beachX, beachZ, 23.0f, nightSound);
+        const auto inland = run(0.0f, 0.0f, 12.0f, inlandSound);
+        std::cout << "flying fish in 200 s: day " << day[0] << " flights, " << day[1] << " splashes; night " << night[0]
+                  << "; inland " << inland[0] << '\n';
+        Check(day[0] >= 2U && day[1] >= day[0] * 3U && daySound && night[0] == 0U && inland[0] == 0U,
+              "the flying fish fly at night or inland, too rarely by day, or off the sea or too high");
     }
     {
         // The arboreal termites' nests: a dozen or more on grown natural canopy trees, each on its

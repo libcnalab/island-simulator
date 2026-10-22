@@ -73,6 +73,7 @@
 #include "IslandSimulator/PassingShipRenderer.hpp"
 #include "IslandSimulator/PandanusRenderer.hpp"
 #include "IslandSimulator/TermiteNestRenderer.hpp"
+#include "IslandSimulator/FlyingFishRenderer.hpp"
 #include "IslandSimulator/DolphinPod.hpp"
 #include "IslandSimulator/DolphinRenderer.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
@@ -284,6 +285,7 @@ namespace island
         WhaleBreachDetail,
         PandanusDetail,
         TermiteNestDetail,
+        FlyingFishDetail,
         PlaneWreckDetail,
         PlaneCockpitDetail,
         BeachLitterDetail,
@@ -512,6 +514,7 @@ namespace island
         SeaTurtleGroup seaTurtleGroup_;
         SharkPatrol sharkPatrol_;
         DolphinPod dolphinPod_;
+        FlyingFishShoal flyingFish_;
         MonkeyTroop monkeyTroop_;
         VegetationLayout vegetationLayout_;
         JungleLayout jungleLayout_;
@@ -805,6 +808,9 @@ namespace island
         MudFleckField mudFlecks_;
         CrabBubbleField crabBubbles_;
         std::unique_ptr<CascadeMistRenderer> dolphinBlowRenderer_;
+        std::unique_ptr<FlyingFishRenderer> flyingFishRenderer_;
+        std::unique_ptr<CascadeMistRenderer> flyingFishSprayRenderer_;
+        float oceanSeconds_ = 0.0f;   // the last frame's ocean clock, for the sea's height in Update
         StingraySandField stingraySand_;
         StingraySandField stingrayFlickSand_;
         TurtleGrazeField turtleGraze_;

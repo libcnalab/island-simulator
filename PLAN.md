@@ -233,6 +233,38 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 546 (2026-10-22) — flying fish gliding over the open water
+
+The sea off the island had whales, dolphins, a shark and reef fish, but nothing in the air over
+it except birds. Now flying fish are there too, a sight of every tropical sea.
+
+- **When and where** (`FlyingFishShoal`).
+  - Flights come every 24 to 62 s, by day only (06:30 to 18:12).
+  - Only for a walker within 140 m of the sea, a swimmer included.
+  - Three to eight fish burst out together, a ragged second apart. They launch 55 to 140 m out
+    from the shore nearest the walker, over open water at least 2.2 m deep past the shallows.
+- **The flight.**
+  - The fish glide along the coast, a little in or out, at about 15 m/s, slowing a quarter and
+    banking gently on a slight curve.
+  - Each is up off the water in the first tenth of a 2 to 4.6 s flight and glides 0.5 to 1.4 m
+    over the waves (on the waves' own height), a little lower all the way, before dropping back in.
+  - About a third touch down part way, sculling on with their tails, and lift off again.
+  - The pectoral fins spread with a little dihedral, then fold flat along the body as the fish
+    drops back in.
+- **Spray.** Each launch, touch-down and entry throws up a little white spray (MistPuffs through
+  their own mist renderer).
+- **The fish** (`FlyingFishRenderer`). 108 triangles each, drawn in one dynamic batch and lit by
+  the hour's sun:
+  - a slender spindle body, dark blue above and silver below;
+  - the great swept pectoral fins and the smaller pelvic pair;
+  - the deep tail fork with its long lower lobe;
+  - a low dorsal fin.
+- **New QA view.** `flying-fish`, a swimmer's eye 70 m out off the whale-breach bearing's beach.
+  It follows a previewed flight of six gliding past against the sky (`20261022T155214`). `beach`
+  still passes (`155345`).
+- **Tests.** CoreTests run 200 s by day on the beach (5 flights, 66 splashes), at night (none)
+  and deep inland (none), each fish over the sea and under 1.7 m.
+
 ## Loop pass 545 (2026-10-22) — arboreal termites' nests on the jungle trunks
 
 The jungle's trunks were bare bark under the crowns. Now some of them carry an arboreal termites'

@@ -210,6 +210,7 @@ namespace island
             case FixedViewpoint::WhaleBreachDetail: return "whale-breach";
             case FixedViewpoint::PandanusDetail: return "pandanus";
             case FixedViewpoint::TermiteNestDetail: return "termite-nest";
+            case FixedViewpoint::FlyingFishDetail: return "flying-fish";
             case FixedViewpoint::PlaneWreckDetail: return "plane-wreck";
             case FixedViewpoint::PlaneCockpitDetail: return "plane-cockpit";
             case FixedViewpoint::BeachLitterDetail: return "beach-litter";
@@ -357,6 +358,7 @@ namespace island
           seaTurtleGroup_(terrain_),
           sharkPatrol_(terrain_),
           dolphinPod_(terrain_),
+          flyingFish_(terrain_),
           monkeyTroop_(terrain_),
           vegetationLayout_(terrain_),
           jungleLayout_(terrain_),
@@ -2161,6 +2163,21 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: termite-nest QA camera looks up at a termites' nest on a jungle trunk\n";
+        } else if (viewpoint_ == FixedViewpoint::FlyingFishDetail) {
+            // A swimmer's eye out past the shallows off the whale-breach bearing's beach, at a flight
+            // of flying fish gliding past along the shore some ten metres off, under a second into it
+            // (the eye follows the shoal in Update).
+            const float bearing=PassingShip::Bearing+0.12f;
+            const float reach=terrain_.ShoreRadius(bearing)+70.0f;
+            const float eyeX=std::cos(bearing)*reach,eyeZ=std::sin(bearing)*reach;
+            cameraPosition_=Vector3(eyeX,0.45f,eyeZ);
+            const float outX=std::cos(bearing),outZ=std::sin(bearing),alongX=-outZ,alongZ=outX;
+            const float launchX=eyeX+outX*9.0f-alongX*12.0f,launchZ=eyeZ+outZ*9.0f-alongZ*12.0f;
+            flyingFish_.PreviewFlight(launchX,launchZ,std::atan2(alongZ,alongX),0.6f);
+            const Vector3 direction=Vector3(launchX+alongX*14.0f,0.9f,launchZ+alongZ*14.0f)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: flying-fish QA camera looks from the open water at flying fish gliding past\n";
         } else if (viewpoint_ == FixedViewpoint::WhaleBreachDetail) {
             // On the shore at the freighter's lane's bearing, out at a humpback breaching 115 m off
             // it, rising toward the top of its leap (the leap goes on through the capture's half
@@ -3509,6 +3526,11 @@ namespace island
             SurfSprayField::Capacity);
         dolphinBlowRenderer_ = std::make_unique<CascadeMistRenderer>(device,
             "island-simulator: a dolphin breaking the surface blows a puff of spray from the blowhole");
+        flyingFishRenderer_ = std::make_unique<FlyingFishRenderer>(device);
+        flyingFishSprayRenderer_ = std::make_unique<CascadeMistRenderer>(device,
+            "island-simulator: a flying fish leaving the sea, touching down or dropping back in throws up a little spray",
+            FlyingFishShoal::SplashCapacity);
+        flyingFishSprayRenderer_->SetRange(120.0f, 80.0f, 1.3f);
         stingraySandRenderer_ = std::make_unique<RootingDustRenderer>(device,
             "island-simulator: a settled stingray bursts out of the sand in a puff when the swimmer comes near", 196, 178, 140);
         // Blown sand holds up to BlownSandField::Capacity puffs, more than the dust default.
@@ -4112,6 +4134,22 @@ namespace island
         UpdateQuad(deltaSeconds);
         updateProfile_.Mark("whales");
         whales_.Update(deltaSeconds, wind::DirectionX, wind::DirectionZ);
+        updateProfile_.Mark("flyingFish");
+        flyingFish_.Update(deltaSeconds, cameraPosition_.X, cameraPosition_.Z, dayNight_.Hour(), [this](const float x, const float z) {
+            return SampleOceanWaves(x, z, oceanSeconds_).height * weather_now::SeaState();
+        });
+        if (viewpoint_ == FixedViewpoint::FlyingFishDetail) {
+            // The swimmer's eye follows the shoal as it glides past.
+            Vector3 middle(0.0f, 0.0f, 0.0f);
+            int count = 0;
+            for (const FlyingFishState& fish : flyingFish_.Fish())
+                if (fish.visible) { middle += Vector3(fish.x, fish.y, fish.z); ++count; }
+            if (count > 0) {
+                const Vector3 direction = middle / static_cast<float>(count) - cameraPosition_;
+                yaw_ = std::atan2(direction.X, direction.Z);
+                pitch_ = std::atan2(direction.Y, std::hypot(direction.X, direction.Z)) - 0.04f;
+            }
+        }
         updateProfile_.Mark("sailboat");
         sailboat_.Update(deltaSeconds);
         {
@@ -6634,6 +6672,7 @@ namespace island
             + distantSceneryRenderer_->DrawCallCount() + passingShipRenderer_->DrawCallCount()
             + (pandanusRenderer_ ? pandanusRenderer_->DrawCallCount() : 0)
             + (termiteNestRenderer_ ? termiteNestRenderer_->DrawCallCount() : 0)
+            + flyingFishRenderer_->DrawCallCount()
             + contactShadowRenderer_->DrawCallCount()
             + birdRenderer_->DrawCallCount() + fruitBatRenderer_->DrawCallCount() + mineBatRenderer_->DrawCallCount()
             + butterflyRenderer_->DrawCallCount()
@@ -7042,6 +7081,7 @@ namespace island
             ? static_cast<float>(bearCaptureUpdates_)*0.1f : UsesMonkeyCaptureClock()
             ? static_cast<float>(monkeyCaptureUpdates_)*0.1f : static_cast<float>(gameTime.getTotalGameTimeProperty()
                                                          .getTotalSecondsProperty());
+        oceanSeconds_ = timeSeconds;
         auto& device = getGraphicsDeviceProperty();
         BeginGpuDiagnosticFrame(drawnFrames_, drawnFrames_ < 2U
             && (viewpoint_ == FixedViewpoint::SnakeDetail || viewpoint_ == FixedViewpoint::SnakeHeadDetail
@@ -7610,6 +7650,7 @@ namespace island
             }
             dolphinRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,
                 dolphinPod_.Dolphins(),timeSeconds);
+            flyingFishRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,flyingFish_.Fish());
         }
 
         {
@@ -7706,6 +7747,7 @@ namespace island
             octopusInkRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,octopusInk_.Puffs());
             surfSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,surfSpray_.Puffs());
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,dolphinBlows_.Puffs());
+            flyingFishSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,flyingFish_.Splashes());
             if (whaleBlowRenderer_) {
                 whaleBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,whales_.Blow());
                 whaleBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,whales_.Splash());

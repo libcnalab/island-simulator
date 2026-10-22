@@ -98,6 +98,7 @@ add_library(island_core STATIC
     game/src/MineBatColony.cpp
     game/src/PandanusLayout.cpp
     game/src/TermiteNestLayout.cpp
+    game/src/FlyingFishShoal.cpp
     game/src/LifeboatLayout.cpp
     game/src/BridgeLayout.cpp
     game/src/LookoutLayout.cpp
@@ -772,6 +773,7 @@ if(ISLAND_BUILD_GAME)
         game/src/PassingShipRenderer.cpp
         game/src/PandanusRenderer.cpp
         game/src/TermiteNestRenderer.cpp
+        game/src/FlyingFishRenderer.cpp
         game/src/DolphinRenderer.cpp
         game/src/DeerRenderer.cpp
         game/src/FishRenderer.cpp
