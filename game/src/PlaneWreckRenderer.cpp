@@ -69,6 +69,9 @@ PlaneWreckRenderer::PlaneWreckRenderer(GraphicsDevice& device,const PlaneWreckPl
         colour=Vector3::Lerp(colour,Bare,std::clamp((wear-0.30f)*3.0f,0.0f,1.0f)*0.85f);
         const float rot=std::sin(centre.X*11.0f+centre.Y*7.0f)*std::sin(centre.Z*9.0f-centre.X*5.0f);
         colour=Vector3::Lerp(colour,Corroded,std::clamp((rot-0.6f)*3.0f,0.0f,1.0f)*0.6f);
+        // eighty years under the jungle: moss and lichen on the faces turned up
+        const float moss=std::sin(centre.X*1.9f+centre.Z*1.3f+std::sin(centre.Y*2.7f))*std::sin(centre.Z*1.6f-centre.X*0.9f);
+        colour=Vector3::Lerp(colour,Vector3(84,108,54),std::clamp((moss-0.15f)*2.2f,0.0f,1.0f)*std::clamp((normal.Y-0.35f)*2.0f,0.0f,1.0f)*0.7f);
         return colour*(0.94f+0.06f*std::sin(centre.X*5.3f+centre.Z*4.1f));
     };
     const Vector3 heading(placement.headingX,0.0f,placement.headingZ),right(placement.headingZ,0.0f,-placement.headingX);
@@ -206,6 +209,53 @@ PlaneWreckRenderer::PlaneWreckRenderer(GraphicsDevice& device,const PlaneWreckPl
         b.Tube({axle-main.r*0.08f,axle+main.r*0.08f},{0.28f,0.28f},14,Rubber);
     }
 
+    // the jungle taking it back: creepers climbing over the fuselage and the tail section, their
+    // leaves along them, and ferns come up round its belly
+    {
+        const Vector3 vine(62,92,44),leaf(74,124,52),fern(68,116,50);
+        const auto creeper=[&](const Frame3& frame,const float from,const float to,const float radius,const float drift,const std::uint32_t seed) {
+            std::vector<Vector3> points;std::vector<float> radii;
+            constexpr int Joints=16;
+            for(int j=0;j<=Joints;++j) {
+                const float t=static_cast<float>(j)/Joints;
+                // up one flank from the ground, over the top and down the other
+                const float a=-Pi*0.55f+Pi*1.1f*t;
+                const float f=from+(to-from)*t+0.15f*std::sin(t*9.0f+static_cast<float>(seed));
+                const float r=radius+0.03f;
+                points.push_back(frame.At(f+drift*t,std::cos(a)*r*(t<0.5f?-1.0f:1.0f)*0.0f+std::sin(a)*r,std::cos(a)*r*1.08f));
+                radii.push_back(0.018f);
+            }
+            b.Tube(points,radii,4,vine);
+            for(int j=1;j<Joints;++j) {
+                const Vector3 at=points[static_cast<std::size_t>(j)];
+                Vector3 along=points[static_cast<std::size_t>(j+1)]-points[static_cast<std::size_t>(j-1)];along.Normalize();
+                Vector3 out=at-frame.At(from+(to-from)*static_cast<float>(j)/Joints,0.0f,0.0f);out.Normalize();
+                const float s=j%2==0?1.0f:-1.0f;
+                const Vector3 side=Vector3::Normalize(Vector3::Cross(along,out))*s;
+                const Vector3 tip=at+side*0.24f+out*0.06f+along*0.06f;
+                const Vector3 w=along*0.09f;
+                b.inside=at-out*0.2f;
+                b.Quad(at,at+side*0.12f+w+out*0.04f,tip,at+side*0.12f-w+out*0.04f,leaf*(0.85f+0.3f*std::sin(static_cast<float>(j*3)+static_cast<float>(seed))));
+            }
+        };
+        creeper(main,2.9f,2.5f,0.65f,0.3f,5U);
+        creeper(main,2.2f,1.8f,0.62f,0.4f,1U);
+        creeper(main,0.3f,0.6f,0.58f,-0.4f,6U);
+        creeper(main,-0.4f,-0.9f,0.55f,-0.3f,2U);
+        creeper(tail,-1.8f,-2.3f,0.45f,0.2f,3U);
+        creeper(tail,-3.2f,-3.0f,0.3f,0.1f,4U);
+        for(int k=0;k<6;++k) {
+            const float side=k%2==0?1.0f:-1.0f;
+            const auto spot=placement.At(-1.5f+1.2f*static_cast<float>(k/2),side*(1.2f+0.3f*static_cast<float>(k%3)));
+            const Vector3 base(spot[0],groundAt(spot[0],spot[1]),spot[1]);
+            for(int f=0;f<6;++f) {
+                const float a=2.0f*Pi*static_cast<float>(f)/6.0f+static_cast<float>(k);
+                const Vector3 out(std::cos(a),0.0f,std::sin(a));
+                b.Blade(base,Vector3::Up,Vector3::Normalize(out+Vector3::Up*0.8f),Vector3::Cross(out,Vector3::Up),0.01f,0.7f,0.11f,0.02f,
+                        fern*(0.85f+0.3f*std::sin(static_cast<float>(k*6+f))));
+            }
+        }
+    }
     auto& mesh=b.builder.mesh;
     triangles_=static_cast<int>(mesh.size()/3);
     Vector3 low(1e9f,1e9f,1e9f),high(-1e9f,-1e9f,-1e9f);

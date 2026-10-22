@@ -233,6 +233,22 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 518 (2026-10-22) — the jungle takes the fighter's wreck back
+
+The fighter's wreck has lain eighty years under the jungle, and now it shows it
+(`PlaneWreckRenderer`).
+
+- **Creepers.** Six creepers climb up one flank of the fuselage and the tail section, over the
+  top and down the other. Each is a thin stem with leaves in turn along it.
+- **Moss.** Moss and lichen blotch the skin's faces turned up, in the skin's tint.
+- **Ferns.** Six clumps of ferns come up round the belly.
+
+The first, thinner creepers were barely visible from the QA camera. They were made more numerous
+and given larger leaves.
+
+Evidence: `20261022T115511` (plane-wreck, creepers over the nose and the cockpit). The suite
+is 76/76.
+
 ## Loop pass 517 (2026-10-22) — the castaway's signal fire stands ready by HELP ME
 
 Past the end of the castaway's HELP ME, the castaway keeps a signal fire stacked ready to light

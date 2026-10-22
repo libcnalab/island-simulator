@@ -351,6 +351,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 518: the fighter wreck overgrown: creepers with leaves over the fuselage and tail, moss on the upturned skin, ferns round the belly (PLAN "Loop pass 518").
 - Pass 517: the castaway's signal fire stacked ready (driftwood poles, palm fronds) and a burnt-out fire ring by HELP ME; QA view `signal-fire` (PLAN "Loop pass 517").
 - Pass 516: four sulphur-crusted fumaroles steaming on the volcano's slopes (PLAN "Loop pass 516").
 - Pass 515: the coaster's name MARIA K on both bows and the transom with PANAMA (stroke font on the plating) (PLAN "Loop pass 515").
