@@ -55,6 +55,10 @@ int main() {
     Check(bunker.HidesTerrain(portalSurface.x,terrain.Height(portalSurface.x,portalSurface.z),
                               portalSurface.z),
           "terrain still seals the open bunker portal");
+    // the hillside falling below the apron in front of the portal stays: hidden, nothing
+    // covered it and the sky showed through the island under the apron's edge
+    const auto apron=bunker.World(0,bunker.FloorRelative(-0.5f)-0.2f,-0.5f);
+    Check(!bunker.HidesTerrain(apron.x,apron.y,apron.z),"the hillside below the bunker's apron is hidden");
     const auto coveredRoof=bunker.World(0,bunker.FloorRelative(20)+4.5f,20);
     Check(!bunker.HidesTerrain(coveredRoof.x,coveredRoof.y,coveredRoof.z),
           "bunker excavation removes valid ridge cover above the roof");

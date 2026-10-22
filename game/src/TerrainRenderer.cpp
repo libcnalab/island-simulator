@@ -331,8 +331,10 @@ void main()
         &&bunkerDepth>=25.75&&bunkerDepth<=35.55;
     float bunkerCeiling=uBunkerEntrance.y+bunkerFloor
         +(bunkerDepth<10.0?2.75:3.05);
+    // (above its floor only: where the hillside falls below the apron in front of the portal
+    // it stays, or the sky showed through the island under the apron's edge)
     if((bunkerCorridor||bunkerComputer||bunkerReactor||bunkerService)
-        &&vWorld.y<bunkerCeiling+0.04) discard;
+        &&vWorld.y<bunkerCeiling+0.04&&vWorld.y>uBunkerEntrance.y+bunkerFloor-0.03) discard;
     // The old mine's adit the same way: the cutting between its floor and its roof at the
     // portal (the slope falling below the floor in front of the mouth stays: the cutting's
     // gravel follows it down).

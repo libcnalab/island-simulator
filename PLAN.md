@@ -269,6 +269,13 @@ the quad could not be driven into the mine.
 - **Tests.** MineLayoutTests check that the slope below the floor in front of the mouth and the
   hillside beside the cutting stay drawn, that the hillside over the mouth's floor is still
   hidden, and the quad's floor plan.
+- **The bunker, the same check.** The same oblique probe at the bunker found a smaller sliver of
+  sky under its apron's front edge, where the hillside fell below the apron.
+  - Its terrain is now hidden only above the floor too, in the shader and in
+    `BunkerLayout::HidesTerrain`.
+  - BunkerLayoutTests check the hillside below the apron.
+  - `bunker`, `bunker-corridor`, `quad-bunker`, `cave`, `quad-cave` and `mine-cutting` still
+    pass (`20261022T163834` to `163928`).
 
 ## Loop pass 547 (2026-10-22) — a windthrown jungle giant
 

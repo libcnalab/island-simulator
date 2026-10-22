@@ -90,9 +90,10 @@ bool BunkerLayout::HidesTerrain(float worldX,float worldY,float worldZ)const noe
         &&local.z>=25.75f&&local.z<=35.55f;
     if(!(corridor||computer||reactor||service))return false;
     const float ceiling=entrance_.y+FloorRelative(local.z)+(local.z<10.0f?2.75f:3.05f);
-    // Preserve the real ridge wherever it is genuinely above the concrete roof;
-    // remove only heightfield fragments that pass through the habitable volume.
-    return worldY<ceiling+.04f;
+    // Preserve the real ridge wherever it is genuinely above the concrete roof, and the
+    // hillside wherever it falls below the floor (in front of the portal, under the apron's
+    // edge); remove only heightfield fragments that pass through the habitable volume.
+    return worldY<ceiling+.04f&&worldY>entrance_.y+FloorRelative(local.z)-.03f;
 }
 
 bool BunkerLayout::IntersectsCapsule(BunkerPoint feet,float radius,float height)const noexcept {
