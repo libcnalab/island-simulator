@@ -554,11 +554,10 @@ namespace island
                 ++visibleGoatShadowCount_;
             }
             if (player.visible) {
-                // A standing walker under the 55-degree fixed sun casts about 1.2 m of shadow
-                // in the shadow direction; this soft ellipse grounds the first-person body.
+                // The walker's sun shadow is a figure of its own (WalkerShadowRenderer); this is
+                // only the soft pool of occluded sky right under the feet, which stays at night.
                 AppendTerrainEllipse(stagingVertices_, movingHeight, player.x, player.z,
-                                     shadowDirectionX, shadowDirectionZ, 0.80f, 0.30f,
-                                     shadowDirectionX * 0.62f, shadowDirectionZ * 0.62f, 74);
+                                     1.0f, 0.0f, 0.34f, 0.27f, 0.0f, 0.0f, 46);
                 ++visiblePlayerShadowCount_;
             }
             std::vector<std::pair<float,const SpiderState*>> visibleSpiders;

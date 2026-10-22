@@ -48,6 +48,7 @@
 #include "IslandSimulator/ButterflyMeadow.hpp"
 #include "IslandSimulator/ButterflyRenderer.hpp"
 #include "IslandSimulator/ContactShadowRenderer.hpp"
+#include "IslandSimulator/WalkerShadowRenderer.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/CrabColony.hpp"
 #include "IslandSimulator/CrocodileGroup.hpp"
@@ -240,6 +241,7 @@ namespace island
         ReefDetail,
         ReefHabitatDetail,
         AnemoneDetail,
+        WalkerShadowDetail,
         FallenFrondDetail,
         BirdDetail,
         BirdPreenDetail,
@@ -508,6 +510,7 @@ namespace island
         std::unique_ptr<FruitBatRenderer> fruitBatRenderer_;
         std::unique_ptr<ButterflyRenderer> butterflyRenderer_;
         std::unique_ptr<ContactShadowRenderer> contactShadowRenderer_;
+        std::unique_ptr<WalkerShadowRenderer> walkerShadowRenderer_;
         std::unique_ptr<SunShadowMap> sunShadowMap_;
         bool sunShadowReceiversBound_ = false;
         std::unique_ptr<CrabRenderer> crabRenderer_;
@@ -677,6 +680,11 @@ namespace island
         std::unique_ptr<RainRenderer> rain_;
         bool weatherKeyWasDown_ = false;
         FootprintTrail footprints_;
+        // The walker's sun-shadow figure: the gait's phase (a turn per stride), how far the limbs
+        // swing (0 standing .. 1 walking), and the way the body faces (yaw, eased).
+        float walkerGaitPhase_ = 0.0f;
+        float walkerSwing_ = 0.0f;
+        float walkerFacingYaw_ = 0.0f;
         // The deer's and the boars' cloven prints on wet sand and the stream's mud.
         std::array<FootprintTrail,DeerHerd::Count> deerPrints_{};
         std::array<FootprintTrail,BoarHerd::BoarCount> boarPrints_{};

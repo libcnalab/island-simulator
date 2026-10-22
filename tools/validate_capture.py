@@ -20,7 +20,10 @@ MINIMUM_LUMINANCE_DEVIATION = 18.0
 MINIMUM_QUANTIZED_COLOR_BINS = 64
 MINIMUM_SPATIAL_CONTRAST = 30.0
 PROFILES = ("scene", "shaded-detail", "close-natural-detail", "dark-cave-detail", "night-scene",
-            "underwater-scene")
+            "underwater-scene", "sand-shadow-detail")
+# Looking down at one's own shadow on open sand (walker-shadow, loop pass 447) fills the frame with
+# one sand colour and the shadow's shade: reviewed on 2026-10-22 at 10:00 (luminance spread 12.1,
+# 18 colour bins) and 14:00 (12.1, 21), with a clean figure each time.
 # Under the sea the water's haze and the surface's mirror outside Snell's window (loop pass 333)
 # fill the frame with one blue-green, so the luminance spread sits under the open-air floor;
 # reviewed on 2026-10-21 for the views whose camera is in the water (fish 18.5, reef-habitat 16.8,
@@ -46,6 +49,8 @@ def profile_for_viewpoint(viewpoint: str, hour: float | None = None) -> str:
         return "dark-cave-detail"
     if viewpoint in UNDERWATER_VIEWPOINTS:
         return "underwater-scene"
+    if viewpoint == "walker-shadow":   # the walker's own shadow on the open bay beach, sand filling the frame; reviewed 2026-10-22
+        return "sand-shadow-detail"
     if viewpoint in ("cave-top", "ground", "tracks", "cascade", "bridge", "boars", "boar-lying", "spiders", "spiders-bright", "snakes", "snake-head", "tree-snakes", "ants", "cicadas", "beetles", "rats", "mice"):
         return "close-natural-detail"
     return "scene"
@@ -242,6 +247,7 @@ def validate_capture(image: PpmImage, expected_width: int | None = None,
     # Shaded close-ups must retain at least 25% relative variation and a hard noise
     # floor. This is stricter for bright/washed-out pictures, not a blanket bypass.
     minimum_deviation = (2.5 if profile == "dark-cave-detail"
+                         else 10.0 if profile == "sand-shadow-detail"
                          else 3.0 if profile == "night-scene"
                          else 12.0 if profile == "underwater-scene"
                          else max(12.0, metrics["luminanceMean"] * 0.25)
@@ -249,7 +255,8 @@ def validate_capture(image: PpmImage, expected_width: int | None = None,
                          else max(10.0, metrics["luminanceMean"] * 0.20)
                          if profile == "close-natural-detail"
                          else MINIMUM_LUMINANCE_DEVIATION)
-    minimum_color_bins = (6 if profile == "dark-cave-detail" else 10 if profile == "night-scene" else 40
+    minimum_color_bins = (6 if profile == "dark-cave-detail" else 10 if profile == "night-scene"
+                          else 16 if profile == "sand-shadow-detail" else 40
                           if profile == "close-natural-detail" else MINIMUM_QUANTIZED_COLOR_BINS)
     minimum_spatial_contrast = (8.0 if profile in ("dark-cave-detail", "night-scene") else 15.0
                                 if profile == "close-natural-detail" else MINIMUM_SPATIAL_CONTRAST)

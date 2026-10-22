@@ -59,7 +59,7 @@ namespace island
         ContactShadowRenderer(ContactShadowRenderer&&) = delete;
         ContactShadowRenderer& operator=(ContactShadowRenderer&&) = delete;
 
-        /** The walking player's own grounding shadow, projected along the fixed sun. */
+        /** The walking player's grounding pool under the feet (the sun's figure is WalkerShadowRenderer's). */
         struct PlayerShadow
         {
             float x = 0.0f;

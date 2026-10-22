@@ -189,6 +189,7 @@ namespace island
             case FixedViewpoint::ReefDetail: return "reef";
             case FixedViewpoint::ReefHabitatDetail: return "reef-habitat";
             case FixedViewpoint::AnemoneDetail: return "anemone";
+            case FixedViewpoint::WalkerShadowDetail: return "walker-shadow";
             case FixedViewpoint::FallenFrondDetail: return "fronds";
             case FixedViewpoint::BirdDetail: return "birds";
             case FixedViewpoint::BirdPreenDetail: return "bird-preen";
@@ -536,6 +537,20 @@ namespace island
             cameraPosition_ = Vector3(x, terrain_.Height(x, z) + PlayerMotion::EyeHeight, z);
             yaw_ = 0.12f;
             pitch_ = -0.07f;
+        } else if (viewpoint_ == FixedViewpoint::WalkerShadowDetail) {
+            // Stand on the open bay beach with the sun at the back and look down along one's own
+            // shadow, aimed at its middle (the shading sun stands at least 15 degrees high).
+            constexpr float x = -147.0f, z = -8.0f;
+            cameraPosition_ = Vector3(x, terrain_.Height(x, z) + PlayerMotion::EyeHeight, z);
+            const float hour = day_night_options::RequestedHour() >= 0.0f ? day_night_options::RequestedHour()
+                                                                         : DayNightCycle::DefaultHour;
+            const DayVec3 toSun = DayNightCycle::SunDirectionAt(hour);
+            const float horizontal = std::max(std::hypot(toSun.x, toSun.z), 1e-3f);
+            yaw_ = std::atan2(-toSun.x, -toSun.z);
+            const float height = std::max(toSun.y, std::sin(sun_light::MinimumShadingElevationDegrees
+                                                             * std::numbers::pi_v<float> / 180.0f));
+            pitch_ = -std::atan2(PlayerMotion::EyeHeight, 0.5f * 1.75f * horizontal / height + 0.3f);
+            std::cout << "island-simulator: walker-shadow QA camera looks down along the walker's own shadow on the bay beach\n";
         } else if (viewpoint_ == FixedViewpoint::HeadlandDetail) {
             cameraPosition_ = Vector3(300.0f, 28.0f, 110.0f);
             yaw_ = std::atan2(-63.0f, -23.0f);
@@ -2385,6 +2400,7 @@ namespace island
             shipwreckLayout_, qualityProfile_.contactShadowDistanceScale,
             hutPlacement_?&*hutPlacement_:nullptr,
             helicopterPlacement_?&*helicopterPlacement_:nullptr, drawnGround_.get());
+        walkerShadowRenderer_ = std::make_unique<WalkerShadowRenderer>(device);
         constexpr auto coastalShadowDiagnostic =
             "island-simulator: coastal contact patches follow rendered seabed triangles in the existing batch";
         std::cout << coastalShadowDiagnostic << '\n';
@@ -3563,6 +3579,18 @@ namespace island
             updateProfile_.Mark("footprints");
             footprints_.Update(deltaSeconds,walker.x,walker.z,playerMotion_.VelocityX(),playerMotion_.VelocityZ(),onSand,
                 onSand&&terrain_.Sample(walker.x,walker.z).surface==TerrainSurface::WetSand);
+            // The shadow figure's gait: a turn of the phase per stride walked, the limbs swinging
+            // wider with the pace and settling when the walker stops, the body turning to the way
+            // it walks (or, standing, to the view) over some few tenths of a second.
+            const float speed=std::hypot(playerMotion_.VelocityX(),playerMotion_.VelocityZ());
+            walkerGaitPhase_=std::fmod(walkerGaitPhase_+speed*deltaSeconds/walker_shadow::StrideMetres
+                *2.0f*std::numbers::pi_v<float>,2.0f*std::numbers::pi_v<float>);
+            const float swingTarget=std::clamp(speed/1.6f,0.0f,1.0f);
+            walkerSwing_+=(swingTarget-walkerSwing_)*std::min(1.0f,deltaSeconds*6.0f);
+            if(speed<0.2f&&walkerSwing_<0.05f) walkerGaitPhase_=0.0f;
+            const float facing=speed>0.3f?std::atan2(playerMotion_.VelocityX(),playerMotion_.VelocityZ()):yaw_;
+            const float turn=std::remainder(facing-walkerFacingYaw_,2.0f*std::numbers::pi_v<float>);
+            walkerFacingYaw_+=turn*std::min(1.0f,deltaSeconds*8.0f);
         }
         const auto previousResident=resident_->State();
         const auto& observer=playerMotion_.Position();
@@ -6275,6 +6303,7 @@ namespace island
                 helicopterRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (quadRenderer_) quadRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 shipwreckRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                walkerShadowRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 sunShadowReceiversBound_ = true;
             }
             SunShadowMap::SetCloudClock(timeSeconds);
@@ -6333,6 +6362,24 @@ namespace island
                                          renderedMonkeys, boarHerd_.Boars(),*snakes_,goats_->Goats(),AwakeSpiders(),
                                          playerShadow);
             residentRenderer_->DrawShadow(cameraView_,cameraProjection_,renderCameraPosition_,resident_->State());
+            if (playerShadow.visible) {
+                // ...and the figure the sun lays from the walker's feet, where the feet stand on the
+                // drawn ground (not on a deck or a rock top above it) and out of the cave.
+                const PlayerPosition& walker = playerMotion_.Position();
+                const float ground = DrawnOrAnalyticHeight(*drawnGround_, terrain_, walker.x, walker.z);
+                const bool inCave = terrainRenderer_ && terrainRenderer_->CaveGround().Contains(walker.x, walker.z)
+                    && cameraPosition_.Y < terrain_.Height(cameraPosition_.X, cameraPosition_.Z) - 0.5f;
+                if (std::abs(playerMotion_.GroundHeight() - ground) < 0.25f && !inCave) {
+                    const auto& light = sun_light::Current();
+                    const auto toSun = light.shading;
+                    const walker_shadow::Shape figure = walker_shadow::Build(
+                        {std::sin(walkerFacingYaw_), std::cos(walkerFacingYaw_), walkerGaitPhase_, walkerSwing_},
+                        toSun.x, toSun.y, toSun.z);
+                    walkerShadowRenderer_->Draw(cameraView_, cameraProjection_, figure, Vector3(walker.x, ground, walker.z),
+                        Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength,
+                        [this](const float x, const float z) { return DrawnOrAnalyticHeight(*drawnGround_, terrain_, x, z); });
+                }
+            }
             if (quadRenderer_ && quadPlaced_) {
                 const auto q = quad_.Position();
                 const BikeGround ground = QuadGround(q.x, q.z);
@@ -7499,7 +7546,8 @@ namespace island
                       << distantSceneryRenderer_->DrawCallCount()
                       << " draw; contact shadows "
                       << contactShadowRenderer_->VisibleShadowCount() << " (walker's own shadow "
-                      << contactShadowRenderer_->VisiblePlayerShadowCount() << "), "
+                      << contactShadowRenderer_->VisiblePlayerShadowCount() << ", sun figure "
+                      << walkerShadowRenderer_->TriangleCount() << " triangles), "
                       << contactShadowRenderer_->PrimitiveCount() << " triangles, "
                       << contactShadowRenderer_->DrawCallCount()
                       << " draw, contact-batch mass shadows "

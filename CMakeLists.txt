@@ -109,6 +109,7 @@ add_library(island_core STATIC
     game/src/RootingDustField.cpp
     game/src/ShellDragTrail.cpp
     game/src/ReefFishField.cpp
+    game/src/WalkerShadow.cpp
     game/src/SurfSprayField.cpp
     game/src/DolphinBlowField.cpp
     game/src/StingraySandField.cpp
@@ -707,6 +708,7 @@ if(ISLAND_BUILD_GAME)
         game/src/BirdRenderer.cpp
         game/src/ButterflyRenderer.cpp
         game/src/ContactShadowRenderer.cpp
+        game/src/WalkerShadowRenderer.cpp
         game/src/SunShadowMap.cpp
         game/src/StructureShadowReceiver.cpp
         game/src/TimeOfDayRenderer.cpp

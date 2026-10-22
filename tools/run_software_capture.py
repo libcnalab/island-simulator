@@ -593,7 +593,7 @@ def run_monitored_capture(command, root, environment, evidence, journal, baselin
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("build", type=Path)
-    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "quad", "quad-ride", "quad-chase", "quad-drive", "quad-bunker", "quad-cave", "quad-jetty", "quad-helicopter", "quad-lookout", "quad-bear", "quad-stream", "quad-sea", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "jetty-end", "anemone", "flight", "bridge", "lookout", "log", "beach-vine", "hut", "hut-material", "helicopter", "helicopter-inside", "resident", "resident-tending", "resident-fishing", "bear", "bear-lying", "boars", "boar-lying", "goats", "goat-lying", "deer", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "monkey-scratch", "ground-doves", "bird-preen", "stingray-buried"}))
+    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "quad", "quad-ride", "quad-chase", "quad-drive", "quad-bunker", "quad-cave", "quad-jetty", "quad-helicopter", "quad-lookout", "quad-bear", "quad-stream", "quad-sea", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "jetty-end", "anemone", "walker-shadow", "flight", "bridge", "lookout", "log", "beach-vine", "hut", "hut-material", "helicopter", "helicopter-inside", "resident", "resident-tending", "resident-fishing", "bear", "bear-lying", "boars", "boar-lying", "goats", "goat-lying", "deer", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "monkey-scratch", "ground-doves", "bird-preen", "stingray-buried"}))
     parser.add_argument("--canopy-lod-inspection", nargs=3, metavar=("X_MM", "Z_MM", "TIER"))
     parser.add_argument("--time-of-day", type=float, default=None,
                         help="QA: the game hour to hold the clock at (default: the 14:00 the views were made at)")
@@ -1514,8 +1514,14 @@ def main():
                 raise RuntimeError("current dolphin blowhole is missing; check for a stale executable")
             if not re.search(r"footstep ground probe: jetty deck wood, water beside its end shallows, the stream's middle reach shallows, beside it (grass|soil|rock|sand), nearest beach sand, nearest rock rock, nearest inland ground (grass|soil)", diagnostics):
                 raise RuntimeError("the walker's footstep ground does not resolve wood, shallows (the sea's and the stream's), sand, rock and inland ground; check for a stale executable")
-            if not re.search(r"contact shadows \d+ \(walker's own shadow [01]\)", diagnostics):
+            walker_shadow = re.search(r"contact shadows \d+ \(walker's own shadow [01], sun figure (\d+) triangles\)", diagnostics)
+            if not walker_shadow:
                 raise RuntimeError("the walker's own shadow count is missing from the inventory; check for a stale executable")
+            # The contact and walker-shadow views stand the walker in the open: in clear daylight the sun lays its figure.
+            if (args.viewpoint in ("contact", "walker-shadow") and args.weather in (None, "clear")
+                    and (args.time_of_day is None or 7.5 <= args.time_of_day <= 17.0)
+                    and int(walker_shadow.group(1)) == 0):
+                raise RuntimeError("the walker cast no sun-shadow figure in the daylight contact view")
             if args.viewpoint == "resident-fishing" and "resident QA camera frames the resident fishing, rod out and line to the float" not in diagnostics:
                 raise RuntimeError("resident fishing capture did not hold the rod out")
             if args.viewpoint == "resident-tending" and "resident QA camera frames the resident crouched to tend the fire" not in diagnostics:

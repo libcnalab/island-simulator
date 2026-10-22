@@ -92,6 +92,7 @@
 #include "IslandSimulator/RootingDustField.hpp"
 #include "IslandSimulator/ShellDragTrail.hpp"
 #include "IslandSimulator/ReefFishField.hpp"
+#include "IslandSimulator/WalkerShadow.hpp"
 #include "IslandSimulator/SurfSprayField.hpp"
 #include "IslandSimulator/DolphinBlowField.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
@@ -12513,6 +12514,38 @@ int main()
         Check(nearFull, "the sun shadows keep full strength within 40 m of the viewer at every height of the island");
         std::cout << "sun shadow far fade: largest step " << largestStep << " per 2 cm across " << anchorChanges
                   << " re-centres (square edge fade: " << largestOldStep << ")\n";
+    }
+
+    {
+        // The walker's sun shadow is a figure laid along the light: some 1.2 m long under the
+        // afternoon sun, over six at a sun of fifteen degrees, none from a sun on the horizon.
+        namespace ws = island::walker_shadow;
+        const ws::Pose standing{0.0f, 1.0f, 0.0f, 0.0f};
+        const ws::Shape afternoon = ws::Build(standing, -0.45f, 0.82f, -0.34f);
+        const auto at = [](const ws::Shape& shape, const float along, const float across) {
+            return ws::SignedDistance(shape, shape.alongX * along - shape.alongZ * across,
+                                      shape.alongZ * along + shape.alongX * across);
+        };
+        Check(afternoon.cast && std::abs(afternoon.length - 1.2f) < 0.05f
+                  && at(afternoon, 0.93f * afternoon.length, 0.0f) < 0.0f
+                  && at(afternoon, 0.5f * afternoon.length, 0.0f) < 0.0f
+                  && at(afternoon, 1.25f * afternoon.length, 0.0f) > 0.0f
+                  && at(afternoon, -0.5f * afternoon.length, 0.0f) > 0.0f
+                  && afternoon.alongX > 0.0f && afternoon.alongZ > 0.0f,
+              "the afternoon sun lays the walker's figure some 1.2 m long away from itself");
+        const float low = std::sin(15.0f * std::numbers::pi_v<float> / 180.0f);
+        const ws::Shape evening = ws::Build(standing, std::sqrt(1.0f - low * low), low, 0.0f);
+        Check(evening.cast && evening.length > 6.0f && evening.length < 7.0f
+                  && at(evening, 0.93f * evening.length, 0.0f) < 0.0f && evening.alongX < -0.99f,
+              "a fifteen-degree sun lays it over six metres long");
+        Check(!ws::Build(standing, 1.0f, 0.05f, 0.0f).cast && !ws::Build(standing, 0.0f, -1.0f, 0.0f).cast,
+              "a sun on or below the horizon lays no figure");
+        // Side-lit, the striding legs part in the shadow and close again as the walker stands.
+        const ws::Shape stride = ws::Build({0.0f, 1.0f, std::numbers::pi_v<float> * 0.5f, 1.0f}, 1.0f, 1.0f, 0.0f);
+        const ws::Shape still = ws::Build({0.0f, 1.0f, std::numbers::pi_v<float> * 0.5f, 0.0f}, 1.0f, 1.0f, 0.0f);
+        Check(at(stride, 0.25f, 0.0f) > 0.08f && at(still, 0.25f, 0.0f) < 0.05f
+                  && at(stride, 1.62f, 0.0f) < 0.0f && at(still, 1.62f, 0.0f) < 0.0f,
+              "side-lit, the striding legs part in the walker's shadow and the head stays in it");
     }
 
     if (failures != 0) {

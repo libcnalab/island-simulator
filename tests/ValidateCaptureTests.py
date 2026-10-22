@@ -66,6 +66,9 @@ class CaptureValidatorTests(unittest.TestCase):
         self.assertEqual(profile_for_viewpoint("reef-habitat"), "underwater-scene")
         self.assertEqual(profile_for_viewpoint("dolphins"), "underwater-scene")
         self.assertEqual(profile_for_viewpoint("fish", 21.0), "night-scene")
+        # The walker's own shadow on open sand: reviewed 2026-10-22, the sand fills the frame.
+        self.assertEqual(profile_for_viewpoint("walker-shadow"), "sand-shadow-detail")
+        self.assertEqual(profile_for_viewpoint("walker-shadow", 21.0), "night-scene")
         for name in ("", "overview", "grass", "wet-sand", "litter-other", "interactive"):
             self.assertEqual(profile_for_viewpoint(name), "scene")
 
@@ -81,6 +84,19 @@ class CaptureValidatorTests(unittest.TestCase):
                          ("spatialContrast", 29.0)):
             with patch("tools.validate_capture.analyze_capture", return_value={**metrics, key: bad}):
                 self.assertFalse(validate_capture(image, profile="underwater-scene")["valid"])
+
+    def test_sand_shadow_detail_relaxes_only_the_spread_and_the_colour_bins(self):
+        image = PpmImage(640, 360, b"")
+        metrics = {"luminanceMean": 123.0, "luminanceStandardDeviation": 12.1,
+                   "quantizedColorBins": 21, "spatialContrast": 38.4,
+                   "darkPixelFraction": 0.0, "brightPixelFraction": 0.0}
+        with patch("tools.validate_capture.analyze_capture", return_value=metrics):
+            self.assertTrue(validate_capture(image, profile="sand-shadow-detail")["valid"])
+            self.assertFalse(validate_capture(image, profile="scene")["valid"])
+        for key, bad in (("luminanceStandardDeviation", 9.5), ("quantizedColorBins", 15),
+                         ("spatialContrast", 29.0)):
+            with patch("tools.validate_capture.analyze_capture", return_value={**metrics, key: bad}):
+                self.assertFalse(validate_capture(image, profile="sand-shadow-detail")["valid"])
 
     def test_close_natural_detail_retains_bounded_non_degenerate_thresholds(self):
         image = PpmImage(640, 360, b"")

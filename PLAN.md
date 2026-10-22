@@ -233,6 +233,33 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 447 (2026-10-22) — the walker's shadow is the figure of a body, cast by the hour's sun
+
+The player's sun shadow was a soft 0.8 x 0.3 m ellipse laid along the fixed 14:00 sun. It is now the
+figure of a body (new `WalkerShadow`, `WalkerShadowRenderer`). Seventeen capsules make the legs (thigh,
+shin, foot), the hips, the torso (narrower at the waist), the sloping shoulders, the neck, the head
+and the arms (a hand's breadth clear of the waist). The gait poses them: the thighs swing against each
+other, a knee folds as its leg swings through, the arms swing against the legs, and the body turns to
+the way it walks. The capsules are laid along the hour's shading light onto the feet's plane. A sphere
+slid along a slanting ray is an ellipse 1/sin(e) long; measured with that axis shortened by sin(e) it
+is a circle again, so every capsule lands as a 2D capsule. One smooth-union signed distance per
+fragment gives the whole silhouette, without seams at the joints and never darker where parts overlap.
+
+The figure is drawn on a grid draped on the drawn ground. Its fragments carry themselves up the light
+to the feet's plane, so a bank facing the sun shortens it. Its penumbra widens with the light's path
+from the body (the sun's half-degree disc). It multiplies the ground by the terrain's own crown-shade
+tint, scaled by the hour's shadow strength (none at night, faint under an overcast), and only where
+the sun shadow map and the clouds still leave the ground lit: in a crown's shadow it adds nothing.
+It is skipped on decks and rocks above the ground and in the cave. The old ellipse is now only the
+small occlusion pool under the feet (0.34 x 0.27 m).
+
+The new QA view `walker-shadow` looks down along one's own shadow on the open bay beach. Its framing
+depends on the hour, and it gets a reviewed `sand-shadow-detail` capture profile because sand fills
+the frame. Captures at 07:30, 10:00, 14:00 and 17:00 show a clean human figure. At 17:00 it is
+6.5 m long, at 14:00 1.2 m, and in a tree's shade it is gone (`contact` at 16:30). The core tests
+cover the length at both suns and the striding legs parting when lit from the side; the capture
+inventory reports `sun figure N triangles`.
+
 ## Loop pass 446 (2026-10-22) — the far hermit crab carries the same coiled shell
 
 Since pass 424 a hermit crab's shell changed its form at 18 m: the near coil gave way to the old banded
