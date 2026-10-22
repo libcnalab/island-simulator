@@ -124,6 +124,8 @@ namespace island
         void SetBunker(const BunkerLayout* bunker) noexcept {bunker_=bunker;}
         // The old mine's adit and chamber under the main mountain; null disables it.
         void SetMine(const MineLayout* mine) noexcept {mine_=mine;}
+        // The small volcano's cone carries the walker up to its rim; its crater is not entered.
+        void SetVolcano(bool present) noexcept {volcano_=present;}
         // Immutable grounded-helicopter floor/shell layout; null disables the landmark.
         void SetHelicopter(const HelicopterPlacement* helicopter) noexcept
         {helicopter_=helicopter;}
@@ -232,6 +234,7 @@ namespace island
         const CaveGroundPatch* caveGround_ = nullptr;
         const BunkerLayout* bunker_ = nullptr;
         const MineLayout* mine_ = nullptr;
+        bool volcano_ = false;
         const HelicopterPlacement* helicopter_ = nullptr;
         const JettyPlacement* jetty_ = nullptr;
         const BridgePlacement* bridge_ = nullptr;

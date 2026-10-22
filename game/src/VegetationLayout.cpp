@@ -5,6 +5,7 @@
 #include "IslandSimulator/CaveSite.hpp"
 #include "IslandSimulator/CampfireSite.hpp"
 #include "IslandSimulator/HelicopterSite.hpp"
+#include "IslandSimulator/VolcanoSite.hpp"
 #include "IslandSimulator/MineSite.hpp"
 #include "IslandSimulator/BunkerSite.hpp"
 
@@ -98,7 +99,7 @@ namespace island
 
     bool VegetationLayout::IsReservedRoute(const float x, const float z) noexcept
     {
-        if(CaveSite::Reserves(x,z,5)||BunkerSite::Reserves(x,z,2)||MineSite::Reserves(x,z,2)||CampfireSite::Reserves(x,z)
+        if(CaveSite::Reserves(x,z,5)||BunkerSite::Reserves(x,z,2)||MineSite::Reserves(x,z,2)||VolcanoSite::Reserves(x,z,2)||CampfireSite::Reserves(x,z)
             ||HelicopterSite::Reserves(x,z))return true;
         // A footpath-sized reserve lets the forest approach the walking line.
         // Solid trunks additionally exclude their footprint so the narrow path stays usable.
@@ -126,7 +127,7 @@ namespace island
     {
         if (!std::isfinite(x) || !std::isfinite(z) || !std::isfinite(radius) || radius < 0)
             return true;
-        if(CaveSite::Reserves(x,z,5+radius)||BunkerSite::Reserves(x,z,2+radius)||MineSite::Reserves(x,z,2+radius)||CampfireSite::Reserves(x,z,radius)
+        if(CaveSite::Reserves(x,z,5+radius)||BunkerSite::Reserves(x,z,2+radius)||MineSite::Reserves(x,z,2+radius)||VolcanoSite::Reserves(x,z,2+radius)||CampfireSite::Reserves(x,z,radius)
             ||HelicopterSite::Reserves(x,z,radius))return true;
         for (const auto clearing : {EastClearing, WestClearing,
                                     ClearingDefinition{PlayerSpawnReserveX, PlayerSpawnReserveZ,

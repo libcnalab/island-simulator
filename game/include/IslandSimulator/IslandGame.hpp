@@ -117,6 +117,7 @@
 #include "IslandSimulator/BunkerRenderer.hpp"
 #include "IslandSimulator/MineLayout.hpp"
 #include "IslandSimulator/MineRenderer.hpp"
+#include "IslandSimulator/VolcanoRenderer.hpp"
 #include "IslandSimulator/CampfireRenderer.hpp"
 #include "IslandSimulator/ResidentMotion.hpp"
 #include "IslandSimulator/ResidentRenderer.hpp"
@@ -278,6 +279,8 @@ namespace island
         MineExterior,
         MineAdit,
         MineChamber,
+        VolcanoExterior,
+        VolcanoCrater,
         GroundDoveDetail,
         FruitBatDetail,
         FruitBatRoostDetail,
@@ -577,6 +580,7 @@ namespace island
         std::unique_ptr<CaveRenderer> caveRenderer_;
         std::unique_ptr<BunkerRenderer> bunkerRenderer_;
         std::unique_ptr<MineRenderer> mineRenderer_;
+        std::unique_ptr<VolcanoRenderer> volcanoRenderer_;
         std::unique_ptr<CampfireRenderer> campfireRenderer_;
         std::unique_ptr<ResidentRenderer> residentRenderer_;
         std::unique_ptr<BearRenderer> bearRenderer_;

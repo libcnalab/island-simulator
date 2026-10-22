@@ -305,6 +305,11 @@ if(ISLAND_BUILD_TESTS AND NOT CMAKE_CROSSCOMPILING)
     island_enable_first_party_warnings(island_mine_tests)
     island_enable_first_party_sanitizers(island_mine_tests)
     add_test(NAME IslandMineLayoutTests COMMAND island_mine_tests)
+    add_executable(island_volcano_tests tests/VolcanoSiteTests.cpp)
+    target_link_libraries(island_volcano_tests PRIVATE IslandSimulator::Core)
+    island_enable_first_party_warnings(island_volcano_tests)
+    island_enable_first_party_sanitizers(island_volcano_tests)
+    add_test(NAME IslandVolcanoSiteTests COMMAND island_volcano_tests)
     add_executable(island_crocodile_tests tests/CrocodileGroupTests.cpp)
     target_link_libraries(island_crocodile_tests PRIVATE IslandSimulator::Core)
     island_enable_first_party_warnings(island_crocodile_tests)
@@ -801,6 +806,7 @@ if(ISLAND_BUILD_GAME)
         game/src/FreighterRenderer.cpp
         game/src/HumanSkeleton.cpp
         game/src/MineRenderer.cpp
+        game/src/VolcanoRenderer.cpp
         game/src/BridgeRenderer.cpp
         game/src/LookoutRenderer.cpp
         game/src/FallingFruitRenderer.cpp

@@ -11,6 +11,7 @@
 #include "IslandSimulator/BunkerLayout.hpp"
 #include "IslandSimulator/FreighterLayout.hpp"
 #include "IslandSimulator/MineLayout.hpp"
+#include "IslandSimulator/VolcanoSite.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -105,6 +106,8 @@ namespace island
                 sample.slopeRadians=std::atan(std::hypot(height(px+.1f,pz)-height(px-.1f,pz),
                     height(px,pz+.1f)-height(px,pz-.1f))/.2f);
             }
+            if(volcano_)
+                sample.height=VolcanoSite::SupportHeight(px,pz,sample.height);
             if(helicopter_)
                 sample.height=helicopter_->SupportHeight(px,pz,sample.height);
             if(jetty_)
@@ -223,6 +226,8 @@ namespace island
         if(freighter_&&mode_==LocomotionMode::Swimming&&freighter_->SafeTravelFraction(
             {position_.x,position_.y-EyeHeight,position_.z},{candidateX,position_.y-EyeHeight,candidateZ},
             CapsuleRadius,CapsuleHeight)<1.0f)
+            return HorizontalStepResult::ObstacleBlocked;
+        if(volcano_&&VolcanoSite::BlocksWalker(candidateX,candidateZ))
             return HorizontalStepResult::ObstacleBlocked;
         if (mode_ == LocomotionMode::Walking) {
             const GroundContact current = SampleGroundContact(terrain, position_.x, position_.z);

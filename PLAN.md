@@ -233,6 +233,54 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 507 (2026-10-22) — a small volcano with lava in its crater
+
+A small volcano stands on the eastern foothills over the sea at (174, 0) (`VolcanoSite`,
+`VolcanoRenderer`; QA views `volcano` and `volcano-crater`). Its cone rises 25 m from a 55 m foot
+to a crater 11 m across the rim, with a lava lake 9 m down. This is the last of the operator's
+backlog items.
+
+- **Site.** A probe over the terrain picked a spot with few forest trees, clear of the paths, the
+  stream, the landmarks and the monkeys' homes. The first choice, the south-western lowland, sat
+  on the monkey troop's authored homes and 50 m from the hut, so the volcano moved.
+- **Cone.**
+  - **Profile.** The cone's height is analytic, so the walker and the mesh agree. The slope
+    steepens toward the rim but stays under 37 deg. The foot reaches out unevenly on different
+    bearings, rain gullies run down the mid slopes, and an old lava flow runs down toward the
+    sea.
+  - **Rim.** The crater's wall and the outer slope meet in a crest rounded by a smooth minimum.
+    A knife-edge rim caught the walker on a sawtooth of contact heights.
+  - **Base.** The base sits under the foothills, so the cone rises out of them.
+- **Walking.** `PlayerMotion::SetVolcano` carries the walker up the cone. The walker stops on the
+  rim and is never let down into the crater. The quad bike, the animals and the resident keep
+  off the cone. Forest and grass keep off it through `VolcanoSite::Reserves`.
+- **Look.**
+  - **Cone.** Weathered soil going green at the foot, black basalt, then grey ash high up. Red
+    scoria and some sulphur sit on the rim. The old flow is black, the gullies hold darker grit,
+    and 70 blocks of black lava lie half-bedded down the slopes. The cone takes and casts the
+    sun shadows.
+  - **Lava.** The lava lake has a shader of its own: dark crust plates drift and churn between
+    bright seams of molten rock, hot spots well up, and the glow breathes.
+  - **Crater wall.** It is lit orange by the lava, strongest just above the lake. This light is
+    added over the night's grade, offset a few centimetres from the wall so it never loses the
+    depth test.
+  - **Plume.** A white steam plume rises out of the crater and leans away downwind, drawn by a
+    stateless function of time.
+  - **Night.** A glow stands over the rim and lights the steam.
+- **Tests.**
+  - `IslandVolcanoSiteTests` checks the rim's continuity and the climbable slope on every
+    bearing, and drives the real controller up to the rim, where it stops, and back down.
+  - The jungle's measured populations in `CoreTests` change from 557 bushes and 2133 ground
+    plants to 531 and 2027.
+  - The spider colony test's nearby crawler floor drops from 10 to 8, since nine crawl there
+    now.
+  - The command-line test's unknown-viewpoint example changes from "volcano" to "spaceship",
+    since "volcano" is now a real viewpoint.
+
+  The suite is 76/76.
+
+Evidence: `20261022T105022` (volcano), `105030` (crater) and `105039` (night).
+
 ## Loop pass 506 (2026-10-22) — an old mine runs under the main mountain, lit by lanterns
 
 The old mine is an adit driven west-north-west under the main mountain from the foot of its

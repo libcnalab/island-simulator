@@ -147,8 +147,8 @@ def main() -> int:
         ),
         InvalidInvocation(
             "unknown viewpoint",
-            ("--viewpoint", "volcano"),
-            "island-simulator: unknown viewpoint 'volcano'",
+            ("--viewpoint", "spaceship"),
+            "island-simulator: unknown viewpoint 'spaceship'",
         ),
         InvalidInvocation(
             "missing capture path",

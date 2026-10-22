@@ -111,7 +111,9 @@ realism pass):
       lit inside by lanterns or something else that glows: an old mine under the main mountain
       at (1, 7), a 48 m timbered adit lit by 8 lanterns to a chamber of glowing crystals,
       walkable (PLAN "Loop pass 506", `mine*` views, `20261022T101820`..`102409`).
-- [ ] A small volcano somewhere on the island, with lava visible inside its crater.
+- [x] A small volcano somewhere on the island, with lava visible inside its crater: a 25 m cone on
+      the eastern foothills at (174, 0), a churning lava lake in its crater, climbable to the rim,
+      glowing at night (PLAN "Loop pass 507", `volcano*` views, `20261022T105022`..`105039`).
 
 Loop log (propose → implement, continues until the operator stops the session):
 - Pass 1: dappled leaf-gap sun flecks on the shaded forest floor; `ground` view reclassified
@@ -348,6 +350,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 507: small volcano on the eastern foothills at (174, 0): analytic walkable cone (25 m, rounded rim, gullies, old flow, lava blocks), lava-lake shader, crater glow and night halo over the grade, steam plume; QA views `volcano`, `volcano-crater` (`20261022T105022`..`105039`) (PLAN "Loop pass 507").
 - Pass 506: old mine under the main mountain at (1, 7): 48 m timbered adit, 8 lanterns, crystal chamber, ore cart; walkable (MineLayout, PlayerMotion::SetMine), terrain cut in the shader, forest reserved; two-pass baked light (lanterns over the night grade); QA views `mine`, `mine-adit`, `mine-chamber` (`20261022T101820`..`101840`; night `102355`/`102409`) (PLAN "Loop pass 506").
 - Pass 505: README gallery adds the coaster row (grounded-coaster, coaster-hold, coaster-crew; captures `20261022T094410`/`094427`/`094435`) (PLAN "Loop pass 505").
 - Pass 504: five sailors' skeletons aboard the coaster (HumanSkeleton: skull with jaw/sockets/teeth, 22 vertebrae, ribs, pelvis, long bones, hands/feet, trouser rags, boots, caps; lying/sitting/slumped/curled poses); QA views `freighter-crew`, `freighter-mess` (profile `dim-interior-scene`) (`20261022T094410`..`094443`) (PLAN "Loop pass 504").

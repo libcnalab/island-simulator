@@ -211,6 +211,8 @@ namespace island
             case FixedViewpoint::MineExterior: return "mine";
             case FixedViewpoint::MineAdit: return "mine-adit";
             case FixedViewpoint::MineChamber: return "mine-chamber";
+            case FixedViewpoint::VolcanoExterior: return "volcano";
+            case FixedViewpoint::VolcanoCrater: return "volcano-crater";
             case FixedViewpoint::GroundDoveDetail: return "ground-doves";
             case FixedViewpoint::FruitBatDetail: return "bats";
             case FixedViewpoint::FruitBatRoostDetail: return "bat-roost";
@@ -483,6 +485,7 @@ namespace island
             }
             avoid.push_back({{bunkerLayout_.Entrance().x,bunkerLayout_.Entrance().z}});
             avoid.push_back({{mineLayout_.Entrance().x,mineLayout_.Entrance().z}});
+            avoid.push_back({{VolcanoSite::X,VolcanoSite::Z}});
             avoid.push_back({{helicopterPlacement_->x,helicopterPlacement_->z}});
             idolPlacement_=IdolStatueLayout::FindInWorld(terrain_,worldObstacles,avoid);
             if(idolPlacement_) worldObstacles.push_back(idolPlacement_->Obstacle());
@@ -552,6 +555,8 @@ namespace island
         // its own walls instead, so it can climb aboard.
         if(freighterPlacement_)
             for(const auto& circle:freighterPlacement_->Obstacles()) wildlifeObstacles.push_back(circle);
+        // and the volcano's steep cone
+        wildlifeObstacles.push_back({VolcanoSite::X,VolcanoSite::Z,VolcanoSite::BaseRadius*0.72f});
         // Keep complete animal bodies out of the authored rotor/clearing footprint,
         // not merely outside the fuselage collision proxy. Goat habitat selection
         // previously accepted a home under an open cabin door because 3.2 m only
@@ -797,6 +802,28 @@ namespace island
             }
             cameraPosition_={camera.x,camera.y,camera.z};
             const Vector3 direction=Vector3(target.x,target.y,target.z)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: "<<what<<'\n';
+        } else if(viewpoint_==FixedViewpoint::VolcanoExterior||viewpoint_==FixedViewpoint::VolcanoCrater) {
+            Vector3 target;
+            const char* what=nullptr;
+            if(viewpoint_==FixedViewpoint::VolcanoExterior) {
+                // from the hillside inland, across to the cone and the plume, the sea beyond
+                const float a=2.6f,r=VolcanoSite::BaseRadius+23.0f;
+                const float x=VolcanoSite::X+std::cos(a)*r,z=VolcanoSite::Z+std::sin(a)*r;
+                cameraPosition_=Vector3(x,terrain_.Height(x,z)+PlayerMotion::EyeHeight+0.6f,z);
+                target=Vector3(VolcanoSite::X,VolcanoSite::BaseY+VolcanoSite::Height*0.62f,VolcanoSite::Z);
+                what="volcano QA camera looks up the cone from the hillside to the plume over its crater";
+            } else {
+                // standing on the rim, looking down the sheer wall into the lava
+                const float a=VolcanoSite::FlowAngle+1.2f,r=VolcanoSite::RimRadius+0.3f;
+                const float x=VolcanoSite::X+std::cos(a)*r,z=VolcanoSite::Z+std::sin(a)*r;
+                cameraPosition_=Vector3(x,VolcanoSite::SurfaceY(x,z)+PlayerMotion::EyeHeight,z);
+                target=Vector3(VolcanoSite::X-std::cos(a)*1.5f,VolcanoSite::LavaY(),VolcanoSite::Z-std::sin(a)*1.5f);
+                what="volcano-crater QA camera looks down from the rim into the lava lake";
+            }
+            const Vector3 direction=target-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: "<<what<<'\n';
@@ -2734,11 +2761,13 @@ namespace island
         playerMotion_.SetCave(&terrainRenderer_->Cave(),&terrainRenderer_->CaveGround());
         playerMotion_.SetBunker(&bunkerLayout_);
         playerMotion_.SetMine(&mineLayout_);
+        playerMotion_.SetVolcano(true);
         flightMotion_.SetCave(&terrainRenderer_->Cave(),&terrainRenderer_->CaveGround());
         caveRenderer_=std::make_unique<CaveRenderer>(device,terrainRenderer_->Cave(),
                                                       terrainRenderer_->CaveGround());
         bunkerRenderer_=std::make_unique<BunkerRenderer>(device,bunkerLayout_);
         mineRenderer_=std::make_unique<MineRenderer>(device,mineLayout_,terrain_,*drawnGround_);
+        volcanoRenderer_=std::make_unique<VolcanoRenderer>(device,terrain_,*drawnGround_);
         campfireRenderer_=std::make_unique<CampfireRenderer>(device,campfireLayout_);
         streamWaterRenderer_=std::make_unique<StreamWaterRenderer>(device,terrain_,terrainRenderer_->StreamBed());
         grassRenderer_ = std::move(grassRenderer);
@@ -4978,6 +5007,8 @@ namespace island
         if (helicopterPlacement_ && helicopterPlacement_->IntersectsCapsule(x, z, 0.95f)) return true;
         // The grounded coaster's hull and its ladder (the ladder is a walker's, not a quad's).
         if (freighterPlacement_ && freighterPlacement_->Blocks(x, z, 0.95f)) return true;
+        // The volcano's cone, too steep for the quad above its foot.
+        if (VolcanoSite::BlocksVehicle(x, z, 0.95f)) return true;
         if (bridgePlacement_) {
             const auto& bridge = *bridgePlacement_;
             const float dx = x - bridge.ax, dz = z - bridge.az;
@@ -6225,6 +6256,7 @@ namespace island
         return 2 + terrainRenderer_->DrawCallCount()+streamWaterRenderer_->DrawCallCount()+caveRenderer_->DrawCallCount()
             +bunkerRenderer_->DrawCallCount()
             +(mineRenderer_?mineRenderer_->DrawCallCount():0)
+            +(volcanoRenderer_?volcanoRenderer_->DrawCallCount():0)
             +campfireRenderer_->DrawCallCount()
             + palmRenderer_->DrawCallCount() + jungleRenderer_->DrawCallCount()
             + naturalPropRenderer_->DrawCallCount() + grassRenderer_->DrawCallCount()
@@ -6670,6 +6702,7 @@ namespace island
                 if (planeWreckRenderer_) planeWreckRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (beachLitterRenderer_) beachLitterRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (freighterRenderer_) freighterRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                if (volcanoRenderer_) volcanoRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (bridgeRenderer_) bridgeRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (lookoutRenderer_) lookoutRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 helicopterRenderer_->SetSunShadowMap(sunShadowMap_.get());
@@ -6695,6 +6728,7 @@ namespace island
                 if (lighthouseRenderer_) lighthouseRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (planeWreckRenderer_) planeWreckRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (freighterRenderer_) freighterRenderer_->DrawSunShadow(*sunShadowMap_);
+                if (volcanoRenderer_) volcanoRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (bridgeRenderer_) bridgeRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (lookoutRenderer_) lookoutRenderer_->DrawSunShadow(*sunShadowMap_);
                 shipwreckRenderer_->DrawSunShadow(*sunShadowMap_);
@@ -6723,6 +6757,7 @@ namespace island
             caveRenderer_->Draw(cameraView_,cameraProjection_);
             bunkerRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
             if(mineRenderer_) mineRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
+            if(volcanoRenderer_) volcanoRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
             campfireRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,timeSeconds,false);
         }
         {
@@ -7274,6 +7309,7 @@ namespace island
             wetlandMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,wetlandMist_.Puffs());
             wetlandMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,valleyMist_.Puffs());
             sunSteamRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,sunSteam_.Puffs());
+            if (volcanoRenderer_) volcanoRenderer_->DrawPlume(cameraView_,cameraProjection_,renderCameraPosition_,timeSeconds);
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,rootingDust_.Puffs());
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,mudFlecks_.Puffs());
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,hoofDust_.Puffs());
@@ -7398,6 +7434,10 @@ namespace island
             timeOfDay_->DrawGrade(light, localLit);
             // the old mine's lanterns and crystals keep their light through the night's grade
             if (mineRenderer_) mineRenderer_->DrawLight(cameraView_, cameraProjection_, renderCameraPosition_, timeSeconds);
+            // the volcano's lava and its light on the crater's wall, over the grade too
+            if (volcanoRenderer_)
+                volcanoRenderer_->DrawGlow(cameraView_, cameraProjection_, renderCameraPosition_, timeSeconds,
+                                           1.0f - std::clamp((light.sunElevationDegrees + 3.0f) / 9.0f, 0.0f, 1.0f));
             if (lighthouseRenderer_ && !underground) {
                 // the lighthouse's lamp and its sweeping beams, over the graded night
                 const float lampNight = 1.0f - std::clamp((light.sunElevationDegrees + 3.0f) / 9.0f, 0.0f, 1.0f);

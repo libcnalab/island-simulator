@@ -2,6 +2,7 @@
 #include "IslandSimulator/CaveSite.hpp"
 #include "IslandSimulator/CampfireSite.hpp"
 #include "IslandSimulator/HelicopterSite.hpp"
+#include "IslandSimulator/VolcanoSite.hpp"
 #include "IslandSimulator/MineSite.hpp"
 #include "IslandSimulator/BunkerSite.hpp"
 
@@ -65,7 +66,7 @@ namespace island
             sample = terrain.Sample(x, z);
             const auto environment = IslandEnvironmentField::SampleInland(
                 x, z, sample.signedShoreDistance);
-            return !CaveSite::Reserves(x,z,1) && !BunkerSite::Reserves(x,z,.7f) && !MineSite::Reserves(x,z,.7f) && !CampfireSite::Reserves(x,z)
+            return !CaveSite::Reserves(x,z,1) && !BunkerSite::Reserves(x,z,.7f) && !MineSite::Reserves(x,z,.7f) && !VolcanoSite::Reserves(x,z,.7f) && !CampfireSite::Reserves(x,z)
                 && !HelicopterSite::Reserves(x,z,.7f)
                 && sample.signedShoreDistance >= 20.0f && sample.height >= 2.1f
                 && sample.slopeRadians <= 0.4886922f && sample.coastalRockiness < 0.60f
