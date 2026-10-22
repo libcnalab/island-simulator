@@ -207,6 +207,7 @@ namespace island
             case FixedViewpoint::LighthouseLanternDetail: return "lighthouse-lantern";
             case FixedViewpoint::LighthouseCottageDetail: return "lighthouse-cottage";
             case FixedViewpoint::PlaneWreckDetail: return "plane-wreck";
+            case FixedViewpoint::PlaneCockpitDetail: return "plane-cockpit";
             case FixedViewpoint::BeachLitterDetail: return "beach-litter";
             case FixedViewpoint::FreighterDetail: return "freighter";
             case FixedViewpoint::FreighterDeckDetail: return "freighter-deck";
@@ -1993,6 +1994,17 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: plane-wreck QA camera looks at the fighter's broken fuselage from ahead of its nose\n";
+        } else if (viewpoint_ == FixedViewpoint::PlaneCockpitDetail) {
+            // Standing on its left wing root, down through the canopy into the cockpit.
+            if(!planeWreckPlacement_) throw std::runtime_error("Plane wreck QA requires the wreck");
+            const auto& w=*planeWreckPlacement_;
+            const Vector3 heading(w.headingX,0.0f,w.headingZ),right(w.headingZ,0.0f,-w.headingX);
+            const Vector3 cockpit=Vector3(w.x,w.groundY+0.52f+0.15f,w.z)+heading*0.62f;
+            cameraPosition_=cockpit-right*1.25f-heading*0.55f+Vector3::Up*1.45f;
+            const Vector3 direction=cockpit+heading*0.15f-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: plane-cockpit QA camera looks down through the fighter's canopy into its cockpit\n";
         } else if (viewpoint_ == FixedViewpoint::FreighterDetail
                    || viewpoint_ == FixedViewpoint::FreighterDeckDetail
                    || viewpoint_ == FixedViewpoint::FreighterHoldDetail

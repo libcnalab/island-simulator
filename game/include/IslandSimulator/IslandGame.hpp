@@ -278,6 +278,7 @@ namespace island
         LighthouseLanternDetail,
         LighthouseCottageDetail,
         PlaneWreckDetail,
+        PlaneCockpitDetail,
         BeachLitterDetail,
         FreighterDetail,
         FreighterDeckDetail,

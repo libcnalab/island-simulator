@@ -233,6 +233,25 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 539 (2026-10-22) — the fighter's cockpit under a clear canopy
+
+The fighter's canopy had opaque blue-grey panes over a closed fuselage top.
+
+- **Opening.** The fuselage now leaves the cockpit's opening in its top: no skin from 0.3 m aft
+  of the wing roots to 1.5 m forward, over the top quarter of its round.
+- **Cockpit.** Under the canopy stands a cockpit tub in the factory's grey-green primer:
+  - a seat whose leather has gone dark, its back tilted;
+  - the stick with its rubber grip, and the rudder pedals;
+  - a black instrument panel facing the seat, with seven dials (dark faces in pale rings);
+  - the headrest on the bulkhead behind;
+  - sills from the opening's edge to the canopy's frame.
+- **Glass.** The canopy's surviving panes are a see-through mesh drawn after the metal (dirty,
+  alpha 0.32, with a glint toward the sun), so the cockpit shows through them.
+- **New QA view.** `plane-cockpit` stands by the left wing root and looks down into it
+  (`20261022T143602`). `plane-wreck` still passes (`20261022T143700`).
+
+The suite is 76/76.
+
 ## Loop pass 538 (2026-10-22) — the keepers' ruined cottage
 
 A lighthouse has its keepers' house. Ours is a roofless ruin beside it, 9.5-12.5 m from the

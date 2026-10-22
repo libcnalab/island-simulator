@@ -40,10 +40,10 @@ private:
     std::unique_ptr<StructureShadowReceiver> receiver_;
     const SunShadowMap* sunShadow_=nullptr;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> sunShadowEffect_;
-    std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> vertices_;
+    std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> vertices_,glass_;
     Microsoft::Xna::Framework::BoundingBox bounds_;
     Microsoft::Xna::Framework::Vector3 centre_;
-    int triangles_=0,drawCalls_=0;
+    int triangles_=0,glassTriangles_=0,drawCalls_=0;
     bool sunShadowUnavailable_=false;
 };
 }

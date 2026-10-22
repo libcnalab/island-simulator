@@ -28,7 +28,10 @@ constexpr float Pi=std::numbers::pi_v<float>;
 // the painted skin's marker (its colour comes from the face's facing and wear), and the other
 // pigments past full for the build's light
 const Vector3 Skin(1,2,3),Olive(124,146,94),Underside(196,196,188),Bare(214,214,208),Corroded(236,232,220),
-    Disc(232,70,56),Glass(48,62,68),Frame(96,104,82),Engine(78,76,72),Prop(70,66,58),Rubber(40,38,36);
+    Disc(232,70,56),Glass(48,62,68),Frame(96,104,82),Engine(78,76,72),Prop(70,66,58),Rubber(40,38,36),
+    Primer(118,132,104),Leather(98,72,50),Panel(34,34,32),Gauge(30,30,28);
+// the cockpit's opening in the fuselage's top, forward from the wing roots
+constexpr float CockpitAft=-0.3f,CockpitFore=1.5f;
 // A frame for one piece of the wreck: origin and its forward, right and up axes.
 struct Frame3 {
     Vector3 o,f,r,u;
@@ -54,7 +57,7 @@ PlaneWreckRenderer::PlaneWreckRenderer(GraphicsDevice& device,const PlaneWreckPl
                                        const IslandTerrain& terrain,const RenderedTerrainSurface& ground)
     :device_(device),effect_(std::make_unique<BasicEffect>(device))
 {
-    SculptMeshBuilder b;
+    SculptMeshBuilder b,clear;   // the metal; the canopy's glass, drawn see-through
     const auto groundAt=[&](const float x,const float z) {return DrawnOrAnalyticHeight(ground,terrain,x,z);};
     b.ground=groundAt;b.stainColour=Vector3(124,110,84);b.stainHeight=0.6f;b.stainAmount=0.35f;
     // the painted skin: dark green on the faces turned up, grey under, worn through to aluminium
@@ -83,9 +86,10 @@ PlaneWreckRenderer::PlaneWreckRenderer(GraphicsDevice& device,const PlaneWreckPl
     // the fuselage's radius along it (forward from the wing roots), and a lofted round section
     const std::vector<std::array<float,2>> fuselage{{{4.25f,0.10f},{4.05f,0.36f},{3.85f,0.56f},{3.55f,0.64f},{2.6f,0.65f},
         {1.6f,0.63f},{0.0f,0.59f},{-1.5f,0.49f},{-3.0f,0.33f},{-4.4f,0.17f},{-4.8f,0.08f}}};
-    const auto loftFuselage=[&](const Frame3& frame,const float from,const float to,const float shift) {
+    // the fuselage, lofted round; `open` leaves the cockpit's opening in its top
+    const auto loftFuselage=[&](const Frame3& frame,const float from,const float to,const float shift,const bool open) {
         constexpr int Ring=18;
-        std::vector<std::vector<Vector3>> rings;std::vector<Vector3> centres;
+        std::vector<std::vector<Vector3>> rings;std::vector<Vector3> centres;std::vector<float> stationsAt;
         const int stations=std::max(2,static_cast<int>(std::abs(from-to)/0.3f));
         for(int i=0;i<=stations;++i) {
             const float f=from+(to-from)*static_cast<float>(i)/static_cast<float>(stations);
@@ -95,14 +99,65 @@ PlaneWreckRenderer::PlaneWreckRenderer(GraphicsDevice& device,const PlaneWreckPl
                 const float a=2.0f*Pi*static_cast<float>(k)/Ring;
                 ring.push_back(frame.At(f-shift,std::cos(a)*rr,std::sin(a)*rr*1.08f));
             }
-            rings.push_back(ring);centres.push_back(frame.At(f-shift,0.0f,0.0f));
+            rings.push_back(ring);centres.push_back(frame.At(f-shift,0.0f,0.0f));stationsAt.push_back(f);
         }
-        b.Loft(rings,centres,[](std::size_t,std::size_t) {return Skin;});
+        for(std::size_t i=0;i+1<rings.size();++i) {
+            b.inside=(centres[i]+centres[i+1])*0.5f;
+            const float fm=(stationsAt[i]+stationsAt[i+1])*0.5f;
+            for(int k=0;k<Ring;++k) {
+                const auto kk=static_cast<std::size_t>(k),k1=static_cast<std::size_t>((k+1)%Ring);
+                const float am=2.0f*Pi*(static_cast<float>(k)+0.5f)/Ring;
+                if(open&&fm>CockpitAft&&fm<CockpitFore&&std::sin(am)>0.7f) continue;
+                b.Quad(rings[i][kk],rings[i+1][kk],rings[i+1][k1],rings[i][k1],Skin);
+            }
+        }
+        for(std::size_t k=0;k<static_cast<std::size_t>(Ring);++k) {
+            const std::size_t k1=(k+1)%static_cast<std::size_t>(Ring);
+            b.inside=centres[1];b.Face(centres.front(),rings.front()[k1],rings.front()[k],Skin);
+            b.inside=centres[centres.size()-2];b.Face(centres.back(),rings.back()[k],rings.back()[k1],Skin);
+        }
     };
-    loftFuselage(main,3.85f,-1.05f,0.0f);
+    loftFuselage(main,3.85f,-1.05f,0.0f,true);
+    // the cockpit under its canopy: a tub painted the grey-green of the factory's primer, the
+    // pilot's seat, the stick and the rudder pedals, the instrument panel with its dials, the
+    // headrest on the bulkhead behind; a sill along the opening's edges
+    {
+        const auto box=[&](const float f0,const float f1,const float r0,const float r1,const float u0,const float u1,const Vector3& pigment) {
+            b.Box(main.At((f0+f1)*0.5f,(r0+r1)*0.5f,(u0+u1)*0.5f),main.f,main.u,main.r,(f1-f0)*0.5f,(u1-u0)*0.5f,(r1-r0)*0.5f,pigment,pigment);
+        };
+        box(CockpitAft,CockpitFore,-0.42f,0.42f,-0.2f,-0.14f,Primer*0.8f);
+        for(const float side:{-1.0f,1.0f}) {
+            box(CockpitAft,CockpitFore,side>0.0f?0.4f:-0.44f,side>0.0f?0.44f:-0.4f,-0.2f,0.46f,Primer);
+            // the sill between the opening's edge and the canopy's frame
+            b.inside=main.At(0.6f,side*0.42f,0.2f);
+            b.Quad(main.At(CockpitAft,side*0.36f,0.5f),main.At(CockpitFore,side*0.36f,0.5f),main.At(CockpitFore,side*0.49f,0.44f),
+                   main.At(CockpitAft,side*0.49f,0.44f),Primer*0.9f);
+        }
+        box(CockpitAft-0.05f,CockpitAft,-0.42f,0.42f,-0.2f,0.5f,Primer*0.9f);
+        b.Tube({main.At(CockpitAft+0.02f,-0.18f,0.5f),main.At(CockpitAft+0.02f,0.18f,0.5f)},{0.1f,0.1f},8,Leather*0.8f);
+        // the seat, its pan and its back, leather gone dark and split
+        box(0.1f,0.55f,-0.22f,0.22f,-0.02f,0.04f,Leather);
+        b.Box(main.At(0.06f,0.0f,0.25f),main.u*0.96f+main.f*0.28f,main.r,main.f*0.96f-main.u*0.28f,0.24f,0.22f,0.03f,Leather*0.9f,Leather*0.9f);
+        // the stick and the pedals
+        b.Tube({main.At(0.85f,0.0f,-0.14f),main.At(0.82f,0.0f,0.18f),main.At(0.8f,0.0f,0.26f)},{0.022f,0.018f,0.03f},6,Rubber);
+        for(const float side:{-1.0f,1.0f}) box(1.2f,1.28f,side*0.12f-0.05f,side*0.12f+0.05f,-0.14f,0.02f,Engine);
+        // the instrument panel facing the seat: black, its dials pale rings with dark faces
+        b.Box(main.At(CockpitFore-0.04f,0.0f,0.2f),main.f,main.u,main.r,0.03f,0.22f,0.36f,Panel,Panel);
+        const std::array<std::array<float,2>,7> Dials{{{-0.22f,0.3f},{0.0f,0.32f},{0.22f,0.3f},{-0.24f,0.12f},{-0.08f,0.1f},{0.08f,0.1f},{0.24f,0.12f}}};
+        for(const auto& dial:Dials) {
+            const Vector3 centre=main.At(CockpitFore-0.075f,dial[0],dial[1]);
+            b.inside=centre+main.f*0.2f;
+            for(int k=0;k<10;++k) {
+                const float a0=2.0f*Pi*static_cast<float>(k)/10.0f,a1=2.0f*Pi*static_cast<float>(k+1)/10.0f;
+                const Vector3 e0=main.r*std::cos(a0)+main.u*std::sin(a0),e1=main.r*std::cos(a1)+main.u*std::sin(a1);
+                b.Face(centre,centre+e0*0.045f,centre+e1*0.045f,Gauge);
+                b.Quad(centre+e0*0.045f,centre+e1*0.045f,centre+e1*0.06f,centre+e0*0.06f,Corroded);
+            }
+        }
+    }
     // the tail section, broken off behind the cockpit, thrown aside and twisted onto its side
     const Frame3 tail=Frame3{main.At(-1.25f,0.85f,-0.12f),heading,right,Vector3::Up}.Turned(0.48f,-0.04f,-0.32f);
-    loftFuselage(tail,-1.15f,-4.8f,-1.15f);
+    loftFuselage(tail,-1.15f,-4.8f,-1.15f,false);
     {
         // its fin and rudder, and the tailplanes
         b.Blade(tail.At(-3.0f,0.0f,0.22f),tail.r,tail.u*0.94f-tail.f*0.34f,tail.f,0.045f,1.25f,0.62f,0.28f,Skin);
@@ -147,8 +202,8 @@ PlaneWreckRenderer::PlaneWreckRenderer(GraphicsDevice& device,const PlaneWreckPl
                     const auto at=[&](const float ff,const float a) {
                         return main.At(ff,std::cos(a)*0.35f,0.50f+std::sin(a)*0.39f*(1.0f-0.25f*std::abs(ff-0.6f)));
                     };
-                    b.inside=main.At((f+f1)*0.5f,0.0f,0.55f);
-                    b.Quad(at(f,a0),at(f1,a0),at(f1,a1),at(f,a1),Glass*(1.0f+0.3f*static_cast<float>(k%3)));
+                    clear.inside=main.At((f+f1)*0.5f,0.0f,0.55f);
+                    clear.Quad(at(f,a0),at(f1,a0),at(f1,a1),at(f,a1),Glass*(1.0f+0.3f*static_cast<float>(k%3)));
                 }
             }
         }
@@ -268,6 +323,32 @@ PlaneWreckRenderer::PlaneWreckRenderer(GraphicsDevice& device,const PlaneWreckPl
     vertices_=std::make_unique<VertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),
         static_cast<int>(mesh.size()),BufferUsage::WriteOnly);
     vertices_->SetData(mesh.data(),static_cast<int>(mesh.size()));
+    // the canopy's glass: dirty and crazed, faintly green-grey over the cockpit (premultiplied),
+    // a glint where a pane turns to the sun
+    {
+        auto& panes=clear.builder.mesh;
+        Vector3 sun(environment::SunDirectionX,environment::SunDirectionY,environment::SunDirectionZ);sun.Normalize();
+        for(std::size_t tri=0;tri<panes.size()/3U;++tri) {
+            const Vector3 a=panes[tri*3U].Position,bb=panes[tri*3U+1U].Position,c=panes[tri*3U+2U].Position;
+            Vector3 normal=Vector3::Cross(bb-a,c-a);
+            if(normal.LengthSquared()<1e-14f) continue;
+            normal.Normalize();
+            const float glint=std::clamp((std::abs(Vector3::Dot(normal,sun))-0.75f)/0.2f,0.0f,1.0f);
+            const float alpha=0.32f+0.4f*glint;
+            for(std::size_t v=0;v<3U;++v) {
+                const Color lit=panes[tri*3U+v].Color;
+                const auto channel=[&](const int value) {return static_cast<int>(std::lround(std::min(255.0f,static_cast<float>(value)*alpha+255.0f*0.3f*glint)));};
+                panes[tri*3U+v].Color=Color(channel(lit.getRProperty()),channel(lit.getGProperty()),channel(lit.getBProperty()),
+                                            static_cast<int>(std::lround(alpha*255.0f)));
+            }
+        }
+        glassTriangles_=static_cast<int>(panes.size()/3U);
+        if(glassTriangles_>0) {
+            glass_=std::make_unique<VertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),
+                static_cast<int>(panes.size()),BufferUsage::WriteOnly);
+            glass_->SetData(panes.data(),static_cast<int>(panes.size()));
+        }
+    }
     effect_->setVertexColorEnabledProperty(true);effect_->setLightingEnabledProperty(false);
     effect_->setFogEnabledProperty(true);
     effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
@@ -297,6 +378,17 @@ void PlaneWreckRenderer::Draw(const Matrix& view,const Matrix& projection,const 
         effect_->setViewProperty(view);effect_->setProjectionProperty(projection);effect_->Apply();
     }
     device_.DrawPrimitives(PrimitiveType::TriangleList,0,triangles_);drawCalls_=1;
+    if(glass_) {
+        // the canopy's glass over the cockpit, without hiding it
+        device_.setBlendStateProperty(BlendState::AlphaBlend);
+        device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
+        effect_->setWorldProperty(Matrix::getIdentityProperty());
+        effect_->setViewProperty(view);effect_->setProjectionProperty(projection);effect_->Apply();
+        device_.SetVertexBuffer(glass_.get());device_.setIndicesProperty(nullptr);
+        device_.DrawPrimitives(PrimitiveType::TriangleList,0,glassTriangles_);++drawCalls_;
+        device_.setBlendStateProperty(BlendState::Opaque);
+        device_.setDepthStencilStateProperty(DepthStencilState::Default);
+    }
 }
 
 void PlaneWreckRenderer::DrawSunShadow(SunShadowMap& map) {
