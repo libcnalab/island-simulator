@@ -6368,7 +6368,15 @@ namespace island
             walkerShadowRenderer_->BeginFrame();
             const auto& light = sun_light::Current();
             const auto toSun = light.shading;
-            const auto groundAt = [this](const float x, const float z) { return DrawnOrAnalyticHeight(*drawnGround_, terrain_, x, z); };
+            // the ground the figures fall on: the drawn terrain, or the jetty's, the bridge's or the
+            // lookout's planks where they cross it
+            const auto groundAt = [this](const float x, const float z) {
+                float height = DrawnOrAnalyticHeight(*drawnGround_, terrain_, x, z);
+                if (jettyPlacement_) height = jettyPlacement_->SupportHeight(x, z, height);
+                if (bridgePlacement_) height = bridgePlacement_->SupportHeight(x, z, height);
+                if (lookoutPlacement_) height = lookoutPlacement_->SupportHeight(x, z, height);
+                return height;
+            };
             {
                 // The resident's figure too, laid from their posed skeleton, within 80 m and where
                 // they stand on the drawn ground (not on the jetty's deck or the lookout).
@@ -6425,12 +6433,18 @@ namespace island
             }
             if (playerShadow.visible) {
                 // ...and the figure the sun lays from the walker's feet, where the feet stand on the
-                // drawn ground (not on a deck or a rock top above it) and out of the cave.
+                // drawn ground or a deck (not on a rock top above them) and out of the cave.
                 const PlayerPosition& walker = playerMotion_.Position();
-                const float ground = DrawnOrAnalyticHeight(*drawnGround_, terrain_, walker.x, walker.z);
+                const float ground = groundAt(walker.x, walker.z);
                 const bool inCave = terrainRenderer_ && terrainRenderer_->CaveGround().Contains(walker.x, walker.z)
                     && cameraPosition_.Y < terrain_.Height(cameraPosition_.X, cameraPosition_.Z) - 0.5f;
-                if (std::abs(playerMotion_.GroundHeight() - ground) < 0.25f && !inCave) {
+                // Only the walker's own eye sees the walker's body cast: a QA close-up camera set low
+                // by a crab or a gecko is no one standing there (the contact and walker-shadow views
+                // stand the walker in their frame on purpose).
+                const bool ownEye = std::abs(renderCameraPosition_.Y - (playerMotion_.GroundHeight() + PlayerMotion::EyeHeight)) < 0.35f
+                    && std::hypot(renderCameraPosition_.X - walker.x, renderCameraPosition_.Z - walker.z) < 0.5f;
+                const bool framed = viewpoint_ == FixedViewpoint::GroundContactDetail || viewpoint_ == FixedViewpoint::WalkerShadowDetail;
+                if (std::abs(playerMotion_.GroundHeight() - ground) < 0.25f && !inCave && (ownEye || framed)) {
                     const walker_shadow::Shape figure = walker_shadow::Build(
                         {std::sin(walkerFacingYaw_), std::cos(walkerFacingYaw_), walkerGaitPhase_, walkerSwing_},
                         toSun.x, toSun.y, toSun.z);

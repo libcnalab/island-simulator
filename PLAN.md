@@ -233,6 +233,26 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 455 (2026-10-22) — sweep after the shadow passes; figures on decks and off their edges
+
+A full capture sweep after passes 447-454 passed 127 of 127 (canopy skipped as always). The most
+changed views were animated: butterflies, fish, stingray-buried (a sea turtle swam into the corner),
+crocodiles and the like. Two real faults turned up and are fixed here.
+
+- **The walker's figure in low close-ups.** In `hermit-crabs`, `geckos` and `ants`, the walker's
+  figure fell into close-ups whose camera sits low by the animal, where no one stands. The figure is
+  now drawn only from the walker's own eye (within 0.35 m of standing eye height above the feet), or
+  in the two views that frame the walker on purpose (`contact`, `walker-shadow`). `hermit-crabs` now
+  reports `sun figure 0`.
+- **Decks.** On the jetty, the bridge and the lookout the walker cast nothing, because the figure was
+  drawn only where the feet stood on the drawn ground. The ground the figures fall on is now the
+  terrain or, where they cross it, a deck's support height. A grid cell across a deck's edge (a rise
+  over 0.4 m within the cell) is left out, so no slanted sheet hangs from the planks.
+- **Shadows lengthened by a drop.** Where the ground falls away under the shadow, the grid now
+  reaches further by the drop times the light's run per metre. In `jetty-end` at 08:00 the walker's
+  figure first lacked its head on the seabed two metres below the deck, and it is now whole there,
+  seen through the clear shallows.
+
 ## Loop pass 454 (2026-10-22) — birds', sea animals' and monkeys' shadows follow the hour's light
 
 Three projected shadows still used the fixed 14:00 sun and kept their full darkness under an overcast

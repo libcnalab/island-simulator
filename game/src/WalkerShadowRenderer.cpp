@@ -37,6 +37,7 @@ namespace island
         constexpr float Margin = 0.35f;           // past the figure's own extent: the penumbra and the joints
         constexpr float LongestReach = 14.0f;     // a low sun down a falling bank
         constexpr float SurfaceOffset = 0.03f;
+        constexpr float StepHeight = 0.4f;        // a rise within one cell that is a deck's edge, not a slope
 
         constexpr const char* Vertex = R"(
 layout(location = 0) in vec3 aPosition;
@@ -148,7 +149,14 @@ void main() {
             }
         }
         const float from = nearest - Margin;
-        const float to = std::min(LongestReach, 1.6f * farthest + Margin);
+        float to = std::min(LongestReach, 1.6f * farthest + Margin);
+        // Where the ground falls away under the shadow (off a deck's end to the seabed, down a
+        // bank) the figure lands that much further on: the drop times the light's run per metre.
+        const float run = std::sqrt(std::max(1.0f - shape.sunSine * shape.sunSine, 0.0f)) / shape.sunSine;
+        for (int pass = 0; pass < 2; ++pass) {
+            const float drop = feet.Y - groundHeight(feet.X + shape.alongX * to, feet.Z + shape.alongZ * to);
+            if (drop > 0.0f) to = std::min(LongestReach, 1.6f * farthest + Margin + drop * run);
+        }
         const float acrossFrom = leftmost - Margin, acrossTo = rightmost + Margin;
         const int alongCells = std::clamp(static_cast<int>(std::ceil((to - from) / 0.30f)), 6, MaximumAlongCells);
         const int acrossCells = std::clamp(static_cast<int>(std::ceil((acrossTo - acrossFrom) / 0.30f)), 4, MaximumAcrossCells);
@@ -170,6 +178,11 @@ void main() {
                 const auto at = [&](const int a, const int b) {
                     return grid[static_cast<std::size_t>((j + a) * (acrossCells + 1) + i + b)];
                 };
+                // A cell across a deck's edge (the jetty's, the bridge's) would hang a slanted
+                // sheet of shadow from the planks to the sand or the water below: left out.
+                const float low = std::min({at(0, 0).Y, at(1, 0).Y, at(1, 1).Y, at(0, 1).Y});
+                const float high = std::max({at(0, 0).Y, at(1, 0).Y, at(1, 1).Y, at(0, 1).Y});
+                if (high - low > StepHeight) continue;
                 for (const auto& corner : {at(0, 0), at(1, 0), at(1, 1), at(0, 0), at(1, 1), at(0, 1)})
                     staging_.emplace_back(corner, white);
             }
