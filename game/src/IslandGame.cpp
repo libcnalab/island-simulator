@@ -7218,6 +7218,11 @@ namespace island
                 }
             }
             timeOfDay_->DrawGrade(light, localLit);
+            if (lighthouseRenderer_ && !underground) {
+                // the lighthouse's lamp and its sweeping beams, over the graded night
+                const float lampNight = 1.0f - std::clamp((light.sunElevationDegrees + 3.0f) / 9.0f, 0.0f, 1.0f);
+                lighthouseRenderer_->DrawLight(cameraView_, cameraProjection_, renderCameraPosition_, lampNight, timeSeconds);
+            }
             timeOfDay_->DrawNightSky(cameraView_, cameraProjection_, renderCameraPosition_, light, timeSeconds);
             if (!underground)
                 timeOfDay_->DrawRainbow(cameraView_, cameraProjection_, renderCameraPosition_, light,

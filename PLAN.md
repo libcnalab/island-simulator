@@ -233,6 +233,24 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 499 (2026-10-22) — the lighthouse's beams sweep the night
+
+At night the lighthouse's lamp burns and its two opposed beams sweep round over the sea every
+twelve seconds (`LighthouseRenderer::DrawLight`, drawn over the graded night, additive and
+depth-read).
+
+- **Beams.** Each is three crossed fans from the lamp out to 140 m, aimed a little below the
+  level. They widen from 0.3 m to 12 m, brightest along the core and fading to nothing at their
+  edges and their end, faint as a beam in clear air.
+- **Glow.** The lamp is a warm disc turned to the eye in the lantern. It flares up to 8 m across
+  as a beam swings past the eye (the beam's alignment to the eye to the sixtieth power).
+- **Timing.** Its night rises from 6° above the horizon to 3° below. All of it is world-space
+  geometry, nothing on the screen.
+
+The first beams were solid light sabers, bright and hard-edged. They were dimmed and given soft
+edges. `lighthouse --time-of-day 21.5` (`20261022T082725`) shows the two faint beams crossing the starry
+sky from the glowing lantern.
+
 ## Loop pass 498 (2026-10-22) — a lighthouse over the sea
 
 Operator request: a lighthouse on the island. A whitewashed masonry lighthouse with two red

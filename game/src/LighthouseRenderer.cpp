@@ -11,6 +11,7 @@
 #include "Microsoft/Xna/Framework/Graphics/DepthStencilState.hpp"
 #include "Microsoft/Xna/Framework/Graphics/PrimitiveType.hpp"
 #include "Microsoft/Xna/Framework/Graphics/RasterizerState.hpp"
+#include "Microsoft/Xna/Framework/Graphics/SetDataOptions.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -182,6 +183,13 @@ LighthouseRenderer::LighthouseRenderer(GraphicsDevice& device,const LighthousePl
     catch(const std::exception& error) {
         std::cout<<"island-simulator: lighthouse sun shadow receiver unavailable: "<<error.what()<<'\n';
     }
+    lamp_=Vector3(placement.Lamp()[0],placement.Lamp()[1],placement.Lamp()[2]);
+    lightEffect_=std::make_unique<BasicEffect>(device);
+    lightEffect_->setVertexColorEnabledProperty(true);lightEffect_->setLightingEnabledProperty(false);
+    light_=std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),512,BufferUsage::WriteOnly);
+    lightStaging_.reserve(512);
+    std::cout<<"island-simulator: at night the lighthouse's lamp burns and its two beams sweep round over the sea every "
+             <<static_cast<int>(BeamTurnSeconds)<<" seconds, flaring as they pass the eye\n";
     std::ostringstream message;
     message<<"island-simulator: a whitewashed lighthouse with two red bands stands over the sea at ("
         <<static_cast<int>(std::lround(placement.x))<<", "<<static_cast<int>(std::lround(placement.z))
@@ -204,6 +212,77 @@ void LighthouseRenderer::Draw(const Matrix& view,const Matrix& projection,const 
         effect_->setViewProperty(view);effect_->setProjectionProperty(projection);effect_->Apply();
     }
     device_.DrawPrimitives(PrimitiveType::TriangleList,0,triangles_);drawCalls_=1;
+}
+
+Vector3 LighthouseRenderer::BeamDirection(const float seconds) noexcept {
+    const float a=(std::isfinite(seconds)?std::fmod(seconds,BeamTurnSeconds):0.0f)/BeamTurnSeconds*2.0f*Pi;
+    // a little below the level, so the beam reaches the sea at the horizon's distance
+    return Vector3::Normalize(Vector3(std::cos(a),-0.025f,std::sin(a)));
+}
+
+void LighthouseRenderer::DrawLight(const Matrix& view,const Matrix& projection,const Vector3& camera,
+                                   const float night,const float seconds) {
+    flare_=0;
+    if(!(night>0.02f)||(lamp_-camera).LengthSquared()>900.0f*900.0f) return;
+    lightStaging_.clear();
+    const auto colour=[](const float r,const float g,const float b) {
+        const auto c=[](const float v){return static_cast<int>(std::lround(std::clamp(v,0.0f,1.0f)*255.0f));};
+        return Color(c(r),c(g),c(b),255);
+    };
+    Vector3 toEye=camera-lamp_;
+    const float eyeDistance=std::max(toEye.Length(),0.1f);
+    toEye/=eyeDistance;
+    // the two beams: each three crossed fans from the lamp widening out to their length, bright at
+    // the lamp and gone at the end
+    for(const float sign:{1.0f,-1.0f}) {
+        const Vector3 dir=BeamDirection(seconds)*sign;
+        flare_=std::max(flare_,std::pow(std::max(0.0f,Vector3::Dot(dir,toEye)),60.0f));
+        Vector3 across=Vector3::Cross(dir,Vector3::Up);across.Normalize();
+        const Vector3 up=Vector3::Cross(across,dir);
+        for(int fan=0;fan<3;++fan) {
+            const float a=Pi*static_cast<float>(fan)/3.0f;
+            const Vector3 spread=across*std::cos(a)+up*std::sin(a);
+            // the beam's core along its axis, fading out to nothing at its edges and its end
+            const std::array<float,4> along{{0.0f,0.12f,0.40f,1.0f}},width{{0.30f,1.9f,5.2f,12.0f}},glow{{0.16f,0.12f,0.05f,0.0f}};
+            for(std::size_t i=0;i+1<along.size();++i) {
+                const Vector3 c0=lamp_+dir*(BeamLength*along[i]),c1=lamp_+dir*(BeamLength*along[i+1]);
+                const Color k0=colour(glow[i]*night,glow[i]*0.94f*night,glow[i]*0.76f*night);
+                const Color k1=colour(glow[i+1]*night,glow[i+1]*0.94f*night,glow[i+1]*0.76f*night);
+                const Color none(0,0,0,255);
+                for(const float edge:{1.0f,-1.0f}) {
+                    const Vector3 e0=c0+spread*(edge*width[i]),e1=c1+spread*(edge*width[i+1]);
+                    const VertexPositionColor q[]={{c0,k0},{e0,none},{e1,none},{c0,k0},{e1,none},{c1,k1}};
+                    for(const auto& v:q) lightStaging_.push_back(v);
+                }
+            }
+        }
+    }
+    // the lamp's glow, a disc turned to the eye, flaring as a beam swings past
+    {
+        Vector3 right=Vector3::Cross(toEye,Vector3::Up);
+        if(right.LengthSquared()<1e-6f) right=Vector3::UnitX;
+        right.Normalize();
+        const Vector3 up=Vector3::Cross(right,toEye);
+        const float radius=1.2f+7.0f*flare_;
+        const Vector3 centre=lamp_+toEye*1.4f;
+        const Color core=colour((0.85f+0.15f*flare_)*night,(0.78f+0.2f*flare_)*night,(0.55f+0.3f*flare_)*night),rim(0,0,0,255);
+        constexpr int Segments=20;
+        for(int k=0;k<Segments;++k) {
+            const float a0=2.0f*Pi*static_cast<float>(k)/Segments,a1=2.0f*Pi*static_cast<float>(k+1)/Segments;
+            lightStaging_.emplace_back(centre,core);
+            lightStaging_.emplace_back(centre+(right*std::cos(a0)+up*std::sin(a0))*radius,rim);
+            lightStaging_.emplace_back(centre+(right*std::cos(a1)+up*std::sin(a1))*radius,rim);
+        }
+    }
+    light_->SetData(lightStaging_.data(),0,static_cast<int>(lightStaging_.size()),SetDataOptions::Discard);
+    device_.setRasterizerStateProperty(RasterizerState::CullNone);
+    device_.setBlendStateProperty(BlendState::Additive);
+    device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
+    device_.SetVertexBuffer(light_.get());device_.setIndicesProperty(nullptr);
+    lightEffect_->setWorldProperty(Matrix::getIdentityProperty());
+    lightEffect_->setViewProperty(view);lightEffect_->setProjectionProperty(projection);lightEffect_->Apply();
+    device_.DrawPrimitives(PrimitiveType::TriangleList,0,static_cast<int>(lightStaging_.size()/3));
+    ++drawCalls_;
 }
 
 void LighthouseRenderer::DrawSunShadow(SunShadowMap& map) {
