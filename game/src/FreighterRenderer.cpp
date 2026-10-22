@@ -44,30 +44,63 @@ FreighterRenderer::FreighterRenderer(GraphicsDevice& device,const FreighterPlace
     SculptMeshBuilder b;
     const auto groundAt=[&](const float x,const float z) {return DrawnOrAnalyticHeight(ground,terrain,x,z);};
     b.stainColour=Vector3(196,178,140);b.stainHeight=0.5f;b.stainAmount=0.55f;
-    b.tintPerQuad=true;
-    // rust streaking down from the deck edge and the scuppers, blistered patches, weed at the
-    // waterline; the glass and the brass left as they are
-    b.tint=[&ship](const Vector3& pigment,const Vector3& normal,const Vector3& centre) {
-        const auto same=[&](const Vector3& other) {return pigment.X==other.X&&pigment.Y==other.Y&&pigment.Z==other.Z;};
-        if(same(Glass)||same(Brass)) return pigment;
-        const FreighterPoint local=ship.Local({centre.X,centre.Y,centre.Z});
-        float rust=0.0f;
-        if(std::abs(normal.Y)<0.6f) {
-            // streaks run down here and there from the scuppers and the plate seams, each its
-            // own strength and length, fading toward the waterline
-            auto cell=static_cast<std::uint32_t>(static_cast<int>(std::floor(local.x*4.0f))+1000)*2654435761U
-                ^(local.z>0.0f?0x9e3779b9U:0x85ebca6bU);
-            cell^=cell>>15U;cell*=0x2c1b3c6dU;cell^=cell>>12U;
-            const float pick=static_cast<float>(cell&0xffffU)/65535.0f,strength=static_cast<float>((cell>>16U)&0xffU)/255.0f;
-            const float length=1.0f+3.5f*strength;
-            const float below=P::DeckUp(local.x)+P::Bulwark-local.y;
-            if(pick>0.78f) rust+=(0.35f+0.45f*strength)*std::clamp(1.0f-below/length,0.0f,1.0f);
+    // weathered corner by corner, so the paint fades and rusts smoothly across the plates
+    b.tintPerVertex=true;
+    // rust weeping down the topsides: from the scuppers along the deck's edge, from the fittings
+    // on the bulwark's rail, and heaviest from the hawse pipes at the bow; each a thin streak of
+    // its own strength and length, widening and fading as it runs down the black (the topsides
+    // and the bulwarks are built fine enough to carry them)
+    struct Streak {float along,top,length,width,strength,side;};
+    std::vector<Streak> streaks;
+    {
+        std::uint32_t seed=0x51a7U;
+        const auto next=[&seed]() {seed=seed*1664525U+1013904223U;return static_cast<float>(seed>>8U)*(1.0f/16777216.0f);};
+        for(const float s:{-1.0f,1.0f}) {
+            for(float a=2.6f+next();a<27.5f;a+=1.3f+1.2f*next())
+                streaks.push_back({a,P::DeckUp(a)+0.03f,0.7f+1.9f*next(),0.04f+0.07f*next(),0.55f+0.4f*next(),s});
+            for(float a=1.5f+2.0f*next();a<28.0f;a+=2.5f+3.0f*next())
+                streaks.push_back({a,P::DeckUp(a)+P::Bulwark,0.35f+0.9f*next(),0.025f+0.03f*next(),0.3f+0.25f*next(),s});
+            streaks.push_back({28.9f,P::DeckUp(28.9f)-0.45f,2.0f,0.15f,0.9f,s});
         }
+        // each ends on the black, above the boot-top
+        for(Streak& streak:streaks) streak.length=std::min(streak.length,streak.top-BootTop-0.08f);
+    }
+    const auto weeping=[&streaks](const float along,const float up,const float across) {
+        float rust=0.0f;
+        for(const Streak& s:streaks) {
+            if(s.side*across<=0.0f) continue;
+            const float below=s.top-up;
+            if(below<-0.02f||below>s.length) continue;
+            const float run=std::clamp(below/s.length,0.0f,1.0f);
+            const float wander=0.025f*std::sin(below*3.1f+s.along*7.0f);
+            const float x=(along-s.along-wander)/(s.width*(0.6f+0.9f*run));
+            const float start=std::clamp((below+0.02f)/0.05f,0.0f,1.0f);
+            rust=std::max(rust,s.strength*std::exp(-x*x)*std::pow(1.0f-run,1.4f)*start);
+        }
+        return rust;
+    };
+    // blistered rust patches, the black faded chalky by the sun, weed at the waterline; the glass
+    // and the brass left as they are
+    b.tint=[&ship,weeping](const Vector3& paint,const Vector3& normal,const Vector3& centre) {
+        const FreighterPoint local=ship.Local({centre.X,centre.Y,centre.Z});
+        const auto is=[](const Vector3& a,const Vector3& b) {return a.X==b.X&&a.Y==b.Y&&a.Z==b.Z;};
+        const Vector3& pigment=paint;
+        const auto same=[&](const Vector3& other) {return is(pigment,other);};
+        if(same(Glass)||same(Brass)) return pigment;
+        float rust=0.0f;
         const float patch=std::sin(local.x*0.83f+local.z*1.7f+local.y*0.6f)*std::sin(local.x*1.9f-local.y*1.1f+local.z*0.7f);
         rust+=std::clamp((patch-0.58f)*2.5f,0.0f,1.0f)*(normal.Y>0.6f?0.2f:0.32f);
         // the white paint holds better: only thin weeping under the fittings
         if(same(House)||same(HouseInside)||same(Boot)) rust*=0.35f;
-        Vector3 colour=Vector3::Lerp(pigment,Rust,std::min(rust,0.75f));
+        Vector3 colour=pigment;
+        if(same(Topside)) {
+            // the black faded chalky grey by years of sun, most high up and in patches
+            const float high=std::clamp((local.y-BootTop)/(P::DeckUp(local.x)+P::Bulwark-BootTop),0.0f,1.0f);
+            const float blotch=0.5f+0.5f*std::sin(local.x*0.41f+local.y*1.3f)*std::sin(local.x*0.23f-local.y*0.7f+1.3f);
+            colour=Vector3::Lerp(colour,Vector3(104,106,108),0.14f+0.22f*high*blotch);
+        }
+        colour=Vector3::Lerp(colour,Rust,std::min(rust,0.75f));
+        if(same(Topside)&&std::abs(normal.Y)<0.6f) colour=Vector3::Lerp(colour,Rust*1.15f,std::min(0.9f,weeping(local.x,local.y,local.z)));
         const float weed=1.0f-std::clamp(std::abs(centre.Y+0.05f)/0.45f,0.0f,1.0f);
         colour=Vector3::Lerp(colour,Weed,weed*0.6f);
         return colour*(0.97f+0.03f*std::sin(local.x*3.1f+local.y*2.3f+local.z*1.7f));
@@ -121,22 +154,33 @@ FreighterRenderer::FreighterRenderer(GraphicsDevice& device,const FreighterPlace
             fraction*=1.0f-fine*std::pow(1.0f-t,1.5f);
             return P::HalfBreadth(a)*fraction;
         };
-        const std::array<float,13> rows{{0.0f,0.03f,0.12f,0.28f,0.5f,0.75f,1.1f,1.6f,Waterline,BootTop,3.1f,3.7f,99.0f}};
-        std::vector<float> stations;
+        // below the boot-top in quarter-metre stations; the black topsides, where the rust weeps,
+        // in a fine grid, so a streak a few centimetres wide reads corner by corner
+        const std::vector<float> lowRows{{0.0f,0.03f,0.12f,0.28f,0.5f,0.75f,1.1f,1.6f,Waterline,BootTop}};
+        std::vector<float> highRows;
+        for(float u=BootTop;u<P::DeckUp(P::Length)+0.15f;u+=0.15f) highRows.push_back(u);
+        highRows.push_back(99.0f);
+        std::vector<float> stations,fineStations;
         for(float a=0.0f;a<=P::Length+1e-3f;a+=0.25f) stations.push_back(a);
-        const auto rowUp=[&](const float a,const std::size_t k) {return std::clamp(rows[k],keelUp(a),D(a));};
-        for(std::size_t i=0;i+1<stations.size();++i) {
-            const float a0=stations[i],a1=stations[i+1];
-            for(std::size_t k=0;k+1<rows.size();++k) {
-                const float u00=rowUp(a0,k),u01=rowUp(a0,k+1),u10=rowUp(a1,k),u11=rowUp(a1,k+1);
-                const float middle=(u00+u01+u10+u11)*0.25f;
-                const Vector3 pigment=middle<Waterline?AntiFouling:(middle<BootTop?Boot:Topside);
-                b.inside=W((a0+a1)*0.5f,middle,0.0f);
-                for(const float s:{-1.0f,1.0f})
-                    b.Quad(W(a0,u00,s*breadth(a0,u00)),W(a1,u10,s*breadth(a1,u10)),
-                           W(a1,u11,s*breadth(a1,u11)),W(a0,u01,s*breadth(a0,u01)),pigment);
+        for(int i=0;i<=500;++i) fineStations.push_back(P::Length*static_cast<float>(i)/500.0f);
+        const auto shell=[&](const std::vector<float>& along,const std::vector<float>& rows) {
+            const auto rowUp=[&](const float a,const std::size_t k) {return std::clamp(rows[k],keelUp(a),D(a));};
+            for(std::size_t i=0;i+1<along.size();++i) {
+                const float a0=along[i],a1=along[i+1];
+                for(std::size_t k=0;k+1<rows.size();++k) {
+                    const float u00=rowUp(a0,k),u01=rowUp(a0,k+1),u10=rowUp(a1,k),u11=rowUp(a1,k+1);
+                    if(u01-u00<1e-4f&&u11-u10<1e-4f) continue;
+                    const float middle=(u00+u01+u10+u11)*0.25f;
+                    const Vector3 pigment=middle<Waterline?AntiFouling:(middle<BootTop?Boot:Topside);
+                    b.inside=W((a0+a1)*0.5f,middle,0.0f);
+                    for(const float s:{-1.0f,1.0f})
+                        b.Quad(W(a0,u00,s*breadth(a0,u00)),W(a1,u10,s*breadth(a1,u10)),
+                               W(a1,u11,s*breadth(a1,u11)),W(a0,u01,s*breadth(a0,u01)),pigment);
+                }
             }
-        }
+        };
+        shell(stations,lowRows);
+        shell(fineStations,highRows);
         // the flat bottom across the keel
         for(std::size_t i=0;i+1<stations.size();++i) {
             const float a0=stations[i],a1=stations[i+1];
@@ -146,8 +190,9 @@ FreighterRenderer::FreighterRenderer(GraphicsDevice& device,const FreighterPlace
         }
         // the transom
         b.inside=W(1.0f,3.2f,0.0f);
+        const std::array<float,13> rows{{0.0f,0.03f,0.12f,0.28f,0.5f,0.75f,1.1f,1.6f,Waterline,BootTop,3.1f,3.7f,99.0f}};
         for(std::size_t k=0;k+1<rows.size();++k) {
-            const float u0=rowUp(0.0f,k),u1=rowUp(0.0f,k+1);
+            const float u0=std::clamp(rows[k],keelUp(0.0f),D(0.0f)),u1=std::clamp(rows[k+1],keelUp(0.0f),D(0.0f));
             const Vector3 pigment=(u0+u1)*0.5f<BootTop?Boot:Topside;
             b.Quad(W(0.0f,u0,-breadth(0.0f,u0)),W(0.0f,u0,breadth(0.0f,u0)),W(0.0f,u1,breadth(0.0f,u1)),W(0.0f,u1,-breadth(0.0f,u1)),pigment);
         }
@@ -226,7 +271,13 @@ FreighterRenderer::FreighterRenderer(GraphicsDevice& device,const FreighterPlace
             const float i0=std::max(h0-0.1f,0.0f),i1=std::max(h1-0.1f,0.0f);
             const Vector3 outside=W(middle,D(middle)+0.5f,s*(P::HalfBreadth(middle)+2.0f));
             const Vector3 inboard=W(middle,D(middle)+0.5f,0.0f);
-            face(W(a,D(a),s*h0),W(a1,D(a1),s*h1),W(a1,D(a1)+P::Bulwark,s*h1),W(a,D(a)+P::Bulwark,s*h0),outside,Topside);
+            // the outside in a fine grid, for the rust weeping down it from the rail's fittings
+            for(int c=0;c<4;++c) for(int r=0;r<5;++r) {
+                const float c0=a+0.0625f*static_cast<float>(c),c1=c0+0.0625f;
+                const float r0=P::Bulwark*static_cast<float>(r)/5.0f,r1=P::Bulwark*static_cast<float>(r+1)/5.0f;
+                face(W(c0,D(c0)+r0,s*P::HalfBreadth(c0)),W(c1,D(c1)+r0,s*P::HalfBreadth(c1)),
+                     W(c1,D(c1)+r1,s*P::HalfBreadth(c1)),W(c0,D(c0)+r1,s*P::HalfBreadth(c0)),outside,Topside);
+            }
             face(W(a,D(a),s*i0),W(a1,D(a1),s*i1),W(a1,D(a1)+P::Bulwark,s*i1),W(a,D(a)+P::Bulwark,s*i0),inboard,BulwarkInside);
             face(W(a,D(a)+P::Bulwark,s*i0),W(a1,D(a1)+P::Bulwark,s*i1),W(a1,D(a1)+P::Bulwark+0.02f,s*(h1+0.04f)),
                  W(a,D(a)+P::Bulwark+0.02f,s*(h0+0.04f)),W(middle,D(middle)+5.0f,s*h0),Boot*0.9f);

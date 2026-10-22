@@ -233,6 +233,32 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 526 (2026-10-22) — the coaster's rust weeps
+
+The coaster's black topsides were striped with evenly spaced orange-brown bars, like ticking.
+Each "streak" was a quarter-metre cell of the hull's per-quad tint, and only three rows covered
+the 2 m between the boot-top and the deck.
+
+- **Streaks.** The rust now weeps from real sources:
+  - the scuppers along the deck's edge, every 1.3-2.5 m;
+  - the fittings on the bulwark's rail, sparser and finer;
+  - heaviest, the hawse pipes at the bow.
+
+  Each streak has its own strength, length (0.35-2.6 m) and width (2.5-11 cm). It widens, wanders
+  a little and fades as it runs down, and ends on the black above the boot-top.
+- **Paint.** The black is faded chalky grey by the sun, most high up and in patches.
+- **Mesh.** The hull is tinted corner by corner (`tintPerVertex`). The topsides above the
+  boot-top are built in a fine grid (500 stations, 0.15 m rows) and the bulwarks' outsides in
+  6 cm × 20 cm cells, so a streak a few centimetres wide reads smoothly. Below the boot-top the
+  hull keeps its quarter-metre stations. The ship is now 62,923 triangles in one draw (from
+  about 31,000).
+- **Rejected approach.** Thin decal sheets a centimetre off the plating showed their outlines:
+  their facets followed the analytic curve while the hull's follow its chords, so they caught
+  the light differently.
+- **Evidence.** `freighter` `20261022T130102`, `freighter-birds` `20261022T130221`.
+
+The suite is 76/76.
+
 ## Loop pass 525 (2026-10-22) — weathering that runs across the faces
 
 Three landmarks broke up at 2x crops into the triangles or tiles of their mesh. The weathering
