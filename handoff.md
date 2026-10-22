@@ -7,7 +7,12 @@
 - Loop pass 549 (foxfire mushrooms) is the last completed pass. It is committed with its native
   tests (76/76), its QA captures, a Web build (`build-probe`, rc 0) and an Android
   `assembleDebug` (rc 0).
-- The working tree is clean apart from this handoff commit, and `develop` is pushed to `origin`.
+- The working tree is clean.
+- The operator asked for a push, but `git push origin develop` failed from the agent's shell with
+  `Permission denied (publickey)`. The `github-libcnalab` alias uses `~/.ssh/id_rsa`, which the
+  running ssh-agent does not hold, and no passphrase prompt is possible there. So `develop` may
+  still be ahead of `origin`: check with `git fetch && git log --oneline origin/develop..develop`
+  and push from an interactive terminal (`ssh-add ~/.ssh/id_rsa` first if needed).
 - Every operator request recorded below is done (`[x]`):
   - the 20-item backlog, re-evidenced in passes 484 and 512;
   - day/night, weather and the quad bike;
