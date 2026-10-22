@@ -233,6 +233,19 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 476 (2026-10-22) — morning mist in the stream's valley
+
+After a dewy or a rained-on night, mist lies in a tropical valley at first light and burns off as
+the sun climbs. A new `ValleyMistField` holds ten broad, faint banks (5.5-9 m) spread down the
+stream's valley, alternately either side of the channel and a knee's to a head's height up. They
+drift slowly down the valley with the cool air draining off the hill and sway across it.
+
+Their thickness (`Strength`) gathers through the last hour of the night, is fullest at first light
+and is gone by 09:30, scaled by the night's dew (`weather_now::Dew`) and the rain's wetness. They
+are MistPuffs, drawn by the wetland mist's renderer. In `stream` at 06:12 the banks lie hazy and
+warm in the dawn light over the valley; at 12:00 there are none. A core test checks the strength
+at dawn, noon and 09:36, dry and wet, and that the banks lie over the stream at their heights.
+
 ## Loop pass 475 (2026-10-22) — the animals' coats darken in the rain
 
 The deer, the goats, the boars and the bear kept their dry coats through any downpour. A shared

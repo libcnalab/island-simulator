@@ -3710,6 +3710,8 @@ namespace island
         cascadeMist_.Update(deltaSeconds,seaForageSeconds_);
         updateProfile_.Mark("wetlandMist");
         wetlandMist_.Update(deltaSeconds,seaForageSeconds_);
+        valleyMist_.Update(deltaSeconds,dayNight_.Hour(),
+            weather_now::Dew(dayNight_.Hour(),weather_now::Current().cloudCover),weather_now::Current().wetness);
         updateProfile_.Mark("surfSpray");
         surfSpray_.Update(deltaSeconds,seaForageSeconds_,cameraPosition_.X,cameraPosition_.Z);
         updateProfile_.Mark("dolphinBlows");
@@ -6897,6 +6899,7 @@ namespace island
             streamDriftRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,streamDrift_.Leaves());
             cascadeMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,cascadeMist_.Puffs());
             wetlandMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,wetlandMist_.Puffs());
+            wetlandMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,valleyMist_.Puffs());
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,rootingDust_.Puffs());
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,mudFlecks_.Puffs());
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,hoofDust_.Puffs());

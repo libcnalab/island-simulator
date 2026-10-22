@@ -93,6 +93,7 @@
 #include "IslandSimulator/ShellDragTrail.hpp"
 #include "IslandSimulator/ReefFishField.hpp"
 #include "IslandSimulator/WalkerShadow.hpp"
+#include "IslandSimulator/ValleyMistField.hpp"
 #include "IslandSimulator/FootprintGround.hpp"
 #include "IslandSimulator/SurfSprayField.hpp"
 #include "IslandSimulator/DolphinBlowField.hpp"
@@ -12707,6 +12708,27 @@ int main()
         std::cout << "frog calls in five minutes: dry day " << dryDay << ", wet night " << wetNight << '\n';
         Check(dryDay >= 15 && dryDay <= 45 && wetNight >= 3 * dryDay,
               "the frogs call several times as often on a wet night as by a dry day");
+    }
+
+    {
+        // Morning mist in the stream's valley: thick at first light after a dewy night, none at
+        // noon or after a dry clear night, burnt off by half past nine; the banks lie over the
+        // stream, a knee's to a head's height up.
+        namespace vm = island;
+        Check(vm::ValleyMistField::Strength(6.2f, 0.45f, 0.0f) > 0.8f && vm::ValleyMistField::Strength(12.0f, 0.45f, 0.9f) == 0.0f
+                  && vm::ValleyMistField::Strength(9.6f, 0.5f, 1.0f) == 0.0f && vm::ValleyMistField::Strength(6.2f, 0.0f, 0.0f) == 0.0f
+                  && vm::ValleyMistField::Strength(6.2f, 0.1f, 0.9f) > vm::ValleyMistField::Strength(6.2f, 0.1f, 0.0f),
+              "the valley mist lies thick at first light after a dewy or rainy night and burns off by half past nine");
+        island::ValleyMistField mist(terrain);
+        for (int step = 0; step < 50; ++step) mist.Update(0.1f, 6.2f, 0.45f, 0.0f);
+        bool overStream = true, dense = true;
+        for (const auto& puff : mist.Puffs()) {
+            const float lift = puff.y - terrain.Height(puff.x, puff.z);
+            overStream = overStream && std::abs(puff.z - island::StreamRoute::CentreZ(puff.x)) < 4.0f
+                && lift > 0.2f && lift < 2.5f;
+            dense = dense && puff.active && puff.density > 0.15f;
+        }
+        Check(overStream && dense, "the morning mist banks lie over the stream, a knee's to a head's height up");
     }
 
     if (failures != 0) {
