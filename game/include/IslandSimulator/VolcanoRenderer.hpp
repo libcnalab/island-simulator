@@ -36,9 +36,10 @@ public:
     /** The steam plume (with the scene's other mists, before the grade). */
     void DrawPlume(const Microsoft::Xna::Framework::Matrix& view,const Microsoft::Xna::Framework::Matrix& projection,
                    const Microsoft::Xna::Framework::Vector3& camera,float seconds);
-    /** The lava lake and its light on the crater's wall, over the hour's grade; at night
-     *  (`night` 0..1) the glow it throws up into the steam over the crater as well, each of the
-     *  plume's puffs (placed by this frame's DrawPlume) lit by how low over the lake it hangs. */
+    /** The lava lake and its light on the crater's wall, over the hour's grade, and the lake's
+     *  spatter; at night (`night` 0..1) the glow it throws up into the steam over the crater as
+     *  well, each of the plume's puffs (placed by this frame's DrawPlume) lit by how low over the
+     *  lake it hangs. */
     void DrawGlow(const Microsoft::Xna::Framework::Matrix& view,const Microsoft::Xna::Framework::Matrix& projection,
                   const Microsoft::Xna::Framework::Vector3& camera,float seconds,float night);
     [[nodiscard]] int DrawCallCount() const noexcept {return drawCalls_;}
@@ -46,6 +47,10 @@ public:
     static constexpr int PlumePuffs=22,VentPuffs=4;
     /** The height over the lava lake (m) in which the lake's light on the plume falls to 1/e. */
     static constexpr float PlumeLightFalloff=13.0f;
+    /** The lava lake's spatter: a bubble bursts every `SpatterPeriod` seconds (give or take),
+     *  flinging this many glowing gobbets up to fall back into it. */
+    static constexpr float SpatterPeriod=3.7f;
+    static constexpr int SpatterGobbets=14;
 private:
     [[nodiscard]] bool Visible(const Microsoft::Xna::Framework::Matrix& view,const Microsoft::Xna::Framework::Matrix& projection,
                                const Microsoft::Xna::Framework::Vector3& camera) const;
@@ -58,6 +63,7 @@ private:
     std::unique_ptr<CascadeMistRenderer> plume_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> halo_;
     std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> haloStaging_;
+    static constexpr std::size_t HaloCapacity=2048;
     std::array<MistPuff,PlumePuffs+4*VentPuffs> puffs_{};
     Microsoft::Xna::Framework::BoundingBox bounds_;
     int coneTriangles_=0,glowTriangles_=0,lavaTriangles_=0,drawCalls_=0;

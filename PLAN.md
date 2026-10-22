@@ -233,6 +233,24 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 529 (2026-10-22) — the lava lake spatters
+
+The lava lake's crust plates drifted between their glowing seams, but nothing broke its surface.
+
+- **Spatter.** About every 3.7 s (`SpatterPeriod`), a gas bubble bursts somewhere within the
+  inner two thirds of the lake. A half-second flash shows on the lava. Fourteen gobbets
+  (`SpatterGobbets`) are flung up 1-3 m at 3-8.5 m/s and out at 0.4-2.4 m/s. They arc under
+  gravity and fall back in, cooling from yellow to a dull red. Each is a small hot core with a
+  soft halo, added over the grade, so they glow by day and by night.
+- **Schedule.** The first burst comes as the island loads, so the crater view shows one in
+  flight (`volcano-crater` `20261022T131631`).
+- **Buffer fix.** The night glow of pass 521 (two fans plus 22 lit puffs of 14 segments) could
+  reach 1,044 vertices in a 1,024-vertex buffer. The buffer now holds 2,048
+  (`HaloCapacity`) and a fan that would overflow it is skipped. The night view still passes
+  (`volcano --time-of-day 22` `20261022T131652`).
+
+The suite is 76/76.
+
 ## Loop pass 528 (2026-10-22) — the mine's bats squeak
 
 The bats of pass 522 flew in silence.

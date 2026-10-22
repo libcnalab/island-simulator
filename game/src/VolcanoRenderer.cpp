@@ -311,8 +311,8 @@ VolcanoRenderer::VolcanoRenderer(GraphicsDevice& device,const IslandTerrain& ter
     catch(const std::exception& error) {
         std::cout<<"island-simulator: volcano sun shadow receiver unavailable: "<<error.what()<<'\n';
     }
-    halo_=std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),1024,BufferUsage::WriteOnly);
-    haloStaging_.reserve(1024);
+    halo_=std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),static_cast<int>(HaloCapacity),BufferUsage::WriteOnly);
+    haloStaging_.reserve(HaloCapacity);
     plume_=std::make_unique<CascadeMistRenderer>(device,"island-simulator: steam rises out of the volcano's crater in a plume leaning downwind, and out of four sulphur-crusted fumaroles on its slopes",
                                                  static_cast<std::size_t>(PlumePuffs+4*VentPuffs));
     plume_->SetRange(260.0f,240.0f,1.5f);
@@ -417,27 +417,53 @@ void VolcanoRenderer::DrawGlow(const Matrix& view,const Matrix& projection,const
         device_.SetVertexBuffer(lava_.get());device_.setIndicesProperty(nullptr);
         device_.DrawPrimitives(PrimitiveType::TriangleList,0,lavaTriangles_);++drawCalls_;
     }
-    // at night the lake lights the steam over the crater: a soft glow standing over the rim, and
-    // the plume's puffs lit from beneath, so the light leans and breaks with the steam
+    // the glows added over the grade: at night the lake lighting the steam over the crater (a
+    // soft glow standing over the rim, and the plume's puffs lit from beneath, so the light
+    // leans and breaks with the steam); by day and night the lake's spatter
+    haloStaging_.clear();
+    Vector3 toEye=camera-Vector3(V::X,V::LavaY()+8.0f,V::Z);
+    if(toEye.LengthSquared()<1e-4f) toEye=Vector3::UnitZ;
+    toEye.Normalize();
+    Vector3 right=Vector3::Cross(toEye,Vector3::Up);
+    if(right.LengthSquared()<1e-6f) right=Vector3::UnitX;
+    right.Normalize();
+    const Vector3 up=Vector3::Cross(right,toEye);
+    const auto fan=[&](const Vector3& centre,const float radius,const float tall,const int segments,const Vector3& colour) {
+        if(haloStaging_.size()+static_cast<std::size_t>(segments)*3U>HaloCapacity) return;
+        const Color core(static_cast<int>(std::min(255.0f,colour.X*255.0f)),static_cast<int>(std::min(255.0f,colour.Y*255.0f)),
+                         static_cast<int>(std::min(255.0f,colour.Z*255.0f))),rim(0,0,0);
+        for(int k=0;k<segments;++k) {
+            const float a0=2.0f*Pi*static_cast<float>(k)/segments,a1=2.0f*Pi*static_cast<float>(k+1)/segments;
+            haloStaging_.emplace_back(centre,core);
+            haloStaging_.emplace_back(centre+(right*std::cos(a0)+up*std::sin(a0)*tall)*radius,rim);
+            haloStaging_.emplace_back(centre+(right*std::cos(a1)+up*std::sin(a1)*tall)*radius,rim);
+        }
+    };
+    // the spatter: every few seconds a gas bubble bursts somewhere on the lake, a flash on the
+    // lava, and flings gobbets of it up a few metres; they arc and fall back into it, cooling
+    // from yellow to a dull red as they go
+    for(int back=0;back<2;++back) {
+        const float burst=std::floor((seconds+0.7f)/SpatterPeriod)-static_cast<float>(back);
+        const auto seed=static_cast<std::uint32_t>(static_cast<int>(burst)+1000000)*2654435761U;
+        // (the schedule set so the first burst comes as the island loads)
+        const float since=seconds-(burst*SpatterPeriod+0.9f*Hash(seed)-0.7f);
+        if(since<0.0f||since>2.4f) continue;
+        const float r=V::LavaRadius*0.65f*std::sqrt(Hash(seed^0x1U)),a=2.0f*Pi*Hash(seed^0x2U);
+        const Vector3 vent(V::X+std::cos(a)*r,V::LavaY()+0.05f,V::Z+std::sin(a)*r);
+        if(since<0.5f) fan(vent+Vector3::Up*0.3f,1.6f,0.6f,12,Vector3(0.9f,0.5f,0.12f)*(1.0f-since/0.5f));
+        for(int k=0;k<SpatterGobbets;++k) {
+            const auto g=seed^(static_cast<std::uint32_t>(k+1)*0x9e3779b9U);
+            const float rise=3.0f+5.5f*Hash(g^0x3U),out=0.4f+2.0f*Hash(g^0x4U),heading=2.0f*Pi*Hash(g^0x5U);
+            const float height=rise*since-4.9f*since*since;
+            if(height<0.0f) continue;
+            const float life=std::clamp(since/(rise/4.9f),0.0f,1.0f);
+            const Vector3 at=vent+Vector3(std::cos(heading)*out*since,height,std::sin(heading)*out*since);
+            const Vector3 hot=Vector3::Lerp(Vector3(1.0f,0.82f,0.35f),Vector3(0.75f,0.16f,0.03f),life);
+            fan(at,0.07f+0.08f*Hash(g^0x6U),1.0f,6,hot);
+            fan(at,0.35f,1.0f,8,hot*0.22f);
+        }
+    }
     if(night>0.01f) {
-        haloStaging_.clear();
-        Vector3 toEye=camera-Vector3(V::X,V::LavaY()+8.0f,V::Z);
-        if(toEye.LengthSquared()<1e-4f) toEye=Vector3::UnitZ;
-        toEye.Normalize();
-        Vector3 right=Vector3::Cross(toEye,Vector3::Up);
-        if(right.LengthSquared()<1e-6f) right=Vector3::UnitX;
-        right.Normalize();
-        const Vector3 up=Vector3::Cross(right,toEye);
-        const auto fan=[&](const Vector3& centre,const float radius,const float tall,const int segments,const Vector3& colour) {
-            const Color core(static_cast<int>(std::min(255.0f,colour.X*255.0f)),static_cast<int>(std::min(255.0f,colour.Y*255.0f)),
-                             static_cast<int>(std::min(255.0f,colour.Z*255.0f))),rim(0,0,0);
-            for(int k=0;k<segments;++k) {
-                const float a0=2.0f*Pi*static_cast<float>(k)/segments,a1=2.0f*Pi*static_cast<float>(k+1)/segments;
-                haloStaging_.emplace_back(centre,core);
-                haloStaging_.emplace_back(centre+(right*std::cos(a0)+up*std::sin(a0)*tall)*radius,rim);
-                haloStaging_.emplace_back(centre+(right*std::cos(a1)+up*std::sin(a1)*tall)*radius,rim);
-            }
-        };
         const float glow=night*pulse;
         fan(Vector3(V::X,V::LavaY()+8.0f,V::Z),15.0f,1.3f,20,Vector3(0.55f,0.20f,0.05f)*glow);
         fan(Vector3(V::X,V::LavaY()+14.0f,V::Z),28.0f,1.3f,20,Vector3(0.12f,0.04f,0.012f)*glow);
@@ -449,6 +475,8 @@ void VolcanoRenderer::DrawGlow(const Matrix& view,const Matrix& projection,const
             if(lit<0.01f) continue;
             fan(Vector3(puff.x,puff.y,puff.z),puff.size*0.6f,1.0f,14,Vector3(0.55f,0.21f,0.06f)*(glow*lit));
         }
+    }
+    if(!haloStaging_.empty()) {
         halo_->SetData(haloStaging_.data(),0,static_cast<int>(haloStaging_.size()),SetDataOptions::Discard);
         device_.setBlendStateProperty(BlendState::Additive);
         device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
