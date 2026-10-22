@@ -60,17 +60,21 @@ void main()
 #ifdef STRUCTURE_TEXTURED
     color *= texture(uTexture, vTextureCoordinate);
 #endif
+    // The face (its normal from the world position's derivatives, turned to the eye).
+    vec3 faceNormal = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
+    if (dot(faceNormal, uCameraPosition - vWorld) < 0.0) faceNormal = -faceNormal;
     if (uBakedAmbient > 0.0) {
-        // Each face's light was baked for the fixed afternoon sun: the face (its normal from
-        // the world position's derivatives, turned to the eye) is relit by the hour's sun.
-        vec3 faceNormal = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
-        if (dot(faceNormal, uCameraPosition - vWorld) < 0.0) faceNormal = -faceNormal;
+        // Each face's light was baked for the fixed afternoon sun: it is relit by the hour's sun.
         float direct = 1.0 - uBakedAmbient;
         color.rgb *= (uBakedAmbient + direct * max(0.0, dot(faceNormal, normalize(uToSun))))
             / (uBakedAmbient + direct * max(0.0, dot(faceNormal, normalize(vec3(-0.45, 0.82, -0.34)))));
     }
     color.rgb *= mix(vec3(1.0), vec3(0.64, 0.66, 0.68), clamp(uWetness, 0.0, 1.0));
-    color.rgb *= mix(vec3(0.56, 0.60, 0.66), vec3(1.0), sunShadowVisibility(vWorld));
+    // A shadow takes the sun's direct light, which a face turned from the sun never had: such
+    // faces (a ceiling under its own roof, a wall's lee side) keep their ambient light whatever
+    // the shadow map, the crowns' dapples included.
+    float facing = smoothstep(0.0, 0.25, dot(faceNormal, normalize(uToSun)));
+    color.rgb *= mix(vec3(0.56, 0.60, 0.66), vec3(1.0), mix(1.0, sunShadowVisibility(vWorld), facing));
     float fog = clamp((length(vWorld - uCameraPosition) - uFogRange.x) / (uFogRange.y - uFogRange.x), 0.0, 1.0);
     fragColor = vec4(mix(color.rgb, islandAtmosphereFog, fog), color.a);
 }

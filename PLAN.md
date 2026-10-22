@@ -233,6 +233,23 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 511 (2026-10-22) — shadows no longer dapple faces turned from the sun
+
+This fixes the known issue from pass 504: the palms' dappled canopy shade showed on the
+coaster's mess ceiling.
+
+- **Cause.** The structure receiver multiplied a face's whole colour by the sun shadow's tint.
+  The mess's ceiling sits only 0.12 m under its own roof, well inside the shadow map's depth
+  bias, so the roof did not shadow it. The crowns' dapples above then showed on it.
+- **Fix.** A shadow takes the sun's direct light, which a face turned away from the sun never
+  had. The receiver now fades the shadow's tint out as the face turns from the sun
+  (`smoothstep(0, 0.25, n.toSun)`), with the face normal now taken from derivatives for every
+  receiver. Ceilings and the lee sides of walls keep their ambient light whatever the shadow map
+  says. This also ends the double darkening of shaded back faces.
+- **Check.** The mess's ceiling is now plain. The hut, the jetty, the helicopter's cockpit and the
+  idol are unchanged at a glance (`20261022T1123xx` against their earlier captures). The suite is
+  76/76.
+
 ## Loop pass 510 (2026-10-22) — the README gallery shows the mine and the volcano
 
 The README's "Newer landmarks" table now has two more rows, freshly captured at pass 509:
