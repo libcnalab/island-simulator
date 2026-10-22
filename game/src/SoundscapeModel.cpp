@@ -2158,6 +2158,50 @@ namespace island
         return Quantize(samples, .5f);
     }
 
+    AmbientLoop GeneratePalmClatter(const std::uint8_t variant)
+    {
+        // A palm's fronds in a gust: the stiff leaflets and the dry hanging fronds knock and
+        // slap together in quick clusters of clacks, each a few milliseconds of bright noise
+        // with a woody ring, over a dry rustle; the whole swells with the gust and settles.
+        constexpr float Seconds = 1.6f;
+        constexpr std::size_t frames = static_cast<std::size_t>(AmbientSampleRate * Seconds);
+        std::vector<float> samples(frames, 0.0f);
+        const unsigned which = variant % 3U;
+        DeterministicNoise noise(0x7a1c3e59U + which * 4099U);
+        // the clacks' times and strengths, drawn densest where the gust is strongest
+        std::uint32_t seed = 0x2f6e1d07U + which * 977U;
+        const auto next = [&seed] { seed = seed * 1664525U + 1013904223U; return static_cast<float>(seed >> 8U) / 16777216.0f; };
+        std::vector<std::array<float, 3>> clacks;   // time, strength, ring pitch
+        for (float t = 0.05f; t < Seconds - 0.12f;) {
+            const float swell = std::sin(std::numbers::pi_v<float> * t / Seconds);
+            const int cluster = 2 + static_cast<int>(next() * 4.0f);
+            for (int k = 0; k < cluster && t < Seconds - 0.12f; ++k) {
+                clacks.push_back({t, (0.45f + 0.55f * next()) * (0.35f + 0.65f * swell), 1400.0f + 1600.0f * next()});
+                t += 0.012f + 0.03f * next();
+            }
+            t += 0.05f + 0.22f * next() * (1.2f - swell);
+        }
+        float low = 0.0f, rustleLow = 0.0f, rustleSlow = 0.0f;
+        for (std::size_t i = 0; i < frames; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            const float raw = noise.Next();
+            low += 0.55f * (raw - low);
+            rustleLow += 0.30f * (raw - rustleLow);
+            rustleSlow += 0.04f * (rustleLow - rustleSlow);
+            const float swell = std::sin(std::numbers::pi_v<float> * t / Seconds);
+            float value = (rustleLow - rustleSlow) * 0.30f * swell * swell;
+            for (const auto& clack : clacks) {
+                const float since = t - clack[0];
+                if (since < 0.0f || since > 0.04f) continue;
+                const float hit = std::exp(-since * 260.0f) * clack[1];
+                const float ring = std::sin(2.0f * std::numbers::pi_v<float> * clack[2] * since) * std::exp(-since * 120.0f) * clack[1] * 0.35f;
+                value += hit * (raw - low) * 1.1f + ring;
+            }
+            samples[i] = value * SmoothStep(0.0f, 0.01f, t) * (1.0f - SmoothStep(Seconds - 0.08f, Seconds, t));
+        }
+        return Quantize(samples, .55f);
+    }
+
     AmbientLoop GenerateWingClap(const std::uint8_t variant)
     {
         // A flushing bird's wing clap: six quick beats of air in half a second, each a

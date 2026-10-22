@@ -233,6 +233,26 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 490 (2026-10-22) — a gust clatters the palms' dry fronds
+
+A coconut palm's stiff fronds rattle and clack in a strong gust: one of the most recognisable
+sounds of a tropical beach. The island's gust fronts already swelled the breeze and canopy beds
+and thrashed the palms, but nothing clattered.
+
+- **`GeneratePalmClatter(variant)`.** 1.6 s of hard little clacks in clusters of two to five,
+  drawn densest where the gust swells. Each clack is a few milliseconds of bright noise with a
+  short woody ring at 1.4–3 kHz, over a dry rustle that swells and settles. Three variants.
+- **Playback.** `Soundscape::NotePalmClatter` plays it through the wildlife voice
+  (`WildlifeCallType::PalmClatter`), heard within about thirty-five metres.
+- **Trigger.** While the gust at the listener is over 0.5, `IslandGame` notes a clatter every 2.5
+  to 5.5 s (shorter in a gale, by the weather's wind up to two), up in the crown of the nearest
+  living palm within 35 m.
+
+A core test checks the PCM: deterministic, three variants, at least eight separate clacks,
+louder mid-gust than at its start, and dry (over 1,500 zero crossings a second). A spectrogram
+shows the clusters over the swelling rustle. Pass 489's `octopuses` Chrome scope passed with the
+4326/24 geometry, and pass 488's `turtles` showed the scaled head and the eye on WebGL.
+
 ## Loop pass 489 (2026-10-22) — the octopus's arms are round, mottled and carry their suckers
 
 In `octopuses` the octopus read as a cartoon: a smooth, evenly orange body. Its arms were

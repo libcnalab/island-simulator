@@ -3125,6 +3125,7 @@ namespace island
                   << "island-simulator: a bolting deer flags its tail up, and a grazing or resting deer flicks it every few seconds\n"
                   << "island-simulator: the deer sentinel coming alert at the walker snorts the alarm, an original short nasal blast heard within fifty metres\n"
                   << "island-simulator: at night the house geckos by the hut's lantern chirp now and then, an original run of sharp chik-chik calls heard within twenty-five metres\n"
+                  << "island-simulator: a strong gust front clatters the nearest palm's dry fronds, an original run of hard little clacks over a dry rustle heard within thirty-five metres\n"
                   << "island-simulator: the resident's pause at the campfire tends the fire, its tongues and plume standing a third taller while they stay\n"
                   << "island-simulator: the resident's footfalls sound on the ground under them, sand, soil, grass, rock, shallows or planks, heard within twenty-four metres\n"
                   << "island-simulator: the resident's head turns to the walker within fourteen metres ahead of them, and back to the front once they leave that\n"
@@ -4057,6 +4058,27 @@ namespace island
                 soundscape_->NoteGeckoChirp(geckos[chirper].x, geckos[chirper].y, geckos[chirper].z);
             }
             geckoChirpClock_ = clock;
+        }
+        // A strong gust front knocks the nearest living palm's dry fronds together: their
+        // clatter up in its crown, every few seconds while the gust lasts, oftener in a gale.
+        if (soundscape_) {
+            palmClatterSeconds_ = std::max(0.0f, palmClatterSeconds_ - deltaSeconds);
+            if (palmClatterSeconds_ <= 0.0f && soundscape_->GustStrength() > 0.5f) {
+                const PalmPlacement* nearest = nullptr;
+                float best = 35.0f * 35.0f;
+                for (const auto& palm : vegetationLayout_.Palms()) {
+                    if (palm.condition != PalmCondition::Living) continue;
+                    const float d2 = (palm.x - cameraPosition_.X) * (palm.x - cameraPosition_.X)
+                        + (palm.z - cameraPosition_.Z) * (palm.z - cameraPosition_.Z);
+                    if (d2 < best) { best = d2; nearest = &palm; }
+                }
+                if (nearest)
+                    soundscape_->NotePalmClatter(nearest->x,
+                        nearest->y + (9.4f + static_cast<float>(nearest->variant) * 0.55f) * nearest->scale * 0.92f, nearest->z);
+                ++palmClatters_;
+                palmClatterSeconds_ = (2.5f + 3.0f * static_cast<float>((palmClatters_ * 2654435761U) >> 24U) / 255.0f)
+                    / std::clamp(weather_now::Current().wind, 1.0f, 2.0f);
+            }
         }
         if (viewpoint_ == FixedViewpoint::CrabDetail) {
             const CrabState& subject = crabColony_.Crabs()[crabViewSubject_];

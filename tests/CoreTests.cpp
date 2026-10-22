@@ -2334,6 +2334,33 @@ int main()
         Check(pcm,"gecko chirp PCM is deterministic, three distinct variants of 1.1 s, silent at the ends");
         Check(counts,"a gecko chirp variant runs five, six or seven chik bursts");
         Check(high,"a gecko's chik is a high tone");
+        // A palm's frond clatter: deterministic, three distinct variants of 1.6 s, silent at
+        // both ends, a run of separate hard clacks (bursts), loudest in its middle, and dry
+        // (bright: many zero crossings).
+        bool clatterPcm=true,clacks=true,dry=true,swells=true;
+        for(std::uint8_t variant=0;variant<3;++variant){
+            const auto clatter=island::GeneratePalmClatter(variant);
+            clatterPcm=clatterPcm&&clatter.sampleRate==22050&&clatter.samples.size()==static_cast<std::size_t>(22050*1.6f)
+                &&clatter.samples==island::GeneratePalmClatter(variant).samples
+                &&clatter.samples.front()==0&&clatter.samples.back()==0
+                &&(variant==0||clatter.samples!=island::GeneratePalmClatter(0).samples);
+            int bursts=0;bool loud=false;
+            for(std::size_t from=0;from<clatter.samples.size();from+=110){
+                int peak=0;
+                for(std::size_t i=from;i<from+110&&i<clatter.samples.size();++i)peak=std::max(peak,std::abs(static_cast<int>(clatter.samples[i])));
+                if(peak>5000&&!loud)++bursts;
+                loud=peak>5000;
+            }
+            clacks=clacks&&bursts>=8;
+            const auto peakIn=[&](std::size_t from,std::size_t to){int peak=0;for(std::size_t i=from;i<to;++i)peak=std::max(peak,std::abs(static_cast<int>(clatter.samples[i])));return peak;};
+            swells=swells&&peakIn(11025,24255)>peakIn(0,2200);
+            int crossings=0;
+            for(std::size_t i=1;i<clatter.samples.size();++i)crossings+=(clatter.samples[i-1]<0)!=(clatter.samples[i]<0);
+            dry=dry&&static_cast<float>(crossings)*0.5f/1.6f>1500.0f;
+        }
+        Check(clatterPcm,"palm clatter PCM is deterministic, three distinct variants of 1.6 s, silent at the ends");
+        Check(clacks&&swells,"a palm clatter is a run of separate clacks, louder in the gust's middle than at its start");
+        Check(dry,"a palm clatter is dry and bright");
         // Through an hour of night the two house geckos at the hut chirp between sixty and a
         // hundred and sixty times, both of them, each from home at rest; by day not once.
         island::HutPlacement hut{};

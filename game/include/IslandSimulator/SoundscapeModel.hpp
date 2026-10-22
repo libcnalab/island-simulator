@@ -385,7 +385,8 @@ namespace island
         ClawKnock,
         Owl,
         Heron,
-        Gecko
+        Gecko,
+        PalmClatter
     };
 
     /** @brief Nearest currently eligible world-space source for one wildlife species. */
@@ -598,6 +599,9 @@ namespace island
      *  a little and fading towards the end, 1.1 s; the three variants give five, six and seven
      *  chirps, each its own pitch. */
     [[nodiscard]] AmbientLoop GenerateGeckoChirp(std::uint8_t variant);
+    /** @brief Original clatter of a palm's dry fronds knocked together by a gust: clusters of
+     *  hard little clacks over a dry rustle, swelling and settling, 1.6 s; three variants. */
+    [[nodiscard]] AmbientLoop GeneratePalmClatter(std::uint8_t variant);
     [[nodiscard]] float SnakeHissVolume(float distance) noexcept;
 
     struct SnakeHissRequest

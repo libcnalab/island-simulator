@@ -322,6 +322,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 490: gusts clatter the nearest palm's fronds (GeneratePalmClatter, Soundscape::NotePalmClatter, every 2.5-5.5 s while gust > 0.5) (PLAN "Loop pass 490").
 - Pass 489: octopus arms six-sided lit tubes (cross-section bug fixed), mottled, two sucker rows; mantle mottled; near budget 4326 (`20261022T062233` octopuses) (PLAN "Loop pass 489").
 - Pass 488: turtle paddles smooth-lit per corner (faces from their grid neighbours), budget unchanged (`20261022T061749` turtles) (PLAN "Loop pass 488").
 - Pass 487: turtle head smooth-lit with dark-centred, pale-rimmed scale plates and a round eye (pupil, iris, lid ring, highlight); near budget 5274 (`20261022T061343` turtles) (PLAN "Loop pass 487").
