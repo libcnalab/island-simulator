@@ -233,6 +233,27 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 543 (2026-10-22) — a live lava flow down the volcano's flank
+
+- **Flow.** Lava now spills over the crater's lip and runs 22 m down the old flow's crest
+  (`VolcanoSite::FlowCentre/FlowHalfWidth/OnLavaFlow`). It is a ribbon a little proud of the rock
+  and crowned, widening from 0.8 m to 2.4 m to a rounded lobe at its front.
+- **Look.** It is drawn with the lake's lava shader, which gains `uCool`: by day the crust is
+  partly closed (dark red-brown between glowing cracks); at night it is bright through. Its light
+  falls in soft orange fans on the slope and the air along it at night.
+- **Walking.** The walker stops at its edge (`BlocksWalker`).
+- **Depth fix.** The lava shader never moved XNA's 0..1 depth into GL's -1..1 clip space, as
+  every other custom shader in the project does. Its surfaces drew far behind where they lie: the
+  lake never showed it, but the flow vanished under the cone it rides on. The vertex shader now
+  remaps it.
+- **New QA view.** `volcano-flow` from above the slope beside the flow, by day
+  (`20261022T151013`) and at 21:00 (`20261022T151021`). `volcano-crater` is unchanged
+  (`20261022T151029`).
+- **Tests.** VolcanoSiteTests check the flow's footprint (on it is blocked, a step beside is not)
+  and that the walker walking up it stops at its foot.
+
+The suite is 76/76.
+
 ## Loop pass 542 (2026-10-22) — a humpback breaches
 
 The whales offshore blew, rolled their backs and raised their flukes. Now about one surfacing in

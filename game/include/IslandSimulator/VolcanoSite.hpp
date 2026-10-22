@@ -81,9 +81,25 @@ struct VolcanoSite final {
         if(!std::isfinite(x)||!std::isfinite(z)||!std::isfinite(margin)) return false;
         return Radius(x,z)<BaseRadius-4.0f+std::max(0.0f,margin);
     }
-    /** The walker stops on the rim: the crater's wall drops sheer to the lava. */
+    /** The live lava spilling over the rim's lip and down the old flow's crest: from the rim
+     *  this far down the slope, widening from FlowRootWidth to FlowFrontWidth. */
+    static constexpr float FlowLength=22.0f,FlowRootWidth=0.8f,FlowFrontWidth=2.4f;
+    /** The live flow's centreline bearing at radius r (along the old flow's crest). */
+    [[nodiscard]] static float FlowCentre(const float r) noexcept {return FlowAngle-0.05f*std::sin(r*0.21f);}
+    [[nodiscard]] static float FlowHalfWidth(const float r) noexcept {
+        return 0.5f*(FlowRootWidth+(FlowFrontWidth-FlowRootWidth)*std::clamp((r-RimRadius)/FlowLength,0.0f,1.0f));
+    }
+    /** Whether (x, z) lies on the live flow, `margin` wider all round. */
+    [[nodiscard]] static bool OnLavaFlow(const float x,const float z,const float margin=0.0f) noexcept {
+        const float r=Radius(x,z);
+        if(r<RimRadius-margin||r>RimRadius+FlowLength+margin) return false;
+        const float across=std::remainder(Bearing(x,z)-FlowCentre(r),2.0f*std::numbers::pi_v<float>)*r;
+        return std::abs(across)<FlowHalfWidth(r)+margin;
+    }
+    /** The walker stops on the rim (the crater's wall drops sheer to the lava) and at the live
+     *  flow's edge. */
     [[nodiscard]] static bool BlocksWalker(const float x,const float z) noexcept {
-        return Radius(x,z)<RimRadius+0.05f;
+        return Radius(x,z)<RimRadius+0.05f||OnLavaFlow(x,z,0.35f);
     }
     /** The quad and the animals keep off the steep cone. */
     [[nodiscard]] static bool BlocksVehicle(const float x,const float z,const float margin) noexcept {

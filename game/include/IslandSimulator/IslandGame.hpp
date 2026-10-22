@@ -298,6 +298,7 @@ namespace island
         MinePuddleDetail,
         VolcanoExterior,
         VolcanoCrater,
+        VolcanoFlowDetail,
         LifeboatDetail,
         SignalFireDetail,
         GroundDoveDetail,

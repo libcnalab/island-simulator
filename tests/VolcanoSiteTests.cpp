@@ -48,5 +48,21 @@ int main() {
     Check(p.y-island::PlayerMotion::EyeHeight>V::BaseY+V::Height-1.2f,"the walker is not up on the rim");
     for(int frame=0;frame<60*20;++frame) player.Update(terrain,std::cos(bearing),std::sin(bearing),1.0f/60.0f);
     Check(V::Radius(player.Position().x,player.Position().z)>V::RimRadius+10.0f,"the walker cannot come back down the cone");
-    std::cout<<"Volcano: a climbable cone to its rim, the crater kept from the walker\n";
+    // the live lava flow down the old flow's crest: it is on the lava, a step to the side is not,
+    // and the walker walking up the flow stops at its foot
+    {
+        const float r=V::RimRadius+10.0f,theta=V::FlowCentre(r);
+        const float x=V::X+std::cos(theta)*r,z=V::Z+std::sin(theta)*r;
+        const float beside=theta+(V::FlowHalfWidth(r)+1.2f)/r;
+        Check(V::OnLavaFlow(x,z)&&V::BlocksWalker(x,z)
+              &&!V::BlocksWalker(V::X+std::cos(beside)*r,V::Z+std::sin(beside)*r),"the live lava flow is not where it runs, or blocks beside it");
+        island::PlayerMotion climber;
+        climber.SetVolcano(true);
+        const float foot=V::FlowCentre(V::RimRadius+V::FlowLength+8.0f);
+        climber.SetPosition(terrain,V::X+std::cos(foot)*(V::RimRadius+V::FlowLength+8.0f),V::Z+std::sin(foot)*(V::RimRadius+V::FlowLength+8.0f));
+        for(int frame=0;frame<60*25;++frame) climber.Update(terrain,-std::cos(foot),-std::sin(foot),1.0f/60.0f);
+        const auto& q=climber.Position();
+        Check(!V::OnLavaFlow(q.x,q.z)&&V::Radius(q.x,q.z)>V::RimRadius+V::FlowLength-0.5f,"the walker walks up onto the live lava");
+    }
+    std::cout<<"Volcano: a climbable cone to its rim, the crater kept from the walker; its live lava flow kept from it too\n";
 }

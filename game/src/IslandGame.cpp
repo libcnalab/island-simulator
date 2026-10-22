@@ -226,6 +226,7 @@ namespace island
             case FixedViewpoint::MinePuddleDetail: return "mine-puddle";
             case FixedViewpoint::VolcanoExterior: return "volcano";
             case FixedViewpoint::VolcanoCrater: return "volcano-crater";
+            case FixedViewpoint::VolcanoFlowDetail: return "volcano-flow";
             case FixedViewpoint::LifeboatDetail: return "lifeboat";
             case FixedViewpoint::SignalFireDetail: return "signal-fire";
             case FixedViewpoint::GroundDoveDetail: return "ground-doves";
@@ -918,7 +919,8 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: lifeboat QA camera looks at the coaster's lifeboat keel up on the beach\n";
-        } else if(viewpoint_==FixedViewpoint::VolcanoExterior||viewpoint_==FixedViewpoint::VolcanoCrater) {
+        } else if(viewpoint_==FixedViewpoint::VolcanoExterior||viewpoint_==FixedViewpoint::VolcanoCrater
+                  ||viewpoint_==FixedViewpoint::VolcanoFlowDetail) {
             Vector3 target;
             const char* what=nullptr;
             if(viewpoint_==FixedViewpoint::VolcanoExterior) {
@@ -928,6 +930,15 @@ namespace island
                 cameraPosition_=Vector3(x,terrain_.Height(x,z)+PlayerMotion::EyeHeight+0.6f,z);
                 target=Vector3(VolcanoSite::X,VolcanoSite::BaseY+VolcanoSite::Height*0.62f,VolcanoSite::Z);
                 what="volcano QA camera looks up the cone from the hillside to the plume over its crater";
+            } else if(viewpoint_==FixedViewpoint::VolcanoFlowDetail) {
+                // on the slope beside the live flow, up it to where it spills over the rim
+                const float r=VolcanoSite::RimRadius+VolcanoSite::FlowLength+5.0f,a=VolcanoSite::FlowCentre(r)+0.22f;
+                const float x=VolcanoSite::X+std::cos(a)*r,z=VolcanoSite::Z+std::sin(a)*r;
+                cameraPosition_=Vector3(x,std::max(VolcanoSite::SurfaceY(x,z),terrain_.Height(x,z))+PlayerMotion::EyeHeight+10.0f,z);
+                const float tr=VolcanoSite::RimRadius+6.0f,ta=VolcanoSite::FlowCentre(tr);
+                const float tx=VolcanoSite::X+std::cos(ta)*tr,tz=VolcanoSite::Z+std::sin(ta)*tr;
+                target=Vector3(tx,VolcanoSite::SurfaceY(tx,tz)+0.5f,tz);
+                what="volcano-flow QA camera looks up the live lava flow to where it spills over the rim";
             } else {
                 // standing on the rim, looking down the sheer wall into the lava
                 const float a=VolcanoSite::FlowAngle+1.2f,r=VolcanoSite::RimRadius+0.3f;

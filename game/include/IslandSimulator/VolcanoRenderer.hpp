@@ -59,14 +59,14 @@ private:
     std::unique_ptr<StructureShadowReceiver> receiver_;
     const SunShadowMap* sunShadow_=nullptr;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> sunShadowEffect_,lavaEffect_;
-    std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> cone_,glow_,lava_;
+    std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> cone_,glow_,lava_,flow_;
     std::unique_ptr<CascadeMistRenderer> plume_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> halo_;
     std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> haloStaging_;
     static constexpr std::size_t HaloCapacity=2048;
     std::array<MistPuff,PlumePuffs+4*VentPuffs> puffs_{};
     Microsoft::Xna::Framework::BoundingBox bounds_;
-    int coneTriangles_=0,glowTriangles_=0,lavaTriangles_=0,drawCalls_=0;
+    int coneTriangles_=0,glowTriangles_=0,lavaTriangles_=0,flowTriangles_=0,drawCalls_=0;
     bool sunShadowUnavailable_=false;
 };
 }

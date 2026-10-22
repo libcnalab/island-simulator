@@ -59,6 +59,8 @@ out vec3 vWorld;
 void main(){
     vWorld=aPosition;
     gl_Position=uViewProjection*vec4(aPosition,1.0);
+    // the projection's depth is XNA's 0..1; GL's clip space wants -1..1
+    gl_Position.z=2.0*gl_Position.z-gl_Position.w;
 }
 )";
 // The lake's crust: dark plates drifting and churning between bright seams of molten rock,
@@ -66,6 +68,7 @@ void main(){
 constexpr const char* LavaFragment=R"(
 in vec3 vWorld;
 uniform float uTime;
+uniform float uCool;   // 0 the molten lake; more for a flow crusting over in the daylight
 out vec4 fragColor;
 float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
 float noise(vec2 p){vec2 i=floor(p);vec2 f=fract(p);f=f*f*(3.0-2.0*f);
@@ -78,7 +81,7 @@ void main(){
     float n=fbm(q+vec2(t*0.03,-t*0.02));
     float seam=1.0-smoothstep(0.0,0.085,abs(n-0.5));
     float well=smoothstep(0.64,0.92,fbm(q*2.3-vec2(t*0.1,t*0.07)));
-    float heat=clamp(seam+well*0.65,0.0,1.0);
+    float heat=clamp(seam+well*0.65,0.0,1.0)*(1.0-uCool);
     float pulse=0.86+0.14*sin(t*0.9+n*6.0);
     vec3 crust=vec3(0.11,0.045,0.03)+vec3(0.14,0.035,0.0)*n;
     vec3 hot=mix(vec3(0.95,0.26,0.04),vec3(1.0,0.80,0.32),heat*heat);
@@ -284,6 +287,31 @@ VolcanoRenderer::VolcanoRenderer(GraphicsDevice& device,const IslandTerrain& ter
             }
         }
         lavaTriangles_=static_cast<int>(disc.size()/3U);
+        // the live flow: a ribbon riding the old flow's crest from the rim's lip down the flank,
+        // a little proud of the rock and crowned, its front a rounded lobe
+        {
+            std::vector<VertexPositionColor> ribbon;
+            constexpr int Columns=6;
+            const Color white(255,255,255);
+            const auto point=[&](const float r,const float c) {   // c from -1 to 1 across
+                const float half=V::FlowHalfWidth(r);
+                const float front=std::clamp((V::RimRadius+V::FlowLength-r)/1.5f,0.0f,1.0f);
+                const float lobe=std::sqrt(std::max(0.0f,1.0f-(1.0f-front)*(1.0f-front)));
+                const float theta=V::FlowCentre(r)+c*half*lobe/std::max(r,1.0f);
+                const float x=V::X+std::cos(theta)*r,z=V::Z+std::sin(theta)*r;
+                return Vector3(x,V::SurfaceY(x,z)+0.08f+0.22f*(1.0f-c*c)*lobe,z);
+            };
+            for(float r=V::RimRadius+0.3f;r<V::RimRadius+V::FlowLength-1e-3f;r+=0.6f) {
+                const float r1=std::min(r+0.6f,V::RimRadius+V::FlowLength);
+                for(int k=0;k<Columns;++k) {
+                    const float c0=-1.0f+2.0f*static_cast<float>(k)/Columns,c1=-1.0f+2.0f*static_cast<float>(k+1)/Columns;
+                    for(const Vector3& q:{point(r,c0),point(r1,c0),point(r1,c1),point(r,c0),point(r1,c1),point(r,c1)}) ribbon.emplace_back(q,white);
+                }
+            }
+            flowTriangles_=static_cast<int>(ribbon.size()/3U);
+            flow_=std::make_unique<VertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),static_cast<int>(ribbon.size()),BufferUsage::WriteOnly);
+            flow_->SetData(ribbon.data(),static_cast<int>(ribbon.size()));
+        }
         lava_=std::make_unique<VertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),static_cast<int>(disc.size()),BufferUsage::WriteOnly);
         lava_->SetData(disc.data(),static_cast<int>(disc.size()));
         using CNA::Graphics::ShaderCodeEXT;
@@ -414,8 +442,16 @@ void VolcanoRenderer::DrawGlow(const Matrix& view,const Matrix& projection,const
         lavaEffect_->Apply();
         lavaEffect_->SetUniformMat4("uViewProjection",matrix);
         lavaEffect_->SetUniformFloat("uTime",std::remainder(seconds,600.0f)+600.0f);
+        lavaEffect_->SetUniformFloat("uCool",0.0f);
         device_.SetVertexBuffer(lava_.get());device_.setIndicesProperty(nullptr);
         device_.DrawPrimitives(PrimitiveType::TriangleList,0,lavaTriangles_);++drawCalls_;
+        // the live flow down the flank: crusted dark by day between its glowing cracks, the
+        // whole of it bright at night
+        if(flow_) {
+            lavaEffect_->SetUniformFloat("uCool",0.22f*(1.0f-std::clamp(night,0.0f,1.0f)));
+            device_.SetVertexBuffer(flow_.get());device_.setIndicesProperty(nullptr);
+            device_.DrawPrimitives(PrimitiveType::TriangleList,0,flowTriangles_);++drawCalls_;
+        }
     }
     // the glows added over the grade: at night the lake lighting the steam over the crater (a
     // soft glow standing over the rim, and the plume's puffs lit from beneath, so the light
@@ -467,6 +503,12 @@ void VolcanoRenderer::DrawGlow(const Matrix& view,const Matrix& projection,const
         const float glow=night*pulse;
         fan(Vector3(V::X,V::LavaY()+8.0f,V::Z),15.0f,1.3f,20,Vector3(0.55f,0.20f,0.05f)*glow);
         fan(Vector3(V::X,V::LavaY()+14.0f,V::Z),28.0f,1.3f,20,Vector3(0.12f,0.04f,0.012f)*glow);
+        // the flow's light on the slope and the air over it
+        for(float r=V::RimRadius+1.0f;r<V::RimRadius+V::FlowLength;r+=2.5f) {
+            const float theta=V::FlowCentre(r);
+            const float x=V::X+std::cos(theta)*r,z=V::Z+std::sin(theta)*r;
+            fan(Vector3(x,V::SurfaceY(x,z)+1.2f,z),3.2f+0.08f*(r-V::RimRadius),1.0f,12,Vector3(0.32f,0.11f,0.03f)*glow);
+        }
         for(int k=0;k<PlumePuffs;++k) {
             const MistPuff& puff=puffs_[static_cast<std::size_t>(k)];
             if(!puff.active||puff.density<=0.02f) continue;
