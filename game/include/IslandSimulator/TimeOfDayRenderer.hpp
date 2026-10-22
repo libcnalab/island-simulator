@@ -30,8 +30,9 @@ namespace island
     class TimeOfDayRenderer final
     {
     public:
-        static constexpr int StarCount = 1100;
-        static constexpr int BandStarCount = 600;   // fainter stars crowded into the Milky Way
+        // over the whole sky, which wheels with the hour: about half of them above the horizon
+        static constexpr int StarCount = 2200;
+        static constexpr int BandStarCount = 1200;   // fainter stars crowded into the Milky Way
         static constexpr float StarDistance = 850.0f, MoonDistance = 820.0f;
         static constexpr float MoonRadiusDegrees = 1.2f;
 
@@ -82,12 +83,15 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> skyEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BlendState> gradeBlend_, litGradeBlend_, alphaResetBlend_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> gradeTriangle_;
-        std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> stars_, milkyWay_;
-        std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> moon_, meteor_, rainbow_, bolt_, starsInSky_, curtains_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> moon_, meteor_, rainbow_, bolt_, starsInSky_, curtains_,
+            milkyWay_;
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> curtainStaging_;
-        // the stars as built, and those low enough for the cumulus to pass in front of
-        std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> starBase_, starStaging_;
-        std::vector<std::uint32_t> lowStars_;
+        // The stars and the Milky Way as the sky stands at midnight: their vertices (recoloured
+        // as the sky turns: dimmed by the haze low down, gone under the horizon, hidden by the
+        // cumulus), each star's and band vertex's direction and its colour clear overhead.
+        std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> starStaging_, bandStaging_;
+        std::vector<Microsoft::Xna::Framework::Vector3> starDirection_, starColour_, bandDirection_, bandColour_;
+        float bandHour_ = -1000.0f;   // the hour the band was last recoloured for
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> boltStaging_;
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> rainbowStaging_;
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> moonStaging_;

@@ -233,6 +233,29 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 483 (2026-10-22) — the stars wheel about the celestial pole with the hour
+
+The sun and the moon crossed the sky, but the stars and the Milky Way stood fixed all night. A
+real sky wheels about the celestial pole at fifteen degrees an hour. In 24-minute days that is a
+quarter of a degree a real second: watched for a minute, the stars rise in the east and set in
+the west with the sun's path.
+
+- **`DayNightCycle::SkyAt(fixed, hour)`.** Turns a direction fixed among the stars (the sky as it
+  stands at midnight) about the pole: north, raised by the fitted 17.9 degree latitude. The world's
+  east-north-up frame is mirrored, so the rotation's sign follows the sun. Midnight's sun and moon
+  are carried exactly to every hour's. `DayLighting` carries its `hour`.
+- **Stars over the whole sky.** The stars cover the whole sphere (2,200, plus 1,200 in the band),
+  so no empty sky rises from under the horizon. About half are above it at a time, as the 1,100
+  were before.
+- **Turning.** The renderer turns the stars and the band by the hour's rotation in their world
+  matrix. Each star's colour is taken each frame from its height now: dimmed by the haze low down,
+  gone under the horizon (a smooth 0.02–0.06 rise), and covered by the drifting cumulus as before.
+  The Milky Way's colours are recoloured for its low haze whenever the hour has moved 0.01
+  (0.15 degrees). The unused static star buffer is gone.
+
+A core test checks the sun and moon, rigidity and the fixed pole. `distant` at 21:00 and 03:00
+(new moon) shows the band at 21:00 and different stars, the band gone, at 03:00.
+
 ## Loop pass 482 (2026-10-22) — capture evidence is kept as PNG and pruned to the newest sets
 
 Operator request: the capture directories had grown to 25.7 GB. `build-consumer/software-captures`

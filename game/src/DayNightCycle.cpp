@@ -182,9 +182,25 @@ namespace island
         return OnPath(Radians((hour - 12.0f) * 15.0f));
     }
 
+    DayVec3 DayNightCycle::SkyAt(const DayVec3& fixed, const float hour) noexcept
+    {
+        // the pole: north (east axis (c, s), north axis (-s, c) in world x, z) raised by the latitude
+        const float c = std::cos(fit.eastAxis), s = std::sin(fit.eastAxis), north = std::cos(fit.latitude);
+        const DayVec3 k{-north * s, std::sin(fit.latitude), north * c};
+        // turned about it (in the world's frame, whose east-north-up is mirrored) the sun's path
+        // runs on westward with the hours
+        const float angle = Radians((std::isfinite(hour) ? hour : 0.0f) * 15.0f);
+        const float ca = std::cos(angle), sa = std::sin(angle);
+        const DayVec3 cross{k.y * fixed.z - k.z * fixed.y, k.z * fixed.x - k.x * fixed.z, k.x * fixed.y - k.y * fixed.x};
+        const float along = (k.x * fixed.x + k.y * fixed.y + k.z * fixed.z) * (1.0f - ca);
+        return {fixed.x * ca + cross.x * sa + k.x * along, fixed.y * ca + cross.y * sa + k.y * along,
+                fixed.z * ca + cross.z * sa + k.z * along};
+    }
+
     DayLighting DayNightCycle::LightingAt(const float hour, const float day) noexcept
     {
         DayLighting light;
+        light.hour = hour;
         light.toSun = SunDirectionAt(hour);
         light.sunElevationDegrees = ElevationDegrees(light.toSun);
         // The moon trails the sun by its phase: new beside the sun, full opposite it.

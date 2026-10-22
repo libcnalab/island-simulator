@@ -26,6 +26,7 @@ namespace island
         DayVec3 skyHorizon;            // sky colour at the horizon (toward the sun)
         DayVec3 skyAntiHorizon;        // and at the horizon opposite the sun (cool at the golden hours, rose at dusk)
         float shadowStrength = 1.0f;   // 0..1 sun shadows (none at night)
+        float hour = 14.0f;            // the hour this light is for (the stars wheel with it)
     };
 
     /**
@@ -62,6 +63,10 @@ namespace island
         [[nodiscard]] static DayVec3 SunDirectionAt(float hour) noexcept;
         /** @brief The fitted latitude (degrees) and the world rotation of the east axis. */
         [[nodiscard]] static float LatitudeDegrees() noexcept;
+        /** @brief A direction fixed among the stars, given as the sky stands at midnight, turned
+         *  to where it stands at an hour: the whole sky wheels about the celestial pole (at the
+         *  latitude's height over the north horizon) with the sun, fifteen degrees an hour. */
+        [[nodiscard]] static DayVec3 SkyAt(const DayVec3& fixed, float hour) noexcept;
         [[nodiscard]] static float EastAxisDegrees() noexcept;
 
     private:

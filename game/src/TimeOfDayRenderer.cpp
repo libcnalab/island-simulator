@@ -18,6 +18,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <utility>
 #include <iostream>
 #include <numbers>
 
@@ -144,71 +145,62 @@ namespace island
                                                         BufferUsage::WriteOnly);
         gradeTriangle_->SetData(triangle.data(), 3);
 
-        // The stars: fixed directions above the horizon, a few bright and many faint, each a
-        // small square facing its own direction; translated with the camera each frame.
-        // After them, fainter ones crowded into the Milky Way's band, thickest towards its core.
-        std::vector<VertexPositionColor> stars;
-        stars.reserve(static_cast<std::size_t>(StarCount + BandStarCount) * 6U);
+        // The stars: fixed directions all round the sky (as it stands at midnight; it wheels
+        // with the hour), a few bright and many faint, each a small square facing its own
+        // direction; translated with the camera each frame. After them, fainter ones crowded
+        // into the Milky Way's band, thickest towards its core.
+        const auto total = static_cast<std::size_t>(StarCount + BandStarCount);
+        starStaging_.reserve(total * 6U);
+        starDirection_.reserve(total);
+        starColour_.reserve(total);
         const GalaxyFrame galaxy = Galaxy();
-        for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(StarCount + BandStarCount); ++i) {
+        for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(total); ++i) {
             const bool inBand = i >= static_cast<std::uint32_t>(StarCount);
             Vector3 direction;
             if (inBand) {
-                // half near the core, half anywhere along the arc above the horizon (0..pi)
+                // half near the core, half anywhere along the circle
                 const float theta = Unit(i, 0x5a1bu) < 0.5f ? GalaxyCoreAngle + 0.8f * (Unit(i, 0x5a1cu) * 2.0f - 1.0f)
-                                                            : std::numbers::pi_v<float> * Unit(i, 0x5a1cu);
+                                                            : 2.0f * std::numbers::pi_v<float> * Unit(i, 0x5a1cu);
                 // roughly normal across the band: the sum of three uniform draws
                 const float across = (Unit(i, 0x5a1du) + Unit(i, 0x5a1eu) + Unit(i, 0x5a1fu) - 1.5f) * 0.20f;
                 direction = Vector3::Normalize(galaxy.u * std::cos(theta) + galaxy.w * std::sin(theta) + galaxy.pole * across);
-                if (direction.Y < 0.04f) direction = Vector3::Normalize(Vector3(direction.X, 0.04f + 0.3f * Unit(i, 0x5a20u), direction.Z));
             } else {
-                const float y = 0.04f + 0.96f * std::sqrt(Unit(i, 0x5a17u));
+                const float y = 2.0f * Unit(i, 0x5a17u) - 1.0f;
                 const float azimuth = 2.0f * std::numbers::pi_v<float> * Unit(i, 0x5a18u);
                 const float horizontal = std::sqrt(std::max(0.0f, 1.0f - y * y));
                 direction = Vector3(horizontal * std::cos(azimuth), y, horizontal * std::sin(azimuth));
             }
-            const float y = direction.Y;
             const float magnitude = std::pow(Unit(i, 0x5a19u), inBand ? 5.0f : 3.2f) * (inBand ? 0.5f : 1.0f);   // most faint
             const float brightness = 0.25f + 0.75f * magnitude;
-            // the low sky is behind the cumulus band and the haze
-            const float low = 0.35f + 0.65f * std::clamp((y - 0.10f) / 0.35f, 0.0f, 1.0f);
             const float tint = Unit(i, 0x5a1au);
-            const float r = (tint < 0.2f ? 0.82f : tint > 0.85f ? 1.0f : 0.95f) * brightness * low;
-            const float g = (tint < 0.2f ? 0.88f : tint > 0.85f ? 0.90f : 0.96f) * brightness * low;
-            const float b = (tint < 0.2f ? 1.0f : tint > 0.85f ? 0.78f : 1.0f) * brightness * low;
+            starColour_.emplace_back((tint < 0.2f ? 0.82f : tint > 0.85f ? 1.0f : 0.95f) * brightness,
+                                     (tint < 0.2f ? 0.88f : tint > 0.85f ? 0.90f : 0.96f) * brightness,
+                                     (tint < 0.2f ? 1.0f : tint > 0.85f ? 0.78f : 1.0f) * brightness);
+            starDirection_.push_back(direction);
             const float half = StarDistance * std::tan((0.035f + 0.05f * magnitude) * std::numbers::pi_v<float> / 180.0f);
             Vector3 right = Vector3::Cross(direction, Vector3::Up);
             if (right.LengthSquared() < 1e-6f) right = Vector3::UnitX;
             right.Normalize();
             const Vector3 up = Vector3::Normalize(Vector3::Cross(right, direction));
             const Vector3 centre = direction * StarDistance;
-            const Color color(static_cast<int>(r * 255.0f), static_cast<int>(g * 255.0f), static_cast<int>(b * 255.0f), 255);
+            const Color dark(0, 0, 0, 255);
             const Vector3 a = centre - right * half - up * half, bq = centre + right * half - up * half;
             const Vector3 c = centre + right * half + up * half, d = centre - right * half + up * half;
-            stars.emplace_back(a, color); stars.emplace_back(bq, color); stars.emplace_back(c, color);
-            stars.emplace_back(a, color); stars.emplace_back(c, color); stars.emplace_back(d, color);
+            starStaging_.emplace_back(a, dark); starStaging_.emplace_back(bq, dark); starStaging_.emplace_back(c, dark);
+            starStaging_.emplace_back(a, dark); starStaging_.emplace_back(c, dark); starStaging_.emplace_back(d, dark);
         }
-        starVertexCount_ = static_cast<int>(stars.size());
-        starBase_ = stars;
-        for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(StarCount + BandStarCount); ++i) {
-            const Vector3 centre = (stars[i * 6U].Position + stars[i * 6U + 2U].Position) * 0.5f;
-            if (centre.Y / StarDistance < 0.46f) lowStars_.push_back(i);
-        }
+        starVertexCount_ = static_cast<int>(starStaging_.size());
         starsInSky_ = std::make_unique<DynamicVertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(),
                                                             starVertexCount_, BufferUsage::WriteOnly);
-        starStaging_.reserve(stars.size());
-        stars_ = std::make_unique<VertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(),
-                                                starVertexCount_, BufferUsage::WriteOnly);
-        stars_->SetData(stars.data(), starVertexCount_);
         {
-            // The Milky Way: a faint band along a great circle arching to 63 degrees, mottled
-            // into star clouds, split by a dark dust rift and brightest and widest towards its
-            // core, low down near the horizon lost in the haze; fixed in the sky like the stars.
+            // The Milky Way: a faint band along a great circle (arching to 63 degrees at
+            // midnight), mottled into star clouds, split by a dark dust rift and brightest and
+            // widest towards its core, low down near the horizon lost in the haze; fixed in the
+            // sky like the stars.
             constexpr int Segments = 180, Rows = 10;
             constexpr float Tau = 2.0f * std::numbers::pi_v<float>, CoreAngle = GalaxyCoreAngle;
             const Vector3 pole = galaxy.pole, u = galaxy.u, w = galaxy.w;
-            std::vector<VertexPositionColor> band;
-            band.reserve(static_cast<std::size_t>(Segments * Rows * 6));
+            bandStaging_.reserve(static_cast<std::size_t>(Segments * Rows * 6));
             const auto vertex = [&](const int segment, const int row) {
                 const float theta = Tau * static_cast<float>(segment) / Segments;
                 const float b = -1.0f + 2.0f * static_cast<float>(row) / Rows;
@@ -223,24 +215,23 @@ namespace island
                 const float laneCentre = 0.12f * std::sin(2.0f * theta + 0.5f);
                 const float lane = std::exp(-((b - laneCentre) / 0.16f) * ((b - laneCentre) / 0.16f));
                 const float rift = (0.20f + 0.65f * std::exp(-fromCore * fromCore / 1.2f)) * lane;
-                const float low = std::clamp((direction.Y - 0.02f) / 0.28f, 0.0f, 1.0f);
-                const float brightness = 0.085f * profile * mottle * (1.0f - rift) * (1.0f + 1.3f * core) * low * low * (3.0f - 2.0f * low);
-                const float r = brightness * (0.80f + 0.20f * core), g = brightness * (0.86f + 0.07f * core),
-                            bl = brightness * (1.00f - 0.18f * core);
-                const auto c = [](const float v) { return static_cast<int>(std::lround(std::clamp(v, 0.0f, 1.0f) * 255.0f)); };
-                return VertexPositionColor(direction * StarDistance * 1.01f, Color(c(r), c(g), c(bl), 255));
+                const float brightness = 0.085f * profile * mottle * (1.0f - rift) * (1.0f + 1.3f * core);
+                return std::pair{direction, Vector3(brightness * (0.80f + 0.20f * core), brightness * (0.86f + 0.07f * core),
+                                                    brightness * (1.00f - 0.18f * core))};
             };
-            for (int s = 0; s < Segments; ++s) {
+            for (int seg = 0; seg < Segments; ++seg) {
                 for (int row = 0; row < Rows; ++row) {
-                    const auto a = vertex(s, row), b = vertex(s + 1, row), c = vertex(s + 1, row + 1), d = vertex(s, row + 1);
-                    band.push_back(a); band.push_back(b); band.push_back(c);
-                    band.push_back(a); band.push_back(c); band.push_back(d);
+                    const auto a = vertex(seg, row), b = vertex(seg + 1, row), c = vertex(seg + 1, row + 1), d = vertex(seg, row + 1);
+                    for (const auto* corner : {&a, &b, &c, &a, &c, &d}) {
+                        bandStaging_.emplace_back(corner->first * StarDistance * 1.01f, Color(0, 0, 0, 255));
+                        bandDirection_.push_back(corner->first);
+                        bandColour_.push_back(corner->second);
+                    }
                 }
             }
-            milkyWayVertexCount_ = static_cast<int>(band.size());
-            milkyWay_ = std::make_unique<VertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(),
-                                                       milkyWayVertexCount_, BufferUsage::WriteOnly);
-            milkyWay_->SetData(band.data(), milkyWayVertexCount_);
+            milkyWayVertexCount_ = static_cast<int>(bandStaging_.size());
+            milkyWay_ = std::make_unique<DynamicVertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(),
+                                                              milkyWayVertexCount_, BufferUsage::WriteOnly);
         }
         moon_ = std::make_unique<DynamicVertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(),
                                                       MoonVertexCapacity, BufferUsage::WriteOnly);
@@ -257,7 +248,7 @@ namespace island
                                                           CurtainVertexCapacity, BufferUsage::WriteOnly);
         curtainStaging_.reserve(static_cast<std::size_t>(CurtainVertexCapacity));
         const std::string message = "island-simulator: night sky: " + std::to_string(StarCount)
-            + " stars and a phased moon over the graded sky; the scene is graded by the hour (golden hours, a dark blue night)";
+            + " stars wheeling about the celestial pole with the hour, and a phased moon over the graded sky; the scene is graded by the hour (golden hours, a dark blue night)";
         std::cout << message << '\n';
         MirrorRuntimeDiagnosticToPlatformLog(message);
         const std::string galaxyMessage = "island-simulator: on dark moonless nights the Milky Way arches across the sky, mottled, rifted and brightest at its core, with "
@@ -576,25 +567,46 @@ namespace island
         // Stars: additive, faded in with the dark.
         if (light.starVisibility > 0.01f) {
             device_.setBlendStateProperty(BlendState::Additive);
-            // the drifting cumulus stand in front of the low stars
-            starStaging_ = starBase_;
+            // The sky as it stands at this hour: midnight's turned about the celestial pole.
+            const auto turned = [&](const Vector3& axis) {
+                const DayVec3 d = DayNightCycle::SkyAt({axis.X, axis.Y, axis.Z}, light.hour);
+                return Vector3(d.x, d.y, d.z);
+            };
+            const Vector3 rx = turned(Vector3::UnitX), ry = turned(Vector3::UnitY), rz = turned(Vector3::UnitZ);
+            const Matrix turn(rx.X, rx.Y, rx.Z, 0.0f, ry.X, ry.Y, ry.Z, 0.0f, rz.X, rz.Y, rz.Z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+            const Vector3 upward(rx.Y, ry.Y, rz.Y);   // a midnight direction's height now is its dot with this
+            const auto byte = [](const float v) { return static_cast<int>(std::lround(std::clamp(v, 0.0f, 1.0f) * 255.0f)); };
+            // the low stars dim in the haze and are gone under the horizon; the drifting cumulus
+            // stand in front of them
             const float starDrift = sky_cloud::DriftAngle(static_cast<float>(seconds));
-            for (const std::uint32_t star : lowStars_) {
-                const Vector3 centre = (starBase_[star * 6U].Position + starBase_[star * 6U + 2U].Position) * 0.5f;
-                const float cover = CumulusCover(centre, starDrift);
-                if (cover <= 0.01f) continue;
-                const float keep = 1.0f - 0.95f * cover;
-                for (std::uint32_t k = 0; k < 6U; ++k) {
-                    auto& vertex = starStaging_[star * 6U + k];
-                    const auto scaled = [keep](std::uint8_t c) { return static_cast<int>(std::lround(static_cast<float>(c) * keep)); };
-                    vertex.Color = Color(scaled(vertex.Color.getRProperty()), scaled(vertex.Color.getGProperty()),
-                                         scaled(vertex.Color.getBProperty()), 255);
+            for (std::size_t star = 0; star < starDirection_.size(); ++star) {
+                const Vector3& d = starDirection_[star];
+                const float y = Vector3::Dot(d, upward);
+                float keep = 0.0f;
+                if (y > 0.02f) {
+                    const float rise = std::clamp((y - 0.02f) / 0.04f, 0.0f, 1.0f);
+                    keep = rise * rise * (3.0f - 2.0f * rise) * (0.35f + 0.65f * std::clamp((y - 0.10f) / 0.35f, 0.0f, 1.0f));
+                    if (y < 0.46f) keep *= 1.0f - 0.95f * CumulusCover(rx * d.X + ry * d.Y + rz * d.Z, starDrift);
                 }
+                const Vector3& colour = starColour_[star];
+                const Color shade(byte(colour.X * keep), byte(colour.Y * keep), byte(colour.Z * keep), 255);
+                for (std::size_t k = 0; k < 6U; ++k) starStaging_[star * 6U + k].Color = shade;
             }
-            skyEffect_->setWorldProperty(Matrix::CreateTranslation(camera));
+            skyEffect_->setWorldProperty(turn * Matrix::CreateTranslation(camera));
             // the Milky Way first, under the stars: a moon washes it out far sooner than them
             const float galaxy = std::clamp(light.starVisibility * (1.0f - 0.9f * light.moonLight), 0.0f, 1.0f);
             if (galaxy > 0.02f) {
+                if (std::abs(light.hour - bandHour_) > 0.01f) {
+                    // as it turns, its low reaches are lost in the haze (redone every 0.15 degrees)
+                    bandHour_ = light.hour;
+                    for (std::size_t i = 0; i < bandStaging_.size(); ++i) {
+                        const float low = std::clamp((Vector3::Dot(bandDirection_[i], upward) - 0.02f) / 0.28f, 0.0f, 1.0f);
+                        const float k = low * low * (3.0f - 2.0f * low);
+                        const Vector3& colour = bandColour_[i];
+                        bandStaging_[i].Color = Color(byte(colour.X * k), byte(colour.Y * k), byte(colour.Z * k), 255);
+                    }
+                    milkyWay_->SetData(bandStaging_.data(), 0, milkyWayVertexCount_, SetDataOptions::Discard);
+                }
                 device_.SetVertexBuffer(milkyWay_.get());
                 skyEffect_->setDiffuseColorProperty(Vector3(galaxy, galaxy, galaxy));
                 skyEffect_->Apply();

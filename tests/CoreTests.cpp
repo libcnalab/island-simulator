@@ -6965,6 +6965,31 @@ int main()
                   && midnight.grade.z > midnight.grade.x && midnight.starVisibility > 0.99f
                   && midnight.sunVisibility == 0.0f && midnight.shadowStrength == 0.0f,
               "midnight is dark and blue, starry, without sun or shadows");
+        {
+            // The stars wheel with the hour: the sky turns about the celestial pole with the sun
+            // (midnight's sun carried to every hour's), the moon too (on its day), the pole stays
+            // put at the latitude's height over the horizon, and nothing is stretched.
+            const auto close = [](const island::DayVec3& a, const island::DayVec3& b) {
+                return std::abs(a.x - b.x) < 1e-4f && std::abs(a.y - b.y) < 1e-4f && std::abs(a.z - b.z) < 1e-4f;
+            };
+            const auto moonAt = [](const float hour) { return DayNightCycle::LightingAt(hour, 3.0f).toMoon; };
+            bool withTheSun = true, withTheMoon = true, rigid = true;
+            for (const float hour : {0.0f, 3.0f, 7.5f, 12.0f, 18.25f, 23.9f}) {
+                withTheSun = withTheSun && close(DayNightCycle::SkyAt(DayNightCycle::SunDirectionAt(0.0f), hour),
+                                                 DayNightCycle::SunDirectionAt(hour));
+                withTheMoon = withTheMoon && close(DayNightCycle::SkyAt(moonAt(0.0f), hour), moonAt(hour));
+                const auto star = DayNightCycle::SkyAt({0.6f, 0.0f, 0.8f}, hour);
+                rigid = rigid && std::abs(star.x * star.x + star.y * star.y + star.z * star.z - 1.0f) < 1e-4f;
+            }
+            const float latitude = DayNightCycle::LatitudeDegrees() * std::numbers::pi_v<float> / 180.0f;
+            const float east = DayNightCycle::EastAxisDegrees() * std::numbers::pi_v<float> / 180.0f;
+            const island::DayVec3 pole{-std::cos(latitude) * std::sin(east), std::sin(latitude), std::cos(latitude) * std::cos(east)};
+            Check(withTheSun && withTheMoon && rigid && close(DayNightCycle::SkyAt(pole, 5.0f), pole)
+                      && close(DayNightCycle::SkyAt(pole, 17.0f), pole),
+                  "the night sky wheels about the celestial pole with the sun and the moon, rigidly");
+            Check(midnight.hour == 0.0f && afternoon.hour == DayNightCycle::DefaultHour,
+                  "the hour's light carries its hour (the stars turn with it)");
+        }
         const auto fullMoon = DayNightCycle::LightingAt(0.0f, 0.5f * DayNightCycle::LunarDays);
         const auto newMoon = DayNightCycle::LightingAt(0.0f, 0.0f);
         Check(fullMoon.moonIllumination > 0.99f && newMoon.moonIllumination < 0.01f
