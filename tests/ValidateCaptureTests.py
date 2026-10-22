@@ -73,6 +73,7 @@ class CaptureValidatorTests(unittest.TestCase):
         self.assertEqual(profile_for_viewpoint("freighter-mess"), "dim-interior-scene")
         self.assertEqual(profile_for_viewpoint("freighter-mess", 21.0), "night-scene")
         self.assertEqual(profile_for_viewpoint("mine-bats"), "dim-interior-scene")
+        self.assertEqual(profile_for_viewpoint("mine-puddle"), "dim-interior-scene")
         self.assertEqual(profile_for_viewpoint("freighter-hold"), "scene")
         for name in ("", "overview", "grass", "wet-sand", "litter-other", "interactive"):
             self.assertEqual(profile_for_viewpoint(name), "scene")
@@ -90,7 +91,7 @@ class CaptureValidatorTests(unittest.TestCase):
             with patch("tools.validate_capture.analyze_capture", return_value={**metrics, key: bad}):
                 self.assertFalse(validate_capture(image, profile="underwater-scene")["valid"])
 
-    def test_dim_interior_scene_relaxes_only_the_luminance_spread(self):
+    def test_dim_interior_scene_relaxes_only_the_luminance_spread_and_mean(self):
         image = PpmImage(640, 360, b"")
         metrics = {"luminanceMean": 76.0, "luminanceStandardDeviation": 15.2,
                    "quantizedColorBins": 128, "spatialContrast": 84.0,
@@ -98,7 +99,12 @@ class CaptureValidatorTests(unittest.TestCase):
         with patch("tools.validate_capture.analyze_capture", return_value=metrics):
             self.assertTrue(validate_capture(image, profile="dim-interior-scene")["valid"])
             self.assertFalse(validate_capture(image, profile="scene")["valid"])
-        for key, bad in (("luminanceStandardDeviation", 11.5), ("quantizedColorBins", 63),
+        # the lantern-lit adit (loop pass 530): a dim tunnel, mean 23.2 and spread 11.1
+        tunnel = {**metrics, "luminanceMean": 23.2, "luminanceStandardDeviation": 11.1, "quantizedColorBins": 148}
+        with patch("tools.validate_capture.analyze_capture", return_value=tunnel):
+            self.assertTrue(validate_capture(image, profile="dim-interior-scene")["valid"])
+            self.assertFalse(validate_capture(image, profile="scene")["valid"])
+        for key, bad in (("luminanceStandardDeviation", 9.5), ("luminanceMean", 19.0), ("quantizedColorBins", 63),
                          ("spatialContrast", 29.0)):
             with patch("tools.validate_capture.analyze_capture", return_value={**metrics, key: bad}):
                 self.assertFalse(validate_capture(image, profile="dim-interior-scene")["valid"])

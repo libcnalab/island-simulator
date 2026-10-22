@@ -4,8 +4,11 @@
 #include "Microsoft/Xna/Framework/Matrix.hpp"
 #include "Microsoft/Xna/Framework/Vector3.hpp"
 #include "Microsoft/Xna/Framework/Graphics/BasicEffect.hpp"
+#include "Microsoft/Xna/Framework/Graphics/DynamicVertexBuffer.hpp"
 #include "Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp"
 #include "Microsoft/Xna/Framework/Graphics/VertexBuffer.hpp"
+#include "Microsoft/Xna/Framework/Graphics/VertexPositionColor.hpp"
+#include <array>
 #include <memory>
 #include <vector>
 
@@ -34,14 +37,32 @@ public:
     [[nodiscard]] int TriangleCount() const noexcept {return baseTriangles_+lightTriangles_;}
     [[nodiscard]] int LanternCount() const noexcept {return lanterns_;}
     static constexpr float DrawDistance=140.0f;
+    /** A puddle down the adit: its middle (across, depth in) and half extents, its rim pushed in
+     *  and out round the oval. */
+    struct Puddle {float across=0,depth=0,halfAcross=0.2f,halfAlong=0.5f;std::array<float,14> outline{};};
+    [[nodiscard]] static std::vector<Puddle> Puddles(const MineLayout& layout);
+    /** The lanterns hung down the adit: their flames' places. */
+    [[nodiscard]] static std::vector<Microsoft::Xna::Framework::Vector3> HangingLanterns(const MineLayout& layout);
+    /** QA: where to stand, eyes at `eyeHeight`, to see a lantern's flame in a puddle, and where to
+     *  look; false if no puddle lies short of a lantern on its side. */
+    [[nodiscard]] static bool ReflectionView(const MineLayout& layout,float eyeHeight,
+                                             Microsoft::Xna::Framework::Vector3& eye,Microsoft::Xna::Framework::Vector3& look);
+    /** The lanterns' glints drawn in the puddles last frame. */
+    [[nodiscard]] int GlintCount() const noexcept {return glints_;}
 private:
     [[nodiscard]] bool Visible(const Microsoft::Xna::Framework::Matrix& view,const Microsoft::Xna::Framework::Matrix& projection,
                                const Microsoft::Xna::Framework::Vector3& camera) const;
+    static constexpr std::size_t ReflectionCapacity=1200;
     Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
+    const MineLayout& layout_;
+    std::vector<Puddle> puddles_;
+    std::vector<Microsoft::Xna::Framework::Vector3> lanternPositions_;
+    std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> reflections_;
+    std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> reflectionStaging_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> base_,light_;
     Microsoft::Xna::Framework::BoundingBox bounds_;
     Microsoft::Xna::Framework::Vector3 entrance_;
-    int baseTriangles_=0,lightTriangles_=0,drawCalls_=0,lanterns_=0;
+    int baseTriangles_=0,lightTriangles_=0,drawCalls_=0,lanterns_=0,glints_=0;
 };
 }

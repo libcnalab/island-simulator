@@ -214,6 +214,7 @@ namespace island
             case FixedViewpoint::MineChamber: return "mine-chamber";
             case FixedViewpoint::MineBatsDetail: return "mine-bats";
             case FixedViewpoint::MineBatsNightDetail: return "mine-bats-night";
+            case FixedViewpoint::MinePuddleDetail: return "mine-puddle";
             case FixedViewpoint::VolcanoExterior: return "volcano";
             case FixedViewpoint::VolcanoCrater: return "volcano-crater";
             case FixedViewpoint::LifeboatDetail: return "lifeboat";
@@ -819,7 +820,8 @@ namespace island
                   ||viewpoint_==FixedViewpoint::MineAdit
                   ||viewpoint_==FixedViewpoint::MineChamber
                   ||viewpoint_==FixedViewpoint::MineBatsDetail
-                  ||viewpoint_==FixedViewpoint::MineBatsNightDetail) {
+                  ||viewpoint_==FixedViewpoint::MineBatsNightDetail
+                  ||viewpoint_==FixedViewpoint::MinePuddleDetail) {
             MinePoint camera,target;
             const char* what=nullptr;
             if(viewpoint_==FixedViewpoint::MineExterior) {
@@ -845,6 +847,15 @@ namespace island
                 const MinePoint out=mineLayout_.World(0.0f,0.0f,-14.0f);
                 target={out.x,terrain_.Height(out.x,out.z)+7.0f,out.z};
                 what="mine-bats-night QA camera looks out from below the portal at the bats hunting over the clearing";
+            } else if(viewpoint_==FixedViewpoint::MinePuddleDetail) {
+                // short of a puddle beside the track, a lantern on its side as far past it: the
+                // flame shows in the water
+                Vector3 eye,look;
+                if(!MineRenderer::ReflectionView(mineLayout_,PlayerMotion::EyeHeight,eye,look))
+                    throw std::runtime_error("Mine puddle QA requires a puddle short of a lantern");
+                camera={eye.X,eye.Y,eye.Z};
+                target={look.X,look.Y,look.Z};
+                what="mine-puddle QA camera looks down the adit at a lantern's flame in a puddle";
             } else {
                 camera=mineLayout_.World(-0.6f,MineLayout::FloorRelative(48.6f)+PlayerMotion::EyeHeight,48.6f);
                 target=mineLayout_.World(0.5f,MineLayout::FloorRelative(54.5f)+0.9f,54.5f);
@@ -8388,6 +8399,8 @@ namespace island
             std::cout << report.str() << '\n';
             MirrorRuntimeDiagnosticToPlatformLog(report.str());
         }
+        if(viewpoint_==FixedViewpoint::MinePuddleDetail&&drawnFrames_==1U&&mineRenderer_)
+            std::cout<<"island-simulator: mine puddle proof: "<<mineRenderer_->GlintCount()<<" lantern glints in the adit's puddles\n";
         if(viewpoint_==FixedViewpoint::BirdPreenDetail&&drawnFrames_==1U&&!birdFlock_.Birds().empty()) {
             const BirdState& bird=birdFlock_.Birds().front();
             std::ostringstream report;

@@ -595,7 +595,7 @@ def run_monitored_capture(command, root, environment, evidence, journal, baselin
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("build", type=Path)
-    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "quad", "quad-ride", "quad-chase", "quad-drive", "quad-bunker", "quad-cave", "quad-jetty", "quad-helicopter", "quad-lookout", "quad-bear", "quad-stream", "quad-sea", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "jetty-end", "anemone", "walker-shadow", "flight", "bridge", "lookout", "log", "beach-vine", "hut", "hut-material", "helicopter", "helicopter-inside", "resident", "resident-tending", "resident-fishing", "bear", "bear-lying", "boars", "boar-lying", "goats", "goat-lying", "deer", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "monkey-scratch", "ground-doves", "bird-preen", "frigatebird", "whale-skeleton", "idol", "help-sign", "lighthouse", "plane-wreck", "beach-litter", "freighter", "freighter-deck", "freighter-hold", "freighter-crew", "freighter-mess", "freighter-birds", "mine", "mine-adit", "mine-chamber", "mine-bats", "mine-bats-night", "volcano", "volcano-crater", "lifeboat", "signal-fire", "stingray-buried"}))
+    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "quad", "quad-ride", "quad-chase", "quad-drive", "quad-bunker", "quad-cave", "quad-jetty", "quad-helicopter", "quad-lookout", "quad-bear", "quad-stream", "quad-sea", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "jetty-end", "anemone", "walker-shadow", "flight", "bridge", "lookout", "log", "beach-vine", "hut", "hut-material", "helicopter", "helicopter-inside", "resident", "resident-tending", "resident-fishing", "bear", "bear-lying", "boars", "boar-lying", "goats", "goat-lying", "deer", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "monkey-scratch", "ground-doves", "bird-preen", "frigatebird", "whale-skeleton", "idol", "help-sign", "lighthouse", "plane-wreck", "beach-litter", "freighter", "freighter-deck", "freighter-hold", "freighter-crew", "freighter-mess", "freighter-birds", "mine", "mine-adit", "mine-chamber", "mine-bats", "mine-bats-night", "mine-puddle", "volcano", "volcano-crater", "lifeboat", "signal-fire", "stingray-buried"}))
     parser.add_argument("--canopy-lod-inspection", nargs=3, metavar=("X_MM", "Z_MM", "TIER"))
     parser.add_argument("--time-of-day", type=float, default=None,
                         help="QA: the game hour to hold the clock at (default: the 14:00 the views were made at)")
@@ -1564,6 +1564,10 @@ def main():
                 raise RuntimeError("current old mine is missing; check for a stale executable")
             if not re.search(r"the coaster's lifeboat lies keel up on the beach at \(-?\d+, -?\d+\)", diagnostics):
                 raise RuntimeError("current lifeboat is missing; check for a stale executable")
+            if args.viewpoint == "mine-puddle":
+                glints = re.search(r"mine puddle proof: (\d+) lantern glints in the adit's puddles", diagnostics)
+                if not glints or int(glints.group(1)) < 1:
+                    raise RuntimeError("mine-puddle capture shows no lantern glint in a puddle")
             if not re.search(r"the old mine's 12 small bats hang in three clusters under the chamber's dome by day", diagnostics):
                 raise RuntimeError("current mine bats are missing; check for a stale executable")
             landmark_perches = re.search(r"the coast's birds perch on the landmarks too, (\d+) perches on the coaster's mastheads and bow rail, the lifeboat's keel, the lighthouse's gallery rail and the whale's skull; (\d+) birds stand on them as the island loads", diagnostics)
@@ -1582,6 +1586,7 @@ def main():
                                  ("mine-chamber", "mine-chamber QA camera looks into the chamber of glowing crystals"),
                                  ("mine-bats", "mine-bats QA camera looks up at the bats hanging under the chamber's dome"),
                                  ("mine-bats-night", "mine-bats-night QA camera looks out from below the portal at the bats hunting"),
+                                 ("mine-puddle", "mine-puddle QA camera looks down the adit at a lantern's flame in a puddle"),
                                  ("volcano", "volcano QA camera looks up the cone from the hillside"),
                                  ("volcano-crater", "volcano-crater QA camera looks down from the rim into the lava lake"),
                                  ("lifeboat", "lifeboat QA camera looks at the coaster's lifeboat"),

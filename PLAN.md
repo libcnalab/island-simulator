@@ -233,6 +233,31 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 530 (2026-10-22) — puddles down the adit, the lanterns in them
+
+The adit's "puddles" were darker floor quads, 0.75 × 0.5 m rectangles.
+
+- **Floor.** The gravel floor is now a 0.25 m grid tinted corner by corner, darker and wet in
+  soft ovals round the puddles.
+- **Puddles.** Eleven puddles (`MineRenderer::Puddles`) stand down the adit. Most lie beside the
+  track, where the floor dips toward the walls; a few lie between its sleepers. Each is an
+  irregular oval of dark still water, a centimetre over the gravel.
+- **Reflections.** In the light pass, each lantern within 7 m of a puddle is mirrored below its
+  water. Where the line from the eye to that image crosses the puddle, its flame shows: the
+  glass's oval (drawn out toward the eye by the low angle) with a soft halo, nearly as bright as
+  the lantern, fading out at the water's edge. It slides over the water as the walker moves and
+  leaves it at the rim.
+- **Refactor.** The hanging lanterns' places come from one helper
+  (`MineRenderer::HangingLanterns`), shared by the renderer and the QA.
+- **New QA view.** `mine-puddle` stands short of a puddle beside the track with a lantern on its
+  side 1.2-3.2 m past it (`MineRenderer::ReflectionView`). The frame inventory reads "mine puddle
+  proof: N lantern glints", and the capture fails on none (`20261022T132536`, 1 glint).
+- **Validation.** The dim adit between its lanterns (mean 23.2, spread 11.1) joins the reviewed
+  `dim-interior-scene` profile, whose floors are now mean 20 and spread 10. ValidateCaptureTests
+  cover the new floors.
+
+The suite is 76/76.
+
 ## Loop pass 529 (2026-10-22) — the lava lake spatters
 
 The lava lake's crust plates drifted between their glowing seams, but nothing broke its surface.

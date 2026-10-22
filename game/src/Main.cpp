@@ -99,6 +99,7 @@ namespace
         case FixedViewpoint::MineChamber: return "mine-chamber";
         case FixedViewpoint::MineBatsDetail: return "mine-bats";
         case FixedViewpoint::MineBatsNightDetail: return "mine-bats-night";
+        case FixedViewpoint::MinePuddleDetail: return "mine-puddle";
         case FixedViewpoint::VolcanoExterior: return "volcano";
         case FixedViewpoint::VolcanoCrater: return "volcano-crater";
         case FixedViewpoint::LifeboatDetail: return "lifeboat";
@@ -405,6 +406,8 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::MineBatsDetail;
             } else if (name == "mine-bats-night") {
                 viewpoint = island::FixedViewpoint::MineBatsNightDetail;
+            } else if (name == "mine-puddle") {
+                viewpoint = island::FixedViewpoint::MinePuddleDetail;
             } else if (name == "volcano") {
                 viewpoint = island::FixedViewpoint::VolcanoExterior;
             } else if (name == "volcano-crater") {

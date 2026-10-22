@@ -285,6 +285,7 @@ namespace island
         MineChamber,
         MineBatsDetail,
         MineBatsNightDetail,
+        MinePuddleDetail,
         VolcanoExterior,
         VolcanoCrater,
         LifeboatDetail,

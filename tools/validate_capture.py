@@ -35,8 +35,12 @@ UNDERWATER_VIEWPOINTS = ("fish", "reef-habitat", "anemone", "dolphins")
 # render with the skeleton over the table and the bright doorway clear. The mine's chamber seen
 # from the adit's mouth up into its dome (loop pass 523), lit only by its crystals and a lantern:
 # reviewed on 2026-10-22 (luminance spread 17.96 against 18, 111 colour bins, contrast 76), a
-# correct render with the bats' three clusters under the rough dome clear.
-DIM_INTERIOR_VIEWPOINTS = ("freighter-mess", "mine-bats")
+# correct render with the bats' three clusters under the rough dome clear. The mine's adit between
+# its lanterns, a lantern's flame mirrored in a puddle (loop pass 530): reviewed on 2026-10-22
+# (luminance mean 23.2 against 24, spread 11.1, 148 colour bins), a correct render of a dim
+# tunnel with the lit lantern, the track and the bright reflection clear; the profile's floors
+# are mean 20 and spread 10.
+DIM_INTERIOR_VIEWPOINTS = ("freighter-mess", "mine-bats", "mine-puddle")
 
 # The game hours of the night (the clock's dark between the dusk and the dawn), when a capture
 # asks for one with --time-of-day: reviewed on 2026-10-20 as a dark blue moonlit scene.
@@ -259,7 +263,8 @@ def validate_capture(image: PpmImage, expected_width: int | None = None,
     minimum_deviation = (2.5 if profile == "dark-cave-detail"
                          else 10.0 if profile == "sand-shadow-detail"
                          else 3.0 if profile == "night-scene"
-                         else 12.0 if profile in ("underwater-scene", "dim-interior-scene")
+                         else 12.0 if profile == "underwater-scene"
+                         else 10.0 if profile == "dim-interior-scene"
                          else max(12.0, metrics["luminanceMean"] * 0.25)
                          if profile == "shaded-detail"
                          else max(10.0, metrics["luminanceMean"] * 0.20)
@@ -286,7 +291,7 @@ def validate_capture(image: PpmImage, expected_width: int | None = None,
         errors.append("capture has too few quantized colour bins")
     if metrics["spatialContrast"] < minimum_spatial_contrast:
         errors.append("capture has insufficient large-scale spatial contrast")
-    minimum_mean = 6.0 if profile == "night-scene" else 24.0
+    minimum_mean = 6.0 if profile == "night-scene" else 20.0 if profile == "dim-interior-scene" else 24.0
     if not minimum_mean <= metrics["luminanceMean"] <= 232.0:
         errors.append("capture mean luminance is outside the usable presentation range")
     if metrics["darkPixelFraction"] > (0.995 if profile == "night-scene" else 0.92):

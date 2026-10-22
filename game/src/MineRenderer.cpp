@@ -8,6 +8,8 @@
 #include "Microsoft/Xna/Framework/Graphics/BlendState.hpp"
 #include "Microsoft/Xna/Framework/Graphics/BufferUsage.hpp"
 #include "Microsoft/Xna/Framework/Graphics/DepthStencilState.hpp"
+#include "Microsoft/Xna/Framework/Graphics/DynamicVertexBuffer.hpp"
+#include "Microsoft/Xna/Framework/Graphics/SetDataOptions.hpp"
 #include "Microsoft/Xna/Framework/Graphics/PrimitiveType.hpp"
 #include "Microsoft/Xna/Framework/Graphics/RasterizerState.hpp"
 #include "Microsoft/Xna/Framework/Graphics/VertexPositionColor.hpp"
@@ -39,16 +41,78 @@ float Noise(const float x,const float y) {
     const float a=at(fx,fy),b=at(fx+1.0f,fy),c=at(fx,fy+1.0f),d=at(fx+1.0f,fy+1.0f);
     return (a+(b-a)*tx)+((c+(d-c)*tx)-(a+(b-a)*tx))*ty;
 }
+float SmoothStep(const float edge0,const float edge1,const float x) {
+    const float t=std::clamp((x-edge0)/(edge1-edge0),0.0f,1.0f);
+    return t*t*(3.0f-2.0f*t);
+}
 struct Lamp {Vector3 position,colour;float intensity,radius,reach;};
 const Vector3 Rock(118,104,90),RockDark(84,74,64),Gravel(104,94,80),Timber(132,98,64),TimberDark(96,70,46),
     RailIron(104,86,70),Glass(60,48,30),CrystalBlue(80,214,255),CrystalViolet(186,120,255),CartIron(112,84,62),
-    Ore(70,62,58);
+    Ore(70,62,58),Water(34,32,30);
+}
+
+std::vector<Vector3> MineRenderer::HangingLanterns(const MineLayout& layout) {
+    // on every fourth timber set down the adit, hung from the posts on alternate sides
+    std::vector<Vector3> lanterns;
+    std::size_t k=0;
+    for(float d=layout.PortalDepth()+0.6f;d<MineSite::AditLength-0.4f;d+=1.5f,++k) {
+        if(k%4U!=1U) continue;
+        const float side=(k/4U)%2U==0U?1.0f:-1.0f;
+        const auto p=layout.World(side*(MineSite::PostInner-0.13f),MineLayout::FloorRelative(d-0.18f)+1.72f,d-0.18f);
+        lanterns.emplace_back(p.x,p.y,p.z);
+    }
+    return lanterns;
+}
+
+std::vector<MineRenderer::Puddle> MineRenderer::Puddles(const MineLayout& layout) {
+    // water standing in the low places down the adit: beside the track, where the floor dips
+    // toward the walls, and between its sleepers; each an irregular oval
+    std::vector<Puddle> puddles;
+    std::uint32_t seed=0x7d1e5U;
+    const auto next=[&seed]() {seed=seed*1664525U+1013904223U;return static_cast<float>(seed>>8U)*(1.0f/16777216.0f);};
+    for(float d=layout.PortalDepth()+2.5f+2.0f*next();d<46.5f;d+=2.2f+3.2f*next()) {
+        const float pick=next();
+        Puddle puddle;
+        const bool beside=pick<0.8f;
+        puddle.across=beside?(pick<0.4f?-1.0f:1.0f)*(0.66f+0.18f*next()):0.0f;
+        puddle.depth=d;
+        puddle.halfAcross=beside?0.26f+0.14f*next():0.22f+0.14f*next();
+        puddle.halfAlong=0.35f+0.55f*next();
+        for(float& r:puddle.outline) r=0.82f+0.3f*next();
+        puddles.push_back(puddle);
+    }
+    return puddles;
+}
+
+bool MineRenderer::ReflectionView(const MineLayout& layout,const float eyeHeight,Vector3& eye,Vector3& look) {
+    // a puddle beside the track with a lantern on its side of the adit a few metres past it:
+    // standing as far short of the puddle as the lantern is past it, at the lantern's height,
+    // the flame shows in the water's middle
+    const auto lanterns=HangingLanterns(layout);
+    for(const Puddle& puddle:Puddles(layout)) {
+        if(std::abs(puddle.across)<0.1f) continue;
+        for(const Vector3& lamp:lanterns) {
+            const auto local=layout.Local({lamp.X,lamp.Y,lamp.Z});
+            if(local.x*puddle.across<=0.0f||local.z<puddle.depth+1.2f||local.z>puddle.depth+3.2f) continue;
+            const float across=2.0f*puddle.across-local.x,depth=2.0f*puddle.depth-local.z;
+            if(std::abs(across)>MineSite::PostInner-0.3f||depth<layout.PortalDepth()+0.5f) continue;
+            const auto at=layout.World(across,MineLayout::FloorRelative(depth)+eyeHeight,depth);
+            const auto down=layout.World(-local.x*0.25f,MineLayout::FloorRelative(local.z)+0.65f,local.z+0.5f);
+            eye=Vector3(at.x,at.y,at.z);look=Vector3(down.x,down.y,down.z);
+            return true;
+        }
+    }
+    return false;
 }
 
 MineRenderer::MineRenderer(GraphicsDevice& device,const MineLayout& layout,const IslandTerrain& terrain,
                            const RenderedTerrainSurface& ground)
-    :device_(device),effect_(std::make_unique<BasicEffect>(device))
+    :device_(device),layout_(layout),
+     reflections_(std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),
+                                                        static_cast<int>(ReflectionCapacity),BufferUsage::WriteOnly)),
+     effect_(std::make_unique<BasicEffect>(device))
 {
+    reflectionStaging_.reserve(ReflectionCapacity);
     // the frame: across, up from the floor at that depth, depth in
     const auto W=[&](const float a,const float u,const float d) {
         const auto p=layout.World(a,MineLayout::FloorRelative(d)+u,d);return Vector3(p.x,p.y,p.z);
@@ -64,10 +128,7 @@ MineRenderer::MineRenderer(GraphicsDevice& device,const MineLayout& layout,const
     std::vector<Vector3> lanternAt;
     std::vector<float> sets;
     for(float d=portal+0.6f;d<MineSite::AditLength-0.4f;d+=1.5f) sets.push_back(d);
-    for(std::size_t k=0;k<sets.size();++k) {
-        if(k%4U!=1U) continue;
-        const float side=(k/4U)%2U==0U?1.0f:-1.0f;
-        const Vector3 p=W(side*(MineSite::PostInner-0.13f),1.72f,sets[k]-0.18f);
+    for(const Vector3& p:HangingLanterns(layout)) {
         lanternAt.push_back(p);
         lamps.push_back({p,Vector3(1.0f,0.70f,0.36f),1.5f,1.35f,7.5f});
     }
@@ -86,6 +147,8 @@ MineRenderer::MineRenderer(GraphicsDevice& device,const MineLayout& layout,const
         lamps.push_back({p,Vector3(1.0f,0.70f,0.36f),1.3f,1.3f,7.0f});
     }
     lanterns_=static_cast<int>(lanternAt.size());
+    lanternPositions_=lanternAt;
+    puddles_=Puddles(layout);
     // the crystal clusters on the chamber's walls, each throwing its own cold light
     struct Cluster {float theta,up,lean;bool violet;};
     const std::array<Cluster,9> clusters{{{-0.2f,0.3f,0.2f,false},{0.35f,1.2f,-0.3f,false},{0.9f,0.15f,0.1f,true},
@@ -235,12 +298,48 @@ MineRenderer::MineRenderer(GraphicsDevice& device,const MineLayout& layout,const
     }
     // ---- the adit: its rock walls and roof, the gravel floor with puddles
     const float aditEnd=48.0f;
+    // the gravel floor in a fine grid, tinted corner by corner: darker and wet round the puddles
+    {
+        const auto wetness=[&](const float a,const float d) {
+            float wet=0.0f;
+            for(const Puddle& puddle:puddles_) {
+                const float x=(a-puddle.across)/(puddle.halfAcross*1.9f),z=(d-puddle.depth)/(puddle.halfAlong*1.6f);
+                wet=std::max(wet,1.0f-std::clamp(x*x+z*z,0.0f,1.0f));
+            }
+            return wet;
+        };
+        const auto floorTone=[&](const float a,const float d) {
+            return Gravel*((0.84f+0.24f*Noise(d*1.3f+a*0.7f,a*2.1f)+0.08f*Noise(d*5.1f,a*4.7f))*(1.0f-0.42f*wetness(a,d)));
+        };
+        constexpr float Cell=0.25f;
+        const Vector3 up(0,1,0);
+        for(float d=portal-0.1f;d<aditEnd-1e-3f;d+=Cell) {
+            const float d1=std::min(d+Cell,aditEnd);
+            for(float a=-MineSite::HalfWidth-0.2f;a<MineSite::HalfWidth+0.2f-1e-3f;a+=Cell) {
+                const float a1=a+Cell;
+                const std::array<Vector3,4> p{{W(a,0,d),W(a1,0,d),W(a1,0,d1),W(a,0,d1)}};
+                const std::array<Vector3,4> t{{floorTone(a,d),floorTone(a1,d),floorTone(a1,d1),floorTone(a,d1)}};
+                smoothTri({{p[0],p[1],p[2]}},{{up,up,up}},{{t[0],t[1],t[2]}});
+                smoothTri({{p[0],p[2],p[3]}},{{up,up,up}},{{t[0],t[2],t[3]}});
+            }
+        }
+        // the water: dark, still, the roof's gloom in it (the lanterns' reflections are drawn
+        // with the light, from where the eye is)
+        for(const Puddle& puddle:puddles_) {
+            const Vector3 centre=W(puddle.across,0.012f,puddle.depth);
+            const auto rim=[&](const std::size_t k) {
+                const float angle=2.0f*Pi*static_cast<float>(k)/static_cast<float>(puddle.outline.size());
+                const float r=puddle.outline[k%puddle.outline.size()];
+                return W(puddle.across+std::cos(angle)*puddle.halfAcross*r,0.012f,puddle.depth+std::sin(angle)*puddle.halfAlong*r);
+            };
+            for(std::size_t k=0;k<puddle.outline.size();++k)
+                smoothTri({{centre,rim(k),rim(k+1)}},{{up,up,up}},{{Water,Water*1.1f,Water*1.1f}});
+        }
+    }
     for(float d=portal-0.1f;d<aditEnd-1e-3f;d+=0.5f) {
         const float d1=std::min(d+0.5f,aditEnd);
         for(float a=-MineSite::HalfWidth-0.2f;a<MineSite::HalfWidth+0.2f-1e-3f;a+=0.75f) {
             const float a1=a+0.75f;
-            const float wet=Noise(d*0.35f,a*0.9f)>0.72f?0.62f:1.0f;
-            quad(W(a,0,d),W(a1,0,d),W(a1,0,d1),W(a,0,d1),Vector3(0,1,0),Gravel*stain(a,0,d)*wet);
             // the rock roof above the lagging
             quad(W(a,2.68f,d),W(a1,2.68f,d),W(a1,2.68f,d1),W(a,2.68f,d1),Vector3(0,-1,0),RockDark*stain(a,2.7f,d));
         }
@@ -577,6 +676,57 @@ void MineRenderer::DrawLight(const Matrix& view,const Matrix& projection,const V
     effect_->setViewProperty(view);effect_->setProjectionProperty(projection);effect_->Apply();
     device_.SetVertexBuffer(light_.get());device_.setIndicesProperty(nullptr);
     device_.DrawPrimitives(PrimitiveType::TriangleList,0,lightTriangles_);++drawCalls_;
+    // the lanterns in the puddles: each lantern's flame mirrored in the water where the line
+    // from the eye to its image under the floor crosses the puddle, a soft glint drawn out toward
+    // the eye; it slides over the water as the walker moves and leaves it at the edge
+    reflectionStaging_.clear();
+    glints_=0;
+    for(const Puddle& puddle:puddles_) {
+        const auto centre=layout_.World(puddle.across,MineLayout::FloorRelative(puddle.depth)+0.012f,puddle.depth);
+        const Vector3 middle(centre.x,centre.y,centre.z);
+        if(Vector3::DistanceSquared(middle,camera)>30.0f*30.0f||camera.Y<=middle.Y) continue;
+        for(const Vector3& lamp:lanternPositions_) {
+            if(Vector3::DistanceSquared(lamp,middle)>7.0f*7.0f) continue;
+            const Vector3 image(lamp.X,2.0f*middle.Y-lamp.Y,lamp.Z);
+            const float t=(camera.Y-middle.Y)/(camera.Y-image.Y);
+            const Vector3 glint=camera+(image-camera)*t;
+            const auto local=layout_.Local({glint.X,glint.Y,glint.Z});
+            const float x=(local.x-puddle.across)/puddle.halfAcross,z=(local.z-puddle.depth)/puddle.halfAlong;
+            const float inside=1.0f-SmoothStep(0.55f,0.85f,std::sqrt(x*x+z*z));
+            if(inside<=0.0f||reflectionStaging_.size()+60U>ReflectionCapacity) continue;
+            // still water at a low angle gives back most of the light: the flame nearly as bright
+            // in it as in the lantern
+            const float strength=0.9f*flicker*inside;
+            Vector3 toEye=camera-glint;toEye.Y=0.0f;
+            if(toEye.LengthSquared()<1e-6f) toEye=Vector3::UnitZ;
+            toEye.Normalize();
+            const Vector3 across(-toEye.Z,0.0f,toEye.X);
+            const float grazing=std::clamp((camera.Y-middle.Y)/std::max(0.1f,Vector3::Distance(camera,glint)),0.1f,1.0f);
+            // the lantern's image: as wide as its glass seen from twice as far, drawn out toward the
+            // eye by the low angle; round it, its halo
+            const Vector3 at=glint+Vector3::Up*0.003f;
+            ++glints_;
+            const auto oval=[&](const float width,const float length,const float r,const float g,const float b) {
+                const Color core(static_cast<int>(255.0f*std::min(1.0f,r)),static_cast<int>(255.0f*std::min(1.0f,g)),
+                                 static_cast<int>(255.0f*std::min(1.0f,b))),edge(0,0,0);
+                constexpr int Segments=10;
+                for(int k=0;k<Segments;++k) {
+                    const float a0=2.0f*Pi*static_cast<float>(k)/Segments,a1=2.0f*Pi*static_cast<float>(k+1)/Segments;
+                    reflectionStaging_.emplace_back(at,core);
+                    reflectionStaging_.emplace_back(at+across*(std::cos(a0)*width)+toEye*(std::sin(a0)*length),edge);
+                    reflectionStaging_.emplace_back(at+across*(std::cos(a1)*width)+toEye*(std::sin(a1)*length),edge);
+                }
+            };
+            oval(0.07f,0.12f/grazing,strength,0.82f*strength,0.5f*strength);
+            oval(0.22f,0.3f/grazing,0.3f*strength,0.2f*strength,0.09f*strength);
+        }
+    }
+    if(!reflectionStaging_.empty()) {
+        effect_->setDiffuseColorProperty(Vector3(1.0f,1.0f,1.0f));effect_->Apply();
+        reflections_->SetData(reflectionStaging_.data(),0,static_cast<int>(reflectionStaging_.size()),SetDataOptions::Discard);
+        device_.SetVertexBuffer(reflections_.get());device_.setIndicesProperty(nullptr);
+        device_.DrawPrimitives(PrimitiveType::TriangleList,0,static_cast<int>(reflectionStaging_.size()/3U));++drawCalls_;
+    }
     effect_->setDiffuseColorProperty(Vector3(1.0f,1.0f,1.0f));
     device_.setBlendStateProperty(BlendState::Opaque);
     device_.setDepthStencilStateProperty(DepthStencilState::Default);
