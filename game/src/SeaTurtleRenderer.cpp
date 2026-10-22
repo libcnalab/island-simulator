@@ -578,6 +578,41 @@ namespace island
                     lowerLeading.push_back(local(c.x, c.y, c.z + halfWidth) - lift);
                     lowerTrailing.push_back(local(c.x, c.y, c.z - halfWidth) - lift * 0.45f);
                 }
+                // Each corner of the upper and lower faces lit by the face's own normal there
+                // (from its neighbours along and across the paddle), so the paddle shades
+                // smoothly; the scale bands keep their tones.
+                const auto faceNormal = [&](const std::array<const std::vector<Vector3>*, 3>& columns, const int count,
+                                            const int i, const int column, const float upward) {
+                    const auto& here = *columns[static_cast<std::size_t>(column)];
+                    const auto& before = *columns[static_cast<std::size_t>(std::max(column - 1, 0))];
+                    const auto& after = *columns[static_cast<std::size_t>(std::min(column + 1, count - 1))];
+                    const auto at = static_cast<std::size_t>(i);
+                    const Vector3 along = here[static_cast<std::size_t>(std::min(i + 1, samples - 1))]
+                        - here[static_cast<std::size_t>(std::max(i - 1, 0))];
+                    Vector3 normal = Vector3::Cross(along, after[at] - before[at]);
+                    if (Vector3::Dot(normal, axes.up) * upward < 0.0f) normal = -normal;
+                    return normal.LengthSquared() > 1.0e-12f ? Vector3::Normalize(normal) : axes.up * upward;
+                };
+                const std::array<const std::vector<Vector3>*, 3> upperColumns{&upperLeading, &upperMiddle, &upperTrailing};
+                const std::array<const std::vector<Vector3>*, 3> lowerColumns{&lowerLeading, &lowerTrailing, &lowerTrailing};
+                const auto smooth = [&](const Vector3& point, const Vector3& normal, const Color& color) {
+                    const float light = 0.72f + std::max(0.0f, Vector3::Dot(normal, wildlife_render::FixedSunDirection)) * 0.30f
+                        + std::max(0.0f, normal.Y) * 0.06f;
+                    return VertexPositionColor(point, wildlife_render::ScaleColor(color, light));
+                };
+                const auto upper = [&](const int i, const int column, const Color& color) {
+                    return smooth((*upperColumns[static_cast<std::size_t>(column)])[static_cast<std::size_t>(i)],
+                                  faceNormal(upperColumns, 3, i, column, 1.0f), color);
+                };
+                const auto lower = [&](const int i, const int column, const Color& color) {
+                    return smooth((*lowerColumns[static_cast<std::size_t>(column)])[static_cast<std::size_t>(i)],
+                                  faceNormal(lowerColumns, 2, i, column, -1.0f), color);
+                };
+                const auto emit = [&](const VertexPositionColor& p, const VertexPositionColor& q, const VertexPositionColor& r) {
+                    vertices.push_back(p);
+                    vertices.push_back(q);
+                    vertices.push_back(r);
+                };
                 for (int i = 0; i + 1 < samples; ++i) {
                     const auto a = static_cast<std::size_t>(i), b = a + 1U;
                     const float scaleMottle = 0.965f + 0.035f * std::sin(
@@ -596,14 +631,13 @@ namespace island
                     const Color edge = ToneColor(palette.skin, topTone * 0.72f);
                     // the leading edge's pale horny margin
                     const Color margin = ToneColor(Color::Lerp(palette.skin, palette.underside, 0.62f), 0.92f);
-                    const Vector3 above = (upperLeading[a] + upperTrailing[b]) * 0.5f + axes.up * 0.2f;
-                    const Vector3 below = (lowerLeading[a] + lowerTrailing[b]) * 0.5f - axes.up * 0.2f;
-                    AddOutwardTriangle(vertices, upperLeading[a], upperMiddle[a], upperMiddle[b], top, below);
-                    AddOutwardTriangle(vertices, upperLeading[a], upperMiddle[b], upperLeading[b], top, below);
-                    AddOutwardTriangle(vertices, upperMiddle[a], upperTrailing[a], upperTrailing[b], skinTone, below);
-                    AddOutwardTriangle(vertices, upperMiddle[a], upperTrailing[b], upperMiddle[b], skinTone, below);
-                    AddOutwardTriangle(vertices, lowerLeading[a], lowerTrailing[b], lowerTrailing[a], under, above);
-                    AddOutwardTriangle(vertices, lowerLeading[a], lowerLeading[b], lowerTrailing[b], under, above);
+                    const int ia = i, ib = i + 1;
+                    emit(upper(ia, 0, top), upper(ia, 1, top), upper(ib, 1, top));
+                    emit(upper(ia, 0, top), upper(ib, 1, top), upper(ib, 0, top));
+                    emit(upper(ia, 1, skinTone), upper(ia, 2, skinTone), upper(ib, 2, skinTone));
+                    emit(upper(ia, 1, skinTone), upper(ib, 2, skinTone), upper(ib, 1, skinTone));
+                    emit(lower(ia, 0, under), lower(ib, 1, under), lower(ia, 1, under));
+                    emit(lower(ia, 0, under), lower(ib, 0, under), lower(ib, 1, under));
                     AddQuad(vertices, upperLeading[a], upperLeading[b], lowerLeading[b], lowerLeading[a], margin);
                     AddQuad(vertices, upperTrailing[b], upperTrailing[a], lowerTrailing[a], lowerTrailing[b], edge);
                 }

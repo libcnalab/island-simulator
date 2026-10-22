@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 488 (2026-10-22) — the sea turtle's paddles shade smoothly
+
+After pass 487 the paddles were the turtle's faceted part: every triangle of their upper and lower
+faces was lit flat. Each corner of both faces is now lit by the face's own normal there, from its
+neighbours along the paddle and across it (leading, middle and trailing lines above; leading and
+trailing below), by the shell's light rule. The leading half's scale bands keep their alternating
+tones and pale seams, and the edge strips stay flat. The triangle budget is unchanged. `turtles`
+(`20261022T061749`) and `turtle-nest` pass, as do the tests.
+
 ## Loop pass 487 (2026-10-22) — the sea turtle's head is smooth, scaled and has a real eye
 
 At 4x in `turtles` the turtle's head, the operator's worst-rated animal, was a faceted dome. Each
