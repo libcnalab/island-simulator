@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 467 (2026-10-22) — a figure on the shallows' bed is refracted
+
+Seen from the jetty's end, the walker's figure lies on the seabed under a metre of clear water.
+It was laid along the air's ray as if the water were not there. The fish's and rays' seabed shadows
+already bend at the surface (pass 454). The figures' shader now does too: a ground fragment below
+the sea level goes back up the refracted ray to the surface (`SeabedShadowProjection::Refracted`,
+Snell's law) and then up the light in the air to the feet's plane. A figure on the shallows' bed
+therefore lies shorter, as the fish's shadows do. In `jetty-end` at 08:00 the figure under the
+water is now visibly more compact than before. In `walker-shadow`, on dry sand, it is unchanged.
+
 ## Loop pass 466 (2026-10-22) — the walker and the resident print the mud too
 
 The walker's prints were laid only on sand and the resident's only on sand and the shallows, while

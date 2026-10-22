@@ -2,6 +2,7 @@
 #include "IslandSimulator/CanopyLightField.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
+#include "IslandSimulator/SeabedShadowProjection.hpp"
 #include "CNA/Graphics/ShaderCodeEXT.hpp"
 #include "CNA/Graphics/ShaderPackageEXT.hpp"
 #include "CNA/ShaderLanguageEXT.hpp"
@@ -53,6 +54,7 @@ void main() {
 in vec3 vWorld;
 uniform vec3 uFeet;
 uniform vec3 uToSun;
+uniform vec2 uSea;             // x: the sea's level, y: the light's run per metre of depth once refracted
 uniform vec4 uAxes;            // xy: the shadow's horizontal direction, z: the light's sine, w: strength
 uniform vec2 uCapsuleA[CAPSULES];    // the capsules in shadow space (along x sine, across)
 uniform vec2 uCapsuleB[CAPSULES];
@@ -62,7 +64,16 @@ out vec4 fragColor;
 void main() {
     float visibility = sunShadowVisibility(vWorld);
     // up the light from this ground point to the feet's plane, where the silhouette was laid
-    vec3 onFeet = vWorld - uToSun * ((vWorld.y - uFeet.y) / uToSun.y);
+    // Under the sea the light came down bent toward the vertical: back up the refracted ray to
+    // the surface first, then up the light in the air (so a figure on the shallows' bed lies
+    // shorter, as the fish's shadows do).
+    vec3 ground = vWorld;
+    float depth = uSea.x - ground.y;
+    if (depth > 0.0) {
+        vec2 sunward = uToSun.xz / max(length(uToSun.xz), 1e-4);
+        ground = vec3(ground.xz + sunward * (uSea.y * depth), uSea.x).xzy;
+    }
+    vec3 onFeet = ground - uToSun * ((ground.y - uFeet.y) / uToSun.y);
     vec2 s = onFeet.xz - uFeet.xz;
     float along = dot(s, uAxes.xy);
     vec2 q = vec2(along * uAxes.z, dot(s, vec2(-uAxes.y, uAxes.x)));
@@ -204,6 +215,10 @@ void main() {
         effect_->SetUniformMat4("uViewProjection", viewProjection);
         effect_->SetUniformVec3("uFeet", feet.X, feet.Y, feet.Z);
         effect_->SetUniformVec3("uToSun", light.X, light.Y, light.Z);
+        {
+            const auto run = SeabedShadowProjection::Refracted(light.X, light.Y, light.Z);
+            effect_->SetUniformVec2("uSea", 0.0f, std::hypot(run[0], run[1]));
+        }
         effect_->SetUniformVec4("uAxes", shape.alongX, shape.alongZ, shape.sunSine, std::clamp(strength, 0.0f, 1.0f));
         effect_->SetUniformVec2Array("uCapsuleA", a.data(), walker_shadow::CapsuleCount);
         effect_->SetUniformVec2Array("uCapsuleB", b.data(), walker_shadow::CapsuleCount);
