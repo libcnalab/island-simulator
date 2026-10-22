@@ -233,6 +233,24 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 459 (2026-10-22) — the crabs cast their figures
+
+The beach crabs, the hermit crabs and the coconut crabs had no shadow of any kind, and in close
+views they sat on the sand without touching it. The same figure renderer now lays their limbs in
+CrabRenderer's proportions:
+
+- **Beach crab:** the near-square carapace as a cross of two capsules, eight splayed legs stepping
+  with the gait, and the two claws.
+- **Hermit crab:** the coiled shell leaning back from the aperture and the body under it, with the
+  legs and claws drawn in as it withdraws.
+- **Coconut crab:** the long cephalothorax, the abdomen curled under its back, the long legs and the
+  heavy claws. A crab up a palm (climb above 0.2) casts none.
+
+The nearest eight within 18 m are drawn, each on the ground within 0.15 m. In `crabs` every crab's
+legs throw thin strokes on the sand, and in `hermit-crabs` and `coconut-crabs` the shadows ground
+the animals. A core test checks that each figure has its feet on the sand, stays low, and holds the
+body's shadow inside it.
+
 ## Loop pass 458 (2026-10-22) — goats' and boars' feet fit the drawn stream banks too
 
 Goats drink at half-width + 1.05 m from the stream's centre and boars at + 1.1 m, where the drawn

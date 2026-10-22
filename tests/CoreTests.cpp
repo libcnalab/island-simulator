@@ -12555,6 +12555,30 @@ int main()
         // Side-lit, the striding legs part in the shadow and close again as the walker stands.
         const ws::Shape stride = ws::Build({0.0f, 1.0f, std::numbers::pi_v<float> * 0.5f, 1.0f}, 1.0f, 1.0f, 0.0f);
         const ws::Shape still = ws::Build({0.0f, 1.0f, std::numbers::pi_v<float> * 0.5f, 0.0f}, 1.0f, 1.0f, 0.0f);
+        // The crabs' figures: feet on the sand, low bodies, the body's shadow inside the figure.
+        {
+            island::CrabState beach;
+            beach.scale = 0.7f;
+            island::HermitCrabState hermit;
+            hermit.scale = 0.45f;
+            island::CoconutCrabState coconut;
+            const std::array<std::pair<std::array<ws::Limb, ws::CapsuleCount>, float>, 3> crabs{{
+                {ws::GhostCrabLimbs(beach), 0.08f * 0.7f}, {ws::HermitCrabLimbs(hermit), 0.11f * 0.45f},
+                {ws::CoconutCrabLimbs(coconut), 0.245f}}};
+            bool grounded = true;
+            for (const auto& [limbs, bodyHeight] : crabs) {
+                float lowest = 1e9f, highest = -1e9f;
+                for (const auto& limb : limbs) {
+                    if (!(limb.radius > 0.0f)) continue;
+                    lowest = std::min({lowest, limb.ay, limb.by});
+                    highest = std::max({highest, limb.ay + limb.radius, limb.by + limb.radius});
+                }
+                const auto figure = ws::Lay(limbs, 0.0f, 0.0f, 0.0f, -0.45f, 0.82f, -0.34f, 0.4f);
+                grounded = grounded && std::abs(lowest) < 1e-4f && highest < 0.5f
+                    && ws::SignedDistance(figure, 0.45f / 0.82f * bodyHeight, 0.34f / 0.82f * bodyHeight) < 0.0f;
+            }
+            Check(grounded, "the crabs' figures stand on the sand, low, with the body's shadow inside");
+        }
         Check(at(stride, 0.25f, 0.0f) > 0.08f && at(still, 0.25f, 0.0f) < 0.05f
                   && at(stride, 1.62f, 0.0f) < 0.0f && at(still, 1.62f, 0.0f) < 0.0f,
               "side-lit, the striding legs part in the walker's shadow and the head stays in it");

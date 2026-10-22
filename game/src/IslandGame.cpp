@@ -6415,6 +6415,33 @@ namespace island
                         walker_shadow::Lay(walker_shadow::BearLimbs(bear), bear.x, ground, bear.z, toSun.x, toSun.y, toSun.z, 1.8f),
                         Vector3(bear.x, ground, bear.z), Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength, groundAt);
             }
+            {
+                // the nearest crabs' too (a beach crab's, a hermit's, a coconut crab's off its palm),
+                // eight at most within 18 m: a few centimetres of shadow is what grounds them
+                struct CrabFigure { float distanceSquared; std::array<walker_shadow::Limb, walker_shadow::CapsuleCount> limbs; float x, y, z, stature; };
+                std::vector<CrabFigure> crabs;
+                const auto consider = [&](const float x, const float y, const float z, const float stature, const auto& build) {
+                    const float d = Vector3::DistanceSquared(Vector3(x, y, z), renderCameraPosition_);
+                    if (d > 18.0f * 18.0f) return;
+                    crabs.push_back({d, build(), x, y, z, stature});
+                };
+                for (const auto& crab : crabColony_.Crabs())
+                    consider(crab.x, crab.y, crab.z, 0.25f * crab.scale, [&] { return walker_shadow::GhostCrabLimbs(crab); });
+                for (const auto& crab : hermitCrabGroup_.Crabs())
+                    consider(crab.x, crab.y, crab.z, 0.42f * crab.scale, [&] { return walker_shadow::HermitCrabLimbs(crab); });
+                for (const auto& crab : coconutCrabGroup_.Crabs())
+                    if (crab.climbAmount < 0.2f)
+                        consider(crab.x, crab.y, crab.z, 0.45f * crab.scale, [&] { return walker_shadow::CoconutCrabLimbs(crab); });
+                std::sort(crabs.begin(), crabs.end(), [](const CrabFigure& a, const CrabFigure& b) { return a.distanceSquared < b.distanceSquared; });
+                if (crabs.size() > 8U) crabs.resize(8U);
+                for (const CrabFigure& crab : crabs) {
+                    const float ground = groundAt(crab.x, crab.z);
+                    if (std::abs(crab.y - ground) > 0.15f) continue;   // on a rock, in a burrow
+                    walkerShadowRenderer_->Draw(cameraView_, cameraProjection_,
+                        walker_shadow::Lay(crab.limbs, crab.x, ground, crab.z, toSun.x, toSun.y, toSun.z, crab.stature),
+                        Vector3(crab.x, ground, crab.z), Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength, groundAt);
+                }
+            }
             for (const CrocodileState& crocodile : crocodileGroup_.Crocodiles()) {
                 // the crocodiles' hauled out on the bank (not afloat)
                 const float ground = groundAt(crocodile.x, crocodile.z);

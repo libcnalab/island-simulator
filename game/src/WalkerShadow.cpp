@@ -3,7 +3,10 @@
 #include "IslandSimulator/BoarGroundPose.hpp"
 #include "IslandSimulator/BoarHerd.hpp"
 #include "IslandSimulator/BoarPose.hpp"
+#include "IslandSimulator/CoconutCrabGroup.hpp"
+#include "IslandSimulator/CrabColony.hpp"
 #include "IslandSimulator/CrocodileGroup.hpp"
+#include "IslandSimulator/HermitCrabGroup.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 #include "IslandSimulator/GoatHerd.hpp"
 #include "IslandSimulator/ResidentMotion.hpp"
@@ -379,6 +382,82 @@ namespace island::walker_shadow
         }
         for (; next < limbs.size(); ++next) limbs[next].radius = UnusedRadius;
         return limbs;
+    }
+
+    namespace
+    {
+        // A crab in its own frame (x right, y up, z forward, unscaled metres) laid out in the world.
+        struct CrabFrame
+        {
+            float x, y, z, fx, fz, scale;
+            std::array<Limb, CapsuleCount> limbs{};
+            std::size_t next = 0;
+            void Add(const float ax, const float ay, const float az, const float bx, const float by, const float bz,
+                     const float radius) noexcept
+            {
+                const float rx = -fz, rz = fx;
+                limbs[next++] = {x + (rx * ax + fx * az) * scale, y + ay * scale, z + (rz * ax + fz * az) * scale,
+                                 x + (rx * bx + fx * bz) * scale, y + by * scale, z + (rz * bx + fz * bz) * scale,
+                                 radius * scale};
+            }
+            // Four legs a side splayed out to the sand, stepping with the gait.
+            void Legs(const float rootX, const float rootY, const float footX, const std::array<float, 4>& rows,
+                      const float spread, const float radius, const float phase, const float stride) noexcept
+            {
+                for (const float side : {-1.0f, 1.0f})
+                    for (std::size_t row = 0; row < rows.size(); ++row) {
+                        const float step = stride * std::sin(phase + static_cast<float>(row) * 1.6f + (side > 0.0f ? 3.1f : 0.0f));
+                        Add(side * rootX, rootY, rows[row], side * footX, 0.0f, rows[row] * spread + step, radius);
+                    }
+            }
+            std::array<Limb, CapsuleCount> Finish() noexcept
+            {
+                for (; next < limbs.size(); ++next) limbs[next].radius = UnusedRadius;
+                return limbs;
+            }
+        };
+    }
+
+    std::array<Limb, CapsuleCount> GhostCrabLimbs(const CrabState& crab) noexcept
+    {
+        // CrabRenderer's beach crab: the near-square carapace (0.84 x 0.62 x 0.13 unscaled) as a
+        // cross of two capsules, eight splayed legs and the two claws ahead.
+        CrabFrame f{crab.x, crab.y, crab.z, std::cos(crab.bodyYawRadians), std::sin(crab.bodyYawRadians), crab.scale};
+        f.Add(-0.27f, 0.08f, 0.0f, 0.27f, 0.08f, 0.0f, 0.13f);
+        f.Add(0.0f, 0.08f, -0.14f, 0.0f, 0.08f, 0.12f, 0.14f);
+        f.Legs(0.36f, 0.08f, 0.80f, {0.15f, 0.05f, -0.05f, -0.15f}, 1.7f, 0.035f, crab.legPhase, 0.05f * std::min(1.0f, crab.speed * 4.0f));
+        for (const float side : {-1.0f, 1.0f}) f.Add(side * 0.22f, 0.07f, 0.26f, side * 0.34f, 0.05f, 0.42f, 0.06f);
+        return f.Finish();
+    }
+
+    std::array<Limb, CapsuleCount> HermitCrabLimbs(const HermitCrabState& crab) noexcept
+    {
+        // The coiled shell leaning back from the aperture, the walking legs and the claws ahead of
+        // it (drawn back into the shell as the crab withdraws).
+        const float withdraw = std::clamp(crab.withdrawAmount, 0.0f, 1.0f);
+        const float carry = std::clamp(crab.shellCarry, 0.0f, 1.0f);
+        CrabFrame f{crab.x, crab.y, crab.z, std::cos(crab.headingRadians), std::sin(crab.headingRadians), crab.scale};
+        f.Add(0.0f, 0.10f + 0.03f * carry, -0.01f, 0.0f, 0.29f + 0.03f * carry, -0.14f, 0.12f);
+        f.Add(0.0f, 0.11f + 0.03f * carry, 0.05f, 0.0f, 0.10f, -0.06f, 0.10f);
+        const float reach = 1.0f - 0.7f * withdraw;
+        f.Legs(0.05f, 0.06f, 0.05f + 0.15f * reach, {0.09f, 0.05f, 0.01f, -0.03f}, 1.3f, 0.022f, crab.legPhase,
+               0.03f * std::min(1.0f, crab.speed * 6.0f));
+        for (const float side : {-1.0f, 1.0f})
+            f.Add(side * 0.035f, 0.07f, 0.12f * reach, side * 0.055f, 0.04f, 0.12f + 0.10f * reach, 0.035f);
+        return f.Finish();
+    }
+
+    std::array<Limb, CapsuleCount> CoconutCrabLimbs(const CoconutCrabState& crab) noexcept
+    {
+        // The long cephalothorax and the abdomen curled under its back, eight long legs and
+        // the heavy claws.
+        CrabFrame f{crab.x, crab.y, crab.z, std::cos(crab.headingRadians), std::sin(crab.headingRadians), crab.scale};
+        for (const float side : {-0.12f, 0.12f}) f.Add(side, 0.245f, -0.28f, side, 0.245f, 0.32f, 0.17f);
+        f.Add(0.0f, 0.20f, -0.30f, 0.0f, 0.12f, -0.55f, 0.14f);
+        f.Legs(0.25f, 0.22f, 0.62f, {0.20f, 0.06f, -0.08f, -0.22f}, 1.3f, 0.045f, crab.legPhase,
+               0.06f * std::min(1.0f, crab.speed * 3.0f));
+        for (const float side : {-1.0f, 1.0f}) f.Add(side * 0.15f, 0.20f, 0.30f, side * 0.22f, 0.12f, 0.62f, 0.08f);
+        return f.Finish();
     }
 
     float SignedDistance(const Shape& shape, const float offsetX, const float offsetZ) noexcept
