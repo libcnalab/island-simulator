@@ -7847,8 +7847,8 @@ int main()
     Check(jungle.Bushes().size() - jungle.ClearingBushCount() == 557
         && jungle.GroundPlants().size() - jungle.ClearingGroundPlantCount()
             - jungle.ForestGroundPlantCount() - jungle.StreamBankGroundPlantCount()
-            - jungle.SeasonalWetlandGroundPlantCount() == 2134,
-        "wet-biome, cave, bunker and helicopter reservations preserve measured deterministic populations");
+            - jungle.SeasonalWetlandGroundPlantCount() == 2133,
+        "wet-biome, cave, bunker, mine and helicopter reservations preserve measured deterministic populations");
     Check(jungle.StreamBankGroundPlantCount() >= 20
         && jungle.StreamBankGroundPlantCount() <= static_cast<std::size_t>(
             island::JungleLayout::StreamBankColonyCount

@@ -10,6 +10,7 @@
 #include "IslandSimulator/HelicopterLayout.hpp"
 #include "IslandSimulator/BunkerLayout.hpp"
 #include "IslandSimulator/FreighterLayout.hpp"
+#include "IslandSimulator/MineLayout.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -72,6 +73,11 @@ namespace island
             const auto local=bunker_->Local({x,bunkerHeight,z});
             contact.maximumSlopeRadians=local.z>0&&local.z<10
                 ?std::atan(.32f):0.0f;
+            return contact;
+        }
+        float mineHeight=0.0f;
+        if(mine_&&mine_->SupportHeight(x,z,position_.y-EyeHeight,mineHeight)) {
+            contact.height=mineHeight;
             return contact;
         }
         float shipHeight=0.0f;
@@ -236,6 +242,11 @@ namespace island
                 {candidateX,std::max(candidate.height+.001f,position_.y-EyeHeight),candidateZ},
                 CapsuleRadius,CapsuleHeight)<1)
                 return HorizontalStepResult::ObstacleBlocked;
+            if(mine_&&mine_->SafeTravelFraction(
+                {position_.x,std::max(current.height+.001f,position_.y-EyeHeight),position_.z},
+                {candidateX,std::max(candidate.height+.001f,position_.y-EyeHeight),candidateZ},
+                CapsuleRadius,CapsuleHeight)<1)
+                return HorizontalStepResult::ObstacleBlocked;
             if(helicopter_&&helicopter_->SafeTravelFraction(
                 position_.x,position_.z,candidateX,candidateZ,CapsuleRadius)<1.0f)
                 return HorizontalStepResult::ObstacleBlocked;
@@ -283,6 +294,12 @@ namespace island
         if(bunker_&&bunker_->IntersectsCapsule({position_.x,position_.y-EyeHeight,position_.z},
             CapsuleRadius,CapsuleHeight)) {
             const auto safe=bunker_->World(0,0,-3.2f);
+            position_.x=safe.x;position_.z=safe.z;
+            ResolveModeAndHeight(terrain,std::numeric_limits<float>::infinity());
+        }
+        if(mine_&&mine_->IntersectsCapsule({position_.x,position_.y-EyeHeight,position_.z},
+            CapsuleRadius,CapsuleHeight)) {
+            const auto safe=mine_->World(0,0,-3.0f);
             position_.x=safe.x;position_.z=safe.z;
             ResolveModeAndHeight(terrain,std::numeric_limits<float>::infinity());
         }

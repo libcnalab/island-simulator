@@ -233,6 +233,56 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 506 (2026-10-22) — an old mine runs under the main mountain, lit by lanterns
+
+The old mine is an adit driven west-north-west under the main mountain from the foot of its
+eastern slope at (1, 7), above the forest path. A 48 m timbered tunnel lit by eight oil lanterns
+runs from there to a domed chamber of glowing crystals (`MineSite`, `MineLayout`,
+`MineRenderer`; QA views `mine`, `mine-adit` and `mine-chamber`). This is the operator's mine
+backlog item.
+
+- **Site.** A probe over the deterministic terrain picked the site. Three metres in, the slope
+  covers the roof, and further in there are 18-22 m of mountain over it. The adit rises 1 % so
+  that water drains out. It keeps clear of the bunker, the cave, the stream and the helicopter's
+  clearing.
+- **Cutting and the forest.** The terrain shader discards the hillside's fragments below the
+  adit's roof, as it does for the bunker. Forest, bushes and grass keep clear of the cutting
+  through `MineSite::Reserves`. The jungle loses one ground plant, so the measured population in
+  `CoreTests` goes from 2134 to 2133.
+- **Walking.** `PlayerMotion::SetMine` gives the mine's floor; feet far above it keep the
+  mountain's ground. The walkable plan blocks the walker at the timber sets, the chamber's oval
+  wall and the tipped ore cart; the roof stops it as well. `IslandMineLayoutTests` drives the
+  real controller from the path in through the portal, down the adit, across the chamber past
+  the cart and back out.
+- **Look.**
+  - **Cutting and adit.** Log cribbing steps down the cut face with the slope, and the portal
+    has a heavy timber frame with a weathered board. The adit has rough rock walls, a gravel
+    floor with wet patches, and timber sets every 1.5 m with lagging over their caps. A
+    narrow-gauge track on sleepers runs to the chamber.
+  - **Lanterns.** Each hangs from a nail in a post, with a glass that glows and a flame inside.
+  - **Chamber.** A rough dome over an oval floor, closed round the adit's mouth by a headwall.
+    Nine clusters of hexagonal crystals, cyan and violet, grow from its walls. The ore cart lies
+    tipped over with its load spilled.
+- **Light.** It is baked per vertex in two draws.
+  - **Base draw.** The rock and the timber in the daylight that comes in at the portal and dies
+    within a few metres. This draw is graded with the hour like the scene.
+  - **Light draw.** After the night's grade comes an additive draw with the lanterns' warm
+    light and the crystals' cold light falling off over the walls, the glass, flames and
+    crystals themselves, and the lanterns' soft crossed halos. All of it breathes a few percent
+    together.
+
+  So at night the portal glows from within, and the adit stays lit.
+- **Fixed during the pass.**
+  - Gaps showed light between the gravel and the bumpy walls; the floor and roof now reach
+    under the walls.
+  - There was an open space between the adit's roof and the dome; it is now closed by the
+    headwall.
+  - A crack in the dome let the terrain above show through as a "leaf". The dome's roughness
+    noise was not periodic round the oval; it now is. Bisecting every draw scope found it.
+
+Evidence: `20261022T101820` to `101840` (mine, adit, chamber), and `102355` and `102409` at
+22:00. The suite is 75/75.
+
 ## Loop pass 505 (2026-10-22) — the README gallery shows the grounded coaster
 
 The README's "Newer landmarks" table has a fourth row from the pass-504 captures: the coaster

@@ -27,6 +27,7 @@ namespace island
     class CaveLayout;
     class CaveGroundPatch;
     class BunkerLayout;
+    class MineLayout;
     /** @brief Frustum-culled island terrain with portable procedural material variation. */
     class SunShadowMap;
 
@@ -93,6 +94,7 @@ namespace island
         Microsoft::Xna::Framework::BoundingBox scourBounds_;
         int scourVertexCount_=0,scourPrimitiveCount_=0;
         std::unique_ptr<CaveLayout> cave_;
+        std::unique_ptr<MineLayout> mine_;
         std::array<float,15> tidePools_{};   // the five tide pools: centre x, z and radius
         std::array<float,15> tidePoolPhaseCos_{};   // and their outline harmonics' phases
         std::array<float,15> tidePoolPhaseSin_{};

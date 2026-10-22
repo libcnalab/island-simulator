@@ -10,6 +10,7 @@
 #include "IslandSimulator/CaveGroundPatch.hpp"
 #include "IslandSimulator/CampfireLighting.hpp"
 #include "IslandSimulator/BunkerLayout.hpp"
+#include "IslandSimulator/MineLayout.hpp"
 
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/UnderwaterFog.hpp"
@@ -194,6 +195,8 @@ float tidePoolReach(vec2 point,vec3 pool,vec3 phaseCos,vec3 phaseSin)
     return distance/(pool.z*outline);
 }
 uniform vec4 uBunkerFrame;
+uniform vec3 uMineEntrance;
+uniform vec4 uMineFrame;
 
 uniform vec3 uCameraPosition;
 uniform vec3 uToSun;
@@ -330,6 +333,12 @@ void main()
         +(bunkerDepth<10.0?2.75:3.05);
     if((bunkerCorridor||bunkerComputer||bunkerReactor||bunkerService)
         &&vWorld.y<bunkerCeiling+0.04) discard;
+    // The old mine's adit the same way: the cutting below its roof at the portal.
+    vec2 mineOffset=p-uMineEntrance.xz;
+    float mineAcross=dot(mineOffset,uMineFrame.xy);
+    float mineDepth=dot(mineOffset,uMineFrame.zw);
+    if(abs(mineAcross)<=1.55&&mineDepth>=-0.80&&mineDepth<=48.4
+        &&vWorld.y<uMineEntrance.y+0.01*max(mineDepth,0.0)+2.54) discard;
     float detailFade = 1.0 - smoothstep(95.0, 285.0, distanceToCamera);
 
     // Substrate is a world property: never fade humus, clearings or paths back to
@@ -1607,6 +1616,7 @@ void main()
         streamBed_=std::make_unique<StreamBedPatch>(StreamCourse(terrain),*original);
         wreckScour_=std::make_unique<WreckScourPatch>(ShipwreckLayout(terrain),*original);
         cave_=std::make_unique<CaveLayout>(terrain);
+        mine_=std::make_unique<MineLayout>(terrain);
         for (std::size_t index=0;index<TidePoolLayout::Definitions.size();++index) {
             const auto [poolX,poolZ]=TidePoolLayout::Centre(terrain,index);
             tidePools_[index*3U]=poolX;
@@ -1672,7 +1682,8 @@ void main()
                     const float midY=terrain.Height(midX,midZ);
                     if(streamBed_->Contains(midX,midZ)||caveGround_->Contains(midX,midZ)
                         ||wreckScour_->Contains(midX,midZ)
-                        ||(!materialReady_&&bunker_.HidesTerrain(midX,midY,midZ)))continue;
+                        ||(!materialReady_&&bunker_.HidesTerrain(midX,midY,midZ))
+                        ||(!materialReady_&&mine_->HidesTerrain(midX,midY,midZ)))continue;
                     const auto topLeft = static_cast<std::uint16_t>(
                         (layout.firstGridRow + row) * TerrainMeshLayout::Resolution
                         + layout.firstGridColumn + column);
@@ -1864,6 +1875,13 @@ void main()
             materialEffect_->SetUniformVec4("uBunkerFrame",
                 bunkerAcross.x-bunkerEntrance.x,bunkerAcross.z-bunkerEntrance.z,
                 bunkerDepth.x-bunkerEntrance.x,bunkerDepth.z-bunkerEntrance.z);
+            const auto mineEntrance=mine_->Entrance();
+            const auto mineAcross=mine_->World(1,0,0);
+            const auto mineDepth=mine_->World(0,0,1);
+            materialEffect_->SetUniformVec3("uMineEntrance",mineEntrance.x,mineEntrance.y,mineEntrance.z);
+            materialEffect_->SetUniformVec4("uMineFrame",
+                mineAcross.x-mineEntrance.x,mineAcross.z-mineEntrance.z,
+                mineDepth.x-mineEntrance.x,mineDepth.z-mineEntrance.z);
             materialEffect_->SetUniformVec3("uCameraPosition", cameraPosition.X,
                                             cameraPosition.Y, cameraPosition.Z);
             underwater_fog::Bind(*materialEffect_);

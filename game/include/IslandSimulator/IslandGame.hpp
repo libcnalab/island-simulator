@@ -115,6 +115,8 @@
 #include "IslandSimulator/CaveRenderer.hpp"
 #include "IslandSimulator/BunkerLayout.hpp"
 #include "IslandSimulator/BunkerRenderer.hpp"
+#include "IslandSimulator/MineLayout.hpp"
+#include "IslandSimulator/MineRenderer.hpp"
 #include "IslandSimulator/CampfireRenderer.hpp"
 #include "IslandSimulator/ResidentMotion.hpp"
 #include "IslandSimulator/ResidentRenderer.hpp"
@@ -273,6 +275,9 @@ namespace island
         FreighterHoldDetail,
         FreighterCrewDetail,
         FreighterMessDetail,
+        MineExterior,
+        MineAdit,
+        MineChamber,
         GroundDoveDetail,
         FruitBatDetail,
         FruitBatRoostDetail,
@@ -511,6 +516,7 @@ namespace island
         std::optional<HelicopterPlacement> helicopterPlacement_;
         CampfireLayout campfireLayout_{terrain_};
         BunkerLayout bunkerLayout_{terrain_};
+        MineLayout mineLayout_{terrain_};
         WorldCollisionGrid worldCollisionGrid_;
         std::unique_ptr<ResidentMotion> resident_;
         std::unique_ptr<BearMotion> bear_;
@@ -570,6 +576,7 @@ namespace island
         std::unique_ptr<StreamWaterRenderer> streamWaterRenderer_;
         std::unique_ptr<CaveRenderer> caveRenderer_;
         std::unique_ptr<BunkerRenderer> bunkerRenderer_;
+        std::unique_ptr<MineRenderer> mineRenderer_;
         std::unique_ptr<CampfireRenderer> campfireRenderer_;
         std::unique_ptr<ResidentRenderer> residentRenderer_;
         std::unique_ptr<BearRenderer> bearRenderer_;

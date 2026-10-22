@@ -208,6 +208,9 @@ namespace island
             case FixedViewpoint::FreighterHoldDetail: return "freighter-hold";
             case FixedViewpoint::FreighterCrewDetail: return "freighter-crew";
             case FixedViewpoint::FreighterMessDetail: return "freighter-mess";
+            case FixedViewpoint::MineExterior: return "mine";
+            case FixedViewpoint::MineAdit: return "mine-adit";
+            case FixedViewpoint::MineChamber: return "mine-chamber";
             case FixedViewpoint::GroundDoveDetail: return "ground-doves";
             case FixedViewpoint::FruitBatDetail: return "bats";
             case FixedViewpoint::FruitBatRoostDetail: return "bat-roost";
@@ -479,6 +482,7 @@ namespace island
                 avoid.push_back({{cave.Entrance().x,cave.Entrance().z}});
             }
             avoid.push_back({{bunkerLayout_.Entrance().x,bunkerLayout_.Entrance().z}});
+            avoid.push_back({{mineLayout_.Entrance().x,mineLayout_.Entrance().z}});
             avoid.push_back({{helicopterPlacement_->x,helicopterPlacement_->z}});
             idolPlacement_=IdolStatueLayout::FindInWorld(terrain_,worldObstacles,avoid);
             if(idolPlacement_) worldObstacles.push_back(idolPlacement_->Obstacle());
@@ -771,6 +775,31 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: bunker QA camera "<<ViewpointName(viewpoint_)<<'\n';
+        } else if(viewpoint_==FixedViewpoint::MineExterior
+                  ||viewpoint_==FixedViewpoint::MineAdit
+                  ||viewpoint_==FixedViewpoint::MineChamber) {
+            MinePoint camera,target;
+            const char* what=nullptr;
+            if(viewpoint_==FixedViewpoint::MineExterior) {
+                // from the path below, up the approach to the portal in the slope
+                const auto stand=mineLayout_.World(-1.9f,0.0f,-6.5f);
+                camera={stand.x,terrain_.Height(stand.x,stand.z)+PlayerMotion::EyeHeight,stand.z};
+                target=mineLayout_.World(0.0f,1.5f,mineLayout_.PortalDepth());
+                what="mine QA camera looks up the approach at the old mine's timbered portal";
+            } else if(viewpoint_==FixedViewpoint::MineAdit) {
+                camera=mineLayout_.World(0.25f,MineLayout::FloorRelative(9.0f)+PlayerMotion::EyeHeight,9.0f);
+                target=mineLayout_.World(0.0f,MineLayout::FloorRelative(30.0f)+1.3f,30.0f);
+                what="mine-adit QA camera looks down the lantern-lit adit";
+            } else {
+                camera=mineLayout_.World(-0.6f,MineLayout::FloorRelative(48.6f)+PlayerMotion::EyeHeight,48.6f);
+                target=mineLayout_.World(0.5f,MineLayout::FloorRelative(54.5f)+0.9f,54.5f);
+                what="mine-chamber QA camera looks into the chamber of glowing crystals";
+            }
+            cameraPosition_={camera.x,camera.y,camera.z};
+            const Vector3 direction=Vector3(target.x,target.y,target.z)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: "<<what<<'\n';
         } else if (viewpoint_ == FixedViewpoint::TidePoolDetail) {
             const auto [poolX,poolZ]=TidePoolLayout::Centre(terrain_,0U);
             const float radialLength=std::hypot(poolX,poolZ);
@@ -2704,10 +2733,12 @@ namespace island
         deer_->SetGround(drawnGround_.get());   // and the deer stand on its banks to drink
         playerMotion_.SetCave(&terrainRenderer_->Cave(),&terrainRenderer_->CaveGround());
         playerMotion_.SetBunker(&bunkerLayout_);
+        playerMotion_.SetMine(&mineLayout_);
         flightMotion_.SetCave(&terrainRenderer_->Cave(),&terrainRenderer_->CaveGround());
         caveRenderer_=std::make_unique<CaveRenderer>(device,terrainRenderer_->Cave(),
                                                       terrainRenderer_->CaveGround());
         bunkerRenderer_=std::make_unique<BunkerRenderer>(device,bunkerLayout_);
+        mineRenderer_=std::make_unique<MineRenderer>(device,mineLayout_,terrain_,*drawnGround_);
         campfireRenderer_=std::make_unique<CampfireRenderer>(device,campfireLayout_);
         streamWaterRenderer_=std::make_unique<StreamWaterRenderer>(device,terrain_,terrainRenderer_->StreamBed());
         grassRenderer_ = std::move(grassRenderer);
@@ -6193,6 +6224,7 @@ namespace island
     {
         return 2 + terrainRenderer_->DrawCallCount()+streamWaterRenderer_->DrawCallCount()+caveRenderer_->DrawCallCount()
             +bunkerRenderer_->DrawCallCount()
+            +(mineRenderer_?mineRenderer_->DrawCallCount():0)
             +campfireRenderer_->DrawCallCount()
             + palmRenderer_->DrawCallCount() + jungleRenderer_->DrawCallCount()
             + naturalPropRenderer_->DrawCallCount() + grassRenderer_->DrawCallCount()
@@ -6690,6 +6722,7 @@ namespace island
             terrainRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,timeSeconds);
             caveRenderer_->Draw(cameraView_,cameraProjection_);
             bunkerRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
+            if(mineRenderer_) mineRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
             campfireRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,timeSeconds,false);
         }
         {
@@ -7363,6 +7396,8 @@ namespace island
                 }
             }
             timeOfDay_->DrawGrade(light, localLit);
+            // the old mine's lanterns and crystals keep their light through the night's grade
+            if (mineRenderer_) mineRenderer_->DrawLight(cameraView_, cameraProjection_, renderCameraPosition_, timeSeconds);
             if (lighthouseRenderer_ && !underground) {
                 // the lighthouse's lamp and its sweeping beams, over the graded night
                 const float lampNight = 1.0f - std::clamp((light.sunElevationDegrees + 3.0f) / 9.0f, 0.0f, 1.0f);

@@ -18,6 +18,7 @@ namespace island
     class CaveLayout;
     class CaveGroundPatch;
     class BunkerLayout;
+    class MineLayout;
     struct HelicopterPlacement;
     struct FreighterPlacement;
 
@@ -121,6 +122,8 @@ namespace island
         void SetCave(const CaveLayout* cave,const CaveGroundPatch* ground) noexcept
         {cave_=cave;caveGround_=ground;}
         void SetBunker(const BunkerLayout* bunker) noexcept {bunker_=bunker;}
+        // The old mine's adit and chamber under the main mountain; null disables it.
+        void SetMine(const MineLayout* mine) noexcept {mine_=mine;}
         // Immutable grounded-helicopter floor/shell layout; null disables the landmark.
         void SetHelicopter(const HelicopterPlacement* helicopter) noexcept
         {helicopter_=helicopter;}
@@ -228,6 +231,7 @@ namespace island
         const CaveLayout* cave_ = nullptr;
         const CaveGroundPatch* caveGround_ = nullptr;
         const BunkerLayout* bunker_ = nullptr;
+        const MineLayout* mine_ = nullptr;
         const HelicopterPlacement* helicopter_ = nullptr;
         const JettyPlacement* jetty_ = nullptr;
         const BridgePlacement* bridge_ = nullptr;
