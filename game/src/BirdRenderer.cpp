@@ -97,8 +97,14 @@ namespace island
              Color(96, 148, 128, 255), Color(86, 76, 70, 255), Color(40, 22, 20, 255)}
         }};
 
+        // Glossy black, the wings' undersides a shade browner, the bill a horn grey.
+        const BirdPalette FrigatePalette{Color(24, 23, 27, 255), Color(30, 28, 33, 255),
+            Color(46, 41, 40, 255), Color(22, 21, 25, 255), Color(26, 25, 30, 255),
+            Color(146, 146, 140, 255), Color(10, 10, 10, 255)};
+
         [[nodiscard]] const BirdPalette& PaletteForBird(const BirdState& bird)
         {
+            if (bird.species == BirdSpecies::Frigatebird) return FrigatePalette;
             if (bird.species == BirdSpecies::Parrot) {
                 return ParrotPalettes[bird.colorVariant % ParrotPalettes.size()];
             }
@@ -533,13 +539,19 @@ namespace island
                 }
                 const Vector3 front=side<0.0f?leftFront:rightFront;
                 const Vector3 back=side<0.0f?leftBack:rightBack;
-                const Vector3 elbow=LocalPoint(bodyCentre,right,bodyUp,bodyForward,side*.40f,
-                    wingLift*.30f+.035f,std::lerp(.055f,-.20f,sidePerch),scale);
+                // A frigatebird's wing is long, narrow and crooked: the arm raised forward to a
+                // sharp wrist, the hand swept far back and drooped to a pointed tip.
+                const bool frigate=bird.species==BirdSpecies::Frigatebird;
+                const float reach=frigate?std::lerp(1.32f,1.0f,sidePerch):1.0f;
+                const Vector3 elbow=LocalPoint(bodyCentre,right,bodyUp,bodyForward,side*.40f*(frigate?1.25f:1.0f),
+                    wingLift*.30f+.035f+(frigate?.10f*(1.0f-sidePerch):0.0f),
+                    std::lerp(frigate?.16f:.055f,-.20f,sidePerch),scale);
                 const Vector3 tip=LocalPoint(
-                    bodyCentre,right,bodyUp,bodyForward,side*wingSpan,wingLift,wingRear,scale);
+                    bodyCentre,right,bodyUp,bodyForward,side*wingSpan*reach,wingLift-(frigate?.05f*(1.0f-sidePerch):0.0f),
+                    wingRear-(frigate?.42f*(1.0f-sidePerch):0.0f),scale);
                 const Vector3 outerTrailing=LocalPoint(bodyCentre,right,bodyUp,bodyForward,
-                    side*std::lerp(.62f,.17f,sidePerch),wingLift*.62f-.018f,
-                    std::lerp(-.39f,-.48f,sidePerch),scale);
+                    side*std::lerp(.62f,.17f,sidePerch)*(frigate?1.15f:1.0f),wingLift*.62f-.018f,
+                    std::lerp(frigate?-.30f:-.39f,-.48f,sidePerch),scale);
                 const Vector3 innerTrailing=LocalPoint(bodyCentre,right,bodyUp,bodyForward,
                     side*std::lerp(.25f,.11f,sidePerch),wingLift*.20f-.010f,
                     std::lerp(-.34f,-.43f,sidePerch),scale);
@@ -570,18 +582,21 @@ namespace island
                                       palette.upperWing,palette.lowerWing);
             }
 
+            // (a frigatebird's tail long and deeply forked, its two streamers apart)
+            const bool forked = bird.species == BirdSpecies::Frigatebird;
             const float tailHalfWidth = bird.species == BirdSpecies::Parrot ? .16f
-                : (bird.species == BirdSpecies::FruitDove ? .21f : .34f);
+                : (bird.species == BirdSpecies::FruitDove ? .21f : forked ? .25f : .34f);
             const float tailLength = bird.species == BirdSpecies::Parrot ? -1.08f
-                : (bird.species == BirdSpecies::FruitDove ? -.64f : -.83f);
-            const float featherRoot=bird.species==BirdSpecies::Parrot?.075f:tailHalfWidth*.42f;
+                : (bird.species == BirdSpecies::FruitDove ? -.64f : forked ? -1.30f : -.83f);
+            const float featherRoot=bird.species==BirdSpecies::Parrot?.075f:forked?.085f:tailHalfWidth*.42f;
             for(const float side:{-1.0f,1.0f}) {
                 const float tipZ=tailLength-(side>0.0f&&bird.species==BirdSpecies::Parrot?.055f:0.0f);
                 const std::array<Vector3,4> feather{
                     LocalPoint(bodyCentre,right,bodyUp,bodyForward,side*.025f,0.0f,-.35f,scale),
                     LocalPoint(bodyCentre,right,bodyUp,bodyForward,side*featherRoot,-.006f,-.47f,scale),
                     LocalPoint(bodyCentre,right,bodyUp,bodyForward,side*tailHalfWidth,side*.012f,tipZ,scale),
-                    LocalPoint(bodyCentre,right,bodyUp,bodyForward,side*.018f,side*.018f,tipZ+.10f,scale)};
+                    LocalPoint(bodyCentre,right,bodyUp,bodyForward,side*(forked?.07f:.018f),side*.018f,
+                               tipZ+(forked?.42f:.10f),scale)};
                 AppendClosedSurface(vertices,feather,bodyUp*(.010f*scale),palette.tail,
                     wildlife_render::ScaleColor(palette.tail,.84f));
             }
@@ -664,6 +679,19 @@ namespace island
                 centre, right, up, forward, -wingSpan, wingLift, wingRear, scale);
             const Vector3 rightTip = LocalPoint(
                 centre, right, up, forward, wingSpan, wingLift, wingRear, scale);
+            if (bird.species == BirdSpecies::Frigatebird) {
+                // the crooked wings (an M from below) and the forked tail's two streamers
+                for (const float side : {-1.0f, 1.0f}) {
+                    const Vector3 wrist = LocalPoint(centre, right, up, forward, side * 0.62f, wingLift + 0.08f, 0.12f, scale);
+                    const Vector3 tip = LocalPoint(centre, right, up, forward, side * 1.28f, wingLift - 0.05f, -0.48f, scale);
+                    const Vector3 hand = LocalPoint(centre, right, up, forward, side * 0.55f, wingLift * 0.5f, -0.18f, scale);
+                    AddDoubleSidedTriangle(vertices, nose, wrist, tail, palette.upperWing);
+                    AddDoubleSidedTriangle(vertices, wrist, tip, hand, palette.upperWing);
+                    AddDoubleSidedTriangle(vertices, tail, LocalPoint(centre, right, up, forward, side * 0.05f, 0.0f, -0.62f, scale),
+                                           LocalPoint(centre, right, up, forward, side * 0.20f, 0.0f, -1.30f, scale), palette.tail);
+                }
+                return;
+            }
             AddDoubleSidedTriangle(vertices, nose, leftTip, tail, palette.upperWing);
             AddDoubleSidedTriangle(vertices, nose, tail, rightTip, palette.upperWing);
         }

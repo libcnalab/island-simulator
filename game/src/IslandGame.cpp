@@ -196,6 +196,7 @@ namespace island
             case FixedViewpoint::FallenFrondDetail: return "fronds";
             case FixedViewpoint::BirdDetail: return "birds";
             case FixedViewpoint::BirdPreenDetail: return "bird-preen";
+            case FixedViewpoint::FrigatebirdDetail: return "frigatebird";
             case FixedViewpoint::GroundDoveDetail: return "ground-doves";
             case FixedViewpoint::FruitBatDetail: return "bats";
             case FixedViewpoint::FruitBatRoostDetail: return "bat-roost";
@@ -1326,6 +1327,19 @@ namespace island
             yaw_ = std::atan2(toBird.X, toBird.Z);
             pitch_ = std::atan2(toBird.Y, std::hypot(toBird.X, toBird.Z));
             std::cout << "island-simulator: bird QA camera frames one flying hooked-beak parrot\n";
+        } else if (viewpoint_ == FixedViewpoint::FrigatebirdDetail
+                   && birdFlock_.Birds().size() == BirdFlock::BirdCount) {
+            // The last agent is a frigatebird soaring high over the island: framed from ahead
+            // and a little below, so its crooked wings and forked tail read against the sky.
+            const BirdState& bird = birdFlock_.Birds().back();
+            const Vector3 flightForward(std::cos(bird.headingRadians), 0.0f, std::sin(bird.headingRadians));
+            const Vector3 flightRight(-flightForward.Z, 0.0f, flightForward.X);
+            cameraPosition_ = Vector3(bird.x, bird.y, bird.z)
+                + flightForward * 3.4f + flightRight * 2.2f - Vector3::Up * 1.1f;
+            const Vector3 toBird = Vector3(bird.x, bird.y, bird.z) - flightForward * 0.3f - cameraPosition_;
+            yaw_ = std::atan2(toBird.X, toBird.Z);
+            pitch_ = std::atan2(toBird.Y, std::hypot(toBird.X, toBird.Z));
+            std::cout << "island-simulator: bird QA camera frames one soaring frigatebird, its crooked wings and forked tail against the sky\n";
         } else if (viewpoint_ == FixedViewpoint::BirdPreenDetail
                    && !birdFlock_.Birds().empty()) {
             // Agent 0 is seeded perched on the wreck; held mid-preen, framed from its
@@ -3803,6 +3817,7 @@ namespace island
         if(viewpoint_ == FixedViewpoint::BirdPreenDetail) birdFlock_.PreviewPreen(0U);
         updateProfile_.Mark("birdFlock");
         birdFlock_.Update((viewpoint_ == FixedViewpoint::BirdDetail
+                              || viewpoint_ == FixedViewpoint::FrigatebirdDetail
                               || viewpoint_ == FixedViewpoint::BirdPreenDetail
                               || viewpoint_ == FixedViewpoint::GroundDoveDetail)
                                  ? 0.0f : deltaSeconds,

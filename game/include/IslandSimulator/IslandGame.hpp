@@ -247,6 +247,7 @@ namespace island
         FallenFrondDetail,
         BirdDetail,
         BirdPreenDetail,
+        FrigatebirdDetail,
         GroundDoveDetail,
         FruitBatDetail,
         FruitBatRoostDetail,

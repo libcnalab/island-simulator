@@ -42,7 +42,11 @@ namespace island
         Coastal,
         Parrot,
         FruitDove,
-        Seabird
+        Seabird,
+        /** Great frigatebirds: the last two of the high birds, soaring far above the island on
+         *  long crooked wings with deeply forked tails, hardly ever flapping; silent, and never
+         *  diving or sitting on the sea (their plumage is not waterproof). */
+        Frigatebird
     };
 
     /** @brief Renderer-independent pose for one procedural bird. */

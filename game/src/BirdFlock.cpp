@@ -89,11 +89,15 @@ namespace island
             agent.state.speed = 7.6f + static_cast<float>(index % 3U) * 1.0f;
         } else {
             agent.state.family = BirdPathFamily::High;
-            agent.state.species = BirdSpecies::Seabird;
-            route.preferredRadius = 125.0f + static_cast<float>(index % 5U) * 27.0f;
-            route.baseAltitude = 71.0f + static_cast<float>(index % 4U) * 8.0f;
+            const bool frigate = index + 2U >= BirdCount;
+            agent.state.species = frigate ? BirdSpecies::Frigatebird : BirdSpecies::Seabird;
+            route.preferredRadius = frigate ? 175.0f + static_cast<float>(index % 2U) * 30.0f
+                                            : 125.0f + static_cast<float>(index % 5U) * 27.0f;
+            route.baseAltitude = frigate ? 112.0f + static_cast<float>(index % 2U) * 16.0f
+                                         : 71.0f + static_cast<float>(index % 4U) * 8.0f;
             route.minimumClearance = 46.0f;
-            agent.state.speed = 12.4f + static_cast<float>(index % 4U) * 1.1f;
+            agent.state.speed = frigate ? 9.2f + static_cast<float>(index % 2U) * 0.6f
+                                        : 12.4f + static_cast<float>(index % 4U) * 1.1f;
             agent.nextHuntSeconds = 20.0f + static_cast<float>(index - 18U) * 12.5f;
         }
         route.family = agent.state.family;
@@ -134,6 +138,11 @@ namespace island
         agent.flapSpeed = 5.2f + static_cast<float>(index % 6U) * 0.54f;
         agent.state.wingPose = std::sin(agent.flapPhase);
         agent.state.scale = 0.72f + static_cast<float>(index % 6U) * 0.085f;
+        if (agent.state.species == BirdSpecies::Frigatebird) {
+            // a two-metre span on slow, deep, rare beats
+            agent.state.scale = 0.95f;
+            agent.flapSpeed = 3.1f;
+        }
         agent.state.colorVariant = static_cast<std::uint8_t>(index % 3U);
         const float terrainHeight = terrain_.Height(agent.state.x, agent.state.z);
         agent.state.y = std::max(route.baseAltitude
@@ -816,7 +825,10 @@ namespace island
             elapsedSeconds_ * agent.glideFrequency + agent.glidePhase)
             + 0.38f * std::sin(elapsedSeconds_ * agent.glideFrequency * 0.417f
                               + agent.glidePhase * 1.73f);
-        const float targetGlide = std::clamp((glideSignal - 0.42f) / 0.42f, 0.0f, 1.0f);
+        // a frigatebird soars, a few slow beats only now and then
+        const float targetGlide = agent.state.species == BirdSpecies::Frigatebird
+            ? std::clamp((glideSignal + 1.05f) / 0.25f, 0.0f, 1.0f)
+            : std::clamp((glideSignal - 0.42f) / 0.42f, 0.0f, 1.0f);
         agent.state.glideAmount += std::clamp(
             targetGlide - agent.state.glideAmount,
             -deltaSeconds * 0.72f, deltaSeconds * 0.72f);

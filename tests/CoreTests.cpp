@@ -2972,7 +2972,8 @@ int main()
               "bird route diagnostics retain the exact authored spawn pose");
         Check(route.family == bird.family
                   && route.preferredRadius >= 70.0f && route.preferredRadius <= 248.0f
-                  && route.baseAltitude >= 28.0f && route.baseAltitude <= 95.0f
+                  && route.baseAltitude >= 28.0f
+                  && route.baseAltitude <= (bird.species == island::BirdSpecies::Frigatebird ? 130.0f : 95.0f)
                   && route.minimumClearance >= 15.0f
                   && route.verticalAmplitude >= 2.0f
                   && (route.direction == -1 || route.direction == 1),
@@ -9547,6 +9548,31 @@ int main()
               "gust fronts travel downwind at the front speed");
     }
 
+    {
+        // Two great frigatebirds soar far above the island: over a hundred metres up, gliding
+        // nearly all the time, never hunting or sitting on the sea even with a school in play.
+        const island::IslandTerrain terrain;
+        island::BirdFlock flock(terrain);
+        const float shore = terrain.ShoreRadius(0.3f);
+        flock.SetSeaForage(std::cos(0.3f) * (shore + 25.0f), std::sin(0.3f) * (shore + 25.0f), true);
+        int frigates = 0;
+        for (const auto& bird : flock.Birds()) frigates += bird.species == island::BirdSpecies::Frigatebird;
+        bool high = true, neverDown = true;
+        int samples = 0, gliding = 0;
+        for (int step = 0; step < 6000; ++step) {
+            flock.Update(0.05f, 0.0f, 120.0f, 0.0f);
+            for (const auto& bird : flock.Birds()) {
+                if (bird.species != island::BirdSpecies::Frigatebird) continue;
+                high = high && bird.y > 95.0f;
+                neverDown = neverDown && bird.huntAmount < 0.01f && bird.raftAmount < 0.01f;
+                ++samples;
+                gliding += bird.glideAmount > 0.8f;
+            }
+        }
+        std::cout << "frigatebirds gliding " << gliding << '/' << samples << '\n';
+        Check(frigates == 2 && high && neverDown && gliding > samples * 3 / 4,
+              "two frigatebirds soar over a hundred metres up, gliding, never hunting or rafting");
+    }
     {
         // Seabirds leave their high orbit to circle low over the fish school they are given,
         // and climb back onto the route once it is withdrawn.

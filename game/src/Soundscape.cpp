@@ -107,7 +107,8 @@ namespace island
             WildlifeAudioSource result;
             float nearestDistanceSquared = std::numeric_limits<float>::max();
             for (const BirdState& bird : birds) {
-                if (bird.simulationTier == WildlifeSimulationTier::Dormant) {
+                if (bird.simulationTier == WildlifeSimulationTier::Dormant
+                    || bird.species == BirdSpecies::Frigatebird) {   // soaring silent
                     continue;
                 }
                 const float dx = bird.x - listenerX;

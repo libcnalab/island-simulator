@@ -233,6 +233,32 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 492 (2026-10-22) — two frigatebirds soar over the island
+
+The high birds were one generic seabird that dives for fish. Over a tropical island the great
+frigatebird is the signature silhouette: black, with long narrow wings crooked at the wrist and a
+long, deeply forked tail, hanging high on the wind for hours almost without a wingbeat. It never
+dives or sits on the sea, because its plumage is not waterproof.
+
+- **Flock** (`BirdSpecies::Frigatebird`). The last two of the six high birds (the count stays
+  24). They orbit 175–205 m out at 112–128 m, at 9.2–9.8 m/s and scale 0.95 (about a two-metre
+  span). Their glide blend holds at 1 unless the glide signal dips very low, which brings a few
+  slow beats (flap speed 3.1). The seabird hunting, diving and rafting stays the seabirds' own, so
+  they never come down. The soundscape skips them as call sources: frigatebirds are silent at sea.
+- **Rendering.** The same near mesh topology with the frigatebird's shape: glossy black (the
+  undersides of the wings a shade browner, a horn-grey bill). The wings reach 1.32 times out, the
+  arm raised forward to a sharp wrist and the hand swept far back and drooped. The tail is long
+  (1.30) and forked: two streamers with a deep notch between them. The far model draws the
+  crooked M and the two streamers.
+- **QA view `frigatebird`.** It frames the last agent from ahead and a little below against the
+  sky (`20261022T070643`).
+
+A core test: two frigatebirds, always above 95 m, never hunting or rafting with a school in play,
+gliding 84 % of the time. The route-bounds test allows them 130 m. A full sweep of all 127 views
+(after passes 456–491, 06:40 UTC) passed. Its largest differences against the earlier sets were
+the underwater views' moving caustics. The `geckos` view's large dark shape before pass 455 was
+the walker's figure, wrongly drawn in QA views then, not a deer's lost shadow.
+
 ## Loop pass 491 (2026-10-22) — wet feet print the jetty's planks
 
 Come out of the sea onto the jetty, and real wet feet leave dark prints on the boards that dry
