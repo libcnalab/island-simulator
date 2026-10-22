@@ -104,6 +104,7 @@
 #include "IslandSimulator/WhaleSkeletonLayout.hpp"
 #include "IslandSimulator/IdolStatueLayout.hpp"
 #include "IslandSimulator/StoneSignLayout.hpp"
+#include "IslandSimulator/LighthouseLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/LookoutLayout.hpp"
 #include "IslandSimulator/FallingFruitField.hpp"
@@ -9551,6 +9552,25 @@ int main()
               "gust fronts travel downwind at the front speed");
     }
 
+    {
+        // The lighthouse stands on a level coastal rise of rock or turf 10-25 m up from the shore,
+        // its lantern high over the sea, and an obstacle on its spot moves it.
+        const island::IslandTerrain terrain;
+        const std::vector<island::CircularObstacle> none;
+        const auto light = island::LighthouseLayout::FindInWorld(terrain, none, {});
+        bool sound = false;
+        if (light) {
+            const auto sample = terrain.Sample(light->x, light->z);
+            const float shore = terrain.SignedShoreDistance(light->x, light->z);
+            sound = sample.surface != island::TerrainSurface::DrySand && sample.surface != island::TerrainSurface::WetSand
+                && sample.height >= island::LighthouseLayout::MinimumHeight && shore > 5.0f && shore < 35.0f
+                && light->Lamp()[1] > light->groundY + 17.0f && light->x * light->seaX + light->z * light->seaZ > 0.0f;
+            const std::vector<island::CircularObstacle> taken{{light->x, light->z, 1.0f}};
+            const auto moved = island::LighthouseLayout::FindInWorld(terrain, taken, {});
+            sound = sound && moved && std::hypot(moved->x - light->x, moved->z - light->z) > 5.0f;
+        }
+        Check(light && sound, "the lighthouse stands on a coastal rise of rock or turf with its lantern high over the sea");
+    }
     {
         // The castaway's HELP ME, big enough for an aircraft: some 600 stones in double rows along
         // the strokes on level dry beach sand, the

@@ -233,6 +233,38 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 498 (2026-10-22) — a lighthouse over the sea
+
+Operator request: a lighthouse on the island. A whitewashed masonry lighthouse with two red
+bands stands on the east coast's rise at (225, 73), its lantern 18 m over the ground.
+
+**`LighthouseLayout`.** It searches 180 bearings round the shore for the highest spot that is:
+
+- 10–25 m up from the shoreline, rock or turf (not sand), 3–24 m up;
+- level within 1.2 m over ±3.5 m;
+- clear of every obstacle by 3 m beyond its 3.1 m plinth;
+- 35 m from the wreck, the jetty's root, the whale, the sign, the god, the hut, the fire, the cave,
+  the bunker and the helicopter.
+
+It is an obstacle.
+
+**`LighthouseRenderer`.** One opaque `SculptMeshBuilder` draw of 4,922 triangles:
+
+- **Plinth.** An octagon of dressed stone, sunk below its lowest ground.
+- **Tower.** A 16.5 m tower tapering from 2.4 to 1.6 m, whitewashed with two red bands. Rust bleeds
+  in columns from its upper part and salt grime darkens its foot.
+- **Openings.** The door faces inland and five small windows climb its height, each a dark hollow
+  in a white frame.
+- **Gallery.** A slab on sixteen corbels with a railing of posts and two rails.
+- **Lantern.** Twelve glazed panes in white frames on a low iron wall, under a flattened red dome
+  with its vent, ball and lightning rod.
+- **Light.** Relit by the hour, receiving and casting the sun shadows (the leaves' shadows fall on
+  the tower).
+
+QA view `lighthouse` (`20261022T082109`) looks up at the tower from the land beside it. A core test checks
+a coastal rise of rock or turf with the lamp over 17 m up, and that an obstacle moves it. The
+validator requires the diagnostic line in every capture. Its light at night comes next.
+
 ## Loop pass 497 (2026-10-22) — HELP ME across the whole beach, big enough for an aircraft
 
 The operator found pass 496's sign ridiculously small: it has to run across the whole beach, so

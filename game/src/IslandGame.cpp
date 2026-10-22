@@ -200,6 +200,7 @@ namespace island
             case FixedViewpoint::WhaleSkeletonDetail: return "whale-skeleton";
             case FixedViewpoint::IdolDetail: return "idol";
             case FixedViewpoint::StoneSignDetail: return "help-sign";
+            case FixedViewpoint::LighthouseDetail: return "lighthouse";
             case FixedViewpoint::GroundDoveDetail: return "ground-doves";
             case FixedViewpoint::FruitBatDetail: return "bats";
             case FixedViewpoint::FruitBatRoostDetail: return "bat-roost";
@@ -474,6 +475,15 @@ namespace island
             avoid.push_back({{helicopterPlacement_->x,helicopterPlacement_->z}});
             idolPlacement_=IdolStatueLayout::FindInWorld(terrain_,worldObstacles,avoid);
             if(idolPlacement_) worldObstacles.push_back(idolPlacement_->Obstacle());
+            // The lighthouse on the highest coastal rise of rock or turf, clear of the wreck, the
+            // jetty, the whale, the sign and the god.
+            avoid.push_back({{shipwreckLayout_.Ship().x,shipwreckLayout_.Ship().z}});
+            if(jettyPlacement_) avoid.push_back({{jettyPlacement_->rootX,jettyPlacement_->rootZ}});
+            if(whalePlacement_) avoid.push_back(whalePlacement_->At(4.0f,0.0f));
+            if(stoneSignPlacement_) avoid.push_back(stoneSignPlacement_->At(StoneSignPlacement::Length()*0.5f,3.5f));
+            if(idolPlacement_) avoid.push_back({{idolPlacement_->x,idolPlacement_->z}});
+            lighthousePlacement_=LighthouseLayout::FindInWorld(terrain_,worldObstacles,avoid);
+            if(lighthousePlacement_) worldObstacles.push_back(lighthousePlacement_->Obstacle());
         }
         // The animals' lighting reads the solid casters the sun shadow map draws: the jungle's
         // snags, understory and bushes (baked with the field) and the structures, so a goat
@@ -1760,6 +1770,16 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: bridge QA camera looks across the rope bridge from the bank\n";
+        } else if (viewpoint_ == FixedViewpoint::LighthouseDetail) {
+            // From the land a little off to one side, the whole tower against the sky.
+            if(!lighthousePlacement_) throw std::runtime_error("Lighthouse QA requires the lighthouse");
+            const auto& l=*lighthousePlacement_;
+            const float eyeX=l.x-l.seaX*24.0f+l.seaZ*12.0f,eyeZ=l.z-l.seaZ*24.0f-l.seaX*12.0f;
+            cameraPosition_=Vector3(eyeX,terrain_.Height(eyeX,eyeZ)+PlayerMotion::EyeHeight,eyeZ);
+            const Vector3 direction=Vector3(l.x,l.groundY+9.5f,l.z)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: lighthouse QA camera looks up at the tower from the land beside it\n";
         } else if (viewpoint_ == FixedViewpoint::StoneSignDetail) {
             // From above the sea's edge before the sign, as from a low pass, looking down on it.
             if(!stoneSignPlacement_) throw std::runtime_error("Help sign QA requires the stone sign");
@@ -2690,6 +2710,7 @@ namespace island
         if(whalePlacement_) whaleSkeletonRenderer_=std::make_unique<WhaleSkeletonRenderer>(device,*whalePlacement_,terrain_,*drawnGround_);
         if(idolPlacement_) idolRenderer_=std::make_unique<IdolStatueRenderer>(device,*idolPlacement_,terrain_,*drawnGround_);
         if(stoneSignPlacement_) stoneSignRenderer_=std::make_unique<StoneSignRenderer>(device,*stoneSignPlacement_,terrain_,*drawnGround_);
+        if(lighthousePlacement_) lighthouseRenderer_=std::make_unique<LighthouseRenderer>(device,*lighthousePlacement_,terrain_,*drawnGround_);
         if(bridgePlacement_) bridgeRenderer_=std::make_unique<BridgeRenderer>(device,*bridgePlacement_);
         if(lookoutPlacement_) lookoutRenderer_=std::make_unique<LookoutRenderer>(device,*lookoutPlacement_);
         fallingFruitRenderer_=std::make_unique<FallingFruitRenderer>(device);
@@ -6485,6 +6506,7 @@ namespace island
                 if (whaleSkeletonRenderer_) whaleSkeletonRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (idolRenderer_) idolRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (stoneSignRenderer_) stoneSignRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                if (lighthouseRenderer_) lighthouseRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (bridgeRenderer_) bridgeRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (lookoutRenderer_) lookoutRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 helicopterRenderer_->SetSunShadowMap(sunShadowMap_.get());
@@ -6507,6 +6529,7 @@ namespace island
                 if (whaleSkeletonRenderer_) whaleSkeletonRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (idolRenderer_) idolRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (stoneSignRenderer_) stoneSignRenderer_->DrawSunShadow(*sunShadowMap_);
+                if (lighthouseRenderer_) lighthouseRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (bridgeRenderer_) bridgeRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (lookoutRenderer_) lookoutRenderer_->DrawSunShadow(*sunShadowMap_);
                 shipwreckRenderer_->DrawSunShadow(*sunShadowMap_);
@@ -6760,6 +6783,10 @@ namespace island
         if(stoneSignRenderer_) {
             GpuDiagnosticScope gpuPass("stone-sign");
             stoneSignRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
+        }
+        if(lighthouseRenderer_) {
+            GpuDiagnosticScope gpuPass("lighthouse");
+            lighthouseRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }
         if(bridgeRenderer_) {
             GpuDiagnosticScope gpuPass("bridge");
