@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <memory>
 #include <string>
 
@@ -46,6 +47,14 @@ namespace island
                   float fishSplashX = 0.0f, float fishSplashZ = 0.0f,
                   float fishSplashPhase = -1.0f);
 
+        /** @brief The grounded coaster's hull standing in the surf: its stern's end (x, z) at
+         *  the keel, its unit stern-to-bow direction, its length and half beam; the water breaks
+         *  white round it. A zero direction clears it. */
+        void SetHull(float x, float z, float dirX, float dirZ, float length, float halfBeam) noexcept
+        {
+            hull_ = {x, z, dirX, dirZ, length, halfBeam};
+        }
+
         [[nodiscard]] bool UsesCustomShader() const noexcept { return customShaderReady_; }
         [[nodiscard]] const std::string& FallbackReason() const noexcept { return fallbackReason_; }
         [[nodiscard]] int VertexCount() const noexcept { return vertexCount_; }
@@ -56,6 +65,7 @@ namespace island
         void DrawGeometry();
 
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
+        std::array<float, 6> hull_{};
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> customEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> fallbackEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> vertices_;

@@ -209,6 +209,7 @@ namespace island
             case FixedViewpoint::FreighterCrewDetail: return "freighter-crew";
             case FixedViewpoint::FreighterMessDetail: return "freighter-mess";
             case FixedViewpoint::FreighterBirdsDetail: return "freighter-birds";
+            case FixedViewpoint::FreighterSternDetail: return "freighter-stern";
             case FixedViewpoint::MineExterior: return "mine";
             case FixedViewpoint::MineAdit: return "mine-adit";
             case FixedViewpoint::MineChamber: return "mine-chamber";
@@ -500,6 +501,18 @@ namespace island
             // its lifeboat, gone from the davits, keel up on the sand along the beach from it
             if(freighterPlacement_) lifeboatPlacement_=LifeboatLayout::FindNear(terrain_,*freighterPlacement_,solid,avoid);
             if(lifeboatPlacement_) for(const auto& obstacle:lifeboatPlacement_->Obstacles()) worldObstacles.push_back(obstacle);
+            // the breakers strike her stern and quarters in the surf and throw spray up them
+            if(freighterPlacement_) {
+                const FreighterPlacement& ship=*freighterPlacement_;
+                const FreighterPoint stern=ship.World(0.0f,0.0f,0.0f);
+                surfSpray_.AddFace(stern.x,stern.z,1.6f,2.6f,-ship.dirX,-ship.dirZ,2.2f);
+                for(const float side:{-1.0f,1.0f}) {
+                    const float along=2.5f;
+                    const FreighterPoint quarter=ship.World(along,0.0f,side*(FreighterPlacement::HalfBreadth(along)+0.1f));
+                    surfSpray_.AddFace(quarter.x,quarter.z,1.4f,1.8f,side*ship.AcrossX()-0.6f*ship.dirX,
+                                       side*ship.AcrossZ()-0.6f*ship.dirZ,1.8f);
+                }
+            }
         }
         {
             // The coast's birds settle on the landmarks too: the coaster's mastheads and bow rail,
@@ -1969,7 +1982,8 @@ namespace island
                    || viewpoint_ == FixedViewpoint::FreighterHoldDetail
                    || viewpoint_ == FixedViewpoint::FreighterCrewDetail
                    || viewpoint_ == FixedViewpoint::FreighterMessDetail
-                   || viewpoint_ == FixedViewpoint::FreighterBirdsDetail) {
+                   || viewpoint_ == FixedViewpoint::FreighterBirdsDetail
+                   || viewpoint_ == FixedViewpoint::FreighterSternDetail) {
             if(!freighterPlacement_) throw std::runtime_error("Freighter QA requires the coaster");
             const auto& ship=*freighterPlacement_;
             FreighterPoint eye,look;
@@ -2001,6 +2015,13 @@ namespace island
                 eye={stand.x,terrain_.Height(stand.x,stand.z)+PlayerMotion::EyeHeight,stand.z};
                 look=ship.World(25.5f,FreighterPlacement::DeckUp(25.5f)+4.5f,-1.5f);
                 what="freighter-birds QA camera looks up from the beach at the birds on the coaster's bow rail and foremast";
+            } else if(viewpoint_==FixedViewpoint::FreighterSternDetail) {
+                // wading in the surf off her starboard quarter, at the water breaking round her stern
+                const auto stand=ship.World(-6.0f,0.0f,7.5f);
+                eye={stand.x,std::max(terrain_.Height(stand.x,stand.z),0.0f)+PlayerMotion::EyeHeight,stand.z};
+                look=ship.World(0.5f,0.0f,1.5f);
+                look.y=0.2f;
+                what="freighter-stern QA camera looks from the surf off the coaster's stern at the water breaking round her";
             } else {
                 // in the hold, from its after end toward the light through the hatch and the stair
                 eye=ship.World(10.9f,FreighterPlacement::HoldFloor+PlayerMotion::EyeHeight,-2.2f);
@@ -3048,6 +3069,9 @@ namespace island
         }
         oceanRenderer_ = std::make_unique<OceanRenderer>(
             device, terrain_, qualityProfile_.oceanQuadsPerAxis);
+        if (freighterPlacement_)
+            oceanRenderer_->SetHull(freighterPlacement_->x, freighterPlacement_->z, freighterPlacement_->dirX,
+                                    freighterPlacement_->dirZ, FreighterPlacement::Length, FreighterPlacement::HalfBeam);
         shorelineRenderer_ = std::make_unique<ShorelineRenderer>(device, terrain_);
         skyRenderer_ = std::make_unique<SkyRenderer>(device);
         debugOverlay_ = std::make_unique<DebugOverlay>(device);

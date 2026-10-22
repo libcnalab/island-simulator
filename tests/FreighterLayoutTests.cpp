@@ -3,6 +3,7 @@
 #include "IslandSimulator/LifeboatLayout.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/PlayerMotion.hpp"
+#include "IslandSimulator/SurfSprayField.hpp"
 
 #include <cmath>
 #include <iostream>
@@ -116,5 +117,19 @@ int main() {
     birds.SettlePerched(1U,3U);
     Check(birds.Birds()[1].behavior==island::BirdBehavior::Perched&&birds.Birds()[1].perchSiteIndex==3U
           &&std::abs(birds.Birds()[1].y-keel.y-birds.Birds()[1].scale*0.12f)<0.001f,"a bird settled on the keel does not stand on it");
+    // the breakers strike her stern in the surf: spray thrown up off it within a breaker's cycle
+    {
+        island::SurfSprayField spray(terrain);
+        const auto stern=ship.World(0.0f,0.0f,0.0f);
+        spray.AddFace(stern.x,stern.z,1.6f,2.6f,-ship.dirX,-ship.dirZ,2.2f);
+        Check(spray.RockCount()==1U,"the stern does not stand as a spray face");
+        bool nearStern=false;
+        for(float t=0.0f;t<25.0f;t+=1.0f/30.0f) {
+            spray.Update(1.0f/30.0f,t,stern.x,stern.z);
+            for(const auto& puff:spray.Puffs())
+                nearStern=nearStern||(puff.active&&std::hypot(puff.x-stern.x,puff.z-stern.z)<3.0f&&puff.size>0.4f);
+        }
+        Check(spray.BurstCount()>=1U&&nearStern,"no breaker throws spray up the coaster's stern");
+    }
     std::cout<<"Freighter on the beach: ladder, deck, hatch, stair, hold and deckhouse routes valid\n";
 }

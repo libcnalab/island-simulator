@@ -233,6 +233,30 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 532 (2026-10-22) — the surf breaks round the coaster's stern
+
+The coaster's stern stood in the surf, but the water round her hull did nothing.
+
+- **Foam.** The ocean shader gains the hull's outline: `uHullLine` (stern, stern-to-bow
+  direction) and `uHullSize` (length, half beam), with the hull's half-breadth curve, set through
+  `OceanRenderer::SetHull`. Where her sides and stern meet the water it now breaks white:
+  - a collar 0.5-1.6 m wide that surges with the swell, laced and broken;
+  - a broken line of wash running out from the hull to some four metres, like the waves thrown
+    back off her.
+
+  Both are whitest at the stern and thinner toward the beach.
+- **Spray.** `SurfSprayField` takes faces besides the offshore rocks (`AddFace`: a foot, a top,
+  a spread, the direction out to sea, a puff scale). The stern and both quarters are faces now,
+  so the ocean's breakers throw big puffs of spray up them as they arrive. The field's capacity
+  is 36.
+- **New QA view.** `freighter-stern` wades in the surf off her starboard quarter
+  (`20261022T133645`).
+- **Tests.** FreighterLayoutTests check that a breaker throws spray up the stern within 25 s,
+  near it and at the bigger size.
+- **Unchanged.** The jetty's collars (`jetty` `20261022T133740`).
+
+The suite is 76/76.
+
 ## Loop pass 531 (2026-10-22) — the adit's rock walls shaded round
 
 The adit's walls had geometric bumps but were lit with one flat normal per 0.5 m × 0.5 m panel,

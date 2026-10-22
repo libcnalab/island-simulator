@@ -138,6 +138,8 @@ uniform float uPlayerSplashPhase;
 uniform vec3 uBirdSplash;   // strike point x, z and ring phase 0..1 (negative: none)
 uniform vec3 uFishSplash;   // a fish breaking the surface: point x, z and ring phase (negative: none)
 uniform vec4 uJettyLine;    // deck root x, z and unit direction out to sea (zero: no jetty)
+uniform vec4 uHullLine;     // the grounded coaster: stern x, z and unit stern-to-bow direction (zero: none)
+uniform vec2 uHullSize;     // its length and half beam
 uniform vec4 uCoastalOptics;
 uniform vec3 uGlint;   // the glint's colour and strength (the sun out, or the moon)
 uniform vec3 uSkyHorizonScale, uSkyZenithScale;   // the hour's sky against the afternoon's (the sky shader's)
@@ -456,6 +458,28 @@ void main()
             * (0.5 + 0.5 * sin(uTime * 2.1 - toPost.x * 6.0));
         float jettyFoam = (collar * 0.55 + lee * 0.30) * step(-0.3, along) * step(along, 14.3);
         foam = max(foam, jettyFoam);
+    }
+    if (dot(uHullLine.zw, uHullLine.zw) > 0.5) {
+        // The grounded coaster's hull in the surf: the water breaks white along her sides and
+        // round her stern, a collar that surges up and back with the swell, laced and broken,
+        // whitest at the stern where the sea meets her and thinning toward the beach.
+        vec2 hullOffset = vWorld.xz - uHullLine.xy;
+        float hullAlong = dot(hullOffset, uHullLine.zw);
+        float hullAcross = abs(dot(hullOffset, vec2(-uHullLine.w, uHullLine.z)));
+        float station = clamp(hullAlong, 0.0, uHullSize.x);
+        float fineness = (station - 21.0) / 9.0;
+        float beam = station < 2.5 ? 3.0 + 0.5 * sin(station / 2.5 * 1.5708)
+            : (station <= 21.0 ? uHullSize.y : uHullSize.y * sqrt(max(0.0, 1.0 - fineness * fineness)));
+        float hullDistance = length(max(vec2(-hullAlong, hullAcross - beam), vec2(0.0)));
+        float surge = 0.5 + 0.5 * sin(uTime * 1.25 - hullAlong * 0.35);
+        float collar = (1.0 - smoothstep(0.0, 0.5 + 1.1 * surge, hullDistance)) * step(0.0001, hullDistance);
+        float lace = 0.68 + 0.32 * sin(vWorld.x * 3.7 + uTime * 0.8) * sin(vWorld.z * 4.1 - uTime * 0.6);
+        // and the wash thrown back off her, a broken line of foam running out from the hull
+        float washAt = 1.0 + 3.2 * fract(uTime * 0.11 - hullAlong * 0.015);
+        float wash = (1.0 - smoothstep(0.0, 0.28, abs(hullDistance - washAt)))
+            * (1.0 - smoothstep(1.0, 4.2, washAt)) * smoothstep(0.35, 0.75, lace);
+        float sternward = 1.0 - smoothstep(4.0, 22.0, hullAlong);
+        foam = max(foam, max(collar * lace, wash * 0.7) * mix(0.55, 1.0, sternward));
     }
     if (uBirdSplash.z >= 0.0 && uBirdSplash.z <= 1.0) {
         // A seabird's plunge: a white plume at the strike that becomes a wider ring than a
@@ -809,6 +833,8 @@ void main()
             customEffect_->SetUniformVec4("uJettyLine",
                 std::isfinite(jettyRootX) ? jettyRootX : 0.0f, std::isfinite(jettyRootZ) ? jettyRootZ : 0.0f,
                 std::isfinite(jettyDirX) ? jettyDirX : 0.0f, std::isfinite(jettyDirZ) ? jettyDirZ : 0.0f);
+            customEffect_->SetUniformVec4("uHullLine", hull_[0], hull_[1], hull_[2], hull_[3]);
+            customEffect_->SetUniformVec2("uHullSize", hull_[4], hull_[5]);
             customEffect_->SetUniformVec3("uBirdSplash",
                 std::isfinite(birdSplashX) ? birdSplashX : 0.0f,
                 std::isfinite(birdSplashZ) ? birdSplashZ : 0.0f,

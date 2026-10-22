@@ -17,8 +17,22 @@ void SurfSprayField::SetRocks(const std::span<const RockPlacement> rocks) {
         r.coastAngle=std::atan2(rock.z,rock.x);
         const float radial=std::max(std::hypot(rock.x,rock.z),1.0f);
         r.outX=rock.x/radial;r.outZ=rock.z/radial;
+        r.spread=r.radius;r.out=r.radius*0.8f;
         rocks_.push_back(r);
     }
+}
+
+void SurfSprayField::AddFace(const float x,const float z,const float top,const float spread,const float outX,const float outZ,
+                             const float scale) {
+    if(!std::isfinite(x)||!std::isfinite(z)||!std::isfinite(top)||!std::isfinite(spread)||!std::isfinite(scale)) return;
+    const float norm=std::hypot(outX,outZ);
+    if(!(norm>1e-4f)) return;
+    Rock r;
+    r.x=x;r.z=z;r.top=top;r.radius=spread;r.spread=spread;r.scale=scale;r.out=0.25f;
+    r.offshore=std::max(0.0f,-terrain_.SignedShoreDistance(x,z));
+    r.coastAngle=std::atan2(z,x);
+    r.outX=outX/norm;r.outZ=outZ/norm;
+    rocks_.push_back(r);
 }
 
 void SurfSprayField::Burst(const Rock& rock) noexcept {
@@ -26,11 +40,11 @@ void SurfSprayField::Burst(const Rock& rock) noexcept {
     for(MistPuff& puff:puffs_) {
         if(puff.active||placed>=PuffsPerBurst) continue;
         // Up the seaward face, spread along it.
-        const float along=(static_cast<float>(placed)-1.0f)*0.45f*rock.radius;
-        puff.x=rock.x+rock.outX*rock.radius*0.8f-rock.outZ*along;
-        puff.z=rock.z+rock.outZ*rock.radius*0.8f+rock.outX*along;
+        const float along=(static_cast<float>(placed)-1.0f)*0.45f*rock.spread;
+        puff.x=rock.x+rock.outX*rock.out-rock.outZ*along;
+        puff.z=rock.z+rock.outZ*rock.out+rock.outX*along;
         puff.y=std::max(rock.top-0.3f,0.1f);
-        puff.size=0.25f+0.1f*static_cast<float>(placed);
+        puff.size=(0.25f+0.1f*static_cast<float>(placed))*rock.scale;
         puff.age=0;puff.density=0;puff.active=true;
         ++placed;
     }

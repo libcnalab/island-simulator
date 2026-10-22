@@ -280,6 +280,7 @@ namespace island
         FreighterCrewDetail,
         FreighterMessDetail,
         FreighterBirdsDetail,
+        FreighterSternDetail,
         MineExterior,
         MineAdit,
         MineChamber,
