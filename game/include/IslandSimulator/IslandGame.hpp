@@ -300,6 +300,7 @@ namespace island
         FreighterBirdsDetail,
         FreighterSternDetail,
         MineExterior,
+        MineCutting,
         MineAdit,
         MineChamber,
         MineBatsDetail,
@@ -347,6 +348,7 @@ namespace island
         QuadDriveDetail,
         QuadBunkerDetail,
         QuadCaveDetail,
+        QuadMineDetail,
         QuadJettyDetail,
         QuadHelicopterDetail,
         QuadLookoutDetail,
@@ -748,7 +750,7 @@ namespace island
         // Where the quad is: in the cave or the bunker their floors are its ground and their
         // rock, walls and roof its obstacles (the terrain heightfield runs on through the hill
         // above them, so it had driven on as if neither were there).
-        enum class QuadSite : std::uint8_t { Open, Cave, Bunker };
+        enum class QuadSite : std::uint8_t { Open, Cave, Bunker, Mine };
         QuadSite quadSite_ = QuadSite::Open;
         // the driven quad views: up the beach path, and into the bunker and the cave
         [[nodiscard]] bool QuadDriveView() const noexcept {
@@ -756,12 +758,15 @@ namespace island
                 || viewpoint_ == FixedViewpoint::QuadCaveDetail || viewpoint_ == FixedViewpoint::QuadJettyDetail
                 || viewpoint_ == FixedViewpoint::QuadHelicopterDetail || viewpoint_ == FixedViewpoint::QuadLookoutDetail
                 || viewpoint_ == FixedViewpoint::QuadBearDetail || viewpoint_ == FixedViewpoint::QuadStreamDetail
-                || viewpoint_ == FixedViewpoint::QuadSeaDetail;
+                || viewpoint_ == FixedViewpoint::QuadSeaDetail || viewpoint_ == FixedViewpoint::QuadMineDetail;
         }
         float quadSiteFloorY_ = 0.0f;
         int quadStreamWaitUpdates_ = 13;   // QA: the stream view stands this many updates before setting off
         void UpdateQuadSite();
         [[nodiscard]] bool QuadWallBlocked(float x, float z) const noexcept;
+        // The old mine's floor under (x, z) for the quad down at it, in the cutting, the adit and
+        // the chamber (on the mountain above them, none).
+        [[nodiscard]] bool QuadMineFloor(float x, float z, float& floor) const noexcept;
         [[nodiscard]] bool QuadOnShelterFloor(float x, float z) const noexcept;
         [[nodiscard]] bool StreamWaterAt(float x, float z, float& bed, float& waterDepth) const noexcept;
         [[nodiscard]] float WalkerWaterDepth() const noexcept;

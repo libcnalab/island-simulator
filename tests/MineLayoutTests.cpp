@@ -43,6 +43,17 @@ int main() {
     Check(!mine.SupportHeight(deep.x,deep.z,terrain.Height(deep.x,deep.z),floor),"the adit captures a walker on the mountain above");
     const auto portal=mine.World(0,1.0f,0.5f);
     Check(mine.HidesTerrain(portal.x,mine.Entrance().y+1.0f,portal.z),"the hillside still seals the portal");
+    // Only between the floor and the roof: the slope falling below the floor in front of the mouth
+    // and beside the cut stays drawn (hidden, nothing covered it and the sky showed through).
+    const auto mouth=mine.World(0,0,-0.6f);
+    Check(!mine.HidesTerrain(mouth.x,mine.Entrance().y-0.2f,mouth.z),"the slope below the floor in front of the mouth is hidden");
+    Check(mine.HidesTerrain(mouth.x,mine.Entrance().y+0.3f,mouth.z),"the hillside over the mouth's floor still stands");
+    const auto beside=mine.World(island::MineLayout::CutHalfWidth+0.2f,1.0f,1.0f);
+    Check(!mine.HidesTerrain(beside.x,beside.y,beside.z),"the hillside beside the cutting is hidden");
+    Check(island::MineLayout::OnFloorPlan(0.0f,-0.5f)&&island::MineLayout::OnFloorPlan(1.5f,2.0f)
+              &&island::MineLayout::OnFloorPlan(0.0f,30.0f)&&island::MineLayout::OnFloorPlan(2.5f,island::MineSite::ChamberCentre)
+              &&!island::MineLayout::OnFloorPlan(2.5f,20.0f)&&!island::MineLayout::OnFloorPlan(0.0f,-2.0f),
+          "the floor plan the quad drives on is not the cutting, the adit and the chamber");
 
     // The real controller: up the path into the cutting, along the adit past the lanterns to
     // the crystal chamber, round the cart, and back out.

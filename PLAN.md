@@ -233,6 +233,43 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 548 (2026-10-22) — the mine's mouth closed all round, and the quad drives in
+
+The operator reported that the old mine's entrance showed a hole out of the island, and that
+the quad could not be driven into the mine.
+
+- **The hole.** The terrain shader (and its CPU fallback, `MineLayout::HidesTerrain`) hid the
+  hillside in a band 1.55 m either side of the adit's axis, from 0.8 m before the mouth, at any
+  height below the roof. Nothing covered that band in full:
+  - the cutting's gravel was the adit's width only (1.3 m either side);
+  - in front of the mouth, the gravel stood level over the slope that fell away below it;
+  - the cribbing's logs left the band's edges open.
+  Beside and below the gravel the sky showed through the island (reproduced from three sides
+  with a temporary camera probe, since removed). Fixed in three parts:
+  - The terrain is now hidden only between the floor and the roof, so the slope falling below
+    the floor stays.
+  - The gravel spans the whole band (`MineLayout::CutHalfWidth`, `CutStart`), following the
+    slope down in front of the mouth where it falls below the floor.
+  - Behind the cribbing, an earth bank rises from the gravel to the hillside on either side.
+- **The quad.** The quad's ground was the hillside's heightfield, which rose over the adit's roof
+  at the mouth, so the quad climbed it instead of driving in.
+  - The quad now has the mine's floor (`IslandGame::QuadMineFloor`, `MineLayout::OnFloorPlan`)
+    in the cutting, the adit and the chamber, while it is down at that floor. On the mountain
+    above, the mountain stays its ground.
+  - A new quad site `Mine` gives no ruts, dust or spray on the gravel.
+  - The walls hold the quad's footprint to the adit and the chamber, clear of the crates, the
+    rubble and the cart; the cribbing and the posts stop it.
+  - The chase camera stays inside the adit, between the floor and the roof, as in the bunker.
+- **New QA views.**
+  - `mine-cutting`: from the slope beside the mouth, across the cutting (`20261022T163138`).
+  - `quad-mine`: the quad driven up the approach and into the adit, 7.4 m in at 29 km/h, on the
+    floor with its walls clear (`163146`). It uses the dim-interior profile, reviewed: mean 51.6,
+    spread 16.8.
+  - `mine`, `mine-adit` and `quad-bunker` still pass (`163128`, `163159`, `163206`).
+- **Tests.** MineLayoutTests check that the slope below the floor in front of the mouth and the
+  hillside beside the cutting stay drawn, that the hillside over the mouth's floor is still
+  hidden, and the quad's floor plan.
+
 ## Loop pass 547 (2026-10-22) — a windthrown jungle giant
 
 The jungle's trees all stood. Now one giant lies where a storm threw it, the commonest

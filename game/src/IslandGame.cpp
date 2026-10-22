@@ -224,6 +224,7 @@ namespace island
             case FixedViewpoint::FreighterBirdsDetail: return "freighter-birds";
             case FixedViewpoint::FreighterSternDetail: return "freighter-stern";
             case FixedViewpoint::MineExterior: return "mine";
+            case FixedViewpoint::MineCutting: return "mine-cutting";
             case FixedViewpoint::MineAdit: return "mine-adit";
             case FixedViewpoint::MineChamber: return "mine-chamber";
             case FixedViewpoint::MineBatsDetail: return "mine-bats";
@@ -271,6 +272,7 @@ namespace island
             case FixedViewpoint::QuadDriveDetail: return "quad-drive";
             case FixedViewpoint::QuadBunkerDetail: return "quad-bunker";
             case FixedViewpoint::QuadCaveDetail: return "quad-cave";
+            case FixedViewpoint::QuadMineDetail: return "quad-mine";
             case FixedViewpoint::QuadJettyDetail: return "quad-jetty";
             case FixedViewpoint::QuadHelicopterDetail: return "quad-helicopter";
             case FixedViewpoint::QuadLookoutDetail: return "quad-lookout";
@@ -899,6 +901,7 @@ namespace island
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: bunker QA camera "<<ViewpointName(viewpoint_)<<'\n';
         } else if(viewpoint_==FixedViewpoint::MineExterior
+                  ||viewpoint_==FixedViewpoint::MineCutting
                   ||viewpoint_==FixedViewpoint::MineAdit
                   ||viewpoint_==FixedViewpoint::MineChamber
                   ||viewpoint_==FixedViewpoint::MineBatsDetail
@@ -912,6 +915,12 @@ namespace island
                 camera={stand.x,terrain_.Height(stand.x,stand.z)+PlayerMotion::EyeHeight,stand.z};
                 target=mineLayout_.World(0.0f,1.5f,mineLayout_.PortalDepth());
                 what="mine QA camera looks up the approach at the old mine's timbered portal";
+            } else if(viewpoint_==FixedViewpoint::MineCutting) {
+                // from the slope beside the mouth, across the cutting: its gravel, its cribbing and
+                // the banks behind it close it all round (it had shown the sky through the island)
+                camera=mineLayout_.World(5.0f,2.5f,-1.0f);
+                target=mineLayout_.World(0.0f,1.0f,1.0f);
+                what="mine-cutting QA camera looks across the cutting at the old mine's mouth";
             } else if(viewpoint_==FixedViewpoint::MineAdit) {
                 camera=mineLayout_.World(0.25f,MineLayout::FloorRelative(9.0f)+PlayerMotion::EyeHeight,9.0f);
                 target=mineLayout_.World(0.0f,MineLayout::FloorRelative(30.0f)+1.3f,30.0f);
@@ -3445,6 +3454,10 @@ namespace island
                 if (viewpoint_ == FixedViewpoint::QuadBunkerDetail) {
                     const auto from = bunkerLayout_.World(0.0f, 0.0f, -6.0f), to = bunkerLayout_.World(0.0f, 0.0f, 0.0f);
                     PlaceQuadNear(from.x, from.z, std::atan2(to.x - from.x, to.z - from.z));
+                } else if (viewpoint_ == FixedViewpoint::QuadMineDetail) {
+                    // up the approach into the old mine's cutting and its adit
+                    const auto from = mineLayout_.World(0.25f, 0.0f, -7.0f), to = mineLayout_.World(0.25f, 0.0f, 0.0f);
+                    PlaceQuadNear(from.x, from.z, std::atan2(to.x - from.x, to.z - from.z));
                 } else if (viewpoint_ == FixedViewpoint::QuadCaveDetail) {
                     const auto from = terrainRenderer_->Cave().World(0.0f, 0.0f, -6.0f);
                     const auto to = terrainRenderer_->Cave().World(0.0f, 0.0f, 0.0f);
@@ -5428,6 +5441,9 @@ namespace island
         } else if (terrainRenderer_ && terrainRenderer_->CaveGround().Contains(p.x, p.z)) {
             quadSite_ = QuadSite::Cave;
             quadSiteFloorY_ = terrainRenderer_->CaveGround().SampleHeight(p.x, p.z);
+        } else if (QuadMineFloor(p.x, p.z, floor) && mineLayout_.Local({p.x, 0.0f, p.z}).z >= -0.3f) {
+            quadSite_ = QuadSite::Mine;
+            quadSiteFloorY_ = floor;
         } else {
             quadSite_ = QuadSite::Open;
         }
@@ -5459,6 +5475,30 @@ namespace island
                     const float px = x + fx * along + fz * across, pz = z + fz * along - fx * across;
                     if (bunkerLayout_.Local({px, 0.0f, pz}).z < -0.35f) continue;   // still outside
                     if (!bunkerLayout_.ContainsWalkable(px, pz, 0.0f)) return true;
+                }
+            }
+        }
+        // The old mine: down at its floor, past the mouth, the quad's footprint (its corners and
+        // the middles of its sides) must lie in the adit and the chamber, clear of the crates, the
+        // rubble and the cart; the cutting's cribbing, the adit's posts and the rock stop it.
+        {
+            float floor = 0.0f;
+            const MinePoint centre = mineLayout_.Local({x, 0.0f, z});
+            const bool inside = QuadMineFloor(x, z, floor) && centre.z >= -0.3f;
+            if (centre.z > -3.0f && centre.z < MineSite::ChamberCentre + MineSite::ChamberHalfLength + 3.0f
+                && std::abs(centre.x) < 8.0f
+                && std::abs(quad_.Position().y - 0.6f - (mineLayout_.Entrance().y + MineLayout::FloorRelative(centre.z))) < 1.4f) {
+                const BikeVec forward = quad_.Forward();
+                const float length = std::hypot(forward.x, forward.z);
+                const float fx = length > 1e-4f ? forward.x / length : 0.0f, fz = length > 1e-4f ? forward.z / length : 1.0f;
+                for (const float along : {-1.0f, 0.0f, 1.0f}) {
+                    for (const float across : {-0.62f, 0.0f, 0.62f}) {
+                        if (along == 0.0f && across == 0.0f) continue;
+                        const MinePoint p = mineLayout_.Local({x + fx * along + fz * across, 0.0f, z + fz * along - fx * across});
+                        if (p.z < -0.3f) continue;   // still out in front of the mouth
+                        if (!MineLayout::OnFloorPlan(p.x, p.z)) { if (inside) return true; continue; }
+                        if (!MineLayout::WalkableLocal(p.x, p.z)) return true;
+                    }
                 }
             }
         }
@@ -5502,9 +5542,31 @@ namespace island
         return terrainRenderer_ && terrainRenderer_->Cave().IntersectsCapsule({x, feet, z}, Radius, Height);
     }
 
+    bool IslandGame::QuadMineFloor(const float x, const float z, float& floor) const noexcept
+    {
+        const MinePoint local = mineLayout_.Local({x, 0.0f, z});
+        if (!MineLayout::OnFloorPlan(local.x, local.z)) return false;
+        floor = mineLayout_.Entrance().y + MineLayout::FloorRelative(local.z);
+        // the wheels touch about 0.6 m below the body's origin
+        return std::abs(quad_.Position().y - 0.6f - floor) < 1.4f;
+    }
+
     BikeGround IslandGame::QuadGround(const float x, const float z) const noexcept
     {
         BikeGround ground;
+        // The old mine: its floor in the cutting, the adit and the chamber, where the hillside
+        // (not drawn there) stands over it. (The quad had met the hillside's heightfield rising
+        // over the adit's roof at the mouth and climbed it instead of driving in.) In front of
+        // the mouth, where the slope falls below the floor, the slope.
+        {
+            float floor = 0.0f;
+            if (QuadMineFloor(x, z, floor) && DrawnOrAnalyticHeight(*drawnGround_, terrain_, x, z) > floor - 0.03f) {
+                ground.height = floor;
+                ground.normal = {0.0f, 1.0f, 0.0f};
+                ground.grip = 1.1f;   // packed gravel
+                return ground;
+            }
+        }
         // In the bunker its ramp and rooms are the ground, from its floor plan, and in the cave
         // its excavated floor (beyond which, while inside, the floor under the quad goes on
         // under the hull's points that reach into the rock).
@@ -5997,6 +6059,20 @@ namespace island
             const float floor = bunkerLayout_.EntranceGroundY() + bunkerLayout_.FloorRelative(depth);
             const float ceiling = floor + (depth < 10.0f ? 2.75f : 3.05f);   // the ramp's and the rooms' roofs
             desired.Y = std::clamp(desired.Y, floor + 0.6f, ceiling - 0.35f);
+        } else if (quadSite_ == QuadSite::Mine && mineLayout_.Local({desired.X, desired.Y, desired.Z}).z >= -0.3f) {
+            // In the mine the same: drawn in behind the quad until it stands in the adit or the
+            // chamber, clear of its walls, between the floor and the roof.
+            const auto clear = [this](const Vector3& at) {
+                const MinePoint l = mineLayout_.Local({at.X, at.Y, at.Z});
+                return l.z < -0.3f || (MineLayout::WalkableLocal(l.x, l.z) && (std::abs(l.x) <= 0.8f || l.z > MineSite::AditLength));
+            };
+            for (float back = 4.8f; back > 0.9f && !clear(desired); back -= 0.3f) {
+                desired.X = p.x - std::sin(quadCameraYaw_) * back;
+                desired.Z = p.z - std::cos(quadCameraYaw_) * back;
+            }
+            const MinePoint l = mineLayout_.Local({desired.X, desired.Y, desired.Z});
+            const float floor = mineLayout_.Entrance().y + MineLayout::FloorRelative(l.z);
+            desired.Y = std::clamp(desired.Y, floor + 0.6f, floor + MineLayout::Headroom(l.x, l.z) - 0.35f);
         } else {
             desired.Y = std::max(desired.Y, terrain_.Height(desired.X, desired.Z) + 0.6f);
         }
@@ -9047,6 +9123,12 @@ namespace island
                                   << jetty.SupportHeight(q.x, q.z, -100.0f);
                     }
                     std::cout << '\n';
+                } else if (viewpoint_ == FixedViewpoint::QuadMineDetail) {
+                    const MinePoint local = mineLayout_.Local({q.x, q.y, q.z});
+                    std::cout << "island-simulator: quad QA shelter: mine, site "
+                              << (quadSite_ == QuadSite::Mine ? "mine" : "open") << ", depth " << local.z << " m, across "
+                              << local.x << " m, floor " << QuadGround(q.x, q.z).height << ", body " << q.y
+                              << ", walls " << (QuadWallBlocked(q.x, q.z) ? "touching" : "clear") << '\n';
                 } else if (viewpoint_ != FixedViewpoint::QuadDriveDetail) {
                     const bool bunker = viewpoint_ == FixedViewpoint::QuadBunkerDetail;
                     const float depth = bunker ? bunkerLayout_.Local({q.x, q.y, q.z}).z

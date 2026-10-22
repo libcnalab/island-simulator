@@ -109,6 +109,7 @@ namespace
         case FixedViewpoint::FreighterSternDetail: return "freighter-stern";
         case FixedViewpoint::FreighterMessDetail: return "freighter-mess";
         case FixedViewpoint::MineExterior: return "mine";
+        case FixedViewpoint::MineCutting: return "mine-cutting";
         case FixedViewpoint::MineAdit: return "mine-adit";
         case FixedViewpoint::MineChamber: return "mine-chamber";
         case FixedViewpoint::MineBatsDetail: return "mine-bats";
@@ -155,6 +156,7 @@ namespace
         case FixedViewpoint::QuadChaseDetail: return "quad-chase";
         case FixedViewpoint::QuadDriveDetail: return "quad-drive";
         case FixedViewpoint::QuadBunkerDetail: return "quad-bunker";
+        case FixedViewpoint::QuadMineDetail: return "quad-mine";
         case FixedViewpoint::QuadCaveDetail: return "quad-cave";
         case FixedViewpoint::QuadJettyDetail: return "quad-jetty";
         case FixedViewpoint::QuadHelicopterDetail: return "quad-helicopter";
@@ -441,6 +443,8 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::FreighterMessDetail;
             } else if (name == "mine") {
                 viewpoint = island::FixedViewpoint::MineExterior;
+            } else if (name == "mine-cutting") {
+                viewpoint = island::FixedViewpoint::MineCutting;
             } else if (name == "mine-adit") {
                 viewpoint = island::FixedViewpoint::MineAdit;
             } else if (name == "mine-chamber") {
@@ -515,6 +519,8 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::QuadDriveDetail;
             } else if (name == "quad-bunker") {
                 viewpoint = island::FixedViewpoint::QuadBunkerDetail;
+            } else if (name == "quad-mine") {
+                viewpoint = island::FixedViewpoint::QuadMineDetail;
             } else if (name == "quad-cave") {
                 viewpoint = island::FixedViewpoint::QuadCaveDetail;
             } else if (name == "quad-jetty") {

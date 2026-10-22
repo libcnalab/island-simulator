@@ -29,6 +29,12 @@ public:
     [[nodiscard]] bool HidesTerrain(float worldX,float worldY,float worldZ) const noexcept;
     [[nodiscard]] bool IntersectsCapsule(MinePoint feet,float radius,float height) const noexcept;
     [[nodiscard]] float SafeTravelFraction(MinePoint from,MinePoint to,float radius,float height) const noexcept;
+    // The band the hillside is cut away in (the terrain hidden in it between the floor and the
+    // roof), out from the mouth and in to the adit's end.
+    static constexpr float CutHalfWidth=1.55f,CutStart=-0.8f;
+    /** Whether (across, depth) lies on the mine's floor plan for a vehicle: the cut band and
+     *  the chamber. */
+    [[nodiscard]] static bool OnFloorPlan(float across,float depth) noexcept;
     // where the old cart lies tipped on its side in the chamber
     static constexpr float CartAcross=1.9f,CartDepth=51.0f,CartRadius=0.75f;
     // the crates stacked against the left wall, the fall of rubble and a broken cap against the right

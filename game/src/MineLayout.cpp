@@ -79,8 +79,16 @@ bool MineLayout::SupportHeight(const float worldX,const float worldZ,const float
 bool MineLayout::HidesTerrain(const float worldX,const float worldY,const float worldZ) const noexcept {
     if(!std::isfinite(worldX)||!std::isfinite(worldY)||!std::isfinite(worldZ)) return false;
     const auto local=Local({worldX,worldY,worldZ});
-    if(std::abs(local.x)>MineSite::HalfWidth+0.25f||local.z<-0.8f||local.z>MineSite::AditLength+0.4f) return false;
-    return worldY<entrance_.y+FloorRelative(local.z)+MineSite::Height+0.04f;
+    if(std::abs(local.x)>CutHalfWidth||local.z<CutStart||local.z>MineSite::AditLength+0.4f) return false;
+    // above the floor only: where the slope in front of the mouth falls below it, it stays
+    const float floor=entrance_.y+FloorRelative(local.z);
+    return worldY<floor+MineSite::Height+0.04f&&worldY>floor-0.03f;
+}
+
+bool MineLayout::OnFloorPlan(const float across,const float depth) noexcept {
+    if(!std::isfinite(across)||!std::isfinite(depth)) return false;
+    const float a=across/MineSite::ChamberHalfWidth,d=(depth-MineSite::ChamberCentre)/MineSite::ChamberHalfLength;
+    return (std::abs(across)<=CutHalfWidth+0.05f&&depth>=CutStart-0.05f&&depth<=MineSite::AditLength+0.4f)||a*a+d*d<=1.0f;
 }
 
 bool MineLayout::IntersectsCapsule(const MinePoint feet,const float radius,const float height) const noexcept {

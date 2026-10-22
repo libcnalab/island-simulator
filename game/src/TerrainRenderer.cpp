@@ -333,12 +333,15 @@ void main()
         +(bunkerDepth<10.0?2.75:3.05);
     if((bunkerCorridor||bunkerComputer||bunkerReactor||bunkerService)
         &&vWorld.y<bunkerCeiling+0.04) discard;
-    // The old mine's adit the same way: the cutting below its roof at the portal.
+    // The old mine's adit the same way: the cutting between its floor and its roof at the
+    // portal (the slope falling below the floor in front of the mouth stays: the cutting's
+    // gravel follows it down).
     vec2 mineOffset=p-uMineEntrance.xz;
     float mineAcross=dot(mineOffset,uMineFrame.xy);
     float mineDepth=dot(mineOffset,uMineFrame.zw);
+    float mineFloor=uMineEntrance.y+0.01*max(mineDepth,0.0);
     if(abs(mineAcross)<=1.55&&mineDepth>=-0.80&&mineDepth<=48.4
-        &&vWorld.y<uMineEntrance.y+0.01*max(mineDepth,0.0)+2.54) discard;
+        &&vWorld.y<mineFloor+2.54&&vWorld.y>mineFloor-0.03) discard;
     float detailFade = 1.0 - smoothstep(95.0, 285.0, distanceToCamera);
 
     // Substrate is a world property: never fade humus, clearings or paths back to

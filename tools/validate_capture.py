@@ -42,8 +42,10 @@ UNDERWATER_VIEWPOINTS = ("fish", "reef-habitat", "anemone", "dolphins")
 # inside its whitewashed tower (loop pass 533), lit by a window and the door: reviewed on
 # 2026-10-22 (53 colour bins against 64, spread 27.1, contrast 163), a correct render of a nearly
 # one-colour interior with the treads, the newel, the green handrail and the window clear. The
-# profile's floors are mean 20, spread 10 and 40 colour bins.
-DIM_INTERIOR_VIEWPOINTS = ("freighter-mess", "mine-bats", "mine-puddle", "lighthouse-stair")
+# quad driven into the mine's adit (quad-mine, 2026-10-22: mean 51.6, spread 16.8 against 18, 232
+# colour bins), a correct render of the rider on the quad between the timbered walls under the
+# lanterns. The profile's floors are mean 20, spread 10 and 40 colour bins.
+DIM_INTERIOR_VIEWPOINTS = ("freighter-mess", "mine-bats", "mine-puddle", "lighthouse-stair", "quad-mine")
 
 # The game hours of the night (the clock's dark between the dusk and the dawn), when a capture
 # asks for one with --time-of-day: reviewed on 2026-10-20 as a dark blue moonlit scene.

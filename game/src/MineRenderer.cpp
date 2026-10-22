@@ -258,12 +258,38 @@ MineRenderer::MineRenderer(GraphicsDevice& device,const MineLayout& layout,const
         return 0.82f+0.3f*Noise(d*1.3f+a*0.7f,u*1.9f+a*2.1f)+0.08f*Noise(d*5.1f,u*4.7f);
     };
 
-    // ---- the cutting: gravel underfoot, log cribbing holding back the slope either side
-    for(float d=-0.75f;d<portal+0.2f;d+=0.5f) {
-        const float d1=std::min(d+0.5f,portal+0.2f);
-        for(float a=-MineSite::HalfWidth;a<MineSite::HalfWidth-1e-3f;a+=0.65f) {
-            const float a1=a+0.65f;
-            quad(W(a,0,d),W(a1,0,d),W(a1,0,d1),W(a,0,d1),Vector3(0,1,0),Gravel*stain(a,0,d));
+    // ---- the cutting: gravel underfoot, log cribbing holding back the slope either side. The
+    // gravel spans the whole width the hillside is cut away to (the terrain is not drawn there
+    // above the floor), following the slope down in front of the mouth where it falls below the
+    // floor; behind the cribbing an earth bank rises to the hillside on either side. (The gravel
+    // was the adit's width only and stood level out over the falling slope: the cut showed
+    // the sky through the island beside and below it.)
+    constexpr float CutHalf=MineLayout::CutHalfWidth+0.05f;
+    const auto cutFloor=[&](const float a,const float d) {
+        Vector3 p=W(a,0,d);
+        if(d<portal) p.Y=std::min(p.Y,DrawnOrAnalyticHeight(ground,terrain,p.X,p.Z)+0.05f);
+        return p;
+    };
+    for(float d=MineLayout::CutStart-0.05f;d<portal+0.2f;d+=0.25f) {
+        const float d1=std::min(d+0.25f,portal+0.2f);
+        for(int k=0;k<6;++k) {
+            const float a=-CutHalf+2.0f*CutHalf*static_cast<float>(k)/6.0f,a1=-CutHalf+2.0f*CutHalf*static_cast<float>(k+1)/6.0f;
+            quad(cutFloor(a,d),cutFloor(a1,d),cutFloor(a1,d1),cutFloor(a,d1),Vector3(0,1,0),Gravel*stain(a,0,d));
+        }
+    }
+    for(const float s:{-1.0f,1.0f}) {
+        // the bank's top: the hillside just outside the cut, no higher than the roof's line
+        const auto bankTop=[&](const float d) {
+            const auto o=W(s*(CutHalf+0.05f),0,d);
+            return std::min(DrawnOrAnalyticHeight(ground,terrain,o.X,o.Z)+0.05f,W(0,MineSite::Height+0.12f,d).Y);
+        };
+        for(float d=MineLayout::CutStart-0.05f;d<portal+0.2f;d+=0.25f) {
+            const float d1=std::min(d+0.25f,portal+0.2f);
+            const Vector3 b0=cutFloor(s*CutHalf,d)-Vector3::Up*0.05f,b1=cutFloor(s*CutHalf,d1)-Vector3::Up*0.05f;
+            const float t0=bankTop(d),t1=bankTop(d1);
+            if(t0<=b0.Y+0.06f&&t1<=b1.Y+0.06f) continue;
+            const Vector3 u0(b0.X,std::max(t0,b0.Y),b0.Z),u1(b1.X,std::max(t1,b1.Y),b1.Z);
+            quad(b0,b1,u1,u0,acrossDir*(-s),Vector3(96,80,62)*stain(s,d,d));
         }
     }
     for(const float s:{-1.0f,1.0f}) {
