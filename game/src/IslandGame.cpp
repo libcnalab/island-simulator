@@ -3454,7 +3454,11 @@ namespace island
                         open += 0.2f * std::clamp(canopyLightField_.Sample(listener.x + offset[0], listener.z + offset[1]), 0.0f, 1.0f);
                     const bool inCave = terrainRenderer_ && terrainRenderer_->CaveGround().Contains(listener.x, listener.z)
                         && cameraPosition_.Y < terrain_.Height(cameraPosition_.X, cameraPosition_.Z) - 0.5f;
-                    soundscape_->SetRainShelter(1.0f - open, inCave ? 1.0f : 0.0f);
+                    // in the helicopter's cabin the rain drums on the metal skin
+                    const bool inCabin = helicopterPlacement_
+                        && (helicopterPlacement_->InRearCabin(listener.x, listener.z)
+                            || helicopterPlacement_->InPilotFootwell(listener.x, listener.z));
+                    soundscape_->SetRainShelter(1.0f - open, inCave ? 1.0f : 0.0f, inCabin ? 1.0f : 0.0f);
                 }
                 soundscape_->SetWind(weather_.State().wind);
                 soundscape_->SetWetness(weather_.State().wetness);

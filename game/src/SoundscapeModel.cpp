@@ -525,13 +525,16 @@ namespace island
         return Quantize(samples, 0.62f, true);
     }
 
-    RainHearing RainUnderShelter(const float rain, const float canopy, const float enclosed) noexcept
+    RainHearing RainUnderShelter(const float rain, const float canopy, const float enclosed, const float metal) noexcept
     {
         const auto unit = [](const float value) { return std::isfinite(value) ? std::clamp(value, 0.0f, 1.0f) : 0.0f; };
-        const float r = unit(rain), c = unit(canopy), e = unit(enclosed);
+        const float r = unit(rain), c = unit(canopy), e = unit(enclosed), m = unit(metal);
         RainHearing hearing;
         hearing.volume = r * 0.62f * (1.0f + 0.35f * c) * (1.0f - 0.85f * e);
         hearing.pitch = -0.22f * c * (1.0f - e) - 0.30f * e;
+        // drumming on a metal skin overhead: louder than in the open and brighter
+        hearing.volume = std::lerp(hearing.volume, r * 0.62f * 1.7f, m);
+        hearing.pitch = std::lerp(hearing.pitch, 0.30f, m);
         return hearing;
     }
 

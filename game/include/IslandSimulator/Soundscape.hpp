@@ -144,12 +144,13 @@ namespace island
         /** @brief The weather's sound: the rain's loudness and the lightning strikes so far
          *  (a new strike's thunder follows after its distance over the speed of sound). */
         void SetWeather(float rain, std::uint32_t strikes, float strikeDistance) noexcept;
-        /** @brief Where the listener hears the rain from: under the crowns (0..1) and in the
-         *  cave (0..1; the bunker takes its own presence). */
-        void SetRainShelter(float canopy, float enclosed) noexcept
+        /** @brief Where the listener hears the rain from: under the crowns (0..1), in the cave
+         *  (0..1; the bunker takes its own presence) and under a metal roof (the helicopter's cabin). */
+        void SetRainShelter(float canopy, float enclosed, float metal = 0.0f) noexcept
         {
             rainCanopy_ = std::isfinite(canopy) ? std::clamp(canopy, 0.0f, 1.0f) : 0.0f;
             rainEnclosed_ = std::isfinite(enclosed) ? std::clamp(enclosed, 0.0f, 1.0f) : 0.0f;
+            rainMetal_ = std::isfinite(metal) ? std::clamp(metal, 0.0f, 1.0f) : 0.0f;
         }
         /** @brief The quad's engine: running or not, its revs, its load (throttle), where it is,
          *  and whether the listener rides it (then heard close, not placed in the world). */
@@ -326,7 +327,7 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> impactInstance_;
         int playedImpactCount_ = 0;
         float weatherRain_ = 0.0f;
-        float rainCanopy_ = 0.0f, rainEnclosed_ = 0.0f;
+        float rainCanopy_ = 0.0f, rainEnclosed_ = 0.0f, rainMetal_ = 0.0f;
         std::uint32_t weatherStrikes_ = 0;
         float pendingThunderSeconds_ = 0.0f, pendingThunderDistance_ = 0.0f;
         bool thunderPending_ = false;

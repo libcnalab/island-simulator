@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 477 (2026-10-22) — rain drums on the helicopter's skin
+
+The rain was heard the same everywhere except under the crowns (louder, deeper) and in the cave
+(far off). Sheltering in the wrecked helicopter's cabin, the walker heard it as in the open.
+`RainUnderShelter` now takes a metal skin overhead (`metal`): there the rain drums louder than in
+the open (1.7 times) and brighter (+0.30 pitch). The game sets it while the listener is in the rear
+cabin or the pilot's footwell (`HelicopterPlacement::InRearCabin`/`InPilotFootwell`). A core test
+checks the cabin against the open, and that there is nothing without rain.
+
 ## Loop pass 476 (2026-10-22) — morning mist in the stream's valley
 
 After a dewy or a rained-on night, mist lies in a tropical valley at first light and burns off as

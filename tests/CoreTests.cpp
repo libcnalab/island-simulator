@@ -7416,6 +7416,10 @@ int main()
                       && cave.volume < open.volume * 0.2f && island::RainUnderShelter(0.0f, 1.0f, 0.0f).volume == 0.0f
                       && std::abs(open.volume - 0.8f * 0.62f) < 1e-6f && open.pitch == 0.0f,
                   "the rain drums deeper under the crowns, is far off in the cave and unchanged in the open");
+            const auto cabin = island::RainUnderShelter(0.8f, 0.0f, 0.0f, 1.0f);
+            Check(cabin.volume > open.volume * 1.5f && cabin.pitch > open.pitch + 0.2f
+                      && island::RainUnderShelter(0.0f, 0.0f, 0.0f, 1.0f).volume == 0.0f,
+                  "in the helicopter's cabin the rain drums on the metal skin, loud and tinny");
         }
         // The night chorus: an audible eight-second loop whose crickets live in the treble.
         const auto chorus = island::GenerateNightChorusLoop();

@@ -1980,7 +1980,7 @@ namespace island
                 *underwaterAudio_.airGain*enclosureAir*gain));
             if (rainInstance_) {
                 // drumming on the leaves under the crowns, a muffled hiss in the cave
-                const RainHearing hearing = RainUnderShelter(weatherRain_, rainCanopy_, std::max(rainEnclosed_, bunkerPresence_));
+                const RainHearing hearing = RainUnderShelter(weatherRain_, rainCanopy_, std::max(rainEnclosed_, bunkerPresence_), rainMetal_);
                 rainInstance_->setVolumeProperty(hearing.volume*underwaterAudio_.airGain*gain);
                 rainInstance_->setPitchProperty(hearing.pitch);
             }
