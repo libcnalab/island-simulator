@@ -6362,6 +6362,23 @@ namespace island
                                          renderedMonkeys, boarHerd_.Boars(),*snakes_,goats_->Goats(),AwakeSpiders(),
                                          playerShadow);
             residentRenderer_->DrawShadow(cameraView_,cameraProjection_,renderCameraPosition_,resident_->State());
+            walkerShadowRenderer_->BeginFrame();
+            const auto& light = sun_light::Current();
+            const auto toSun = light.shading;
+            const auto groundAt = [this](const float x, const float z) { return DrawnOrAnalyticHeight(*drawnGround_, terrain_, x, z); };
+            {
+                // The resident's figure too, laid from their posed skeleton, within 80 m and where
+                // they stand on the drawn ground (not on the jetty's deck or the lookout).
+                const ResidentState& resident = resident_->State();
+                const float ground = groundAt(resident.x, resident.z);
+                if (Vector3::DistanceSquared(Vector3(resident.x, resident.y, resident.z), renderCameraPosition_) < 80.0f * 80.0f
+                    && std::abs(resident.y - ground) < 0.25f) {
+                    const walker_shadow::Shape figure = walker_shadow::Lay(walker_shadow::ResidentLimbs(resident),
+                        resident.x, ground, resident.z, toSun.x, toSun.y, toSun.z, resident.pose.pelvisY + 0.83f - ground);
+                    walkerShadowRenderer_->Draw(cameraView_, cameraProjection_, figure, Vector3(resident.x, ground, resident.z),
+                        Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength, groundAt);
+                }
+            }
             if (playerShadow.visible) {
                 // ...and the figure the sun lays from the walker's feet, where the feet stand on the
                 // drawn ground (not on a deck or a rock top above it) and out of the cave.
@@ -6370,14 +6387,11 @@ namespace island
                 const bool inCave = terrainRenderer_ && terrainRenderer_->CaveGround().Contains(walker.x, walker.z)
                     && cameraPosition_.Y < terrain_.Height(cameraPosition_.X, cameraPosition_.Z) - 0.5f;
                 if (std::abs(playerMotion_.GroundHeight() - ground) < 0.25f && !inCave) {
-                    const auto& light = sun_light::Current();
-                    const auto toSun = light.shading;
                     const walker_shadow::Shape figure = walker_shadow::Build(
                         {std::sin(walkerFacingYaw_), std::cos(walkerFacingYaw_), walkerGaitPhase_, walkerSwing_},
                         toSun.x, toSun.y, toSun.z);
                     walkerShadowRenderer_->Draw(cameraView_, cameraProjection_, figure, Vector3(walker.x, ground, walker.z),
-                        Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength,
-                        [this](const float x, const float z) { return DrawnOrAnalyticHeight(*drawnGround_, terrain_, x, z); });
+                        Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength, groundAt);
                 }
             }
             if (quadRenderer_ && quadPlaced_) {

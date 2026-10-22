@@ -8,6 +8,7 @@
 #include "IslandSimulator/JettyLayout.hpp"
 #include "IslandSimulator/CampfireLayout.hpp"
 #include "IslandSimulator/StreamBedPatch.hpp"
+#include "IslandSimulator/WalkerShadow.hpp"
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -178,6 +179,23 @@ int main() {
     Check(maximumArmForward[0]-minimumArmForward[0]>.35f
         &&maximumArmForward[1]-minimumArmForward[1]>.35f,
         "resident walking arms no longer counter-swing through a visible sagittal arc");
+    {
+        // The resident's sun shadow is laid from their own skeleton: every limb within reach of
+        // the body, the head's shadow inside the figure some 1.2 m off under the afternoon sun.
+        const auto& state=actor.State();
+        const auto limbs=walker_shadow::ResidentLimbs(state);
+        bool near=true;
+        for(const auto& limb:limbs) near=near&&std::hypot(limb.ax-state.x,limb.az-state.z)<1.2f
+            &&std::hypot(limb.bx-state.x,limb.bz-state.z)<1.2f&&limb.ay>state.y-.1f&&limb.by<state.y+1.95f&&limb.radius>0;
+        const float sx=-.45f,sy=.82f,sz=-.34f,length=std::sqrt(sx*sx+sy*sy+sz*sz);
+        const auto figure=walker_shadow::Lay(limbs,state.x,state.y,state.z,sx,sy,sz,state.pose.pelvisY+.83f-state.y);
+        const float head=state.pose.pelvisY+.70f-state.y;
+        const float headX=-sx/length*head/(sy/length),headZ=-sz/length*head/(sy/length);
+        Check(near&&figure.cast&&std::abs(figure.length-1.2f)<.15f
+            &&walker_shadow::SignedDistance(figure,headX,headZ)<0
+            &&walker_shadow::SignedDistance(figure,headX*1.4f,headZ*1.4f)>0,
+            "the resident's sun shadow is not laid from their skeleton");
+    }
     const auto beforeStall=actor.State();actor.Update(100,{NAN,NAN,NAN});
     Check(Distance({beforeStall.x,beforeStall.y,beforeStall.z},{actor.State().x,actor.State().y,actor.State().z})<.14f,
         "a render stall causes unbounded resident catch-up motion");

@@ -4,6 +4,8 @@
 
 namespace island
 {
+    struct ResidentState;
+
     /**
      * The walking player's own sun shadow, the figure rather than a blot: the body as seventeen
      * capsules (each leg in thigh, shin and foot, the hips, a torso of two side-by-side capsules,
@@ -44,8 +46,21 @@ namespace island
             bool cast = false;                    // false: the light is too low (or below the horizon)
         };
 
-        /** The silhouette for a pose under the light toward (toSunX, toSunY, toSunZ). */
+        /** A body part in the world: a capsule from a to b, metres. */
+        struct Limb
+        {
+            float ax = 0.0f, ay = 0.0f, az = 0.0f, bx = 0.0f, by = 0.0f, bz = 0.0f, radius = 0.0f;
+        };
+
+        /** Lays world limbs along the light toward (toSunX, toSunY, toSunZ) onto the level plane
+         *  through the feet; `stature` gives the length reported on level ground. */
+        [[nodiscard]] Shape Lay(const std::array<Limb, CapsuleCount>& limbs, float feetX, float feetY, float feetZ,
+                                float toSunX, float toSunY, float toSunZ, float stature) noexcept;
+        /** The walker's silhouette for a pose (the body's limbs about feet at the origin). */
         [[nodiscard]] Shape Build(const Pose& pose, float toSunX, float toSunY, float toSunZ) noexcept;
+        /** The resident's limbs on their posed skeleton: the solved legs and arms (a crouch at the
+         *  fire, the rod held out, the stretch), the pelvis, and the neck and head above it. */
+        [[nodiscard]] std::array<Limb, CapsuleCount> ResidentLimbs(const ResidentState& resident) noexcept;
         /** The silhouette's signed distance, metres in shadow space, at an offset from the feet on
          *  their plane (negative inside): the CPU mirror of the shader's, for the tests. */
         [[nodiscard]] float SignedDistance(const Shape& shape, float offsetX, float offsetZ) noexcept;

@@ -22,12 +22,12 @@ namespace island
     class SunShadowMap;
 
     /**
-     * Draws the walker's sun shadow (walker_shadow::Shape) on the ground: a grid draped on the
-     * drawn terrain under where the shadow can fall, whose fragments carry themselves up the light
-     * onto the feet's plane, so the figure lands shorter on a bank that faces the sun and longer
-     * down one that falls away. The grid multiplies the ground by the very shade tint the
-     * terrain takes under a tree, and only where the sun shadow map and the clouds still leave
-     * it sunlit: inside a crown's shadow the walker's adds nothing.
+     * Draws a figure's sun shadow (walker_shadow::Shape: the walker's, the resident's) on the
+     * ground: a grid draped on the drawn terrain under where the shadow can fall, whose fragments
+     * carry themselves up the light onto the feet's plane, so the figure lands shorter on a bank
+     * that faces the sun and longer down one that falls away. The grid multiplies the ground by
+     * the very shade tint the terrain takes under a tree, and only where the sun shadow map and
+     * the clouds still leave it sunlit: inside a crown's shadow the figure adds nothing.
      */
     class WalkerShadowRenderer final
     {
@@ -39,6 +39,8 @@ namespace island
         WalkerShadowRenderer& operator=(const WalkerShadowRenderer&) = delete;
 
         void SetSunShadowMap(const SunShadowMap* map) noexcept { sunShadow_ = map; }
+        /** Clears the frame's counts (the walker's and the resident's figures each draw once). */
+        void BeginFrame() noexcept { draws_ = triangles_ = 0; }
 
         /** `strength`: the hour's shadow strength (none at night, faint under an overcast). */
         void Draw(const Microsoft::Xna::Framework::Matrix& view,

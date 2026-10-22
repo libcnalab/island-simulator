@@ -1,4 +1,5 @@
 #include "IslandSimulator/WalkerShadow.hpp"
+#include "IslandSimulator/ResidentMotion.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -20,7 +21,8 @@ namespace island::walker_shadow
         }
     }
 
-    Shape Build(const Pose& pose, const float toSunX, const float toSunY, const float toSunZ) noexcept
+    Shape Lay(const std::array<Limb, CapsuleCount>& limbs, const float feetX, const float feetY, const float feetZ,
+              const float toSunX, const float toSunY, const float toSunZ, const float stature) noexcept
     {
         Shape shape;
         const float length = std::sqrt(toSunX * toSunX + toSunY * toSunY + toSunZ * toSunZ);
@@ -29,14 +31,35 @@ namespace island::walker_shadow
         if (ly < MinimumSunSine) return shape;
         // The shadow falls away from the sun; straight overhead it has no direction of its own.
         const float horizontal = std::hypot(lx, lz);
-        const float facingLength = std::hypot(pose.facingX, pose.facingZ);
-        const float fx = facingLength > 1e-6f ? pose.facingX / facingLength : 0.0f;
-        const float fz = facingLength > 1e-6f ? pose.facingZ / facingLength : 1.0f;
-        shape.alongX = horizontal > 1e-4f ? -lx / horizontal : fx;
-        shape.alongZ = horizontal > 1e-4f ? -lz / horizontal : fz;
+        shape.alongX = horizontal > 1e-4f ? -lx / horizontal : 0.0f;
+        shape.alongZ = horizontal > 1e-4f ? -lz / horizontal : 1.0f;
         shape.sunSine = ly;
         shape.cast = true;
         const float acrossX = -shape.alongZ, acrossZ = shape.alongX;
+        const auto project = [&](const float x, const float y, const float z, float& along, float& across) {
+            // the body point slid down the light onto the feet's plane
+            const float height = y - feetY;
+            const float px = x - feetX - lx * (height / ly);
+            const float pz = z - feetZ - lz * (height / ly);
+            along = (px * shape.alongX + pz * shape.alongZ) * ly;
+            across = px * acrossX + pz * acrossZ;
+        };
+        for (std::size_t i = 0; i < limbs.size(); ++i) {
+            const Limb& limb = limbs[i];
+            Capsule& capsule = shape.capsules[i];
+            project(limb.ax, limb.ay, limb.az, capsule.ax, capsule.ay);
+            project(limb.bx, limb.by, limb.bz, capsule.bx, capsule.by);
+            capsule.radius = limb.radius;
+        }
+        shape.length = std::max(stature, 0.0f) * horizontal / ly;
+        return shape;
+    }
+
+    Shape Build(const Pose& pose, const float toSunX, const float toSunY, const float toSunZ) noexcept
+    {
+        const float facingLength = std::hypot(pose.facingX, pose.facingZ);
+        const float fx = facingLength > 1e-6f ? pose.facingX / facingLength : 0.0f;
+        const float fz = facingLength > 1e-6f ? pose.facingZ / facingLength : 1.0f;
         const float rightX = -fz, rightZ = fx;
 
         // The gait: the thighs swing against each other, each knee folds while its leg swings
@@ -48,21 +71,12 @@ namespace island::walker_shadow
         const float hipHeight = 0.94f - hipDrop;
         const float raise = -hipDrop;   // the trunk rides on the hips
 
-        int next = 0;
+        std::array<Limb, CapsuleCount> limbs{};
+        std::size_t next = 0;
         const auto add = [&](const Point& a, const Point& b, const float radius) {
-            const auto project = [&](const Point& p, float& along, float& across) {
-                // the body point in the world, then slid down the light onto the feet's plane
-                const float x = rightX * p.right + fx * p.forward - lx * (p.up / ly);
-                const float z = rightZ * p.right + fz * p.forward - lz * (p.up / ly);
-                along = (x * shape.alongX + z * shape.alongZ) * ly;
-                across = x * acrossX + z * acrossZ;
-            };
-            Capsule& capsule = shape.capsules[static_cast<std::size_t>(next++)];
-            project(a, capsule.ax, capsule.ay);
-            project(b, capsule.bx, capsule.by);
-            capsule.radius = radius;
+            limbs[next++] = {rightX * a.right + fx * a.forward, a.up, rightZ * a.right + fz * a.forward,
+                             rightX * b.right + fx * b.forward, b.up, rightZ * b.right + fz * b.forward, radius};
         };
-
         for (const float side : {-1.0f, 1.0f}) {
             const float phase = pose.gaitPhase + (side > 0.0f ? std::numbers::pi_v<float> : 0.0f);
             const float thigh = reach * std::sin(phase);
@@ -91,8 +105,51 @@ namespace island::walker_shadow
         add({0.04f, 1.43f + raise, 0.0f}, {0.18f, 1.375f + raise, 0.0f}, 0.060f);     // sloping
         add({0.0f, 1.44f + raise, 0.0f}, {0.0f, 1.54f + raise, 0.0f}, 0.050f);        // neck
         add({0.0f, 1.60f + raise, 0.01f}, {0.0f, 1.66f + raise, 0.01f}, 0.095f);      // head
-        shape.length = (1.75f + raise) * horizontal / ly;
-        return shape;
+        return Lay(limbs, 0.0f, 0.0f, 0.0f, toSunX, toSunY, toSunZ, 1.75f + raise);
+    }
+
+    std::array<Limb, CapsuleCount> ResidentLimbs(const ResidentState& resident) noexcept
+    {
+        // The resident's own skeleton (ResidentRenderer builds the body on it): the solved legs
+        // and arms, the pelvis, and the neck and head above the pelvis as the renderer sets them.
+        const ResidentPose& pose = resident.pose;
+        const float rx = std::cos(pose.heading), rz = -std::sin(pose.heading);
+        const float pelvis = pose.pelvisY;
+        std::array<Limb, CapsuleCount> limbs{};
+        std::size_t next = 0;
+        const auto add = [&](const ResidentPoint& a, const ResidentPoint& b, const float radius) {
+            limbs[next++] = {a.x, a.y, a.z, b.x, b.y, b.z, radius};
+        };
+        const auto offset = [&](const float side, const float up) {
+            return ResidentPoint{resident.x + rx * side, pelvis + up, resident.z + rz * side};
+        };
+        for (std::size_t s = 0; s < 2; ++s) {
+            const ResidentLegPose& leg = pose.legs[s];
+            const ResidentFootFrame& foot = leg.foot;
+            // the sandal from heel to toe, as broad as the drawn foot
+            const ResidentPoint heel{foot.centre.x - foot.forward.x * 0.09f, foot.centre.y + 0.03f,
+                                     foot.centre.z - foot.forward.z * 0.09f};
+            const ResidentPoint toe{foot.centre.x + foot.forward.x * 0.13f, foot.centre.y + 0.03f,
+                                    foot.centre.z + foot.forward.z * 0.13f};
+            add(leg.hip, leg.knee, 0.068f);
+            add(leg.knee, leg.ankle, 0.050f);
+            add(heel, toe, 0.055f);
+            // the forearm carried on past the wrist to the fingertips
+            const ResidentPoint& elbow = pose.elbows[s];
+            const ResidentPoint& wrist = pose.wrists[s];
+            const ResidentPoint fingers{wrist.x + (wrist.x - elbow.x) * 0.35f, wrist.y + (wrist.y - elbow.y) * 0.35f,
+                                        wrist.z + (wrist.z - elbow.z) * 0.35f};
+            add(pose.shoulders[s], elbow, 0.048f);
+            add(elbow, fingers, 0.040f);
+        }
+        add(offset(-0.09f, 0.0f), offset(0.09f, 0.0f), 0.095f);                      // hips
+        add(offset(-0.05f, 0.07f), offset(-0.07f, 0.40f), 0.110f);                   // the torso
+        add(offset(0.05f, 0.07f), offset(0.07f, 0.40f), 0.110f);
+        add(offset(-0.04f, 0.50f), pose.shoulders[0], 0.060f);                       // the shoulders
+        add(offset(0.04f, 0.50f), pose.shoulders[1], 0.060f);
+        add(offset(0.0f, 0.48f), offset(0.0f, 0.60f), 0.055f);                       // neck
+        add(offset(0.0f, 0.67f), offset(0.0f, 0.73f), 0.100f);                       // head
+        return limbs;
     }
 
     float SignedDistance(const Shape& shape, const float offsetX, const float offsetZ) noexcept

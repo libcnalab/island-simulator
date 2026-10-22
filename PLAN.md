@@ -233,6 +233,24 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 448 (2026-10-22) — the resident casts their figure too, from their own skeleton
+
+The resident had only two soft pools under the feet, so beside the walker's new figure (pass 447) they
+cast no shadow at all. `walker_shadow::Lay` now lays any seventeen world-space limbs along the light,
+and `ResidentLimbs` takes them from the resident's posed skeleton. The legs are the solved hip, knee
+and ankle, with the sandal from heel to toe. The arms are the shoulder, elbow and wrist, carried on to
+the fingertips. The pelvis, torso, sloping shoulders, neck and head stand above the pelvis as
+ResidentRenderer builds them. The figure therefore crouches at the fire, holds the rod out at the
+jetty foot and reaches up in the stretch. It is drawn by the same renderer: a second draw while the
+resident is within 80 m and stands on the drawn ground (not on the jetty's deck or the lookout).
+
+A runtime probe at the fishing spot found the resident's feet 2 mm above the drawn ground. The first
+capture showed a gap between the shoe and its shadow because the drawn sandal is broader than the
+first foot capsule, so the capsule now runs heel to toe at 5.5 cm. In `resident-fishing` at 14:00 and
+16:30 the figure meets the feet, short in the afternoon and long toward evening. The resident tests
+check that every limb lies within reach of the body and that the head's shadow falls inside the figure
+some 1.2 m off under the afternoon sun.
+
 ## Loop pass 447 (2026-10-22) — the walker's shadow is the figure of a body, cast by the hour's sun
 
 The player's sun shadow was a soft 0.8 x 0.3 m ellipse laid along the fixed 14:00 sun. It is now the

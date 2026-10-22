@@ -130,8 +130,6 @@ void main() {
                                     const Vector3& feet, const Vector3& toSun, const float strength,
                                     const std::function<float(float, float)>& groundHeight)
     {
-        draws_ = 0;
-        triangles_ = 0;
         if (!shape.cast || !(strength > 0.01f) || !groundHeight) return;
         Vector3 light = toSun;
         if (!(light.LengthSquared() > 1e-8f)) return;
@@ -191,8 +189,9 @@ void main() {
         device_.setRasterizerStateProperty(RasterizerState::CullNone);
         device_.SetVertexBuffer(vertices_.get());
         device_.setIndicesProperty(nullptr);
-        triangles_ = static_cast<int>(staging_.size() / 3);
-        device_.DrawPrimitives(PrimitiveType::TriangleList, 0, triangles_);
-        draws_ = 1;
+        const int triangles = static_cast<int>(staging_.size() / 3);
+        device_.DrawPrimitives(PrimitiveType::TriangleList, 0, triangles);
+        triangles_ += triangles;
+        ++draws_;
     }
 }
