@@ -214,6 +214,10 @@ namespace island
             case FixedViewpoint::IdolDetail: return "idol";
             case FixedViewpoint::IdolOfferingsDetail: return "idol-offerings";
             case FixedViewpoint::CastleDetail: return "castle";
+            case FixedViewpoint::UfoDetail: return "ufo";
+            case FixedViewpoint::AlienDetail: return "alien";
+            case FixedViewpoint::AlienExamineDetail: return "alien-examine";
+            case FixedViewpoint::AlienHullDetail: return "alien-hull";
             case FixedViewpoint::QuadAuditDetail: return "quad-audit";
             case FixedViewpoint::QuadPlaneDetail: return "quad-plane";
             case FixedViewpoint::QuadWhaleDetail: return "quad-whale";
@@ -554,6 +558,10 @@ namespace island
             if(planeWreckPlacement_) avoid.push_back({{planeWreckPlacement_->x,planeWreckPlacement_->z}});
             castlePlacement_=CastleRuinLayout::FindInWorld(terrain_,worldObstacles,avoid);
             if(castlePlacement_) for(const auto& circle:castlePlacement_->WallObstacles()) worldObstacles.push_back(circle);
+            // A crashed flying saucer in the most open clearing left, well away from the rest.
+            if(castlePlacement_) avoid.push_back({{castlePlacement_->x,castlePlacement_->z}});
+            ufoPlacement_=UfoWreckLayout::FindInWorld(terrain_,worldObstacles,avoid,75.0f);
+            if(ufoPlacement_) for(const auto& obstacle:ufoPlacement_->Obstacles()) worldObstacles.push_back(obstacle);
         }
         {
             // A rusting coaster a storm drove up a broad beach, well away from the old wreck, the
@@ -821,6 +829,10 @@ namespace island
             const StreamCourse course(terrain_);
             const auto& mouth=course.Station(course.Count()-1U);
             elephant_->SetDrinkingPlace(mouth.x,mouth.z);
+        }
+        if(ufoPlacement_) {
+            alien_=std::make_unique<AlienMotion>(terrain_,*ufoPlacement_,worldObstacles);
+            std::cout<<"island-simulator: a grey alien, "<<AlienMotion::Height<<" m tall, picks over the wrecked saucer on foot\n";
         }
         std::cout<<"island-simulator: a bull Asian elephant, "<<ElephantMotion::ShoulderHeight<<" m at the shoulder, roams a round of "
                  <<elephant_->Route().size()<<" points on the coastal flats behind the beach\n";
@@ -2803,6 +2815,40 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: castle QA camera looks at the castle ruin from outside its gate\n";
+        } else if (viewpoint_ == FixedViewpoint::UfoDetail) {
+            // From the front quarter, up a little, across the wreck toward its furrow.
+            if(!ufoPlacement_) throw std::runtime_error("Ufo QA requires the crashed saucer");
+            const auto& g=*ufoPlacement_;
+            const auto eye=g.At(15.0f,-13.0f);
+            cameraPosition_=Vector3(eye[0],std::max(terrain_.Height(eye[0],eye[1]),g.groundY)+PlayerMotion::EyeHeight+2.5f,eye[1]);
+            const Vector3 direction=Vector3(g.x,g.groundY+1.6f,g.z)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: ufo QA camera looks at the crashed saucer from its front quarter\n";
+        } else if (viewpoint_ == FixedViewpoint::AlienDetail || viewpoint_ == FixedViewpoint::AlienExamineDetail
+                   || viewpoint_ == FixedViewpoint::AlienHullDetail) {
+            // Close before the alien: standing and looking about; crouched over a torn plate; or
+            // with its hands on the hull.
+            if(!alien_||!ufoPlacement_) throw std::runtime_error("Alien QA requires the alien");
+            const bool examine=viewpoint_==FixedViewpoint::AlienExamineDetail,hull=viewpoint_==FixedViewpoint::AlienHullDetail;
+            if(examine) {
+                const auto spot=UfoWreckPlacement::DebrisSpot(0);
+                alien_->Place(spot[0]+0.8f,spot[1]-0.17f,AlienBehavior::Examine,600.0f);
+            } else if(hull) {
+                alien_->Place(5.5f,-1.8f,AlienBehavior::TendHull,600.0f);
+            } else {
+                alien_->Place(-8.5f,-6.0f,AlienBehavior::Stand,600.0f);
+            }
+            const auto& now=alien_->State();
+            const float fx=std::cos(now.heading),fz=std::sin(now.heading);
+            const float ahead=hull?-0.4f:2.6f,side=hull?3.0f:1.5f;
+            const float ex=now.x+fx*ahead+fz*side,ez=now.z+fz*ahead-fx*side;
+            cameraPosition_=Vector3(ex,std::max(terrain_.Height(ex,ez),0.0f)+1.0f,ez);
+            const AlienPoint aim=alien_->ToWorld(0.0f,hull?0.9f:examine?0.6f:0.95f,hull?0.3f:0.0f);
+            const Vector3 direction=Vector3(aim.x,aim.y,aim.z)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: "<<ViewpointName(viewpoint_)<<" QA camera looks at the alien by the saucer\n";
         } else if (viewpoint_ == FixedViewpoint::IdolOfferingsDetail) {
             // At the platform's edge before the god, down at the offerings laid at its feet.
             if(!idolPlacement_) throw std::runtime_error("Idol QA requires the stone god");
@@ -3518,6 +3564,7 @@ namespace island
         }
         if (idolPlacement_) add("idol", idolPlacement_->x, idolPlacement_->TopY(), idolPlacement_->z, 3.0f);
         if (castlePlacement_) add("castle", castlePlacement_->x, castlePlacement_->groundY + 3.0f, castlePlacement_->z, 12.0f);
+        if (ufoPlacement_) add("ufo", ufoPlacement_->x, ufoPlacement_->groundY + 1.5f, ufoPlacement_->z, 6.0f);
         if (seabirdIslet_) add("seabird-islet", seabirdIslet_->x, 3.0f, seabirdIslet_->z, 8.0f);
         if (stoneSignPlacement_) {
             const auto at = stoneSignPlacement_->At(StoneSignPlacement::Length() * 0.5f, 3.5f);
@@ -3651,6 +3698,7 @@ namespace island
             const std::size_t entry = JournalIndex("elephant");
             if (!journal_.Found(entry)) consider(entry, body.x, body.y, body.z, 3.0f);
         }
+        if (alien_) each("alien", std::span(&alien_->State(), 1), 0.6f, always);
         each("coconut-crabs", coconutCrabGroup_.Crabs(), 0.3f, always);
         {
             // by day three in four keep to their retreats, as the drawn colony does
@@ -4051,6 +4099,8 @@ namespace island
         if(whalePlacement_) whaleSkeletonRenderer_=std::make_unique<WhaleSkeletonRenderer>(device,*whalePlacement_,terrain_,*drawnGround_);
         if(idolPlacement_) idolRenderer_=std::make_unique<IdolStatueRenderer>(device,*idolPlacement_,terrain_,*drawnGround_);
         if(castlePlacement_) castleRenderer_=std::make_unique<CastleRuinRenderer>(device,*castlePlacement_,terrain_,*drawnGround_);
+        if(ufoPlacement_) ufoRenderer_=std::make_unique<UfoWreckRenderer>(device,*ufoPlacement_,terrain_,*drawnGround_);
+        if(alien_) alienRenderer_=std::make_unique<AlienRenderer>(device,300.0f);
         if(stoneSignPlacement_) stoneSignRenderer_=std::make_unique<StoneSignRenderer>(device,*stoneSignPlacement_,terrain_,*drawnGround_);
         if(lighthousePlacement_) lighthouseRenderer_=std::make_unique<LighthouseRenderer>(device,*lighthousePlacement_,terrain_,*drawnGround_,
             cottagePlacement_?&*cottagePlacement_:nullptr);
@@ -5278,6 +5328,12 @@ namespace island
             trexShake_ *= std::exp(-deltaSeconds * 7.0f);
             trexShakeClock_ += deltaSeconds;
             (void)rex;
+        }
+        if (alien_) {
+            // it watches the walker (or the rider) and bolts from one too near
+            const bool observing = viewpoint_ == FixedViewpoint::None;
+            alien_->Update(deltaSeconds, riding_ ? quad_.Position().x : playerMotion_.Position().x,
+                           riding_ ? quad_.Position().z : playerMotion_.Position().z, observing);
         }
         if (elephant_) {
             // it watches the walker (or the rider) and trumpets at one too close, or at the
@@ -6667,6 +6723,7 @@ namespace island
         if (resident_) body(resident_->State().x, resident_->State().z, 0.30f);
         if (trex_) for (const auto& part : trex_->Obstacles()) body(part.x, part.z, part.radius);
         if (elephant_) for (const auto& part : elephant_->Obstacles()) body(part.x, part.z, part.radius);
+        if (alien_) body(alien_->State().x, alien_->State().z, 0.35f);
         return hit;
     }
 
@@ -6778,6 +6835,7 @@ namespace island
         }
         if (idolPlacement_) targets.push_back({"idol", idolPlacement_->x, idolPlacement_->z, 3.5f});
         if (castlePlacement_) targets.push_back({"castle", castlePlacement_->x, castlePlacement_->z, 12.0f});
+        if (ufoPlacement_) targets.push_back({"ufo", ufoPlacement_->x, ufoPlacement_->z, 6.5f});
         if (whalePlacement_) {
             const auto at = whalePlacement_->At(4.0f, 0.0f);
             targets.push_back({"whale-skeleton", at[0], at[1], 8.0f});
@@ -8414,6 +8472,7 @@ namespace island
                 if (whaleSkeletonRenderer_) whaleSkeletonRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (idolRenderer_) idolRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (castleRenderer_) castleRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                if (ufoRenderer_) ufoRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (stoneSignRenderer_) stoneSignRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (seabirdIsletRenderer_) seabirdIsletRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (lighthouseRenderer_) lighthouseRenderer_->SetSunShadowMap(sunShadowMap_.get());
@@ -8448,6 +8507,7 @@ namespace island
                 if (whaleSkeletonRenderer_) whaleSkeletonRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (idolRenderer_) idolRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (castleRenderer_) castleRenderer_->DrawSunShadow(*sunShadowMap_);
+                if (ufoRenderer_) ufoRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (stoneSignRenderer_) stoneSignRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (lighthouseRenderer_) lighthouseRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (planeWreckRenderer_) planeWreckRenderer_->DrawSunShadow(*sunShadowMap_);
@@ -8559,6 +8619,16 @@ namespace island
                     walkerShadowRenderer_->Draw(cameraView_, cameraProjection_,
                         walker_shadow::Lay(walker_shadow::BearLimbs(bear), bear.x, ground, bear.z, toSun.x, toSun.y, toSun.z, 1.8f),
                         Vector3(bear.x, ground, bear.z), Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength, groundAt);
+            }
+            if (alien_) {
+                // and the alien's, within the small figures' reach
+                const AlienState& alien = alien_->State();
+                const float ground = groundAt(alien.x, alien.z);
+                if (Vector3::DistanceSquared(Vector3(alien.x, alien.y, alien.z), renderCameraPosition_) < animalReach * animalReach
+                    && std::abs(alien.y - ground) < 0.25f)
+                    walkerShadowRenderer_->Draw(cameraView_, cameraProjection_,
+                        walker_shadow::Lay(walker_shadow::AlienLimbs(alien), alien.x, ground, alien.z, toSun.x, toSun.y, toSun.z, 1.3f),
+                        Vector3(alien.x, ground, alien.z), Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength, groundAt);
             }
             if (elephant_) {
                 // and the elephant's, farther: it is a big figure
@@ -8727,6 +8797,14 @@ namespace island
         if(castleRenderer_) {
             GpuDiagnosticScope gpuPass("castle");
             castleRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
+        }
+        if(ufoRenderer_) {
+            GpuDiagnosticScope gpuPass("ufo");
+            ufoRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
+        }
+        if(alienRenderer_&&alien_) {
+            GpuDiagnosticScope gpuPass("alien");
+            alienRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,*alien_);
         }
         if(stoneSignRenderer_) {
             GpuDiagnosticScope gpuPass("stone-sign");

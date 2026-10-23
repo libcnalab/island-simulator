@@ -90,6 +90,7 @@ add_library(island_core STATIC
     game/src/WhaleSkeletonLayout.cpp
     game/src/IdolStatueLayout.cpp
     game/src/CastleRuinLayout.cpp
+    game/src/UfoWreckLayout.cpp
     game/src/StoneSignLayout.cpp
     game/src/LighthouseLayout.cpp
     game/src/PlaneWreckLayout.cpp
@@ -112,6 +113,7 @@ add_library(island_core STATIC
     game/src/BalloonFlight.cpp
     game/src/TRexMotion.cpp
     game/src/ElephantMotion.cpp
+    game/src/AlienMotion.cpp
     game/src/ElephantSplashField.cpp
     game/src/LifeboatLayout.cpp
     game/src/BridgeLayout.cpp
@@ -832,6 +834,8 @@ if(ISLAND_BUILD_GAME)
         game/src/WhaleSkeletonRenderer.cpp
         game/src/IdolStatueRenderer.cpp
         game/src/CastleRuinRenderer.cpp
+        game/src/UfoWreckRenderer.cpp
+        game/src/AlienRenderer.cpp
         game/src/StoneSignRenderer.cpp
         game/src/LighthouseRenderer.cpp
         game/src/PlaneWreckRenderer.cpp

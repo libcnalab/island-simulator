@@ -180,6 +180,10 @@
 #include "IslandSimulator/IdolStatueRenderer.hpp"
 #include "IslandSimulator/CastleRuinLayout.hpp"
 #include "IslandSimulator/CastleRuinRenderer.hpp"
+#include "IslandSimulator/UfoWreckLayout.hpp"
+#include "IslandSimulator/UfoWreckRenderer.hpp"
+#include "IslandSimulator/AlienMotion.hpp"
+#include "IslandSimulator/AlienRenderer.hpp"
 #include "IslandSimulator/StoneSignLayout.hpp"
 #include "IslandSimulator/StoneSignRenderer.hpp"
 #include "IslandSimulator/LighthouseLayout.hpp"
@@ -291,6 +295,10 @@ namespace island
         IdolDetail,
         IdolOfferingsDetail,
         CastleDetail,
+        UfoDetail,
+        AlienDetail,
+        AlienExamineDetail,
+        AlienHullDetail,
         JournalDetail,
         JournalNoticeDetail,
         CrabMigrationDetail,
@@ -598,6 +606,7 @@ namespace island
         std::optional<HutPlacement> hutPlacement_;
         std::optional<JettyPlacement> jettyPlacement_;
         std::optional<WhaleSkeletonPlacement> whalePlacement_;   // a stranded whale's skeleton on the beach
+        std::optional<UfoWreckPlacement> ufoPlacement_;        // the crashed flying saucer and its furrow
         std::optional<CastleRuinPlacement> castlePlacement_;   // the medieval castle ruin inland
         std::optional<IdolStatuePlacement> idolPlacement_;   // the island's stone god on its platform
         std::optional<StoneSignPlacement> stoneSignPlacement_;   // the castaway's HELP ME in stones on a beach
@@ -720,6 +729,9 @@ namespace island
         std::unique_ptr<WhaleSkeletonRenderer> whaleSkeletonRenderer_;
         std::unique_ptr<IdolStatueRenderer> idolRenderer_;
         std::unique_ptr<CastleRuinRenderer> castleRenderer_;
+        std::unique_ptr<UfoWreckRenderer> ufoRenderer_;
+        std::unique_ptr<AlienMotion> alien_;                    // the grey visitor picking over the wreck
+        std::unique_ptr<AlienRenderer> alienRenderer_;
         std::unique_ptr<StoneSignRenderer> stoneSignRenderer_;
         std::unique_ptr<LighthouseRenderer> lighthouseRenderer_;
         std::unique_ptr<PlaneWreckRenderer> planeWreckRenderer_;

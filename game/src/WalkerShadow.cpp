@@ -1,6 +1,7 @@
 #include "IslandSimulator/WalkerShadow.hpp"
 #include "IslandSimulator/BearMotion.hpp"
 #include "IslandSimulator/ElephantMotion.hpp"
+#include "IslandSimulator/AlienMotion.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
 #include "IslandSimulator/BirdFlock.hpp"
 #include "IslandSimulator/ReefHeronGroup.hpp"
@@ -372,6 +373,31 @@ namespace island::walker_shadow
         for (const auto& leg : s.legs) {
             add(leg.top, leg.middle, 0.30f);
             add(leg.middle, ElephantPoint{leg.foot.x, leg.foot.y + 0.12f, leg.foot.z}, 0.22f);
+        }
+        for (; next < limbs.size(); ++next) limbs[next].radius = UnusedRadius;
+        return limbs;
+    }
+
+    std::array<Limb, CapsuleCount> AlienLimbs(const AlienState& alien) noexcept
+    {
+        // AlienRenderer's shapes: the thin body and neck, the great head and the limbs from the
+        // solved joints.
+        std::array<Limb, CapsuleCount> limbs{};
+        std::size_t next = 0;
+        const auto add = [&](const AlienPoint& a, const AlienPoint& b, const float radius) {
+            limbs[next++] = {a.x, a.y, a.z, b.x, b.y, b.z, radius};
+        };
+        add(alien.pelvis, alien.chest, 0.09f);
+        add(alien.chest, alien.neck, 0.04f);
+        add({alien.head.x - alien.headUp.x * 0.15f, alien.head.y - alien.headUp.y * 0.15f, alien.head.z - alien.headUp.z * 0.15f},
+            {alien.head.x + alien.headUp.x * 0.15f, alien.head.y + alien.headUp.y * 0.15f, alien.head.z + alien.headUp.z * 0.15f}, 0.14f);
+        for (const auto& leg : alien.legs) {
+            add(leg.hip, leg.knee, 0.05f);
+            add(leg.knee, leg.foot, 0.04f);
+        }
+        for (const auto& arm : alien.arms) {
+            add(arm.shoulder, arm.elbow, 0.035f);
+            add(arm.elbow, arm.hand, 0.025f);
         }
         for (; next < limbs.size(); ++next) limbs[next].radius = UnusedRadius;
         return limbs;
