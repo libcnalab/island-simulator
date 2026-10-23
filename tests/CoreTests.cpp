@@ -35,6 +35,7 @@
 #include "IslandSimulator/LandCrabMigration.hpp"
 #include "IslandSimulator/TermiteSwarm.hpp"
 #include "IslandSimulator/SeabirdIslet.hpp"
+#include "IslandSimulator/Mudskippers.hpp"
 #include "IslandSimulator/DistantSceneryLayout.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/FishSchools.hpp"
@@ -13609,6 +13610,26 @@ int main()
                       && (!moved || std::hypot(moved->x - islet->x, moved->z - islet->z) > 45.0f),
                   "the seabird islet is not offshore in the sea, its stack is not above the water, or its nests and birds are wrong");
         }
+    }
+    {
+        // The mudskippers: mud under the low mangroves, the fish on it within the patches, on
+        // the ground or a hop over it, and skipping away from the walker's feet.
+        const island::IslandTerrain terrain;
+        const island::JungleLayout jungle(terrain);
+        const island::MudskipperColony colony(terrain, jungle.Canopy());
+        const auto ground = [&terrain](const float x, const float z) { return terrain.Height(x, z); };
+        std::vector<island::Mudskipper> fish;
+        colony.At(20.0f, 1e4f, 1e4f, ground, fish);
+        bool onMud = !colony.Patches().empty() && fish.size() == colony.Count() && fish.size() >= 12U;
+        for (const auto& f : fish) {
+            float nearest = 1e9f;
+            for (const auto& patch : colony.Patches()) nearest = std::min(nearest, std::hypot(f.x - patch.x, f.z - patch.z) - patch.radius);
+            onMud = onMud && nearest < 0.5f && f.y >= terrain.Height(f.x, f.z) - 1e-3f && f.y <= terrain.Height(f.x, f.z) + 0.11f;
+        }
+        std::vector<island::Mudskipper> fled;
+        colony.At(20.0f, fish.front().x, fish.front().z, ground, fled);
+        Check(onMud && std::hypot(fled.front().x - fish.front().x, fled.front().z - fish.front().z) > 1.5f,
+              "the mudskippers are off the mud, under or over it, or stay under the walker's feet");
     }
 
     if (failures != 0) {

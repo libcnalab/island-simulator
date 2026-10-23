@@ -70,6 +70,7 @@
 #include "IslandSimulator/LandCrabMigration.hpp"
 #include "IslandSimulator/LandCrabRenderer.hpp"
 #include "IslandSimulator/SeabirdIsletRenderer.hpp"
+#include "IslandSimulator/MudskipperRenderer.hpp"
 #include "IslandSimulator/FlightMotion.hpp"
 #include "IslandSimulator/GeckoPopulation.hpp"
 #include "IslandSimulator/SkinkPopulation.hpp"
@@ -288,6 +289,7 @@ namespace island
         TermiteSwarmDetail,
         BoobyColonyDetail,
         BoobyNestsDetail,
+        MudskipperDetail,
         OrbitProbe,
         BunkerSideDetail,
         StoneSignDetail,
@@ -585,6 +587,9 @@ namespace island
         std::unique_ptr<BoobyColony> boobies_;
         std::vector<BirdState> boobyBirds_;
         std::unique_ptr<SeabirdIsletRenderer> seabirdIsletRenderer_;
+        std::unique_ptr<MudskipperColony> mudskippers_;          // on the mud under the mangroves
+        std::vector<Mudskipper> skippers_;
+        std::unique_ptr<MudskipperRenderer> mudskipperRenderer_;
         std::optional<BridgePlacement> bridgePlacement_;
         std::optional<LookoutPlacement> lookoutPlacement_;
         std::optional<HelicopterPlacement> helicopterPlacement_;

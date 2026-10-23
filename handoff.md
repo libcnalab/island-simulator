@@ -134,7 +134,7 @@ Czech in the operator's messages; the intent is kept here.
 6. [x] **Winged termites swarming.** Done in pass 566. At dusk after rain, winged termites stream out of the
    arboreal nests (`TermiteNestLayout`, pass 545), and the bats and geckos come to feed on them.
 7. [x] **A seabird colony.** Done in pass 567. Boobies nesting on a rocky islet offshore.
-8. [ ] **Mudskippers.** Mudskippers hopping on the mud among the mangroves.
+8. [x] **Mudskippers.** Done in pass 568. Mudskippers hopping on the mud among the mangroves.
 9. [ ] **A Tyrannosaurus rex.** It must look realistic and be at real size: about 12 m long and
    about 3.7-4 m at the hip, some 8 t. Model it on current palaeontology:
    - a horizontal body balanced over the hips, a deep skull with forward-facing eyes;
@@ -514,6 +514,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 568: item 8, mudskippers (`MudskipperColony`, `MudskipperRenderer`): wet mud under the low mangroves, 28 skippers hopping, displaying and fleeing to the water; journal entry; QA `mudskippers` `20261023T075511` (PLAN "Loop pass 568").
 - Pass 567: item 7, a brown booby colony on a rocky islet offshore (`SeabirdIslet`, `BoobyColony`, `SeabirdIsletRenderer`, `BirdSpecies::Booby`): basalt stacks white with guano, 12 nests, standing/sitting/preening birds and five plunge-diving fliers; journal entries; QA `booby-colony` `20261023T074134`, `booby-nests` `074141` (PLAN "Loop pass 567").
 - Pass 566: item 6, the termites' nuptial flight at dusk after rain (`TermiteSwarm`, `AlateRenderer`): alates rising from each nest, two bats circling and swooping, a gecko lunging below the mouth; journal entry; QA `termite-swarm --time-of-day 18.2 --wet-ground` `20261023T073258` (PLAN "Loop pass 566").
 - Pass 565: item 5, the red crabs' march to the sea after rain (`LandCrabMigration`, `LandCrabRenderer`): 525 lanes x 40 crabs, deterministic in the clock, dark x wet strength, nearest 700 drawn; journal entry; QA `crab-migration --time-of-day 18.7 --wet-ground` `20261023T072046` (PLAN "Loop pass 565").

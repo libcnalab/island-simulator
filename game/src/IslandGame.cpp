@@ -220,6 +220,7 @@ namespace island
             case FixedViewpoint::TermiteSwarmDetail: return "termite-swarm";
             case FixedViewpoint::BoobyColonyDetail: return "booby-colony";
             case FixedViewpoint::BoobyNestsDetail: return "booby-nests";
+            case FixedViewpoint::MudskipperDetail: return "mudskippers";
             case FixedViewpoint::OrbitProbe: return "orbit";
             case FixedViewpoint::BunkerSideDetail: return "bunker-side";
             case FixedViewpoint::StoneSignDetail: return "help-sign";
@@ -674,6 +675,7 @@ namespace island
                 for(std::size_t i=0;i<course.Count();i+=3) avoid.push_back({{course.Station(i).x,course.Station(i).z}});
             }
             windthrowPlacement_=WindthrowLayout::FindInWorld(terrain_,jungleLayout_.Canopy(),worldObstacles,avoid);
+            mudskippers_=std::make_unique<MudskipperColony>(terrain_,jungleLayout_.Canopy());
             if(windthrowPlacement_) {
                 for(const CircularObstacle& o:windthrowPlacement_->Obstacles()) worldObstacles.push_back(o);
                 std::cout<<"island-simulator: a windthrown giant lies in the jungle at ("<<windthrowPlacement_->x<<", "
@@ -2420,6 +2422,35 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: help-sign QA camera looks down on the castaway's stones from a low pass over the sea\n";
+        } else if (viewpoint_ == FixedViewpoint::MudskipperDetail) {
+            // Crouched on the mud at the edge of a mangrove's patch, low over the skippers on it.
+            if(!mudskippers_||mudskippers_->Patches().empty()) throw std::runtime_error("Mudskipper QA requires the mud");
+            std::vector<Mudskipper> fish;
+            mudskippers_->At(0.0f,1e4f,1e4f,[this](const float x,const float z){return terrain_.Height(x,z);},fish);
+            if(fish.empty()) throw std::runtime_error("Mudskipper QA requires the mudskippers");
+            // the skipper with the most others within three metres
+            std::size_t pick=0;int most=-1;
+            for(std::size_t i=0;i<fish.size();++i) {
+                int n=0;
+                for(const auto& other:fish) n+=std::hypot(other.x-fish[i].x,other.z-fish[i].z)<3.0f?1:0;
+                if(n>most) {most=n;pick=i;}
+            }
+            const auto& subject=fish[pick];
+            // from out beyond it, away from the nearest mangrove, so the roots stand behind it
+            const CanopyPlacement* tree=nullptr;
+            for(const auto& c:jungleLayout_.Canopy())
+                if(c.variant==MangroveCanopyVariant&&(!tree||std::hypot(c.x-subject.x,c.z-subject.z)<std::hypot(tree->x-subject.x,tree->z-subject.z))) tree=&c;
+            float ox=subject.x-(tree?tree->x:0.0f),oz=subject.z-(tree?tree->z:0.0f);
+            const float ol=std::max(1e-3f,std::hypot(ox,oz));ox/=ol;oz/=ol;
+            // broadside to it, on the side away from the tree
+            float px=-std::sin(subject.heading),pz=std::cos(subject.heading);
+            if(px*ox+pz*oz<0.0f) {px=-px;pz=-pz;}
+            const float ex=subject.x+px*1.0f+std::cos(subject.heading)*0.25f,ez=subject.z+pz*1.0f+std::sin(subject.heading)*0.25f;
+            cameraPosition_=Vector3(ex,std::max(terrain_.Height(ex,ez),0.0f)+0.45f,ez);
+            const Vector3 direction=Vector3(subject.x,subject.y+0.05f,subject.z)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: mudskippers QA camera crouches on the mud under the mangroves\n";
         } else if (viewpoint_ == FixedViewpoint::BoobyColonyDetail || viewpoint_ == FixedViewpoint::BoobyNestsDetail) {
             // From the headland's shore across the water to the boobies' islet; or close, from
             // over the sea beside its main stack, at the birds on their nests.
@@ -3364,6 +3395,7 @@ namespace island
         each("red-crabs", marchingCrabs_, 0.1f, [](const MigratingCrab& c) { return c.scale > 0.5f; });
         each("termite-flight", alates_, 0.5f, [](const Alate& a) { return a.scale > 0.5f; });
         each("boobies", boobyBirds_, 0.5f, always);
+        each("mudskippers", skippers_, 0.06f, always);
         each("coconut-crabs", coconutCrabGroup_.Crabs(), 0.3f, always);
         {
             // by day three in four keep to their retreats, as the drawn colony does
@@ -3759,6 +3791,7 @@ namespace island
         if(freighterPlacement_) freighterRenderer_=std::make_unique<FreighterRenderer>(device,*freighterPlacement_,terrain_,*drawnGround_);
         if(lifeboatPlacement_) lifeboatRenderer_=std::make_unique<LifeboatRenderer>(device,*lifeboatPlacement_,terrain_,*drawnGround_);
         if(seabirdIslet_) seabirdIsletRenderer_=std::make_unique<SeabirdIsletRenderer>(device,*seabirdIslet_);
+        if(mudskippers_) mudskipperRenderer_=std::make_unique<MudskipperRenderer>(device,*mudskippers_,terrain_,*drawnGround_);
         if(!pandanus_.empty()) pandanusRenderer_=std::make_unique<PandanusRenderer>(device,pandanus_,terrain_,*drawnGround_);
         if(windthrowPlacement_) windthrowRenderer_=std::make_unique<WindthrowRenderer>(device,*windthrowPlacement_,terrain_,*drawnGround_);
         glowingFungi_=GlowingFungusLayout::Place(terrain_,windthrowPlacement_?&*windthrowPlacement_:nullptr,naturalPropLayout_.FallenLogs(),
@@ -8537,6 +8570,17 @@ namespace island
             mineBatRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
                                    mineBats_.Bats());
             if (!huntingBats_.empty()) mineBatRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, huntingBats_);
+        }
+        if (mudskipperRenderer_) {
+            GpuDiagnosticScope gpuPass("mudskippers");
+            mudskipperRenderer_->DrawMud(cameraView_, cameraProjection_, renderCameraPosition_);
+            // (the QA cameras' walker stays where it was put, often under the camera: the fish
+            // would flee from the lens)
+            const PlayerPosition& walker = playerMotion_.Position();
+            const bool walking = viewpoint_ == FixedViewpoint::None;
+            mudskippers_->At(timeSeconds, walking ? walker.x : 1.0e4f, walking ? walker.z : 1.0e4f,
+                             [this](const float x, const float z) { return DrawnOrAnalyticHeight(*drawnGround_, terrain_, x, z); }, skippers_);
+            mudskipperRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, skippers_);
         }
         if (alateRenderer_) {
             GpuDiagnosticScope gpuPass("termite-swarm");

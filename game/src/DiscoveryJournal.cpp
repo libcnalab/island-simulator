@@ -87,6 +87,7 @@ constexpr std::array Entries{
     JournalEntry{"fish","Shoaling fish",Creature,15.0f},
     JournalEntry{"reef-fish","Reef fish",Creature,8.0f},
     JournalEntry{"stream-fish","Stream fish",Creature,8.0f},
+    JournalEntry{"mudskippers","Mudskippers",Creature,6.0f},
     JournalEntry{"stingrays","Stingrays",Creature,15.0f},
     JournalEntry{"octopuses","Octopuses",Creature,8.0f},
     JournalEntry{"shark","Shark",Creature,40.0f},

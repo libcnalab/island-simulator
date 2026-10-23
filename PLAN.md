@@ -233,6 +233,26 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 568 (2026-10-23) — mudskippers on the mangroves' mud
+
+The operator's task list (reviewed 2026-10-23), item 8.
+- **The mud** (`MudskipperColony`, `MudskipperRenderer::DrawMud`): under each mangrove where the
+  ground is low (9 of them), a patch of wet grey-brown mud some 6.8 m across, its edge ragged
+  and blended into the sand, darker toward the water, a few centimetres over the drawn ground
+  (the mangroves had stood on clean beach sand).
+- **The mudskippers**: four a tree beyond the stilt roots' spread (28 in all), mostly on the
+  water's side. Each rests propped on its pectoral fins, skips a body-length or two every few
+  seconds (the body arcing, the tail flicked straight), raises its dorsal sail at a neighbour now
+  and then, and skips away toward the water from the walker's feet (2.6 m). Deterministic in the
+  clock; the QA cameras' walker is ignored (it stands under the lens).
+- **Drawn**: a 206-triangle fish 16 cm long, a big blunt head standing higher than the tapering
+  body, two ringed eyes bulging on top, pale blue spots, the pectoral fins planted like elbows,
+  pelvic fins, two dorsals (the first a sail folded flat but in display), a rounded tail.
+- The journal has a new creature entry, "Mudskippers".
+- **QA view** `mudskippers`: crouched broadside to a skipper on the mud, the mangroves' roots
+  behind (`20261023T075511`); `mangroves` shows the mud under the trees (`20261023T075724`). Core test: the
+  fish on the patches, on the ground or a hop over it, fleeing the walker. Full suite 76/76.
+
 ## Loop pass 567 (2026-10-23) — a colony of brown boobies on a rocky islet offshore
 
 The operator's task list (reviewed 2026-10-23), item 7.
