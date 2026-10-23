@@ -48,7 +48,7 @@ namespace island
         constexpr int FarHermitCrabVertexCount = 3 * 4 * 5 * 6;   // the coarse coil alone
         constexpr int MaximumHermitCrabVertices =
             static_cast<int>(HermitCrabGroup::Count) * HermitCrabVertexCount;
-        constexpr int CoconutCrabVertexCount = 3000;
+        constexpr int CoconutCrabVertexCount = 3300;   // (+300: the front of the cephalothorax)
         constexpr int MaximumCoconutCrabVertices =
             static_cast<int>(CoconutCrabGroup::Count) * CoconutCrabVertexCount;
         constexpr int MaximumVertexCount = static_cast<int>(CrabColony::CrabCount)
@@ -112,9 +112,11 @@ namespace island
              Color(96, 65, 51, 255), Color(220, 154, 96, 255)}
         }};
 
+        // A coconut crab's own colours: orange-red, a deep red-brown, the violet-blue morph and
+        // a sandy orange (a blue-grey crab read as a generic spider crab)
         const std::array<Color, 4> CoconutBodyColours = {{
-            Color(112, 112, 142, 255), Color(135, 91, 106, 255),
-            Color(84, 116, 126, 255), Color(139, 111, 82, 255)
+            Color(196, 88, 48, 255), Color(150, 62, 42, 255),
+            Color(78, 76, 118, 255), Color(190, 116, 60, 255)
         }};
 
         void AddTriangle(std::vector<VertexPositionColor>& vertices,
@@ -904,17 +906,18 @@ namespace island
             forward = Vector3::Normalize(Vector3::Cross(right, up));
             const float scale = crab.scale;
             const std::array<Color, 4> plates = {{
-                Color(108, 116, 95, 255), Color(128, 91, 82, 255),
-                Color(94, 91, 119, 255), Color(145, 112, 72, 255)}};
+                Color(162, 70, 40, 255), Color(118, 50, 36, 255),
+                Color(78, 66, 116, 255), Color(160, 96, 50, 255)}};
             const Color plate = plates[crab.colorVariant % plates.size()];
             const Color plateShade = Color::Lerp(plate, Color(25, 28, 25, 255), .42f);
             const Color body = CoconutBodyColours[
                 crab.colorVariant % CoconutBodyColours.size()];
             const Color bodyLight = wildlife_render::ScaleColor(body, 1.16f);
             const Color bodyShade = wildlife_render::ScaleColor(body, .72f);
-            const Color limb = Color::Lerp(body, plateShade, .36f);
+            // the legs and claws carry the red-orange of the species even on the blue morph
+            const Color limb = Color::Lerp(Color::Lerp(body, Color(172, 76, 44, 255), .40f), plateShade, .30f);
             const Color joint = wildlife_render::ScaleColor(limb, .69f);
-            const Color claw = Color::Lerp(bodyLight, plate, .38f);
+            const Color claw = Color::Lerp(Color::Lerp(bodyLight, Color(188, 92, 52, 255), .40f), plate, .30f);
 
             // Build the terrestrial species directly. Reusing and stretching the
             // beach-crab mesh made the animal read as a flat disc with wheel-shaped
@@ -922,10 +925,15 @@ namespace island
             // ventral edge from frontal, lateral and elevated views.
             // (longer than wide, as a coconut crab's cephalothorax is: a dome wider than
             // long, on short legs, read as a generic beach crab)
+            // (narrower and longer still, the front drawn forward between the eyes)
             AppendRoundedCoconutPalm(vertices,
                 centre + forward * (.025f * scale) + up * (.245f * scale),
-                right, up, forward, .270f * scale, .190f * scale,
-                .360f * scale, bodyLight, bodyShade);
+                right, up, forward, .235f * scale, .175f * scale,
+                .390f * scale, bodyLight, bodyShade);
+            AppendRoundedCoconutPalm(vertices,
+                centre + forward * (.300f * scale) + up * (.265f * scale),
+                right, up, forward, .120f * scale, .085f * scale,
+                .120f * scale, bodyLight, bodyShade);
 
             struct ArmourMark { float x; float z; float halfX; float halfZ; };
             constexpr std::array<ArmourMark, 10> ArmourMarks = {{
@@ -938,13 +946,13 @@ namespace island
             for (const ArmourMark& mark : ArmourMarks) {
                 const auto shellPoint = [&](const float x, const float z) {
                     const float dome = std::sqrt(std::max(0.0f, 1.0f
-                        - x * x / (.270f * .270f) - z * z / (.360f * .360f)));
+                        - x * x / (.235f * .235f) - z * z / (.390f * .390f)));
                     return centre + right * (x * scale)
                         + forward * ((z + .025f) * scale)
-                        + up * ((.245f + .190f * dome + .004f) * scale);
+                        + up * ((.245f + .175f * dome + .004f) * scale);
                 };
-                const float mx = mark.x * .80f, mz = mark.z * 1.24f;
-                const float hx = mark.halfX * .80f, hz = mark.halfZ * 1.24f;
+                const float mx = mark.x * .70f, mz = mark.z * 1.30f;
+                const float hx = mark.halfX * .70f, hz = mark.halfZ * 1.30f;
                 AddQuad(vertices,
                         shellPoint(mx - hx, mz),
                         shellPoint(mx, mz + hz),
@@ -1055,10 +1063,12 @@ namespace island
                 AppendOctahedron(vertices, elbow, right, up, forward,
                     .055f * scale, .050f * scale, .060f * scale,
                     limb, joint);
+                // the claw's palm long and laterally flattened, as a pincer's is (round, it read
+                // as a ball on the arm)
                 AppendRoundedCoconutPalm(vertices, palm, right, up, forward,
-                    (major ? .122f : .104f) * scale,
-                    (major ? .105f : .092f) * scale,
-                    (major ? .168f : .145f) * scale,
+                    (major ? .078f : .066f) * scale,
+                    (major ? .100f : .086f) * scale,
+                    (major ? .190f : .165f) * scale,
                     claw, wildlife_render::ScaleColor(claw, .67f));
 
                 const float opening = .030f + crab.clawPose * .032f;

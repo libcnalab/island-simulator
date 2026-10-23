@@ -233,6 +233,16 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 559 (2026-10-23) — the coconut crab's colours and proportions (inventory 5)
+
+- **Colours**: the species' own, orange-red, a deep red-brown, the violet-blue morph and a sandy
+  orange (it had been blue-grey and mauve, a generic spider crab); the legs and claws keep a
+  red-orange cast on the blue morph too.
+- **Shape**: the cephalothorax narrower and longer, with its front drawn forward between the
+  eyes as a second rounded volume; the claws' palms long and laterally flattened (they had been
+  balls on the arms). The near crab's exact budget is 3300 vertices (+300).
+- Evidence: `coconut-crabs` (the blue morph, `20261023T065950`). Full suite 76/76.
+
 ## Loop pass 558 (2026-10-23) — insects up close (inventory 4)
 
 - **Clear wings.** The small-fauna batch now gathers the insects' wing membranes into a second
