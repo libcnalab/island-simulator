@@ -161,6 +161,10 @@ Czech in the operator's messages; the intent is kept here.
 14. [ ] **A longer `quad-mine` QA drive** that reaches the crates.
 15. [ ] **A night `glowing-fungi` QA view** on a fallen log away from the giant.
 
+**Operator addition (2026-10-23).**
+16. [ ] **A balloon over the island.** A balloon floating over the island, drifting round it and
+    across it.
+
 ## Backlog (agent-actionable, 2026-10-19)
 
 Distilled from `PLAN.md` "Latest operator priorities — 2026-10-12" and "Current significant
