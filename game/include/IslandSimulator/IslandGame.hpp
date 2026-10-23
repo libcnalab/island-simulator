@@ -311,6 +311,8 @@ namespace island
         WindthrowDetail,
         WindthrowLogDetail,
         GlowingFungiDetail,
+        FoxfireLogDetail,
+        FoxfireSnagDetail,
         PlaneWreckDetail,
         PlaneCockpitDetail,
         BeachLitterDetail,

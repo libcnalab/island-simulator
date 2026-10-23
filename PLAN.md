@@ -233,6 +233,21 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 572 (2026-10-23) — foxfire on the standing snags and the fallen logs' true surface
+
+The operator's kept items 11 and 15.
+- **On the snags** (`GlowingFungusLayout::Place`, a new snags argument): a clump or two on about
+  two snags in three away from the shore, 0.9-1.9 m up the trunk (above the butt's flare), facing
+  out from it, on the snag's rest mesh turned by its yaw. 32 clumps and 312 caps in all now (16
+  and 155 before).
+- **On the fallen logs**: the clumps are laid on the log's own surface (its axis bowed sideways
+  and arching, its girth flared at the butt and swollen at the knots, as `NaturalPropRenderer`
+  builds it); on the straight radius they had been buried inside the logs, their glow only a
+  faint green haze.
+- **QA views** (capture at night): `foxfire-log` (a clump on a fallen log away from the giant,
+  `20261023T083722`), `foxfire-snag` (on a standing snag, `083730`); `glowing-fungi` unchanged.
+  Full suite 76/76.
+
 ## Loop pass 571 (2026-10-23) — the windthrow's light gap and saplings; no grass in its pit
 
 The operator's kept items 10 and 13.

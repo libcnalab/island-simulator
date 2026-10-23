@@ -1,4 +1,5 @@
 #pragma once
+#include "IslandSimulator/JungleLayout.hpp"
 #include "IslandSimulator/NaturalPropLayout.hpp"
 #include "IslandSimulator/WindthrowLayout.hpp"
 #include <array>
@@ -22,11 +23,12 @@ struct FungusCluster {
 
 class GlowingFungusLayout final {
 public:
-    static constexpr std::size_t MaximumClusters=48;
-    /** Clumps on the low flanks of the windthrown giant's trunk (when there is one) and on the
-     *  jungle's fallen logs (not the wet stream-bank ones, nor any near the shore); `ground` is
-     *  the drawn ground's height under (x, z). */
+    static constexpr std::size_t MaximumClusters=80;
+    /** Clumps on the low flanks of the windthrown giant's trunk (when there is one), on the
+     *  jungle's fallen logs (not the wet stream-bank ones, nor any near the shore) and low on
+     *  the rotting standing snags' trunks; `ground` is the drawn ground's height under (x, z). */
     [[nodiscard]] static std::vector<FungusCluster> Place(const IslandTerrain& terrain,const WindthrowPlacement* windthrow,
-        std::span<const FallenLogPlacement> logs,const std::function<float(float,float)>& ground);
+        std::span<const FallenLogPlacement> logs,const std::function<float(float,float)>& ground,
+        std::span<const StandingSnagPlacement> snags={});
 };
 }

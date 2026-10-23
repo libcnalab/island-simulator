@@ -241,6 +241,8 @@ namespace island
             case FixedViewpoint::WindthrowDetail: return "windthrow";
             case FixedViewpoint::WindthrowLogDetail: return "windthrow-log";
             case FixedViewpoint::GlowingFungiDetail: return "glowing-fungi";
+            case FixedViewpoint::FoxfireLogDetail: return "foxfire-log";
+            case FixedViewpoint::FoxfireSnagDetail: return "foxfire-snag";
             case FixedViewpoint::PlaneWreckDetail: return "plane-wreck";
             case FixedViewpoint::PlaneCockpitDetail: return "plane-cockpit";
             case FixedViewpoint::BeachLitterDetail: return "beach-litter";
@@ -2281,17 +2283,24 @@ namespace island
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<(swarm?"island-simulator: termite-swarm QA camera looks up at the column of winged termites over a nest\n"
                              :"island-simulator: termite-nest QA camera looks up at a termites' nest on a jungle trunk\n");
-        } else if (viewpoint_ == FixedViewpoint::GlowingFungiDetail) {
+        } else if (viewpoint_ == FixedViewpoint::GlowingFungiDetail || viewpoint_ == FixedViewpoint::FoxfireLogDetail
+                   || viewpoint_ == FixedViewpoint::FoxfireSnagDetail) {
             // Crouched a metre and a bit from a clump of foxfire on the windthrown giant's flank,
             // down at it (the capture asks for a dark hour): from whichever clump's side stands
             // clear of the standing trunks and bushes.
             // (the clumps themselves are laid on the drawn ground once it is built; the analytic
             // ground places the eye as well)
-            const auto clumps=GlowingFungusLayout::Place(terrain_,windthrowPlacement_?&*windthrowPlacement_:nullptr,
-                naturalPropLayout_.FallenLogs(),[this](const float x,const float z) {return terrain_.Height(x,z);});
+            // (foxfire-log: a clump on one of the jungle's fallen logs away from the giant;
+            // foxfire-snag: one low on a standing snag)
+            const bool onLog=viewpoint_==FixedViewpoint::FoxfireLogDetail,onSnag=viewpoint_==FixedViewpoint::FoxfireSnagDetail;
+            const auto analytic=[this](const float x,const float z) {return terrain_.Height(x,z);};
+            const auto clumps=onLog?GlowingFungusLayout::Place(terrain_,nullptr,naturalPropLayout_.FallenLogs(),analytic)
+                :onSnag?GlowingFungusLayout::Place(terrain_,nullptr,{},analytic,jungleLayout_.StandingSnags())
+                :GlowingFungusLayout::Place(terrain_,windthrowPlacement_?&*windthrowPlacement_:nullptr,
+                    naturalPropLayout_.FallenLogs(),analytic);
             if(clumps.empty()) throw std::runtime_error("Glowing fungi QA requires the foxfire clumps");
             std::size_t pick=0;
-            for(std::size_t i=0;i<clumps.size()&&i<8U;++i) {
+            for(std::size_t i=0;i<clumps.size()&&i<(onLog||onSnag?clumps.size():8U);++i) {
                 const FungusCluster& c=clumps[i];
                 const float hx=c.normal[0],hz=c.normal[2],h=std::max(1e-3f,std::hypot(hx,hz));
                 const float ex=c.at[0]+hx/h*1.3f,ez=c.at[2]+hz/h*1.3f;
@@ -2302,11 +2311,12 @@ namespace island
             const FungusCluster& c=clumps[pick];
             const float hx=c.normal[0],hz=c.normal[2],h=std::max(1e-3f,std::hypot(hx,hz));
             const float ex=c.at[0]+hx/h*1.3f-hz/h*0.25f,ez=c.at[2]+hz/h*1.3f+hx/h*0.25f;
-            cameraPosition_=Vector3(ex,terrain_.Height(ex,ez)+0.95f,ez);
+            cameraPosition_=Vector3(ex,std::max(terrain_.Height(ex,ez)+0.95f,c.at[1]+(onSnag?0.35f:0.0f)),ez);
             const Vector3 direction=Vector3(c.at[0],c.at[1]+0.02f,c.at[2])-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
-            std::cout<<"island-simulator: glowing-fungi QA camera looks down at a clump of foxfire on the fallen giant\n";
+            std::cout<<"island-simulator: "<<ViewpointName(viewpoint_)<<" QA camera looks down at a clump of foxfire on "
+                     <<(onLog?"a fallen log":onSnag?"a standing snag":"the fallen giant")<<'\n';
         } else if (viewpoint_ == FixedViewpoint::WindthrowLogDetail) {
             // Beside the fallen trunk toward its snapped end, along it: its moss, shelf fungi and
             // ferns, the splintered break and the crown's limbs beyond; from whichever side of it
@@ -3870,7 +3880,7 @@ namespace island
         if(!pandanus_.empty()) pandanusRenderer_=std::make_unique<PandanusRenderer>(device,pandanus_,terrain_,*drawnGround_);
         if(windthrowPlacement_) windthrowRenderer_=std::make_unique<WindthrowRenderer>(device,*windthrowPlacement_,terrain_,*drawnGround_);
         glowingFungi_=GlowingFungusLayout::Place(terrain_,windthrowPlacement_?&*windthrowPlacement_:nullptr,naturalPropLayout_.FallenLogs(),
-            [this](const float x,const float z) {return DrawnOrAnalyticHeight(*drawnGround_,terrain_,x,z);});
+            [this](const float x,const float z) {return DrawnOrAnalyticHeight(*drawnGround_,terrain_,x,z);},jungleLayout_.StandingSnags());
         if(!glowingFungi_.empty()) glowingFungusRenderer_=std::make_unique<GlowingFungusRenderer>(device,glowingFungi_);
         if(!termiteNests_.empty()) termiteNestRenderer_=std::make_unique<TermiteNestRenderer>(device,termiteNests_,jungleLayout_.Canopy());
         if(bridgePlacement_) bridgeRenderer_=std::make_unique<BridgeRenderer>(device,*bridgePlacement_);
