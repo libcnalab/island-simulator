@@ -241,7 +241,7 @@ The operator's task list (reviewed 2026-10-23), item 7.
   lifeboat and the whale by 45 m; found at (291, 106). Four basalt stacks (7.5, 4.6, 2.2 and
   1.2 m high): lobed and buttressed outlines, near-vertical cliffs and craggy tops, an apron of
   fallen blocks just awash round their feet. Their rock is a collision obstacle for the swimmer.
-- **Drawn** (`SeabirdIsletRenderer`, 2 x 9632-ish triangles in one draw, receiving the sun
+- **Drawn** (`SeabirdIsletRenderer`, one draw, receiving the sun
   shadows): dark basalt with a grain, black wet rock and green weed at the waterline, guano
   white over the level tops and ledges and in streaks down the faces below them.
 - **The boobies** (`BoobyColony`, `BirdSpecies::Booby`): 12 nest sites on the level tops above
