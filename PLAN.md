@@ -233,6 +233,37 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 570 (2026-10-23) — the tyrannosaur's voice, its ways and the ground's shake
+
+The operator's item 9, second pass (and the operator's reminder of 2026-10-23: it must make
+sounds).
+- **Sounds** (procedural, `GenerateTRexFootfall`, `GenerateTRexRoar`, `GenerateTRexBreath`;
+  `Soundscape::NoteTRex`, its feet and its voice each on their own instance, panned across the
+  listener's view, the fall square-rooted so the low end carries): two footfalls (a 34-40 Hz
+  thump sagging in pitch, the ground's rumble after it, the sand's crunch; heard to 150 m), the
+  roar (a 58-94 Hz throat tone with nine harmonics torn by a 21 Hz rasp under shaped breath
+  noise, 3.4 s, to 400 m), a closed-mouth boom (a 42 Hz tone in slow pulses, to 300 m) and a
+  breath (a long exhale, a shorter inhale, a snort, to 30 m). Rendered offline: rms 4572 / 5767 /
+  9109 / 4366, peaks under full scale.
+- **Its ways** (`TRexMotion::Update` with the walker or the rider and the night): walking, it
+  notices the walker within 40 m and stops to watch, its head turned to them; watching, it now
+  and then roars or booms at them, sniffs the air (the head raised high, the nostrils working),
+  follows at a distance for up to 25 s (never nearer than 20 m), or walks on; it drinks at the
+  stream's mouth when its round passes it (the body lowered and pitched down, the head to the
+  water); round sunset it lies up for the night (the hips down to 1 m, the legs folded flat
+  under it, the tail and belly on the sand, the head low) and is up at dawn or when the walker
+  comes within 18 m.
+- **The island's animals scatter from it**: the deer and the goats take it for their threat when
+  it is nearer than the walker and within 45 m, the boars stand off from it as from the bear, the
+  reef herons fly up 40 m off.
+- **The ground shakes** under its footfalls near the walker: the eye jolts up to 7 cm within 6 m,
+  less out to 56 m, dying away in a fraction of a second (ordinary play only).
+- **QA views**: `trex-roar` (the jaws wide, the head up, from three-quarters in front,
+  `20261023T081909`) and `trex-rest` (lying, `081955`); `trex`, `boars`, `deer` and `goats` pass.
+  Core test: watching the walker and calling, lying up at night, roused by the walker. Full suite
+  76/76. The audio itself was not heard here (captures run without an audio device): the
+  operator should listen in play.
+
 ## Loop pass 569 (2026-10-23) — a Tyrannosaurus rex walks the island (first pass)
 
 The operator's task list (reviewed 2026-10-23), item 9, first pass: the animal, its walk, its

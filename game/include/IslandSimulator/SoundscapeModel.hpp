@@ -598,6 +598,15 @@ namespace island
     [[nodiscard]] AmbientLoop GenerateWingClap(std::uint8_t variant);
     /** @brief Original crocodile hiss: a long, low, open-jawed breath of air, 1.2 seconds. */
     [[nodiscard]] AmbientLoop GenerateCrocodileHiss(std::uint8_t variant);
+    /** @brief A tyrannosaur's footfall: a deep thud felt as much as heard, the ground's rumble
+     *  after it and the sand's crunch (variant 1 a little heavier). */
+    [[nodiscard]] AmbientLoop GenerateTRexFootfall(std::uint8_t variant);
+    /** @brief A tyrannosaur's voice: variant 0 a long rasping roar, its jaws open; variant 1 a
+     *  closed-mouth booming rumble, deep and pulsing. */
+    [[nodiscard]] AmbientLoop GenerateTRexRoar(std::uint8_t variant);
+    /** @brief A tyrannosaur's breath: a slow heavy exhale and inhale through the nostrils with a
+     *  snort at its end. */
+    [[nodiscard]] AmbientLoop GenerateTRexBreath();
     /** @brief Original bird alarm chatter: a run of sharp quick chirps over a snake, one second. */
     [[nodiscard]] AmbientLoop GenerateBirdChatter(std::uint8_t variant);
     /** @brief Original hoofbeats of an animal trotting off: a drumming of dull thuds, 1.4 s;

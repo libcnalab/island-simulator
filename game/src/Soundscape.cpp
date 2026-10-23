@@ -339,6 +339,39 @@ namespace island
         }
     }
 
+    void Soundscape::NoteTRex(const int kind, const float x, const float y, const float z) noexcept
+    {
+        (void)y;
+        if (!available_ || muted_ || kind < 0 || kind > 3 || !std::isfinite(x) || !std::isfinite(z)) return;
+        const float dx = x - listenerX_, dz = z - listenerZ_, distance = std::hypot(dx, dz);
+        constexpr std::array<float, 4> Reach{{150.0f, 400.0f, 300.0f, 30.0f}};
+        constexpr std::array<float, 4> Loudness{{0.95f, 1.0f, 0.9f, 0.55f}};
+        // a big sound's low end carries: the fall is gentle, square-rooted
+        const float near = 6.0f;
+        const float t = std::clamp((distance - near) / (Reach[static_cast<std::size_t>(kind)] - near), 0.0f, 1.0f);
+        const float volume = Loudness[static_cast<std::size_t>(kind)] * (1.0f - std::sqrt(t)) * underwaterAudio_.airGain;
+        if (volume < 0.02f) return;
+        // panned by where it stands across the listener's view
+        const float rightX = -listenerForwardZ_, rightZ = listenerForwardX_;
+        const float pan = distance > 1e-3f ? std::clamp((dx * rightX + dz * rightZ) / distance * 0.8f, -0.8f, 0.8f) : 0.0f;
+        const std::size_t effect = kind == 0 ? (playedTRexCount_ % 2) : static_cast<std::size_t>(kind + 1);
+        try {
+            auto& instance = kind == 0 ? trexStepInstance_ : trexVoiceInstance_;
+            if (kind != 0 && instance && instance->getStateProperty() == SoundState::Playing && kind == 3) return;   // a breath never cuts the roar
+            instance = std::make_unique<SoundEffectInstance>(trexEffects_[effect]->CreateInstance());
+            instance->setVolumeProperty(std::clamp(volume, 0.0f, 1.0f));
+            instance->setPanProperty(pan);
+            instance->setPitchProperty(kind == 0 ? -0.05f * static_cast<float>(playedTRexCount_ % 3) : 0.0f);
+            instance->Play();
+            ++playedTRexCount_;
+            if (playedTRexCount_ == 1)
+                std::cout << "island-simulator: the tyrannosaur heard: footfalls, roar, boom and breath from procedural voices\n";
+        } catch (const std::exception&) {
+            trexStepInstance_.reset();
+            trexVoiceInstance_.reset();
+        }
+    }
+
     void Soundscape::SetWeather(const float rain, const std::uint32_t strikes, const float strikeDistance) noexcept
     {
         weatherRain_ = std::isfinite(rain) ? std::clamp(rain, 0.0f, 1.0f) : 0.0f;
@@ -575,6 +608,12 @@ namespace island
             quadSplashEffect_->setNameProperty("Procedural quad splash");
             impactEffect_ = CreateOneShotSoundEffect(GenerateQuadImpact());
             impactEffect_->setNameProperty("Procedural quad impact");
+            trexEffects_[0] = CreateOneShotSoundEffect(GenerateTRexFootfall(0U));
+            trexEffects_[1] = CreateOneShotSoundEffect(GenerateTRexFootfall(1U));
+            trexEffects_[2] = CreateOneShotSoundEffect(GenerateTRexRoar(0U));
+            trexEffects_[3] = CreateOneShotSoundEffect(GenerateTRexRoar(1U));
+            trexEffects_[4] = CreateOneShotSoundEffect(GenerateTRexBreath());
+            for (auto& effect : trexEffects_) effect->setNameProperty("Procedural tyrannosaur");
             owlEffect_ = CreateOneShotSoundEffect(GenerateScopsOwlCall());
             owlEffect_->setNameProperty("Procedural scops owl");
             nightChorusEffect_ = CreateLoopedSoundEffect(GenerateNightChorusLoop());
@@ -947,6 +986,9 @@ namespace island
             for (auto& effect : deerSnortEffects_) effect.reset();
             for (auto& effect : residentWhistleEffects_) effect.reset();
             for (auto& effect : wingClapEffects_) effect.reset();
+            trexStepInstance_.reset();
+            trexVoiceInstance_.reset();
+            for (auto& effect : trexEffects_) effect.reset();
             for (auto& effect : crocodileHissEffects_) effect.reset();
             for (auto& effect : birdChatterEffects_) effect.reset();
             for (auto& effect : hoofbeatEffects_) effect.reset();
@@ -1094,6 +1136,10 @@ namespace island
 
         listenerX_ = listenerState.x;
         listenerZ_ = listenerState.z;
+        {
+            const float length = std::hypot(listenerState.forwardX, listenerState.forwardZ);
+            if (length > 1e-4f) { listenerForwardX_ = listenerState.forwardX / length; listenerForwardZ_ = listenerState.forwardZ / length; }
+        }
         streamSound_ = StreamSoundField::Sample(listenerState.x, listenerState.z, streamCascade_);
         campfirePresence_=CampfireSite::SoundPresence(listenerState.x,listenerState.y,listenerState.z,CampfireLayout::GroundY());
         campfireVolume_+=(campfirePresence_*.26f-campfireVolume_)*(1-std::exp(-safeDelta*4));
@@ -2234,6 +2280,9 @@ namespace island
         for (auto& effect : deerSnortEffects_) effect.reset();
         for (auto& effect : residentWhistleEffects_) effect.reset();
         for (auto& effect : wingClapEffects_) effect.reset();
+        trexStepInstance_.reset();
+        trexVoiceInstance_.reset();
+        for (auto& effect : trexEffects_) effect.reset();
         for (auto& effect : crocodileHissEffects_) effect.reset();
         for (auto& effect : birdChatterEffects_) effect.reset();
         for (auto& effect : hoofbeatEffects_) effect.reset();

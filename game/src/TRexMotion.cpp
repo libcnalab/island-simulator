@@ -42,6 +42,7 @@ TRexMotion::TRexMotion(const IslandTerrain& terrain,const std::span<const Circul
     state_.x=start.x;state_.z=start.z;state_.y=Ground(start.x,start.z);
     const TRexPoint& next=route_[1];
     state_.heading=std::atan2(next.z-start.z,next.x-start.x);
+    state_.behavior=TRexBehavior::Walk;
     walkSeconds_=40.0f;
     PoseLegs(0.0f);
 }
@@ -56,7 +57,8 @@ void TRexMotion::PlaceNear(const float x,const float z) {
     target_=(best+1)%route_.size();
     state_.heading=std::atan2(route_[target_].z-state_.z,route_[target_].x-state_.x);
     state_.speed=0;
-    walkSeconds_=0;standSeconds_=20.0f;
+    previewHold_=false;
+    BeginStand(TRexBehavior::Stand,20.0f);
     PoseLegs(0.0f);
 }
 
@@ -80,53 +82,140 @@ std::array<CircularObstacle,3> TRexMotion::Obstacles() const noexcept {
     return {{{hips.x,hips.z,BodyRadius},{chest.x,chest.z,1.1f},{tail.x,tail.z,.8f}}};
 }
 
-void TRexMotion::Update(const float seconds) {
+void TRexMotion::BeginStand(const TRexBehavior what,const float seconds) {
+    state_.behavior=what;
+    activitySeconds_=seconds;
+    if(what==TRexBehavior::Roar) {
+        ++calls_;
+        lastCall_=Hash(calls_*31U+5U)<.6f?1:2;
+    }
+}
+
+void TRexMotion::PreviewRoar(const bool boom) {
+    BeginStand(TRexBehavior::Roar,1e6f);
+    lastCall_=boom?2:1;
+    previewHold_=true;
+}
+
+void TRexMotion::PreviewRest() {
+    BeginStand(TRexBehavior::Rest,1e6f);
+    state_.lie=1.0f;
+    previewHold_=true;
+}
+
+void TRexMotion::Update(const float seconds,const float observerX,const float observerZ,const bool observerValid,
+                        const float nightness) {
     const float dt=std::isfinite(seconds)?std::clamp(seconds,0.0f,0.1f):0.0f;
     clock_+=dt;
-    // walking its round and standing a while now and then
-    bool walking=state_.behavior==TRexBehavior::Walk;
-    if(holdSeconds_>0.0f) {holdSeconds_-=dt;walking=false;}
-    else if(walking) {
-        walkSeconds_-=dt;
-        if(walkSeconds_<=0.0f) {
-            walking=false;
-            standSeconds_=8.0f+10.0f*Hash(static_cast<std::uint32_t>(clock_*7.0f)+3U);
+    drinkCooldown_=std::max(0.0f,drinkCooldown_-dt);
+    followCooldown_=std::max(0.0f,followCooldown_-dt);
+    noticeCooldown_=std::max(0.0f,noticeCooldown_-dt);
+    const float ox=observerX-state_.x,oz=observerZ-state_.z;
+    const float observerDistance=observerValid&&std::isfinite(ox)&&std::isfinite(oz)?std::hypot(ox,oz):1e9f;
+    const float night=std::isfinite(nightness)?std::clamp(nightness,0.0f,1.0f):0.0f;
+    TRexBehavior& b=state_.behavior;
+    if(holdSeconds_>0.0f) {
+        holdSeconds_-=dt;
+        if(b==TRexBehavior::Walk||b==TRexBehavior::Follow) b=TRexBehavior::Stand;
+    } else if(!previewHold_) {
+        activitySeconds_-=dt;
+        const bool moving=b==TRexBehavior::Walk||b==TRexBehavior::Follow;
+        if(b==TRexBehavior::Rest) {
+            // up at dawn, or when the walker comes near
+            if((night<0.3f&&activitySeconds_<=0.0f)||observerDistance<18.0f) {b=TRexBehavior::Stand;activitySeconds_=4.0f;}
+        } else if(b==TRexBehavior::Walk&&observerDistance<40.0f&&noticeCooldown_<=0.0f) {
+            // walking, it notices the walker within 40 m: it stops to look
+            BeginStand(TRexBehavior::Watch,6.0f+6.0f*Hash(++decisions_));
+            noticeCooldown_=45.0f;
+        } else if(observerDistance<WatchDistance&&!moving&&b!=TRexBehavior::Roar&&b!=TRexBehavior::Drink) {
+            // the walker near: it turns to watch, and now and then calls at it
+            if(b!=TRexBehavior::Watch) BeginStand(TRexBehavior::Watch,6.0f+6.0f*Hash(++decisions_));
+            if(activitySeconds_<=0.0f) {
+                const float pick=Hash(++decisions_*7U);
+                if(pick<.30f) BeginStand(TRexBehavior::Roar,3.4f);
+                else if(pick<.55f&&followCooldown_<=0.0f&&observerDistance>FollowDistance+8.0f) {b=TRexBehavior::Follow;followSeconds_=25.0f;}
+                else if(pick<.75f) BeginStand(TRexBehavior::Sniff,3.0f);
+                else {b=TRexBehavior::Walk;walkSeconds_=30.0f;}
+            }
+        } else if(b==TRexBehavior::Follow) {
+            followSeconds_-=dt;
+            if(observerDistance<FollowDistance) BeginStand(TRexBehavior::Watch,5.0f);
+            else if(followSeconds_<=0.0f||observerDistance>WatchDistance*1.5f) {followCooldown_=90.0f;b=TRexBehavior::Walk;walkSeconds_=30.0f;}
+        } else if(b==TRexBehavior::Walk) {
+            walkSeconds_-=dt;
+            if(hasDrink_&&drinkCooldown_<=0.0f&&std::hypot(drinkX_-state_.x,drinkZ_-state_.z)<9.0f) {
+                BeginStand(TRexBehavior::Drink,9.0f);drinkCooldown_=240.0f;
+            } else if(walkSeconds_<=0.0f) {
+                if(night>0.6f) BeginStand(TRexBehavior::Rest,60.0f);
+                else {
+                    const float pick=Hash(++decisions_*13U);
+                    BeginStand(pick<.25f?TRexBehavior::Roar:pick<.6f?TRexBehavior::Sniff:TRexBehavior::Stand,
+                               pick<.25f?3.4f:pick<.6f?3.0f:8.0f+10.0f*Hash(decisions_*17U));
+                }
+            }
+        } else if(activitySeconds_<=0.0f) {
+            // a stand, a sniff, a roar or a drink over: on again (or down for the night)
+            if(night>0.6f) BeginStand(TRexBehavior::Rest,60.0f);
+            else {b=TRexBehavior::Walk;walkSeconds_=40.0f+50.0f*Hash(++decisions_*19U);}
         }
-    } else {
-        standSeconds_-=dt;
-        if(standSeconds_<=0.0f) {walking=true;walkSeconds_=40.0f+50.0f*Hash(static_cast<std::uint32_t>(clock_*5.0f)+11U);}
     }
-    state_.behavior=walking?TRexBehavior::Walk:TRexBehavior::Stand;
-    // steering to the next point of its round, slowly (a heavy animal turns wide)
-    const TRexPoint& target=route_[target_];
-    if(std::hypot(target.x-state_.x,target.z-state_.z)<6.0f) target_=(target_+1)%route_.size();
-    if(walking) {
-        const float want=std::atan2(route_[target_].z-state_.z,route_[target_].x-state_.x);
-        const float turn=std::remainder(want-state_.heading,2.0f*Pi);
-        state_.heading+=std::clamp(turn,-.30f*dt,.30f*dt);
-    }
-    state_.speed=Approach(state_.speed,walking?WalkSpeed:0.0f,(walking?.35f:.6f)*dt);
+    const bool walking=b==TRexBehavior::Walk||b==TRexBehavior::Follow;
+    // steering: its round, or toward the walker it follows; facing the walker it watches
+    if(std::hypot(route_[target_].x-state_.x,route_[target_].z-state_.z)<6.0f) target_=(target_+1)%route_.size();
+    float want=state_.heading;
+    if(b==TRexBehavior::Follow||b==TRexBehavior::Watch) want=std::atan2(oz,ox);
+    else if(walking) want=std::atan2(route_[target_].z-state_.z,route_[target_].x-state_.x);
+    if(b==TRexBehavior::Drink&&hasDrink_) want=std::atan2(drinkZ_-state_.z,drinkX_-state_.x);
+    const float turn=std::remainder(want-state_.heading,2.0f*Pi);
+    state_.heading+=std::clamp(turn,-(walking?.30f:.22f)*dt,(walking?.30f:.22f)*dt);
+    state_.speed=Approach(state_.speed,walking?WalkSpeed*(b==TRexBehavior::Follow?.8f:1.0f):0.0f,(walking?.35f:.6f)*dt);
     const float fx=std::cos(state_.heading),fz=std::sin(state_.heading);
     state_.x+=fx*state_.speed*dt;state_.z+=fz*state_.speed*dt;
     state_.y=Ground(state_.x,state_.z);
     distance_+=state_.speed*dt;
     const float pace=std::clamp(state_.speed/WalkSpeed,0.0f,1.0f);
     const float phase=distance_/StrideLength*2.0f*Pi;
+    // lying and crouching
+    state_.lie=Approach(state_.lie,b==TRexBehavior::Rest?1.0f:0.0f,(b==TRexBehavior::Rest?.25f:.5f)*dt);
+    state_.crouch=Approach(state_.crouch,b==TRexBehavior::Drink?1.0f:0.0f,.5f*dt);
+    const float lie=state_.lie*state_.lie*(3.0f-2.0f*state_.lie);
+    const float crouch=state_.crouch*state_.crouch*(3.0f-2.0f*state_.crouch);
     // the hips drop as each foot takes the weight and rise as it passes under; the body sways
     // onto the planted leg; the tail swings against the stride
     state_.hipHeight=HipHeight-.07f*pace*(1.0f+std::cos(2.0f*phase))*.5f-.02f;
+    state_.hipHeight+=(1.0f-HipHeight)*lie-.55f*crouch;
     state_.roll=.035f*pace*std::sin(phase);
-    // level along the ground's slope under it
     const float ahead=Ground(state_.x+fx*2.0f,state_.z+fz*2.0f),behind=Ground(state_.x-fx*2.0f,state_.z-fz*2.0f);
-    state_.pitch=std::clamp(std::atan2(behind-ahead,4.0f)*.6f,-.2f,.2f)+.02f*std::sin(clock_*.4f);
-    state_.tailSway=.09f*pace*std::sin(phase+.6f)+(1.0f-pace)*.05f*std::sin(clock_*.45f);
-    // standing, it looks about, the head swinging slowly; walking, it looks ahead
-    state_.neckYaw=Approach(state_.neckYaw,(1.0f-pace)*.55f*std::sin(clock_*.23f),.4f*dt);
-    state_.neckPitch=.05f*std::sin(clock_*.31f)+(1.0f-pace)*.06f;
+    state_.pitch=std::clamp(std::atan2(behind-ahead,4.0f)*.6f,-.2f,.2f)+.02f*std::sin(clock_*.4f)*(1.0f-lie)+.38f*crouch+.06f*lie;
+    state_.tailSway=.09f*pace*std::sin(phase+.6f)+(1.0f-pace)*.05f*std::sin(clock_*.45f)*(1.0f-.7f*lie);
+    // the head: looking about standing, ahead walking, at the walker watching; raised high to
+    // sniff; flung up and then thrust out to roar; down to the water to drink; low resting
+    float yawTarget=(1.0f-pace)*.55f*std::sin(clock_*.23f),pitchTarget=.05f*std::sin(clock_*.31f)+(1.0f-pace)*.06f;
+    float jawTarget=.03f+.02f*std::sin(state_.breath);
+    if(b==TRexBehavior::Watch||b==TRexBehavior::Follow) {
+        yawTarget=std::clamp(std::remainder(std::atan2(oz,ox)-state_.heading,2.0f*Pi),-.6f,.6f);
+        pitchTarget=.02f;
+    }
+    if(b==TRexBehavior::Sniff) {pitchTarget=.42f+.04f*std::sin(clock_*9.0f);yawTarget=.2f*std::sin(clock_*.9f);jawTarget=0.0f;}
+    if(b==TRexBehavior::Roar) {
+        const float k=std::clamp(1.0f-activitySeconds_/3.4f,0.0f,1.0f);
+        const bool boom=lastCall_==2;
+        // the boom with the mouth shut and the throat swelling, the roar with the jaws wide
+        pitchTarget=boom?-.10f:.30f*std::sin(Pi*std::min(k*1.6f,1.0f))-.05f;
+        jawTarget=boom?.05f:std::sin(Pi*std::clamp((k-.05f)/.8f,0.0f,1.0f));
+        if(previewHold_) {pitchTarget=boom?-.10f:.22f;jawTarget=boom?.05f:1.0f;}
+    }
+    if(b==TRexBehavior::Drink) {pitchTarget=-1.05f*crouch;yawTarget=0.0f;jawTarget=.08f*crouch;}
+    if(b==TRexBehavior::Rest) {pitchTarget=-.30f*lie;yawTarget=.25f*std::sin(clock_*.07f);}
+    state_.neckYaw=Approach(state_.neckYaw,yawTarget,.5f*dt);
+    state_.neckPitch=Approach(state_.neckPitch,pitchTarget,(b==TRexBehavior::Roar?1.6f:.6f)*dt);
+    state_.jaw=Approach(state_.jaw,jawTarget,(b==TRexBehavior::Roar?2.5f:1.0f)*dt);
     state_.breath+=dt*(1.6f+.6f*pace);
-    state_.jaw=.03f+.02f*std::sin(state_.breath);
+    // a breath heard every few seconds while it stands
+    breathClock_+=dt;
+    if(!walking&&b!=TRexBehavior::Roar&&breathClock_>5.5f) {breathClock_=0.0f;++breaths_;}
     PoseLegs(phase);
-    // its prints fade over a quarter of an hour (the rain beats them out sooner)
+    // its prints fade over a quarter of an hour
     for(Footprint& print:prints_) {
         if(!print.active) continue;
         print.age+=dt;
@@ -154,8 +243,9 @@ void TRexMotion::PoseLegs(const float phase) {
             lift=.42f*std::sin(Pi*k);
             leg.planted=false;
         }
-        // standing, the feet come to rest side by side
+        // standing, the feet come to rest side by side; lying, they fold forward under it
         along*=pace;lift*=pace;
+        along+=.62f*state_.lie;
         if(pace<.05f) leg.planted=true;
         const float bx=state_.x+fx*(along+.30f)+rx*side*.52f,bz=state_.z+fz*(along+.30f)+rz*side*.52f;
         leg.ball={bx,Ground(bx,bz)+.07f+lift,bz};
@@ -167,8 +257,11 @@ void TRexMotion::PoseLegs(const float phase) {
             const float x=bx+tx*length,z=bz+tz*length;
             leg.toes[static_cast<std::size_t>(t)]={x,std::max(Ground(x,z)+.02f,leg.ball.y-.07f-(lift>0.0f?.15f*lift:0.0f)),z};
         }
-        // the metatarsus up and back from the ball at sixty degrees
-        leg.ankle={bx-fx*MetatarsusLength*.5f,leg.ball.y+MetatarsusLength*.866f,bz-fz*MetatarsusLength*.5f};
+        // the metatarsus up and back from the ball at sixty degrees; lying, flat on the ground
+        // under the body, the heel back under the hips (and the knee then forward by the flank)
+        const float lie=state_.lie;
+        const float rise=MetatarsusLength*(.866f*(1.0f-lie)+.12f*lie),back=MetatarsusLength*(.5f*(1.0f-lie)+.99f*lie);
+        leg.ankle={bx-fx*back,leg.ball.y+rise,bz-fz*back};
         leg.hip=ToWorld(side*HipAcross,-.10f,-.05f);
         // the knee forward of the line from hip to ankle (two bones)
         float dx=leg.ankle.x-leg.hip.x,dy=leg.ankle.y-leg.hip.y,dz=leg.ankle.z-leg.hip.z;

@@ -177,6 +177,10 @@ namespace island
         void SetEngine(bool running, float rpm, float load, float x, float y, float z, bool riding) noexcept;
         /** @brief The quad struck something (strength 0..1); heard close when riding. */
         void NoteQuadImpact(float strength, float x, float y, float z, bool riding) noexcept;
+        /** @brief The tyrannosaur's sounds where it is: 0 a footfall (heard to some 150 m),
+         *  1 its roar (to 400 m), 2 its closed-mouth boom (to 300 m), 3 a breath (to 30 m). */
+        void NoteTRex(int kind, float x, float y, float z) noexcept;
+        [[nodiscard]] int PlayedTRexCount() const noexcept { return playedTRexCount_; }
         /** @brief The quad's tyres on the ground: rolling speed and sliding speed, m/s, and how
          *  far they wade (0 dry .. 1 the wheels in water to the hubs): in water the tyres' crunch
          *  gives way to the water they churn, and running into it at speed splashes. */
@@ -328,6 +332,12 @@ namespace island
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance>, 2> engineInstances_;
         bool engineRunning_ = false, engineRiding_ = false, enginePlaying_ = false;
         float listenerX_ = 0.0f, listenerZ_ = 0.0f;
+        float listenerForwardX_ = 0.0f, listenerForwardZ_ = 1.0f;
+        // the tyrannosaur: two footfalls, the roar, the boom and the breath; its feet and its
+        // voice each on their own instance
+        std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 5> trexEffects_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> trexStepInstance_, trexVoiceInstance_;
+        int playedTRexCount_ = 0;
         float engineRpm_ = 1400.0f, engineLoad_ = 0.0f, engineX_ = 0.0f, engineY_ = 0.0f, engineZ_ = 0.0f;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> rainEffect_, nightChorusEffect_, owlEffect_;
         float owlSeconds_ = 12.0f, dawn_ = 0.0f, chorusSeconds_ = 0.0f;

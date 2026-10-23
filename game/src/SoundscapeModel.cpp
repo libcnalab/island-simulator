@@ -2160,6 +2160,95 @@ namespace island
         return Quantize(samples, .6f);
     }
 
+    AmbientLoop GenerateTRexFootfall(const std::uint8_t variant)
+    {
+        // Eight tonnes set down on one foot: a very low thump sagging in pitch, the ground's
+        // rumble ringing on after it, and the crunch of the sand under the toes at its start.
+        constexpr float seconds = 1.6f;
+        const auto frames = static_cast<std::size_t>(AmbientSampleRate * seconds);
+        std::vector<float> samples(frames, 0.0f);
+        const bool heavy = (variant & 1U) != 0U;
+        DeterministicNoise noise(0x7e3a11fU + static_cast<std::uint32_t>(heavy) * 977U);
+        float low = 0.0f, lower = 0.0f;
+        float phase = 0.0f;
+        for (std::size_t i = 0; i < frames; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            const float raw = noise.Next();
+            low += 0.02f * (raw - low);
+            lower += 0.004f * (low - lower);
+            const float pitch = (heavy ? 34.0f : 40.0f) * (1.0f - 0.35f * std::min(t / 0.5f, 1.0f));
+            phase += 2.0f * std::numbers::pi_v<float> * pitch / static_cast<float>(AmbientSampleRate);
+            const float thump = std::sin(phase) * std::exp(-t * 5.5f) * SmoothStep(0.0f, 0.012f, t);
+            const float rumble = lower * 9.0f * std::exp(-t * 2.4f);
+            const float crunch = (raw - low) * 0.35f * std::exp(-t * 28.0f);
+            samples[i] = thump * 1.1f + rumble + crunch;
+        }
+        return Quantize(samples, 0.95f);
+    }
+
+    AmbientLoop GenerateTRexRoar(const std::uint8_t variant)
+    {
+        constexpr float seconds = 3.4f;
+        const auto frames = static_cast<std::size_t>(AmbientSampleRate * seconds);
+        std::vector<float> samples(frames, 0.0f);
+        const bool boom = (variant & 1U) != 0U;
+        DeterministicNoise noise(0x52a7f00dU + static_cast<std::uint32_t>(boom) * 131U);
+        float phase = 0.0f, low = 0.0f, band = 0.0f, bandLow = 0.0f;
+        for (std::size_t i = 0; i < frames; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            const float u = t / seconds;
+            const float raw = noise.Next();
+            low += 0.05f * (raw - low);
+            if (boom) {
+                // the closed-mouth boom: a deep tone swelling and dying in slow pulses, as large
+                // birds and crocodilians boom with the mouth shut
+                const float pitch = 42.0f + 6.0f * std::sin(2.0f * std::numbers::pi_v<float> * 0.7f * t);
+                phase += 2.0f * std::numbers::pi_v<float> * pitch / static_cast<float>(AmbientSampleRate);
+                const float pulse = 0.6f + 0.4f * std::sin(2.0f * std::numbers::pi_v<float> * 2.2f * t);
+                const float envelope = SmoothStep(0.0f, 0.18f, u) * (1.0f - SmoothStep(0.70f, 1.0f, u));
+                samples[i] = envelope * pulse * (std::sin(phase) + 0.45f * std::sin(2.0f * phase) + 0.2f * std::sin(3.0f * phase) + low * 0.8f);
+            } else {
+                // the roar: a low throat tone rising then falling, rich in harmonics and torn by a
+                // fast rasp, under a band of breath noise shaped by the open jaws
+                const float contour = std::sin(std::numbers::pi_v<float> * std::min(u * 1.25f, 1.0f));
+                const float pitch = 58.0f + 36.0f * contour;
+                phase += 2.0f * std::numbers::pi_v<float> * pitch / static_cast<float>(AmbientSampleRate);
+                const float rasp = 0.55f + 0.45f * std::sin(2.0f * std::numbers::pi_v<float> * 21.0f * t + 1.7f * std::sin(5.0f * t));
+                float tone = 0.0f;
+                for (int h = 1; h <= 9; ++h) tone += std::sin(static_cast<float>(h) * phase) / std::pow(static_cast<float>(h), 0.85f);
+                band += 0.18f * (raw - band);
+                bandLow += 0.03f * (band - bandLow);
+                const float breath = (band - bandLow) * 2.2f;
+                const float envelope = SmoothStep(0.0f, 0.10f, u) * (1.0f - SmoothStep(0.62f, 1.0f, u));
+                samples[i] = envelope * (tone * 0.32f * rasp + breath * (0.5f + 0.5f * contour) + low * 0.6f);
+            }
+        }
+        return Quantize(samples, 0.9f);
+    }
+
+    AmbientLoop GenerateTRexBreath()
+    {
+        // A great slow breath through the nostrils: the exhale a long low rushing, the inhale
+        // shorter and higher, and a snort to end it.
+        constexpr float seconds = 3.0f;
+        const auto frames = static_cast<std::size_t>(AmbientSampleRate * seconds);
+        std::vector<float> samples(frames, 0.0f);
+        DeterministicNoise noise(0x2b3e8a1U);
+        float low = 0.0f, lower = 0.0f;
+        for (std::size_t i = 0; i < frames; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            const float raw = noise.Next();
+            low += 0.04f * (raw - low);
+            lower += 0.008f * (low - lower);
+            const float exhale = SmoothStep(0.0f, 0.25f, t) * (1.0f - SmoothStep(1.1f, 1.5f, t));
+            const float inhale = SmoothStep(1.6f, 1.9f, t) * (1.0f - SmoothStep(2.4f, 2.6f, t));
+            const float snort = std::exp(-std::max(0.0f, t - 2.65f) * 18.0f) * (t > 2.65f ? 1.0f : 0.0f);
+            samples[i] = exhale * ((low - lower) * 2.6f + lower * 2.0f) + inhale * (raw - low) * 0.35f
+                + snort * (raw * 0.5f + std::sin(2.0f * std::numbers::pi_v<float> * 70.0f * t) * 0.4f);
+        }
+        return Quantize(samples, 0.7f);
+    }
+
     AmbientLoop GenerateBirdChatter(const std::uint8_t variant)
     {
         // A bird's alarm chatter over a snake: a run of sharp quick chirps, each a short

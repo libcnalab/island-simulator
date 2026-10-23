@@ -223,6 +223,8 @@ namespace island
             case FixedViewpoint::MudskipperDetail: return "mudskippers";
             case FixedViewpoint::TRexDetail: return "trex";
             case FixedViewpoint::TRexCloseDetail: return "trex-close";
+            case FixedViewpoint::TRexRoarDetail: return "trex-roar";
+            case FixedViewpoint::TRexRestDetail: return "trex-rest";
             case FixedViewpoint::OrbitProbe: return "orbit";
             case FixedViewpoint::BunkerSideDetail: return "bunker-side";
             case FixedViewpoint::StoneSignDetail: return "help-sign";
@@ -753,6 +755,12 @@ namespace island
                  <<"the resident raises a hand to a player who stops close by\n";
         bear_=std::make_unique<BearMotion>(terrain_,wildlifeObstacles);
         trex_=std::make_unique<TRexMotion>(terrain_,worldObstacles);
+        {
+            // it drinks where the stream comes out on the beach
+            const StreamCourse course(terrain_);
+            const auto& mouth=course.Station(course.Count()-1U);
+            trex_->SetDrinkingPlace(mouth.x,mouth.z);
+        }
         std::cout<<"island-simulator: a full-grown Tyrannosaurus rex, "<<TRexMotion::Length<<" m long and "<<TRexMotion::HipHeight+0.85f
                  <<" m at the hip, walks a round of "<<trex_->Route().size()<<" points on the island's open upper beaches\n";
         monkeyTroop_.SetObstacles(wildlifeObstacles);
@@ -2427,25 +2435,30 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: help-sign QA camera looks down on the castaway's stones from a low pass over the sea\n";
-        } else if (viewpoint_ == FixedViewpoint::TRexDetail || viewpoint_ == FixedViewpoint::TRexCloseDetail) {
+        } else if (viewpoint_ == FixedViewpoint::TRexDetail || viewpoint_ == FixedViewpoint::TRexCloseDetail
+                   || viewpoint_ == FixedViewpoint::TRexRoarDetail || viewpoint_ == FixedViewpoint::TRexRestDetail) {
             // On the south beach: from the side at 22 m as it walks its round; or close, 7 m
             // before it standing, up at its head.
             if(!trex_) throw std::runtime_error("T. rex QA requires the tyrannosaur");
             const float pathZ=-225.0f,pathX=VegetationLayout::PrimaryPathCenterX(pathZ);
             trex_->PlaceNear(pathX,pathZ);
             const bool close=viewpoint_==FixedViewpoint::TRexCloseDetail;
+            const bool roar=viewpoint_==FixedViewpoint::TRexRoarDetail,rest=viewpoint_==FixedViewpoint::TRexRestDetail;
             if(close) trex_->HoldStanding(600.0f);
             else trex_->HoldStanding(0.0f);
+            if(roar) {trex_->PreviewRoar(false);for(int k=0;k<40;++k) trex_->Update(0.1f);}
+            if(rest) {trex_->PreviewRest();for(int k=0;k<40;++k) trex_->Update(0.1f);}
             const auto& rex=trex_->State();
             const float fx=std::cos(rex.heading),fz=std::sin(rex.heading);
             // (walking, it is set going at once: the QA view sees it mid-stride)
-            if(!close) {for(int k=0;k<220;++k) trex_->Update(0.1f);}
+            if(!close&&!roar&&!rest) {for(int k=0;k<220;++k) trex_->Update(0.1f);}
             const auto& now=trex_->State();
             const float side=-1.0f;
-            const float ex=close?now.x+fx*7.5f-fz*side*2.5f:now.x-fz*side*22.0f+fx*4.0f;
-            const float ez=close?now.z+fz*7.5f+fx*side*2.5f:now.z+fx*side*22.0f+fz*4.0f;
+            // (the roar three-quarters from in front at 13 m; the rest from the side at 14 m)
+            const float ex=close?now.x+fx*7.5f-fz*side*2.5f:roar?now.x+fx*10.0f-fz*side*8.0f:rest?now.x-fz*side*13.0f+fx*2.0f:now.x-fz*side*22.0f+fx*4.0f;
+            const float ez=close?now.z+fz*7.5f+fx*side*2.5f:roar?now.z+fz*10.0f+fx*side*8.0f:rest?now.z+fx*side*13.0f+fz*2.0f:now.z+fx*side*22.0f+fz*4.0f;
             cameraPosition_=Vector3(ex,std::max(terrain_.Height(ex,ez),0.0f)+PlayerMotion::EyeHeight,ez);
-            const TRexPoint aim=close?trex_->ToWorld(0.0f,1.0f,4.2f):trex_->ToWorld(0.0f,-.6f,.8f);
+            const TRexPoint aim=close||roar?trex_->ToWorld(0.0f,roar?.6f:1.0f,roar?3.0f:4.2f):trex_->ToWorld(0.0f,-.6f,rest?1.5f:.8f);
             const Vector3 direction=Vector3(aim.x,aim.y,aim.z)-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
@@ -3472,6 +3485,16 @@ namespace island
             for (const auto& cluster : glowingFungi_) consider(JournalIndex("foxfire"), cluster.at[0], cluster.at[1], cluster.at[2], 0.4f);
         const PassingShip::State ship = PassingShip::At(oceanSeconds_);
         if (ship.visible) consider(JournalIndex("passing-ship"), ship.x, 6.0f, ship.z, PassingShip::Length * 0.5f);
+    }
+
+    Vector3 IslandGame::HerdThreat(const float x, const float z) const noexcept
+    {
+        if (!trex_ || viewpoint_ != FixedViewpoint::None) return cameraPosition_;
+        const auto& rex = trex_->State();
+        const float rexDistance = std::hypot(rex.x - x, rex.z - z);
+        if (rexDistance < 45.0f && rexDistance < std::hypot(cameraPosition_.X - x, cameraPosition_.Z - z))
+            return Vector3(rex.x, rex.y + 1.7f, rex.z);
+        return cameraPosition_;
     }
 
     void IslandGame::NoteJournal(const std::size_t entry)
@@ -5000,7 +5023,37 @@ namespace island
         bear_->SetLyingFruit(fallingFruit_.Fruit());
         if(viewpoint_==FixedViewpoint::BearLyingDetail) bear_->PreviewLie();
         updateProfile_.Mark("bear");
-        if (trex_) trex_->Update(deltaSeconds);
+        if (trex_) {
+            // it watches the walker (or the rider), and lies up for the night
+            const bool observing = viewpoint_ == FixedViewpoint::None;
+            const float observerX = riding_ ? quad_.Position().x : playerMotion_.Position().x;
+            const float observerZ = riding_ ? quad_.Position().z : playerMotion_.Position().z;
+            const float night = 1.0f - std::clamp((sun_light::Current().lighting.sunElevationDegrees + 3.0f) / 9.0f, 0.0f, 1.0f);
+            trex_->Update(deltaSeconds, observerX, observerZ, observing, night);
+            // its sounds and the ground's shake under its feet
+            const TRexState& rex = trex_->State();
+            if (trex_->FootfallCount() != notedTRexFootfalls_) {
+                notedTRexFootfalls_ = trex_->FootfallCount();
+                const TRexPoint foot = trex_->LastFootfall();
+                if (soundscape_) soundscape_->NoteTRex(0, foot.x, foot.y, foot.z);
+                const float d = std::hypot(foot.x - cameraPosition_.X, foot.z - cameraPosition_.Z);
+                trexShake_ = std::max(trexShake_, 0.07f * std::clamp(1.0f - (d - 6.0f) / 50.0f, 0.0f, 1.0f));
+            }
+            if (trex_->CallCount() != notedTRexCalls_) {
+                notedTRexCalls_ = trex_->CallCount();
+                const TRexPoint head = trex_->ToWorld(0.0f, 1.0f, 4.5f);
+                if (soundscape_) soundscape_->NoteTRex(trex_->LastCallKind() == 2 ? 2 : 1, head.x, head.y, head.z);
+                std::cout << "island-simulator: the tyrannosaur " << (trex_->LastCallKind() == 2 ? "booms" : "roars") << '\n';
+            }
+            if (trex_->BreathCount() != notedTRexBreaths_) {
+                notedTRexBreaths_ = trex_->BreathCount();
+                const TRexPoint head = trex_->ToWorld(0.0f, 1.0f, 5.0f);
+                if (soundscape_) soundscape_->NoteTRex(3, head.x, head.y, head.z);
+            }
+            trexShake_ *= std::exp(-deltaSeconds * 7.0f);
+            trexShakeClock_ += deltaSeconds;
+            (void)rex;
+        }
         bear_->Update(viewpoint_==FixedViewpoint::BearLyingDetail?0.0f:deltaSeconds,bearCaptureClock?BearPoint{NAN,NAN,NAN}
             :BearPoint{observer.x,observer.y,observer.z});
         for (const std::size_t eaten : bear_->EatenFruit()) fallingFruit_.Consume(eaten);
@@ -5470,7 +5523,17 @@ namespace island
                                      subject.z-previousCrocodile.z);
         }
         boarHerd_.SetLyingFruit(fallingFruit_.Fruit());
-        boarHerd_.SetBear(bear_->State().x, bear_->State().z, true);
+        {
+            // the boars stand off from the bear as from the walker, and from the tyrannosaur
+            float threatX = bear_->State().x, threatZ = bear_->State().z;
+            if (trex_ && !boarHerd_.Boars().empty()) {
+                const auto& boar = boarHerd_.Boars().front();
+                if (std::hypot(trex_->State().x - boar.x, trex_->State().z - boar.z) < std::min(45.0f, std::hypot(threatX - boar.x, threatZ - boar.z))) {
+                    threatX = trex_->State().x; threatZ = trex_->State().z;
+                }
+            }
+            boarHerd_.SetBear(threatX, threatZ, true);
+        }
         boarHerd_.SetWetness(weather_now::Current().wetness);
         if (viewpoint_ == FixedViewpoint::BoarLyingDetail) boarHerd_.PreviewLie(1U);
         updateProfile_.Mark("boarHerd");
@@ -5584,7 +5647,7 @@ namespace island
         // and the facing/oblique-retreat behaviour is gated by IslandCloseObserverTurningTests.
         const GoatPoint goatObserver=UsesGoatCaptureClock()
             ?GoatPoint{std::numeric_limits<float>::quiet_NaN(),0,0}
-            :GoatPoint{cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z};
+            :[&]{const auto& g=goats_->Goats().front();const Vector3 t=HerdThreat(g.x,g.z);return GoatPoint{t.X,t.Y,t.Z};}();
         if(viewpoint_==FixedViewpoint::GoatLyingDetail) goats_->PreviewLie(1U);
         updateProfile_.Mark("goats");
         measureWildlife(1, [&] { goats_->Update(viewpoint_==FixedViewpoint::GoatLyingDetail?0.0f:deltaSeconds,goatObserver); });
@@ -5610,8 +5673,11 @@ namespace island
             cameraPosition_+=Vector3(current.x-previousGoat.x,current.y-previousGoat.y,current.z-previousGoat.z);
         }
         updateProfile_.Mark("deer");
-        deer_->Update(viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail?0.0f:deltaSeconds,
-            cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z);
+        {
+            const Vector3 threat=deer_->Deer().empty()?cameraPosition_:HerdThreat(deer_->Deer().front().x,deer_->Deer().front().z);
+            deer_->Update(viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail?0.0f:deltaSeconds,
+                threat.X,threat.Y,threat.Z);
+        }
         // The deer sentinel coming alert at the walker snorts the alarm.
         if(soundscape_&&deer_->SentinelAlert()&&!deerSentinelWasAlert_&&!deer_->Deer().empty()) {
             const auto& sentinel=deer_->Deer().front();
@@ -5733,6 +5799,7 @@ namespace island
                 disturbers.push_back({quad.x, quad.z, std::abs(quad_.Speed()) > 1.0f ? 30.0f : 16.0f});
             }
             disturbers.push_back({bear_->State().x, bear_->State().z, 14.0f});
+            if (trex_) disturbers.push_back({trex_->State().x, trex_->State().z, 40.0f});
             for (const auto& boar : boarHerd_.Boars()) disturbers.push_back({boar.x, boar.z, 8.0f});
             for (const auto& crocodile : crocodileGroup_.Crocodiles())
                 if (crocodile.speed > 0.05f) disturbers.push_back({crocodile.x, crocodile.z, 7.0f});
@@ -7580,6 +7647,9 @@ namespace island
         const Vector3 forward(std::sin(yaw_) * cosPitch, std::sin(pitch_),
                               std::cos(yaw_) * cosPitch);
         renderCameraPosition_ = cameraPosition_;
+        // the ground shaking under the tyrannosaur's footfalls near the walker
+        if (viewpoint_ == FixedViewpoint::None && trexShake_ > 0.002f)
+            renderCameraPosition_ += Vector3(0.3f * std::sin(trexShakeClock_ * 31.0f), std::sin(trexShakeClock_ * 43.0f), 0.0f) * trexShake_;
         if (viewpoint_ == FixedViewpoint::None && !smokeTest_
             && !IsDebugFreeCameraActive() && !flightMotion_.IsActive()
             && playerMotion_.SubmergedDepth()==0.0f) {

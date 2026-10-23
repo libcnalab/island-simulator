@@ -293,6 +293,8 @@ namespace island
         MudskipperDetail,
         TRexDetail,
         TRexCloseDetail,
+        TRexRoarDetail,
+        TRexRestDetail,
         OrbitProbe,
         BunkerSideDetail,
         StoneSignDetail,
@@ -595,6 +597,11 @@ namespace island
         std::unique_ptr<MudskipperRenderer> mudskipperRenderer_;
         std::unique_ptr<TRexMotion> trex_;                       // the tyrannosaur walking the island
         std::unique_ptr<TRexRenderer> trexRenderer_;
+        std::uint32_t notedTRexFootfalls_ = 0U, notedTRexCalls_ = 0U, notedTRexBreaths_ = 0U;
+        float trexShake_ = 0.0f, trexShakeClock_ = 0.0f;   // the ground's shake under its footfalls
+        /** The herd's threat: the walker's eye, or the tyrannosaur when it is the nearer to
+         *  (x, z) and within 45 m (the island's animals scatter from it). */
+        [[nodiscard]] Microsoft::Xna::Framework::Vector3 HerdThreat(float x, float z) const noexcept;
         std::optional<BridgePlacement> bridgePlacement_;
         std::optional<LookoutPlacement> lookoutPlacement_;
         std::optional<HelicopterPlacement> helicopterPlacement_;

@@ -13660,6 +13660,25 @@ int main()
         std::size_t prints = 0U;
         for (const auto& print : rex.Prints()) prints += print.active && print.kind == 2U ? 1U : 0U;
         const auto bodies = rex.Obstacles();
+        // its behaviours: the walker near has it stop and watch (head toward the walker) and,
+        // over a few minutes, call; at night it lies down; the walker close rouses it
+        island::TRexMotion watcher(terrain, {});
+        for (int step = 0; step < 50; ++step) watcher.Update(0.1f);
+        const auto& w = watcher.State();
+        const float wx = w.x + std::cos(w.heading + 0.4f) * 30.0f, wz = w.z + std::sin(w.heading + 0.4f) * 30.0f;
+        bool watched = false;
+        for (int step = 0; step < 3000; ++step) {
+            watcher.Update(0.1f, wx, wz, true, 0.0f);
+            watched = watched || watcher.State().behavior == island::TRexBehavior::Watch;
+        }
+        island::TRexMotion sleeper(terrain, {});
+        for (int step = 0; step < 2000; ++step) sleeper.Update(0.1f, 0.0f, 0.0f, false, 1.0f);
+        const bool slept = sleeper.State().behavior == island::TRexBehavior::Rest && sleeper.State().lie > 0.99f
+            && sleeper.State().hipHeight < 1.2f;
+        const auto& z = sleeper.State();
+        for (int step = 0; step < 20; ++step) sleeper.Update(0.1f, z.x + 5.0f, z.z, true, 1.0f);
+        Check(watched && watcher.CallCount() >= 1U && slept && sleeper.State().behavior != island::TRexBehavior::Rest,
+              "the tyrannosaur does not watch the walker or call, does not lie up at night, or is not roused");
         Check(round && travelled > 25.0f && grounded && legs && rex.FootfallCount() >= 10U && prints >= 10U
                   && bodies[0].radius == island::TRexMotion::BodyRadius,
               "the tyrannosaur's round, walk, planted feet, legs, prints or body are wrong");

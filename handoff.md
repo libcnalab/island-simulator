@@ -135,7 +135,7 @@ Czech in the operator's messages; the intent is kept here.
    arboreal nests (`TermiteNestLayout`, pass 545), and the bats and geckos come to feed on them.
 7. [x] **A seabird colony.** Done in pass 567. Boobies nesting on a rocky islet offshore.
 8. [x] **Mudskippers.** Done in pass 568. Mudskippers hopping on the mud among the mangroves.
-9. [~] **A Tyrannosaurus rex.** Pass 569: the animal, its walk, prints, collision, shadow. It must look realistic and be at real size: about 12 m long and
+9. [x] **A Tyrannosaurus rex.** Passes 569-570. Ask the operator to listen to it in play. It must look realistic and be at real size: about 12 m long and
    about 3.7-4 m at the hip, some 8 t. Model it on current palaeontology:
    - a horizontal body balanced over the hips, a deep skull with forward-facing eyes;
    - tiny two-fingered arms, a massive tail held off the ground;
@@ -518,6 +518,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 570: item 9 second pass, the tyrannosaur's sounds (footfalls, roar, boom, breath; `Soundscape::NoteTRex`), its ways (watch, follow, roar/boom, sniff, drink at the stream mouth, lie up at night), animals scattering from it, the ground's shake; QA `trex-roar` `20261023T081909`, `trex-rest` `081955` (PLAN "Loop pass 570").
 - Pass 569: item 9 first pass, a full-size Tyrannosaurus rex (`TRexMotion`, `TRexRenderer`): its round of the upper beaches, IK legs and planted three-toed prints, collision for walker and quad, ground shadow, journal entry; QA `trex` `20261023T081228`, `trex-close` `081236`. Next: sound (steps, breath, roar), camera shake, roar/drink/rest/watch/follow, scattering animals (PLAN "Loop pass 569").
 - Pass 568: item 8, mudskippers (`MudskipperColony`, `MudskipperRenderer`): wet mud under the low mangroves, 28 skippers hopping, displaying and fleeing to the water; journal entry; QA `mudskippers` `20261023T075511` (PLAN "Loop pass 568").
 - Pass 567: item 7, a brown booby colony on a rocky islet offshore (`SeabirdIslet`, `BoobyColony`, `SeabirdIsletRenderer`, `BirdSpecies::Booby`): basalt stacks white with guano, 12 nests, standing/sitting/preening birds and five plunge-diving fliers; journal entries; QA `booby-colony` `20261023T074134`, `booby-nests` `074141` (PLAN "Loop pass 567").

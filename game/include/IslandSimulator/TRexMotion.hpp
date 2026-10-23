@@ -20,7 +20,7 @@ struct TRexLeg {
     bool planted=true;
 };
 
-enum class TRexBehavior : std::uint8_t {Walk,Stand};
+enum class TRexBehavior : std::uint8_t {Walk,Stand,Sniff,Roar,Drink,Rest,Watch,Follow};
 
 /** The tyrannosaur's whole pose this moment, everything the renderer needs. */
 struct TRexState {
@@ -34,6 +34,8 @@ struct TRexState {
     float jaw=0;                 // 0..1 the jaw open
     float tailSway=0;            // the tail's swing, radians at its root
     float breath=0;              // the breathing phase
+    float lie=0;                 // 0..1 lying down to rest, the legs folded under it
+    float crouch=0;              // 0..1 the body lowered and pitched down (to drink)
     TRexBehavior behavior=TRexBehavior::Stand;
     std::array<TRexLeg,2> legs{};   // left, right
 };
@@ -53,7 +55,22 @@ public:
     static constexpr std::size_t PrintCapacity=40;
 
     TRexMotion(const IslandTerrain& terrain,std::span<const CircularObstacle> obstacles);
-    void Update(float seconds);
+    void Update(float seconds) {Update(seconds,0.0f,0.0f,false,0.0f);}
+    /** With the walker (or the quad) at (observerX, observerZ): it stops and watches the walker
+     *  within 60 m, follows at a distance now and then (never nearer than FollowDistance), and
+     *  is roused from its rest within 18 m; `nightness` (0 day .. 1 night) has it lie up for
+     *  the night. */
+    void Update(float seconds,float observerX,float observerZ,bool observerValid,float nightness);
+    static constexpr float WatchDistance=60.0f,FollowDistance=20.0f;
+    /** Where it goes to drink (the stream's mouth): on its round near it, it stops and drinks. */
+    void SetDrinkingPlace(float x,float z) noexcept {drinkX_=x;drinkZ_=z;hasDrink_=true;}
+    /** QA: begins a roar now (`boom`: the closed-mouth call), or the lie-down, held. */
+    void PreviewRoar(bool boom);
+    void PreviewRest();
+    /** Calls begun so far (roars and booms), the last one's kind (1 roar, 2 boom), breaths. */
+    [[nodiscard]] std::uint32_t CallCount() const noexcept {return calls_;}
+    [[nodiscard]] int LastCallKind() const noexcept {return lastCall_;}
+    [[nodiscard]] std::uint32_t BreathCount() const noexcept {return breaths_;}
     /** QA: puts it at the route's waypoint nearest (x, z), standing still. */
     void PlaceNear(float x,float z);
     /** QA: holds it standing for `seconds` from now. */
@@ -80,6 +97,12 @@ private:
     TRexState state_;
     float distance_=0;               // walked, for the stride's phase
     float standSeconds_=0,walkSeconds_=0,holdSeconds_=0,clock_=0;
+    float activitySeconds_=0,breathClock_=0,drinkCooldown_=0,followSeconds_=0,followCooldown_=30.0f,noticeCooldown_=0;
+    float drinkX_=0,drinkZ_=0;
+    bool hasDrink_=false,previewHold_=false;
+    std::uint32_t calls_=0,breaths_=0,decisions_=0;
+    int lastCall_=0;
+    void BeginStand(TRexBehavior what,float seconds);
     std::array<bool,2> wasPlanted_{true,true};
     std::array<Footprint,PrintCapacity> prints_{};
     std::size_t nextPrint_=0;
