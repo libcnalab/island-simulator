@@ -236,6 +236,7 @@ namespace island
             case FixedViewpoint::ElephantDetail: return "elephant";
             case FixedViewpoint::ElephantCloseDetail: return "elephant-close";
             case FixedViewpoint::ElephantTrumpetDetail: return "elephant-trumpet";
+            case FixedViewpoint::ElephantBatheDetail: return "elephant-bathe";
             case FixedViewpoint::OrbitProbe: return "orbit";
             case FixedViewpoint::BunkerSideDetail: return "bunker-side";
             case FixedViewpoint::StoneSignDetail: return "help-sign";
@@ -2526,23 +2527,30 @@ namespace island
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: "<<ViewpointName(viewpoint_)<<" QA camera looks at the tyrannosaur on the beach\n";
         } else if (viewpoint_ == FixedViewpoint::ElephantDetail || viewpoint_ == FixedViewpoint::ElephantCloseDetail
-                   || viewpoint_ == FixedViewpoint::ElephantTrumpetDetail) {
+                   || viewpoint_ == FixedViewpoint::ElephantTrumpetDetail || viewpoint_ == FixedViewpoint::ElephantBatheDetail) {
             // Behind the south-east beach: from the side at 17 m as it walks its round; close,
             // 7 m before it standing, three-quarters on at its head and tusks; or trumpeting, at
             // 13 m.
             if(!elephant_) throw std::runtime_error("Elephant QA requires the elephant");
             elephant_->PlaceNear(ElephantQaX,ElephantQaZ);
             const bool close=viewpoint_==FixedViewpoint::ElephantCloseDetail,trumpet=viewpoint_==FixedViewpoint::ElephantTrumpetDetail;
+            const bool bathe=viewpoint_==FixedViewpoint::ElephantBatheDetail;
             elephant_->HoldStanding(close?600.0f:0.0f);
+            if(bathe) {
+                // out in the sea off the beach, showering its back
+                elephant_->PreviewBathe(ElephantQaX,ElephantQaZ);
+                for(int k=0;k<20;++k) {elephant_->Update(0.1f);elephantSplash_.Update(0.1f,*elephant_);}
+            }
             if(trumpet) {elephant_->PreviewTrumpet();for(int k=0;k<30;++k) elephant_->Update(0.1f);}
             // (walking, it is set going at once: the QA view sees it mid-stride)
-            if(!close&&!trumpet) {for(int k=0;k<160;++k) elephant_->Update(0.1f);}
+            if(!close&&!trumpet&&!bathe) {for(int k=0;k<160;++k) elephant_->Update(0.1f);}
             if(close) {for(int k=0;k<30;++k) elephant_->Update(0.1f);}
             const auto& now=elephant_->State();
             const float fx=std::cos(now.heading),fz=std::sin(now.heading);
             // (the seaward side first: it walks its round with the sea on its left; the first
             // eye with a clear sight of it past the trees and rocks)
-            const float baseAhead=close?7.0f:trumpet?9.0f:2.0f,baseSide=close?3.5f:trumpet?9.0f:17.0f;
+            // (bathing, from the side, standing in the shallows)
+            const float baseAhead=close?7.0f:trumpet?9.0f:bathe?1.5f:2.0f,baseSide=close?3.5f:trumpet?9.0f:bathe?13.0f:17.0f;
             float ex=now.x,ez=now.z;
             bool clear=false;
             for(const float side:{1.0f,-1.0f}) {
@@ -2551,12 +2559,12 @@ namespace island
                         if(clear) break;
                         const float a=close?baseAhead+shift*.3f:baseAhead+shift,sd=baseSide*scale;
                         ex=now.x+fx*a+fz*side*sd;ez=now.z+fz*a-fx*side*sd;
-                        clear=elephant_->ClearSight(ex,ez,now.x,now.z,2.6f)&&terrain_.Height(ex,ez)>.3f;
+                        clear=elephant_->ClearSight(ex,ez,now.x,now.z,2.6f)&&terrain_.Height(ex,ez)>(bathe?-.7f:.3f);
                     }
                 }
             }
             cameraPosition_=Vector3(ex,std::max(terrain_.Height(ex,ez),0.0f)+PlayerMotion::EyeHeight,ez);
-            const ElephantPoint aim=close?elephant_->ToWorld(0.0f,-.1f,2.6f):trumpet?elephant_->ToWorld(0.0f,.5f,1.6f):elephant_->ToWorld(0.0f,-.5f,.4f);
+            const ElephantPoint aim=bathe?elephant_->ToWorld(0.0f,.2f,.0f):close?elephant_->ToWorld(0.0f,-.1f,2.6f):trumpet?elephant_->ToWorld(0.0f,.5f,1.6f):elephant_->ToWorld(0.0f,-.5f,.4f);
             const Vector3 direction=Vector3(aim.x,aim.y,aim.z)-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
@@ -4411,6 +4419,7 @@ namespace island
                       && TurtleGrazeField::Capacity <= RootingDustField::Capacity
                       && FinWakeField::Capacity <= RootingDustField::Capacity
                       && CrocodileWakeField::Capacity <= RootingDustField::Capacity
+                      && ElephantSplashField::FoamCapacity <= RootingDustField::Capacity
                       && OctopusInkField::Capacity <= RootingDustField::Capacity,
                       "a puff field outgrew the shared dust renderer");
         surfSprayRenderer_ = std::make_unique<CascadeMistRenderer>(device,
@@ -4418,6 +4427,10 @@ namespace island
             SurfSprayField::Capacity);
         dolphinBlowRenderer_ = std::make_unique<CascadeMistRenderer>(device,
             "island-simulator: a dolphin breaking the surface blows a puff of spray from the blowhole");
+        elephantSprayRenderer_ = std::make_unique<CascadeMistRenderer>(device,
+            "island-simulator: the elephant bathing in the sea showers its back with water from its trunk",
+            ElephantSplashField::SprayCapacity);
+        elephantSprayRenderer_->SetRange(40.0f, 30.0f, 3.6f);
         flyingFishRenderer_ = std::make_unique<FlyingFishRenderer>(device);
         flyingFishSprayRenderer_ = std::make_unique<CascadeMistRenderer>(device,
             "island-simulator: a flying fish leaving the sea, touching down or dropping back in throws up a little spray",
@@ -5263,6 +5276,12 @@ namespace island
                 const ElephantPoint head = elephant_->ToWorld(0.0f, 0.0f, 3.0f);
                 if (soundscape_) soundscape_->NoteElephant(elephant_->LastCallKind(), head.x, head.y, head.z);
                 std::cout << "island-simulator: the elephant " << (elephant_->LastCallKind() == 1 ? "trumpets" : "rumbles") << '\n';
+            }
+            elephantSplash_.Update(deltaSeconds, *elephant_);
+            if (elephant_->SprayCount() != notedElephantSprays_) {
+                notedElephantSprays_ = elephant_->SprayCount();
+                const ElephantPoint back = elephant_->ToWorld(0.0f, 1.0f, -0.5f);
+                if (soundscape_) soundscape_->NoteElephant(2, back.x, back.y, back.z);
             }
         }
         bear_->Update(viewpoint_==FixedViewpoint::BearLyingDetail?0.0f:deltaSeconds,bearCaptureClock?BearPoint{NAN,NAN,NAN}
@@ -9120,9 +9139,11 @@ namespace island
             blownSandRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,blownSand_.Puffs());
             finWakeRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,finWake_.Puffs());
             finWakeRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,crocodileWake_.Puffs());
+            finWakeRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,elephantSplash_.Foam());
             octopusInkRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,octopusInk_.Puffs());
             surfSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,surfSpray_.Puffs());
             dolphinBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,dolphinBlows_.Puffs());
+            elephantSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,elephantSplash_.Spray());
             flyingFishSprayRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,flyingFish_.Splashes());
             if (whaleBlowRenderer_) {
                 whaleBlowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,whales_.Blow());

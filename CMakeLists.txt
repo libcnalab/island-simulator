@@ -111,6 +111,7 @@ add_library(island_core STATIC
     game/src/BalloonFlight.cpp
     game/src/TRexMotion.cpp
     game/src/ElephantMotion.cpp
+    game/src/ElephantSplashField.cpp
     game/src/LifeboatLayout.cpp
     game/src/BridgeLayout.cpp
     game/src/LookoutLayout.cpp

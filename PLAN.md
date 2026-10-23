@@ -233,6 +233,31 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 577 (2026-10-23) — the elephant bathes in the sea
+
+Operator request (2026-10-23, in Czech): "add the elephant bathing". As the Andaman elephants do.
+- **Motion** (`ElephantMotion`, a new `Bathe` behaviour): by day, at the end of a walk, after a
+  first 90 s and then at most every 7 minutes (one walk's end in three), it leaves its round
+  straight out from the island's middle to where the sea first reaches 1.25 m
+  (`FindBathingPlace`, within 90 m), wading slower as the water deepens (to 55 % of its pace).
+  For 80 s it bathes: a seven-second cycle of the trunk down into the sea to fill and swung up
+  and over the back to shower it, one side and then the other; every 26 s it lies down in the
+  water for 9 s (the body 0.8 m lower, rolled 0.22 rad onto its side), the trunk held up out of
+  it. Then (or at dusk) it wades out and rejoins its round at the nearest waypoint. Its hide is
+  wet in the sea and dries over four minutes on land (`ElephantState::wet`, darker, the sand's
+  dust washed off); `waterDepth` and `sink` are in its state.
+- **Water** (`ElephantSplashField`, core): each shower bursts from the trunk's tip as twelve
+  spray puffs thrown up and back to come down on the back within the second (its own mist
+  renderer, 24 puffs, drawn denser), with foam where it lands; foam at the waterline about the
+  chest wading, all round the body lying down and rising, and the lapping standing.
+- **Sound**: each shower splashes (the quad's splash voice pitched down, heard to 90 m).
+- **QA view** `elephant-bathe` (out off the south-east beach, from the side in the shallows, the
+  trunk held up showering every second; `20261023T115342`). Core test: from its round it goes to
+  bathe, wades out to its depth, showers at least five times with spray and foam, lies down,
+  and comes back out onto land still wet. Full suite 76/76; `elephant` and `elephant-close`
+  re-captured unchanged (`115444`, `115451`). In a still frame the shower is faint against the
+  sky; in motion it reads as the arc it is (to judge in play).
+
 ## Loop pass 576 (2026-10-23) — a bull Asian elephant roams the coastal flats
 
 Operator request (2026-10-23, in Czech): "add one elephant to the island". An Asian elephant

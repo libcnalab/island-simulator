@@ -46,10 +46,10 @@ Vector3 Unit(Vector3 v,const Vector3& fallback=Vector3::Up) {
 // pigment (the ears' edges, the face and the trunk's root) as `pink` says.
 struct Skin {
     Vector3 grey{98,91,86},dust{150,131,108},belly{78,72,68};
-    float bands=0.0f,bandDepth=0.0f,pink=0.0f;
+    float bands=0.0f,bandDepth=0.0f,pink=0.0f,wet=0.0f;
     Color At(const Vector3& p,const Vector3& n,const float along,const float pinkHere=0.0f) const {
         const float upness=n.Y;
-        Vector3 c=upness>0.0f?Vector3::Lerp(grey,dust,std::clamp(upness*upness*.55f,0.0f,1.0f))
+        Vector3 c=upness>0.0f?Vector3::Lerp(grey,dust,std::clamp(upness*upness*.55f*(1.0f-wet),0.0f,1.0f))
                              :Vector3::Lerp(grey,belly,std::clamp(-upness*1.4f,0.0f,1.0f));
         if(bands>0.0f) {
             const float fold=std::pow(.5f+.5f*std::sin(along*bands*2.0f*Pi),6.0f);
@@ -58,8 +58,8 @@ struct Skin {
         const float freckle=std::max(pink,pinkHere);
         if(freckle>0.0f&&Noise3(p*16.0f)>.45f) c=Vector3::Lerp(c,Vector3(200,158,146),freckle*.75f);
         c*=.92f+.12f*Noise3(p*6.0f);
-        c*=wildlife_render::WetCoatFactor();
-        const float light=.56f+.40f*std::max(0.0f,Vector3::Dot(n,wildlife_render::FixedSunDirection))+.10f*std::max(0.0f,n.Y);
+        c*=wildlife_render::WetCoatFactor()*(1.0f-.12f*wet);
+        const float light=.60f+.38f*std::max(0.0f,Vector3::Dot(n,wildlife_render::FixedSunDirection))+.10f*std::max(0.0f,n.Y);
         c*=light;
         return Color(static_cast<int>(std::clamp(c.X,0.0f,255.0f)),static_cast<int>(std::clamp(c.Y,0.0f,255.0f)),
                      static_cast<int>(std::clamp(c.Z,0.0f,255.0f)));
@@ -193,6 +193,8 @@ void ElephantRenderer::Draw(const Matrix& view,const Matrix& projection,const Ve
     vertices_.clear();
     Builder b(vertices_);
     Skin skin;
+    // dark and wet from the sea, drying in the sun
+    skin.wet=std::clamp(s.wet,0.0f,1.0f);
     const Vector3 right=V(elephant.ToWorld(1,0,0))-origin,up=V(elephant.ToWorld(0,1,0))-origin,ahead=V(elephant.ToWorld(0,0,1))-origin;
     const auto local=[&](const float x,const float y,const float z) {return origin+right*x+up*y+ahead*z;};
     // ---- the body: the barrel from the rump's slope over the arched back to the neck, each

@@ -40,6 +40,7 @@
 #include "IslandSimulator/BalloonFlight.hpp"
 #include "IslandSimulator/TRexMotion.hpp"
 #include "IslandSimulator/ElephantMotion.hpp"
+#include "IslandSimulator/ElephantSplashField.hpp"
 #include "IslandSimulator/DistantSceneryLayout.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/FishSchools.hpp"
@@ -13832,6 +13833,31 @@ int main()
               "the elephant's round, walk, planted feet, legs, trunk or prints are wrong");
         Check(watched && trumpeted && raised && trumpetCall && movedOff && dozed,
               "the elephant does not watch the walker, trumpet at one too close and move off, or doze at night");
+        // bathing: by day it goes down into the sea now and then, wades out to its depth,
+        // showers its back and lies down in the water, and comes back out wet onto its round
+        island::ElephantMotion bather(terrain, {});
+        island::ElephantSplashField splash;
+        bool bathed = false, deep = false, lay = false, ashore = false, sprayed = false, foamed = false;
+        std::uint32_t showers = 0U;
+        float wetOut = 0.0f;
+        for (int step = 0; step < 36000 && !ashore; ++step) {
+            bather.Update(0.1f, 0.0f, 0.0f, false, 0.0f, 0.0f, 0.0f, false);
+            splash.Update(0.1f, bather);
+            const auto& b = bather.State();
+            if (bather.Bathing()) {
+                bathed = true;
+                deep = deep || b.waterDepth > island::ElephantMotion::BatheDepth * 0.8f;
+                lay = lay || b.sink > 0.9f;
+                sprayed = sprayed || splash.ActiveSpray() >= 5U;
+                foamed = foamed || splash.ActiveFoam() >= 2U;
+                showers = bather.SprayCount();
+            } else if (bathed && b.waterDepth == 0.0f) {
+                ashore = true;
+                wetOut = b.wet;
+            }
+        }
+        Check(bathed && deep && lay && sprayed && foamed && showers >= 5U && ashore && wetOut > 0.8f,
+              "the elephant does not go to bathe in the sea, wade out, shower, lie down and come out wet");
     }
 
     if (failures != 0) {

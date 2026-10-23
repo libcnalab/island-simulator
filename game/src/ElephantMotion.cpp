@@ -69,7 +69,7 @@ void ElephantMotion::PlaceNear(const float x,const float z) {
     target_=(best+1)%route_.size();
     state_.heading=std::atan2(route_[target_].z-state_.z,route_[target_].x-state_.x);
     state_.speed=0;
-    previewHold_=false;goingToDrink_=false;fleeSeconds_=0.0f;
+    previewHold_=previewBathe_=false;goingToDrink_=goingToBathe_=false;fleeSeconds_=0.0f;state_.sink=0.0f;
     Begin(ElephantBehavior::Stand,20.0f);
     PoseLegs(0.0f);
 }
@@ -78,6 +78,36 @@ void ElephantMotion::PreviewTrumpet() {
     Begin(ElephantBehavior::Trumpet,1e6f);
     fleeX_=state_.x+std::cos(state_.heading)*20.0f;fleeZ_=state_.z+std::sin(state_.heading)*20.0f;
     previewHold_=true;
+}
+
+bool ElephantMotion::FindBathingPlace(const float x,const float z,float& outX,float& outZ) const noexcept {
+    // straight out from the island's middle through (x, z), a metre at a time
+    const float l=std::max(1e-3f,std::hypot(x,z)),ux=x/l,uz=z/l;
+    for(float d=1.0f;d<=90.0f;d+=1.0f) {
+        const float px=x+ux*d,pz=z+uz*d;
+        if(Ground(px,pz)<-BatheDepth) {outX=px;outZ=pz;return true;}
+    }
+    return false;
+}
+
+void ElephantMotion::PreviewBathe(const float x,const float z) {
+    PlaceNear(x,z);
+    float bx=0,bz=0;
+    if(!FindBathingPlace(state_.x,state_.z,bx,bz)) return;
+    state_.heading=std::atan2(bz-state_.z,bx-state_.x);
+    state_.x=bx;state_.z=bz;state_.y=Ground(bx,bz);
+    state_.wet=1.0f;
+    Begin(ElephantBehavior::Bathe,1e6f);
+    previewHold_=previewBathe_=true;
+    PoseLegs(0.0f);
+}
+
+void ElephantMotion::RejoinRound() {
+    // back onto its round at the nearest waypoint, on to the next
+    std::size_t best=0;
+    for(std::size_t i=1;i<route_.size();++i)
+        if(std::hypot(route_[i].x-state_.x,route_[i].z-state_.z)<std::hypot(route_[best].x-state_.x,route_[best].z-state_.z)) best=i;
+    target_=best;
 }
 
 bool ElephantMotion::ClearSight(const float x0,const float z0,const float x1,const float z1,const float margin) const noexcept {
@@ -172,6 +202,7 @@ void ElephantMotion::Update(const float seconds,const float observerX,const floa
     drinkCooldown_=std::max(0.0f,drinkCooldown_-dt);
     noticeCooldown_=std::max(0.0f,noticeCooldown_-dt);
     trumpetCooldown_=std::max(0.0f,trumpetCooldown_-dt);
+    batheCooldown_=std::max(0.0f,batheCooldown_-dt);
     const float ox=observerX-state_.x,oz=observerZ-state_.z;
     const float observerDistance=observerValid&&std::isfinite(ox)&&std::isfinite(oz)?std::hypot(ox,oz):1e9f;
     const float rx=rivalX-state_.x,rz=rivalZ-state_.z;
@@ -195,7 +226,10 @@ void ElephantMotion::Update(const float seconds,const float observerX,const floa
             Begin(ElephantBehavior::Trumpet,2.8f);
             trumpetCooldown_=45.0f;
         } else if(b==ElephantBehavior::Trumpet) {
-            if(activitySeconds_<=0.0f) {b=ElephantBehavior::Walk;walkSeconds_=25.0f;fleeSeconds_=22.0f;goingToDrink_=false;}
+            if(activitySeconds_<=0.0f) {b=ElephantBehavior::Walk;walkSeconds_=25.0f;fleeSeconds_=22.0f;goingToDrink_=goingToBathe_=false;}
+        } else if(b==ElephantBehavior::Bathe) {
+            // out of the sea when the bath is over (or with the dusk), back to its round
+            if(activitySeconds_<=0.0f||night>.5f) {RejoinRound();b=ElephantBehavior::Walk;walkSeconds_=60.0f;}
         } else if(b==ElephantBehavior::Doze) {
             if((night<.3f&&activitySeconds_<=0.0f)||observerDistance<15.0f) Begin(ElephantBehavior::Watch,6.0f);
         } else if(observerDistance<WatchDistance&&fleeSeconds_<=0.0f&&noticeCooldown_<=0.0f
@@ -206,16 +240,23 @@ void ElephantMotion::Update(const float seconds,const float observerX,const floa
             if(Hash(decisions_*29U)<.5f) {++calls_;lastCall_=0;}
         } else if(b==ElephantBehavior::Walk) {
             walkSeconds_-=dt;
-            if(hasDrink_&&!goingToDrink_&&drinkCooldown_<=0.0f&&fleeSeconds_<=0.0f&&std::hypot(drinkX_-state_.x,drinkZ_-state_.z)<30.0f)
+            if(goingToBathe_&&std::hypot(batheX_-state_.x,batheZ_-state_.z)<1.5f) {
+                goingToBathe_=false;
+                Begin(ElephantBehavior::Bathe,BatheSeconds);
+            }
+            if(!goingToBathe_&&hasDrink_&&!goingToDrink_&&drinkCooldown_<=0.0f&&fleeSeconds_<=0.0f&&std::hypot(drinkX_-state_.x,drinkZ_-state_.z)<30.0f)
                 goingToDrink_=true;
             if(goingToDrink_&&std::hypot(drinkX_-state_.x,drinkZ_-state_.z)<4.5f) {
                 goingToDrink_=false;drinkCooldown_=300.0f;
                 Begin(ElephantBehavior::Drink,21.0f);
-            } else if(walkSeconds_<=0.0f&&!goingToDrink_&&fleeSeconds_<=0.0f) {
+            } else if(walkSeconds_<=0.0f&&!goingToDrink_&&!goingToBathe_&&fleeSeconds_<=0.0f&&b==ElephantBehavior::Walk) {
                 if(night>.6f) Begin(ElephantBehavior::Doze,90.0f);
                 else {
                     const float pick=Hash(++decisions_*13U);
-                    if(pick<.40f) Begin(ElephantBehavior::Graze,18.0f+12.0f*Hash(decisions_*17U));
+                    // by day now and then down to the sea to bathe
+                    if(night<.3f&&batheCooldown_<=0.0f&&pick>.62f&&FindBathingPlace(state_.x,state_.z,batheX_,batheZ_)) {
+                        goingToBathe_=true;batheCooldown_=420.0f;walkSeconds_=1e6f;
+                    } else if(pick<.40f) Begin(ElephantBehavior::Graze,18.0f+12.0f*Hash(decisions_*17U));
                     else if(pick<.62f) Begin(ElephantBehavior::Dust,10.0f);
                     else {
                         Begin(ElephantBehavior::Stand,8.0f+10.0f*Hash(decisions_*23U));
@@ -230,11 +271,12 @@ void ElephantMotion::Update(const float seconds,const float observerX,const floa
         }
     }
     const bool walking=b==ElephantBehavior::Walk;
-    // steering: its round, the drinking place, or away from what it trumpeted at; facing the
-    // walker it watches; round the trees and rocks in its way
+    // steering: its round, the drinking place, the sea to bathe in, or away from what it
+    // trumpeted at; facing the walker it watches; round the trees and rocks in its way
     if(std::hypot(route_[target_].x-state_.x,route_[target_].z-state_.z)<5.0f) target_=(target_+1)%route_.size();
     float wantX=route_[target_].x-state_.x,wantZ=route_[target_].z-state_.z;
     if(goingToDrink_||b==ElephantBehavior::Drink) {wantX=drinkX_-state_.x;wantZ=drinkZ_-state_.z;}
+    if(goingToBathe_) {wantX=batheX_-state_.x;wantZ=batheZ_-state_.z;}
     if(fleeSeconds_>0.0f) {wantX=state_.x-fleeX_;wantZ=state_.z-fleeZ_;}
     {
         const float l=std::max(1e-3f,std::hypot(wantX,wantZ));
@@ -250,12 +292,15 @@ void ElephantMotion::Update(const float seconds,const float observerX,const floa
     if(b==ElephantBehavior::Watch) want=std::atan2(oz,ox);
     if(b==ElephantBehavior::Trumpet) want=std::atan2(fleeZ_-state_.z,fleeX_-state_.x);
     if(b==ElephantBehavior::Drink&&hasDrink_) want=std::atan2(drinkZ_-state_.z,drinkX_-state_.x);
+    if(b==ElephantBehavior::Bathe&&!previewBathe_) want=state_.heading+.3f*std::sin(clock_*.11f);
     const float turn=std::remainder(want-state_.heading,2.0f*Pi);
     const float rate=walking?.38f:b==ElephantBehavior::Trumpet?.5f:.25f;
     state_.heading+=std::clamp(turn,-rate*dt,rate*dt);
     // it turns on the spot before it sets off, rather than walking off sideways
     const float aligned=walking?std::clamp(1.0f-(std::abs(turn)-.6f)/.8f,.25f,1.0f):0.0f;
-    state_.speed=Approach(state_.speed,WalkSpeed*aligned*(fleeSeconds_>0.0f?1.25f:1.0f),(walking?.3f:.6f)*dt);
+    // slower wading through the water
+    const float wade=1.0f-.45f*std::clamp(state_.waterDepth/1.2f,0.0f,1.0f);
+    state_.speed=Approach(state_.speed,WalkSpeed*aligned*wade*(fleeSeconds_>0.0f?1.25f:1.0f),(walking?.3f:.6f)*dt);
     const float fx=std::cos(state_.heading),fz=std::sin(state_.heading);
     state_.x+=fx*state_.speed*dt;state_.z+=fz*state_.speed*dt;
     // never inside a trunk or a rock
@@ -264,16 +309,23 @@ void ElephantMotion::Update(const float seconds,const float observerX,const floa
         if(d<clear&&d>1e-3f) {state_.x=o.x+dx/d*clear;state_.z=o.z+dz/d*clear;}
     }
     state_.y=Ground(state_.x,state_.z);
+    state_.waterDepth=std::max(0.0f,-state_.y);
     distance_+=state_.speed*dt;
     const float pace=std::clamp(state_.speed/WalkSpeed,0.0f,1.3f);
     const float phase=distance_/StrideLength;
     state_.doze=Approach(state_.doze,b==ElephantBehavior::Doze?1.0f:0.0f,.2f*dt);
     const float doze=Smooth(state_.doze);
+    // bathing, it lies down in the water every half minute or so, rolled onto its side
+    const float soak=std::fmod(clock_,26.0f);
+    state_.sink=Approach(state_.sink,b==ElephantBehavior::Bathe&&!previewBathe_&&soak>14.0f&&soak<23.0f?1.0f:0.0f,.35f*dt);
+    const float sink=Smooth(state_.sink);
+    // wet from the sea, drying over some four minutes in the air
+    state_.wet=state_.waterDepth>.4f?std::min(1.0f,state_.wet+.5f*dt):std::max(0.0f,state_.wet-dt/240.0f);
     // the body vaults over each stiff leg: highest as the legs pass under it, a gentle roll
     // onto the planted side, pitched with the ground
     const float stride=std::min(pace,1.0f);
-    state_.bodyHeight=BodyHeight-.045f*stride*(.5f+.5f*std::cos(4.0f*Pi*phase))-.04f*doze;
-    state_.roll=.025f*stride*std::sin(2.0f*Pi*phase);
+    state_.bodyHeight=BodyHeight-.045f*stride*(.5f+.5f*std::cos(4.0f*Pi*phase))-.04f*doze-.8f*sink;
+    state_.roll=.025f*stride*std::sin(2.0f*Pi*phase)+.22f*sink;
     const float ahead=Ground(state_.x+fx*1.5f,state_.z+fz*1.5f),behind=Ground(state_.x-fx*1.5f,state_.z-fz*1.5f);
     state_.pitch=std::clamp(std::atan2(behind-ahead,3.0f)*.7f,-.18f,.18f);
     state_.tailSwing=.25f*std::sin(clock_*1.3f+.5f*std::sin(clock_*.37f))*(1.0f-.8f*doze)+.08f*stride*std::sin(2.0f*Pi*phase);
@@ -329,6 +381,27 @@ void ElephantMotion::Update(const float seconds,const float observerX,const floa
         headPitch=-.10f+.40f*k;
         lift=k;swing=0.0f;
         ears=.25f+.75f*k;
+        break;
+    }
+    case ElephantBehavior::Bathe: {
+        // a cycle of seven seconds: the trunk down into the sea to fill, then swung up and over
+        // the back to shower it, one side and then the other; lying in the water, the trunk
+        // held up out of it
+        const float t=previewBathe_?2.3f:std::fmod(clock_,7.0f);
+        const float down=Smooth(t/1.0f)*(1.0f-Smooth((t-1.4f)/.5f));
+        const float toss=Smooth((t-1.4f)/.5f)*(1.0f-Smooth((t-3.2f)/1.2f));
+        headPitch=-.18f*down+.15f*toss-.05f;
+        reach=down*(1.0f-sink);lift=.95f*toss*(1.0f-sink)+.55f*sink;
+        swing=(std::fmod(clock_,14.0f)<7.0f?.85f:-.85f)*toss*(1.0f-sink);
+        ears=.30f+.30f*std::sin(clock_*2.6f);
+        headPitch-=.12f*sink;
+        if(previewBathe_) {
+            sprayClock_+=dt;
+            if(sprayClock_>.9f) {sprayClock_=0.0f;++sprays_;}
+        } else {
+            if(sprayClock_<2.0f&&t>=2.0f&&sink<.2f) ++sprays_;
+            sprayClock_=t;
+        }
         break;
     }
     case ElephantBehavior::Doze:

@@ -75,6 +75,7 @@
 #include "IslandSimulator/BalloonRenderer.hpp"
 #include "IslandSimulator/TRexRenderer.hpp"
 #include "IslandSimulator/ElephantRenderer.hpp"
+#include "IslandSimulator/ElephantSplashField.hpp"
 #include "IslandSimulator/FlightMotion.hpp"
 #include "IslandSimulator/GeckoPopulation.hpp"
 #include "IslandSimulator/SkinkPopulation.hpp"
@@ -303,6 +304,7 @@ namespace island
         ElephantDetail,
         ElephantCloseDetail,
         ElephantTrumpetDetail,
+        ElephantBatheDetail,
         BalloonDetail,
         BalloonCloseDetail,
         OrbitProbe,
@@ -624,7 +626,9 @@ namespace island
         float trexShake_ = 0.0f, trexShakeClock_ = 0.0f;   // the ground's shake under its footfalls
         std::unique_ptr<ElephantMotion> elephant_;               // the bull elephant roaming the coastal flats
         std::unique_ptr<ElephantRenderer> elephantRenderer_;
-        std::uint32_t notedElephantCalls_ = 0U;
+        std::uint32_t notedElephantCalls_ = 0U, notedElephantSprays_ = 0U;
+        ElephantSplashField elephantSplash_;                     // the water it throws about bathing
+        std::unique_ptr<CascadeMistRenderer> elephantSprayRenderer_;
         /** The herd's threat: the walker's eye, or the tyrannosaur when it is the nearer to
          *  (x, z) and within 45 m (the island's animals scatter from it). */
         [[nodiscard]] Microsoft::Xna::Framework::Vector3 HerdThreat(float x, float z) const noexcept;

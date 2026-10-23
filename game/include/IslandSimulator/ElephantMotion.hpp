@@ -18,7 +18,7 @@ struct ElephantLeg {
     bool planted=true;
 };
 
-enum class ElephantBehavior : std::uint8_t {Walk,Stand,Graze,Drink,Dust,Watch,Trumpet,Doze};
+enum class ElephantBehavior : std::uint8_t {Walk,Stand,Graze,Drink,Dust,Watch,Trumpet,Doze,Bathe};
 
 /** The elephant's whole pose this moment, everything the renderer needs. */
 struct ElephantState {
@@ -37,6 +37,9 @@ struct ElephantState {
     float tailSwing=0;
     float breath=0;
     float doze=0;                // 0..1 dozing on its feet, the head and trunk low
+    float sink=0;                // 0..1 lowered into the water to bathe, rolled onto its side
+    float waterDepth=0;          // the sea over the ground under it, metres (0 on land)
+    float wet=0;                 // 0..1 the hide wet from the sea, drying in the sun
     ElephantBehavior behavior=ElephantBehavior::Stand;
     std::array<ElephantLeg,4> legs{};   // left fore, right fore, left hind, right hind
 };
@@ -47,7 +50,9 @@ struct ElephantState {
  *  island's coastal flats behind the beach at a slow 1.1 m/s in the lateral walk of its kind
  *  (left hind, left fore, right hind, right fore), each foot laying a round print; it stops to
  *  pull and eat grass, to dust itself, to drink where the stream comes out, and fans its ears
- *  in the heat; it watches the walker who comes near, its trunk raised to take the scent, trumpets
+ *  in the heat; by day it goes down now and then into the sea to bathe, wading out to some
+ *  1.25 m, showering water over its back with its trunk and lying down in it, and comes out
+ *  dark and wet onto its round again; it watches the walker who comes near, its trunk raised to take the scent, trumpets
  *  at a walker who comes too close (and at the tyrannosaur), and dozes on its feet at night.
  *  Deterministic in the time it is given. */
 class ElephantMotion final {
@@ -60,6 +65,7 @@ public:
     static constexpr float ShoulderAhead=1.3f,HipBehind=1.3f,TrunkLength=1.95f;
     static constexpr float WatchDistance=32.0f,TrumpetDistance=11.0f;
     static constexpr std::size_t PrintCapacity=40;
+    static constexpr float BatheDepth=1.25f,BatheSeconds=80.0f;
 
     ElephantMotion(const IslandTerrain& terrain,std::span<const CircularObstacle> obstacles);
     void Update(float seconds) {Update(seconds,0.0f,0.0f,false,0.0f,0.0f,0.0f,false);}
@@ -77,6 +83,14 @@ public:
     void HoldStanding(float seconds) noexcept {holdSeconds_=std::max(holdSeconds_,seconds);}
     /** QA: begins a trumpet now, held at its height, facing the way it faces. */
     void PreviewTrumpet();
+    /** QA: puts it in the sea off its round's waypoint nearest (x, z), bathing, its trunk held
+     *  up over its back and showering it every second. */
+    void PreviewBathe(float x,float z);
+    /** Showers of water thrown over its back so far, and the trunk's tip when the last began. */
+    [[nodiscard]] std::uint32_t SprayCount() const noexcept {return sprays_;}
+    [[nodiscard]] bool Bathing() const noexcept {return state_.behavior==ElephantBehavior::Bathe;}
+    /** Where, out from (x, z), the sea first reaches BatheDepth (false: not within 90 m). */
+    [[nodiscard]] bool FindBathingPlace(float x,float z,float& outX,float& outZ) const noexcept;
     /** Whether the line from (x0, z0) to (x1, z1) passes clear of the trees and rocks near its
      *  round by `margin` (QA cameras look at it past them). */
     [[nodiscard]] bool ClearSight(float x0,float z0,float x1,float z1,float margin) const noexcept;
@@ -103,6 +117,7 @@ private:
     [[nodiscard]] float Ground(float x,float z) const noexcept;
     void PoseLegs(float phase);
     void Begin(ElephantBehavior what,float seconds);
+    void RejoinRound();
     const IslandTerrain& terrain_;
     std::vector<ElephantPoint> route_;
     std::vector<CircularObstacle> obstacles_;   // near its round, which it steers round
@@ -113,8 +128,9 @@ private:
     float drinkCooldown_=0,noticeCooldown_=0,trumpetCooldown_=0,rumbleClock_=0,fleeSeconds_=0;
     float fleeX_=0,fleeZ_=0;
     float drinkX_=0,drinkZ_=0;
-    bool hasDrink_=false,goingToDrink_=false,previewHold_=false;
-    std::uint32_t calls_=0,decisions_=0;
+    bool hasDrink_=false,goingToDrink_=false,previewHold_=false,goingToBathe_=false,previewBathe_=false;
+    float batheX_=0,batheZ_=0,batheCooldown_=90.0f,sprayClock_=0;
+    std::uint32_t calls_=0,decisions_=0,sprays_=0;
     int lastCall_=0;
     std::array<bool,4> wasPlanted_{true,true,true,true};
     std::array<Footprint,PrintCapacity> prints_{};

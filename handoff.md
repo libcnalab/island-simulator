@@ -185,6 +185,8 @@ Czech in the operator's messages; the intent is kept here.
 15. [x] **A night `glowing-fungi` QA view** (`foxfire-log`, pass 572) on a fallen log away from the giant.
 
 **Operator addition (2026-10-23).**
+18. [x] **The elephant bathing in the sea.** Done in pass 577 (QA `elephant-bathe`). Ask the
+    operator to watch a bath in play (the shower is faint in still frames).
 17. [x] **An elephant on the island.** Done in pass 576 (a bull Asian elephant; QA `elephant`,
     `elephant-close`, `elephant-trumpet`). Ask the operator to listen to its trumpet and rumble
     in play, and to walk up to it.
@@ -544,6 +546,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 577: operator request, the elephant bathes in the sea (`Bathe`, `ElephantSplashField`): wades out to 1.25 m, showers its back with its trunk, lies down in the water, comes out wet; spray, foam, splash sound; QA `elephant-bathe` `20261023T115342` (PLAN "Loop pass 577").
 - Pass 576: operator request, a bull Asian elephant (`ElephantMotion`, `ElephantRenderer`): its round on the coastal flats, lateral walk with IK legs and round prints, trunk/ears/tail, grazing, dusting, drinking, watching, trumpeting and moving off, dozing; trumpet and rumble sounds; capsule sun shadow; journal entry; QA `elephant` `20261023T113556`, `elephant-close` `113603`, `elephant-trumpet` `113611` (PLAN "Loop pass 576").
 - Pass 575: item 16, the hot-air balloon on a turning figure of eight over the island and the sea, burner bursts; QA `balloon`, `balloon-close` (PLAN "Loop pass 575").
 - Pass 574: item 12, weavers' nests on three shore palms' fronds (swayed with the fronds), yellow males displaying upside down, fetching grass; QA `weaver-nests`, `weaver-display` (PLAN "Loop pass 574").

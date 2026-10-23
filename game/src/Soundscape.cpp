@@ -375,10 +375,10 @@ namespace island
     void Soundscape::NoteElephant(const int kind, const float x, const float y, const float z) noexcept
     {
         (void)y;
-        if (!available_ || muted_ || kind < 0 || kind > 1 || !std::isfinite(x) || !std::isfinite(z)) return;
+        if (!available_ || muted_ || kind < 0 || kind > 2 || !std::isfinite(x) || !std::isfinite(z)) return;
         const float dx = x - listenerX_, dz = z - listenerZ_, distance = std::hypot(dx, dz);
-        constexpr std::array<float, 2> Reach{{250.0f, 600.0f}};
-        constexpr std::array<float, 2> Loudness{{0.75f, 1.0f}};
+        constexpr std::array<float, 3> Reach{{250.0f, 600.0f, 90.0f}};
+        constexpr std::array<float, 3> Loudness{{0.75f, 1.0f, 0.7f}};
         const float near = 5.0f;
         const float t = std::clamp((distance - near) / (Reach[static_cast<std::size_t>(kind)] - near), 0.0f, 1.0f);
         const float volume = Loudness[static_cast<std::size_t>(kind)] * (1.0f - std::sqrt(t)) * underwaterAudio_.airGain;
@@ -386,6 +386,15 @@ namespace island
         const float rightX = -listenerForwardZ_, rightZ = listenerForwardX_;
         const float pan = distance > 1e-3f ? std::clamp((dx * rightX + dz * rightZ) / distance * 0.8f, -0.8f, 0.8f) : 0.0f;
         try {
+            if (kind == 2) {
+                elephantSplashInstance_ = std::make_unique<SoundEffectInstance>(elephantEffects_[2]->CreateInstance());
+                elephantSplashInstance_->setVolumeProperty(std::clamp(volume, 0.0f, 1.0f));
+                elephantSplashInstance_->setPanProperty(pan);
+                elephantSplashInstance_->setPitchProperty(-0.25f + 0.08f * static_cast<float>(playedElephantCount_ % 3));
+                elephantSplashInstance_->Play();
+                ++playedElephantCount_;
+                return;
+            }
             if (kind == 0 && elephantVoiceInstance_ && elephantVoiceInstance_->getStateProperty() == SoundState::Playing) return;   // a rumble never cuts the trumpet
             elephantVoiceInstance_ = std::make_unique<SoundEffectInstance>(elephantEffects_[static_cast<std::size_t>(kind == 1 ? 0 : 1)]->CreateInstance());
             elephantVoiceInstance_->setVolumeProperty(std::clamp(volume, 0.0f, 1.0f));
@@ -397,6 +406,7 @@ namespace island
                 std::cout << "island-simulator: the elephant heard: trumpet and rumble from procedural voices\n";
         } catch (const std::exception&) {
             elephantVoiceInstance_.reset();
+            elephantSplashInstance_.reset();
         }
     }
 
@@ -644,6 +654,7 @@ namespace island
             for (auto& effect : trexEffects_) effect->setNameProperty("Procedural tyrannosaur");
             elephantEffects_[0] = CreateOneShotSoundEffect(GenerateElephantTrumpet());
             elephantEffects_[1] = CreateOneShotSoundEffect(GenerateElephantRumble());
+            elephantEffects_[2] = CreateOneShotSoundEffect(GenerateQuadSplash());   // a shower of water falling back
             for (auto& effect : elephantEffects_) effect->setNameProperty("Procedural elephant");
             owlEffect_ = CreateOneShotSoundEffect(GenerateScopsOwlCall());
             owlEffect_->setNameProperty("Procedural scops owl");
@@ -1021,6 +1032,7 @@ namespace island
             trexVoiceInstance_.reset();
             for (auto& effect : trexEffects_) effect.reset();
             elephantVoiceInstance_.reset();
+            elephantSplashInstance_.reset();
             for (auto& effect : elephantEffects_) effect.reset();
             for (auto& effect : crocodileHissEffects_) effect.reset();
             for (auto& effect : birdChatterEffects_) effect.reset();
@@ -2317,6 +2329,7 @@ namespace island
         trexVoiceInstance_.reset();
         for (auto& effect : trexEffects_) effect.reset();
         elephantVoiceInstance_.reset();
+        elephantSplashInstance_.reset();
         for (auto& effect : elephantEffects_) effect.reset();
         for (auto& effect : crocodileHissEffects_) effect.reset();
         for (auto& effect : birdChatterEffects_) effect.reset();
