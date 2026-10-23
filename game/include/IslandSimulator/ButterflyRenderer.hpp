@@ -82,6 +82,9 @@ namespace island
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> vertices_;
         std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> stagingVertices_;
+        // the insects' clear wings, drawn translucent after the solid batch
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> membraneVertices_;
+        std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> membraneStaging_;
         int visibleButterflyCount_ = 0;
         int visibleNearButterflyCount_ = 0;
         int visibleFarButterflyCount_ = 0;

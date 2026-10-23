@@ -233,6 +233,24 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 558 (2026-10-23) — insects up close (inventory 4)
+
+- **Clear wings.** The small-fauna batch now gathers the insects' wing membranes into a second
+  batch drawn after the solid one, premultiplied and translucent, reading the depth only
+  (`AppendMembrane`, `ButterflyRenderer::membraneStaging_`); their veins stay opaque
+  (`AppendVein`). The fly's wing is a long rounded oval, smoky, with its costa, radial, medial
+  and cubital veins and a crossvein; the dragonfly's four are long and narrow (the hindwing
+  broader at its root) with a net of veins and the dark pterostigma near each tip; the cicada's
+  two lie roof-folded over the abdomen, clear with green-brown veins. All three had been opaque
+  grey or green plates.
+- **The fly**: an ash-grey thorax with four black stripes, a yellowish-grey abdomen, and domed
+  compound eyes taking most of the head's side (it was a black block with flat red discs).
+- **The beetle**: deep metallic shells (green, copper, blue, gold) with a sheen along each wing
+  case's crown, both cases alike, black legs (a pale matt blue, each case a different shade,
+  read as plastic).
+- Evidence: `flies` (`20261023T065435`), `dragonflies` (`065442`), `cicadas` (`065545`),
+  `beetles` (`065608`). Full suite 76/76.
+
 ## Loop pass 557 (2026-10-23) — the ground dove and the folded wing (inventory 3)
 
 The ground dove read as a pink-backed blob with a grey lens stuck on its side and a ball head.

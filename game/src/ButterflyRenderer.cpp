@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <array>
+#include <initializer_list>
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
@@ -66,6 +67,9 @@ namespace island
             +MaximumDragonflyVertices + MaximumFrogVertices + MaximumRodentVertices
             + MaximumFlyVertices + MaximumAntVertices + MaximumCicadaVertices
             + MaximumBeetleVertices;
+        // the flies' two wings (ten triangles each) and the dragonflies' four (eight each)
+        constexpr int MaximumMembraneVertices = 60 * static_cast<int>(FlySwarms::Count)
+            + 96 * static_cast<int>(DragonflySwarm::Count) + 24 * static_cast<int>(CicadaColony::Count) + 96;
         constexpr std::string_view ButterflyDiagnostic =
             "island-simulator: clearing butterflies use hinged patterned wings in one culled batch";
         constexpr std::string_view ButterflyAnatomyDiagnostic =
@@ -305,6 +309,45 @@ namespace island
             AddDoubleSidedTriangle(vertices, a + side, b - side * .52f, a - side, color);
         }
 
+        // The clear wings go to a second, translucent batch while the renderer gathers them
+        // (null otherwise: opaque, in the caller's batch).
+        std::vector<VertexPositionColor>* MembraneSink = nullptr;
+
+        // A clear wing membrane: `outline` (span fraction, chord offset toward the leading
+        // edge, both in units of the span) laid out from `root` along `span` with the chord on
+        // `chord`, fanned from its first point; `tint` at `alpha`, premultiplied for the
+        // translucent pass, a little brighter on the side the sun catches.
+        template<std::size_t Count>
+        void AppendMembrane(std::vector<VertexPositionColor>& vertices,const Vector3& root,
+                            const Vector3& span,const Vector3& chord,
+                            const std::array<std::array<float,2>,Count>& outline,
+                            const Color& tint,const float alpha)
+        {
+            std::vector<VertexPositionColor>& target = MembraneSink ? *MembraneSink : vertices;
+            Vector3 normal = Vector3::Cross(span, chord);
+            if (normal.LengthSquared() > 1e-12f) normal.Normalize();
+            const float sun = std::abs(Vector3::Dot(normal, wildlife_render::FixedSunDirection));
+            const Color lit = wildlife_render::ScaleColor(tint, .85f + .30f * sun);
+            const float a = MembraneSink ? alpha : 1.0f;
+            const Color colour(static_cast<int>(lit.getRProperty() * a), static_cast<int>(lit.getGProperty() * a),
+                               static_cast<int>(lit.getBProperty() * a), static_cast<int>(255.0f * a));
+            const auto at = [&](const std::size_t i) { return root + span * outline[i][0] + chord * outline[i][1]; };
+            for (std::size_t i = 1; i + 1 < Count; ++i) AddTriangle(target, at(0), at(i), at(i + 1), colour);
+        }
+
+        // A vein along a membrane: a thin opaque strip through the outline's coordinates.
+        void AppendVein(std::vector<VertexPositionColor>& vertices,const Vector3& root,const Vector3& span,
+                        const Vector3& chord,std::initializer_list<std::array<float,2>> path,
+                        const float halfWidth,const Color& colour)
+        {
+            const std::array<float,2>* previous = nullptr;
+            for (const auto& point : path) {
+                if (previous) AppendGeckoSegment(vertices, root + span * (*previous)[0] + chord * (*previous)[1],
+                                                 root + span * point[0] + chord * point[1], halfWidth, colour);
+                previous = &point;
+            }
+        }
+
         void AppendGeckoTube(std::vector<VertexPositionColor>& vertices,
                              const Vector3& a,const Vector3& b,
                              const float radiusA,const float radiusB,
@@ -403,7 +446,7 @@ namespace island
             // a hard shell: a sky gloss on its crown, the segments a shade apart
             AppendShadedLoft<Sides>(vertices, centre, right, up, forward, stations, halfWidths,
                                     halfHeights, scale,
-                                    LoftShading{dorsal, flank, underside, 0.0f, .28f, .05f});
+                                    LoftShading{dorsal, flank, underside, 0.0f, .45f, .05f});
             const Vector3 rear = centre + forward * (stations.front() * scale);
             const Vector3 front = centre + forward * (stations.back() * scale);
             for (int side = 0; side < Sides; ++side) {
@@ -729,10 +772,24 @@ namespace island
                     const Vector3 trailing = base + right * (side * reach * .72f * s)
                         + forward * (rearForward * s)
                         + up * (beat * .72f * (side > 0 ? 1.0f : -1.0f));
-                    AddDoubleSidedTriangle(vertices, base, shoulder, tip, wing);
-                    AddDoubleSidedTriangle(vertices, base, tip, trailing, wing);
-                    AppendGeckoSegment(vertices, base, tip, .0032f * s, wingVein);
-                    AppendGeckoSegment(vertices, shoulder, trailing, .0024f * s, wingVein);
+                    (void)shoulder;(void)trailing;
+                    // a long clear wing with a dense net of veins and the dark pterostigma
+                    // near its tip on the leading edge
+                    const Vector3 span = tip - base;
+                    Vector3 chord = forward - span * (Vector3::Dot(forward, span) / std::max(span.LengthSquared(), 1e-10f));
+                    chord = chord.LengthSquared() > 1e-12f ? Vector3::Normalize(chord) * span.Length() : forward * span.Length();
+                    const float hind = pair == 1 ? 1.25f : 1.0f;   // the hindwing broader at its root
+                    const std::array<std::array<float, 2>, 10> DragonflyWing{{
+                        {0.0f, 0.0f}, {.10f, .05f}, {.45f, .085f}, {.80f, .085f}, {.97f, .055f}, {1.0f, .0f},
+                        {.92f, -.07f}, {.60f, -.10f}, {.25f, -.12f * hind}, {.06f, -.09f * hind}}};
+                    AppendMembrane(vertices, base, span, chord, DragonflyWing, Color(196, 210, 214), .22f);
+                    AppendVein(vertices, base, span, chord, {{0.0f, .03f}, {.45f, .082f}, {.80f, .083f}, {.97f, .054f}},
+                               .0026f * s, wingVein);
+                    AppendVein(vertices, base, span, chord, {{.02f, .0f}, {.55f, .02f}, {.98f, .0f}}, .0018f * s, wingVein);
+                    AppendVein(vertices, base, span, chord, {{.05f, -.04f}, {.50f, -.05f}, {.93f, -.06f}}, .0016f * s, wingVein);
+                    for (const float at : {.18f, .30f, .42f, .54f, .66f, .78f})
+                        AppendVein(vertices, base, span, chord, {{at, .080f}, {at + .02f, -.09f}}, .0010f * s, wingVein);
+                    AppendVein(vertices, base, span, chord, {{.84f, .078f}, {.90f, .070f}}, .0060f * s, Color(54, 44, 34));
                 }
             }
 
@@ -955,12 +1012,15 @@ namespace island
                                   std::sin(fly.headingRadians));
             const Vector3 right(-forward.Z, 0.0f, forward.X), up = Vector3::Up;
             const float scale = .12f * fly.scale;
-            const std::array<Color, 3> bodies = {{Color(38, 35, 30), Color(52, 45, 34),
-                                                  Color(29, 31, 29)}};
+            // a house fly's ash-grey thorax striped black, a yellowish-grey abdomen (a black
+            // body with flat red discs for eyes read as a toy)
+            const std::array<Color, 3> bodies = {{Color(92, 90, 84), Color(104, 98, 84),
+                                                  Color(84, 86, 84)}};
             const Color body = bodies[fly.colorVariant % bodies.size()];
-            const Color bodyFlank = Color::Lerp(body, Color(13, 15, 13), .34f);
-            const Color abdomen = Color::Lerp(body, Color(72, 76, 55), .24f);
-            const Color underside = Color::Lerp(body, Color(87, 78, 61), .18f);
+            const Color bodyFlank = Color::Lerp(body, Color(26, 26, 24), .45f);
+            const Color abdomen = Color::Lerp(body, Color(132, 112, 66), .45f);
+            const Color underside = Color::Lerp(body, Color(60, 56, 46), .40f);
+            const Color stripe(28, 28, 26);
             const Color eye(126, 42, 31), eyeGlint(221, 174, 111);
             const Color wing(166, 178, 171), vein(76, 82, 76), leg(31, 28, 24);
             const Vector3 centre(fly.x, fly.y, fly.z);
@@ -978,6 +1038,13 @@ namespace island
             constexpr std::array<float, 5> AbdomenHeights = {{.022f, .052f, .067f, .058f, .029f}};
             AppendGeckoLoft(vertices, abdomenCentre, right, up, forward, AbdomenStations,
                             AbdomenWidths, AbdomenHeights, scale, abdomen, bodyFlank, underside);
+            // the thorax's four black stripes, front to back over its top
+            for (const float across : {-.052f, -.018f, .018f, .052f}) {
+                const float rise = .090f - std::abs(across) * .32f;
+                AppendGeckoSegment(vertices, thorax + forward * (.12f * scale) + right * (across * scale) + up * (rise * .96f * scale),
+                                   thorax - forward * (.06f * scale) + right * (across * scale) + up * (rise * scale),
+                                   .0075f * scale, stripe);
+            }
 
             const Vector3 head = centre + forward * (.205f * scale)
                 + up * (.004f * scale);
@@ -1001,26 +1068,33 @@ namespace island
                     - forward * (.235f * scale) + up * (beat * .055f * scale);
                 const Vector3 trailing = root - forward * (.105f * scale)
                     + right * (side * .030f * scale);
-                AddDoubleSidedTriangle(vertices, leading, tip, rear, wing);
-                AddDoubleSidedTriangle(vertices, leading, rear, trailing, wing);
-                AppendGeckoSegment(vertices, root, tip, .0035f * scale, vein);
-                AppendGeckoSegment(vertices, root, rear, .0028f * scale, vein);
+                (void)leading;(void)rear;(void)trailing;
+                // a clear smoky wing, a long rounded oval with its veins (the costa along the
+                // leading edge, the radial and medial veins out to the tip, the cubitus behind)
+                const Vector3 span = tip - root;
+                Vector3 chord = forward - span * (Vector3::Dot(forward, span) / std::max(span.LengthSquared(), 1e-10f));
+                chord = chord.LengthSquared() > 1e-12f ? Vector3::Normalize(chord) * span.Length() : forward * span.Length();
+                static constexpr std::array<std::array<float, 2>, 12> FlyWing{{
+                    {0.0f, 0.0f}, {.08f, .10f}, {.35f, .16f}, {.65f, .17f}, {.88f, .12f}, {1.0f, .03f},
+                    {.95f, -.08f}, {.75f, -.18f}, {.45f, -.22f}, {.20f, -.20f}, {.08f, -.14f}, {.03f, -.05f}}};
+                AppendMembrane(vertices, root, span, chord, FlyWing, wing, .30f);
+                AppendVein(vertices, root, span, chord, {{0.0f, .02f}, {.35f, .155f}, {.65f, .165f}, {.88f, .115f}, {1.0f, .03f}},
+                           .0030f * scale, vein);
+                AppendVein(vertices, root, span, chord, {{.04f, .04f}, {.55f, .06f}, {.98f, .02f}}, .0022f * scale, vein);
+                AppendVein(vertices, root, span, chord, {{.08f, -.02f}, {.60f, -.08f}, {.92f, -.05f}}, .0020f * scale, vein);
+                AppendVein(vertices, root, span, chord, {{.12f, -.08f}, {.55f, -.20f}}, .0018f * scale, vein);
+                AppendVein(vertices, root, span, chord, {{.45f, .04f}, {.45f, -.07f}}, .0016f * scale, vein);
 
-                const Vector3 eyeCentre = head + forward * (.030f * scale)
-                    + right * (side * .072f * scale) + up * (.008f * scale);
-                for (int edge = 0; edge < 8; ++edge) {
-                    const float firstAngle = 6.28318530718f * static_cast<float>(edge) / 8.0f;
-                    const float secondAngle = 6.28318530718f * static_cast<float>(edge + 1) / 8.0f;
-                    const Vector3 first = eyeCentre
-                        + forward * (std::cos(firstAngle) * .037f * scale)
-                        + up * (std::sin(firstAngle) * .044f * scale);
-                    const Vector3 second = eyeCentre
-                        + forward * (std::cos(secondAngle) * .037f * scale)
-                        + up * (std::sin(secondAngle) * .044f * scale);
-                    AddDoubleSidedTriangle(vertices, eyeCentre, first, second, eye);
-                }
-                const Vector3 highlight = eyeCentre + forward * (.015f * scale)
-                    + up * (.020f * scale) + right * (side * .001f * scale);
+                // a domed compound eye taking most of the head's side
+                const Vector3 eyeCentre = head + forward * (.022f * scale)
+                    + right * (side * .050f * scale) + up * (.010f * scale);
+                constexpr std::array<float, 5> EyeStations = {{-.040f, -.022f, 0.0f, .022f, .038f}};
+                constexpr std::array<float, 5> EyeWidths = {{.010f, .030f, .036f, .030f, .010f}};
+                constexpr std::array<float, 5> EyeHeights = {{.016f, .042f, .052f, .044f, .018f}};
+                AppendGeckoLoft(vertices, eyeCentre, right, up, forward, EyeStations, EyeWidths, EyeHeights, scale,
+                                eye, Color::Lerp(eye, Color(40, 12, 10), .35f), Color::Lerp(eye, Color(30, 10, 8), .55f));
+                const Vector3 highlight = eyeCentre + forward * (.012f * scale)
+                    + up * (.030f * scale) + right * (side * .030f * scale);
                 AddDoubleSidedTriangle(vertices, highlight + up * (.006f * scale),
                     highlight - forward * (.005f * scale) - up * (.004f * scale),
                     highlight + forward * (.005f * scale) - up * (.004f * scale), eyeGlint);
@@ -1200,6 +1274,7 @@ namespace island
             const Color body = bodies[cicada.colorVariant % bodies.size()];
             const Color flank = Color::Lerp(body, Color(22, 20, 15), .45f);
             const Color wing = Color::Lerp(body, Color(133, 143, 94), .42f);
+            (void)wing;
             const Color vein = Color::Lerp(body, Color(27, 31, 20), .61f);
             const Color legColor = Color::Lerp(body, Color(164, 142, 77), .20f);
             const Color eye(119, 57, 39), glint(232, 197, 127);
@@ -1267,10 +1342,22 @@ namespace island
                     -forward*(1.46f*unit)+dorsal*(beat*.70f*unit);
                 const Vector3 trailing=root+right*(side*.08f*unit)
                     -forward*(1.25f*unit)+dorsal*(.04f*unit);
-                AddDoubleSidedTriangle(vertices,root,leading,outer,wing);
-                AddDoubleSidedTriangle(vertices,root,outer,tip,wing);
-                AddDoubleSidedTriangle(vertices,root,tip,trailing,
-                    Color::Lerp(wing,body,.20f));
+                // clear membranes over the abdomen, roof-folded, their veins green-brown
+                {
+                    const Vector3 span = tip - root;
+                    const Vector3 across = outer - (root + span * (Vector3::Dot(outer - root, span) / std::max(span.LengthSquared(), 1e-10f)));
+                    const float spanLength = span.Length();
+                    const Vector3 chord = across.LengthSquared() > 1e-12f ? Vector3::Normalize(across) * spanLength : right * (side * spanLength);
+                    const float o = Vector3::Dot(outer - root, Vector3::Normalize(span)) / std::max(spanLength, 1e-6f);
+                    const float c = across.Length() / std::max(spanLength, 1e-6f);
+                    const float l = Vector3::Dot(leading - root, Vector3::Normalize(span)) / std::max(spanLength, 1e-6f);
+                    const float lc = Vector3::Dot(leading - root, Vector3::Normalize(chord)) / std::max(spanLength, 1e-6f);
+                    const float t = Vector3::Dot(trailing - root, Vector3::Normalize(span)) / std::max(spanLength, 1e-6f);
+                    const float tc = Vector3::Dot(trailing - root, Vector3::Normalize(chord)) / std::max(spanLength, 1e-6f);
+                    const std::array<std::array<float, 2>, 6> CicadaWing{{
+                        {0.0f, 0.0f}, {l, lc}, {o, c}, {(o + 1.0f) * .5f, c * .80f}, {1.0f, 0.0f}, {t, tc}}};
+                    AppendMembrane(vertices, root, span, chord, CicadaWing, Color(176, 190, 168), .26f);
+                }
                 AppendGeckoSegment(vertices, root, tip, .025f * unit, vein);
                 AppendGeckoSegment(vertices,leading,tip,.018f*unit,vein);
                 AppendGeckoSegment(vertices,outer,trailing,.016f*unit,vein);
@@ -1325,12 +1412,14 @@ namespace island
             forward = Vector3::Normalize(forward - dorsal * Vector3::Dot(forward, dorsal));
             const Vector3 right = Vector3::Normalize(Vector3::Cross(dorsal, forward));
             const float unit = .050f * beetle.scale;
-            const std::array<Color, 4> shells = {{Color(37, 128, 91), Color(145, 75, 37),
-                                                  Color(43, 91, 151), Color(145, 111, 31)}};
+            // deep metallic shells, a bright sheen along the crown of each case (a pale matt
+            // blue, each case another shade, read as plastic)
+            const std::array<Color, 4> shells = {{Color(12, 66, 44), Color(92, 38, 14),
+                                                  Color(14, 36, 84), Color(100, 70, 12)}};
             const Color shell = shells[beetle.colorVariant % shells.size()];
-            const Color shellLight = Color::Lerp(shell, Color(172, 172, 116), .24f);
-            const Color underside = Color::Lerp(shell, Color(10, 11, 10), .58f);
-            const Color limb = Color::Lerp(shell, Color(13, 12, 10), .48f);
+            const Color shellLight = Color::Lerp(shell, Color(214, 220, 196), .20f);
+            const Color underside = Color::Lerp(shell, Color(8, 9, 8), .72f);
+            const Color limb = Color::Lerp(shell, Color(10, 10, 9), .78f);
             const Color ridge = Color::Lerp(shell, Color(18, 20, 17), .43f);
             const Color eye(18, 12, 8), glint(213, 197, 148);
             const Vector3 centre(beetle.x, beetle.y, beetle.z);
@@ -1351,8 +1440,7 @@ namespace island
                 const Vector3 elytron = hinge + caseRight * (side * .265f * unit) - caseDorsal * (.30f * unit);
                 AppendBeetleLoft(vertices, elytron, caseRight, caseDorsal, forward,
                     ElytronStations, ElytronWidths, ElytronHeights, unit,
-                    side < 0.0f ? shell : shellLight,
-                    Color::Lerp(shell, underside, .28f), underside);
+                    shellLight, Color::Lerp(shell, underside, .30f), underside);
 
                 // Three shallow raised striae per wing case catch the light without
                 // relying on a texture or a second material.
@@ -1901,6 +1989,9 @@ namespace island
         effect_->setFogStartProperty(250.0f);
         effect_->setFogEndProperty(660.0f);
         stagingVertices_.reserve(static_cast<std::size_t>(MaximumVertexCount));
+        membraneVertices_ = std::make_unique<DynamicVertexBuffer>(device, VertexPositionColor::getVertexDeclarationStatic(),
+            MaximumMembraneVertices, BufferUsage::WriteOnly);
+        membraneStaging_.reserve(static_cast<std::size_t>(MaximumMembraneVertices));
         std::cout << ButterflyDiagnostic << '\n';
         std::cout << ButterflyAnatomyDiagnostic << '\n';
         std::cout << ButterflyBodyDiagnostic << '\n';
@@ -1968,6 +2059,8 @@ namespace island
                                   const std::span<const BeetleState> beetles)
     {
         stagingVertices_.clear();
+        membraneStaging_.clear();
+        MembraneSink = &membraneStaging_;
         visibleButterflyCount_ = 0;
         visibleNearButterflyCount_ = 0;
         visibleFarButterflyCount_ = 0;
@@ -2112,6 +2205,7 @@ namespace island
             }
             ++visibleButterflyCount_;
         }
+        MembraneSink = nullptr;
         if (stagingVertices_.empty()) return;
 
         // A crowded close view may exceed the summed budget; drop whole trailing triangles
@@ -2139,5 +2233,18 @@ namespace island
         device_.DrawPrimitives(PrimitiveType::TriangleList, 0,
                                static_cast<int>(stagingVertices_.size() / 3U));
         ++drawCallCount_;
+        // the clear wings over what is behind them, premultiplied, reading the depth only
+        if (!membraneStaging_.empty() && membraneStaging_.size() <= static_cast<std::size_t>(MaximumMembraneVertices)) {
+            device_.setBlendStateProperty(BlendState::AlphaBlend);
+            device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
+            membraneVertices_->SetData(membraneStaging_.data(), 0, static_cast<int>(membraneStaging_.size()),
+                                       SetDataOptions::Discard);
+            device_.SetVertexBuffer(membraneVertices_.get());
+            effect_->Apply();
+            device_.DrawPrimitives(PrimitiveType::TriangleList, 0, static_cast<int>(membraneStaging_.size() / 3U));
+            ++drawCallCount_;
+            device_.setBlendStateProperty(BlendState::Opaque);
+            device_.setDepthStencilStateProperty(DepthStencilState::Default);
+        }
     }
 }
