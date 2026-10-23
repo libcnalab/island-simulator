@@ -312,6 +312,7 @@ namespace island
         TRexCloseDetail,
         TRexRoarDetail,
         TRexRestDetail,
+        TRexHeadDetail,
         ElephantDetail,
         ElephantCloseDetail,
         ElephantTrumpetDetail,

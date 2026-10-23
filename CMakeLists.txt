@@ -112,6 +112,7 @@ add_library(island_core STATIC
     game/src/WeaverColony.cpp
     game/src/BalloonFlight.cpp
     game/src/TRexMotion.cpp
+    game/src/TRexBody.cpp
     game/src/ElephantMotion.cpp
     game/src/AlienMotion.cpp
     game/src/ElephantSplashField.cpp

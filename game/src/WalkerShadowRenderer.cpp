@@ -36,7 +36,7 @@ namespace island
         constexpr int MaximumAlongCells = 48;
         constexpr int VertexCapacity = MaximumAcrossCells * MaximumAlongCells * 6;
         constexpr float Margin = 0.35f;           // past the figure's own extent: the penumbra and the joints
-        constexpr float LongestReach = 14.0f;     // a low sun down a falling bank
+        constexpr float LongestReach = 24.0f;     // a low sun down a falling bank, or the tyrannosaur's head
         constexpr float SurfaceOffset = 0.03f;
         constexpr float StepHeight = 0.4f;        // a rise within one cell that is a deck's edge, not a slope
 

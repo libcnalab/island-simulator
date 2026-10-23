@@ -38,6 +38,7 @@
 #include "IslandSimulator/Mudskippers.hpp"
 #include "IslandSimulator/WeaverColony.hpp"
 #include "IslandSimulator/BalloonFlight.hpp"
+#include "IslandSimulator/TRexBody.hpp"
 #include "IslandSimulator/TRexMotion.hpp"
 #include "IslandSimulator/ElephantMotion.hpp"
 #include "IslandSimulator/ElephantSplashField.hpp"
@@ -13754,7 +13755,7 @@ int main()
         island::TRexMotion sleeper(terrain, {});
         for (int step = 0; step < 2000; ++step) sleeper.Update(0.1f, 0.0f, 0.0f, false, 1.0f);
         const bool slept = sleeper.State().behavior == island::TRexBehavior::Rest && sleeper.State().lie > 0.99f
-            && sleeper.State().hipHeight < 1.2f;
+            && sleeper.State().hipHeight < island::TRexMotion::LieHipHeight + 0.05f;
         const auto& z = sleeper.State();
         for (int step = 0; step < 20; ++step) sleeper.Update(0.1f, z.x + 5.0f, z.z, true, 1.0f);
         Check(watched && watcher.CallCount() >= 1U && slept && sleeper.State().behavior != island::TRexBehavior::Rest,
@@ -13762,6 +13763,57 @@ int main()
         Check(round && travelled > 25.0f && grounded && legs && rex.FootfallCount() >= 10U && prints >= 10U
                   && bodies[0].radius == island::TRexMotion::BodyRadius,
               "the tyrannosaur's round, walk, planted feet, legs, prints or body are wrong");
+
+        // Its skin: one closed, outward-facing mesh of fixed topology in 16-bit indices, its
+        // normals smooth and whole; 12 m from snout to tail and some 4 m tall, standing on its
+        // toes, and lying on its belly; posed in the world on the walk, still whole.
+        island::TRexBody body;
+        const auto measure = [&](float& lowest, float& highest, float& length, double& volume, bool& sound) {
+            const auto vertices = body.Vertices();
+            const auto indices = body.Indices();
+            lowest = 1e9f; highest = -1e9f;
+            float first = 1e9f, last = -1e9f;
+            sound = vertices.size() < 65536U && indices.size() % 3U == 0U && body.TriangleCount() > 5000U;
+            for (const auto& v : vertices) {
+                const float n = std::hypot(std::hypot(v.normal[0], v.normal[1]), v.normal[2]);
+                sound = sound && std::isfinite(v.position[0]) && std::isfinite(v.position[1]) && std::isfinite(v.position[2])
+                    && std::abs(n - 1.0f) < 1e-3f;
+                lowest = std::min(lowest, v.position[1]); highest = std::max(highest, v.position[1]);
+                first = std::min(first, v.position[2]); last = std::max(last, v.position[2]);
+            }
+            // the volume enclosed (overlapping parts counted twice), by the divergence theorem
+            // about a point on it: the mouth's lining is an open sheet, so the point matters a little
+            volume = 0.0;
+            const float* centre = vertices[0].position;
+            for (std::size_t i = 0; i + 2 < indices.size(); i += 3) {
+                sound = sound && indices[i] < vertices.size() && indices[i + 1] < vertices.size() && indices[i + 2] < vertices.size();
+                double a[3], b[3], c[3];
+                for (int k = 0; k < 3; ++k) {
+                    a[k] = vertices[indices[i]].position[k] - centre[k];
+                    b[k] = vertices[indices[i + 1]].position[k] - centre[k];
+                    c[k] = vertices[indices[i + 2]].position[k] - centre[k];
+                }
+                volume += (a[0] * (b[1] * c[2] - b[2] * c[1]) - a[1] * (b[0] * c[2] - b[2] * c[0]) + a[2] * (b[0] * c[1] - b[1] * c[0])) / 6.0;
+            }
+            length = last - first;
+        };
+        float lowest = 0.0f, highest = 0.0f, length = 0.0f;
+        double volume = 0.0;
+        bool sound = false;
+        const auto standing = island::TRexBody::RestState();
+        body.PoseLocal(standing);
+        measure(lowest, highest, length, volume, sound);
+        const bool stands = sound && std::abs(lowest + standing.hipHeight) < 0.08f && highest + standing.hipHeight > 3.7f
+            && highest + standing.hipHeight < 4.4f && std::abs(length - island::TRexMotion::Length) < 0.5f && volume > 6.0 && volume < 20.0;
+        const auto lying = island::TRexBody::RestState(1.0f);
+        body.PoseLocal(lying);
+        measure(lowest, highest, length, volume, sound);
+        const bool lies = sound && std::abs(lowest + lying.hipHeight) < 0.10f && volume > 6.0;
+        body.Pose(rex);
+        measure(lowest, highest, length, volume, sound);
+        const bool walks = sound && volume > 6.0 && volume < 20.0;
+        Check(stands && lies && walks,
+              "the tyrannosaur's skin is not a sound outward mesh of its size, standing on its feet, lying on its belly and posed on the walk");
     }
 
     {

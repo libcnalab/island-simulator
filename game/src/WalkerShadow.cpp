@@ -1,6 +1,8 @@
 #include "IslandSimulator/WalkerShadow.hpp"
 #include "IslandSimulator/BearMotion.hpp"
 #include "IslandSimulator/ElephantMotion.hpp"
+#include "IslandSimulator/TRexBody.hpp"
+#include "IslandSimulator/TRexMotion.hpp"
 #include "IslandSimulator/AlienMotion.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
 #include "IslandSimulator/BirdFlock.hpp"
@@ -373,6 +375,43 @@ namespace island::walker_shadow
         for (const auto& leg : s.legs) {
             add(leg.top, leg.middle, 0.30f);
             add(leg.middle, ElephantPoint{leg.foot.x, leg.foot.y + 0.12f, leg.foot.z}, 0.22f);
+        }
+        for (; next < limbs.size(); ++next) limbs[next].radius = UnusedRadius;
+        return limbs;
+    }
+
+    std::array<Limb, CapsuleCount> TRexLimbs(const TRexMotion& rex) noexcept
+    {
+        // TRexBody's shapes: the hips over the tail's base and the deep chest, the tail in three
+        // along its swing (laid down and curled at rest), the neck to the skull, the skull and
+        // the jaw by the head's turn and gape, and the legs from the solved joints.
+        const TRexState& s = rex.State();
+        const TRexBody::Frame frame = TRexBody::FrameOf(rex);
+        const float lie = s.lie * s.lie * (3.0f - 2.0f * s.lie);
+        std::array<Limb, CapsuleCount> limbs{};
+        std::size_t next = 0;
+        const auto add = [&](const TRexPoint& a, const TRexPoint& b, const float radius) {
+            limbs[next++] = {a.x, a.y, a.z, b.x, b.y, b.z, radius};
+        };
+        const auto tail = [&](const float z, const float y) {
+            const float behind = std::max(0.0f, -z - 0.8f);
+            const float sway = s.tailSway * std::pow(behind, 1.35f) * 0.30f + lie * 0.55f * std::pow(behind / 5.8f, 2.0f);
+            const float droop = lie * std::clamp((-z - 0.8f) / 3.0f, 0.0f, 1.0f) * 0.55f;
+            return rex.ToWorld(sway, y - droop, z);
+        };
+        add(rex.ToWorld(0.0f, -0.05f, -0.9f), rex.ToWorld(0.0f, -0.25f, 0.9f), 0.85f);
+        add(rex.ToWorld(0.0f, -0.25f, 0.9f), rex.ToWorld(0.0f, -0.15f, 2.6f), 0.90f);
+        add(tail(-0.9f, -0.12f), tail(-2.6f, -0.22f), 0.60f);
+        add(tail(-2.6f, -0.22f), tail(-4.4f, -0.38f), 0.36f);
+        add(tail(-4.4f, -0.38f), tail(-6.5f, -0.66f), 0.14f);
+        add(rex.ToWorld(0.0f, -0.05f, 2.9f), TRexBody::HeadPoint(s, frame, 0.0f, -0.12f, 0.0f), 0.48f);
+        add(TRexBody::HeadPoint(s, frame, 0.0f, 0.0f, 0.05f), TRexBody::HeadPoint(s, frame, 0.0f, -0.12f, 1.30f), 0.34f);
+        add(TRexBody::HeadPoint(s, frame, 0.0f, -0.12f, 0.0f, true), TRexBody::HeadPoint(s, frame, 0.0f, -0.10f, 1.30f, true), 0.16f);
+        for (const auto& leg : s.legs) {
+            add(leg.hip, leg.knee, 0.40f);
+            add(leg.knee, leg.ankle, 0.19f);
+            add(leg.ankle, leg.ball, 0.12f);
+            add(leg.ball, leg.toes[1], 0.13f);
         }
         for (; next < limbs.size(); ++next) limbs[next].radius = UnusedRadius;
         return limbs;

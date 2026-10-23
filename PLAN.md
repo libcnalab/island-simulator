@@ -233,6 +233,57 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 578 (2026-10-23) — the tyrannosaur rebuilt: one smooth skin, scaled and lit per pixel
+
+Operator report (2026-10-23, in Czech): the T. rex looks like "a pile of triangles"; make it look
+normal.
+- **What was wrong**: `TRexRenderer` rebuilt some 16 000 unshared, vertex-coloured triangles each
+  frame from separate lofts and ellipsoids. The thigh's ellipsoid was lofted along the femur
+  with its sections in the body's right/up plane, so it collapsed into a flat plate standing up
+  over the back; the legs were sticks; seams showed where the parts crossed; the light was
+  faceted per vertex; and the shadow (every triangle projected onto the ground at alpha 70)
+  darkened in blotches where triangles overlapped, at two terrain lookups per vertex per frame
+  (2.3 ms in the operator's own log).
+- **The skin** (`TRexBody`, core, renderer-independent): one mesh of fixed topology (6 290
+  vertices, 12 212 triangles in 16-bit indices, re-posed each frame into one dynamic buffer and
+  drawn in one indexed call), smoothed by area-weighted normals. A body loft from the tail's tip
+  to the deep chest (the hips 3.9 m up) runs on into a Bezier neck that bends toward where it
+  looks and ends inside the skull. The skull is superelliptic (a boxy snout, broad cheeks, a
+  narrow top), with the brows, hornlets, jugal bosses, the jaw muscles' swell, the antorbital
+  hollow and a nasal ridge modelled into its surface. The jaw swings on its hinge; the mouth's
+  lining (cheeks and throat) stretches as it opens; 44 stout teeth stay behind the lips until the
+  gape bares them. The eyes are set into the skull's side and the nostrils are slits at the snout.
+  The thighs flare into the hips; the shins carry the calf behind; then the metatarsi, three
+  padded toes with knuckles and claws, the dewclaw, and the arms with two clawed fingers.
+  Pigment, hollows (baked occlusion), scale size and materials are set once from the pose at
+  rest: a dark banded back, tawny flanks, a pale belly, a darker mask through the eyes, dusty
+  feet.
+- **The hide's material** (custom GLSL, ES and desktop): lit per pixel (wrapped sun, sky,
+  occlusion), receiving the sun shadow map (trees) and the cloud shade. Pebbled scales in relief
+  (cellular, 2-5 cm, flat crocodile-like plates on the face) on the rest-pose coordinates, folds
+  (neck, flanks, knees and ankles, throat, tail) and spots, each faded out by its screen
+  footprint before it could shimmer. Rain darkens the hide and gives it a sheen; glints only in
+  direct sun (`uDirectSun`). The eyes have an amber iris, a round pupil and a glint; teeth and
+  claws are horn; the mouth is wet inside. Where custom shaders are not run, a BasicEffect
+  per-vertex fallback draws the same mesh. The GLSL ES variant was compiled and linked on
+  llvmpipe in a bwrap sandbox without /dev/dri (no T. rex browser scope exists).
+- **Shadow**: the projected triangles are gone. It casts the figures' soft capsule shadow
+  (`walker_shadow::TRexLimbs`, 16 capsules) out to 140 m, and `WalkerShadowRenderer`'s longest
+  reach went from 14 to 24 m so an evening sun no longer cuts off its head's shadow.
+- **Lying**: the hips rest at 1.36 m (`TRexMotion::LieHipHeight`, was 1.0 m), the belly and the
+  pubic boot on the sand instead of sunk 0.5 m into it.
+- **Cost**: posing 0.25-0.33 ms (probe, -O2) against the old rebuild's 2.3 ms; on llvmpipe the
+  `trex` pass takes 1-2 ms a frame after frame 0's shader JIT (147 ms).
+- **QA**: a new view `trex-head` (3.8 m from its face, at head height). `trex` `155554`,
+  `trex-close` `155604`, `trex-roar` `155616`, `trex-rest` `155628`, `trex-head` `155640`; night
+  `trex-roar --time-of-day 21.5` `154649`, `trex-close --weather thunderstorm` `154659`, evening
+  `trex-roar --time-of-day 17.6` `154911` (all 20261023T). Core test: the skin is a sound
+  outward mesh (finite, unit normals, valid indices, 6-20 m3 enclosed counting the parts'
+  overlaps), 12.3 m long and about 4 m tall, standing on its toes, lying on its belly, and posed
+  on the walk. Full suite 76/76; Web (`build-probe`) and Android `assembleDebug` rc 0. Its look
+  in motion (the scales and folds fading with distance, the jaw's lining) is for the operator to
+  judge in play.
+
 ## Loop pass 577 (2026-10-23) — the elephant bathes in the sea
 
 Operator request (2026-10-23, in Czech): "add the elephant bathing". As the Andaman elephants do.

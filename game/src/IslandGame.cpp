@@ -238,6 +238,7 @@ namespace island
             case FixedViewpoint::TRexCloseDetail: return "trex-close";
             case FixedViewpoint::TRexRoarDetail: return "trex-roar";
             case FixedViewpoint::TRexRestDetail: return "trex-rest";
+            case FixedViewpoint::TRexHeadDetail: return "trex-head";
             case FixedViewpoint::ElephantDetail: return "elephant";
             case FixedViewpoint::ElephantCloseDetail: return "elephant-close";
             case FixedViewpoint::ElephantTrumpetDetail: return "elephant-trumpet";
@@ -2517,13 +2518,15 @@ namespace island
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: help-sign QA camera looks down on the castaway's stones from a low pass over the sea\n";
         } else if (viewpoint_ == FixedViewpoint::TRexDetail || viewpoint_ == FixedViewpoint::TRexCloseDetail
-                   || viewpoint_ == FixedViewpoint::TRexRoarDetail || viewpoint_ == FixedViewpoint::TRexRestDetail) {
+                   || viewpoint_ == FixedViewpoint::TRexRoarDetail || viewpoint_ == FixedViewpoint::TRexRestDetail
+                   || viewpoint_ == FixedViewpoint::TRexHeadDetail) {
             // On the south beach: from the side at 22 m as it walks its round; or close, 7 m
-            // before it standing, up at its head.
+            // before it standing, up at its head; or level with its head, at its face.
             if(!trex_) throw std::runtime_error("T. rex QA requires the tyrannosaur");
             const float pathZ=-225.0f,pathX=VegetationLayout::PrimaryPathCenterX(pathZ);
             trex_->PlaceNear(pathX,pathZ);
-            const bool close=viewpoint_==FixedViewpoint::TRexCloseDetail;
+            const bool face=viewpoint_==FixedViewpoint::TRexHeadDetail;
+            const bool close=viewpoint_==FixedViewpoint::TRexCloseDetail||face;
             const bool roar=viewpoint_==FixedViewpoint::TRexRoarDetail,rest=viewpoint_==FixedViewpoint::TRexRestDetail;
             if(close) trex_->HoldStanding(600.0f);
             else trex_->HoldStanding(0.0f);
@@ -2539,7 +2542,17 @@ namespace island
             const float ex=close?now.x+fx*7.5f-fz*side*2.5f:roar?now.x+fx*10.0f-fz*side*8.0f:rest?now.x-fz*side*13.0f+fx*2.0f:now.x-fz*side*22.0f+fx*4.0f;
             const float ez=close?now.z+fz*7.5f+fx*side*2.5f:roar?now.z+fz*10.0f+fx*side*8.0f:rest?now.z+fx*side*13.0f+fz*2.0f:now.z+fx*side*22.0f+fz*4.0f;
             cameraPosition_=Vector3(ex,std::max(terrain_.Height(ex,ez),0.0f)+PlayerMotion::EyeHeight,ez);
-            const TRexPoint aim=close||roar?trex_->ToWorld(0.0f,roar?.6f:1.0f,roar?3.0f:4.2f):trex_->ToWorld(0.0f,-.6f,rest?1.5f:.8f);
+            TRexPoint aim=close||roar?trex_->ToWorld(0.0f,roar?.6f:1.0f,roar?3.0f:4.2f):trex_->ToWorld(0.0f,-.6f,rest?1.5f:.8f);
+            if(face) {
+                // 3.8 m out from its head, three-quarters on from its left front, a little above
+                // its eyes (as from the lookout or the air)
+                const TRexBody::Frame frame=TRexBody::FrameOf(*trex_);
+                aim=TRexBody::HeadPoint(now,frame,0.0f,-.05f,.70f);
+                const TRexPoint front=TRexBody::HeadPoint(now,frame,0.0f,-.05f,1.70f),left=TRexBody::HeadPoint(now,frame,-1.0f,-.05f,.70f);
+                Vector3 out=.80f*Vector3(front.x-aim.x,0.0f,front.z-aim.z)+.60f*Vector3(left.x-aim.x,0.0f,left.z-aim.z);
+                out.Normalize();
+                cameraPosition_=Vector3(aim.x,aim.y+.40f,aim.z)+out*3.8f;
+            }
             const Vector3 direction=Vector3(aim.x,aim.y,aim.z)-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
@@ -4080,7 +4093,7 @@ namespace island
         monkeyRenderer_ = std::move(monkeyRenderer);
         residentRenderer_=std::move(residentRenderer);
         bearRenderer_=std::move(bearRenderer);
-        trexRenderer_=std::make_unique<TRexRenderer>(device,terrain_,*drawnGround_,600.0f);
+        trexRenderer_=std::make_unique<TRexRenderer>(device,600.0f);
         elephantRenderer_=std::make_unique<ElephantRenderer>(device,500.0f);
         canopyLighting_ = std::move(canopyLighting);
         terrainHeightMap_ = std::move(terrainHeightMap);
@@ -8473,6 +8486,7 @@ namespace island
                 if (idolRenderer_) idolRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (castleRenderer_) castleRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (ufoRenderer_) ufoRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                if (trexRenderer_) trexRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (stoneSignRenderer_) stoneSignRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (seabirdIsletRenderer_) seabirdIsletRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (lighthouseRenderer_) lighthouseRenderer_->SetSunShadowMap(sunShadowMap_.get());
@@ -8639,6 +8653,17 @@ namespace island
                     walkerShadowRenderer_->Draw(cameraView_, cameraProjection_,
                         walker_shadow::Lay(walker_shadow::ElephantLimbs(*elephant_), elephant.x, ground, elephant.z, toSun.x, toSun.y, toSun.z, 3.0f),
                         Vector3(elephant.x, ground, elephant.z), Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength, groundAt);
+            }
+            if (trex_) {
+                // and the tyrannosaur's: a 12 m figure whose shadow reads from far off
+                const TRexState& rex = trex_->State();
+                const float ground = groundAt(rex.x, rex.z);
+                const float reach = std::max(3.0f * animalReach, 140.0f);
+                if (Vector3::DistanceSquared(Vector3(rex.x, rex.y, rex.z), renderCameraPosition_) < reach * reach
+                    && std::abs(rex.y - ground) < 0.35f)
+                    walkerShadowRenderer_->Draw(cameraView_, cameraProjection_,
+                        walker_shadow::Lay(walker_shadow::TRexLimbs(*trex_), rex.x, ground, rex.z, toSun.x, toSun.y, toSun.z, 4.0f),
+                        Vector3(rex.x, ground, rex.z), Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength, groundAt);
             }
             {
                 // the nearest crabs' and ground doves' too (a beach crab's, a hermit's, a coconut

@@ -183,7 +183,7 @@ void TRexMotion::Update(const float seconds,const float observerX,const float ob
     // the hips drop as each foot takes the weight and rise as it passes under; the body sways
     // onto the planted leg; the tail swings against the stride
     state_.hipHeight=HipHeight-.07f*pace*(1.0f+std::cos(2.0f*phase))*.5f-.02f;
-    state_.hipHeight+=(1.0f-HipHeight)*lie-.55f*crouch;
+    state_.hipHeight+=(LieHipHeight-HipHeight)*lie-.55f*crouch;
     state_.roll=.035f*pace*std::sin(phase);
     const float ahead=Ground(state_.x+fx*2.0f,state_.z+fz*2.0f),behind=Ground(state_.x-fx*2.0f,state_.z-fz*2.0f);
     state_.pitch=std::clamp(std::atan2(behind-ahead,4.0f)*.6f,-.2f,.2f)+.02f*std::sin(clock_*.4f)*(1.0f-lie)+.38f*crouch+.06f*lie;

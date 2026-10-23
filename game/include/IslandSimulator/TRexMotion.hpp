@@ -48,6 +48,7 @@ struct TRexState {
 class TRexMotion final {
 public:
     static constexpr float Length=12.2f,HipHeight=3.05f,WalkSpeed=1.5f;
+    static constexpr float LieHipHeight=1.36f;  // lying: the belly and the pubic boot on the ground
     static constexpr float StrideLength=4.1f;   // one foot's step forward and back again
     static constexpr float FemurLength=1.32f,TibiaLength=1.22f,MetatarsusLength=.72f,ToeLength=.42f;
     static constexpr float HipAcross=.62f;      // the hip joints out from the midline

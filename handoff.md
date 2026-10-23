@@ -22,6 +22,8 @@
   interactive terminal (`ssh-add ~/.ssh/id_rsa` first).
 
 **Ask the operator to check in play** (none of this can be judged from captures):
+- The T. rex's new skin (pass 578): close up and walking past, whether the scales and folds fade without
+  shimmering, the mouth's lining when it roars, and its look at night.
 - The T. rex's sounds (footfalls, roar, closed-mouth boom, breathing; pass 570): there is no
   audio device here, so they were only rendered offline. Also its behaviour near the walker.
 - The weavers (pass 574): the males hanging upside down under their nests beating their wings;
@@ -546,6 +548,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 578: operator report ("a pile of triangles"): the T. rex rebuilt as one smooth skin (`TRexBody`, 12 212 triangles) with a per-pixel hide shader (scales, folds, spots, eyes, teeth behind lips, tree shadows), a soft capsule shadow instead of projected triangles, the belly on the sand lying (`LieHipHeight` 1.36 m); new QA view `trex-head`; `trex` `20261023T155554`, `trex-close` `155604`, `trex-roar` `155616`, `trex-rest` `155628`, `trex-head` `155640` (PLAN "Loop pass 578").
 - Pass 577: operator request, the elephant bathes in the sea (`Bathe`, `ElephantSplashField`): wades out to 1.25 m, showers its back with its trunk, lies down in the water, comes out wet; spray, foam, splash sound; QA `elephant-bathe` `20261023T115342` (PLAN "Loop pass 577").
 - Pass 576: operator request, a bull Asian elephant (`ElephantMotion`, `ElephantRenderer`): its round on the coastal flats, lateral walk with IK legs and round prints, trunk/ears/tail, grazing, dusting, drinking, watching, trumpeting and moving off, dozing; trumpet and rumble sounds; capsule sun shadow; journal entry; QA `elephant` `20261023T113556`, `elephant-close` `113603`, `elephant-trumpet` `113611` (PLAN "Loop pass 576").
 - Pass 575: item 16, the hot-air balloon on a turning figure of eight over the island and the sea, burner bursts; QA `balloon`, `balloon-close` (PLAN "Loop pass 575").

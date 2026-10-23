@@ -11,6 +11,7 @@ namespace island
     struct BoarGroundPose;
     struct BearState;
     class ElephantMotion;
+    class TRexMotion;
     struct AlienState;
     struct CrocodileState;
     struct CrabState;
@@ -95,6 +96,10 @@ namespace island
         /** The elephant's limbs from its motion: the barrel as two capsules, the head, the ears,
          *  the trunk along its curve, the tusks, the tail and the four legs in two. */
         [[nodiscard]] std::array<Limb, CapsuleCount> ElephantLimbs(const ElephantMotion& elephant) noexcept;
+        /** The tyrannosaur's limbs from its motion (TRexBody's shapes): the hips and the deep chest,
+         *  the tail in three swinging with it, the neck, the skull and the jaw by the head's turn
+         *  and gape, and each leg in thigh, shin, metatarsus and foot. */
+        [[nodiscard]] std::array<Limb, CapsuleCount> TRexLimbs(const TRexMotion& rex) noexcept;
         /** The alien's limbs from its motion: the body and neck, the head, the legs and the arms. */
         [[nodiscard]] std::array<Limb, CapsuleCount> AlienLimbs(const AlienState& alien) noexcept;
         /** A crocodile's limbs in CrocodileRenderer's frame: the wide barrel, skull and jaw, the

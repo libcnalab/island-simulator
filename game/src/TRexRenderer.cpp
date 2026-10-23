@@ -1,8 +1,13 @@
 #include "IslandSimulator/TRexRenderer.hpp"
+#include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
-#include "IslandSimulator/IslandTerrain.hpp"
-#include "IslandSimulator/RenderedTerrainSurface.hpp"
+#include "IslandSimulator/SunShadowMap.hpp"
+#include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/WildlifeRenderLighting.hpp"
+#include "CNA/GraphicsCapability.hpp"
+#include "CNA/Graphics/ShaderCodeEXT.hpp"
+#include "CNA/Graphics/ShaderPackageEXT.hpp"
+#include "CNA/ShaderLanguageEXT.hpp"
 #include "Microsoft/Xna/Framework/BoundingFrustum.hpp"
 #include "Microsoft/Xna/Framework/BoundingSphere.hpp"
 #include "Microsoft/Xna/Framework/Color.hpp"
@@ -12,332 +17,356 @@
 #include "Microsoft/Xna/Framework/Graphics/DepthStencilState.hpp"
 #include "Microsoft/Xna/Framework/Graphics/DynamicVertexBuffer.hpp"
 #include "Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp"
+#include "Microsoft/Xna/Framework/Graphics/IndexBuffer.hpp"
+#include "Microsoft/Xna/Framework/Graphics/IndexElementSize.hpp"
 #include "Microsoft/Xna/Framework/Graphics/PrimitiveType.hpp"
 #include "Microsoft/Xna/Framework/Graphics/RasterizerState.hpp"
 #include "Microsoft/Xna/Framework/Graphics/SetDataOptions.hpp"
+#include "Microsoft/Xna/Framework/Graphics/ShaderEffect.hpp"
+#include "Microsoft/Xna/Framework/Graphics/VertexDeclaration.hpp"
+#include "Microsoft/Xna/Framework/Graphics/VertexElement.hpp"
+#include "Microsoft/Xna/Framework/Graphics/VertexElementFormat.hpp"
+#include "Microsoft/Xna/Framework/Graphics/VertexElementUsage.hpp"
 #include "Microsoft/Xna/Framework/Graphics/VertexPositionColor.hpp"
 #include <algorithm>
-#include <array>
 #include <cmath>
+#include <cstddef>
 #include <iostream>
-#include <numbers>
+#include <stdexcept>
+#include <string>
 
 using namespace Microsoft::Xna::Framework;
 using namespace Microsoft::Xna::Framework::Graphics;
 
 namespace island {
 namespace {
-constexpr float Pi=std::numbers::pi_v<float>;
-constexpr int Capacity=60000;
-float Hash(std::uint32_t v) {
-    v^=v>>16U;v*=0x7feb352dU;v^=v>>15U;v*=0x846ca68bU;v^=v>>16U;
-    return static_cast<float>(v>>8U)*(1.0f/16777216.0f);
-}
-float Noise3(const Vector3& p) {
-    // a cheap lattice noise for the scales' mottling
-    const float x=std::floor(p.X),y=std::floor(p.Y),z=std::floor(p.Z);
-    return Hash(static_cast<std::uint32_t>(static_cast<std::int32_t>(x)*73856093^static_cast<std::int32_t>(y)*19349663^static_cast<std::int32_t>(z)*83492791));
-}
-Vector3 V(const TRexPoint& p) {return {p.x,p.y,p.z};}
-Vector3 Unit(Vector3 v,const Vector3& fallback=Vector3::Up) {
-    if(v.LengthSquared()<1e-10f) return fallback;
-    v.Normalize();return v;
+const VertexDeclaration& SkinDeclaration() {
+    static const VertexDeclaration declaration{
+        VertexElement(offsetof(TRexSkinVertex,position),VertexElementFormat::Vector3,VertexElementUsage::Position,0),
+        VertexElement(offsetof(TRexSkinVertex,normal),VertexElementFormat::Vector3,VertexElementUsage::Normal,0),
+        VertexElement(offsetof(TRexSkinVertex,pigment),VertexElementFormat::Color,VertexElementUsage::Color,0),
+        VertexElement(offsetof(TRexSkinVertex,rest),VertexElementFormat::Vector4,VertexElementUsage::TextureCoordinate,0),
+        VertexElement(offsetof(TRexSkinVertex,surface),VertexElementFormat::Color,VertexElementUsage::Color,1)};
+    return declaration;
 }
 
-// The hide's colour at a point with its outward normal: a dark olive-brown back with faint bands
-// across it, tawny flanks, a pale buff belly, all broken by the scales' mottling.
-struct Hide {
-    Vector3 back{60,50,38},flank{126,106,78},belly{188,172,140};
-    Color At(const Vector3& p,const Vector3& n,const float bandAlong) const {
-        const float upness=n.Y;
-        Vector3 c=upness>0.0f?Vector3::Lerp(flank,back,std::clamp(upness*1.6f,0.0f,1.0f))
-                             :Vector3::Lerp(flank,belly,std::clamp(-upness*1.8f,0.0f,1.0f));
-        // the bands, over the back only
-        const float band=.5f+.5f*std::sin(bandAlong*2.4f);
-        c*=1.0f-.26f*band*std::clamp(upness*2.0f+.3f,0.0f,1.0f);
-        const float mottle=.80f+.26f*Noise3(p*7.0f)+.14f*Noise3(p*2.1f);
-        c*=mottle;
-        const float light=.56f+.40f*std::max(0.0f,Vector3::Dot(n,wildlife_render::FixedSunDirection))+.10f*std::max(0.0f,n.Y);
-        c*=light;
-        return Color(static_cast<int>(std::clamp(c.X,0.0f,255.0f)),static_cast<int>(std::clamp(c.Y,0.0f,255.0f)),
-                     static_cast<int>(std::clamp(c.Z,0.0f,255.0f)));
-    }
-};
+constexpr const char* SkinVertex=R"(
+layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec3 aNormal;
+layout(location = 2) in vec4 aPigment;
+layout(location = 3) in vec4 aRest;
+layout(location = 4) in vec4 aSurface;
+uniform mat4 uViewProjection;
+out vec3 vWorld;
+out vec3 vNormal;
+out vec4 vPigment;
+out vec4 vRest;
+out vec2 vSurface;
+flat out float vMaterial;
+void main()
+{
+    vWorld = aPosition;
+    vNormal = aNormal;
+    vPigment = aPigment;
+    vRest = aRest;
+    vSurface = aSurface.gb;
+    vMaterial = floor(aSurface.r * 255.0 + 0.5);
+    gl_Position = uViewProjection * vec4(aPosition, 1.0);
+    gl_Position.z = 2.0 * gl_Position.z - gl_Position.w;
+}
+)";
 
-class Builder {
-public:
-    explicit Builder(std::vector<VertexPositionColor>& out):out_(out){}
-    // A loft through cross sections: centre, the section's right and up axes, half width and
-    // height; `along` for the bands. Ends closed.
-    void Loft(const std::vector<Vector3>& centres,const std::vector<Vector3>& rights,const std::vector<Vector3>& ups,
-              const std::vector<float>& widths,const std::vector<float>& heights,const std::vector<float>& along,
-              const int sides,const Hide& hide,const bool capEnds=true) {
-        const std::size_t n=centres.size();
-        const auto point=[&](const std::size_t i,const int k) {
-            const float a=2.0f*Pi*static_cast<float>(k)/static_cast<float>(sides);
-            return centres[i]+rights[i]*(std::cos(a)*widths[i])+ups[i]*(std::sin(a)*heights[i]);
-        };
-        const auto normal=[&](const std::size_t i,const int k) {
-            const float a=2.0f*Pi*static_cast<float>(k)/static_cast<float>(sides);
-            return Unit(rights[i]*(std::cos(a)/std::max(widths[i],1e-3f))+ups[i]*(std::sin(a)/std::max(heights[i],1e-3f)));
-        };
-        for(std::size_t i=0;i+1<n;++i) {
-            for(int k=0;k<sides;++k) {
-                const Vector3 a=point(i,k),b=point(i,k+1),c=point(i+1,k+1),d=point(i+1,k);
-                const Color ca=hide.At(a,normal(i,k),along[i]),cb=hide.At(b,normal(i,k+1),along[i]);
-                const Color cc=hide.At(c,normal(i+1,k+1),along[i+1]),cd=hide.At(d,normal(i+1,k),along[i+1]);
-                out_.emplace_back(a,ca);out_.emplace_back(b,cb);out_.emplace_back(c,cc);
-                out_.emplace_back(a,ca);out_.emplace_back(c,cc);out_.emplace_back(d,cd);
+constexpr const char* SkinFragment=R"(
+in vec3 vWorld;
+in vec3 vNormal;
+in vec4 vPigment;
+in vec4 vRest;
+in vec2 vSurface;
+flat in float vMaterial;
+uniform vec3 uCameraPosition;
+uniform vec2 uFogRange;
+uniform vec3 uToSun;
+uniform float uWetness;
+out vec4 fragColor;
+
+float hash13(vec3 p)
+{
+    p = fract(p * 0.1031);
+    p += dot(p, p.zyx + 31.32);
+    return fract((p.x + p.y) * p.z);
+}
+vec3 hash33(vec3 p)
+{
+    p = fract(p * vec3(0.1031, 0.1030, 0.0973));
+    p += dot(p, p.yxz + 33.33);
+    return fract((p.xxy + p.yxx) * p.zyx);
+}
+float noise3(vec3 p)
+{
+    vec3 i = floor(p);
+    vec3 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    float a = mix(hash13(i), hash13(i + vec3(1.0, 0.0, 0.0)), f.x);
+    float b = mix(hash13(i + vec3(0.0, 1.0, 0.0)), hash13(i + vec3(1.0, 1.0, 0.0)), f.x);
+    float c = mix(hash13(i + vec3(0.0, 0.0, 1.0)), hash13(i + vec3(1.0, 0.0, 1.0)), f.x);
+    float d = mix(hash13(i + vec3(0.0, 1.0, 1.0)), hash13(i + vec3(1.0, 1.0, 1.0)), f.x);
+    return mix(mix(a, b, f.y), mix(c, d, f.y), f.z);
+}
+// The scales: the nearest and second nearest of the jittered cell points (in scale units),
+// the nearest one's own random value and the way to it.
+void scales(vec3 p, out float f1, out float f2, out float id, out vec3 toCentre)
+{
+    vec3 cell = floor(p);
+    vec3 offset = fract(p);
+    f1 = 8.0;
+    f2 = 8.0;
+    id = 0.0;
+    toCentre = vec3(0.0);
+    for (int z = -1; z <= 1; ++z)
+        for (int y = -1; y <= 1; ++y)
+            for (int x = -1; x <= 1; ++x) {
+                vec3 g = vec3(float(x), float(y), float(z));
+                vec3 r = g + 0.12 + 0.76 * hash33(cell + g) - offset;
+                float d = dot(r, r);
+                if (d < f1) {
+                    f2 = f1;
+                    f1 = d;
+                    id = hash13(cell + g + 17.0);
+                    toCentre = r;
+                } else if (d < f2) {
+                    f2 = d;
+                }
             }
-        }
-        if(!capEnds) return;
-        for(const std::size_t i:{std::size_t{0},n-1}) {
-            const Vector3 tip=centres[i]+(i==0?centres[0]-centres[1]:centres[n-1]-centres[n-2])*.15f;
-            for(int k=0;k<sides;++k) {
-                const Color c=hide.At(tip,Unit(tip-centres[i]),along[i]);
-                out_.emplace_back(point(i,k),c);out_.emplace_back(point(i,k+1),c);out_.emplace_back(tip,c);
-            }
-        }
-    }
-    // A tapering limb from a to b, its section an ellipse flattened by `flat` sideways.
-    void Limb(const Vector3& a,const Vector3& b,const float ra,const float rb,const Vector3& sideHint,const int sides,
-              const Hide& hide,const float flat=1.0f) {
-        const Vector3 axis=Unit(b-a);
-        Vector3 side=Unit(Vector3::Cross(axis,sideHint),Vector3::UnitX);
-        const Vector3 other=Unit(Vector3::Cross(side,axis));
-        Loft({a,b},{side,side},{other,other},{ra*flat,rb*flat},{ra,rb},{0.0f,0.0f},sides,hide,false);
-    }
-    void Ellipsoid(const Vector3& c,const Vector3& right,const Vector3& up,const Vector3& forward,const float rx,const float ry,
-                   const float rz,const int sides,const Hide& hide) {
-        std::vector<Vector3> centres,rights,ups;std::vector<float> w,h,al;
-        constexpr int Rings=7;
-        for(int i=0;i<=Rings;++i) {
-            const float t=-1.0f+2.0f*static_cast<float>(i)/Rings;
-            const float s=std::sqrt(std::max(0.02f,1.0f-t*t));
-            centres.push_back(c+forward*(t*rz));rights.push_back(right);ups.push_back(up);
-            w.push_back(rx*s);h.push_back(ry*s);al.push_back(0.0f);
-        }
-        Loft(centres,rights,ups,w,h,al,sides,hide,false);
-    }
-    void Cone(const Vector3& base,const Vector3& tip,const float radius,const Color& colour,const int sides=5) {
-        const Vector3 axis=Unit(tip-base);
-        const Vector3 side=Unit(Vector3::Cross(axis,Vector3::Up),Vector3::UnitX),other=Unit(Vector3::Cross(side,axis));
-        for(int k=0;k<sides;++k) {
-            const float a0=2.0f*Pi*k/sides,a1=2.0f*Pi*(k+1)/sides;
-            const Vector3 p0=base+(side*std::cos(a0)+other*std::sin(a0))*radius,p1=base+(side*std::cos(a1)+other*std::sin(a1))*radius;
-            const Color lit=wildlife_render::FacetColor(p0,p1,tip,colour,true);
-            out_.emplace_back(p0,lit);out_.emplace_back(p1,lit);out_.emplace_back(tip,lit);
-        }
-    }
-    void Disc(const Vector3& centre,const Vector3& a,const Vector3& b,const float ra,const float rb,const Color& colour,const int sides=10) {
-        for(int k=0;k<sides;++k) {
-            const float a0=2.0f*Pi*k/sides,a1=2.0f*Pi*(k+1)/sides;
-            out_.emplace_back(centre,colour);
-            out_.emplace_back(centre+a*(std::cos(a0)*ra)+b*(std::sin(a0)*rb),colour);
-            out_.emplace_back(centre+a*(std::cos(a1)*ra)+b*(std::sin(a1)*rb),colour);
-        }
-    }
-private:
-    std::vector<VertexPositionColor>& out_;
-};
+    f1 = sqrt(f1);
+    f2 = sqrt(f2);
 }
 
-TRexRenderer::TRexRenderer(GraphicsDevice& device,const IslandTerrain& terrain,const RenderedTerrainSurface& ground,
-                           const float maximumDistance)
-    :device_(device),terrain_(terrain),ground_(ground),maximumDistance_(maximumDistance),effect_(std::make_unique<BasicEffect>(device)) {
-    buffer_=std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),Capacity,BufferUsage::WriteOnly);
-    shadowBuffer_=std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),Capacity,BufferUsage::WriteOnly);
-    vertices_.reserve(Capacity);shadow_.reserve(Capacity);
-    effect_->setVertexColorEnabledProperty(true);
-    effect_->setLightingEnabledProperty(false);
-    effect_->setFogEnabledProperty(true);
-    effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
-    effect_->setFogStartProperty(300.0f);
-    effect_->setFogEndProperty(760.0f);
+// One family of the hide's creases: across `dir` every `spacing` metres (wandering a little),
+// `depth` deep where `weight` says; adds its slope (per metre at rest) and how deep in a crease
+// the point lies, faded out before the creases would shimmer.
+void fold(vec3 p, vec3 dir, float spacing, float depth, float weight, float footprint, inout vec3 slope,
+          inout float crease)
+{
+    // in patches, not rings all round: a hide creases where it bends
+    float fade = weight * (1.0 - smoothstep(0.12, 0.30, footprint / spacing))
+        * smoothstep(0.38, 0.62, noise3(p * (0.55 / spacing) + 3.7));
+    if (fade <= 0.0) return;
+    float k = 6.2832 / spacing;
+    float phase = dot(p, dir) * k + 4.0 * noise3(p * (0.30 / spacing)) + 1.5 * noise3(p * (1.1 / spacing));
+    float c = 0.5 + 0.5 * cos(phase);
+    float c5 = c * c * c * c * c;
+    slope += dir * (depth * 3.0 * c5 * sin(phase) * k * fade);
+    crease = max(crease, c5 * c * fade);
+}
+
+void main()
+{
+    vec3 n = normalize(vNormal);
+    vec3 toEye = normalize(uCameraPosition - vWorld);
+    vec3 dpdx = dFdx(vWorld);
+    vec3 dpdy = dFdy(vWorld);
+    vec3 drdx = dFdx(vRest.xyz);
+    vec3 drdy = dFdy(vRest.xyz);
+    // the side of the surface seen: the mouth's lining shows either face
+    vec3 face = normalize(cross(dpdx, dpdy));
+    if (dot(face, toEye) < 0.0) face = -face;
+    if (dot(n, face) < 0.0) n = -n;
+    int material = int(vMaterial);
+    vec3 base = vPigment.rgb;
+    float occlusion = vPigment.a;
+    float gloss = vSurface.x;
+    float wet = clamp(uWetness, 0.0, 1.0);
+    vec3 L = normalize(uToSun);
+    if (material == 2) {
+        // the eye: an amber iris streaked toward the round pupil, a dark rim, the cornea's glint
+        vec3 e = normalize(vRest.xyz);
+        float r = length(e.xy);
+        float angle = atan(e.y, e.x);
+        vec3 iris = mix(vec3(0.42, 0.27, 0.06), vec3(0.78, 0.56, 0.16), smoothstep(0.18, 0.55, r));
+        iris *= 0.86 + 0.14 * sin(angle * 23.0 + r * 9.0);
+        base = mix(iris, vec3(0.05, 0.035, 0.03), 1.0 - smoothstep(0.17, 0.21, r));
+        base = mix(base, vec3(0.10, 0.07, 0.05), smoothstep(0.58, 0.66, r));
+        if (e.z < 0.2) base = vec3(0.12, 0.09, 0.07);
+    }
+    float footprint = max(length(drdx), length(drdy));
+    float scale = vRest.w;
+    float plain = vSurface.y;
+    if (material == 0 && scale > 0.0) {
+        vec3 p = vRest.xyz;
+        float ax = abs(p.x);
+        // the mottling between the blotches the pigment carries and dark spots over the back
+        // and flanks, gone before they would shimmer
+        float mottle = noise3(p * 4.5) - 0.5;
+        base *= 1.0 + 0.16 * mottle * (1.0 - smoothstep(0.06, 0.18, footprint));
+        float spots = smoothstep(0.62, 0.74, noise3(p * 3.1 + 7.3)) * smoothstep(-0.8, -0.2, p.y)
+            * (1.0 - smoothstep(3.4, 3.8, p.z));
+        base *= 1.0 - 0.20 * spots * (1.0 - smoothstep(0.10, 0.30, footprint));
+        // the folds of the hide: rings round the neck and the tail, upright creases down the
+        // flanks, rings at the knees and ankles, long creases under the throat
+        vec3 slope = vec3(0.0);
+        float crease = 0.0;
+        fold(p, normalize(vec3(0.0, 0.35, 1.0)), 0.17, 0.008,
+             smoothstep(2.75, 3.15, p.z) * (1.0 - smoothstep(4.25, 4.55, p.z)), footprint, slope, crease);
+        fold(p, vec3(0.0, 0.0, 1.0), 0.28, 0.009,
+             smoothstep(-1.6, -1.0, p.z) * (1.0 - smoothstep(1.2, 1.7, p.z)) * (1.0 - smoothstep(-0.25, 0.25, p.y))
+             * smoothstep(0.25, 0.40, ax), footprint, slope, crease);
+        fold(p, vec3(0.0, 1.0, 0.0), 0.05, 0.005,
+             max(1.0 - smoothstep(0.15, 0.32, abs(p.y + 1.40)), 1.0 - smoothstep(0.08, 0.20, abs(p.y + 2.36)))
+             * smoothstep(0.30, 0.40, ax) * (1.0 - smoothstep(2.0, 2.3, p.z)), footprint, slope, crease);
+        fold(p, vec3(1.0, 0.0, 0.0), 0.06, 0.005,
+             smoothstep(3.5, 3.9, p.z) * (1.0 - smoothstep(5.2, 5.5, p.z)) * (1.0 - smoothstep(0.10, 0.35, p.y))
+             * (1.0 - smoothstep(0.25, 0.40, ax)), footprint, slope, crease);
+        fold(p, vec3(0.0, 0.0, 1.0), 0.22, 0.006, 1.0 - smoothstep(-1.4, -0.9, p.z), footprint, slope, crease);
+        base *= 1.0 - 0.17 * crease * plain;
+        slope *= plain;
+        // the scales in relief, while each still spans a few pixels
+        float fade = (1.0 - smoothstep(0.20, 0.45, footprint / scale)) * plain;
+        if (fade > 0.0) {
+            float f1;
+            float f2;
+            float id;
+            vec3 toCentre;
+            scales(vRest.xyz / scale, f1, f2, id, toCentre);
+            float border = f2 - f1;
+            float rim = clamp(border / 0.22, 0.0, 1.0);
+            float shoulder = rim * rim * (3.0 - 2.0 * rim);
+            float groove = 1.0 - smoothstep(0.0, 0.12, border);
+            base *= mix(1.0, (0.90 + 0.20 * id) * (1.0 - 0.24 * groove), fade);
+            // each scale a low dome: its slope (per metre at rest) toward the scale's middle
+            vec3 dome = toCentre * (2.0 * shoulder)
+                + normalize(toCentre + 1e-5) * ((1.0 - f1 * f1) * 6.0 * rim * (1.0 - rim) / 0.22);
+            slope += dome * (0.16 * fade);
+            gloss *= 1.0 - 0.6 * groove * fade;
+        }
+        // the relief bends the normal: the slope at rest carried onto the surface as drawn
+        float dhdx = dot(slope, drdx);
+        float dhdy = dot(slope, drdy);
+        vec3 r1 = cross(dpdy, n);
+        vec3 r2 = cross(n, dpdx);
+        float det = dot(dpdx, r1);
+        vec3 surfaceGradient = sign(det) * (dhdx * r1 + dhdy * r2);
+        n = normalize(abs(det) * n - surfaceGradient);
+    }
+    // rain darkens the hide and gives everything a sheen
+    if (material == 0) base *= 1.0 - 0.26 * wet;
+    gloss = clamp(gloss + 0.45 * wet, 0.0, 1.0);
+    // the hour's sun (wrapped a little: a living hide is not chalk), the trees' and the clouds'
+    // shade, the sky's light above and the ground's bounce beneath
+    float ndl = dot(n, L);
+    float direct = mix(max(ndl, 0.0), max((ndl + 0.3) / 1.3, 0.0), 0.35);
+    float facing = smoothstep(0.0, 0.25, ndl);
+    float sun = direct * mix(1.0, sunShadowVisibility(vWorld), facing);
+    float sky = 0.80 + 0.20 * n.y;
+    vec3 colour = base * (0.56 * occlusion * sky + 0.46 * sun);
+    vec3 halfway = normalize(L + toEye);
+    float power = mix(10.0, material == 2 ? 140.0 : 70.0, gloss);
+    // glints only where the sun itself shines (none at night, little under overcast); the eye
+    // keeps a faint one, and a wet hide the sky's sheen at a grazing look
+    float specular = pow(max(dot(n, halfway), 0.0), power) * (0.04 + 0.55 * gloss * gloss) * sun
+        * max(uDirectSun, material == 2 ? 0.35 : 0.10);
+    float grazing = pow(1.0 - max(dot(n, toEye), 0.0), 3.0);
+    if (material == 2) specular = specular * 2.2 + 0.05 * grazing;
+    if (material == 4) specular *= 0.2;
+    colour += vec3(specular) + base * (0.10 * wet * grazing);
+    float fog = clamp((length(vWorld - uCameraPosition) - uFogRange.x) / (uFogRange.y - uFogRange.x), 0.0, 1.0);
+    fragColor = vec4(mix(colour, islandAtmosphereFog, fog), 1.0);
+}
+)";
+}
+
+TRexRenderer::TRexRenderer(GraphicsDevice& device,const float maximumDistance)
+    :device_(device),maximumDistance_(maximumDistance) {
+    const auto vertices=body_.Vertices();
+    const auto indices=body_.Indices();
+    buffer_=std::make_unique<DynamicVertexBuffer>(device,SkinDeclaration(),static_cast<int>(vertices.size()),BufferUsage::WriteOnly);
+    indices_=std::make_unique<IndexBuffer>(device,IndexElementSize::SixteenBits,static_cast<int>(indices.size()),BufferUsage::WriteOnly);
+    indices_->SetData(indices.data(),static_cast<int>(indices.size()));
+    try {
+        if(!device.SupportsCapability(CNA::GraphicsCapability::CustomEffects)||!device.ExecutesShaderEffectSourceEXT())
+            throw std::runtime_error("custom effects unavailable");
+        using CNA::Graphics::ShaderCodeEXT;
+        const auto source=[](const bool embedded,const bool fragment) {
+            return std::string(embedded?"#version 300 es\nprecision highp float;\nprecision highp int;\n":"#version 330 core\n")
+                +environment::FogShaderDefinition+(fragment?SunShadowMap::ReceiverShader:std::string())
+                +(fragment?SkinFragment:SkinVertex);
+        };
+        const CNA::Graphics::ShaderPackageEXT package({
+            ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslEs,CNA::ShaderStageEXT::Vertex,"main","trex/skin.es.vert",source(true,false)),
+            ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslEs,CNA::ShaderStageEXT::Fragment,"main","trex/skin.es.frag",source(true,true)),
+            ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslDesktop,CNA::ShaderStageEXT::Vertex,"main","trex/skin.vert",source(false,false)),
+            ShaderCodeEXT(CNA::ShaderLanguageEXT::GlslDesktop,CNA::ShaderStageEXT::Fragment,"main","trex/skin.frag",source(false,true))},
+            {CNA::ShaderStageEXT::Vertex,CNA::ShaderStageEXT::Fragment});
+        skin_=std::make_unique<ShaderEffect>(device,package);
+        if(!skin_->IsEffectValid()) throw std::runtime_error(skin_->GetCompileErrorEXT());
+        std::cout<<"island-simulator: tyrannosaur skin "<<vertices.size()<<" vertices, "<<body_.TriangleCount()
+                 <<" triangles, lit per pixel with raised scales\n";
+    } catch(const std::exception& error) {
+        skin_.reset();
+        std::cout<<"island-simulator: tyrannosaur skin falls back to vertex lighting: "<<error.what()<<'\n';
+        fallback_=std::make_unique<BasicEffect>(device);
+        fallback_->setVertexColorEnabledProperty(true);
+        fallback_->setLightingEnabledProperty(false);
+        fallback_->setFogEnabledProperty(true);
+        fallback_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
+        fallback_->setFogStartProperty(300.0f);
+        fallback_->setFogEndProperty(760.0f);
+        buffer_=std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),static_cast<int>(vertices.size()),
+                                                      BufferUsage::WriteOnly);
+        fallbackVertices_.resize(vertices.size());
+    }
 }
 
 TRexRenderer::~TRexRenderer()=default;
 
 void TRexRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector3& camera,const TRexMotion& rex) {
     visible_=false;triangles_=0;
-    const TRexState& s=rex.State();
-    const Vector3 hips=V(rex.ToWorld(0,0,0));
-    if(Vector3::DistanceSquared(hips,camera)>maximumDistance_*maximumDistance_) return;
-    if(!BoundingFrustum(view*projection).Intersects(BoundingSphere(hips+Vector3(0,-.5f,0),8.0f))) return;
-    vertices_.clear();
-    Builder b(vertices_);
-    const Hide hide;
-    const Vector3 origin=hips;
-    const Vector3 right=V(rex.ToWorld(1,0,0))-origin,up=V(rex.ToWorld(0,1,0))-origin,ahead=V(rex.ToWorld(0,0,1))-origin;
-    const auto local=[&](const float x,const float y,const float z) {return origin+right*x+up*y+ahead*z;};
-    // ---- the body along its spine: tail tip to the neck's top
-    struct Station {float z,y,w,h;};
-    // (a short thick neck in an S, a deep chest, the tail tall and narrow behind the hips)
-    static constexpr std::array<Station,16> Spine{{
-        {-6.6f,-.86f,.05f,.07f},{-6.0f,-.80f,.10f,.15f},{-5.2f,-.68f,.16f,.27f},{-4.3f,-.52f,.24f,.40f},
-        {-3.4f,-.36f,.32f,.52f},{-2.5f,-.18f,.42f,.62f},{-1.6f,.02f,.54f,.70f},{-.8f,.14f,.63f,.74f},
-        {0.0f,.16f,.68f,.78f},{.8f,.08f,.76f,.92f},{1.6f,.04f,.74f,.92f},{2.3f,.14f,.62f,.76f},
-        {2.8f,.40f,.52f,.62f},{3.15f,.66f,.48f,.56f},{3.45f,.84f,.45f,.52f},{3.7f,.92f,.42f,.48f}}};
-    std::vector<Vector3> centres,rights,ups;std::vector<float> widths,heights,along;
-    // each span of the spine divided in three, smoothly (Catmull-Rom), for the hide's detail
-    std::vector<Station> spine;
-    for(std::size_t i=0;i+1<Spine.size();++i) {
-        const Station& p0=Spine[i==0?0:i-1];const Station& p1=Spine[i];const Station& p2=Spine[i+1];
-        const Station& p3=Spine[std::min(i+2,Spine.size()-1)];
-        for(int k=0;k<3;++k) {
-            const float t=static_cast<float>(k)/3.0f,t2=t*t,t3=t2*t;
-            const auto cr=[&](const float a,const float bb,const float c,const float d) {
-                return .5f*((2.0f*bb)+(-a+c)*t+(2.0f*a-5.0f*bb+4.0f*c-d)*t2+(-a+3.0f*bb-3.0f*c+d)*t3);
-            };
-            spine.push_back({cr(p0.z,p1.z,p2.z,p3.z),cr(p0.y,p1.y,p2.y,p3.y),cr(p0.w,p1.w,p2.w,p3.w),cr(p0.h,p1.h,p2.h,p3.h)});
-        }
-    }
-    spine.push_back(Spine.back());
-    for(const Station& st:spine) {
-        // the tail swings, more toward its tip
-        const float behind=std::max(0.0f,-st.z-.8f);
-        const float sway=s.tailSway*std::pow(behind,1.35f)*.30f;
-        centres.push_back(local(sway,st.y,st.z));
-        // each section square to the spine's run
-        rights.push_back(right);ups.push_back(up);
-        widths.push_back(st.w);heights.push_back(st.h);along.push_back(st.z);
-    }
-    b.Loft(centres,rights,ups,widths,heights,along,28,hide);
-    // ---- the head on the neck, turned and raised
-    const Vector3 neckTop=local(0,.92f,3.7f);
-    // turned by the neck's yaw about the body's up, then raised by its pitch about the head's right
-    const float yaw=s.neckYaw,pitch=s.neckPitch;
-    const Vector3 yawAhead=Unit(ahead*std::cos(yaw)+right*std::sin(yaw));
-    const Vector3 headRight=Unit(right*std::cos(yaw)-ahead*std::sin(yaw));
-    const Vector3 headAhead=Unit(yawAhead*std::cos(pitch)+up*std::sin(pitch));
-    const Vector3 hu=Unit(up*std::cos(pitch)-yawAhead*std::sin(pitch));
-    const auto head=[&](const float x,const float y,const float z) {return neckTop+headRight*x+hu*y+headAhead*(z-.10f);};
-    // (the deep, box-like skull: broad behind for the jaw muscles and the forward-set eyes,
-    // tall all along the snout, its top nearly level)
-    static constexpr std::array<Station,8> Skull{{
-        {0.0f,.05f,.40f,.44f},{.18f,.10f,.46f,.52f},{.40f,.07f,.42f,.52f},{.68f,.02f,.34f,.47f},
-        {.96f,-.03f,.26f,.40f},{1.22f,-.06f,.20f,.33f},{1.42f,-.08f,.14f,.24f},{1.53f,-.10f,.07f,.12f}}};
-    centres.clear();rights.clear();ups.clear();widths.clear();heights.clear();along.clear();
-    for(const Station& st:Skull) {
-        centres.push_back(head(0,st.y,st.z));rights.push_back(headRight);ups.push_back(hu);
-        widths.push_back(st.w);heights.push_back(st.h);along.push_back(st.z*2.0f+4.0f);
-    }
-    b.Loft(centres,rights,ups,widths,heights,along,24,hide);
-    // the lower jaw, hinged at the back of the skull and swung down by the gape
-    const float gape=std::clamp(s.jaw,0.0f,1.0f)*.62f;
-    const Vector3 hinge=head(0,-.30f,.05f);
-    const Vector3 jawAhead=Unit(headAhead*std::cos(gape)-hu*std::sin(gape));
-    const Vector3 jawUp=Unit(hu*std::cos(gape)+headAhead*std::sin(gape));
-    const auto jaw=[&](const float x,const float y,const float z) {return hinge+headRight*x+jawUp*y+jawAhead*z;};
-    static constexpr std::array<Station,5> Jaw{{{0.0f,-.02f,.31f,.15f},{.42f,-.05f,.28f,.14f},{.86f,-.06f,.21f,.12f},
-                                                {1.24f,-.06f,.14f,.09f},{1.40f,-.05f,.08f,.06f}}};
-    centres.clear();rights.clear();ups.clear();widths.clear();heights.clear();along.clear();
-    for(const Station& st:Jaw) {
-        centres.push_back(jaw(0,st.y,st.z));rights.push_back(headRight);ups.push_back(jawUp);
-        widths.push_back(st.w);heights.push_back(st.h);along.push_back(4.0f);
-    }
-    Hide pale=hide;pale.back=hide.flank;
-    b.Loft(centres,rights,ups,widths,heights,along,16,pale);
-    // the teeth: stout curved cones along both jaws, ivory stained at the roots; and the mouth's
-    // dark lining between when it gapes
-    const Color tooth(222,212,184),mouth(96,42,38);
-    // (lipped, as current work on theropods' teeth and jaws suggests: the teeth hidden behind
-    // the lips with the mouth shut, bared as it opens)
-    const float bared=std::clamp((gape-.06f)/.15f,0.0f,1.0f);
-    for(const float side:{-1.0f,1.0f}) {
-        for(int k=0;k<11&&bared>0.0f;++k) {
-            const float z=.50f+.09f*static_cast<float>(k);
-            const float w=.30f-.15f*static_cast<float>(k)/10.0f;
-            const float length=(.10f-.035f*std::abs(static_cast<float>(k)-3.0f)/8.0f)*bared;
-            b.Cone(head(side*w*.92f,-.30f+.02f*static_cast<float>(k)/10.0f,z),head(side*w*.88f,-.30f-length,z+.02f),.026f,tooth);
-            if(k<9) b.Cone(jaw(side*w*.86f,.04f,z-.05f),jaw(side*w*.84f,.04f+length*.85f,z-.03f),.022f,tooth);
-        }
-        if(gape>.05f) b.Disc(head(side*.18f,-.33f,.95f),headAhead,hu,.52f,.06f+gape*.18f,mouth,8);
-    }
-    // the eyes: set forward on the broad skull, looking ahead together; a pale yellow iris, a
-    // slit pupil, a heavy brow over each and the horn-like boss before it
-    for(const float side:{-1.0f,1.0f}) {
-        const Vector3 out=Unit(headRight*side*.75f+headAhead*.55f+hu*.15f);
-        const Vector3 eye=head(side*.36f,.22f,.30f);
-        const Vector3 eyeA=Unit(Vector3::Cross(out,hu)),eyeB=Unit(Vector3::Cross(eyeA,out));
-        b.Disc(eye+out*.01f,eyeA,eyeB,.075f,.060f,Color(196,168,64),12);
-        b.Disc(eye+out*.018f,eyeA,eyeB,.014f,.050f,Color(18,14,10),8);
-        b.Disc(eye+out*.022f+eyeB*.025f+eyeA*.02f,eyeA,eyeB,.010f,.010f,Color(240,236,220),5);
-        b.Ellipsoid(head(side*.34f,.34f,.30f),headRight,hu,headAhead,.10f,.06f,.16f,8,hide);
-        b.Ellipsoid(head(side*.24f,.40f,.52f),headRight,hu,headAhead,.07f,.06f,.10f,7,hide);
-        // the nostril near the snout's tip
-        const Vector3 nostrilOut=Unit(headRight*side*.6f+headAhead*.6f+hu*.5f);
-        const Vector3 nA=Unit(Vector3::Cross(nostrilOut,hu)),nB=Unit(Vector3::Cross(nA,nostrilOut));
-        b.Disc(head(side*.08f,.02f,1.46f)+nostrilOut*.01f,nA,nB,.035f,.022f,Color(30,24,20),7);
-    }
-    // ---- the legs from the motion's joints: the thigh's great muscle mass, the shin, the
-    // metatarsus, three toes with their claws and the small dewclaw
-    for(std::size_t i=0;i<2;++i) {
-        const TRexLeg& leg=s.legs[i];
-        const float side=i==0?-1.0f:1.0f;
-        const Vector3 hip=V(leg.hip),knee=V(leg.knee),ankle=V(leg.ankle),ball=V(leg.ball);
-        // the thigh: the great caudofemoral and thigh muscles, merging up into the hips
-        b.Ellipsoid(Vector3::Lerp(hip,knee,.38f)+up*.22f-ahead*.15f+right*(side*.10f),right,up,Unit(knee-hip),.62f,.92f,1.20f,16,hide);
-        b.Limb(hip,knee,.56f,.32f,right,14,hide,.85f);
-        // the shin's drumstick of muscle behind it, tapering to the ankle
-        b.Ellipsoid(Vector3::Lerp(knee,ankle,.30f)-ahead*.08f,right,up,Unit(ankle-knee),.24f,.26f,.48f,12,hide);
-        b.Limb(knee,ankle,.28f,.14f,right,12,hide,.80f);
-        b.Ellipsoid(knee,right,up,ahead,.24f,.24f,.24f,10,hide);
-        b.Limb(ankle,ball,.13f,.11f,right,10,hide,.85f);
-        b.Ellipsoid(ankle,right,up,ahead,.14f,.13f,.14f,8,hide);
-        for(std::size_t t=0;t<3;++t) {
-            const Vector3 tip=V(leg.toes[t]);
-            const Vector3 toeDir=Unit(tip-ball);
-            const Vector3 nail=tip+toeDir*.10f-up*.03f;
-            b.Limb(ball,tip,.10f,.06f,up,8,hide,1.3f);
-            b.Cone(tip,nail,.045f,Color(54,46,38),5);
-        }
-        b.Cone(V(leg.ankle)-up*.25f-right*side*.08f,V(leg.ankle)-up*.40f-right*side*.10f-ahead*.05f,.04f,Color(54,46,38),4);
-    }
-    // ---- the arms: tiny and stout under the chest, two clawed fingers each
-    for(const float side:{-1.0f,1.0f}) {
-        const Vector3 shoulder=local(side*.46f,-.42f,2.0f),elbow=local(side*.52f,-.80f,2.25f),wrist=local(side*.46f,-.92f,2.55f);
-        b.Limb(shoulder,elbow,.085f,.065f,ahead,8,hide);
-        b.Limb(elbow,wrist,.065f,.05f,ahead,8,hide);
-        for(const float finger:{-.025f,.025f}) {
-            const Vector3 tip=wrist+ahead*.13f-up*.06f+right*finger;
-            b.Limb(wrist,tip,.035f,.022f,up,5,hide);
-            b.Cone(tip,tip+ahead*.05f-up*.04f,.02f,Color(54,46,38),4);
-        }
-    }
-    triangles_=static_cast<int>(vertices_.size()/3);
-    if(vertices_.empty()||vertices_.size()>static_cast<std::size_t>(Capacity)) return;
-    // ---- its shadow: the hide's triangles laid on the ground along the sun, dark and soft
-    shadow_.clear();
-    const Vector3 sun=wildlife_render::FixedSunDirection;
-    if(sun.Y>.12f) {
-        const float groundY=DrawnOrAnalyticHeight(ground_,terrain_,hips.X,hips.Z)+.03f;
-        const Color shade(0,0,0,70);
-        for(const auto& v:vertices_) {
-            const float lift=v.Position.Y-groundY;
-            const Vector3 p(v.Position.X-sun.X*lift/sun.Y,0.0f,v.Position.Z-sun.Z*lift/sun.Y);
-            shadow_.emplace_back(Vector3(p.X,DrawnOrAnalyticHeight(ground_,terrain_,p.X,p.Z)+.035f,p.Z),shade);
-        }
-    }
+    const TRexPoint hips=rex.ToWorld(0.0f,0.0f,0.0f),middle=rex.ToWorld(0.0f,-.9f,-.4f);
+    if(Vector3::DistanceSquared(Vector3(hips.x,hips.y,hips.z),camera)>maximumDistance_*maximumDistance_) return;
+    if(!BoundingFrustum(view*projection).Intersects(BoundingSphere(Vector3(middle.x,middle.y,middle.z),7.5f))) return;
+    body_.Pose(rex);
+    const auto vertices=body_.Vertices();
+    const int count=static_cast<int>(vertices.size());
+    triangles_=static_cast<int>(body_.TriangleCount());
     device_.setRasterizerStateProperty(RasterizerState::CullNone);
-    device_.setIndicesProperty(nullptr);
-    effect_->setWorldProperty(Matrix::getIdentityProperty());
-    effect_->setViewProperty(view);
-    effect_->setProjectionProperty(projection);
-    if(!shadow_.empty()) {
-        device_.setBlendStateProperty(BlendState::AlphaBlend);
-        device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
-        shadowBuffer_->SetData(shadow_.data(),0,static_cast<int>(shadow_.size()),SetDataOptions::Discard);
-        device_.SetVertexBuffer(shadowBuffer_.get());
-        effect_->Apply();
-        device_.DrawPrimitives(PrimitiveType::TriangleList,0,static_cast<int>(shadow_.size()/3U));
-    }
     device_.setBlendStateProperty(BlendState::Opaque);
     device_.setDepthStencilStateProperty(DepthStencilState::Default);
-    buffer_->SetData(vertices_.data(),0,static_cast<int>(vertices_.size()),SetDataOptions::Discard);
-    device_.SetVertexBuffer(buffer_.get());
-    effect_->Apply();
-    device_.DrawPrimitives(PrimitiveType::TriangleList,0,triangles_);
+    if(skin_) {
+        buffer_->SetData(vertices.data(),0,count,SetDataOptions::Discard);
+        device_.SetVertexBuffer(buffer_.get());
+        device_.setIndicesProperty(indices_.get());
+        float matrix[16];
+        (view*projection).ToColumnMajor(matrix);
+        skin_->Apply();
+        skin_->SetUniformMat4("uViewProjection",matrix);
+        skin_->SetUniformVec3("uCameraPosition",camera.X,camera.Y,camera.Z);
+        skin_->SetUniformVec2("uFogRange",300.0f,760.0f);
+        const auto toSun=sun_light::UniformDirection();
+        skin_->SetUniformVec3("uToSun",toSun.x,toSun.y,toSun.z);
+        skin_->SetUniformFloat("uWetness",weather_now::Current().wetness);
+        if(sunShadow_) sunShadow_->Bind(*skin_);
+        else SunShadowMap::BindDisabled(*skin_);
+    } else {
+        // the same skin lit per vertex as the other animals are
+        const Vector3 sun=wildlife_render::FixedSunDirection;
+        for(std::size_t k=0;k<vertices.size();++k) {
+            const TRexSkinVertex& v=vertices[k];
+            const float light=.56f*static_cast<float>(v.pigment[3])/255.0f
+                +.40f*std::max(0.0f,v.normal[0]*sun.X+v.normal[1]*sun.Y+v.normal[2]*sun.Z)+.10f*std::max(0.0f,v.normal[1]);
+            const float wet=wildlife_render::WetCoatFactor();
+            const auto channel=[&](const std::uint8_t c) {return static_cast<int>(std::clamp(static_cast<float>(c)*light*wet,0.0f,255.0f));};
+            fallbackVertices_[k]=VertexPositionColor(Vector3(v.position[0],v.position[1],v.position[2]),
+                                                     Color(channel(v.pigment[0]),channel(v.pigment[1]),channel(v.pigment[2])));
+        }
+        buffer_->SetData(fallbackVertices_.data(),0,count,SetDataOptions::Discard);
+        device_.SetVertexBuffer(buffer_.get());
+        device_.setIndicesProperty(indices_.get());
+        fallback_->setWorldProperty(Matrix::getIdentityProperty());
+        fallback_->setViewProperty(view);
+        fallback_->setProjectionProperty(projection);
+        fallback_->Apply();
+    }
+    device_.DrawIndexedPrimitives(PrimitiveType::TriangleList,0,0,count,0,triangles_);
+    device_.setIndicesProperty(nullptr);
     visible_=true;
 }
 
