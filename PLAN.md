@@ -233,6 +233,22 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 556 (2026-10-23) — the resident's limbs and hands (inventory 2)
+
+The resident's legs and arms were straight frusta between the joints (the leg a calf-thick
+pole to a sudden ankle, a knee and an elbow ball between), the hands rounded mitten lobes.
+- **Limbs** (`HumanMeshBuilder::Limb`): lofted along the joint chain, each ring square to the
+  limb's own axis there and turned to the body's front, shaded smoothly, bending through the
+  knee and the elbow without a seam. The leg tapers from the thigh in the shorts to a slim knee,
+  the calf swells behind the shin a third of the way down (a back-only bulge), and narrows to a
+  slender ankle; the arm has the deltoid's round, the triceps' swell, a slim elbow, the forearm's
+  muscle near the elbow and a flattened wrist.
+- **Hands**: a flat palm, four fingers of three joints each (the middle two longest, the little
+  finger shortest) curling a little toward the palm, and a two-jointed thumb; relaxed, the palm
+  turns in toward the thigh with the thumb in front.
+- Evidence: `resident` (`20261023T064722`), `resident-tending` (squatting at the fire, the knees
+  bent smoothly, `064735`), `resident-fishing` (`064641`). Full suite 76/76.
+
 ## Loop pass 555 (2026-10-23) — birds of feathers: the weakest in the inventory (1)
 
 The inventory's first item: the birds in flight. Within 35 m (the detail LOD) every bird but

@@ -202,6 +202,43 @@ public:
         EmitGrid(static_cast<int>(centres.size())-1,segments);
     }
 
+    // A ring of a limb: `t` along its chain of joints (1 at the second joint, 2 at the third),
+    // `across` its half-width sideways, `depth` front to back, `bulge` the back half's swell
+    // (a calf, a triceps).
+    struct LimbRing { float t, across, depth, bulge; };
+    // A limb lofted along its joints: each ring square to the limb's own axis there (the
+    // straight frusta between joints read as poles), its depth turned toward `front`, shaded
+    // smoothly; it bends through the knee or the elbow without a seam.
+    void Limb(std::span<const Vector3> chain,std::span<const LimbRing> rings,Vector3 front,Material material,int segments=12) {
+        if(chain.size()<2||rings.size()<2)return;
+        segments=Scaled(segments,5);
+        const auto along=[&](const float t) {
+            const float clamped=std::clamp(t,0.0f,static_cast<float>(chain.size()-1));
+            const auto i=std::min(static_cast<std::size_t>(clamped),chain.size()-2);
+            return Lerp(chain[i],chain[i+1],clamped-static_cast<float>(i));
+        };
+        grid_.clear();
+        for(std::size_t r=0;r<rings.size();++r) {
+            const auto& ring=rings[r];
+            const Vector3 centre=along(ring.t);
+            const Vector3 tangent=SafeUnit(along(ring.t+.06f)-along(ring.t-.06f));
+            const Vector3 side=SafeUnit(Vector3::Cross(tangent,front));
+            Vector3 depthAxis=SafeUnit(Vector3::Cross(side,tangent));
+            if(Vector3::Dot(depthAxis,front)<0.0f)depthAxis=-depthAxis;
+            for(int i=0;i<=segments;++i) {
+                const float a=2*Pi*i/segments;
+                const float sine=std::sin(a);
+                // the back half swells by the bulge, easing in from the sides
+                const float depth=ring.depth+(sine<0.0f?ring.bulge*sine*sine:0.0f);
+                const Vector3 offset=side*(std::cos(a)*ring.across)+depthAxis*(sine*depth);
+                const Vector3 normal=SafeUnit(side*(std::cos(a)/ring.across)+depthAxis*(sine/depth));
+                grid_.push_back(Make(centre+offset,normal,{static_cast<float>(i)/segments,
+                    static_cast<float>(r)/(rings.size()-1)},material));
+            }
+        }
+        EmitGrid(static_cast<int>(rings.size())-1,segments);
+    }
+
     void Panel(Vector3 a,Vector3 b,Vector3 c,Vector3 d,Vector3 normal,Material material) {
         normal=SafeUnit(normal);
         Quad(a,normal,{0,0},b,normal,{1,0},c,normal,{1,1},d,normal,{0,1},material);
@@ -395,31 +432,58 @@ void BuildHuman(std::vector<VertexPositionColorTexture>& vertices,const Resident
         mesh.Ellipsoid(sleeveCentre,sleeveSide,sleeveAxis,sleeveForward,
             .053f,.087f,.060f,Material::Cloth,14,8);
         mesh.Tube(armRoot,sleeveEnd,.052f,.049f,Material::Cloth,12);
-        mesh.Ellipsoid(sleeveEnd,right,up,forward,.053f,.055f,.052f,Material::Skin,12,7);
-        mesh.Tube(sleeveEnd,upperMid,.052f,.059f,Material::Skin,12);
-        mesh.Tube(upperMid,elbow,.059f,.043f,Material::Skin,12);
-        mesh.Ellipsoid(elbow,right,up,forward,.047f,.048f,.047f,Material::Skin,10,6);
-        const Vector3 forearm=Lerp(elbow,wrist,.38f);
-        mesh.Tube(elbow,forearm,.043f,.051f,Material::Skin,12);
-        mesh.Tube(forearm,wrist,.051f,.032f,Material::Skin,12);
-        const Vector3 hand=wrist-up*.040f+forward*.006f;
-        mesh.Ellipsoid(hand,right,up,forward,.037f,.050f,.028f,Material::Skin,11,7);
+        (void)upperMid;
+        // the arm from inside the sleeve to the wrist: the deltoid's round, the triceps' swell
+        // behind the upper arm, a slim elbow, the forearm's muscle near the elbow, a flat wrist
+        static constexpr std::array<HumanMeshBuilder::LimbRing,11> ArmRings{{
+            {.18f,.050f,.051f,0.0f},{.32f,.049f,.049f,.006f},{.50f,.046f,.046f,.008f},{.70f,.042f,.041f,.004f},
+            {.88f,.037f,.036f,0.0f},{1.0f,.035f,.035f,.002f},{1.14f,.040f,.037f,.004f},{1.32f,.042f,.035f,.002f},
+            {1.55f,.037f,.030f,0.0f},{1.80f,.030f,.024f,0.0f},{2.0f,.028f,.019f,0.0f}}};
+        const std::array<Vector3,3> armChain{shoulder,elbow,wrist};
+        mesh.Limb(armChain,ArmRings,forward,Material::Skin,12);
+        // the hand: a flat palm, four fingers of three joints each curling a little toward the
+        // palm, and a thumb from the palm's side (the fingers had been four rounded mitten lobes)
+        // (relaxed, the palm turned in toward the thigh, the thumb in front)
+        const Vector3 handDown=SafeUnit(wrist-elbow);
+        const Vector3 inward=-right*sideSign;
+        const Vector3 palmFront=SafeUnit(inward-handDown*Vector3::Dot(inward,handDown));
+        Vector3 handSide=SafeUnit(Vector3::Cross(handDown,palmFront));
+        if(Vector3::Dot(handSide,forward)<0.0f)handSide=-handSide;
+        const Vector3 hand=wrist+handDown*.042f+palmFront*.004f;
+        mesh.Ellipsoid(hand,handSide,handDown,palmFront,.038f,.048f,.016f,Material::Skin,11,7);
         for(int finger=0;finger<4;++finger) {
-            const float offset=(static_cast<float>(finger)-1.5f)*.015f;
-            mesh.Ellipsoid(hand+right*offset-up*.047f+forward*.002f,
-                right,up,forward,.0085f,.031f,.009f,Material::Skin,8,5);
+            const float offset=(static_cast<float>(finger)-1.5f)*.0155f;
+            const float length=finger==1||finger==2?1.0f:(finger==0?.9f:.78f);
+            const Vector3 knuckle=hand+handSide*offset+handDown*.040f;
+            const Vector3 middle=knuckle+handDown*(.026f*length)+palmFront*.004f;
+            const Vector3 last=middle+handDown*(.019f*length)+palmFront*.007f;
+            const Vector3 tip=last+handDown*(.015f*length)+palmFront*.008f;
+            mesh.Tube(knuckle,middle,.0088f,.0080f,Material::Skin,7);
+            mesh.Tube(middle,last,.0080f,.0071f,Material::Skin,7);
+            mesh.Tube(last,tip,.0071f,.0060f,Material::Skin,7);
+            mesh.Ellipsoid(tip,handSide,handDown,palmFront,.0060f,.0062f,.0058f,Material::Skin,6,4);
         }
-        mesh.Ellipsoid(hand+right*(sideSign*.036f)-up*.010f+forward*.009f,
-            right,up,forward,.014f,.030f,.013f,Material::Skin,8,5);
+        {
+            const Vector3 thumbRoot=hand+handSide*.030f+palmFront*.010f-handDown*.008f;
+            const Vector3 thumbMiddle=thumbRoot+handDown*.026f+handSide*.006f+palmFront*.012f;
+            const Vector3 thumbTip=thumbMiddle+handDown*.022f+palmFront*.006f;
+            mesh.Tube(thumbRoot,thumbMiddle,.0120f,.0095f,Material::Skin,7);
+            mesh.Tube(thumbMiddle,thumbTip,.0095f,.0070f,Material::Skin,7);
+            mesh.Ellipsoid(thumbTip,handSide,handDown,palmFront,.0070f,.0072f,.0068f,Material::Skin,6,4);
+        }
 
         const auto& leg=pose.legs[side];const Vector3 hip=Point(leg.hip),knee=Point(leg.knee),ankle=Point(leg.ankle);
         const Vector3 shortEnd=Lerp(hip,knee,.53f);
         mesh.Tube(hip,shortEnd,.105f,.092f,Material::Cloth,12);
-        mesh.Tube(shortEnd,knee,.080f,.070f,Material::Skin,11);
-        mesh.Ellipsoid(knee,right,up,forward,.071f,.072f,.068f,Material::Skin,10,6);
-        const Vector3 calf=Lerp(knee,ankle,.38f);
-        mesh.Tube(knee,calf,.067f,.077f,Material::Skin,11);
-        mesh.Tube(calf,ankle,.077f,.044f,Material::Skin,11);
+        // the leg from inside the shorts to the ankle: the thigh tapering to a slim knee, the
+        // calf swelling behind the shin a third of the way down, a slender ankle
+        static constexpr std::array<HumanMeshBuilder::LimbRing,13> LegRings{{
+            {.50f,.084f,.088f,0.0f},{.62f,.077f,.081f,0.0f},{.78f,.067f,.069f,0.0f},{.92f,.057f,.058f,0.0f},
+            {1.0f,.055f,.054f,0.0f},{1.08f,.052f,.051f,.004f},{1.20f,.051f,.049f,.014f},{1.32f,.050f,.047f,.022f},
+            {1.45f,.046f,.043f,.016f},{1.60f,.040f,.037f,.007f},{1.78f,.033f,.031f,0.0f},{1.92f,.029f,.028f,0.0f},
+            {2.0f,.029f,.027f,0.0f}}};
+        const std::array<Vector3,3> legChain{hip,knee,ankle};
+        mesh.Limb(legChain,LegRings,forward,Material::Skin,12);
         const Vector3 footRight=Point(leg.foot.right),footUp=Point(leg.foot.up),footForward=Point(leg.foot.forward);
         const Vector3 foot=Point(leg.foot.centre)+footUp*.038f+footForward*.025f;
         mesh.Ellipsoid(foot,footRight,footUp,footForward,.068f,.043f,.145f,Material::Skin,12,7);
