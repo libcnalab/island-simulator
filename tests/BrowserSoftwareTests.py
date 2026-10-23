@@ -565,7 +565,7 @@ class BrowserSoftwareTests(unittest.TestCase):
                  "undersides, and long tapered tails in one draw")
         profile=("near stingrays use a curved diamond disc, raised central body, wedge nose, "
                  "and restrained dark rim")
-        geometry="stingray near/far geometry 1086/18 vertices with a continuous crossed-volume tapered tail"
+        geometry="stingray near/far geometry 1596/18 vertices with a continuous crossed-volume tapered tail"
         refinement=("near stingrays add rounded eye mounds, circular dorsal spots, a feathered "
                     "disc edge, and a continuous tail loft")
         skin=("stingray dorsal disc keeps one continuous skin tone beneath the raised body "

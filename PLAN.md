@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 563 (2026-10-23) — the stingray's back (inventory 9)
+
+The stingray read as a moulded brown plate with a hat on it. Its body now rises gently out of
+the wings (a higher, softer crown in the disc and a lower, narrower body loft that no longer
+steps up from it), the crown cap takes the back's own tone instead of a pale highlight, and the
+back is mottled with 34 small paler and darker blotches. The near ray is 1596 vertices (the
+diagnostic and its three checks updated). Evidence: `stingrays` (`20261023T070947`),
+`stingray-buried` (`070914`). Full suite 76/76.
+
 ## Loop pass 562 (2026-10-23) — the gecko stands on its legs (inventory 8)
 
 The gecko's legs went straight out level from its sides, its feet floating a few centimetres

@@ -34,18 +34,18 @@ namespace island
     namespace
     {
         constexpr float NearDistance = 125.0f;
-        constexpr int MaximumVerticesPerRay = 1100;
+        constexpr int MaximumVerticesPerRay = 1620;   // 1086 and the back's 34 blotches (510)
         constexpr int MaximumVertices = static_cast<int>(StingrayGroup::Count)
             * MaximumVerticesPerRay;
         constexpr std::string_view StingrayProfileDiagnostic =
             "island-simulator: near stingrays use a curved diamond disc, raised central body, wedge nose, and restrained dark rim";
         constexpr std::string_view StingrayGeometryDiagnostic =
-            "island-simulator: stingray near/far geometry 1086/18 vertices with a continuous crossed-volume tapered tail";
+            "island-simulator: stingray near/far geometry 1596/18 vertices with a continuous crossed-volume tapered tail";
         constexpr std::string_view StingrayAnatomyDiagnostic=
             "island-simulator: near stingrays add rounded eye mounds, circular dorsal spots, a feathered disc edge, and a continuous tail loft";
         constexpr std::string_view StingraySkinDiagnostic=
             "island-simulator: stingray dorsal disc keeps one continuous skin tone beneath the raised body without exposed highlight wedges";
-        static_assert(MaximumVerticesPerRay>=1086);
+        static_assert(MaximumVerticesPerRay>=1596);
 
         struct Palette
         {
@@ -125,7 +125,9 @@ namespace island
             const float flap=wave*.19f*std::pow(lateral,1.05f);
             const float centralBody=std::pow(1.0f-lateral,1.55f)
                 *std::pow(longitudinal,.72f);
-            const float crown=shell*(.010f+.145f*centralBody);
+            // the body rises gently out of the wings (a steep central shell over a flat disc read
+            // as a hat on a plate)
+            const float crown=shell*(.010f+.185f*std::pow(centralBody,.8f));
             const float feather=-.030f*std::pow(lateral,2.7f)*longitudinal;
             // The margin ripple: a slow wave running back along each wing's outer edge.
             const float margin=ripple*.040f*std::pow(lateral,2.5f)*std::sin(ripplePhase-z*4.5f);
@@ -214,11 +216,11 @@ namespace island
                 const float angleB=2.0f*std::numbers::pi_v<float>
                     *static_cast<float>(index+1)/static_cast<float>(BodySegments);
                 const auto bodyPoint=[&](const float angle,const bool upper) {
-                    const float x=std::cos(angle)*(upper?.255f:.43f);
-                    const float z=.075f+std::sin(angle)*(upper?.41f:.61f);
+                    const float x=std::cos(angle)*(upper?.22f:.40f);
+                    const float z=.075f+std::sin(angle)*(upper?.40f:.58f);
                     if(!upper)return DiscPoint(basis,x,z,ray.wingWave,1.0f,ray.marginRipple,ray.ripplePhase)
-                        +basis.up*(.006f*basis.scale);
-                    const float y=.205f+.022f*std::sin(angle)
+                        -basis.up*(.004f*basis.scale);
+                    const float y=.215f+.022f*std::sin(angle)
                         +.015f*std::cos(angle)*std::cos(angle);
                     return basis.Point(x,y,z);
                 };
@@ -226,9 +228,29 @@ namespace island
                 const Vector3 topA=bodyPoint(angleA,true),topB=bodyPoint(angleB,true);
                 LitTriangle(out,baseA,topA,topB,palette.dorsal);
                 LitTriangle(out,baseA,topB,baseB,palette.dorsal);
-                LitTriangle(out,topA,bodyCrown,topB,palette.highlight);
+                LitTriangle(out,topA,bodyCrown,topB,Color::Lerp(palette.dorsal,palette.highlight,.30f));
             }
 
+            // the back mottled with small paler and darker blotches, as a ray's skin is (an even
+            // brown read as a moulded plate)
+            {
+                const Color pale=Color::Lerp(palette.dorsal,palette.highlight,.65f);
+                const Color dark=ScaleColor(palette.dorsal,.74f);
+                for(int blotch=0;blotch<34;++blotch) {
+                    const float angle=static_cast<float>(blotch)*2.39996f;
+                    const float r=std::sqrt((static_cast<float>(blotch)+.5f)/34.0f);
+                    const float x=std::sin(angle)*r*1.10f,z=.02f+std::cos(angle)*r*.70f;
+                    const float size=(.030f+.022f*static_cast<float>(blotch%3))*basis.scale;
+                    const Vector3 centre=DiscPoint(basis,x,z,ray.wingWave,1.0f,ray.marginRipple,ray.ripplePhase)
+                        +basis.up*(.006f*basis.scale);
+                    const Color tone=blotch%2==0?pale:dark;
+                    for(int k=0;k<5;++k) {
+                        const float a0=2.0f*std::numbers::pi_v<float>*k/5.0f+angle,a1=2.0f*std::numbers::pi_v<float>*(k+1)/5.0f+angle;
+                        Triangle(out,centre,centre+basis.right*(std::cos(a0)*size)+basis.forward*(std::sin(a0)*size*.8f),
+                                 centre+basis.right*(std::cos(a1)*size)+basis.forward*(std::sin(a1)*size*.8f),tone);
+                    }
+                }
+            }
             for(const auto& spot:std::array<std::array<float,3>,6>{{
                     {{-.52f,.18f,.055f}},{{.52f,.18f,.055f}},{{-.69f,-.14f,.044f}},
                     {{.69f,-.14f,.044f}},{{-.27f,-.32f,.040f}},{{.27f,-.32f,.040f}}}}) {

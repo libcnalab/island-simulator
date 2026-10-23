@@ -981,7 +981,7 @@ try {
               && /fish [1-9][0-9]*\/48 visible \(near [1-9][0-9]*, far [0-9]+\), 1 draw/.test(log)))
             && (!focusedStingrayCheck || (log.includes("stingrays use broad undulating discs, raised eyes, dorsal spots, pale undersides, and long tapered tails in one draw")
               && log.includes("near stingrays use a curved diamond disc, raised central body, wedge nose, and restrained dark rim")
-              && log.includes("stingray near/far geometry 1086/18 vertices with a continuous crossed-volume tapered tail")
+              && log.includes("stingray near/far geometry 1596/18 vertices with a continuous crossed-volume tapered tail")
               && log.includes("near stingrays add rounded eye mounds, circular dorsal spots, a feathered disc edge, and a continuous tail loft")
               && log.includes("stingray dorsal disc keeps one continuous skin tone beneath the raised body without exposed highlight wedges")
               && log.includes("stingrays 5 agents glide, forage, and settle over shallow sandy seabed")
