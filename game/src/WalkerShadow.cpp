@@ -1,5 +1,6 @@
 #include "IslandSimulator/WalkerShadow.hpp"
 #include "IslandSimulator/BearMotion.hpp"
+#include "IslandSimulator/ElephantMotion.hpp"
 #include "IslandSimulator/BeetlePopulation.hpp"
 #include "IslandSimulator/BirdFlock.hpp"
 #include "IslandSimulator/ReefHeronGroup.hpp"
@@ -337,6 +338,40 @@ namespace island::walker_shadow
         for (const auto& leg : pose.legs) {
             add(leg.root, leg.joint, 0.17f);
             add(leg.joint, BearPoint{leg.paw.x, leg.paw.y, leg.paw.z + 0.06f}, 0.12f);
+        }
+        for (; next < limbs.size(); ++next) limbs[next].radius = UnusedRadius;
+        return limbs;
+    }
+
+    std::array<Limb, CapsuleCount> ElephantLimbs(const ElephantMotion& elephant) noexcept
+    {
+        // ElephantRenderer's shapes: the deep barrel from the rump to the withers, the head,
+        // the ears across it, the trunk in two along its curve, the tusks, the tail and the legs
+        // from the solved joints.
+        const ElephantState& s = elephant.State();
+        std::array<Limb, CapsuleCount> limbs{};
+        std::size_t next = 0;
+        const auto add = [&](const ElephantPoint& a, const ElephantPoint& b, const float radius) {
+            limbs[next++] = {a.x, a.y, a.z, b.x, b.y, b.z, radius};
+        };
+        add(elephant.ToWorld(0.0f, -0.10f, -1.55f), elephant.ToWorld(0.0f, -0.08f, 0.0f), 0.82f);
+        add(elephant.ToWorld(0.0f, -0.08f, 0.0f), elephant.ToWorld(0.0f, 0.0f, 1.55f), 0.80f);
+        const ElephantMotion::HeadFrame h = elephant.Head();
+        const auto head = [&](const float x, const float y, const float z) {
+            return ElephantPoint{h.pivot.x + h.right.x * x + h.up.x * y + h.ahead.x * z,
+                                 h.pivot.y + h.right.y * x + h.up.y * y + h.ahead.y * z,
+                                 h.pivot.z + h.right.z * x + h.up.z * y + h.ahead.z * z};
+        };
+        add(head(0.0f, -0.04f, 0.05f), head(0.0f, -0.12f, 0.75f), 0.50f);
+        add(head(-0.55f, -0.05f, 0.05f), head(0.55f, -0.05f, 0.05f), 0.32f);   // the ears
+        const auto trunk = elephant.TrunkPoints();
+        add(trunk[0], trunk[7], 0.19f);
+        add(trunk[7], trunk[15], 0.11f);
+        for (const float side : {-1.0f, 1.0f}) add(head(side * 0.20f, -0.50f, 0.90f), head(side * 0.30f, -0.82f, 1.80f), 0.06f);
+        add(elephant.ToWorld(s.tailSwing * 0.3f, 0.30f, -2.30f), elephant.ToWorld(s.tailSwing * 0.8f, -0.80f, -2.40f), 0.05f);
+        for (const auto& leg : s.legs) {
+            add(leg.top, leg.middle, 0.30f);
+            add(leg.middle, ElephantPoint{leg.foot.x, leg.foot.y + 0.12f, leg.foot.z}, 0.22f);
         }
         for (; next < limbs.size(); ++next) limbs[next].radius = UnusedRadius;
         return limbs;

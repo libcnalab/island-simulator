@@ -17,6 +17,8 @@ class RenderedTerrainSurface;
 class FootprintTrailRenderer final {
 public:
     static constexpr int Segments=8,VerticesPerPrint=Segments*3*2;
+    // room for a tyrannosaur's whole trail (40 prints of four fans), more than the walker's
+    static constexpr int BufferVertices=VerticesPerPrint*2*static_cast<int>(FootprintTrail::Capacity);
     FootprintTrailRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,const IslandTerrain& terrain,
         const RenderedTerrainSurface& ground);   // laid on the drawn ground where the mesh reaches
     void Draw(const Microsoft::Xna::Framework::Matrix& view,

@@ -607,6 +607,12 @@ namespace island
     /** @brief A tyrannosaur's breath: a slow heavy exhale and inhale through the nostrils with a
      *  snort at its end. */
     [[nodiscard]] AmbientLoop GenerateTRexBreath();
+    /** @brief An elephant's trumpet: a loud brassy blare through the trunk, rising and breaking,
+     *  rough with the trunk's rattle, 1.6 seconds. */
+    [[nodiscard]] AmbientLoop GenerateElephantTrumpet();
+    /** @brief An elephant's rumble: a deep purring tone from the throat, felt more than heard,
+     *  swelling and fading over 2.6 seconds. */
+    [[nodiscard]] AmbientLoop GenerateElephantRumble();
     /** @brief Original bird alarm chatter: a run of sharp quick chirps over a snake, one second. */
     [[nodiscard]] AmbientLoop GenerateBirdChatter(std::uint8_t variant);
     /** @brief Original hoofbeats of an animal trotting off: a drumming of dull thuds, 1.4 s;

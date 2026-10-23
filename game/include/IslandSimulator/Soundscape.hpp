@@ -181,6 +181,9 @@ namespace island
          *  1 its roar (to 400 m), 2 its closed-mouth boom (to 300 m), 3 a breath (to 30 m). */
         void NoteTRex(int kind, float x, float y, float z) noexcept;
         [[nodiscard]] int PlayedTRexCount() const noexcept { return playedTRexCount_; }
+        /** @brief The elephant's calls where it is: 0 its low rumble (heard to some 250 m),
+         *  1 its trumpet (to 600 m). */
+        void NoteElephant(int kind, float x, float y, float z) noexcept;
         /** @brief The quad's tyres on the ground: rolling speed and sliding speed, m/s, and how
          *  far they wade (0 dry .. 1 the wheels in water to the hubs): in water the tyres' crunch
          *  gives way to the water they churn, and running into it at speed splashes. */
@@ -338,6 +341,10 @@ namespace island
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 5> trexEffects_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> trexStepInstance_, trexVoiceInstance_;
         int playedTRexCount_ = 0;
+        // the elephant: its rumble and its trumpet, on one instance
+        std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> elephantEffects_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> elephantVoiceInstance_;
+        int playedElephantCount_ = 0;
         float engineRpm_ = 1400.0f, engineLoad_ = 0.0f, engineX_ = 0.0f, engineY_ = 0.0f, engineZ_ = 0.0f;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> rainEffect_, nightChorusEffect_, owlEffect_;
         float owlSeconds_ = 12.0f, dawn_ = 0.0f, chorusSeconds_ = 0.0f;

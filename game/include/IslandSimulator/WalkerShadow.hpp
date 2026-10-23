@@ -10,6 +10,7 @@ namespace island
     struct BoarState;
     struct BoarGroundPose;
     struct BearState;
+    class ElephantMotion;
     struct CrocodileState;
     struct CrabState;
     struct HermitCrabState;
@@ -90,6 +91,9 @@ namespace island
         /** The bear's limbs in BearRenderer's frame: trunk and hump, neck, the head by the forage
          *  and the sniff, muzzle, ears, tail and the fitted legs; one slot left empty. */
         [[nodiscard]] std::array<Limb, CapsuleCount> BearLimbs(const BearState& bear) noexcept;
+        /** The elephant's limbs from its motion: the barrel as two capsules, the head, the ears,
+         *  the trunk along its curve, the tusks, the tail and the four legs in two. */
+        [[nodiscard]] std::array<Limb, CapsuleCount> ElephantLimbs(const ElephantMotion& elephant) noexcept;
         /** A crocodile's limbs in CrocodileRenderer's frame: the wide barrel, skull and jaw, the
          *  tail swinging with the body's wave, and the splayed (or folded) legs. */
         [[nodiscard]] std::array<Limb, CapsuleCount> CrocodileLimbs(const CrocodileState& crocodile) noexcept;

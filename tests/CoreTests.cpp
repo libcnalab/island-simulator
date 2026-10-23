@@ -39,6 +39,7 @@
 #include "IslandSimulator/WeaverColony.hpp"
 #include "IslandSimulator/BalloonFlight.hpp"
 #include "IslandSimulator/TRexMotion.hpp"
+#include "IslandSimulator/ElephantMotion.hpp"
 #include "IslandSimulator/DistantSceneryLayout.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/FishSchools.hpp"
@@ -13760,6 +13761,77 @@ int main()
         Check(round && travelled > 25.0f && grounded && legs && rex.FootfallCount() >= 10U && prints >= 10U
                   && bodies[0].radius == island::TRexMotion::BodyRadius,
               "the tyrannosaur's round, walk, planted feet, legs, prints or body are wrong");
+    }
+
+    {
+        // The elephant: its round on the coastal flats; walking at its pace in the lateral walk,
+        // its feet planted on the ground and laying round prints; its legs reaching from the
+        // shoulders and hips to the feet with the bones' lengths, the elbows bent back and the
+        // knees forward; the trunk's length kept; it watches a walker near, trumpets at one too
+        // close and moves off; it dozes at night.
+        const island::IslandTerrain terrain;
+        island::ElephantMotion elephant(terrain, {});
+        bool round = elephant.Route().size() >= 30U;
+        for (const auto& p : elephant.Route()) round = round && p.y > 0.9f && terrain.SignedShoreDistance(p.x, p.z) > 15.0f;
+        float travelled = 0.0f;
+        bool grounded = true, legs = true, trunk = true;
+        const auto length = [](const island::ElephantPoint& a, const island::ElephantPoint& b) {
+            return std::hypot(std::hypot(a.x - b.x, a.y - b.y), a.z - b.z);
+        };
+        for (int step = 0; step < 900; ++step) {
+            const auto before = elephant.State();
+            elephant.Update(0.1f);
+            const auto& now = elephant.State();
+            travelled += std::hypot(now.x - before.x, now.z - before.z);
+            const float fx = std::cos(now.heading), fz = std::sin(now.heading);
+            for (std::size_t i = 0; i < 4; ++i) {
+                const auto& leg = now.legs[i];
+                if (leg.planted) grounded = grounded && std::abs(leg.foot.y - terrain.Height(leg.foot.x, leg.foot.z)) < 0.03f;
+                const bool front = i < 2;
+                const float upper = front ? island::ElephantMotion::UpperArmLength : island::ElephantMotion::FemurLength;
+                const float lower = front ? island::ElephantMotion::ForearmLength : island::ElephantMotion::TibiaLength;
+                // the joint bent the right way: ahead of the line from top to low for a knee
+                const float midX = (leg.top.x + leg.low.x) * 0.5f, midZ = (leg.top.z + leg.low.z) * 0.5f;
+                const float bend = (leg.middle.x - midX) * fx + (leg.middle.z - midZ) * fz;
+                legs = legs && std::abs(length(leg.top, leg.middle) - upper) < 0.03f && std::abs(length(leg.middle, leg.low) - lower) < 0.06f
+                    && (front ? bend < 0.02f : bend > -0.02f) && leg.top.y > leg.middle.y && leg.middle.y > leg.foot.y;
+            }
+            const auto points = elephant.TrunkPoints();
+            float along = 0.0f;
+            for (std::size_t k = 1; k < points.size(); ++k) along += length(points[k], points[k - 1]);
+            trunk = trunk && along > island::ElephantMotion::TrunkLength * 0.85f && along < island::ElephantMotion::TrunkLength * 1.15f;
+        }
+        std::size_t prints = 0U;
+        for (const auto& print : elephant.Prints()) prints += print.active && (print.kind == 3U || print.kind == 4U) ? 1U : 0U;
+        island::ElephantMotion watcher(terrain, {});
+        for (int step = 0; step < 50; ++step) watcher.Update(0.1f);
+        const auto& w = watcher.State();
+        const float wx = w.x + std::cos(w.heading + 0.3f) * 25.0f, wz = w.z + std::sin(w.heading + 0.3f) * 25.0f;
+        bool watched = false;
+        for (int step = 0; step < 100; ++step) {
+            watcher.Update(0.1f, wx, wz, true, 0.0f, 0.0f, 0.0f, false);
+            watched = watched || watcher.State().behavior == island::ElephantBehavior::Watch;
+        }
+        // the walker comes close: a trumpet, the trunk raised, then it walks off
+        const auto& c = watcher.State();
+        const float cx = c.x + std::cos(c.heading) * 7.0f, cz = c.z + std::sin(c.heading) * 7.0f;
+        bool trumpeted = false, raised = false;
+        for (int step = 0; step < 30; ++step) {
+            watcher.Update(0.1f, cx, cz, true, 0.0f, 0.0f, 0.0f, false);
+            trumpeted = trumpeted || watcher.State().behavior == island::ElephantBehavior::Trumpet;
+            raised = raised || watcher.State().trunkLift > 0.6f;
+        }
+        const bool trumpetCall = watcher.LastCallKind() == 1;
+        const float startDistance = std::hypot(watcher.State().x - cx, watcher.State().z - cz);
+        for (int step = 0; step < 300; ++step) watcher.Update(0.1f, cx, cz, true, 0.0f, 0.0f, 0.0f, false);
+        const bool movedOff = std::hypot(watcher.State().x - cx, watcher.State().z - cz) > startDistance + 5.0f;
+        island::ElephantMotion sleeper(terrain, {});
+        for (int step = 0; step < 2000; ++step) sleeper.Update(0.1f, 0.0f, 0.0f, false, 1.0f, 0.0f, 0.0f, false);
+        const bool dozed = sleeper.State().behavior == island::ElephantBehavior::Doze && sleeper.State().doze > 0.99f;
+        Check(round && travelled > 40.0f && grounded && legs && trunk && elephant.FootfallCount() >= 20U && prints >= 20U,
+              "the elephant's round, walk, planted feet, legs, trunk or prints are wrong");
+        Check(watched && trumpeted && raised && trumpetCall && movedOff && dozed,
+              "the elephant does not watch the walker, trumpet at one too close and move off, or doze at night");
     }
 
     if (failures != 0) {

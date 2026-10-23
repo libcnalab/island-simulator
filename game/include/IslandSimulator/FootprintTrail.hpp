@@ -17,7 +17,7 @@ struct Footprint {
     float density=0;     // 1 fresh, fading to 0 as the print is lost
     bool left=false;
     bool active=false;
-    std::uint8_t kind=0;   // 0 the walker's bare foot, 1 a cloven hoof
+    std::uint8_t kind=0;   // 0 the walker's bare foot, 1 a cloven hoof, 2 a tyrannosaur, 3/4 an elephant's fore/hind foot
     float life=240.0f;     // how long the ground keeps this print (the swash takes wet sand's sooner)
     float strength=1.0f;   // how dark it was laid (a wet foot's print on planks, as wet as the foot)
     float y=std::numeric_limits<float>::quiet_NaN();   // laid on planks at this height; NaN: on the ground

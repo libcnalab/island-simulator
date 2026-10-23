@@ -233,6 +233,54 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 576 (2026-10-23) — a bull Asian elephant roams the coastal flats
+
+Operator request (2026-10-23, in Czech): "add one elephant to the island". An Asian elephant
+(*Elephas maximus*), as on the Andaman Islands, a tusker bull at real size.
+- **Motion** (`ElephantMotion`, core): a round of 48 points on the coastal flats behind the
+  beach, 19-46 m in from the water (inland of the tyrannosaur's), 3.2 m clear of the trees and
+  rocks; it steers round those near its round and is never pushed inside one. 1.1 m/s in the
+  lateral walk of its kind (left hind, left fore, right hind, right fore a quarter cycle apart,
+  65 % stance, a 2.1 m stride), turning on the spot before it sets off. The joints' line 2.1 m up
+  (2.9 m at the shoulder, the back highest behind it), the body vaulting over the stiff legs.
+  Each leg is solved from its planted foot by two-bone IK: the forelegs' elbows bent back (upper
+  arm 1.0 m, forearm 0.9 m, the wrist 0.42 m up), the hind knees forward (femur 1.02 m, tibia
+  0.8 m, the hock 0.4 m up); the foot hangs back from the bent joint as it swings. Each footfall
+  lays a round print (fore) or an oval one (hind) with the toenails' crescent (footprint kinds 3
+  and 4, kept 15 minutes). The trunk is 16 points over 1.95 m bent in the head's upright plane,
+  a blend of hanging, raised (the trumpet), curled to the mouth and reaching to the ground, lying
+  along the ground where it meets it.
+- **Behaviour**: grazes (down to the grass, a tuft pulled and curled up to the mouth, six-second
+  cycles), dusts itself (a scoop of sand flung over the head onto the back, side to side), goes
+  to the stream's mouth to drink when its round passes within 30 m, stands fanning its ears in
+  the heat. The walker within 32 m: it stops, turns to face, ears spread, trunk raised in an S
+  to the scent; within 11 m (or the tyrannosaur within 35 m) it trumpets, ears out and trunk
+  high, and moves off for 22 s. Rumbles now and then. Dozes on its feet at night, head and trunk
+  low. Body for the walker and the quad: three circles (rear 1.05 m, front 1.1 m, head 0.7 m).
+- **Sound** (procedural): the trumpet (a brassy blare near 420 Hz breaking upward, the trunk's
+  rattle and breath noise, 1.6 s, heard to 600 m) and the low rumble (28 Hz with its harmonics,
+  purring, 2.6 s, to 250 m). Not listened to here (no audio device).
+- **Drawn** (`ElephantRenderer`, rebuilt each frame from the pose, one draw): the barrel lofted
+  through 28 smooth sections from the sloping rump to the neck; the head with the twin domes of
+  its kind, small lidded brown eyes, the temporal gland, the lower lip; small ears fanned from
+  the head's sides (laid back walking, flapping standing, spread watching and trumpeting), the
+  top margin folded, freckled pink at the edges; the trunk smoothed to 46 sections ringed with
+  wrinkles, its root freckled pink, the one finger and the nostrils at the tip; curved ivory
+  tusks in lip sheaths; the pillar legs from the joints, wrinkled, flaring to round soles with
+  five toenails in front and four behind; the thin tail with its tuft. A grey-brown hide dusted
+  paler over the back. Its sun shadow is its figure (`walker_shadow::ElephantLimbs`, 17
+  capsules), soft and never darker where parts overlap: the hide's triangles projected onto the
+  ground (as the tyrannosaur's are) stacked into dark blotches in the first capture.
+- The journal has "Asian elephant". Birds and small animals are disturbed within 18 m.
+- `FootprintTrailRenderer`'s buffer doubled (a tyrannosaur's 40 prints of four fans could
+  outgrow it) and a fan stops at a full buffer.
+- **QA views** (behind the south-east beach; the eye is the first with a clear sight past the
+  trees, `ElephantMotion::ClearSight`): `elephant` (walking, from the side at ~17 m,
+  `20261023T113556`), `elephant-close` (standing, 7 m before its head and tusks, `113603`),
+  `elephant-trumpet` (trunk up, ears out, `113611`). Core test: the round, the walk, planted
+  feet, bone lengths and the bend of elbows and knees, the trunk's length, prints, watching,
+  trumpeting at a close walker and moving off, dozing at night.
+
 ## Loop pass 575 (2026-10-23) — a hot-air balloon drifting round and over the island
 
 The operator's item 16. `BalloonFlight` (core): a figure of eight (a lemniscate of Gerono, 300 m

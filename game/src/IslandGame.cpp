@@ -93,6 +93,9 @@ namespace island
 {
     namespace
     {
+        // where the elephant's QA views find it on its round, behind the south-east beach
+        constexpr float ElephantQaX = 124.0f, ElephantQaZ = -162.0f;
+
 #if defined(__EMSCRIPTEN__)
         volatile int WebMovementKeyMaskValue = 0;
 
@@ -230,6 +233,9 @@ namespace island
             case FixedViewpoint::TRexCloseDetail: return "trex-close";
             case FixedViewpoint::TRexRoarDetail: return "trex-roar";
             case FixedViewpoint::TRexRestDetail: return "trex-rest";
+            case FixedViewpoint::ElephantDetail: return "elephant";
+            case FixedViewpoint::ElephantCloseDetail: return "elephant-close";
+            case FixedViewpoint::ElephantTrumpetDetail: return "elephant-trumpet";
             case FixedViewpoint::OrbitProbe: return "orbit";
             case FixedViewpoint::BunkerSideDetail: return "bunker-side";
             case FixedViewpoint::StoneSignDetail: return "help-sign";
@@ -802,6 +808,15 @@ namespace island
         }
         std::cout<<"island-simulator: a full-grown Tyrannosaurus rex, "<<TRexMotion::Length<<" m long and "<<TRexMotion::HipHeight+0.85f
                  <<" m at the hip, walks a round of "<<trex_->Route().size()<<" points on the island's open upper beaches\n";
+        elephant_=std::make_unique<ElephantMotion>(terrain_,worldObstacles);
+        {
+            // it drinks where the stream comes out on the beach, as the tyrannosaur does
+            const StreamCourse course(terrain_);
+            const auto& mouth=course.Station(course.Count()-1U);
+            elephant_->SetDrinkingPlace(mouth.x,mouth.z);
+        }
+        std::cout<<"island-simulator: a bull Asian elephant, "<<ElephantMotion::ShoulderHeight<<" m at the shoulder, roams a round of "
+                 <<elephant_->Route().size()<<" points on the coastal flats behind the beach\n";
         monkeyTroop_.SetObstacles(wildlifeObstacles);
         monkeyTroop_.SetCanopy(jungleLayout_.Canopy());
         boarHerd_.SetObstacles(wildlifeObstacles);
@@ -2510,6 +2525,42 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: "<<ViewpointName(viewpoint_)<<" QA camera looks at the tyrannosaur on the beach\n";
+        } else if (viewpoint_ == FixedViewpoint::ElephantDetail || viewpoint_ == FixedViewpoint::ElephantCloseDetail
+                   || viewpoint_ == FixedViewpoint::ElephantTrumpetDetail) {
+            // Behind the south-east beach: from the side at 17 m as it walks its round; close,
+            // 7 m before it standing, three-quarters on at its head and tusks; or trumpeting, at
+            // 13 m.
+            if(!elephant_) throw std::runtime_error("Elephant QA requires the elephant");
+            elephant_->PlaceNear(ElephantQaX,ElephantQaZ);
+            const bool close=viewpoint_==FixedViewpoint::ElephantCloseDetail,trumpet=viewpoint_==FixedViewpoint::ElephantTrumpetDetail;
+            elephant_->HoldStanding(close?600.0f:0.0f);
+            if(trumpet) {elephant_->PreviewTrumpet();for(int k=0;k<30;++k) elephant_->Update(0.1f);}
+            // (walking, it is set going at once: the QA view sees it mid-stride)
+            if(!close&&!trumpet) {for(int k=0;k<160;++k) elephant_->Update(0.1f);}
+            if(close) {for(int k=0;k<30;++k) elephant_->Update(0.1f);}
+            const auto& now=elephant_->State();
+            const float fx=std::cos(now.heading),fz=std::sin(now.heading);
+            // (the seaward side first: it walks its round with the sea on its left; the first
+            // eye with a clear sight of it past the trees and rocks)
+            const float baseAhead=close?7.0f:trumpet?9.0f:2.0f,baseSide=close?3.5f:trumpet?9.0f:17.0f;
+            float ex=now.x,ez=now.z;
+            bool clear=false;
+            for(const float side:{1.0f,-1.0f}) {
+                for(const float shift:{0.0f,-3.0f,3.0f,-6.0f,6.0f}) {
+                    for(const float scale:{1.0f,.8f,1.25f}) {
+                        if(clear) break;
+                        const float a=close?baseAhead+shift*.3f:baseAhead+shift,sd=baseSide*scale;
+                        ex=now.x+fx*a+fz*side*sd;ez=now.z+fz*a-fx*side*sd;
+                        clear=elephant_->ClearSight(ex,ez,now.x,now.z,2.6f)&&terrain_.Height(ex,ez)>.3f;
+                    }
+                }
+            }
+            cameraPosition_=Vector3(ex,std::max(terrain_.Height(ex,ez),0.0f)+PlayerMotion::EyeHeight,ez);
+            const ElephantPoint aim=close?elephant_->ToWorld(0.0f,-.1f,2.6f):trumpet?elephant_->ToWorld(0.0f,.5f,1.6f):elephant_->ToWorld(0.0f,-.5f,.4f);
+            const Vector3 direction=Vector3(aim.x,aim.y,aim.z)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: "<<ViewpointName(viewpoint_)<<" QA camera looks at the elephant on the coastal flats\n";
         } else if (viewpoint_ == FixedViewpoint::MudskipperDetail) {
             // Crouched on the mud at the edge of a mangrove's patch, low over the skippers on it.
             if(!mudskippers_||mudskippers_->Patches().empty()) throw std::runtime_error("Mudskipper QA requires the mud");
@@ -3570,6 +3621,11 @@ namespace island
             const std::size_t entry = JournalIndex("trex");
             if (!journal_.Found(entry)) consider(entry, head.x, head.y - 1.5f, head.z, 4.0f);
         }
+        if (elephant_) {
+            const ElephantPoint body = elephant_->ToWorld(0.0f, 0.0f, 0.5f);
+            const std::size_t entry = JournalIndex("elephant");
+            if (!journal_.Found(entry)) consider(entry, body.x, body.y, body.z, 3.0f);
+        }
         each("coconut-crabs", coconutCrabGroup_.Crabs(), 0.3f, always);
         {
             // by day three in four keep to their retreats, as the drawn colony does
@@ -3952,6 +4008,7 @@ namespace island
         residentRenderer_=std::move(residentRenderer);
         bearRenderer_=std::move(bearRenderer);
         trexRenderer_=std::make_unique<TRexRenderer>(device,terrain_,*drawnGround_,600.0f);
+        elephantRenderer_=std::make_unique<ElephantRenderer>(device,500.0f);
         canopyLighting_ = std::move(canopyLighting);
         terrainHeightMap_ = std::move(terrainHeightMap);
         std::vector<AnimalTrackPlacement> residentFootprints;
@@ -5191,6 +5248,23 @@ namespace island
             trexShakeClock_ += deltaSeconds;
             (void)rex;
         }
+        if (elephant_) {
+            // it watches the walker (or the rider) and trumpets at one too close, or at the
+            // tyrannosaur; it dozes on its feet at night
+            const bool observing = viewpoint_ == FixedViewpoint::None;
+            const float observerX = riding_ ? quad_.Position().x : playerMotion_.Position().x;
+            const float observerZ = riding_ ? quad_.Position().z : playerMotion_.Position().z;
+            const float night = 1.0f - std::clamp((sun_light::Current().lighting.sunElevationDegrees + 3.0f) / 9.0f, 0.0f, 1.0f);
+            const bool rival = trex_ && observing;
+            elephant_->Update(deltaSeconds, observerX, observerZ, observing, night,
+                              rival ? trex_->State().x : 0.0f, rival ? trex_->State().z : 0.0f, rival);
+            if (elephant_->CallCount() != notedElephantCalls_) {
+                notedElephantCalls_ = elephant_->CallCount();
+                const ElephantPoint head = elephant_->ToWorld(0.0f, 0.0f, 3.0f);
+                if (soundscape_) soundscape_->NoteElephant(elephant_->LastCallKind(), head.x, head.y, head.z);
+                std::cout << "island-simulator: the elephant " << (elephant_->LastCallKind() == 1 ? "trumpets" : "rumbles") << '\n';
+            }
+        }
         bear_->Update(viewpoint_==FixedViewpoint::BearLyingDetail?0.0f:deltaSeconds,bearCaptureClock?BearPoint{NAN,NAN,NAN}
             :BearPoint{observer.x,observer.y,observer.z});
         for (const std::size_t eaten : bear_->EatenFruit()) fallingFruit_.Consume(eaten);
@@ -5937,6 +6011,7 @@ namespace island
             }
             disturbers.push_back({bear_->State().x, bear_->State().z, 14.0f});
             if (trex_) disturbers.push_back({trex_->State().x, trex_->State().z, 40.0f});
+            if (elephant_) disturbers.push_back({elephant_->State().x, elephant_->State().z, 18.0f});
             for (const auto& boar : boarHerd_.Boars()) disturbers.push_back({boar.x, boar.z, 8.0f});
             for (const auto& crocodile : crocodileGroup_.Crocodiles())
                 if (crocodile.speed > 0.05f) disturbers.push_back({crocodile.x, crocodile.z, 7.0f});
@@ -6554,6 +6629,7 @@ namespace island
         for (const auto& crocodile : crocodileGroup_.Crocodiles()) body(crocodile.x, crocodile.z, 0.60f);
         if (resident_) body(resident_->State().x, resident_->State().z, 0.30f);
         if (trex_) for (const auto& part : trex_->Obstacles()) body(part.x, part.z, part.radius);
+        if (elephant_) for (const auto& part : elephant_->Obstacles()) body(part.x, part.z, part.radius);
         return hit;
     }
 
@@ -7579,9 +7655,13 @@ namespace island
                 swimTerrainSurface_=std::make_unique<RenderedTerrainSurface>(terrain_);
             playerMotion_.SetSwimInput(swimTerrainSurface_.get(),ascend,runToggleDown);
             playerMotion_.Update(terrain_, wish.X, wish.Z, deltaSeconds, worldCollisionGrid_);
-            // the tyrannosaur's body is solid: the walker is held off its hips, chest and tail
-            if (trex_) {
-                for (const auto& body : trex_->Obstacles()) {
+            // the tyrannosaur's body is solid: the walker is held off its hips, chest and tail;
+            // and the elephant's body and head
+            {
+                std::vector<CircularObstacle> bodies;
+                if (trex_) for (const auto& body : trex_->Obstacles()) bodies.push_back(body);
+                if (elephant_) for (const auto& body : elephant_->Obstacles()) bodies.push_back(body);
+                for (const auto& body : bodies) {
                     const PlayerPosition& at = playerMotion_.Position();
                     const float dx = at.x - body.x, dz = at.z - body.z, d = std::hypot(dx, dz), reach = body.radius + 0.3f;
                     if (d < reach && d > 1e-3f) playerMotion_.SetPosition(terrain_, body.x + dx / d * reach, body.z + dz / d * reach);
@@ -8440,6 +8520,16 @@ namespace island
                         walker_shadow::Lay(walker_shadow::BearLimbs(bear), bear.x, ground, bear.z, toSun.x, toSun.y, toSun.z, 1.8f),
                         Vector3(bear.x, ground, bear.z), Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength, groundAt);
             }
+            if (elephant_) {
+                // and the elephant's, farther: it is a big figure
+                const ElephantState& elephant = elephant_->State();
+                const float ground = groundAt(elephant.x, elephant.z);
+                if (Vector3::DistanceSquared(Vector3(elephant.x, elephant.y, elephant.z), renderCameraPosition_) < 1.6f * animalReach * animalReach
+                    && std::abs(elephant.y - ground) < 0.35f)
+                    walkerShadowRenderer_->Draw(cameraView_, cameraProjection_,
+                        walker_shadow::Lay(walker_shadow::ElephantLimbs(*elephant_), elephant.x, ground, elephant.z, toSun.x, toSun.y, toSun.z, 3.0f),
+                        Vector3(elephant.x, ground, elephant.z), Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength, groundAt);
+            }
             {
                 // the nearest crabs' and ground doves' too (a beach crab's, a hermit's, a coconut
                 // crab's off its palm), the nearest few within 18 m: a few centimetres of shadow is
@@ -8828,6 +8918,11 @@ namespace island
             GpuDiagnosticScope gpuPass("trex");
             trexRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,*trex_);
             if (footprintRenderer_) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,trex_->Prints());
+        }
+        if (elephantRenderer_ && elephant_) {
+            GpuDiagnosticScope gpuPass("elephant");
+            elephantRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,*elephant_);
+            if (footprintRenderer_) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,elephant_->Prints());
         }
 
         {

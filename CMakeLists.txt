@@ -110,6 +110,7 @@ add_library(island_core STATIC
     game/src/WeaverColony.cpp
     game/src/BalloonFlight.cpp
     game/src/TRexMotion.cpp
+    game/src/ElephantMotion.cpp
     game/src/LifeboatLayout.cpp
     game/src/BridgeLayout.cpp
     game/src/LookoutLayout.cpp
@@ -779,6 +780,7 @@ if(ISLAND_BUILD_GAME)
         game/src/WeaverNestRenderer.cpp
         game/src/BalloonRenderer.cpp
         game/src/TRexRenderer.cpp
+        game/src/ElephantRenderer.cpp
         game/src/CrocodileRenderer.cpp
         game/src/BoarRenderer.cpp
         game/src/SnakeRenderer.cpp

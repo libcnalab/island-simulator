@@ -22,9 +22,9 @@ namespace island {
 FootprintTrailRenderer::FootprintTrailRenderer(GraphicsDevice& device,const IslandTerrain& terrain,const RenderedTerrainSurface& ground)
     :device_(device),terrain_(terrain),ground_(ground),effect_(std::make_unique<BasicEffect>(device)),
      vertices_(std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),
-        VerticesPerPrint*static_cast<int>(FootprintTrail::Capacity),BufferUsage::WriteOnly))
+        BufferVertices,BufferUsage::WriteOnly))
 {
-    staging_.reserve(static_cast<std::size_t>(VerticesPerPrint)*FootprintTrail::Capacity);
+    staging_.reserve(static_cast<std::size_t>(BufferVertices));
     effect_->setVertexColorEnabledProperty(true);effect_->setLightingEnabledProperty(false);
     const char* message="island-simulator: the walker's bare feet leave a trail of prints in the sand that the sand takes back over four minutes";
     std::cout<<message<<'\n';MirrorRuntimeDiagnosticToPlatformLog(message);
@@ -40,6 +40,7 @@ void FootprintTrailRenderer::Draw(const Matrix& view,const Matrix& projection,co
         return std::isfinite(deck)?deck+0.006f:DrawnOrAnalyticHeight(ground_,terrain_,x,z)+0.012f;
     };
     const auto fan=[&](float cx,float cz,float forwardX,float forwardZ,float forwardRadius,float sideRadius,int alpha){
+        if(staging_.size()+static_cast<std::size_t>(Segments*3)>static_cast<std::size_t>(BufferVertices)) return;
         const float sideX=-forwardZ,sideZ=forwardX;
         const Vector3 centre(cx,heightAt(cx,cz),cz);
         const Color core(0,0,0,alpha),rim(0,0,0,0);
@@ -75,6 +76,16 @@ void FootprintTrailRenderer::Draw(const Matrix& view,const Matrix& projection,co
                 const float length=toe==0?0.46f:0.38f;
                 fan(print.x+tx*length*0.55f,print.z+tz*length*0.55f,tx,tz,length*0.52f,0.075f,deep);
             }
+            ++visible_;
+            continue;
+        }
+        if(print.kind==3U||print.kind==4U) {
+            // An elephant's print: a broad round dish where the forefoot's sole pressed (an oval,
+            // longer than broad, behind), and the toenails' crescent along its front edge.
+            const bool fore=print.kind==3U;
+            const int deep=std::min(255,alpha*3/2);
+            fan(print.x,print.z,fx,fz,fore?0.25f:0.28f,fore?0.24f:0.19f,deep);
+            fan(print.x+fx*(fore?0.20f:0.22f),print.z+fz*(fore?0.20f:0.22f),fx,fz,0.05f,fore?0.17f:0.13f,deep);
             ++visible_;
             continue;
         }

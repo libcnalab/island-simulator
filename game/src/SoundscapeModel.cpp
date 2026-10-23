@@ -2249,6 +2249,59 @@ namespace island
         return Quantize(samples, 0.7f);
     }
 
+    AmbientLoop GenerateElephantTrumpet()
+    {
+        // Air blown hard through two metres of trunk: a brassy tone near 420 Hz that jumps up as
+        // the call breaks and sags at its end, rich in harmonics, torn by the trunk's rattle and
+        // a rush of breath noise.
+        constexpr float seconds = 1.6f;
+        const auto frames = static_cast<std::size_t>(AmbientSampleRate * seconds);
+        std::vector<float> samples(frames, 0.0f);
+        DeterministicNoise noise(0x3e1e9a7U);
+        float phase = 0.0f, band = 0.0f, bandLow = 0.0f;
+        for (std::size_t i = 0; i < frames; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            const float u = t / seconds;
+            const float raw = noise.Next();
+            const float pitch = 380.0f + 120.0f * SmoothStep(0.08f, 0.22f, u) - 90.0f * SmoothStep(0.65f, 1.0f, u)
+                + 14.0f * std::sin(2.0f * std::numbers::pi_v<float> * 6.5f * t);
+            phase += 2.0f * std::numbers::pi_v<float> * pitch / static_cast<float>(AmbientSampleRate);
+            float tone = 0.0f;
+            for (int h = 1; h <= 8; ++h) tone += std::sin(static_cast<float>(h) * phase) / std::pow(static_cast<float>(h), 0.7f);
+            const float rattle = 0.65f + 0.35f * std::sin(2.0f * std::numbers::pi_v<float> * 38.0f * t);
+            band += 0.35f * (raw - band);
+            bandLow += 0.06f * (band - bandLow);
+            const float breath = (band - bandLow) * 1.4f;
+            const float envelope = SmoothStep(0.0f, 0.05f, u) * (1.0f - SmoothStep(0.78f, 1.0f, u));
+            samples[i] = envelope * (tone * 0.30f * rattle + breath * 0.45f);
+        }
+        return Quantize(samples, 0.9f);
+    }
+
+    AmbientLoop GenerateElephantRumble()
+    {
+        // The low rumble elephants keep in touch with: a deep tone near 28 Hz with its audible
+        // harmonics, purring, swelling and fading.
+        constexpr float seconds = 2.6f;
+        const auto frames = static_cast<std::size_t>(AmbientSampleRate * seconds);
+        std::vector<float> samples(frames, 0.0f);
+        DeterministicNoise noise(0x51e7b0bU);
+        float phase = 0.0f, low = 0.0f;
+        for (std::size_t i = 0; i < frames; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            const float u = t / seconds;
+            const float raw = noise.Next();
+            low += 0.03f * (raw - low);
+            const float pitch = 28.0f + 4.0f * std::sin(std::numbers::pi_v<float> * u);
+            phase += 2.0f * std::numbers::pi_v<float> * pitch / static_cast<float>(AmbientSampleRate);
+            const float purr = 0.7f + 0.3f * std::sin(2.0f * std::numbers::pi_v<float> * 9.0f * t);
+            const float envelope = SmoothStep(0.0f, 0.25f, u) * (1.0f - SmoothStep(0.6f, 1.0f, u));
+            samples[i] = envelope * purr * (std::sin(phase) + 0.6f * std::sin(2.0f * phase) + 0.45f * std::sin(3.0f * phase)
+                + 0.3f * std::sin(4.0f * phase) + low * 0.7f);
+        }
+        return Quantize(samples, 0.8f);
+    }
+
     AmbientLoop GenerateBirdChatter(const std::uint8_t variant)
     {
         // A bird's alarm chatter over a snake: a run of sharp quick chirps, each a short
