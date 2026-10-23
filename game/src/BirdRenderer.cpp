@@ -93,9 +93,9 @@ namespace island
             {Color(99, 143, 94, 255), Color(54, 108, 69, 255),
              Color(201, 196, 163, 255), Color(49, 92, 65, 255),
              Color(111, 126, 144, 255), Color(83, 72, 62, 255), Color(47, 21, 17, 255), Color(44, 74, 62, 255)},
-            {Color(176, 132, 142, 255), Color(118, 122, 132, 255),
-             Color(206, 206, 202, 255), Color(72, 74, 84, 255),
-             Color(96, 148, 128, 255), Color(86, 76, 70, 255), Color(40, 22, 20, 255), Color(52, 54, 64, 255)}
+            {Color(122, 126, 140, 255), Color(140, 144, 154, 255),
+             Color(182, 150, 158, 255), Color(72, 74, 84, 255),
+             Color(92, 128, 120, 255), Color(86, 76, 70, 255), Color(40, 22, 20, 255), Color(44, 44, 52, 255)}
         }};
 
         // Glossy black, the wings' undersides a shade browner, the bill a horn grey.
@@ -328,27 +328,34 @@ namespace island
         // from the shoulder to the wrist, the hand's coverts over the primaries' roots, six
         // secondaries hanging back from the arm and seven primaries fanned from the hand, their
         // tips apart in flight; folded, all of them lie back along the body.
-        void AppendFeatheredWing(std::vector<VertexPositionColor>& vertices,const Vector3& centre,
-                                 const Vector3& right,const Vector3& up,const Vector3& forward,
+        void AppendFeatheredWing(std::vector<VertexPositionColor>& vertices,const Vector3& bodyCentre,
+                                 const Vector3& bodyRight,const Vector3& bodyUp,const Vector3& forward,
                                  const float scale,const float side,const float spread,const float lift,
-                                 const BirdPalette& palette,const BirdSpecies species)
+                                 const BirdPalette& palette,const BirdSpecies species,const float bodyWidth=1.0f)
         {
             const bool frigate=species==BirdSpecies::Frigatebird;
             const bool parrot=species==BirdSpecies::Parrot;
             // the frigatebird's long narrow hand, the parrot's and the dove's broad rounded one
             const float reach=frigate?1.30f:(parrot?.94f:1.0f);
             const float chord=frigate?.70f:1.0f;
+            const float s=spread;
+            // Folded, the wing lies against the body's flank: turned about the body's axis until
+            // its upper side faces out, hung from the top of the flank (flat, it lay inside the
+            // body with only its tips showing).
+            const float tilt=(1.0f-s)*1.20f;
+            const Vector3 up=bodyUp*std::cos(tilt)+bodyRight*(side*std::sin(tilt));
+            const Vector3 right=bodyRight*std::cos(tilt)-bodyUp*(side*std::sin(tilt));
+            const Vector3 centre=bodyCentre+(bodyRight*(side*(.12f*bodyWidth))+bodyUp*.075f)*((1.0f-s)*scale);
             const auto at=[&](const float x,const float y,const float z) {
                 return LocalPoint(centre,right,up,forward,side*x,y,z,scale);
             };
-            const float s=spread;
             const Vector3 shoulder=at(.07f,.035f,.17f);
             const Vector3 armRoot=at(.09f,.020f,-.08f);
             // spread, the wings held in a shallow V (a level eye sees their upper sides, not
             // only their edges)
-            const Vector3 wrist=at(std::lerp(.17f,.47f,s)*reach,.045f+lift*.45f+(frigate?.10f*s:.06f*s),
+            const Vector3 wrist=at(std::lerp(.10f,.47f,s)*reach,.045f+lift*.45f+(frigate?.10f*s:.06f*s),
                                    std::lerp(-.12f,frigate?.15f:.10f,s));
-            const Vector3 tip=at(std::lerp(.20f,.97f,s)*reach,lift+(frigate?-.06f*s:.09f*s),
+            const Vector3 tip=at(std::lerp(.12f,.97f,s)*reach,lift+(frigate?-.06f*s:.09f*s),
                                  std::lerp(-.34f,frigate?-.36f:-.10f,s));
             const Vector3 wristBack=wrist-forward*(.16f*chord*scale)-up*(.010f*scale);
             const Vector3 armBack=armRoot-forward*(.05f*scale);
@@ -405,7 +412,8 @@ namespace island
                                          +up*(.12f*s*t),-forward);
                 const Vector3 across=Unit(Vector3::Cross(up,along)*side,right);
                 const float longest=frigate?.62f:(parrot?.46f:.50f);
-                const float length=longest*scale*std::lerp(.62f,1.0f,std::min(1.0f,t*1.25f))*(k==PrimaryCount-1?.92f:1.0f);
+                const float length=longest*scale*std::lerp(.62f,1.0f,std::min(1.0f,t*1.25f))*(k==PrimaryCount-1?.92f:1.0f)
+                    *std::lerp(.78f,1.0f,s);   // folded, they end about the tail's tip
                 AppendFeather(vertices,root,along,across,up,length,(frigate?.070f:.090f)*scale,thickness,
                               Color::Lerp(palette.upperWing,palette.flight,.75f),
                               wildlife_render::ScaleColor(palette.flight,.70f),under);
@@ -504,7 +512,8 @@ namespace island
                               const Vector3& cameraPosition)
         {
             const bool parrot=species==BirdSpecies::Parrot;
-            const float h=parrot?.95f:(species==BirdSpecies::Frigatebird?.80f:.86f);
+            const bool dove=species==BirdSpecies::FruitDove;
+            const float h=parrot?.95f:(species==BirdSpecies::Frigatebird?.80f:(dove?.84f:.86f));
             struct Section { float z, halfWidth, halfHeight, lift, toHead; };
             constexpr std::array<Section,7> Sections{{
                 {.300f,.090f,.088f,.012f,0.0f},{.340f,.112f,.112f,.030f,.55f},{.385f,.124f,.130f,.046f,.95f},
@@ -548,6 +557,8 @@ namespace island
             const std::array<std::array<float,4>,6> bill=parrot
                 ? std::array<std::array<float,4>,6>{{{.505f,.060f,.040f,.050f},{.540f,.072f,.036f,.044f},
                     {.572f,.062f,.028f,.036f},{.592f,.030f,.020f,.028f},{.596f,-.006f,.012f,.018f},{.584f,-.034f,.004f,.006f}}}
+                : dove ? std::array<std::array<float,4>,6>{{{.522f,.050f,.022f,.018f},{.540f,.050f,.018f,.015f},
+                    {.558f,.048f,.013f,.011f},{.574f,.045f,.010f,.008f},{.588f,.042f,.007f,.006f},{.598f,.040f,.003f,.003f}}}
                 : std::array<std::array<float,4>,6>{{{.525f,.046f,.026f,.020f},{.560f,.045f,.020f,.016f},
                     {.595f,.044f,.015f,.012f},{.625f,.042f,.010f,.009f},{.650f,.040f,.006f,.005f},{.668f,.038f,.002f,.002f}}};
             constexpr int BillSides=8;
@@ -777,7 +788,7 @@ namespace island
             const float pivotZ = (bird.species == BirdSpecies::FruitDove ? .365f : .34f) * scale;
             const Vector3 headCentre = bodyCentre + bodyForward * (bird.headBob * 0.055f * scale + pivotZ)
                 - headForward * pivotZ - bodyUp * (bird.headBob * 0.018f * scale);
-            if(!coarse&&bird.species!=BirdSpecies::FruitDove)
+            if(!coarse)
                 AppendLoftedHead(vertices,headCentre,turnedRight,headUp,headForward,scale,palette,bird.species,cameraPosition);
             else AppendNearHead(vertices,headCentre,turnedRight,headUp,headForward,scale,palette,bird.species,
                                 cameraPosition,coarse);
@@ -804,6 +815,13 @@ namespace island
                 const float wingLift=std::lerp(baseWingLift,-0.16f,stretch);
                 const float wingSpan=std::lerp(.96f,0.21f,sidePerch);
                 const float wingRear=std::lerp(-0.08f,-0.29f,sidePerch);
+                if(groundDove&&!coarse) {
+                    // folded feathers on the dove's plump flank, the primaries crossing over the
+                    // rump (an ellipsoid read as a grey lens stuck on its side)
+                    AppendFeatheredWing(vertices,bodyCentre,right,bodyUp,bodyForward,scale,side,
+                                        0.0f,0.0f,palette,bird.species,1.17f);
+                    continue;
+                }
                 if(groundDove) {
                     const Vector3 foldedWing=LocalPoint(bodyCentre,right,bodyUp,bodyForward,
                         side*.145f,.045f,-.055f,scale);

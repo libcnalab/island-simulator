@@ -233,6 +233,20 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 557 (2026-10-23) — the ground dove and the folded wing (inventory 3)
+
+The ground dove read as a pink-backed blob with a grey lens stuck on its side and a ball head.
+- **Folded wings** (all perched and ground birds within 35 m): the feathered wing of pass 555,
+  folded, now turns about the body's axis until its upper side faces out and hangs from the top
+  of the flank (flat, it lay inside the body with only its tips showing); the primaries shorten
+  to end about the tail's tip. The ground doves use it too, out with their plump bodies' width,
+  in place of the ellipsoid lens.
+- **Heads**: the doves take the lofted head too, with a short slender bill.
+- **The pigeon**: grey back, a rose breast below, an iridescent green-teal head, near-black
+  primaries (it had a pink back).
+- Evidence: `ground-doves` (`20261023T065051`), `bird-preen` (the gull's folded wing on its
+  flank, `065058`). Full suite 76/76.
+
 ## Loop pass 556 (2026-10-23) — the resident's limbs and hands (inventory 2)
 
 The resident's legs and arms were straight frusta between the joints (the leg a calf-thick
