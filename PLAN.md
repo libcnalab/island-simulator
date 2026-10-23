@@ -233,6 +233,18 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 561 (2026-10-23) — the fruit bats' wings (inventory 7)
+
+A flying fox's wing was one flat six-sided plate, a cut-out card. Now (near and coarse LOD):
+the arm reaches to a wrist a little under half the span out; three long fingers fan from it to
+the wing tip and back along the trailing edge; the membrane is stretched between them and sags
+in scallops between the tips, from the leading edge's fold in front of the elbow to the ankle;
+a thumb claw points forward from the wrist. The membrane is near-black over the brown body,
+its underside a shade lighter. The near budget is a maximum of 3000 vertices.
+Evidence: `bats` (`20261023T070543`), `bat-roost` (`070504`), `mine-bats` (`070511`),
+`mine-bats-night` (`070551`). Full suite 76/76. The `bats` QA camera still looks past a large
+leaf in the foreground (the known QA framing caveat).
+
 ## Loop pass 560 (2026-10-23) — table corals (inventory 6)
 
 - Each table (`AppendReefPlate`) is thick at its middle and thins to a paler growing rim (an even

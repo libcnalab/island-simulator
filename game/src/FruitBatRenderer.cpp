@@ -36,7 +36,7 @@ namespace island
         // Past this a bat is a hand's breadth on screen: coarser ellipsoids, three-sided bones,
         // and no eyes or claws (the full near model to 110 m was most of the bats' pass).
         constexpr float DetailDistance = 30.0f;
-        constexpr int MaximumVerticesPerBat = 2700;   // the near mesh, 2628 with the roosting cloak
+        constexpr int MaximumVerticesPerBat = 3000;   // the near mesh with the roosting cloak and the fingered wings
 
         struct Palette
         {
@@ -242,27 +242,51 @@ namespace island
                 const float open = std::min(.9f, std::clamp(bat.fan, 0.0f, 1.0f) * hang * .45f + stretched);
                 const float wingLift = bat.wingPose * .30f * (1.0f - hang) + bat.wingPose * .16f * open - .14f * stretched;
                 const float span = std::lerp(.23f, 1.02f, (1.0f - hang) + open);
+                // A bat's hand: the arm to the wrist a little under half the span out, three
+                // long fingers fanned from it to the tip and back along the trailing edge, the
+                // membrane stretched between them in scallops, from the leading edge's fold to
+                // the ankle (one flat six-sided plate read as a cut-out card).
                 const Vector3 shoulder=Point(centre,right,up,forward,side*.14f,.04f,.20f,s);
-                const Vector3 elbow=Point(centre,right,up,forward,side*span*.56f,
-                    wingLift+.05f,-.02f,s);
-                const Vector3 wrist=Point(centre,right,up,forward,side*span,
-                    wingLift*.55f,-.13f,s);
-                const Vector3 fingerA=Point(centre,right,up,forward,side*span*.88f,
-                    wingLift*.25f,-.51f,s);
-                const Vector3 fingerB=Point(centre,right,up,forward,side*span*.54f,
-                    -.07f,-.58f,s);
+                const Vector3 elbow=Point(centre,right,up,forward,side*span*.30f,
+                    wingLift*.40f+.06f,-.04f,s);
+                const Vector3 wrist=Point(centre,right,up,forward,side*span*.52f,
+                    wingLift*.62f+.04f,.10f,s);
+                const Vector3 tipThird=Point(centre,right,up,forward,side*span*1.02f,
+                    wingLift,-.12f,s);
+                const Vector3 tipFourth=Point(centre,right,up,forward,side*span*.86f,
+                    wingLift*.70f,-.46f,s);
+                const Vector3 tipFifth=Point(centre,right,up,forward,side*span*.56f,
+                    wingLift*.35f,-.56f,s);
                 const Vector3 hip=Point(centre,right,up,forward,side*.12f,-.06f,-.29f,s);
-                const Color innerMembrane=Color::Lerp(p.membrane,p.chest,.10f);
-                const Color outerMembrane=Color::Lerp(p.membrane,Color(34,29,29,255),.12f);
-                const std::array<Vector3,6> wing{{shoulder,elbow,wrist,fingerA,fingerB,hip}};
-                AppendClosedSurface(out,wing,up*(.012f*s),outerMembrane,innerMembrane);
-                AppendTube(out,shoulder,elbow,.016f*s,.013f*s,p.finger,bone);
-                AppendTube(out,elbow,wrist,.013f*s,.010f*s,p.finger,bone);
-                AppendTube(out,wrist,fingerA,.010f*s,.005f*s,p.finger,bone);
-                AppendTube(out,elbow,fingerB,.009f*s,.004f*s,p.finger,bone);
-                AppendTube(out,shoulder,hip,.012f*s,.006f*s,p.finger,bone);
                 const Vector3 ankle=Point(centre,right,up,forward,
                     side*.08f,-.08f,-.25f,s);
+                // the trailing edge between two tips sags in toward the wrist
+                const auto scallop=[&](const Vector3& a,const Vector3& b,const float depth) {
+                    return Vector3::Lerp(Vector3::Lerp(a,b,.5f),wrist,depth);
+                };
+                const Vector3 between34=scallop(tipThird,tipFourth,.20f);
+                const Vector3 between45=scallop(tipFourth,tipFifth,.22f);
+                const Vector3 between5a=Vector3::Lerp(Vector3::Lerp(tipFifth,ankle,.5f),elbow,.18f);
+                const Vector3 leading=Vector3::Lerp(shoulder,wrist,.5f)+(Vector3::Lerp(shoulder,wrist,.5f)-elbow)*.35f;
+                // the flying fox's membrane near-black over the brown body
+                const Color innerMembrane=Color::Lerp(p.membrane,Color(46,36,32,255),.35f);
+                const Color outerMembrane=Color::Lerp(p.membrane,Color(24,19,18,255),.50f);
+                const Vector3 lift=up*(.006f*s);
+                const auto panel=[&](const Vector3& a,const Vector3& b,const Vector3& c) {
+                    Triangle(out,a+lift,b+lift,c+lift,wildlife_render::FacetColor(a,b,c,outerMembrane,true));
+                    Triangle(out,c-lift,b-lift,a-lift,wildlife_render::FacetColor(c,b,a,innerMembrane,true));
+                };
+                panel(wrist,tipThird,between34);panel(wrist,between34,tipFourth);
+                panel(wrist,tipFourth,between45);panel(wrist,between45,tipFifth);
+                panel(elbow,wrist,tipFifth);panel(elbow,tipFifth,between5a);panel(elbow,between5a,ankle);
+                panel(elbow,ankle,hip);panel(elbow,hip,shoulder);panel(elbow,shoulder,leading);panel(elbow,leading,wrist);
+                AppendTube(out,shoulder,elbow,.016f*s,.013f*s,p.finger,bone);
+                AppendTube(out,elbow,wrist,.013f*s,.010f*s,p.finger,bone);
+                AppendTube(out,wrist,tipThird,.010f*s,.004f*s,p.finger,bone);
+                AppendTube(out,wrist,tipFourth,.009f*s,.004f*s,p.finger,bone);
+                AppendTube(out,wrist,tipFifth,.008f*s,.004f*s,p.finger,bone);
+                // the thumb's claw at the wrist, pointing forward
+                AppendTube(out,wrist,wrist+forward*(.06f*s)+right*(side*.01f*s),.009f*s,.003f*s,p.finger,bone);
                 AppendTube(out,hip,ankle,.026f*s,.015f*s,p.finger,bone);
                 if (!coarse) for (const Vector3 clawOffset : {
                          Vector3(side*.07f,-.15f,-.30f), Vector3(side*.13f,-.18f,-.33f)}) {
@@ -274,7 +298,7 @@ namespace island
                     AppendTube(out,claw,toe,.007f*s,.003f*s,p.finger,5);
                 }
             }
-            if(coarse?out.size()-firstVertex>2268U+360U:out.size()-firstVertex!=2268U+360U)
+            if(out.size()-firstVertex>static_cast<std::size_t>(MaximumVerticesPerBat))
                 throw std::runtime_error("Fruit-bat near mesh does not match its fixed vertex budget");
         }
 
