@@ -233,6 +233,33 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 555 (2026-10-23) — birds of feathers: the weakest in the inventory (1)
+
+The inventory's first item: the birds in flight. Within 35 m (the detail LOD) every bird but
+the ground doves now has:
+- **Wings of feathers** (`AppendFeatheredWing`): the arm's coverts as a profiled shield from
+  the shoulder to the wrist, a row of six greater coverts over the secondaries' roots, six
+  secondaries overlapping into one trailing surface with a scalloped edge, the hand's coverts,
+  and seven primaries fanned from the hand, the longest near the outside, their tips apart and
+  bent up in flight; folded, all of them lie back along the body. Spread, the wings are held in
+  a shallow V. Each feather (`AppendFeather`) is a thin two-faced vane, tapered at the root,
+  rounded at the tip, its outer vane narrower, blending root to tip and shaded smoothly; a new
+  palette colour `flight` gives the flight feathers their own (the parrots' blue, the gulls'
+  near-black, the frigatebird's black).
+- **A tail of six feathers** fanned from the rump: long and graduated for the parrot, deeply
+  forked for the frigatebird, square for the coastal birds, rounded for the doves.
+- **A lofted head** (`AppendLoftedHead`): seven sections along the bill's axis from the neck in
+  the body's colour, swelling over the crown, shaded at every corner; the eye a pale ring, a
+  coloured iris, a pupil and a speck of light on the camera's side; the parrot's upper mandible
+  a deep hook over a small lower one, the others' a straight tapering bill.
+- The per-bird budget is now a maximum (4200 vertices), not an exact count. Beyond 35 m the
+  coarse wings and head are unchanged.
+
+Evidence: `birds` (the parrot: hooked bill, ringed eye, blue primaries, yellow under-coverts,
+`20261023T064325`), `frigatebird` (the crooked fingered wings, a continuous trailing edge,
+`064333`), `bird-preen` (`064154`), `ground-doves` (`064210`). Full suite 76/76. The wings stay
+edge-on to the level `birds` camera, so the plumage reads best from below or above.
+
 ## Loop pass 554 (2026-10-23) — the appearance inventory: every QA view, ranked from the weakest
 
 The operator's task list (reviewed 2026-10-23), item 4. All 159 appearance views captured natively

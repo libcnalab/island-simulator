@@ -36,7 +36,7 @@ namespace island
         // Past this a bird is a few pixels long: six sides round the body and head, no eyes
         // and no feet (sixteen sides and every detail out to 255 m was the birds' pass cost).
         constexpr float DetailLodDistance = 35.0f;
-        constexpr int MaximumVerticesPerBird = 1986;
+        constexpr int MaximumVerticesPerBird = 4200;
         constexpr int MaximumVertexCount = static_cast<int>(BirdFlock::BirdCount)
             * MaximumVerticesPerBird;
         constexpr std::string_view NearBirdFeatherDiagnostic =
@@ -61,46 +61,47 @@ namespace island
             Color head;
             Color beak;
             Color eye;
+            Color flight;   // the flight feathers' outer vanes and tips
         };
 
         const std::array<BirdPalette, 3> Palettes = {{
             {Color(61, 70, 70, 255), Color(104, 113, 108, 255),
              Color(214, 218, 203, 255), Color(48, 57, 58, 255),
-             Color(161, 168, 164, 255), Color(194, 145, 57, 255), Color(15, 14, 12, 255)},
+             Color(161, 168, 164, 255), Color(194, 145, 57, 255), Color(15, 14, 12, 255), Color(34, 36, 38, 255)},
             {Color(90, 72, 54, 255), Color(139, 117, 82, 255),
              Color(222, 204, 161, 255), Color(67, 56, 46, 255),
-             Color(130, 105, 73, 255), Color(184, 127, 47, 255), Color(14, 12, 9, 255)},
+             Color(130, 105, 73, 255), Color(184, 127, 47, 255), Color(14, 12, 9, 255), Color(58, 46, 36, 255)},
             {Color(50, 62, 72, 255), Color(78, 99, 114, 255),
              Color(195, 211, 215, 255), Color(39, 50, 59, 255),
-             Color(104, 124, 133, 255), Color(177, 122, 45, 255), Color(12, 13, 14, 255)}
+             Color(104, 124, 133, 255), Color(177, 122, 45, 255), Color(12, 13, 14, 255), Color(30, 36, 44, 255)}
         }};
 
         const std::array<BirdPalette, 2> ParrotPalettes = {{
             {Color(48, 130, 58, 255), Color(28, 96, 48, 255),
              Color(210, 176, 40, 255), Color(26, 82, 47, 255),
-             Color(196, 54, 43, 255), Color(203, 187, 145, 255), Color(13, 12, 9, 255)},
+             Color(196, 54, 43, 255), Color(203, 187, 145, 255), Color(13, 12, 9, 255), Color(34, 72, 150, 255)},
             {Color(57, 140, 65, 255), Color(35, 92, 118, 255),
              Color(218, 182, 46, 255), Color(27, 84, 82, 255),
-             Color(224, 174, 43, 255), Color(59, 53, 47, 255), Color(12, 11, 8, 255)}
+             Color(224, 174, 43, 255), Color(59, 53, 47, 255), Color(12, 11, 8, 255), Color(30, 70, 140, 255)}
         }};
 
         // Fruit-dove greens, and a pigeon grey with a rose breast and iridescent neck.
         const std::array<BirdPalette, 3> DovePalettes = {{
             {Color(91, 137, 84, 255), Color(48, 102, 62, 255),
              Color(181, 191, 150, 255), Color(45, 88, 59, 255),
-             Color(158, 86, 128, 255), Color(78, 70, 64, 255), Color(43, 20, 18, 255)},
+             Color(158, 86, 128, 255), Color(78, 70, 64, 255), Color(43, 20, 18, 255), Color(40, 70, 58, 255)},
             {Color(99, 143, 94, 255), Color(54, 108, 69, 255),
              Color(201, 196, 163, 255), Color(49, 92, 65, 255),
-             Color(111, 126, 144, 255), Color(83, 72, 62, 255), Color(47, 21, 17, 255)},
+             Color(111, 126, 144, 255), Color(83, 72, 62, 255), Color(47, 21, 17, 255), Color(44, 74, 62, 255)},
             {Color(176, 132, 142, 255), Color(118, 122, 132, 255),
              Color(206, 206, 202, 255), Color(72, 74, 84, 255),
-             Color(96, 148, 128, 255), Color(86, 76, 70, 255), Color(40, 22, 20, 255)}
+             Color(96, 148, 128, 255), Color(86, 76, 70, 255), Color(40, 22, 20, 255), Color(52, 54, 64, 255)}
         }};
 
         // Glossy black, the wings' undersides a shade browner, the bill a horn grey.
         const BirdPalette FrigatePalette{Color(24, 23, 27, 255), Color(30, 28, 33, 255),
             Color(46, 41, 40, 255), Color(22, 21, 25, 255), Color(26, 25, 30, 255),
-            Color(146, 146, 140, 255), Color(10, 10, 10, 255)};
+            Color(146, 146, 140, 255), Color(10, 10, 10, 255), Color(18, 17, 20, 255)};
 
         [[nodiscard]] const BirdPalette& PaletteForBird(const BirdState& bird)
         {
@@ -280,6 +281,165 @@ namespace island
                 + forward * (localZ * scale);
         }
 
+        // One feather: a thin vane `length` along `along` from its root, `width` across at its
+        // widest in the plane of `along` and `across`, tapering in at the root and rounding to
+        // its tip; the upper face blends from `root` to `tip`, the under face is `under`, both
+        // shaded smoothly from `up` (48 vertices). The two faces stand `thickness` apart.
+        void AppendFeather(std::vector<VertexPositionColor>& vertices,const Vector3& start,
+                           const Vector3& along,const Vector3& across,const Vector3& up,
+                           const float length,const float width,const float thickness,
+                           const Color& root,const Color& tip,const Color& under)
+        {
+            constexpr std::array<float,5> At{{0.0f,.16f,.55f,.84f,1.0f}};
+            constexpr std::array<float,5> Breadth{{.34f,.86f,1.0f,.78f,.06f}};
+            std::array<Vector3,5> left{},right{};
+            for(std::size_t i=0;i<At.size();++i) {
+                // the outer vane narrower than the inner, as a flight feather's is
+                const Vector3 centre=start+along*(length*At[i]);
+                left[i]=centre-across*(width*.36f*Breadth[i]);
+                right[i]=centre+across*(width*.64f*Breadth[i]);
+            }
+            for(const float face:{1.0f,-1.0f}) {
+                const Vector3 lift=up*(thickness*.5f*face);
+                const Vector3 normal=up*face;
+                for(std::size_t i=0;i+1<At.size();++i) {
+                    const Color c0=face>0.0f?Lit(Color::Lerp(root,tip,At[i]),normal)
+                                            :Lit(wildlife_render::ScaleColor(under,1.0f-.18f*At[i]),normal);
+                    const Color c1=face>0.0f?Lit(Color::Lerp(root,tip,At[i+1]),normal)
+                                            :Lit(wildlife_render::ScaleColor(under,1.0f-.18f*At[i+1]),normal);
+                    vertices.emplace_back(left[i]+lift,c0);
+                    vertices.emplace_back(right[i]+lift,c0);
+                    vertices.emplace_back(right[i+1]+lift,c1);
+                    vertices.emplace_back(left[i]+lift,c0);
+                    vertices.emplace_back(right[i+1]+lift,c1);
+                    vertices.emplace_back(left[i+1]+lift,c1);
+                }
+            }
+        }
+
+        [[nodiscard]] Vector3 Unit(const Vector3& v,const Vector3& fallback)
+        {
+            return v.LengthSquared()>1e-10f?Vector3::Normalize(v):fallback;
+        }
+
+        constexpr int PrimaryCount=7,SecondaryCount=6,CovertCount=6,TailFeatherCount=6;
+
+        // A near wing of feathers (the detail LOD): the arm's coverts as one profiled shield
+        // from the shoulder to the wrist, the hand's coverts over the primaries' roots, six
+        // secondaries hanging back from the arm and seven primaries fanned from the hand, their
+        // tips apart in flight; folded, all of them lie back along the body.
+        void AppendFeatheredWing(std::vector<VertexPositionColor>& vertices,const Vector3& centre,
+                                 const Vector3& right,const Vector3& up,const Vector3& forward,
+                                 const float scale,const float side,const float spread,const float lift,
+                                 const BirdPalette& palette,const BirdSpecies species)
+        {
+            const bool frigate=species==BirdSpecies::Frigatebird;
+            const bool parrot=species==BirdSpecies::Parrot;
+            // the frigatebird's long narrow hand, the parrot's and the dove's broad rounded one
+            const float reach=frigate?1.30f:(parrot?.94f:1.0f);
+            const float chord=frigate?.70f:1.0f;
+            const auto at=[&](const float x,const float y,const float z) {
+                return LocalPoint(centre,right,up,forward,side*x,y,z,scale);
+            };
+            const float s=spread;
+            const Vector3 shoulder=at(.07f,.035f,.17f);
+            const Vector3 armRoot=at(.09f,.020f,-.08f);
+            // spread, the wings held in a shallow V (a level eye sees their upper sides, not
+            // only their edges)
+            const Vector3 wrist=at(std::lerp(.17f,.47f,s)*reach,.045f+lift*.45f+(frigate?.10f*s:.06f*s),
+                                   std::lerp(-.12f,frigate?.15f:.10f,s));
+            const Vector3 tip=at(std::lerp(.20f,.97f,s)*reach,lift+(frigate?-.06f*s:.09f*s),
+                                 std::lerp(-.34f,frigate?-.36f:-.10f,s));
+            const Vector3 wristBack=wrist-forward*(.16f*chord*scale)-up*(.010f*scale);
+            const Vector3 armBack=armRoot-forward*(.05f*scale);
+            // the arm's coverts: thick at the leading edge, thinning back
+            const std::array<Vector3,4> arm{shoulder,wrist,wristBack,armBack};
+            const std::array<float,4> armThickness{.030f*scale,.022f*scale,.008f*scale,.012f*scale};
+            const std::array<float,4> armLift{.012f*scale,.016f*scale*s,.004f*scale,.004f*scale};
+            AppendProfiledSurface(vertices,arm,up,armThickness,armLift,
+                                  palette.upperWing,palette.lowerWing);
+            const Vector3 handEnd=Vector3::Lerp(wrist,tip,.42f);
+            const Vector3 handBack=handEnd-forward*(.10f*chord*scale);
+            const std::array<Vector3,4> hand{wrist,handEnd,handBack,wristBack};
+            const std::array<float,4> handThickness{.016f*scale,.010f*scale,.005f*scale,.007f*scale};
+            const std::array<float,4> handLift{.010f*scale,.006f*scale,.003f*scale,.004f*scale};
+            AppendProfiledSurface(vertices,hand,up,handThickness,handLift,
+                                  Color::Lerp(palette.upperWing,palette.flight,.35f),palette.lowerWing);
+            const Vector3 outward=Unit(tip-wrist,right*side);
+            const Vector3 back=Unit(-forward*(1.0f-.25f*s)+right*(side*.12f*s)-up*(.05f*s),-forward);
+            // (the flight feathers' undersides a shade darker than the coverts', one continuous
+            // underside: lighter, each feather read as a separate scale from below)
+            const Color under=wildlife_render::ScaleColor(palette.lowerWing,.86f);
+            const float thickness=.006f*scale;
+            // the secondaries, from the arm's trailing edge, the innermost shortest
+            for(int k=0;k<SecondaryCount;++k) {
+                const float t=(static_cast<float>(k)+.5f)/SecondaryCount;
+                const Vector3 root=Vector3::Lerp(armBack,wristBack,t)+forward*(.05f*scale);
+                const Vector3 along=Unit(Vector3::Lerp(back,-forward,.3f*(1.0f-t))-up*(.04f*s),-forward);
+                const Vector3 across=Unit(Vector3::Cross(up,along)*side,right);
+                const float length=(.25f+.05f*t)*chord*scale*(frigate?.8f:1.0f);
+                // broad enough to overlap their neighbours (apart they read as loose dashes)
+                const float width=std::max(.085f*chord*scale,2.3f*Vector3::Distance(armBack,wristBack)/SecondaryCount);
+                AppendFeather(vertices,root,along,across,up,length,width,thickness,
+                              Color::Lerp(palette.upperWing,palette.flight,.55f),palette.flight,under);
+            }
+            // the greater coverts, a row of short feathers over the secondaries' roots, a shade
+            // lighter than the arm (the arm read as one flat board without them)
+            for(int k=0;k<CovertCount;++k) {
+                const float t=(static_cast<float>(k)+.5f)/CovertCount;
+                const Vector3 root=Vector3::Lerp(Vector3::Lerp(shoulder,armRoot,.55f),Vector3::Lerp(wrist,wristBack,.45f),t)
+                    +up*(.024f*scale);
+                const Vector3 along=Unit(back-up*(.10f*s),-forward);
+                const Vector3 across=Unit(Vector3::Cross(up,along)*side,right);
+                const float width=1.8f*Vector3::Distance(armRoot,wristBack)/CovertCount;
+                AppendFeather(vertices,root,along,across,up,.11f*chord*scale,width,thickness,
+                              wildlife_render::ScaleColor(palette.upperWing,1.12f),palette.upperWing,palette.lowerWing);
+            }
+            // the primaries fanned from the hand: the innermost back, the outer ones out to the
+            // tip, the longest near the outside; spread, their tips stand apart
+            for(int k=0;k<PrimaryCount;++k) {
+                const float t=static_cast<float>(k)/(PrimaryCount-1);
+                const Vector3 root=Vector3::Lerp(wristBack,handEnd,t*.9f);
+                // (the outer tips bent up by the air's lift)
+                const Vector3 along=Unit(Vector3::Lerp(back,outward,std::lerp(.10f,.92f,t)*s+.02f*t)
+                                         +up*(.12f*s*t),-forward);
+                const Vector3 across=Unit(Vector3::Cross(up,along)*side,right);
+                const float longest=frigate?.62f:(parrot?.46f:.50f);
+                const float length=longest*scale*std::lerp(.62f,1.0f,std::min(1.0f,t*1.25f))*(k==PrimaryCount-1?.92f:1.0f);
+                AppendFeather(vertices,root,along,across,up,length,(frigate?.070f:.090f)*scale,thickness,
+                              Color::Lerp(palette.upperWing,palette.flight,.75f),
+                              wildlife_render::ScaleColor(palette.flight,.70f),under);
+            }
+        }
+
+        // A near tail of six feathers fanned from the rump: the parrot's long and graduated, the
+        // frigatebird's deeply forked, the coastal birds' square, the doves' rounded.
+        void AppendFeatheredTail(std::vector<VertexPositionColor>& vertices,const Vector3& centre,
+                                 const Vector3& right,const Vector3& up,const Vector3& forward,
+                                 const float scale,const BirdPalette& palette,const BirdSpecies species)
+        {
+            const bool parrot=species==BirdSpecies::Parrot,frigate=species==BirdSpecies::Frigatebird;
+            const bool dove=species==BirdSpecies::FruitDove;
+            // centre pair to outer pair
+            const std::array<float,3> lengths=parrot?std::array<float,3>{.74f,.60f,.46f}
+                :frigate?std::array<float,3>{.52f,.74f,1.00f}
+                :dove?std::array<float,3>{.34f,.32f,.28f}:std::array<float,3>{.42f,.44f,.47f};
+            const float fan=parrot?.10f:frigate?.22f:dove?.30f:.34f;
+            const float width=(parrot?.075f:frigate?.070f:.085f)*scale;
+            const Vector3 root=LocalPoint(centre,right,up,forward,0.0f,.004f,-.40f,scale);
+            const Color under=Color::Lerp(palette.lowerWing,palette.tail,.4f);
+            for(int k=0;k<TailFeatherCount;++k) {
+                const int pair=k<3?2-k:k-3;     // 2,1,0 on the left, 0,1,2 on the right
+                const float side=k<3?-1.0f:1.0f;
+                const float angle=side*fan*(static_cast<float>(pair)+.5f)/3.0f;
+                const Vector3 along=Unit(-forward*std::cos(angle)+right*std::sin(angle)-up*.06f,-forward);
+                const Vector3 across=Unit(Vector3::Cross(up,along),right);
+                AppendFeather(vertices,root+right*(side*.012f*scale)+up*(.002f*scale*static_cast<float>(pair)),
+                              along,across,up,lengths[static_cast<std::size_t>(pair)]*scale,width,.006f*scale,
+                              palette.tail,parrot?palette.flight:wildlife_render::ScaleColor(palette.tail,.72f),under);
+            }
+        }
+
         void AppendNearBody(std::vector<VertexPositionColor>& vertices,
                             const Vector3& centre,const Vector3& right,
                             const Vector3& up,const Vector3& forward,const float scale,
@@ -331,6 +491,119 @@ namespace island
                 vertices.emplace_back(corner(Sections.size()-1,side),shade(side));
                 vertices.emplace_back(corner(Sections.size()-1,next),shade(next));
             }
+        }
+
+        // A near head lofted along the bill's axis (the detail LOD, all but the doves): from the
+        // neck, in the body's colour, swelling over the crown and narrowing to the face, shaded
+        // at every corner; the eye a pale ring round a coloured iris and a black pupil on the
+        // side the camera sees, set into the surface; the parrot's upper mandible a deep hook
+        // curling down over the small lower one, the others' a straight tapering bill.
+        void AppendLoftedHead(std::vector<VertexPositionColor>& vertices,const Vector3& centre,
+                              const Vector3& right,const Vector3& up,const Vector3& forward,
+                              const float scale,const BirdPalette& palette,const BirdSpecies species,
+                              const Vector3& cameraPosition)
+        {
+            const bool parrot=species==BirdSpecies::Parrot;
+            const float h=parrot?.95f:(species==BirdSpecies::Frigatebird?.80f:.86f);
+            struct Section { float z, halfWidth, halfHeight, lift, toHead; };
+            constexpr std::array<Section,7> Sections{{
+                {.300f,.090f,.088f,.012f,0.0f},{.340f,.112f,.112f,.030f,.55f},{.385f,.124f,.130f,.046f,.95f},
+                {.430f,.122f,.128f,.054f,1.0f},{.475f,.106f,.112f,.054f,1.0f},{.512f,.078f,.084f,.050f,1.0f},
+                {.538f,.040f,.046f,.046f,1.0f}}};
+            constexpr int Sides=14;
+            const auto point=[&](const std::size_t i,const int side) {
+                const float angle=6.28318530718f*static_cast<float>(side)/Sides;
+                const auto& at=Sections[i];
+                return LocalPoint(centre,right,up,forward,std::cos(angle)*at.halfWidth*h,
+                                  at.lift+std::sin(angle)*at.halfHeight*h,at.z,scale);
+            };
+            const auto colour=[&](const std::size_t i,const int side) {
+                const float angle=6.28318530718f*static_cast<float>(side)/Sides;
+                const auto& at=Sections[i];
+                // round its middle the profile's slope tips the normal back toward the neck
+                const float slope=i==0||i+1==Sections.size()?0.0f:
+                    (Sections[i+1].halfWidth-Sections[i-1].halfWidth)/(Sections[i+1].z-Sections[i-1].z);
+                const Vector3 normal=Unit(right*std::cos(angle)+up*std::sin(angle)-forward*(slope*.8f),up);
+                // the throat a shade paler than the crown
+                const Color base=Color::Lerp(palette.body,palette.head,at.toHead);
+                return Lit(Color::Lerp(wildlife_render::ScaleColor(base,.86f),base,.5f+.5f*std::sin(angle)),normal);
+            };
+            for(int side=0;side<Sides;++side) {
+                const int next=side+1;
+                for(std::size_t i=0;i+1<Sections.size();++i) {
+                    vertices.emplace_back(point(i,side),colour(i,side));
+                    vertices.emplace_back(point(i,next),colour(i,next));
+                    vertices.emplace_back(point(i+1,next),colour(i+1,next));
+                    vertices.emplace_back(point(i,side),colour(i,side));
+                    vertices.emplace_back(point(i+1,next),colour(i+1,next));
+                    vertices.emplace_back(point(i+1,side),colour(i+1,side));
+                }
+                const Vector3 face=LocalPoint(centre,right,up,forward,0.0f,Sections.back().lift,
+                                              Sections.back().z+.006f,scale);
+                vertices.emplace_back(point(Sections.size()-1,side),colour(Sections.size()-1,side));
+                vertices.emplace_back(point(Sections.size()-1,next),colour(Sections.size()-1,next));
+                vertices.emplace_back(face,Lit(palette.head,forward));
+            }
+            // the bill: rings along a curve, a hook for the parrot
+            const std::array<std::array<float,4>,6> bill=parrot
+                ? std::array<std::array<float,4>,6>{{{.505f,.060f,.040f,.050f},{.540f,.072f,.036f,.044f},
+                    {.572f,.062f,.028f,.036f},{.592f,.030f,.020f,.028f},{.596f,-.006f,.012f,.018f},{.584f,-.034f,.004f,.006f}}}
+                : std::array<std::array<float,4>,6>{{{.525f,.046f,.026f,.020f},{.560f,.045f,.020f,.016f},
+                    {.595f,.044f,.015f,.012f},{.625f,.042f,.010f,.009f},{.650f,.040f,.006f,.005f},{.668f,.038f,.002f,.002f}}};
+            constexpr int BillSides=8;
+            const auto billPoint=[&](const std::size_t i,const int side) {
+                const float angle=6.28318530718f*static_cast<float>(side)/BillSides;
+                return LocalPoint(centre,right,up,forward,std::cos(angle)*bill[i][2]*h,
+                                  bill[i][1]*h+std::sin(angle)*bill[i][3]*h,bill[i][0],scale);
+            };
+            for(int side=0;side<BillSides;++side) {
+                const float angle=6.28318530718f*static_cast<float>(side)/BillSides;
+                const Color c=Lit(palette.beak,Unit(right*std::cos(angle)+up*std::sin(angle)+forward*.3f,forward));
+                const Color c1=Lit(palette.beak,Unit(right*std::cos(angle+.785f)+up*std::sin(angle+.785f)+forward*.3f,forward));
+                for(std::size_t i=0;i+1<bill.size();++i) {
+                    vertices.emplace_back(billPoint(i,side),c);
+                    vertices.emplace_back(billPoint(i,side+1),c1);
+                    vertices.emplace_back(billPoint(i+1,side+1),c1);
+                    vertices.emplace_back(billPoint(i,side),c);
+                    vertices.emplace_back(billPoint(i+1,side+1),c1);
+                    vertices.emplace_back(billPoint(i+1,side),c);
+                }
+            }
+            if(parrot) {
+                // the lower mandible, a short blunt scoop under the hook
+                const Color lower=wildlife_render::ScaleColor(palette.beak,.72f);
+                const Vector3 a=LocalPoint(centre,right,up,forward,-.032f*h,.010f*h,.508f,scale);
+                const Vector3 b=LocalPoint(centre,right,up,forward,.032f*h,.010f*h,.508f,scale);
+                const Vector3 c=LocalPoint(centre,right,up,forward,0.0f,-.012f*h,.560f,scale);
+                const Vector3 d=LocalPoint(centre,right,up,forward,0.0f,-.030f*h,.512f,scale);
+                AddTriangle(vertices,a,b,c,wildlife_render::FacetColor(a,b,c,lower,true));
+                AddTriangle(vertices,a,d,b,wildlife_render::FacetColor(a,d,b,lower,true));
+                AddTriangle(vertices,a,c,d,wildlife_render::FacetColor(a,c,d,lower,true));
+                AddTriangle(vertices,b,d,c,wildlife_render::FacetColor(b,d,c,lower,true));
+            }
+            // the eye on the camera's side: a pale ring, the iris, the pupil, a speck of light
+            const float eyeSide=Vector3::Dot(cameraPosition-centre,right)>=0.0f?1.0f:-1.0f;
+            constexpr float EyeZ=.455f,EyeY=.080f;
+            const float surface=(Sections[3].halfWidth+(Sections[4].halfWidth-Sections[3].halfWidth)*((EyeZ-.430f)/.045f))*h;
+            const float ringRadius=parrot?.030f:.020f,irisRadius=parrot?.016f:.014f,pupilRadius=parrot?.008f:.009f;
+            const Color ring=parrot?Color(226,222,210,255):wildlife_render::ScaleColor(palette.head,.70f);
+            const Color iris=parrot?Color(214,150,40,255):Color(96,58,30,255);
+            constexpr int EyeSides=10;
+            const auto disc=[&](const float radius,const float out,const Color& c) {
+                const Vector3 middle=LocalPoint(centre,right,up,forward,eyeSide*(surface*.88f+out),EyeY*h,EyeZ,scale);
+                for(int k=0;k<EyeSides;++k) {
+                    const float a0=6.28318530718f*static_cast<float>(k)/EyeSides,a1=6.28318530718f*static_cast<float>(k+1)/EyeSides;
+                    const auto edge=[&](const float a) {
+                        return middle+up*(std::sin(a)*radius*h*scale)+forward*(std::cos(a)*radius*h*1.15f*scale)
+                            -right*(eyeSide*radius*radius*6.0f*scale);
+                    };
+                    AddTriangle(vertices,middle,edge(a0),edge(a1),c);
+                }
+            };
+            disc(ringRadius,.004f,ring);
+            disc(irisRadius,.006f,iris);
+            disc(pupilRadius,.008f,palette.eye);
+            disc(.0035f,.0095f,Color(236,236,230,255));
         }
 
         void AppendNearHead(std::vector<VertexPositionColor>& vertices,
@@ -504,8 +777,10 @@ namespace island
             const float pivotZ = (bird.species == BirdSpecies::FruitDove ? .365f : .34f) * scale;
             const Vector3 headCentre = bodyCentre + bodyForward * (bird.headBob * 0.055f * scale + pivotZ)
                 - headForward * pivotZ - bodyUp * (bird.headBob * 0.018f * scale);
-            AppendNearHead(vertices,headCentre,turnedRight,headUp,headForward,scale,palette,bird.species,
-                           cameraPosition,coarse);
+            if(!coarse&&bird.species!=BirdSpecies::FruitDove)
+                AppendLoftedHead(vertices,headCentre,turnedRight,headUp,headForward,scale,palette,bird.species,cameraPosition);
+            else AppendNearHead(vertices,headCentre,turnedRight,headUp,headForward,scale,palette,bird.species,
+                                cameraPosition,coarse);
 
             const float perch = std::clamp(bird.perchAmount, 0.0f, 1.0f);
             const bool groundDove = bird.behavior == BirdBehavior::GroundApproach
@@ -535,6 +810,11 @@ namespace island
                     AppendEllipsoid(vertices,foldedWing,right,bodyUp,bodyForward,
                         .105f*scale,.100f*scale,.345f*scale,
                         palette.upperWing,wildlife_render::ScaleColor(palette.upperWing,.82f));
+                    continue;
+                }
+                if(!coarse) {
+                    AppendFeatheredWing(vertices,bodyCentre,right,bodyUp,bodyForward,scale,side,
+                                        1.0f-sidePerch,wingLift,palette,bird.species);
                     continue;
                 }
                 const Vector3 front=side<0.0f?leftFront:rightFront;
@@ -589,7 +869,8 @@ namespace island
             const float tailLength = bird.species == BirdSpecies::Parrot ? -1.08f
                 : (bird.species == BirdSpecies::FruitDove ? -.64f : forked ? -1.30f : -.83f);
             const float featherRoot=bird.species==BirdSpecies::Parrot?.075f:forked?.085f:tailHalfWidth*.42f;
-            for(const float side:{-1.0f,1.0f}) {
+            if(!coarse) AppendFeatheredTail(vertices,bodyCentre,right,bodyUp,bodyForward,scale,palette,bird.species);
+            else for(const float side:{-1.0f,1.0f}) {
                 const float tipZ=tailLength-(side>0.0f&&bird.species==BirdSpecies::Parrot?.055f:0.0f);
                 const std::array<Vector3,4> feather{
                     LocalPoint(bodyCentre,right,bodyUp,bodyForward,side*.025f,0.0f,-.35f,scale),
@@ -637,19 +918,9 @@ namespace island
                     }
                 }
             }
-            std::size_t expected=perch>0.35f?846U:822U;
-            if(bird.species==BirdSpecies::FruitDove)expected+=180U;
-            if(groundDove) {
-                expected+=360U;
-                if(perch>0.35f)expected+=216U;
-            }
-            // the seven-ring body (+384), the four-ring head (+96, not the doves' ellipsoid),
-            // and the notched wings (+144, not the ground doves' folded ellipsoids)
-            expected+=384U;
-            if(bird.species!=BirdSpecies::FruitDove)expected+=96U;
-            if(!groundDove)expected+=144U;
-            if(coarse?vertices.size()-startingVertexCount>expected
-                     :vertices.size()-startingVertexCount!=expected) {
+            // the near mesh stays inside its fixed share of the buffer (feathered wings and tail,
+            // lofted head, the eye and the bill)
+            if(vertices.size()-startingVertexCount>static_cast<std::size_t>(MaximumVerticesPerBird)) {
                 throw std::runtime_error("Bird near mesh does not match its fixed vertex budget");
             }
         }
