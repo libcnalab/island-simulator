@@ -213,6 +213,7 @@ namespace island
             case FixedViewpoint::QuadAuditDetail: return "quad-audit";
             case FixedViewpoint::QuadPlaneDetail: return "quad-plane";
             case FixedViewpoint::QuadWhaleDetail: return "quad-whale";
+            case FixedViewpoint::QuadMineCratesDetail: return "quad-mine-crates";
             case FixedViewpoint::QuadLighthouseDetail: return "quad-lighthouse";
             case FixedViewpoint::JournalDetail: return "journal";
             case FixedViewpoint::JournalNoticeDetail: return "journal-notice";
@@ -4053,6 +4054,12 @@ namespace island
                     std::cout << "island-simulator: quad QA volcano: the walker on the cone " << r << " m from the crater, the quad brought "
                               << VolcanoSite::Radius(q.x, q.z) << " m from it, ground " << QuadGround(q.x, q.z).height
                               << " against the cone's " << OpenGround(q.x, q.z) << '\n';
+                } else if (viewpoint_ == FixedViewpoint::QuadMineCratesDetail) {
+                    // up the approach as quad-mine does, on up the adit to the crates stacked by
+                    // the left wall, where it brakes beside them (over the portal's sill it needs
+                    // its speed; it is captured later than the other drives)
+                    const auto from = mineLayout_.World(0.25f, 0.0f, -7.0f), to = mineLayout_.World(0.25f, 0.0f, 0.0f);
+                    PlaceQuadNear(from.x, from.z, std::atan2(to.x - from.x, to.z - from.z));
                 } else if (viewpoint_ == FixedViewpoint::QuadMineDetail) {
                     // up the approach into the old mine's cutting and its adit
                     const auto from = mineLayout_.World(0.25f, 0.0f, -7.0f), to = mineLayout_.World(0.25f, 0.0f, 0.0f);
@@ -4135,6 +4142,7 @@ namespace island
                 const bool stands = viewpoint_ == FixedViewpoint::QuadVolcanoDetail || viewpoint_ == FixedViewpoint::QuadLighthouseDetail;
                 quadControls_ = {viewpoint_ == FixedViewpoint::QuadDriveDetail ? 0.8f
                     : viewpoint_ == FixedViewpoint::QuadJettyDetail ? 0.4f
+                    : viewpoint_ == FixedViewpoint::QuadMineCratesDetail ? 1.0f
                     : stands ? 0.0f
                     : 1.0f, 0.0f, stands};
                 quadCameraYaw_ = quad_.YawRadians();
@@ -6730,6 +6738,11 @@ namespace island
         if (!quadRenderer_ || !quadPlaced_) return;
         const auto ground = [this](float x, float z) { return QuadGround(x, z); };
         const auto obstacles = [this](float x, float z, float r, float& px, float& pz) { return QuadObstacle(x, z, r, px, pz); };
+        if (viewpoint_ == FixedViewpoint::QuadMineCratesDetail) {
+            // the crates view brakes as its nose comes level with the crates
+            const auto q = quad_.Position();
+            if (mineLayout_.Local({q.x, q.y, q.z}).z > MineLayout::CrateFrom - 1.6f) quadControls_ = {0.0f, 0.0f, true};
+        }
         if (viewpoint_ == FixedViewpoint::QuadJettyDetail && jettyPlacement_) {
             // the jetty view rides six metres out along the deck, then brakes and stands on it
             const auto q = quad_.Position();
@@ -10056,7 +10069,7 @@ namespace island
                 <<" frames="<<drawnFrames_<<" time="<<timeSeconds
                 <<" draws="<<streamWaterRenderer_->DrawCallCount()<<" triangles=6080\n";
         }
-        const std::uint32_t targetFrames = goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture ? 64U : snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
+        const std::uint32_t targetFrames = goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture ? 64U : viewpoint_==FixedViewpoint::QuadMineCratesDetail ? 56U : snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
                 && (viewpoint_ == FixedViewpoint::MonkeyDetail || viewpoint_ == FixedViewpoint::MonkeyTreeDetail || viewpoint_ == FixedViewpoint::MonkeyClimbDetail)
             ? MonkeyCaptureFrames : SmokeTestFrames;
         if (!capturePath_.empty() && drawnFrames_ == targetFrames) {
@@ -10136,7 +10149,7 @@ namespace island
                     std::cout << "island-simulator: quad QA volcano stands " << VolcanoSite::Radius(q.x, q.z)
                               << " m from the crater, body " << q.y << " over the cone's " << OpenGround(q.x, q.z)
                               << (q.y - OpenGround(q.x, q.z) > 0.2f ? ", on it" : ", inside it") << '\n';
-                } else if (viewpoint_ == FixedViewpoint::QuadMineDetail) {
+                } else if (viewpoint_ == FixedViewpoint::QuadMineDetail || viewpoint_ == FixedViewpoint::QuadMineCratesDetail) {
                     const MinePoint local = mineLayout_.Local({q.x, q.y, q.z});
                     std::cout << "island-simulator: quad QA shelter: mine, site "
                               << (quadSite_ == QuadSite::Mine ? "mine" : "open") << ", depth " << local.z << " m, across "

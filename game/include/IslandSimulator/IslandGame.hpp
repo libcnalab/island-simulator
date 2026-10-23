@@ -383,6 +383,7 @@ namespace island
         QuadAuditDetail,
         QuadPlaneDetail,
         QuadWhaleDetail,
+        QuadMineCratesDetail,
         QuadLighthouseDetail,
         CrabDetail,
         HermitCrabDetail,
@@ -817,7 +818,8 @@ namespace island
                 || viewpoint_ == FixedViewpoint::QuadBearDetail || viewpoint_ == FixedViewpoint::QuadStreamDetail
                 || viewpoint_ == FixedViewpoint::QuadSeaDetail || viewpoint_ == FixedViewpoint::QuadMineDetail
                 || viewpoint_ == FixedViewpoint::QuadVolcanoDetail || viewpoint_ == FixedViewpoint::QuadPlaneDetail
-                || viewpoint_ == FixedViewpoint::QuadWhaleDetail || viewpoint_ == FixedViewpoint::QuadLighthouseDetail;
+                || viewpoint_ == FixedViewpoint::QuadWhaleDetail || viewpoint_ == FixedViewpoint::QuadLighthouseDetail
+                || viewpoint_ == FixedViewpoint::QuadMineCratesDetail;
         }
         float quadSiteFloorY_ = 0.0f;
         int quadStreamWaitUpdates_ = 13;   // QA: the stream view stands this many updates before setting off

@@ -233,6 +233,15 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 573 (2026-10-23) — a longer quad drive in the old mine, to the crates
+
+The operator's kept item 14. A new QA view `quad-mine-crates`: the quad driven at full throttle
+up the approach as `quad-mine`, over the portal's sill (it needs its speed there: started
+inside it rolled back off it) and on up the lantern-lit adit, braking as its nose comes level
+with the crates stacked by the left wall; captured after 56 frames (5.6 s) on the dim-interior
+profile. It stands 10.1 m in, on the floor, its walls clear (`20261023T084258`); the capture fails short of
+8.5 m. `quad-mine` passes. Full suite 76/76.
+
 ## Loop pass 572 (2026-10-23) — foxfire on the standing snags and the fallen logs' true surface
 
 The operator's kept items 11 and 15.

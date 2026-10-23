@@ -158,7 +158,7 @@ Czech in the operator's messages; the intent is kept here.
 11. [x] **Foxfire on the standing snags** too, not only on the fallen wood (pass 549). Done in pass 572.
 12. [ ] **Weaver-bird nests** hanging from palm fronds.
 13. [x] **Grass kept out of the windthrow's pit.** Done in pass 571.
-14. [ ] **A longer `quad-mine` QA drive** that reaches the crates.
+14. [x] **A longer `quad-mine` QA drive** that reaches the crates. Done in pass 573 (`quad-mine-crates`).
 15. [x] **A night `glowing-fungi` QA view** (`foxfire-log`, pass 572) on a fallen log away from the giant.
 
 **Operator addition (2026-10-23).**
@@ -518,6 +518,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 573: item 14, QA `quad-mine-crates`: the quad driven up the adit to the crates, 10.1 m in (`20261023T084258`) (PLAN "Loop pass 573").
 - Pass 572: items 11 and 15, foxfire on the standing snags and on the fallen logs' true surface (it had been buried inside them); QA `foxfire-log --time-of-day 22` `20261023T083722`, `foxfire-snag` `083730` (PLAN "Loop pass 572").
 - Pass 571: items 10 and 13, the windthrow's light gap (`CanopyLightField::OpenGap`) with sixteen pioneer saplings, and no grass in its pit/plate/trunk (`GrassLayout::Remove`); `windthrow` `20261023T083240` (PLAN "Loop pass 571").
 - Pass 570: item 9 second pass, the tyrannosaur's sounds (footfalls, roar, boom, breath; `Soundscape::NoteTRex`), its ways (watch, follow, roar/boom, sniff, drink at the stream mouth, lie up at night), animals scattering from it, the ground's shake; QA `trex-roar` `20261023T081909`, `trex-rest` `081955` (PLAN "Loop pass 570").
