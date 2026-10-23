@@ -222,6 +222,8 @@ namespace island
             case FixedViewpoint::BoobyColonyDetail: return "booby-colony";
             case FixedViewpoint::BoobyNestsDetail: return "booby-nests";
             case FixedViewpoint::MudskipperDetail: return "mudskippers";
+            case FixedViewpoint::WeaverNestsDetail: return "weaver-nests";
+            case FixedViewpoint::WeaverDisplayDetail: return "weaver-display";
             case FixedViewpoint::TRexDetail: return "trex";
             case FixedViewpoint::TRexCloseDetail: return "trex-close";
             case FixedViewpoint::TRexRoarDetail: return "trex-roar";
@@ -683,6 +685,19 @@ namespace island
             }
             windthrowPlacement_=WindthrowLayout::FindInWorld(terrain_,jungleLayout_.Canopy(),worldObstacles,avoid);
             mudskippers_=std::make_unique<MudskipperColony>(terrain_,jungleLayout_.Canopy());
+            {
+                // The village weavers' colony: their nests woven onto the mature fronds of a few
+                // shore palms, each where the palm's own mesh draws the frond.
+                std::vector<WeaverNestSite> sites;
+                const auto palms=vegetationLayout_.Palms();
+                for(const std::uint32_t index:WeaverColony::ChoosePalms(palms,terrain_))
+                    for(const PalmRenderer::FrondAnchor& anchor:PalmRenderer::MatureFrondAnchors(palms[index],WeaverColony::NestAlong)) {
+                        const Vector3 rest=Vector3::Transform(anchor.local,anchor.transform);
+                        sites.push_back({rest.X,rest.Y,rest.Z,anchor.bearing,index,anchor.frond});
+                        weaverAnchors_.push_back(anchor);
+                    }
+                if(!sites.empty()) weavers_=std::make_unique<WeaverColony>(sites);
+            }
             if(windthrowPlacement_) {
                 const WindthrowPlacement& w=*windthrowPlacement_;
                 // the gap the giant tore in the crowns as it fell: the light down to the floor
@@ -2521,6 +2536,54 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: mudskippers QA camera crouches on the mud under the mangroves\n";
+        } else if (viewpoint_ == FixedViewpoint::WeaverNestsDetail || viewpoint_ == FixedViewpoint::WeaverDisplayDetail) {
+            // Up into the first colony palm's crown from beside it, at its hanging nests; or
+            // close beside a male hanging under his nest with his wings beating.
+            if(!weavers_||weavers_->Nests().empty()) throw std::runtime_error("Weaver QA requires the weavers' nests");
+            const auto nests=weavers_->Nests();
+            const auto sites=weavers_->Sites();
+            const std::uint32_t palm=sites[nests.front().site].palm;
+            if(viewpoint_==FixedViewpoint::WeaverNestsDetail) {
+                Vector3 centre(0,0,0);float bx=0,bz=0;int n=0;
+                for(const WeaverNest& nest:nests) {
+                    const auto& site=sites[nest.site];
+                    if(site.palm!=palm) continue;
+                    centre+=Vector3(site.x,site.y-nest.hang-0.12f,site.z);
+                    bx+=std::cos(site.bearing);bz+=std::sin(site.bearing);++n;
+                }
+                centre/=static_cast<float>(n);
+                const PalmPlacement& tree=vegetationLayout_.Palms()[palm];
+                // from the side the most nests hang, out past them and a little below
+                float ox=centre.X-tree.x,oz=centre.Z-tree.z;
+                if(std::hypot(bx,bz)>0.3f) {ox=bx;oz=bz;}
+                const float ol=std::max(1e-3f,std::hypot(ox,oz));ox/=ol;oz/=ol;
+                cameraPosition_=Vector3(centre.X+ox*5.5f-oz*1.5f,centre.Y-1.4f,centre.Z+oz*5.5f+ox*1.5f);
+                const Vector3 direction=centre-cameraPosition_;
+                yaw_=std::atan2(direction.X,direction.Z);
+                pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+                std::cout<<"island-simulator: weaver-nests QA camera looks up at "<<n<<" nests in a shore palm\n";
+            } else {
+                // a nest whose male hangs beating his wings through the capture's first second
+                std::size_t pick=nests.size();
+                for(int shift=0;shift<120&&pick==nests.size();++shift)
+                    for(std::size_t i=0;i<nests.size();++i)
+                        if(weavers_->Beating(i,static_cast<float>(shift))&&weavers_->Beating(i,static_cast<float>(shift)+1.0f)
+                           &&weavers_->Displaying(i,static_cast<float>(shift)+2.0f)) {
+                            pick=i;weaverClockShift_=static_cast<float>(shift);break;
+                        }
+                if(pick==nests.size()) throw std::runtime_error("Weaver QA requires a displaying male");
+                const WeaverNest& nest=nests[pick];
+                const auto e=weavers_->EntranceLocal(pick);
+                const auto mouth=weavers_->NestPoint(pick,weaverClockShift_,{0,0,0},e[0],e[1],e[2]);
+                const Vector3 subject(mouth[0],mouth[1]-0.06f,mouth[2]);
+                // broadside to the spout's way, a little below
+                const float sx=-std::sin(nest.yaw),sz=std::cos(nest.yaw);
+                cameraPosition_=Vector3(subject.X+sx*1.05f+std::cos(nest.yaw)*0.35f,subject.Y-0.30f,subject.Z+sz*1.05f+std::sin(nest.yaw)*0.35f);
+                const Vector3 direction=Vector3(subject.X,subject.Y+0.05f,subject.Z)-cameraPosition_;
+                yaw_=std::atan2(direction.X,direction.Z);
+                pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+                std::cout<<"island-simulator: weaver-display QA camera watches a male weaver hanging under his nest\n";
+            }
         } else if (viewpoint_ == FixedViewpoint::BoobyColonyDetail || viewpoint_ == FixedViewpoint::BoobyNestsDetail) {
             // From the headland's shore across the water to the boobies' islet; or close, from
             // over the sea beside its main stack, at the birds on their nests.
@@ -3465,6 +3528,7 @@ namespace island
         each("red-crabs", marchingCrabs_, 0.1f, [](const MigratingCrab& c) { return c.scale > 0.5f; });
         each("termite-flight", alates_, 0.5f, [](const Alate& a) { return a.scale > 0.5f; });
         each("boobies", boobyBirds_, 0.5f, always);
+        each("weavers", weaverBirds_, 0.15f, always);
         each("mudskippers", skippers_, 0.06f, always);
         if (trex_) {
             const TRexPoint head = trex_->ToWorld(0.0f, 1.0f, 4.5f);
@@ -3878,6 +3942,7 @@ namespace island
         if(lifeboatPlacement_) lifeboatRenderer_=std::make_unique<LifeboatRenderer>(device,*lifeboatPlacement_,terrain_,*drawnGround_);
         if(seabirdIslet_) seabirdIsletRenderer_=std::make_unique<SeabirdIsletRenderer>(device,*seabirdIslet_);
         if(mudskippers_) mudskipperRenderer_=std::make_unique<MudskipperRenderer>(device,*mudskippers_,terrain_,*drawnGround_);
+        if(weavers_) weaverNestRenderer_=std::make_unique<WeaverNestRenderer>(device,*weavers_);
         if(!pandanus_.empty()) pandanusRenderer_=std::make_unique<PandanusRenderer>(device,pandanus_,terrain_,*drawnGround_);
         if(windthrowPlacement_) windthrowRenderer_=std::make_unique<WindthrowRenderer>(device,*windthrowPlacement_,terrain_,*drawnGround_);
         glowingFungi_=GlowingFungusLayout::Place(terrain_,windthrowPlacement_?&*windthrowPlacement_:nullptr,naturalPropLayout_.FallenLogs(),
@@ -8584,6 +8649,17 @@ namespace island
             palmRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
                                 timeSeconds);
         }
+        if (weaverNestRenderer_) {
+            GpuDiagnosticScope gpuPass("weaver-nests");
+            // the fronds' sway this moment, as the palm shader sways them
+            weaverOffsets_.resize(weaverAnchors_.size());
+            const auto sites = weavers_->Sites();
+            for (std::size_t i = 0; i < weaverAnchors_.size(); ++i) {
+                const Vector3 at = PalmRenderer::FrondAnchorWorld(weaverAnchors_[i], timeSeconds);
+                weaverOffsets_[i] = {at.X - sites[i].x, at.Y - sites[i].y, at.Z - sites[i].z};
+            }
+            weaverNestRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, timeSeconds + weaverClockShift_, weaverOffsets_);
+        }
 
         {
             GpuDiagnosticScope gpuPass("butterflies");
@@ -8720,6 +8796,12 @@ namespace island
             if (boobies_) {
                 boobies_->At(timeSeconds, boobyBirds_);
                 birdRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, boobyBirds_);
+            }
+            if (weavers_) {
+                weavers_->At(timeSeconds + weaverClockShift_, weaverOffsets_,
+                             [this](const float x, const float z) { return DrawnOrAnalyticHeight(*drawnGround_, terrain_, x, z); },
+                             weaverBirds_);
+                birdRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, weaverBirds_);
             }
         }
 

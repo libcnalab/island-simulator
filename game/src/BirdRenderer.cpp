@@ -109,9 +109,22 @@ namespace island
             Color(232, 230, 222, 255), Color(66, 48, 36, 255), Color(70, 52, 40, 255),
             Color(222, 206, 128, 255), Color(30, 26, 20, 255), Color(50, 38, 30, 255)};
 
+        // A village weaver: the male a bright egg-yolk yellow with a black head, a red eye and a
+        // stout black bill, his back and wings yellow barred with black; the female olive above
+        // and pale yellow below, a horn-coloured bill.
+        const std::array<BirdPalette, 2> WeaverPalettes = {{
+            {Color(236, 196, 34, 255), Color(150, 128, 36, 255), Color(232, 204, 92, 255),
+             Color(118, 104, 40, 255), Color(22, 20, 16, 255), Color(28, 26, 22, 255),
+             Color(150, 34, 24, 255), Color(46, 40, 24, 255)},
+            {Color(214, 196, 108, 255), Color(126, 118, 64, 255), Color(206, 194, 130, 255),
+             Color(110, 104, 62, 255), Color(140, 132, 70, 255), Color(176, 150, 112, 255),
+             Color(92, 46, 30, 255), Color(84, 78, 52, 255)}
+        }};
+
         [[nodiscard]] const BirdPalette& PaletteForBird(const BirdState& bird)
         {
             if (bird.species == BirdSpecies::Booby) return BoobyPalette;
+            if (bird.species == BirdSpecies::Weaver) return WeaverPalettes[bird.colorVariant % WeaverPalettes.size()];
             if (bird.species == BirdSpecies::Frigatebird) return FrigatePalette;
             if (bird.species == BirdSpecies::Parrot) {
                 return ParrotPalettes[bird.colorVariant % ParrotPalettes.size()];
@@ -521,6 +534,7 @@ namespace island
             const bool parrot=species==BirdSpecies::Parrot;
             const bool dove=species==BirdSpecies::FruitDove;
             const bool booby=species==BirdSpecies::Booby;
+            const bool weaver=species==BirdSpecies::Weaver;
             const float h=parrot?.95f:(species==BirdSpecies::Frigatebird?.80f:(dove?.84f:.86f));
             struct Section { float z, halfWidth, halfHeight, lift, toHead; };
             constexpr std::array<Section,7> Sections{{
@@ -568,6 +582,9 @@ namespace island
                 // (a booby's: long, deep at the base and tapering straight to a sharp point)
                 : booby ? std::array<std::array<float,4>,6>{{{.505f,.050f,.036f,.034f},{.570f,.046f,.030f,.026f},
                     {.640f,.041f,.024f,.019f},{.705f,.036f,.017f,.013f},{.755f,.031f,.010f,.008f},{.790f,.027f,.003f,.003f}}}
+                // (a weaver's: a short, stout seed-cracking cone)
+                : weaver ? std::array<std::array<float,4>,6>{{{.505f,.050f,.052f,.050f},{.538f,.048f,.044f,.042f},
+                    {.566f,.046f,.034f,.032f},{.590f,.044f,.023f,.021f},{.606f,.042f,.012f,.011f},{.616f,.041f,.003f,.003f}}}
                 : dove ? std::array<std::array<float,4>,6>{{{.522f,.050f,.022f,.018f},{.540f,.050f,.018f,.015f},
                     {.558f,.048f,.013f,.011f},{.574f,.045f,.010f,.008f},{.588f,.042f,.007f,.006f},{.598f,.040f,.003f,.003f}}}
                 : std::array<std::array<float,4>,6>{{{.525f,.046f,.026f,.020f},{.560f,.045f,.020f,.016f},
@@ -1052,7 +1069,12 @@ namespace island
                 || !frustum.Intersects(BoundingSphere(centre, bird.scale * 1.25f))) {
                 continue;
             }
-            if (distanceSquared <= NearLodDistance * NearLodDistance) {
+            // (a batch of more birds than the flock, the weavers' colony, keeps to the buffer:
+            // the last near ones drawn far)
+            const bool room = stagingVertices_.size() + static_cast<std::size_t>(MaximumVerticesPerBird)
+                <= static_cast<std::size_t>(MaximumVertexCount);
+            if (!room && stagingVertices_.size() + 64U > static_cast<std::size_t>(MaximumVertexCount)) break;
+            if (room && distanceSquared <= NearLodDistance * NearLodDistance) {
                 AppendNearBird(stagingVertices_, bird, cameraPosition,
                                distanceSquared > DetailLodDistance * DetailLodDistance);
                 ++visibleNearBirdCount_;

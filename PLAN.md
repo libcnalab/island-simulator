@@ -233,6 +233,24 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 574 (2026-10-23) — village weavers' nests hanging from the shore palms' fronds
+
+The operator's kept item 12. `WeaverColony` (core): three living palms 12–60 m in from the shore,
+more than 120 m apart; a nest woven onto most of each palm's mature fronds at 0.56 of the frond's
+length (25 nests). Each nest hangs on torn leaflet strips 0.12–0.26 m below the midrib, a woven
+kidney chamber with a short entrance spout underneath, fresh green or dried to straw (last
+season's); a few still bare hoops being woven. The frond points come from the palm's own mesh:
+`PalmRenderer` now shares the frond parameters between its meshes and `MatureFrondAnchors`, and
+`FrondAnchorWorld` mirrors the palm shader's sway, gust lean and storm push, so the nests ride
+their fronds; each nest also rocks on its strips (more while a bird clings to it). Birds
+(`BirdSpecies::Weaver`, through `BirdRenderer`): bright yellow black-headed males with a red eye
+and a short conical bill hang upside down under their spouts beating their wings in bursts, fly
+down to the grass 6–13 m out for a strip, back up, and cling to the nest's back weaving it in;
+an olive female in each palm goes from nest to nest. One old nest in five is abandoned. The
+journal has "Village weavers". `BirdRenderer` keeps a batch larger than the flock inside its
+buffer (the last near birds drawn far). QA views `weaver-nests` (`20261023T090230`) and
+`weaver-display` (`20261023T085745`). Core test for the palms, nests and birds. Full suite 76/76.
+
 ## Loop pass 573 (2026-10-23) — a longer quad drive in the old mine, to the crates
 
 The operator's kept item 14. A new QA view `quad-mine-crates`: the quad driven at full throttle

@@ -61,6 +61,23 @@ namespace island
         void DrawSunShadow(SunShadowMap& map);
         [[nodiscard]] int DrawCallCount() const noexcept { return drawCallCount_; }
         [[nodiscard]] int FallenPalmCount() const noexcept { return fallenPalmCount_; }
+
+        /** A point on a living palm's frond midrib: the palm's instance transform, the point in
+         *  the palm's own frame, its wind weight and phase (as the frond's vertices carry them),
+         *  the frond's outward bearing in the world, and the frond's index in the crown. */
+        struct FrondAnchor
+        {
+            Microsoft::Xna::Framework::Matrix transform;
+            Microsoft::Xna::Framework::Vector3 local;
+            float windWeight = 0.0f, windPhase = 0.0f, bearing = 0.0f;
+            int frond = 0;
+        };
+        /** The midrib point `along` (0 the crown .. 1 the tip) of each mature frond of a living
+         *  palm (the near and middle meshes' crown); none for a broken or fallen palm. */
+        [[nodiscard]] static std::vector<FrondAnchor> MatureFrondAnchors(const PalmPlacement& palm, float along);
+        /** The anchor in the world at `timeSeconds`, swayed as the palm shader sways its frond. */
+        [[nodiscard]] static Microsoft::Xna::Framework::Vector3 FrondAnchorWorld(const FrondAnchor& anchor,
+                                                                                 float timeSeconds);
         [[nodiscard]] int BrokenPalmCount() const noexcept { return brokenPalmCount_; }
 
     private:

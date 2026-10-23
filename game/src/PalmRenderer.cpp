@@ -654,34 +654,79 @@ void main()
             }
         }
 
+        // Lean away from the fixed trade wind in world space, after yaw so the lean does not
+        // depend on the authored facing. Collision stays at the base.
+        [[nodiscard]] Matrix LivingPalmTransform(const PalmPlacement& palm)
+        {
+            const float lean = wind::PalmLeanRadians(
+                wind::Exposure(palm.x, palm.z, palm.shoreDistance));
+            const Vector3 leanAxis(-wind::DirectionZ, 0.0f, wind::DirectionX);
+            return Matrix::CreateScale(palm.scale)
+                * Matrix::CreateRotationY(palm.yawRadians)
+                * Matrix::CreateFromAxisAngle(leanAxis, lean)
+                * Matrix::CreateTranslation(palm.x, palm.y, palm.z);
+        }
+
+        // One frond's bearing and arch in a living crown (shared by the meshes and by what hangs
+        // from the fronds, so the two agree).
+        struct FrondParameters
+        {
+            float angle = 0.0f, length = 1.0f, lift = 0.0f, drop = 0.0f, lateralBend = 0.0f,
+                  windPhase = 0.0f;
+            bool emerging = false;
+        };
+
+        [[nodiscard]] int PalmFrondCount(const int variant, const bool farMesh)
+        {
+            return farMesh ? 12 : 12 + variant % 3;
+        }
+
+        [[nodiscard]] FrondParameters PalmFrond(const int variant, const int frond, const bool farMesh)
+        {
+            const int frondCount = PalmFrondCount(variant, farMesh);
+            const float rotation = static_cast<float>(variant) * 0.41f;
+            const float angleJitter = 0.12f * std::sin(
+                static_cast<float>(frond + 1) * 2.31f
+                + static_cast<float>(variant) * 1.17f);
+            FrondParameters shape;
+            shape.angle = rotation + 2.0f * std::numbers::pi_v<float>
+                * static_cast<float>(frond) / static_cast<float>(frondCount) + angleJitter;
+            shape.emerging = farMesh
+                ? frond >= frondCount - 2
+                : (frond == variant % 3 || frond == frondCount / 2 + variant % 2);
+            const float matureLength = 3.85f + 0.31f
+                * static_cast<float>((frond * 3 + variant) % 5);
+            shape.length = matureLength * (shape.emerging ? 0.76f : 1.0f);
+            shape.lift = shape.emerging ? 1.68f + 0.12f * static_cast<float>(variant % 2)
+                : 0.46f + 0.21f * static_cast<float>((frond + 2 * variant) % 4);
+            shape.drop = shape.emerging ? 0.42f
+                : 1.00f + 0.19f * static_cast<float>((frond * 2 + variant) % 5);
+            shape.lateralBend = 0.10f * std::sin(
+                static_cast<float>(frond + 1) * 1.73f
+                + static_cast<float>(variant) * 0.91f);
+            shape.windPhase = std::fmod(
+                static_cast<float>(frond) / static_cast<float>(frondCount)
+                    + static_cast<float>(variant) * 0.117f,
+                1.0f);
+            return shape;
+        }
+
         void AppendFronds(PalmGeometry& geometry, const int variant, const bool farMesh,
                           const float crownX, const float crownY, const float crownZ,
                           const int leafletStations = NearLeafletStations)
         {
             const int segments = farMesh ? FarFrondSegments : NearFrondSegments;
-            const int frondCount = farMesh ? 12 : 12 + variant % 3;
-            const float rotation = static_cast<float>(variant) * 0.41f;
+            const int frondCount = PalmFrondCount(variant, farMesh);
             for (int frond = 0; frond < frondCount; ++frond) {
-                const float angleJitter = 0.12f * std::sin(
-                    static_cast<float>(frond + 1) * 2.31f
-                    + static_cast<float>(variant) * 1.17f);
-                const float angle = rotation + 2.0f * std::numbers::pi_v<float>
-                    * static_cast<float>(frond) / static_cast<float>(frondCount) + angleJitter;
+                const FrondParameters shape = PalmFrond(variant, frond, farMesh);
+                const float angle = shape.angle;
                 const Vector3 direction(std::cos(angle), 0.0f, std::sin(angle));
                 const Vector3 side(-direction.Z, 0.0f, direction.X);
-                const bool emerging = farMesh
-                    ? frond >= frondCount - 2
-                    : (frond == variant % 3 || frond == frondCount / 2 + variant % 2);
-                const float matureLength = 3.85f + 0.31f
-                    * static_cast<float>((frond * 3 + variant) % 5);
-                const float length = matureLength * (emerging ? 0.76f : 1.0f);
-                const float lift = emerging ? 1.68f + 0.12f * static_cast<float>(variant % 2)
-                    : 0.46f + 0.21f * static_cast<float>((frond + 2 * variant) % 4);
-                const float drop = emerging ? 0.42f
-                    : 1.00f + 0.19f * static_cast<float>((frond * 2 + variant) % 5);
-                const float lateralBend = 0.10f * std::sin(
-                    static_cast<float>(frond + 1) * 1.73f
-                    + static_cast<float>(variant) * 0.91f);
+                const bool emerging = shape.emerging;
+                const float length = shape.length;
+                const float lift = shape.lift;
+                const float drop = shape.drop;
+                const float lateralBend = shape.lateralBend;
                 const std::uint16_t base = static_cast<std::uint16_t>(geometry.vertices.size());
                 geometry.frond.resize(geometry.vertices.size(), PalmGeometry::NoFrond);
                 const auto frondTag = static_cast<std::uint8_t>(geometry.fronds.size());
@@ -692,10 +737,7 @@ void main()
                                       : Color(34, 112, 49, 255));
                 const float frondShade = 0.78f + 0.22f
                     * std::max(0.0f, direction.X * 0.62f + direction.Z * 0.35f);
-                const float windPhase = std::fmod(
-                    static_cast<float>(frond) / static_cast<float>(frondCount)
-                        + static_cast<float>(variant) * 0.117f,
-                    1.0f);
+                const float windPhase = shape.windPhase;
 
                 for (int segment = 0; segment <= segments; ++segment) {
                     const float t = static_cast<float>(segment) / static_cast<float>(segments);
@@ -1339,15 +1381,7 @@ void main()
                 }
                 instance.transform = fallenTransform(tilt);
             } else {
-                // Lean away from the fixed trade wind in world space, after yaw so the lean does
-                // not depend on the authored facing. Collision stays at the base.
-                const float lean = wind::PalmLeanRadians(
-                    wind::Exposure(palm.x, palm.z, palm.shoreDistance));
-                const Vector3 leanAxis(-wind::DirectionZ, 0.0f, wind::DirectionX);
-                instance.transform = Matrix::CreateScale(palm.scale)
-                    * Matrix::CreateRotationY(palm.yawRadians)
-                    * Matrix::CreateFromAxisAngle(leanAxis, lean)
-                    * Matrix::CreateTranslation(palm.x, palm.y, palm.z);
+                instance.transform = LivingPalmTransform(palm);
             }
             instance.x = palm.x;
             instance.z = palm.z;
@@ -1644,5 +1678,67 @@ void main()
         device_.SetVertexBuffers({});
         device_.setIndicesProperty(nullptr);
         effect_->setWorldProperty(Matrix::getIdentityProperty());
+    }
+
+    std::vector<PalmRenderer::FrondAnchor> PalmRenderer::MatureFrondAnchors(const PalmPlacement& palm,
+                                                                            const float along)
+    {
+        std::vector<FrondAnchor> anchors;
+        if (palm.condition != PalmCondition::Living) return anchors;
+        const int variant = static_cast<int>(palm.variant);
+        const TrunkShape trunk = PalmTrunkShape(variant);
+        const Vector3 crown(std::cos(trunk.curveAngle) * trunk.lean, trunk.height,
+                            std::sin(trunk.curveAngle) * trunk.lean);
+        const Matrix transform = LivingPalmTransform(palm);
+        const float t = std::clamp(along, 0.0f, 1.0f);
+        for (int frond = 0; frond < PalmFrondCount(variant, false); ++frond) {
+            const FrondParameters shape = PalmFrond(variant, frond, false);
+            if (shape.emerging) continue;
+            const Vector3 direction(std::cos(shape.angle), 0.0f, std::sin(shape.angle));
+            const Vector3 side(-direction.Z, 0.0f, direction.X);
+            const float radial = shape.length * t;
+            const float arch = shape.lift * std::sin(t * std::numbers::pi_v<float>) - shape.drop * t * t;
+            const float lateral = shape.lateralBend * shape.length
+                * std::sin(t * std::numbers::pi_v<float>) * t;
+            FrondAnchor anchor;
+            anchor.transform = transform;
+            anchor.local = Vector3(crown.X + direction.X * radial + side.X * lateral, crown.Y + arch,
+                                   crown.Z + direction.Z * radial + side.Z * lateral);
+            anchor.windWeight = t * t;
+            anchor.windPhase = shape.windPhase;
+            const Vector3 outward = Vector3::TransformNormal(direction, transform);
+            anchor.bearing = std::atan2(outward.Z, outward.X);
+            anchor.frond = frond;
+            anchors.push_back(anchor);
+        }
+        return anchors;
+    }
+
+    Vector3 PalmRenderer::FrondAnchorWorld(const FrondAnchor& anchor, const float timeSeconds)
+    {
+        // the palm vertex shader's sway, gust lean and storm push, point for point
+        Vector3 local = anchor.local;
+        const float phase = anchor.windPhase * 6.28318530718f;
+        float broad = std::sin(timeSeconds * 0.73f + phase + local.Y * 0.11f);
+        float detail = std::sin(timeSeconds * 1.19f + phase * 1.67f + local.X * 0.31f - local.Z * 0.27f);
+        const float rootX = anchor.transform.M41, rootZ = anchor.transform.M43;
+        const float gust = WindGust::Strength(rootX, rootZ, timeSeconds);
+        broad = broad + (1.0f - broad) * gust * 0.85f;
+        detail *= 1.0f - 0.4f * gust;
+        const float storm = std::clamp(weather_now::Current().wind - 1.0f, 0.0f, 1.2f);
+        const float sway = (broad * 0.115f + detail * 0.032f) * anchor.windWeight * (1.0f + 0.8f * storm);
+        local.X += sway;
+        local.Z += sway * 0.37f;
+        local.Y -= std::abs(sway) * 0.045f * anchor.windWeight;
+        Vector3 world = Vector3::Transform(local, anchor.transform);
+        if (storm > 0.0f) {
+            const Vector3& at = anchor.local;
+            const float thrash = 0.5f + 0.5f * std::sin(timeSeconds * 3.1f + phase * 2.3f + at.X * 0.9f - at.Z * 0.7f);
+            const float blown = storm * anchor.windWeight * (0.55f + 0.30f * thrash + 0.40f * gust);
+            world.X += wind::DirectionX * blown;
+            world.Z += wind::DirectionZ * blown;
+            world.Y -= blown * 0.22f;
+        }
+        return world;
     }
 }

@@ -71,6 +71,7 @@
 #include "IslandSimulator/LandCrabRenderer.hpp"
 #include "IslandSimulator/SeabirdIsletRenderer.hpp"
 #include "IslandSimulator/MudskipperRenderer.hpp"
+#include "IslandSimulator/WeaverNestRenderer.hpp"
 #include "IslandSimulator/TRexRenderer.hpp"
 #include "IslandSimulator/FlightMotion.hpp"
 #include "IslandSimulator/GeckoPopulation.hpp"
@@ -291,6 +292,8 @@ namespace island
         BoobyColonyDetail,
         BoobyNestsDetail,
         MudskipperDetail,
+        WeaverNestsDetail,
+        WeaverDisplayDetail,
         TRexDetail,
         TRexCloseDetail,
         TRexRoarDetail,
@@ -598,6 +601,12 @@ namespace island
         std::unique_ptr<MudskipperColony> mudskippers_;          // on the mud under the mangroves
         std::vector<Mudskipper> skippers_;
         std::unique_ptr<MudskipperRenderer> mudskipperRenderer_;
+        std::unique_ptr<WeaverColony> weavers_;                  // the weavers' nests in the shore palms
+        std::vector<PalmRenderer::FrondAnchor> weaverAnchors_;   // the fronds they hang from, a site each
+        std::vector<std::array<float,3>> weaverOffsets_;          // the fronds' sway this frame
+        std::vector<BirdState> weaverBirds_;
+        float weaverClockShift_ = 0.0f;   // QA: the weavers' clock moved to a male's display
+        std::unique_ptr<WeaverNestRenderer> weaverNestRenderer_;
         std::unique_ptr<TRexMotion> trex_;                       // the tyrannosaur walking the island
         std::unique_ptr<TRexRenderer> trexRenderer_;
         std::uint32_t notedTRexFootfalls_ = 0U, notedTRexCalls_ = 0U, notedTRexBreaths_ = 0U;

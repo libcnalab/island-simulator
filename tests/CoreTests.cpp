@@ -36,6 +36,7 @@
 #include "IslandSimulator/TermiteSwarm.hpp"
 #include "IslandSimulator/SeabirdIslet.hpp"
 #include "IslandSimulator/Mudskippers.hpp"
+#include "IslandSimulator/WeaverColony.hpp"
 #include "IslandSimulator/TRexMotion.hpp"
 #include "IslandSimulator/DistantSceneryLayout.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
@@ -13631,6 +13632,58 @@ int main()
         colony.At(20.0f, fish.front().x, fish.front().z, ground, fled);
         Check(onMud && std::hypot(fled.front().x - fish.front().x, fled.front().z - fish.front().z) > 1.5f,
               "the mudskippers are off the mud, under or over it, or stay under the walker's feet");
+    }
+
+    {
+        // The weavers: three shore palms well apart; a nest on most fronds offered, hanging
+        // under its frond; the males hanging under their nests, flying down to the grass and
+        // back, the females going from nest to nest; every bird where its nest or the ground is.
+        const island::IslandTerrain terrain;
+        const island::VegetationLayout vegetation(terrain);
+        const auto palms = island::WeaverColony::ChoosePalms(vegetation.Palms(), terrain);
+        bool apart = palms.size() == island::WeaverColony::ColonyPalms;
+        for (std::size_t a = 0; a < palms.size(); ++a) {
+            const auto& palm = vegetation.Palms()[palms[a]];
+            apart = apart && palm.condition == island::PalmCondition::Living && palm.shoreDistance >= 12.0f;
+            for (std::size_t b = a + 1; b < palms.size(); ++b)
+                apart = apart && std::hypot(palm.x - vegetation.Palms()[palms[b]].x, palm.z - vegetation.Palms()[palms[b]].z) > 120.0f;
+        }
+        // a frond's point every 30 degrees round each palm, 10 m up
+        std::vector<island::WeaverNestSite> sites;
+        for (const auto index : palms)
+            for (int frond = 0; frond < 12; ++frond) {
+                const auto& palm = vegetation.Palms()[index];
+                const float bearing = static_cast<float>(frond) * 0.5236f;
+                sites.push_back({palm.x + std::cos(bearing) * 2.0f, palm.y + 10.0f, palm.z + std::sin(bearing) * 2.0f, bearing, index, frond});
+            }
+        const island::WeaverColony colony(sites);
+        const auto ground = [&terrain](const float x, const float z) { return terrain.Height(x, z); };
+        bool nests = colony.Nests().size() >= sites.size() / 2U && colony.Nests().size() <= island::WeaverColony::MaximumNests;
+        for (std::size_t i = 0; i < colony.Nests().size(); ++i) {
+            const auto& nest = colony.Nests()[i];
+            const auto& site = colony.Sites()[nest.site];
+            const auto mouth = colony.EntranceLocal(i);
+            const auto at = colony.NestPoint(i, 3.0f, {0.0f, 0.0f, 0.0f}, mouth[0], mouth[1], mouth[2]);
+            nests = nests && at[1] < site.y - nest.hang && at[1] > site.y - 0.7f && std::hypot(at[0] - site.x, at[2] - site.z) < 0.25f;
+        }
+        int displaying = 0, grounded = 0, flying = 0, perched = 0;
+        bool placed = true, beatingDisplays = true;
+        std::vector<island::BirdState> birds;
+        for (int second = 0; second < 80; ++second) {
+            const float t = static_cast<float>(second) * 0.5f;
+            const auto census = colony.Count(t);
+            displaying += census.displaying; grounded += census.grounded; flying += census.flying; perched += census.perched;
+            colony.At(t, {}, ground, birds);
+            for (const auto& bird : birds) {
+                placed = placed && bird.species == island::BirdSpecies::Weaver && std::isfinite(bird.x) && std::isfinite(bird.y);
+                if (bird.behavior == island::BirdBehavior::GroundForage)
+                    placed = placed && std::abs(bird.y - terrain.Height(bird.x, bird.z) - 0.12f * bird.scale) < 0.01f;
+            }
+            for (std::size_t i = 0; i < colony.Nests().size(); ++i)
+                beatingDisplays = beatingDisplays && (!colony.Beating(i, t) || colony.Displaying(i, t));
+        }
+        Check(apart && nests && placed && beatingDisplays && displaying > 0 && grounded > 0 && flying > 0 && perched > 0,
+              "the weavers' palms are not apart, their nests do not hang under the fronds, or the birds are not at their nests, on the grass and in the air");
     }
 
     {

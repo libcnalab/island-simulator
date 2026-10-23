@@ -48,7 +48,9 @@ namespace island
          *  diving or sitting on the sea (their plumage is not waterproof). */
         Frigatebird,
         /** Brown boobies: the seabird islet's colony (BoobyColony), not the flock's. */
-        Booby
+        Booby,
+        /** Village weavers: the palm colony's (WeaverColony); colorVariant 0 the male, 1 the female. */
+        Weaver
     };
 
     /** @brief Renderer-independent pose for one procedural bird. */
