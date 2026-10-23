@@ -18,10 +18,10 @@
   - day/night, weather and the quad bike;
   - the whale skeleton, idol, HELP ME, lighthouse, WWII plane, PET bottles, the 30 m enterable
     coaster with skeletons, the lantern-lit mine, the volcano with lava, and the README gallery.
-- The standing operator instruction is an endless loop: invent an improvement, implement it,
-  test it, commit, repeat. A new session should first work through the operator's task list
-  of 2026-10-22 (the next section) in its order, then resume that loop unless the operator says
-  otherwise. Talk to the operator in Czech.
+- The endless loop (invent an improvement, implement it, test it, commit, repeat) was
+  cancelled by the operator on 2026-10-23. Work only on the operator-approved task list (the
+  next section) in its order; when it is done, stop and ask the operator. Never add an item of
+  your own to the list: propose it and let the operator decide. Talk to the operator in Czech.
 
 **Ask the operator to confirm in play** (pass 548, an operator bug report):
 - The old mine's mouth no longer shows the sky through the island from any side.
@@ -84,86 +84,76 @@ the night profile via `--time-of-day`).
 - The QA cameras for the windthrow and the foxfire choose a clear eye from the jungle obstacles
   only (not the ground plants), so a big leaf can stand in the foreground.
 
-**Ideas not yet done** (candidates for the next loop passes):
-- winged termites swarming out of the pass-545 nests at dusk after rain, with geckos and bats
-  feeding on them;
-- a light gap in the canopy over the windthrown giant, with saplings racing up in it;
-- foxfire also on the standing snags;
-- mudskippers on the mangrove mud;
-- weaver-bird nests hanging from palm fronds;
-- grass kept out of the windthrow's pit;
-- a longer `quad-mine` drive to the crates;
-- a night `glowing-fungi` view on a fallen log away from the giant.
-
 The latest passes (541-549) are the top `- Pass` lines below and the top `## Loop pass` entries
 in `PLAN.md`:
 - the passing freighter, the breaching humpback and the live lava flow;
 - screw pines, termite nests and flying fish;
 - the windthrown giant, the mine/quad fix and the foxfire.
 
-## Operator task list 2026-10-22 — work in this order, then resume the loop
+## Operator task list — reviewed by the operator 2026-10-23, work in this order, then stop
 
-The operator chose these after a short analysis of what the island lacks: much to look at, little
-to do. Mark each `[x]` with its `PLAN.md` evidence (the loop pass) when done. They are written
-in Czech in the operator's message; the intent is kept here.
+The list of 2026-10-22, reviewed item by item with the operator on 2026-10-23. The operator
+struck the signal-fire rescue (the ship answering the lit fire, a game ending); do not build it.
+The previous agent's own ideas were put to the operator too, and those kept are items 10-15.
+Mark each `[x]` with its `PLAN.md` evidence (the loop pass) when done. They were written in
+Czech in the operator's messages; the intent is kept here.
 
-**First: make the island a game** (the operator's recommendation: these two first).
-1. [ ] **Rescue by signal fire.** Tie together what is already there: the HELP ME in stones, the
-   castaway's signal fire stacked on the beach (`StoneSignPlacement::SignalFire`) and the
-   freighter passing offshore on its lane (`PassingShip`, every 720 s).
-   - The player lights the signal fire at night (an interaction key near it). It burns with
-     flame, smoke and light through the night grade.
-   - If the freighter passes while it burns, the ship answers with its horn and a flashing
-     light, which gives the game an ending (a rescue moment).
-2. [ ] **Discovery journal.** A journal that fills as the player finds the landmarks (the mine,
+**First: make the island a game.**
+1. [ ] **Discovery journal.** A journal that fills as the player finds the landmarks (the mine,
    the volcano, the wrecks, the lighthouse, the idol, the windthrow and others) and meets the
    species (the island has dozens). Most of what ~550 passes added is otherwise never
    discovered. Small interactions belong with it: taking a lantern from the mine, lighting the
    lighthouse, collecting shells and coconuts.
 
 **Then: audit what exists** (the mine's bug was probably not the only one of its kind).
-3. [ ] **The quad at every landmark.** Drive the quad into and against each landmark: the
+2. [ ] **The quad at every landmark.** Drive the quad into and against each landmark: the
    lighthouse and its cottage, the coaster and its lifeboat, the plane wreck, the windthrow, the
    idol, the whale skeleton, the HELP ME stones, the screw pines, the jetty and the bridge.
    Check its ground, its walls and its chase camera, and fix what it climbs through or over.
    Add `quad-*` QA views where useful.
-4. [ ] **Oblique views of everything set into the terrain.** View every landmark that hides or
+3. [ ] **Oblique views of everything set into the terrain.** View every landmark that hides or
    replaces terrain (the cave, the bunker, the mine, the volcano's crater and lava flow, the
    windthrow's pit, the wreck scour, the stream bed) from the side and from above for the sky
    showing through the island, gaps or floating edges, as the mine's cutting did (pass 548, see
    the memory note on terrain cut coverage). Keep a permanent QA view for each fix.
-
-5. [ ] **Appearance inventory.** Capture all ~150 QA viewpoints in one sweep, judge them side by
+4. [ ] **Appearance inventory.** Capture all ~150 QA viewpoints in one sweep, judge them side by
    side (at 1:1 crops where detail matters) and rank them from the weakest. The older models have
    fallen behind the newer ones in the ~550 passes since. Record the ranking in `PLAN.md`, then
    improve the weakest first.
 
 **Then: a living island, spectacular and realistic.**
-6. [ ] **Land crab migration after rain.** On nights after rain, thousands of land crabs march
+5. [ ] **Land crab migration after rain.** On nights after rain, thousands of land crabs march
    from the forest to the sea (as on Christmas Island). It builds on the existing weather and
    crabs.
-7. [ ] **Winged termites swarming.** At dusk after rain, winged termites stream out of the
+6. [ ] **Winged termites swarming.** At dusk after rain, winged termites stream out of the
    arboreal nests (`TermiteNestLayout`, pass 545), and the bats and geckos come to feed on them.
-8. [ ] **A seabird colony.** Boobies nesting on a rocky islet offshore.
-9. [ ] **Mudskippers.** Mudskippers hopping on the mud among the mangroves.
+7. [ ] **A seabird colony.** Boobies nesting on a rocky islet offshore.
+8. [ ] **Mudskippers.** Mudskippers hopping on the mud among the mangroves.
+9. [ ] **A Tyrannosaurus rex.** It must look realistic and be at real size: about 12 m long and
+   about 3.7-4 m at the hip, some 8 t. Model it on current palaeontology:
+   - a horizontal body balanced over the hips, a deep skull with forward-facing eyes;
+   - tiny two-fingered arms, a massive tail held off the ground;
+   - a scaly hide with no full feather coat, perhaps sparse filaments.
 
-**Operator addition (2026-10-22).**
-10. [ ] **A Tyrannosaurus rex.** It must look realistic and be at real size: about 12 m long and
-    about 3.7-4 m at the hip, some 8 t. Model it on current palaeontology:
-    - a horizontal body balanced over the hips, a deep skull with forward-facing eyes;
-    - tiny two-fingered arms, a massive tail held off the ground;
-    - a scaly hide with no full feather coat, perhaps sparse filaments.
+   Behaviour:
+   - It walks the island on its own routes, at a heavy gait with footfalls that shake the
+     camera nearby and leave big three-toed tracks.
+   - It does other things too: sniffs the air, roars, drinks at the stream, rests lying down,
+     watches or follows the walker and the quad from a distance, scatters the other animals.
 
-    Behaviour:
-    - It walks the island on its own routes, at a heavy gait with footfalls that shake the
-      camera nearby and leave big three-toed tracks.
-    - It does other things too: sniffs the air, roars, drinks at the stream, rests lying down,
-      watches or follows the walker and the quad from a distance, scatters the other animals.
+   Engineering:
+   - Sound for the steps, breathing and roar.
+   - Collision with the walker and the quad, and sun shadows.
+   - QA views (walking, roaring, resting).
 
-    Engineering:
-    - Sound for the steps, breathing and roar.
-    - Collision with the walker and the quad, and sun shadows.
-    - QA views (walking, roaring, resting).
+**Smaller items the operator kept (2026-10-23).**
+10. [ ] **A light gap over the windthrown giant.** Light falls through the hole the giant tore in
+    the canopy, and saplings race up in it.
+11. [ ] **Foxfire on the standing snags** too, not only on the fallen wood (pass 549).
+12. [ ] **Weaver-bird nests** hanging from palm fronds.
+13. [ ] **Grass kept out of the windthrow's pit.**
+14. [ ] **A longer `quad-mine` QA drive** that reaches the crates.
+15. [ ] **A night `glowing-fungi` QA view** on a fallen log away from the giant.
 
 ## Backlog (agent-actionable, 2026-10-19)
 
@@ -184,14 +174,16 @@ suite pass on the committed sources.
 
 Operator follow-ups 2026-10-19 (in `PLAN.md` under the 2026-10-12 priorities): animals now stop
 and face an approaching player and retreat obliquely instead of turning their backs (gated by
-`IslandCloseObserverTurningTests`; goat/boar gait capture clocks ignore the QA camera); the Web
-build scales mouse look 2.5x and requests unadjusted pointer-lock motion. Both need the operator's
-in-play confirmation (desktop facing feel, browser mouse travel) before `[x]`.
+`IslandCloseObserverTurningTests`; goat/boar gait capture clocks ignore the QA camera); the
+operator dropped its in-play confirmation on 2026-10-23. The Web build scales mouse look 2.5x and
+requests unadjusted pointer-lock motion; it still needs the operator's in-play confirmation
+(browser mouse travel) before `[x]`.
 
 ## Operator backlog 2026-10-19 (evening) — work in this order, then loop
 
 Operator instruction: implement all twenty items below, then continue indefinitely in a loop of
-"propose an island improvement, implement it" until the operator stops the session. Mark items
+"propose an island improvement, implement it" until the operator stops the session. (The loop
+was cancelled on 2026-10-23; see "Resume here".) Mark items
 here as done with their `PLAN.md` evidence reference.
 
 1. [x] Directional sun shadows (`SunShadowMap`, PLAN "Latest lighting pass — directional sun shadow
