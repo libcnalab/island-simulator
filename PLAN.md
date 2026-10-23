@@ -233,6 +233,27 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 581 (2026-10-23) — the quad's collision footprint reaches its brush guard
+
+Operator request (2026-10-23, in Czech): fix the `quad-audit` failure at the UFO (7 footprint
+points inside its shape from side 4; the runner allows 6).
+- **What was wrong**: `QuadWallBlocked` tests the landmarks' drawn shapes (`quadShapes_`) over the
+  quad's footprint 0.96 m ahead and behind, but the drawn quad reaches 1.10 m to the front of its
+  brush guard and 1.09 m to its rear grab bar, and the audit counts its footprint to 1.0 m. From
+  side 4 the quad runs at the UFO's hull square to the 0.2 m cells (heading +x), so with the 0.96 m
+  row just clear the whole 1.0 m row of seven points stood in the next cell column: the brush
+  guard 14 cm inside the hull. The same short nose had stood up to 4 points in at other landmarks
+  (the signal fire, the cottage, the plane wreck, the screw pines), within the runner's limit.
+- **The fix**: the footprint runs from the brush guard to the grab bar, 1.1 m each way, still
+  closer than a cell (15 rows 0.157 m apart instead of 13 rows 0.16 m apart).
+- `quad-audit` `20261023T174208` passes with every landmark at 0 footprint points (before: up to
+  7; UFO sides 6 and 7 stop at its hull's circle under the raised rear rim, as before). All 20
+  quad views pass (`173354` .. `173825`, incl. `quad-cave-top`); `quad-jetty` ends exactly as on
+  the old sources (8.4072 m out on the deck), `quad-plane` and `quad-whale` at 0 points. Full
+  suite 76/76, core tests pass; Web build rc 0.
+- Seen, not changed: behind the UFO the furrow's soil ridges (about 0.4 m high) stand in the
+  quad's 0.3-1.3 m shape band and stop it like a wall.
+
 ## Loop pass 580 (2026-10-23) — the grass over the cave carries the quad too
 
 Operator request (2026-10-23, in Czech): fix the same for the quad over the cave.

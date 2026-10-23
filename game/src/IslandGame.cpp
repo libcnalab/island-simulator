@@ -6533,15 +6533,16 @@ namespace island
         // The landmarks' drawn shapes at the quad's height (the wrecks' hulls and wings, the
         // whale's ribs, the cottage's walls, the signal fire's fronds, the screw pines' stilt
         // roots, the jetty's bollards: circles fitted round them had let it through between),
-        // and the jetty's deck from below its edge: the quad's footprint, its wheels' outer
-        // faces and the middles between.
+        // and the jetty's deck from below its edge: the quad's footprint from the brush guard to
+        // the grab bar (1.1 m each way; to 0.96 m the guard had stood 14 cm into the UFO's hull),
+        // its wheels' outer faces and the middles between.
         {
             const BikeVec forward = quad_.Forward();
             const float length = std::hypot(forward.x, forward.z);
             const float fx = length > 1e-4f ? forward.x / length : 0.0f, fz = length > 1e-4f ? forward.z / length : 1.0f;
             const float wheels = quad_.Position().y - 0.6f;
             // (closer than a cell, so a rib or a stilt root can not pass between them)
-            for (float along = -0.96f; along <= 0.97f; along += 0.16f) {
+            for (float along = -1.1f; along <= 1.11f; along += 2.2f / 14.0f) {
                 for (float across = -0.7f; across <= 0.71f; across += 0.175f) {
                     const float px = x + fx * along + fz * across, pz = z + fz * along - fx * across;
                     if (quadShapes_.Occupied(px, pz)) return true;
