@@ -113,7 +113,7 @@ Czech in the operator's messages; the intent is kept here.
    idol, the whale skeleton, the HELP ME stones, the screw pines, the jetty and the bridge.
    Check its ground, its walls and its chase camera, and fix what it climbs through or over.
    Add `quad-*` QA views where useful.
-3. [ ] **Oblique views of everything set into the terrain.** View every landmark that hides or
+3. [x] **Oblique views of everything set into the terrain.** Done in pass 553 (the bunker's berm, `bunker-side`; the `orbit` probe). View every landmark that hides or
    replaces terrain (the cave, the bunker, the mine, the volcano's crater and lava flow, the
    windthrow's pit, the wreck scour, the stream bed) from the side and from above for the sky
    showing through the island, gaps or floating edges, as the mine's cutting did (pass 548, see
@@ -510,6 +510,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 553: oblique views of what is set into the terrain (item 3): QA probe `orbit` (`ISLAND_QA_ORBIT="<site> <az> <el> <dist>"`), 65 captures of 13 places; only fault the bunker's corridor concrete standing out of the slope, now under an earth berm in the terrain (`IslandTerrain::BunkerBerm`); new view `bunker-side` `20261023T060819` (PLAN "Loop pass 553").
 - Pass 552: the quad meets the landmarks' drawn shapes (`LandmarkShapes`, item 2): renderers hand their triangles over (`landmark_shapes::Note`), a 0.2 m plan of what stands 0.3-1.3 m over the ground blocks the quad's footprint, a second at 1.2-4.2 m keeps the chase camera out; the jetty deck carries it only from its own level; `quad-audit` (worst 4 of 77 points, was 75), `quad-plane`, `quad-whale`, `quad-lighthouse` (PLAN "Loop pass 552").
 - Pass 551: the discovery journal (`DiscoveryJournal`, item 1 of the reviewed list): 34 places and 44 creatures noted when near and in the middle of the view (`JournalSighted`, 4 Hz, hidden animals skipped), a 4 s "NEW IN THE JOURNAL" notice, N or a touch button opens the list, saved as `journal.txt` (+`.bak`) beside the settings; QA `journal` `20261023T044701`, `journal-notice` `20261023T044801` (PLAN "Loop pass 551").
 - Pass 550 (operator bug): F high on the volcano put the walker on the quad inside the cone (the quad's ground was the lowland under the cone): `QuadGround` now includes the cone, and `QuadSummonSpot` brings the quad to the nearest place it can stand (off the steep cone and the lava, out of structures/tunnels, within 60 m); QA `quad-volcano` `20261022T172746` (quad at 40.6 m, on the cone) (PLAN "Loop pass 550").

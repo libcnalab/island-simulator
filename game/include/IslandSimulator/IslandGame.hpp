@@ -281,6 +281,8 @@ namespace island
         IdolOfferingsDetail,
         JournalDetail,
         JournalNoticeDetail,
+        OrbitProbe,
+        BunkerSideDetail,
         StoneSignDetail,
         LighthouseDetail,
         LighthouseStairDetail,

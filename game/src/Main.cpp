@@ -91,6 +91,8 @@ namespace
         case FixedViewpoint::QuadLighthouseDetail: return "quad-lighthouse";
         case FixedViewpoint::JournalDetail: return "journal";
         case FixedViewpoint::JournalNoticeDetail: return "journal-notice";
+        case FixedViewpoint::OrbitProbe: return "orbit";
+        case FixedViewpoint::BunkerSideDetail: return "bunker-side";
         case FixedViewpoint::StoneSignDetail: return "help-sign";
         case FixedViewpoint::LighthouseDetail: return "lighthouse";
         case FixedViewpoint::LighthouseStairDetail: return "lighthouse-stair";
@@ -411,6 +413,10 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::QuadWhaleDetail;
             } else if (name == "quad-lighthouse") {
                 viewpoint = island::FixedViewpoint::QuadLighthouseDetail;
+            } else if (name == "orbit") {
+                viewpoint = island::FixedViewpoint::OrbitProbe;
+            } else if (name == "bunker-side") {
+                viewpoint = island::FixedViewpoint::BunkerSideDetail;
             } else if (name == "journal") {
                 viewpoint = island::FixedViewpoint::JournalDetail;
             } else if (name == "journal-notice") {

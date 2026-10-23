@@ -57,6 +57,7 @@
 #include <limits>
 #include <numbers>
 #include <optional>
+#include <cstdlib>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -215,6 +216,8 @@ namespace island
             case FixedViewpoint::QuadLighthouseDetail: return "quad-lighthouse";
             case FixedViewpoint::JournalDetail: return "journal";
             case FixedViewpoint::JournalNoticeDetail: return "journal-notice";
+            case FixedViewpoint::OrbitProbe: return "orbit";
+            case FixedViewpoint::BunkerSideDetail: return "bunker-side";
             case FixedViewpoint::StoneSignDetail: return "help-sign";
             case FixedViewpoint::LighthouseDetail: return "lighthouse";
             case FixedViewpoint::LighthouseStairDetail: return "lighthouse-stair";
@@ -2395,6 +2398,59 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: help-sign QA camera looks down on the castaway's stones from a low pass over the sea\n";
+        } else if (viewpoint_ == FixedViewpoint::OrbitProbe || viewpoint_ == FixedViewpoint::BunkerSideDetail) {
+            // QA probe for oblique looks at a place: ISLAND_QA_ORBIT="<site> <azimuth deg> <elevation
+            // deg> <distance m>", the site one of cave, bunker, bunker-top, mine, mine-top, crater,
+            // lava, windthrow, scour, cascade, stream:<station>; the camera on a sphere round it
+            // (azimuth from +x toward +z), looking at it.
+            // (bunker-side: the bunker's portal from the hillside beside it, where its corridor's
+            // concrete stood out of the slope before the berm)
+            const char* request = viewpoint_ == FixedViewpoint::BunkerSideDetail ? "bunker 0 15 14" : std::getenv("ISLAND_QA_ORBIT");
+            std::istringstream fields(request ? request : "");
+            std::string site;
+            float azimuth = 0.0f, elevation = 20.0f, distance = 12.0f;
+            fields >> site >> azimuth >> elevation >> distance;
+            const auto ground = [this](const float x, const float z) { return terrain_.Height(x, z); };
+            Vector3 target;
+            const StreamCourse& course = streamDrift_.Course();
+            if (site == "cave") {
+                const auto c = CaveSite::Centre();
+                target = Vector3(c[0], ground(c[0], c[1]) + 1.0f, c[1]);
+            } else if (site == "bunker" || site == "bunker-top") {
+                const auto p = bunkerLayout_.World(0.0f, 1.0f, site == "bunker" ? 0.0f : 15.0f);
+                target = Vector3(p.x, site == "bunker" ? p.y : ground(p.x, p.z), p.z);   // (-top: the hill over it)
+            } else if (site == "mine" || site == "mine-top") {
+                const auto p = mineLayout_.World(0.0f, 1.0f, site == "mine" ? 0.0f : 25.0f);
+                target = Vector3(p.x, site == "mine" ? p.y : ground(p.x, p.z), p.z);
+            } else if (site == "crater") {
+                target = Vector3(VolcanoSite::X, VolcanoSite::LavaY(), VolcanoSite::Z);
+            } else if (site == "lava") {
+                const float r = VolcanoSite::RimRadius + VolcanoSite::FlowLength * 0.5f, b = VolcanoSite::FlowCentre(r);
+                const float x = VolcanoSite::X + std::cos(b) * r, z = VolcanoSite::Z + std::sin(b) * r;
+                target = Vector3(x, VolcanoSite::SurfaceY(x, z), z);
+            } else if (site == "windthrow" && windthrowPlacement_) {
+                target = Vector3(windthrowPlacement_->x, ground(windthrowPlacement_->x, windthrowPlacement_->z), windthrowPlacement_->z);
+            } else if (site == "scour") {
+                const auto& ship = shipwreckLayout_.Ship();
+                target = Vector3(ship.x, ship.y, ship.z);
+            } else if (site == "cascade") {
+                const auto& pool = course.PoolStation();
+                target = Vector3(pool.x, pool.water, pool.z);
+            } else if (site.starts_with("stream:")) {
+                const auto& station = course.Station(std::min<std::size_t>(std::stoul(site.substr(7)), course.Count() - 1U));
+                target = Vector3(station.x, station.water, station.z);
+            } else {
+                throw std::runtime_error("orbit QA needs ISLAND_QA_ORBIT=\"<site> <azimuth> <elevation> <distance>\"");
+            }
+            const float a = azimuth * std::numbers::pi_v<float> / 180.0f, e = elevation * std::numbers::pi_v<float> / 180.0f;
+            cameraPosition_ = target + Vector3(std::cos(e) * std::cos(a), std::sin(e), std::cos(e) * std::sin(a)) * distance;
+            // (never under the ground: the hill's far side shows nothing from inside it)
+            cameraPosition_.Y = std::max(cameraPosition_.Y, std::max(ground(cameraPosition_.X, cameraPosition_.Z), 0.0f) + 1.0f);
+            const Vector3 direction = target - cameraPosition_;
+            yaw_ = std::atan2(direction.X, direction.Z);
+            pitch_ = std::atan2(direction.Y, std::hypot(direction.X, direction.Z));
+            std::cout << "island-simulator: orbit QA camera looks at the " << site << " (" << target.X << ", " << target.Y << ", "
+                      << target.Z << ") from azimuth " << azimuth << ", elevation " << elevation << ", " << distance << " m\n";
         } else if (viewpoint_ == FixedViewpoint::IdolDetail || viewpoint_ == FixedViewpoint::JournalDetail
                    || viewpoint_ == FixedViewpoint::JournalNoticeDetail) {
             // Before the god, a little to one side, looking up at its face.

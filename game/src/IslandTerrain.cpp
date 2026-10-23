@@ -1,6 +1,7 @@
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/IslandEnvironmentField.hpp"
 #include "IslandSimulator/TidePoolLayout.hpp"
+#include "IslandSimulator/BunkerSite.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -137,6 +138,36 @@ namespace island
         if (!IsSupportedCoordinate(x, z)) {
             return DeepSeabedHeight;
         }
+        const float land = LandHeight(x, z);
+        if (SignedShoreDistance(x, z) <= 0.0f) return land;
+        return BunkerBerm(x, z, land) - TidePoolLayout::Depression(*this, x, z);
+    }
+
+    float IslandTerrain::BunkerBerm(const float x, const float z, const float land) const noexcept
+    {
+        // In the corridor's frame: across it and down it from the portal (BunkerLayout's).
+        const float dx = x - BunkerSite::X, dz = z - BunkerSite::Z;
+        const float across = -std::sin(BunkerSite::Angle) * dx + std::cos(BunkerSite::Angle) * dz;
+        const float depth = -std::cos(BunkerSite::Angle) * dx - std::sin(BunkerSite::Angle) * dz;
+        if (std::abs(across) > 14.0f || depth < 0.35f || depth > 22.0f) return land;
+        static const float entrance = LandHeight(BunkerSite::X, BunkerSite::Z);
+        // the corridor's roof (BunkerLayout::FloorRelative, the renderer's ceiling) under 0.9 m
+        // of earth, flat over its width and falling 1:2 to the hillside, steeply at its front
+        // behind the portal's rocks and gently past its end
+        const float floor = depth < 10.0f ? -0.32f * depth : -3.2f;
+        const float t = std::clamp((depth - 8.0f) / 2.0f, 0.0f, 1.0f);
+        const float roof = entrance + floor + 2.75f + 0.30f * t * t * (3.0f - 2.0f * t);
+        const float mound = roof + 0.9f - 0.5f * std::max(0.0f, std::abs(across) - 2.6f)
+            - 1.6f * std::max(0.0f, 1.2f - depth) - 0.5f * std::max(0.0f, depth - 12.0f);
+        // a smooth maximum (exactly the hillside where the berm stays 0.8 m under it), so the
+        // berm's toe runs into the hillside without a crease
+        constexpr float Blend = 0.8f;
+        const float h = std::max(Blend - std::abs(mound - land), 0.0f) / Blend;
+        return std::max(land, mound) + h * h * Blend * 0.25f;
+    }
+
+    float IslandTerrain::LandHeight(const float x, const float z) const noexcept
+    {
         const float inland = SignedShoreDistance(x, z);
         if (inland <= 0.0f) {
             const float offshore = -inland;
@@ -218,7 +249,7 @@ namespace island
             * (0.22f * firstRockStep + 0.34f * secondRockStep);
         const float landHeight=beach + sandMicroRelief + coastalRelief + rockSteps
             + interiorBlend * (foothills + erodedRidges + localRelief);
-        return landHeight-TidePoolLayout::Depression(*this,x,z);
+        return landHeight;
     }
 
     TerrainSample IslandTerrain::Sample(const float x, const float z) const noexcept

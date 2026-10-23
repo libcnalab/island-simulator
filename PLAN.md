@@ -233,6 +233,31 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 553 (2026-10-23) — oblique views of what is set into the terrain; the bunker's berm
+
+The operator's task list (reviewed 2026-10-23), item 3.
+
+- **The probe.** A QA view `orbit` (`ISLAND_QA_ORBIT="<site> <azimuth> <elevation>
+  <distance>"`) puts the camera on a sphere round a named place, never under the ground: cave,
+  bunker, bunker-top, mine, mine-top (the hill over the adit and over the chamber), crater, lava,
+  windthrow (the root plate and its pit), scour (the wreck's), cascade and stream:<station>.
+- **The sweep.** 13 places x 5 views (four sides 15 degrees up, one 60 degrees from above), 65
+  captures, judged as sheets and at full size. No sky through the island, gap or floating edge
+  at the cave's mouth and over its tunnel, the mine's cutting and the hill over it, the crater
+  and its rim, the lava flow, the windthrow's pit, the wreck's scour or the stream bed at the
+  cascade and three stations.
+- **One fault: the bunker.** From the hillside beside it the access corridor's concrete (its
+  outer wall and its roof, the floor descending 0.32 m per metre under a roof 2.75 m above it)
+  stood out of the slope as a grey wedge with a black roof edge, and the roof's edge showed in
+  the grass above. The terrain now heaps earth over it (`IslandTerrain::BunkerBerm`): over the
+  corridor from behind the portal to 22 m in, the roof under 0.9 m of soil, flat over 2.6 m
+  either side of its axis and falling 1:2 to the hillside, steeply at its front behind the
+  portal's rocks; a smooth maximum that is exactly the hillside where the berm stays 0.8 m under
+  it. The entrance's ground and the bunker's own checks are unchanged.
+- **Views.** New permanent `bunker-side` (the portal from the hillside beside it, the earth over
+  the corridor, `20261023T060819`); `bunker`, `bunker-corridor`, `quad-bunker`, `mine-cutting`,
+  `cave` and `quad-cave` pass (`060827` .. `060909`). Full suite 76/76.
+
 ## Loop pass 552 (2026-10-23) — the quad meets the landmarks' drawn shapes
 
 The operator's task list (reviewed 2026-10-23), item 2: the quad at every landmark.

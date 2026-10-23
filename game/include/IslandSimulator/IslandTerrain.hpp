@@ -118,6 +118,11 @@ namespace island
         static constexpr float SurfaceSampleDistance = 0.75f;
 
     private:
+        /** The ground before the authored earthworks (the bunker's berm) and the tide pools. */
+        [[nodiscard]] float LandHeight(float x, float z) const noexcept;
+        /** Earth heaped over the bunker's descending access corridor, so its concrete roof
+         *  lies under some 0.9 m of soil instead of standing out of the hillside's flank. */
+        [[nodiscard]] float BunkerBerm(float x, float z, float land) const noexcept;
         [[nodiscard]] static std::uint32_t Hash(std::int32_t x, std::int32_t z,
                                                 std::uint32_t seed) noexcept;
         [[nodiscard]] static float ValueNoise(float x, float z, std::uint32_t seed) noexcept;
