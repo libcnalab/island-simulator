@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <iostream>
 #include <numbers>
+#include <span>
 #include <sstream>
 #include <vector>
 using namespace Microsoft::Xna::Framework;
@@ -153,6 +154,8 @@ UfoWreckRenderer::UfoWreckRenderer(GraphicsDevice& device,const UfoWreckPlacemen
         b.Tube({foot,foot+Vector3(0.0f,-0.05f,0.0f)},{0.5f,0.52f},10,Hull*0.8f,0.2f);
     }
 
+    // (only the wreck itself stops the quad: it drives over the furrow, the skin and the cables)
+    const std::size_t wreckVertices=b.builder.mesh.size();
     // The furrow ploughed behind it, its soil heaped on both sides, and the burnt earth round the
     // hull (laid just over the drawn ground).
     b.tint=nullptr;
@@ -224,7 +227,7 @@ UfoWreckRenderer::UfoWreckRenderer(GraphicsDevice& device,const UfoWreckPlacemen
     }
 
     auto& mesh=b.builder.mesh;
-    landmark_shapes::Note("ufo",mesh);
+    landmark_shapes::Note("ufo",std::span(mesh).first(wreckVertices));
     triangles_=static_cast<int>(mesh.size()/3);
     Vector3 low(1e9f,1e9f,1e9f),high(-1e9f,-1e9f,-1e9f);
     for(const auto& v:mesh) {low=Vector3::Min(low,v.Position);high=Vector3::Max(high,v.Position);}

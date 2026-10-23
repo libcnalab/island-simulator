@@ -233,6 +233,22 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 582 (2026-10-23) — the quad drives over the UFO's furrow, skin and cables
+
+Operator request (2026-10-23, in Czech): the quad must not be stopped by the furrow behind the UFO.
+- **What stopped it**: the UFO's whole mesh went to the quad's shapes (`landmark_shapes::Note`),
+  the ground dressing included. Noted part by part for the audit: the hull, dome, portholes and
+  strut 1 093 cells in the 0.3-1.3 m band, the furrow and its soil ridges 0 (squashed tubes, at
+  most about 0.28 m over the ground), the scattered skin 0, and the four torn cables 10: each lies
+  in an arc 0.34 m high, so a cable 2.5 cm thick stood as a wall. The furrow itself never stopped
+  the quad (pass 581's note was wrong).
+- **The fix**: only the wreck itself is noted (`UfoWreckRenderer`, the mesh up to the furrow); the
+  quad drives over the furrow, the burnt apron, the skin and the cables. The walker meets the
+  UFO's circles only and is unchanged.
+- `quad-audit` `20261023T175821`: from side 0 the quad now crosses the furrow to the hull, 5.32 m
+  from its centre (before 9.92 m, at a cable); the other sides end as before; every landmark 0
+  footprint points. `ufo` `175842` draws as before. Full suite 76/76, core tests pass.
+
 ## Loop pass 581 (2026-10-23) — the quad's collision footprint reaches its brush guard
 
 Operator request (2026-10-23, in Czech): fix the `quad-audit` failure at the UFO (7 footprint
@@ -251,8 +267,8 @@ points inside its shape from side 4; the runner allows 6).
   quad views pass (`173354` .. `173825`, incl. `quad-cave-top`); `quad-jetty` ends exactly as on
   the old sources (8.4072 m out on the deck), `quad-plane` and `quad-whale` at 0 points. Full
   suite 76/76, core tests pass; Web build rc 0.
-- Seen, not changed: behind the UFO the furrow's soil ridges (about 0.4 m high) stand in the
-  quad's 0.3-1.3 m shape band and stop it like a wall.
+- Seen, not changed here: behind the UFO the quad stops 9.9 m from the hull's centre (side 0). Taken
+  at first for the furrow's soil ridges; pass 582 found it was a torn cable.
 
 ## Loop pass 580 (2026-10-23) — the grass over the cave carries the quad too
 
