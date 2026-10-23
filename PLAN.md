@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 564 (2026-10-23) — the volcano's slopes (inventory 10)
+
+The cone was an evenly toned faceted heap. Its slopes now carry streaks down the fall line, pale
+ash washed down the runnels and darker scoria between, broken along their length into patches a
+few metres long, a fine grain over them, and green creeping up the lowest ten metres in tongues.
+The weathering is now taken at each corner (`tintPerVertex`; taken per quad the streaks stood
+out as a mosaic of tiles), on a finer mesh (360 around, 54 rings; the cone stays outside the
+top of the render-pass profile). Evidence: `volcano` (`20261023T071417`), `headland` (`071424`),
+`volcano-flow` (`071344`); `quad-volcano` and `volcano-crater` pass. Full suite 76/76. From the
+`volcano` view the streaks stay subtle; texturing the cone would carry more detail.
+
 ## Loop pass 563 (2026-10-23) — the stingray's back (inventory 9)
 
 The stingray read as a moulded brown plate with a hat on it. Its body now rises gently out of

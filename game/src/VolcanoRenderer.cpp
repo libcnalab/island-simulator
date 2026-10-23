@@ -102,7 +102,9 @@ VolcanoRenderer::VolcanoRenderer(GraphicsDevice& device,const IslandTerrain& ter
         return Vector3(x,y,z);
     };
     SculptMeshBuilder b;
-    b.tintPerQuad=true;
+    // the weathering taken at each corner, running smoothly across the faces (taken per quad,
+    // the streaks down the slope stood out as a mosaic of tiles)
+    b.tintPerVertex=true;
     b.ground=groundAt;b.stainColour=Vector3(96,84,62);b.stainHeight=0.6f;b.stainAmount=0.5f;
     b.tint=[](const Vector3& pigment,const Vector3& normal,const Vector3& centre) {
         const float r=V::Radius(centre.X,centre.Z),theta=V::Bearing(centre.X,centre.Z);
@@ -141,15 +143,32 @@ VolcanoRenderer::VolcanoRenderer(GraphicsDevice& device,const IslandTerrain& ter
         const float rim=std::clamp((h-23.0f)/2.5f,0.0f,1.0f);
         colour=Vector3::Lerp(colour,Scoria,rim*std::clamp((n-0.4f)*3.0f,0.0f,1.0f)*0.7f);
         colour=Vector3::Lerp(colour,Sulphur,rim*std::clamp((fine-0.7f)*4.0f,0.0f,1.0f)*0.8f);
+        // Streaks down the slope: pale ash washed down the runnels and darker scoria between,
+        // long down the fall line and narrow across it, and the green creeping up the lower
+        // slopes in tongues (an evenly toned cone read as a moulded heap).
+        {
+            const float slope=std::clamp((V::BaseRadius-r)/(V::BaseRadius-V::RimRadius),0.0f,1.0f);
+            // (broken along the fall line too, in patches a few metres long: unbroken they read
+            // as painted pinstripes)
+            const float streak=Noise(theta*38.0f,r*0.30f)*0.7f+Noise(theta*13.0f+5.0f,r*0.11f)*0.3f;
+            const float streakFine=Noise(theta*95.0f+3.0f,r*0.45f);
+            const float body=std::sin(Pi*slope);
+            colour=Vector3::Lerp(colour,Ash*1.10f,std::clamp((streak-0.60f)*3.0f,0.0f,1.0f)*0.35f*body);
+            colour=Vector3::Lerp(colour,Scoria*0.62f,std::clamp((0.38f-streak)*3.0f,0.0f,1.0f)*0.30f*body);
+            colour*=0.93f+0.12f*streakFine;
+            const float tongues=Noise(theta*9.0f+11.0f,r*0.05f);
+            const float green=std::clamp((11.0f-h)/6.0f,0.0f,1.0f)*std::clamp((tongues-0.30f)*2.6f,0.0f,1.0f);
+            colour=Vector3::Lerp(colour,Moss*0.92f,green*0.85f);
+        }
         // the gullies hold the darker wet grit
         const float gully=0.5f+0.5f*std::cos(11.0f*theta+2.0f*std::sin(3.0f*theta)+r*0.07f);
         colour*=1.0f-0.12f*std::pow(gully,4.0f)*std::sin(Pi*std::clamp((V::BaseRadius-r)/(V::BaseRadius-V::RimRadius),0.0f,1.0f));
         return colour*(0.96f+0.08f*fine)*(normal.Y>0.0f?1.0f:0.9f);
     };
-    constexpr int Around=180;
+    constexpr int Around=360;   // (fine enough, with the rings, to carry the streaks down the slope)
     // the outer slope: rings closer together toward the rim, where it is steep
     std::vector<float> outer;
-    constexpr int Rings=36;
+    constexpr int Rings=54;
     for(int k=0;k<=Rings;++k) outer.push_back(V::RimRadius+(V::BaseRadius-V::RimRadius)*std::pow(static_cast<float>(k)/Rings,1.35f));
     outer.push_back(V::BaseRadius+2.0f);
     std::vector<float> inner;
