@@ -284,6 +284,7 @@ namespace island
         JournalDetail,
         JournalNoticeDetail,
         CrabMigrationDetail,
+        TermiteSwarmDetail,
         OrbitProbe,
         BunkerSideDetail,
         StoneSignDetail,
@@ -526,6 +527,13 @@ namespace island
         std::vector<MigratingCrab> marchingCrabs_;
         float landCrabStrength_ = 0.0f;
         bool landCrabReported_ = false;
+        // the termites' nuptial flight at dusk after rain, the bats and geckos hunting it
+        std::vector<Alate> alates_;
+        std::vector<FruitBatState> huntingBats_;
+        std::vector<GeckoState> swarmGeckos_;
+        std::unique_ptr<AlateRenderer> alateRenderer_;
+        float termiteStrength_ = 0.0f;
+        bool termiteReported_ = false;
         CoconutCrabGroup coconutCrabGroup_;
         CrocodileGroup crocodileGroup_;
         BoarHerd boarHerd_;

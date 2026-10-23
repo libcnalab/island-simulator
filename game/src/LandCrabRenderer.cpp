@@ -188,4 +188,75 @@ void LandCrabRenderer::Draw(const Matrix& view,const Matrix& projection,const Ve
     ++draws_;
 }
 
+namespace {
+// an alate: some 12 mm of body and wings half as long again
+constexpr float AlateLength=.026f;   // (with the wings reaching past the abdomen)
+constexpr int AlateVertices=36;   // the body's two triangles and the four wings, each two-faced
+}
+
+AlateRenderer::AlateRenderer(GraphicsDevice& device)
+    :device_(device),effect_(std::make_unique<BasicEffect>(device)) {
+    buffer_=std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),
+        static_cast<int>(MaximumAlates*AlateVertices),BufferUsage::WriteOnly);
+    staging_.reserve(MaximumAlates*AlateVertices);
+    effect_->setVertexColorEnabledProperty(true);
+    effect_->setLightingEnabledProperty(false);
+    effect_->setFogEnabledProperty(true);
+    effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
+    effect_->setFogStartProperty(250.0f);
+    effect_->setFogEndProperty(660.0f);
+}
+
+AlateRenderer::~AlateRenderer()=default;
+
+void AlateRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector3& camera,const std::span<const Alate> alates) {
+    staging_.clear();
+    visible_=0;
+    if(alates.empty()) return;
+    const BoundingFrustum frustum(view*projection);
+    // the wings milky and glinting as they beat
+    const Color body(58,40,26),wingLit(236,232,218),wingDim(176,170,154);
+    const auto tri=[&](const Vector3& a,const Vector3& b,const Vector3& c,const Color& colour) {
+        staging_.emplace_back(a,colour);staging_.emplace_back(b,colour);staging_.emplace_back(c,colour);
+        staging_.emplace_back(c,colour);staging_.emplace_back(b,colour);staging_.emplace_back(a,colour);
+    };
+    for(const Alate& alate:alates) {
+        if(static_cast<std::size_t>(visible_)>=MaximumAlates) break;
+        if(!(alate.scale>.02f)) continue;
+        const Vector3 at(alate.x,alate.y,alate.z);
+        // past some 18 m an alate is under a pixel; the swarm there is carried by the near ones
+        if(Vector3::DistanceSquared(at,camera)>18.0f*18.0f) continue;
+        if(!frustum.Intersects(BoundingSphere(at,AlateLength*1.5f))) continue;
+        const float size=AlateLength*alate.scale;
+        const Vector3 forward(std::cos(alate.heading),0,std::sin(alate.heading));
+        const Vector3 right(-forward.Z,0,forward.X);
+        const Vector3 head=at+forward*(size*.45f),tail=at-forward*(size*.45f);
+        tri(head,at+right*(size*.10f),tail,body);
+        tri(head,tail,at-right*(size*.10f),body);
+        // the four wings, longer than the body, beating: up and down about the thorax
+        const float beat=std::sin(alate.flap);
+        for(const float side:{-1.0f,1.0f}) {
+            for(const float pair:{0.0f,1.0f}) {
+                const Vector3 root=at+forward*(size*(.15f-.12f*pair));
+                const Vector3 out=right*(side*size*.55f)+Vector3::Up*(size*.45f*beat*(1.0f-.3f*pair));
+                const Vector3 tip=root+out-forward*(size*(.95f+.10f*pair));
+                tri(root,root+out*.25f-forward*(size*.05f),tip,beat>0.0f?wingLit:wingDim);
+            }
+        }
+        ++visible_;
+    }
+    if(staging_.empty()) return;
+    device_.setRasterizerStateProperty(RasterizerState::CullNone);
+    device_.setBlendStateProperty(BlendState::Opaque);
+    device_.setDepthStencilStateProperty(DepthStencilState::Default);
+    buffer_->SetData(staging_.data(),0,static_cast<int>(staging_.size()),SetDataOptions::Discard);
+    device_.SetVertexBuffer(buffer_.get());
+    device_.setIndicesProperty(nullptr);
+    effect_->setWorldProperty(Matrix::getIdentityProperty());
+    effect_->setViewProperty(view);
+    effect_->setProjectionProperty(projection);
+    effect_->Apply();
+    device_.DrawPrimitives(PrimitiveType::TriangleList,0,static_cast<int>(staging_.size()/3U));
+}
+
 }

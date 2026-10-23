@@ -70,6 +70,7 @@ constexpr std::array Entries{
     JournalEntry{"crabs","Beach crabs",Creature,12.0f},
     JournalEntry{"hermit-crabs","Hermit crabs",Creature,8.0f},
     JournalEntry{"red-crabs","Red crab migration",Creature,15.0f},
+    JournalEntry{"termite-flight","Termite nuptial flight",Creature,12.0f},
     JournalEntry{"coconut-crabs","Coconut crabs",Creature,10.0f},
     JournalEntry{"spiders","Spiders",Creature,6.0f},
     JournalEntry{"butterflies","Butterflies",Creature,12.0f},

@@ -233,6 +233,26 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 566 (2026-10-23) — the termites' nuptial flight at dusk after rain
+
+The operator's task list (reviewed 2026-10-23), item 6.
+- **The flight** (`TermiteSwarm`): round sunset (the sun from 5 degrees up, at full from 1 up to
+  5 down, over by 9 down) on wet ground, each termites' nest (pass 545) within 45 m lets out up
+  to 220 winged alates from its mouth on top: each climbs on fluttering wings in an opening
+  spiral, leaning out from the trunk and with the trade, and is gone over the canopy after
+  6-9 s, its life cycling (deterministic in the clock, no state).
+- **The hunters**: two of the mine's small bats per nest (the dusky palette, 0.42 the flying
+  fox's size, drawn by the mine bats' renderer) circle the column a few metres over the nest and
+  swoop through it every few seconds; a gecko waits on the bark below each nest's mouth, creeps
+  up with its tail twitching, lunges and licks its lips.
+- **Drawn** (`AlateRenderer`): a dark body and four long milky wings beating, within 18 m.
+- The journal has a new creature entry, "Termite nuptial flight".
+- **QA view** `termite-swarm` (the `termite-nest` camera looking up past the nest; capture it
+  with `--time-of-day 18.2 --wet-ground`): `20261023T073258` (880 alates near the eye, 126
+  drawn, 8 bats, 4 geckos; the pale wings rising up the trunk, a bat among them). `termite-nest`
+  by day unchanged. Core test: dusk and wet only, alates rising from the mouth, the bats over
+  it, the gecko below it, no swarm from a far nest. Full suite 76/76.
+
 ## Loop pass 565 (2026-10-23) — the red crabs' march to the sea after rain
 
 The operator's task list (reviewed 2026-10-23), item 5.

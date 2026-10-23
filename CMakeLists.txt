@@ -104,6 +104,7 @@ add_library(island_core STATIC
     game/src/DiscoveryJournal.cpp
     game/src/LandmarkShapes.cpp
     game/src/LandCrabMigration.cpp
+    game/src/TermiteSwarm.cpp
     game/src/LifeboatLayout.cpp
     game/src/BridgeLayout.cpp
     game/src/LookoutLayout.cpp

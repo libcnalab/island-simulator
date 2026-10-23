@@ -217,6 +217,7 @@ namespace island
             case FixedViewpoint::JournalDetail: return "journal";
             case FixedViewpoint::JournalNoticeDetail: return "journal-notice";
             case FixedViewpoint::CrabMigrationDetail: return "crab-migration";
+            case FixedViewpoint::TermiteSwarmDetail: return "termite-swarm";
             case FixedViewpoint::OrbitProbe: return "orbit";
             case FixedViewpoint::BunkerSideDetail: return "bunker-side";
             case FixedViewpoint::StoneSignDetail: return "help-sign";
@@ -2200,7 +2201,7 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: pandanus QA camera looks out at a screw pine on the coastal fringe\n";
-        } else if (viewpoint_ == FixedViewpoint::TermiteNestDetail) {
+        } else if (viewpoint_ == FixedViewpoint::TermiteNestDetail || viewpoint_ == FixedViewpoint::TermiteSwarmDetail) {
             // A few metres out from a jungle trunk carrying a termites' nest, up at it, its mud
             // runways in view down the bark; the nest whose eye point stands clearest of the
             // other trunks.
@@ -2223,10 +2224,13 @@ namespace island
             const TermiteNest& nest=termiteNests_[pick];
             const Vector3 eye=eyeFor(nest);
             cameraPosition_=Vector3(eye.X,terrain_.Height(eye.X,eye.Z)+PlayerMotion::EyeHeight,eye.Z);
-            const Vector3 direction=Vector3(nest.bark[0],nest.bark[1]-0.6f,nest.bark[2])-cameraPosition_;
+            const bool swarm=viewpoint_==FixedViewpoint::TermiteSwarmDetail;
+            // (the swarm: up past the nest at the column rising from its mouth)
+            const Vector3 direction=Vector3(nest.bark[0],nest.bark[1]+(swarm?1.3f:-0.6f),nest.bark[2])-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
-            std::cout<<"island-simulator: termite-nest QA camera looks up at a termites' nest on a jungle trunk\n";
+            std::cout<<(swarm?"island-simulator: termite-swarm QA camera looks up at the column of winged termites over a nest\n"
+                             :"island-simulator: termite-nest QA camera looks up at a termites' nest on a jungle trunk\n");
         } else if (viewpoint_ == FixedViewpoint::GlowingFungiDetail) {
             // Crouched a metre and a bit from a clump of foxfire on the windthrown giant's flank,
             // down at it (the capture asks for a dark hour): from whichever clump's side stands
@@ -3321,6 +3325,7 @@ namespace island
         each("crabs", crabColony_.Crabs(), 0.15f, [](const auto& c) { return c.hideAmount < 0.5f; });
         each("hermit-crabs", hermitCrabGroup_.Crabs(), 0.1f, always);
         each("red-crabs", marchingCrabs_, 0.1f, [](const MigratingCrab& c) { return c.scale > 0.5f; });
+        each("termite-flight", alates_, 0.5f, [](const Alate& a) { return a.scale > 0.5f; });
         each("coconut-crabs", coconutCrabGroup_.Crabs(), 0.3f, always);
         {
             // by day three in four keep to their retreats, as the drawn colony does
@@ -3514,6 +3519,7 @@ namespace island
         crabRenderer_ = std::make_unique<CrabRenderer>(
             device, 92.0f * qualityProfile_.wildlifeMaximumDistanceScale);
         landCrabRenderer_ = std::make_unique<LandCrabRenderer>(device);
+        alateRenderer_ = std::make_unique<AlateRenderer>(device);
         std::cout << "island-simulator: red land crabs march to the sea down " << landCrabs_.ActiveLaneCount()
                   << " lanes on dark evenings and nights after rain\n";
         crocodileRenderer_ = std::make_unique<CrocodileRenderer>(
@@ -8387,6 +8393,16 @@ namespace island
                 if (i == 0U || i == RodentPopulation::MouseCount + 6U
                     || static_cast<float>((i * 61U + 29U) % 100U) / 100.0f < 0.30f + 0.70f * night)
                     awakeRodents_.push_back(rodentPopulation_.Rodents()[i]);
+            // At dusk after rain the termites swarm: the column of alates, the bats circling it,
+            // a gecko on each trunk below a nest's mouth.
+            {
+                const auto& sky = sun_light::Current().lighting;
+                termiteStrength_ = TermiteSwarm::Strength(sky.sunElevationDegrees, weather_now::Current().wetness);
+                alates_.clear();huntingBats_.clear();swarmGeckos_.clear();
+                TermiteSwarm::Gather(timeSeconds, termiteStrength_, termiteNests_, renderCameraPosition_.X,
+                                     renderCameraPosition_.Y, renderCameraPosition_.Z, alates_, huntingBats_, swarmGeckos_);
+                allGeckos_.insert(allGeckos_.end(), swarmGeckos_.begin(), swarmGeckos_.end());
+            }
             // At night two house geckos come out on the hut's wall by the lantern.
             if (hutPlacement_) {
                 if (night > 0.45f)
@@ -8472,6 +8488,17 @@ namespace island
                                     fruitBatColony_.Bats());
             mineBatRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
                                    mineBats_.Bats());
+            if (!huntingBats_.empty()) mineBatRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, huntingBats_);
+        }
+        if (alateRenderer_) {
+            GpuDiagnosticScope gpuPass("termite-swarm");
+            alateRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, alates_);
+            if (!termiteReported_ && alateRenderer_->VisibleCount() > 0) {
+                termiteReported_ = true;
+                std::cout << "island-simulator: termite swarm at strength " << termiteStrength_ << ": " << alates_.size()
+                          << " winged termites rising from the nests near the eye, " << alateRenderer_->VisibleCount()
+                          << " drawn, " << huntingBats_.size() << " bats hunting them, " << swarmGeckos_.size() << " geckos waiting\n";
+            }
         }
 
         {

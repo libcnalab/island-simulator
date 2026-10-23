@@ -33,6 +33,7 @@
 #include "IslandSimulator/DiscoveryJournal.hpp"
 #include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/LandCrabMigration.hpp"
+#include "IslandSimulator/TermiteSwarm.hpp"
 #include "IslandSimulator/DistantSceneryLayout.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/FishSchools.hpp"
@@ -13547,6 +13548,39 @@ int main()
         march.Gather(100.0f, 1.0f, mx, mz, 20.0f, 1e4f, 1e4f, ground, capped, 10U);
         Check(none.empty() && placed && seaward > 0.9f && clear && capped.size() == 10U,
               "the marching crabs are off their lanes, out of reach, not moving to the sea, on the walker's feet or past the cap");
+    }
+    {
+        // The termites' nuptial flight: only round sunset on wet ground; alates rising out of
+        // the nest's mouth and spreading, two bats circling a few metres over it, a gecko on the
+        // bark below the mouth; nothing for nests out of reach.
+        island::TermiteNest nest;
+        nest.bark = {{10.0f, 3.0f, 20.0f}};
+        nest.normal = {{1.0f, 0.0f, 0.0f}};
+        nest.seed = 7U;
+        Check(island::TermiteSwarm::Strength(40.0f, 1.0f) == 0.0f && island::TermiteSwarm::Strength(-20.0f, 1.0f) == 0.0f
+                  && island::TermiteSwarm::Strength(-2.0f, 0.1f) == 0.0f && island::TermiteSwarm::Strength(-2.0f, 1.0f) > 0.99f,
+              "the termites swarm outside the dusk after rain");
+        const std::array<island::TermiteNest, 1> nests{{nest}};
+        std::vector<island::Alate> alates;
+        std::vector<island::FruitBatState> bats;
+        std::vector<island::GeckoState> geckos;
+        island::TermiteSwarm::Gather(50.0f, 1.0f, nests, 14.0f, 2.0f, 20.0f, alates, bats, geckos);
+        const auto mouth = island::TermiteSwarm::Mouth(nest);
+        bool rising = alates.size() > 100U;
+        float meanRise = 0.0f;
+        for (const auto& a : alates) {
+            rising = rising && a.y >= mouth[1] - 0.3f && std::hypot(a.x - mouth[0], a.z - mouth[2]) < 12.0f && a.scale >= 0.0f && a.scale <= 1.0f;
+            meanRise += (a.y - mouth[1]) / static_cast<float>(alates.size());
+        }
+        bool hunting = bats.size() == 2U;
+        for (const auto& b : bats) hunting = hunting && b.y > mouth[1] + 1.5f && b.hangAmount == 0.0f && std::hypot(b.x - mouth[0], b.z - mouth[2]) < 5.5f;
+        const bool waiting = geckos.size() == 1U && geckos[0].y < mouth[1] && geckos[0].wallNormalX == 1.0f;
+        std::vector<island::Alate> far;
+        std::vector<island::FruitBatState> farBats;
+        std::vector<island::GeckoState> farGeckos;
+        island::TermiteSwarm::Gather(50.0f, 1.0f, nests, 200.0f, 2.0f, 20.0f, far, farBats, farGeckos);
+        Check(rising && meanRise > 1.0f && hunting && waiting && far.empty() && farBats.empty() && farGeckos.empty(),
+              "the termite swarm does not rise from the nest, the bats or the gecko are not at it, or a far nest swarms");
     }
 
     if (failures != 0) {

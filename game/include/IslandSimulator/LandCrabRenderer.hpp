@@ -1,5 +1,6 @@
 #pragma once
 #include "IslandSimulator/LandCrabMigration.hpp"
+#include "IslandSimulator/TermiteSwarm.hpp"
 #include "Microsoft/Xna/Framework/Matrix.hpp"
 #include "Microsoft/Xna/Framework/Vector3.hpp"
 #include <memory>
@@ -39,6 +40,23 @@ private:
     std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> staging_;
     std::vector<TemplateVertex> near_,far_;
     int visible_=0,draws_=0;
+};
+
+/** The swarming winged termites: a dark body and four long pale wings, flickering in their beat. */
+class AlateRenderer final {
+public:
+    static constexpr std::size_t MaximumAlates=1600;
+    explicit AlateRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
+    ~AlateRenderer();
+    void Draw(const Microsoft::Xna::Framework::Matrix& view,const Microsoft::Xna::Framework::Matrix& projection,
+              const Microsoft::Xna::Framework::Vector3& camera,std::span<const Alate> alates);
+    [[nodiscard]] int VisibleCount() const noexcept {return visible_;}
+private:
+    Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
+    std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
+    std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> buffer_;
+    std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> staging_;
+    int visible_=0;
 };
 
 }
