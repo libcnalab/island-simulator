@@ -265,9 +265,9 @@ between runs.
 - **QA views.** `journal` (the list open with two entries in three, over the idol,
   `20261023T044701`) and `journal-notice` (the idol camera noting the idol through the real
   path: "journal notes idol (1 of 78)", the notice at the top, `20261023T044801`).
-- **Open.** Item 1's small interactions (taking a lantern from the mine, lighting the
-  lighthouse, collecting shells and coconuts) are the next pass. Saving across a real restart
-  needs the operator's play (QA runs keep storage off).
+- **Open.** Saving across a real restart needs the operator's play (QA runs keep storage off).
+  The operator struck item 1's small interactions (the mine's lantern, lighting the lighthouse,
+  collecting shells and coconuts) on 2026-10-23.
 
 ## Loop pass 550 (2026-10-22) — the quad no longer comes to you inside the volcano
 

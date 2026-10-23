@@ -99,7 +99,9 @@ Mark each `[x]` with its `PLAN.md` evidence (the loop pass) when done. They were
 Czech in the operator's messages; the intent is kept here.
 
 **First: make the island a game.**
-1. [~] **Discovery journal.** (The journal itself is pass 551; the small interactions remain.) A journal that fills as the player finds the landmarks (the mine,
+1. [x] **Discovery journal.** Done in pass 551. The operator struck the small interactions on
+   2026-10-23 (the mine's lantern, lighting the lighthouse, collecting shells and coconuts): do
+   not build them. A journal that fills as the player finds the landmarks (the mine,
    the volcano, the wrecks, the lighthouse, the idol, the windthrow and others) and meets the
    species (the island has dozens). Most of what ~550 passes added is otherwise never
    discovered. Small interactions belong with it: taking a lantern from the mine, lighting the
