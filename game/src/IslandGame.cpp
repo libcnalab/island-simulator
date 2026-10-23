@@ -14,6 +14,8 @@
 #include "IslandSimulator/TidePoolLayout.hpp"
 #include "IslandSimulator/VolcanoSite.hpp"
 #include "IslandSimulator/CanopyProfile.hpp"
+#include "IslandSimulator/LandmarkShapes.hpp"
+#include <unordered_map>
 #include "IslandSimulator/BridgeLayout.hpp"
 #include "IslandSimulator/LookoutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
@@ -207,6 +209,10 @@ namespace island
             case FixedViewpoint::WhaleSkeletonDetail: return "whale-skeleton";
             case FixedViewpoint::IdolDetail: return "idol";
             case FixedViewpoint::IdolOfferingsDetail: return "idol-offerings";
+            case FixedViewpoint::QuadAuditDetail: return "quad-audit";
+            case FixedViewpoint::QuadPlaneDetail: return "quad-plane";
+            case FixedViewpoint::QuadWhaleDetail: return "quad-whale";
+            case FixedViewpoint::QuadLighthouseDetail: return "quad-lighthouse";
             case FixedViewpoint::JournalDetail: return "journal";
             case FixedViewpoint::JournalNoticeDetail: return "journal-notice";
             case FixedViewpoint::StoneSignDetail: return "help-sign";
@@ -3331,6 +3337,11 @@ namespace island
         const auto contentStarted = std::chrono::steady_clock::now();
         frameworkInitializationMilliseconds_ = std::chrono::duration<double, std::milli>(
             contentStarted - constructionFinished_).count();
+        // the landmarks' renderers hand their triangles over as they are built: the quad's plan of
+        // what it can not drive through is made from them (BuildQuadShapes)
+        landmark_shapes::Current() = [this](const std::string_view landmark, const std::vector<std::array<float, 3>>& triangles) {
+            landmarkMeshes_.emplace_back(std::string(landmark), triangles);
+        };
         if (!qualityProfile_.IsValid()) {
             throw std::logic_error("The selected runtime quality profile is invalid");
         }
@@ -3749,6 +3760,7 @@ namespace island
             quadSurface_ = std::make_unique<RenderedTerrainSurface>(terrain_);
             if (terrainRenderer_)
                 quadSurface_->SetLocalPatches({&terrainRenderer_->StreamBed(), &terrainRenderer_->WreckScour()});
+            BuildQuadShapes();
             tyreTrackRenderer_ = std::make_unique<TyreTrackRenderer>(device, terrain_, *quadSurface_);
             wheelDustRenderer_ = std::make_unique<RootingDustRenderer>(device,
                 "island-simulator: the quad's wheels throw dust off dry sand and soil, more with the speed, settling downwind",
@@ -3775,6 +3787,7 @@ namespace island
                 }
             }
             if (!quadPlaced_) PlaceQuadNear(cameraPosition_.X + 3.0f, cameraPosition_.Z, 0.0f);
+            if (viewpoint_ == FixedViewpoint::QuadAuditDetail) RunQuadAudit();
             if (QuadDriveView()) {
                 // Driven: set off up the beach path at a run before the capture (on a fixed
                 // clock), the chase camera following, to show its ruts and its dust; or in from
@@ -3839,6 +3852,29 @@ namespace island
                     constexpr float startZ = -266.0f;
                     const float x0 = VegetationLayout::PrimaryPathCenterX(startZ);
                     PlaceQuadNear(x0, startZ, std::atan2(0.0f, -1.0f));
+                } else if ((viewpoint_ == FixedViewpoint::QuadPlaneDetail && planeWreckPlacement_)
+                           || (viewpoint_ == FixedViewpoint::QuadWhaleDetail && whalePlacement_)) {
+                    // at the fighter's fuselage from behind its wing, or into the whale's ribcage
+                    // from inland, from a little way off at full throttle (both had let it through)
+                    const bool plane = viewpoint_ == FixedViewpoint::QuadPlaneDetail;
+                    const auto whale = plane ? std::array<float, 2>{} : whalePlacement_->At(4.0f, 0.0f);
+                    const float tx = plane ? planeWreckPlacement_->x : whale[0], tz = plane ? planeWreckPlacement_->z : whale[1];
+                    const float bearing = plane ? std::numbers::pi_v<float> * 1.75f : std::numbers::pi_v<float>;
+                    const float reach = plane ? 12.5f : 14.0f;
+                    const float fromX = tx + std::cos(bearing) * reach, fromZ = tz + std::sin(bearing) * reach;
+                    PlaceQuadNear(fromX, fromZ, std::atan2(tx - fromX, tz - fromZ));
+                } else if (viewpoint_ == FixedViewpoint::QuadLighthouseDetail && lighthousePlacement_) {
+                    // Stood with its back to the lighthouse's tower, just clear of the plinth: the
+                    // chase camera behind it would be inside the tower.
+                    const auto& tower = *lighthousePlacement_;
+                    const float out = LighthousePlacement::PlinthRadius + 1.6f;
+                    for (int k = 0; k < 24; ++k) {
+                        const float a = static_cast<float>(k) * std::numbers::pi_v<float> / 12.0f;
+                        const float x = tower.x + std::cos(a) * out, z = tower.z + std::sin(a) * out;
+                        PlaceQuadNear(x, z, std::atan2(x - tower.x, z - tower.z));
+                        const auto q = quad_.Position();
+                        if (!QuadWallBlocked(q.x, q.z) && std::abs(q.y - 0.6f - OpenGround(q.x, q.z)) < 0.3f) break;
+                    }
                 } else if (viewpoint_ == FixedViewpoint::QuadBearDetail && bear_) {
                     // straight at the bear from eight metres off
                     const auto& bear = bear_->State();
@@ -3851,10 +3887,11 @@ namespace island
                     PlaceQuadNear(x0, startZ, std::atan2(x1 - x0, 6.0f));
                 }
                 riding_ = true;
+                const bool stands = viewpoint_ == FixedViewpoint::QuadVolcanoDetail || viewpoint_ == FixedViewpoint::QuadLighthouseDetail;
                 quadControls_ = {viewpoint_ == FixedViewpoint::QuadDriveDetail ? 0.8f
                     : viewpoint_ == FixedViewpoint::QuadJettyDetail ? 0.4f
-                    : viewpoint_ == FixedViewpoint::QuadVolcanoDetail ? 0.0f
-                    : 1.0f, 0.0f, viewpoint_ == FixedViewpoint::QuadVolcanoDetail};
+                    : stands ? 0.0f
+                    : 1.0f, 0.0f, stands};
                 quadCameraYaw_ = quad_.YawRadians();
                 const auto start = quad_.Position();
                 quadCamera_ = Vector3(start.x - std::sin(quadCameraYaw_) * 4.8f, start.y + 1.9f, start.z - std::cos(quadCameraYaw_) * 4.8f);
@@ -5886,6 +5923,29 @@ namespace island
                 }
             }
         }
+        // The landmarks' drawn shapes at the quad's height (the wrecks' hulls and wings, the
+        // whale's ribs, the cottage's walls, the signal fire's fronds, the screw pines' stilt
+        // roots, the jetty's bollards: circles fitted round them had let it through between),
+        // and the jetty's deck from below its edge: the quad's footprint, its wheels' outer
+        // faces and the middles between.
+        {
+            const BikeVec forward = quad_.Forward();
+            const float length = std::hypot(forward.x, forward.z);
+            const float fx = length > 1e-4f ? forward.x / length : 0.0f, fz = length > 1e-4f ? forward.z / length : 1.0f;
+            const float wheels = quad_.Position().y - 0.6f;
+            // (closer than a cell, so a rib or a stilt root can not pass between them)
+            for (float along = -0.96f; along <= 0.97f; along += 0.16f) {
+                for (float across = -0.7f; across <= 0.71f; across += 0.175f) {
+                    const float px = x + fx * along + fz * across, pz = z + fz * along - fx * across;
+                    if (quadShapes_.Occupied(px, pz)) return true;
+                    if (jettyPlacement_ && jettyPlacement_->OnDeck(px, pz)) {
+                        const float below = quadSurface_ ? quadSurface_->Sample(px, pz).height : terrain_.Height(px, pz);
+                        const float deck = jettyPlacement_->SupportHeight(px, pz, below);
+                        if (deck - below > 0.3f && deck - wheels > 0.45f) return true;
+                    }
+                }
+            }
+        }
         // The cave's rock (an arched shell five metres wide): the quad and its rider as one
         // upright capsule, 0.95 m round and 1.9 m tall.
         constexpr float Radius = 0.95f, Height = 1.9f;
@@ -5977,9 +6037,12 @@ namespace island
         (void)StreamWaterAt(x, z, streamBed, streamDepth);
         // The jetty's deck carries the quad as it does the walker, up its ramp from the sand
         // (off its side, the sea).
+        // (Only from about its own level, up the ramp or along it: from beside it, below the
+        // deck's edge, the deck is a wall (QuadWallBlocked); the quad had climbed a metre up
+        // onto it from the sand as if it were a kerb.)
         if (jettyPlacement_) {
             const float deck = jettyPlacement_->SupportHeight(x, z, ground.height);
-            if (deck > ground.height) {
+            if (deck > ground.height && (quadDeckAnyLevel_ || deck - (quad_.Position().y - 0.6f) < 0.45f)) {
                 ground.height = deck;
                 ground.normal = {0.0f, 1.0f, 0.0f};
             }
@@ -6150,10 +6213,140 @@ namespace island
         return std::clamp(dusk + 0.3f * std::max(weather_now::Current().cloudCover, 0.0f), 0.0f, 1.0f);
     }
 
+    void IslandGame::BuildQuadShapes()
+    {
+        landmark_shapes::Current() = nullptr;
+        // what stands 0.3-1.3 m over the quad's ground (its wheels ride over anything lower, a
+        // stone of the HELP ME or a root, and its rider ducks nothing higher); the jetty's deck
+        // is ground there, so its bollards stand on it
+        quadDeckAnyLevel_ = true;
+        const auto started = std::chrono::steady_clock::now();
+        // (the quad's ground without its grip and water, which cost the most to look up: the
+        // drawn surface, the volcano's cone, the jetty's deck)
+        const float extent = TerrainMeshLayout::Extent - 1.0f;
+        const auto ground = [this, extent](const float x, const float z) {
+            float height = quadSurface_ && std::abs(x) < extent && std::abs(z) < extent ? quadSurface_->Sample(x, z).height
+                                                                                         : terrain_.Height(x, z);
+            if (VolcanoSite::Radius(x, z) < VolcanoSite::BaseRadius) height = std::max(height, VolcanoSite::SurfaceY(x, z));
+            return jettyPlacement_ ? jettyPlacement_->SupportHeight(x, z, height) : height;
+        };
+        for (const auto& [name, triangles] : landmarkMeshes_) {
+            // and where the chase camera rides, some 2.5 m up (with a margin for its lag)
+            const std::size_t cells = LandmarkShapes::Add(name, triangles, ground,
+                {LandmarkShapes::Band{quadShapes_, 0.30f, 1.30f}, LandmarkShapes::Band{chaseCameraShapes_, 1.2f, 4.2f}});
+            if (viewpoint_ == FixedViewpoint::QuadAuditDetail)
+                std::cout << "island-simulator: quad audit shape " << name << ": " << triangles.size() / 3U << " triangles, "
+                          << cells << " cells at the quad's height\n";
+        }
+        quadDeckAnyLevel_ = false;
+        std::cout << "island-simulator: the quad meets the landmarks' drawn shapes: " << landmarkMeshes_.size() << " landmarks, "
+                  << quadShapes_.CellCount() << " cells of " << LandmarkShapes::Cell << " m (the chase camera "
+                  << chaseCameraShapes_.CellCount() << "), built in "
+                  << std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count() << " ms\n";
+        landmarkMeshes_.clear();
+        landmarkMeshes_.shrink_to_fit();
+    }
+
+    void IslandGame::RunQuadAudit()
+    {
+        struct Target { const char* name; float x, z, reach; };
+        std::vector<Target> targets;
+        if (lighthousePlacement_) targets.push_back({"lighthouse", lighthousePlacement_->x, lighthousePlacement_->z, 4.0f});
+        if (cottagePlacement_) targets.push_back({"cottage", cottagePlacement_->x, cottagePlacement_->z, 4.0f});
+        if (freighterPlacement_) {
+            const auto mid = freighterPlacement_->World(FreighterPlacement::Length * 0.5f, 0.0f, 0.0f);
+            targets.push_back({"freighter", mid.x, mid.z, 16.0f});
+        }
+        if (lifeboatPlacement_) targets.push_back({"lifeboat", lifeboatPlacement_->x, lifeboatPlacement_->z, 4.0f});
+        if (planeWreckPlacement_) targets.push_back({"plane-wreck", planeWreckPlacement_->x, planeWreckPlacement_->z, 7.5f});
+        if (windthrowPlacement_) {
+            const auto mid = windthrowPlacement_->At(6.0f, 0.0f);
+            targets.push_back({"windthrow", mid[0], mid[1], 9.0f});
+        }
+        if (idolPlacement_) targets.push_back({"idol", idolPlacement_->x, idolPlacement_->z, 3.5f});
+        if (whalePlacement_) {
+            const auto at = whalePlacement_->At(4.0f, 0.0f);
+            targets.push_back({"whale-skeleton", at[0], at[1], 8.0f});
+        }
+        if (stoneSignPlacement_) {
+            for (const float along : {0.25f, 0.75f}) {
+                const auto at = stoneSignPlacement_->At(StoneSignPlacement::Length() * along, 3.5f);
+                targets.push_back({"help-sign", at[0], at[1], 5.0f});
+            }
+            const auto fire = stoneSignPlacement_->SignalFire();
+            targets.push_back({"signal-fire", fire[0], fire[1], 2.0f});
+        }
+        for (std::size_t i = 0; i < pandanus_.size() && i < 6U; ++i) targets.push_back({"screw-pine", pandanus_[i].x, pandanus_[i].z, 2.5f});
+        if (jettyPlacement_) {
+            targets.push_back({"jetty", jettyPlacement_->rootX, jettyPlacement_->rootZ, 3.0f});
+            targets.push_back({"canoe", jettyPlacement_->canoeX, jettyPlacement_->canoeZ, 2.5f});
+        }
+        if (bridgePlacement_) {
+            const auto& b = *bridgePlacement_;
+            targets.push_back({"bridge", (b.ax + b.bx) * 0.5f, (b.az + b.bz) * 0.5f, b.span * 0.5f});
+        }
+        const auto ground = [this](float x, float z) { return QuadGround(x, z); };
+        const auto obstacles = [this](float x, float z, float r, float& px, float& pz) { return QuadObstacle(x, z, r, px, pz); };
+        const BikeVec parked = quad_.Position();
+        const float parkedYaw = quad_.YawRadians();
+        riding_ = true;
+        for (const Target& target : targets) {
+            int worstHits = 0;
+            std::string worstWhere;
+            for (int side = 0; side < 8; ++side) {
+                const float bearing = static_cast<float>(side) * std::numbers::pi_v<float> / 4.0f;
+                const float startX = target.x + std::cos(bearing) * (target.reach + 9.0f);
+                const float startZ = target.z + std::sin(bearing) * (target.reach + 9.0f);
+                if (QuadGround(startX, startZ).height < 0.2f || worldCollisionGrid_.IntersectsCircle(startX, startZ, 1.4f)
+                    || QuadWallBlocked(startX, startZ)) {
+                    std::cout << "island-simulator: quad audit " << target.name << " side " << side << ": no clear start\n";
+                    continue;
+                }
+                PlaceQuadNear(startX, startZ, std::atan2(target.x - startX, target.z - startZ));
+                const BikeControls controls{1.0f, 0.0f, false};
+                int hits = 0;
+                std::string hitName;
+                float nearest = 1.0e9f, lift = 0.0f;
+                for (int step = 0; step < 60; ++step) {
+                    UpdateQuadSite();
+                    quad_.Step(0.1f, controls, ground, obstacles);
+                    const BikeVec q = quad_.Position(), f = quad_.Forward();
+                    const float length = std::max(std::hypot(f.x, f.z), 1e-4f), fx = f.x / length, fz = f.z / length;
+                    nearest = std::min(nearest, std::hypot(q.x - target.x, q.z - target.z));
+                    lift = std::max(lift, q.y - OpenGround(q.x, q.z));
+                    int stepHits = 0;
+                    std::string_view stepName;
+                    for (float along = -1.0f; along <= 1.001f; along += 0.2f) {
+                        for (float across = -0.6f; across <= 0.601f; across += 0.2f) {
+                            const std::string_view owner = quadShapes_.At(q.x + fx * along + fz * across, q.z + fz * along - fx * across);
+                            if (owner.empty()) continue;
+                            ++stepHits;
+                            stepName = owner;
+                        }
+                    }
+                    if (stepHits > hits) { hits = stepHits; hitName = std::string(stepName); }
+                }
+                const BikeVec end = quad_.Position();
+                std::cout << "island-simulator: quad audit " << target.name << " side " << side << ": nearest "
+                          << nearest << " m, ends " << std::hypot(end.x - target.x, end.z - target.z) << " m off, lift "
+                          << lift << " m, inside a shape " << hits << " of 77 footprint points"
+                          << (hits > 0 ? " (" + hitName + ")" : std::string()) << '\n';
+                if (hits > worstHits) { worstHits = hits; worstWhere = hitName + " from side " + std::to_string(side); }
+            }
+            std::cout << "island-simulator: quad audit " << target.name << " worst: " << worstHits << " footprint points"
+                      << (worstHits > 0 ? " in " + worstWhere : std::string()) << '\n';
+        }
+        riding_ = false;
+        PlaceQuadNear(parked.x, parked.z, parkedYaw);
+    }
+
     void IslandGame::PlaceQuadNear(const float x, const float z, const float yawRadians)
     {
         quadSite_ = QuadSite::Open;   // placed anew, it is not where it was
+        // (set down on whatever is under it: on the jetty, its deck)
+        quadDeckAnyLevel_ = true;
         quad_.Place({x, 0.0f, z}, yawRadians, [this](float px, float pz) { return QuadGround(px, pz); });
+        quadDeckAnyLevel_ = false;
         quadPlaced_ = true;
         quadRestSeconds_ = 0.0f;
         quadRestAnchor_ = quad_.Position();
@@ -6478,6 +6671,13 @@ namespace island
             const float floor = mineLayout_.Entrance().y + MineLayout::FloorRelative(l.z);
             desired.Y = std::clamp(desired.Y, floor + 0.6f, floor + MineLayout::Headroom(l.x, l.z) - 0.35f);
         } else {
+            // Out in the open, drawn in behind the quad out of the landmarks' shapes (swung round
+            // by the mouse it had stood inside the lighthouse's tower or the coaster's hull),
+            // and kept over the ground.
+            for (float back = 4.8f; back > 1.2f && chaseCameraShapes_.Occupied(desired.X, desired.Z); back -= 0.3f) {
+                desired.X = p.x - std::sin(quadCameraYaw_) * back;
+                desired.Z = p.z - std::cos(quadCameraYaw_) * back;
+            }
             desired.Y = std::max(desired.Y, terrain_.Height(desired.X, desired.Z) + 0.6f);
         }
         quadCamera_ = Vector3::Lerp(quadCamera_, desired, 1.0f - std::exp(-deltaSeconds * 9.0f));
@@ -9548,6 +9748,22 @@ namespace island
                                   << jetty.SupportHeight(q.x, q.z, -100.0f);
                     }
                     std::cout << '\n';
+                } else if (viewpoint_ == FixedViewpoint::QuadLighthouseDetail && lighthousePlacement_) {
+                    std::cout << "island-simulator: quad QA lighthouse: the chase camera "
+                              << std::hypot(quadCamera_.X - q.x, quadCamera_.Z - q.z) << " m behind the quad, "
+                              << std::hypot(quadCamera_.X - lighthousePlacement_->x, quadCamera_.Z - lighthousePlacement_->z)
+                              << " m from the tower's axis, "
+                              << (chaseCameraShapes_.Occupied(quadCamera_.X, quadCamera_.Z) ? "inside its shape" : "clear of it") << '\n';
+                } else if (viewpoint_ == FixedViewpoint::QuadPlaneDetail || viewpoint_ == FixedViewpoint::QuadWhaleDetail) {
+                    const BikeVec f = quad_.Forward();
+                    const float length = std::max(std::hypot(f.x, f.z), 1e-4f), fx = f.x / length, fz = f.z / length;
+                    int inside = 0;
+                    for (float along = -1.0f; along <= 1.001f; along += 0.2f)
+                        for (float across = -0.6f; across <= 0.601f; across += 0.2f)
+                            inside += quadShapes_.Occupied(q.x + fx * along + fz * across, q.z + fz * along - fx * across) ? 1 : 0;
+                    std::cout << "island-simulator: quad QA landmark: "
+                              << (viewpoint_ == FixedViewpoint::QuadPlaneDetail ? "plane wreck" : "whale skeleton")
+                              << ", speed " << quad_.Speed() << " m/s, footprint points inside its shape " << inside << " of 77\n";
                 } else if (viewpoint_ == FixedViewpoint::QuadVolcanoDetail) {
                     std::cout << "island-simulator: quad QA volcano stands " << VolcanoSite::Radius(q.x, q.z)
                               << " m from the crater, body " << q.y << " over the cone's " << OpenGround(q.x, q.z)

@@ -1,4 +1,5 @@
 #include "IslandSimulator/HelicopterRenderer.hpp"
+#include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
 
 #include "IslandSimulator/EnvironmentLighting.hpp"
@@ -981,6 +982,7 @@ HelicopterRenderer::HelicopterRenderer(GraphicsDevice& device,const HelicopterPl
     for(const auto& vertex:mesh){low=Vector3::Min(low,vertex.Position);high=Vector3::Max(high,vertex.Position);}
     for(const auto& vertex:glassMesh){low=Vector3::Min(low,vertex.Position);high=Vector3::Max(high,vertex.Position);}
     bounds_=BoundingBox(low,high);triangles_=static_cast<int>(mesh.size()/3);
+    landmark_shapes::Note("helicopter",mesh);
     glassTriangles_=static_cast<int>(glassMesh.size()/3);triangles_+=glassTriangles_;
     vertices_=std::make_unique<VertexBuffer>(device,
         VertexPositionColorTexture::getVertexDeclarationStatic(),static_cast<int>(mesh.size()),

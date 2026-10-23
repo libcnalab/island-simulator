@@ -1,4 +1,5 @@
 #include "IslandSimulator/PandanusRenderer.hpp"
+#include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
@@ -153,6 +154,7 @@ PandanusRenderer::PandanusRenderer(GraphicsDevice& device,const std::span<const 
         mesh.insert(mesh.end(),b.builder.mesh.begin(),b.builder.mesh.end());
         sectors_.push_back(s);
     }
+    landmark_shapes::Note("screw-pines",mesh);
     if(!mesh.empty()) {
         vertices_=std::make_unique<VertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),static_cast<int>(mesh.size()),BufferUsage::WriteOnly);
         vertices_->SetData(mesh.data(),static_cast<int>(mesh.size()));

@@ -1,4 +1,5 @@
 #include "IslandSimulator/JettyRenderer.hpp"
+#include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "IslandSimulator/StructureMeshBuilder.hpp"
@@ -98,6 +99,7 @@ JettyRenderer::JettyRenderer(GraphicsDevice& device,const JettyPlacement& jetty)
     b.Box(paddleCentre+cSide*0.80f,cAxis,Vector3::Up,cSide,0.085f,0.012f,0.22f,paddle,paddle*0.85f);
 
     triangles_=static_cast<int>(b.mesh.size()/3);
+    landmark_shapes::Note("jetty",b.mesh);
     Vector3 low(1e9f,1e9f,1e9f),high(-1e9f,-1e9f,-1e9f);
     for(const auto& v:b.mesh) { low=Vector3::Min(low,v.Position);high=Vector3::Max(high,v.Position); }
     bounds_=BoundingBox(low-Vector3(0.2f,0.2f,0.2f),high+Vector3(0.2f,0.2f,0.2f));

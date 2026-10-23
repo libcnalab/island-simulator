@@ -1,4 +1,5 @@
 #include "IslandSimulator/LifeboatRenderer.hpp"
+#include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
@@ -169,6 +170,7 @@ LifeboatRenderer::LifeboatRenderer(GraphicsDevice& device,const LifeboatPlacemen
     }
 
     auto& mesh=b.builder.mesh;
+    landmark_shapes::Note("lifeboat",mesh);
     triangles_=static_cast<int>(mesh.size()/3U);
     Vector3 low(1e9f,1e9f,1e9f),high(-1e9f,-1e9f,-1e9f);
     for(const auto& vtx:mesh) {low=Vector3::Min(low,vtx.Position);high=Vector3::Max(high,vtx.Position);}

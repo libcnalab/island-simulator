@@ -66,6 +66,7 @@
 #endif
 #include "IslandSimulator/DebugOverlay.hpp"
 #include "IslandSimulator/DiscoveryJournal.hpp"
+#include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/FlightMotion.hpp"
 #include "IslandSimulator/GeckoPopulation.hpp"
 #include "IslandSimulator/SkinkPopulation.hpp"
@@ -361,6 +362,10 @@ namespace island
         QuadBearDetail,
         QuadStreamDetail,
         QuadSeaDetail,
+        QuadAuditDetail,
+        QuadPlaneDetail,
+        QuadWhaleDetail,
+        QuadLighthouseDetail,
         CrabDetail,
         HermitCrabDetail,
         CoconutCrabDetail,
@@ -767,7 +772,8 @@ namespace island
                 || viewpoint_ == FixedViewpoint::QuadHelicopterDetail || viewpoint_ == FixedViewpoint::QuadLookoutDetail
                 || viewpoint_ == FixedViewpoint::QuadBearDetail || viewpoint_ == FixedViewpoint::QuadStreamDetail
                 || viewpoint_ == FixedViewpoint::QuadSeaDetail || viewpoint_ == FixedViewpoint::QuadMineDetail
-                || viewpoint_ == FixedViewpoint::QuadVolcanoDetail;
+                || viewpoint_ == FixedViewpoint::QuadVolcanoDetail || viewpoint_ == FixedViewpoint::QuadPlaneDetail
+                || viewpoint_ == FixedViewpoint::QuadWhaleDetail || viewpoint_ == FixedViewpoint::QuadLighthouseDetail;
         }
         float quadSiteFloorY_ = 0.0f;
         int quadStreamWaitUpdates_ = 13;   // QA: the stream view stands this many updates before setting off
@@ -788,6 +794,16 @@ namespace island
                                              const Microsoft::Xna::Framework::Vector3& target) const;
         [[nodiscard]] bool TouchTorchOffered() const noexcept;
         void UpdateQuad(float deltaSeconds);
+        /** QA: drives the quad at each landmark from eight sides and reports how far it gets into
+         *  the landmark's drawn shape (`quad-audit`). */
+        void RunQuadAudit();
+        // The landmarks' drawn triangles, handed over by their renderers while they are built,
+        // and from them the plan of what stands at the quad's height (LandmarkShapes).
+        std::vector<std::pair<std::string, std::vector<std::array<float, 3>>>> landmarkMeshes_;
+        LandmarkShapes quadShapes_;
+        LandmarkShapes chaseCameraShapes_;   // the same at the chase camera's height
+        bool quadDeckAnyLevel_ = false;   // the jetty's deck is ground at any level (building those, placing the quad)
+        void BuildQuadShapes();
         void UpdateQuadChaseCamera(float deltaSeconds);
         void ToggleQuad();
         // The open ground under (x, z): the drawn terrain, or the volcano's cone where it stands

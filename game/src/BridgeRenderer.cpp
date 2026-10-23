@@ -1,4 +1,5 @@
 #include "IslandSimulator/BridgeRenderer.hpp"
+#include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "IslandSimulator/StructureMeshBuilder.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
@@ -61,6 +62,7 @@ BridgeRenderer::BridgeRenderer(GraphicsDevice& device,const BridgePlacement& bri
         }
     }
     triangles_=static_cast<int>(b.mesh.size()/3);
+    landmark_shapes::Note("bridge",b.mesh);
     Vector3 low(1e9f,1e9f,1e9f),high(-1e9f,-1e9f,-1e9f);
     for(const auto& v:b.mesh) { low=Vector3::Min(low,v.Position);high=Vector3::Max(high,v.Position); }
     bounds_=BoundingBox(low-Vector3(0.2f,0.2f,0.2f),high+Vector3(0.2f,0.2f,0.2f));

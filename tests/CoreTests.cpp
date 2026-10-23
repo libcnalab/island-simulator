@@ -31,6 +31,7 @@
 #include "IslandSimulator/ContactShadowPatch.hpp"
 #include "IslandSimulator/DebugFreeCamera.hpp"
 #include "IslandSimulator/DiscoveryJournal.hpp"
+#include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/DistantSceneryLayout.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/FishSchools.hpp"
@@ -13484,6 +13485,27 @@ int main()
                   && island::JournalSighted(eye, ahead, {0.0f, 2.0f, -0.5f}, 1.0f, 25.0f)
                   && !island::JournalSighted(eye, ahead, {std::nanf(""), 2.0f, 5.0f}, 1.0f, 25.0f),
               "the journal's sight test notes things out of view or out of reach, or misses one in view");
+    }
+
+    {
+        // The landmarks' shapes at the quad's height: a wall standing on sloping ground takes the
+        // cells under it, a stone lower than the band and a roof above it take none.
+        island::LandmarkShapes shapes;
+        const auto ground = [](const float x, const float) { return 0.1f * x; };
+        std::vector<std::array<float, 3>> wall, stone, roof;
+        const auto quad = [](std::vector<std::array<float, 3>>& mesh, const std::array<float, 3>& a, const std::array<float, 3>& b,
+                             const std::array<float, 3>& c, const std::array<float, 3>& d) {
+            mesh.insert(mesh.end(), {a, b, c, a, c, d});
+        };
+        quad(wall, {0.0f, 0.0f, 0.0f}, {2.0f, 0.2f, 0.0f}, {2.0f, 2.2f, 0.0f}, {0.0f, 2.0f, 0.0f});
+        quad(stone, {5.0f, 0.5f, 5.0f}, {5.4f, 0.54f, 5.0f}, {5.4f, 0.74f, 5.0f}, {5.0f, 0.7f, 5.0f});
+        quad(roof, {-3.0f, 2.0f, -3.0f}, {-1.0f, 2.0f, -3.0f}, {-1.0f, 2.0f, -1.0f}, {-3.0f, 2.0f, -1.0f});
+        const std::size_t wallCells = shapes.Add("wall", wall, ground, 0.3f, 1.3f);
+        const std::size_t lowCells = shapes.Add("stone", stone, ground, 0.3f, 1.3f) + shapes.Add("roof", roof, ground, 0.3f, 1.3f);
+        Check(wallCells >= 10U && wallCells <= 12U && lowCells == 0U && shapes.Occupied(1.0f, 0.05f)
+                  && shapes.At(1.9f, 0.01f) == "wall" && !shapes.Occupied(1.0f, 0.5f) && !shapes.Occupied(5.2f, 5.0f)
+                  && !shapes.Occupied(-2.0f, -2.0f) && shapes.At(-2.0f, -2.0f).empty(),
+              "the landmarks' shapes at the quad's height miss a wall, or take a stone below the band or a roof above it");
     }
 
     if (failures != 0) {

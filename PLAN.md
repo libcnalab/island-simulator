@@ -233,6 +233,41 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 552 (2026-10-23) — the quad meets the landmarks' drawn shapes
+
+The operator's task list (reviewed 2026-10-23), item 2: the quad at every landmark.
+
+- **The audit** (`quad-audit`, a QA run that renders nothing of interest): each landmark's
+  renderer hands its triangles over as it is built (`landmark_shapes::Note`); the audit drives
+  the quad at full throttle at each landmark from eight sides for six seconds and counts the
+  points of a 77-point grid over the quad's footprint that stand in a cell of the landmark's
+  drawn shape at the quad's height (0.3-1.3 m over its ground).
+- **Found** (before): it drove through the fighter wreck's wing and fuselage (72 of 77 points),
+  the whale's ribcage (75), the keepers' cottage (40), the signal fire's fronds (27), and climbed
+  a metre up onto the jetty's deck from the sand beside it (the deck carried any wheel under it).
+  The coaster, lifeboat, idol, windthrow, screw pines and bridge only let its corners in
+  (6-10 points: one 0.95 m circle for the quad against circles fitted round the shapes). The
+  HELP ME's stones stand at most 0.24 m: driven over, as they should be.
+- **Fix.** `LandmarkShapes`: the plan of what the landmarks' triangles put 0.3-1.3 m over the
+  quad's ground, in 0.2 m cells (10 757 cells from 15 landmarks: the hut, jetty, whale, idol,
+  HELP ME, lighthouse and cottage, plane, coaster, lifeboat, screw pines, windthrow, bridge,
+  lookout, helicopter and shipwreck), built once at load in 144 ms (llvmpipe machine). The quad
+  is blocked where any of 13 x 9 points over its footprint (closer than a cell, so a rib or a
+  stilt root can not pass between) falls in a cell. The jetty's deck carries the quad only from
+  about its own level (up the ramp, along it); from below its edge it is a wall.
+- **Chase camera.** A second plan at the camera's height (1.2-4.2 m): out in the open the camera
+  is drawn in behind the quad out of the shapes (swung round, it stood inside the lighthouse's
+  tower or the coaster's hull).
+- **After.** The audit's worst is 4 points (edge contact) at every landmark; the capture fails
+  above 6. New views: `quad-plane` (stops at the wing's trailing edge, 0 points inside,
+  `20261023T054428`), `quad-whale` (stops at the tail vertebrae, `054438`), `quad-lighthouse`
+  (backed to the tower: the camera drawn in to 2.1 m behind the quad, clear of it, `054214`),
+  `quad-audit` (`054114`). All earlier quad views pass (`054235` .. `054501`): the jetty view
+  rides 8.4 m out on the deck as before; the helicopter view now stops 3.0 m from its axis, at
+  its open doors and skid (2.1 m before, through them).
+- Tests: `LandmarkShapes` (a wall on a slope taken, a stone under the band and a roof over it
+  not). Full suite 76/76.
+
 ## Loop pass 551 (2026-10-23) — the discovery journal, first pass
 
 The operator's task list (reviewed 2026-10-23), item 1. The operator chose English, a simple

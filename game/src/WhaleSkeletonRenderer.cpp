@@ -1,4 +1,5 @@
 #include "IslandSimulator/WhaleSkeletonRenderer.hpp"
+#include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
@@ -368,6 +369,7 @@ WhaleSkeletonRenderer::WhaleSkeletonRenderer(GraphicsDevice& device,const WhaleS
         scatter(6.8f,-2.9f,0.04f,0.0f,0.11f);
     }
     auto& mesh=bones.builder.mesh;
+    landmark_shapes::Note("whale-skeleton",mesh);
     triangles_=static_cast<int>(mesh.size()/3);
     Vector3 low(1e9f,1e9f,1e9f),high(-1e9f,-1e9f,-1e9f);
     for(const auto& v:mesh) {low=Vector3::Min(low,v.Position);high=Vector3::Max(high,v.Position);}

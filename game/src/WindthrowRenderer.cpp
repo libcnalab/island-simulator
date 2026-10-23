@@ -1,4 +1,5 @@
 #include "IslandSimulator/WindthrowRenderer.hpp"
+#include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
@@ -462,6 +463,7 @@ WindthrowRenderer::WindthrowRenderer(GraphicsDevice& device,const WindthrowPlace
     Builder builder(placement,[&](const float x,const float z) {return DrawnOrAnalyticHeight(ground,terrain,x,z);});
     std::size_t casting=0;
     const std::vector<VertexPositionColor> mesh=builder.Build(casting);
+    landmark_shapes::Note("windthrow",mesh);
     castingTriangles_=static_cast<int>(casting/3U);
     Vector3 low(1e9f,1e9f,1e9f),high(-1e9f,-1e9f,-1e9f);
     for(const auto& v:mesh) {low=Vector3::Min(low,v.Position);high=Vector3::Max(high,v.Position);}

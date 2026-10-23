@@ -1,4 +1,5 @@
 #include "IslandSimulator/FreighterRenderer.hpp"
+#include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/HumanSkeleton.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
@@ -674,6 +675,7 @@ FreighterRenderer::FreighterRenderer(GraphicsDevice& device,const FreighterPlace
     }
 
     auto& mesh=b.builder.mesh;
+    landmark_shapes::Note("freighter",mesh);
     triangles_=static_cast<int>(mesh.size()/3);
     Vector3 low(1e9f,1e9f,1e9f),high(-1e9f,-1e9f,-1e9f);
     for(const auto& v:mesh) {low=Vector3::Min(low,v.Position);high=Vector3::Max(high,v.Position);}

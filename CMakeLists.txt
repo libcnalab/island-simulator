@@ -102,6 +102,7 @@ add_library(island_core STATIC
     game/src/WindthrowLayout.cpp
     game/src/GlowingFungusLayout.cpp
     game/src/DiscoveryJournal.cpp
+    game/src/LandmarkShapes.cpp
     game/src/LifeboatLayout.cpp
     game/src/BridgeLayout.cpp
     game/src/LookoutLayout.cpp

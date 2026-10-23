@@ -1,4 +1,5 @@
 #include "IslandSimulator/LookoutRenderer.hpp"
+#include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "IslandSimulator/StructureMeshBuilder.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
@@ -70,6 +71,7 @@ LookoutRenderer::LookoutRenderer(GraphicsDevice& device,const LookoutPlacement& 
         if(step%4==2) b.Box(at+rampUp*0.02f,across,rampUp,rampDir,LookoutPlacement::RampHalfWidth-0.05f,0.02f,0.03f,post,post);
     }
     triangles_=static_cast<int>(b.mesh.size()/3);
+    landmark_shapes::Note("lookout",b.mesh);
     Vector3 low(1e9f,1e9f,1e9f),high(-1e9f,-1e9f,-1e9f);
     for(const auto& v:b.mesh) { low=Vector3::Min(low,v.Position);high=Vector3::Max(high,v.Position); }
     bounds_=BoundingBox(low-Vector3(0.2f,0.2f,0.2f),high+Vector3(0.2f,0.2f,0.2f));

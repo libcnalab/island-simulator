@@ -1,4 +1,5 @@
 #include "IslandSimulator/HutRenderer.hpp"
+#include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
 #include "IslandSimulator/HutThatch.hpp"
@@ -421,6 +422,7 @@ HutRenderer::HutRenderer(GraphicsDevice& device,const HutPlacement& hut)
         if(Vector3::Cross(mesh[i+1].Position-mesh[i].Position,mesh[i+2].Position-mesh[i].Position).LengthSquared()<1e-12f)
             throw std::runtime_error("Degenerate hut triangle");
     bounds_=BoundingBox(low,high); triangles_=static_cast<int>(mesh.size()/3);
+    landmark_shapes::Note("hut",mesh);
     vertices_=std::make_unique<VertexBuffer>(device,VertexPositionColorTexture::getVertexDeclarationStatic(),static_cast<int>(mesh.size()),BufferUsage::WriteOnly);
     vertices_->SetData(mesh.data(),static_cast<int>(mesh.size()));
     effect_->setVertexColorEnabledProperty(true); effect_->setLightingEnabledProperty(false);

@@ -1,4 +1,5 @@
 #include "IslandSimulator/StoneSignRenderer.hpp"
+#include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
@@ -194,6 +195,7 @@ StoneSignRenderer::StoneSignRenderer(GraphicsDevice& device,const StoneSignPlace
         }
     }
     auto& mesh=b.builder.mesh;
+    landmark_shapes::Note("help-sign",mesh);
     triangles_=static_cast<int>(mesh.size()/3);
     Vector3 low(1e9f,1e9f,1e9f),high(-1e9f,-1e9f,-1e9f);
     for(const auto& v:mesh) {low=Vector3::Min(low,v.Position);high=Vector3::Max(high,v.Position);}

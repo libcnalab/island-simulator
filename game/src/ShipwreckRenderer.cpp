@@ -1,4 +1,5 @@
 #include "IslandSimulator/DayNightCycle.hpp"
+#include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/ShipwreckRenderer.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
 
@@ -1118,6 +1119,7 @@ void main()
         }
 
         vertexCount_ = static_cast<int>(vertices.size());
+        landmark_shapes::Note("shipwreck",vertices);
         primitiveCount_ = vertexCount_ / 3;
         debrisCount_ = static_cast<int>(layout.Debris().size());
         vertices_ = std::make_unique<VertexBuffer>(
