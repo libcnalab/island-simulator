@@ -118,7 +118,11 @@ Czech in the operator's messages; the intent is kept here.
    windthrow's pit, the wreck scour, the stream bed) from the side and from above for the sky
    showing through the island, gaps or floating edges, as the mine's cutting did (pass 548, see
    the memory note on terrain cut coverage). Keep a permanent QA view for each fix.
-4. [~] **Appearance inventory.** Ranked in pass 554; improving the weakest from the top. Capture all ~150 QA viewpoints in one sweep, judge them side by
+4. [x] **Appearance inventory.** Ranked in pass 554; the ten weakest improved in passes 555-564
+   (birds, resident, ground dove, insects, coconut crab, table corals, fruit bats, gecko,
+   stingray, volcano). The rest of the ranking (crocodile, shoal fish and shark, hermit crab,
+   rodents, sea turtle) stays recorded in PLAN "Loop pass 554"; a second look found the
+   crocodile's model detailed and its QA view showing it half-submerged from behind. Capture all ~150 QA viewpoints in one sweep, judge them side by
    side (at 1:1 crops where detail matters) and rank them from the weakest. The older models have
    fallen behind the newer ones in the ~550 passes since. Record the ranking in `PLAN.md`, then
    improve the weakest first.
