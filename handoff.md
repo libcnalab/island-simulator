@@ -128,7 +128,7 @@ Czech in the operator's messages; the intent is kept here.
    improve the weakest first.
 
 **Then: a living island, spectacular and realistic.**
-5. [ ] **Land crab migration after rain.** On nights after rain, thousands of land crabs march
+5. [x] **Land crab migration after rain.** Done in pass 565. On nights after rain, thousands of land crabs march
    from the forest to the sea (as on Christmas Island). It builds on the existing weather and
    crabs.
 6. [ ] **Winged termites swarming.** At dusk after rain, winged termites stream out of the
@@ -514,6 +514,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 565: item 5, the red crabs' march to the sea after rain (`LandCrabMigration`, `LandCrabRenderer`): 525 lanes x 40 crabs, deterministic in the clock, dark x wet strength, nearest 700 drawn; journal entry; QA `crab-migration --time-of-day 18.7 --wet-ground` `20261023T072046` (PLAN "Loop pass 565").
 - Pass 564: inventory item 10, the volcano: ash and scoria streaks down the fall line, green tongues low down, per-vertex weathering on a finer cone mesh; `volcano` `20261023T071417` (PLAN "Loop pass 564").
 - Pass 563: inventory item 9, the stingray: a gentle crown out of the wings, a mottled back (1596 near vertices, diagnostics updated in three tools/tests); `stingrays` `20261023T070947` (PLAN "Loop pass 563").
 - Pass 562: inventory item 8, the gecko stands on bent legs with planted feet; `geckos` `20261023T070721` (PLAN "Loop pass 562").

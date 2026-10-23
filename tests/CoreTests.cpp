@@ -32,6 +32,7 @@
 #include "IslandSimulator/DebugFreeCamera.hpp"
 #include "IslandSimulator/DiscoveryJournal.hpp"
 #include "IslandSimulator/LandmarkShapes.hpp"
+#include "IslandSimulator/LandCrabMigration.hpp"
 #include "IslandSimulator/DistantSceneryLayout.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/FishSchools.hpp"
@@ -13506,6 +13507,46 @@ int main()
                   && shapes.At(1.9f, 0.01f) == "wall" && !shapes.Occupied(1.0f, 0.5f) && !shapes.Occupied(5.2f, 5.0f)
                   && !shapes.Occupied(-2.0f, -2.0f) && shapes.At(-2.0f, -2.0f).empty(),
               "the landmarks' shapes at the quad's height miss a wall, or take a stone below the band or a roof above it");
+    }
+    {
+        // The red crabs' march: none by day or on dry ground; on a wet night, crabs on their
+        // lanes between the forest and the waterline, within reach of the eye, moving seaward
+        // with the clock, stepping aside from the walker, coming up and going under at the ends.
+        const island::IslandTerrain terrain;
+        const island::LandCrabMigration march(terrain);
+        const auto ground = [&terrain](const float x, const float z) { return terrain.Height(x, z); };
+        Check(march.ActiveLaneCount() > 300U && island::LandCrabMigration::Strength(0.0f, 1.0f) == 0.0f
+                  && island::LandCrabMigration::Strength(1.0f, 0.1f) == 0.0f
+                  && island::LandCrabMigration::Strength(1.0f, 1.0f) > 0.99f,
+              "the crab migration has too few lanes or runs by day or on dry ground");
+        const auto& lane = march.Lanes()[march.Lanes().size() / 2U];
+        const float mx = (lane.startX + lane.endX) * 0.5f, mz = (lane.startZ + lane.endZ) * 0.5f;
+        std::vector<island::MigratingCrab> early, none;
+        march.Gather(100.0f, 0.0f, mx, mz, 20.0f, 1e4f, 1e4f, ground, none, 1000U);
+        march.Gather(100.0f, 1.0f, mx, mz, 20.0f, 1e4f, 1e4f, ground, early, 5000U);
+        bool placed = !early.empty();
+        for (const auto& crab : early)
+            placed = placed && std::hypot(crab.x - mx, crab.z - mz) <= 20.0f + 1e-3f
+                && std::abs(crab.y - terrain.Height(crab.x, crab.z)) < 1e-3f && crab.scale >= 0.0f && crab.scale <= 1.2f;
+        // the whole march, ten seconds apart: nearly every crab further out (the lanes run out
+        // from the island's middle; the few that reached the water start again inland)
+        std::vector<island::MigratingCrab> all, allLater;
+        march.Gather(100.0f, 1.0f, 0.0f, 0.0f, 2000.0f, 1e4f, 1e4f, ground, all, 100000U);
+        march.Gather(110.0f, 1.0f, 0.0f, 0.0f, 2000.0f, 1e4f, 1e4f, ground, allLater, 100000U);
+        std::size_t outward = 0U;
+        for (std::size_t i = 0; i < all.size() && i < allLater.size(); ++i)
+            outward += std::hypot(allLater[i].x, allLater[i].z) > std::hypot(all[i].x, all[i].z) ? 1U : 0U;
+        const float seaward = all.size() == allLater.size() && all.size() > 10000U
+            ? static_cast<float>(outward) / static_cast<float>(all.size()) : 0.0f;
+        std::vector<island::MigratingCrab> scattered;
+        march.Gather(100.0f, 1.0f, mx, mz, 20.0f, early.front().x, early.front().z, ground, scattered, 5000U);
+        bool clear = true;
+        for (const auto& crab : scattered)
+            clear = clear && std::hypot(crab.x - early.front().x, crab.z - early.front().z) >= island::LandCrabMigration::ScatterRadius - 1e-3f;
+        std::vector<island::MigratingCrab> capped;
+        march.Gather(100.0f, 1.0f, mx, mz, 20.0f, 1e4f, 1e4f, ground, capped, 10U);
+        Check(none.empty() && placed && seaward > 0.9f && clear && capped.size() == 10U,
+              "the marching crabs are off their lanes, out of reach, not moving to the sea, on the walker's feet or past the cap");
     }
 
     if (failures != 0) {

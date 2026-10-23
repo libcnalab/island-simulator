@@ -67,6 +67,8 @@
 #include "IslandSimulator/DebugOverlay.hpp"
 #include "IslandSimulator/DiscoveryJournal.hpp"
 #include "IslandSimulator/LandmarkShapes.hpp"
+#include "IslandSimulator/LandCrabMigration.hpp"
+#include "IslandSimulator/LandCrabRenderer.hpp"
 #include "IslandSimulator/FlightMotion.hpp"
 #include "IslandSimulator/GeckoPopulation.hpp"
 #include "IslandSimulator/SkinkPopulation.hpp"
@@ -281,6 +283,7 @@ namespace island
         IdolOfferingsDetail,
         JournalDetail,
         JournalNoticeDetail,
+        CrabMigrationDetail,
         OrbitProbe,
         BunkerSideDetail,
         StoneSignDetail,
@@ -518,6 +521,11 @@ namespace island
         FlySwarms flySwarms_;
         CrabColony crabColony_;
         HermitCrabGroup hermitCrabGroup_;
+        LandCrabMigration landCrabs_{terrain_};   // the red crabs' march to the sea after rain
+        std::unique_ptr<LandCrabRenderer> landCrabRenderer_;
+        std::vector<MigratingCrab> marchingCrabs_;
+        float landCrabStrength_ = 0.0f;
+        bool landCrabReported_ = false;
         CoconutCrabGroup coconutCrabGroup_;
         CrocodileGroup crocodileGroup_;
         BoarHerd boarHerd_;

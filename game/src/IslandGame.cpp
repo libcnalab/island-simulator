@@ -216,6 +216,7 @@ namespace island
             case FixedViewpoint::QuadLighthouseDetail: return "quad-lighthouse";
             case FixedViewpoint::JournalDetail: return "journal";
             case FixedViewpoint::JournalNoticeDetail: return "journal-notice";
+            case FixedViewpoint::CrabMigrationDetail: return "crab-migration";
             case FixedViewpoint::OrbitProbe: return "orbit";
             case FixedViewpoint::BunkerSideDetail: return "bunker-side";
             case FixedViewpoint::StoneSignDetail: return "help-sign";
@@ -2398,6 +2399,27 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: help-sign QA camera looks down on the castaway's stones from a low pass over the sea\n";
+        } else if (viewpoint_ == FixedViewpoint::CrabMigrationDetail) {
+            // Low on the upper beach where the lanes come out of the trees, looking along the
+            // shore across the crabs streaming down to the sea (captured at dusk on wet ground).
+            const auto lanes = landCrabs_.Lanes();
+            if (lanes.empty()) throw std::runtime_error("Crab migration QA requires migration lanes");
+            // (the lane nearest the foot of the beach path on the south shore, an open beach)
+            const float pathZ = -232.0f, pathX = VegetationLayout::PrimaryPathCenterX(pathZ);
+            std::size_t chosen = 0U;
+            for (std::size_t i = 1; i < lanes.size(); ++i)
+                if (std::hypot(lanes[i].endX - pathX, lanes[i].endZ - pathZ) < std::hypot(lanes[chosen].endX - pathX, lanes[chosen].endZ - pathZ))
+                    chosen = i;
+            const auto& lane = lanes[chosen];
+            const float dx = lane.endX - lane.startX, dz = lane.endZ - lane.startZ, length = std::hypot(dx, dz);
+            const float ux = dx / length, uz = dz / length;
+            const float eyeX = lane.startX + ux * (length - 12.0f) - uz * 4.0f, eyeZ = lane.startZ + uz * (length - 12.0f) + ux * 4.0f;
+            cameraPosition_ = Vector3(eyeX, terrain_.Height(eyeX, eyeZ) + 1.15f, eyeZ);
+            const float tx = lane.startX + ux * (length - 9.0f) + uz * 5.0f, tz = lane.startZ + uz * (length - 9.0f) - ux * 5.0f;
+            const Vector3 direction = Vector3(tx, terrain_.Height(tx, tz), tz) - cameraPosition_;
+            yaw_ = std::atan2(direction.X, direction.Z);
+            pitch_ = std::atan2(direction.Y, std::hypot(direction.X, direction.Z));
+            std::cout << "island-simulator: crab-migration QA camera looks along the beach at the red crabs going down to the sea\n";
         } else if (viewpoint_ == FixedViewpoint::OrbitProbe || viewpoint_ == FixedViewpoint::BunkerSideDetail) {
             // QA probe for oblique looks at a place: ISLAND_QA_ORBIT="<site> <azimuth deg> <elevation
             // deg> <distance m>", the site one of cave, bunker, bunker-top, mine, mine-top, crater,
@@ -3298,6 +3320,7 @@ namespace island
             return r.species == RodentSpecies::Rat && r.visibility > 0.3f && r.behavior != RodentBehavior::Hidden; });
         each("crabs", crabColony_.Crabs(), 0.15f, [](const auto& c) { return c.hideAmount < 0.5f; });
         each("hermit-crabs", hermitCrabGroup_.Crabs(), 0.1f, always);
+        each("red-crabs", marchingCrabs_, 0.1f, [](const MigratingCrab& c) { return c.scale > 0.5f; });
         each("coconut-crabs", coconutCrabGroup_.Crabs(), 0.3f, always);
         {
             // by day three in four keep to their retreats, as the drawn colony does
@@ -3490,6 +3513,9 @@ namespace island
             device, 72.0f * qualityProfile_.wildlifeMaximumDistanceScale);
         crabRenderer_ = std::make_unique<CrabRenderer>(
             device, 92.0f * qualityProfile_.wildlifeMaximumDistanceScale);
+        landCrabRenderer_ = std::make_unique<LandCrabRenderer>(device);
+        std::cout << "island-simulator: red land crabs march to the sea down " << landCrabs_.ActiveLaneCount()
+                  << " lanes on dark evenings and nights after rain\n";
         crocodileRenderer_ = std::make_unique<CrocodileRenderer>(
             device, 220.0f * qualityProfile_.wildlifeMaximumDistanceScale);
         auto boarRenderer = std::make_unique<BoarRenderer>(
@@ -8381,6 +8407,26 @@ namespace island
             crabRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
                                 crabColony_.Crabs(), crabColony_.Burrows(),
                                 hermitCrabGroup_.Crabs(), coconutCrabGroup_.Crabs());
+        }
+        if (landCrabRenderer_) {
+            // the red crabs on the march round the eye (none by day or on dry ground)
+            GpuDiagnosticScope gpuPass("land-crabs");
+            const auto& light = sun_light::Current().lighting;
+            const float darkness = 1.0f - std::clamp((light.sunElevationDegrees + 3.0f) / 9.0f, 0.0f, 1.0f);
+            landCrabStrength_ = LandCrabMigration::Strength(darkness, weather_now::Current().wetness);
+            marchingCrabs_.clear();
+            const PlayerPosition& walker = playerMotion_.Position();
+            landCrabs_.Gather(timeSeconds, landCrabStrength_, renderCameraPosition_.X, renderCameraPosition_.Z,
+                              26.0f * qualityProfile_.wildlifeMaximumDistanceScale, walker.x, walker.z,
+                              [this](const float x, const float z) { return DrawnOrAnalyticHeight(*drawnGround_, terrain_, x, z); },
+                              marchingCrabs_, LandCrabRenderer::MaximumCrabs);
+            landCrabRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, marchingCrabs_);
+            if (!landCrabReported_ && landCrabRenderer_->VisibleCount() > 0) {
+                landCrabReported_ = true;
+                std::cout << "island-simulator: land crab migration at strength " << landCrabStrength_ << ": "
+                          << marchingCrabs_.size() << " crabs on the march near the eye, "
+                          << landCrabRenderer_->VisibleCount() << " drawn\n";
+            }
         }
 
         {

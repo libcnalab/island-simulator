@@ -103,6 +103,7 @@ add_library(island_core STATIC
     game/src/GlowingFungusLayout.cpp
     game/src/DiscoveryJournal.cpp
     game/src/LandmarkShapes.cpp
+    game/src/LandCrabMigration.cpp
     game/src/LifeboatLayout.cpp
     game/src/BridgeLayout.cpp
     game/src/LookoutLayout.cpp
@@ -766,6 +767,7 @@ if(ISLAND_BUILD_GAME)
         game/src/SwimGlowRenderer.cpp
         game/src/EyeshineRenderer.cpp
         game/src/CrabRenderer.cpp
+        game/src/LandCrabRenderer.cpp
         game/src/CrocodileRenderer.cpp
         game/src/BoarRenderer.cpp
         game/src/SnakeRenderer.cpp

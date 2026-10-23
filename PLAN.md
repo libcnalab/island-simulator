@@ -233,6 +233,28 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 565 (2026-10-23) — the red crabs' march to the sea after rain
+
+The operator's task list (reviewed 2026-10-23), item 5.
+- **The march** (`LandCrabMigration`): 720 lanes round the coast (525 kept: not down the
+  headlands' rock steps or cliffs, nor climbing out of hollows), each from 44 m inland to the
+  waterline, with 40 crabs a lane, some 21 000 in all. A crab's place is worked out from its lane
+  and the clock (no per-crab state): sideways to the sea as crabs walk, 0.10-0.20 m/s, spread
+  across the lane and wandering a little, up out of the litter over the lane's first metre and
+  under the surf over its last, stepping aside from the walker's feet (1.4 m).
+- **When**: the strength is the dark (from the sun's elevation: dusk, night and dawn) times the
+  wet ground (from 0.3 wetness, full at 0.7); fewer crabs are out the weaker it is. None by day
+  or on dry ground.
+- **Drawn** (`LandCrabRenderer`): the nearest crabs within 26 m, at most 700, from a 228-triangle
+  near crab (a domed carapace straight across its front, eight jointed legs stepping in a wave,
+  claws held up before the face, stalked eyes) and a 34-triangle far one, in three reds.
+- The journal has a new creature entry, "Red crab migration".
+- **QA view** `crab-migration` (the lane nearest the foot of the south beach path, along the
+  beach; capture it with `--time-of-day 18.7 --wet-ground`): dusk `20261023T072046` (443 crabs
+  near the eye, 129 drawn), night `072659` (graded with the night: crab 37,10,11 on sand
+  32,36,40), by day none (`072651`). Core test: lanes, no march by day or dry, crabs within
+  reach on the ground, 96 % moving seaward over ten seconds, clear of the walker, the cap.
+
 ## Loop pass 564 (2026-10-23) — the volcano's slopes (inventory 10)
 
 The cone was an evenly toned faceted heap. Its slopes now carry streaks down the fall line, pale
