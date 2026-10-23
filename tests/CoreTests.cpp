@@ -37,6 +37,7 @@
 #include "IslandSimulator/SeabirdIslet.hpp"
 #include "IslandSimulator/Mudskippers.hpp"
 #include "IslandSimulator/WeaverColony.hpp"
+#include "IslandSimulator/BalloonFlight.hpp"
 #include "IslandSimulator/TRexMotion.hpp"
 #include "IslandSimulator/DistantSceneryLayout.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
@@ -13684,6 +13685,30 @@ int main()
         }
         Check(apart && nests && placed && beatingDisplays && displaying > 0 && grounded > 0 && flying > 0 && perched > 0,
               "the weavers' palms are not apart, their nests do not hang under the fronds, or the birds are not at their nests, on the grass and in the air");
+    }
+
+    {
+        // The balloon: over the island's middle and out over the sea round it in turn, at its
+        // drifting pace, always well clear of the ground under it (the volcano too), its burner
+        // firing in bursts.
+        const island::IslandTerrain terrain;
+        const island::BalloonFlight balloon(terrain);
+        bool clear = true, steady = true;
+        int overLand = 0, overSea = 0, burning = 0;
+        for (int step = 0; step < 3000; ++step) {
+            const float t = static_cast<float>(step) * 2.0f;
+            const auto a = balloon.At(t), b = balloon.At(t + 1.0f);
+            float highest = 0.0f;
+            for (float dx = -15.0f; dx <= 15.0f; dx += 5.0f)
+                for (float dz = -15.0f; dz <= 15.0f; dz += 5.0f) highest = std::max(highest, terrain.Height(a.x + dx, a.z + dz));
+            clear = clear && a.y > highest + island::BalloonFlight::Clearance - 1.0f && a.y < highest + 220.0f;
+            const float pace = std::hypot(b.x - a.x, b.z - a.z);
+            steady = steady && pace > 3.0f && pace < 5.0f && std::abs(b.y - a.y) < 3.0f;   // (a balloon climbs at up to 3 m/s)
+            (terrain.Height(a.x, a.z) > 2.0f ? overLand : overSea) += terrain.Height(a.x, a.z) > 2.0f || terrain.Height(a.x, a.z) < -1.0f ? 1 : 0;
+            burning += island::BalloonFlight::Burning(t) && a.burner > 0.0f ? 1 : 0;
+        }
+        Check(clear && steady && overLand > 300 && overSea > 300 && burning > 50 && burning < 1500,
+              "the balloon does not keep clear of the ground, drift steadily, cross the island and the sea, or fire its burner in bursts");
     }
 
     {

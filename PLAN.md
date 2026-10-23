@@ -233,6 +233,24 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 575 (2026-10-23) — a hot-air balloon drifting round and over the island
+
+The operator's item 16. `BalloonFlight` (core): a figure of eight (a lemniscate of Gerono, 300 m
+long either side of the island's middle, 150 m wide) that crosses over the island and swings out
+over the reef and the sea at each end, the whole figure turning 0.9 rad a lap so each crossing
+takes a new line; 4 m/s along it; 80-130 m over the highest ground within some 60 m (a coarse
+grid of the terrain's maxima, looked 40 m ahead so it rises before the ground does; the volcano
+peaks at 40 m), climbing at most 2.7 m/s; a slow spin and a small rock; the burner fired 3.6 s
+every 23 s. `BalloonRenderer`: 24 gores in red, yellow, blue and white with a contrasting belt
+and crown, load tapes down the seams, a dark skirt; the flying wires to a steel burner frame
+over a woven wicker basket with a padded rim and two people in it; an additive flame (orange
+round a yellow core) while the burner fires; lit by the sun (and the moon) every frame, the
+cloth glowing where the sun is behind it. 8194 triangles, one draw (two while firing). The
+journal has "Hot-air balloon". QA views `balloon` (from the jungle up at it over the coast,
+the QA clock moved on to put it there; `20261023T091018`) and `balloon-close` (level with it,
+32 m off, the burner firing; `20261023T090906`, night `20261023T091032`). Core test: clear of the
+ground, steady, over land and sea in turn, burner bursts. Full suite 76/76. No burner sound yet.
+
 ## Loop pass 574 (2026-10-23) — village weavers' nests hanging from the shore palms' fronds
 
 The operator's kept item 12. `WeaverColony` (core): three living palms 12–60 m in from the shore,

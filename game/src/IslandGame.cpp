@@ -223,6 +223,8 @@ namespace island
             case FixedViewpoint::BoobyNestsDetail: return "booby-nests";
             case FixedViewpoint::MudskipperDetail: return "mudskippers";
             case FixedViewpoint::WeaverNestsDetail: return "weaver-nests";
+            case FixedViewpoint::BalloonDetail: return "balloon";
+            case FixedViewpoint::BalloonCloseDetail: return "balloon-close";
             case FixedViewpoint::WeaverDisplayDetail: return "weaver-display";
             case FixedViewpoint::TRexDetail: return "trex";
             case FixedViewpoint::TRexCloseDetail: return "trex-close";
@@ -685,6 +687,7 @@ namespace island
             }
             windthrowPlacement_=WindthrowLayout::FindInWorld(terrain_,jungleLayout_.Canopy(),worldObstacles,avoid);
             mudskippers_=std::make_unique<MudskipperColony>(terrain_,jungleLayout_.Canopy());
+            balloon_=std::make_unique<BalloonFlight>(terrain_);
             {
                 // The village weavers' colony: their nests woven onto the mature fronds of a few
                 // shore palms, each where the palm's own mesh draws the frond.
@@ -2536,6 +2539,33 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: mudskippers QA camera crouches on the mud under the mangroves\n";
+        } else if (viewpoint_ == FixedViewpoint::BalloonDetail || viewpoint_ == FixedViewpoint::BalloonCloseDetail) {
+            // Up at the balloon from the ground some 150 m in from under it; or level with it,
+            // 32 m off its side, its burner firing.
+            if(!balloon_) throw std::runtime_error("Balloon QA requires the balloon");
+            if(viewpoint_==FixedViewpoint::BalloonDetail) {
+                // the clock moved on to where it is out over the coast, the camera inland of it
+                for(float shift=0.0f;shift<900.0f;shift+=5.0f) {
+                    const auto at=balloon_->At(shift);
+                    const float l=std::hypot(at.x,at.z);
+                    if(l<190.0f||l>260.0f) continue;
+                    const float cx=at.x-at.x/l*170.0f,cz=at.z-at.z/l*170.0f;
+                    if(terrain_.Height(cx,cz)>1.5f) {balloonClockShift_=shift;break;}
+                }
+            }
+            const auto state=balloon_->At(balloonClockShift_);
+            if(viewpoint_==FixedViewpoint::BalloonDetail) {
+                const float l=std::max(1.0f,std::hypot(state.x,state.z));
+                float cx=state.x-state.x/l*170.0f,cz=state.z-state.z/l*170.0f;
+                cameraPosition_=Vector3(cx,std::max(terrain_.Height(cx,cz),0.0f)+1.7f,cz);
+            } else {
+                cameraPosition_=Vector3(state.x-std::sin(state.heading)*32.0f,state.y+1.0f,state.z+std::cos(state.heading)*32.0f);
+            }
+            const Vector3 direction=Vector3(state.x,state.y+(viewpoint_==FixedViewpoint::BalloonDetail?8.0f:4.5f),state.z)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: "<<ViewpointName(viewpoint_)<<" QA camera looks at the hot-air balloon "
+                     <<std::lround(state.y-std::max(0.0f,terrain_.Height(state.x,state.z)))<<" m over the ground\n";
         } else if (viewpoint_ == FixedViewpoint::WeaverNestsDetail || viewpoint_ == FixedViewpoint::WeaverDisplayDetail) {
             // Up into the first colony palm's crown from beside it, at its hanging nests; or
             // close beside a male hanging under his nest with his wings beating.
@@ -3530,6 +3560,11 @@ namespace island
         each("boobies", boobyBirds_, 0.5f, always);
         each("weavers", weaverBirds_, 0.15f, always);
         each("mudskippers", skippers_, 0.06f, always);
+        if (balloon_) {
+            const std::size_t entry = JournalIndex("balloon");
+            const auto state = balloon_->At(balloonClock_);
+            if (!journal_.Found(entry)) consider(entry, state.x, state.y + 8.0f, state.z, 9.0f);
+        }
         if (trex_) {
             const TRexPoint head = trex_->ToWorld(0.0f, 1.0f, 4.5f);
             const std::size_t entry = JournalIndex("trex");
@@ -3943,6 +3978,7 @@ namespace island
         if(seabirdIslet_) seabirdIsletRenderer_=std::make_unique<SeabirdIsletRenderer>(device,*seabirdIslet_);
         if(mudskippers_) mudskipperRenderer_=std::make_unique<MudskipperRenderer>(device,*mudskippers_,terrain_,*drawnGround_);
         if(weavers_) weaverNestRenderer_=std::make_unique<WeaverNestRenderer>(device,*weavers_);
+        if(balloon_) balloonRenderer_=std::make_unique<BalloonRenderer>(device);
         if(!pandanus_.empty()) pandanusRenderer_=std::make_unique<PandanusRenderer>(device,pandanus_,terrain_,*drawnGround_);
         if(windthrowPlacement_) windthrowRenderer_=std::make_unique<WindthrowRenderer>(device,*windthrowPlacement_,terrain_,*drawnGround_);
         glowingFungi_=GlowingFungusLayout::Place(terrain_,windthrowPlacement_?&*windthrowPlacement_:nullptr,naturalPropLayout_.FallenLogs(),
@@ -8335,6 +8371,11 @@ namespace island
             GpuDiagnosticScope gpuPass("distant-scenery");
             distantSceneryRenderer_->Draw(cameraView_, cameraProjection_);
             passingShipRenderer_->Draw(cameraView_, cameraProjection_, timeSeconds);
+        }
+        if (balloonRenderer_) {
+            GpuDiagnosticScope gpuPass("balloon");
+            balloonClock_ = timeSeconds + balloonClockShift_;
+            balloonRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, balloon_->At(balloonClock_));
         }
         {
             GpuDiagnosticScope gpuPass("contact-shadows");

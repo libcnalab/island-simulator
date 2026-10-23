@@ -28,6 +28,7 @@ constexpr std::array Entries{
     JournalEntry{"idol","Stone idol",Place,30.0f},
     JournalEntry{"help-sign","HELP ME in stones",Place,25.0f},
     JournalEntry{"seabird-islet","Seabird islet",Place,80.0f},
+    JournalEntry{"balloon","Hot-air balloon",Place,500.0f},
     JournalEntry{"bottles","Washed-up bottles",Place,8.0f},
     JournalEntry{"bunker","Bunker",Place,25.0f},
     JournalEntry{"mine","Old mine",Place,25.0f},

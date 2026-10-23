@@ -162,8 +162,8 @@ Czech in the operator's messages; the intent is kept here.
 15. [x] **A night `glowing-fungi` QA view** (`foxfire-log`, pass 572) on a fallen log away from the giant.
 
 **Operator addition (2026-10-23).**
-16. [ ] **A balloon over the island.** A balloon floating over the island, drifting round it and
-    across it.
+16. [x] **A balloon over the island.** A balloon floating over the island, drifting round it and
+    across it. Done in pass 575 (`balloon`, `balloon-close`).
 
 ## Backlog (agent-actionable, 2026-10-19)
 
@@ -518,6 +518,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 575: item 16, the hot-air balloon on a turning figure of eight over the island and the sea, burner bursts; QA `balloon`, `balloon-close` (PLAN "Loop pass 575").
 - Pass 574: item 12, weavers' nests on three shore palms' fronds (swayed with the fronds), yellow males displaying upside down, fetching grass; QA `weaver-nests`, `weaver-display` (PLAN "Loop pass 574").
 - Pass 573: item 14, QA `quad-mine-crates`: the quad driven up the adit to the crates, 10.1 m in (`20261023T084258`) (PLAN "Loop pass 573").
 - Pass 572: items 11 and 15, foxfire on the standing snags and on the fallen logs' true surface (it had been buried inside them); QA `foxfire-log --time-of-day 22` `20261023T083722`, `foxfire-snag` `083730` (PLAN "Loop pass 572").

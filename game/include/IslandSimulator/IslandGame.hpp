@@ -72,6 +72,7 @@
 #include "IslandSimulator/SeabirdIsletRenderer.hpp"
 #include "IslandSimulator/MudskipperRenderer.hpp"
 #include "IslandSimulator/WeaverNestRenderer.hpp"
+#include "IslandSimulator/BalloonRenderer.hpp"
 #include "IslandSimulator/TRexRenderer.hpp"
 #include "IslandSimulator/FlightMotion.hpp"
 #include "IslandSimulator/GeckoPopulation.hpp"
@@ -298,6 +299,8 @@ namespace island
         TRexCloseDetail,
         TRexRoarDetail,
         TRexRestDetail,
+        BalloonDetail,
+        BalloonCloseDetail,
         OrbitProbe,
         BunkerSideDetail,
         StoneSignDetail,
@@ -607,6 +610,10 @@ namespace island
         std::vector<BirdState> weaverBirds_;
         float weaverClockShift_ = 0.0f;   // QA: the weavers' clock moved to a male's display
         std::unique_ptr<WeaverNestRenderer> weaverNestRenderer_;
+        std::unique_ptr<BalloonFlight> balloon_;                 // the hot-air balloon over the island
+        std::unique_ptr<BalloonRenderer> balloonRenderer_;
+        float balloonClock_ = 0.0f;   // the render clock it was last drawn at (for the journal)
+        float balloonClockShift_ = 0.0f;   // QA: its clock moved on to where it is over the coast
         std::unique_ptr<TRexMotion> trex_;                       // the tyrannosaur walking the island
         std::unique_ptr<TRexRenderer> trexRenderer_;
         std::uint32_t notedTRexFootfalls_ = 0U, notedTRexCalls_ = 0U, notedTRexBreaths_ = 0U;

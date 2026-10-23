@@ -98,6 +98,8 @@ namespace
         case FixedViewpoint::BoobyNestsDetail: return "booby-nests";
         case FixedViewpoint::MudskipperDetail: return "mudskippers";
         case FixedViewpoint::WeaverNestsDetail: return "weaver-nests";
+        case FixedViewpoint::BalloonDetail: return "balloon";
+        case FixedViewpoint::BalloonCloseDetail: return "balloon-close";
         case FixedViewpoint::WeaverDisplayDetail: return "weaver-display";
         case FixedViewpoint::TRexDetail: return "trex";
         case FixedViewpoint::TRexCloseDetail: return "trex-close";
@@ -439,6 +441,10 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::TRexRestDetail;
             } else if (name == "mudskippers") {
                 viewpoint = island::FixedViewpoint::MudskipperDetail;
+            } else if (name == "balloon") {
+                viewpoint = island::FixedViewpoint::BalloonDetail;
+            } else if (name == "balloon-close") {
+                viewpoint = island::FixedViewpoint::BalloonCloseDetail;
             } else if (name == "weaver-nests") {
                 viewpoint = island::FixedViewpoint::WeaverNestsDetail;
             } else if (name == "weaver-display") {
