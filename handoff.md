@@ -1,27 +1,41 @@
 # island-simulator handoff
 
-## Resume here — session stopped by the operator (2026-10-22, after loop pass 549)
+## Resume here — session stopped by the operator (2026-10-23, after loop pass 575)
 
-**State.**
-- The operator asked to finish the current task, update this file, commit, push and stop.
-- Loop pass 549 (foxfire mushrooms) is the last completed pass. It is committed with its native
-  tests (76/76), its QA captures, a Web build (`build-probe`, rc 0) and an Android
-  `assembleDebug` (rc 0).
-- The working tree is clean.
-- The operator asked for a push, but `git push origin develop` failed from the agent's shell with
-  `Permission denied (publickey)`. The `github-libcnalab` alias uses `~/.ssh/id_rsa`, which the
-  running ssh-agent does not hold, and no passphrase prompt is possible there. So `develop` may
-  still be ahead of `origin`: check with `git fetch && git log --oneline origin/develop..develop`
-  and push from an interactive terminal (`ssh-add ~/.ssh/id_rsa` first if needed).
-- Every operator request recorded below is done (`[x]`):
-  - the 20-item backlog, re-evidenced in passes 484 and 512;
-  - day/night, weather and the quad bike;
-  - the whale skeleton, idol, HELP ME, lighthouse, WWII plane, PET bottles, the 30 m enterable
-    coaster with skeletons, the lantern-lit mine, the volcano with lava, and the README gallery.
-- The endless loop (invent an improvement, implement it, test it, commit, repeat) was
-  cancelled by the operator on 2026-10-23. Work only on the operator-approved task list (the
-  next section) in its order; when it is done, stop and ask the operator. Never add an item of
-  your own to the list: propose it and let the operator decide. Talk to the operator in Czech.
+**Read this first (for an agent continuing in a new context).**
+- The operator asked to finish the current task, write this file for the next agent and stop.
+  Talk to the operator in **Czech**.
+- **Every item of the operator-reviewed task list below (items 1-16) is done** (`[x]`). Passes
+  551-575 of 2026-10-23: the discovery journal, the quad and terrain-cut audits, the appearance
+  inventory and the ten weakest models, the land crab migration, the termite swarm, the booby
+  islet, the mudskippers, the T. rex (with sounds), the windthrow's light gap, the foxfire on
+  snags, the longer quad mine drive, the weavers' nests (574) and the hot-air balloon (575).
+- **There is no approved work left. Do not start anything on your own.** Ask the operator what
+  next. The endless self-directed loop was cancelled on 2026-10-23; never add an item of your
+  own to the list: propose ideas and let the operator decide each one (keep or strike).
+- Last commit: pass 575 (`7c4df15c`) on `develop`; tests 76/76 and the core tests pass; the
+  working tree is clean. Web (`build-probe`) and Android `assembleDebug` both built with rc 0
+  on pass 575's sources.
+- `develop` is 31+ commits ahead of `origin/develop`. Never push unless the operator asks; when
+  asked, `git push` from the agent's shell has failed before (`Permission denied (publickey)`,
+  the key `~/.ssh/id_rsa` is not in the ssh-agent), so the operator may have to push from an
+  interactive terminal (`ssh-add ~/.ssh/id_rsa` first).
+
+**Ask the operator to check in play** (none of this can be judged from captures):
+- The T. rex's sounds (footfalls, roar, closed-mouth boom, breathing; pass 570): there is no
+  audio device here, so they were only rendered offline. Also its behaviour near the walker.
+- The weavers (pass 574): the males hanging upside down under their nests beating their wings;
+  the nests riding their fronds' sway.
+- The balloon (pass 575): its drift and climb over the volcano; it has no burner sound yet (a
+  candidate to propose, not to build unasked).
+- Older open confirmations: the mine and bunker mouths (pass 548, below) and the Web mouse look
+  at 2.5x (backlog note further down).
+
+**Ideas to propose to the operator (not approved, do not build unasked):**
+- a burner roar for the balloon when it is near; the balloon's shadow on the ground;
+- the rest of the appearance ranking in PLAN "Loop pass 554" (crocodile, shoal fish and shark,
+  hermit crab, rodents, sea turtle);
+- the weavers' chatter (a colony sound).
 
 **Ask the operator to confirm in play** (pass 548, an operator bug report):
 - The old mine's mouth no longer shows the sky through the island from any side.
@@ -29,14 +43,14 @@
   must weave past the crates (depth 11.6-12.7, left) and the rubble (30.2-31.9, right).
 - The bunker's apron had the same smaller sky sliver and is fixed too.
 
-**Per-pass procedure** (followed for passes 200-549):
+**Per-pass procedure** (followed for passes 200-575):
 1. Implement, then build natively (see the build commands below).
 2. Run `./build-consumer/island_core_tests`, then the full ctest:
    `ctest --test-dir build-consumer -j3 -E '^(IslandGameStartupReportValidation|IslandGameCaptureValidation)$'`
    (76 tests, all must pass).
 3. Capture a new QA viewpoint, look at the PNG at 1:1 or 2x crops, and fix what looks wrong.
 4. Insert `## Loop pass N (date) — title` in `PLAN.md` above the previous pass entry, and a
-   `- Pass N: …` line in this file above the previous `- Pass` line (search for "- Pass 549").
+   `- Pass N: …` line in this file above the previous `- Pass` line (search for "- Pass 575").
 5. Commit on `develop`: no attribution lines, only after the tests pass.
 6. Run the Web build, plus the Android build when source files were added.
 7. Never push unless the operator asks.
@@ -84,11 +98,20 @@ the night profile via `--time-of-day`).
 - The QA cameras for the windthrow and the foxfire choose a clear eye from the jungle obstacles
   only (not the ground plants), so a big leaf can stand in the foreground.
 
-The latest passes (541-549) are the top `- Pass` lines below and the top `## Loop pass` entries
-in `PLAN.md`:
-- the passing freighter, the breaching humpback and the live lava flow;
-- screw pines, termite nests and flying fish;
-- the windthrown giant, the mine/quad fix and the foxfire.
+The latest passes (551-575) are the top `- Pass` lines below and the top `## Loop pass` entries
+in `PLAN.md`.
+
+**Useful mechanisms from passes 551-575.**
+- New landmarks must register their triangles with `landmark_shapes::Note` (the quad collides
+  with them; check with the `quad-audit` view).
+- Anything hung on a palm frond: `PalmRenderer::MatureFrondAnchors` and `FrondAnchorWorld`
+  (mirrors the palm shader's sway), as the weavers' nests do.
+- QA views of clock-driven things move that thing's own clock (`weaverClockShift_`,
+  `balloonClockShift_`) rather than the game clock.
+- `BirdRenderer` draws other species' batches (`BirdSpecies::Booby`, `Weaver`) with the same
+  buffer; a batch bigger than the flock falls back to far LOD instead of overflowing.
+- After adding source files, run the Android build too: its clang `-Werror` catches unused
+  private fields that the native build does not.
 
 ## Operator task list — reviewed by the operator 2026-10-23, work in this order, then stop
 
