@@ -96,7 +96,7 @@ private:
     std::size_t target_=1;
     TRexState state_;
     float distance_=0;               // walked, for the stride's phase
-    float standSeconds_=0,walkSeconds_=0,holdSeconds_=0,clock_=0;
+    float walkSeconds_=0,holdSeconds_=0,clock_=0;
     float activitySeconds_=0,breathClock_=0,drinkCooldown_=0,followSeconds_=0,followCooldown_=30.0f,noticeCooldown_=0;
     float drinkX_=0,drinkZ_=0;
     bool hasDrink_=false,previewHold_=false;
