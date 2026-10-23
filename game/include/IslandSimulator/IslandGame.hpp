@@ -69,6 +69,7 @@
 #include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/LandCrabMigration.hpp"
 #include "IslandSimulator/LandCrabRenderer.hpp"
+#include "IslandSimulator/SeabirdIsletRenderer.hpp"
 #include "IslandSimulator/FlightMotion.hpp"
 #include "IslandSimulator/GeckoPopulation.hpp"
 #include "IslandSimulator/SkinkPopulation.hpp"
@@ -285,6 +286,8 @@ namespace island
         JournalNoticeDetail,
         CrabMigrationDetail,
         TermiteSwarmDetail,
+        BoobyColonyDetail,
+        BoobyNestsDetail,
         OrbitProbe,
         BunkerSideDetail,
         StoneSignDetail,
@@ -578,6 +581,10 @@ namespace island
         std::vector<BeachBottle> beachBottles_;   // washed-up PET bottles along the strandline
         std::optional<FreighterPlacement> freighterPlacement_;   // the coaster driven up a beach
         std::optional<LifeboatPlacement> lifeboatPlacement_;     // its lifeboat, keel up on the sand
+        std::optional<SeabirdIslet> seabirdIslet_;               // the boobies' rocky islet offshore
+        std::unique_ptr<BoobyColony> boobies_;
+        std::vector<BirdState> boobyBirds_;
+        std::unique_ptr<SeabirdIsletRenderer> seabirdIsletRenderer_;
         std::optional<BridgePlacement> bridgePlacement_;
         std::optional<LookoutPlacement> lookoutPlacement_;
         std::optional<HelicopterPlacement> helicopterPlacement_;

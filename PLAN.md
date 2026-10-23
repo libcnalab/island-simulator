@@ -233,6 +233,31 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 567 (2026-10-23) — a colony of brown boobies on a rocky islet offshore
+
+The operator's task list (reviewed 2026-10-23), item 7.
+- **The islet** (`SeabirdIsletLayout`, `SeabirdIslet`): off the most headland-like stretch of
+  rocky coast, 48-70 m out on the shelf (some 2 m of water), clear of the wrecks, the jetty, the
+  lifeboat and the whale by 45 m; found at (291, 106). Four basalt stacks (7.5, 4.6, 2.2 and
+  1.2 m high): lobed and buttressed outlines, near-vertical cliffs and craggy tops, an apron of
+  fallen blocks just awash round their feet. Their rock is a collision obstacle for the swimmer.
+- **Drawn** (`SeabirdIsletRenderer`, 2 x 9632-ish triangles in one draw, receiving the sun
+  shadows): dark basalt with a grain, black wet rock and green weed at the waterline, guano
+  white over the level tops and ledges and in streaks down the faces below them.
+- **The boobies** (`BoobyColony`, `BirdSpecies::Booby`): 12 nest sites on the level tops above
+  the spray, a pair at one in three; sitting on the nest or standing tall (the body raised and
+  pitched up), preening, stretching a wing, ruffling, scratching, on their own cycles; five in
+  the air circling the islet, gliding, flapping in bouts, now and then folding their wings to
+  plunge into the sea and climbing out again. A booby's colours (chocolate back, head, wings
+  and tail, white belly and underwing coverts, a pale yellow bill) and a long straight
+  tapering bill on the lofted head of pass 555.
+- The journal gains a place ("Seabird islet") and a creature ("Brown boobies").
+- **QA views**: `booby-colony` (from the headland's shore across the water, `20261023T074134`)
+  and `booby-nests` (close from over the sea beside the main stack, `074141`). `birds`,
+  `frigatebird`, `headland` and `overview` still pass. Core test: offshore in the sea, the stack
+  above the water, nests on level high ground, the colony's birds, kept away from a point.
+  Full suite 76/76.
+
 ## Loop pass 566 (2026-10-23) — the termites' nuptial flight at dusk after rain
 
 The operator's task list (reviewed 2026-10-23), item 6.

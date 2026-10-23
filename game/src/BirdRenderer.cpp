@@ -103,8 +103,15 @@ namespace island
             Color(46, 41, 40, 255), Color(22, 21, 25, 255), Color(26, 25, 30, 255),
             Color(146, 146, 140, 255), Color(10, 10, 10, 255), Color(18, 17, 20, 255)};
 
+        // A brown booby: chocolate head, back, wings and tail, the belly and the wings' underside
+        // coverts white, a pale yellow bill.
+        const BirdPalette BoobyPalette{Color(82, 60, 44, 255), Color(74, 54, 40, 255),
+            Color(232, 230, 222, 255), Color(66, 48, 36, 255), Color(70, 52, 40, 255),
+            Color(222, 206, 128, 255), Color(30, 26, 20, 255), Color(50, 38, 30, 255)};
+
         [[nodiscard]] const BirdPalette& PaletteForBird(const BirdState& bird)
         {
+            if (bird.species == BirdSpecies::Booby) return BoobyPalette;
             if (bird.species == BirdSpecies::Frigatebird) return FrigatePalette;
             if (bird.species == BirdSpecies::Parrot) {
                 return ParrotPalettes[bird.colorVariant % ParrotPalettes.size()];
@@ -513,6 +520,7 @@ namespace island
         {
             const bool parrot=species==BirdSpecies::Parrot;
             const bool dove=species==BirdSpecies::FruitDove;
+            const bool booby=species==BirdSpecies::Booby;
             const float h=parrot?.95f:(species==BirdSpecies::Frigatebird?.80f:(dove?.84f:.86f));
             struct Section { float z, halfWidth, halfHeight, lift, toHead; };
             constexpr std::array<Section,7> Sections{{
@@ -557,6 +565,9 @@ namespace island
             const std::array<std::array<float,4>,6> bill=parrot
                 ? std::array<std::array<float,4>,6>{{{.505f,.060f,.040f,.050f},{.540f,.072f,.036f,.044f},
                     {.572f,.062f,.028f,.036f},{.592f,.030f,.020f,.028f},{.596f,-.006f,.012f,.018f},{.584f,-.034f,.004f,.006f}}}
+                // (a booby's: long, deep at the base and tapering straight to a sharp point)
+                : booby ? std::array<std::array<float,4>,6>{{{.505f,.050f,.036f,.034f},{.570f,.046f,.030f,.026f},
+                    {.640f,.041f,.024f,.019f},{.705f,.036f,.017f,.013f},{.755f,.031f,.010f,.008f},{.790f,.027f,.003f,.003f}}}
                 : dove ? std::array<std::array<float,4>,6>{{{.522f,.050f,.022f,.018f},{.540f,.050f,.018f,.015f},
                     {.558f,.048f,.013f,.011f},{.574f,.045f,.010f,.008f},{.588f,.042f,.007f,.006f},{.598f,.040f,.003f,.003f}}}
                 : std::array<std::array<float,4>,6>{{{.525f,.046f,.026f,.020f},{.560f,.045f,.020f,.016f},
@@ -769,7 +780,10 @@ namespace island
             const bool groundStance = (bird.behavior == BirdBehavior::GroundApproach
                 || bird.behavior == BirdBehavior::GroundForage
                 || bird.behavior == BirdBehavior::GroundDepart) && bird.perchAmount > 0.35f;
-            const float stanceLift = groundStance ? 0.075f : 0.0f, stancePitch = groundStance ? 0.20f : 0.0f;
+            // (a booby on its rock stands tall, its body raised well up from the level)
+            const bool boobyStance = bird.species == BirdSpecies::Booby && bird.perchAmount > 0.6f;
+            const float stanceLift = groundStance ? 0.075f : boobyStance ? 0.11f : 0.0f;
+            const float stancePitch = groundStance ? 0.20f : boobyStance ? 0.62f : 0.0f;
             const Vector3 bodyCentre = centre + Vector3::Up * (stanceLift * scale);
             const Vector3 bodyForward = forward * std::cos(stancePitch) + up * std::sin(stancePitch);
             const Vector3 bodyUp = up * std::cos(stancePitch) - forward * std::sin(stancePitch);

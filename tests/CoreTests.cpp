@@ -34,6 +34,7 @@
 #include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/LandCrabMigration.hpp"
 #include "IslandSimulator/TermiteSwarm.hpp"
+#include "IslandSimulator/SeabirdIslet.hpp"
 #include "IslandSimulator/DistantSceneryLayout.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/FishSchools.hpp"
@@ -13581,6 +13582,33 @@ int main()
         island::TermiteSwarm::Gather(50.0f, 1.0f, nests, 200.0f, 2.0f, 20.0f, far, farBats, farGeckos);
         Check(rising && meanRise > 1.0f && hunting && waiting && far.empty() && farBats.empty() && farGeckos.empty(),
               "the termite swarm does not rise from the nest, the bats or the gecko are not at it, or a far nest swarms");
+    }
+    {
+        // The boobies' islet: off a rocky headland in the sea, its main stack standing out of
+        // the water; nests on its level tops above the spray; the colony's birds on them and a
+        // few in the air; kept clear of a point it must avoid.
+        const island::IslandTerrain terrain;
+        const auto islet = island::SeabirdIsletLayout::FindInWorld(terrain, {});
+        Check(islet.has_value(), "no seabird islet found off the coast");
+        if (islet) {
+            const auto& stack = islet->rocks.front();
+            const island::BoobyColony colony(*islet);
+            bool nests = colony.Nests().size() >= 6U;
+            for (const auto& nest : colony.Nests())
+                nests = nests && nest[1] > 1.2f && std::abs(nest[1] - islet->SurfaceY(nest[0], nest[2])) < 1e-3f
+                    && islet->Flatness(nest[0], nest[2]) >= 0.86f;
+            std::vector<island::BirdState> birds;
+            colony.At(30.0f, birds);
+            bool boobies = birds.size() >= colony.Nests().size() + island::BoobyColony::FlyingCount;
+            for (const auto& bird : birds) boobies = boobies && bird.species == island::BirdSpecies::Booby && std::isfinite(bird.y);
+            const std::vector<std::array<float, 2>> avoid{{{islet->x, islet->z}}};
+            const auto moved = island::SeabirdIsletLayout::FindInWorld(terrain, avoid);
+            Check(terrain.Height(islet->x, islet->z) < -1.5f && terrain.SignedShoreDistance(islet->x, islet->z) < -40.0f
+                      && islet->SurfaceY(stack.x, stack.z) > 5.0f && islet->SurfaceY(islet->x + 40.0f, islet->z) < -3.0f
+                      && islet->Obstacles().size() == islet->rocks.size() && nests && boobies
+                      && (!moved || std::hypot(moved->x - islet->x, moved->z - islet->z) > 45.0f),
+                  "the seabird islet is not offshore in the sea, its stack is not above the water, or its nests and birds are wrong");
+        }
     }
 
     if (failures != 0) {

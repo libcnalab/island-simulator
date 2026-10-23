@@ -105,6 +105,7 @@ add_library(island_core STATIC
     game/src/LandmarkShapes.cpp
     game/src/LandCrabMigration.cpp
     game/src/TermiteSwarm.cpp
+    game/src/SeabirdIslet.cpp
     game/src/LifeboatLayout.cpp
     game/src/BridgeLayout.cpp
     game/src/LookoutLayout.cpp
@@ -769,6 +770,7 @@ if(ISLAND_BUILD_GAME)
         game/src/EyeshineRenderer.cpp
         game/src/CrabRenderer.cpp
         game/src/LandCrabRenderer.cpp
+        game/src/SeabirdIsletRenderer.cpp
         game/src/CrocodileRenderer.cpp
         game/src/BoarRenderer.cpp
         game/src/SnakeRenderer.cpp

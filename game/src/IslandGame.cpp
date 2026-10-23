@@ -218,6 +218,8 @@ namespace island
             case FixedViewpoint::JournalNoticeDetail: return "journal-notice";
             case FixedViewpoint::CrabMigrationDetail: return "crab-migration";
             case FixedViewpoint::TermiteSwarmDetail: return "termite-swarm";
+            case FixedViewpoint::BoobyColonyDetail: return "booby-colony";
+            case FixedViewpoint::BoobyNestsDetail: return "booby-nests";
             case FixedViewpoint::OrbitProbe: return "orbit";
             case FixedViewpoint::BunkerSideDetail: return "bunker-side";
             case FixedViewpoint::StoneSignDetail: return "help-sign";
@@ -543,6 +545,21 @@ namespace island
             // its lifeboat, gone from the davits, keel up on the sand along the beach from it
             if(freighterPlacement_) lifeboatPlacement_=LifeboatLayout::FindNear(terrain_,*freighterPlacement_,solid,avoid);
             if(lifeboatPlacement_) for(const auto& obstacle:lifeboatPlacement_->Obstacles()) worldObstacles.push_back(obstacle);
+            // the boobies' islet off a headland, clear of the wrecks and the landing places
+            {
+                std::vector<std::array<float,2>> away{{{shipwreckLayout_.Ship().x,shipwreckLayout_.Ship().z}}};
+                if(freighterPlacement_) away.push_back({{freighterPlacement_->x,freighterPlacement_->z}});
+                if(jettyPlacement_) away.push_back({{jettyPlacement_->rootX,jettyPlacement_->rootZ}});
+                if(lifeboatPlacement_) away.push_back({{lifeboatPlacement_->x,lifeboatPlacement_->z}});
+                if(whalePlacement_) away.push_back(whalePlacement_->At(4.0f,0.0f));
+                seabirdIslet_=SeabirdIsletLayout::FindInWorld(terrain_,away);
+                if(seabirdIslet_) {
+                    for(const auto& obstacle:seabirdIslet_->Obstacles()) worldObstacles.push_back(obstacle);
+                    boobies_=std::make_unique<BoobyColony>(*seabirdIslet_);
+                    std::cout<<"island-simulator: brown boobies nest on "<<boobies_->Nests().size()<<" sites of a rocky islet off ("
+                             <<seabirdIslet_->x<<", "<<seabirdIslet_->z<<")\n";
+                }
+            }
             // the breakers strike her stern and quarters in the surf and throw spray up them
             if(freighterPlacement_) {
                 const FreighterPlacement& ship=*freighterPlacement_;
@@ -2403,6 +2420,25 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: help-sign QA camera looks down on the castaway's stones from a low pass over the sea\n";
+        } else if (viewpoint_ == FixedViewpoint::BoobyColonyDetail || viewpoint_ == FixedViewpoint::BoobyNestsDetail) {
+            // From the headland's shore across the water to the boobies' islet; or close, from
+            // over the sea beside its main stack, at the birds on their nests.
+            if(!seabirdIslet_) throw std::runtime_error("Booby QA requires the seabird islet");
+            const auto& islet=*seabirdIslet_;
+            const auto& stack=islet.rocks.front();
+            if(viewpoint_==FixedViewpoint::BoobyColonyDetail) {
+                float x=islet.x,z=islet.z;
+                for(int step=0;step<200&&terrain_.Height(x,z)<0.3f;++step) {x+=islet.towardShoreX;z+=islet.towardShoreZ;}
+                x+=islet.towardShoreX*3.0f;z+=islet.towardShoreZ*3.0f;
+                cameraPosition_=Vector3(x,terrain_.Height(x,z)+PlayerMotion::EyeHeight,z);
+            } else {
+                const float side=-islet.towardShoreZ,sideZ=islet.towardShoreX;
+                cameraPosition_=Vector3(stack.x+islet.towardShoreX*9.0f+side*5.0f,stack.height+2.2f,stack.z+islet.towardShoreZ*9.0f+sideZ*5.0f);
+            }
+            const Vector3 direction=Vector3(stack.x,stack.height-(viewpoint_==FixedViewpoint::BoobyColonyDetail?2.0f:0.6f),stack.z)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: "<<ViewpointName(viewpoint_)<<" QA camera looks at the boobies' islet\n";
         } else if (viewpoint_ == FixedViewpoint::CrabMigrationDetail) {
             // Low on the upper beach where the lanes come out of the trees, looking along the
             // shore across the crabs streaming down to the sea (captured at dusk on wet ground).
@@ -3212,6 +3248,7 @@ namespace island
             add("whale-skeleton", at[0], ground(at[0], at[1]) + 1.0f, at[1], 7.5f);
         }
         if (idolPlacement_) add("idol", idolPlacement_->x, idolPlacement_->TopY(), idolPlacement_->z, 3.0f);
+        if (seabirdIslet_) add("seabird-islet", seabirdIslet_->x, 3.0f, seabirdIslet_->z, 8.0f);
         if (stoneSignPlacement_) {
             const auto at = stoneSignPlacement_->At(StoneSignPlacement::Length() * 0.5f, 3.5f);
             add("help-sign", at[0], ground(at[0], at[1]), at[1], StoneSignPlacement::Length() * 0.5f);
@@ -3326,6 +3363,7 @@ namespace island
         each("hermit-crabs", hermitCrabGroup_.Crabs(), 0.1f, always);
         each("red-crabs", marchingCrabs_, 0.1f, [](const MigratingCrab& c) { return c.scale > 0.5f; });
         each("termite-flight", alates_, 0.5f, [](const Alate& a) { return a.scale > 0.5f; });
+        each("boobies", boobyBirds_, 0.5f, always);
         each("coconut-crabs", coconutCrabGroup_.Crabs(), 0.3f, always);
         {
             // by day three in four keep to their retreats, as the drawn colony does
@@ -3720,6 +3758,7 @@ namespace island
         beachLitterRenderer_=std::make_unique<BeachLitterRenderer>(device,beachBottles_,terrain_,*drawnGround_);
         if(freighterPlacement_) freighterRenderer_=std::make_unique<FreighterRenderer>(device,*freighterPlacement_,terrain_,*drawnGround_);
         if(lifeboatPlacement_) lifeboatRenderer_=std::make_unique<LifeboatRenderer>(device,*lifeboatPlacement_,terrain_,*drawnGround_);
+        if(seabirdIslet_) seabirdIsletRenderer_=std::make_unique<SeabirdIsletRenderer>(device,*seabirdIslet_);
         if(!pandanus_.empty()) pandanusRenderer_=std::make_unique<PandanusRenderer>(device,pandanus_,terrain_,*drawnGround_);
         if(windthrowPlacement_) windthrowRenderer_=std::make_unique<WindthrowRenderer>(device,*windthrowPlacement_,terrain_,*drawnGround_);
         glowingFungi_=GlowingFungusLayout::Place(terrain_,windthrowPlacement_?&*windthrowPlacement_:nullptr,naturalPropLayout_.FallenLogs(),
@@ -7968,6 +8007,7 @@ namespace island
                 if (whaleSkeletonRenderer_) whaleSkeletonRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (idolRenderer_) idolRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (stoneSignRenderer_) stoneSignRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                if (seabirdIsletRenderer_) seabirdIsletRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (lighthouseRenderer_) lighthouseRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (planeWreckRenderer_) planeWreckRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (beachLitterRenderer_) beachLitterRenderer_->SetSunShadowMap(sunShadowMap_.get());
@@ -8264,6 +8304,10 @@ namespace island
             GpuDiagnosticScope gpuPass("stone-sign");
             stoneSignRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }
+        if(seabirdIsletRenderer_) {
+            GpuDiagnosticScope gpuPass("seabird-islet");
+            seabirdIsletRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
+        }
         if(lighthouseRenderer_) {
             GpuDiagnosticScope gpuPass("lighthouse");
             lighthouseRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
@@ -8480,6 +8524,10 @@ namespace island
             GpuDiagnosticScope gpuPass("birds");
             birdRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
                                 birdFlock_.Birds());
+            if (boobies_) {
+                boobies_->At(timeSeconds, boobyBirds_);
+                birdRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, boobyBirds_);
+            }
         }
 
         {
