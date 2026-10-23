@@ -61,6 +61,9 @@ namespace island
         [[nodiscard]] int Resolution() const noexcept { return resolution_; }
         [[nodiscard]] std::span<const std::uint8_t> Texels() const noexcept { return texels_; }
         [[nodiscard]] float Sample(float x, float z) const noexcept;
+        /** @brief Opens a gap in the crowns over (x, z): the direct light there raised toward
+         *  `transmission` (0..1) within `radius`, easing out over its outer third. */
+        void OpenGap(float x, float z, float radius, float transmission) noexcept;
         /** @brief Matches the shader's ground-anchor approximation for low elevated receivers. */
         [[nodiscard]] float SampleReceiver(float x, float y, float z, float groundHeight) const noexcept;
         /** @brief Five-tap spatial average for a stock material shared by a small animal body. */

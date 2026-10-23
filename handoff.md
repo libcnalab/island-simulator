@@ -153,11 +153,11 @@ Czech in the operator's messages; the intent is kept here.
    - QA views (walking, roaring, resting).
 
 **Smaller items the operator kept (2026-10-23).**
-10. [ ] **A light gap over the windthrown giant.** Light falls through the hole the giant tore in
+10. [x] **A light gap over the windthrown giant.** Done in pass 571. Light falls through the hole the giant tore in
     the canopy, and saplings race up in it.
 11. [ ] **Foxfire on the standing snags** too, not only on the fallen wood (pass 549).
 12. [ ] **Weaver-bird nests** hanging from palm fronds.
-13. [ ] **Grass kept out of the windthrow's pit.**
+13. [x] **Grass kept out of the windthrow's pit.** Done in pass 571.
 14. [ ] **A longer `quad-mine` QA drive** that reaches the crates.
 15. [ ] **A night `glowing-fungi` QA view** on a fallen log away from the giant.
 
@@ -518,6 +518,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 571: items 10 and 13, the windthrow's light gap (`CanopyLightField::OpenGap`) with sixteen pioneer saplings, and no grass in its pit/plate/trunk (`GrassLayout::Remove`); `windthrow` `20261023T083240` (PLAN "Loop pass 571").
 - Pass 570: item 9 second pass, the tyrannosaur's sounds (footfalls, roar, boom, breath; `Soundscape::NoteTRex`), its ways (watch, follow, roar/boom, sniff, drink at the stream mouth, lie up at night), animals scattering from it, the ground's shake; QA `trex-roar` `20261023T081909`, `trex-rest` `081955` (PLAN "Loop pass 570").
 - Pass 569: item 9 first pass, a full-size Tyrannosaurus rex (`TRexMotion`, `TRexRenderer`): its round of the upper beaches, IK legs and planted three-toed prints, collision for walker and quad, ground shadow, journal entry; QA `trex` `20261023T081228`, `trex-close` `081236`. Next: sound (steps, breath, roar), camera shake, roar/drink/rest/watch/follow, scattering animals (PLAN "Loop pass 569").
 - Pass 568: item 8, mudskippers (`MudskipperColony`, `MudskipperRenderer`): wet mud under the low mangroves, 28 skippers hopping, displaying and fleeing to the water; journal entry; QA `mudskippers` `20261023T075511` (PLAN "Loop pass 568").

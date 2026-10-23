@@ -681,6 +681,24 @@ namespace island
             windthrowPlacement_=WindthrowLayout::FindInWorld(terrain_,jungleLayout_.Canopy(),worldObstacles,avoid);
             mudskippers_=std::make_unique<MudskipperColony>(terrain_,jungleLayout_.Canopy());
             if(windthrowPlacement_) {
+                const WindthrowPlacement& w=*windthrowPlacement_;
+                // the gap the giant tore in the crowns as it fell: the light down to the floor
+                // round where it stood
+                const auto gap=w.At(-0.8f,0.0f);
+                canopyLightField_.OpenGap(gap[0],gap[1],8.5f,0.92f);
+                // no grass in its pit, under its plate or through its trunk
+                const std::size_t cleared=grassLayout_.Remove([&w](const float x,const float z) {
+                    const float dx=x-w.x,dz=z-w.z;
+                    const float along=dx*w.dirX+dz*w.dirZ,across=dx*w.AcrossX()+dz*w.AcrossZ();
+                    if(along>-WindthrowPlacement::PitReach-0.5f&&along<0.6f
+                       &&std::abs(across)<WindthrowPlacement::PlateHalfWidth+0.5f) return true;
+                    return along>=0.0f&&along<=WindthrowPlacement::TrunkLength
+                        &&std::abs(across)<WindthrowPlacement::RadiusAt(along)+0.35f;
+                });
+                std::cout<<"island-simulator: the windthrow's gap opens the crowns over it; "<<cleared
+                         <<" grass clusters cleared from its pit, plate and trunk\n";
+            }
+            if(windthrowPlacement_) {
                 for(const CircularObstacle& o:windthrowPlacement_->Obstacles()) worldObstacles.push_back(o);
                 std::cout<<"island-simulator: a windthrown giant lies in the jungle at ("<<windthrowPlacement_->x<<", "
                          <<windthrowPlacement_->z<<")\n";

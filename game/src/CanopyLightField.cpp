@@ -273,4 +273,24 @@ namespace island
                                    value(std::min(ix + 1, resolution_ - 1), std::min(iz + 1, resolution_ - 1)),
                                    column - ix), row - iz);
     }
+
+    void CanopyLightField::OpenGap(const float x, const float z, const float radius, const float transmission) noexcept
+    {
+        if (!std::isfinite(x) || !std::isfinite(z) || !(radius > 0.0f) || !std::isfinite(transmission)) return;
+        const float texel = 2.0f * HalfExtent / static_cast<float>(resolution_);
+        const int reach = static_cast<int>(std::ceil(radius / texel)) + 1;
+        const int cx = static_cast<int>((x + HalfExtent) / texel), cz = static_cast<int>((z + HalfExtent) / texel);
+        const float target = std::clamp(transmission, 0.0f, 1.0f) * 255.0f;
+        for (int row = std::max(0, cz - reach); row <= std::min(resolution_ - 1, cz + reach); ++row)
+            for (int column = std::max(0, cx - reach); column <= std::min(resolution_ - 1, cx + reach); ++column) {
+                const float wx = -HalfExtent + (static_cast<float>(column) + 0.5f) * texel;
+                const float wz = -HalfExtent + (static_cast<float>(row) + 0.5f) * texel;
+                const float d = std::hypot(wx - x, wz - z) / radius;
+                if (d >= 1.0f) continue;
+                const float t = std::clamp((1.0f - d) / 0.34f, 0.0f, 1.0f);
+                auto& value = texels_[static_cast<std::size_t>(row) * resolution_ + column];
+                value = static_cast<std::uint8_t>(std::lround(std::max(static_cast<float>(value),
+                    std::lerp(static_cast<float>(value), target, t * t * (3.0f - 2.0f * t)))));
+            }
+    }
 }

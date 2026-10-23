@@ -52,6 +52,16 @@ namespace island
             return patches_;
         }
 
+        /** @brief Takes out the clusters where `excluded(x, z)` holds (ground a landmark placed
+         *  later has dug up or lies on); returns how many went. */
+        template<class Excluded>
+        std::size_t Remove(const Excluded& excluded)
+        {
+            const std::size_t before = patches_.size();
+            std::erase_if(patches_, [&](const GrassPlacement& p) { return excluded(p.x, p.z); });
+            return before - patches_.size();
+        }
+
     private:
         [[nodiscard]] static std::uint32_t Hash(std::int32_t x, std::int32_t z,
                                                 std::uint32_t seed) noexcept;

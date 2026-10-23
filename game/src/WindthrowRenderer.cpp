@@ -84,7 +84,7 @@ public:
     }
     // the mesh, the pit's earth last: `casting` is how many vertices before it cast shadows
     std::vector<VertexPositionColor> Build(std::size_t& casting) {
-        Trunk();BrokenEnd();Crown();Stubs();Fungi();Ferns();Plate();Pit();
+        Trunk();BrokenEnd();Crown();Stubs();Fungi();Ferns();Saplings();Plate();Pit();
         std::vector<VertexPositionColor> mesh=std::move(smooth_);
         mesh.insert(mesh.end(),b_.builder.mesh.begin(),b_.builder.mesh.end());
         casting=mesh.size();
@@ -243,6 +243,54 @@ private:
         }
     }
     // a nurse log: ferns and seedlings rooting in the moss along its top
+    // The pioneers racing up into the light of the gap: slender saplings round where the giant
+    // stood, their stems lean and their few big leaves held out at the top (as the island's
+    // pioneers grow), the tallest four metres; none in the pit, on the plate or the trunk.
+    void Saplings() {
+        const Vector3 stem(104,96,70),leafLight(112,164,62),leafDark(70,118,44);
+        int placed=0;
+        for(int k=0;k<60&&placed<16;++k) {
+            const auto salt=static_cast<std::uint32_t>(2400+k*37);
+            const float angle=2.0f*Pi*h(salt),r=2.0f+5.6f*std::sqrt(h(salt^0x5U));
+            const float along=-0.8f+std::cos(angle)*r,across=std::sin(angle)*r;
+            // clear of the pit and plate, and of the trunk and its crown along the ground
+            if(along>-WindthrowPlacement::PitReach-1.0f&&along<1.0f&&std::abs(across)<WindthrowPlacement::PlateHalfWidth+0.8f) continue;
+            if(along>0.0f&&std::abs(across)<WindthrowPlacement::RadiusAt(std::min(along,WindthrowPlacement::TrunkLength))+1.2f) continue;
+            ++placed;
+            const Vector3 foot=Plan(along,across);
+            const float height=1.2f+3.2f*h(salt^0x7U)*h(salt^0x7U)+0.6f*h(salt^0x9U);
+            const float leanA=2.0f*Pi*h(salt^0xBU),lean=0.12f*h(salt^0xDU);
+            const Vector3 tip=foot+Vector3(std::cos(leanA)*lean*height,height,std::sin(leanA)*lean*height);
+            const Vector3 mid=Vector3::Lerp(foot,tip,0.55f)+Vector3(std::sin(leanA)*0.06f,0.0f,-std::cos(leanA)*0.06f);
+            const float girth=0.025f+0.02f*height/4.5f;
+            b_.Tube({foot-Vector3::Up*0.05f,mid,tip},{girth,girth*0.75f,girth*0.4f},5,stem*(0.85f+0.3f*h(salt^0xFU)));
+            // the leaves: one to three tiers near the top, three to five in each, each a broad
+            // oval on a petiole held out and drooping, the young top ones upright
+            const int tiers=1+static_cast<int>(h(salt^0x11U)*2.0f+height/3.0f);
+            for(int t=0;t<tiers;++t) {
+                const Vector3 node=Vector3::Lerp(foot,tip,1.0f-0.13f*static_cast<float>(t));
+                const int count=4+static_cast<int>(h(salt^(0x13U+static_cast<std::uint32_t>(t)))*2.99f);
+                for(int l=0;l<count;++l) {
+                    const float a=2.0f*Pi*(static_cast<float>(l)+0.5f*static_cast<float>(t))/count+h(salt^0x17U)*6.0f;
+                    const Vector3 out(std::cos(a),0.0f,std::sin(a));
+                    const float size=(0.24f+0.14f*h(salt^(0x19U+static_cast<std::uint32_t>(l))))*(1.0f-0.15f*static_cast<float>(t))*(0.75f+0.25f*height/4.5f);
+                    const float droop=0.10f+0.25f*static_cast<float>(t);
+                    const Vector3 base=node+out*0.10f+Vector3::Up*(0.04f-droop*0.08f);
+                    const Vector3 along2=Vector3::Normalize(out-Vector3::Up*droop);
+                    const Vector3 side=Vector3::Normalize(Vector3::Cross(along2,Vector3::Up));
+                    b_.Tube({node,base},{0.009f,0.006f},4,stem);
+                    const Vector3 c=base+along2*size;
+                    const Vector3 tipLeaf=base+along2*(size*2.0f)-Vector3::Up*(size*0.25f*droop);
+                    const Vector3 colour=Vector3::Lerp(leafDark,leafLight,0.4f+0.6f*h(salt^(0x23U+static_cast<std::uint32_t>(l*3+t))));
+                    b_.inside=c-Vector3::Up*0.5f;
+                    // the blade a little folded along its midrib, so it catches the light
+                    b_.Quad(base,c+side*(size*0.75f)-Vector3::Up*(size*0.08f),tipLeaf,c+Vector3::Up*(size*0.04f),colour);
+                    b_.Quad(base,c+Vector3::Up*(size*0.04f),tipLeaf,c-side*(size*0.75f)-Vector3::Up*(size*0.08f),colour*0.92f);
+                }
+            }
+        }
+    }
+
     void Ferns() {
         for(int j=0;j<13;++j) {
             const auto salt=static_cast<std::uint32_t>(400+j*19);

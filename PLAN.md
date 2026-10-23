@@ -233,6 +233,21 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 571 (2026-10-23) — the windthrow's light gap and saplings; no grass in its pit
+
+The operator's kept items 10 and 13.
+- **The gap** (`CanopyLightField::OpenGap`): over where the giant stood (0.8 m behind its foot)
+  the crowns' direct light is raised to 0.92 within 8.5 m, easing out over the outer third,
+  before the ground's light texture is made: the forest floor there lit and greener.
+- **The saplings** (`WindthrowRenderer` Saplings): sixteen pioneers racing up into the gap round
+  where it stood, 1.2-4.5 m tall, slender leaning stems, one to three tiers of four to six big
+  leaves held out on petioles and drooping, folded along the midrib; none in the pit, on the
+  plate, on the trunk or in its crown's fall line. They are in the quad's landmark shapes.
+- **No grass in the pit** (`GrassLayout::Remove`): clusters in the pit, under the root plate and
+  through the trunk are taken out once the windthrow is placed (5 here).
+- Evidence: `windthrow` (`20261023T083240`), `windthrow-log` (`083215`); `quad-audit` and
+  `jungle` pass. Full suite 76/76.
+
 ## Loop pass 570 (2026-10-23) — the tyrannosaur's voice, its ways and the ground's shake
 
 The operator's item 9, second pass (and the operator's reminder of 2026-10-23: it must make
