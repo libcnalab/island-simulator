@@ -233,6 +233,41 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 554 (2026-10-23) — the appearance inventory: every QA view, ranked from the weakest
+
+The operator's task list (reviewed 2026-10-23), item 4. All 159 appearance views captured natively
+in one sweep at 14:00 (`20261023T061215` anemone .. `063452` windthrow-log; the functional quad
+drives, the journal and the probes left out; `canopy` needs its LOD inspection mode;
+`glowing-fungi` fails the day profile as known), judged six to a sheet and at full size where
+detail mattered. The landscape, the structures (hut, lighthouse, cottage, coaster and its
+crew, plane, helicopter, mine, bunker, whale skeleton, wrecks), the bear, the deer, the goats,
+the boars, the monkeys, the snakes, the spiders and the octopus hold together. The ranking,
+weakest first (the evidence capture in brackets):
+
+1. **Birds in flight**: the parrot is a box body with flat card wings and a cartoon head; the
+   coastal birds and the frigatebird are flat cut-outs too (`061359` birds, `061352` bird-preen,
+   `062024` frigatebird).
+2. **The resident**: a blocky figure of slabs, the most watched character (`062946` resident,
+   and resident-fishing, resident-tending).
+3. **The ground (fruit) dove**: a flat-shaded duck-like blob (`062200`).
+4. **Insects up close**: the fly (a black block with red cylinder eyes), the blue beetle, the
+   cicada, the dragonfly (`061905`, `061344`, `061659`, `061825`).
+5. **The coconut crab**: a grey ball on spiky sticks (`061714`).
+6. **Table corals**: flat brown tables on stalks across the reef (`061215` anemone,
+   `062938` reef-habitat).
+7. **Fruit bats**: a flat brown card (`061237` bats, bat-roost).
+8. **Small reptiles and frogs**: the flat gecko and skink, the toy-like frog (`062056`,
+   `063055`, `062031`).
+9. **Stingrays**: flat slabs with a stick tail (`063217`, stingray-buried).
+10. **The volcano's cone**: a smooth faceted grey cone with no rock or ash texture (`063325`).
+11. **The crocodile**: a long boxy body (`061738`).
+12. **Shoal fish and the shark**: simple lofts, the shark a translucent flat shape (`061858`,
+    `063025`).
+13. **The hermit crab** (`062250`), 14. **mice and rats** (`062923`), 15. **the sea turtle**
+    (`063318`).
+
+The improvements follow in this order, from the top.
+
 ## Loop pass 553 (2026-10-23) — oblique views of what is set into the terrain; the bunker's berm
 
 The operator's task list (reviewed 2026-10-23), item 3.

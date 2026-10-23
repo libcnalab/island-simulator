@@ -118,7 +118,7 @@ Czech in the operator's messages; the intent is kept here.
    windthrow's pit, the wreck scour, the stream bed) from the side and from above for the sky
    showing through the island, gaps or floating edges, as the mine's cutting did (pass 548, see
    the memory note on terrain cut coverage). Keep a permanent QA view for each fix.
-4. [ ] **Appearance inventory.** Capture all ~150 QA viewpoints in one sweep, judge them side by
+4. [~] **Appearance inventory.** Ranked in pass 554; improving the weakest from the top. Capture all ~150 QA viewpoints in one sweep, judge them side by
    side (at 1:1 crops where detail matters) and rank them from the weakest. The older models have
    fallen behind the newer ones in the ~550 passes since. Record the ranking in `PLAN.md`, then
    improve the weakest first.
@@ -510,6 +510,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 554: the appearance inventory (item 4): 159 views captured in one sweep (`20261023T061215` .. `063452`), ranked weakest first in PLAN "Loop pass 554" (birds in flight, the resident, the ground dove, insects, the coconut crab, table corals, fruit bats, small reptiles/frogs, stingrays, the volcano cone, ...); improving from the top.
 - Pass 553: oblique views of what is set into the terrain (item 3): QA probe `orbit` (`ISLAND_QA_ORBIT="<site> <az> <el> <dist>"`), 65 captures of 13 places; only fault the bunker's corridor concrete standing out of the slope, now under an earth berm in the terrain (`IslandTerrain::BunkerBerm`); new view `bunker-side` `20261023T060819` (PLAN "Loop pass 553").
 - Pass 552: the quad meets the landmarks' drawn shapes (`LandmarkShapes`, item 2): renderers hand their triangles over (`landmark_shapes::Note`), a 0.2 m plan of what stands 0.3-1.3 m over the ground blocks the quad's footprint, a second at 1.2-4.2 m keeps the chase camera out; the jetty deck carries it only from its own level; `quad-audit` (worst 4 of 77 points, was 75), `quad-plane`, `quad-whale`, `quad-lighthouse` (PLAN "Loop pass 552").
 - Pass 551: the discovery journal (`DiscoveryJournal`, item 1 of the reviewed list): 34 places and 44 creatures noted when near and in the middle of the view (`JournalSighted`, 4 Hz, hidden animals skipped), a 4 s "NEW IN THE JOURNAL" notice, N or a touch button opens the list, saved as `journal.txt` (+`.bak`) beside the settings; QA `journal` `20261023T044701`, `journal-notice` `20261023T044801` (PLAN "Loop pass 551").
