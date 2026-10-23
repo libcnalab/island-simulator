@@ -36,6 +36,7 @@
 #include "IslandSimulator/TermiteSwarm.hpp"
 #include "IslandSimulator/SeabirdIslet.hpp"
 #include "IslandSimulator/Mudskippers.hpp"
+#include "IslandSimulator/TRexMotion.hpp"
 #include "IslandSimulator/DistantSceneryLayout.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/FishSchools.hpp"
@@ -13630,6 +13631,38 @@ int main()
         colony.At(20.0f, fish.front().x, fish.front().z, ground, fled);
         Check(onMud && std::hypot(fled.front().x - fish.front().x, fled.front().z - fish.front().z) > 1.5f,
               "the mudskippers are off the mud, under or over it, or stay under the walker's feet");
+    }
+
+    {
+        // The tyrannosaur: its round on the open upper beaches; walking at its pace, its feet
+        // planted on the ground in turn and laying three-toed prints; its legs reaching from the
+        // hips to the feet; its body a solid in three circles.
+        const island::IslandTerrain terrain;
+        const island::TRexMotion probe(terrain, {});
+        island::TRexMotion rex(terrain, {});
+        bool round = probe.Route().size() >= 40U;
+        for (const auto& p : probe.Route()) round = round && p.y > 0.5f && terrain.SignedShoreDistance(p.x, p.z) > 6.0f;
+        float travelled = 0.0f;
+        bool grounded = true, legs = true;
+        for (int step = 0; step < 900; ++step) {
+            const auto before = rex.State();
+            rex.Update(0.1f);
+            const auto& now = rex.State();
+            travelled += std::hypot(now.x - before.x, now.z - before.z);
+            for (const auto& leg : now.legs) {
+                if (leg.planted) grounded = grounded && std::abs(leg.ball.y - terrain.Height(leg.ball.x, leg.ball.z) - 0.07f) < 0.05f;
+                const float thigh = std::hypot(std::hypot(leg.knee.x - leg.hip.x, leg.knee.y - leg.hip.y), leg.knee.z - leg.hip.z);
+                const float shin = std::hypot(std::hypot(leg.ankle.x - leg.knee.x, leg.ankle.y - leg.knee.y), leg.ankle.z - leg.knee.z);
+                legs = legs && std::abs(thigh - island::TRexMotion::FemurLength) < 0.03f
+                    && std::abs(shin - island::TRexMotion::TibiaLength) < 0.05f && leg.knee.y < leg.hip.y;
+            }
+        }
+        std::size_t prints = 0U;
+        for (const auto& print : rex.Prints()) prints += print.active && print.kind == 2U ? 1U : 0U;
+        const auto bodies = rex.Obstacles();
+        Check(round && travelled > 25.0f && grounded && legs && rex.FootfallCount() >= 10U && prints >= 10U
+                  && bodies[0].radius == island::TRexMotion::BodyRadius,
+              "the tyrannosaur's round, walk, planted feet, legs, prints or body are wrong");
     }
 
     if (failures != 0) {

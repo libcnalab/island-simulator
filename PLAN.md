@@ -233,6 +233,34 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 569 (2026-10-23) — a Tyrannosaurus rex walks the island (first pass)
+
+The operator's task list (reviewed 2026-10-23), item 9, first pass: the animal, its walk, its
+prints and its body. Sound and the other behaviours follow in the next pass.
+- **Motion** (`TRexMotion`): a round of 72 points on the open upper beaches all round the island
+  (16 m in from the water where the ground allows, clear of the obstacles by 2.6 m), walked at
+  1.5 m/s with wide slow turns, standing 8-18 s now and then and looking about. The hips at
+  3.05 m (3.9 m to the top of the hip), bobbing as each foot takes the weight, the body swaying
+  onto the planted leg and pitched with the ground, the tail swinging against the stride. Each
+  hind leg is solved from the planted foot (a 4.1 m stride, 60 % stance): the ball of the foot,
+  three splayed toes, the metatarsus up at 60 degrees, and the knee by two-bone inverse kinematics
+  (femur 1.32 m, tibia 1.22 m), bent forward. Each footfall lays a three-toed print 0.7 m long
+  (a new footprint kind, kept 15 minutes) and is counted for the shake and the thud to come.
+- **Body for the walker and the quad**: three circles (hips 1.4 m, chest 1.1 m, tail 0.8 m).
+- **Drawn** (`TRexRenderer`, rebuilt each frame from the pose): the body lofted along a spine of
+  45 smooth sections from the tail's tip (tall and narrow) through the hips and the deep chest to
+  a short thick S-curved neck; a deep box-like skull, broad behind, with forward-facing yellow
+  eyes with slit pupils under heavy brows, bosses, nostrils; the lower jaw hinged under it;
+  lipped teeth, bared only as the jaw opens; the massive thighs and the shins' drumsticks, the
+  metatarsi and three clawed toes and a dewclaw from the leg joints; tiny two-fingered clawed
+  arms. A scaly hide: dark olive-brown back with faint bands, tawny flanks, a pale buff belly,
+  mottled; its shadow laid on the ground along the sun.
+- The journal has a new creature entry, "Tyrannosaurus rex".
+- **QA views**: `trex` (walking on the south beach, from the side at 22 m, `20261023T081228`)
+  and `trex-close` (standing, up at its head from 7.5 m, `081236`). Core test: the round, the
+  walk, feet planted on the ground, leg bone lengths, prints, footfalls, the body. Full suite
+  76/76.
+
 ## Loop pass 568 (2026-10-23) — mudskippers on the mangroves' mud
 
 The operator's task list (reviewed 2026-10-23), item 8.

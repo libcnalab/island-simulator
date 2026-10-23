@@ -64,6 +64,20 @@ void FootprintTrailRenderer::Draw(const Matrix& view,const Matrix& projection,co
         if(alpha<3) continue;
         const float fx=std::cos(print.headingRadians),fz=std::sin(print.headingRadians);
         deck=print.y;
+        if(print.kind==2U) {
+            // A tyrannosaur's three-toed print, some 0.7 m long: the broad heel pad and three
+            // long toes splayed forward from it, the middle one longest, each ending in a claw mark.
+            const int deep=std::min(255,alpha*2);
+            fan(print.x-fx*0.12f,print.z-fz*0.12f,fx,fz,0.20f,0.17f,deep);
+            for(int toe=-1;toe<=1;++toe) {
+                const float splay=static_cast<float>(toe)*0.38f;
+                const float tx=std::cos(print.headingRadians+splay),tz=std::sin(print.headingRadians+splay);
+                const float length=toe==0?0.46f:0.38f;
+                fan(print.x+tx*length*0.55f,print.z+tz*length*0.55f,tx,tz,length*0.52f,0.075f,deep);
+            }
+            ++visible_;
+            continue;
+        }
         if(print.kind==1U) {
             // A cloven hoof: two narrow toes side by side, splayed a little at the front.
             for(const float toe:{-1.0f,1.0f}) {

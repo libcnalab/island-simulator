@@ -71,6 +71,7 @@
 #include "IslandSimulator/LandCrabRenderer.hpp"
 #include "IslandSimulator/SeabirdIsletRenderer.hpp"
 #include "IslandSimulator/MudskipperRenderer.hpp"
+#include "IslandSimulator/TRexRenderer.hpp"
 #include "IslandSimulator/FlightMotion.hpp"
 #include "IslandSimulator/GeckoPopulation.hpp"
 #include "IslandSimulator/SkinkPopulation.hpp"
@@ -290,6 +291,8 @@ namespace island
         BoobyColonyDetail,
         BoobyNestsDetail,
         MudskipperDetail,
+        TRexDetail,
+        TRexCloseDetail,
         OrbitProbe,
         BunkerSideDetail,
         StoneSignDetail,
@@ -590,6 +593,8 @@ namespace island
         std::unique_ptr<MudskipperColony> mudskippers_;          // on the mud under the mangroves
         std::vector<Mudskipper> skippers_;
         std::unique_ptr<MudskipperRenderer> mudskipperRenderer_;
+        std::unique_ptr<TRexMotion> trex_;                       // the tyrannosaur walking the island
+        std::unique_ptr<TRexRenderer> trexRenderer_;
         std::optional<BridgePlacement> bridgePlacement_;
         std::optional<LookoutPlacement> lookoutPlacement_;
         std::optional<HelicopterPlacement> helicopterPlacement_;

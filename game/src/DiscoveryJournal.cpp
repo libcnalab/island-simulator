@@ -48,6 +48,7 @@ constexpr std::array Entries{
     JournalEntry{"passing-ship","Passing freighter",Place,1100.0f},
     JournalEntry{"resident","The resident",Creature,30.0f},
     JournalEntry{"bear","Bear",Creature,35.0f},
+    JournalEntry{"trex","Tyrannosaurus rex",Creature,70.0f},
     JournalEntry{"deer","Deer",Creature,30.0f},
     JournalEntry{"boars","Wild boars",Creature,30.0f},
     JournalEntry{"goats","Feral goats",Creature,35.0f},

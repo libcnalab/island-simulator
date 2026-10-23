@@ -221,6 +221,8 @@ namespace island
             case FixedViewpoint::BoobyColonyDetail: return "booby-colony";
             case FixedViewpoint::BoobyNestsDetail: return "booby-nests";
             case FixedViewpoint::MudskipperDetail: return "mudskippers";
+            case FixedViewpoint::TRexDetail: return "trex";
+            case FixedViewpoint::TRexCloseDetail: return "trex-close";
             case FixedViewpoint::OrbitProbe: return "orbit";
             case FixedViewpoint::BunkerSideDetail: return "bunker-side";
             case FixedViewpoint::StoneSignDetail: return "help-sign";
@@ -750,6 +752,9 @@ namespace island
                  <<"at the campfire the resident stands facing the fire; "
                  <<"the resident raises a hand to a player who stops close by\n";
         bear_=std::make_unique<BearMotion>(terrain_,wildlifeObstacles);
+        trex_=std::make_unique<TRexMotion>(terrain_,worldObstacles);
+        std::cout<<"island-simulator: a full-grown Tyrannosaurus rex, "<<TRexMotion::Length<<" m long and "<<TRexMotion::HipHeight+0.85f
+                 <<" m at the hip, walks a round of "<<trex_->Route().size()<<" points on the island's open upper beaches\n";
         monkeyTroop_.SetObstacles(wildlifeObstacles);
         monkeyTroop_.SetCanopy(jungleLayout_.Canopy());
         boarHerd_.SetObstacles(wildlifeObstacles);
@@ -2422,6 +2427,29 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: help-sign QA camera looks down on the castaway's stones from a low pass over the sea\n";
+        } else if (viewpoint_ == FixedViewpoint::TRexDetail || viewpoint_ == FixedViewpoint::TRexCloseDetail) {
+            // On the south beach: from the side at 22 m as it walks its round; or close, 7 m
+            // before it standing, up at its head.
+            if(!trex_) throw std::runtime_error("T. rex QA requires the tyrannosaur");
+            const float pathZ=-225.0f,pathX=VegetationLayout::PrimaryPathCenterX(pathZ);
+            trex_->PlaceNear(pathX,pathZ);
+            const bool close=viewpoint_==FixedViewpoint::TRexCloseDetail;
+            if(close) trex_->HoldStanding(600.0f);
+            else trex_->HoldStanding(0.0f);
+            const auto& rex=trex_->State();
+            const float fx=std::cos(rex.heading),fz=std::sin(rex.heading);
+            // (walking, it is set going at once: the QA view sees it mid-stride)
+            if(!close) {for(int k=0;k<220;++k) trex_->Update(0.1f);}
+            const auto& now=trex_->State();
+            const float side=-1.0f;
+            const float ex=close?now.x+fx*7.5f-fz*side*2.5f:now.x-fz*side*22.0f+fx*4.0f;
+            const float ez=close?now.z+fz*7.5f+fx*side*2.5f:now.z+fx*side*22.0f+fz*4.0f;
+            cameraPosition_=Vector3(ex,std::max(terrain_.Height(ex,ez),0.0f)+PlayerMotion::EyeHeight,ez);
+            const TRexPoint aim=close?trex_->ToWorld(0.0f,1.0f,4.2f):trex_->ToWorld(0.0f,-.6f,.8f);
+            const Vector3 direction=Vector3(aim.x,aim.y,aim.z)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: "<<ViewpointName(viewpoint_)<<" QA camera looks at the tyrannosaur on the beach\n";
         } else if (viewpoint_ == FixedViewpoint::MudskipperDetail) {
             // Crouched on the mud at the edge of a mangrove's patch, low over the skippers on it.
             if(!mudskippers_||mudskippers_->Patches().empty()) throw std::runtime_error("Mudskipper QA requires the mud");
@@ -3396,6 +3424,11 @@ namespace island
         each("termite-flight", alates_, 0.5f, [](const Alate& a) { return a.scale > 0.5f; });
         each("boobies", boobyBirds_, 0.5f, always);
         each("mudskippers", skippers_, 0.06f, always);
+        if (trex_) {
+            const TRexPoint head = trex_->ToWorld(0.0f, 1.0f, 4.5f);
+            const std::size_t entry = JournalIndex("trex");
+            if (!journal_.Found(entry)) consider(entry, head.x, head.y - 1.5f, head.z, 4.0f);
+        }
         each("coconut-crabs", coconutCrabGroup_.Crabs(), 0.3f, always);
         {
             // by day three in four keep to their retreats, as the drawn colony does
@@ -3767,6 +3800,7 @@ namespace island
         monkeyRenderer_ = std::move(monkeyRenderer);
         residentRenderer_=std::move(residentRenderer);
         bearRenderer_=std::move(bearRenderer);
+        trexRenderer_=std::make_unique<TRexRenderer>(device,terrain_,*drawnGround_,600.0f);
         canopyLighting_ = std::move(canopyLighting);
         terrainHeightMap_ = std::move(terrainHeightMap);
         std::vector<AnimalTrackPlacement> residentFootprints;
@@ -4966,6 +5000,7 @@ namespace island
         bear_->SetLyingFruit(fallingFruit_.Fruit());
         if(viewpoint_==FixedViewpoint::BearLyingDetail) bear_->PreviewLie();
         updateProfile_.Mark("bear");
+        if (trex_) trex_->Update(deltaSeconds);
         bear_->Update(viewpoint_==FixedViewpoint::BearLyingDetail?0.0f:deltaSeconds,bearCaptureClock?BearPoint{NAN,NAN,NAN}
             :BearPoint{observer.x,observer.y,observer.z});
         for (const std::size_t eaten : bear_->EatenFruit()) fallingFruit_.Consume(eaten);
@@ -6314,6 +6349,7 @@ namespace island
         if (deer_) for (const auto& deer : deer_->Deer()) body(deer.x, deer.z, 0.45f);
         for (const auto& crocodile : crocodileGroup_.Crocodiles()) body(crocodile.x, crocodile.z, 0.60f);
         if (resident_) body(resident_->State().x, resident_->State().z, 0.30f);
+        if (trex_) for (const auto& part : trex_->Obstacles()) body(part.x, part.z, part.radius);
         return hit;
     }
 
@@ -7334,6 +7370,14 @@ namespace island
                 swimTerrainSurface_=std::make_unique<RenderedTerrainSurface>(terrain_);
             playerMotion_.SetSwimInput(swimTerrainSurface_.get(),ascend,runToggleDown);
             playerMotion_.Update(terrain_, wish.X, wish.Z, deltaSeconds, worldCollisionGrid_);
+            // the tyrannosaur's body is solid: the walker is held off its hips, chest and tail
+            if (trex_) {
+                for (const auto& body : trex_->Obstacles()) {
+                    const PlayerPosition& at = playerMotion_.Position();
+                    const float dx = at.x - body.x, dz = at.z - body.z, d = std::hypot(dx, dz), reach = body.radius + 0.3f;
+                    if (d < reach && d > 1e-3f) playerMotion_.SetPosition(terrain_, body.x + dx / d * reach, body.z + dz / d * reach);
+                }
+            }
             const PlayerPosition& position = playerMotion_.Position();
             cameraPosition_ = Vector3(position.x, position.y, position.z);
             if (!swimmingEntryDiagnosticReported_
@@ -8551,6 +8595,11 @@ namespace island
         {
             GpuDiagnosticScope gpuPass("bear");
             bearRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,bear_->State());
+        }
+        if (trexRenderer_ && trex_) {
+            GpuDiagnosticScope gpuPass("trex");
+            trexRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,*trex_);
+            if (footprintRenderer_) footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,trex_->Prints());
         }
 
         {
