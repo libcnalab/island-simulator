@@ -87,6 +87,9 @@ namespace island
         static constexpr float CapsuleHeight = 1.9f;
         static constexpr float MaximumStepHeight = 0.38f;
         static constexpr float MaximumWalkSlopeRadians = 0.66322512f; // 38 degrees
+        // Feet within this of the soil over the cave (or above it) stand on it; the cave's
+        // roof is some three metres over the feet of anyone on its floor.
+        static constexpr float CaveTopReach = 1.15f;
         static constexpr float SoftCurrentStart = 42.0f;
         static constexpr float FullCurrentDistance = 72.0f;
         static constexpr float SafetyDistance = 92.0f;
@@ -110,6 +113,9 @@ namespace island
          * @param z World z coordinate.
          */
         void SetPosition(const IslandTerrain& terrain, float x, float z) noexcept;
+        // The same, standing on the surface under a known feet height rather than the last
+        // one: a landing from flight onto the soil over the cave, not onto its floor.
+        void SetPosition(const IslandTerrain& terrain, float x, float z, float feetHeight) noexcept;
 
         // Surface must outlive this controller. Null disables diving. The caller
         // refreshes input every frame; teleports clear depth and held input.

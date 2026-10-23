@@ -113,6 +113,13 @@ namespace island
                 sample.slopeRadians=std::atan(std::hypot(height(px+.1f,pz)-height(px-.1f,pz),
                     height(px,pz+.1f)-height(px,pz-.1f))/.2f);
             }
+            // Up on the cave the grass over its crown and the bare rock of its lip carry the
+            // walker; the excavated floor under them is the ground only for one inside.
+            float top=0.0f,topSlope=0.0f;
+            if(caveGround_&&caveGround_->TopHeight(px,pz,position_.y-EyeHeight+CaveTopReach,top,topSlope)
+                &&top>sample.height) {
+                sample.height=top;sample.slopeRadians=topSlope;
+            }
             if(volcano_)
                 sample.height=VolcanoSite::SupportHeight(px,pz,sample.height);
             if(helicopter_)
@@ -280,6 +287,13 @@ namespace island
         position_.x = candidateX;
         position_.z = candidateZ;
         return HorizontalStepResult::Accepted;
+    }
+
+    void PlayerMotion::SetPosition(const IslandTerrain& terrain, const float x, const float z,
+                                   const float feetHeight) noexcept
+    {
+        if(std::isfinite(feetHeight)) position_.y=feetHeight+EyeHeight;
+        SetPosition(terrain,x,z);
     }
 
     void PlayerMotion::SetPosition(const IslandTerrain& terrain, const float x, const float z) noexcept

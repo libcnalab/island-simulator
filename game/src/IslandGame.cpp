@@ -7314,7 +7314,8 @@ namespace island
             if (flightMotion_.IsActive()) {
                 const auto landing=flightMotion_.FindLanding(terrain_,worldCollisionGrid_);
                 if (landing) {
-                    playerMotion_.SetPosition(terrain_,landing->x,landing->z);
+                    playerMotion_.SetPosition(terrain_,landing->x,landing->z,
+                                              landing->y-PlayerMotion::EyeHeight);
                     playerMotion_.Update(terrain_,0,0,0,worldCollisionGrid_);
                     flightMotion_.Deactivate();
                     cameraPosition_=Vector3(landing->x,landing->y,landing->z);

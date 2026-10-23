@@ -331,6 +331,32 @@ int main() {
     Check(!cave.IntersectsCapsule({walker.Position().x,walker.Position().y-PlayerMotion::EyeHeight,
                                   walker.Position().z},radius,height),
           "soil-covered cave flank does not provide a valid walkable top surface");
+    // The grass over the crown carries a walker across the cave: from the hillside behind
+    // it and from either side, never through the roof onto the floor below.
+    const std::array<std::array<float,4>,4> crossings{{{0,30,0,3},{-16,10,16,10},{16,6,-16,6},{-16,17,16,17}}};
+    for(const auto& crossing:crossings) {
+        PlayerMotion hiker;hiker.SetCave(&cave,&ground);
+        const auto from=cave.World(crossing[0],0,crossing[1]),to=cave.World(crossing[2],0,crossing[3]);
+        hiker.SetPosition(terrain,from.x,from.z);
+        for(int i=0;i<60*12;++i) {
+            const auto p=hiker.Position();
+            const float tx=to.x-p.x,tz=to.z-p.z,length=std::hypot(tx,tz);
+            if(length<.3f)break;
+            hiker.Update(terrain,tx/length,tz/length,1.0f/60,worldSolids);
+            const auto q=hiker.Position();
+            const CavePoint feet{q.x,q.y-PlayerMotion::EyeHeight,q.z};
+            const auto at=cave.Local(feet);
+            Check(!(std::abs(at.x)<2.6f&&at.z>0&&at.z<20.5f&&at.y<CaveLayout::Floor(at.z)+2.2f),
+                  "walker on the grass over the cave fell through its roof");
+            Check(!cave.IntersectsCapsule(feet,radius,height),"walker over the cave entered its rock");
+        }
+        const auto end=hiker.Position();
+        Check(std::hypot(end.x-to.x,end.z-to.z)<.5f,"walker cannot cross the grass over the cave");
+    }
+    const auto crown=cave.World(0,0,10);
+    walker.SetPosition(terrain,crown.x,crown.z,entrance.y+20);
+    Check(cave.Local({walker.Position().x,walker.Position().y-PlayerMotion::EyeHeight,walker.Position().z}).y>4,
+          "a walker placed from above over the cave lands on its floor");
     FlightMotion flight;flight.SetCave(&cave,&ground);
     const auto inside=cave.World(0,CaveLayout::Floor(10)+PlayerMotion::EyeHeight+.02f,10);
     flight.Activate(terrain,{inside.x,inside.y,inside.z});
@@ -351,6 +377,10 @@ int main() {
     Check(local.y>4.2f&&local.y<7.0f,"downward flight pierced compact exterior roof");
     Check(!cave.IntersectsCapsule({flight.Position().x,flight.Position().y-PlayerMotion::EyeHeight,
           flight.Position().z},radius,height),"flight stopped inside exterior roof");
+    const auto landing=flight.FindLanding(terrain,empty);
+    Check(landing&&std::hypot(landing->x-flight.Position().x,landing->z-flight.Position().z)<.01f
+          &&cave.Local({landing->x,landing->y-PlayerMotion::EyeHeight,landing->z}).y>4,
+          "landing over the cave does not set the walker down on its grass");
     std::cout<<"cave ground "<<ground.Vertices().size()<<" vertices "<<ground.Indices().size()/3
              <<" triangles; rock volume "<<volume/6<<" cubic metres\n";
     std::cout<<"Cave shell topology, whole-capsule clearance and terrain target passed\n";

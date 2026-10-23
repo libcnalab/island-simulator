@@ -102,6 +102,64 @@ CaveGroundPatch::CaveGroundPatch(const CaveLayout& cave,const RenderedTerrainSur
         const auto br=static_cast<std::uint16_t>(bl+1);
         coverIndices_.insert(coverIndices_.end(),{tl,bl,tr,tr,bl,br});
     }
+
+    // The walkable tops. Under the soil the rock is lower, so the cover wins there; only
+    // the lip over the mouth, in front of the soil's edge, is bare rock to stand on.
+    const auto addTop=[&](CavePoint a,CavePoint b,CavePoint c) {
+        const double ux=double(b.x)-a.x,uy=double(b.y)-a.y,uz=double(b.z)-a.z;
+        const double vx=double(c.x)-a.x,vy=double(c.y)-a.y,vz=double(c.z)-a.z;
+        const double nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;
+        const double length=std::sqrt(nx*nx+ny*ny+nz*nz);
+        if(length<1e-12)return;
+        tops_.push_back({{a,b,c},static_cast<float>(std::acos(std::clamp(std::abs(ny)/length,0.0,1.0)))});
+    };
+    for(std::size_t i=0;i+2<coverIndices_.size();i+=3)
+        addTop(coverVertices_[coverIndices_[i]],coverVertices_[coverIndices_[i+1]],
+               coverVertices_[coverIndices_[i+2]]);
+    for(const auto& triangle:cave.Triangles())
+        if(triangle.surface==CaveSurface::Exterior&&triangle.normal.y>0)
+            addTop(triangle.points[0],triangle.points[1],triangle.points[2]);
+    if(tops_.size()>=65536) throw std::runtime_error("Cave tops exceed their cell indices");
+    topMinX_=topMinZ_=INFINITY;
+    float topMaxX=-INFINITY,topMaxZ=-INFINITY;
+    for(const auto& top:tops_) for(const auto& p:top.points) {
+        topMinX_=std::min(topMinX_,p.x);topMaxX=std::max(topMaxX,p.x);
+        topMinZ_=std::min(topMinZ_,p.z);topMaxZ=std::max(topMaxZ,p.z);
+    }
+    topColumns_=static_cast<int>(std::floor(topMaxX-topMinX_))+1;
+    topRows_=static_cast<int>(std::floor(topMaxZ-topMinZ_))+1;
+    topCells_.resize(static_cast<std::size_t>(topColumns_*topRows_));
+    for(std::size_t index=0;index<tops_.size();++index) {
+        const auto& p=tops_[index].points;
+        const int c0=static_cast<int>(std::floor(std::min({p[0].x,p[1].x,p[2].x})-topMinX_));
+        const int c1=static_cast<int>(std::floor(std::max({p[0].x,p[1].x,p[2].x})-topMinX_));
+        const int r0=static_cast<int>(std::floor(std::min({p[0].z,p[1].z,p[2].z})-topMinZ_));
+        const int r1=static_cast<int>(std::floor(std::max({p[0].z,p[1].z,p[2].z})-topMinZ_));
+        for(int row=r0;row<=r1;++row) for(int column=c0;column<=c1;++column)
+            topCells_[static_cast<std::size_t>(row*topColumns_+column)]
+                .push_back(static_cast<std::uint16_t>(index));
+    }
+}
+bool CaveGroundPatch::TopHeight(float x,float z,float ceiling,
+                                float& height,float& slopeRadians) const noexcept {
+    if(!std::isfinite(x)||!std::isfinite(z)||std::isnan(ceiling)||tops_.empty()) return false;
+    const float column=std::floor(x-topMinX_),row=std::floor(z-topMinZ_);
+    if(column<0||row<0||column>=static_cast<float>(topColumns_)||row>=static_cast<float>(topRows_))
+        return false;
+    bool found=false;
+    for(const auto index:topCells_[static_cast<std::size_t>(row)*topColumns_+static_cast<std::size_t>(column)]) {
+        const auto& top=tops_[index];
+        const auto& a=top.points[0];const auto& b=top.points[1];const auto& c=top.points[2];
+        const float bax=b.x-a.x,baz=b.z-a.z,cax=c.x-a.x,caz=c.z-a.z;
+        const float denominator=bax*caz-baz*cax;
+        if(std::abs(denominator)<1e-7f)continue;
+        const float qax=x-a.x,qaz=z-a.z;
+        const float u=(qax*caz-qaz*cax)/denominator,v=(bax*qaz-baz*qax)/denominator;
+        if(u<-.0001f||v<-.0001f||u+v>1.0001f)continue;
+        const float y=a.y+u*(b.y-a.y)+v*(c.y-a.y);
+        if(y<=ceiling&&(!found||y>height)) {height=y;slopeRadians=top.slopeRadians;found=true;}
+    }
+    return found;
 }
 bool CaveGroundPatch::Contains(float x,float z) const noexcept {
     return std::isfinite(x)&&std::isfinite(z)

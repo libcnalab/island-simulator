@@ -123,12 +123,14 @@ namespace island
         if (!surface_ || !active_) return {};
         std::optional<PlayerPosition> best;
         float bestDistance=std::numeric_limits<float>::infinity();
-        const auto candidate=[&](float x,float z) {
+        // Straight down, the walker stands on what is under the flier (the grass over the
+        // cave, not its floor); the fallback grid takes each place's own ground.
+        const auto candidate=[&](float x,float z,float feet) {
             const float distance=std::hypot(x-position_.x,z-position_.z);
             if (distance>=bestDistance || std::hypot(x,z)>Radius || terrain.Height(x,z)<.1f) return;
             PlayerMotion landed;
             landed.SetCave(cave_,caveGround_);
-            landed.SetPosition(terrain,x,z);
+            landed.SetPosition(terrain,x,z,feet);
             landed.Update(terrain,0,0,0,obstacles);
             const auto p=landed.Position();
             if (landed.Mode()!=LocomotionMode::Walking
@@ -142,12 +144,13 @@ namespace island
             const float resolvedDistance=std::hypot(p.x-position_.x,p.z-position_.z);
             if (resolvedDistance<bestDistance) { best=p; bestDistance=resolvedDistance; }
         };
-        candidate(position_.x,position_.z);
+        candidate(position_.x,position_.z,position_.y-Clearance);
         if (best && bestDistance<.01f) return best;
         // Bounded deterministic dry-land fallback (including launches from water).
         // Choose the nearest valid grid candidate, not an offshore swimming placement.
         for (int z=-330;z<=330;z+=10)
-            for (int x=-330;x<=330;x+=10) candidate(static_cast<float>(x),static_cast<float>(z));
+            for (int x=-330;x<=330;x+=10)
+                candidate(static_cast<float>(x),static_cast<float>(z),std::numeric_limits<float>::quiet_NaN());
         return best;
     }
 }

@@ -233,6 +233,36 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 579 (2026-10-23) — the grass over the cave carries the walker
+
+Operator report (2026-10-23, in Czech): walking over the cave on the grass, the walker falls
+through into the cave.
+- **What was wrong**: the soil over the cave's crown (`CaveGroundPatch` cover) was drawn only.
+  Over the same X/Z the walker's ground was the support grid, which there is the cave's floor,
+  so a walker coming over the hill onto the grass sank through the roof (the camera's descent is
+  not swept against the rock) and often ended up inside the shell's rock. A probe of 180 straight
+  walks across the cave from all sides: 122 entered the cavity and 91 033 frames stood in rock.
+- **The fix**: `CaveGroundPatch::TopHeight` gives the walkable tops, the cover's own triangles
+  and the outer rock wherever it faces up (bare on the lip over the mouth, in front of the soil's
+  edge), bucketed on a one-metre grid. `PlayerMotion::SampleGroundContact` stands the walker on
+  the highest top not more than `CaveTopReach` (1.15 m) above the feet; the floor stays the
+  ground inside, the roof being about three metres over anyone on it.
+  `PlayerMotion::SetPosition(terrain, x, z, feetHeight)` places on the surface under a known
+  height: `FlightMotion::FindLanding` uses the flier's height straight down (a landing over the
+  cave sets the walker on its grass, not off to a grid point beside it) and the game passes the
+  landing's height to the walker.
+- The same probe after: only the walks that enter by the mouth reach the cavity, and the frames
+  in rock are only the existing ones at the back pocket. Beside the mouth the soil's front edge
+  hangs 0.5-1.9 m over the shoulders: the walker cannot climb it there (it climbs onto the cave
+  from the sides and the back), and walks off it like any ledge; off the lip's front it comes
+  down in front of the mouth.
+- `IslandCaveLayoutTests`: four crossings (from the hill behind, from either side) never fall
+  into the cavity nor touch the rock and reach their far side; a placement from above lands on
+  the grass; the landing over the cave stays straight down on the grass. Without the fix the
+  test fails. Full suite 76/76, core tests pass; `cave-top` `20261023T164006` unchanged.
+- Not changed: the quad's ground over the cave (`IslandGame::QuadGround`) is still the support
+  grid, the floor under the grass; to be put to the operator.
+
 ## Loop pass 578 (2026-10-23) — the tyrannosaur rebuilt: one smooth skin, scaled and lit per pixel
 
 Operator report (2026-10-23, in Czech): the T. rex looks like "a pile of triangles"; make it look
