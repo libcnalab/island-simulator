@@ -233,6 +233,34 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 580 (2026-10-23) — the grass over the cave carries the quad too
+
+Operator request (2026-10-23, in Czech): fix the same for the quad over the cave.
+- **What was wrong**: `IslandGame::QuadGround` gave the support grid over the cave (its floor
+  under the crown), and `QuadWallBlocked` set the rock capsule on that ground. Driven at the cave
+  from beside or behind, the quad met the shell's rock hidden under the grass, sank up to a metre
+  into the grass, was thrown back and drove round the cave; from behind it bounced off the rear
+  cap. The new `quad-cave-top` crossings on the old code: none of four reached its far side
+  cleanly, 4-21 steps each sunk under the grass.
+- **The fix**: `QuadGround` takes the cave's tops (`CaveGroundPatch::TopHeight`, the grass and the
+  lip's rock) over the floor up to `QuadCaveTopCeiling`: up on them (`QuadOnCaveTop`) a metre over
+  the wheels (`PlayerMotion::CaveTopReach`), from beside them a kerb (0.45 m, the jetty deck's
+  rule), at any level when the quad is set down anew. On top the site is open, not the cave. From
+  below, the grass's edge hanging over the hill beside the mouth is a bank (`QuadWallBlocked`:
+  more than 0.45 m over the wheels and 0.3 m over the ground under it). The chase camera stays
+  over the grass; the walker riding and stepping off is placed at the wheels' level.
+- **QA view `quad-cave-top`**: four steered crossings (from behind to the top over the mouth,
+  across from either side, across the rear) report their end and the steps sunk under the grass,
+  then a drive from the hill beside it up onto the crown for the capture. The runner requires all
+  four within 3 m of the far side with no step sunk, and the quad up on the grass in the frame.
+  `quad-cave-top` `20261023T170858` passes (ends 0.67-1.39 m off, 0 steps sunk; the wheels 3.86 m
+  over the cave's floor, on the grass). `quad-cave` `170559` reports exactly as before (site cave,
+  depth 6.98 m, walls clear); `quad-bunker`, `quad-mine`, `quad-drive` pass. Full suite 76/76,
+  core tests pass; Web build rc 0.
+- **Left open, not from this pass**: `quad-audit` fails on the UFO (7 footprint points inside its
+  shape from side 4, the runner allows 6). It fails the same on the sources before this pass
+  (`20261023T170318`); the UFO came in at `60973486` after the last audit run (`083343`).
+
 ## Loop pass 579 (2026-10-23) — the grass over the cave carries the walker
 
 Operator report (2026-10-23, in Czech): walking over the cave on the grass, the walker falls

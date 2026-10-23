@@ -194,6 +194,7 @@ namespace
         case FixedViewpoint::QuadMineDetail: return "quad-mine";
         case FixedViewpoint::QuadVolcanoDetail: return "quad-volcano";
         case FixedViewpoint::QuadCaveDetail: return "quad-cave";
+        case FixedViewpoint::QuadCaveTopDetail: return "quad-cave-top";
         case FixedViewpoint::QuadJettyDetail: return "quad-jetty";
         case FixedViewpoint::QuadHelicopterDetail: return "quad-helicopter";
         case FixedViewpoint::QuadLookoutDetail: return "quad-lookout";
@@ -631,6 +632,8 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::QuadVolcanoDetail;
             } else if (name == "quad-cave") {
                 viewpoint = island::FixedViewpoint::QuadCaveDetail;
+            } else if (name == "quad-cave-top") {
+                viewpoint = island::FixedViewpoint::QuadCaveTopDetail;
             } else if (name == "quad-jetty") {
                 viewpoint = island::FixedViewpoint::QuadJettyDetail;
             } else if (name == "quad-helicopter") {

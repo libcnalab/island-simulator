@@ -320,6 +320,7 @@ namespace island
             case FixedViewpoint::QuadDriveDetail: return "quad-drive";
             case FixedViewpoint::QuadBunkerDetail: return "quad-bunker";
             case FixedViewpoint::QuadCaveDetail: return "quad-cave";
+            case FixedViewpoint::QuadCaveTopDetail: return "quad-cave-top";
             case FixedViewpoint::QuadMineDetail: return "quad-mine";
             case FixedViewpoint::QuadVolcanoDetail: return "quad-volcano";
             case FixedViewpoint::QuadJettyDetail: return "quad-jetty";
@@ -4315,6 +4316,13 @@ namespace island
                     const auto from = terrainRenderer_->Cave().World(0.0f, 0.0f, -6.0f);
                     const auto to = terrainRenderer_->Cave().World(0.0f, 0.0f, 0.0f);
                     PlaceQuadNear(from.x, from.z, std::atan2(to.x - from.x, to.z - from.z));
+                } else if (viewpoint_ == FixedViewpoint::QuadCaveTopDetail) {
+                    // across the cave from the hill beside it, up onto the grass over its crown
+                    // (the quad had dropped through the grass onto the cave's floor)
+                    RunQuadCaveTopCrossings();
+                    const auto from = terrainRenderer_->Cave().World(-15.0f, 0.0f, 11.0f);
+                    const auto to = terrainRenderer_->Cave().World(0.0f, 0.0f, 11.0f);
+                    PlaceQuadNear(from.x, from.z, std::atan2(to.x - from.x, to.z - from.z));
                 } else if (viewpoint_ == FixedViewpoint::QuadJettyDetail && jettyPlacement_) {
                     // from the deck's ramp out along it (the jetty's root lies under a steep bank)
                     const auto& jetty = *jettyPlacement_;
@@ -6406,7 +6414,7 @@ namespace island
         if (bunkerLayout_.SupportHeight(p.x, p.z, p.y - 0.6f, floor)) {
             quadSite_ = QuadSite::Bunker;
             quadSiteFloorY_ = floor;
-        } else if (terrainRenderer_ && terrainRenderer_->CaveGround().Contains(p.x, p.z)) {
+        } else if (terrainRenderer_ && terrainRenderer_->CaveGround().Contains(p.x, p.z) && !QuadOnCaveTop()) {
             quadSite_ = QuadSite::Cave;
             quadSiteFloorY_ = terrainRenderer_->CaveGround().SampleHeight(p.x, p.z);
         } else if (QuadMineFloor(p.x, p.z, floor) && mineLayout_.Local({p.x, 0.0f, p.z}).z >= -0.3f) {
@@ -6415,6 +6423,25 @@ namespace island
         } else {
             quadSite_ = QuadSite::Open;
         }
+    }
+
+    bool IslandGame::QuadOnCaveTop() const noexcept
+    {
+        if (!terrainRenderer_) return false;
+        const CaveGroundPatch& cave = terrainRenderer_->CaveGround();
+        const BikeVec p = quad_.Position();
+        float top = 0.0f, slope = 0.0f;
+        // the wheels touch about 0.6 m below the body's origin
+        return cave.Contains(p.x, p.z)
+            && cave.TopHeight(p.x, p.z, p.y - 0.6f + PlayerMotion::CaveTopReach, top, slope)
+            && top > cave.SampleHeight(p.x, p.z) + 0.05f;
+    }
+
+    float IslandGame::QuadCaveTopCeiling() const noexcept
+    {
+        // (set down anew, on whatever is under it, as on the jetty's deck)
+        if (quadDeckAnyLevel_) return std::numeric_limits<float>::infinity();
+        return quad_.Position().y - 0.6f + (QuadOnCaveTop() ? PlayerMotion::CaveTopReach : 0.45f);
     }
 
     bool IslandGame::QuadOnShelterFloor(const float x, const float z) const noexcept
@@ -6526,6 +6553,23 @@ namespace island
                 }
             }
         }
+        // The grass over the cave hangs over the hill beside its mouth: from below, its edge is a
+        // bank too high to drive up (from on top, the quad drives over it and off).
+        if (terrainRenderer_ && !QuadOnCaveTop()) {
+            const CaveGroundPatch& cave = terrainRenderer_->CaveGround();
+            const float wheels = quad_.Position().y - 0.6f;
+            const BikeVec forward = quad_.Forward();
+            const float length = std::hypot(forward.x, forward.z);
+            const float fx = length > 1e-4f ? forward.x / length : 0.0f, fz = length > 1e-4f ? forward.z / length : 1.0f;
+            for (const float along : {-1.0f, 0.0f, 1.0f}) {
+                for (const float across : {-0.62f, 0.0f, 0.62f}) {
+                    const float px = x + fx * along + fz * across, pz = z + fz * along - fx * across;
+                    float top = 0.0f, slope = 0.0f;
+                    if (cave.Contains(px, pz) && cave.TopHeight(px, pz, wheels + 1.9f, top, slope)
+                        && top - wheels > 0.45f && top - cave.SampleHeight(px, pz) > 0.3f) return true;
+                }
+            }
+        }
         // The cave's rock (an arched shell five metres wide): the quad and its rider as one
         // upright capsule, 0.95 m round and 1.9 m tall.
         constexpr float Radius = 0.95f, Height = 1.9f;
@@ -6576,10 +6620,17 @@ namespace island
             ground.normal = {-slopeX / length, 1.0f / length, -slopeZ / length};
             return ground;
         }
+        // Up on the cave, its grass and its lip's rock over that floor (the quad had dropped
+        // through the grass onto the floor).
         if (terrainRenderer_ && (quadSite_ == QuadSite::Cave || terrainRenderer_->CaveGround().Contains(x, z))) {
             const CaveGroundPatch& cave = terrainRenderer_->CaveGround();
+            const float ceiling = QuadCaveTopCeiling();
             const auto heightAt = [&](const float px, const float pz) {
-                if (cave.Contains(px, pz)) return cave.SampleHeight(px, pz);
+                if (cave.Contains(px, pz)) {
+                    float top = 0.0f, slope = 0.0f;
+                    const float floor = cave.SampleHeight(px, pz);
+                    return cave.TopHeight(px, pz, ceiling, top, slope) ? std::max(floor, top) : floor;
+                }
                 if (quadSite_ == QuadSite::Cave) return quadSiteFloorY_;
                 return DrawnOrAnalyticHeight(*drawnGround_, terrain_, px, pz);
             };
@@ -6925,6 +6976,46 @@ namespace island
         PlaceQuadNear(parked.x, parked.z, parkedYaw);
     }
 
+    void IslandGame::RunQuadCaveTopCrossings()
+    {
+        // Driven over the cave from the hill behind it and across it from either side, steered
+        // at the far side: over the corridor the quad stays up on the grass, never down in it.
+        if (!terrainRenderer_) return;
+        const CaveLayout& cave = terrainRenderer_->Cave();
+        const auto ground = [this](float x, float z) { return QuadGround(x, z); };
+        const auto obstacles = [this](float x, float z, float r, float& px, float& pz) { return QuadObstacle(x, z, r, px, pz); };
+        const BikeVec parked = quad_.Position();
+        const float parkedYaw = quad_.YawRadians();
+        riding_ = true;
+        struct Crossing { const char* name; float fromAcross, fromDepth, toAcross, toDepth; };
+        for (const Crossing& crossing : {Crossing{"behind", 0.0f, 30.0f, 0.0f, 3.0f}, Crossing{"left", -16.0f, 10.0f, 16.0f, 10.0f},
+                                         Crossing{"right", 16.0f, 6.0f, -16.0f, 6.0f}, Crossing{"left-rear", -16.0f, 17.0f, 16.0f, 17.0f}}) {
+            const CavePoint from = cave.World(crossing.fromAcross, 0.0f, crossing.fromDepth);
+            const CavePoint to = cave.World(crossing.toAcross, 0.0f, crossing.toDepth);
+            PlaceQuadNear(from.x, from.z, std::atan2(to.x - from.x, to.z - from.z));
+            int down = 0;
+            for (int step = 0; step < 150; ++step) {
+                const BikeVec q = quad_.Position(), right = quad_.Right();
+                const float dx = to.x - q.x, dz = to.z - q.z, distance = std::hypot(dx, dz);
+                if (distance < 1.5f) break;
+                const float side = (dx * right.x + dz * right.z) / std::max(distance * std::hypot(right.x, right.z), 1e-4f);
+                UpdateQuadSite();
+                quad_.Step(0.1f, {0.6f, std::clamp(side * 2.5f, -1.0f, 1.0f), false}, ground, obstacles);
+                const BikeVec p = quad_.Position();
+                float top = 0.0f, slope = 0.0f;
+                // sunk under the grass over the cave (or down on its floor)
+                if (terrainRenderer_->CaveGround().TopHeight(p.x, p.z, std::numeric_limits<float>::infinity(), top, slope)
+                    && top > terrainRenderer_->CaveGround().SampleHeight(p.x, p.z) + 0.3f && p.y - 0.6f < top - 0.5f) ++down;
+            }
+            const BikeVec end = quad_.Position();
+            std::cout << "island-simulator: quad QA cave top: from the " << crossing.name << ", ends "
+                      << std::hypot(end.x - to.x, end.z - to.z) << " m from the far side, " << down
+                      << " steps sunk under its grass\n";
+        }
+        riding_ = false;
+        PlaceQuadNear(parked.x, parked.z, parkedYaw);
+    }
+
     void IslandGame::PlaceQuadNear(const float x, const float z, const float yawRadians)
     {
         quadSite_ = QuadSite::Open;   // placed anew, it is not where it was
@@ -6984,7 +7075,7 @@ namespace island
                 const float sx = p.x + right.x * side[0] + forward.x * side[1];
                 const float sz = p.z + right.z * side[0] + forward.z * side[1];
                 if (!worldCollisionGrid_.IntersectsCircle(sx, sz, 0.4f) && terrain_.Height(sx, sz) > -0.3f) {
-                    playerMotion_.SetPosition(terrain_, sx, sz);
+                    playerMotion_.SetPosition(terrain_, sx, sz, p.y - 0.6f);
                     break;
                 }
             }
@@ -7215,7 +7306,7 @@ namespace island
         if (riding_) {
             // The walker goes where the quad goes (the wildlife and the sounds follow).
             const auto p = quad_.Position();
-            playerMotion_.SetPosition(terrain_, p.x, p.z);
+            playerMotion_.SetPosition(terrain_, p.x, p.z, p.y - 0.6f);   // at the wheels' level (up on the cave, its grass)
         }
     }
 
@@ -7269,6 +7360,11 @@ namespace island
                 desired.Z = p.z - std::cos(quadCameraYaw_) * back;
             }
             desired.Y = std::max(desired.Y, terrain_.Height(desired.X, desired.Z) + 0.6f);
+            // up on the cave, over its grass
+            float top = 0.0f, slope = 0.0f;
+            if (QuadOnCaveTop() && terrainRenderer_->CaveGround().TopHeight(desired.X, desired.Z,
+                    std::numeric_limits<float>::infinity(), top, slope))
+                desired.Y = std::max(desired.Y, top + 0.6f);
         }
         quadCamera_ = Vector3::Lerp(quadCamera_, desired, 1.0f - std::exp(-deltaSeconds * 9.0f));
         cameraPosition_ = quadCamera_;
@@ -10523,6 +10619,16 @@ namespace island
                               << (quadSite_ == QuadSite::Mine ? "mine" : "open") << ", depth " << local.z << " m, across "
                               << local.x << " m, floor " << QuadGround(q.x, q.z).height << ", body " << q.y
                               << ", walls " << (QuadWallBlocked(q.x, q.z) ? "touching" : "clear") << '\n';
+                } else if (viewpoint_ == FixedViewpoint::QuadCaveTopDetail) {
+                    const CavePoint local = terrainRenderer_->Cave().Local({q.x, q.y - 0.6f, q.z});
+                    const CaveGroundPatch& cave = terrainRenderer_->CaveGround();
+                    float top = 0.0f, slope = 0.0f;
+                    const bool over = cave.TopHeight(q.x, q.z, std::numeric_limits<float>::infinity(), top, slope)
+                        && top > cave.SampleHeight(q.x, q.z) + 0.3f;
+                    std::cout << "island-simulator: quad QA cave top: across " << local.x << " m, depth " << local.z
+                              << " m, the wheels " << local.y - CaveLayout::Floor(local.z) << " m over the cave's floor, "
+                              << (over && q.y - 0.6f > top - 0.3f ? "up on its grass" : over ? "sunk under its grass" : "off its top")
+                              << '\n';
                 } else if (viewpoint_ != FixedViewpoint::QuadDriveDetail) {
                     const bool bunker = viewpoint_ == FixedViewpoint::QuadBunkerDetail;
                     const float depth = bunker ? bunkerLayout_.Local({q.x, q.y, q.z}).z

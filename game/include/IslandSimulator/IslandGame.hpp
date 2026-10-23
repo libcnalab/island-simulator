@@ -396,6 +396,7 @@ namespace island
         QuadDriveDetail,
         QuadBunkerDetail,
         QuadCaveDetail,
+        QuadCaveTopDetail,
         QuadMineDetail,
         QuadVolcanoDetail,
         QuadJettyDetail,
@@ -858,7 +859,8 @@ namespace island
         // the driven quad views: up the beach path, and into the bunker and the cave
         [[nodiscard]] bool QuadDriveView() const noexcept {
             return viewpoint_ == FixedViewpoint::QuadDriveDetail || viewpoint_ == FixedViewpoint::QuadBunkerDetail
-                || viewpoint_ == FixedViewpoint::QuadCaveDetail || viewpoint_ == FixedViewpoint::QuadJettyDetail
+                || viewpoint_ == FixedViewpoint::QuadCaveDetail || viewpoint_ == FixedViewpoint::QuadCaveTopDetail
+                || viewpoint_ == FixedViewpoint::QuadJettyDetail
                 || viewpoint_ == FixedViewpoint::QuadHelicopterDetail || viewpoint_ == FixedViewpoint::QuadLookoutDetail
                 || viewpoint_ == FixedViewpoint::QuadBearDetail || viewpoint_ == FixedViewpoint::QuadStreamDetail
                 || viewpoint_ == FixedViewpoint::QuadSeaDetail || viewpoint_ == FixedViewpoint::QuadMineDetail
@@ -870,6 +872,14 @@ namespace island
         int quadStreamWaitUpdates_ = 13;   // QA: the stream view stands this many updates before setting off
         void UpdateQuadSite();
         [[nodiscard]] bool QuadWallBlocked(float x, float z) const noexcept;
+        // The cave's top (the grass over its crown, the bare rock of its lip) is the quad's ground
+        // up to this height: up on it, a metre over the wheels; from beside it, a kerb's height
+        // (higher, its edge is a bank: QuadWallBlocked).
+        [[nodiscard]] float QuadCaveTopCeiling() const noexcept;
+        // the quad up on the cave's grass or its lip, not in the cave nor on the hill by it
+        [[nodiscard]] bool QuadOnCaveTop() const noexcept;
+        // QA: the quad driven over the cave from behind and across it from either side
+        void RunQuadCaveTopCrossings();
         // The old mine's floor under (x, z) for the quad down at it, in the cutting, the adit and
         // the chamber (on the mountain above them, none).
         [[nodiscard]] bool QuadMineFloor(float x, float z, float& floor) const noexcept;
