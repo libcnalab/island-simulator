@@ -519,11 +519,14 @@ void main()
             }
         }
 
+        // A table of coral: thick at its middle, thinning to a pale growing rim (a disc of even
+        // thickness read as a mushroom's cap).
         void AppendReefPlate(PropGeometry& geometry, const Vector3& centre,
                              const float radius, const int sides, const float phase,
                              const Color& color)
         {
             const float halfThickness = .055f;
+            const Color rimColor = ShadeColor(color, 1.22f);
             const auto topCentre = static_cast<std::uint16_t>(geometry.vertices.size());
             geometry.vertices.emplace_back(centre + Vector3::Up * halfThickness, color);
             geometry.albedos.push_back(color);
@@ -538,10 +541,10 @@ void main()
                     const float irregular = radius * (1.0f + .10f
                         * std::sin(angle * 3.0f + phase) + .055f * std::sin(angle * 5.0f));
                     geometry.vertices.emplace_back(centre + Vector3(std::cos(angle) * irregular,
-                        (layer == 0 ? halfThickness : -halfThickness)
+                        (layer == 0 ? halfThickness * .30f : -halfThickness * .20f)
                             + .025f * std::sin(angle * 2.0f + phase),
-                        std::sin(angle) * irregular), color);
-                    geometry.albedos.push_back(color);
+                        std::sin(angle) * irregular), rimColor);
+                    geometry.albedos.push_back(rimColor);
                 }
             }
             for (int side = 0; side < sides; ++side) {
@@ -687,9 +690,33 @@ void main()
                 if (!farMesh) AppendReefMound(geometry, Vector3(.05f,0,-.35f),
                     .36f, .45f, 3, 9, 2.8f, ShadeColor(coral, 1.06f));
             } else {
-                const Color coral(196, 153, 112, 16);
+                // a table coral's olive-brown, on a short trunk of fused branches splaying up
+                // into the tables, their tops roughened by the upturned branchlet tips
+                const Color coral(142, 128, 90, 16);
                 AppendReefTube(geometry, Vector3(0,-.04f,0), Vector3(0,.58f,0),
                     .14f, .10f, sides, coral);
+                if (!farMesh) {
+                    for (int limb = 0; limb < 3; ++limb) {
+                        const float angle = .7f + static_cast<float>(limb) * 2.094f;
+                        AppendReefTube(geometry, Vector3(std::cos(angle) * .05f, .10f, std::sin(angle) * .05f),
+                            Vector3(std::cos(angle) * .22f, .62f, std::sin(angle) * .22f), .075f, .050f, 6,
+                            ShadeColor(coral, .90f));
+                    }
+                    const std::array<std::pair<Vector3, float>, 3> tables{{
+                        {Vector3(-.10f,.37f,.06f), .43f}, {Vector3(.11f,.68f,-.05f), .70f}, {Vector3(-.20f,.91f,.12f), .48f}}};
+                    for (std::size_t t = 0; t < tables.size(); ++t) {
+                        const auto& [middle, reach] = tables[t];
+                        // dense and small, a texture of tips rather than separate knobs
+                        constexpr int Nubs = 42;
+                        for (int nub = 0; nub < Nubs; ++nub) {
+                            const float angle = static_cast<float>(nub) * 2.39996f + static_cast<float>(t);
+                            const float r = reach * .95f * std::sqrt((static_cast<float>(nub) + .5f) / Nubs);
+                            const float rise = .055f * .30f * (1.0f - r / reach) + .012f;
+                            AppendReefMound(geometry, middle + Vector3(std::cos(angle) * r, rise, std::sin(angle) * r),
+                                .022f, .020f, 2, 4, angle, ShadeColor(coral, nub % 4 == 0 ? 1.20f : (nub % 4 == 1 ? .86f : 1.0f)));
+                        }
+                    }
+                }
                 AppendReefPlate(geometry, Vector3(-.10f,.37f,.06f), .43f,
                     farMesh ? 7 : 11, .8f, ShadeColor(coral, .92f));
                 AppendReefPlate(geometry, Vector3(.11f,.68f,-.05f), farMesh ? .62f : .70f,

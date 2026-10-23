@@ -233,6 +233,17 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 560 (2026-10-23) — table corals (inventory 6)
+
+- Each table (`AppendReefPlate`) is thick at its middle and thins to a paler growing rim (an even
+  disc read as a mushroom's cap).
+- Near, the trunk splays into three fused limbs reaching up into the tables, and each table's
+  top is roughened by 42 small upturned branchlet tips in three shades.
+- The colour is a table coral's olive-brown.
+- Evidence: `anemone` (`20261023T070224`), `reef` (`070231`), `reef-habitat` (`070148`). Seen
+  edge-on from the seabed the tables still read as pale slabs; a further pass could add a
+  scalloped, layered rim.
+
 ## Loop pass 559 (2026-10-23) — the coconut crab's colours and proportions (inventory 5)
 
 - **Colours**: the species' own, orange-red, a deep red-brown, the violet-blue morph and a sandy
