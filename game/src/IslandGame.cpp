@@ -213,6 +213,7 @@ namespace island
             case FixedViewpoint::WhaleSkeletonDetail: return "whale-skeleton";
             case FixedViewpoint::IdolDetail: return "idol";
             case FixedViewpoint::IdolOfferingsDetail: return "idol-offerings";
+            case FixedViewpoint::CastleDetail: return "castle";
             case FixedViewpoint::QuadAuditDetail: return "quad-audit";
             case FixedViewpoint::QuadPlaneDetail: return "quad-plane";
             case FixedViewpoint::QuadWhaleDetail: return "quad-whale";
@@ -548,6 +549,11 @@ namespace island
             if(lighthousePlacement_) avoid.push_back({{lighthousePlacement_->x,lighthousePlacement_->z}});
             planeWreckPlacement_=PlaneWreckLayout::FindInWorld(terrain_,worldObstacles,avoid);
             if(planeWreckPlacement_) for(const auto& obstacle:planeWreckPlacement_->Obstacles()) worldObstacles.push_back(obstacle);
+            // A medieval castle ruin on the most level ground inland, away from everything else;
+            // its standing walls, towers and keep stop the walker and the animals.
+            if(planeWreckPlacement_) avoid.push_back({{planeWreckPlacement_->x,planeWreckPlacement_->z}});
+            castlePlacement_=CastleRuinLayout::FindInWorld(terrain_,worldObstacles,avoid);
+            if(castlePlacement_) for(const auto& circle:castlePlacement_->WallObstacles()) worldObstacles.push_back(circle);
         }
         {
             // A rusting coaster a storm drove up a broad beach, well away from the old wreck, the
@@ -2787,6 +2793,16 @@ namespace island
             } else {
                 std::cout<<"island-simulator: idol QA camera looks up at the stone god's face from before its platform\n";
             }
+        } else if (viewpoint_ == FixedViewpoint::CastleDetail) {
+            // Outside the gate, up a little, looking across the courtyard at the keep and the towers.
+            if(!castlePlacement_) throw std::runtime_error("Castle QA requires the castle ruin");
+            const auto& g=*castlePlacement_;
+            const auto eye=g.At(-16.0f,CastleRuinPlacement::Half+36.0f);
+            cameraPosition_=Vector3(eye[0],std::max(terrain_.Height(eye[0],eye[1]),g.groundY)+PlayerMotion::EyeHeight+8.0f,eye[1]);
+            const Vector3 direction=Vector3(g.x,g.groundY+3.5f,g.z)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: castle QA camera looks at the castle ruin from outside its gate\n";
         } else if (viewpoint_ == FixedViewpoint::IdolOfferingsDetail) {
             // At the platform's edge before the god, down at the offerings laid at its feet.
             if(!idolPlacement_) throw std::runtime_error("Idol QA requires the stone god");
@@ -3501,6 +3517,7 @@ namespace island
             add("whale-skeleton", at[0], ground(at[0], at[1]) + 1.0f, at[1], 7.5f);
         }
         if (idolPlacement_) add("idol", idolPlacement_->x, idolPlacement_->TopY(), idolPlacement_->z, 3.0f);
+        if (castlePlacement_) add("castle", castlePlacement_->x, castlePlacement_->groundY + 3.0f, castlePlacement_->z, 12.0f);
         if (seabirdIslet_) add("seabird-islet", seabirdIslet_->x, 3.0f, seabirdIslet_->z, 8.0f);
         if (stoneSignPlacement_) {
             const auto at = stoneSignPlacement_->At(StoneSignPlacement::Length() * 0.5f, 3.5f);
@@ -4033,6 +4050,7 @@ namespace island
         if(jettyPlacement_) jettyRenderer_=std::make_unique<JettyRenderer>(device,*jettyPlacement_);
         if(whalePlacement_) whaleSkeletonRenderer_=std::make_unique<WhaleSkeletonRenderer>(device,*whalePlacement_,terrain_,*drawnGround_);
         if(idolPlacement_) idolRenderer_=std::make_unique<IdolStatueRenderer>(device,*idolPlacement_,terrain_,*drawnGround_);
+        if(castlePlacement_) castleRenderer_=std::make_unique<CastleRuinRenderer>(device,*castlePlacement_,terrain_,*drawnGround_);
         if(stoneSignPlacement_) stoneSignRenderer_=std::make_unique<StoneSignRenderer>(device,*stoneSignPlacement_,terrain_,*drawnGround_);
         if(lighthousePlacement_) lighthouseRenderer_=std::make_unique<LighthouseRenderer>(device,*lighthousePlacement_,terrain_,*drawnGround_,
             cottagePlacement_?&*cottagePlacement_:nullptr);
@@ -6759,6 +6777,7 @@ namespace island
             targets.push_back({"windthrow", mid[0], mid[1], 9.0f});
         }
         if (idolPlacement_) targets.push_back({"idol", idolPlacement_->x, idolPlacement_->z, 3.5f});
+        if (castlePlacement_) targets.push_back({"castle", castlePlacement_->x, castlePlacement_->z, 12.0f});
         if (whalePlacement_) {
             const auto at = whalePlacement_->At(4.0f, 0.0f);
             targets.push_back({"whale-skeleton", at[0], at[1], 8.0f});
@@ -8394,6 +8413,7 @@ namespace island
                 if (jettyRenderer_) jettyRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (whaleSkeletonRenderer_) whaleSkeletonRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (idolRenderer_) idolRenderer_->SetSunShadowMap(sunShadowMap_.get());
+                if (castleRenderer_) castleRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (stoneSignRenderer_) stoneSignRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (seabirdIsletRenderer_) seabirdIsletRenderer_->SetSunShadowMap(sunShadowMap_.get());
                 if (lighthouseRenderer_) lighthouseRenderer_->SetSunShadowMap(sunShadowMap_.get());
@@ -8427,6 +8447,7 @@ namespace island
                 if (jettyRenderer_) jettyRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (whaleSkeletonRenderer_) whaleSkeletonRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (idolRenderer_) idolRenderer_->DrawSunShadow(*sunShadowMap_);
+                if (castleRenderer_) castleRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (stoneSignRenderer_) stoneSignRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (lighthouseRenderer_) lighthouseRenderer_->DrawSunShadow(*sunShadowMap_);
                 if (planeWreckRenderer_) planeWreckRenderer_->DrawSunShadow(*sunShadowMap_);
@@ -8702,6 +8723,10 @@ namespace island
         if(idolRenderer_) {
             GpuDiagnosticScope gpuPass("idol");
             idolRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
+        }
+        if(castleRenderer_) {
+            GpuDiagnosticScope gpuPass("castle");
+            castleRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
         }
         if(stoneSignRenderer_) {
             GpuDiagnosticScope gpuPass("stone-sign");

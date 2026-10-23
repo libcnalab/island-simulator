@@ -178,6 +178,8 @@
 #include "IslandSimulator/WhaleSkeletonRenderer.hpp"
 #include "IslandSimulator/IdolStatueLayout.hpp"
 #include "IslandSimulator/IdolStatueRenderer.hpp"
+#include "IslandSimulator/CastleRuinLayout.hpp"
+#include "IslandSimulator/CastleRuinRenderer.hpp"
 #include "IslandSimulator/StoneSignLayout.hpp"
 #include "IslandSimulator/StoneSignRenderer.hpp"
 #include "IslandSimulator/LighthouseLayout.hpp"
@@ -288,6 +290,7 @@ namespace island
         WhaleSkeletonDetail,
         IdolDetail,
         IdolOfferingsDetail,
+        CastleDetail,
         JournalDetail,
         JournalNoticeDetail,
         CrabMigrationDetail,
@@ -595,6 +598,7 @@ namespace island
         std::optional<HutPlacement> hutPlacement_;
         std::optional<JettyPlacement> jettyPlacement_;
         std::optional<WhaleSkeletonPlacement> whalePlacement_;   // a stranded whale's skeleton on the beach
+        std::optional<CastleRuinPlacement> castlePlacement_;   // the medieval castle ruin inland
         std::optional<IdolStatuePlacement> idolPlacement_;   // the island's stone god on its platform
         std::optional<StoneSignPlacement> stoneSignPlacement_;   // the castaway's HELP ME in stones on a beach
         std::optional<LighthousePlacement> lighthousePlacement_;   // the lighthouse on a coastal rise
@@ -715,6 +719,7 @@ namespace island
         std::unique_ptr<JettyRenderer> jettyRenderer_;
         std::unique_ptr<WhaleSkeletonRenderer> whaleSkeletonRenderer_;
         std::unique_ptr<IdolStatueRenderer> idolRenderer_;
+        std::unique_ptr<CastleRuinRenderer> castleRenderer_;
         std::unique_ptr<StoneSignRenderer> stoneSignRenderer_;
         std::unique_ptr<LighthouseRenderer> lighthouseRenderer_;
         std::unique_ptr<PlaneWreckRenderer> planeWreckRenderer_;
