@@ -233,6 +233,14 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 562 (2026-10-23) — the gecko stands on its legs (inventory 8)
+
+The gecko's legs went straight out level from its sides, its feet floating a few centimetres
+above the ground like a starfish's arms. The elbows and knees now rise over the body's sides
+and the feet are planted on the ground ahead and behind, the digits fanned flat with their pads
+at the tips. Evidence: `geckos` (`20261023T070721`). The skink's short legs and the frog were
+left as they are: next to the gecko they hold up at the QA distance.
+
 ## Loop pass 561 (2026-10-23) — the fruit bats' wings (inventory 7)
 
 A flying fox's wing was one flat six-sided plate, a cut-out card. Now (near and coarse LOD):

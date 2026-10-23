@@ -499,16 +499,21 @@ namespace island
                         ? stride : -stride;
                     const Vector3 root = body + forward * (along * scale)
                         + right * (sideSign * .07f * scale);
-                    const Vector3 knee = root + right * (sideSign * .12f * scale)
-                        + forward * opposed;
-                    const Vector3 toe = knee + right * (sideSign * .10f * scale)
-                        + forward * ((pair == 0 ? .055f : -.045f) * scale - opposed * .35f);
+                    // the elbow and the knee raised over the body's side, the foot planted on
+                    // the ground ahead or behind (straight out level, the legs floated as a
+                    // starfish's arms a few centimetres above the ground)
+                    const Vector3 knee = root + right * (sideSign * .11f * scale)
+                        + forward * opposed + up * (.030f * scale);
+                    const Vector3 toe = knee + right * (sideSign * .06f * scale)
+                        + forward * ((pair == 0 ? .075f : -.065f) * scale - opposed * .35f)
+                        - up * (.098f * scale);
                     AppendGeckoTube(vertices,root,knee,.020f*scale,.015f*scale,flank);
                     AppendGeckoTube(vertices,knee,toe,.015f*scale,.010f*scale,back);
                     for(int digit=-1;digit<=1;++digit) {
-                        const Vector3 digitEnd=toe+right*(sideSign*.055f*scale)
-                            +forward*((static_cast<float>(digit)*.030f
-                                +(pair==0?.018f:-.018f))*scale);
+                        // the digits fanned flat on the ground, the pads at their tips
+                        const Vector3 digitEnd=toe+right*(sideSign*.040f*scale)
+                            +forward*((static_cast<float>(digit)*.034f
+                                +(pair==0?.030f:-.030f))*scale);
                         AppendGeckoTube(vertices,toe,digitEnd,.0065f*scale,
                                         .0040f*scale,underside);
                         AppendGeckoDiamond(vertices,digitEnd,right,up,forward,

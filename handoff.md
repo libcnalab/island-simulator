@@ -510,6 +510,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 562: inventory item 8, the gecko stands on bent legs with planted feet; `geckos` `20261023T070721` (PLAN "Loop pass 562").
 - Pass 561: inventory item 7, fruit bats: fingered wings with a scalloped near-black membrane and a thumb claw; `bats` `20261023T070543` (PLAN "Loop pass 561").
 - Pass 560: inventory item 6, table corals: tapered tables with a pale rim, fused limbs, branchlet tips on top; `anemone` `20261023T070224` (PLAN "Loop pass 560").
 - Pass 559: inventory item 5, the coconut crab: the species' colours, a longer narrower cephalothorax with a drawn-forward front, flattened claw palms; `coconut-crabs` `20261023T065950` (PLAN "Loop pass 559").
