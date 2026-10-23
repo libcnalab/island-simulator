@@ -7,6 +7,13 @@
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/SlopeScrubLayout.hpp"
 #include "IslandSimulator/IslandGame.hpp"
+#include "IslandSimulator/CaveSite.hpp"
+#include "IslandSimulator/IslandEnvironmentField.hpp"
+#include "IslandSimulator/MineSite.hpp"
+#include "IslandSimulator/PassingShip.hpp"
+#include "IslandSimulator/TidePoolLayout.hpp"
+#include "IslandSimulator/VolcanoSite.hpp"
+#include "IslandSimulator/CanopyProfile.hpp"
 #include "IslandSimulator/BridgeLayout.hpp"
 #include "IslandSimulator/LookoutLayout.hpp"
 #include "IslandSimulator/JettyLayout.hpp"
@@ -200,6 +207,8 @@ namespace island
             case FixedViewpoint::WhaleSkeletonDetail: return "whale-skeleton";
             case FixedViewpoint::IdolDetail: return "idol";
             case FixedViewpoint::IdolOfferingsDetail: return "idol-offerings";
+            case FixedViewpoint::JournalDetail: return "journal";
+            case FixedViewpoint::JournalNoticeDetail: return "journal-notice";
             case FixedViewpoint::StoneSignDetail: return "help-sign";
             case FixedViewpoint::LighthouseDetail: return "lighthouse";
             case FixedViewpoint::LighthouseStairDetail: return "lighthouse-stair";
@@ -2380,7 +2389,8 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: help-sign QA camera looks down on the castaway's stones from a low pass over the sea\n";
-        } else if (viewpoint_ == FixedViewpoint::IdolDetail) {
+        } else if (viewpoint_ == FixedViewpoint::IdolDetail || viewpoint_ == FixedViewpoint::JournalDetail
+                   || viewpoint_ == FixedViewpoint::JournalNoticeDetail) {
             // Before the god, a little to one side, looking up at its face.
             if(!idolPlacement_) throw std::runtime_error("Idol QA requires the stone god");
             const auto& g=*idolPlacement_;
@@ -2389,7 +2399,17 @@ namespace island
             const Vector3 direction=Vector3(g.x,g.TopY()+1.9f,g.z)-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
-            std::cout<<"island-simulator: idol QA camera looks up at the stone god's face from before its platform\n";
+            if(viewpoint_==FixedViewpoint::JournalDetail) {
+                // the journal open over the view, two entries in three written
+                for(std::size_t i=0;i<DiscoveryJournal::Catalogue().size();++i) if(i%3U!=2U) journal_.Discover(i);
+                journalOpen_=true;
+                std::cout<<"island-simulator: journal QA opens the journal with "<<journal_.FoundCount()<<" of "
+                         <<DiscoveryJournal::Catalogue().size()<<" entries over the stone god\n";
+            } else if(viewpoint_==FixedViewpoint::JournalNoticeDetail) {
+                std::cout<<"island-simulator: journal-notice QA camera looks up at the stone god for the journal to note it\n";
+            } else {
+                std::cout<<"island-simulator: idol QA camera looks up at the stone god's face from before its platform\n";
+            }
         } else if (viewpoint_ == FixedViewpoint::IdolOfferingsDetail) {
             // At the platform's edge before the god, down at the offerings laid at its feet.
             if(!idolPlacement_) throw std::runtime_error("Idol QA requires the stone god");
@@ -2963,6 +2983,7 @@ namespace island
         // Capture-only clock: no wall-time catch-up updates between recorded frames.
         setIsFixedTimeStepProperty(!interactivePlay && benchmarkPath_.empty() && !UsesSnakeCaptureClock() && !UsesGoatCaptureClock() && !UsesSpiderCaptureClock() && !UsesBoarCaptureClock()&&!UsesCampfireCaptureClock()&&!UsesResidentCaptureClock()&&!UsesBearCaptureClock()&&!UsesMonkeyCaptureClock()&&!(QuadDriveView()&&!capturePath_.empty()));
         InitializeUserSettings();
+        InitializeJournal();
 #if defined(__EMSCRIPTEN__)
         soundscapeNeedsGesture_ = true;
 #endif
@@ -3027,6 +3048,282 @@ namespace island
             std::cout << "island-simulator: user settings saved\n";
             MirrorRuntimeDiagnosticToPlatformLog("island-simulator: user settings saved");
         }
+    }
+
+    namespace
+    {
+        constexpr std::string_view JournalFileName = "journal.txt";
+    }
+
+    void IslandGame::InitializeJournal()
+    {
+        GatherJournalPlaces();
+        if (!userSettingsStore_) return;
+        // the record, or the copy it replaced when the record itself cannot be read
+        for (const std::string& name : {std::string(JournalFileName), std::string(JournalFileName) + ".bak"}) {
+            std::string error;
+            const auto text = userSettingsStore_->ReadRecord(name, DiscoveryJournal::MaximumSerializedBytes, error);
+            if (!text) {
+                if (!error.empty()) std::cerr << "island-simulator: " << name << " could not be read: " << error << '\n';
+                continue;
+            }
+            if (auto read = DiscoveryJournal::Parse(*text, error)) {
+                journal_ = std::move(*read);
+                std::cout << "island-simulator: journal loaded with " << journal_.FoundCount() << " of "
+                          << DiscoveryJournal::Catalogue().size() << " entries from " << name << '\n';
+                return;
+            }
+            std::cerr << "island-simulator: " << name << " is not a journal record: " << error << '\n';
+        }
+    }
+
+    namespace
+    {
+        [[nodiscard]] std::size_t JournalIndex(const std::string_view id)
+        {
+            const auto index = DiscoveryJournal::IndexOf(id);
+            if (!index) throw std::logic_error("the journal has no entry " + std::string(id));
+            return *index;
+        }
+    }
+
+    void IslandGame::GatherJournalPlaces()
+    {
+        journalPlaces_.clear();
+        const auto add = [this](const std::string_view id, const float x, const float y, const float z, const float radius) {
+            journalPlaces_.push_back({JournalIndex(id), x, y, z, radius});
+        };
+        const auto ground = [this](const float x, const float z) { return terrain_.Height(x, z); };
+        if (hutPlacement_) add("hut", hutPlacement_->x, hutPlacement_->floorY + 1.5f, hutPlacement_->z, 3.3f);
+        if (jettyPlacement_) {
+            const auto& j = *jettyPlacement_;
+            add("jetty", j.rootX + j.dirX * 7.0f, j.deckY, j.rootZ + j.dirZ * 7.0f, 7.0f);
+            add("canoe", j.canoeX, j.canoeY, j.canoeZ, 2.2f);
+        }
+        add("campfire", CampfireSite::X, CampfireLayout::GroundY() + 0.4f, CampfireSite::Z, 1.3f);
+        if (lookoutPlacement_) add("lookout", lookoutPlacement_->x, lookoutPlacement_->platformY, lookoutPlacement_->z, 4.0f);
+        if (bridgePlacement_) {
+            const auto& b = *bridgePlacement_;
+            add("bridge", (b.ax + b.bx) * 0.5f, (b.ay + b.by) * 0.5f, (b.az + b.bz) * 0.5f, b.span * 0.5f);
+        }
+        if (helicopterPlacement_) add("helicopter", helicopterPlacement_->x, helicopterPlacement_->groundY + 1.5f, helicopterPlacement_->z, 5.0f);
+        {
+            const auto& ship = shipwreckLayout_.Ship();
+            add("shipwreck", ship.x, ship.y + 1.5f, ship.z, 10.0f);
+        }
+        if (freighterPlacement_) {
+            const auto mid = freighterPlacement_->World(FreighterPlacement::Length * 0.5f, 0.0f, 0.0f);
+            add("freighter", mid.x, mid.y + 3.0f, mid.z, 15.0f);
+        }
+        if (lifeboatPlacement_) add("lifeboat", lifeboatPlacement_->x, lifeboatPlacement_->groundY + 0.6f, lifeboatPlacement_->z, 3.6f);
+        if (planeWreckPlacement_) add("plane-wreck", planeWreckPlacement_->x, planeWreckPlacement_->groundY + 1.0f, planeWreckPlacement_->z, 6.5f);
+        if (lighthousePlacement_) add("lighthouse", lighthousePlacement_->x, lighthousePlacement_->groundY + 8.0f, lighthousePlacement_->z, 4.0f);
+        if (cottagePlacement_) add("cottage", cottagePlacement_->x, cottagePlacement_->groundY + 1.5f, cottagePlacement_->z, 3.8f);
+        if (whalePlacement_) {
+            const auto at = whalePlacement_->At(4.0f, 0.0f);
+            add("whale-skeleton", at[0], ground(at[0], at[1]) + 1.0f, at[1], 7.5f);
+        }
+        if (idolPlacement_) add("idol", idolPlacement_->x, idolPlacement_->TopY(), idolPlacement_->z, 3.0f);
+        if (stoneSignPlacement_) {
+            const auto at = stoneSignPlacement_->At(StoneSignPlacement::Length() * 0.5f, 3.5f);
+            add("help-sign", at[0], ground(at[0], at[1]), at[1], StoneSignPlacement::Length() * 0.5f);
+        }
+        for (const auto& bottle : beachBottles_) add("bottles", bottle.x, bottle.groundY, bottle.z, 0.6f);
+        {
+            const auto door = bunkerLayout_.Entrance();
+            add("bunker", door.x, door.y + 1.5f, door.z, 4.0f);
+            const auto mouth = mineLayout_.Entrance();
+            add("mine", mouth.x, mouth.y + 1.5f, mouth.z, 3.6f);
+            const auto chamber = mineLayout_.World(0.0f, 1.5f, MineSite::ChamberCentre);
+            add("mine-chamber", chamber.x, chamber.y, chamber.z, 4.0f);
+            const auto cave = CaveSite::Centre();
+            add("cave", cave[0], ground(cave[0], cave[1]) + 1.5f, cave[1], 6.0f);
+        }
+        add("volcano", VolcanoSite::X, VolcanoSite::LavaY(), VolcanoSite::Z, VolcanoSite::RimRadius);
+        {
+            const float r = VolcanoSite::RimRadius + VolcanoSite::FlowLength * 0.5f;
+            const float bearing = VolcanoSite::FlowCentre(r);
+            const float x = VolcanoSite::X + std::cos(bearing) * r, z = VolcanoSite::Z + std::sin(bearing) * r;
+            add("lava-flow", x, VolcanoSite::SurfaceY(x, z), z, VolcanoSite::FlowLength * 0.5f);
+        }
+        if (windthrowPlacement_) {
+            const auto at = windthrowPlacement_->At(8.5f, 0.0f);
+            add("windthrow", at[0], ground(at[0], at[1]) + 1.0f, at[1], 8.5f);
+        }
+        for (const auto& nest : termiteNests_) add("termite-nest", nest.bark[0], nest.bark[1], nest.bark[2], 0.6f);
+        for (const auto& pine : pandanus_) add("screw-pines", pine.x, pine.groundY + 2.5f, pine.z, 2.5f);
+        {
+            const StreamCourse& course = streamDrift_.Course();
+            const auto& pool = course.PoolStation();
+            add("cascade", pool.x, pool.water, pool.z, pool.halfWidth + 1.5f);
+            add("cascade", course.CascadeX(), course.Station(course.CascadeIndex()).water, course.CascadeZ(), 2.5f);
+        }
+        add("wetland", IslandEnvironmentField::SeasonalWetlandX, ground(IslandEnvironmentField::SeasonalWetlandX, IslandEnvironmentField::SeasonalWetlandZ),
+            IslandEnvironmentField::SeasonalWetlandZ, 13.0f);
+        for (const auto& tree : jungleLayout_.Canopy())
+            if (tree.variant == MangroveCanopyVariant) add("mangroves", tree.x, tree.y + 2.0f, tree.z, 3.0f * tree.scale);
+        if (goats_ && goats_->WaterholeSite().valid) {
+            const auto& basin = goats_->WaterholeSite();
+            add("goat-basin", basin.x, basin.y, basin.z, basin.radius);
+        }
+        for (std::size_t i = 0; i < TidePoolLayout::Definitions.size(); ++i) {
+            const auto [x, z] = TidePoolLayout::Centre(terrain_, i);
+            add("tide-pools", x, TidePoolLayout::WaterLevel(terrain_, i), z, TidePoolLayout::Definitions[i].radius);
+        }
+        for (const auto& detail : naturalPropLayout_.BeachDetails())
+            if (detail.turtleNest) add("turtle-nests", detail.x, detail.y, detail.z, 1.2f);
+    }
+
+    void IslandGame::GatherJournalCreatures(std::vector<JournalSpot>& spots) const
+    {
+        // the nearest of each kind (that shows itself) to the eye
+        const Vector3 eye = cameraPosition_;
+        const auto consider = [&](const std::size_t entry, const float x, const float y, const float z, const float radius) {
+            if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) return;
+            const float d = (x - eye.X) * (x - eye.X) + (y - eye.Y) * (y - eye.Y) + (z - eye.Z) * (z - eye.Z);
+            for (JournalSpot& spot : spots) {
+                if (spot.entry != entry) continue;
+                const float best = (spot.x - eye.X) * (spot.x - eye.X) + (spot.y - eye.Y) * (spot.y - eye.Y) + (spot.z - eye.Z) * (spot.z - eye.Z);
+                if (d < best) spot = {entry, x, y, z, radius};
+                return;
+            }
+            spots.push_back({entry, x, y, z, radius});
+        };
+        const auto each = [&](const std::string_view id, const auto& animals, const float radius, const auto& shows) {
+            const std::size_t entry = JournalIndex(id);
+            if (journal_.Found(entry)) return;
+            for (const auto& animal : animals) if (shows(animal)) consider(entry, animal.x, animal.y, animal.z, radius);
+        };
+        const auto always = [](const auto&) { return true; };
+        const float day = std::clamp((sun_light::Current().lighting.sunElevationDegrees + 2.0f) / 10.0f, 0.0f, 1.0f);
+        const auto& resident = resident_->State();
+        each("resident", std::span(&resident, 1), 0.5f, always);
+        const auto& bear = bear_->State();
+        each("bear", std::span(&bear, 1), 1.2f, always);
+        each("deer", deer_->Deer(), 0.9f, always);
+        each("boars", boarHerd_.Boars(), 0.7f, always);
+        each("goats", goats_->Goats(), 0.7f, always);
+        each("monkeys", monkeyTroop_.Monkeys(), 0.5f, always);
+        each("crocodiles", crocodileGroup_.Crocodiles(), 1.5f, [](const auto& c) { return c.submerged < 0.7f; });
+        const auto birds = birdFlock_.Birds();
+        each("coastal-birds", birds, 0.3f, [](const BirdState& b) { return b.species == BirdSpecies::Coastal; });
+        each("parrots", birds, 0.3f, [](const BirdState& b) { return b.species == BirdSpecies::Parrot; });
+        each("fruit-doves", birds, 0.3f, [](const BirdState& b) { return b.species == BirdSpecies::FruitDove; });
+        each("seabirds", birds, 0.5f, [](const BirdState& b) { return b.species == BirdSpecies::Seabird; });
+        each("frigatebirds", birds, 1.0f, [](const BirdState& b) { return b.species == BirdSpecies::Frigatebird; });
+        each("reef-herons", reefHeronGroup_.Herons(), 0.5f, always);
+        each("fruit-bats", fruitBatColony_.Bats(), 0.6f, always);
+        each("mine-bats", mineBats_.Bats(), 0.3f, always);
+        {
+            const auto head = [](const auto& snake) { return snake.body.front(); };
+            for (const std::string_view id : {std::string_view("snakes"), std::string_view("tree-snakes")}) {
+                const std::size_t entry = JournalIndex(id);
+                if (journal_.Found(entry)) continue;
+                for (const auto& snake : id == "snakes" ? snakes_->Snakes() : snakes_->TreeSnakes()) {
+                    if (snake.body.empty()) continue;
+                    const auto p = head(snake);
+                    consider(entry, p.x, p.y, p.z, 0.4f);
+                }
+            }
+        }
+        each("geckos", geckoPopulation_.Geckos(), 0.1f, [](const auto& g) { return g.visibility > 0.3f && g.behavior != GeckoBehavior::Hidden; });
+        each("skinks", skinkPopulation_.Skinks(), 0.1f, always);
+        each("frogs", frogPopulation_.Frogs(), 0.1f, [](const auto& f) { return f.submerged < 0.5f; });
+        const auto rodents = rodentPopulation_.Rodents();
+        each("mice", rodents, 0.1f, [](const RodentState& r) {
+            return r.species == RodentSpecies::Mouse && r.visibility > 0.3f && r.behavior != RodentBehavior::Hidden; });
+        each("rats", rodents, 0.15f, [](const RodentState& r) {
+            return r.species == RodentSpecies::Rat && r.visibility > 0.3f && r.behavior != RodentBehavior::Hidden; });
+        each("crabs", crabColony_.Crabs(), 0.15f, [](const auto& c) { return c.hideAmount < 0.5f; });
+        each("hermit-crabs", hermitCrabGroup_.Crabs(), 0.1f, always);
+        each("coconut-crabs", coconutCrabGroup_.Crabs(), 0.3f, always);
+        {
+            // by day three in four keep to their retreats, as the drawn colony does
+            const std::size_t entry = JournalIndex("spiders");
+            const auto all = spiders_->Spiders();
+            if (!journal_.Found(entry))
+                for (std::size_t i = 0; i < all.size(); ++i)
+                    if (static_cast<float>((i * 61U) % 100U) / 100.0f < 1.0f - 0.75f * day) consider(entry, all[i].x, all[i].y, all[i].z, 0.1f);
+        }
+        each("butterflies", butterflyMeadow_.Butterflies(), 0.1f, always);
+        each("dragonflies", dragonflySwarm_.Dragonflies(), 0.1f, always);
+        each("flies", flySwarms_.Flies(), 0.3f, always);
+        each("ants", antTrails_.Ants(), 0.2f, always);
+        each("cicadas", cicadaColony_.Cicadas(), 0.05f, always);
+        each("beetles", beetlePopulation_.Beetles(), 0.05f, [](const auto& b) { return b.visibility > 0.3f; });
+        if (fireflies_ && fireflies_->Presence() > 0.2f)
+            each("fireflies", fireflies_->Flies(), 0.3f, [](const auto& f) { return f.glow > 0.3f; });
+        each("sea-turtles", seaTurtleGroup_.Turtles(), 0.6f, always);
+        each("hatchlings", hatchlings_.Hatchlings(), 0.1f, [](const auto& h) { return h.active; });
+        {
+            const std::size_t entry = JournalIndex("fish");
+            if (!journal_.Found(entry))
+                for (const auto& school : fishSchools_.Schools()) consider(entry, school.centreX, school.centreY, school.centreZ, 1.5f);
+        }
+        if (reefFish_) each("reef-fish", reefFish_->Fish(), 0.1f, always);
+        each("stream-fish", streamFish_.Fish(), 0.1f, [](const auto& f) { return f.active && !f.hiding; });
+        each("stingrays", stingrayGroup_.Stingrays(), 0.5f, [](const auto& r) { return r.buryAmount < 0.8f; });
+        each("octopuses", octopusGroup_.Octopuses(), 0.3f, [](const auto& o) { return o.hideAmount < 0.6f; });
+        {
+            const auto& shark = sharkPatrol_.State();
+            if (shark.present && shark.visible) each("shark", std::span(&shark, 1), 1.0f, always);
+        }
+        each("dolphins", dolphinPod_.Dolphins(), 1.0f, always);
+        each("flying-fish", flyingFish_.Fish(), 0.2f, [](const auto& f) { return f.visible; });
+        {
+            const auto& whale = whales_.Surfacing();
+            if (whale.active) consider(JournalIndex("whales"), whale.x, 0.0f, whale.z, 8.0f);
+        }
+        // the foxfire glowing on the dead wood at night; the freighter on its lane offshore
+        if (day < 0.2f && !journal_.Found(JournalIndex("foxfire")))
+            for (const auto& cluster : glowingFungi_) consider(JournalIndex("foxfire"), cluster.at[0], cluster.at[1], cluster.at[2], 0.4f);
+        const PassingShip::State ship = PassingShip::At(oceanSeconds_);
+        if (ship.visible) consider(JournalIndex("passing-ship"), ship.x, 6.0f, ship.z, PassingShip::Length * 0.5f);
+    }
+
+    void IslandGame::NoteJournal(const std::size_t entry)
+    {
+        if (!journal_.Discover(entry)) return;
+        const JournalEntry& written = DiscoveryJournal::Catalogue()[entry];
+        std::cout << "island-simulator: journal notes " << written.id << " (" << journal_.FoundCount() << " of "
+                  << DiscoveryJournal::Catalogue().size() << ")\n";
+        journalNotices_.push_back(entry);
+        if (journalNotices_.size() == 1U) journalNoticeSeconds_ = 4.0f;
+        if (!userSettingsStore_) return;
+        std::string error;
+        if (!userSettingsStore_->WriteRecord(JournalFileName, journal_.ToText(), error))
+            std::cerr << "island-simulator: the journal could not be saved: " << error << '\n';
+    }
+
+    void IslandGame::UpdateJournal(const float deltaSeconds)
+    {
+        if (!journalNotices_.empty()) {
+            journalNoticeSeconds_ -= deltaSeconds;
+            if (journalNoticeSeconds_ <= 0.0f) {
+                journalNotices_.erase(journalNotices_.begin());
+                if (!journalNotices_.empty()) journalNoticeSeconds_ = 4.0f;
+            }
+        }
+        // only the walker's own play writes the journal (the QA cameras would fill it)
+        // (the journal-notice view lets it note what its camera looks at)
+        const bool noticeView = viewpoint_ == FixedViewpoint::JournalNoticeDetail;
+        if (!noticeView && (viewpoint_ != FixedViewpoint::None || smokeTest_ || IsDebugFreeCameraActive())) return;
+        journalScanSeconds_ -= deltaSeconds;
+        if (journalScanSeconds_ > 0.0f) return;
+        journalScanSeconds_ = 0.25f;
+        const float cosPitch = std::cos(pitch_);
+        const std::array<float, 3> eye{cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z},
+            forward{std::sin(yaw_) * cosPitch, std::sin(pitch_), std::cos(yaw_) * cosPitch};
+        const auto catalogue = DiscoveryJournal::Catalogue();
+        const auto look = [&](const JournalSpot& spot) {
+            if (journal_.Found(spot.entry)) return;
+            if (JournalSighted(eye, forward, {spot.x, spot.y, spot.z}, spot.radius, catalogue[spot.entry].reach))
+                NoteJournal(spot.entry);
+        };
+        for (const JournalSpot& spot : journalPlaces_) look(spot);
+        journalCreatures_.clear();
+        GatherJournalCreatures(journalCreatures_);
+        for (const JournalSpot& spot : journalCreatures_) look(spot);
     }
 
     void IslandGame::LoadContent()
@@ -4269,6 +4566,13 @@ namespace island
             PersistUserSettings();
         }
         muteToggleWasDown_ = muteToggleDown;
+        const bool journalKeyDown = frameKeyboard.IsKeyDown(Keys::N);
+        if (journalKeyDown && !journalKeyWasDown_ && getIsActiveProperty()) {
+            journalOpen_ = !journalOpen_;
+            std::cout << "island-simulator: journal " << (journalOpen_ ? "opened" : "closed") << ", "
+                      << journal_.FoundCount() << " of " << DiscoveryJournal::Catalogue().size() << " entries\n";
+        }
+        journalKeyWasDown_ = journalKeyDown;
         if (!benchmarkPath_.empty()
             && viewpoint_ == FixedViewpoint::BenchmarkTraversal) {
             UpdateBenchmarkTraversal();
@@ -5322,6 +5626,8 @@ namespace island
                                        subject.y - previousMonkeySubject.y,
                                        subject.z - previousMonkeySubject.z);
         }
+        updateProfile_.Mark("journal");
+        UpdateJournal(deltaSeconds);
         updateProfile_.Mark("UpdateSoundscape");
         UpdateSoundscape(deltaSeconds);
         if (soundscape_ && worldDebugVisible_) {
@@ -6612,7 +6918,8 @@ namespace island
         // F: ride the quad or step off it.
         const bool quadKeyDown = keyboard.IsKeyDown(Keys::F);
         if ((quadKeyDown && !quadKeyWasDown_ && getIsActiveProperty()) || touchControlState_.rideToggled) ToggleQuad();
-        touchControlState_.rideToggled = touchControlState_.torchToggled = false;   // each tap acts once
+        if (touchControlState_.journalToggled) journalOpen_ = !journalOpen_;
+        touchControlState_.rideToggled = touchControlState_.torchToggled = touchControlState_.journalToggled = false;   // each tap acts once
         quadKeyWasDown_ = quadKeyDown;
         if (riding_) {
             const bool rightKeyDown = keyboard.IsKeyDown(Keys::Back);
@@ -8282,6 +8589,18 @@ namespace island
                 viewport.getWidthProperty(), viewport.getHeightProperty(),flightMotion_.IsActive());
         }
 
+        if (journalOpen_) {
+            GpuDiagnosticScope gpuPass("journal");
+            debugOverlay_->DrawJournal(journal_, viewport.getWidthProperty(), viewport.getHeightProperty());
+        } else if (!journalNotices_.empty() && journalNoticeSeconds_ > 0.0f) {
+            // in for a quarter second, held, out over the last half
+            constexpr float Shown = 4.0f;
+            const float opacity = std::min({1.0f, (Shown - journalNoticeSeconds_) / 0.25f, journalNoticeSeconds_ / 0.5f});
+            GpuDiagnosticScope gpuPass("journal-notice");
+            debugOverlay_->DrawJournalNotice(DiscoveryJournal::Catalogue()[journalNotices_.front()].title, opacity,
+                                             viewport.getWidthProperty(), viewport.getHeightProperty());
+        }
+
         if (debugOverlayVisible_ && worldDebugVisible_) {
             const SoundscapeDebugState soundscapeDebug = soundscape_
                 ? soundscape_->DebugState() : SoundscapeDebugState{};
@@ -8305,7 +8624,7 @@ namespace island
             GpuDiagnosticScope gpuPass("touch-overlay");
             touchOverlay_->Draw(touchControlState_, touchDisplayWidth_, touchDisplayHeight_,
                                 viewport.getWidthProperty(), viewport.getHeightProperty(), true,
-                                {TouchRideOffered(), riding_, TouchTorchOffered(), torchOn_});
+                                {TouchRideOffered(), riding_, TouchTorchOffered(), torchOn_, true, journalOpen_});
         }
 
         if (debugOverlayVisible_) {

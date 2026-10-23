@@ -233,6 +233,42 @@ water (the ocean's glints follow the shading direction, the moon at night), star
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
 
+## Loop pass 551 (2026-10-23) — the discovery journal, first pass
+
+The operator's task list (reviewed 2026-10-23), item 1. The operator chose English, a simple
+list, an entry written when the walker is near a thing and looking at it, and the journal saved
+between runs.
+
+- **The journal** (`DiscoveryJournal`): a catalogue of 34 places (the hut, jetty and canoe, the
+  wrecks, the lighthouse and cottage, the idol, HELP ME, the bunker, the mine and its chamber,
+  the cave, the volcano and its lava flow, the windthrow, foxfire, the cascade, the wetland, the
+  mangroves, tide pools, turtle nests, the passing freighter and others) and 44 creatures (from
+  the resident and the bear to the ants and the humpbacks; the five bird kinds, mice and rats,
+  ground and tree snakes counted apart). Each entry has a stable id, a name and a reach.
+- **Noting.** Four times a second the walker's eye checks the places (gathered once) and the
+  nearest showing individual of each creature still missing (`JournalSighted`): the thing's edge
+  within the entry's reach and inside a 0.5 rad cone round the view's centre, widened by its
+  size. Hidden animals do not count (a burrowed crab, a buried stingray, a submerged crocodile,
+  a hiding gecko, a spider in its retreat by day); foxfire counts only in the dark, a whale only
+  while it surfaces, the freighter only on its lane. QA cameras, smoke runs and the F3 camera
+  do not write it.
+- **Showing it.** A new entry shows "NEW IN THE JOURNAL: …  N OPENS IT" at the top for four
+  seconds (several queue). N (or a new list button beside the touch sensitivity selector) opens
+  the list: PLACES n/34 and CREATURES n/44, found ones by name, the rest as "? ? ?", flowed into
+  as many columns as the view needs, in the HUD's bitmap font (which gained ' , ( )).
+- **Saving.** `journal.txt` beside `settings.ini` in the same storage container (IDBFS on the
+  Web), written on each new entry with the previous copy kept as `.bak`; unknown ids are
+  skipped, a malformed record falls back to the backup. QA runs keep storage off.
+- **Tests.** Core: unique ids and reaches, write-once order, save/parse round trip, skipped ids,
+  refused records, the sight cone; touch: the journal button answers a tap without turning the
+  camera. Full suite 76/76.
+- **QA views.** `journal` (the list open with two entries in three, over the idol,
+  `20261023T044701`) and `journal-notice` (the idol camera noting the idol through the real
+  path: "journal notes idol (1 of 78)", the notice at the top, `20261023T044801`).
+- **Open.** Item 1's small interactions (taking a lantern from the mine, lighting the
+  lighthouse, collecting shells and coconuts) are the next pass. Saving across a real restart
+  needs the operator's play (QA runs keep storage off).
+
 ## Loop pass 550 (2026-10-22) — the quad no longer comes to you inside the volcano
 
 The operator reported that walking up the volcano and pressing F put them on the quad inside

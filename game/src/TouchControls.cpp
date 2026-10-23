@@ -53,6 +53,8 @@ namespace island
         }
         // a little larger than the selector, a thumb's reach down the right edge
         const float radius = selector.radius * 1.15f;
+        // the journal beside the selector along the top edge, out of the look zone's way
+        if (action == TouchAction::Journal) return {selector.x - radius * 2.6f, selector.y, radius};
         const float row = static_cast<float>(static_cast<int>(action)) + 1.0f;
         return {selector.x - (radius - selector.radius), selector.y + row * radius * 2.5f, radius};
     }
@@ -163,6 +165,7 @@ namespace island
         state_.actionButtonActive = false;
         state_.rideToggled = false;
         state_.torchToggled = false;
+        state_.journalToggled = false;
         const TouchContact* held = FindContact(contacts, actionId_);
         if (held == nullptr || !IsUsableContact(*held, displayWidth, displayHeight)
             || held->phase == TouchPhase::Released) {
@@ -178,7 +181,7 @@ namespace island
                 || !IsUsableContact(contact, displayWidth, displayHeight)) {
                 continue;
             }
-            for (const TouchAction action : {TouchAction::Ride, TouchAction::Torch}) {
+            for (const TouchAction action : {TouchAction::Ride, TouchAction::Torch, TouchAction::Journal}) {
                 const TouchSensitivitySelectorLayout button =
                     ActionButtonLayout(action, displayWidth, displayHeight);
                 if (!IsActionEnabled(action)
@@ -187,7 +190,8 @@ namespace island
                 }
                 actionId_ = contact.id;
                 state_.actionButtonActive = true;
-                (action == TouchAction::Ride ? state_.rideToggled : state_.torchToggled) = true;
+                (action == TouchAction::Ride ? state_.rideToggled
+                    : action == TouchAction::Torch ? state_.torchToggled : state_.journalToggled) = true;
                 return;
             }
         }

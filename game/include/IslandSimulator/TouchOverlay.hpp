@@ -20,6 +20,8 @@ namespace island
         bool riding = false;   ///< lit while on the quad: a tap steps off
         bool torchShown = false;
         bool torchOn = false;
+        bool journalShown = false;
+        bool journalOpen = false;   ///< lit while the journal is open
     };
 
     /** @brief Asset-free presentation for movement, look, and look-sensitivity touch controls. */

@@ -65,6 +65,7 @@
 #include "IslandSimulator/DebugFreeCamera.hpp"
 #endif
 #include "IslandSimulator/DebugOverlay.hpp"
+#include "IslandSimulator/DiscoveryJournal.hpp"
 #include "IslandSimulator/FlightMotion.hpp"
 #include "IslandSimulator/GeckoPopulation.hpp"
 #include "IslandSimulator/SkinkPopulation.hpp"
@@ -277,6 +278,8 @@ namespace island
         WhaleSkeletonDetail,
         IdolDetail,
         IdolOfferingsDetail,
+        JournalDetail,
+        JournalNoticeDetail,
         StoneSignDetail,
         LighthouseDetail,
         LighthouseStairDetail,
@@ -926,6 +929,21 @@ namespace island
         bool debugFreeCameraToggleWasDown_ = false;
 #endif
         bool muteToggleWasDown_ = false;
+        // N: the discovery journal. What the walker comes near and looks at is written in it,
+        // a short notice saying so; it is saved beside the settings.
+        DiscoveryJournal journal_;
+        bool journalOpen_ = false, journalKeyWasDown_ = false;
+        float journalScanSeconds_ = 0.0f;
+        std::vector<std::size_t> journalNotices_;   // entries still to announce, oldest first
+        float journalNoticeSeconds_ = 0.0f;         // the front notice's time left on screen
+        struct JournalSpot { std::size_t entry; float x, y, z, radius; };
+        std::vector<JournalSpot> journalPlaces_;    // the fixed places, gathered once
+        std::vector<JournalSpot> journalCreatures_; // this scan's nearest of each creature
+        void InitializeJournal();
+        void UpdateJournal(float deltaSeconds);
+        void GatherJournalPlaces();
+        void GatherJournalCreatures(std::vector<JournalSpot>& spots) const;
+        void NoteJournal(std::size_t entry);
         bool cameraMotionToggleWasDown_ = false;
         float locomotionModeNoticeSeconds_ = 0.0f;
         bool movementKeyWasDown_ = false;

@@ -16,6 +16,7 @@
 | F11 | Toggle fullscreen on desktop/Web; browser permission or embedding policy may refuse it. Android keeps immersive mode. |
 | Tab | Toggle player flight; WASD/arrows move horizontally, Space ascends and either Shift descends. Holding both vertical controls cancels vertical motion. Ceiling: 100 m above rendered terrain; radius: 330 m from island centre. Turning off selects safe dry ground nearby (grid fallback offshore). |
 | F5 / F6 / F7 / F8 / F9 / F10 / J / K / L / O / F12 | With the overlay visible, teleport to QA locations; F9 faces the fish shallows, F10 the offshore shark, repeated J presses cycle through all seven monkeys, K cycles through six boars, L visits the cave entrance, O visits the campfire, and F12 enters the active offshore current for feedback QA |
+| N | Open or close the discovery journal: the places and creatures found so far. A thing is written in when the walker comes near it and looks at it, with a short notice at the top; the journal is saved beside the settings. Android has a list button beside the sensitivity selector. |
 | B | Smoothly disable or restore restrained walking/swimming camera motion; the selection is saved |
 | M | Mute or unmute the ambient soundscape; the selection is saved |
 | Escape | Release captured mouse; press again to exit |

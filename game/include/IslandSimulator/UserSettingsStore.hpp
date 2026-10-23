@@ -3,7 +3,9 @@
 #include "IslandSimulator/UserSettings.hpp"
 
 #include <memory>
+#include <optional>
 #include <string>
+#include <string_view>
 
 namespace island
 {
@@ -31,6 +33,15 @@ namespace island
         [[nodiscard]] UserSettingsLoadResult Load();
         [[nodiscard]] bool Save(const UserSettings& settings, std::string& error);
         [[nodiscard]] const std::string& Location() const noexcept { return location_; }
+
+        /** @brief Reads another small record kept beside the settings (at most `maximumBytes`);
+         *  empty when it does not exist or cannot be read, the reason then in `error`. */
+        [[nodiscard]] std::optional<std::string> ReadRecord(std::string_view name,
+                                                            std::size_t maximumBytes,
+                                                            std::string& error);
+        /** @brief Replaces such a record, keeping the one it replaces as `<name>.bak`. */
+        [[nodiscard]] bool WriteRecord(std::string_view name, std::string_view text,
+                                       std::string& error);
 
     private:
         class Impl;

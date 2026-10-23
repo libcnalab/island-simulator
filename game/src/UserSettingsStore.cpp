@@ -25,12 +25,13 @@ namespace island
         constexpr std::size_t MaximumReadBytes = UserSettings::MaximumSerializedBytes + 1U;
 
         [[nodiscard]] std::string ReadText(Storage::StorageContainer& container,
-                                           const std::string& name)
+                                           const std::string& name,
+                                           const std::size_t maximumBytes = MaximumReadBytes)
         {
             auto stream = container.OpenFile(name, System::IO::FileMode::Open);
             std::string text;
             std::vector<std::uint8_t> chunk(1024U);
-            while (text.size() <= MaximumReadBytes) {
+            while (text.size() <= maximumBytes) {
                 const int read = stream->Read(chunk.data(), 0,
                                               static_cast<int>(chunk.size()));
                 if (read <= 0) break;
@@ -154,6 +155,50 @@ namespace island
             error = exception.what();
             try {
                 DeleteIfPresent(*impl_->container, std::string(TemporaryFileName));
+            } catch (const std::exception&) {
+                // Preserve the original actionable write error.
+            }
+            return false;
+        }
+    }
+
+    std::optional<std::string> UserSettingsStore::ReadRecord(const std::string_view name,
+                                                             const std::size_t maximumBytes,
+                                                             std::string& error)
+    {
+        try {
+            error.clear();
+            if (!impl_->container->FileExists(std::string(name))) return std::nullopt;
+            std::string text = ReadText(*impl_->container, std::string(name), maximumBytes);
+            if (text.size() > maximumBytes) {
+                error = std::string(name) + " is larger than " + std::to_string(maximumBytes) + " bytes";
+                return std::nullopt;
+            }
+            return text;
+        } catch (const std::exception& exception) {
+            error = exception.what();
+            return std::nullopt;
+        }
+    }
+
+    bool UserSettingsStore::WriteRecord(const std::string_view name, const std::string_view text,
+                                        std::string& error)
+    {
+        const std::string primary(name), backup = primary + ".bak", temporary = primary + ".tmp";
+        try {
+            WriteText(*impl_->container, temporary, text);
+            if (impl_->container->FileExists(primary)) {
+                WriteText(*impl_->container, backup, ReadText(*impl_->container, primary, text.size() * 2U + 4096U));
+                impl_->container->DeleteFile(primary);
+            }
+            WriteText(*impl_->container, primary, text);
+            DeleteIfPresent(*impl_->container, temporary);
+            error.clear();
+            return true;
+        } catch (const std::exception& exception) {
+            error = exception.what();
+            try {
+                DeleteIfPresent(*impl_->container, temporary);
             } catch (const std::exception&) {
                 // Preserve the original actionable write error.
             }

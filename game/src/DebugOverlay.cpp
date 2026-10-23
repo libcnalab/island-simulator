@@ -1,5 +1,6 @@
 #include "IslandSimulator/DebugOverlay.hpp"
 
+#include "IslandSimulator/DiscoveryJournal.hpp"
 #include "IslandSimulator/GeneratedTextureBudget.hpp"
 
 #include <algorithm>
@@ -45,6 +46,10 @@ namespace island
             switch (character) {
             case ' ': return {0, 0, 0, 0, 0, 0, 0};
             case '!': return {4, 4, 4, 4, 4, 0, 4};
+            case '\'': return {4, 4, 8, 0, 0, 0, 0};
+            case ',': return {0, 0, 0, 0, 0, 4, 8};
+            case '(': return {2, 4, 8, 8, 8, 4, 2};
+            case ')': return {8, 4, 2, 2, 2, 4, 8};
             case '-': return {0, 0, 0, 31, 0, 0, 0};
             case '.': return {0, 0, 0, 0, 0, 0, 4};
             case '/': return {1, 2, 2, 4, 8, 8, 16};
@@ -232,6 +237,119 @@ namespace island
             Vector2(static_cast<float>(panelX + horizontalPadding),
                     static_cast<float>(panelY + verticalPadding)),
             accent, 0.0f, Vector2::Zero, scale, SpriteEffects::None, 0.0f);
+        spriteBatch_->End();
+    }
+
+    namespace
+    {
+        [[nodiscard]] std::string Upper(const std::string_view text)
+        {
+            std::string upper(text);
+            for (char& c : upper) {
+                if (c >= 'a' && c <= 'z') c = static_cast<char>(c - 'a' + 'A');
+            }
+            return upper;
+        }
+    }
+
+    void DebugOverlay::DrawJournal(const DiscoveryJournal& journal, const int viewportWidth,
+                                   const int viewportHeight)
+    {
+        if (viewportWidth <= 0 || viewportHeight <= 0) return;
+        // The lines in reading order: each kind's heading, then its entries in catalogue order,
+        // flowed down the columns.
+        struct Line { std::string text; int tone; };   // 0 heading, 1 found, 2 unknown
+        std::vector<Line> lines;
+        for (const JournalKind kind : {JournalKind::Place, JournalKind::Creature}) {
+            if (!lines.empty()) lines.push_back({"", 2});
+            std::ostringstream heading;
+            heading << (kind == JournalKind::Place ? "PLACES " : "CREATURES ")
+                    << journal.FoundCount(kind) << "/" << DiscoveryJournal::Count(kind);
+            lines.push_back({heading.str(), 0});
+            const auto catalogue = DiscoveryJournal::Catalogue();
+            for (std::size_t i = 0; i < catalogue.size(); ++i) {
+                if (catalogue[i].kind != kind) continue;
+                lines.push_back(journal.Found(i) ? Line{Upper(catalogue[i].title), 1} : Line{"? ? ?", 2});
+            }
+        }
+        const std::string title = "JOURNAL";
+        const std::string hint = "N CLOSES";
+        // as large as the view allows, up to twice the notice's size, in as few columns as fit
+        const float height = static_cast<float>(viewportHeight), width = static_cast<float>(viewportWidth);
+        float scale = std::clamp(std::floor(height / 540.0f * 2.0f) / 2.0f + 0.5f, 1.0f, 3.0f);
+        std::size_t widest = 0U;
+        for (const Line& line : lines) widest = std::max(widest, line.text.size());
+        int rows = 1, columns = 1;
+        float lineHeight = 0.0f, columnWidth = 0.0f;
+        for (;;) {
+            lineHeight = static_cast<float>(GlyphCellHeight + 3) * scale;
+            columnWidth = (static_cast<float>(widest) + 3.0f) * static_cast<float>(GlyphCellWidth) * scale;
+            rows = std::max(1, static_cast<int>((height - 120.0f * scale / 1.5f) / lineHeight) - 3);
+            columns = static_cast<int>((lines.size() + static_cast<std::size_t>(rows) - 1U) / static_cast<std::size_t>(rows));
+            if ((static_cast<float>(columns) * columnWidth <= width - 48.0f && static_cast<float>(rows) * lineHeight <= height - 96.0f)
+                || scale <= 1.0f) break;
+            scale -= 0.25f;
+        }
+        rows = static_cast<int>((lines.size() + static_cast<std::size_t>(columns) - 1U) / static_cast<std::size_t>(columns));
+        const float padding = 14.0f * scale / 1.5f;
+        const float panelWidth = static_cast<float>(columns) * columnWidth + padding * 2.0f;
+        const float panelHeight = (static_cast<float>(rows) + 2.5f) * lineHeight + padding * 2.0f;
+        const float panelX = std::max(8.0f, (width - panelWidth) * 0.5f);
+        const float panelY = std::max(8.0f, (height - panelHeight) * 0.5f);
+        const Color background(6, 16, 15, 222), accent(148, 229, 202, 255), found(226, 236, 224, 255),
+            unknown(92, 116, 110, 255);
+
+        spriteBatch_->Begin();
+        spriteBatch_->Draw(*whitePixel_, Rectangle(static_cast<int>(panelX), static_cast<int>(panelY),
+            static_cast<int>(panelWidth), static_cast<int>(panelHeight)), background);
+        spriteBatch_->Draw(*whitePixel_, Rectangle(static_cast<int>(panelX), static_cast<int>(panelY),
+            static_cast<int>(panelWidth), 2), accent);
+        const float textScale = scale * 1.25f;
+        spriteBatch_->DrawString(*font_, title, Vector2(panelX + padding, panelY + padding), accent, 0.0f,
+            Vector2::Zero, textScale, SpriteEffects::None, 0.0f);
+        const float hintWidth = font_->MeasureString(hint).X * scale;
+        spriteBatch_->DrawString(*font_, hint, Vector2(panelX + panelWidth - padding - hintWidth, panelY + padding),
+            unknown, 0.0f, Vector2::Zero, scale, SpriteEffects::None, 0.0f);
+        const float top = panelY + padding + lineHeight * 2.0f;
+        for (std::size_t i = 0; i < lines.size(); ++i) {
+            const int column = static_cast<int>(i) / rows, row = static_cast<int>(i) % rows;
+            const Line& line = lines[i];
+            const float x = panelX + padding + static_cast<float>(column) * columnWidth + (line.tone == 0 ? 0.0f : 2.0f * GlyphCellWidth * scale);
+            spriteBatch_->DrawString(*font_, line.text, Vector2(x, top + static_cast<float>(row) * lineHeight),
+                line.tone == 0 ? accent : (line.tone == 1 ? found : unknown), 0.0f, Vector2::Zero, scale,
+                SpriteEffects::None, 0.0f);
+        }
+        spriteBatch_->End();
+    }
+
+    void DebugOverlay::DrawJournalNotice(const std::string_view title, const float opacity,
+                                         const int viewportWidth, const int viewportHeight)
+    {
+        const float boundedOpacity = std::clamp(opacity, 0.0f, 1.0f);
+        if (boundedOpacity <= 0.0f || viewportWidth <= 0 || viewportHeight <= 0) return;
+        const std::string text = "NEW IN THE JOURNAL: " + Upper(title);
+        const std::string hint = "N OPENS IT";
+        const float scale = viewportHeight >= 900 ? 2.0f : 1.65f;
+        const Vector2 textSize = font_->MeasureString(text) * scale;
+        const Vector2 hintSize = font_->MeasureString(hint) * scale;
+        const int horizontalPadding = 14, verticalPadding = 9;
+        const int panelWidth = static_cast<int>(std::ceil(std::max(textSize.X, hintSize.X))) + horizontalPadding * 2;
+        const int panelHeight = static_cast<int>(std::ceil(textSize.Y + hintSize.Y)) + verticalPadding * 3;
+        const int panelX = std::max(8, (viewportWidth - panelWidth) / 2);
+        const int panelY = std::max(8, viewportHeight / 12);
+        const auto premultiplied = [boundedOpacity](const int red, const int green, const int blue, const int alpha) {
+            const int a = static_cast<int>(std::lround(static_cast<float>(alpha) * boundedOpacity));
+            const auto channel = [a](const int value) { return static_cast<std::uint8_t>((value * a + 127) / 255); };
+            return Color(channel(red), channel(green), channel(blue), static_cast<std::uint8_t>(a));
+        };
+        const Color accent = premultiplied(148, 229, 202, 244), dim = premultiplied(120, 150, 142, 230);
+        spriteBatch_->Begin();
+        spriteBatch_->Draw(*whitePixel_, Rectangle(panelX, panelY, panelWidth, panelHeight), premultiplied(8, 21, 20, 204));
+        spriteBatch_->Draw(*whitePixel_, Rectangle(panelX, panelY, panelWidth, 2), accent);
+        spriteBatch_->DrawString(*font_, text, Vector2(static_cast<float>(panelX + (panelWidth - static_cast<int>(textSize.X)) / 2),
+            static_cast<float>(panelY + verticalPadding)), accent, 0.0f, Vector2::Zero, scale, SpriteEffects::None, 0.0f);
+        spriteBatch_->DrawString(*font_, hint, Vector2(static_cast<float>(panelX + (panelWidth - static_cast<int>(hintSize.X)) / 2),
+            static_cast<float>(panelY + verticalPadding * 2) + textSize.Y), dim, 0.0f, Vector2::Zero, scale, SpriteEffects::None, 0.0f);
         spriteBatch_->End();
     }
 

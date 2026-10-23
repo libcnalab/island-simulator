@@ -30,6 +30,7 @@
 #include "IslandSimulator/IslandEnvironmentField.hpp"
 #include "IslandSimulator/ContactShadowPatch.hpp"
 #include "IslandSimulator/DebugFreeCamera.hpp"
+#include "IslandSimulator/DiscoveryJournal.hpp"
 #include "IslandSimulator/DistantSceneryLayout.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/FishSchools.hpp"
@@ -2847,6 +2848,21 @@ int main()
     Check(actionState.rideToggled && !actionState.torchToggled && actionState.movementActive
               && !actionState.lookActive,
           "the ride button answers a tap while the other thumb holds the stick");
+    {
+        // the journal's button beside the selector along the top edge
+        const island::TouchSensitivitySelectorLayout journalButton = island::TouchControls::ActionButtonLayout(
+            island::TouchAction::Journal, 1280.0f, 720.0f);
+        (void)touchActionControls.Update({}, 1280.0f, 720.0f);
+        const std::array<island::TouchContact, 1> journalTap = {{
+            {65, journalButton.x, journalButton.y, island::TouchPhase::Pressed},
+        }};
+        actionState = touchActionControls.Update(journalTap, 1280.0f, 720.0f);
+        Check(journalButton.x + journalButton.radius < sensitivitySelector.x - sensitivitySelector.radius
+                  && journalButton.x > 640.0f && journalButton.y == sensitivitySelector.y
+                  && actionState.journalToggled && !actionState.torchToggled && !actionState.rideToggled
+                  && !actionState.lookActive,
+              "the journal button sits beside the selector and a tap on it opens the journal without turning the camera");
+    }
 
     island::TouchControls restoredTouchControls;
     restoredTouchControls.SetLookSensitivity(
@@ -13421,6 +13437,53 @@ int main()
         for (int step = 0; step < 80; ++step) steam.Update(0.1f, 10.0f, -20.0f, 0.0f, -1.0f, 0.0f, open);
         Check(warm >= SunSteamField::Capacity * 3 / 4 && round && refused.ActiveCount() == 0 && steam.ActiveCount() == 0,
               "steam wisps rise from the open ground round the walker, none where refused, all gone a life after the sun goes");
+    }
+
+    {
+        // The discovery journal: every catalogue id unique, each entry written once and in the
+        // order found, a save read back the same, unknown ids skipped, malformed records refused.
+        using island::DiscoveryJournal;
+        using island::JournalKind;
+        const auto catalogue = DiscoveryJournal::Catalogue();
+        bool unique = !catalogue.empty();
+        for (std::size_t i = 0; i < catalogue.size(); ++i) {
+            unique = unique && !catalogue[i].title.empty() && catalogue[i].reach > 0.0f
+                && catalogue[i].id.find_first_of(" \n") == std::string_view::npos;
+            for (std::size_t j = 0; j < i; ++j) unique = unique && catalogue[i].id != catalogue[j].id;
+        }
+        Check(unique && DiscoveryJournal::Count(JournalKind::Place) > 20
+                  && DiscoveryJournal::Count(JournalKind::Creature) > 30,
+              "the journal's catalogue has empty, unreachable or repeated entries, or too few of them");
+        DiscoveryJournal journal;
+        const std::size_t last = catalogue.size() - 1U;
+        const bool first = journal.Discover(last), again = journal.Discover(last);
+        journal.Discover(0U);
+        journal.Discover(catalogue.size());
+        Check(first && !again && journal.FoundCount() == 2 && journal.Order()[0] == last && journal.Order()[1] == 0U
+                  && journal.Found(0U) && !journal.Found(1U),
+              "a journal entry is written twice, out of order, or outside the catalogue");
+        std::string error;
+        const auto read = DiscoveryJournal::Parse(journal.ToText(), error);
+        Check(read && *read == journal && error.empty(), "a saved journal does not read back the same");
+        const auto skipped = DiscoveryJournal::Parse("island-simulator-journal 1\nfound no-such-thing\r\nfound "
+                                                         + std::string(catalogue[0].id) + "\n", error);
+        Check(skipped && skipped->FoundCount() == 1 && skipped->Found(0U), "a journal entry this build lacks is not skipped");
+        Check(!DiscoveryJournal::Parse("", error) && !DiscoveryJournal::Parse("island-simulator-journal 2\n", error)
+                  && !DiscoveryJournal::Parse("island-simulator-journal 1\nlost x\n", error) && !error.empty(),
+              "a malformed journal record is accepted");
+        journal.Clear();
+        Check(journal.FoundCount() == 0 && !journal.Found(last), "a cleared journal keeps an entry");
+        // in sight: in the middle of the view and within reach of its edge; a broad thing is seen
+        // further off the view's centre; nothing behind the eye
+        const std::array<float, 3> eye{0.0f, 2.0f, 0.0f}, ahead{0.0f, 0.0f, 1.0f};
+        Check(island::JournalSighted(eye, ahead, {0.0f, 2.0f, 20.0f}, 1.0f, 25.0f)
+                  && !island::JournalSighted(eye, ahead, {0.0f, 2.0f, 30.0f}, 1.0f, 25.0f)
+                  && !island::JournalSighted(eye, ahead, {12.0f, 2.0f, 12.0f}, 1.0f, 25.0f)
+                  && island::JournalSighted(eye, ahead, {12.0f, 2.0f, 12.0f}, 8.0f, 25.0f)
+                  && !island::JournalSighted(eye, ahead, {0.0f, 2.0f, -5.0f}, 1.0f, 25.0f)
+                  && island::JournalSighted(eye, ahead, {0.0f, 2.0f, -0.5f}, 1.0f, 25.0f)
+                  && !island::JournalSighted(eye, ahead, {std::nanf(""), 2.0f, 5.0f}, 1.0f, 25.0f),
+              "the journal's sight test notes things out of view or out of reach, or misses one in view");
     }
 
     if (failures != 0) {

@@ -225,6 +225,19 @@ namespace island
             spriteBatch_->Draw(*discTexture_, CentredRectangle(x, y, r * 0.30f),
                                actions.torchOn ? glyphLit : glyphIdle);
         }
+        if (actions.journalShown) {
+            // the journal as a short list: three rows of a bullet and its line
+            button(TouchAction::Journal, x, y, r);
+            spriteBatch_->Draw(*ringTexture_, CentredRectangle(x, y, r),
+                               actions.journalOpen ? PremultipliedColor(255, 208, 112, 180)
+                                                   : PremultipliedColor(235, 250, 255, 62));
+            const Color glyph = actions.journalOpen ? glyphLit : glyphIdle;
+            for (const float row : {-0.32f, 0.0f, 0.32f}) {
+                spriteBatch_->Draw(*discTexture_, CentredRectangle(x - r * 0.30f, y + r * row, r * 0.08f), glyph);
+                for (const float along : {-0.08f, 0.06f, 0.20f, 0.34f})
+                    spriteBatch_->Draw(*discTexture_, CentredRectangle(x + r * along, y + r * row, r * 0.06f), glyph);
+            }
+        }
         spriteBatch_->End();
     }
 }

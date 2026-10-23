@@ -6,6 +6,7 @@
 #include <string>
 
 #include "IslandSimulator/WorldIdentity.hpp"
+#include <string_view>
 #include "Microsoft/Xna/Framework/Vector3.hpp"
 
 namespace Microsoft::Xna::Framework::Graphics
@@ -18,6 +19,8 @@ namespace Microsoft::Xna::Framework::Graphics
 
 namespace island
 {
+    class DiscoveryJournal;
+
     /** @brief Per-frame diagnostics presented by the opt-in developer overlay. */
     struct DebugOverlayState
     {
@@ -279,6 +282,14 @@ namespace island
         /** @brief Draws a short normal-play confirmation after keyboard run-mode toggles. */
         void DrawLocomotionModeNotice(bool running, float opacity,
                                       int viewportWidth, int viewportHeight, bool flying = false);
+
+        /** @brief Draws the discovery journal's list: the places and creatures found so far, the
+         *  rest as unknown lines. */
+        void DrawJournal(const DiscoveryJournal& journal, int viewportWidth, int viewportHeight);
+
+        /** @brief Draws the short notice of a new journal entry at the top of the view. */
+        void DrawJournalNotice(std::string_view title, float opacity, int viewportWidth,
+                               int viewportHeight);
 
         [[nodiscard]] float FramesPerSecond() const noexcept { return framesPerSecond_; }
         [[nodiscard]] float FrameMilliseconds() const noexcept { return frameMilliseconds_; }

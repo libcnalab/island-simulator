@@ -37,11 +37,12 @@ namespace island
         float radius = 0.0f;
     };
 
-    /** @brief The tap buttons below the sensitivity selector, top to bottom. */
+    /** @brief The tap buttons below the sensitivity selector, top to bottom (the journal's beside it). */
     enum class TouchAction
     {
         Ride,  ///< F: ride the quad or step off it
         Torch, ///< H: the hand torch on or off
+        Journal, ///< N: the discovery journal open or closed
         Count
     };
 
@@ -67,6 +68,7 @@ namespace island
         bool actionButtonActive = false; ///< A finger rests on one of the action buttons.
         bool rideToggled = false;        ///< The ride button was tapped this frame.
         bool torchToggled = false;       ///< The torch button was tapped this frame.
+        bool journalToggled = false;     ///< The journal button was tapped this frame.
     };
 
     /**
@@ -108,10 +110,14 @@ namespace island
             TouchAction action, float displayWidth, float displayHeight) noexcept;
 
         /** @brief Which action buttons are offered (a hidden one leaves its place to look). */
-        void SetActionsEnabled(bool ride, bool torch) noexcept { rideEnabled_ = ride; torchEnabled_ = torch; }
+        void SetActionsEnabled(bool ride, bool torch, bool journal = true) noexcept
+        {
+            rideEnabled_ = ride; torchEnabled_ = torch; journalEnabled_ = journal;
+        }
         [[nodiscard]] bool IsActionEnabled(TouchAction action) const noexcept
         {
-            return action == TouchAction::Ride ? rideEnabled_ : action == TouchAction::Torch && torchEnabled_;
+            return action == TouchAction::Ride ? rideEnabled_
+                : action == TouchAction::Torch ? torchEnabled_ : action == TouchAction::Journal && journalEnabled_;
         }
 
         /** @brief Advances the interpreter from the complete current touch snapshot. */
@@ -146,6 +152,7 @@ namespace island
         int actionId_ = -1;
         bool rideEnabled_ = false;
         bool torchEnabled_ = false;
+        bool journalEnabled_ = false;
         float lastLookX_ = 0.0f;
         float lastLookY_ = 0.0f;
         float displayWidth_ = 0.0f;
