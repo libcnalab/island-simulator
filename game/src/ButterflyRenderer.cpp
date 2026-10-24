@@ -1774,7 +1774,9 @@ namespace island
                     + up * (b * .025f * unit);
                 AppendRodentSegment(vertices, start, end,
                     (.013f - .0025f * segment) * unit,
-                    (.011f - .0025f * segment) * unit, tail);
+                    (.011f - .0025f * segment) * unit,
+                    wildlife_render::ScaleColor(tail,
+                        segment % 2 == 0 ? .91f : 1.035f));
             }
             if (vertices.size() - startingVertexCount != RodentVertexCount) {
                 throw std::logic_error("Rodent geometry violated its exact vertex budget");

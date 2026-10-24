@@ -184,6 +184,12 @@ namespace island
         /** @brief The elephant's sounds where it is: 0 its low rumble (heard to some 250 m),
          *  1 its trumpet (to 600 m), 2 the splash of a shower of water over its back (to 90 m). */
         void NoteElephant(int kind, float x, float y, float z) noexcept;
+        /** @brief One complete hot-air-balloon burner firing, placed at its burner frame. */
+        void NoteBalloonBurner(float x, float y, float z, float strength = 1.0f) noexcept;
+        [[nodiscard]] int PlayedBalloonBurnCount() const noexcept { return playedBalloonBurnCount_; }
+        /** @brief A short burst of village-weaver colony chatter at the occupied palm. */
+        void NoteWeaverChatter(float x, float y, float z, float activity = 1.0f) noexcept;
+        [[nodiscard]] int PlayedWeaverChatterCount() const noexcept { return playedWeaverChatterCount_; }
         /** @brief The quad's tyres on the ground: rolling speed and sliding speed, m/s, and how
          *  far they wade (0 dry .. 1 the wheels in water to the hubs): in water the tyres' crunch
          *  gives way to the water they churn, and running into it at speed splashes. */
@@ -334,7 +340,7 @@ namespace island
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> engineEffects_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance>, 2> engineInstances_;
         bool engineRunning_ = false, engineRiding_ = false, enginePlaying_ = false;
-        float listenerX_ = 0.0f, listenerZ_ = 0.0f;
+        float listenerX_ = 0.0f, listenerY_ = 0.0f, listenerZ_ = 0.0f;
         float listenerForwardX_ = 0.0f, listenerForwardZ_ = 1.0f;
         // the tyrannosaur: two footfalls, the roar, the boom and the breath; its feet and its
         // voice each on their own instance
@@ -345,6 +351,9 @@ namespace island
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 3> elephantEffects_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> elephantVoiceInstance_, elephantSplashInstance_;
         int playedElephantCount_ = 0;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> balloonBurnerEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffectInstance> balloonBurnerInstance_;
+        int playedBalloonBurnCount_ = 0;
         float engineRpm_ = 1400.0f, engineLoad_ = 0.0f, engineX_ = 0.0f, engineY_ = 0.0f, engineZ_ = 0.0f;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> rainEffect_, nightChorusEffect_, owlEffect_;
         float owlSeconds_ = 12.0f, dawn_ = 0.0f, chorusSeconds_ = 0.0f;
@@ -431,6 +440,7 @@ namespace island
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> wingClapEffects_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> crocodileHissEffects_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> birdChatterEffects_;
+        std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> weaverChatterEffects_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 2> hoofbeatEffects_;
         std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect> clawKnockEffect_;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Audio::SoundEffect>, 3> geckoChirpEffects_;
@@ -463,6 +473,11 @@ namespace island
         float pendingChatterSeconds_ = 0.0f;
         std::uint32_t chatterCount_ = 0U;
         int playedBirdChatterCount_ = 0;
+        WildlifeAudioSource pendingWeaverChatter_;
+        float pendingWeaverChatterSeconds_ = 0.0f;
+        float pendingWeaverActivity_ = 0.0f;
+        std::uint32_t weaverChatterCount_ = 0U;
+        int playedWeaverChatterCount_ = 0;
         WildlifeAudioSource pendingHoofbeats_;
         float pendingHoofbeatSeconds_ = 0.0f;
         std::uint8_t pendingHoofbeatVariant_ = 0U;

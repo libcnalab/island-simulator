@@ -19,6 +19,7 @@ struct JournalEntry {
     std::string_view title;
     JournalKind kind;
     float reach;
+    std::string_view note{};   // optional passive story inference shown only after discovery
 };
 
 /** The castaway's journal of what they have found on the island: its places and the creatures

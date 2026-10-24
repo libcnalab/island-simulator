@@ -257,7 +257,8 @@ void CrocodileGroup::UpdateAgent(Agent& agent,float dt,float observerX,float obs
 
     const auto sample=terrain_.Sample(agent.state.x,agent.state.z);
     const float targetSubmerged=(agent.state.behavior==CrocodileBehavior::Swim
-        ||agent.state.behavior==CrocodileBehavior::Retreat)&&sample.height<.05f?1.0f:0.0f;
+        ||agent.state.behavior==CrocodileBehavior::Retreat)
+        &&sample.height<tideLevel_+.05f?1.0f:0.0f;
     const float previousSubmerged=agent.state.submerged;
     agent.state.submerged+=std::clamp(targetSubmerged-agent.state.submerged,-dt*.8f,dt*.8f);
     // The slide off the bank: the moment the body goes under is the splash.
@@ -267,7 +268,8 @@ void CrocodileGroup::UpdateAgent(Agent& agent,float dt,float observerX,float obs
     // the channel hung over the gravel.
     const float bed=BedHeight(agent.state.x,agent.state.z,sample.height);
     const float groundY=bed+.10f*agent.state.scale;
-    const float swimY=std::max(bed+BedClearance*agent.state.scale,SwimDepth*agent.state.scale);
+    const float swimY=std::max(bed+BedClearance*agent.state.scale,
+        tideLevel_+SwimDepth*agent.state.scale);
     agent.state.y+=std::clamp(std::lerp(groundY,swimY,agent.state.submerged)-agent.state.y,
                               -dt*.55f,dt*.55f);
     agent.state.gaitPhase=std::fmod(agent.state.gaitPhase+dt*(1.1f+agent.state.speed*2.2f),Tau);

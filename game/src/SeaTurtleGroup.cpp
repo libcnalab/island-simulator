@@ -114,14 +114,14 @@ namespace island
                                        const float seabedHeight) const noexcept
     {
         const float lower = seabedHeight + 0.48f * agent.state.scale;
-        constexpr float upper = -0.11f;
+        const float upper = tideLevel_ - 0.11f;
         if (agent.state.behavior == SeaTurtleBehavior::Surface) {
             return std::max(lower, upper);
         }
         if (agent.state.behavior == SeaTurtleBehavior::Forage) {
             return std::min(upper, lower + 0.18f);
         }
-        const float cruiseDepth = -1.12f
+        const float cruiseDepth = tideLevel_ - 1.12f
             + std::sin(elapsedSeconds_ * 0.22f + agent.depthPhase) * 0.28f;
         return lower <= upper ? std::clamp(cruiseDepth, lower, upper) : upper;
     }
@@ -163,7 +163,8 @@ namespace island
                             observerX, observerZ, observerValid);
                 agent.accumulatedSeconds = 0.0f;
                 // The head lifts through the surface for a breath on the way up.
-                if (depthBefore < BreathDepth && agent.state.y >= BreathDepth
+                const float breathDepth = tideLevel_ + BreathDepth;
+                if (depthBefore < breathDepth && agent.state.y >= breathDepth
                     && agent.state.behavior == SeaTurtleBehavior::Surface) {
                     breath_ = {agent.state.x, agent.state.z, agent.state.headingRadians, agent.state.scale, breath_.count + 1U};
                     agent.blinkSeconds = BlinkSeconds;   // the eyes squeeze shut as the head breaks the surface
@@ -375,6 +376,12 @@ namespace island
     {
         threatValid_ = valid && std::isfinite(x) && std::isfinite(z);
         if (threatValid_) { threatX_ = x; threatZ_ = z; }
+    }
+
+    void SeaTurtleGroup::SetTideLevel(const float tideLevel) noexcept
+    {
+        tideLevel_ = std::isfinite(tideLevel)
+            ? std::clamp(tideLevel, -0.3f, 0.3f) : 0.0f;
     }
 
     std::span<const SeaTurtleState> SeaTurtleGroup::Turtles() const noexcept

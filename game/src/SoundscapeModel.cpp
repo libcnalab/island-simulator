@@ -2302,6 +2302,66 @@ namespace island
         return Quantize(samples, 0.8f);
     }
 
+    AmbientLoop GenerateBalloonBurner()
+    {
+        constexpr float seconds = 3.6f;
+        const auto frames = static_cast<std::size_t>(AmbientSampleRate * seconds);
+        std::vector<float> samples(frames, 0.0f);
+        DeterministicNoise noise(0xba1100aU);
+        float body = 0.0f, slow = 0.0f, phase = 0.0f;
+        for (std::size_t i = 0; i < frames; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            const float u = t / seconds;
+            const float raw = noise.Next();
+            body += 0.12f * (raw - body);
+            slow += 0.018f * (body - slow);
+            phase += 2.0f * std::numbers::pi_v<float> *
+                (74.0f + 5.0f * std::sin(2.0f * std::numbers::pi_v<float> * 3.1f * t)) /
+                static_cast<float>(AmbientSampleRate);
+            const float envelope = SmoothStep(0.0f, 0.055f, u) *
+                (1.0f - SmoothStep(0.86f, 1.0f, u));
+            const float flutter = 0.78f + 0.15f * std::sin(2.0f * std::numbers::pi_v<float> * 17.0f * t)
+                + 0.07f * std::sin(2.0f * std::numbers::pi_v<float> * 31.0f * t + 0.7f);
+            const float hiss = (raw - body) * 0.28f + (body - slow) * 2.4f;
+            const float combustion = std::sin(phase) * 0.42f + std::sin(2.0f * phase) * 0.18f;
+            samples[i] = envelope * flutter * (hiss + combustion + slow * 1.2f);
+        }
+        return Quantize(samples, 0.88f);
+    }
+
+    AmbientLoop GenerateWeaverChatter(const std::uint8_t variant)
+    {
+        constexpr float seconds = 2.4f;
+        const auto frames = static_cast<std::size_t>(AmbientSampleRate * seconds);
+        std::vector<float> samples(frames, 0.0f);
+        const bool bright = (variant & 1U) != 0U;
+        DeterministicNoise noise(0x7ea7e120U + static_cast<std::uint32_t>(bright) * 4051U);
+        float phaseA = 0.0f, phaseB = 0.0f;
+        for (std::size_t i = 0; i < frames; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(AmbientSampleRate);
+            const float u = t / seconds;
+            const float cycleA = std::fmod(t * (bright ? 8.7f : 7.4f), 1.0f);
+            const float cycleB = std::fmod(t * (bright ? 5.3f : 6.1f) + 0.41f, 1.0f);
+            const float gateA = SmoothStep(0.0f, 0.045f, cycleA) *
+                (1.0f - SmoothStep(0.19f, 0.34f, cycleA));
+            const float gateB = SmoothStep(0.0f, 0.06f, cycleB) *
+                (1.0f - SmoothStep(0.22f, 0.42f, cycleB));
+            phaseA += 2.0f * std::numbers::pi_v<float> *
+                ((bright ? 3450.0f : 3060.0f) * (1.0f - 0.18f * cycleA)) /
+                static_cast<float>(AmbientSampleRate);
+            phaseB += 2.0f * std::numbers::pi_v<float> *
+                ((bright ? 2580.0f : 2320.0f) * (1.0f + 0.12f * cycleB)) /
+                static_cast<float>(AmbientSampleRate);
+            const float group = 0.68f + 0.32f * std::sin(2.0f * std::numbers::pi_v<float> * 0.8f * t + 0.4f);
+            const float fade = SmoothStep(0.0f, 0.025f, u) *
+                (1.0f - SmoothStep(0.92f, 1.0f, u));
+            const float rustle = noise.Next() * 0.018f * (gateA + gateB);
+            samples[i] = fade * group * (gateA * (0.68f * std::sin(phaseA) + 0.18f * std::sin(2.0f * phaseA))
+                + gateB * (0.48f * std::sin(phaseB) + 0.12f * std::sin(2.0f * phaseB)) + rustle);
+        }
+        return Quantize(samples, 0.48f);
+    }
+
     AmbientLoop GenerateBirdChatter(const std::uint8_t variant)
     {
         // A bird's alarm chatter over a snake: a run of sharp quick chirps, each a short

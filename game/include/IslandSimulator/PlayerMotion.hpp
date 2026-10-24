@@ -120,6 +120,9 @@ namespace island
         // Surface must outlive this controller. Null disables diving. The caller
         // refreshes input every frame; teleports clear depth and held input.
         void SetSwimInput(const RenderedTerrainSurface* surface, bool ascend, bool descend) noexcept;
+        /** @brief Moves the swimming surface with the slow tide while preserving dive depth. */
+        void SetSeaLevel(float seaLevel) noexcept;
+        [[nodiscard]] float SeaLevel() const noexcept { return seaLevel_; }
         // Dense terrain replacements (stream bed, wreck scour bar) that override the analytic
         // field for ground contact; both must outlive the controller, null disables one.
         void SetGroundPatches(const LocalTerrainPatch* stream,const LocalTerrainPatch* scour) noexcept {
@@ -256,6 +259,7 @@ namespace island
         float velocityZ_ = 0.0f;
         float groundHeight_ = 0.0f;
         float groundSlopeRadians_ = 0.0f;
+        float seaLevel_ = 0.0f;
         LocomotionMode mode_ = LocomotionMode::Walking;
         bool running_ = false;
         bool depenetrationPending_ = true;

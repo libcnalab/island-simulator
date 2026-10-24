@@ -20,6 +20,27 @@ Status markers:
 - `[~]` in progress
 - `[!]` blocked or degraded, with the reason written next to the item
 
+## Approved island-improvement backlog (2026-10-24)
+
+The operator approved these as the next work, in order. They are implementation tasks, not merely
+ideas:
+
+1. [x] Pass 583: positional balloon-burner audio, weaver-colony chatter and restrained missing calls for the
+   newest large wildlife, within the current audio-source budget and underwater/mute response.
+2. [x] Pass 583: finish the remaining appearance ranking from loop pass 554 — crocodile, shoal fish and shark,
+   hermit crab, rodents and sea turtle — without losing behaviour, batching or LOD.
+3. [x] Pass 583: add a moving soft balloon shadow, bounded and faded safely over ground and sea.
+4. [x] Pass 583: add a deterministic tide shared by water, wet shore and affected wildlife/habitats without
+   breaking walking, swimming or quad traversal.
+5. [x] Pass 583: add passive environmental clues and journal wording connecting the castle, mine, bunker,
+   lighthouse, wrecks and UFO, with no quests, pickups or objectives.
+6. [x] Pass 583: add traversal-safe erosion rills, rock shelves, dune ridges and stronger
+   beach/wetland/hillside transitions while preserving authored paths, landmark coverage and
+   rendered/collision-ground agreement.
+
+Each item needs focused tests, the full native suite and inspected software-rendered evidence where
+visual.
+
 ## Latest lighting pass — directional sun shadow map
 
 The operator's 2026-10-19 evening backlog opens with real directional shadows. `SunShadowMap`
@@ -232,6 +253,56 @@ at 02:50 on day 3 shows the 88 % gibbous moon low over the sea with its glitter 
 water (the ocean's glints follow the shading direction, the moon at night), stars and moonlit
 clouds. The moon draws over the sky shader's cumulus rather than behind them (open). Next:
 weather.
+
+## Loop pass 583 (2026-10-24) — the island breathes: sound, tide, clues and weathered terrain
+
+The operator approved improvement ideas 1, 2, 3, 4, 5 and 7; the six concrete tasks above are now
+implemented together because the tide and terrain share the same shore contract.
+
+- **Sound life:** `GenerateBalloonBurner` makes one 3.6-second pressurised flame burst, positioned
+  in 3D at the moving burner and attenuated over height as well as map distance. It uses the two
+  transient slots above the four ambient beds, pre-empting a lower-priority short effect if
+  necessary; the runtime test holds the hard six-source limit, mute and distance rules. Two
+  `GenerateWeaverChatter` variants share the existing pooled wildlife voice and come from the
+  nearest occupied nesting palm only in daylight. The T. rex and elephant already retain their
+  full call sets, so no duplicate large-animal voice was added.
+- **Remaining model ranking:** existing exact-budget meshes now carry stronger but restrained
+  species material cues: pigment variation across the crocodile's back/skull, a diagonal flank
+  scale lattice on shoal fish, a shark lateral line and denticle sheen, spiral ribs and freckles
+  on hermit-crab shells, alternating scale rings on mouse/rat tails and concentric growth rings
+  within the sea turtle's scutes. Population, behaviour, silhouette, batching and LOD are
+  unchanged. Inspected native llvmpipe views: `20261024T074128.800810Z-crocodiles`,
+  `074149.523430Z-fish`, `074209.539978Z-shark`, `074230.812870Z-hermit-crabs`,
+  `074250.613447Z-mice`, `074314.318587Z-rats` and `074348.027858Z-turtles`.
+- **Balloon shadow:** `BalloonShadowProjection` follows the current sun ray to analytic/drawn land
+  or the sea plane and rejects upward, low-sun, excessively long and invalid projections.
+  `BalloonShadowRenderer` draws two depth-tested 24-sided translucent ellipses for a soft bounded
+  umbra/penumbra without adding the balloon to the directional map. Projection tests cover land,
+  sea and bounds; `20261024T073339.209407Z-balloon` and `074424.560542Z-overview` validate the
+  complete software-rendered scene.
+- **Tide:** `TideCycle` is deterministic, +/-0.18 m over twelve minutes. The same level displaces
+  the custom and fallback ocean, shore ribbons/glow, swimmer transitions/depth, underwater fog,
+  ripples, splashes, shallows, sailing and ground shadows. Crocodiles follow estuary depth,
+  mudskippers leave covered lower mud, beach crabs retreat at high water, and surface-oriented
+  turtle swimming and breaths follow the raised surface while grazing keeps seabed clearance.
+  Focused core tests cover extrema, rising/falling state, shifted swim depth, turtle depth and
+  crab retreat.
+- **One island story:** six small, non-solid weathered survey stakes repeat the same raised
+  compass-and-wave mark at the shipwreck, castle, mine, bunker, lighthouse and UFO. Their one to
+  three studs imply a survey sequence without interaction or objective. Journal notes connect
+  them as Expedition/Station XII. The first mine capture exposed the plate's back; all markers
+  now face an explorer approaching inland. Inspected `20261024T073420.903689Z-journal` and the
+  corrected `20261024T073608.256821Z-mine`.
+- **Geological variety:** the exposed east/north-east shore gains low parallel dune trains behind
+  its foredune. Two otherwise smooth mountain shoulders gain shallow rain rills; they explicitly
+  avoid the established north-west goat pasture. The existing rocky-headland shelf bands and the
+  shared coast material field continue through the new height transitions, with all relief in
+  the authoritative collision/render height function. `20261024T073403.408398Z-headland` and
+  `074424.560542Z-overview` were inspected; goat habitat/herd, rendered terrain, material and quad
+  invariants pass.
+- Native Release build passes with `-Werror`; core tests pass; the complete enabled suite is
+  76/76. All listed captures passed validation under forced llvmpipe. Web (`build-probe`) and
+  Android `assembleDebug` both build with rc 0.
 
 ## Loop pass 582 (2026-10-23) — the quad drives over the UFO's furrow, skin and cables
 

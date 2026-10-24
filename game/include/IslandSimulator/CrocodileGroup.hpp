@@ -62,6 +62,7 @@ public:
      *  bodies lie on and swim over; without it, the analytic terrain. Settles the hauled-out
      *  crocodiles onto it at once. */
     void SetGround(const RenderedTerrainSurface* ground) noexcept;
+    void SetTideLevel(float level) noexcept { tideLevel_ = level; }
     void Update(float deltaSeconds,float observerX,float observerY,float observerZ) noexcept;
 
     [[nodiscard]] std::span<const CrocodileState> Crocodiles()const noexcept{return states_;}
@@ -124,6 +125,7 @@ private:
     std::vector<CrocodileHome> homes_;
     std::vector<CircularObstacle> obstacles_;
     float elapsedSeconds_=0;
+    float tideLevel_=0;
     std::uint64_t frameIndex_=0;
     Entry entry_;
     Hiss hiss_;

@@ -269,9 +269,9 @@ namespace island
             const float scale=crocodile.scale;
             // Low barrel torso and heavy shoulder mass.
             AppendEllipsoid(vertices,Local(centre,axes,0,.34f,-.18f,scale),axes,scale,
-                            .74f,.32f,1.34f,palette.back,palette.belly,8,18,.12f,3);
+                            .74f,.32f,1.34f,palette.back,palette.belly,8,18,.18f,3);
             AppendEllipsoid(vertices,Local(centre,axes,0,.35f,.72f,scale),axes,scale,
-                            .68f,.29f,.74f,palette.back,palette.side,5,16,.10f,11);
+                            .68f,.29f,.74f,palette.back,palette.side,5,16,.16f,11);
 
             // The tapering tail bends visibly during swimming instead of reading as a rigid cone.
             Vector3 previous=Local(centre,axes,0,.27f,-1.12f,scale);
@@ -295,7 +295,7 @@ namespace island
             // Broad, shallow saltwater-crocodile skull and independently opening lower jaw.
             const Vector3 skull=Local(centre,axes,0,.39f,1.25f,scale);
             AppendEllipsoid(vertices,skull,axes,scale,.64f,.255f,.72f,
-                            palette.back,palette.jaw,6,18,.10f,17);
+                            palette.back,palette.jaw,6,18,.16f,17);
             // Four shallow elliptical stations replace the old rectangular upper
             // wedge. They keep the broad saltwater-crocodile proportions while
             // rounding the cheek-to-muzzle transition and tapering the nasal tip.

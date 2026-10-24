@@ -36,7 +36,7 @@ public:
     [[nodiscard]] std::size_t Count() const noexcept {return homes_.size();}
     /** The skippers at the clock's `seconds`, skipping away from the walker (written into `out`). */
     void At(float seconds,float walkerX,float walkerZ,const std::function<float(float,float)>& ground,
-            std::vector<Mudskipper>& out) const;
+            std::vector<Mudskipper>& out,float tideLevel=0.0f) const;
 
 private:
     struct Home {float x,z,towardWaterX,towardWaterZ;std::uint32_t seed;};

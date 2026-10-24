@@ -38,6 +38,7 @@
 #include "IslandSimulator/Mudskippers.hpp"
 #include "IslandSimulator/WeaverColony.hpp"
 #include "IslandSimulator/BalloonFlight.hpp"
+#include "IslandSimulator/BalloonShadowProjection.hpp"
 #include "IslandSimulator/TRexBody.hpp"
 #include "IslandSimulator/TRexMotion.hpp"
 #include "IslandSimulator/ElephantMotion.hpp"
@@ -148,6 +149,7 @@
 #include "IslandSimulator/WindthrowLayout.hpp"
 #include "IslandSimulator/GlowingFungusLayout.hpp"
 #include "IslandSimulator/SwimDepth.hpp"
+#include "IslandSimulator/TideCycle.hpp"
 #include "IslandSimulator/ProceduralMeshValidation.hpp"
 #include "IslandSimulator/RockSurface.hpp"
 #include "IslandSimulator/SurfaceNormals.hpp"
@@ -216,6 +218,18 @@ int main()
             "CPU and portable shader atmosphere fog share one authored colour");
     }
     {
+        const auto mean = island::TideCycle::At(0.0f);
+        const auto high = island::TideCycle::At(island::TideCycle::PeriodSeconds * .25f);
+        const auto low = island::TideCycle::At(island::TideCycle::PeriodSeconds * .75f);
+        CheckNear(mean.level, 0.0f, 1.0e-6f, "tide begins at mean water");
+        CheckNear(high.level, island::TideCycle::Amplitude, 1.0e-5f,
+                  "quarter tide cycle reaches authored high water");
+        CheckNear(low.level, -island::TideCycle::Amplitude, 1.0e-5f,
+                  "three-quarter tide cycle reaches authored low water");
+        Check(mean.rising && !high.rising && low.highWater < high.highWater,
+              "tide reports a coherent rising branch and exposure range");
+    }
+    {
         island::SwimDepth dive;
         Check(dive.EyeHeight()==.58f,"diving starts at the swimming surface");
         for(int step=0;step<200;++step) dive.Update(-12.0f,false,true,.1f);
@@ -242,6 +256,11 @@ int main()
         Check(dive.EyeHeight()==.58f,"dry support does not allow diving");
         dive.Update(-12,false,true,.1f); dive.Reset();
         Check(dive.EyeHeight()==.58f,"teleport/reset clears diving depth");
+        dive.SetSeaLevel(.18f);
+        CheckNear(dive.EyeHeight(), .76f, 1.0e-6f,
+                  "rising tide carries a surface swimmer without changing immersion");
+        CheckNear(dive.SubmergedDepth(), 0.0f, 1.0e-6f,
+                  "shifted tide surface remains zero immersion");
     }
     {
         // Bent, tapered V-fold strip; three shared vertices per level, including a centre ridge.
@@ -4400,6 +4419,17 @@ int main()
               && seaTurtles.Homes().size() == island::SeaTurtleGroup::TurtleCount,
           "sea-turtle simulation exposes the intended small bounded population");
     {
+        island::SeaTurtleGroup meanTide(terrain), highTide(terrain);
+        highTide.SetTideLevel(island::TideCycle::Amplitude);
+        const auto subject = meanTide.Turtles()[2U];
+        for (int step = 0; step < 40; ++step) {
+            meanTide.Update(0.05f, subject.x, subject.y + 10.0f, subject.z);
+            highTide.Update(0.05f, subject.x, subject.y + 10.0f, subject.z);
+        }
+        Check(highTide.Turtles()[2U].y > meanTide.Turtles()[2U].y + 0.12f,
+              "a surfacing sea turtle follows the raised high-tide surface");
+    }
+    {
         // Grazing: within a minute a turtle foraging low over the bottom dips its head in
         // bites, each noted at its beak on the bottom; the sand field raises a puff at a bite
         // that settles within two seconds.
@@ -4651,6 +4681,14 @@ int main()
         std::size_t down = 0;
         for (const auto& crab : nightly.Crabs()) down += crab.hideAmount > 0.9f ? 1U : 0U;
         Check(down * 10U >= nightly.Crabs().size() * 9U, "after dark the beach crabs go home down their burrows");
+    }
+    {
+        island::CrabColony highTide(terrain);
+        highTide.SetTideLevel(island::TideCycle::Amplitude);
+        for (int step = 0; step < 30 * 90; ++step)
+            highTide.Update(1.0f / 30.0f, 900.0f, 0.0f, 900.0f);
+        Check(highTide.HiddenCount() * 10U >= highTide.Crabs().size() * 9U,
+              "the high tide sends exposed beach crabs into their burrows");
     }
     {
         // Hermit crabs: far more time paused by day than by night.
@@ -12347,6 +12385,30 @@ int main()
             Check(crossings>1500&&quietRuns>=5,"the bird chatter is high and comes in distinct chirps");
         }
         {
+            const auto burner=island::GenerateBalloonBurner();
+            const auto weaverA=island::GenerateWeaverChatter(0),weaverB=island::GenerateWeaverChatter(1);
+            Check(burner.sampleRate==22050&&burner.samples.size()==static_cast<std::size_t>(22050*3.6f)
+                &&burner.samples==island::GenerateBalloonBurner().samples&&burner.samples.front()==0
+                &&burner.samples.back()==0,"the balloon burner is not a deterministic complete 3.6-second firing");
+            long long burnerEnergy=0;int burnerPeak=0;
+            for(std::size_t i=2205;i+2205<burner.samples.size();++i) {
+                const int sample=static_cast<int>(burner.samples[i]);
+                burnerEnergy+=static_cast<long long>(sample)*sample;burnerPeak=std::max(burnerPeak,std::abs(sample));
+            }
+            Check(burnerPeak>9000&&burnerEnergy>1000000000000LL,"the balloon burner lacks a sustained broad roar");
+            Check(weaverA.sampleRate==22050&&weaverA.samples.size()==static_cast<std::size_t>(22050*2.4f)
+                &&weaverB.samples.size()==weaverA.samples.size()&&weaverA.samples!=weaverB.samples
+                &&weaverA.samples==island::GenerateWeaverChatter(0).samples&&weaverA.samples.front()==0
+                &&weaverA.samples.back()==0&&weaverB.samples.front()==0&&weaverB.samples.back()==0,
+                "village-weaver chatter is not deterministic, varied, bounded and silent at its ends");
+            int crossings=0,active=0;
+            for(std::size_t i=1;i<weaverA.samples.size();++i) {
+                if((weaverA.samples[i]>=0)!=(weaverA.samples[i-1]>=0))++crossings;
+                if(std::abs(static_cast<int>(weaverA.samples[i]))>300)++active;
+            }
+            Check(crossings>2500&&active>1800,"the weaver colony lacks overlapping high chirps");
+        }
+        {
             // The hoofbeats PCM: deterministic, two variants, 1.4 s, silent at both ends, low
             // (few zero crossings) and in distinct beats (quiet gaps between).
             {
@@ -13712,6 +13774,13 @@ int main()
         }
         Check(clear && steady && overLand > 300 && overSea > 300 && burning > 50 && burning < 1500,
               "the balloon does not keep clear of the ground, drift steadily, cross the island and the sea, or fire its burner in bursts");
+        const float centreGround=terrain.Height(0.0f,0.0f);
+        const auto landShadow=island::BalloonShadowProjection::Project(terrain,0.0f,centreGround+130.0f,0.0f,.22f,-.11f);
+        const auto seaShadow=island::BalloonShadowProjection::Project(terrain,420.0f,130.0f,0.0f,.05f,0.0f);
+        Check(landShadow.valid&&landShadow.overLand&&landShadow.x<0.0f&&landShadow.z>0.0f
+            &&landShadow.height>100.0f,"the balloon shadow does not follow the sun ray onto the island");
+        Check(seaShadow.valid&&!seaShadow.overLand&&std::abs(seaShadow.receiverY)<.001f,
+              "the balloon shadow does not accept the sea as a receiver");
     }
 
     {

@@ -36,6 +36,7 @@
 #include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/TimeOfDayRenderer.hpp"
 #include "IslandSimulator/DayNightCycle.hpp"
+#include "IslandSimulator/TideCycle.hpp"
 #include "IslandSimulator/BenchmarkTraversalRoute.hpp"
 #include "IslandSimulator/CanopyLeafFallField.hpp"
 #include "IslandSimulator/BearMotion.hpp"
@@ -73,6 +74,7 @@
 #include "IslandSimulator/MudskipperRenderer.hpp"
 #include "IslandSimulator/WeaverNestRenderer.hpp"
 #include "IslandSimulator/BalloonRenderer.hpp"
+#include "IslandSimulator/ExpeditionMarkerRenderer.hpp"
 #include "IslandSimulator/TRexRenderer.hpp"
 #include "IslandSimulator/ElephantRenderer.hpp"
 #include "IslandSimulator/ElephantSplashField.hpp"
@@ -156,6 +158,7 @@
 #include "IslandSimulator/StreamFishRenderer.hpp"
 #include "IslandSimulator/HatchlingRenderer.hpp"
 #include "IslandSimulator/BirdShadowRenderer.hpp"
+#include "IslandSimulator/BalloonShadowRenderer.hpp"
 #include "IslandSimulator/SeabedShadowRenderer.hpp"
 #include "IslandSimulator/CascadeMistRenderer.hpp"
 #include "IslandSimulator/JettyRenderer.hpp"
@@ -630,11 +633,16 @@ namespace island
         std::vector<std::array<float,3>> weaverOffsets_;          // the fronds' sway this frame
         std::vector<BirdState> weaverBirds_;
         float weaverClockShift_ = 0.0f;   // QA: the weavers' clock moved to a male's display
+        float weaverChatterSeconds_ = 1.5f;
+        std::uint32_t weaverChatterBursts_ = 0U;
         std::unique_ptr<WeaverNestRenderer> weaverNestRenderer_;
         std::unique_ptr<BalloonFlight> balloon_;                 // the hot-air balloon over the island
         std::unique_ptr<BalloonRenderer> balloonRenderer_;
+        std::unique_ptr<BalloonShadowRenderer> balloonShadowRenderer_;
+        std::unique_ptr<ExpeditionMarkerRenderer> expeditionMarkerRenderer_;
         float balloonClock_ = 0.0f;   // the render clock it was last drawn at (for the journal)
         float balloonClockShift_ = 0.0f;   // QA: its clock moved on to where it is over the coast
+        int notedBalloonBurns_ = 0;
         std::unique_ptr<TRexMotion> trex_;                       // the tyrannosaur walking the island
         std::unique_ptr<TRexRenderer> trexRenderer_;
         std::uint32_t notedTRexFootfalls_ = 0U, notedTRexCalls_ = 0U, notedTRexBreaths_ = 0U;
@@ -954,6 +962,9 @@ namespace island
         std::unique_ptr<FlyingFishRenderer> flyingFishRenderer_;
         std::unique_ptr<CascadeMistRenderer> flyingFishSprayRenderer_;
         float oceanSeconds_ = 0.0f;   // the last frame's ocean clock, for the sea's height in Update
+        float tideSeconds_ = 0.0f;
+        TideState tide_{};
+        bool tideDiagnosticReported_ = false;
         StingraySandField stingraySand_;
         StingraySandField stingrayFlickSand_;
         TurtleGrazeField turtleGraze_;

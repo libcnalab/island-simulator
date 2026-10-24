@@ -288,8 +288,11 @@ namespace island
         }
         const CrabBurrow& burrow = burrows_[std::min(index / 5U, burrows_.size() - 1U)];
         const bool nightfall = nightness_ > 0.6f;
-        if (nightfall && agent.state.behavior != CrabBehavior::Hide) {
-            // After dark: home to the colony's burrow at a run, and down it.
+        const bool highTideRetreat = tideLevel_ > 0.12f;
+        const bool beachClosed = nightfall || highTideRetreat;
+        if (beachClosed && agent.state.behavior != CrabBehavior::Hide) {
+            // After dark, or as the high tide covers the feeding strand: home to the
+            // colony's burrow at a run, and down it.
             const float toBurrowX = burrow.x - agent.state.x, toBurrowZ = burrow.z - agent.state.z;
             const float burrowDistance = std::hypot(toBurrowX, toBurrowZ);
             agent.state.behavior = CrabBehavior::Scuttle;
@@ -339,7 +342,7 @@ namespace island
             }
         } else if (agent.state.behavior == CrabBehavior::Hide) {
             // Down the hole until the beach has been clear a while, then up and on.
-            agent.clearSeconds = observerDistance < ScuttleDistance * 1.6f || nightfall
+            agent.clearSeconds = observerDistance < ScuttleDistance * 1.6f || beachClosed
                 ? 0.0f : agent.clearSeconds + deltaSeconds;
             if (agent.clearSeconds >= EmergeDelaySeconds && agent.state.hideAmount <= 0.0f) {
                 agent.state.behavior = CrabBehavior::Pause;

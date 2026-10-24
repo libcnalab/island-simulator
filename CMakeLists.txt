@@ -784,6 +784,8 @@ if(ISLAND_BUILD_GAME)
         game/src/MudskipperRenderer.cpp
         game/src/WeaverNestRenderer.cpp
         game/src/BalloonRenderer.cpp
+        game/src/BalloonShadowRenderer.cpp
+        game/src/ExpeditionMarkerRenderer.cpp
         game/src/TRexRenderer.cpp
         game/src/ElephantRenderer.cpp
         game/src/CrocodileRenderer.cpp

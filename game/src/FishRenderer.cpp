@@ -257,6 +257,14 @@ namespace island
             const float sheen = shoulder * sheenVariation;
             patterned = Color::Lerp(patterned, palette.belly, sheen * .14f);
             patterned = wildlife_render::ScaleColor(patterned, 1.0f + sheen * .055f);
+            // A very low-contrast diagonal scale lattice is only visible on the broad flank.
+            // It is evaluated per existing corner, so the exact fish vertex budget and the
+            // smooth family silhouettes stay unchanged.
+            const float scaleLattice = std::sin((longitudinal + .58f) * 38.0f + angle * 5.0f)
+                * std::sin((longitudinal + .58f) * 25.0f - angle * 7.0f);
+            const float scaleField = flank * SoftBand(longitudinal, .03f, .42f);
+            patterned = wildlife_render::ScaleColor(
+                patterned, 1.0f + scaleLattice * scaleField * .022f);
             return wildlife_render::ScaleColor(patterned,
                                                .76f + .25f * direct + .05f * sky);
         }

@@ -211,6 +211,19 @@ namespace island
         const float sandMicroRelief = sandReliefMask
             * (berm + dune - washChannel * (0.12f + 0.10f * directionalPatch));
 
+        // On the exposed east and north-east beaches, several low parallel dune ridges sit
+        // behind the single broad foredune. They are deliberately broad and under a handspan
+        // high: the four-metre render grid resolves them, wheels and feet traverse them, and no
+        // collision-only micro-bumps appear. The sheltered western bay keeps its flatter strand.
+        const float windward = SmoothStep((std::cos(coastAngle - .20f) + .18f) / .90f);
+        const float duneTrainBand = SmoothStep((inland - 7.0f) / 4.0f)
+            * (1.0f - SmoothStep((inland - 31.0f) / 8.0f));
+        const float duneTrainWave = .5f + .5f * std::sin(
+            inland * .72f + coastAngle * 2.4f
+            + .55f * FractalNoise(x * .018f, z * .018f, 0xd71eU));
+        const float duneTrain = .22f * sandReliefMask * windward * duneTrainBand
+            * duneTrainWave * duneTrainWave;
+
         const float interiorBlend = SmoothStep((inland - beachWidth * (11.0f / 18.0f)) / 75.0f);
         // Two offset, tilted ridges give the island an asymmetric skyline and a saddle.
         // Their broad shoulders leave room for a walkable route between the summits.
@@ -238,6 +251,26 @@ namespace island
         const float localRelief = 1.4f * FractalNoise(x * 0.027f, z * 0.027f, 0x711dU);
         const float erodedRidges = (mainRidge + secondRidge)
             * (1.0f - 0.62f * southValley) * (1.0f - 0.32f * westValley);
+
+        // Rain rills run obliquely down the two mountain shoulders. The cuts are shallow,
+        // continuous and low-frequency enough to remain below the walker's step/slope limits;
+        // because they live in this authoritative field, render mesh and collision agree.
+        const float uplandMass = SmoothStep((mainRidge + secondRidge - 5.0f) / 14.0f)
+            * interiorBlend;
+        const float rillCarrier = .5f + .5f * std::sin(
+            x * .24f + z * .085f
+            + 1.35f * FractalNoise(x * .014f + 7.0f, z * .014f - 4.0f, 0xe20dU));
+        const auto rillPatch = [](const float dx, const float dz,
+                                  const float rx, const float rz) {
+            return std::exp(-.5f * (dx * dx / (rx * rx) + dz * dz / (rz * rz)));
+        };
+        // Keep the established north-west goat pasture broad and smooth; rills belong to two
+        // otherwise featureless shoulders where no authored route or grazing home is selected.
+        const float rillRegion = std::clamp(
+            rillPatch(x + 125.0f, z - 20.0f, 22.0f, 38.0f)
+            + rillPatch(x - 50.0f, z + 75.0f, 30.0f, 34.0f), 0.0f, 1.0f);
+        const float erosionRills = -.30f * uplandMass * rillRegion
+            * SmoothStep((rillCarrier - .72f) / .28f);
         const float headland = IslandEnvironmentField::CoastalRockPotential(std::atan2(z, x));
         const float coastalRelief = 7.5f * headland * SmoothStep((inland - 2.0f) / 10.0f)
             * (1.0f - SmoothStep((inland - 32.0f) / 38.0f));
@@ -247,8 +280,8 @@ namespace island
             * (1.0f - SmoothStep((inland - 23.0f) / 5.0f));
         const float rockSteps = headland * shoreFade
             * (0.22f * firstRockStep + 0.34f * secondRockStep);
-        const float landHeight=beach + sandMicroRelief + coastalRelief + rockSteps
-            + interiorBlend * (foothills + erodedRidges + localRelief);
+        const float landHeight=beach + sandMicroRelief + duneTrain + coastalRelief + rockSteps
+            + interiorBlend * (foothills + erodedRidges + localRelief) + erosionRills;
         return landHeight;
     }
 

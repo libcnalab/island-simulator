@@ -38,13 +38,13 @@ namespace island
         void Draw(const Microsoft::Xna::Framework::Matrix& view,
                   const Microsoft::Xna::Framework::Matrix& projection,
                   const Microsoft::Xna::Framework::Vector3& cameraPosition,
-                  float timeSeconds);
+                  float timeSeconds, float tideLevel);
         /** @brief Bioluminescence on dark nights: the breaking crests glitter blue where the
          *  plankton are stirred, drawn after the night grade (additive); `strength` 0..1. */
         void DrawGlow(const Microsoft::Xna::Framework::Matrix& view,
                       const Microsoft::Xna::Framework::Matrix& projection,
                       const Microsoft::Xna::Framework::Vector3& cameraPosition,
-                      float timeSeconds, float strength);
+                      float timeSeconds, float strength, float tideLevel);
 
         [[nodiscard]] bool UsesCustomShader() const noexcept { return customShaderReady_; }
         [[nodiscard]] int VertexCount() const noexcept { return vertexCount_; }

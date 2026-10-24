@@ -316,6 +316,30 @@ void ExerciseShipwreckCreak() {
     Check(sound.PlayedShipwreckCreakCount()==audible,
         "Distant shipwreck created actual creak playback");
 }
+void ExerciseApprovedIslandSounds() {
+    using namespace island;
+    Soundscape sound;
+    SoundscapeListenerState listener;
+    listener.x=0.0f;listener.y=1.72f;listener.z=0.0f;
+    Check(sound.Start(40.0f,false,0,0,0,.5f,listener.x,listener.z,listener.y),
+          "Approved island-sound dummy audio startup failed: "+sound.Error());
+    sound.NoteWeaverChatter(3.0f,5.0f,0.0f,.8f);
+    sound.Update(40.0f,false,0,0,0,1.0f/60,.5f,listener,{},{},{},{},{});
+    Check(sound.PlayedWeaverChatterCount()==1,
+          "Nearby village weavers did not use the shared wildlife voice");
+    sound.NoteBalloonBurner(0.0f,22.0f,0.0f,1.0f);
+    Check(sound.PlayedBalloonBurnCount()==1
+              && sound.DebugState().playingSourceCount<=sound.MaximumPlayingSourceCount,
+          "Balloon burner did not play inside the six-source budget");
+    sound.SetMuted(true);
+    sound.NoteBalloonBurner(0.0f,22.0f,0.0f,1.0f);
+    Check(sound.PlayedBalloonBurnCount()==1,
+          "Muted balloon burner created transient playback");
+    sound.SetMuted(false);
+    sound.NoteBalloonBurner(900.0f,22.0f,900.0f,1.0f);
+    Check(sound.PlayedBalloonBurnCount()==1,
+          "Out-of-range balloon burner created transient playback");
+}
 }
 
 int main(int argc, char** argv) {
@@ -337,6 +361,7 @@ int main(int argc, char** argv) {
         ExerciseCicadaVoice();
         ExerciseFlyVoice();
         ExerciseShipwreckCreak();
+        ExerciseApprovedIslandSounds();
         std::cout << "Soundscape stream startup/entry/swim/mute runtime regression passed\n";
         return 0;
     } catch (const std::exception& error) {

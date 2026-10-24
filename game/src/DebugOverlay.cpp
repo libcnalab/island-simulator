@@ -258,7 +258,7 @@ namespace island
         if (viewportWidth <= 0 || viewportHeight <= 0) return;
         // The lines in reading order: each kind's heading, then its entries in catalogue order,
         // flowed down the columns.
-        struct Line { std::string text; int tone; };   // 0 heading, 1 found, 2 unknown
+        struct Line { std::string text; int tone; };   // 0 heading, 1 found, 2 unknown, 3 story note
         std::vector<Line> lines;
         for (const JournalKind kind : {JournalKind::Place, JournalKind::Creature}) {
             if (!lines.empty()) lines.push_back({"", 2});
@@ -269,7 +269,13 @@ namespace island
             const auto catalogue = DiscoveryJournal::Catalogue();
             for (std::size_t i = 0; i < catalogue.size(); ++i) {
                 if (catalogue[i].kind != kind) continue;
-                lines.push_back(journal.Found(i) ? Line{Upper(catalogue[i].title), 1} : Line{"? ? ?", 2});
+                if (!journal.Found(i)) {
+                    lines.push_back({"? ? ?", 2});
+                    continue;
+                }
+                lines.push_back({Upper(catalogue[i].title), 1});
+                if (!catalogue[i].note.empty())
+                    lines.push_back({"- " + Upper(catalogue[i].note), 3});
             }
         }
         const std::string title = "JOURNAL";
@@ -316,7 +322,9 @@ namespace island
             const Line& line = lines[i];
             const float x = panelX + padding + static_cast<float>(column) * columnWidth + (line.tone == 0 ? 0.0f : 2.0f * GlyphCellWidth * scale);
             spriteBatch_->DrawString(*font_, line.text, Vector2(x, top + static_cast<float>(row) * lineHeight),
-                line.tone == 0 ? accent : (line.tone == 1 ? found : unknown), 0.0f, Vector2::Zero, scale,
+                line.tone == 0 ? accent : (line.tone == 1 ? found
+                    : (line.tone == 3 ? Color(157, 192, 177, 255) : unknown)),
+                0.0f, Vector2::Zero, scale,
                 SpriteEffects::None, 0.0f);
         }
         spriteBatch_->End();

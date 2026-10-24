@@ -397,7 +397,8 @@ namespace island
         Heron,
         Gecko,
         PalmClatter,
-        Bat
+        Bat,
+        Weaver
     };
 
     /** @brief Nearest currently eligible world-space source for one wildlife species. */
@@ -613,6 +614,12 @@ namespace island
     /** @brief An elephant's rumble: a deep purring tone from the throat, felt more than heard,
      *  swelling and fading over 2.6 seconds. */
     [[nodiscard]] AmbientLoop GenerateElephantRumble();
+    /** @brief A hot-air balloon's propane burner: a broad pressurised roar with a deep
+     *  combustion body and irregular flame flutter, shaped to one complete 3.6 s firing. */
+    [[nodiscard]] AmbientLoop GenerateBalloonBurner();
+    /** @brief Village-weaver colony chatter: overlapping short metallic chirps and softer
+     *  contact notes from several birds, two deterministic variants. */
+    [[nodiscard]] AmbientLoop GenerateWeaverChatter(std::uint8_t variant);
     /** @brief Original bird alarm chatter: a run of sharp quick chirps over a snake, one second. */
     [[nodiscard]] AmbientLoop GenerateBirdChatter(std::uint8_t variant);
     /** @brief Original hoofbeats of an animal trotting off: a drumming of dull thuds, 1.4 s;

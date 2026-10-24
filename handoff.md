@@ -1,21 +1,19 @@
 # island-simulator handoff
 
-## Resume here — session stopped by the operator (2026-10-23, after loop pass 575)
+## Resume here — approved island improvements completed (2026-10-24, after loop pass 583)
 
 **Read this first (for an agent continuing in a new context).**
-- The operator asked to finish the current task, write this file for the next agent and stop.
-  Talk to the operator in **Czech**.
-- **Every item of the operator-reviewed task list below (items 1-16) is done** (`[x]`). Passes
-  551-575 of 2026-10-23: the discovery journal, the quad and terrain-cut audits, the appearance
-  inventory and the ten weakest models, the land crab migration, the termite swarm, the booby
-  islet, the mudskippers, the T. rex (with sounds), the windthrow's light gap, the foxfire on
-  snags, the longer quad mine drive, the weavers' nests (574) and the hot-air balloon (575).
+- Talk to the operator in **Czech**.
+- **Every item of the operator-reviewed task list below (items 1-16) and every item of the
+  2026-10-24 approved island-improvement backlog are done** (`[x]`). Pass 583 adds the balloon
+  and weaver sounds, finishes the older-model appearance ranking, gives the balloon a shadow,
+  adds the tide, connects the island's clues and breaks up selected smooth terrain.
 - **There is no approved work left. Do not start anything on your own.** Ask the operator what
   next. The endless self-directed loop was cancelled on 2026-10-23; never add an item of your
   own to the list: propose ideas and let the operator decide each one (keep or strike).
-- Last commit: pass 575 (`7c4df15c`) on `develop`; tests 76/76 and the core tests pass; the
-  working tree is clean. Web (`build-probe`) and Android `assembleDebug` both built with rc 0
-  on pass 575's sources.
+- Last completed work: pass 583 (this handoff's commit) on `develop`; core tests and the full
+  native suite pass (76/76). The final Web and Android cross-build results are recorded in the
+  pass entry below. The working tree should be clean.
 - `develop` is 31+ commits ahead of `origin/develop`. Never push unless the operator asks; when
   asked, `git push` from the agent's shell has failed before (`Permission denied (publickey)`,
   the key `~/.ssh/id_rsa` is not in the ssh-agent), so the operator may have to push from an
@@ -33,11 +31,41 @@
 - Older open confirmations: the mine and bunker mouths (pass 548, below) and the Web mouse look
   at 2.5x (backlog note further down).
 
-**Ideas to propose to the operator (not approved, do not build unasked):**
-- a burner roar for the balloon when it is near; the balloon's shadow on the ground;
-- the rest of the appearance ranking in PLAN "Loop pass 554" (crocodile, shoal fish and shark,
+**Completed from the former proposal list (pass 583):**
+- the balloon's burner roar and moving shadow;
+- the rest of the appearance ranking from PLAN "Loop pass 554" (crocodile, shoal fish and shark,
   hermit crab, rodents, sea turtle);
-- the weavers' chatter (a colony sound).
+- the weavers' colony chatter.
+
+## Operator-approved backlog — 2026-10-24
+
+The operator explicitly approved the following six improvements. Work through them in this order,
+marking an item complete only after implementation, focused tests, the full native suite and an
+inspected software-rendered capture where the change is visual. Keep the existing per-pass procedure
+and do not push unless asked.
+
+1. [x] **Sound life (pass 583).** Add a positional burner roar for the hot-air balloon while its flame is
+   firing, colony chatter for the village weavers, and restrained distance-aware calls for the
+   newest large wildlife where a quiet gap remains. Keep the six-source audio budget and the
+   existing mute/underwater response.
+2. [x] **Finish the older-model appearance ranking (pass 583).** Improve, in order, the crocodile; shoal fish
+   and shark; hermit crab; mice and rats; and sea turtle. Preserve their populations, behaviours,
+   batching, LOD and collision while bringing silhouettes, smooth lighting, eyes, limbs/fins and
+   material detail up to the newer animals' standard.
+3. [x] **Hot-air-balloon shadow (pass 583).** Add a moving, soft, distance-bounded ground/sea shadow that
+   follows the balloon and the current sun without extending the directional shadow map to its
+   high-altitude route. It must fade safely when the receiver is too distant or the sun is low.
+4. [x] **Tide cycle (pass 583).** Add a slow deterministic tide shared by ocean rendering, shore wetness and
+   habitat logic. It should expose and cover the mudflat and shallow shore gradually, affect the
+   wreck/jetty/mangrove edge coherently, and drive suitable crocodile, mudskipper, crab and turtle
+   behaviour without trapping the walker or quad or breaking swimming transitions.
+5. [x] **Connect the island's story (pass 583).** Tie the castle, mine, bunker, lighthouse, wrecks and UFO
+   together with subtle non-interactive environmental clues and journal wording. No quest,
+   inventory, pickup, objective or required sequence; the operator previously struck those.
+6. [x] **Geological variety (pass 583).** Break up selected overly smooth slopes and transitions with
+   traversal-safe erosion rills, rock shelves, dune ridges and clearer beach/wetland/hillside
+   material transitions. Preserve authored paths, landmark ground coverage, vegetation reserves,
+   collision/rendered-ground agreement and the quad audit.
 
 **Ask the operator to confirm in play** (pass 548, an operator bug report):
 - The old mine's mouth no longer shows the sky through the island from any side.
@@ -548,6 +576,7 @@ Loop log (propose → implement, continues until the operator stops the session)
 - Pass 221: a second flight crash path closed: the leaf renderer (14-leaf buffer) also drew the canopy leaf fall, measured at up to 35 leaves in one view; it now holds 48 and stops at its buffer; surf spray, deer and contact-shadow capacities corrected, shared puff renderers checked at compile time (PLAN "Loop pass 221").
 - Pass 222: the resident's footprints are rounded sand-toned hollows instead of near-black stamps in the hoof prints' mud colours (PLAN "Loop pass 222").
 - Pass 223: a new `SlopeScrubLayout` grows 1262 low coastal scrub bushes on the steep banks, foredunes and beach backs every other plant rule leaves bare (the bank behind the jetty's beach), drawn as extra jungle bushes with their own count (PLAN "Loop pass 223").
+- Pass 583: completed the six operator-approved island improvements: balloon/weaver sound, the remaining appearance ranking, a soft balloon shadow, a shared deterministic tide with habitat responses, Expedition XII clues and journal notes, and traversal-safe dune/rill terrain variety. Core and full native suite pass (76/76); Web (`build-probe`) and Android `assembleDebug` both build with rc 0. Inspected llvmpipe evidence includes `20261024T073339.209407Z-balloon`, `074128.800810Z-crocodiles`, `074149.523430Z-fish`, `074209.539978Z-shark`, `074230.812870Z-hermit-crabs`, `074250.613447Z-mice`, `074314.318587Z-rats`, `074348.027858Z-turtles`, `073403.408398Z-headland`, `073420.903689Z-journal`, `073608.256821Z-mine` and `074424.560542Z-overview` (PLAN "Loop pass 583").
 - Pass 582: operator request, the quad behind the UFO: only the wreck (hull, dome, portholes, strut) is noted as the quad's shape; the furrow never stopped it (0 cells), a torn cable arcing 0.34 m did (10 cells); `quad-audit` `20261023T175821` side 0 reaches the hull (5.32 m, before 9.92 m) (PLAN "Loop pass 582").
 - Pass 581: operator request, the `quad-audit` UFO failure: `QuadWallBlocked`'s landmark-shape footprint runs 1.1 m each way (the drawn brush guard and grab bar; 0.96 m had left the guard 14 cm inside the UFO's hull); `quad-audit` `20261023T174208` all landmarks 0 points, all 20 quad views pass (PLAN "Loop pass 581").
 - Pass 580: operator request, the quad over the cave too: `QuadGround` takes the cave's tops up to `QuadCaveTopCeiling` (on top a metre, from beside a kerb), the grass's edge over the hill a bank in `QuadWallBlocked`, site open on top, chase camera over the grass; new QA view `quad-cave-top` (four crossings, 0 steps sunk) `20261023T170858`. The `quad-audit` UFO failure seen here (older, 7 points > 6) is fixed in pass 581 (PLAN "Loop pass 580").

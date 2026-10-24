@@ -208,7 +208,7 @@ namespace island
         const float candidateX = position_.x + deltaX;
         const float candidateZ = position_.z + deltaZ;
         if(swimSurface_ && mode_==LocomotionMode::Swimming
-            && swimDepth_.EyeHeight()<SwimmingEyeHeight-.001f) {
+            && swimDepth_.EyeHeight()<seaLevel_+SwimmingEyeHeight-.001f) {
             const float minX=std::min(position_.x,candidateX)-CapsuleRadius;
             const float minZ=std::min(position_.z,candidateZ)-CapsuleRadius;
             const float maxX=std::max(position_.x,candidateX)+CapsuleRadius;
@@ -307,7 +307,7 @@ namespace island
         velocityZ_ = 0.0f;
         movementTrace_ = PlayerMovementTrace{};
         depenetrationPending_ = true;
-        mode_ = terrain.Height(position_.x, position_.z) < WaterEntryTerrainHeight
+        mode_ = terrain.Height(position_.x, position_.z) < seaLevel_ + WaterEntryTerrainHeight
             ? LocomotionMode::Swimming
             : LocomotionMode::Walking;
         ResolveModeAndHeight(terrain, std::numeric_limits<float>::infinity());
@@ -363,6 +363,13 @@ namespace island
         if(!surface) swimDepth_.Reset();
     }
 
+    void PlayerMotion::SetSeaLevel(const float seaLevel) noexcept
+    {
+        if (!std::isfinite(seaLevel)) return;
+        seaLevel_ = seaLevel;
+        swimDepth_.SetSeaLevel(seaLevel_);
+    }
+
     float PlayerMotion::OffshoreDistance(const IslandTerrain& terrain) const noexcept
     {
         return std::max(0.0f, -terrain.SignedShoreDistance(position_.x, position_.z));
@@ -410,9 +417,11 @@ namespace island
             || (bridge_ && bridge_->OnDeck(position_.x, position_.z))
             || (freighter_ && freighter_->SupportHeight(position_.x, position_.z,
                                                        position_.y - EyeHeight, shipHeight));
-        if (mode_ == LocomotionMode::Walking && centre.height < WaterEntryTerrainHeight && !onDeck) {
+        if (mode_ == LocomotionMode::Walking
+            && centre.height < seaLevel_ + WaterEntryTerrainHeight && !onDeck) {
             mode_ = LocomotionMode::Swimming;
-        } else if (mode_ == LocomotionMode::Swimming && centre.height > WaterExitTerrainHeight) {
+        } else if (mode_ == LocomotionMode::Swimming
+                   && centre.height > seaLevel_ + WaterExitTerrainHeight) {
             mode_ = LocomotionMode::Walking;
         }
 
@@ -428,7 +437,7 @@ namespace island
 
         const float target = mode_ == LocomotionMode::Walking
             ? groundHeight_ + EyeHeight
-            : swimSurface_ ? swimDepth_.EyeHeight() : SwimmingEyeHeight;
+            : swimSurface_ ? swimDepth_.EyeHeight() : seaLevel_ + SwimmingEyeHeight;
         if (target > position_.y) {
             // Never smooth the camera through rising terrain. Downhill motion is eased to avoid
             // a saw-tooth camera path over dense height samples.

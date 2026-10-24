@@ -466,6 +466,15 @@ namespace island
                     Color base = bandWave > .25f ? shellShade : (bandWave < -.55f ? shellRidge : shell);
                     const float inward = std::max(0.0f, -std::cos(phi));
                     base = Color::Lerp(base, Color(49, 39, 31, 255), .45f * inward * inward);
+                    // Growth ribs and salt-weathered freckles follow the spiral instead of
+                    // forming screen-aligned noise. They cost no additional shell vertices.
+                    const float rib = .5f + .5f * std::sin(
+                        static_cast<float>(ring) * 2.35f + phi * .55f);
+                    const float freckle = .5f + .5f * std::sin(
+                        static_cast<float>(ring) * 5.13f
+                        + static_cast<float>(side) * 3.71f);
+                    base = wildlife_render::ScaleColor(
+                        base, .965f + .045f * rib - .025f * freckle);
                     const float direct = std::max(0.0f, Vector3::Dot(normal, wildlife_render::FixedSunDirection));
                     return VertexPositionColor(position, wildlife_render::ScaleColor(
                         base, .72f + .30f * direct + .06f * std::max(0.0f, normal.Y)));

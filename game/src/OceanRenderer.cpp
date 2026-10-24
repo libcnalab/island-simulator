@@ -88,6 +88,7 @@ layout(location = 2) in vec2 aWaterData;
 
 uniform mat4 uViewProjection;
 uniform float uTime;
+uniform float uTideLevel;
 uniform float uSeaState;   // the weather's sea: 1 the trade wind, more in a storm (unset reads as 1)
 
 out vec3 vWorld;
@@ -107,6 +108,7 @@ float coastalWindExposure(vec2 position,float shoreDistance)
 void main()
 {
     vec3 world = aPosition;
+    world.y += uTideLevel;
     float windExposure=coastalWindExposure(world.xz,aWaterData.y);
     world.y += oceanHeight(world.xz, uTime)*mix(.78,1.22,windExposure)*max(uSeaState,1.0);
     vWorld = world;
@@ -770,6 +772,7 @@ void main()
 
     void OceanRenderer::Draw(const Matrix& view, const Matrix& projection,
                              const Vector3& cameraPosition, const float timeSeconds,
+                             const float tideLevel,
                              const float playerX, const float playerZ,
                              const float playerRippleIntensity,
                              const float playerRipplePhase,
@@ -798,6 +801,8 @@ void main()
                 "uToSun", sun_light::UniformDirection().x, sun_light::UniformDirection().y,
                 sun_light::UniformDirection().z);
             customEffect_->SetUniformFloat("uTime", timeSeconds);
+            customEffect_->SetUniformFloat("uTideLevel",
+                std::isfinite(tideLevel) ? tideLevel : 0.0f);
             {
                 const auto& gusts = WindGust::Live();
                 customEffect_->SetUniformVec4("uGustClock", gusts.travelled, gusts.spacing, gusts.floor, gusts.live ? 1.0f : 0.0f);
@@ -861,7 +866,8 @@ void main()
                     ? std::clamp(playerSplashPhase, 0.0f, 1.0f) : 1.0f);
             DrawGeometry();
         } else {
-            fallbackEffect_->setWorldProperty(Matrix::getIdentityProperty());
+            fallbackEffect_->setWorldProperty(Matrix::CreateTranslation(
+                0.0f, std::isfinite(tideLevel) ? tideLevel : 0.0f, 0.0f));
             fallbackEffect_->setViewProperty(view);
             fallbackEffect_->setProjectionProperty(projection);
             for (auto& pass : fallbackEffect_->getCurrentTechniqueProperty()->getPassesProperty()) {

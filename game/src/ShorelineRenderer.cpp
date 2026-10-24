@@ -55,6 +55,7 @@ layout(location = 2) in vec2 aRibbonData;
 
 uniform mat4 uViewProjection;
 uniform float uTime;
+uniform float uTideLevel;
 
 out vec3 vWorld;
 out float vAcross;
@@ -74,6 +75,7 @@ void main()
 {
     vec3 world = aPosition;
     vPool = aRibbonData.y < 0.0 ? 1.0 : 0.0;
+    world.y += uTideLevel * (1.0 - vPool);
     if (vPool > 0.5) {
         vWindExposure=.5;
         world.y += 0.006 * sin(uTime * 0.38 + dot(world.xz, vec2(0.31, -0.23)));
@@ -421,7 +423,8 @@ void main()
     }
 
     void ShorelineRenderer::Draw(const Matrix& view, const Matrix& projection,
-                                 const Vector3& cameraPosition, const float timeSeconds)
+                                 const Vector3& cameraPosition, const float timeSeconds,
+                                 const float tideLevel)
     {
         drawCallCount_ = 0;
         device_.setRasterizerStateProperty(RasterizerState::CullNone);
@@ -438,13 +441,15 @@ void main()
             customEffect_->SetUniformVec3("uCameraPosition", cameraPosition.X,
                                           cameraPosition.Y, cameraPosition.Z);
             customEffect_->SetUniformFloat("uTime", timeSeconds);
+            customEffect_->SetUniformFloat("uTideLevel", std::isfinite(tideLevel) ? tideLevel : 0.0f);
             customEffect_->SetUniformFloat("uSeaState", weather_now::SeaState());
             customEffect_->SetUniformFloat("uGlow", 0.0f);
             device_.DrawIndexedPrimitives(PrimitiveType::TriangleList, 0, 0, vertexCount_, 0,
                                           primitiveCount_);
             ++drawCallCount_;
         } else {
-            fallbackEffect_->setWorldProperty(Matrix::getIdentityProperty());
+            fallbackEffect_->setWorldProperty(Matrix::CreateTranslation(
+                0.0f, std::isfinite(tideLevel) ? tideLevel : 0.0f, 0.0f));
             fallbackEffect_->setViewProperty(view);
             fallbackEffect_->setProjectionProperty(projection);
             for (auto& pass : fallbackEffect_->getCurrentTechniqueProperty()->getPassesProperty()) {
@@ -460,7 +465,8 @@ void main()
     }
 
     void ShorelineRenderer::DrawGlow(const Matrix& view, const Matrix& projection,
-                                     const Vector3& cameraPosition, const float timeSeconds, const float strength)
+                                     const Vector3& cameraPosition, const float timeSeconds,
+                                     const float strength, const float tideLevel)
     {
         if (!customShaderReady_ || !(strength > 0.01f)) return;
         device_.setRasterizerStateProperty(RasterizerState::CullNone);
@@ -474,6 +480,7 @@ void main()
         customEffect_->SetUniformMat4("uViewProjection", viewProjection);
         customEffect_->SetUniformVec3("uCameraPosition", cameraPosition.X, cameraPosition.Y, cameraPosition.Z);
         customEffect_->SetUniformFloat("uTime", timeSeconds);
+        customEffect_->SetUniformFloat("uTideLevel", std::isfinite(tideLevel) ? tideLevel : 0.0f);
             customEffect_->SetUniformFloat("uSeaState", weather_now::SeaState());
         customEffect_->SetUniformFloat("uGlow", strength);
         device_.DrawIndexedPrimitives(PrimitiveType::TriangleList, 0, 0, vertexCount_, 0, primitiveCount_);

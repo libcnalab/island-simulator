@@ -37,7 +37,7 @@ namespace island
         void Draw(const Microsoft::Xna::Framework::Matrix& view,
                   const Microsoft::Xna::Framework::Matrix& projection,
                   const Microsoft::Xna::Framework::Vector3& cameraPosition,
-                  float timeSeconds, float playerX, float playerZ,
+                  float timeSeconds, float tideLevel, float playerX, float playerZ,
                   float playerRippleIntensity, float playerRipplePhase,
                   float playerSplashIntensity, float playerSplashPhase,
                   float birdSplashX = 0.0f, float birdSplashZ = 0.0f,

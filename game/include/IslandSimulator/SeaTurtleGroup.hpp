@@ -67,6 +67,9 @@ namespace island
 
         void Update(float deltaSeconds, float observerX, float observerY,
                     float observerZ) noexcept;
+        /** @brief Moves surface-oriented swimming and breath depth with the tide while
+         *  bottom-foraging turtles retain their clearance above the seabed. */
+        void SetTideLevel(float tideLevel) noexcept;
 
         [[nodiscard]] std::span<const SeaTurtleState> Turtles() const noexcept;
         /** @brief The last turtle to lift its head through the surface for a breath: where,
@@ -135,6 +138,7 @@ namespace island
                                          float seabedHeight) const noexcept;
 
         const IslandTerrain& terrain_;
+        float tideLevel_ = 0.0f;
         std::vector<Agent> agents_;
         std::vector<SeaTurtleState> states_;
         std::vector<SeaTurtleHomeRange> homes_;

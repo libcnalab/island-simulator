@@ -410,6 +410,63 @@ namespace island
         }
     }
 
+    void Soundscape::NoteBalloonBurner(const float x, const float y, const float z,
+                                       const float strength) noexcept
+    {
+        if (!available_ || muted_ || !balloonBurnerEffect_ || !std::isfinite(x)
+            || !std::isfinite(y) || !std::isfinite(z) || !std::isfinite(strength)) return;
+        const float dx=x-listenerX_,dy=y-listenerY_,dz=z-listenerZ_;
+        const float distance=std::hypot(std::hypot(dx,dz),dy);
+        const float falloff=1.0f-std::clamp((distance-24.0f)/360.0f,0.0f,1.0f);
+        const float volume=std::clamp(strength,0.0f,1.0f)*0.82f*falloff*underwaterAudio_.airGain;
+        if(volume<0.015f)return;
+        // The burner is prominent but still lives inside the two-transient allowance above
+        // the four ambient beds. Make room by dropping the least important short sound.
+        const auto stop = [](auto& instance) noexcept {
+            try { if(instance) instance->Stop(); } catch(const std::exception&) {}
+            instance.reset();
+        };
+        int transientCount=static_cast<int>(waterTransitionInstance_!=nullptr)
+            +static_cast<int>(footstepInstance_!=nullptr)
+            +static_cast<int>(wildlifeInstance_!=nullptr)
+            +static_cast<int>(waveInstance_!=nullptr);
+        if(transientCount>=2&&wildlifeInstance_) {
+            stop(wildlifeInstance_);wildlifeSecondsRemaining_=0.0f;activeWildlifeCall_={};--transientCount;
+        }
+        if(transientCount>=2&&waveInstance_) {
+            stop(waveInstance_);waveSecondsRemaining_=0.0f;--transientCount;
+        }
+        if(transientCount>=2&&footstepInstance_) {
+            stop(footstepInstance_);footstepSecondsRemaining_=0.0f;--transientCount;
+        }
+        if(transientCount>=2&&waterTransitionInstance_) {
+            stop(waterTransitionInstance_);waterTransitionSecondsRemaining_=0.0f;
+        }
+        const float rightX=-listenerForwardZ_,rightZ=listenerForwardX_;
+        const float horizontal=std::hypot(dx,dz);
+        const float pan=horizontal>1e-3f?std::clamp((dx*rightX+dz*rightZ)/horizontal*.85f,-.85f,.85f):0.0f;
+        try {
+            balloonBurnerInstance_=std::make_unique<SoundEffectInstance>(balloonBurnerEffect_->CreateInstance());
+            balloonBurnerInstance_->setVolumeProperty(volume);
+            balloonBurnerInstance_->setPanProperty(pan);
+            balloonBurnerInstance_->setPitchProperty(-.04f+.02f*static_cast<float>(playedBalloonBurnCount_%5));
+            balloonBurnerInstance_->Play();
+            ++playedBalloonBurnCount_;
+            if(playedBalloonBurnCount_==1)
+                std::cout<<"island-simulator: the hot-air balloon's burner roars from its moving burner frame\n";
+        } catch(const std::exception&) { balloonBurnerInstance_.reset(); }
+    }
+
+    void Soundscape::NoteWeaverChatter(const float x,const float y,const float z,
+                                       const float activity) noexcept
+    {
+        if(!std::isfinite(x)||!std::isfinite(y)||!std::isfinite(z)||!std::isfinite(activity))return;
+        pendingWeaverChatter_={true,x,y,z,0U};
+        pendingWeaverChatterSeconds_=1.4f;
+        pendingWeaverActivity_=std::clamp(activity,0.0f,1.0f);
+        ++weaverChatterCount_;
+    }
+
     void Soundscape::SetWeather(const float rain, const std::uint32_t strikes, const float strikeDistance) noexcept
     {
         weatherRain_ = std::isfinite(rain) ? std::clamp(rain, 0.0f, 1.0f) : 0.0f;
@@ -537,7 +594,7 @@ namespace island
                     bunkerHumInstance_.get(),mineAmbienceInstance_.get(),volcanoRumbleInstance_.get(),
                     waterMovementInstance_.get(),
                     waveInstance_.get(), waterTransitionInstance_.get(), footstepInstance_.get(),
-                    wildlifeInstance_.get()}) {
+                    wildlifeInstance_.get(),balloonBurnerInstance_.get()}) {
                 try {
                     if (instance && instance->getStateProperty() == SoundState::Playing)
                         ++state.playingSourceCount;
@@ -656,6 +713,8 @@ namespace island
             elephantEffects_[1] = CreateOneShotSoundEffect(GenerateElephantRumble());
             elephantEffects_[2] = CreateOneShotSoundEffect(GenerateQuadSplash());   // a shower of water falling back
             for (auto& effect : elephantEffects_) effect->setNameProperty("Procedural elephant");
+            balloonBurnerEffect_=CreateOneShotSoundEffect(GenerateBalloonBurner());
+            balloonBurnerEffect_->setNameProperty("Original procedural hot-air-balloon burner");
             owlEffect_ = CreateOneShotSoundEffect(GenerateScopsOwlCall());
             owlEffect_->setNameProperty("Procedural scops owl");
             nightChorusEffect_ = CreateLoopedSoundEffect(GenerateNightChorusLoop());
@@ -787,6 +846,10 @@ namespace island
             for (std::size_t i = 0; i < birdChatterEffects_.size(); ++i) {
                 birdChatterEffects_[i] = CreateOneShotSoundEffect(GenerateBirdChatter(static_cast<std::uint8_t>(i)));
                 birdChatterEffects_[i]->setNameProperty("Original procedural bird alarm chatter " + std::to_string(i));
+            }
+            for (std::size_t i=0;i<weaverChatterEffects_.size();++i) {
+                weaverChatterEffects_[i]=CreateOneShotSoundEffect(GenerateWeaverChatter(static_cast<std::uint8_t>(i)));
+                weaverChatterEffects_[i]->setNameProperty("Original procedural village-weaver colony chatter "+std::to_string(i));
             }
             for (std::size_t i = 0; i < hoofbeatEffects_.size(); ++i) {
                 hoofbeatEffects_[i] = CreateOneShotSoundEffect(GenerateHoofbeats(static_cast<std::uint8_t>(i)));
@@ -1034,8 +1097,11 @@ namespace island
             elephantVoiceInstance_.reset();
             elephantSplashInstance_.reset();
             for (auto& effect : elephantEffects_) effect.reset();
+            balloonBurnerInstance_.reset();
+            balloonBurnerEffect_.reset();
             for (auto& effect : crocodileHissEffects_) effect.reset();
             for (auto& effect : birdChatterEffects_) effect.reset();
+            for (auto& effect : weaverChatterEffects_) effect.reset();
             for (auto& effect : hoofbeatEffects_) effect.reset();
             clawKnockEffect_.reset();
             for (auto& effect : geckoChirpEffects_) effect.reset();
@@ -1178,8 +1244,15 @@ namespace island
                 }
             }
         }
+        if(balloonBurnerInstance_) {
+            try {
+                if(balloonBurnerInstance_->getStateProperty()==SoundState::Stopped)
+                    balloonBurnerInstance_.reset();
+            } catch(const std::exception&) { balloonBurnerInstance_.reset(); }
+        }
 
         listenerX_ = listenerState.x;
+        listenerY_ = listenerState.y;
         listenerZ_ = listenerState.z;
         {
             const float length = std::hypot(listenerState.forwardX, listenerState.forwardZ);
@@ -1415,7 +1488,8 @@ namespace island
                 }
                 int activeLowerPriorityVoices = static_cast<int>(waveInstance_ != nullptr)
                     + static_cast<int>(footstepInstance_ != nullptr)
-                    + static_cast<int>(wildlifeInstance_ != nullptr);
+                    + static_cast<int>(wildlifeInstance_ != nullptr)
+                    + static_cast<int>(balloonBurnerInstance_ != nullptr);
                 if (activeLowerPriorityVoices >= 2 && wildlifeInstance_) {
                     wildlifeInstance_->Stop();
                     wildlifeInstance_.reset();
@@ -1523,7 +1597,8 @@ namespace island
             const int activeOtherTransientVoices =
                 static_cast<int>(waterTransitionInstance_ != nullptr)
                 + static_cast<int>(waveInstance_ != nullptr)
-                + static_cast<int>(wildlifeInstance_ != nullptr);
+                + static_cast<int>(wildlifeInstance_ != nullptr)
+                + static_cast<int>(balloonBurnerInstance_ != nullptr);
             if (activeOtherTransientVoices < 2) {
                 try {
                     if (footstepInstance_) {
@@ -1564,7 +1639,8 @@ namespace island
 
         const int activeTransientVoices = (waterTransitionInstance_ ? 1 : 0)
             + (footstepInstance_ ? 1 : 0)
-            + (wildlifeInstance_ ? 1 : 0);
+            + (wildlifeInstance_ ? 1 : 0)
+            + (balloonBurnerInstance_ ? 1 : 0);
         const float shipwreckDistance = hasShipwreckSource_
             ? std::hypot(std::hypot(shipwreckX_ - listenerState.x,
                                     shipwreckZ_ - listenerState.z),
@@ -1631,7 +1707,9 @@ namespace island
         RefreshDebugSources(listenerState.x, listenerState.y, listenerState.z,
                             birds, monkeys);
         const bool wildlifeSlotAvailable = available_ && !muted_ && wildlifeCallsEnabled_
-            && !wildlifeInstance_ && !waveInstance_ && !waterTransitionInstance_;
+            && !wildlifeInstance_ && !waveInstance_ && !waterTransitionInstance_
+            && static_cast<int>(footstepInstance_ != nullptr)
+                + static_cast<int>(balloonBurnerInstance_ != nullptr) < 2;
         // Nearby herd voices are encounter feedback, so let a due goat/boar call
         // claim the one transient channel before non-local birds and monkeys. They
         // still share the same voice and never raise the six-source device budget.
@@ -1820,6 +1898,23 @@ namespace island
                 pendingChatter_.available = false;
             }
         }
+        // The occupied nesting palm is a small daytime chorus, not a global ambience. It
+        // shares the one wildlife voice and expires quickly if another nearby animal has it.
+        if(pendingWeaverChatter_.available) {
+            pendingWeaverChatterSeconds_-=safeDelta;
+            const float distance=std::hypot(std::hypot(pendingWeaverChatter_.x-listenerState.x,
+                pendingWeaverChatter_.z-listenerState.z),pendingWeaverChatter_.y-listenerState.y);
+            const float falloff=1.0f-std::clamp((distance-5.0f)/55.0f,0.0f,1.0f);
+            if(wildlifeSlotAvailable&&wildlifeCall.type==WildlifeCallType::None&&falloff>.02f
+                &&pendingWeaverActivity_>.05f) {
+                wildlifeCall={WildlifeCallType::Weaver,
+                    static_cast<std::uint8_t>(weaverChatterCount_%2U),
+                    (.20f+.22f*pendingWeaverActivity_)*falloff,0.02f,pendingWeaverChatter_};
+                pendingWeaverChatter_.available=false;
+            } else if(pendingWeaverChatterSeconds_<=0.0f||falloff<=.02f) {
+                pendingWeaverChatter_.available=false;
+            }
+        }
         // Hoofbeats of a boar or deer trotting off: a drumming heard within about twenty
         // metres, dropped if the slot stays busy for a second.
         if (pendingHoofbeats_.available) {
@@ -1983,6 +2078,8 @@ namespace island
             wildlifeEffect = crocodileHissEffects_.at(wildlifeCall.variant).get();
         } else if (wildlifeCall.type == WildlifeCallType::Chatter) {
             wildlifeEffect = birdChatterEffects_.at(wildlifeCall.variant).get();
+        } else if(wildlifeCall.type==WildlifeCallType::Weaver) {
+            wildlifeEffect=weaverChatterEffects_.at(wildlifeCall.variant).get();
         } else if (wildlifeCall.type == WildlifeCallType::Hoofbeats) {
             wildlifeEffect = hoofbeatEffects_.at(wildlifeCall.variant).get();
         } else if (wildlifeCall.type == WildlifeCallType::ClawKnock) {
@@ -2120,6 +2217,10 @@ namespace island
                 if (playedBirdChatterCount_ == 1) {
                     std::cout << "island-simulator: first positional bird alarm chatter played\n" << std::flush;
                 }
+            } else if(wildlifeCall.type==WildlifeCallType::Weaver) {
+                ++playedWeaverChatterCount_;
+                if(playedWeaverChatterCount_==1)std::cout
+                    <<"island-simulator: village weavers chatter from their occupied nesting palm\n"<<std::flush;
             } else if(wildlifeCall.type==WildlifeCallType::Hoofbeats) {
                 ++playedHoofbeatCount_;
                 if (playedHoofbeatCount_ == 1) {
@@ -2207,6 +2308,7 @@ namespace island
             stopTransient(waterTransitionInstance_);
             stopTransient(footstepInstance_);
             stopTransient(wildlifeInstance_);
+            stopTransient(balloonBurnerInstance_);
             waveSecondsRemaining_ = 0.0f;
             waterTransitionSecondsRemaining_ = 0.0f;
             footstepSecondsRemaining_ = 0.0f;
@@ -2331,8 +2433,11 @@ namespace island
         elephantVoiceInstance_.reset();
         elephantSplashInstance_.reset();
         for (auto& effect : elephantEffects_) effect.reset();
+        balloonBurnerInstance_.reset();
+        balloonBurnerEffect_.reset();
         for (auto& effect : crocodileHissEffects_) effect.reset();
         for (auto& effect : birdChatterEffects_) effect.reset();
+        for (auto& effect : weaverChatterEffects_) effect.reset();
         for (auto& effect : hoofbeatEffects_) effect.reset();
         clawKnockEffect_.reset();
         for (auto& effect : geckoChirpEffects_) effect.reset();

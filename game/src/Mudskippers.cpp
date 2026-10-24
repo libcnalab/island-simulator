@@ -43,7 +43,8 @@ MudskipperColony::MudskipperColony(const IslandTerrain& terrain,const std::span<
 }
 
 void MudskipperColony::At(const float seconds,const float walkerX,const float walkerZ,
-                          const std::function<float(float,float)>& ground,std::vector<Mudskipper>& out) const {
+                          const std::function<float(float,float)>& ground,std::vector<Mudskipper>& out,
+                          const float tideLevel) const {
     out.clear();
     if(!ground) return;
     const float t=std::isfinite(seconds)?seconds:0.0f;
@@ -85,7 +86,11 @@ void MudskipperColony::At(const float seconds,const float walkerX,const float wa
         Mudskipper skipper;
         skipper.x=x;skipper.z=z;
         skipper.hop=hop;
-        skipper.y=ground(x,z)+std::sin(hop*Pi)*0.10f;
+        const float mudHeight=ground(x,z);
+        // At high water the lower homes are under the estuary and their fish stay hidden;
+        // ebb tide exposes the complete colony again.
+        if(mudHeight<tideLevel-.17f) continue;
+        skipper.y=mudHeight+std::sin(hop*Pi)*0.10f;
         skipper.heading=heading;
         // the dorsal fin raised now and then, at a neighbour
         const float show=std::fmod(t*0.11f+Hash(seed+17U),1.0f);

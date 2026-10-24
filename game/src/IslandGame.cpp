@@ -4126,6 +4126,46 @@ namespace island
         if(mudskippers_) mudskipperRenderer_=std::make_unique<MudskipperRenderer>(device,*mudskippers_,terrain_,*drawnGround_);
         if(weavers_) weaverNestRenderer_=std::make_unique<WeaverNestRenderer>(device,*weavers_);
         if(balloon_) balloonRenderer_=std::make_unique<BalloonRenderer>(device);
+        if(balloon_) balloonShadowRenderer_=std::make_unique<BalloonShadowRenderer>(device,terrain_,*drawnGround_);
+        {
+            std::vector<ExpeditionMarkerSite> markers;
+            const auto addMarker = [this, &markers](const float x, const float z,
+                                                     const std::uint8_t chapter) {
+                const float heading = std::atan2(x, z);   // face an explorer approaching inland
+                markers.push_back({x, DrawnOrAnalyticHeight(*drawnGround_, terrain_, x, z),
+                                   z, heading, chapter});
+            };
+            {
+                const auto& ship = shipwreckLayout_.Ship();
+                const float radius = std::max(1.0f, std::hypot(ship.x, ship.z));
+                addMarker(ship.x - ship.x / radius * 9.0f,
+                          ship.z - ship.z / radius * 9.0f, 0U);
+            }
+            if (castlePlacement_) {
+                const auto p = castlePlacement_->At(0.0f, CastleRuinPlacement::Half + 3.0f);
+                addMarker(p[0], p[1], 1U);
+            }
+            {
+                const auto p = mineLayout_.World(2.0f, 0.0f, -2.1f);
+                addMarker(p.x, p.z, 2U);
+            }
+            {
+                const auto p = bunkerLayout_.World(-2.0f, 0.0f, -2.3f);
+                addMarker(p.x, p.z, 3U);
+            }
+            if (lighthousePlacement_) {
+                const auto p = lighthousePlacement_->At(
+                    LighthousePlacement::DoorAngle,
+                    LighthousePlacement::PlinthRadius + lighthousePlacement_->stepsRun + 1.3f,
+                    lighthousePlacement_->stepsFootY);
+                addMarker(p.x, p.z, 4U);
+            }
+            if (ufoPlacement_) {
+                const auto p = ufoPlacement_->At(-UfoWreckPlacement::HullRadius - 3.0f, 2.5f);
+                addMarker(p[0], p[1], 5U);
+            }
+            expeditionMarkerRenderer_ = std::make_unique<ExpeditionMarkerRenderer>(device, markers);
+        }
         if(!pandanus_.empty()) pandanusRenderer_=std::make_unique<PandanusRenderer>(device,pandanus_,terrain_,*drawnGround_);
         if(windthrowPlacement_) windthrowRenderer_=std::make_unique<WindthrowRenderer>(device,*windthrowPlacement_,terrain_,*drawnGround_);
         glowingFungi_=GlowingFungusLayout::Place(terrain_,windthrowPlacement_?&*windthrowPlacement_:nullptr,naturalPropLayout_.FallenLogs(),
@@ -5003,6 +5043,18 @@ namespace island
         const float deltaSeconds = canopyLodInspection_ ? 0.0f : (snakeCaptureClock||goatCaptureClock||spiderCaptureClock||boarCaptureClock||campfireCaptureClock||residentCaptureClock||bearCaptureClock||monkeyCaptureClock||quadDriveClock) ? 0.1f : std::min(
             0.1f, static_cast<float>(gameTime.getElapsedGameTimeProperty().getTotalMillisecondsProperty())
                 / 1000.0f);
+        tideSeconds_ += deltaSeconds;
+        tide_ = TideCycle::At(tideSeconds_);
+        playerMotion_.SetSeaLevel(tide_.level);
+        crocodileGroup_.SetTideLevel(tide_.level);
+        crabColony_.SetTideLevel(tide_.level);
+        seaTurtleGroup_.SetTideLevel(tide_.level);
+        if (!tideDiagnosticReported_) {
+            tideDiagnosticReported_ = true;
+            std::cout << "island-simulator: tide moves the ocean, shoreline, swimmer and estuary habitat through a "
+                      << TideCycle::Amplitude * 2.0f << " m range every "
+                      << TideCycle::PeriodSeconds / 60.0f << " minutes\n";
+        }
         worldSeedCopyFeedbackSeconds_ = std::max(
             0.0f, worldSeedCopyFeedbackSeconds_ - deltaSeconds);
         locomotionModeNoticeSeconds_ = std::max(
@@ -5137,7 +5189,7 @@ namespace island
         whales_.Update(deltaSeconds, wind::DirectionX, wind::DirectionZ);
         updateProfile_.Mark("flyingFish");
         flyingFish_.Update(deltaSeconds, cameraPosition_.X, cameraPosition_.Z, dayNight_.Hour(), [this](const float x, const float z) {
-            return SampleOceanWaves(x, z, oceanSeconds_).height * weather_now::SeaState();
+            return tide_.level + SampleOceanWaves(x, z, oceanSeconds_).height * weather_now::SeaState();
         });
         if (viewpoint_ == FixedViewpoint::FlyingFishDetail) {
             // The swimmer's eye follows the shoal as it glides past.
@@ -5161,7 +5213,7 @@ namespace island
             const PlayerPosition& swimmer = playerMotion_.Position();
             const float vx = playerMotion_.VelocityX(), vz = playerMotion_.VelocityZ();
             updateProfile_.Mark("swimGlow");
-            swimGlow_.Update(deltaSeconds, swimmer.x, 0.0f, swimmer.z, std::hypot(vx, vz), vx, vz,
+            swimGlow_.Update(deltaSeconds, swimmer.x, tide_.level, swimmer.z, std::hypot(vx, vz), vx, vz,
                              playerMotion_.Mode() == LocomotionMode::Swimming, swimGlowStrength_);
         }
         {
@@ -5195,7 +5247,7 @@ namespace island
         updateProfile_.Mark("waterViewModel");
         (void)waterViewModel_.Update(
             waterViewAllowed && !flightMotion_.IsActive() && playerMotion_.Mode() == LocomotionMode::Swimming,
-            playerMotion_.GroundHeight(), playerMotion_.OceanCurrentStrength(terrain_),
+            playerMotion_.GroundHeight() - tide_.level, playerMotion_.OceanCurrentStrength(terrain_),
             deltaSeconds);
         {
             // A descent breathes out a burst of bubbles that thins over the next two seconds.
@@ -5212,7 +5264,7 @@ namespace island
         updateProfile_.Mark("waterRippleModel");
         (void)waterRippleModel_.Update(
             !flightMotion_.IsActive() && playerMotion_.Mode() == LocomotionMode::Swimming,
-            playerMotion_.GroundHeight(), rippleSpeed, deltaSeconds);
+            playerMotion_.GroundHeight() - tide_.level, rippleSpeed, deltaSeconds);
         const float grassInteractionSpeed = viewpoint_ == FixedViewpoint::GrassDetail
             ? 3.2f
             : (viewpoint_ == FixedViewpoint::BenchmarkTraversal
@@ -5456,11 +5508,11 @@ namespace island
         }
         if (soundscape_ && crocodileGroup_.LastEntry().count != notedEntryCount_) {
             notedEntryCount_ = crocodileGroup_.LastEntry().count;
-            soundscape_->NoteBirdSplash(crocodileGroup_.LastEntry().x, 0.0f, crocodileGroup_.LastEntry().z);
+            soundscape_->NoteBirdSplash(crocodileGroup_.LastEntry().x, tide_.level, crocodileGroup_.LastEntry().z);
         }
         if (soundscape_ && fishSchools_.LastBreach().count != notedBreachCount_) {
             notedBreachCount_ = fishSchools_.LastBreach().count;
-            soundscape_->NoteFishBreach(fishSchools_.LastBreach().x, 0.0f, fishSchools_.LastBreach().z);
+            soundscape_->NoteFishBreach(fishSchools_.LastBreach().x, tide_.level, fishSchools_.LastBreach().z);
         }
         if (soundscape_ && reefHeronGroup_.LastFlush().count != notedHeronFlushes_) {
             notedHeronFlushes_ = reefHeronGroup_.LastFlush().count;
@@ -6705,7 +6757,7 @@ namespace island
         default: ground.grip = 1.0f; break;
         }
         ground.grip *= 1.0f - 0.25f * weather_now::Current().wetness;
-        ground.waterDepth = std::max(streamDepth, -ground.height);
+        ground.waterDepth = std::max(streamDepth, tide_.level - ground.height);
         return ground;
     }
 
@@ -6728,7 +6780,7 @@ namespace island
         const PlayerPosition& position = playerMotion_.Position();
         float bed = 0.0f, stream = 0.0f;
         (void)StreamWaterAt(position.x, position.z, bed, stream);
-        return std::max(std::max(0.0f, -playerMotion_.GroundHeight()), stream);
+        return std::max(std::max(0.0f, tide_.level - playerMotion_.GroundHeight()), stream);
     }
 
     bool IslandGame::QuadObstacle(const float x, const float z, const float radius, float& pushX, float& pushZ) const noexcept
@@ -7946,6 +7998,33 @@ namespace island
                                                                 weather_now::Current().wetness));
         }
         soundscape_->SetWindClock(seaForageSeconds_);
+        if(balloon_) {
+            const float clock=seaForageSeconds_+balloonClockShift_;
+            const int burns=BalloonFlight::BurnCount(clock);
+            if(burns!=notedBalloonBurns_&&BalloonFlight::Burning(clock)) {
+                const auto balloon=balloon_->At(clock);
+                soundscape_->NoteBalloonBurner(balloon.x,balloon.y-BalloonFlight::BasketBelow+.9f,
+                                               balloon.z,balloon.burner);
+                notedBalloonBurns_=burns;
+            }
+        }
+        if(weavers_&&!weavers_->Sites().empty()) {
+            weaverChatterSeconds_=std::max(0.0f,weaverChatterSeconds_-deltaSeconds);
+            const float daylight=std::clamp((sun_light::Current().lighting.sunElevationDegrees+3.0f)/12.0f,0.0f,1.0f);
+            if(weaverChatterSeconds_<=0.0f&&daylight>.15f) {
+                const WeaverNestSite* nearest=&weavers_->Sites().front();
+                float best=std::numeric_limits<float>::max();
+                for(const auto& site:weavers_->Sites()) {
+                    const float d2=(site.x-listener.x)*(site.x-listener.x)+(site.z-listener.z)*(site.z-listener.z);
+                    if(d2<best){best=d2;nearest=&site;}
+                }
+                const auto census=weavers_->Count(seaForageSeconds_+weaverClockShift_);
+                const float activity=std::clamp(.30f+.08f*static_cast<float>(census.displaying+census.flying),.3f,1.0f)*daylight;
+                soundscape_->NoteWeaverChatter(nearest->x,nearest->y-.8f,nearest->z,activity);
+                ++weaverChatterBursts_;
+                weaverChatterSeconds_=4.5f+static_cast<float>((weaverChatterBursts_*7919U)%31U)*.1f;
+            }
+        }
         soundscape_->Update(
             shoreDistance,
             !flightMotion_.IsActive() && playerMotion_.Mode() == LocomotionMode::Swimming,
@@ -8024,7 +8103,7 @@ namespace island
         const TerrainSample sample = terrain_.Sample(x, z);
         // Ankle-deep water before the swim threshold wades; the scheduler stays silent once
         // the player is actually swimming. The stream's water is waded too.
-        if (sample.height < -0.06f) return FootstepSurface::Shallows;
+        if (sample.height < tide_.level - 0.06f) return FootstepSurface::Shallows;
         if (float bed = 0.0f, stream = 0.0f; StreamWaterAt(x, z, bed, stream) && stream > 0.04f) return FootstepSurface::Shallows;
         switch (sample.surface) {
         case TerrainSurface::DeepSeabed:
@@ -8641,7 +8720,7 @@ namespace island
             const Vector3& eye = renderCameraPosition_;
             const bool overSea = std::isfinite(eye.X) && std::isfinite(eye.Z)
                 && terrain_.Height(eye.X, eye.Z) < 0.0f && terrain_.SignedShoreDistance(eye.X, eye.Z) < 0.0f;
-            underwater_fog::Update(overSea && eye.Y < 0.0f ? -eye.Y : 0.0f);
+            underwater_fog::Update(overSea && eye.Y < tide_.level ? tide_.level - eye.Y : 0.0f);
         }
         {
             GpuDiagnosticScope gpuPass("sky");
@@ -8674,7 +8753,7 @@ namespace island
             ContactShadowRenderer::PlayerShadow playerShadow;
             if (!flightMotion_.IsActive() && !IsDebugFreeCameraActive()
                 && playerMotion_.Mode() == LocomotionMode::Walking
-                && playerMotion_.GroundHeight() > -0.06f) {
+                && playerMotion_.GroundHeight() > tide_.level - 0.06f) {
                 const PlayerPosition& walker = playerMotion_.Position();
                 playerShadow = {walker.x, walker.z, true};
             }
@@ -8904,6 +8983,10 @@ namespace island
         {
             GpuDiagnosticScope gpuPass("shipwreck");
             shipwreckRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_);
+        }
+        if (expeditionMarkerRenderer_) {
+            GpuDiagnosticScope gpuPass("expedition-markers");
+            expeditionMarkerRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_);
         }
         if(jettyRenderer_) {
             GpuDiagnosticScope gpuPass("jetty");
@@ -9202,7 +9285,8 @@ namespace island
             const PlayerPosition& walker = playerMotion_.Position();
             const bool walking = viewpoint_ == FixedViewpoint::None;
             mudskippers_->At(timeSeconds, walking ? walker.x : 1.0e4f, walking ? walker.z : 1.0e4f,
-                             [this](const float x, const float z) { return DrawnOrAnalyticHeight(*drawnGround_, terrain_, x, z); }, skippers_);
+                             [this](const float x, const float z) { return DrawnOrAnalyticHeight(*drawnGround_, terrain_, x, z); },
+                             skippers_, tide_.level);
             mudskipperRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, skippers_);
         }
         if (alateRenderer_) {
@@ -9265,7 +9349,8 @@ namespace island
                                                            weather_now::SeaState());
             if (sailboatRenderer_) {
                 const auto& boat = sailboat_.State();
-                const float swell = boat.active ? SampleOceanWaves(boat.x, boat.z, timeSeconds).height * weather_now::SeaState() : 0.0f;
+                const float swell = boat.active ? tide_.level
+                    + SampleOceanWaves(boat.x, boat.z, timeSeconds).height * weather_now::SeaState() : 0.0f;
                 sailboatRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, boat, swell,
                                         weather_now::Current().wind, timeSeconds);
             }
@@ -9327,7 +9412,7 @@ namespace island
                     smallSplash = {strike.x, strike.z, strikePhase};
             }
             oceanRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
-                                 timeSeconds, oceanPlayer.x, oceanPlayer.z,
+                                 timeSeconds, tide_.level, oceanPlayer.x, oceanPlayer.z,
                                  waterRippleModel_.Intensity(), waterRippleModel_.Phase(),
                                  waterRippleModel_.SplashIntensity(),
                                  waterRippleModel_.SplashPhase(),
@@ -9337,11 +9422,14 @@ namespace island
                                  jettyPlacement_ ? jettyPlacement_->dirX : 0.0f,
                                  jettyPlacement_ ? jettyPlacement_->dirZ : 0.0f,
                                  smallSplash.x, smallSplash.z, smallSplash.phase);
+            if(balloonShadowRenderer_&&balloon_)
+                balloonShadowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,
+                                              balloon_->At(balloonClock_));
         }
         {
             GpuDiagnosticScope gpuPass("shoreline");
             shorelineRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
-                                     timeSeconds);
+                                     timeSeconds, tide_.level);
         }
         {
             GpuDiagnosticScope gpuPass("stream-water");
@@ -9554,7 +9642,7 @@ namespace island
             if (!underground) {
                 const float dark = 1.0f - std::clamp((light.sunElevationDegrees + 6.0f) / 8.0f, 0.0f, 1.0f);
                 shorelineRenderer_->DrawGlow(cameraView_, cameraProjection_, renderCameraPosition_, timeSeconds,
-                                             dark * (1.0f - 0.55f * light.moonLight));
+                                             dark * (1.0f - 0.55f * light.moonLight), tide_.level);
                 if (swimGlowRenderer_)
                     swimGlowRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, swimGlow_.Specks(), swimGlowStrength_);
             }

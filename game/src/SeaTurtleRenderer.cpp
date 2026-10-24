@@ -251,7 +251,12 @@ namespace island
                     + static_cast<float>(turtle.colorVariant) * 1.7f);
                 const float fine = 0.99f + 0.040f * std::sin(u * 37.0f - s * 21.0f
                     + std::sin(u * 11.0f + s * 13.0f) * 1.3f);
-                const float mottle = broad * fine;
+                // Narrow concentric growth bands break the formerly waxy plates without
+                // changing the closed carapace mesh or its exact vertex budget.
+                const float fromPlateCentre = std::hypot((u - uMid) * 1.15f, s - sMid);
+                const float growthBand = .985f + .025f
+                    * std::sin(fromPlateCentre * 58.0f + static_cast<float>(ScuteRow(uMid)));
+                const float mottle = broad * fine * growthBand;
                 const float rowTone = (ScuteRow(uMid) % 2 == 0) ? 1.0f : 0.985f;
                 if (scute == Scute::Vertebral)
                     return ToneColor(palette.scute, 1.025f * rowTone * mottle);

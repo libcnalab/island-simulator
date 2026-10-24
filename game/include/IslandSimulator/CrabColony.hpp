@@ -98,6 +98,11 @@ namespace island
          *  day, so after dark each goes home to its colony's burrow and stays down until
          *  morning. Never set (the tests), the day and the night are alike. */
         void SetNightness(float nightness) noexcept { nightness_ = std::isfinite(nightness) ? std::clamp(nightness, 0.0f, 1.0f) : -1.0f; }
+        /** @brief Current ocean displacement. At the top of the tide the exposed beach
+         *  colony retreats to its burrows until the water begins to fall. */
+        void SetTideLevel(float tideLevel) noexcept {
+            tideLevel_ = std::isfinite(tideLevel) ? std::clamp(tideLevel, -0.3f, 0.3f) : 0.0f;
+        }
         /** @brief A second walker on the beach (the resident); crabs scatter from whichever
          *  of the observer and the walker is nearer. Activation stays observer-relative. */
         void SetWalker(float x, float z, bool valid) noexcept;
@@ -132,6 +137,7 @@ namespace island
 
     private:
         float nightness_ = -1.0f;   // unset: day and night alike
+        float tideLevel_ = 0.0f;
         struct Agent
         {
             CrabState state;

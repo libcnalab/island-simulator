@@ -117,16 +117,25 @@ namespace island
 
         [[nodiscard]] Color SmoothBodyColor(const Color& back, const Color& body,
                                             const Color& belly, const PoseAxes& axes,
-                                            const float angle)
+                                            const float angle, const float longitudinal)
         {
             const Vector3 normal = Vector3::Normalize(
                 axes.right * std::cos(angle) + axes.up * std::sin(angle));
             const float direct = std::max(
                 0.0f, Vector3::Dot(normal, wildlife_render::FixedSunDirection));
             const float sky = std::max(0.0f, normal.Y);
+            Color patterned = BodyColor(back, body, belly, std::sin(angle));
+            // A shark's lateral line is a restrained shadow on either flank, never a bright
+            // painted stripe. Fine longitudinal modulation suggests denticles in close views.
+            const float flank = std::abs(std::cos(angle));
+            const float lateralLine = flank
+                * std::clamp(1.0f - std::abs(std::sin(angle) - .03f) / .16f, 0.0f, 1.0f)
+                * std::clamp((longitudinal + .82f) / .24f, 0.0f, 1.0f);
+            patterned = Color::Lerp(patterned, back, lateralLine * .13f);
+            const float denticleSheen = std::sin(longitudinal * 47.0f + angle * 8.0f)
+                * flank * .018f;
             return wildlife_render::ScaleColor(
-                BodyColor(back, body, belly, std::sin(angle)),
-                .76f + .25f * direct + .05f * sky);
+                patterned, .76f + .25f * direct + .05f * sky + denticleSheen);
         }
 
         void AddGradientTriangle(std::vector<VertexPositionColor>& vertices,
@@ -241,8 +250,10 @@ namespace island
                     * static_cast<float>(next) / static_cast<float>(BodySegments);
                 AddGradientTriangle(vertices, nose, rings.front()[segment],
                                     rings.front()[next], body,
-                                    SmoothBodyColor(back, body, belly, axes, angle),
-                                    SmoothBodyColor(back, body, belly, axes, nextAngle));
+                                    SmoothBodyColor(back, body, belly, axes, angle,
+                                                    BodySections.front().z),
+                                    SmoothBodyColor(back, body, belly, axes, nextAngle,
+                                                    BodySections.front().z));
             }
             for (std::size_t row = 0; row + 1U < BodySections.size(); ++row) {
                 for (int segment = 0; segment < BodySegments; ++segment) {
@@ -251,8 +262,10 @@ namespace island
                         * static_cast<float>(segment) / static_cast<float>(BodySegments);
                     const float nextAngle = 2.0f * std::numbers::pi_v<float>
                         * static_cast<float>(next) / static_cast<float>(BodySegments);
-                    const Color color = SmoothBodyColor(back, body, belly, axes, angle);
-                    const Color nextColor = SmoothBodyColor(back, body, belly, axes, nextAngle);
+                    const Color color = SmoothBodyColor(back, body, belly, axes, angle,
+                                                        BodySections[row].z);
+                    const Color nextColor = SmoothBodyColor(back, body, belly, axes, nextAngle,
+                                                            BodySections[row].z);
                     AddGradientTriangle(vertices, rings[row][segment], rings[row + 1U][segment],
                                         rings[row + 1U][next], color, color, nextColor);
                     AddGradientTriangle(vertices, rings[row][segment], rings[row + 1U][next],
@@ -270,8 +283,10 @@ namespace island
                     * static_cast<float>(next) / static_cast<float>(BodySegments);
                 AddGradientTriangle(vertices, rings.back()[segment], rearCap,
                                     rings.back()[next],
-                                    SmoothBodyColor(back, body, belly, axes, angle), body,
-                                    SmoothBodyColor(back, body, belly, axes, nextAngle));
+                                    SmoothBodyColor(back, body, belly, axes, angle,
+                                                    BodySections.back().z), body,
+                                    SmoothBodyColor(back, body, belly, axes, nextAngle,
+                                                    BodySections.back().z));
             }
 
             const float bend = shark.bodyWave * 0.125f;
