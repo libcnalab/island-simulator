@@ -19,7 +19,7 @@ from run_software_capture import (
     validate_goat_motion_stages,
     validate_boar_motion_stages,
     validate_deer_motion_stages,
-    validate_bunker_quad_entry, validate_bunker_quad_turn,
+    validate_bunker_quad_entry, validate_bunker_quad_turn, validate_crocodile_land,
     validate_spider_motion_stages,
     validate_spider_render_log,
     validate_spider_web_render_log,
@@ -258,6 +258,20 @@ class SoftwareCaptureTests(unittest.TestCase):
                     re.sub(r"position=\d,2,3", "position=1,2,3", good)):
             with self.subTest(bad=bad), self.assertRaises(RuntimeError):
                 validate_boar_motion_stages(bad)
+
+    def test_crocodile_land_rejects_rest_pedalling_and_missing_crawl(self):
+        good=''.join(f"island-simulator: crocodile land stage={i} frame={(i+1)*10} "
+                     f"position={0 if i<8 else (i-7)*.3},0,0 heading=0 speed={0 if i<8 else .34} "
+                     f"phase={0 if i<8 else i*.2} submerged=0 behavior={0 if i<8 else 1} near=1\n" for i in range(16))
+        self.assertGreater(validate_crocodile_land(good)["travel"],.5)
+        for bad in ('',good+good,good.replace('frame=160','frame=159'),
+                    good.replace('phase=0 ','phase=nan '),good.replace('near=1','near=0'),
+                    good.replace('stage=1 frame=20 position=0,0,0 heading=0 speed=0 phase=0',
+                                 'stage=1 frame=20 position=0,0,0 heading=0 speed=0 phase=1'),
+                    good.replace('stage=1 frame=20 position=0,0,0 heading=0',
+                                 'stage=1 frame=20 position=0,0,0 heading=1'),
+                    good.replace('behavior=1','behavior=0')):
+            with self.subTest(bad=bad),self.assertRaises(RuntimeError):validate_crocodile_land(bad)
 
     def test_bunker_turn_requires_real_entry_shunts_and_forward_escape(self):
         rows=[]

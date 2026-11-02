@@ -427,6 +427,7 @@ namespace island
         HermitCrabDetail,
         CoconutCrabDetail,
         CrocodileDetail,
+        CrocodileLandDetail,
         BoarDetail,
         BoarLyingDetail,
         GoatDetail,

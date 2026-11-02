@@ -1,4 +1,5 @@
 #include "IslandSimulator/CrocodileGroup.hpp"
+#include "IslandSimulator/CrocodilePose.hpp"
 
 #include "IslandSimulator/IslandEnvironmentField.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
@@ -60,12 +61,27 @@ void CrocodileGroup::InitializeAgents() {
         agent.state.y=agent.state.submerged>0
             ?std::max(sample.height+BedClearance*agent.state.scale,SwimDepth*agent.state.scale)
             :sample.height+.10f*agent.state.scale;
+        UpdateFootSupport(agent.state);
         states_[i]=agent.state;homes_[i]=agent.home;
     }
 }
 
 float CrocodileGroup::BedHeight(const float x,const float z,const float analytic) const noexcept {
     return ground_?DrawnOrAnalyticHeight(*ground_,terrain_,x,z):analytic;
+}
+
+void CrocodileGroup::UpdateFootSupport(CrocodileState& state) const noexcept {
+    if(state.submerged>=1.0f)return;
+    const float fx=std::cos(state.headingRadians),fz=std::sin(state.headingRadians);
+    for(int i=0;i<4;++i) {
+        const auto foot=crocodile_pose::SampleLeg(state,i).foot;
+        const float x=state.x+(-fz*foot.x+fx*foot.z)*state.scale;
+        const float z=state.z+(fx*foot.x+fz*foot.z)*state.scale;
+        // The drawn cache already supplies the height; calculate the procedural
+        // fallback only when it is actually needed, not once per planted foot.
+        const float height=ground_?DrawnOrAnalyticHeight(*ground_,terrain_,x,z):terrain_.Height(x,z);
+        state.footSupport[i]=(height-state.y)/state.scale;
+    }
 }
 
 void CrocodileGroup::SetGround(const RenderedTerrainSurface* ground) noexcept {
@@ -75,6 +91,7 @@ void CrocodileGroup::SetGround(const RenderedTerrainSurface* ground) noexcept {
         if(agent.state.submerged>0.0f) continue;
         agent.state.y=BedHeight(agent.state.x,agent.state.z,terrain_.Height(agent.state.x,agent.state.z))
             +.10f*agent.state.scale;
+        UpdateFootSupport(agent.state);
         states_[i]=agent.state;
     }
 }
@@ -155,6 +172,8 @@ void CrocodileGroup::Update(float deltaSeconds,float observerX,float observerY,
     for(const auto& state:states_) {
         assert(std::isfinite(state.x)&&std::isfinite(state.y)&&std::isfinite(state.z));
         assert(std::isfinite(state.headingRadians)&&std::isfinite(state.speed));
+        assert(std::isfinite(state.gaitSpeed)&&std::isfinite(state.gaitPhase)&&std::isfinite(state.tailPhase));
+        for(float support:state.footSupport)assert(std::isfinite(support));
         assert(state.submerged>=0&&state.submerged<=1);
     }
 #endif
@@ -248,6 +267,7 @@ void CrocodileGroup::UpdateAgent(Agent& agent,float dt,float observerX,float obs
         agent.state.behavior==CrocodileBehavior::Crawl?.34f:
         agent.state.behavior==CrocodileBehavior::Swim?.72f:1.05f;
     agent.state.speed+=std::clamp(targetSpeed-agent.state.speed,-dt*.7f,dt*.7f);
+    const float previousX=agent.state.x,previousZ=agent.state.z;
     const float nx=agent.state.x+std::cos(agent.state.headingRadians)*agent.state.speed*dt;
     const float nz=agent.state.z+std::sin(agent.state.headingRadians)*agent.state.speed*dt;
     if(IsValidHabitat(nx,nz,agent.home)) {agent.state.x=nx;agent.state.z=nz;}
@@ -255,6 +275,16 @@ void CrocodileGroup::UpdateAgent(Agent& agent,float dt,float observerX,float obs
         std::atan2((agent.home.waterZ+agent.home.landZ)*.5f-agent.state.z,
                    (agent.home.waterX+agent.home.landX)*.5f-agent.state.x),turnStep);
 
+    // Resting on the bank does not rotate the body toward its own anchor. Alert
+    // facing still uses the existing steering budget and gets actual turning steps.
+    if(agent.state.behavior==CrocodileBehavior::Bask&&!alertFacing&&agent.state.speed<.02f)
+        agent.state.headingRadians=previousHeading;
+    const float distance=std::hypot(agent.state.x-previousX,agent.state.z-previousZ);
+    agent.state.speed=distance/dt;
+    const float turnDistance=std::abs(Wrap(agent.state.headingRadians-previousHeading))*.45f*agent.state.scale;
+    agent.state.gaitSpeed=std::max(distance,turnDistance)/dt;
+    agent.state.gaitPhase=crocodile_pose::Advance(agent.state.gaitPhase,
+        std::max(distance,turnDistance),agent.state.gaitSpeed,agent.state.scale);
     const auto sample=terrain_.Sample(agent.state.x,agent.state.z);
     const float targetSubmerged=(agent.state.behavior==CrocodileBehavior::Swim
         ||agent.state.behavior==CrocodileBehavior::Retreat)
@@ -272,12 +302,14 @@ void CrocodileGroup::UpdateAgent(Agent& agent,float dt,float observerX,float obs
         tideLevel_+SwimDepth*agent.state.scale);
     agent.state.y+=std::clamp(std::lerp(groundY,swimY,agent.state.submerged)-agent.state.y,
                               -dt*.55f,dt*.55f);
-    agent.state.gaitPhase=std::fmod(agent.state.gaitPhase+dt*(1.1f+agent.state.speed*2.2f),Tau);
-    agent.state.bodyWave=std::sin(agent.state.gaitPhase)*(.10f+.18f*agent.state.submerged);
+    agent.state.tailPhase=std::fmod(agent.state.tailPhase+dt*(1.1f+agent.state.speed*2.2f),Tau);
+    const float landWave=.015f+.085f*crocodile_pose::Movement(agent.state.gaitSpeed);
+    agent.state.bodyWave=std::sin(agent.state.tailPhase)*std::lerp(landWave,.28f,agent.state.submerged);
     // Swimming, the legs fold back along the flanks and the tail does the work; on the
     // bank, or afloat and still, they splay again.
     const bool swimming=agent.state.submerged>.6f&&agent.state.speed>.1f;
     agent.state.legFold+=std::clamp((swimming?1.0f:0.0f)-agent.state.legFold,-dt*LegSplayRate,dt*LegFoldRate);
+    UpdateFootSupport(agent.state);
     agent.wasAlert=alertFacing;
     agent.hissSeconds=std::max(0.0f,agent.hissSeconds-dt);
     // The gape: a few seconds into a lie-up on the bank the jaws open and stay open for

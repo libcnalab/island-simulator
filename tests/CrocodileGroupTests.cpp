@@ -35,6 +35,17 @@ int main() {
     }
     Check(basking&&swimming,"initial population lacks basking and swimming animals");
     {
+        island::CrocodileGroup resting(terrain);
+        const auto start=resting.Crocodiles()[0];
+        for(int frame=0;frame<70;++frame)
+            resting.Update(.1f,start.x+80,start.y+2,start.z);
+        const auto end=resting.Crocodiles()[0];
+        Check(end.behavior==island::CrocodileBehavior::Bask&&end.speed==0
+            &&end.x==start.x&&end.z==start.z,"Basking fixture moved or changed behavior");
+        Check(end.gaitPhase==start.gaitPhase,"Motionless basking crocodile keeps walking in place");
+        Check(end.headingRadians==start.headingRadians,"Unalert resting crocodile pivots across its planted feet");
+    }
+    {
         // On the drawn ground (the stream's carved bed at the mouth among its patches) a hauled-out
         // crocodile lies on what is drawn, not on the analytic sheet the bed was carved from.
         const island::RenderedTerrainSurface plain(terrain);
@@ -60,6 +71,7 @@ int main() {
         // its back, and the barrel's shadow inside it.
         island::CrocodileState basking;
         basking.headingRadians=0.0f;
+        basking.y=.10f; // real body-centre offset above a level bank at y=0
         const auto limbs=island::walker_shadow::CrocodileLimbs(basking);
         float front=-1e9f,back=1e9f,highest=-1e9f,lowest=1e9f;
         for(const auto& limb:limbs) {
@@ -69,8 +81,8 @@ int main() {
             lowest=std::min({lowest,limb.ay-limb.radius,limb.by-limb.radius});
         }
         const auto figure=island::walker_shadow::Lay(limbs,0,0,0,-.45f,.82f,-.34f,.7f);
-        Check(front>2.0f&&front<2.4f&&back<-3.5f&&back>-4.0f&&highest<.8f&&lowest>-.1f&&lowest<.1f
-            &&island::walker_shadow::SignedDistance(figure,.45f/.82f*.34f,.34f/.82f*.34f)<-.1f,
+        Check(front>2.0f&&front<2.4f&&back<-3.5f&&back>-4.0f&&highest<.81f&&lowest>-.1f&&lowest<.1f
+            &&island::walker_shadow::SignedDistance(figure,.45f/.82f*(basking.y+.34f),.34f/.82f*(basking.y+.34f))<-.1f,
             "a crocodile's sun shadow is not laid from its renderer's frame");
     }
     island::CrocodileGroup obstacleAware(terrain);

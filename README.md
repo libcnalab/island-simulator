@@ -380,7 +380,9 @@ cycles through basking, crawling and swimming, while a nearby player makes them 
 water. The one-draw near/far renderer uses a broad low armored barrel, wide independently shaped
 jaws, raised lateral eyes and nostrils, teeth, low dorsal osteoderms, four muscular limbs that
 splay at the elbow and return to flat three-toed feet, and an animated heavy-rooted tapering tail.
-Use `--viewpoint crocodiles` for the close inspection camera; current scope and qualification
+Land steps use overlapping support and raised returns on the drawn ground; resting feet stay still.
+Use `--viewpoint crocodiles` for the swimming inspection or `--viewpoint crocodile-land` for
+the fixed-clock bask-to-crawl capture; current scope and qualification
 status are recorded in [the crocodile implementation notes](docs/crocodiles.md).
 Eighteen butterflies occupy three sunny clearing-edge habitats, alternate rest, flutter, and
 nectar-hover behaviour, and stay inside low terrain-relative altitude and home-range bounds. Five

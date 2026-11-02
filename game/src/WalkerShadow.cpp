@@ -1,3 +1,4 @@
+#include "IslandSimulator/CrocodilePose.hpp"
 #include "IslandSimulator/DeerGait.hpp"
 #include "IslandSimulator/WalkerShadow.hpp"
 #include "IslandSimulator/DeerHoofSupport.hpp"
@@ -478,26 +479,18 @@ namespace island::walker_shadow
         for (const float side : {-0.20f, 0.20f})
             add(local(side, 0.36f, 1.0f), local(side * 0.6f, 0.33f, 1.55f), 0.16f);            // the broad jaw
         const auto tailAt = [&](const float t) {
-            const float wave = std::sin(t * 4.2f + crocodile.gaitPhase) * crocodile.bodyWave * t * t * 0.55f;
+            const float wave = std::sin(t * 4.2f + crocodile.tailPhase) * crocodile.bodyWave * t * t * 0.55f;
             return local(wave, 0.22f - 0.17f * t, -1.04f - 2.66f * t);
         };
         add(local(0.0f, 0.27f, -1.12f), tailAt(0.33f), 0.24f);   // (round: as wide as the flat tail is high)
         add(tailAt(0.33f), tailAt(0.66f), 0.16f);
         add(tailAt(0.66f), tailAt(1.0f), 0.08f);
-        const float fold = std::clamp(crocodile.legFold, 0.0f, 1.0f);
-        for (int pair = 0; pair < 2; ++pair) {
-            const float rootZ = pair == 0 ? 0.64f : -0.66f;
-            for (int sideIndex = -1; sideIndex <= 1; sideIndex += 2) {
-                const float side = static_cast<float>(sideIndex);
-                const float stride = std::sin(crocodile.gaitPhase + (pair * 2 + (sideIndex > 0 ? 1 : 0)) * std::numbers::pi_v<float>)
-                    * 0.13f * (1.0f - crocodile.submerged);
-                const auto shoulder = local(side * 0.52f, 0.34f, rootZ);
-                const auto elbow = local(side * std::lerp(0.83f, 0.62f, fold), std::lerp(0.18f, 0.22f, fold), rootZ + stride - 0.28f * fold);
-                const auto foot = local(side * std::lerp(0.78f, 0.56f, fold), std::lerp(0.025f, 0.14f, fold) + 0.018f,
-                                        rootZ + 0.24f + stride - 0.62f * fold + 0.20f);
-                add(shoulder, elbow, 0.15f);
-                add(elbow, foot, 0.10f);
-            }
+        for(int i=0;i<4;++i) {
+            const auto leg=crocodile_pose::SampleLeg(crocodile,i);
+            const auto point=[&](crocodile_pose::Point p){return local(p.x,p.y,p.z);};
+            add(point(leg.shoulder),point(leg.elbow),.15f);
+            auto toe=leg.foot;toe.z+=.20f;
+            add(point(leg.elbow),point(toe),.10f);
         }
         for (; next < limbs.size(); ++next) limbs[next].radius = UnusedRadius;
         return limbs;

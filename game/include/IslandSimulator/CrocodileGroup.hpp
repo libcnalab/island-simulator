@@ -4,6 +4,7 @@
 #include "IslandSimulator/WorldCollision.hpp"
 
 #include <cstddef>
+#include <array>
 #include <cstdint>
 #include <span>
 #include <utility>
@@ -21,6 +22,10 @@ struct CrocodileState {
     float headingRadians=0;
     float speed=0;
     float gaitPhase=0;
+    float gaitSpeed=0; // accepted translation/turn arc, not an unfulfilled drive command
+    float tailPhase=0; // independent water propulsion and subdued idle tail movement
+    // Ground height below each sole, relative to body centre and divided by scale.
+    std::array<float,4> footSupport{{-.10f,-.10f,-.10f,-.10f}};
     float bodyWave=0;
     float jawOpen=0;
     /** @brief 0..1 the blink: the eyes shut for a moment every several seconds, basking or
@@ -99,6 +104,7 @@ public:
 
 private:
     [[nodiscard]] float BedHeight(float x,float z,float analytic) const noexcept;
+    void UpdateFootSupport(CrocodileState&) const noexcept;
     const RenderedTerrainSurface* ground_=nullptr;
     struct Agent {
         CrocodileState state;

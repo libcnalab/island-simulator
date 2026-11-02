@@ -297,6 +297,33 @@ def validate_deer_motion_stages(text):
     return validate_ground_herd_motion_stages(text, "deer", "grazing", 4, 3.1)
 
 
+def validate_crocodile_land(text):
+    rows=re.findall(r"^island-simulator: crocodile land stage=(\d+) frame=(\d+) position=(\S+) heading=(\S+) "
+                    r"speed=(\S+) phase=(\S+) submerged=(\S+) behavior=(\d+) near=(\d+)$",text,re.M)
+    if len(rows)!=16 or text.count("crocodile land stage=")!=16:
+        raise RuntimeError("crocodile land inspection requires sixteen real motion stages")
+    samples=[]
+    for i,row in enumerate(rows):
+        stage,frame=map(int,row[:2]);position=tuple(map(float,row[2].split(',')))
+        heading,speed,phase,submerged=map(float,row[3:7]);behavior,near=map(int,row[7:9])
+        if (stage!=i or frame!=(i+1)*10 or len(position)!=3
+            or not all(map(math.isfinite,(*position,heading,speed,phase,submerged)))
+            or not 0<=speed<=1.051 or not 0<=phase<math.tau+.00001 or not 0<=submerged<=1
+            or not 0<=behavior<=3 or near<1):
+            raise RuntimeError("invalid crocodile land clock, pose or near visibility")
+        samples.append(dict(stage=stage,frame=frame,position=position,heading=heading,speed=speed,
+                            phase=phase,submerged=submerged,behavior=behavior))
+    idle=samples[:6]
+    if any(s["behavior"]!=0 or s["speed"]>1e-5 or math.dist(s["position"],idle[0]["position"])>.00001
+           or abs(math.remainder(s["heading"]-idle[0]["heading"],math.tau))>.00001
+           or s["phase"]!=idle[0]["phase"] for s in idle):
+        raise RuntimeError("basking crocodile pedals or rotates without actual travel")
+    travel=sum(math.dist(a["position"],b["position"]) for a,b in zip(samples,samples[1:]))
+    if travel<.5 or not any(s["behavior"]==1 and s["speed"]>.15 for s in samples[8:]):
+        raise RuntimeError("crocodile inspection omitted the natural crawl transition")
+    return dict(samples=samples,travel=travel)
+
+
 def validate_bunker_quad_entry(text):
     """An attractive outdoor image is not proof that the vehicle entered the portal."""
     rows = re.findall(r"^island-simulator: quad QA shelter: bunker, site ([a-z]+), "
@@ -743,7 +770,7 @@ def run_monitored_capture(command, root, environment, evidence, journal, baselin
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("build", type=Path)
-    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"fish-swim", "bird-flight", "campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "quad", "quad-ride", "quad-chase", "quad-drive", "quad-bunker", "quad-bunker-turn", "quad-mine", "quad-mine-crates", "quad-volcano", "quad-cave", "quad-cave-top", "quad-jetty", "quad-helicopter", "quad-lookout", "quad-bear", "quad-stream", "quad-sea", "quad-audit", "quad-plane", "quad-whale", "quad-lighthouse", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "jetty-end", "anemone", "walker-shadow", "flight", "bridge", "lookout", "log", "beach-vine", "hut", "hut-material", "hut-eaves", "helicopter", "helicopter-inside", "resident", "resident-tending", "resident-fishing", "bear", "bear-lying", "boars", "boar-lying", "goats", "goat-lying", "deer", "deer-walk", "deer-alert", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "monkey-scratch", "ground-doves", "bird-preen", "frigatebird", "whale-skeleton", "idol", "idol-offerings", "castle", "castle-gate", "castle-courtyard", "ufo", "alien", "alien-walk", "alien-examine", "alien-hull", "orbit", "bunker-side", "crab-migration", "termite-swarm", "booby-colony", "booby-nests", "mudskippers", "weaver-nests", "weaver-display", "balloon", "balloon-close", "trex", "trex-close", "trex-roar", "trex-rest", "trex-head", "elephant", "elephant-close", "elephant-trumpet", "elephant-bathe", "journal", "journal-notice", "help-sign", "lighthouse", "lighthouse-stair", "lighthouse-gallery", "lighthouse-lantern", "lighthouse-cottage", "passing-ship", "whale-breach", "pandanus", "termite-nest", "flying-fish", "windthrow", "windthrow-log", "glowing-fungi", "foxfire-log", "foxfire-snag", "plane-wreck", "plane-cockpit", "beach-litter", "freighter", "freighter-deck", "freighter-hold", "freighter-crew", "freighter-mess", "freighter-birds", "freighter-stern", "mine", "mine-cutting", "mine-adit", "mine-chamber", "mine-bats", "mine-bats-night", "mine-puddle", "volcano", "volcano-crater", "volcano-flow", "lifeboat", "signal-fire", "stingray-buried"}))
+    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"crocodile-land", "fish-swim", "bird-flight", "campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "quad", "quad-ride", "quad-chase", "quad-drive", "quad-bunker", "quad-bunker-turn", "quad-mine", "quad-mine-crates", "quad-volcano", "quad-cave", "quad-cave-top", "quad-jetty", "quad-helicopter", "quad-lookout", "quad-bear", "quad-stream", "quad-sea", "quad-audit", "quad-plane", "quad-whale", "quad-lighthouse", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "jetty-end", "anemone", "walker-shadow", "flight", "bridge", "lookout", "log", "beach-vine", "hut", "hut-material", "hut-eaves", "helicopter", "helicopter-inside", "resident", "resident-tending", "resident-fishing", "bear", "bear-lying", "boars", "boar-lying", "goats", "goat-lying", "deer", "deer-walk", "deer-alert", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "monkey-scratch", "ground-doves", "bird-preen", "frigatebird", "whale-skeleton", "idol", "idol-offerings", "castle", "castle-gate", "castle-courtyard", "ufo", "alien", "alien-walk", "alien-examine", "alien-hull", "orbit", "bunker-side", "crab-migration", "termite-swarm", "booby-colony", "booby-nests", "mudskippers", "weaver-nests", "weaver-display", "balloon", "balloon-close", "trex", "trex-close", "trex-roar", "trex-rest", "trex-head", "elephant", "elephant-close", "elephant-trumpet", "elephant-bathe", "journal", "journal-notice", "help-sign", "lighthouse", "lighthouse-stair", "lighthouse-gallery", "lighthouse-lantern", "lighthouse-cottage", "passing-ship", "whale-breach", "pandanus", "termite-nest", "flying-fish", "windthrow", "windthrow-log", "glowing-fungi", "foxfire-log", "foxfire-snag", "plane-wreck", "plane-cockpit", "beach-litter", "freighter", "freighter-deck", "freighter-hold", "freighter-crew", "freighter-mess", "freighter-birds", "freighter-stern", "mine", "mine-cutting", "mine-adit", "mine-chamber", "mine-bats", "mine-bats-night", "mine-puddle", "volcano", "volcano-crater", "volcano-flow", "lifeboat", "signal-fire", "stingray-buried"}))
     parser.add_argument("--canopy-lod-inspection", nargs=3, metavar=("X_MM", "Z_MM", "TIER"))
     parser.add_argument("--tide-phase", type=float, default=None, help="QA: hold existing tide phase in [0,1)")
     parser.add_argument("--time-of-day", type=float, default=None,
@@ -826,7 +853,7 @@ def main():
             metadata["cmake_cache"] = artifact_identity(build / "CMakeCache.txt")
             (evidence / "run.json").write_text(json.dumps(metadata, indent=2) + "\n")
             result = run_monitored_capture(command, evidence, software_environment(evidence),
-                                           evidence, journal, baseline, timeout=600.0 if args.viewpoint=="quad-bunker-turn" else 65.0,
+                                           evidence, journal, baseline, timeout=600.0 if args.viewpoint=="quad-bunker-turn" else 180.0 if args.viewpoint=="crocodile-land" else 65.0,
                                            read_only_directories=bindings)
             if result:
                 raise RuntimeError(f"software capture exited {result}")
@@ -1887,6 +1914,12 @@ def main():
                 reached = re.search(r"quad QA shelter: mine, site mine, depth ([-0-9.e]+) m, across [-0-9.e]+ m, floor [-0-9.e]+, body [-0-9.e]+, walls clear", diagnostics)
                 if not reached or float(reached.group(1)) < 8.5:
                     raise RuntimeError("quad-mine-crates capture did not bring the quad up the adit to the crates")
+            if args.viewpoint == "crocodile-land":
+                motion=validate_crocodile_land(log)
+                (evidence/"crocodile-land.json").write_text(json.dumps(motion,indent=2)+"\n")
+                for stage in range(16):
+                    if not Path(str(capture)+f".croc-stage-{stage}.ppm").is_file():
+                        raise RuntimeError("missing crocodile land stage image")
             if args.viewpoint == "quad-bunker-turn":
                 journey = validate_bunker_quad_turn(log)
                 (evidence / "bunker-turn.json").write_text(json.dumps(journey, indent=2) + "\n")

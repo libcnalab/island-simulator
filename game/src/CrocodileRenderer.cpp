@@ -1,5 +1,6 @@
 #include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/CrocodileRenderer.hpp"
+#include "IslandSimulator/CrocodilePose.hpp"
 
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
@@ -278,7 +279,7 @@ namespace island
             float previousWidth=.57f*scale,previousHeight=.30f*scale;
             for(int section=1;section<=12;++section) {
                 const float t=static_cast<float>(section)/12.0f;
-                const float wave=std::sin(t*4.2f+crocodile.gaitPhase)*crocodile.bodyWave
+                const float wave=std::sin(t*4.2f+crocodile.tailPhase)*crocodile.bodyWave
                     *t*t*.55f;
                 const Vector3 next=Local(centre,axes,wave,.22f-.17f*t,
                                          -1.04f-2.66f*t,scale);
@@ -401,7 +402,7 @@ namespace island
             for(int row=0;row<8;++row) {
                 const float t=(static_cast<float>(row)+.65f)/9.0f;
                 const float z=-1.04f-2.66f*t;
-                const float wave=std::sin(t*4.2f+crocodile.gaitPhase)*crocodile.bodyWave
+                const float wave=std::sin(t*4.2f+crocodile.tailPhase)*crocodile.bodyWave
                     *t*t*.55f;
                 const float centreY=.22f-.17f*t;
                 const float tailHeight=TailHalfHeight(t);
@@ -421,17 +422,11 @@ namespace island
 
             // Four short, muscular, splayed legs with alternating planted gait.
             for(int pair=0;pair<2;++pair) {
-                const float rootZ=pair==0?.64f:-.66f;
                 for(int sideIndex=-1;sideIndex<=1;sideIndex+=2) {
-                    const float side=static_cast<float>(sideIndex);
-                    const float stride=std::sin(crocodile.gaitPhase
-                        +(pair*2+(sideIndex>0?1:0))*std::numbers::pi_v<float>)*.13f
-                        *(1.0f-crocodile.submerged);
-                    // Folded for the swim, the elbow and wrist lie back along the flank.
-                    const float fold=std::clamp(crocodile.legFold,0.0f,1.0f);
-                    const Vector3 shoulder=Local(centre,axes,side*.52f,.34f,rootZ,scale);
-                    const Vector3 elbow=Local(centre,axes,side*std::lerp(.83f,.62f,fold),std::lerp(.18f,.22f,fold),rootZ+stride-.28f*fold,scale);
-                    const Vector3 wrist=Local(centre,axes,side*std::lerp(.78f,.56f,fold),std::lerp(.025f,.14f,fold),rootZ+.24f+stride-.62f*fold,scale);
+                    const int legIndex=pair*2+(sideIndex>0?1:0);
+                    const auto leg=crocodile_pose::SampleLeg(crocodile,legIndex);
+                    const auto point=[&](crocodile_pose::Point p){return Local(centre,axes,p.x,p.y,p.z,scale);};
+                    const Vector3 shoulder=point(leg.shoulder),elbow=point(leg.elbow),wrist=point(leg.wrist);
                     // A low pectoral/hip mass hides the old tube-to-barrel seam and
                     // gives the splayed limb a muscular crocodilian root. It remains
                     // centred on the existing animated joint and adds no simulation state.
@@ -443,7 +438,7 @@ namespace island
                                     41+pair*2+(sideIndex>0?1:0));
                     AppendTaperedSegment(vertices,shoulder,elbow,.17f*scale,.125f*scale,palette.side,8);
                     AppendTaperedSegment(vertices,elbow,wrist,.125f*scale,.075f*scale,palette.side,8);
-                    const Vector3 foot=wrist+axes.forward*(.075f*scale)+axes.up*(.018f*scale);
+                    const Vector3 foot=point(leg.foot);
                     AppendEllipsoid(vertices,foot,axes,1.0f,.14f*scale,.045f*scale,
                                     .18f*scale,palette.side,palette.belly,2,8,.06f,
                                     53+pair*2+(sideIndex>0?1:0));

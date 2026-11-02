@@ -1,4 +1,4 @@
-# Comprehensive visual cohesion campaign — final qualification recorded, 2026-11-02
+# Comprehensive visual cohesion campaign — ACTIVE continuation after f7446521
 
 The whole original superprompt/attachment is assessed in the final acceptance ledger at the
 end of this file. Earlier premature completion conclusions and ACTIVE checkpoints remain as
@@ -11,11 +11,12 @@ all preserved and committed/pushed in ad48d3d4 at the user's explicit request. E
 saved in build/campaign-deer-alert-entry-binary. Builds used CPU0–3/-j2/-j3; physical AMDGPU suspended,
 contained verified llvmpipe/Pixman only. No external source/system/Git destructive operations.
 
-Current result: implementation and available safe qualification are complete. The concluding
-original-criterion ledger, exact identities, all final image/live paths and remaining limitations
-are below. Source through83019563 is pushed; the following launcher/final-record commit is the
-last repository delivery step. Do not repeat completed milestones or interpret the historical
-pending notes as current tasks. New user findings should be investigated from actual evidence.
+Current task: user-requested original-scope continuation remains ACTIVE. Crocodile rest,
+four-beat crawl and drawn-ground support are implemented and qualified below (91/91 safe tests,
+16 inspected motion stages plus swimming control). Next observed priority: elephant sole contact
+uses analytic terrain and can sink18cm into the drawn mesh. Add natural stand→walk evidence,
+correct its ground sampling, validate, then continue the original acceptance reassessment.
+Compile on CPU0–3, -j2/-j3; contained verified llvmpipe/Pixman only. Sound remains closed.
 
 **No temporary diagnostic, disabled aerial range or benchmark-only source remains.**
 Final source enables the qualified aerial canopy and palm policies plus the final resident waist
@@ -2315,3 +2316,68 @@ Available safe qualification is complete; remaining platform/driver/simulation l
 not represented as passed or fixed. No additional required in-scope implementation remains
 identified by the final review. Goal completion is assessed only after this ledger is written
 and the concluding repository delivery is verified.
+
+## User-requested continuation from f7446521 — ACTIVE
+
+Entry develop/f7446521, clean worktree, previous source/qualification pushed. Original attachment
+and relevant README/PLAN/BUGS/critical GPU incident reread; dependencies remain read-only. New
+active goal created at the user's explicit request. Do not close it at the crocodile milestone.
+
+Initial actual crocodile static baseline: build/software-captures/20261102T205620.561431Z-crocodiles,
+verified software capture passed and image inspected. Existing model/armor/head improvements
+retained. Source evidence: gaitPhase advances by dt*(1.1+2.2*speed), even when speed is zero;
+renderer/shadow stride uses(pair*2+side)*pi, putting same-side fore/hind legs in phase and no
+foot lift. Static legacy QA shows the swimming subject and cannot qualify bask/crawl. Adding
+one160-frame/16stage crocodile-land inspection through existing camera/clock/capture facilities
+for a real natural bask→crawl transition, not a new wildlife/animation engine. Implementation
+changes still pending baseline inspection. Next: baseline fixture build/capture, confirm defect
+visually, then shared pose/contact/timing correction and focused regression coverage.
+
+### Qualified crocodile land-contact correction — 2026-11-02
+
+Observed before fix, not a hypothetical audit: all16 natural bask/crawl stages in
+`build/software-captures/20261102T210527.520544Z-crocodile-land` were captured with the
+new inspection clock but the old animal code. During zero translation the basking subject
+rotated almost half a turn and pedalled. Existing static `crocodiles` frames show a swimmer,
+so could not qualify this land defect. Actual pre-fix log is rejected by the new semantic gate;
+`build/campaign-croc-idle-red-test.log` records the CPU regression failing before the repair.
+
+Implemented shared small CrocodilePose helper for renderer and shadow: four-beat overlapping
+stance, terrain-relative planted soles and raised return, phase calibrated to accepted movement
+and turning. Resting non-alert bask no longer steers toward its own anchor. Independent tail
+phase preserves swimming propulsion and gives only a subdued resting tail. Existing anatomy,
+habitat/steering limits, population, geometry and draw budgets retained. Foot-height queries
+use the existing rendered cache, with analytic fallback only when needed.
+
+Release/OpenGL33 final app1155d0a5e8fc4abebbb07e8d5de28e177b8a62604395d2cddd481a0cd0a8fa37;
+CPU0–3/-j2 build passes (`build/campaign-croc-final-build.log`). Full safe suite **91/91 passes
+in108.56s** (`build/campaign-croc-final-safe-ctest.log`);3 focused tests,74 launcher tests pass.
+Pose regression covers1879 planted/317 swing contacts on actual stream-patched drawn terrain,
+straight stance compensation and the same shadow joints; fold-height swimming control retained.
+No display-labelled/native-GPU test or the two orphan capture validators was run.
+
+Final software scopes: `build/software-captures/20261102T212524.093381Z-crocodile-land`
+(160 rendered/160 updated frames,16stages; natural crawl travel3.3034m), and
+`build/software-captures/20261102T212602.052777Z-crocodiles` (legacy swimming control).
+Both pass verified llvmpipe/Pixman/private-device containment, unchanged artifact and empty final
+kernel gates. All16 land stages reviewed in `build/campaign-croc-land-pairs-{1..4}.png`; the
+optimized final capture is **16/16 byte-identical** to those reviewed after images. Swimming
+control separately inspected: tail/awash back/folded limbs preserved. First8 before/after frames
+share camera and position; later views use the same translation-follow camera policy but animal
+paths differ because the incorrect resting rotation was removed. No different route is presented
+as an isolated mesh comparison. Land sequence ends in Swim behavior on the bank; actual water
+posture is qualified only by the separate swimming control.
+
+CPU3-pass isolated 10,000-update/full-tier3-animal measurement: median18.5377→17.9574us/update,
+within run variability (`build/campaign-croc-cpu-final-comparison.json`). An initial unoptimized
+version added4.17us/18.4%; investigation removed four unused procedural fallback calculations.
+No native FPS or general speedup claim, no new triangles/draws, no renderer/dependency change.
+Persistent world-space foot IK during turning/acceleration is still not claimed.
+
+Next original priority already investigated: elephant placed soles differ from the rendered
+terrain by −.183936..+.0451078m over5249 real route contacts (CPU probe). Baselines inspected:
+`build/software-captures/20261102T212612.591614Z-elephant` and
+`build/software-captures/20261102T212622.615210Z-elephant-close`; both safe scopes pass, final
+kernel intervals empty. Existing static elephant QA actually remains standing during its short
+capture, so add a bounded natural stand→walk inspection before correcting ground sampling.
+Goal remains ACTIVE; continue this priority, then reassess the original whole-campaign ledger.

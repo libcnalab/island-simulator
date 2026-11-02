@@ -346,6 +346,7 @@ namespace island
             case FixedViewpoint::HermitCrabDetail: return "hermit-crabs";
             case FixedViewpoint::CoconutCrabDetail: return "coconut-crabs";
             case FixedViewpoint::CrocodileDetail: return "crocodiles";
+            case FixedViewpoint::CrocodileLandDetail: return "crocodile-land";
             case FixedViewpoint::BoarDetail: return "boars";
             case FixedViewpoint::BoarLyingDetail: return "boar-lying";
             case FixedViewpoint::GoatDetail: return "goats";
@@ -3322,9 +3323,9 @@ namespace island
             yaw_ = std::atan2(direction.X, direction.Z);
             pitch_ = std::atan2(direction.Y, std::hypot(direction.X, direction.Z));
             std::cout << "island-simulator: coconut-crab QA camera frames one large terrestrial animal in coastal vegetation\n";
-        } else if (viewpoint_ == FixedViewpoint::CrocodileDetail
+        } else if ((viewpoint_ == FixedViewpoint::CrocodileDetail || viewpoint_ == FixedViewpoint::CrocodileLandDetail)
                    && !crocodileGroup_.Crocodiles().empty()) {
-            const CrocodileState& crocodile=crocodileGroup_.Crocodiles()[2U];
+            const CrocodileState& crocodile=crocodileGroup_.Crocodiles()[viewpoint_==FixedViewpoint::CrocodileLandDetail?0U:2U];
             const Vector3 forward(std::cos(crocodile.headingRadians),0,
                                   std::sin(crocodile.headingRadians));
             Vector3 side(-forward.Z,0,forward.X);
@@ -5974,11 +5975,13 @@ namespace island
                                        subject.y - previousCrabSubject.y,
                                        subject.z - previousCrabSubject.z);
         }
-        const CrocodileState previousCrocodile=crocodileGroup_.Crocodiles()[2U];
+        const bool crocLand=viewpoint_==FixedViewpoint::CrocodileLandDetail;
+        const CrocodileState previousCrocodile=crocodileGroup_.Crocodiles()[crocLand?0U:2U];
         Vector3 crocodileObserver=cameraPosition_;
         if(viewpoint_==FixedViewpoint::CrocodileDetail)
             crocodileObserver=Vector3(previousCrocodile.x,previousCrocodile.y+20.0f,
                                       previousCrocodile.z);
+        if(crocLand)crocodileObserver=Vector3(previousCrocodile.x+80,previousCrocodile.y+2,previousCrocodile.z);
         updateProfile_.Mark("crocodileGroup");
         crocodileGroup_.Update(deltaSeconds,crocodileObserver.X,crocodileObserver.Y,
                                crocodileObserver.Z);
@@ -6001,8 +6004,8 @@ namespace island
             const auto& hiss=crocodileGroup_.LastHiss();
             if(hiss.valid) soundscape_->NoteCrocodileHiss(hiss.x,hiss.y,hiss.z);
         }
-        if(viewpoint_==FixedViewpoint::CrocodileDetail) {
-            const CrocodileState& subject=crocodileGroup_.Crocodiles()[2U];
+        if(viewpoint_==FixedViewpoint::CrocodileDetail || crocLand) {
+            const CrocodileState& subject=crocodileGroup_.Crocodiles()[crocLand?0U:2U];
             cameraPosition_+=Vector3(subject.x-previousCrocodile.x,
                                      subject.y-previousCrocodile.y,
                                      subject.z-previousCrocodile.z);
@@ -10834,7 +10837,15 @@ namespace island
                 <<" camera-blocked="<<bunkerTurnInspection_->BlockedCameraSamples()
                 <<" camera-occluded="<<bunkerTurnInspection_->OccludedCameraSamples()<<'\n';
         }
-        const std::uint32_t targetFrames = bunkerTurnInspection_ ? BunkerTurnInspection::CaptureFrames : alienCapture||goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture||deerCapture ? 64U : viewpoint_==FixedViewpoint::QuadMineCratesDetail ? 56U : freeMotionCapture||snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
+        if(!capturePath_.empty() && viewpoint_==FixedViewpoint::CrocodileLandDetail && drawnFrames_%10U==0) {
+            const auto& c=crocodileGroup_.Crocodiles()[0];
+            CaptureFrame(capturePath_+".croc-stage-"+std::to_string(drawnFrames_/10U-1U)+".ppm");
+            std::cout<<"island-simulator: crocodile land stage="<<drawnFrames_/10U-1U<<" frame="<<drawnFrames_
+                <<" position="<<c.x<<','<<c.y<<','<<c.z<<" heading="<<c.headingRadians
+                <<" speed="<<c.speed<<" phase="<<c.gaitPhase<<" submerged="<<c.submerged
+                <<" behavior="<<static_cast<int>(c.behavior)<<" near="<<crocodileRenderer_->VisibleNearCount()<<'\n';
+        }
+        const std::uint32_t targetFrames = viewpoint_==FixedViewpoint::CrocodileLandDetail ? 160U : bunkerTurnInspection_ ? BunkerTurnInspection::CaptureFrames : alienCapture||goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture||deerCapture ? 64U : viewpoint_==FixedViewpoint::QuadMineCratesDetail ? 56U : freeMotionCapture||snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
                 && (viewpoint_ == FixedViewpoint::MonkeyDetail || viewpoint_ == FixedViewpoint::MonkeyTreeDetail || viewpoint_ == FixedViewpoint::MonkeyClimbDetail)
             ? MonkeyCaptureFrames : SmokeTestFrames;
         if (captureTideHeld_ && (drawnFrames_ == 1U || drawnFrames_ == targetFrames)) {
