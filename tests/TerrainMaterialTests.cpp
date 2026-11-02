@@ -1,6 +1,7 @@
 #include "IslandSimulator/TerrainMaterialVertex.hpp"
 #include "IslandSimulator/TerrainMeshLayout.hpp"
 #include "IslandSimulator/TerrainSurfaceFrame.hpp"
+#include "IslandSimulator/GroundCoverField.hpp"
 #include "Microsoft/Xna/Framework/Vector3.hpp"
 #include "Microsoft/Xna/Framework/Graphics/SamplerState.hpp"
 
@@ -22,6 +23,31 @@ try
 {
     using Microsoft::Xna::Framework::Vector3;
     using island::TerrainDaylight;
+    // Humid forest retains moss, while a dry open ridge does not receive the same
+    // green material merely because its procedural patch happens to be dark.
+    Require(island::GroundCover::MossSuitability(1, 0) == 1,
+            "Humid shade retains full moss suitability");
+    Require(island::GroundCover::MossSuitability(0, 1) < 0.06f,
+            "Dry open ground strongly suppresses moss");
+    for (int step = 1; step <= 100; ++step) {
+        const float t = step / 100.0f, previous = (step - 1) / 100.0f;
+        Require(island::GroundCover::MossSuitability(t, 0.5f)
+                    >= island::GroundCover::MossSuitability(previous, 0.5f),
+                "Moss increases continuously with moisture");
+        Require(island::GroundCover::MossSuitability(0.5f, t)
+                    <= island::GroundCover::MossSuitability(0.5f, previous),
+                "Moss decreases with canopy exposure");
+    }
+    for (float bad : {-0.01f, 1.01f, std::numeric_limits<float>::infinity(),
+                      std::numeric_limits<float>::quiet_NaN()}) {
+        for (bool moisture : {false, true}) {
+            bool rejected = false;
+            try { (void)island::GroundCover::MossSuitability(moisture ? bad : 0.5f,
+                                                            moisture ? 0.5f : bad); }
+            catch (const std::invalid_argument&) { rejected = true; }
+            Require(rejected, "Moss habitat rejects invalid environment samples");
+        }
+    }
     using namespace Microsoft::Xna::Framework::Graphics;
     const auto reference = island::TerrainSurfaceFrame::Normalize({0.25f, 1.0f, -0.5f});
     for (float scale : {1.0e-30f, 1.0e-15f, 1.0e-6f, 1.0f, 1.0e15f, 1.0e30f}) {

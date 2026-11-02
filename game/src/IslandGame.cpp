@@ -1,5 +1,8 @@
+#include "IslandSimulator/BunkerQuadSupport.hpp"
 #include "IslandSimulator/BoarGroundPose.hpp"
 #include "IslandSimulator/FootprintGround.hpp"
+#include "IslandSimulator/SunShadowFocus.hpp"
+#include "IslandSimulator/RockSurface.hpp"
 #include "IslandSimulator/PrevailingWind.hpp"
 #include "IslandSimulator/QuadBike.hpp"
 #include "IslandSimulator/WindGust.hpp"
@@ -201,6 +204,7 @@ namespace island
             case FixedViewpoint::CurrentBoundaryDetail: return "current";
             case FixedViewpoint::DistantSceneryDetail: return "distant";
             case FixedViewpoint::PropDetail: return "props";
+            case FixedViewpoint::RockContactDetail: return "rock-contact";
             case FixedViewpoint::DriftwoodDetail: return "driftwood";
             case FixedViewpoint::ReefDetail: return "reef";
             case FixedViewpoint::ReefHabitatDetail: return "reef-habitat";
@@ -208,6 +212,7 @@ namespace island
             case FixedViewpoint::WalkerShadowDetail: return "walker-shadow";
             case FixedViewpoint::FallenFrondDetail: return "fronds";
             case FixedViewpoint::BirdDetail: return "birds";
+            case FixedViewpoint::BirdFlightDetail: return "bird-flight";
             case FixedViewpoint::BirdPreenDetail: return "bird-preen";
             case FixedViewpoint::FrigatebirdDetail: return "frigatebird";
             case FixedViewpoint::WhaleSkeletonDetail: return "whale-skeleton";
@@ -287,6 +292,7 @@ namespace island
             case FixedViewpoint::FruitBatDetail: return "bats";
             case FixedViewpoint::FruitBatRoostDetail: return "bat-roost";
             case FixedViewpoint::FishDetail: return "fish";
+            case FixedViewpoint::FishMotionDetail: return "fish-swim";
             case FixedViewpoint::StingrayDetail: return "stingrays";
             case FixedViewpoint::ReefHeronDetail: return "herons";
             case FixedViewpoint::StingrayBuriedDetail: return "stingray-buried";
@@ -311,6 +317,7 @@ namespace island
             case FixedViewpoint::BeachVineDetail: return "beach-vine";
             case FixedViewpoint::HutDetail: return "hut";
             case FixedViewpoint::HutMaterialDetail: return "hut-material";
+            case FixedViewpoint::HutEavesDetail: return "hut-eaves";
             case FixedViewpoint::HelicopterDetail: return "helicopter";
             case FixedViewpoint::HelicopterInteriorDetail: return "helicopter-inside";
             case FixedViewpoint::HelicopterApproach: return "helicopter-approach";
@@ -338,6 +345,7 @@ namespace island
             case FixedViewpoint::GoatDetail: return "goats";
             case FixedViewpoint::GoatLyingDetail: return "goat-lying";
             case FixedViewpoint::DeerDetail: return "deer";
+            case FixedViewpoint::DeerMotionDetail: return "deer-walk";
             case FixedViewpoint::DeerBeddedDetail: return "deer-bedded";
             case FixedViewpoint::SpiderDetail: return "spiders";
             case FixedViewpoint::SpiderBrightDetail: return "spiders-bright";
@@ -390,7 +398,8 @@ namespace island
                            const bool inputDiagnostics, const bool showWorldDebug,
                            std::string benchmarkPath, std::string startupReportPath,
                            const bool userSettingsEnabled,
-                           std::optional<CanopyLodInspection> canopyLodInspection)
+                           std::optional<CanopyLodInspection> canopyLodInspection,
+                           std::optional<std::uint32_t> naturalPropSeed)
         : graphics_(this),
           birdFlock_(terrain_),
           butterflyMeadow_(terrain_),
@@ -442,6 +451,9 @@ namespace island
           benchmarkPath_(std::move(benchmarkPath)),
           startupReportPath_(std::move(startupReportPath))
     {
+        if (naturalPropSeed)
+            naturalPropInspection_=std::make_unique<NaturalPropLayout>(
+                terrain_,vegetationLayout_,jungleLayout_,*naturalPropSeed);
         std::vector<CrabHabitatCue> crabDebrisCues;
         crabDebrisCues.reserve(naturalPropLayout_.Driftwood().size()
                                + naturalPropLayout_.BeachDetails().size());
@@ -513,11 +525,11 @@ namespace island
         {
             // The turtle nests among the beach details are where the hatchlings break out.
             std::vector<HatchlingNest> nests;
-            for (const auto& detail : naturalPropLayout_.BeachDetails())
+            for (const auto& detail : RenderedNaturalProps().BeachDetails())
                 if (detail.turtleNest) nests.push_back({detail.x, detail.z});
             hatchlings_.SetNests(nests);
         }
-        surfSpray_.SetRocks(naturalPropLayout_.Rocks());
+        surfSpray_.SetRocks(RenderedNaturalProps().Rocks());
         butterflyMeadow_.SetFlowerBushes(jungleLayout_.Bushes());
         canopyLeafFall_.SetCrowns(jungleLayout_.Canopy());
         bridgePlacement_=BridgeLayout::FindInWorld(terrain_,StreamCourse(terrain_));
@@ -1151,10 +1163,16 @@ namespace island
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout << "island-simulator: tide-pool QA camera targets rocky basin water\n";
         } else if (viewpoint_ == FixedViewpoint::TurtleNestDetail) {
-            const auto nest = std::ranges::find_if(
-                naturalPropLayout_.BeachDetails(),
+            const auto& details=RenderedNaturalProps().BeachDetails();
+            auto nest = std::ranges::find_if(
+                details,
                 [](const BeachDetailPlacement& detail) { return detail.turtleNest; });
-            if (nest == naturalPropLayout_.BeachDetails().end())
+            // The capture-only alternate-seed inspection targets the second nest: it
+            // is the one a failed coarse search could not place. Ordinary QA is unchanged.
+            if (naturalPropInspection_)
+                for (auto it=details.begin();it!=details.end();++it)
+                    if (it->turtleNest) nest=it;
+            if (nest == details.end())
                 throw std::runtime_error("Turtle-nest QA camera found no target");
             const float radialLength = std::hypot(nest->x, nest->z);
             const Vector3 outward(nest->x / radialLength, 0.0f, nest->z / radialLength);
@@ -1163,8 +1181,18 @@ namespace island
             const float cameraZ = nest->z - outward.Z * 3.2f + tangent.Z * 2.2f;
             cameraPosition_ = Vector3(cameraX, terrain_.Height(cameraX, cameraZ) + 2.4f,
                                       cameraZ);
-            const Vector3 target = Vector3(nest->x, nest->y, nest->z)
+            Vector3 target = Vector3(nest->x, nest->y, nest->z)
                 + outward * 3.4f + Vector3::Up * 0.05f;
+            if (naturalPropInspection_) {
+                // Frame the complete crawl and nest, including oblique recovery paths.
+                // Observe from the open beach without hiding any neighboring geometry.
+                const float heading = -nest->yawRadians - std::numbers::pi_v<float> * .5f;
+                const Vector3 approach(std::cos(heading), 0.0f, std::sin(heading));
+                const Vector3 side(-approach.Z, 0.0f, approach.X);
+                target = Vector3(nest->x, nest->y, nest->z) + approach * 4.0f;
+                cameraPosition_ = Vector3(nest->x, nest->y, nest->z)
+                    + approach * 15.0f + side * 3.0f + Vector3::Up * 6.0f;
+            }
             const Vector3 direction = target - cameraPosition_;
             yaw_ = std::atan2(direction.X, direction.Z);
             pitch_ = std::atan2(direction.Y, std::hypot(direction.X, direction.Z));
@@ -1608,6 +1636,36 @@ namespace island
                                       cameraZ);
             yaw_ = std::numbers::pi_v<float>;
             pitch_ = -0.005f;
+        } else if (viewpoint_ == FixedViewpoint::RockContactDetail) {
+            // Frame the largest original rim gap from downhill. Selection uses the original
+            // anchor height, not the corrected mesh Y, so before/after cameras stay identical.
+            const RenderedTerrainSurface support(terrain_);
+            const RockPlacement* selected=nullptr;
+            Vector3 downhill=Vector3::Forward;
+            float largestGap=-1.0f;
+            for (const auto& rock:naturalPropLayout_.Rocks()) {
+                if (rock.offshore) continue;
+                const auto mesh=BuildRockSurface(rock.variant,false);
+                for (int i=0;i<RockSurfaceNearSlices;++i) {
+                    const auto& p=mesh.vertices[i].position;
+                    const float dx=std::cos(rock.yawRadians)*p[0]*rock.scaleX
+                        +std::sin(rock.yawRadians)*p[2]*rock.scaleZ;
+                    const float dz=-std::sin(rock.yawRadians)*p[0]*rock.scaleX
+                        +std::cos(rock.yawRadians)*p[2]*rock.scaleZ;
+                    const float gap=rock.y-support.Height(rock.x+dx,rock.z+dz);
+                    if (gap>largestGap) {largestGap=gap;selected=&rock;downhill=Vector3(dx,0,dz);}
+                }
+            }
+            if (!selected) throw std::runtime_error("No land rock to inspect");
+            downhill.Normalize();
+            const float distance=3.0f+std::max(selected->scaleX,selected->scaleZ);
+            const float x=selected->x+downhill.X*distance,z=selected->z+downhill.Z*distance;
+            cameraPosition_=Vector3(x,support.Height(x,z)+0.65f,z);
+            const Vector3 direction=Vector3(selected->x,selected->y+0.12f*selected->scaleY,selected->z)-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: rock-contact QA original rim gap="<<largestGap
+                <<" target="<<selected->x<<','<<selected->y<<','<<selected->z<<'\n';
         } else if (viewpoint_ == FixedViewpoint::PropDetail
                    && !naturalPropLayout_.FallenLogs().empty()) {
             const FallenLogPlacement& log = naturalPropLayout_.FallenLogs().front();
@@ -1766,7 +1824,7 @@ namespace island
                 - cameraPosition_;
             yaw_ = std::atan2(toFrond.X, toFrond.Z);
             pitch_ = std::atan2(toFrond.Y, std::hypot(toFrond.X, toFrond.Z));
-        } else if (viewpoint_ == FixedViewpoint::BirdDetail
+        } else if ((viewpoint_ == FixedViewpoint::BirdDetail || viewpoint_ == FixedViewpoint::BirdFlightDetail)
                    && !birdFlock_.Birds().empty()) {
             // Agent 11 is a flying parrot. Agent 10 is intentionally seeded onto a canopy
             // branch, where the close camera can sit inside foliage and hide the bird entirely.
@@ -1861,7 +1919,7 @@ namespace island
             yaw_ = std::atan2(toBat.X, toBat.Z);
             pitch_ = std::atan2(toBat.Y, std::hypot(toBat.X, toBat.Z));
             std::cout << "island-simulator: fruit-bat roost QA camera frames one inverted canopy sleeper\n";
-        } else if (viewpoint_ == FixedViewpoint::FishDetail
+        } else if ((viewpoint_ == FixedViewpoint::FishDetail || viewpoint_ == FixedViewpoint::FishMotionDetail)
                    && !fishSchools_.Fish().empty()) {
             const FishState& fish = fishSchools_.Fish().front();
             const Vector3 forward(std::cos(fish.headingRadians), 0.0f,
@@ -2980,6 +3038,18 @@ namespace island
                                  "from fifty metres along the beach\n"
                                : "island-simulator: shipwreck QA camera views the 20m wreck "
                                  "from the beach\n");
+        } else if (viewpoint_ == FixedViewpoint::HutEavesDetail) {
+            if(!hutPlacement_) throw std::runtime_error("Hut eaves QA requires a valid site");
+            const auto& h=*hutPlacement_;
+            const float c=std::cos(h.yawRadians),s=std::sin(h.yawRadians);
+            // Inspect from beside the wall under the thatch overhang, looking along the
+            // eave toward the rain outside. This is a fixed QA camera, not player traversal.
+            cameraPosition_=Vector3(h.x+c*2.35f,h.floorY+1.45f,h.z-s*2.35f);
+            const Vector3 target(h.x+c*2.35f+s*6.0f,h.floorY+2.55f,h.z-s*2.35f+c*6.0f);
+            const Vector3 direction=target-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: hut-eaves QA camera inspects rain beneath the thatch overhang\n";
         } else if (viewpoint_ == FixedViewpoint::HutDetail || viewpoint_ == FixedViewpoint::HutMaterialDetail) {
             if(!hutPlacement_) throw std::runtime_error("Hut QA requires a valid site");
             const auto& h=*hutPlacement_;
@@ -3122,7 +3192,7 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             if(lying) std::cout<<"island-simulator: goat QA camera frames one resting goat lying on folded legs\n";
-        } else if (viewpoint_ == FixedViewpoint::DeerDetail || viewpoint_ == FixedViewpoint::DeerBeddedDetail) {
+        } else if (viewpoint_ == FixedViewpoint::DeerDetail || viewpoint_ == FixedViewpoint::DeerMotionDetail || viewpoint_ == FixedViewpoint::DeerBeddedDetail) {
             const bool bedded=viewpoint_==FixedViewpoint::DeerBeddedDetail;
             // The bedded view sets the antlered deer down as a shade rest does and frames it
             // a little lower and closer.
@@ -3430,11 +3500,13 @@ namespace island
         // The fixed 60 Hz step made a slow frame run several catch-up Updates before the next
         // Draw, each making it slower still: measured on 2026-10-21 on a Radeon 780M, 4.8 Updates
         // per drawn frame and 12 fps in the jungle, where one Update per frame would have given 18.
-        // QA captures, smoke runs and startup reports keep the deterministic fixed step.
+        // Named QA captures advance once per rendered frame on their explicit clock;
+        // smoke runs and startup reports without a named capture retain the fixed step.
         const bool interactivePlay = viewpoint_ == FixedViewpoint::None && capturePath_.empty()
             && !smokeTest_ && startupReportPath_.empty();
         // Capture-only clock: no wall-time catch-up updates between recorded frames.
-        setIsFixedTimeStepProperty(!interactivePlay && benchmarkPath_.empty() && !UsesSnakeCaptureClock() && !UsesGoatCaptureClock() && !UsesSpiderCaptureClock() && !UsesBoarCaptureClock()&&!UsesCampfireCaptureClock()&&!UsesResidentCaptureClock()&&!UsesBearCaptureClock()&&!UsesMonkeyCaptureClock()&&!(QuadDriveView()&&!capturePath_.empty()));
+        setIsFixedTimeStepProperty(!interactivePlay && benchmarkPath_.empty()
+                                  && !UsesFixedCaptureClock());
         InitializeUserSettings();
         InitializeJournal();
 #if defined(__EMSCRIPTEN__)
@@ -3887,7 +3959,7 @@ namespace island
         // the analytic terrain's microseconds a vertex.
         drawnGround_=std::make_unique<RenderedTerrainSurface>(terrain_);
         contactShadowRenderer_ = std::make_unique<ContactShadowRenderer>(
-            device, terrain_, vegetationLayout_, jungleLayout_, naturalPropLayout_,
+            device, terrain_, vegetationLayout_, jungleLayout_, RenderedNaturalProps(),
             shipwreckLayout_, qualityProfile_.contactShadowDistanceScale,
             hutPlacement_?&*hutPlacement_:nullptr,
             helicopterPlacement_?&*helicopterPlacement_:nullptr, drawnGround_.get(),
@@ -3982,7 +4054,7 @@ namespace island
         flightMotion_.SetCave(&terrainRenderer_->Cave(),&terrainRenderer_->CaveGround());
         caveRenderer_=std::make_unique<CaveRenderer>(device,terrainRenderer_->Cave(),
                                                       terrainRenderer_->CaveGround());
-        bunkerRenderer_=std::make_unique<BunkerRenderer>(device,bunkerLayout_);
+        bunkerRenderer_=std::make_unique<BunkerRenderer>(device,bunkerLayout_,*drawnGround_);
         mineRenderer_=std::make_unique<MineRenderer>(device,mineLayout_,terrain_,*drawnGround_);
         volcanoRenderer_=std::make_unique<VolcanoRenderer>(device,terrain_,*drawnGround_);
         campfireRenderer_=std::make_unique<CampfireRenderer>(device,campfireLayout_);
@@ -3996,6 +4068,7 @@ namespace island
         snakeRenderer_ = std::move(snakeRenderer);
         goatRenderer_ = std::move(goatRenderer);
         deerRenderer_ = std::move(deerRenderer);
+        deerRenderer_->SetGround(drawnGround_.get());
         spiderRenderer_ = std::move(spiderRenderer);
         spiderWebRenderer_=std::move(spiderWebRenderer);
         std::cout << "island-simulator: ground spiders " << spiders_->Spiders().size()
@@ -4102,9 +4175,9 @@ namespace island
         if (jettyPlacement_)
             for (const auto& line : jettyPlacement_->FootprintLines(terrain_, RenderedTerrainSurface(terrain_)))
                 residentFootprints.push_back(line);
-        turtleTrackRenderer_ = std::make_unique<TurtleTrackRenderer>(device, naturalPropLayout_.BeachDetails(),
+        turtleTrackRenderer_ = std::make_unique<TurtleTrackRenderer>(device, RenderedNaturalProps().BeachDetails(),
                                                                      RenderedTerrainSurface(terrain_));
-        naturalPropRenderer_ = std::make_unique<NaturalPropRenderer>(device, naturalPropLayout_, residentFootprints,
+        naturalPropRenderer_ = std::make_unique<NaturalPropRenderer>(device, RenderedNaturalProps(), residentFootprints,
                                                                      &canopyLightField_);
         shipwreckRenderer_ = std::make_unique<ShipwreckRenderer>(device, shipwreckLayout_);
         if(hutPlacement_) hutRenderer_=std::make_unique<HutRenderer>(device,*hutPlacement_);
@@ -5039,11 +5112,10 @@ namespace island
             MirrorRuntimeDiagnosticToPlatformLog("island-simulator: snake QA update resumed after first draw");
         }
         if(snakeCaptureClock) ++snakeCaptureUpdates_;
-        const bool quadDriveClock = QuadDriveView() && !capturePath_.empty();
-        const float deltaSeconds = canopyLodInspection_ ? 0.0f : (snakeCaptureClock||goatCaptureClock||spiderCaptureClock||boarCaptureClock||campfireCaptureClock||residentCaptureClock||bearCaptureClock||monkeyCaptureClock||quadDriveClock) ? 0.1f : std::min(
+        const float deltaSeconds = canopyLodInspection_ ? 0.0f : UsesFixedCaptureClock() ? 0.1f : std::min(
             0.1f, static_cast<float>(gameTime.getElapsedGameTimeProperty().getTotalMillisecondsProperty())
                 / 1000.0f);
-        tideSeconds_ += deltaSeconds;
+        if (!captureTideHeld_) tideSeconds_ += deltaSeconds;
         tide_ = TideCycle::At(tideSeconds_);
         playerMotion_.SetSeaLevel(tide_.level);
         crocodileGroup_.SetTideLevel(tide_.level);
@@ -5545,6 +5617,9 @@ namespace island
         updateProfile_.Mark("birdFlock");
         const bool birdsHeld = viewpoint_ == FixedViewpoint::BirdPreenDetail
             || viewpoint_ == FixedViewpoint::FreighterBirdsDetail;
+        const Vector3 previousFlightPosition = viewpoint_ == FixedViewpoint::BirdFlightDetail
+            ? Vector3(birdFlock_.Birds()[11U].x,birdFlock_.Birds()[11U].y,birdFlock_.Birds()[11U].z)
+            : Vector3::Zero;
         birdFlock_.Update((viewpoint_ == FixedViewpoint::BirdDetail
                               || viewpoint_ == FixedViewpoint::FrigatebirdDetail
                               || viewpoint_ == FixedViewpoint::BirdPreenDetail
@@ -5556,6 +5631,11 @@ namespace island
                           birdsHeld ? 1.0e4f : cameraPosition_.X,
                           cameraPosition_.Y,
                           birdsHeld ? 1.0e4f : cameraPosition_.Z);
+        if (viewpoint_ == FixedViewpoint::BirdFlightDetail) {
+            // Translation only: preserve framing without hiding the subject's live turns/bank.
+            const auto& subject = birdFlock_.Birds()[11U];
+            cameraPosition_ += Vector3(subject.x,subject.y,subject.z)-previousFlightPosition;
+        }
         // A bird settling on a branch, and a monkey moving through a crown every few
         // seconds, shake a leaf loose.
         // A bird mobbing a snake chatters the alarm over it every couple of seconds.
@@ -5914,9 +5994,12 @@ namespace island
         boarHerd_.SetWetness(weather_now::Current().wetness);
         if (viewpoint_ == FixedViewpoint::BoarLyingDetail) boarHerd_.PreviewLie(1U);
         updateProfile_.Mark("boarHerd");
-        if (UsesBoarCaptureClock())
-            boarHerd_.Update(deltaSeconds, std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f);
-        else
+        if (UsesBoarCaptureClock()) {
+            // An invalid observer puts the herd in dormant simulation and freezes it
+            // between distant updates. Observe from above: full simulation, no close threat.
+            const auto subject = boarHerd_.Boars().front();
+            boarHerd_.Update(deltaSeconds, subject.x, subject.y + 20.0f, subject.z);
+        } else
             boarHerd_.Update(viewpoint_ == FixedViewpoint::BoarLyingDetail ? 0.0f : deltaSeconds,
                              cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
         for (const std::size_t eaten : boarHerd_.EatenFruit()) fallingFruit_.Consume(eaten);
@@ -6051,9 +6134,16 @@ namespace island
         }
         updateProfile_.Mark("deer");
         {
-            const Vector3 threat=deer_->Deer().empty()?cameraPosition_:HerdThreat(deer_->Deer().front().x,deer_->Deer().front().z);
-            deer_->Update(viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail?0.0f:deltaSeconds,
-                threat.X,threat.Y,threat.Z);
+            if (UsesDeerCaptureClock()) {
+                // Deer perceive horizontal proximity even above them. Stay within the
+                // full simulation radius but outside alert range, preserving a natural walk.
+                const auto& subject=deer_->Deer().front();
+                deer_->Update(deltaSeconds,subject.x+60.0f,subject.y+20.0f,subject.z);
+            } else {
+                const Vector3 threat=deer_->Deer().empty()?cameraPosition_:HerdThreat(deer_->Deer().front().x,deer_->Deer().front().z);
+                deer_->Update(viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail?0.0f:deltaSeconds,
+                    threat.X,threat.Y,threat.Z);
+            }
         }
         // The deer sentinel coming alert at the walker snorts the alarm.
         if(soundscape_&&deer_->SentinelAlert()&&!deerSentinelWasAlert_&&!deer_->Deer().empty()) {
@@ -6078,7 +6168,7 @@ namespace island
                 atBank||ground==FootstepSurface::Sand||ground==FootstepSurface::Shallows,
                 ground==FootstepSurface::Shallows||terrain_.Sample(d.x,d.z).surface==TerrainSurface::WetSand);
         }
-        if(viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail) {
+        if(viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerMotionDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail) {
             const auto& current=deer_->Deer().front();
             cameraPosition_+=Vector3(current.x-previousDeer.x,current.y-previousDeer.y,
                                      current.z-previousDeer.z);
@@ -6136,7 +6226,10 @@ namespace island
             fishSchools_.SetThreat(shark.x, shark.y, shark.z, shark.present && shark.visible);
         }
         updateProfile_.Mark("fishSchools");
-        fishSchools_.Update(deltaSeconds, cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
+        fishSchools_.Update(deltaSeconds, cameraPosition_.X,
+                            viewpoint_ == FixedViewpoint::FishMotionDetail
+                                ? cameraPosition_.Y + 20.0f : cameraPosition_.Y,
+                            cameraPosition_.Z);
         if (!reefFish_) reefFish_ = std::make_unique<ReefFishField>(naturalPropLayout_.ReefHabitat());
         reefFish_->Update(deltaSeconds, cameraPosition_.X, cameraPosition_.Y, cameraPosition_.Z);
         // A fish breaking the surface draws the shark that way.
@@ -6144,7 +6237,7 @@ namespace island
             notedSharkBreach_ = fishSchools_.LastBreach().count;
             sharkPatrol_.NoteBreach(fishSchools_.LastBreach().x, fishSchools_.LastBreach().z);
         }
-        if (viewpoint_ == FixedViewpoint::FishDetail) {
+        if (viewpoint_ == FixedViewpoint::FishDetail || viewpoint_ == FixedViewpoint::FishMotionDetail) {
             // Follow translation only so a close CPU-rendered audit retains the subject while
             // still exposing its live heading, banking, tail bend and school movement.
             const FishState& subject = fishSchools_.Fish().front();
@@ -6392,7 +6485,8 @@ namespace island
                 if(playerMotion_.Mode()==LocomotionMode::Swimming && !flightMotion_.IsActive()) {
                     const auto p=playerMotion_.Position();
                     std::cout << "island-simulator: swim position " << p.x << ' ' << p.y << ' ' << p.z
-                        << " depth " << playerMotion_.SubmergedDepth() << '\n';
+                        << " depth " << playerMotion_.SubmergedDepth()
+                        << " sea-level " << playerMotion_.SeaLevel() << '\n';
                 }
                 std::cout << std::flush;
             }
@@ -6511,7 +6605,7 @@ namespace island
         // through the portal, its tail still outside the plan while its middle was in.
         const BunkerPoint centre = bunkerLayout_.Local({x, 0.0f, z});
         const float floorHere = bunkerLayout_.EntranceGroundY() + bunkerLayout_.FloorRelative(centre.z);
-        if (centre.z > -2.5f && centre.z < 37.5f && std::abs(centre.x) < 12.0f
+        if (centre.z > BunkerLayout::CorridorFrontDepth-1.5f && centre.z < 37.5f && std::abs(centre.x) < 12.0f
             && std::abs(quad_.Position().y - 0.6f - floorHere) < 1.15f) {
             const BikeVec forward = quad_.Forward();
             const float length = std::hypot(forward.x, forward.z);
@@ -6520,7 +6614,7 @@ namespace island
                 for (const float across : {-0.62f, 0.0f, 0.62f}) {
                     if (along == 0.0f && across == 0.0f) continue;
                     const float px = x + fx * along + fz * across, pz = z + fz * along - fx * across;
-                    if (bunkerLayout_.Local({px, 0.0f, pz}).z < -0.35f) continue;   // still outside
+                    if (bunkerLayout_.Local({px, 0.0f, pz}).z < BunkerLayout::CorridorFrontDepth) continue;   // outside the apron
                     if (!bunkerLayout_.ContainsWalkable(px, pz, 0.0f)) return true;
                 }
             }
@@ -6655,24 +6749,11 @@ namespace island
                 return ground;
             }
         }
-        // In the bunker its ramp and rooms are the ground, from its floor plan, and in the cave
-        // its excavated floor (beyond which, while inside, the floor under the quad goes on
-        // under the hull's points that reach into the rock).
-        // (Behind the portal plane the hillside is still the ground: the plan's gentler apron
-        // there lifted the rear wheels as the front went in, and the quad nosed over the ramp.)
-        if (quadSite_ == QuadSite::Bunker
-            && bunkerLayout_.Local({x, bunkerLayout_.EntranceGroundY(), z}).z >= -0.35f) {
-            const auto floorAt = [this](const float px, const float pz) {
-                const auto local = bunkerLayout_.Local({px, bunkerLayout_.EntranceGroundY(), pz});
-                return bunkerLayout_.EntranceGroundY() + bunkerLayout_.FloorRelative(local.z);
-            };
-            ground.height = floorAt(x, z);
-            const float slopeX = (floorAt(x + 0.25f, z) - floorAt(x - 0.25f, z)) / 0.5f;
-            const float slopeZ = (floorAt(x, z + 0.25f) - floorAt(x, z - 0.25f)) / 0.5f;
-            const float length = std::sqrt(slopeX * slopeX + 1.0f + slopeZ * slopeZ);
-            ground.normal = {-slopeX / length, 1.0f / length, -slopeZ / length};
-            return ground;
-        }
+        // Select the excavated floor per footprint query, before the centre enters.
+        // Exposed approach terrain remains ground outside the actual opening.
+        if(const auto bunkerGround=SampleBunkerQuadGround(bunkerLayout_,x,z,
+                quad_.Position().y-.6f,quadSite_==QuadSite::Bunker))
+            return *bunkerGround;
         // Up on the cave, its grass and its lip's rock over that floor (the quad had dropped
         // through the grass onto the floor).
         if (terrainRenderer_ && (quadSite_ == QuadSite::Cave || terrainRenderer_->CaveGround().Contains(x, z))) {
@@ -8171,7 +8252,7 @@ namespace island
                                            Vector3::Up);
         cameraProjection_ = Matrix::CreatePerspectiveFieldOfView(
             (viewpoint_==FixedViewpoint::BoarDetail||viewpoint_==FixedViewpoint::BoarLyingDetail||viewpoint_==FixedViewpoint::GoatDetail||viewpoint_==FixedViewpoint::GoatLyingDetail
-                ||viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail
+                ||viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerMotionDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail
                 ||viewpoint_==FixedViewpoint::ResidentDetail||viewpoint_==FixedViewpoint::ResidentTendDetail||viewpoint_==FixedViewpoint::ResidentFishDetail||viewpoint_==FixedViewpoint::BearDetail||viewpoint_==FixedViewpoint::BearLyingDetail
                 ||viewpoint_==FixedViewpoint::MouseDetail||viewpoint_==FixedViewpoint::RatDetail
                 ||viewpoint_==FixedViewpoint::FlyDetail||viewpoint_==FixedViewpoint::AntDetail
@@ -8180,6 +8261,16 @@ namespace island
                 ||UsesSpiderViewpoint())
                 ?0.50f:std::numbers::pi_v<float> / 3.0f,
             aspect, 0.08f, 1200.0f);
+    }
+
+    void IslandGame::HoldCaptureTide(const float phase)
+    {
+        if (capturePath_.empty() || viewpoint_ == FixedViewpoint::None || canopyLodInspection_
+            || !std::isfinite(phase) || phase < 0.0f || phase >= 1.0f)
+            throw std::invalid_argument("Held tide requires a fixed capture and finite phase in [0,1)");
+        tideSeconds_ = phase * TideCycle::PeriodSeconds;
+        tide_ = TideCycle::At(tideSeconds_);
+        captureTideHeld_ = true;
     }
 
     void IslandGame::CaptureFrame(const std::string& path)
@@ -8633,7 +8724,8 @@ namespace island
             ? static_cast<float>(spiderCaptureUpdates_)*0.1f : UsesBoarCaptureClock()
             ? static_cast<float>(boarCaptureUpdates_)*0.1f : UsesBearCaptureClock()
             ? static_cast<float>(bearCaptureUpdates_)*0.1f : UsesMonkeyCaptureClock()
-            ? static_cast<float>(monkeyCaptureUpdates_)*0.1f : static_cast<float>(gameTime.getTotalGameTimeProperty()
+            ? static_cast<float>(monkeyCaptureUpdates_)*0.1f : UsesFixedCaptureClock()
+            ? static_cast<float>(drawnFrames_+1U)*0.1f : static_cast<float>(gameTime.getTotalGameTimeProperty()
                                                          .getTotalSecondsProperty());
         oceanSeconds_ = timeSeconds;
         auto& device = getGraphicsDeviceProperty();
@@ -8650,6 +8742,10 @@ namespace island
             device.Clear(Color(136, 202, 224, 255), 1.0f);
         }
         UpdateCameraMatrices();
+        const float canopyClearance = renderCameraPosition_.Y - std::max(tide_.level,
+            terrain_.Height(renderCameraPosition_.X, renderCameraPosition_.Z));
+        const Vector3 shadowFocus = SunShadowViewFocus(renderCameraPosition_,
+            {-cameraView_.M13, -cameraView_.M23, -cameraView_.M33}, canopyClearance);
         if (sunShadowMap_) {
             if (!sunShadowReceiversBound_) {
                 terrainRenderer_->SetSunShadowMap(sunShadowMap_.get());
@@ -8685,7 +8781,7 @@ namespace island
                 sunShadowReceiversBound_ = true;
             }
             SunShadowMap::SetCloudClock(timeSeconds);
-            if (sunShadowMap_->Prepare(renderCameraPosition_)) {
+            if (sunShadowMap_->Prepare(shadowFocus)) {
                 GpuDiagnosticScope gpuPass("sun-shadow");
                 sunShadowMap_->Begin();
                 device.setRasterizerStateProperty(RasterizerState::CullNone);
@@ -8759,7 +8855,7 @@ namespace island
             }
             contactShadowRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
                                          renderedMonkeys, boarHerd_.Boars(),*snakes_,goats_->Goats(),AwakeSpiders(),
-                                         playerShadow);
+                                         playerShadow, &shadowFocus);
             residentRenderer_->DrawShadow(cameraView_,cameraProjection_,renderCameraPosition_,resident_->State());
             walkerShadowRenderer_->BeginFrame();
             // The figures reach as far as the quality's contact shadows do (all of it in the
@@ -8798,7 +8894,7 @@ namespace island
                     || std::abs(deer.y - ground) > 0.25f) continue;
                 const float stature = (deer.antlered ? 2.6f : 2.1f) * deer.scale * (1.0f - 0.35f * std::clamp(deer.bedAmount, 0.0f, 1.0f));
                 walkerShadowRenderer_->Draw(cameraView_, cameraProjection_,
-                    walker_shadow::Lay(walker_shadow::DeerLimbs(deer), deer.x, ground, deer.z, toSun.x, toSun.y, toSun.z, stature),
+                    walker_shadow::Lay(walker_shadow::DeerLimbs(deer, drawnGround_.get()), deer.x, ground, deer.z, toSun.x, toSun.y, toSun.z, stature),
                     Vector3(deer.x, ground, deer.z), Vector3(toSun.x, toSun.y, toSun.z), light.lighting.shadowStrength, groundAt);
             }
             {
@@ -9082,7 +9178,7 @@ namespace island
             GpuDiagnosticScope gpuPass("jungle");
             jungleRenderer_->SetDew(weather_now::Dew(dayNight_.Hour(), weather_now::Current().cloudCover));
             jungleRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
-                                  timeSeconds,renderedMonkeys,grassWalkers);
+                                  timeSeconds,renderedMonkeys,grassWalkers,canopyClearance);
         }
 
         const PlayerPosition& grassPlayer = playerMotion_.Position();
@@ -9106,7 +9202,7 @@ namespace island
         {
             GpuDiagnosticScope gpuPass("palms");
             palmRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
-                                timeSeconds);
+                                timeSeconds, canopyClearance);
         }
         if (weaverNestRenderer_) {
             GpuDiagnosticScope gpuPass("weaver-nests");
@@ -9255,8 +9351,6 @@ namespace island
 
         {
             GpuDiagnosticScope gpuPass("birds");
-            birdRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
-                                birdFlock_.Birds());
             if (boobies_) {
                 boobies_->At(timeSeconds, boobyBirds_);
                 birdRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, boobyBirds_);
@@ -9267,6 +9361,10 @@ namespace island
                              weaverBirds_);
                 birdRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_, weaverBirds_);
             }
+            // As with fish schools, keep the primary population last: public per-draw
+            // counters and close-view proofs must describe this flock, not the last colony.
+            birdRenderer_->Draw(cameraView_, cameraProjection_, renderCameraPosition_,
+                                birdFlock_.Birds());
         }
 
         {
@@ -10423,7 +10521,7 @@ namespace island
             std::cout << report.str() << '\n';
             MirrorRuntimeDiagnosticToPlatformLog(report.str());
         }
-        if((viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail)&&drawnFrames_==1U) {
+        if((viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerMotionDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail)&&drawnFrames_==1U) {
             std::ostringstream report;
             report << "island-simulator: deer render proof: deer "
                 << deerRenderer_->VisibleCount() << '/' << deer_->Deer().size()
@@ -10476,6 +10574,28 @@ namespace island
             std::cout << report.str() << '\n';
             MirrorRuntimeDiagnosticToPlatformLog(report.str());
         }
+        const bool freeMotionCapture = !capturePath_.empty()
+            && (viewpoint_ == FixedViewpoint::FishMotionDetail || viewpoint_ == FixedViewpoint::BirdFlightDetail);
+        if (freeMotionCapture && drawnFrames_%2U == 0U && drawnFrames_ <= 32U) {
+            const bool fish = viewpoint_ == FixedViewpoint::FishMotionDetail;
+            const auto& f = fishSchools_.Fish().front();
+            const auto& b = birdFlock_.Birds()[11U];
+            const float x = fish ? f.x : b.x, y = fish ? f.y : b.y, z = fish ? f.z : b.z;
+            const char* species = fish ? "fish" : "bird";
+            GpuDiagnosticScope gpuPass("capture-readback");
+            CaptureFrame(capturePath_+"."+species+"-stage-"+std::to_string(drawnFrames_/2U-1U)+".ppm");
+            std::ostringstream report; report.precision(9);
+            report << "island-simulator: " << species << " motion stage=" << drawnFrames_/2U-1U
+                << " updates=" << drawnFrames_ << " time=" << timeSeconds
+                << " near=" << (fish ? fishRenderer_->VisibleNearFishCount() : birdRenderer_->VisibleNearBirdCount())
+                << " position=" << x << ',' << y << ',' << z
+                << " heading=" << (fish ? f.headingRadians : b.headingRadians)
+                << " bank=" << (fish ? f.bankRadians : b.bankRadians)
+                << " animation=" << (fish ? f.bodyWave : b.wingPose)
+                << " clearance=" << y-drawnGround_->Height(x,z)
+                << " tier=" << static_cast<unsigned>(fish ? f.simulationTier : b.simulationTier);
+            std::cout << report.str() << std::endl;
+        }
         const bool snakeCapture = UsesSnakeCaptureClock();
         const bool goatCapture = UsesGoatCaptureClock();
         const bool boarCapture = UsesBoarCaptureClock();
@@ -10491,7 +10611,23 @@ namespace island
                 << " visible=" << boarRenderer_->VisibleCount() << " position="
                 << subject.x << ',' << subject.y << ',' << subject.z
                 << " speed=" << subject.speed << " phase=" << subject.gaitPhase
-                << " rooting=" << subject.rootingPose;
+                << " rooting=" << subject.rootingPose
+                << " tier=" << static_cast<unsigned>(subject.simulationTier);
+            std::cout << report.str() << std::endl;
+        }
+        const bool deerCapture=UsesDeerCaptureClock();
+        if(deerCapture&&drawnFrames_%8U==0&&drawnFrames_<=64U) {
+            GpuDiagnosticScope gpuPass("capture-readback");
+            CaptureFrame(capturePath_+".deer-stage-"+std::to_string(drawnFrames_/8U-1U)+".ppm");
+            const auto& subject=deer_->Deer().front();
+            std::ostringstream report;report.precision(9);
+            report << "island-simulator: deer motion stage=" << drawnFrames_/8U-1U
+                << " updates=" << drawnFrames_ << " time=" << timeSeconds
+                << " visible=" << deerRenderer_->VisibleCount() << " position="
+                << subject.x << ',' << subject.y << ',' << subject.z
+                << " speed=" << subject.speed << " phase=" << subject.gaitPhase
+                << " grazing=" << subject.grazeAmount
+                << " tier=" << static_cast<unsigned>(subject.simulationTier);
             std::cout << report.str() << std::endl;
         }
         const bool spiderCapture = UsesSpiderCaptureClock();
@@ -10622,9 +10758,15 @@ namespace island
                 <<" frames="<<drawnFrames_<<" time="<<timeSeconds
                 <<" draws="<<streamWaterRenderer_->DrawCallCount()<<" triangles=6080\n";
         }
-        const std::uint32_t targetFrames = goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture ? 64U : viewpoint_==FixedViewpoint::QuadMineCratesDetail ? 56U : snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
+        const std::uint32_t targetFrames = goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture||deerCapture ? 64U : viewpoint_==FixedViewpoint::QuadMineCratesDetail ? 56U : freeMotionCapture||snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
                 && (viewpoint_ == FixedViewpoint::MonkeyDetail || viewpoint_ == FixedViewpoint::MonkeyTreeDetail || viewpoint_ == FixedViewpoint::MonkeyClimbDetail)
             ? MonkeyCaptureFrames : SmokeTestFrames;
+        if (captureTideHeld_ && (drawnFrames_ == 1U || drawnFrames_ == targetFrames)) {
+            std::ostringstream proof; proof.precision(9);
+            proof << "island-simulator: capture tide frame=" << drawnFrames_
+                << " phase=" << tide_.phase << " level=" << tide_.level;
+            std::cout << proof.str() << std::endl;
+        }
         if (!capturePath_.empty() && drawnFrames_ == targetFrames) {
             {
                 // the frames so far (in the software renderer: CPU work and its vertex shading)

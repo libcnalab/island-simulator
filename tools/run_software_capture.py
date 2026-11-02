@@ -22,10 +22,84 @@ from capture_retention import (KEEP_SOFTWARE_CAPTURE_SETS, cited_stamps, compres
 
 from gpu_incident_qualification import (
     CAPTURE_VIEWPOINTS, FAULT, GL_ERROR, Journal, MonitorError, stop_process_group,
-    contained_command, artifact_identity,
+    contained_command, artifact_identity, verify_artifact_content_unchanged,
 )
 
 SPIDER_POPULATION = 1000
+
+
+def validate_capture_clock(log):
+    rows=set(re.findall(r"capture-profile frames=(\d+) updates=(\d+)",log))
+    if len(rows)!=1:
+        raise RuntimeError("missing or conflicting capture clock accounting")
+    frames,updates=map(int,rows.pop())
+    if frames<=0 or updates!=frames:
+        raise RuntimeError("capture must advance exactly once per rendered frame")
+    return {"frames":frames,"updates":updates}
+
+
+def capture_tide_arguments(phase):
+    if phase is None:
+        return []
+    if not math.isfinite(phase) or not 0 <= phase < 1:
+        raise ValueError("tide phase must be finite and in [0,1)")
+    return ["--capture-tide-phase", str(phase)]
+
+
+def validate_capture_tide(log, phase):
+    rows = re.findall(r"capture tide frame=(\d+) phase=(\S+) level=(\S+)",log)
+    if phase is None:
+        if rows:
+            raise RuntimeError("unexpected held capture tide")
+        return None
+    frames = validate_capture_clock(log)["frames"]
+    if len(rows) != 2 or [int(row[0]) for row in rows] != [1,frames]:
+        raise RuntimeError("held tide requires first and final frame proof")
+    for _, actual, level in rows:
+        try:
+            actual, level = float(actual), float(level)
+        except ValueError as error:
+            raise RuntimeError("invalid held tide numeric proof") from error
+        if (not all(map(math.isfinite,(actual,level))) or abs(actual-phase) > 1e-6
+                or abs(level-.18*math.sin(math.tau*phase)) > 1e-6):
+            raise RuntimeError("held tide disagrees with requested phase or sea level")
+    return {"phase":phase,"level":float(rows[-1][2]),"frames":frames}
+
+
+def validate_free_motion_stages(log, species):
+    """Require actual near-tier travel and fin/wing movement on the fixed capture clock."""
+    if species not in ("fish", "bird"):
+        raise ValueError("unsupported free-motion subject")
+    rows = re.findall(rf"{species} motion stage=(\d+) updates=(\d+) time=(\S+) near=(\d+) "
+                      r"position=(\S+) heading=(\S+) bank=(\S+) animation=(\S+) "
+                      r"clearance=(\S+) tier=(\d+)", log)
+    if len(rows) != 16 or [int(row[0]) for row in rows] != list(range(16)):
+        raise RuntimeError(f"{species} requires sixteen ordered live motion stages")
+    stages = []
+    for stage, updates, seconds, near, position, heading, bank, animation, clearance, tier in rows:
+        try:
+            p = tuple(map(float, position.split(',')))
+            h, b, a, c, t = map(float, (heading, bank, animation, clearance, seconds))
+            valid = (len(p) == 3 and all(map(math.isfinite, (*p, h, b, a, c, t)))
+                     and int(updates) == (int(stage)+1)*2 and math.isclose(t, int(updates)*.1, abs_tol=1e-5)
+                     and 1 <= int(near) <= (48 if species == "fish" else 24)
+                     and int(tier) == 0 and abs(b) <= (.281 if species == "fish" else .341)
+                     and abs(a) <= 1.001 and c > 0)
+        except ValueError:
+            valid = False
+        if not valid:
+            raise RuntimeError(f"invalid {species} pose, habitat or live-tier clock")
+        stages.append({"stage":int(stage), "position":p, "heading":h, "bank":b,
+                       "animation":a, "clearance":c})
+    travel = sum(math.dist(a["position"], b["position"]) for a,b in zip(stages, stages[1:]))
+    animation_range = max(s["animation"] for s in stages)-min(s["animation"] for s in stages)
+    if travel < .3 or animation_range < .15:
+        raise RuntimeError(f"{species} did not visibly travel and animate")
+    for a,b in zip(stages, stages[1:]):
+        turn = abs(math.remainder(b["heading"]-a["heading"], 2*math.pi))
+        if math.dist(a["position"],b["position"]) > 4 or turn > .85:
+            raise RuntimeError(f"{species} motion contains an abrupt position or heading jump")
+    return {"stages":stages, "travel":travel, "animation_range":animation_range}
 
 
 def validate_campfire_stages(log):
@@ -189,28 +263,56 @@ def validate_tree_snake_motion_stages(text):
     return bodies
 
 
-def validate_boar_motion_stages(text):
-    """Validate the capture clock and finite poses, not artistic quality or gait."""
-    rows = re.findall(r"^island-simulator: boar motion stage=(\d+) updates=(\d+) time=(\S+) visible=(\d+) "
-                      r"position=(\S+) speed=(\S+) phase=(\S+) rooting=(\S+)$", text, re.M)
-    if len(rows) != 8 or text.count("boar motion stage=") != 8 or [int(r[0]) for r in rows] != list(range(8)):
-        raise RuntimeError("boar capture requires eight ordered stages")
+def validate_ground_herd_motion_stages(text, species, pose, count, maximum_speed):
+    """Require a live full-simulation motion sequence; not an artistic gait oracle."""
+    rows = re.findall(rf"^island-simulator: {species} motion stage=(\d+) updates=(\d+) time=(\S+) visible=(\d+) "
+                      rf"position=(\S+) speed=(\S+) phase=(\S+) {pose}=(\S+) tier=(\d+)$", text, re.M)
+    if len(rows) != 8 or text.count(f"{species} motion stage=") != 8 or [int(r[0]) for r in rows] != list(range(8)):
+        raise RuntimeError(f"{species} capture requires eight ordered stages")
     samples = []
-    for stage, updates, elapsed, visible, point, speed, phase, rooting in rows:
+    for stage, updates, elapsed, visible, point, speed, phase, rooting, tier in rows:
         try:
             p = tuple(map(float, point.split(',')))
             s, ph, root, t = map(float, (speed, phase, rooting, elapsed))
             expected = (int(stage)+1)*8
             valid = (int(updates) == expected and math.isclose(t, expected*.1, abs_tol=1e-5)
-                     and 1 <= int(visible) <= 6 and len(p) == 3 and all(map(math.isfinite, p))
-                     and all(map(math.isfinite, (s, ph, root))) and 0 <= s <= 3
+                     and int(tier) == 0 and 1 <= int(visible) <= count and len(p) == 3 and all(map(math.isfinite, p))
+                     and all(map(math.isfinite, (s, ph, root))) and 0 <= s <= maximum_speed
                      and 0 <= ph <= math.tau+1e-5 and 0 <= root <= 1)
         except ValueError:
             valid = False
         if not valid:
-            raise RuntimeError("invalid boar capture state or clock")
-        samples.append(dict(position=p, speed=s, phase=ph, rooting=root, time=t))
+            raise RuntimeError(f"invalid {species} capture state or clock")
+        samples.append(dict(position=p, speed=s, phase=ph, time=t, tier=int(tier), **{pose: root}))
+    if sum(math.dist(a["position"], b["position"]) for a, b in zip(samples, samples[1:])) < .1:
+        raise RuntimeError(f"{species} motion inspection did not move")
     return {"samples": samples}
+
+
+def validate_boar_motion_stages(text):
+    return validate_ground_herd_motion_stages(text, "boar", "rooting", 6, 3.0)
+
+
+def validate_deer_motion_stages(text):
+    return validate_ground_herd_motion_stages(text, "deer", "grazing", 4, 3.1)
+
+
+def validate_bunker_quad_entry(text):
+    """An attractive outdoor image is not proof that the vehicle entered the portal."""
+    rows = re.findall(r"^island-simulator: quad QA shelter: bunker, site ([a-z]+), "
+                      r"depth (\S+) m, floor (\S+), body (\S+), walls ([a-z]+)$", text, re.M)
+    if len(rows) != 1:
+        raise RuntimeError("missing or ambiguous bunker vehicle entry proof")
+    site, depth, floor, body, walls = rows[0]
+    try:
+        depth, floor, body = map(float, (depth, floor, body))
+        valid = (site == "bunker" and walls == "clear" and all(map(math.isfinite, (depth, floor, body)))
+                 and 1.5 <= depth <= 36.0 and .35 <= body-floor <= 1.1)
+    except ValueError:
+        valid = False
+    if not valid:
+        raise RuntimeError("quad-bunker did not enter and settle on the actual bunker floor")
+    return dict(depth=depth, floor=floor, body=body, body_floor_gap=body-floor)
 
 
 def validate_goat_motion_stages(text):
@@ -370,8 +472,8 @@ def software_environment(evidence):
 def inspection_arguments(values):
     if values is None:
         return []
-    if len(values) != 3 or values[2] not in ("near", "far"):
-        raise ValueError("canopy inspection requires X_MM Z_MM near|far")
+    if len(values) != 3 or values[2] not in ("near", "far", "roots"):
+        raise ValueError("canopy inspection requires X_MM Z_MM near|far|roots")
     for value in values[:2]:
         if not re.fullmatch(r"-?\d+", value) or not -500000 <= int(value) <= 500000:
             raise ValueError("canopy inspection coordinates must be integers within +/-500000")
@@ -488,7 +590,21 @@ def validate_monkey_tree_stages(diagnostics):
     return stages
 
 
-def validate_graphics_log(diagnostics, inspection=None, *, missing_leaf=False):
+def natural_props_seed_arguments(seed, viewpoint):
+    if seed is None:
+        return []
+    if type(seed) is not int or not 0 <= seed <= 0xffffffff or viewpoint != "turtle-nest":
+        raise ValueError("natural-props seed requires uint32 and turtle-nest inspection")
+    return ["--natural-props-seed", str(seed)]
+
+
+def validate_graphics_log(diagnostics, inspection=None, *, missing_leaf=False, natural_props_seed=None):
+    seed_markers=re.findall(r"QA natural-props seed=([^\n]+)", diagnostics)
+    if natural_props_seed is None:
+        if seed_markers:
+            raise RuntimeError("alternate natural-props seed cannot qualify the authoritative world")
+    elif not seed_markers or any(row != f"{natural_props_seed} turtle-nest-target=last" for row in seed_markers):
+        raise RuntimeError("natural-props inspection seed is missing or mismatched")
     markers = re.findall(r"TEMPORARY SOFTWARE DIAGNOSTIC[^\n]*", diagnostics)
     if inspection is None:
         if markers:
@@ -595,14 +711,17 @@ def run_monitored_capture(command, root, environment, evidence, journal, baselin
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("build", type=Path)
-    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "quad", "quad-ride", "quad-chase", "quad-drive", "quad-bunker", "quad-mine", "quad-mine-crates", "quad-volcano", "quad-cave", "quad-cave-top", "quad-jetty", "quad-helicopter", "quad-lookout", "quad-bear", "quad-stream", "quad-sea", "quad-audit", "quad-plane", "quad-whale", "quad-lighthouse", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "jetty-end", "anemone", "walker-shadow", "flight", "bridge", "lookout", "log", "beach-vine", "hut", "hut-material", "helicopter", "helicopter-inside", "resident", "resident-tending", "resident-fishing", "bear", "bear-lying", "boars", "boar-lying", "goats", "goat-lying", "deer", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "monkey-scratch", "ground-doves", "bird-preen", "frigatebird", "whale-skeleton", "idol", "idol-offerings", "castle", "ufo", "alien", "alien-examine", "alien-hull", "orbit", "bunker-side", "crab-migration", "termite-swarm", "booby-colony", "booby-nests", "mudskippers", "weaver-nests", "weaver-display", "balloon", "balloon-close", "trex", "trex-close", "trex-roar", "trex-rest", "trex-head", "elephant", "elephant-close", "elephant-trumpet", "elephant-bathe", "journal", "journal-notice", "help-sign", "lighthouse", "lighthouse-stair", "lighthouse-gallery", "lighthouse-lantern", "lighthouse-cottage", "passing-ship", "whale-breach", "pandanus", "termite-nest", "flying-fish", "windthrow", "windthrow-log", "glowing-fungi", "foxfire-log", "foxfire-snag", "plane-wreck", "plane-cockpit", "beach-litter", "freighter", "freighter-deck", "freighter-hold", "freighter-crew", "freighter-mess", "freighter-birds", "freighter-stern", "mine", "mine-cutting", "mine-adit", "mine-chamber", "mine-bats", "mine-bats-night", "mine-puddle", "volcano", "volcano-crater", "volcano-flow", "lifeboat", "signal-fire", "stingray-buried"}))
+    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"fish-swim", "bird-flight", "campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "quad", "quad-ride", "quad-chase", "quad-drive", "quad-bunker", "quad-mine", "quad-mine-crates", "quad-volcano", "quad-cave", "quad-cave-top", "quad-jetty", "quad-helicopter", "quad-lookout", "quad-bear", "quad-stream", "quad-sea", "quad-audit", "quad-plane", "quad-whale", "quad-lighthouse", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "jetty-end", "anemone", "walker-shadow", "flight", "bridge", "lookout", "log", "beach-vine", "hut", "hut-material", "hut-eaves", "helicopter", "helicopter-inside", "resident", "resident-tending", "resident-fishing", "bear", "bear-lying", "boars", "boar-lying", "goats", "goat-lying", "deer", "deer-walk", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "monkey-scratch", "ground-doves", "bird-preen", "frigatebird", "whale-skeleton", "idol", "idol-offerings", "castle", "ufo", "alien", "alien-examine", "alien-hull", "orbit", "bunker-side", "crab-migration", "termite-swarm", "booby-colony", "booby-nests", "mudskippers", "weaver-nests", "weaver-display", "balloon", "balloon-close", "trex", "trex-close", "trex-roar", "trex-rest", "trex-head", "elephant", "elephant-close", "elephant-trumpet", "elephant-bathe", "journal", "journal-notice", "help-sign", "lighthouse", "lighthouse-stair", "lighthouse-gallery", "lighthouse-lantern", "lighthouse-cottage", "passing-ship", "whale-breach", "pandanus", "termite-nest", "flying-fish", "windthrow", "windthrow-log", "glowing-fungi", "foxfire-log", "foxfire-snag", "plane-wreck", "plane-cockpit", "beach-litter", "freighter", "freighter-deck", "freighter-hold", "freighter-crew", "freighter-mess", "freighter-birds", "freighter-stern", "mine", "mine-cutting", "mine-adit", "mine-chamber", "mine-bats", "mine-bats-night", "mine-puddle", "volcano", "volcano-crater", "volcano-flow", "lifeboat", "signal-fire", "stingray-buried"}))
     parser.add_argument("--canopy-lod-inspection", nargs=3, metavar=("X_MM", "Z_MM", "TIER"))
+    parser.add_argument("--tide-phase", type=float, default=None, help="QA: hold existing tide phase in [0,1)")
     parser.add_argument("--time-of-day", type=float, default=None,
                         help="QA: the game hour to hold the clock at (default: the 14:00 the views were made at)")
     parser.add_argument("--weather", choices=["clear", "partly-cloudy", "overcast", "showers", "thunderstorm"], default=None,
                         help="QA: hold this weather (default: the partly cloudy sky the views were made in)")
     parser.add_argument("--wet-ground", action="store_true",
                         help="QA: hold the ground wet, as just after rain, under the held weather")
+    parser.add_argument("--natural-props-seed", type=int, default=None,
+                        help="QA only: inspect the last turtle nest with another natural-props seed")
     parser.add_argument("--game-day", type=int, default=None,
                         help="QA: the game day (the moon's phase follows it)")
     parser.add_argument("--no-sun-shadows", action="store_true",
@@ -611,6 +730,15 @@ def main():
                         help="test only the leaf-image fallback using a read-only namespace overlay")
     args = parser.parse_args()
     inspection = inspection_arguments(args.canopy_lod_inspection)
+    try:
+        prop_seed_arguments = natural_props_seed_arguments(args.natural_props_seed, args.viewpoint)
+        tide_arguments = capture_tide_arguments(args.tide_phase)
+    except ValueError as error:
+        parser.error(str(error))
+    if tide_arguments and inspection:
+        parser.error("held tide cannot be combined with canopy inspection")
+    if prop_seed_arguments and inspection:
+        parser.error("natural-props inspection cannot be combined with canopy inspection")
     if args.viewpoint == "canopy" and not inspection:
         parser.error("canopy viewpoint requires --canopy-lod-inspection")
     if args.missing_leaf and (args.viewpoint != "ground-broadleaf" or inspection):
@@ -624,16 +752,18 @@ def main():
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     evidence = build / "software-captures" / (f"{stamp}-{args.viewpoint}" + ("-no-sun-shadows" if args.no_sun_shadows else "")
                                               + (f"-t{args.time_of_day:05.2f}" if args.time_of_day is not None else "")
+                                              + (f"-tide{args.tide_phase:.3f}" if args.tide_phase is not None else "")
                                               + (f"-d{args.game_day}" if args.game_day is not None else "")
                                               + (f"-{args.weather}" if args.weather is not None else "")
-                                              + ("-wet" if args.wet_ground else ""))
+                                              + ("-wet" if args.wet_ground else "")
+                                              + (f"-props-seed{args.natural_props_seed}" if prop_seed_arguments else ""))
     evidence.mkdir(parents=True)
     capture = evidence / "capture.ppm"
     platform = dependency / "tools/platform"
     command = [str(platform / "wayland_test_server.sh"), "--compositor", "weston", "--renderer", "pixman",
                str(platform / "run_gpu_tests_private.sh"), "--inside-private-compositor", "exec",
                str(build / "island-simulator"), "--capture", str(capture), "--viewpoint", args.viewpoint,
-               "--no-user-settings", *inspection, *(["--no-sun-shadows"] if args.no_sun_shadows else []),
+               "--no-user-settings", *inspection, *prop_seed_arguments, *tide_arguments, *(["--no-sun-shadows"] if args.no_sun_shadows else []),
                *(["--time-of-day", str(args.time_of_day)] if args.time_of_day is not None else []),
                *(["--game-day", str(args.game_day)] if args.game_day is not None else []),
                *(["--weather", args.weather] if args.weather is not None else []),
@@ -641,6 +771,10 @@ def main():
     scope = "single-tree frozen LOD inspection only" if inspection else "software visual validation only"
     # Exercise title-relative content loading from an unrelated, build-owned working directory.
     metadata = {"scope": scope, "command": command, "cwd": str(evidence), "kernel_before": baseline}
+    if prop_seed_arguments:
+        metadata["scope"] = "local natural-props layer inspection; canonical gameplay world; last turtle nest"
+        metadata["natural_props_seed"] = args.natural_props_seed
+        metadata["natural_props_layer_only"] = True
     leaf_asset = build / "Content/vegetation/leaf-lamina.png"
     bindings = []
     if args.missing_leaf:
@@ -655,6 +789,9 @@ def main():
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             # Persist the exact command and baseline before launching any rendering process.
             metadata["monitor_poll_seconds"] = 0.2
+            metadata["artifact"] = artifact_identity(build / "island-simulator")
+            metadata["harness"] = artifact_identity(Path(__file__))
+            metadata["cmake_cache"] = artifact_identity(build / "CMakeCache.txt")
             (evidence / "run.json").write_text(json.dumps(metadata, indent=2) + "\n")
             result = run_monitored_capture(command, evidence, software_environment(evidence),
                                            evidence, journal, baseline, read_only_directories=bindings)
@@ -670,6 +807,8 @@ def main():
             # Lift the logger lines out so the diagnostic reads whole again.
             log = re.sub(r"(?m)^(island-simulator:[^\n]*?)(?:\[INFO\]\[[A-Z]+\][^\n]*\n)+", r"\1", log)
             diagnostics = log + "".join(p.read_text(errors="replace") for p in evidence.glob("island-runtime-*.log"))
+            metadata["capture_clock"] = validate_capture_clock(log)
+            metadata["held_tide"] = validate_capture_tide(log, args.tide_phase)
             if args.viewpoint in {"campfire", "campfire-wide"}:
                 validate_campfire_stages(log)
                 for stage in range(4):
@@ -787,6 +926,24 @@ def main():
                 for stage in range(4):
                     if not Path(str(capture)+f".snake-stage-{stage}.ppm").is_file():
                         raise RuntimeError("missing snake motion stage image")
+            if args.viewpoint in ("fish-swim", "bird-flight"):
+                species = "fish" if args.viewpoint == "fish-swim" else "bird"
+                motion = validate_free_motion_stages(log, species)
+                (evidence / f"{species}-motion.json").write_text(json.dumps(motion, indent=2)+"\n")
+                for stage in range(16):
+                    stage_path = Path(str(capture)+f".{species}-stage-{stage}.ppm")
+                    validation = subprocess.run([sys.executable, str(root / "tools/validate_capture.py"),
+                        str(stage_path), "--profile", profile_for_viewpoint(args.viewpoint, args.time_of_day),
+                        "--output", str(evidence / f"{species}-stage-{stage}-validation.json")],
+                        check=False, timeout=15)
+                    if validation.returncode:
+                        raise RuntimeError(f"{species} stage {stage} image validation failed")
+            if args.viewpoint == "deer-walk":
+                motion = validate_deer_motion_stages(log)
+                (evidence / "deer-motion.json").write_text(json.dumps(motion, indent=2) + "\n")
+                for stage in range(8):
+                    if not Path(str(capture)+f".deer-stage-{stage}.ppm").is_file():
+                        raise RuntimeError("missing deer motion stage image")
             if args.viewpoint == "boars":
                 motion = validate_boar_motion_stages(log)
                 (evidence / "boar-motion.json").write_text(json.dumps(motion, indent=2) + "\n")
@@ -845,7 +1002,8 @@ def main():
                                "bear capture visible 1; draws 2"):
                     if marker not in diagnostics:
                         raise RuntimeError(f"bear integration diagnostic missing: {marker}")
-            validate_graphics_log(diagnostics, args.canopy_lod_inspection, missing_leaf=args.missing_leaf)
+            validate_graphics_log(diagnostics, args.canopy_lod_inspection, missing_leaf=args.missing_leaf,
+                                  natural_props_seed=args.natural_props_seed)
             validate_antialiasing_log(diagnostics, 0)
             if not args.missing_leaf and "leaf material loaded Content/vegetation/leaf-lamina.png; 256x256, 9 mips, 349524 RGBA8 bytes" not in diagnostics:
                 raise RuntimeError("packaged live-leaf material is missing; check assets and executable")
@@ -1060,8 +1218,10 @@ def main():
                 raise RuntimeError("current canopy epiphyte detail is missing; check for a stale executable")
             if "canopy forms use distinct emerald, olive, blue-green, and warm-green palettes with bounded lobe variation" not in diagnostics:
                 raise RuntimeError("current canopy palette variation is missing; check for a stale executable")
-            if "canopy mesh variant=0 near-vertices=4998 near-triangles=4864 far-vertices=1071 far-triangles=1120" not in diagnostics:
-                raise RuntimeError("current far canopy support branches are missing; check for a stale executable")
+            # One additional foot ring preserves all original bark/contact faces: +12/+5
+            # vertices and +24/+10 triangles in near/far; the distant range retains its foot.
+            if "canopy mesh variant=0 near-vertices=5010 near-triangles=4888 far-vertices=1076 far-triangles=1130 distant-triangles=210" not in diagnostics:
+                raise RuntimeError("current canopy supports/terrain foot closure are missing; check for a stale executable")
             if "eight structural crown forms share eight LOD lobe anchors and supported trunk bends" not in diagnostics:
                 raise RuntimeError("current canopy structure is missing; check for a stale executable")
             if "forest soil separates humus and moss with footprint-filtered fallen leaves" not in diagnostics:
@@ -1657,6 +1817,9 @@ def main():
                 reached = re.search(r"quad QA shelter: mine, site mine, depth ([-0-9.e]+) m, across [-0-9.e]+ m, floor [-0-9.e]+, body [-0-9.e]+, walls clear", diagnostics)
                 if not reached or float(reached.group(1)) < 8.5:
                     raise RuntimeError("quad-mine-crates capture did not bring the quad up the adit to the crates")
+            if args.viewpoint == "quad-bunker":
+                entry = validate_bunker_quad_entry(log)
+                (evidence / "bunker-entry.json").write_text(json.dumps(entry, indent=2) + "\n")
             if args.viewpoint == "quad-mine" and "quad QA shelter: mine, site mine" not in diagnostics:
                 raise RuntimeError("quad-mine capture did not drive the quad into the mine")
             if args.viewpoint == "quad-cave-top":
@@ -2070,7 +2233,7 @@ def main():
                     raise RuntimeError("bedded deer capture did not submit the live coat-and-bare-parts population")
                 if "deer QA camera frames one antlered clearing animal bedded down broadside" not in diagnostics:
                     raise RuntimeError("bedded deer capture did not set the deer down")
-            if args.viewpoint == "deer":
+            if args.viewpoint in ("deer", "deer-walk"):
                 if not re.search(r"deer [1-4]/4 visible, 2 draw", diagnostics):
                     raise RuntimeError("deer capture did not submit the live coat-and-bare-parts population")
                 for marker in (
@@ -2139,6 +2302,15 @@ def main():
     except (OSError, RuntimeError, subprocess.SubprocessError, KeyboardInterrupt) as error:
         failure = str(error) or "interrupted"
     finally:
+        if "artifact" in metadata:
+            try:
+                metadata["artifact_after"] = artifact_identity(build / "island-simulator")
+                verify_artifact_content_unchanged(metadata["artifact"], metadata["artifact_after"])
+                metadata["artifact_content_unchanged"] = True
+            except (OSError, RuntimeError) as error:
+                metadata["artifact_content_unchanged"] = False
+                metadata["artifact_verification_error"] = str(error)
+                failure = failure or str(error)
         if args.missing_leaf:
             try:
                 metadata["leaf_after"] = artifact_identity(leaf_asset)

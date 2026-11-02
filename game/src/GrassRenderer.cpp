@@ -386,6 +386,10 @@ void main()
     // Same blend as the terrain beneath: the shadow map supplies direct sun, the baked
     // field keeps sky occlusion, so blades and ground darken together under one crown.
     float grassTransmission = canopyDappleTransmission(receiver, canopyTransmission(receiver));
+    // Shade-grown leaves share the cooler understory palette. Keep sunny meadow and
+    // coastal grass pigment intact; direct shadows still supply their own illumination.
+    float shadePigment = 1.0 - smoothstep(0.35, 0.90, grassTransmission);
+    color *= mix(vec3(1.0), vec3(0.84, 0.90, 0.94), shadePigment);
     float grassSunVisibility = sunShadowVisibility(vWorld);
     float grassSkyOcclusion = mix(grassTransmission, 1.0, uSunShadowParams.x * 0.55);
     color *= mix(uCanopyAmbient, vec3(1.0), min(grassSkyOcclusion, grassSunVisibility));

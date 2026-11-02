@@ -63,6 +63,8 @@ class CaptureValidatorTests(unittest.TestCase):
         self.assertEqual(profile_for_viewpoint("cave-back"), "dark-cave-detail")
         # Underwater views: reviewed 2026-10-21, the water's haze lowers the luminance spread.
         self.assertEqual(profile_for_viewpoint("fish"), "underwater-scene")
+        self.assertEqual(profile_for_viewpoint("fish-swim"), "underwater-scene")
+        self.assertEqual(profile_for_viewpoint("bird-flight"), "scene")
         self.assertEqual(profile_for_viewpoint("reef-habitat"), "underwater-scene")
         self.assertEqual(profile_for_viewpoint("dolphins"), "underwater-scene")
         self.assertEqual(profile_for_viewpoint("fish", 21.0), "night-scene")
@@ -74,6 +76,9 @@ class CaptureValidatorTests(unittest.TestCase):
         self.assertEqual(profile_for_viewpoint("freighter-mess", 21.0), "night-scene")
         self.assertEqual(profile_for_viewpoint("mine-bats"), "dim-interior-scene")
         self.assertEqual(profile_for_viewpoint("mine-puddle"), "dim-interior-scene")
+        self.assertEqual(profile_for_viewpoint("cave-inside"), "dim-interior-scene")
+        self.assertEqual(profile_for_viewpoint("cave-inside", 22.0), "night-scene")
+        self.assertEqual(profile_for_viewpoint("cave"), "scene")
         self.assertEqual(profile_for_viewpoint("lighthouse-stair"), "dim-interior-scene")
         self.assertEqual(profile_for_viewpoint("freighter-hold"), "scene")
         for name in ("", "overview", "grass", "wet-sand", "litter-other", "interactive"):

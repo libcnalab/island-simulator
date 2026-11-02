@@ -38,6 +38,7 @@ namespace island
         int xMillimetres;
         int zMillimetres;
         bool near;
+        bool roots = false;
 
         [[nodiscard]] bool Matches(float x, float z) const noexcept
         {

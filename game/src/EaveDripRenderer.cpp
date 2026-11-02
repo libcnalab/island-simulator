@@ -1,4 +1,5 @@
 #include "IslandSimulator/EaveDripRenderer.hpp"
+#include "IslandSimulator/RainStreakAppearance.hpp"
 #include "IslandSimulator/HutThatch.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
@@ -86,22 +87,23 @@ namespace island
                 const float gap = (0.25f + 0.9f * Unit(index, d, 2U)) * (1.4f - wet);
                 const float cycle = tip.fallSeconds + SplashSeconds + gap;
                 const float t = std::fmod(time + cycle * Unit(index, d, 3U), cycle);
-                const Vector3 toCamera = camera - tip.at;
-                const float distance = toCamera.Length();
-                if (distance < 0.3f) continue;
                 const float alpha = std::clamp((0.30f + 0.25f * wet) * far, 0.0f, 1.0f);
-                const auto c = [alpha](const float v) { return static_cast<int>(std::lround(v * alpha * 255.0f)); };
                 if (t < tip.fallSeconds) {
                     // a falling drop, streaked by its speed over a frame
                     const float y = tip.at.Y - 0.5f * Gravity * t * t;
                     const float streak = std::clamp(Gravity * t * 0.035f, 0.03f, 0.30f);
                     const Vector3 bottom(tip.at.X, y, tip.at.Z), top(tip.at.X, std::min(tip.at.Y, y + streak), tip.at.Z);
+                    const Vector3 toCamera=camera-bottom;
+                    const float distance=toCamera.Length();
+                    const float dropAlpha=alpha*rain_streak::NearOpacity(distance);
+                    if (dropAlpha<=0) continue;
                     Vector3 side = Vector3::Cross(Vector3::Up, toCamera);
                     if (side.LengthSquared() < 1e-6f) continue;
                     side.Normalize();
-                    side *= 0.004f + distance * 0.0011f;
-                    const Color head(c(0.78f), c(0.82f), c(0.86f), static_cast<int>(std::lround(alpha * 255.0f)));
-                    const Color tail(c(0.45f), c(0.48f), c(0.52f), static_cast<int>(std::lround(alpha * 0.35f * 255.0f)));
+                    side *= rain_streak::HalfWidth(distance);
+                    const auto c = [dropAlpha](float v) { return static_cast<int>(std::lround(v*dropAlpha*255.0f)); };
+                    const Color head(c(0.78f), c(0.82f), c(0.86f), static_cast<int>(std::lround(dropAlpha * 255.0f)));
+                    const Color tail(c(0.45f), c(0.48f), c(0.52f), static_cast<int>(std::lround(dropAlpha * 0.35f * 255.0f)));
                     staging_.emplace_back(top - side, tail); staging_.emplace_back(top + side, tail);
                     staging_.emplace_back(bottom + side, head);
                     staging_.emplace_back(top - side, tail); staging_.emplace_back(bottom + side, head);

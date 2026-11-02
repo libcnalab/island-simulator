@@ -519,7 +519,15 @@ void main()
         foam = max(foam, capCrest * capBreak * rough * capOpen * capDistance * 0.92);
     }
     foam = clamp(foam, 0.0, 0.86);
-    water = mix(water, vec3(0.82, 0.94, 0.91), foam);
+    float alpha = uCoastalOptics.w * (1.0 - exp(-waterDepth * uCoastalOptics.x));
+    // Grazing sky reflection should not inherit the clear lagoon's downward-view transparency.
+    alpha = max(alpha, fresnel * 0.92);
+    alpha = mix(alpha, max(alpha, 0.93), plume);   // the silt hides the bed
+    alpha = mix(alpha, 0.95, foam);
+    // Foam covers the translucent body: weight its pigment by its share of the resulting
+    // opacity. Raw coverage underweighted the white in clear water, leaving opaque blue rings.
+    float foamTint = foam * 0.95 / max(alpha, 0.0001);
+    water = mix(water, vec3(0.82, 0.94, 0.91), foamTint);
     // The rain rings the water near the eye (gone where a cell spans too few pixels to show
     // its ring) and dulls the whole surface a little.
     if (uRain > 0.0) {
@@ -546,11 +554,6 @@ void main()
     float fog = max(distanceFog, grazingHaze);
     water = mix(water, islandAtmosphereFog, fog);
 
-    float alpha = uCoastalOptics.w * (1.0 - exp(-waterDepth * uCoastalOptics.x));
-    // Grazing sky reflection should not inherit the clear lagoon's downward-view transparency.
-    alpha = max(alpha, fresnel * 0.92);
-    alpha = mix(alpha, max(alpha, 0.93), plume);   // the silt hides the bed
-    alpha = mix(alpha, 0.95, foam);
     alpha = mix(alpha, 0.96, fog);
     alpha *= contactCoverage;
     // The seabed is drawn only within the terrain mesh's square. Where the eye's ray through

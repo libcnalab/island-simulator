@@ -2,6 +2,11 @@
 #include "IslandSimulator/JungleGrounding.hpp"
 #include "IslandSimulator/JungleLayout.hpp"
 #include "IslandSimulator/GroundLitter.hpp"
+#include "IslandSimulator/CanopyProfile.hpp"
+#include "IslandSimulator/JungleRootGrounding.hpp"
+#include "IslandSimulator/NaturalPropLayout.hpp"
+#include "IslandSimulator/VegetationLayout.hpp"
+#include "IslandSimulator/RockSurface.hpp"
 
 #include <algorithm>
 #include <array>
@@ -167,6 +172,83 @@ int main()
     }
     check(auditedRoots>15000 && largestOldGap>0.10f,
           "Root-contact regression no longer covers the observed analytic-height discrepancy");
+    // Origins alone cannot ground a broad foot on a slope. Audit the actual near/far
+    // trunk rings against the packed height reconstruction used by both GPU passes.
+    std::size_t footSamples=0,oldFloatingFeet=0;
+    float largestFootGap=0,highestClosureGap=-1000;
+    const island::JungleLayout rootLayout(terrain);
+    for (const auto& source : rootLayout.Canopy()) {
+        const auto tree=island::GroundJunglePlacement(source,surface);
+        const bool mangrove=tree.variant==island::MangroveCanopyVariant;
+        const float radius=(mangrove?1.6f:.8f)*tree.scale;
+        const auto bounds=surface.HeightRange(tree.x-radius,tree.z-radius,tree.x+radius,tree.z+radius);
+        const float c=std::cos(tree.yawRadians),s=std::sin(tree.yawRadians);
+        for(bool far : {false,true}) for(int side=0;side<24;++side) {
+            const float angle=side*6.28318530718f/24;
+            float previous=-std::numeric_limits<float>::infinity();
+            const auto originalRings=island::CanopyTrunkRingHeights(tree.variant,far);
+            const auto footRings=island::jungle_root_grounding::RingHeightsWithFoot(tree.variant,far);
+            check(footRings.size()==originalRings.size()+1
+                && std::equal(originalRings.begin(),originalRings.end(),footRings.begin()+1),
+                "Foot closure changed an original trunk ring");
+            for(float h : footRings) {
+                const auto p=island::jungle_root_grounding::TrunkVertexWithFoot(tree.variant,h,angle,far,1.0f);
+                const float x=tree.x+tree.scale*(p[0]*c+p[2]*s);
+                const float z=tree.z+tree.scale*(-p[0]*s+p[2]*c);
+                const float original=tree.y+p[1]*tree.scale;
+                const float shift=h<0?std::min(0.0f,surface.SamplePacked(x,z)-tree.y):0.0f;
+                const float corrected=original+shift;
+                if(h<0) {
+                    check(std::hypot(x-tree.x,z-tree.z)<=radius,
+                          "Low trunk escaped its relief-bounds footprint");
+                    check(corrected>=bounds[0]-.20f*tree.scale,
+                          "Grounded trunk escaped its conservative lower bounds");
+                } else {
+                    check(p==island::CanopyTrunkVertex(tree.variant,h,angle,far,1.0f)
+                        && corrected==original,"Foot closure moved a shared bark/grip surface");
+                }
+                check(corrected>previous,"Grounding folded or inverted a trunk ring");
+                previous=corrected;
+                if(h<0) {
+                    const float ground=surface.Sample(x,z).height;
+                    const float gap=tree.y-ground;
+                    largestFootGap=std::max(largestFootGap,gap);
+                    oldFloatingFeet+=gap>.02f;
+                    highestClosureGap=std::max(highestClosureGap,corrected-ground);
+                    ++footSamples;
+                }
+            }
+        }
+    }
+    check(footSamples>10000 && oldFloatingFeet>1000 && largestFootGap>.30f,
+          "Trunk-foot audit missed the observed horizontal-plane defect");
+    check(highestClosureGap<-.001f,"Foot closure leaves an exposed gap above the drawn terrain");
+    for(bool mangrove : {false,true}) {
+        float previous=1;
+        for(int step=0;step<=200;++step) {
+            const float h=step*.01f,weight=island::jungle_root_grounding::Weight(h,mangrove);
+            check(weight>=0 && weight<=previous,"Root blend must be bounded and monotone");
+            previous=weight;
+        }
+        check(island::jungle_root_grounding::Weight(.15f,mangrove)==1
+            && island::jungle_root_grounding::Weight(1.4f,mangrove)==0,
+            "Root blend endpoints changed");
+    }
+    check(island::jungle_root_grounding::Weight(.90f,false)==0
+        && island::jungle_root_grounding::Weight(.90f,true)>0,
+        "Ordinary attachment height must stay fixed while mangrove stilts retain their longer blend");
+    struct Comma final : std::numpunct<char> {
+        char do_decimal_point() const override { return ','; }
+    };
+    const auto shader=island::jungle_root_grounding::Shader();
+    const auto savedLocale=std::locale();
+    std::locale::global(std::locale(savedLocale,new Comma));
+    check(island::jungle_root_grounding::Shader()==shader,
+          "Root shader constants depend on decimal locale");
+    std::locale::global(savedLocale);
+    std::cout << "Trunk-foot samples " << footSamples << ", old floating " << oldFloatingFeet
+              << ", largest gap " << largestFootGap << " m, highest closure gap "
+              << highestClosureGap << " m\n";
     double oldMinimum=1000,oldMaximum=-1000,conformedMinimum=1000,conformedMaximum=-1000;
     std::size_t litterSamples=0,oldBuriedSamples=0,conformedBuriedSamples=0;
     for (int leaf=0;leaf<island::GroundLitterCount;++leaf) {
@@ -250,6 +332,53 @@ int main()
             check(rejected,"Invalid rendered-surface coordinate was accepted");
         }
     }
+    // The former open rim floated above downhill support. Audit both LOD outlines and
+    // their edges against actual rendered triangles, including five accepted prop seeds.
+    const island::VegetationLayout palms(terrain);
+    const island::JungleLayout rockJungle(terrain);
+    std::size_t rockFootSamples=0;
+    float oldRockGap=0,highestRockFoot=-100;
+    for (const auto seed : {island::NaturalPropLayout::DefaultSeed,0U,1U,0xffffffffU,0x75a81423U}) {
+        const island::NaturalPropLayout props(terrain,palms,rockJungle,seed);
+        auto rocks=props.Rocks();
+        // The fourth reef habitat also reuses this surface, with a uniform scale.
+        for (const auto& habitat : props.ReefHabitat()) {
+            if (habitat.variant!=3U) continue;
+            island::RockPlacement rock;
+            rock.x=habitat.x;rock.y=habitat.y;rock.z=habitat.z;
+            rock.yawRadians=habitat.yawRadians;rock.variant=2;
+            rock.scaleX=rock.scaleY=rock.scaleZ=habitat.scale;
+            rocks.push_back(rock);
+        }
+        for (const auto& rock : rocks) {
+            for (const bool far : {false,true}) {
+                const auto mesh=island::BuildRockSurface(rock.variant,far);
+                const int sides=far?island::RockSurfaceFarSlices:island::RockSurfaceNearSlices;
+                for (int side=0;side<sides;++side) {
+                    for (int step=0;step<8;++step) {
+                        const auto& a=mesh.vertices[side].position;
+                        const auto& b=mesh.vertices[(side+1)%sides].position;
+                        const float t=step/8.0f;
+                        const float lx=std::lerp(a[0],b[0],t)*rock.scaleX;
+                        const float lz=std::lerp(a[2],b[2],t)*rock.scaleZ;
+                        const float x=rock.x+std::cos(rock.yawRadians)*lx+std::sin(rock.yawRadians)*lz;
+                        const float z=rock.z-std::sin(rock.yawRadians)*lx+std::cos(rock.yawRadians)*lz;
+                        const float ground=surface.Height(x,z);
+                        const float y=rock.y+std::lerp(a[1],b[1],t)*rock.scaleY;
+                        oldRockGap=std::max(oldRockGap,rock.y-ground);
+                        highestRockFoot=std::max(highestRockFoot,y-ground);
+                        check(y<ground,"Rock basal edge remains above rendered terrain");
+                        check(y>=rock.y+island::RockSurfaceMinimumHeight*rock.scaleY-0.0001f,
+                              "Rock foot exceeds renderer's conservative lower bound");
+                        ++rockFootSamples;
+                    }
+                }
+            }
+        }
+    }
+    check(oldRockGap>0.65f,"Rock audit missed the original sloped-rim gap");
+    std::cout<<"Rock basal support: "<<rockFootSamples<<" samples, old maximum gap "
+        <<oldRockGap<<" m, highest corrected edge "<<highestRockFoot<<" m\n";
     if (failures) return 1;
     std::cout << "Rendered terrain vertices, triangle planes, normals, seams and input bounds passed; "
               << auditedRoots << " jungle root origins checked, old maximum gap " << largestOldGap << " m\n";

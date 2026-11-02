@@ -27,6 +27,7 @@ namespace island
         constexpr float WaterEntryTerrainHeight = -0.45f;
         constexpr float WaterExitTerrainHeight = -0.16f;
         constexpr float MaximumStepSeconds = 0.1f;
+        constexpr float MaximumWalkingStepSeconds = 1.0f / 60.0f;
         constexpr float MaximumHorizontalSubstep = 0.14f;
         constexpr float DepenetrationSkin = 0.001f;
         constexpr int MaximumDepenetrationPasses = 8;
@@ -251,9 +252,11 @@ namespace island
                 {candidateX,std::max(candidate.height+.001f,position_.y-EyeHeight),candidateZ},
                 CapsuleRadius,CapsuleHeight)<1.0f)
                 return HorizontalStepResult::ObstacleBlocked;
+            // Test the actual supported feet. Raising this proxy by a millimetre can
+            // clear the rounded back-wall contact while the real capsule penetrates it.
             if(cave_&&cave_->SafeTravelFraction(
-                {position_.x,std::max(current.height+.001f,position_.y-EyeHeight),position_.z},
-                {candidateX,std::max(candidate.height+.001f,position_.y-EyeHeight),candidateZ},
+                {position_.x,std::max(current.height,position_.y-EyeHeight),position_.z},
+                {candidateX,std::max(candidate.height,position_.y-EyeHeight),candidateZ},
                 CapsuleRadius,CapsuleHeight)<1)
                 return HorizontalStepResult::ObstacleBlocked;
             if(bunker_&&bunker_->SafeTravelFraction(
@@ -462,6 +465,46 @@ namespace island
     }
 
     void PlayerMotion::UpdateInternal(
+        const IslandTerrain& terrain, const float inputX, const float inputZ,
+        const float deltaSeconds, const std::span<const CircularObstacle> obstacles,
+        const WorldCollisionGrid* collisionGrid) noexcept
+    {
+        // Integrate acceleration and contact together. One large acceleration tick followed
+        // by distance-only collision substeps could lock a bank that 60 Hz walking traverses.
+        // Only walking needs this correction; swimming and the variable world timestep retain
+        // their established integration paths.
+        const float dt = std::isfinite(deltaSeconds)
+            ? std::clamp(deltaSeconds, 0.0f, MaximumStepSeconds) : 0.0f;
+        // A stationary walker still refreshes support/depenetration once. Avoid repeating
+        // the expensive terrain query on slow idle frames, and preserve swimming behavior.
+        if (mode_ != LocomotionMode::Walking || (inputX == 0.0f && inputZ == 0.0f
+            && velocityX_ == 0.0f && velocityZ_ == 0.0f)) {
+            const auto trace = UpdateStep(terrain, inputX, inputZ, dt, obstacles, collisionGrid);
+            if (trace.valid || trace.safetyClamped) movementTrace_ = trace;
+            return;
+        }
+        const int steps = std::max(1, static_cast<int>(std::ceil(dt / MaximumWalkingStepSeconds)));
+        const float stepSeconds = dt / static_cast<float>(steps);
+        PlayerMovementTrace trace;
+        trace.startX = trace.attemptedX = position_.x;
+        trace.startZ = trace.attemptedZ = position_.z;
+        for (int step = 0; step < steps; ++step) {
+            const auto part = UpdateStep(terrain, inputX, inputZ, stepSeconds, obstacles, collisionGrid);
+            trace.attemptedX += part.attemptedX - part.startX;
+            trace.attemptedZ += part.attemptedZ - part.startZ;
+            trace.obstacleRejections += part.obstacleRejections;
+            trace.terrainRejections += part.terrainRejections;
+            trace.slideSubsteps += part.slideSubsteps;
+            trace.obstacleDepenetrations += part.obstacleDepenetrations;
+            trace.safetyClamped = trace.safetyClamped || part.safetyClamped;
+            trace.valid = trace.valid || part.valid;
+        }
+        trace.resolvedX = position_.x;
+        trace.resolvedZ = position_.z;
+        if (trace.valid || trace.safetyClamped) movementTrace_ = trace;
+    }
+
+    PlayerMovementTrace PlayerMotion::UpdateStep(
         const IslandTerrain& terrain, float inputX, float inputZ,
         const float deltaSeconds, const std::span<const CircularObstacle> obstacles,
         const WorldCollisionGrid* collisionGrid) noexcept
@@ -573,9 +616,6 @@ namespace island
 
         trace.resolvedX = position_.x;
         trace.resolvedZ = position_.z;
-        if (trace.valid || trace.safetyClamped) {
-            movementTrace_ = trace;
-        }
 
         if(swimSurface_ && mode_==LocomotionMode::Swimming) {
             constexpr float bound=TerrainMeshLayout::Extent-CapsuleRadius;
@@ -585,7 +625,12 @@ namespace island
                 swimDepth_.Update(support,swimAscend_,swimDescend_,dt);
             } else swimDepth_.Reset();
         }
-        ResolveModeAndHeight(terrain, 1.8f * dt);
+        // Keep the downhill ease at rest, but follow a walkable bank at locomotion speed.
+        // A fixed 1.8 m/s fall rate left the camera/capsule hovering over descending soil.
+        const float followSpeed = mode_ == LocomotionMode::Walking
+            ? std::max(1.8f, std::hypot(velocityX_, velocityZ_) * std::tan(MaximumWalkSlopeRadians))
+            : 1.8f;
+        ResolveModeAndHeight(terrain, followSpeed * dt);
 #ifndef NDEBUG
         assert(std::isfinite(position_.x) && std::isfinite(position_.y)
                && std::isfinite(position_.z));
@@ -594,5 +639,6 @@ namespace island
         assert(groundSlopeRadians_ >= 0.0f
                && groundSlopeRadians_ <= std::numbers::pi_v<float> * 0.5f + 0.001f);
 #endif
+        return trace;
     }
 }

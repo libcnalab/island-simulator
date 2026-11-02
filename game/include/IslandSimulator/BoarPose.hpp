@@ -32,9 +32,16 @@ namespace island
         static constexpr float UpperLength = 0.35f;
         static constexpr float LowerLength = 0.32f;
         static constexpr float HoofHeight = 0.065f;
+        static constexpr float HalfStride = 0.245f;
         static constexpr float StanceFraction = 0.64f;
     };
     /** @brief Fixed-length two-segment pose above a supplied local ground height. */
     [[nodiscard]] BoarLegPose EvaluateBoarLeg(float phase, float movement, float bodyBob,
                                             bool front, bool left, float groundHeight = 0.0f) noexcept;
+    /** @brief Shared stride amplitude for the pose and distance-driven gait clock. */
+    [[nodiscard]] float BoarGaitMovement(float speed) noexcept;
+    /** @brief Advance by accepted surface travel, accounting for stride amplitude and body scale.
+     * Matches steady stride to body travel; does not lock world-space feet through turns/stops.
+     */
+    [[nodiscard]] float AdvanceBoarGait(float phase, float distance, float speed, float scale) noexcept;
 }

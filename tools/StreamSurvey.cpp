@@ -158,5 +158,31 @@ int main() {
     std::cerr << "west corridor reached sea=" << reachedSea << " maximum local rise="
         << maximumRise << " maximum candidate incision=" << maximumCut
         << "; candidate is not yet a sea-level-connected water surface\n";
+    // Live keyboard QA exposed a long-frame bank lock here. Test the actual controller,
+    // in both directions, without prop obstacles so this isolates ground contact.
+    constexpr float CrossingX=-110.0f;
+    const float crossingCentre=island::StreamRoute::CentreZ(CrossingX);
+    for (float direction : {-1.0f,1.0f}) {
+        for (float dt : {1.0f/60.0f,.1f}) {
+            walker.SetPosition(terrain,CrossingX,crossingCentre-direction*3.0f);
+            for (int step=0;step<600
+                 &&direction*(walker.Position().z-crossingCentre)<2.5f;++step) {
+                walker.Update(terrain,0,direction,dt);
+                if (walker.Mode()!=island::LocomotionMode::Walking
+                    ||std::abs(walker.Position().y-island::PlayerMotion::EyeHeight
+                        -walker.GroundHeight())>.025f) {
+                    std::cerr<<"Stream crossing lost planted support: direction="<<direction
+                        <<" dt="<<dt<<'\n';
+                    return 24;
+                }
+            }
+            if (direction*(walker.Position().z-crossingCentre)<2.0f) {
+                std::cerr<<"Stream crossing blocked: direction="<<direction<<" dt="<<dt
+                    <<" across="<<walker.Position().z-crossingCentre<<'\n';
+                return 23;
+            }
+        }
+    }
+    std::cerr<<"Stream supports bidirectional walking at 60 Hz and 100 ms steps\n";
     return reachedSea?0:1;
 }

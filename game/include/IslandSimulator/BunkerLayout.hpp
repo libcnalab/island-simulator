@@ -11,6 +11,7 @@ struct BunkerPoint {float x=0,y=0,z=0;};
 /** Deterministic enterable floor plan and collision contract for the underground bunker. */
 class BunkerLayout final {
 public:
+    static constexpr float CorridorFrontDepth=BunkerSite::ApronFrontDepth;
     explicit BunkerLayout(const IslandTerrain&);
     [[nodiscard]] BunkerPoint Entrance()const noexcept{return entrance_;}
     [[nodiscard]] BunkerPoint World(float across,float height,float depth)const noexcept;

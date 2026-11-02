@@ -285,6 +285,7 @@ namespace island
         CurrentBoundaryDetail,
         DistantSceneryDetail,
         PropDetail,
+        RockContactDetail,
         DriftwoodDetail,
         ReefDetail,
         ReefHabitatDetail,
@@ -292,6 +293,7 @@ namespace island
         WalkerShadowDetail,
         FallenFrondDetail,
         BirdDetail,
+        BirdFlightDetail,
         BirdPreenDetail,
         FrigatebirdDetail,
         WhaleSkeletonDetail,
@@ -366,6 +368,7 @@ namespace island
         FruitBatDetail,
         FruitBatRoostDetail,
         FishDetail,
+        FishMotionDetail,
         StingrayDetail,
         ReefHeronDetail,
         StingrayBuriedDetail,
@@ -390,6 +393,7 @@ namespace island
         LookoutDetail,
         HutDetail,
         HutMaterialDetail,
+        HutEavesDetail,
         HelicopterDetail,
         HelicopterInteriorDetail,
         HelicopterApproach,
@@ -422,6 +426,7 @@ namespace island
         GoatDetail,
         GoatLyingDetail,
         DeerDetail,
+        DeerMotionDetail,
         DeerBeddedDetail,
         SpiderDetail,
         SpiderBrightDetail,
@@ -455,6 +460,7 @@ namespace island
          * @param viewpoint Optional fixed QA camera without player movement.
          * @param benchmarkPath Optional JSON destination for an uncapped fixed-view benchmark.
          * @param startupReportPath Optional JSON destination for first-draw phase timing.
+         * @param naturalPropSeed Capture-only prop-layer preview; gameplay world stays authoritative.
          */
         explicit IslandGame(bool smokeTest = false, std::string capturePath = {},
                             FixedViewpoint viewpoint = FixedViewpoint::None,
@@ -464,7 +470,11 @@ namespace island
                             std::string benchmarkPath = {},
                             std::string startupReportPath = {},
                             bool userSettingsEnabled = true,
-                            std::optional<CanopyLodInspection> canopyLodInspection = std::nullopt);
+                            std::optional<CanopyLodInspection> canopyLodInspection = std::nullopt,
+                            std::optional<std::uint32_t> naturalPropSeed = std::nullopt);
+
+        /** Hold only the existing tide clock for a deterministic capture, phase in [0,1). */
+        void HoldCaptureTide(float phase);
 
         GetTypeNameHPP()
 
@@ -604,6 +614,13 @@ namespace island
         GroundCoverField groundCoverField_;
         GrassLayout grassLayout_;
         NaturalPropLayout naturalPropLayout_;
+        // Capture-only layer preview. Gameplay, landmark siting and collision keep the
+        // authoritative layout; the preview supplies visible props and their effects.
+        std::unique_ptr<NaturalPropLayout> naturalPropInspection_;
+        [[nodiscard]] const NaturalPropLayout& RenderedNaturalProps() const noexcept
+        {
+            return naturalPropInspection_ ? *naturalPropInspection_ : naturalPropLayout_;
+        }
         ShipwreckLayout shipwreckLayout_;
         BirdPerchLayout birdPerchLayout_;
         std::size_t landmarkPerchCount_ = 0U, landmarkSeatedCount_ = 0U;
@@ -963,6 +980,7 @@ namespace island
         std::unique_ptr<CascadeMistRenderer> flyingFishSprayRenderer_;
         float oceanSeconds_ = 0.0f;   // the last frame's ocean clock, for the sea's height in Update
         float tideSeconds_ = 0.0f;
+        bool captureTideHeld_ = false;
         TideState tide_{};
         bool tideDiagnosticReported_ = false;
         StingraySandField stingraySand_;
@@ -1092,6 +1110,9 @@ namespace island
         std::uint32_t campfireCaptureUpdates_=0;
         std::uint32_t residentCaptureUpdates_=0;
         std::uint32_t bearCaptureUpdates_=0;
+        [[nodiscard]] bool UsesFixedCaptureClock() const noexcept {
+            return !capturePath_.empty() && viewpoint_!=FixedViewpoint::None;
+        }
         [[nodiscard]] bool UsesCampfireCaptureClock() const noexcept {
             return !capturePath_.empty()&&(viewpoint_==FixedViewpoint::CampfireDetail||viewpoint_==FixedViewpoint::CampfireWide);
         }
@@ -1109,6 +1130,9 @@ namespace island
         std::uint32_t monkeyCaptureUpdates_=0;
         [[nodiscard]] bool UsesMonkeyCaptureClock() const noexcept {
             return !capturePath_.empty()&&viewpoint_==FixedViewpoint::MonkeyDetail;
+        }
+        [[nodiscard]] bool UsesDeerCaptureClock() const noexcept {
+            return !capturePath_.empty() && viewpoint_==FixedViewpoint::DeerMotionDetail;
         }
         [[nodiscard]] bool UsesBoarCaptureClock() const noexcept {
             return !capturePath_.empty() && viewpoint_==FixedViewpoint::BoarDetail;

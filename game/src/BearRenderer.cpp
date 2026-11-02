@@ -40,7 +40,7 @@ namespace island {
 namespace {
 constexpr int VertexCapacity=36000,ShadowCapacity=180;
 constexpr float Pi=std::numbers::pi_v<float>;
-enum class Material:std::uint8_t {Fur,DarkFur,Muzzle,Nose,Bare,Claw,EyeHighlight};
+enum class Material:std::uint8_t {Fur,DarkFur,FaceFur,Muzzle,Nose,Bare,Claw,EyeHighlight};
 
 Vector3 Point(BearPoint p){return {p.x,p.y,p.z};}
 BearPoint Point(Vector3 p){return {p.X,p.Y,p.Z};}
@@ -49,6 +49,9 @@ Vector2 AtlasUv(Material material,float u,float v) {
     u=std::clamp(u,0.0f,1.0f);v=std::clamp(v,0.0f,1.0f);
     if(material==Material::Fur)return {.025f+.95f*u,.025f+.95f*v};
     if(material==Material::DarkFur)return {.975f-.95f*u,.025f+.95f*v};
+    // The face loft's U follows the muzzle. Align the directional coat to that axis;
+    // its original circumference mapping wrapped the hair into forehead bands.
+    if(material==Material::FaceFur)return {.025f+.95f*v,.025f+.95f*u};
     // Short facial surfaces use bounded source windows rather than stretching one
     // long guard-hair clump over a nose, eye or mouth mark.
     if(material==Material::Muzzle)return {.40f+.20f*u,.40f+.20f*v};
@@ -57,7 +60,7 @@ Vector2 AtlasUv(Material material,float u,float v) {
 }
 Color BaseColor(Material material) {
     switch(material) {
-    case Material::Fur:return Color(245,245,245);
+    case Material::Fur:case Material::FaceFur:return Color(245,245,245);
     case Material::DarkFur:return Color(176,166,154);
     case Material::Muzzle:return Color(235,222,205);
     case Material::Nose:return Color(39,34,30);
@@ -295,7 +298,7 @@ void BuildBear(std::vector<VertexPositionColorTexture>& vertices,const BearState
         head+shakenForward*.445f-headUp*.095f}};
     const std::array<Vector2,4> faceRadii{{
         {.350f,.280f},{.305f,.235f},{.250f,.185f},{.190f,.143f}}};
-    mesh.BodyLoft(faceCentres,faceRadii,Material::Fur,lon);
+    mesh.BodyLoft(faceCentres,faceRadii,Material::FaceFur,lon);
 
     // Keep the contrasting muzzle confined to the distal face rather than painting a
     // broad oval over the cheeks. Two nested volumes retain a short natural taper.
@@ -320,8 +323,10 @@ void BuildBear(std::vector<VertexPositionColorTexture>& vertices,const BearState
             // A broad brow and recessed dark socket surround a smaller visible eye.
             // Moving the pair inward also gives the face the forward-looking, deep-set
             // expression of a brown bear instead of two dots on the sides of a sphere.
-            const Vector3 brow=head+headRight*(side*.202f)+headUp*.132f+shakenForward*.292f;
-            mesh.Ellipsoid(brow,headRight,headUp,shakenForward,.132f,.066f,.102f,Material::Fur,12,7);
+            // Embed the ridge in the skull: the old deep oval protruded as a second
+            // pair of ears above the eyes, especially in the front-quarter QA view.
+            const Vector3 brow=head+headRight*(side*.202f)+headUp*.132f+shakenForward*.310f;
+            mesh.Ellipsoid(brow,headRight,headUp,shakenForward,.102f,.040f,.055f,Material::Fur,12,7);
             const Vector3 socket=head+headRight*(side*.205f)+headUp*.068f+shakenForward*.374f;
             mesh.Ellipsoid(socket,headRight,headUp,shakenForward,.058f,.040f,.017f,Material::DarkFur,10,6);
             const Vector3 eye=socket+shakenForward*.014f;

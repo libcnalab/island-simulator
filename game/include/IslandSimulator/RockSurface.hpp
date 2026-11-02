@@ -7,6 +7,11 @@
 namespace island
 {
     inline constexpr float RockSurfaceMaximumHeight = 1.23f;
+    // Buried basal rim: closes downhill gaps without moving placements, crowns or perches.
+    // Includes relief at accepted coastal/clearing sites; shared by both LODs and culling.
+    inline constexpr float RockSurfaceMinimumHeight = -1.25f;
+    inline constexpr int RockSurfaceNearSlices = 24;
+    inline constexpr int RockSurfaceFarSlices = 7;
     struct RockSurfaceVertex
     {
         std::array<float, 3> position;

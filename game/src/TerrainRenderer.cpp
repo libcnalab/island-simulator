@@ -25,6 +25,7 @@
 #include "IslandSimulator/TidePoolLayout.hpp"
 #include "IslandSimulator/TerrainMaterialVertex.hpp"
 #include "IslandSimulator/TerrainSurfaceFrame.hpp"
+#include "IslandSimulator/TerrainRockMaterial.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
 
 #include <algorithm>
@@ -172,6 +173,7 @@ in float vGroundLight;
 uniform vec3 uCaveEntrance;
 uniform vec2 uCaveForward;
 uniform vec3 uBunkerEntrance;
+uniform vec2 uBunkerApron;   // front depth and slope, shared with BunkerLayout
 uniform vec3 uTidePools[5];   // the tide pools' centres (x, z) and authored radii
 // The cosines and sines of each outline harmonic's phase (TidePoolLayout::OutlineScale).
 uniform vec3 uTidePoolPhaseCos[5];
@@ -319,10 +321,10 @@ void main()
     vec2 bunkerOffset=p-uBunkerEntrance.xz;
     float bunkerAcross=dot(bunkerOffset,uBunkerFrame.xy);
     float bunkerDepth=dot(bunkerOffset,uBunkerFrame.zw);
-    float bunkerFloor=bunkerDepth<=0.0?0.11*bunkerDepth
+    float bunkerFloor=bunkerDepth<=0.0?uBunkerApron.y*bunkerDepth
         :(bunkerDepth<10.0?-0.32*bunkerDepth:-3.2);
     bool bunkerCorridor=abs(bunkerAcross)<=1.40
-        &&bunkerDepth>=-0.80&&bunkerDepth<=36.35;
+        &&bunkerDepth>=uBunkerApron.x&&bunkerDepth<=36.35;
     bool bunkerComputer=bunkerAcross>=1.02&&bunkerAcross<=9.30
         &&bunkerDepth>=10.95&&bunkerDepth<=23.25;
     bool bunkerReactor=bunkerAcross>=-10.15&&bunkerAcross<=-1.02
@@ -680,6 +682,11 @@ void main()
         float lineA = pow(max(0.0, 1.0 - webA * 1.8), 3.0);
         float lineB = pow(max(0.0, 1.0 - webB * 1.8), 3.0);
         float lineC = pow(max(0.0, 1.0 - webC * 1.8), 3.0);
+        // Focus arrives in patches, not three equally bright line families spanning
+        // the entire bed. Reuse the slow refractive warp to break their continuity.
+        lineA *= 0.22 + 0.78 * smoothstep(-0.50, 0.50, warp.y);
+        lineB *= 0.22 + 0.78 * smoothstep(-0.50, 0.50, -warp.x);
+        lineC *= 0.22 + 0.78 * smoothstep(-0.65, 0.65, warp.x + warp.y);
         float web = min(1.0, (lineA + lineB + lineC) * 0.8);
         // refracted direct sunlight: gone once the sun is down or behind the overcast, and
         // fading as it sinks (a glancing sun's light spreads into a faint, smeared net)
@@ -732,7 +739,8 @@ void main()
     color = mix(color, vec3(0.205, 0.151, 0.091) * vGroundLight,
                 leafHumus * 0.54 * aerialPatchStrength * underCrowns);
     color = mix(color, vec3(0.185, 0.265, 0.115) * vGroundLight,
-                coolMoss * 0.64 * aerialPatchStrength * underCrowns);
+                coolMoss * 0.64 * aerialPatchStrength * underCrowns
+                    * forestMossSuitability(inlandField.x, groundField.x));
 
     // Preserve broad authored material/lighting cues; the litter source supplies close detail.
     // Fade before the hashed lattice itself becomes subpixel. Its mip chain filters texels,
@@ -743,6 +751,19 @@ void main()
         * (1.0 - turfAmount * 0.35);
     if (imageFloor > 0.0) {
         vec3 litter = forestFloorColor(p, worldDx.xz, worldDy.xz);
+        // Preserve the material distinction in rain: dark humus absorbs more, while
+        // the pale leaf/wood fragments keep more diffuse response. Use the same
+        // filtered source sample (upper midtones), not added noise or another texture.
+        float leafFragment = smoothstep(0.25, 0.45,
+            dot(litter, vec3(0.2126, 0.7152, 0.0722)));
+        float litterAbsorption = mix(0.38, 0.10, leafFragment);
+        float litterWetness = clamp(uWetness, 0.0, 1.0)
+            * smoothstep(0.10, 0.60, vWorld.y);
+        // Compensate this material contribution before blending. The common wet-land
+        // multiplier below then yields its own absorption; later stone/soil overrides
+        // keep their original response without a second set of landmark masks.
+        litter *= (1.0 - litterAbsorption * litterWetness)
+            / (1.0 - 0.30 * litterWetness);
         color = mix(color, litter * vGroundLight * (0.82 + broad*0.12), imageFloor * 0.88);
     }
 
@@ -953,59 +974,21 @@ void main()
     float cliffMacroModulation = 0.0;
     vec3 weatheredRock = vec3(0.36, 0.33, 0.27);
     if (ridgeRock > 0.0) {
-        // Height-field x/z noise stretches into muddy vertical curtains on a steep face.
-        // Project detail through the dominant horizontal face axis and use world height for
-        // the other coordinate so cliffs retain compact rock blocks and readable bedding.
-        // This island is approximately radial. A smooth radial face proxy avoids changing
-        // projection weights at every height-field triangle while still selecting the
-        // appropriate vertical plane around the shoreline and inland ridges.
+        // Radial weights vary smoothly around the island. Each vertical chart retains
+        // its own coordinate and footprint; only the resulting materials are blended.
         float xFacing = abs(vWorld.x)
             / max(abs(vWorld.x) + abs(vWorld.z), 0.0001);
-        float faceAcross = mix(vWorld.x, vWorld.z, xFacing);
-        float projectedMacro = mix(
-            valueNoise(vec2(vWorld.x, vWorld.y) * vec2(0.055, 0.075) + vec2(2.4, -1.7)),
-            valueNoise(vec2(vWorld.z, vWorld.y) * vec2(0.055, 0.075) + vec2(-3.8, 2.1)),
-            xFacing);
-        float projectedMottle = mix(
-            valueNoise(vec2(vWorld.x, vWorld.y) * vec2(0.31, 0.38) + vec2(7.6, -3.1)),
-            valueNoise(vec2(vWorld.z, vWorld.y) * vec2(0.31, 0.38) + vec2(-11.8, 5.7)),
-            xFacing);
-        float rockTone = clamp(0.50 + projectedMacro * 0.82
-            + projectedMottle * 0.30, 0.0, 1.0);
-        weatheredRock = mix(vec3(0.255, 0.272, 0.268),
-                            vec3(0.455, 0.392, 0.300), rockTone);
-        vec3 saltWornRock = mix(vec3(0.350, 0.370, 0.350),
-                                vec3(0.485, 0.425, 0.330),
-                                clamp(0.52 + projectedMacro * 0.76
-                                    + projectedMottle * 0.34, 0.0, 1.0));
-        weatheredRock = mix(weatheredRock, saltWornRock, coastalCliff * 0.62);
-        // The close bedding and grain deliberately filter away with footprint size. Keep a
-        // much broader, low-contrast geological rhythm for the whole-headland view so the
-        // seven-metre face does not collapse into one flat grey curtain at distance.
-        float macroStrata = sin(vWorld.y * 1.08 + projectedMacro * 0.68
-            + sin(faceAcross * 0.085) * 0.34);
-        float drainageField = valueNoise(vec2(faceAcross * 0.092, vWorld.y * 0.052)
-            + vec2(-14.6, 7.3));
-        float drainageStreak = smoothstep(0.18, 0.70,
-            drainageField + projectedMottle * 0.20);
-        float warmBed = smoothstep(0.30, 0.82,
-            macroStrata + projectedMacro * 0.26);
-        weatheredRock = mix(weatheredRock, vec3(0.470, 0.392, 0.292),
-            coastalCliff * warmBed * 0.27);
-        weatheredRock *= 1.0 + coastalCliff
-            * (macroStrata * 0.135 - drainageStreak * 0.155);
-        cliffMacroModulation = coastalCliff
-            * (macroStrata * 0.075 - drainageStreak * 0.080);
-        weatheredRock *= 1.0 + projectedMottle * 0.25;
-        float beddingPhase = vWorld.y * 1.72 + projectedMacro * 0.58
-            + sin(faceAcross * 0.11 + projectedMottle * 1.4) * 0.30;
-        // Thin soil leaves connected but irregular outcrops, rather than tinting an entire
-        // inland hillside as one dark muddy curtain. Low coastal cliffs remain more exposed.
-        // Macro colour may span tens of metres, so it must only bias exposure.  Let the
-        // three-metre mottle and broken bedding define the actual boundary; otherwise a
-        // modest slope turns into one soft, dark oval that resembles a painted stain.
-        float outcropField = projectedMacro * 0.18 + projectedMottle * 0.72
-            + sin(beddingPhase * 0.47 + faceAcross * 0.035) * 0.16;
+        float xyWidth = max(length(worldDx.xy), length(worldDy.xy));
+        float zyWidth = max(length(worldDx.zy), length(worldDy.zy));
+        RockFaceMaterial xyRock = rockFaceMaterial(vWorld.xy, 0.0, xyWidth,
+            coastalCliff, vec2(2.4, -1.7), vec2(7.6, -3.1));
+        // Offset the second chart's joints to avoid mirrored seams on diagonal faces.
+        RockFaceMaterial zyRock = rockFaceMaterial(vWorld.zy, 17.3, zyWidth,
+            coastalCliff, vec2(-3.8, 2.1), vec2(-11.8, 5.7));
+        weatheredRock = mix(xyRock.color, zyRock.color, xFacing);
+        cliffMacroModulation = mix(xyRock.cliffMacroModulation,
+                                   zyRock.cliffMacroModulation, xFacing);
+        float outcropField = mix(xyRock.outcropField, zyRock.outcropField, xFacing);
         // Coverage is read most often from above, where face-projected fields alone form
         // smooth oval islands. Two footprint-filtered ground-plane fields notch those rims
         // and leave small soil shelves across otherwise exposed faces. They affect only the
@@ -1028,34 +1011,6 @@ void main()
         float minimumExposure = mix(0.045, 0.88, coastField.x);
         rockCoverage *= mix(minimumExposure, 1.0,
                             max(outcropBreakup, coastalCliff * 0.72));
-        float beddingWave = sin(beddingPhase) + 0.34 * sin(beddingPhase * 2.07 + 0.8);
-        float beddingVisibility = 1.0 - smoothstep(0.16, 0.48, groundPixelWidth * 2.05);
-        float bedding = beddingWave * beddingVisibility;
-        float seamDistance = abs(fract(beddingPhase / 6.28318530718) - 0.5);
-        float seamWidth = max(0.018, groundPixelWidth * 0.035);
-        float beddingSeam = 1.0 - smoothstep(0.030, 0.030 + seamWidth, seamDistance);
-        float seamBreak = valueNoise(vec2(faceAcross * 0.16, vWorld.y * 0.27)
-            + vec2(-6.8, 12.1));
-        beddingSeam *= smoothstep(-0.34, 0.16, seamBreak + projectedMottle * 0.45);
-        float jointCoordinate = faceAcross * 0.18
-            + sin(vWorld.y * 0.21 + projectedMottle * 1.8) * 0.14
-            + valueNoise(vec2(vWorld.y * 0.18, faceAcross * 0.065) + vec2(4.9, -8.2)) * 0.70;
-        float jointDistance = abs(fract(jointCoordinate) - 0.5);
-        float jointWidth = max(0.012, groundPixelWidth * 0.022);
-        float verticalJoint = 1.0 - smoothstep(0.020, 0.020 + jointWidth, jointDistance);
-        float jointBreak = valueNoise(vec2(faceAcross * 0.07, vWorld.y * 0.36)
-            + vec2(18.4, -2.7));
-        verticalJoint *= smoothstep(-0.28, 0.13, jointBreak + projectedMacro * 0.35);
-        float rockVisibility = 1.0 - smoothstep(0.18, 0.50, groundPixelWidth * 0.90);
-        float rockGrain = valueNoise(vec2(faceAcross, vWorld.y) * vec2(0.90, 1.05)
-            + vec2(31.8, -8.4)) * rockVisibility;
-        float fractureField = valueNoise(vec2(faceAcross * 0.19,
-            vWorld.y * 0.23) + vec2(4.2, 9.3));
-        float fractureWidth = max(0.014, groundPixelWidth * 0.19);
-        float fracture = 1.0 - smoothstep(0.018, 0.018 + fractureWidth, abs(fractureField));
-        weatheredRock *= 1.0 + rockGrain * 0.24 + projectedMottle * 0.18
-            + bedding * 0.055 - beddingSeam * 0.085 - verticalJoint * 0.075
-            - fracture * 0.06 * (1.0 - smoothstep(0.10, 0.35, groundPixelWidth * 0.19));
         // Aerial rock still receives open sky. This small distance-only lift prevents the
         // remaining broken patches from collapsing into near-black spots without bleaching
         // their close mineral contrast or changing coverage.
@@ -1255,6 +1210,23 @@ void main()
         color=mix(color,benchRock*vGroundLight,bench);
     }
 
+    // Compacted earth carries a little of the cutting's gravel down its short approach.
+    // Use the existing mine frame and filtered substrate fields: no overlay, new noise,
+    // or changes to support/collision. End outside the portal so the mountain above the
+    // buried adit keeps its natural cover; height also excludes high overlying terrain.
+    float mineApproachEdge = hummock * 0.55 + medium * 0.28;
+    float mineApproachWidth = mix(0.55, 1.75, smoothstep(-4.1, -1.1, mineDepth));
+    float mineEdgeFilter = max(0.16, groundPixelWidth);
+    float mineApproach = smoothstep(-4.5, -3.6, mineDepth + mineApproachEdge)
+        * (1.0 - smoothstep(-0.85, -0.45, mineDepth))
+        * (1.0 - smoothstep(mineApproachWidth - mineEdgeFilter,
+            mineApproachWidth + mineEdgeFilter,
+            abs(mineAcross) + mineApproachEdge))
+        * (1.0 - smoothstep(0.15, 0.65, vWorld.y - mineFloor));
+    vec3 mineEarth = mix(vec3(0.30, 0.245, 0.165), vec3(0.40, 0.35, 0.265),
+        clamp(0.5 + medium * 0.70 + hummock * 0.30, 0.0, 1.0));
+    color = mix(color, mineEarth * vGroundLight, mineApproach * 0.48);
+
     // Same texel as the cover sample above; retains cool skylight in canopy shade.
     float terrainTransmission=canopyDappleTransmission(vWorld.xz,groundField.x);
     // Direct sun now arrives through the shadow map: the baked field keeps only the sky
@@ -1393,7 +1365,12 @@ void main()
             // Falling rain rings the puddles: a drop in each half-metre cell now and then (more
             // in heavier rain), its ring spreading and fading in under a second; only where a
             // ring is several pixels across.
-            float ringVisibility = (1.0 - smoothstep(0.012, 0.035, groundPixelWidth)) * clamp(uRain * 1.6, 0.0, 1.0);
+            // The weather particles stop underground; their material-side impact rings
+            // must also stop under the closed cave roof. Leave the exposed mouth gradual
+            // and the soil ABOVE the roof unchanged (caveFloor is height restricted).
+            float rainExposure = 1.0 - caveFloor * smoothstep(0.30, 1.80, caveDepth);
+            float ringVisibility = (1.0 - smoothstep(0.012, 0.035, groundPixelWidth))
+                * clamp(uRain * 1.6, 0.0, 1.0) * rainExposure;
             if (ringVisibility > 0.0) {
                 vec2 cellCoordinate = p * 2.0;
                 vec2 cell = floor(cellCoordinate);
@@ -1430,6 +1407,7 @@ void main()
                     + (canopy ? IslandEnvironmentField::InlandShader : "")
                     + (canopy ? GroundCover::Shader() : std::string())
                     + (canopy ? TerrainSurfaceFrame::Shader : "")
+                    + (canopy ? terrain_rock::Shader : "")
                     + (canopy ? ForestFloorMaterial::Shader : "")
                     + (canopy ? std::string(CampfireLighting::Shader) + SunShadowMap::ReceiverShader : std::string()) + body;
             }
@@ -1439,6 +1417,7 @@ void main()
                 + (canopy ? IslandEnvironmentField::InlandShader : "")
                 + (canopy ? GroundCover::Shader() : std::string())
                 + (canopy ? TerrainSurfaceFrame::Shader : "")
+                + (canopy ? terrain_rock::Shader : "")
                 + (canopy ? ForestFloorMaterial::Shader : "")
                 + (canopy ? std::string(CampfireLighting::Shader) + SunShadowMap::ReceiverShader : std::string()) + body;
         }
@@ -1877,6 +1856,8 @@ void main()
             const auto bunkerDepth=bunker_.World(0,0,1);
             materialEffect_->SetUniformVec3("uBunkerEntrance",bunkerEntrance.x,
                                             bunkerEntrance.y,bunkerEntrance.z);
+            materialEffect_->SetUniformVec2("uBunkerApron", BunkerSite::ApronFrontDepth,
+                                            BunkerSite::ApronSlope);
             materialEffect_->SetUniformVec4("uBunkerFrame",
                 bunkerAcross.x-bunkerEntrance.x,bunkerAcross.z-bunkerEntrance.z,
                 bunkerDepth.x-bunkerEntrance.x,bunkerDepth.z-bunkerEntrance.z);

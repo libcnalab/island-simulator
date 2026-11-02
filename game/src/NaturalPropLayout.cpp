@@ -32,6 +32,28 @@ namespace island
         constexpr float BeachDetailSpacing = 6.0f;
         constexpr int BeachDetailRadius = 47;
         constexpr int FallenFrondSupportSamples = 5;
+        constexpr int TurtleCoarseCandidates = 36;
+        constexpr std::array TurtleRefinementOffsets{.5f,.25f,.75f,.125f,.375f,.625f,.875f};
+        // A turtle need not approach its nest on an exact island-radius ray. Try
+        // bounded oblique approaches only when the original pair cannot be placed.
+        constexpr std::array TurtleRecoveryHeadingOffsets{
+            0.0f, -.15f, .15f, -.3f, .3f, -.45f, .45f, -.6f, .6f};
+        constexpr int TurtleCandidateCount = TurtleCoarseCandidates
+            + (TurtleCoarseCandidates-1)*static_cast<int>(TurtleRefinementOffsets.size());
+
+        [[nodiscard]] float TurtleCandidateAngle(const int candidate) noexcept
+        {
+            // Preserve the original search first, including its exact float arithmetic.
+            // Some clutter seeds block those rays while leaving safe gaps between them.
+            // Refine only those intervals, progressively, without expanding the coast.
+            // Recovery tests at most 281 nest rays with nine approach headings.
+            if (candidate<TurtleCoarseCandidates)
+                return 2.78f+static_cast<float>(candidate)*.026f;
+            const int extra=candidate-TurtleCoarseCandidates;
+            const float index=static_cast<float>(extra%(TurtleCoarseCandidates-1))
+                +TurtleRefinementOffsets[extra/(TurtleCoarseCandidates-1)];
+            return 2.78f+index*.026f;
+        }
 
         [[nodiscard]] float SmoothStep(const float value) noexcept
         {
@@ -945,72 +967,146 @@ namespace island
         }
 
         std::vector<std::array<float, 2>> turtleNestCentres;
-        for (int candidate = 0; candidate < 36
-             && turtleNestCentres.size() < static_cast<std::size_t>(TurtleNestingTrackCount);
-             ++candidate) {
-            const float angle = 2.78f + static_cast<float>(candidate) * 0.026f;
-            std::vector<BeachDetailPlacement> pending;
-            pending.reserve(TurtleTrackSegmentsPerNest + 1U);
-            bool valid = true;
-            for (int segment = 0; segment < TurtleTrackSegmentsPerNest; ++segment) {
-                const float inland = 4.2f + static_cast<float>(segment) * 1.34f;
-                const float radius = terrain.ShoreRadius(angle) - inland;
-                const float x = std::cos(angle) * radius;
-                const float z = std::sin(angle) * radius;
-                const TerrainSample sample = terrain.Sample(x, z);
-                if (sample.signedShoreDistance < 3.0f
-                    || sample.signedShoreDistance > 18.0f
-                    || sample.height < 0.22f || sample.slopeRadians > 0.20943951f
-                    || VegetationLayout::IsReservedRoute(x, z)
-                    || NearTree(x, z, 1.4f, palms, jungle)
-                    || std::ranges::any_of(beachDetails_, [x, z](const auto& detail) {
-                           return DistanceSquared(x, z, detail.x, detail.z) < 0.64f;
-                       })) {
-                    valid = false;
-                    break;
+        const auto turtleDetailsStart = beachDetails_.size();
+        const auto recoveryFootprintClear = [&](const float x, const float z,
+                                                 const float radius) {
+            // Root/trunk and model bounds include the visible footprint, not just its
+            // placement centre. Keep recovered trails clear across their full width.
+            if (NearTree(x, z, radius + .7f, palms, jungle)) return false;
+            for (const auto& tree : jungle.Canopy()) {
+                const float rootReach = (tree.variant == MangroveCanopyVariant ? 1.6f : .8f)
+                    * tree.scale;
+                const float clearance = radius + rootReach + .15f;
+                if (DistanceSquared(x, z, tree.x, tree.z) < clearance * clearance)
+                    return false;
+            }
+            for (const auto& obstacle : palms.Obstacles()) {
+                const float clearance = radius + obstacle.radius;
+                if (DistanceSquared(x, z, obstacle.x, obstacle.z) < clearance * clearance)
+                    return false;
+            }
+            for (const auto& rock : rocks_) {
+                const float clearance = radius + std::max(rock.scaleX, rock.scaleZ);
+                if (DistanceSquared(x, z, rock.x, rock.z) < clearance * clearance)
+                    return false;
+            }
+            const auto clearWood = [&](const auto& wood) {
+                const float c = std::cos(wood.yawRadians), s = std::sin(wood.yawRadians);
+                const float dx = x - wood.x, dz = z - wood.z;
+                const float halfLength = wood.length * .56f;
+                const float along = std::clamp(dx*c + dz*s, -halfLength, halfLength);
+                // Cover bends and fork limbs as well as the main trunk. A capsule
+                // leaves the sand beside long wood available without crossing its body.
+                const float clearance = radius + wood.radius * 3.6f;
+                return DistanceSquared(dx, dz, c*along, s*along) >= clearance * clearance;
+            };
+            for (const auto& log : fallenLogs_) if (!clearWood(log)) return false;
+            for (const auto& wood : driftwood_) if (!clearWood(wood)) return false;
+            return true;
+        };
+        const auto placeNests = [&](const bool recovery) {
+            const int candidateCount = recovery
+                ? TurtleCandidateCount * static_cast<int>(TurtleRecoveryHeadingOffsets.size())
+                : TurtleCoarseCandidates;
+            for (int candidate = 0; candidate < candidateCount
+                 && turtleNestCentres.size() < static_cast<std::size_t>(TurtleNestingTrackCount);
+                 ++candidate) {
+                const float angle = TurtleCandidateAngle(candidate % TurtleCandidateCount);
+                const float traceAngle = angle + (recovery
+                    ? TurtleRecoveryHeadingOffsets[candidate / TurtleCandidateCount] : 0.0f);
+                const float nestInland = 14.1f;
+                const float nestRadius = terrain.ShoreRadius(angle) - nestInland;
+                const float nestX = std::cos(angle) * nestRadius;
+                const float nestZ = std::sin(angle) * nestRadius;
+                const auto positionAt = [&](float inland) {
+                    if (!recovery) {
+                        const float radius = terrain.ShoreRadius(angle) - inland;
+                        return std::array{std::cos(angle) * radius, std::sin(angle) * radius};
+                    }
+                    return std::array{nestX + std::cos(traceAngle) * (nestInland - inland),
+                                      nestZ + std::sin(traceAngle) * (nestInland - inland)};
+                };
+                if (recovery) {
+                    // Four stations per segment cover the .7m half-width corridor. Include
+                    // the half-segment extensions actually drawn beyond the first/last mark.
+                    bool clear = true;
+                    for (int station = -2; station <= (TurtleTrackSegmentsPerNest - 1) * 4 + 2; ++station) {
+                        const float inland = 4.2f + static_cast<float>(station) * (1.34f / 4.0f);
+                        const auto point = positionAt(inland);
+                        if (!recoveryFootprintClear(point[0], point[1], .7f)) {
+                            clear = false;
+                            break;
+                        }
+                    }
+                    if (!clear) continue;
                 }
-                BeachDetailPlacement mark;
-                mark.x = x;
-                mark.y = drawnGround.Sample(x, z).height + 0.008f;
-                mark.z = z;
-                mark.yawRadians = -angle - std::numbers::pi_v<float> * 0.5f;
-                mark.scale = 0.88f + 0.025f * static_cast<float>(segment % 3);
-                mark.variant = 4U;
-                mark.turtleTrace = true;
-                mark.normalX = sample.normal.x; mark.normalY = sample.normal.y; mark.normalZ = sample.normal.z;
-                pending.push_back(mark);
+                std::vector<BeachDetailPlacement> pending;
+                pending.reserve(TurtleTrackSegmentsPerNest + 1U);
+                bool valid = true;
+                for (int segment = 0; segment < TurtleTrackSegmentsPerNest; ++segment) {
+                    const float inland = 4.2f + static_cast<float>(segment) * 1.34f;
+                    const auto point = positionAt(inland);
+                    const float x = point[0], z = point[1];
+                    const TerrainSample sample = terrain.Sample(x, z);
+                    if (sample.signedShoreDistance < 3.0f
+                        || sample.signedShoreDistance > 18.0f
+                        || sample.height < 0.22f || sample.slopeRadians > 0.20943951f
+                        || VegetationLayout::IsReservedRoute(x, z)
+                        || NearTree(x, z, 1.4f, palms, jungle)
+                        || std::ranges::any_of(beachDetails_, [x, z](const auto& detail) {
+                               return DistanceSquared(x, z, detail.x, detail.z) < 0.64f;
+                           })) {
+                        valid = false;
+                        break;
+                    }
+                    BeachDetailPlacement mark;
+                    mark.x = x;
+                    mark.y = drawnGround.Sample(x, z).height + 0.008f;
+                    mark.z = z;
+                    mark.yawRadians = -traceAngle - std::numbers::pi_v<float> * 0.5f;
+                    mark.scale = 0.88f + 0.025f * static_cast<float>(segment % 3);
+                    mark.variant = 4U;
+                    mark.turtleTrace = true;
+                    mark.normalX = sample.normal.x; mark.normalY = sample.normal.y; mark.normalZ = sample.normal.z;
+                    pending.push_back(mark);
+                }
+                const TerrainSample nestSample = terrain.Sample(nestX, nestZ);
+                if (!valid || (recovery && !recoveryFootprintClear(nestX, nestZ, 1.8f))
+                    || nestSample.signedShoreDistance < 3.0f
+                    || nestSample.signedShoreDistance > 18.0f
+                    || nestSample.height < 0.22f || nestSample.slopeRadians > 0.20943951f
+                    || VegetationLayout::IsReservedRoute(nestX, nestZ)
+                    || NearTree(nestX, nestZ, 1.8f, palms, jungle)
+                    || std::ranges::any_of(turtleNestCentres, [nestX, nestZ](const auto& centre) {
+                           return DistanceSquared(nestX, nestZ, centre[0], centre[1]) < 324.0f;
+                       })
+                    || std::ranges::any_of(beachDetails_, [nestX, nestZ](const auto& detail) {
+                           return DistanceSquared(nestX, nestZ, detail.x, detail.z) < 2.25f;
+                       })) {
+                    continue;
+                }
+                BeachDetailPlacement nest;
+                nest.x = nestX;
+                nest.y = drawnGround.Sample(nestX, nestZ).height + 0.02f;
+                nest.z = nestZ;
+                nest.yawRadians = -traceAngle - std::numbers::pi_v<float> * 0.5f;
+                nest.scale = 1.18f;
+                nest.variant = 5U;
+                nest.turtleTrace = true;
+                nest.turtleNest = true;
+                nest.normalX = nestSample.normal.x; nest.normalY = nestSample.normal.y; nest.normalZ = nestSample.normal.z;
+                pending.push_back(nest);
+                beachDetails_.insert(beachDetails_.end(), pending.begin(), pending.end());
+                turtleNestCentres.push_back({nestX, nestZ});
             }
-            const float nestInland = 14.1f;
-            const float nestRadius = terrain.ShoreRadius(angle) - nestInland;
-            const float nestX = std::cos(angle) * nestRadius;
-            const float nestZ = std::sin(angle) * nestRadius;
-            const TerrainSample nestSample = terrain.Sample(nestX, nestZ);
-            if (!valid || nestSample.signedShoreDistance < 3.0f
-                || nestSample.signedShoreDistance > 18.0f
-                || nestSample.height < 0.22f || nestSample.slopeRadians > 0.20943951f
-                || VegetationLayout::IsReservedRoute(nestX, nestZ)
-                || NearTree(nestX, nestZ, 1.8f, palms, jungle)
-                || std::ranges::any_of(turtleNestCentres, [nestX, nestZ](const auto& centre) {
-                       return DistanceSquared(nestX, nestZ, centre[0], centre[1]) < 324.0f;
-                   })
-                || std::ranges::any_of(beachDetails_, [nestX, nestZ](const auto& detail) {
-                       return DistanceSquared(nestX, nestZ, detail.x, detail.z) < 2.25f;
-                   })) {
-                continue;
-            }
-            BeachDetailPlacement nest;
-            nest.x = nestX;
-            nest.y = drawnGround.Sample(nestX, nestZ).height + 0.02f;
-            nest.z = nestZ;
-            nest.yawRadians = -angle - std::numbers::pi_v<float> * 0.5f;
-            nest.scale = 1.18f;
-            nest.variant = 5U;
-            nest.turtleTrace = true;
-            nest.turtleNest = true;
-            nest.normalX = nestSample.normal.x; nest.normalY = nestSample.normal.y; nest.normalZ = nestSample.normal.z;
-            pending.push_back(nest);
-            beachDetails_.insert(beachDetails_.end(), pending.begin(), pending.end());
-            turtleNestCentres.push_back({nestX, nestZ});
+        };
+        // Preserve every successful legacy layout exactly. A failed search committed only
+        // a provisional first trail; restart that pair atomically on the same authored beach.
+        placeNests(false);
+        if (turtleNestCentres.size() != static_cast<std::size_t>(TurtleNestingTrackCount)) {
+            beachDetails_.resize(turtleDetailsStart);
+            turtleNestCentres.clear();
+            placeNests(true);
         }
         if (turtleNestCentres.size() != static_cast<std::size_t>(TurtleNestingTrackCount)) {
             throw std::runtime_error("Unable to place both turtle nesting traces on dry sand");

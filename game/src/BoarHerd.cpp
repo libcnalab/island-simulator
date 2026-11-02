@@ -1,4 +1,5 @@
 #include "IslandSimulator/BoarHerd.hpp"
+#include "IslandSimulator/BoarPose.hpp"
 #include "IslandSimulator/StreamRoute.hpp"
 #include "IslandSimulator/IslandEnvironmentField.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
@@ -399,8 +400,11 @@ namespace island
         if (separated && std::hypot(x - state.homeX, z - state.homeZ) <= HomeRadius
             && (strictlyValid || (allowance && IsValidGround(x, z, true)))) {
             agent.inCorridor = !strictlyValid;
-            state.gaitPhase = std::fmod(state.gaitPhase + state.speed * dt * 7.0f, Tau);
+            const float height = terrain_.Height(x, z);
+            const float travel = std::hypot(x - state.x, height - state.y, z - state.z);
+            state.gaitPhase = AdvanceBoarGait(state.gaitPhase, travel, state.speed, state.scale);
             state.x = x;
+            state.y = height;
             state.z = z;
         } else {
             state.speed = 0.0f;
@@ -419,7 +423,6 @@ namespace island
         agent.lying = shouldLie;
         state.lieAmount += std::clamp((agent.lying ? 1.0f : 0.0f) - state.lieAmount,
                                       -dt * RiseRate, dt * LieDownRate);
-        state.y = terrain_.Height(state.x, state.z);
         state.inChannel = agent.inCorridor;
         // In the mud the boar drops its snout like rooting; the coat wets while it stays and
         // dries off over a few minutes once it leaves.

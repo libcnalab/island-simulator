@@ -28,7 +28,7 @@ PROFILES = ("scene", "shaded-detail", "close-natural-detail", "dark-cave-detail"
 # fill the frame with one blue-green, so the luminance spread sits under the open-air floor;
 # reviewed on 2026-10-21 for the views whose camera is in the water (fish 18.5, reef-habitat 16.8,
 # dolphins 13.8 against the scene floor of 18), all correct renders with their subject clear.
-UNDERWATER_VIEWPOINTS = ("fish", "reef-habitat", "anemone", "dolphins")
+UNDERWATER_VIEWPOINTS = ("fish", "fish-swim", "reef-habitat", "anemone", "dolphins")
 # Inside a roofed room lit only through its door and portholes (the grounded coaster's mess,
 # loop pass 504) the walls, the ceiling and the floor share one dim light: reviewed on 2026-10-22
 # (luminance spread 15.2 against the scene floor of 18, 128 colour bins, contrast 84), a correct
@@ -45,7 +45,11 @@ UNDERWATER_VIEWPOINTS = ("fish", "reef-habitat", "anemone", "dolphins")
 # quad driven into the mine's adit (quad-mine, 2026-10-22: mean 51.6, spread 16.8 against 18, 232
 # colour bins), a correct render of the rider on the quad between the timbered walls under the
 # lanterns. The profile's floors are mean 20, spread 10 and 40 colour bins.
-DIM_INTERIOR_VIEWPOINTS = ("freighter-mess", "mine-bats", "mine-puddle", "lighthouse-stair", "quad-mine", "quad-mine-crates")
+# The roofed cave facing its mouth is also a dim interior. In a storm the unchanged
+# baseline is mean23.2619, spread18.5371,71bins: its floor/walls and opening were reviewed,
+# while the ordinary scene mean floor24 falsely rejected it. Reuse the existing interior
+# thresholds; exterior/overhead cave views retain their current profiles.
+DIM_INTERIOR_VIEWPOINTS = ("freighter-mess", "mine-bats", "mine-puddle", "lighthouse-stair", "quad-mine", "quad-mine-crates", "cave-inside")
 
 # The game hours of the night (the clock's dark between the dusk and the dawn), when a capture
 # asks for one with --time-of-day: reviewed on 2026-10-20 as a dark blue moonlit scene.

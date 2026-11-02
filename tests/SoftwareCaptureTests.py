@@ -14,10 +14,12 @@ from unittest.mock import Mock, patch
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 from run_software_capture import (
     check_configuration, software_environment, validate_graphics_log, run_monitored_capture,
-    inspection_arguments, validate_antialiasing_log, validate_monkey_capture_log,
+    inspection_arguments, natural_props_seed_arguments, validate_antialiasing_log, validate_monkey_capture_log,
     validate_monkey_tree_stages, validate_monkey_climb_stages, validate_snake_motion_stages,
     validate_goat_motion_stages,
     validate_boar_motion_stages,
+    validate_deer_motion_stages,
+    validate_bunker_quad_entry,
     validate_spider_motion_stages,
     validate_spider_render_log,
     validate_spider_web_render_log,
@@ -26,8 +28,12 @@ from run_software_capture import (
     validate_campfire_stages,
     validate_stream_stages,
     validate_resident_stages,
+    validate_capture_clock,
+    validate_free_motion_stages,
+    capture_tide_arguments, validate_capture_tide,
 )
-from gpu_incident_qualification import MonitorError, contained_command
+from gpu_incident_qualification import (MonitorError, contained_command, artifact_identity,
+                                        verify_artifact_content_unchanged)
 from run_fullscreen_software import (geometry, worker as fullscreen_worker,
                                      validate_boar_audio_trace, validate_goat_audio_trace,
                                      validate_snake_audio_trace)
@@ -37,9 +43,39 @@ from run_fullscreen_software import validate_cave_trace
 from run_fullscreen_software import validate_fire_audio_trace
 from run_fullscreen_software import validate_stream_crossing_trace
 from run_software_capture import validate_build_configuration
+from run_software_capture import main as capture_main
+from run_fullscreen_software import main as fullscreen_main
 
 
 class SoftwareCaptureTests(unittest.TestCase):
+    def test_natural_props_seed_requires_scoped_uint32_inspection(self):
+        self.assertEqual(natural_props_seed_arguments(None,"jungle"),[])
+        for seed in (0,2,0xffffffff):
+            self.assertEqual(natural_props_seed_arguments(seed,"turtle-nest"),
+                             ["--natural-props-seed",str(seed)])
+        for seed,view in ((-1,"turtle-nest"),(0x100000000,"turtle-nest"),
+                          (True,"turtle-nest"),("2","turtle-nest"),(2,"jungle")):
+            with self.subTest(seed=seed,view=view),self.assertRaises(ValueError):
+                natural_props_seed_arguments(seed,view)
+
+    def test_natural_props_seed_marker_cannot_qualify_another_world(self):
+        marker="island-simulator: QA natural-props seed=2 turtle-nest-target=last"
+        validate_graphics_log(marker,natural_props_seed=2)
+        for log,seed in ((marker,None),(marker,17),("",2),
+                         (marker+"\nQA natural-props seed=17 turtle-nest-target=last",2)):
+            with self.subTest(log=log,seed=seed),self.assertRaises(RuntimeError):
+                validate_graphics_log(log,natural_props_seed=seed)
+
+    def test_capture_clock_rejects_wall_time_catchup(self):
+        good="capture-profile frames=4 updates=4"
+        self.assertEqual(validate_capture_clock(good)["frames"],4)
+        self.assertEqual(validate_capture_clock(good+"\n"+good)["updates"],4)
+        for bad in ("", "capture-profile frames=0 updates=0",
+                    "capture-profile frames=4 updates=49",
+                    good+"\ncapture-profile frames=8 updates=8"):
+            with self.subTest(log=bad),self.assertRaises(RuntimeError):
+                validate_capture_clock(bad)
+
     def test_stream_crossing_requires_both_banks_channel_and_shared_support(self):
         good=[(-110,5.0,-34+i*.55,-4+i*.55,abs(-4+i*.55),0,0) for i in range(14)]
         result=validate_stream_crossing_trace(good)
@@ -105,15 +141,59 @@ class SoftwareCaptureTests(unittest.TestCase):
                     good.replace("arm-swing=-0.24,0.24", "arm-swing=nan,0.24", 1),
                     good.replace("position=42.0,23.8,-12.0","position=nan,23.8,-12.0")):
             with self.assertRaises(RuntimeError):validate_resident_stages(bad)
+    def test_capture_tide_phase_bounds_and_clock_proof(self):
+        self.assertEqual(capture_tide_arguments(None), [])
+        for phase,level in ((0,0),(.25,.18),(.75,-.18)):
+            self.assertEqual(capture_tide_arguments(phase), ["--capture-tide-phase",str(phase)])
+            log=(f"capture tide frame=1 phase={phase} level={level}\n"
+                 f"capture tide frame=4 phase={phase} level={level}\n"
+                 "capture-profile frames=4 updates=4")
+            self.assertEqual(validate_capture_tide(log,phase)["level"], level)
+            for bad in (log.replace('frame=1','frame=2'),log.replace('frame=4','frame=3'),
+                        log+f"\ncapture tide frame=4 phase={phase} level={level}",
+                        log.replace(f'level={level}','level=nan'),log.replace(f'level={level}','level=2'),
+                        log.replace(f'phase={phase}','phase=broken'),log.replace(f'level={level}','level=broken'),
+                        log.replace('updates=4','updates=8')):
+                with self.assertRaises(RuntimeError):validate_capture_tide(bad,phase)
+            with self.assertRaises(RuntimeError):validate_capture_tide(log,None)
+        for phase in (-.1,1,float('nan'),float('inf')):
+            with self.assertRaises(ValueError):capture_tide_arguments(phase)
+        self.assertIsNone(validate_capture_tide('capture-profile frames=4 updates=4',None))
+        with self.assertRaises(RuntimeError):validate_capture_tide('capture-profile frames=4 updates=4',.25)
+
+    def test_live_fish_and_bird_sequence_rejects_frozen_or_invalid_subjects(self):
+        for species in ("fish", "bird"):
+            rows = [f"island-simulator: {species} motion stage={i} updates={(i+1)*2} "
+                    f"time={(i+1)*.2:.1f} near=2 position={i*.1},-0.7,3 "
+                    f"heading={i*.01} bank=0.1 animation={(-1)**i*.5} clearance=0.8 tier=0"
+                    for i in range(16)]
+            good = "\n".join(rows)
+            result = validate_free_motion_stages(good, species)
+            self.assertAlmostEqual(result["travel"], 1.5)
+            if species == "fish":
+                with self.assertRaises(RuntimeError):
+                    validate_free_motion_stages(good.replace("bank=0.1", "bank=0.3"),species)
+            frozen = re.sub(r"position=\S+", "position=0,-0.7,3", good)
+            for bad in ("", "\n".join(rows[:-1]), good+"\n"+rows[0],
+                        good.replace("stage=1 ", "stage=0 "), good.replace("tier=0", "tier=1"),
+                        good.replace("near=2", "near=0"), good.replace("clearance=0.8", "clearance=-0.1"),
+                        good.replace("time=0.2", "time=nan"), good.replace("updates=2 ", "updates=3 "),
+                        good.replace("bank=0.1", "bank=inf"), frozen,
+                        re.sub(r"animation=\S+", "animation=0.2", good),
+                        good.replace("heading=0.0 ", "heading=2.0 ")):
+                with self.subTest(species=species,bad=bad[:100]),self.assertRaises(RuntimeError):
+                    validate_free_motion_stages(bad,species)
+
     def test_cave_traversal_and_corruptions(self):
-        points=[(0,0,-8,0,0),(0,.49,19.65,0,0),(0,1.7,19.65,1,0),
-                (0,.50,19.65,0,0),(0,0,-6,0,0)]
+        points=[(0,0,-8,0,0),(0,.49,19.65,0,0),(0,1.5,13.5,1,0),
+                (0,.3375,13.5,0,0),(0,0,-6,0,0)]
         samples=[p for p in points for _ in range(5)]
         stages=dict(zip(("start","back","ceiling","landed","exit"),(4,9,14,19,24)))
         validate_cave_trace(samples,stages)
         for index,point in ((0,(0,0,-8,0,1)),(4,(0,0,0,0,0)),(9,(0,.5,21,0,0)),
-                            (14,(0,7,19.65,1,0)),(14,(0,1.7,19.65,0,0)),
-                            (19,(0,1.7,19.65,0,0)),(24,(0,0,4,0,0)),
+                            (14,(0,7,13.5,1,0)),(14,(0,1.5,13.5,0,0)),
+                            (14,(0,1.7,19.65,1,0)),
+                            (19,(0,1.7,13.5,0,0)),(24,(0,0,4,0,0)),
                             (2,(float("nan"),0,0,0,0)),(3,(2,0,0,0,0))):
             bad=list(samples);bad[index]=point
             with self.subTest(index=index,point=point),self.assertRaises(RuntimeError):
@@ -150,27 +230,60 @@ class SoftwareCaptureTests(unittest.TestCase):
                 validate_frame_windows(bad)
 
     def test_diving_trace_and_rejections(self):
-        good=[(0,.58,-270,0),(0,-.5,-270,.5),(0,-1,-270,1),(0,.58,-270,0)]
+        good=[(0,.58,-270,0,0),(0,-.5,-270,.5,0),(0,-1,-270,1,0),(0,.58,-270,0,0)]
         validate_diving_trace(good)
-        for bad in ([],good[:3],good[1:],[(0,.58,-270,0)]*4,
-                    [good[0],(0,-1,-270,0),*good[2:]],
-                    [good[0],(0,float('nan'),-270,0),*good[2:]],
-                    [good[0],(0,5,-270,0),*good[2:]],
+        for level in (-.18,.18):
+            validate_diving_trace([(x,y+level,z,depth,level) for x,y,z,depth,_ in good])
+        for bad in ([],good[:3],good[1:],[(0,.58,-270,0,0)]*4,
+                    [good[0],(0,-1,-270,0,0),*good[2:]],
+                    [good[0],(0,float('nan'),-270,0,0),*good[2:]],
+                    [good[0],(0,5,-270,0,0),*good[2:]],
+                    [good[0],(0,-1,-270,1,float('nan')),*good[2:]],
+                    [good[0],(0,-1,-270,1,.18),*good[2:]],
                     [good[0],(0,-1,-270),*good[2:]]):
             with self.subTest(bad=bad),self.assertRaises(RuntimeError):
                 validate_diving_trace(bad)
 
     def test_boar_capture_clock_and_corruptions(self):
         good = ''.join(f"island-simulator: boar motion stage={i} updates={(i+1)*8} time={(i+1)*.8:.1f} "
-                       "visible=1 position=1,2,3 speed=0 phase=0 rooting=0.5\n" for i in range(8))
+                       f"visible=1 position={i},2,3 speed=0 phase=0 rooting=0.5 tier=0\n" for i in range(8))
         self.assertEqual(len(validate_boar_motion_stages(good)["samples"]), 8)
         for bad in ("", good+good, good.replace("stage=7", "stage=6"),
                     good.replace("updates=8 ", "updates=9 "), good.replace("time=0.8", "time=nan"),
                     good.replace("visible=1", "visible=0"), good.replace("1,2,3", "1,inf,3"),
                     good.replace("speed=0", "speed=-1"), good.replace("phase=0", "phase=7"),
-                    good.replace("rooting=0.5", "rooting=2")):
+                    good.replace("rooting=0.5", "rooting=2"),
+                    good.replace("tier=0", "tier=1"), good.replace("tier=0", "tier=2"),
+                    good.replace(" tier=0", ""),
+                    re.sub(r"position=\d,2,3", "position=1,2,3", good)):
             with self.subTest(bad=bad), self.assertRaises(RuntimeError):
                 validate_boar_motion_stages(bad)
+
+    def test_bunker_quad_entry_rejects_original_airborne_false_pass(self):
+        good = "island-simulator: quad QA shelter: bunker, site bunker, depth 2.69 m, floor 17.89, body 18.54, walls clear\n"
+        self.assertAlmostEqual(validate_bunker_quad_entry(good)["body_floor_gap"], .65)
+        original = "island-simulator: quad QA shelter: bunker, site open, depth -5.71518 m, floor 17.4266, body 24.1712, walls clear\n"
+        for bad in (original, "", good+good, good.replace("site bunker", "site open"),
+                    good.replace("depth 2.69", "depth -1"), good.replace("floor 17.89", "floor nan"),
+                    good.replace("body 18.54", "body 24"), good.replace("body 18.54", "body 17.9"),
+                    good.replace("walls clear", "walls touching")):
+            with self.subTest(bad=bad), self.assertRaises(RuntimeError):
+                validate_bunker_quad_entry(bad)
+
+    def test_deer_capture_rejects_frozen_throttled_or_invalid_motion(self):
+        good = ''.join(f"island-simulator: deer motion stage={i} updates={(i+1)*8} time={(i+1)*.8:.1f} "
+                       f"visible=1 position={i},2,3 speed=0.78 phase=0 grazing=0 tier=0\n" for i in range(8))
+        samples = validate_deer_motion_stages(good)["samples"]
+        self.assertEqual(len(samples), 8)
+        self.assertEqual(samples[0]["grazing"], 0)
+        for bad in ("", good+good, good.replace("stage=7", "stage=6"),
+                    good.replace("updates=8 ", "updates=9 "), good.replace("time=0.8", "time=nan"),
+                    good.replace("visible=1", "visible=5"), good.replace("1,2,3", "1,inf,3"),
+                    good.replace("speed=0.78", "speed=3.2"), good.replace("phase=0", "phase=7"),
+                    good.replace("grazing=0", "grazing=2"), good.replace("tier=0", "tier=1"),
+                    re.sub(r"position=\d,2,3", "position=1,2,3", good)):
+            with self.subTest(bad=bad), self.assertRaises(RuntimeError):
+                validate_deer_motion_stages(bad)
 
     def test_spider_bright_camera_selects_existing_habitat(self):
         rows = ''.join(f"spider habitat candidate={i} transmission={0.9 if i in (4, 7) else 0.1}\n"
@@ -537,6 +650,8 @@ class SoftwareCaptureTests(unittest.TestCase):
         self.assertEqual(inspection_arguments(None), [])
         self.assertEqual(inspection_arguments(["-87120", "-15369", "near"]),
                          ["--canopy-lod-inspection", "-87120", "-15369", "near"])
+        self.assertEqual(inspection_arguments(["-87120", "-15369", "roots"]),
+                         ["--canopy-lod-inspection", "-87120", "-15369", "roots"])
         for values in (["0", "0", "other"], ["1.5", "0", "near"], ["500001", "0", "near"],
                        ["0", "near"], ["x", "0", "far"]):
             with self.subTest(values=values), self.assertRaises(ValueError):
@@ -552,6 +667,100 @@ class SoftwareCaptureTests(unittest.TestCase):
                            marker + "\ngl-error GL_INVALID_OPERATION"):
             with self.subTest(diagnostic=diagnostic), self.assertRaises(RuntimeError):
                 validate_graphics_log(diagnostic, values)
+
+
+class CaptureArtifactTests(unittest.TestCase):
+    def test_capture_records_before_launch_and_after_failed_workload(self):
+        for mode in ("stable","replace","missing"):
+            with self.subTest(mode=mode),tempfile.TemporaryDirectory() as directory:
+                build=Path(directory)
+                binary=build/"island-simulator"
+                binary.write_bytes(b"old executable")
+                (build/"CMakeCache.txt").write_text("fixture")
+                journal=Mock()
+                journal.latest.return_value={"_BOOT_ID":"boot","__CURSOR":"cursor"}
+                journal.read.return_value=[]
+                def workload(command,evidence,*args,**kwargs):
+                    report=json.loads((evidence/"run.json").read_text())
+                    self.assertEqual(report["artifact"],artifact_identity(binary))
+                    if mode=="replace":binary.write_bytes(b"new executable")
+                    elif mode=="missing":binary.unlink()
+                    return 1  # Skip graphics validators; no process or GPU is launched.
+                with patch("sys.argv",["capture",str(build),"jungle"]),patch("builtins.print"),patch.multiple(
+                    "run_software_capture",check_configuration=Mock(return_value=build),
+                    Journal=Mock(return_value=journal),run_monitored_capture=Mock(side_effect=workload),
+                    compress_captures=Mock(),prune_sets=Mock(),cited_stamps=Mock(return_value=set())):
+                    self.assertEqual(capture_main(),1)
+                evidence=next((build/"software-captures").iterdir())
+                report=json.loads((evidence/"run.json").read_text())
+                self.assertEqual(report["failure"],"software capture exited 1")
+                self.assertEqual(report["artifact_content_unchanged"],mode=="stable")
+                if mode!="stable":self.assertIn("artifact_verification_error",report)
+                if mode!="missing":self.assertIn("artifact_after",report)
+
+    def test_fullscreen_cannot_pass_after_artifact_change(self):
+        for mode in ("stable","replace","missing"):
+            with self.subTest(mode=mode),tempfile.TemporaryDirectory() as directory:
+                root=Path(directory);build=root/"build";build.mkdir()
+                tools=root/"tools";tools.mkdir()
+                harness=tools/"run_fullscreen_software.py";harness.write_bytes(b"fixture")
+                (tools/"fullscreen_openbox.xml").write_bytes(b"config")
+                binary=build/"island-simulator";binary.write_bytes(b"old executable")
+                manager=build/"window-manager";manager.write_bytes(b"manager")
+                (build/"CMakeCache.txt").write_text("fixture")
+                journal=Mock()
+                journal.latest.return_value={"_BOOT_ID":"boot","__CURSOR":"cursor"}
+                journal.read.return_value=[]
+                def workload(command,evidence,*args,**kwargs):
+                    self.assertEqual(json.loads((evidence/"run.json").read_text())["artifact"],
+                                     artifact_identity(binary))
+                    (evidence/"input-result.json").write_text('{"passed":true}')
+                    if mode=="replace":binary.write_bytes(b"new executable")
+                    elif mode=="missing":binary.unlink()
+                    return 0  # Fake worker success; no process or GPU is launched.
+                with patch("sys.argv",["fullscreen",str(build),"--window-manager",str(manager)]),\
+                     patch("run_fullscreen_software.__file__",str(harness)),\
+                     patch("builtins.print"),patch("run_fullscreen_software.shutil.which",return_value="fixture"),\
+                     patch("run_fullscreen_software.os.sched_setaffinity"),patch.multiple(
+                         "run_fullscreen_software",check_configuration=Mock(return_value=build),
+                         Journal=Mock(return_value=journal),run_monitored_capture=Mock(side_effect=workload)):
+                    if mode=="stable":fullscreen_main()
+                    else:
+                        with self.assertRaises((OSError,RuntimeError)):fullscreen_main()
+                report=json.loads((next((build/"software-fullscreen").iterdir())/"run.json").read_text())
+                self.assertEqual(report["result"],"passed" if mode=="stable" else "failed")
+                self.assertEqual(report["artifact_content_unchanged"],mode=="stable")
+
+    def test_unchanged_bytes_pass_and_records_keep_file_identity(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory)/"game"
+            path.write_bytes(b"original executable")
+            before=artifact_identity(path)
+            verify_artifact_content_unchanged(before,artifact_identity(path))
+            replacement=path.with_name("replacement")
+            replacement.write_bytes(path.read_bytes())
+            replacement.replace(path)
+            after=artifact_identity(path)
+            self.assertNotEqual(before["inode"],after["inode"])
+            verify_artifact_content_unchanged(before,after)
+
+    def test_changed_bytes_fail_even_at_same_size(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory)/"game"
+            path.write_bytes(b"old executable")
+            before=artifact_identity(path)
+            for data in (b"new executable",b"a longer replacement"):
+                path.write_bytes(data)
+                with self.subTest(data=data),self.assertRaisesRegex(MonitorError,"content changed"):
+                    verify_artifact_content_unchanged(before,artifact_identity(path))
+
+    def test_missing_artifact_cannot_be_certified(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory)/"game"
+            path.write_bytes(b"old executable")
+            before=artifact_identity(path)
+            path.unlink()
+            with self.assertRaises(OSError):artifact_identity(path)
 
 
 class CaptureMonitorTests(unittest.TestCase):
@@ -730,6 +939,41 @@ class CaptureRetentionTests(unittest.TestCase):
             (folder / "island-browser-coast-water.png").write_bytes(b"x")
             self.assertEqual(remove_browser_profiles(folder), 1)
             self.assertEqual([entry.name for entry in folder.iterdir()], ["island-browser-coast-water.png"])
+
+    def test_uppercase_handoff_and_linked_evidence_survive_pruning(self):
+        from capture_retention import cited_stamps, prune_sets
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            captures = root / "build" / "software-captures"
+            captures.mkdir(parents=True)
+            names = [f"2026101{day}T000000.000000Z-view" for day in range(6)]
+            for name in names:
+                (captures / name).mkdir()
+            (root / "HANDOFF.md").write_text(
+                f"Direct: {names[0]}\nIndex: `build/comparison.json`\n", encoding="utf-8")
+            (root / "handoff.md").write_text(names[1], encoding="utf-8")
+            (root / "build" / "comparison.json").write_text(
+                json.dumps({"before": names[2], "after": names[3]}), encoding="utf-8")
+            removed = prune_sets(captures, 1, cited_stamps(root))
+            self.assertEqual([path.name for path in removed], [names[4]])
+            self.assertEqual(sorted(path.name for path in captures.iterdir()), names[:4] + names[5:])
+
+    def test_evidence_index_cannot_escape_build_or_read_unbounded_files(self):
+        from capture_retention import cited_stamps, MAX_EVIDENCE_INDEX_BYTES
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "build").mkdir()
+            outside = root / "outside.json"
+            outside.write_text('"20261010T000000"', encoding="utf-8")
+            (root / "build" / "escape.json").symlink_to(outside)
+            (root / "build" / "invalid.json").write_bytes(b"\xff20261011T000000")
+            with (root / "build" / "large.json").open("wb") as stream:
+                stream.write(b"20261012T000000")
+                stream.truncate(MAX_EVIDENCE_INDEX_BYTES + 1)
+            (root / "HANDOFF.md").write_text(
+                "build/../outside.json build/escape.json build/invalid.json "
+                "build/large.json build/missing.json", encoding="utf-8")
+            self.assertEqual(cited_stamps(root), set())
 
 
 if __name__ == "__main__":

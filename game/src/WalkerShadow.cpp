@@ -1,4 +1,6 @@
+#include "IslandSimulator/DeerGait.hpp"
 #include "IslandSimulator/WalkerShadow.hpp"
+#include "IslandSimulator/DeerHoofSupport.hpp"
 #include "IslandSimulator/BearMotion.hpp"
 #include "IslandSimulator/ElephantMotion.hpp"
 #include "IslandSimulator/TRexBody.hpp"
@@ -172,7 +174,7 @@ namespace island::walker_shadow
         return limbs;
     }
 
-    std::array<Limb, CapsuleCount> DeerLimbs(const DeerState& deer) noexcept
+    std::array<Limb, CapsuleCount> DeerLimbs(const DeerState& deer, const RenderedTerrainSurface* ground)
     {
         // The joints as DeerRenderer sets them (the body's centre, the neck and head by the
         // graze and the toss, the four legs by the gait, the bed and the stamp), the parts'
@@ -187,10 +189,11 @@ namespace island::walker_shadow
         };
         const auto lerp = [](const V& a, const V& b, const float t) { return a + (b - a) * t; };
         const float s = deer.scale;
-        const V forward{std::cos(deer.headingRadians), 0.0f, std::sin(deer.headingRadians)};
-        const V right{-forward.z, 0.0f, forward.x}, up{0.0f, 1.0f, 0.0f};
+        const auto frame=MakeDeerSupportFrame(deer,ground);
+        const auto v=[](DeerHoofPoint p){return V{p.x,p.y,p.z};};
+        const V origin=v(frame.origin),forward=v(frame.forward),right=v(frame.right),up=v(frame.up);
         const float bed = std::clamp(deer.bedAmount, 0.0f, 1.0f);
-        const V body{deer.x, deer.y + (1.03f - 0.56f * bed) * s, deer.z};
+        const V body=origin+up*((1.03f-.56f*bed)*s);
         std::array<Limb, CapsuleCount> limbs{};
         std::size_t next = 0;
         const auto add = [&](const V& a, const V& b, const float radius) {
@@ -200,23 +203,33 @@ namespace island::walker_shadow
         for (int leg = 0; leg < 4; ++leg) {
             const float fore = leg < 2 ? 0.48f : -0.47f;
             const float sideSign = leg % 2 == 0 ? -1.0f : 1.0f;
-            const float phase = deer.gaitPhase + ((leg == 0 || leg == 3) ? 0.0f : std::numbers::pi_v<float>);
-            const float swing = std::sin(phase) * std::min(1.0f, deer.speed / 0.8f);
+            const auto step=deer_gait::Sample(deer.gaitPhase,deer.speed,leg);
             const bool hind = leg >= 2;
-            const V hip = body + forward * (fore * s) + right * (sideSign * 0.255f * s) - up * (0.23f * s);
-            const V standingKnee = hip + forward * (((hind ? 0.16f : -0.07f) + swing * 0.13f) * s) - up * (0.37f * s)
-                + right * (sideSign * 0.018f * s);
-            const V standingHock = standingKnee + forward * (((hind ? -0.22f : 0.08f) - swing * 0.15f) * s) - up * (0.34f * s);
-            const V standingHoof = standingHock + forward * (((hind ? 0.18f : 0.04f) - swing * 0.08f) * s);
+            const V hip = body + forward * (fore * s) + right * (sideSign * .255f * s) - up * (.23f * s);
+            const V standingKnee = hip + forward * (((hind ? .16f : -.07f) + step.along*.45f) * s)
+                - up * (.37f * s) + right * (sideSign * .018f * s);
+            const V standingHock = hip + forward * (((hind ? -.06f : .01f) + step.along*.8f) * s)
+                - up * (.71f * s) + right * (sideSign * .018f * s);
+            const V standingHoof = hip + forward * (((hind ? .12f : .05f) + step.along) * s)
+                - up * (.71f * s) + right * (sideSign * .018f * s);
             const V foldedKnee = hip + forward * ((hind ? 0.22f : 0.10f) * s) - up * ((hind ? 0.12f : 0.14f) * s)
                 + right * (sideSign * 0.05f * s);
             const V foldedHock = foldedKnee - forward * ((hind ? 0.28f : 0.30f) * s) - up * ((hind ? 0.05f : 0.03f) * s);
             const V foldedHoof = foldedHock + forward * ((hind ? 0.30f : -0.05f) * s);
-            const float lift = (leg == 0 ? std::clamp(deer.stamp, 0.0f, 1.0f) : 0.0f) * 0.14f * s;
-            const V knee = lerp(standingKnee, foldedKnee, bed) + up * (lift * 0.35f) + forward * (lift * 0.2f);
-            const V hock = lerp(standingHock, foldedHock, bed) + up * (lift * 0.8f) - forward * (lift * 0.3f);
+            const float lift = (step.lift*(1.0f-bed)
+                +(leg == 0 ? std::clamp(deer.stamp, 0.0f, 1.0f) : 0.0f)*.14f)*s;
+            V knee = lerp(standingKnee, foldedKnee, bed) + up * (lift * 0.35f) + forward * (lift * 0.2f);
+            V hock = lerp(standingHock, foldedHock, bed) + up * (lift * 0.8f) - forward * (lift * 0.3f);
             V hoof = lerp(standingHoof, foldedHoof, bed) - forward * (lift * 0.2f);
-            hoof.y = deer.y + 0.060f * s + lift;
+            const V offset=hoof-origin;
+            const float height=offset.x*up.x+offset.y*up.y+offset.z*up.z;
+            hoof=hoof+up*(DeerHoofSupport::AnkleHeight*s-height);
+            const float nominalY=hoof.y;
+            const auto support=FitDeerHoofSupport(ground,deer.y,hoof.x,hoof.z,deer.headingRadians,s);
+            hoof=v(support.centre)+up*lift;
+            const float correction=support.centre.y-nominalY;
+            knee.y+=correction*DeerHoofSupport::KneeWeight;
+            hock.y+=correction*DeerHoofSupport::HockWeight;
             add(hip, knee, (hind ? 0.095f : 0.085f) * s);
             add(knee, hock, 0.035f * s);
             add(hock, hoof, 0.028f * s);

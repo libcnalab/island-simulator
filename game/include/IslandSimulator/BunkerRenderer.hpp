@@ -16,10 +16,13 @@ class VertexBuffer;
 
 namespace island {
 
+class RenderedTerrainSurface;
+
 /** Bounded two-batch procedural shell for the underground bunker and its lit rooms. */
 class BunkerRenderer final {
 public:
-    BunkerRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice&,const BunkerLayout&);
+    BunkerRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice&,const BunkerLayout&,
+                   const RenderedTerrainSurface&);
     ~BunkerRenderer();
     void Draw(const Microsoft::Xna::Framework::Matrix&,const Microsoft::Xna::Framework::Matrix&,
               const Microsoft::Xna::Framework::Vector3& camera);

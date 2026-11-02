@@ -11,6 +11,7 @@
 
 #include <exception>
 #include <charconv>
+#include <cmath>
 #include <iostream>
 #include <cstdlib>
 #include <string>
@@ -73,6 +74,7 @@ namespace
         case FixedViewpoint::CurrentBoundaryDetail: return "current";
         case FixedViewpoint::DistantSceneryDetail: return "distant";
         case FixedViewpoint::PropDetail: return "props";
+        case FixedViewpoint::RockContactDetail: return "rock-contact";
         case FixedViewpoint::DriftwoodDetail: return "driftwood";
         case FixedViewpoint::ReefDetail: return "reef";
         case FixedViewpoint::ReefHabitatDetail: return "reef-habitat";
@@ -80,6 +82,7 @@ namespace
         case FixedViewpoint::WalkerShadowDetail: return "walker-shadow";
         case FixedViewpoint::FallenFrondDetail: return "fronds";
         case FixedViewpoint::BirdDetail: return "birds";
+        case FixedViewpoint::BirdFlightDetail: return "bird-flight";
         case FixedViewpoint::BirdPreenDetail: return "bird-preen";
         case FixedViewpoint::FrigatebirdDetail: return "frigatebird";
         case FixedViewpoint::WhaleSkeletonDetail: return "whale-skeleton";
@@ -159,6 +162,7 @@ namespace
         case FixedViewpoint::FruitBatDetail: return "bats";
         case FixedViewpoint::FruitBatRoostDetail: return "bat-roost";
         case FixedViewpoint::FishDetail: return "fish";
+        case FixedViewpoint::FishMotionDetail: return "fish-swim";
         case FixedViewpoint::StingrayDetail: return "stingrays";
         case FixedViewpoint::ReefHeronDetail: return "herons";
         case FixedViewpoint::StingrayBuriedDetail: return "stingray-buried";
@@ -183,6 +187,7 @@ namespace
         case FixedViewpoint::BeachVineDetail: return "beach-vine";
         case FixedViewpoint::HutDetail: return "hut";
         case FixedViewpoint::HutMaterialDetail: return "hut-material";
+        case FixedViewpoint::HutEavesDetail: return "hut-eaves";
         case FixedViewpoint::HelicopterDetail: return "helicopter";
         case FixedViewpoint::HelicopterInteriorDetail: return "helicopter-inside";
         case FixedViewpoint::HelicopterApproach: return "helicopter-approach";
@@ -210,6 +215,7 @@ namespace
         case FixedViewpoint::GoatDetail: return "goats";
         case FixedViewpoint::GoatLyingDetail: return "goat-lying";
         case FixedViewpoint::DeerDetail: return "deer";
+        case FixedViewpoint::DeerMotionDetail: return "deer-walk";
         case FixedViewpoint::DeerBeddedDetail: return "deer-bedded";
         case FixedViewpoint::SpiderDetail: return "spiders";
         case FixedViewpoint::SpiderBrightDetail: return "spiders-bright";
@@ -252,9 +258,38 @@ int main(const int argc, char* argv[])
     std::string benchmarkPath;
     std::string startupReportPath;
     std::optional<island::CanopyLodInspection> canopyLodInspection;
+    std::optional<std::uint32_t> naturalPropSeed;
+    std::optional<float> captureTidePhase;
     for (int index = 1; index < argc; ++index) {
         const std::string_view argument(argv[index]);
-        if (argument == "--canopy-lod-inspection") {
+        if (argument == "--capture-tide-phase") {
+            if (captureTidePhase || index+1 >= argc) {
+                std::cerr << "island-simulator: --capture-tide-phase requires one finite phase in [0,1)\n";
+                return 2;
+            }
+            const std::string_view value(argv[++index]);
+            float phase = 0;
+            const auto parsed = std::from_chars(value.data(),value.data()+value.size(),phase);
+            if (parsed.ec != std::errc{} || parsed.ptr != value.data()+value.size()
+                || !std::isfinite(phase) || phase < 0 || phase >= 1) {
+                std::cerr << "island-simulator: --capture-tide-phase requires one finite phase in [0,1)\n";
+                return 2;
+            }
+            captureTidePhase = phase;
+        } else if (argument == "--natural-props-seed") {
+            std::uint32_t seed=0;
+            if (naturalPropSeed || index+1>=argc) {
+                std::cerr<<"island-simulator: --natural-props-seed requires one uint32 decimal seed\n";
+                return 2;
+            }
+            const std::string_view value(argv[++index]);
+            const auto parsed=std::from_chars(value.data(),value.data()+value.size(),seed);
+            if (parsed.ec!=std::errc{} || parsed.ptr!=value.data()+value.size()) {
+                std::cerr<<"island-simulator: invalid --natural-props-seed\n";
+                return 2;
+            }
+            naturalPropSeed=seed;
+        } else if (argument == "--canopy-lod-inspection") {
             island::CanopyLodInspection inspection{};
             const auto coordinate = [](const std::string_view text, int& value) {
                 const auto result = std::from_chars(text.data(), text.data() + text.size(), value);
@@ -265,12 +300,14 @@ int main(const int argc, char* argv[])
                 || !coordinate(argv[index + 1], inspection.xMillimetres)
                 || !coordinate(argv[index + 2], inspection.zMillimetres)
                 || (std::string_view(argv[index + 3]) != "near"
-                    && std::string_view(argv[index + 3]) != "far")) {
+                    && std::string_view(argv[index + 3]) != "far"
+                    && std::string_view(argv[index + 3]) != "roots")) {
                 std::cerr << "island-simulator: --canopy-lod-inspection requires unique "
-                             "X_MM Z_MM near|far (integer coordinates within +/-500000)\n";
+                             "X_MM Z_MM near|far|roots (integer coordinates within +/-500000)\n";
                 return 2;
             }
-            inspection.near = std::string_view(argv[index + 3]) == "near";
+            inspection.roots = std::string_view(argv[index + 3]) == "roots";
+            inspection.near = std::string_view(argv[index + 3]) != "far";
             canopyLodInspection = inspection;
             index += 3;
         } else if (argument == "--smoke-test") {
@@ -305,8 +342,8 @@ int main(const int argc, char* argv[])
             if (++index >= argc) {
                 std::cerr << "island-simulator: --viewpoint requires overview, bay, bay-ground, beach, jungle, snags, sapling, "
                              "east, headland, tide-pools, turtle-nest, cave, cave-top, cave-inside, cave-back, bunker, bunker-corridor, bunker-computers, bunker-reactor, bunker-service, bunker-end, campfire, campfire-wide, resident, bear, clearing-edge, canopy (inspection only), west, stream, wetland, mangroves, grass, ground, ground-broadleaf, bush, litter, contact, movement, palms, fallen-palm, broken-palm, water, "
-                             "wet-sand, current, distant, props, driftwood, reef, reef-habitat, fronds, birds, herons, bats, bat-roost, fish, "
-                             "shark, dolphins, monkeys, monkey-tree, monkey-climb, shipwreck, shipwreck-wide, tracks, fruit, cascade, jetty, bridge, lookout, log, hut, hut-material, helicopter, helicopter-inside, helicopter-approach, crabs, hermit-crabs, coconut-crabs, crocodiles, boars, goats, spiders, spiders-bright, spider-web, snakes, snake-head, tree-snakes, butterflies, geckos, skinks, dragonflies, frogs, mice, rats, flies, ants, cicadas, turtles, or traversal\n";
+                             "wet-sand, current, distant, props, rock-contact, driftwood, reef, reef-habitat, fronds, birds, bird-flight, herons, bats, bat-roost, fish, fish-swim, "
+                             "shark, dolphins, monkeys, monkey-tree, monkey-climb, shipwreck, shipwreck-wide, tracks, fruit, cascade, jetty, bridge, lookout, log, hut, hut-material, hut-eaves, helicopter, helicopter-inside, helicopter-approach, crabs, hermit-crabs, coconut-crabs, crocodiles, boars, goats, spiders, spiders-bright, spider-web, snakes, snake-head, tree-snakes, butterflies, geckos, skinks, dragonflies, frogs, mice, rats, flies, ants, cicadas, turtles, or traversal\n";
                 return 2;
             }
             const std::string_view name(argv[index]);
@@ -408,6 +445,8 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::DistantSceneryDetail;
             } else if (name == "props") {
                 viewpoint = island::FixedViewpoint::PropDetail;
+            } else if (name == "rock-contact") {
+                viewpoint = island::FixedViewpoint::RockContactDetail;
             } else if (name == "driftwood") {
                 viewpoint = island::FixedViewpoint::DriftwoodDetail;
             } else if (name == "reef") {
@@ -420,6 +459,8 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::WalkerShadowDetail;
             } else if (name == "fronds") {
                 viewpoint = island::FixedViewpoint::FallenFrondDetail;
+            } else if (name == "bird-flight") {
+                viewpoint = island::FixedViewpoint::BirdFlightDetail;
             } else if (name == "birds") {
                 viewpoint = island::FixedViewpoint::BirdDetail;
             } else if (name == "bird-preen") {
@@ -578,6 +619,8 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::FruitBatDetail;
             } else if (name == "bat-roost") {
                 viewpoint = island::FixedViewpoint::FruitBatRoostDetail;
+            } else if (name == "fish-swim") {
+                viewpoint = island::FixedViewpoint::FishMotionDetail;
             } else if (name == "fish") {
                 viewpoint = island::FixedViewpoint::FishDetail;
             } else if (name == "stingrays") {
@@ -658,6 +701,8 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::HutDetail;
             } else if (name == "hut-material") {
                 viewpoint = island::FixedViewpoint::HutMaterialDetail;
+            } else if (name == "hut-eaves") {
+                viewpoint = island::FixedViewpoint::HutEavesDetail;
             } else if (name == "helicopter") {
                 viewpoint = island::FixedViewpoint::HelicopterDetail;
             } else if (name == "helicopter-inside") {
@@ -684,6 +729,8 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::GoatLyingDetail;
             } else if (name == "deer") {
                 viewpoint = island::FixedViewpoint::DeerDetail;
+            } else if (name == "deer-walk") {
+                viewpoint = island::FixedViewpoint::DeerMotionDetail;
             } else if (name == "deer-bedded") {
                 viewpoint = island::FixedViewpoint::DeerBeddedDetail;
             } else if (name == "spiders") {
@@ -761,7 +808,20 @@ int main(const int argc, char* argv[])
                      "viewpoint, without benchmark, startup report or debug modes\n";
         return 2;
     }
-    const std::string_view mode = canopyLodInspection ? "canopy-lod-inspection"
+    if (naturalPropSeed && (capturePath.empty() || viewpoint!=island::FixedViewpoint::TurtleNestDetail
+        || canopyLodInspection || !benchmarkPath.empty() || !startupReportPath.empty()
+        || showDebugOverlay || showWorldDebug || inputDiagnostics)) {
+        std::cerr<<"island-simulator: --natural-props-seed is QA-only and requires --capture --viewpoint turtle-nest\n";
+        return 2;
+    }
+    if (captureTidePhase && (capturePath.empty() || viewpoint == island::FixedViewpoint::None
+        || viewpoint == island::FixedViewpoint::BenchmarkTraversal || canopyLodInspection
+        || !benchmarkPath.empty() || !startupReportPath.empty())) {
+        std::cerr << "island-simulator: --capture-tide-phase requires a fixed capture without benchmark or inspection\n";
+        return 2;
+    }
+    const std::string_view mode = naturalPropSeed ? "natural-props-inspection"
+        : canopyLodInspection ? "canopy-lod-inspection"
         : !benchmarkPath.empty() ? "benchmark"
         : !capturePath.empty() ? "capture"
         : !startupReportPath.empty() ? "startup-report"
@@ -780,13 +840,17 @@ int main(const int argc, char* argv[])
     }
     island::RecordRuntimeWorkload(mode, ViewpointName(viewpoint), capturePath,
                                   benchmarkPath, startupReportPath);
+    if (naturalPropSeed)
+        std::cout<<"island-simulator: QA natural-props seed="<<*naturalPropSeed
+            <<" turtle-nest-target=last\n";
     try {
         island::IslandGame game(smokeTest, std::move(capturePath), viewpoint, showDebugOverlay,
                                 inputDiagnostics, showWorldDebug, std::move(benchmarkPath),
                                 std::move(startupReportPath),
                                 !noUserSettings && !smokeTest && !inputDiagnostics
                                     && viewpoint == island::FixedViewpoint::None,
-                                canopyLodInspection);
+                                canopyLodInspection, naturalPropSeed);
+        if (captureTidePhase) game.HoldCaptureTide(*captureTidePhase);
         game.Run();
         return 0;
     } catch (const std::exception& error) {

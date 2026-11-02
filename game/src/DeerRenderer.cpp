@@ -1,5 +1,7 @@
+#include "IslandSimulator/DeerGait.hpp"
 #include "IslandSimulator/VegetationFade.hpp"
 #include "IslandSimulator/DeerRenderer.hpp"
+#include "IslandSimulator/DeerHoofSupport.hpp"
 #include "IslandSimulator/WildlifeRenderLighting.hpp"
 #include "IslandSimulator/DeerHerd.hpp"
 
@@ -76,13 +78,13 @@ namespace island
                              std::lround(base.getBProperty() * light), 0L, 255L)), 255);
         }
 
-        Color CoatTone(const Color base, const Vector3& normal, const float amount)
+        Color CoatTone(const Color base, const float dorsalFacing, const float amount)
         {
             if (amount <= 0.0f) return base;
-            const Color target = normal.Y >= 0.0f ? Color(65, 45, 30)
+            const Color target = dorsalFacing >= 0.0f ? Color(65, 45, 30)
                                                    : Color(220, 190, 145);
             return Color::Lerp(base, target,
-                               std::clamp(amount * std::abs(normal.Y), 0.0f, 1.0f));
+                               std::clamp(amount * std::abs(dorsalFacing), 0.0f, 1.0f));
         }
 
         void Ellipsoid(std::vector<DeerVertex>& out, const Vector3& centre,
@@ -125,7 +127,7 @@ namespace island
             corners.clear();
             for (int ring = 0; ring <= rings; ++ring) for (int side = 0; side < sides; ++side) {
                 const Vector3 n = normal(ring, side);
-                corners.push_back({point(ring, side), Lit(CoatTone(color, n, coatTone), n, transmission)});
+                corners.push_back({point(ring, side), Lit(CoatTone(color, Vector3::Dot(n,up), coatTone), n, transmission)});
             }
             const auto at = [&](const int ring, const int side) -> const Corner& {
                 return corners[static_cast<std::size_t>(ring * sides + side)];
@@ -145,13 +147,14 @@ namespace island
 
         void Tube(std::vector<DeerVertex>& out, const Vector3& a, const Vector3& b,
                   const float radiusA, const float radiusB, const Color color,
-                  const float transmission, const int sides = 7)
+                  const float transmission, const int sides = 7,
+                  const Vector3* sideHint = nullptr, const float ringPhase = 0.0f)
         {
             Vector3 axis = b - a;
             const float length = axis.Length();
             if (length < .0001f) return;
             axis /= length;
-            Vector3 side = Vector3::Cross(axis, std::abs(axis.Y) < .9f
+            Vector3 side = sideHint ? *sideHint : Vector3::Cross(axis, std::abs(axis.Y) < .9f
                 ? Vector3::Up : Vector3::Right);
             side.Normalize();
             const Vector3 other = Vector3::Cross(axis, side);
@@ -160,8 +163,8 @@ namespace island
             for (int index = 0; index < sides; ++index) {
                 const float u0 = girth * static_cast<float>(index) / sides;
                 const float u1 = girth * static_cast<float>(index + 1) / sides;
-                const float first = 6.28318530718f * static_cast<float>(index) / sides;
-                const float second = 6.28318530718f * static_cast<float>(index + 1) / sides;
+                const float first = 6.28318530718f * static_cast<float>(index) / sides + ringPhase;
+                const float second = 6.28318530718f * static_cast<float>(index + 1) / sides + ringPhase;
                 const Vector3 radialA = side * std::cos(first) + other * std::sin(first);
                 const Vector3 radialB = side * std::cos(second) + other * std::sin(second);
                 const Color shadeA = Lit(color, radialA, transmission);
@@ -180,7 +183,8 @@ namespace island
                       const std::array<Vector3,RingCount>& centres,
                       const std::array<float,RingCount>& radii,
                       Vector3 right,const Color color,const float transmission,
-                      const int sides,const float coatTone=0.0f)
+                      const int sides,const float coatTone=0.0f,
+                      const Vector3& toneUp=Vector3::Up)
         {
             static_assert(RingCount>=2);
             right.Normalize();
@@ -213,7 +217,7 @@ namespace island
             corners.clear();
             for(std::size_t ring=0;ring<RingCount;++ring) for(int side=0;side<sides;++side) {
                 const Vector3 r=radial(ring,side);
-                corners.push_back({centres[ring]+r*radii[ring],Lit(CoatTone(color,r,coatTone),r,transmission)});
+                corners.push_back({centres[ring]+r*radii[ring],Lit(CoatTone(color,Vector3::Dot(r,toneUp),coatTone),r,transmission)});
             }
             const auto at=[&](const std::size_t ring,const int side)->const Corner& {
                 return corners[ring*static_cast<std::size_t>(sides)+static_cast<std::size_t>(side)];
@@ -306,7 +310,7 @@ namespace island
             const auto colour=[&](const std::size_t section,const int side,const Vector3& n) {
                 const float mottle=.5f+.5f*std::sin(
                     static_cast<float>(section)*2.17f+static_cast<float>(side)*1.31f);
-                return Lit(CoatTone(Color::Lerp(coat,shadowCoat,.018f+.035f*mottle),n,.30f),
+                return Lit(CoatTone(Color::Lerp(coat,shadowCoat,.018f+.035f*mottle),Vector3::Dot(n,up),.30f),
                            n,transmission);
             };
             for(std::size_t section=0;section+1<DeerBodySections.size();++section) {
@@ -332,7 +336,7 @@ namespace island
                 const Vector3 capCentre=centre+forward*(DeerBodySections[section].forward*scale)
                     +up*(DeerBodySections[section].lift*scale);
                 const Vector3 capNormal=reverse?-forward:forward;
-                const Color capColor=Lit(CoatTone(coat,capNormal,.30f),capNormal,transmission);
+                const Color capColor=Lit(CoatTone(coat,Vector3::Dot(capNormal,up),.30f),capNormal,transmission);
                 for(int side=0;side<sides;++side) {
                     const int next=(side+1)%sides;
                     const Vector2 capUv(DeerBodySections[section].forward*scale/CoatTile,0.0f);
@@ -347,7 +351,7 @@ namespace island
         // hooves and antlers.
         void AppendDeer(std::vector<DeerVertex>& out, std::vector<DeerVertex>& bare, const DeerState& deer,
                         const float transmission, const bool near, const Vector3& watcher,
-                        std::vector<EyeGlint>* eyes = nullptr)
+                        std::vector<EyeGlint>* eyes, const RenderedTerrainSurface* ground)
         {
             const std::array<Color, 3> coats = {{Color(151, 103, 58), Color(130, 82, 48),
                                                  Color(170, 121, 69)}};
@@ -357,14 +361,12 @@ namespace island
             const Color pale = Color::Lerp(coat, Color(231, 214, 177), .68f);
             const Color eye(24, 17, 11), antler(103, 82, 57), hoof(31, 27, 24);
             const float scale = deer.scale;
-            const Vector3 forward(std::cos(deer.headingRadians), 0.0f,
-                                  std::sin(deer.headingRadians));
-            const Vector3 right(-forward.Z, 0.0f, forward.X), up = Vector3::Up;
-            // Bedded down, the body settles toward the ground and the legs fold under it:
-            // the fore cannons lie back along the ground from knees set forward, the hind
-            // legs tuck with the hooves brought forward under the belly.
+            const auto frame=MakeDeerSupportFrame(deer,ground);
+            const auto vector=[](DeerHoofPoint p){return Vector3(p.x,p.y,p.z);};
+            const Vector3 origin=vector(frame.origin),forward=vector(frame.forward);
+            const Vector3 right=vector(frame.right),up=vector(frame.up);
             const float bed = std::clamp(deer.bedAmount, 0.0f, 1.0f);
-            const Vector3 body(deer.x, deer.y + (1.03f - .56f * bed) * scale, deer.z);
+            const Vector3 body=origin+up*((1.03f-.56f*bed)*scale);
             AppendBody(out,body,right,up,forward,scale,coat,transmission,near);
             const float graze = deer.grazeAmount;
             const Vector3 neckBase = body + forward * (.58f * scale) + up * (.24f * scale);
@@ -380,7 +382,7 @@ namespace island
                 neckTop}};
             const std::array<float,5> neckRadii{{.245f*scale,.225f*scale,.185f*scale,
                                                  .155f*scale,.132f*scale}};
-            LoftTube(out,neckStations,neckRadii,right,coat,transmission,near?10:7,.24f);
+            LoftTube(out,neckStations,neckRadii,right,coat,transmission,near?10:7,.24f,up);
             // Tossed, the head is thrown up and forward a little for a moment.
             const float toss = std::clamp(deer.headToss, 0.0f, 1.0f);
             const Vector3 head = neckTop + forward * ((.22f + .035f * toss) * scale)
@@ -444,32 +446,41 @@ namespace island
                               .004f*scale,Color(225,205,145),transmission,3,8);
                 }
             }
-            // Four articulated legs; diagonal phase offsets make walk and retreat readable.
+            // The existing joints follow a stance/swing hoof path shared with shadows.
             for (int leg = 0; leg < 4; ++leg) {
                 const float fore = leg < 2 ? .48f : -.47f;
                 const float sideSign = leg % 2 == 0 ? -1.0f : 1.0f;
-                const float phase = deer.gaitPhase + ((leg == 0 || leg == 3) ? 0.0f : 3.14159265359f);
-                const float swing = std::sin(phase) * std::min(1.0f, deer.speed / .8f);
+                const auto step=deer_gait::Sample(deer.gaitPhase,deer.speed,leg);
                 const Vector3 hip = body + forward * (fore * scale)
                     + right * (sideSign * .255f * scale) - up * (.23f * scale);
                 const bool hind = leg >= 2;
                 const Vector3 standingKnee = hip + forward * (((hind ? .16f : -.07f)
-                    + swing * .13f) * scale) - up * (.37f * scale)
+                    + step.along * .45f) * scale) - up * (.37f * scale)
                     + right * (sideSign * .018f * scale);
-                const Vector3 standingHock = standingKnee + forward * (((hind ? -.22f : .08f)
-                    - swing * .15f) * scale) - up * (.34f * scale);
-                const Vector3 standingHoof = standingHock + forward * (((hind ? .18f : .04f)
-                    - swing * .08f) * scale);
+                const Vector3 standingHock = hip + forward * (((hind ? -.06f : .01f)
+                    + step.along * .8f) * scale) - up * (.71f * scale)
+                    + right * (sideSign * .018f * scale);
+                const Vector3 standingHoof = hip + forward * (((hind ? .12f : .05f)
+                    + step.along) * scale) - up * (.71f * scale)
+                    + right * (sideSign * .018f * scale);
                 const Vector3 foldedKnee = hip + forward * ((hind ? .22f : .10f) * scale)
                     - up * ((hind ? .12f : .14f) * scale) + right * (sideSign * .05f * scale);
                 const Vector3 foldedHock = foldedKnee - forward * ((hind ? .28f : .30f) * scale)
                     - up * ((hind ? .05f : .03f) * scale);
                 const Vector3 foldedHoof = foldedHock + forward * ((hind ? .30f : -.05f) * scale);
                 // Stamping, the left forefoot lifts, the knee and hock folding up with it.
-                const float lift = (leg == 0 ? std::clamp(deer.stamp, 0.0f, 1.0f) : 0.0f) * .14f * scale;
-                const Vector3 knee = Vector3::Lerp(standingKnee, foldedKnee, bed) + up * (lift * .35f) + forward * (lift * .2f);
-                const Vector3 hock = Vector3::Lerp(standingHock, foldedHock, bed) + up * (lift * .8f) - forward * (lift * .3f);
+                const float lift = (step.lift*(1.0f-bed)
+                    +(leg == 0 ? std::clamp(deer.stamp, 0.0f, 1.0f) : 0.0f)*.14f)*scale;
+                Vector3 knee = Vector3::Lerp(standingKnee, foldedKnee, bed) + up * (lift * .35f) + forward * (lift * .2f);
+                Vector3 hock = Vector3::Lerp(standingHock, foldedHock, bed) + up * (lift * .8f) - forward * (lift * .3f);
                 const Vector3 hoofPoint = Vector3::Lerp(standingHoof, foldedHoof, bed) - forward * (lift * .2f);
+                const Vector3 nominalHoof=hoofPoint+up*(DeerHoofSupport::AnkleHeight*scale-Vector3::Dot(hoofPoint-origin,up));
+                const auto support=FitDeerHoofSupport(ground,deer.y,nominalHoof.X,nominalHoof.Z,
+                                                      deer.headingRadians,scale);
+                const Vector3 groundedHoof=vector(support.centre)+up*lift;
+                const float correction=support.centre.y-nominalHoof.Y;
+                knee.Y+=correction*DeerHoofSupport::KneeWeight;
+                hock.Y+=correction*DeerHoofSupport::HockWeight;
                 const float upperRootRadius = hind ? .142f : .128f;
                 const std::array<Vector3,4> upperLeg{{hip,Vector3::Lerp(hip,knee,.28f),
                     Vector3::Lerp(hip,knee,.62f),knee}};
@@ -483,14 +494,17 @@ namespace island
                 const Color shank = Color::Lerp(coat, Color(92, 76, 60), .42f);
                 Tube(out, knee, hock, .040f * scale, .030f * scale, Color::Lerp(coat, shank, .55f),
                      transmission, near ? 9 : 7);
-                Tube(out, hock, Vector3(hoofPoint.X, deer.y + .060f * scale + lift, hoofPoint.Z),
+                Tube(out, hock, groundedHoof,
                      .031f * scale, .024f * scale, shank, transmission, near ? 9 : 7);
-                const Vector3 groundedHoof(hoofPoint.X, deer.y + .060f * scale + lift, hoofPoint.Z);
-                for(const float toeSide:{-.018f,.018f}) {
-                    const Vector3 offset=right*(toeSide*scale);
-                    Tube(bare,groundedHoof-forward*(.030f*scale)+offset,
-                         groundedHoof+forward*(.070f*scale)+offset,
-                         .024f*scale,.015f*scale,hoof,transmission,near?8:6);
+                const Vector3 hoofForward(support.forward.x,support.forward.y,support.forward.z);
+                const Vector3 hoofRight(support.right.x,support.right.y,support.right.z);
+                const int hoofSides=near?8:6;
+                for(const float toeSide:{-DeerHoofSupport::ToeOffset,DeerHoofSupport::ToeOffset}) {
+                    const Vector3 offset=hoofRight*(toeSide*scale);
+                    Tube(bare,groundedHoof+hoofForward*(DeerHoofSupport::Rear*scale)+offset,
+                         groundedHoof+hoofForward*(DeerHoofSupport::Front*scale)+offset,
+                         DeerHoofSupport::RearRadius*scale,DeerHoofSupport::FrontRadius*scale,
+                         hoof,transmission,hoofSides,&hoofRight,DeerHoofRingPhase(hoofSides));
                 }
             }
             const Vector3 tailRoot = body - forward * (.73f * scale) + up * (.17f * scale);
@@ -620,8 +634,12 @@ namespace island
         for (const DeerState& animal : deer) {
             const Vector3 centre(animal.x, animal.y + 1.1f * animal.scale, animal.z);
             const float distanceSquared = Vector3::DistanceSquared(centre, camera);
-            if (distanceSquared > maximumDistance_ * maximumDistance_
-                || !frustum.Intersects(BoundingSphere(centre, 2.1f * animal.scale))) continue;
+            if (distanceSquared > maximumDistance_ * maximumDistance_) continue;
+            const auto frame=MakeDeerSupportFrame(animal,ground_);
+            const Vector3 cullCentre(frame.origin.x+frame.up.x*1.1f*animal.scale,
+                frame.origin.y+frame.up.y*1.1f*animal.scale,
+                frame.origin.z+frame.up.z*1.1f*animal.scale);
+            if (!frustum.Intersects(BoundingSphere(cullCentre, DeerSupportFrame::CullRadius * animal.scale))) continue;
             const float shrink = vegetation_fade::FarShrink(std::sqrt(distanceSquared), maximumDistance_,
                                                             vegetation_fade::TreeShrinkFraction);
             if (shrink <= 0.0f) continue;
@@ -629,7 +647,7 @@ namespace island
                 animal.x, animal.y + 1.0f, animal.z, animal.y);
             const std::size_t first = staging_.size(), firstBare = solid_.size();
             // the smooth near body within 30 m (a deer is some 25 pixels tall there at 720p)
-            AppendDeer(staging_, solid_, animal, transmission, distanceSquared < 30.0f * 30.0f, camera, &eyes_);
+            AppendDeer(staging_, solid_, animal, transmission, distanceSquared < 30.0f * 30.0f, camera, &eyes_, ground_);
             // the strand texture multiplies the coat: divided by its mean, the coat keeps its tones
             for (std::size_t i = first; i < staging_.size(); ++i) {
                 Color& c = staging_[i].Color;

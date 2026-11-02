@@ -189,6 +189,7 @@ add_library(island_core STATIC
     game/src/DolphinPod.cpp
     game/src/DragonflySwarm.cpp
     game/src/DeerHerd.cpp
+    game/src/DeerHoofSupport.cpp
     game/src/HermitCrabGroup.cpp
     game/src/CoconutCrabGroup.cpp
     game/src/SharkPatrol.cpp
@@ -421,6 +422,22 @@ if(ISLAND_BUILD_TESTS AND NOT CMAKE_CROSSCOMPILING)
     island_enable_first_party_warnings(island_deer_herd_tests)
     island_enable_first_party_sanitizers(island_deer_herd_tests)
     add_test(NAME IslandDeerHerdTests COMMAND island_deer_herd_tests)
+
+    add_executable(island_deer_hoof_tests tests/DeerHoofSupportTests.cpp)
+    target_link_libraries(island_deer_hoof_tests PRIVATE IslandSimulator::Core)
+    island_enable_first_party_warnings(island_deer_hoof_tests)
+    island_enable_first_party_sanitizers(island_deer_hoof_tests)
+    add_test(NAME IslandDeerHoofSupportTests COMMAND island_deer_hoof_tests)
+    add_executable(island_deer_gait_tests tests/DeerGaitTests.cpp)
+    target_link_libraries(island_deer_gait_tests PRIVATE IslandSimulator::Core)
+    island_enable_first_party_warnings(island_deer_gait_tests)
+    island_enable_first_party_sanitizers(island_deer_gait_tests)
+    add_test(NAME IslandDeerGaitTests COMMAND island_deer_gait_tests)
+    add_executable(island_bunker_quad_tests tests/BunkerQuadSupportTests.cpp)
+    target_link_libraries(island_bunker_quad_tests PRIVATE IslandSimulator::Core)
+    island_enable_first_party_warnings(island_bunker_quad_tests)
+    island_enable_first_party_sanitizers(island_bunker_quad_tests)
+    add_test(NAME IslandBunkerQuadSupportTests COMMAND island_bunker_quad_tests)
     add_executable(island_close_observer_turning_tests tests/CloseObserverTurningTests.cpp)
     target_link_libraries(island_close_observer_turning_tests PRIVATE IslandSimulator::Core)
     island_enable_first_party_warnings(island_close_observer_turning_tests)
@@ -517,6 +534,12 @@ if(ISLAND_BUILD_TESTS AND NOT CMAKE_CROSSCOMPILING)
     island_enable_first_party_warnings(island_boar_pose_tests)
     island_enable_first_party_sanitizers(island_boar_pose_tests)
     add_test(NAME IslandBoarPoseTests COMMAND island_boar_pose_tests)
+
+    add_executable(island_boar_gait_tests tests/BoarGaitTests.cpp)
+    target_link_libraries(island_boar_gait_tests PRIVATE IslandSimulator::Core)
+    island_enable_first_party_warnings(island_boar_gait_tests)
+    island_enable_first_party_sanitizers(island_boar_gait_tests)
+    add_test(NAME IslandBoarGaitTests COMMAND island_boar_gait_tests)
     add_executable(island_leaf_tests tests/LeafBladeProfileTests.cpp tests/GroundBroadleafTests.cpp
         tests/SplitGroundLeafTests.cpp tests/BushProfileTests.cpp)
     target_link_libraries(island_leaf_tests PRIVATE IslandSimulator::Core)
@@ -535,6 +558,16 @@ if(ISLAND_BUILD_TESTS AND NOT CMAKE_CROSSCOMPILING)
     island_enable_first_party_warnings(island_rendered_terrain_tests)
     island_enable_first_party_sanitizers(island_rendered_terrain_tests)
     add_test(NAME IslandRenderedTerrainTests COMMAND island_rendered_terrain_tests)
+    add_executable(island_rain_shelter_tests tests/RainShelterTests.cpp)
+    target_link_libraries(island_rain_shelter_tests PRIVATE IslandSimulator::Core)
+    island_enable_first_party_warnings(island_rain_shelter_tests)
+    island_enable_first_party_sanitizers(island_rain_shelter_tests)
+    add_test(NAME IslandRainShelterTests COMMAND island_rain_shelter_tests)
+    add_executable(island_turtle_nesting_tests tests/TurtleNestingTests.cpp)
+    target_link_libraries(island_turtle_nesting_tests PRIVATE IslandSimulator::Core)
+    island_enable_first_party_warnings(island_turtle_nesting_tests)
+    island_enable_first_party_sanitizers(island_turtle_nesting_tests)
+    add_test(NAME IslandTurtleNestingTests COMMAND island_turtle_nesting_tests)
     add_executable(island_canopy_tests tests/CanopyLightFieldTests.cpp)
     target_link_libraries(island_canopy_tests PRIVATE IslandSimulator::Core)
     island_enable_first_party_warnings(island_canopy_tests)
@@ -999,6 +1032,18 @@ if(ISLAND_BUILD_GAME)
         island_enable_cna_consumer_warnings(island_canopy_visibility_tests)
         island_enable_first_party_sanitizers(island_canopy_visibility_tests)
         add_test(NAME IslandCanopyVisibilityTests COMMAND island_canopy_visibility_tests)
+        add_executable(island_bird_wing_tests tests/BirdWingNormalTests.cpp)
+        target_include_directories(island_bird_wing_tests PRIVATE game/include)
+        target_link_libraries(island_bird_wing_tests PRIVATE CNA)
+        island_enable_cna_consumer_warnings(island_bird_wing_tests)
+        island_enable_first_party_sanitizers(island_bird_wing_tests)
+        add_test(NAME IslandBirdWingNormalTests COMMAND island_bird_wing_tests)
+        add_executable(island_sun_shadow_focus_tests tests/SunShadowFocusTests.cpp)
+        target_include_directories(island_sun_shadow_focus_tests PRIVATE game/include)
+        target_link_libraries(island_sun_shadow_focus_tests PRIVATE CNA)
+        island_enable_cna_consumer_warnings(island_sun_shadow_focus_tests)
+        island_enable_first_party_sanitizers(island_sun_shadow_focus_tests)
+        add_test(NAME IslandSunShadowFocusTests COMMAND island_sun_shadow_focus_tests)
         add_executable(island_terrain_material_tests tests/TerrainMaterialTests.cpp)
         target_link_libraries(island_terrain_material_tests PRIVATE CNA IslandSimulator::Core)
         island_enable_cna_consumer_warnings(island_terrain_material_tests)
@@ -1144,7 +1189,7 @@ if(ISLAND_BUILD_GAME)
             set_tests_properties(IslandCommandLineValidation PROPERTIES
                 TIMEOUT 15
                 PASS_REGULAR_EXPRESSION
-                    "command-line validation passed [(]26 invalid invocations[)]")
+                    "command-line validation passed [(]38 invalid invocations[)]")
 
             add_test(NAME IslandGameStartupReportValidation
                 COMMAND "${Python3_EXECUTABLE}"

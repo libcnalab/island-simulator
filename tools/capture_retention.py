@@ -2,8 +2,8 @@
 """Keeps the capture evidence directories from filling the disk.
 
 Each run's frames are stored as PNG (lossless, a fraction of a raw PPM's 2.7 MB) once the run has
-validated them, and only the newest capture sets are kept, besides any set whose stamp handoff.md
-cites. A browser run's left-over Chrome profile (hundreds of MB of cache after a timeout) goes too.
+validated them, and only the newest capture sets are kept, besides sets cited by the handoff or
+its evidence indexes. A browser run's left-over Chrome profile goes too.
 """
 
 from __future__ import annotations
@@ -22,6 +22,8 @@ KEEP_SOFTWARE_CAPTURE_SETS = 400   # some three full sweeps of the native views
 KEEP_BROWSER_SETS = 100
 SET_STAMP = re.compile(r"^(20\d{6}T\d{6})")
 CITED_STAMP = re.compile(r"20\d{6}T\d{6}")
+EVIDENCE_INDEX = re.compile(r"(?<![\w/.-])build/[\w./-]+\.json\b")
+MAX_EVIDENCE_INDEX_BYTES = 4 * 1024 * 1024
 
 
 def write_png(path: Path, width: int, height: int, rgb: bytes) -> None:
@@ -50,11 +52,24 @@ def compress_captures(directory: Path) -> int:
 
 
 def cited_stamps(root: Path) -> set[str]:
-    """The capture stamps handoff.md cites (their sets are kept whatever their age)."""
-    try:
-        return set(CITED_STAMP.findall((root / "handoff.md").read_text()))
-    except OSError:
-        return set()
+    """Protect handoff citations, including directly linked local JSON evidence indexes."""
+    cited: set[str] = set()
+    build = (root / "build").resolve()
+    for name in ("HANDOFF.md", "handoff.md"):
+        try:
+            handoff = (root / name).read_text(encoding="utf-8")
+        except (OSError, UnicodeError):
+            continue
+        cited.update(CITED_STAMP.findall(handoff))
+        for reference in set(EVIDENCE_INDEX.findall(handoff)):
+            try:
+                index = (root / reference).resolve()
+                if not index.is_relative_to(build) or index.stat().st_size > MAX_EVIDENCE_INDEX_BYTES:
+                    continue
+                cited.update(CITED_STAMP.findall(index.read_text(encoding="utf-8")))
+            except (OSError, UnicodeError, RuntimeError):
+                continue
+    return cited
 
 
 def prune_sets(parent: Path, keep: int, cited: set[str]) -> list[Path]:

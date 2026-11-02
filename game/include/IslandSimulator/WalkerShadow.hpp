@@ -6,6 +6,7 @@ namespace island
 {
     struct ResidentState;
     struct DeerState;
+    class RenderedTerrainSurface;
     struct GoatState;
     struct BoarState;
     struct BoarGroundPose;
@@ -83,7 +84,7 @@ namespace island
         /** A deer's limbs as DeerRenderer poses it: the barrel, the legs in three by the gait,
          *  the bed and the stamp, the neck and head by the graze, and the stag's antler beams or
          *  a doe's long ears. */
-        [[nodiscard]] std::array<Limb, CapsuleCount> DeerLimbs(const DeerState& deer) noexcept;
+        [[nodiscard]] std::array<Limb, CapsuleCount> DeerLimbs(const DeerState& deer, const RenderedTerrainSurface* ground = nullptr);
         /** A goat's limbs in GoatMesh's frame: the barrel, the planted legs, the neck, the head
          *  pitched by the graze with its horns, ears and beard, and the tail. */
         [[nodiscard]] std::array<Limb, CapsuleCount> GoatLimbs(const GoatState& goat) noexcept;

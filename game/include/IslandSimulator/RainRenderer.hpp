@@ -1,5 +1,7 @@
 #pragma once
 
+#include "IslandSimulator/RainShelter.hpp"
+
 #include "Microsoft/Xna/Framework/Matrix.hpp"
 #include "Microsoft/Xna/Framework/Vector3.hpp"
 #include "Microsoft/Xna/Framework/Graphics/VertexPositionColor.hpp"
@@ -66,8 +68,6 @@ namespace island
                          Emit&& emit) const;
         void Flush(const Microsoft::Xna::Framework::Matrix& view, const Microsoft::Xna::Framework::Matrix& projection,
                    const Microsoft::Xna::Framework::Graphics::BlendState& blend);
-        struct Shelter { float x, z, cosYaw, sinYaw, halfSpan, halfLength, eaveY, ridgeY; };
-        bool sheltered_ = false;
-        Shelter shelter_{};
+        GabledRainShelter shelter_;
     };
 }

@@ -387,8 +387,9 @@ int main()
                 const auto& n = rock.vertices[i].normal;
                 for (int axis=0; axis<3; ++axis) CheckNear(sharedNormals[i][axis],n[axis],0.000001f,
                     "wood normal builder matches independently generated rock normals");
-                Check(std::hypot(p[0],p[2]) <= 1 && p[1] >= 0 && p[1] <= island::RockSurfaceMaximumHeight,
-                      "refined rock fits existing collision/culling extents");
+                Check(std::hypot(p[0],p[2]) <= 1 && p[1] >= island::RockSurfaceMinimumHeight
+                          && p[1] <= island::RockSurfaceMaximumHeight,
+                      "refined rock fits shared buried-base and crown bounds");
                 CheckNear(std::hypot(n[0],n[1],n[2]), 1, 0.000001f, "rock normals are finite and unit length");
                 const auto& e = expected[i];
                 for (int axis=0; axis<3; ++axis) CheckNear(n[axis], e[axis]/std::hypot(e[0],e[1],e[2]),

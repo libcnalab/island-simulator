@@ -192,7 +192,19 @@ public:
         segments=Scaled(segments,6);
         right=SafeUnit(right);forward=SafeUnit(forward);
         const auto p=[&](std::size_t r,float a){return centres[r]+right*(rx[r]*std::cos(a))+forward*(rz[r]*std::sin(a));};
-        const auto n=[&](std::size_t r,float a){return SafeUnit(right*(std::cos(a)/rx[r])+forward*(std::sin(a)/rz[r]));};
+        // Follow the longitudinal taper too: radial normals flattened the shoulders
+        // and trapezius even where the loft's geometry already curved over them.
+        const auto n=[&](std::size_t r,float a) {
+            const auto before=r==0?0:r-1,after=std::min(r+1,centres.size()-1);
+            const float c=std::cos(a),s=std::sin(a);
+            const Vector3 along=centres[after]-centres[before]
+                +right*((rx[after]-rx[before])*c)+forward*((rz[after]-rz[before])*s);
+            const Vector3 around=right*(-rx[r]*s)+forward*(rz[r]*c);
+            Vector3 normal=SafeUnit(Vector3::Cross(along,around));
+            const Vector3 outward=right*c+forward*s;
+            if(Vector3::Dot(normal,outward)<0)normal=-normal;
+            return normal;
+        };
         grid_.clear();
         for(std::size_t ring=0;ring<centres.size();++ring)for(int i=0;i<=segments;++i) {
             const float a=2*Pi*i/segments;
@@ -305,7 +317,10 @@ void BuildHuman(std::vector<VertexPositionColorTexture>& vertices,const Resident
     const std::array torsoRx{.170f,.150f,.148f,.170f,.198f,.214f,.205f,.175f,.125f,.086f};
     const std::array torsoRz{.114f,.105f,.103f,.115f,.135f,.132f,.119f,.103f,.084f,.067f};
     mesh.Loft(torsoCentres,torsoRx,torsoRz,right,forward,Material::Cloth,18);
-    mesh.Tube(root+up*.045f,root+up*.092f,.178f,.17f,Material::Fibre,14);
+    // Keep the band a few millimetres outside the tunic's oval waist in every pose.
+    const std::array beltCentres{root+up*.045f,root+up*.092f};
+    const std::array beltRx{.156f,.155f},beltRz{.111f,.110f};
+    mesh.Loft(beltCentres,beltRx,beltRz,right,forward,Material::Fibre,14);
     // A bound V neckline breaks the flat bib-like front while staying practical and
     // culturally nonspecific.  The trim follows the torso surface and shares its draw.
     const Vector3 neckPoint=root+up*.402f+forward*.145f;
@@ -322,15 +337,19 @@ void BuildHuman(std::vector<VertexPositionColorTexture>& vertices,const Resident
     for(std::size_t side=0;side<2;++side) {
         const float sign=side==0?-1.0f:1.0f;
         const Vector3 thigh=Lerp(Point(pose.legs[side].hip),Point(pose.legs[side].knee),.43f);
-        const Vector3 frontTop=root+up*.052f+forward*.123f;
+        // Tuck the upper corners into the oval waistband; the free lower corners
+        // still follow the thigh. Rectangular top edges projected outside the band.
+        const Vector3 frontInnerTop=root+up*.052f+forward*.103f+right*(sign*.008f);
+        const Vector3 frontOuterTop=root+up*.052f+forward*.035f+right*(sign*.142f);
         const Vector3 frontOuterBottom=thigh+forward*.112f+right*(sign*.018f);
         const Vector3 frontInnerBottom=root-up*.210f+forward*.112f+right*(sign*.008f);
-        mesh.Panel(frontTop+right*(sign*.008f),frontTop+right*(sign*.158f),
+        mesh.Panel(frontInnerTop,frontOuterTop,
             frontOuterBottom,frontInnerBottom,forward,Material::Cloth);
-        const Vector3 backTop=root+up*.052f-forward*.116f;
+        const Vector3 backInnerTop=root+up*.052f-forward*.099f+right*(sign*.008f);
+        const Vector3 backOuterTop=root+up*.052f-forward*.033f+right*(sign*.142f);
         const Vector3 backOuterBottom=thigh-forward*.105f+right*(sign*.018f);
         const Vector3 backInnerBottom=root-up*.210f-forward*.105f+right*(sign*.008f);
-        mesh.Panel(backTop+right*(sign*.158f),backTop+right*(sign*.008f),
+        mesh.Panel(backOuterTop,backInnerTop,
             backInnerBottom,backOuterBottom,-forward,Material::Cloth);
     }
 
@@ -422,17 +441,16 @@ void BuildHuman(std::vector<VertexPositionColorTexture>& vertices,const Resident
         const float sideSign=side==0?-1.0f:1.0f;
         const Vector3 armRoot=shoulder-right*(sideSign*.032f)+up*.012f;
         const Vector3 sleeveEnd=Lerp(shoulder,elbow,.22f);
-        const Vector3 upperMid=Lerp(shoulder,elbow,.46f);
-        // An open cap sleeve bridges the animated arm root and the sloping torso cloth.
-        // It hides the unavoidable procedural joint seam without adding a separate draw.
-        const Vector3 sleeveCentre=Lerp(armRoot,sleeveEnd,.48f)-up*.006f;
+        // One open sleeve loft covers the deltoid without intersecting cloth shells.
+        // Its cuff stays outside the skin rings throughout the existing animated arm chain.
         const Vector3 sleeveAxis=SafeUnit(sleeveEnd-armRoot);
         const Vector3 sleeveForward=SafeUnit(Vector3::Cross(sleeveAxis,right));
         const Vector3 sleeveSide=SafeUnit(Vector3::Cross(sleeveForward,sleeveAxis));
-        mesh.Ellipsoid(sleeveCentre,sleeveSide,sleeveAxis,sleeveForward,
-            .053f,.087f,.060f,Material::Cloth,14,8);
-        mesh.Tube(armRoot,sleeveEnd,.052f,.049f,Material::Cloth,12);
-        (void)upperMid;
+        const std::array sleeveCentres{armRoot,Lerp(armRoot,sleeveEnd,.30f),
+            Lerp(armRoot,sleeveEnd,.72f),sleeveEnd};
+        const std::array sleeveRx{.055f,.064f,.060f,.056f};
+        const std::array sleeveRz{.061f,.065f,.061f,.056f};
+        mesh.Loft(sleeveCentres,sleeveRx,sleeveRz,sleeveSide,sleeveForward,Material::Cloth,14);
         // the arm from inside the sleeve to the wrist: the deltoid's round, the triceps' swell
         // behind the upper arm, a slim elbow, the forearm's muscle near the elbow, a flat wrist
         static constexpr std::array<HumanMeshBuilder::LimbRing,11> ArmRings{{

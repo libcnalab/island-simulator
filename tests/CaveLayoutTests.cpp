@@ -318,11 +318,21 @@ int main() {
     const auto approach=cave.World(0,0,-3),forward=cave.World(0,0,1);
     const float dx=forward.x-entrance.x,dz=forward.z-entrance.z;
     walker.SetPosition(terrain,approach.x,approach.z);
-    for(int i=0;i<350;++i)walker.Update(terrain,dx,dz,1.0f/60,worldSolids);
+    for(int i=0;i<350;++i) {
+        walker.Update(terrain,dx,dz,1.0f/60,worldSolids);
+        const auto p=walker.Position();
+        Check(!cave.IntersectsCapsule({p.x,p.y-PlayerMotion::EyeHeight,p.z},radius,height),
+              "walking capsule penetrated the cave during entry");
+    }
     auto local=cave.Local({walker.Position().x,walker.Position().y-PlayerMotion::EyeHeight,walker.Position().z});
     std::cout<<"walked cave depth "<<local.z<<'\n';
     Check(local.z>18&&local.z<20,"walking controller cannot reach cave back or escaped through it");
-    for(int i=0;i<100;++i)walker.Update(terrain,dx,dz,.1f,worldSolids);
+    for(int i=0;i<100;++i) {
+        walker.Update(terrain,dx,dz,.1f,worldSolids);
+        const auto p=walker.Position();
+        Check(!cave.IntersectsCapsule({p.x,p.y-PlayerMotion::EyeHeight,p.z},radius,height),
+              "walking capsule penetrated the cave at its back wall");
+    }
     Check(cave.Local({walker.Position().x,0,walker.Position().z}).z<20,"walking controller crossed back wall");
     for(int i=0;i<380;++i)walker.Update(terrain,-dx,-dz,1.0f/60,worldSolids);
     Check(cave.Local({walker.Position().x,0,walker.Position().z}).z<0,"walking controller cannot exit cave");

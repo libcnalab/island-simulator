@@ -50,7 +50,7 @@ namespace island
         result.right = Unit(Cross(result.up, horizontal));
         result.forward = Unit(Cross(result.right, result.up));
         result.scale = state.scale;
-        const float movement = std::min(1.0f, state.speed / 0.65f);
+        const float movement = BoarGaitMovement(state.speed);
         const float phase = std::fmod(state.gaitPhase, 2.0f * std::numbers::pi_v<float>);
         result.bodyBob = std::abs(std::sin(phase * 2.0f)) * 0.018f * movement;
 

@@ -11,7 +11,7 @@ namespace island
         if (variant < 0 || variant > 3) throw std::invalid_argument("Rock variant must be in [0, 3]");
         RockSurface result;
         const int rings = farMesh ? 4 : 10;
-        const int slices = farMesh ? 7 : 24;
+        const int slices = farMesh ? RockSurfaceFarSlices : RockSurfaceNearSlices;
         const float height = 0.98f + 0.045f * variant;
         for (int ring = 0; ring <= rings; ++ring) {
             const float t = static_cast<float>(ring) / rings;
@@ -24,7 +24,8 @@ namespace island
                        + 0.018f * std::sin(angle*5 - variant*0.9f));
                 const float radius = radialBase
                     * (0.88f + 0.11f * std::sin(angle*(2+variant) + t*7 + variant*1.3f));
-                result.vertices.push_back({{std::cos(angle)*radius, t*height+crown,
+                const float y = ring == 0 ? RockSurfaceMinimumHeight : t*height+crown;
+                result.vertices.push_back({{std::cos(angle)*radius, y,
                                              std::sin(angle)*radius}, {0,0,0}});
             }
         }

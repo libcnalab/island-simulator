@@ -103,6 +103,18 @@ def main() -> int:
         return 2
 
     cases = (
+        *(InvalidInvocation("invalid tide phase: "+repr(args), args,
+            "--capture-tide-phase requires one finite phase in [0,1)") for args in (
+                ("--capture-tide-phase",), ("--capture-tide-phase","nan"),
+                ("--capture-tide-phase","inf"), ("--capture-tide-phase","-0.1"),
+                ("--capture-tide-phase","1"), ("--capture-tide-phase",".25junk"),
+                ("--capture-tide-phase","0","--capture-tide-phase",".5"))),
+        *(InvalidInvocation("tide mode conflict: "+repr(args),
+            ("--capture-tide-phase",".25",*args),
+            "--capture-tide-phase requires a fixed capture without benchmark or inspection") for args in (
+                (), ("--capture","unused.ppm"), ("--viewpoint","beach"),
+                ("--capture","unused.ppm","--viewpoint","beach","--benchmark","unused.json"),
+                ("--capture","unused.ppm","--viewpoint","beach","--startup-report","unused.json"))),
         InvalidInvocation("bush camera parsed before missing capture path",
                           ("--viewpoint", "bush", "--capture"),
                           "island-simulator: --capture requires a path"),

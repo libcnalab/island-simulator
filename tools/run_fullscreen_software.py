@@ -15,7 +15,7 @@ import subprocess
 import sys
 import time
 
-from gpu_incident_qualification import Journal, FAULT, artifact_identity
+from gpu_incident_qualification import Journal, FAULT, artifact_identity, verify_artifact_content_unchanged
 from run_software_capture import (check_configuration, run_monitored_capture,
                                   software_environment, validate_graphics_log)
 
@@ -126,11 +126,12 @@ def validate_control_transitions(text, flight=False, fullscreen_cycles=2):
 
 
 def validate_diving_trace(samples):
-    if len(samples)<4 or any(len(p)!=4 for p in samples):
+    if len(samples)<4 or any(len(p)!=5 for p in samples):
         raise RuntimeError("missing swimming depth samples")
-    if any(not all(map(math.isfinite,p)) or p[1]>.581 or abs(p[3]-max(0,-p[1]))>.001 for p in samples):
+    if any(not all(map(math.isfinite,p)) or p[1]-p[4]>.581
+           or abs(p[3]-max(0,p[4]-p[1]))>.001 for p in samples):
         raise RuntimeError("invalid swimming depth samples")
-    if samples[0][1]<.57 or samples[-1][1]<.57 or max(p[3] for p in samples)<.8:
+    if samples[0][1]-samples[0][4]<.57 or samples[-1][1]-samples[-1][4]<.57 or max(p[3] for p in samples)<.8:
         raise RuntimeError("missing surface/dive/resurface sequence")
 
 
@@ -179,6 +180,8 @@ def validate_cave_trace(samples, stages):
         raise RuntimeError("cave stages are out of order")
     if not (-9<start[2]<-6 and 18<back[2]<20 and exit_point[2]<-4):
         raise RuntimeError("cave entry/back wall/exit not reached")
+    if not 10<ceiling[2]<16:
+        raise RuntimeError("cave ceiling inspection must use the open chamber, not the closing pocket")
     if any(abs(p[0])>.6 for p in samples):
         raise RuntimeError("cave traversal left its intended corridor")
     if any(p[3]!=0 for p in (start,back,landed,exit_point)) or ceiling[3]!=1:
@@ -465,6 +468,13 @@ def worker(build, evidence, window_manager, flight=False, boar_audio=False,
                 finally:
                     command("xdotool","keyup","w")
                 save_cave_stage("back")
+                # The natural terminal pocket narrows above a standing capsule.
+                # Keep the wall check there, but exercise ascent beneath the chamber roof.
+                command("xdotool","keydown","s")
+                try:
+                    wait(lambda: 11<cave_samples()[-1][2]<14,"return to open cave chamber")
+                finally:
+                    command("xdotool","keyup","s")
                 keys("Tab","flight on;")
                 command("xdotool","keydown","space")
                 try:
@@ -626,7 +636,7 @@ def worker(build, evidence, window_manager, flight=False, boar_audio=False,
             if diving:
                 def swim_samples():
                     return [tuple(map(float,m)) for m in re.findall(
-                        r"swim position ([-+\d.eE]+) ([-+\d.eE]+) ([-+\d.eE]+) depth ([-+\d.eE]+)",log())]
+                        r"swim position ([-+\d.eE]+) ([-+\d.eE]+) ([-+\d.eE]+) depth ([-+\d.eE]+) sea-level ([-+\d.eE]+)",log())]
                 def underwater_audio_samples():
                     number=r"([-+\d.eE]+)"
                     return [tuple(map(float,m)) for m in re.findall(
@@ -650,7 +660,7 @@ def worker(build, evidence, window_manager, flight=False, boar_audio=False,
                 wait(lambda: len(swim_samples())>=count+2,"released descent")
                 command("xdotool","keydown","space")
                 try:
-                    wait(lambda: swim_samples()[-1][1]>.57,"resurface")
+                    wait(lambda: swim_samples()[-1][1]-swim_samples()[-1][4]>.57,"resurface")
                 finally:
                     command("xdotool","keyup","space")
                 command("import","-window",window,str(evidence/"diving-surface.png"))
@@ -708,6 +718,16 @@ def worker(build, evidence, window_manager, flight=False, boar_audio=False,
                 samples=len(flight_samples())
                 wait(lambda: len(flight_samples())>=samples+3,"aerial look frames")
                 command("import", "-window", window, str(evidence / "flight-ceiling.png"))
+                # Turning with a stationary eye also moves the aerial shadow focus. Exercise
+                # that path separately from camera translation and the altitude transition.
+                command("xdotool", "mousemove_relative", "--", "260", "0")
+                samples=len(flight_samples())
+                wait(lambda: len(flight_samples())>=samples+3,"aerial turn frames")
+                command("import", "-window", window, str(evidence / "flight-turn.png"))
+                command("xdotool", "mousemove_relative", "--", "-260", "0")
+                samples=len(flight_samples())
+                wait(lambda: len(flight_samples())>=samples+3,"aerial return frames")
+                command("import", "-window", window, str(evidence / "flight-return.png"))
                 command("xdotool", "keydown", "Shift_L")
                 try:
                     wait(lambda: flight_samples()[-1][3]<60,"flight descent")
@@ -740,7 +760,7 @@ def worker(build, evidence, window_manager, flight=False, boar_audio=False,
                 wait(lambda: log().count("input sample captured")>=frames+3,"landed frames")
                 command("import", "-window", window, str(evidence / "flight-landed.png"))
                 (evidence / "flight-result.json").write_text(json.dumps({"passed":True,"samples":samples,
-                    "scope":"native Tab repeat, Space ascent/ceiling, Shift descent and safe return; horizontal boundary is CPU tested"},indent=2)+"\n")
+                    "scope":"native Tab repeat, Space ascent/ceiling, aerial pitch/yaw, Shift descent and safe return; horizontal boundary is CPU tested"},indent=2)+"\n")
             if "debug teleport monkey troop" in log():
                 raise RuntimeError("F11 still teleported to monkeys")
             validate_graphics_log(log(), None)
@@ -877,6 +897,14 @@ def main():
         except (OSError, RuntimeError, subprocess.SubprocessError) as error:
             failure = error
         finally:
+            try:
+                metadata["artifact_after"] = artifact_identity(build / "island-simulator")
+                verify_artifact_content_unchanged(metadata["artifact"], metadata["artifact_after"])
+                metadata["artifact_content_unchanged"] = True
+            except (OSError, RuntimeError) as error:
+                metadata["artifact_content_unchanged"] = False
+                metadata["artifact_verification_error"] = str(error)
+                failure = failure or error
             try:
                 records = journal.read("--after-cursor", baseline["__CURSOR"])
                 (evidence / "kernel-final.json").write_text(json.dumps(records, indent=2)+"\n")

@@ -1,5 +1,33 @@
 # Current wildlife visual audit — 2026-10-12
 
+## 2026-11-02 campaign follow-up
+
+Flight follow-up: sixteen-stage translation-following parrot review exposed vane planes that
+stayed aligned with the body during flapping. Separate arm/hand span normals now keep feathers
+connected and legible; dry/rain flight and folded/soaring comparisons were reviewed. Primary
+flock counters also survive subsequent colony draws by rendering that flock last. Ambient and
+evasive fish sequences are now separately qualified without changing ordinary fish simulation.
+The288pose CPU regression and exact paths/cost/limits are in [HANDOFF.md](../HANDOFF.md).
+
+Boar steady-walking cadence now accounts for stride amplitude and juvenile scale; the motion
+inspection also retains Full simulation instead of selecting the dormant tier. Matched day,
+wet/dawn and lying pairs were reviewed on isolated llvmpipe/Pixman. Turns/stops remain procedural;
+this is not all-species gait acceptance or hardware qualification. Exact tests, comparison paths,
+reference-build provenance and limits are in the [campaign checkpoint](../HANDOFF.md).
+
+
+Deer support follow-up: body and split hooves now follow the rendered terrain, with the same
+pose used by shadows and body-relative dorsal/belly pigment. Standing/bedded/wet/dawn/context
+pairs were reviewed; sampled bank/stamp/LOD geometry passes CPU coverage. This is ground support,
+not a new fixed-length rig or live deer-gait acceptance. See the same campaign checkpoint above.
+
+Live deer-gait continuation: accepted surface travel and body scale now drive the step clock;
+stance feet remain planted at steady heading/speed and swing feet lift through the existing
+procedural joints. Dry/rain eight-stage walk-and-stop pairs, standing and bedded controls were
+reviewed on llvmpipe. New actual-joint/world-space tests and support extremes pass. Turns and
+acceleration retain procedural slip; rapid retreat has CPU/support coverage, not separate visual
+acceptance. Full evidence and ongoing original campaign criteria remain in HANDOFF.md.
+
 ## Latest monkey trunk/hand anatomy pass
 
 Actual contained `20261012T221727.352629Z-monkey-tree` (nine sequential frames) and

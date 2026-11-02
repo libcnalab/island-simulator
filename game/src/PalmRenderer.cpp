@@ -1,5 +1,6 @@
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/VegetationFade.hpp"
+#include "IslandSimulator/CanopyVisibility.hpp"
 #include "IslandSimulator/PalmRenderer.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
 
@@ -1401,7 +1402,6 @@ void main()
                 fallen.variant = palm.variant;
                 fallen.transform.push_back(instance.transform);
             }
-            cell.instances.push_back(instance);
             ++totalPalmCount_;
             fallenPalmCount_ += palm.condition == PalmCondition::Fallen ? 1 : 0;
             brokenPalmCount_ += palm.condition == PalmCondition::Broken ? 1 : 0;
@@ -1411,6 +1411,8 @@ void main()
             const float verticalExtent = palm.condition == PalmCondition::Fallen
                 ? 6.2f * palm.scale
                 : (palm.condition == PalmCondition::Broken ? 6.5f : 15.0f) * palm.scale;
+            instance.canopyHeight = palm.condition == PalmCondition::Living ? verticalExtent : 0.0f;
+            cell.instances.push_back(instance);
             const Vector3 minimum(palm.x - horizontalExtent, palm.y - 0.2f,
                                   palm.z - horizontalExtent);
             const Vector3 maximum(palm.x + horizontalExtent,
@@ -1559,7 +1561,8 @@ void main()
     }
 
     void PalmRenderer::Draw(const Matrix& view, const Matrix& projection,
-                            const Vector3& cameraPosition, const float timeSeconds)
+                            const Vector3& cameraPosition, const float timeSeconds,
+                            const float cameraClearance)
     {
         for (auto& transforms : visibleNearTransforms_) {
             transforms.clear();
@@ -1578,6 +1581,10 @@ void main()
         drawCallCount_ = 0;
 
         const BoundingFrustum frustum(view * projection);
+        // The same bounded aerial policy as broadleaf canopy, reusing the existing cheap
+        // far palm mesh. Ground views, low broken/fallen props and stock fallback keep budget.
+        const float canopyMaximumDistance = customShaderReady_ && instancingSupported_
+            ? CanopyViewRange(maximumDistance_, MaximumDistance, cameraClearance) : maximumDistance_;
         for (const PalmCell& cell : cells_) {
             if (!cell.occupied || frustum.Contains(cell.bounds) == ContainmentType::Disjoint) {
                 continue;
@@ -1589,7 +1596,8 @@ void main()
                                                cameraPosition.X - cell.bounds.Max.X});
             const float cellDeltaZ = std::max({cell.bounds.Min.Z - cameraPosition.Z, 0.0f,
                                                cameraPosition.Z - cell.bounds.Max.Z});
-            if (cellDeltaX * cellDeltaX + cellDeltaZ * cellDeltaZ > maximumDistance_ * maximumDistance_) {
+            if (cellDeltaX * cellDeltaX + cellDeltaZ * cellDeltaZ
+                > canopyMaximumDistance * canopyMaximumDistance) {
                 continue;
             }
             bool cellVisible = false;
@@ -1598,7 +1606,12 @@ void main()
                 const float instanceDeltaZ = instance.z - cameraPosition.Z;
                 const float instanceDistanceSquared = instanceDeltaX * instanceDeltaX
                     + instanceDeltaZ * instanceDeltaZ;
-                const float shrink = vegetation_fade::FarShrink(vegetation_fade::SlantDistance(instanceDistanceSquared, cameraPosition.Y - instance.transform.M42), maximumDistance_,
+                const float instanceMaximumDistance = canopyMaximumDistance > maximumDistance_
+                    && instance.canopyHeight > 0.0f
+                    ? CanopyProjectedRange(maximumDistance_, canopyMaximumDistance,
+                                           instance.canopyHeight, std::abs(projection.M22))
+                    : maximumDistance_;
+                const float shrink = vegetation_fade::FarShrink(vegetation_fade::SlantDistance(instanceDistanceSquared, cameraPosition.Y - instance.transform.M42), instanceMaximumDistance,
                                                                 vegetation_fade::TreeShrinkFraction);
                 if (shrink <= 0.0f) continue;
                 const Matrix transform = shrink < 1.0f ? Matrix::CreateScale(shrink) * instance.transform

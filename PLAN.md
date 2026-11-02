@@ -20,6 +20,117 @@ Status markers:
 - `[~]` in progress
 - `[!]` blocked or degraded, with the reason written next to the item
 
+## Visual cohesion campaign — 2026-11-01/02 (qualified)
+
+- Moisture/shade-controlled moss and grass pigment; bank-grounded mangrove supports with
+  matching sun shadows and conservative culling. Existing placements remain deterministic.
+- Aerial canopy uses bounded altitude/projected-size visibility and cheaper index ranges sharing
+  existing vertices. Overview retains 192 rather than 42 existing trees; bay 231. Walking budgets
+  and near/medium meshes preserved; walking jungle/water PNGs remain byte-identical.
+- Follow-up coastal palm silhouettes use the same bounded policy with their own 520 m cap.
+  Overview retains 179 rather than 93 palms; bay 213 rather than 47, same palm draw counts.
+  Walking palms/jungle/water PNGs remain byte-identical; low damaged props keep their budgets.
+- Caustics reuse warp to break the bright grid; foam pigment follows composed opacity. Resident
+  sleeves avoid intersecting shells; torso/neck normals follow taper. Body 7,142 →6,814 triangles,
+  same two draws. Bear brows embedded, original coat UVs retained.
+- Resident belt follows the oval waist; wrap corners tuck beneath it while lower corners
+  retain thigh motion. Four paired day/evening views reviewed, eight-stage gait gate passes;
+  same 6,814 body triangles and two draws. Temporary diagnostic removed, shorts preserved.
+- Aerial sun shadows reuse the existing map with bounded, gradual look-ahead above the canopy.
+  Overview/bay previously mapped empty sea (0 casters); now 1,179/1,521 casters ground visible
+  forest. Same target resolution and footprint; structure-contact fading shares the focus.
+  Walking and disabled-map controls are byte-identical. Added focus bounds/horizon regressions;
+  identical before/after live flight with pitch/yaw and safe return passes.
+- Canopy trunk feet close downhill terrain gaps (sampled old maximum 0.395 m) with one small
+  lower ring, preserving every original bark/grip surface. Buttresses and their shadow/pigment
+  contact follow relief; placements/collision remain deterministic. Three matched root details,
+  five environment views and monkey-climb pass visual review on verified llvmpipe.
+  Vertex payload +7,956 B, same buffers/layout/draw groups; +24/+10 near/far triangles per mesh.
+- Bear face-loft fur follows the muzzle axis, reducing horizontal forehead bands. Four matched
+  walking/resting/wet/dawn pairs reviewed; changes stay within the face. Same6,382 body triangles,
+  two draws, texture/mips and rig. Cropped-material trial rejected; body UVs retained.
+- Static capture records executable/harness/cache identities before launch. Static and live
+  fullscreen gates now compare executable SHA256/size again at cleanup and reject changed or
+  missing binaries, including after worker success. Temporary-file/mocked workflow regressions
+  cover these paths; this is content consistency checking, not executable pinning.
+- Mine cutting gravel now shades along its actual support slope and interpolates pigment at
+  shared corners, removing rectangular colour seams. A short tapered earth approach uses the
+  existing filtered fields and mine frame. Same support geometry/collision and 22,304 base
+  triangles; two additional triangles qualify for the existing additive lamp pass (no new draw).
+  Seven matched day/wet/dawn/cutting/interior/forest/overview pairs reviewed; jungle and adit
+  pixels unchanged, overview differences confined to an 8×4-pixel region at the entrance.
+- Shared rock profiles extend their existing basal rim beneath sloped terrain, closing visible
+  hollow undersides without moving placements/crowns/perches or adding mesh data. Land and reef
+  culling bounds include the buried profile; normals use the existing area-weighted builder.
+  Both LODs retain their counts; entire prop inventory stays12,780vertices/357,840vertex bytes.
+  A sampled five-seed land/reef regression fails on old geometry and passes703,080edge samples
+  after correction (old max0.730m; highest corrected foot−0.074m). Ten matched software pairs
+  reviewed, including the new deterministic rock-contact view; west control is pixel-identical.
+- Rain/eave/canopy streaks share the existing narrow width and near-eye fade; eaves measure
+  distance to each falling drop, removing broad close ribbons. Shared finite-segment clipping
+  fixes the hut's start-point-only roof exclusion in ordinary and lamp-lit rain. New portable
+  CPU test covers141,636segments/16,988old leaking fixtures. Eight matched software pairs
+  reviewed; jungle/litter/dry-eaves controls identical. Ground-in-storm contrast gate fails in
+  BOTH versions (9.42 versus10); preserved as an explicit qualification gap, no threshold change.
+- Fixed long-frame stream bank lock/downhill hover and cave capsule contact. Regression and
+  strict live cave/stream/diving/flight checks pass. Diving QA uses actual tide-relative depth.
+- Named captures advance once per frame on the existing explicit clock pattern. Repeated water
+  PNGs are byte-identical; missing/conflicting/catch-up accounting is rejected.
+- Final Release/OpenGL33 non-display suite 81/81 (95.13 s), Python 66/66. Parsed world report identical,
+  fingerprint `238be1fec0a0cdd7`. Twenty-view holistic audit, final vehicle/LOD/aerial checks and
+  live flight pass on isolated, verified llvmpipe/Pixman; no new kernel GPU faults. AMD incident
+  remains open; no physical-GPU or cross-platform qualification claimed.
+- Controlled software canopy-only pair: 104.19 →110.91 ms (+6.45%), CPU +6.91%, peak RSS +1.96%,
+  tracked draws 56–57 →65–66 for 42 →192 canopies. Expensive/round LOD candidates were revised;
+  earlier timing variance from host CPU contention is retained in the evidence. Caustics reef
+  benchmark 71.26 →72.57 ms (+1.84%); foam repeat 132.40 →140.64 ms (+6.2%).
+- Palm-only software pairs: mean 92.08 →96.83 ms, then reverse-order 112.36 →100.59 ms;
+  p95 +12.24% prompted that repeat. Timing remains variable; no stable speedup claim.
+  Same 65–66 tracked draws; RSS +1.0–1.3%. Latest live flight passes, with empty kernel delta.
+- Shadow-focus software overview pair: 87.59 →90.56 ms (+3.39%), p95 +0.41%, CPU +6.57%,
+  RSS +0.07%, same 65–66 steady scene submissions. Map refresh now includes visible casters.
+  Local shadow coverage remains bounded; software measurements do not qualify hardware cost.
+- Final root-closure software pair: 174.80 →173.96 ms, p95 191.52 →191.18 ms, same127–133
+  tracked submissions. Within timing variability; no speedup/hardware claim. Direct-trunk warp
+  was superseded to preserve bark contacts; its intermediate timings/images remain identified.
+- Mine approach software pair: 169.87 →167.45 ms, p95 222.24 →186.32 ms, same129–131
+  tracked submissions and matched scene ranges. CPU −4.48%, RSS −0.04%; observed variability,
+  not a proven speedup. Fourteen final captures and both benchmarks have empty kernel deltas.
+- Rock grounding headland software pair: 99.87 →100.34 ms (+0.47%), p95 110.23 →108.33 ms;
+  same70–72 tracked submissions,59rocks/183reef habitats; RSS+0.31%. No speedup/hardware claim.
+  Twenty paired captures and both benchmarks have empty kernel deltas; local stream/scour
+  support audit also passes703,080samples without changing the terrain or collision fields.
+- Rain hut software pair: 110.12 →112.88ms (+2.50%); p95+10.57% prompted a reverse-order
+  repeat, whose before/after is115.92 →113.74ms (−1.88%), p95−8.74%. Same102–103tracked draws;
+  variability, no speedup claim. All four benchmark executable/runtime guards pass; kernel clean.
+- Turtle nesting constructor recovery preserves successful legacy layouts and rebuilds failed
+  pairs atomically on the same western beach. Bounded refined rays/oblique approaches check full
+  crawl footprints against roots, rocks and wood. Original/current67-seed audit:17old failures
+  now succeed; all50old successes keep identical beach-detail fingerprints. New portable21-layout
+  regression passes. Local seed capture mode is explicitly a prop-layer preview, not full-world
+  seed/traversal support; ordinary day/dawn images and world fingerprint remain identical.
+  Five final views reviewed with verified llvmpipe/Pixman and clean kernel/artifact guards.
+  CPU-only default layout construction219.24→213.32ms (−2.70%, timing variability); recovered
+  layouts add bounded loading work, with no native GPU/frame-performance claim.
+- Boar cadence now follows accepted surface distance, actual stride amplitude and juvenile
+  scale, fixing steady stance sliding. Live contact audit worst slip/body-travel ratio falls
+  0.917→0.023;33,066flat and40,135live stance pairs pass. Existing rig/geometry/materials retained.
+  The eight-stage boar capture now uses a nonthreatening overhead observer to retain Full
+  simulation; tier/motion guards reject the old dormant-inspection behavior. Four matched
+  software pairs reviewed using original-cadence reference plus identical final QA/rendering.
+  Lying pixels and non-gait trajectories stay identical. Isolated CPU herd cost2081.10→2151.37ms
+  per30,000updates (+3.38%, median−1.27%, variability); turns/stops remain procedural, no world-space locking.
+- Deer body/hoof support now follows the drawn terrain and local patches, sharing fitted pose
+  with shadows. Fixes the reproduced36mm flat hoof gap; body-plane support avoids excessive
+  leg-only deformation. Split toes align to slope, both LODs share a downward contact vertex,
+  and body-relative coat pigment rotates coherently. Same mesh/draw/resource budgets and AI.
+  Portable834-pose/3,336-foot audit covers folding/stamps/slopes/drinking banks and bounded joint
+  deformation. Seven matched software pairs reviewed; clearing-edge/jungle controls identical.
+  Warmed llvmpipe scene103.41→104.58ms (+1.13%), p95−5.32%, same2deer/two draws and118–120total
+  submissions. Procedural lengths and gait remain; no fixed-length rig or hardware qualification.
+- Compilation restricted to four permitted CPU cores with `taskset` and `-j3`, as requested.
+  Accepted evidence, exact commands, rejected experiments and limits: `HANDOFF.md`.
+
 ## Approved island-improvement backlog (2026-10-24)
 
 The operator approved these as the next work, in order. They are implementation tasks, not merely
@@ -27279,6 +27390,26 @@ Existing observation and qualification queue:
   SHA-256 `7aa25966a91260c10e4a76e6d1596db6a3c92054c3e614d8cec80a9977f68bb9`; stripped
   `libmain.so` is 19,702,696 bytes.
 
+## Visual campaign — final qualification, 2026-11-02
+
+- Completed the original visual/environmental campaign assessment and implementation loops;
+  detailed criterion evidence, before/after indexes and limitations are in HANDOFF.md.
+- Improved forest floor/root grounding and aerial silhouettes, rock material projections and
+  mine earth integration, water caustic/foam coherence, shelter/drips and wet litter contrast,
+  bear/resident forms, boar/deer contact/gait, turtle nesting and walking/cave/stream support.
+- Final traversal audit also reproduced an airborne quad at the bunker: shared per-wheel floor
+  support and an apron matched to packed terrain now permit entry/forward exit. New strict
+  capture protocol rejects the old image-only false positive; roof and other-entry controls pass.
+- Release/OpenGL33 final build,83/83 safe CTests,70/70 capture-harness and11/11 validator tests
+  pass. World fingerprint238be1fec0a0cdd7 unchanged. Final llvmpipe/Pixman holistic scenes and
+  live diving/cave/stream/flight images reviewed;97run safety/artifact audit retained.
+- Comparable software pairs show no material unexplained regression. Bunker timing outlier was
+  investigated in reverse order; no artificial11% speedup claim. Evidence retention now honors
+  uppercase HANDOFF.md and directly linked bounded build JSON indexes.
+- No further in-scope correction identified by the final review. Physical AMDGPU incidents stay
+  OPEN; current Web/Android/Debug/other backend qualification and documented gait/reverse-traction
+  limits remain explicit. No dependency/system edits, commits, push or merge. CPU0–3/-j3 only.
+
 ## Session-end checklist
 
 - [ ] Keep source and docs coherent and in English.
@@ -27289,3 +27420,21 @@ Existing observation and qualification queue:
 - [ ] Inspect `git status` and `git diff --check`; stage only intended files.
 - [ ] Measure project-owned disk use and remove only clearly obsolete owned artifacts.
 - [ ] Record build directories used and maximum job count in the handoff/final report.
+
+## Visual campaign continuation — 2026-11-02 (qualified)
+
+- User requested continued original-scope work; prior accepted changes/evidence preserved.
+- Continuous fish/bird review revealed raised flight-feather vanes staying in the body plane.
+  Arm/hand span normals now keep connected vane surfaces during flapping; same mesh budget.
+  Primary flock renders last so counters/preen proof no longer describe the weaver colony.
+- Dry/rain matched sixteen-stage flight plus folded/soaring controls reviewed; ambient and
+  evasive fish motion captured without changing gameplay. Old body-up frame fails the new CPU
+  regression;288bank/fold/flap fixtures pass.84/84safe tests pass; world fingerprint unchanged.
+  Software mean138.13→136.48ms,p95149.25→149.46ms,RSS+.50%; no material regression/speedup claim.
+- Continuing criterion7.6: capture-only held tide phase uses existing TideCycle, strict first/last
+  phase/level proof and bounded CLI validation.72harness tests and38invalid CLI invocations pass.
+  Six matched high/low coastal pairs and low-water fish reviewed; default overview/flight controls
+  exact, including16flight-stage PNGs. Final84/84safe tests pass; continuation audit35sets/179images.
+- Full original-criterion reassessment, exact paths, failed-run history and limits: HANDOFF.md.
+  No further observed in-scope defect identified. No hardware/dependency changes, staging/commit/
+  push/merge. All compilation CPU0–3/-j3; physical/platform qualification remains explicitly limited.

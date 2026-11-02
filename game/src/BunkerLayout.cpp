@@ -31,17 +31,15 @@ BunkerPoint BunkerLayout::Local(BunkerPoint point)const noexcept {
 }
 
 float BunkerLayout::FloorRelative(float depth)const noexcept {
-    // A short packed-earth apron meets the sampled north-facing hillside without
-    // an 8 cm vertical lip that the slope limiter would correctly reject.
-    if(depth<=0)return .11f*depth;
+    // Meet the packed north-facing hillside before roof-berm interpolation;
+    // the rendered opening and the support plane share this approach slope.
+    if(depth<=0)return BunkerSite::ApronSlope*depth;
     return depth<10.0f?-.32f*depth:-3.2f;
 }
 
 bool BunkerLayout::WalkableLocal(float across,float depth)const noexcept {
-    // Extend the logical opening slightly through the portal plane. Collision starts
-    // at depth -0.35, so a complete player capsule is already inside this walkable
-    // interval at the first constrained sample; there is no artificial blocking band.
-    const bool corridor=std::abs(across)<=1.36f&&depth>=-.75f&&depth<=36.2f;
+    // Include the packed-earth approach; the built walls begin at the portal.
+    const bool corridor=std::abs(across)<=1.36f&&depth>=CorridorFrontDepth&&depth<=36.2f;
     const bool computer=across>=1.05f&&across<=9.25f&&depth>=11.0f&&depth<=23.2f;
     const bool reactor=across>=-10.1f&&across<=-1.05f&&depth>=22.8f&&depth<=36.2f;
     const bool service=across>=1.05f&&across<=7.1f&&depth>=25.8f&&depth<=35.5f;
@@ -81,7 +79,7 @@ bool BunkerLayout::SupportHeight(float worldX,float worldZ,float currentFeetY,
 bool BunkerLayout::HidesTerrain(float worldX,float worldY,float worldZ)const noexcept {
     if(!std::isfinite(worldX)||!std::isfinite(worldY)||!std::isfinite(worldZ))return false;
     const auto local=Local({worldX,worldY,worldZ});
-    const bool corridor=std::abs(local.x)<=1.40f&&local.z>=-.80f&&local.z<=36.35f;
+    const bool corridor=std::abs(local.x)<=1.40f&&local.z>=CorridorFrontDepth&&local.z<=36.35f;
     const bool computer=local.x>=1.02f&&local.x<=9.30f
         &&local.z>=10.95f&&local.z<=23.25f;
     const bool reactor=local.x>=-10.15f&&local.x<=-1.02f

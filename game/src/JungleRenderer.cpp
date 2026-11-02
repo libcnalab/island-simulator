@@ -11,6 +11,7 @@
 #include "IslandSimulator/JungleWind.hpp"
 #include "IslandSimulator/JungleMaterial.hpp"
 #include "IslandSimulator/JungleGrounding.hpp"
+#include "IslandSimulator/JungleRootGrounding.hpp"
 #include "IslandSimulator/GroundLitter.hpp"
 #include "IslandSimulator/LeafSurfaceMaterial.hpp"
 #include "IslandSimulator/RenderedTerrainHeightMap.hpp"
@@ -80,6 +81,8 @@ namespace island
     namespace
     {
         constexpr float CanopyMaximumDistance = 475.0f;
+        constexpr int FarClusterSlices = 6;
+        constexpr int RoundedFarClusterRings = 3;
         constexpr float StandingSnagNearDistance = 74.0f;
         constexpr float StandingSnagMaximumDistance = 310.0f;
         constexpr float UnderstoryNearDistance = 58.0f;
@@ -103,7 +106,7 @@ namespace island
         {
             Vector3 normal{};
             // Leaves: along/across/variation. Wood: cos(angle)/sin(angle)/axial metres.
-            Vector4 coordinates{}; // Material tag: wood -1/other 0/live leaf 1/ground litter 2.
+            Vector4 coordinates{}; // Material tag: trunk-grounded -3/bank-grounded -2/wood -1/other 0/leaf 1/litter 2.
             Color woodAlbedo{}; // Custom shader only; stock vertices keep their historical baked shade.
         };
 
@@ -133,8 +136,11 @@ namespace island
         {
             std::vector<VertexPositionColorTexture> vertices;
             std::vector<std::uint16_t> indices;
+            std::vector<std::uint16_t> distantIndices;
             std::vector<LeafSurface> leaves;
         };
+
+        const std::string RootGroundingShader = jungle_root_grounding::Shader();
 
         constexpr const char* VertexBody = R"(
 layout(location = 0) in vec3 aPosition;
@@ -198,6 +204,7 @@ void main()
         world.xz += uStormWind.xy * storm * aWindData.x * (0.25 + 0.12 * toss + 0.20 * gust);
     }
     float groundHeight = aInstance3.y;
+    world = groundJungleRoot(world, aPosition.y, groundHeight, aLeaf.w);
     // The animals and the resident brush through the bushes and understory: foliage within
     // 1.7 m of the ground near a body is pushed away from it and down, by its wind weight.
     float lowGrowth = 1.0 - smoothstep(1.1, 1.7, world.y - groundHeight);
@@ -406,14 +413,16 @@ void main()
                     + WindGust::Shader
                     + (canopy ? std::string(CampfireLighting::Shader) + SunShadowMap::ReceiverShader : std::string())
                     + (canopy ? std::string(CanopyLighting::Shader) + JungleMaterial::Shader() + BarkMaterial::Shader + TrunkSurface::Shader() + LeafSurfaceMaterial::Shader()
-                              : JungleWind::ShaderConstants() + std::string(RenderedTerrainSurface::Shader)) + body;
+                              : JungleWind::ShaderConstants() + std::string(RenderedTerrainSurface::Shader))
+                    + (canopy ? "" : RootGroundingShader) + body;
             }
             return std::string("#version 330 core\n")
                 + environment::FogShaderDefinition
                 + WindGust::Shader
                 + (canopy ? std::string(CampfireLighting::Shader) + SunShadowMap::ReceiverShader : std::string())
                 + (canopy ? std::string(CanopyLighting::Shader) + JungleMaterial::Shader() + BarkMaterial::Shader + TrunkSurface::Shader() + LeafSurfaceMaterial::Shader()
-                          : JungleWind::ShaderConstants() + std::string(RenderedTerrainSurface::Shader)) + body;
+                          : JungleWind::ShaderConstants() + std::string(RenderedTerrainSurface::Shader))
+                + (canopy ? "" : RootGroundingShader) + body;
         }
 
         [[nodiscard]] CNA::Graphics::ShaderPackageEXT CreateShaderPackage()
@@ -536,6 +545,7 @@ void main()
                         ShadeColor(bark, .76f + .20f * std::max(0.0f, outward.Y)),
                         Vector2(windWeight * t, phase));
                     SetWoodAlbedo(geometry, bark, angle, along);
+                    geometry.leaves.back().coordinates.W = -2.0f;
                     outwardDirections.push_back(outward);
                 }
             }
@@ -646,6 +656,7 @@ void main()
                             ShadeColor(bark, 0.78f + 0.20f * lift + 0.06f * column), still);
                         SetWoodAlbedo(geometry, bark,
                             column * 2.0f * std::numbers::pi_v<float> / 3.0f, along);
+                        geometry.leaves.back().coordinates.W = -3.0f;
                         outwardDirections.push_back(side * column
                             + Vector3::Up * (1.0f - std::abs(column) * 0.8f) + direction * 0.15f);
                     }
@@ -673,19 +684,19 @@ void main()
             // Both tiers retain the straight lower collision zone and the bend's start knot.
             // Near rings concentrate on the root flare. Irregularity is a smooth function of
             // height and angle, never of ring index, so ring boundaries do not form creases.
-            const auto ringHeights = CanopyTrunkRingHeights(variant,farMesh);
+            const auto ringHeights = jungle_root_grounding::RingHeightsWithFoot(variant,farMesh);
             const Color bark = CanopyBarkColor(variant);
             const std::uint16_t base = static_cast<std::uint16_t>(geometry.vertices.size());
             const auto firstIndex = geometry.indices.size();
             std::vector<Vector3> outwardDirections;
 
             for (const float localHeight : ringHeights) {
-                const float t = localHeight / height;
+                const float t = std::max(0.0f,localHeight) / height;
                 const float pigment = JungleMaterial::TrunkPigment(t);
                 for (int side = 0; side < sides; ++side) {
                     const float angle = 2.0f * std::numbers::pi_v<float>
                         * static_cast<float>(side) / static_cast<float>(sides);
-                    const auto position = CanopyTrunkVertex(variant,localHeight,angle,farMesh);
+                    const auto position = jungle_root_grounding::TrunkVertexWithFoot(variant,localHeight,angle,farMesh);
                     const float directional = 0.68f + 0.30f
                         * std::max(0.0f, std::cos(angle) * 0.74f + std::sin(angle) * 0.28f);
                     geometry.vertices.emplace_back(
@@ -693,7 +704,8 @@ void main()
                         ShadeColor(bark, directional * pigment),
                         Vector2(t * t * 0.08f, static_cast<float>(variant) * 0.17f));
                     SetWoodAlbedo(geometry, ShadeColor(bark, pigment),
-                        angle, localHeight);
+                        angle, std::max(0.0f,localHeight));
+                    if (localHeight < 0) geometry.leaves.back().coordinates.W = -3.0f;
                     outwardDirections.emplace_back(std::cos(angle), 0.0f, std::sin(angle));
                 }
             }
@@ -894,8 +906,8 @@ void main()
                                const float windPhase, const bool farMesh,
                                const bool roundedFar = false)
         {
-            const int rings = farMesh ? (roundedFar ? 3 : 2) : 4;
-            const int slices = farMesh ? 6 : 9;
+            const int rings = farMesh ? (roundedFar ? RoundedFarClusterRings : 2) : 4;
+            const int slices = farMesh ? FarClusterSlices : 9;
             const auto base = static_cast<std::uint16_t>(geometry.vertices.size());
             for (int ring = 0; ring <= rings; ++ring) {
                 const float ringT = static_cast<float>(ring) / static_cast<float>(rings);
@@ -1132,6 +1144,21 @@ void main()
                 AppendCanopyButtresses(geometry, variant);
             }
             AppendCanopyTrunk(geometry, variant, farMesh);
+            // Reuse vertices for aerial silhouettes: trunk, eight crown cores and
+            // perimeter/upper leaves. Fine branch and inner-shoot geometry is subpixel.
+            if (farMesh) geometry.distantIndices = geometry.indices;
+            const auto keepDistantBlades = [&](std::size_t first) {
+                if (!farMesh) return;
+                // At this range a blade is under a pixel wide. Its root, outer
+                // shoulders and tip retain the silhouette without its internal folds.
+                constexpr std::array<std::uint16_t,6> outline{0,4,6,0,6,5};
+                const auto stride=CanopyBladeCoordinates.size();
+                if ((geometry.vertices.size()-first)%stride!=0)
+                    throw std::logic_error("Distant blade range contains non-blade vertices");
+                for (auto base=first;base<geometry.vertices.size();base+=stride)
+                    for (auto index:outline) geometry.distantIndices.push_back(
+                        static_cast<std::uint16_t>(base+index));
+            };
             if (!farMesh && (variant == 0 || variant == 4 || variant == 6))
                 AppendCanopyEpiphyte(geometry, variant);
 
@@ -1166,12 +1193,25 @@ void main()
                 // Retain the same eight lobe anchors at distance. Merging pairs into oversized
                 // cores filled near-tier sky gaps and caused a visible solid-mass LOD pop.
                 const auto crownFill = MakeCanopyCrownFill(variant, cluster);
+                const auto coreBase = static_cast<std::uint16_t>(geometry.vertices.size());
                 AppendLeafCluster(geometry, centre,
                                   Vector3(width * crownFill.coreX,
                                           crownHeight * crownFill.coreY,
                                           width * 0.91f * crownFill.coreZ),
                                   cluster % 3 == 0 ? ShadeColor(clusterLeaf, 1.10f) : clusterLeaf,
                                   phase, farMesh, farMesh);
+                if (farMesh) {
+                    // Twelve faces through existing middle-ring vertices and poles.
+                    // The eight lobe anchors, height and perimeter leaves stay fixed.
+                    const auto top=static_cast<std::uint16_t>(coreBase+RoundedFarClusterRings*FarClusterSlices);
+                    for (int slice=0;slice<FarClusterSlices;++slice) {
+                        const int next=(slice+1)%FarClusterSlices;
+                        const auto a=static_cast<std::uint16_t>(coreBase+(1+slice%2)*FarClusterSlices+slice);
+                        const auto b=static_cast<std::uint16_t>(coreBase+(1+next%2)*FarClusterSlices+next);
+                        geometry.distantIndices.insert(geometry.distantIndices.end(),
+                            {coreBase,a,b,top,b,a});
+                    }
+                }
                 // Two canopy forms bear fruit: small clusters hang beneath alternate lobes of
                 // the near crown only, so the far silhouette and its LOD hand-off are unchanged.
                 if (!farMesh && IsFruitingCanopyVariant(variant) && cluster % 2 == 1) {
@@ -1202,6 +1242,7 @@ void main()
                         const float shellRadius = std::sqrt(std::max(0.0f, 1.0f - shellY * shellY));
                         const float sprigAngle = phase * 6.2831853f + sprig * 2.39996323f;
                         const Vector3 outward(std::cos(sprigAngle), 0.0f, std::sin(sprigAngle));
+                        const auto sprigStart = geometry.vertices.size();
                         const Vector3 sprigRoot = centre
                             + Vector3(outward.X, 0.0f, outward.Z * 0.91f)
                                 * (width * crownFill.shellRadius * shellRadius)
@@ -1220,7 +1261,10 @@ void main()
                                     + shellY * 0.09f),
                                 std::fmod(phase + sprig * 0.071f, 1.0f), 0.075f, posture.pitch, posture.roll);
                         }
+                        // Identity 30 is the existing uppermost far shoot.
+                        if (sprig == 30) keepDistantBlades(sprigStart);
                     }
+                    const auto perimeterStart = geometry.vertices.size();
                     const float leafAngle = angle
                         + (cluster % 2 == 0 ? -0.32f : 0.39f);
                     const Vector3 leafDirection(std::cos(leafAngle), 0.0f,
@@ -1258,6 +1302,7 @@ void main()
                                              : ShadeColor(clusterLeaf, 0.97f),
                             std::fmod(phase + 0.071f, 1.0f), 0.11f, lowerPosture.pitch, lowerPosture.roll);
                     }
+                    keepDistantBlades(perimeterStart);
                 }
                 // Lianas hang from alternate lobes of every natural broadleaf form except the
                 // fruiting mango form, long enough to read as vines between crowns from the
@@ -2159,6 +2204,15 @@ void main()
                     std::sqrt(instance.nearLodDistanceSquared),
                     {tree.bounds.Min.X, tree.bounds.Min.Y, tree.bounds.Min.Z},
                     {tree.bounds.Max.X, tree.bounds.Max.Y, tree.bounds.Max.Z});
+                if (inspection.roots) {
+                    const float radius = std::hypot(instance.x, instance.z);
+                    const float dx = radius > .001f ? instance.x / radius : 0.0f;
+                    const float dz = radius > .001f ? instance.z / radius : 1.0f;
+                    // Capture-only: frame the same anchored foot from four metres away.
+                    const float y = instance.transform.M42;
+                    camera = {{instance.x + dx * 4.0f, y + 1.0f, instance.z + dz * 4.0f},
+                              {instance.x, y + .30f, instance.z}};
+                }
                 std::cout << "island-simulator: canopy inspection target variant="
                           << static_cast<int>(instance.variant) << " threshold="
                           << std::sqrt(instance.nearLodDistanceSquared) << '\n';
@@ -2168,7 +2222,7 @@ void main()
         lodInspection_ = inspection;
         std::cout << "island-simulator: TEMPORARY SOFTWARE DIAGNOSTIC canopy-lod target="
                   << inspection.xMillimetres << ':' << inspection.zMillimetres
-                  << " tier=" << (inspection.near ? "near" : "far")
+                  << " tier=" << (inspection.roots ? "roots" : inspection.near ? "near" : "far")
                   << " frozen-simulation=0 shader-time=1\n";
         return camera;
     }
@@ -2189,6 +2243,7 @@ void main()
         };
         write(visibleCanopyNear_, 'N');
         write(visibleCanopyFar_, 'F');
+        write(visibleCanopyDistant_, 'F');
         if (first) output << "none";
         output << " shrubs " << visibleBushNearCount_ << ' ' << visibleBushFarCount_ << " bushes ";
         first = true;
@@ -2242,9 +2297,10 @@ void main()
                     const auto& leaf = surface.coordinates;
                     if (!std::isfinite(normal.X) || !std::isfinite(normal.Y) || !std::isfinite(normal.Z)
                         || !std::isfinite(leaf.X) || !std::isfinite(leaf.Y) || !std::isfinite(leaf.Z)
-                        || (leaf.W != -1.0f && leaf.W != 0.0f && leaf.W != 1.0f && leaf.W != 2.0f)
+                        || (leaf.W != -3.0f && leaf.W != -2.0f && leaf.W != -1.0f
+                            && leaf.W != 0.0f && leaf.W != 1.0f && leaf.W != 2.0f)
                         || (leaf.W == 2.0f && vertex.TextureCoordinate.X != 0.0f)
-                        || (leaf.W == -1.0f
+                        || (leaf.W < 0.0f
                             ? !JungleMaterial::ValidWoodCoordinates(leaf.X, leaf.Y, leaf.Z)
                             : (leaf.X < 0.0f || leaf.X > 1.0f || std::abs(leaf.Y) > 1.0f))) {
                         throw std::runtime_error(std::string(label) + " contains invalid plant surface data");
@@ -2264,10 +2320,18 @@ void main()
                     mesh.vertexCount, BufferUsage::WriteOnly);
                 mesh.vertices->SetData(geometry.vertices.data(), mesh.vertexCount);
             }
+            auto indices = geometry.indices;
+            if (!geometry.distantIndices.empty()) {
+                ValidateProceduralTriangleMeshOrThrow(geometry.vertices.size(),
+                    geometry.distantIndices, "distant canopy index range");
+                mesh.distantIndexStart = static_cast<int>(indices.size());
+                mesh.distantPrimitiveCount = static_cast<int>(geometry.distantIndices.size()/3U);
+                indices.insert(indices.end(),geometry.distantIndices.begin(),geometry.distantIndices.end());
+            }
             mesh.indices = std::make_unique<IndexBuffer>(
-                device_, IndexElementSize::SixteenBits, static_cast<int>(geometry.indices.size()),
+                device_, IndexElementSize::SixteenBits, static_cast<int>(indices.size()),
                 BufferUsage::WriteOnly);
-            mesh.indices->SetData(geometry.indices.data(), static_cast<int>(geometry.indices.size()));
+            mesh.indices->SetData(indices.data(), static_cast<int>(indices.size()));
         };
         for (std::size_t variant = 0; variant < canopyNearMeshes_.size(); ++variant) {
             upload(CreateCanopyGeometry(static_cast<int>(variant), false),
@@ -2279,7 +2343,8 @@ void main()
                       << " near-vertices=" << canopyNearMeshes_[variant].vertexCount
                       << " near-triangles=" << canopyNearMeshes_[variant].primitiveCount
                       << " far-vertices=" << canopyFarMeshes_[variant].vertexCount
-                      << " far-triangles=" << canopyFarMeshes_[variant].primitiveCount;
+                      << " far-triangles=" << canopyFarMeshes_[variant].primitiveCount
+                      << " distant-triangles=" << canopyFarMeshes_[variant].distantPrimitiveCount;
             std::cout << diagnostic.str() << '\n';
             MirrorRuntimeDiagnosticToPlatformLog(diagnostic.str());
         }
@@ -2346,8 +2411,8 @@ void main()
     void JungleRenderer::CreateCells(const IslandTerrain& terrain, const JungleLayout& layout,
                                      const std::span<const BushPlacement> extraBushes)
     {
-        // Startup-only CPU cache; avoid a large Web stack allocation. No new GPU
-        // texture, per-frame height query or shader-side deformation is required.
+        // Startup-only origin/bounds cache; avoid a large Web stack allocation.
+        // Low mangrove supports additionally reuse the shared GPU height map.
         const auto surface = std::make_unique<RenderedTerrainSurface>(terrain);
         const auto extendBounds = [](JungleCell& cell, const Vector3& minimum,
                                      const Vector3& maximum) {
@@ -2375,12 +2440,19 @@ void main()
             const auto& nearMesh = canopyNearMeshes_[tree.variant];
             const auto& farMesh = canopyFarMeshes_[tree.variant];
             const float juvenileMorphMargin=tree.scale<.35f?.75f:0.0f;
-            const auto bounds = CanopyInstanceBounds(
+            auto bounds = CanopyInstanceBounds(
                 std::max(nearMesh.horizontalRadius, farMesh.horizontalRadius)
                     +juvenileMorphMargin,
                 std::min(nearMesh.minimumY, farMesh.minimumY),
                 std::max(nearMesh.maximumY, farMesh.maximumY),
                 Vector3(tree.x, tree.y, tree.z), tree.scale);
+            {
+                // Low trunk/buttress feet follow relief without changing their X/Z footprint.
+                const float rootRadius = (tree.variant == MangroveCanopyVariant ? 1.6f : .8f) * tree.scale;
+                const auto bank = surface->HeightRange(tree.x-rootRadius, tree.z-rootRadius,
+                                                       tree.x+rootRadius, tree.z+rootRadius);
+                bounds.Min.Y = std::min(bounds.Min.Y, bank[0] - .20f * tree.scale);
+            }
             cell.canopy.push_back({{Matrix::CreateScale(tree.scale)
                                        * Matrix::CreateRotationY(tree.yawRadians)
                                        * Matrix::CreateTranslation(tree.x, tree.y, tree.z),
@@ -2510,7 +2582,10 @@ out float vSunDepth;
 void main()
 {
     mat4 instanceTransform = mat4(aInstance0, aInstance1, aInstance2, aInstance3);
-    vec4 clip = uSunViewProjection * (instanceTransform * vec4(aPosition, 1.0));
+    vec4 world = instanceTransform * vec4(aPosition, 1.0);
+    float groundHeight = aInstance3.y;
+    world = groundJungleRoot(world, aPosition.y, groundHeight, aLeaf.w);
+    vec4 clip = uSunViewProjection * world;
     vSunDepth = clip.z / clip.w;
     gl_Position = clip;
     gl_Position.z = 2.0 * gl_Position.z - gl_Position.w;
@@ -2523,7 +2598,9 @@ void main()
         if (!customShaderReady_ || !instancingSupported_ || sunShadowUnavailable_) return;
         if (!sunShadowEffect_) {
             try {
-                sunShadowEffect_ = map.CreateCasterEffect(JungleSunShadowVertex, "jungle");
+                const auto source = std::string(RenderedTerrainSurface::Shader)
+                    + RootGroundingShader + JungleSunShadowVertex;
+                sunShadowEffect_ = map.CreateCasterEffect(source.c_str(), "jungle");
             } catch (const std::exception& error) {
                 std::cout << "island-simulator: jungle sun shadow casters unavailable: "
                           << error.what() << '\n';
@@ -2563,6 +2640,7 @@ void main()
         float matrix[16];
         map.LightViewProjectionColumnMajor(matrix);
         sunShadowEffect_->Apply();
+        terrainHeightMap_.Bind(*sunShadowEffect_);
         sunShadowEffect_->SetUniformMat4("uSunViewProjection", matrix);
         for (std::size_t variant = 0; variant < canopyFarMeshes_.size(); ++variant)
             DrawInstances(canopyFarMeshes_[variant], visibleCanopyFar_[variant]);
@@ -2577,12 +2655,21 @@ void main()
         map.CountCasters(casters);
     }
 
-    void JungleRenderer::DrawInstances(PlantMesh& mesh, const std::vector<Matrix>& transforms)
+    void JungleRenderer::DrawInstances(PlantMesh& mesh, const std::vector<Matrix>& transforms,
+                                       const std::span<const Matrix> distant)
     {
-        if (transforms.empty()) return;
+        if (transforms.empty() && distant.empty()) return;
         device_.setIndicesProperty(mesh.indices.get());
         if (instancingSupported_) {
-            const int count = static_cast<int>(transforms.size());
+            std::span<const Matrix> upload = transforms;
+            if (!distant.empty()) {
+                // One upload for both index ranges: rewriting a still-bound stream
+                // violates XNA's resource-use contract and can serialize the renderer.
+                instanceUpload_.assign(transforms.begin(),transforms.end());
+                instanceUpload_.insert(instanceUpload_.end(),distant.begin(),distant.end());
+                upload = instanceUpload_;
+            }
+            const int count = static_cast<int>(upload.size());
             if (mesh.instances == nullptr || count > mesh.instanceCapacity) {
                 int capacity = std::max(16, mesh.instanceCapacity);
                 while (capacity < count) capacity *= 2;
@@ -2590,37 +2677,47 @@ void main()
                     device_, InstanceDeclaration(), capacity, BufferUsage::WriteOnly);
                 mesh.instanceCapacity = capacity;
             }
-            ValidateInstancedDrawRangeOrThrow(
-                mesh.instanceCapacity, 0, count, "jungle instance");
-            mesh.instances->SetDataRaw(transforms.data(), count, static_cast<int>(sizeof(Matrix)));
-            device_.SetVertexBuffers({VertexBufferBinding(mesh.vertices.get(), 0, 0),
-                                      VertexBufferBinding(mesh.instances.get(), 0, 1)});
-            if (!customShaderReady_) {
-                fallbackEffect_->setWorldProperty(Matrix::getIdentityProperty());
-                fallbackEffect_->Apply();
-            }
-            device_.DrawInstancedPrimitives(PrimitiveType::TriangleList, 0, 0,
-                                            mesh.vertexCount, 0, mesh.primitiveCount, count);
-            ++drawCallCount_;
+            ValidateInstancedDrawRangeOrThrow(mesh.instanceCapacity, 0, count, "jungle instance");
+            mesh.instances->SetDataRaw(upload.data(), count, static_cast<int>(sizeof(Matrix)));
+            const auto draw = [&](int first, int instances, int start, int primitives) {
+                if (!instances) return;
+                device_.SetVertexBuffers({VertexBufferBinding(mesh.vertices.get(), 0, 0),
+                                          VertexBufferBinding(mesh.instances.get(), first, 1)});
+                if (!customShaderReady_) {
+                    fallbackEffect_->setWorldProperty(Matrix::getIdentityProperty());
+                    fallbackEffect_->Apply();
+                }
+                device_.DrawInstancedPrimitives(PrimitiveType::TriangleList, 0, 0,
+                                                mesh.vertexCount, start, primitives, instances);
+                ++drawCallCount_;
+            };
+            draw(0,static_cast<int>(transforms.size()),0,mesh.primitiveCount);
+            draw(static_cast<int>(transforms.size()),static_cast<int>(distant.size()),
+                 mesh.distantIndexStart,mesh.distantPrimitiveCount);
             return;
         }
         device_.SetVertexBuffer(mesh.vertices.get());
-        for (const Matrix& transform : transforms) {
-            fallbackEffect_->setWorldProperty(transform);
-            fallbackEffect_->Apply();
-            device_.DrawIndexedPrimitives(PrimitiveType::TriangleList, 0, 0,
-                                          mesh.vertexCount, 0, mesh.primitiveCount);
-            ++drawCallCount_;
-        }
+        const auto draw = [&](std::span<const Matrix> list,int start,int primitives) {
+            for (const Matrix& transform : list) {
+                fallbackEffect_->setWorldProperty(transform);
+                fallbackEffect_->Apply();
+                device_.DrawIndexedPrimitives(PrimitiveType::TriangleList, 0, 0,
+                                              mesh.vertexCount, start, primitives);
+                ++drawCallCount_;
+            }
+        };
+        draw(transforms,0,mesh.primitiveCount);
+        draw(distant,mesh.distantIndexStart,mesh.distantPrimitiveCount);
     }
 
     void JungleRenderer::Draw(const Matrix& view, const Matrix& projection,
                               const Vector3& cameraPosition, const float timeSeconds,
                               std::span<const MonkeyState> monkeys,
-                              const std::span<const GrassWalker> walkers)
+                              const std::span<const GrassWalker> walkers, const float cameraClearance)
     {
         for (auto& transforms : visibleCanopyNear_) transforms.clear();
         for (auto& transforms : visibleCanopyFar_) transforms.clear();
+        for (auto& transforms : visibleCanopyDistant_) transforms.clear();
         for (auto& transforms : visibleStandingSnagNear_) transforms.clear();
         for (auto& transforms : visibleStandingSnagFar_) transforms.clear();
         for (auto& transforms : visibleUnderstoryNear_) transforms.clear();
@@ -2648,7 +2745,10 @@ void main()
 
         int inspectionSubmissions = 0;
         const BoundingFrustum frustum(view * projection);
-        const float canopyMaximumDistance = CanopyMaximumDistance * maximumDistanceScale_;
+        const float groundCanopyDistance = CanopyMaximumDistance * maximumDistanceScale_;
+        const float canopyMaximumDistance = customShaderReady_ && instancingSupported_
+            ? CanopyViewRange(groundCanopyDistance, CanopyMaximumDistance, cameraClearance)
+            : groundCanopyDistance;
         const float standingSnagMaximumDistance = StandingSnagMaximumDistance
             * maximumDistanceScale_;
         const float understoryMaximumDistance = UnderstoryMaximumDistance * maximumDistanceScale_;
@@ -2670,12 +2770,15 @@ void main()
             if (cellDistanceSquared <= canopyMaximumDistance * canopyMaximumDistance) {
                 for (const CanopyInstance& tree : cell.canopy) {
                     const DrawInstance& instance = tree.draw;
+                    const float treeMaximumDistance = CanopyProjectedRange(groundCanopyDistance,
+                        canopyMaximumDistance, tree.bounds.Max.Y-tree.bounds.Min.Y,
+                        std::abs(projection.M22));
                     const float instanceDeltaX = instance.x - cameraPosition.X;
                     const float instanceDeltaZ = instance.z - cameraPosition.Z;
                     const float instanceDistanceSquared = instanceDeltaX * instanceDeltaX
                         + instanceDeltaZ * instanceDeltaZ;
                     if (instanceDistanceSquared
-                        > canopyMaximumDistance * canopyMaximumDistance) {
+                        > treeMaximumDistance * treeMaximumDistance) {
                         continue;
                     }
                     if (frustum.Contains(tree.bounds) == ContainmentType::Disjoint) {
@@ -2696,10 +2799,15 @@ void main()
                     // Far trees shrink to nothing over the last part of the range instead of
                     // vanishing (a gripped tree keeps its size).
                     const float shrink = gripped ? 1.0f
-                        : vegetation_fade::FarShrink(vegetation_fade::SlantDistance(instanceDistanceSquared, cameraPosition.Y - instance.transform.M42), canopyMaximumDistance,
+                        : vegetation_fade::FarShrink(vegetation_fade::SlantDistance(instanceDistanceSquared, cameraPosition.Y - instance.transform.M42), treeMaximumDistance,
                                                      vegetation_fade::TreeShrinkFraction);
                     if (shrink <= 0.0f) continue;
-                    (nearLod ? visibleCanopyNear_ : visibleCanopyFar_)[instance.variant]
+                    const float distantBoundary = groundCanopyDistance * (1.0f
+                        + vegetation_fade::NearStagger * vegetation_fade::Seed(instance.x,instance.z));
+                    const bool distant = !nearLod && !gripped && !lodInspection_
+                        && treeMaximumDistance>groundCanopyDistance
+                        && instanceDistanceSquared>distantBoundary*distantBoundary;
+                    (nearLod ? visibleCanopyNear_ : distant ? visibleCanopyDistant_ : visibleCanopyFar_)[instance.variant]
                         .push_back(shrink < 1.0f ? Matrix::CreateScale(shrink) * instance.transform
                                                  : instance.transform);
                     if (nearLod) {
@@ -2865,7 +2973,8 @@ void main()
 
         for (std::size_t variant = 0; variant < canopyNearMeshes_.size(); ++variant) {
             DrawInstances(canopyNearMeshes_[variant], visibleCanopyNear_[variant]);
-            DrawInstances(canopyFarMeshes_[variant], visibleCanopyFar_[variant]);
+            DrawInstances(canopyFarMeshes_[variant], visibleCanopyFar_[variant],
+                          visibleCanopyDistant_[variant]);
         }
         if (customShaderReady_) customEffect_->SetUniformFloat("uReceiveCanopyLight", 1.0f);
         for (std::size_t variant = 0; variant < standingSnagNearMeshes_.size(); ++variant) {

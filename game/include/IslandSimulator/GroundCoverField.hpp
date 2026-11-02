@@ -26,6 +26,8 @@ namespace island
 
         /** @brief Contrast-shaped [0,1] patch value from the raw multi-octave noise. */
         [[nodiscard]] float PatchFromNoise(float noise);
+        /** @brief Persistent moss favors humid shade; dry ground retains sparse sheltered pockets. */
+        [[nodiscard]] float MossSuitability(float moisture, float transmission);
         /** @brief Cover in [0,1]; throws on non-finite input or out-of-range light/patch. */
         [[nodiscard]] float Density(float transmission, float patch,
                                     float shoreDistance, float slopeRadians,

@@ -23,6 +23,7 @@ namespace Microsoft::Xna::Framework::Graphics
 namespace island
 {
     class CanopyLightField;
+    class RenderedTerrainSurface;
 
     /** Portable procedural renderer for the small inland deer herd: the coat in one draw
      *  over the goats' short-hair strand texture, the bare parts in a second. */
@@ -34,6 +35,7 @@ namespace island
                      Microsoft::Xna::Framework::Graphics::Texture2D& coat,
                      const std::array<float, 3>& coatMean);
         ~DeerRenderer();
+        void SetGround(const RenderedTerrainSurface* ground) noexcept { ground_=ground; }
         void Draw(const Microsoft::Xna::Framework::Matrix& view,
                   const Microsoft::Xna::Framework::Matrix& projection,
                   const Microsoft::Xna::Framework::Vector3& camera,
@@ -47,6 +49,7 @@ namespace island
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
         const CanopyLightField& canopy_;
         float maximumDistance_ = 0.0f;
+        const RenderedTerrainSurface* ground_ = nullptr;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> buffer_;
         Microsoft::Xna::Framework::Graphics::Texture2D& coat_;

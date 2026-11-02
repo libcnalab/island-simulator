@@ -14,6 +14,10 @@ struct BunkerSite final {
     static constexpr float MaximumAcross=12.0f;
     static constexpr float MinimumDepth=-7.0f;
     static constexpr float MaximumDepth=39.0f;
+    // Match the packed north-facing hillside before the roof berm begins. The
+    // former .9m apron left an interpolated heightfield lip across the opening.
+    static constexpr float ApronFrontDepth=-3.0f;
+    static constexpr float ApronSlope=.23f;
 
     [[nodiscard]] static bool Reserves(float x,float z,float margin=0.0f) noexcept {
         if(!std::isfinite(x)||!std::isfinite(z)||!std::isfinite(margin))return false;
@@ -38,7 +42,7 @@ struct BunkerSite final {
         const bool reactor=across>=-10.25f&&across<=-.9f&&depth>=22.6f&&depth<=36.35f;
         const bool service=across>=.9f&&across<=7.25f&&depth>=25.6f&&depth<=35.65f;
         if(!(corridor||computer||reactor||service))return 0.0f;
-        const float floorRelative=depth<=0.0f?.11f*depth:depth<10.0f?-.32f*depth:-3.2f;
+        const float floorRelative=depth<=0.0f?ApronSlope*depth:depth<10.0f?-.32f*depth:-3.2f;
         // Match the walking camera rather than accepting a listener standing on the ridge roof.
         const float verticalError=std::abs(y-(entranceGroundY+floorRelative+1.72f));
         const float verticalT=std::clamp((verticalError-.7f)/1.35f,0.0f,1.0f);

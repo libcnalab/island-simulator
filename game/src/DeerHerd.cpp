@@ -1,4 +1,5 @@
 #include "IslandSimulator/DeerHerd.hpp"
+#include "IslandSimulator/DeerGait.hpp"
 #include "IslandSimulator/CampfireSite.hpp"
 #include "IslandSimulator/CanopyLightField.hpp"
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
@@ -473,6 +474,7 @@ namespace island
         agent.tossSeconds = std::max(0.0f, agent.tossSeconds - deltaSeconds);
         agent.state.headToss += std::clamp((agent.tossSeconds > 0.0f ? 1.0f : 0.0f) - agent.state.headToss,
             -6.0f * deltaSeconds, 10.0f * deltaSeconds);
+        const auto previous=agent.state;
         const float nextX = agent.state.x
             + std::cos(agent.state.headingRadians) * agent.state.speed * deltaSeconds;
         const float nextZ = agent.state.z
@@ -486,8 +488,10 @@ namespace island
             agent.state.speed = std::min(agent.state.speed, .45f);
             agent.behaviorSeconds = std::min(agent.behaviorSeconds, .8f);
         }
-        agent.state.gaitPhase = std::fmod(agent.state.gaitPhase
-            + deltaSeconds * (1.4f + agent.state.speed * 4.2f), TwoPi);
         agent.state.y = StandHeight(agent.state.x, agent.state.z);
+        const float travel=std::hypot(agent.state.x-previous.x,agent.state.y-previous.y,
+                                      agent.state.z-previous.z);
+        agent.state.gaitPhase=deer_gait::Advance(agent.state.gaitPhase,travel,
+                                               agent.state.speed,agent.state.scale);
     }
 }

@@ -46,7 +46,7 @@ namespace island
         void Draw(const Microsoft::Xna::Framework::Matrix& view,
                   const Microsoft::Xna::Framework::Matrix& projection,
                   const Microsoft::Xna::Framework::Vector3& cameraPosition,
-                  float timeSeconds);
+                  float timeSeconds, float cameraClearance = 0.0f);
 
         [[nodiscard]] bool UsesInstancing() const noexcept { return instancingSupported_; }
         [[nodiscard]] bool UsesCustomShader() const noexcept { return customShaderReady_; }
@@ -98,6 +98,7 @@ namespace island
             float z = 0.0f;
             float nearLodDistanceSquared = 0.0f;
             float midLodDistanceSquared = 0.0f;
+            float canopyHeight = 0.0f; // Living silhouette envelope; zero for low damaged props.
             static constexpr std::uint16_t NoFallen = 0xFFFFU;
             std::uint16_t fallen = NoFallen;   // its own collapsed-crown meshes in fallen_
             std::uint8_t variant = 0U;

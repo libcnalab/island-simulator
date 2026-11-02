@@ -42,6 +42,36 @@ try
 {
     using namespace Microsoft::Xna::Framework;
     using island::CanopyInstanceBounds;
+    const float focal=1.0f/std::tan(std::numbers::pi_v<float>/6);
+    // Broadleaf and palm profiles share the policy but retain their own native full reach.
+    for (float fullRange : {475.0f, 520.0f}) {
+        const float walkingRange=fullRange*.55f;
+        Require(island::CanopyViewRange(walkingRange,fullRange,1.7f)==walkingRange
+            && island::CanopyViewRange(walkingRange,fullRange,12)==walkingRange,
+            "Ground walking must retain the native canopy budget");
+        Require(island::CanopyViewRange(walkingRange,fullRange,80)==fullRange
+            && island::CanopyViewRange(fullRange,fullRange,100)==fullRange,
+            "Aerial canopy must stay within the existing full-profile reach");
+        float previous=walkingRange;
+        for(int height=0;height<=120;++height) {
+            const float range=island::CanopyViewRange(walkingRange,fullRange,static_cast<float>(height));
+            Require(range>=previous && range<=fullRange,
+                "Aerial canopy transition must be bounded and monotone");
+            previous=range;
+        }
+        Require(island::CanopyProjectedRange(walkingRange,fullRange,12,focal)==fullRange,
+            "A mature crown still spanning visible pixels must survive the aerial range");
+        Require(island::CanopyProjectedRange(walkingRange,fullRange,2,focal)==walkingRange,
+            "Small juvenile crowns must not extend the distant budget");
+    }
+    constexpr float groundRange=475.0f*.55f;
+    for(float bad : {-1.0f,std::numeric_limits<float>::quiet_NaN(),
+                     std::numeric_limits<float>::infinity()}) {
+        bool refused=false;
+        try { (void)island::CanopyProjectedRange(groundRange,475,bad,focal); }
+        catch(const std::invalid_argument&) { refused=true; }
+        Require(refused,"Invalid canopy projection was accepted");
+    }
     constexpr float horizontalWindMargin = island::JungleWind::HorizontalMargin;
     constexpr float verticalWindMargin = island::JungleWind::VerticalMargin;
     // VertexBody has independent unit sine terms, weights in [0,1], then uniform scale/yaw.

@@ -12,7 +12,8 @@
 
 namespace island {
     /**
-     * One orthographic depth map of the fixed sun around the camera. Every caster is static
+     * One orthographic depth map around a receiver column (the camera during walking,
+     * a bounded look-ahead in flight). Every caster is static
      * (trees, palms, snags, bushes, the hut, the wreck and the helicopter), so the map is only
      * re-rendered when the camera leaves an AnchorStep cell; receivers sample it with a bilinear
      * four-tap comparison. Depth is packed into an RGBA8 colour target so WebGL 2, GLES 3 and
@@ -47,7 +48,7 @@ namespace island {
         SunShadowMap(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int resolution);
         ~SunShadowMap();
 
-        /** Recomputes the light around the camera; true when the map must be rendered now. */
+        /** Recomputes the light around the receiver column; true when rendering is needed. */
         [[nodiscard]] bool Prepare(const Microsoft::Xna::Framework::Vector3& camera);
         /** Binds the colour target, sets its viewport and clears it to "no caster". */
         void Begin();

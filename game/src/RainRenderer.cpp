@@ -1,4 +1,5 @@
 #include "IslandSimulator/RainRenderer.hpp"
+#include "IslandSimulator/RainStreakAppearance.hpp"
 #include "IslandSimulator/PrevailingWind.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "Microsoft/Xna/Framework/Color.hpp"
@@ -54,8 +55,7 @@ namespace island
     void RainRenderer::SetShelter(const float x, const float z, const float yawRadians, const float halfSpan,
                                   const float halfLength, const float eaveY, const float ridgeY) noexcept
     {
-        shelter_ = {x, z, std::cos(yawRadians), std::sin(yawRadians), halfSpan, halfLength, eaveY, ridgeY};
-        sheltered_ = std::isfinite(x) && std::isfinite(z) && halfSpan > 0.0f && halfLength > 0.0f;
+        shelter_.Set(x,z,yawRadians,halfSpan,halfLength,eaveY,ridgeY);
     }
 
     template <class Emit>
@@ -90,15 +90,11 @@ namespace island
                     const float edge = std::clamp((1.0f - horizontal / Radius) * 4.0f, 0.0f, 1.0f)
                         * std::clamp((1.0f - vertical) * 4.0f, 0.0f, 1.0f);
                     if (edge <= 0.01f) continue;
-                    if (sheltered_) {
-                        // under the roof: in the roof's own frame, below its slope there
-                        const float dx = x - shelter_.x, dz = z - shelter_.z;
-                        const float across = std::abs(shelter_.cosYaw * dx - shelter_.sinYaw * dz);
-                        const float along = std::abs(shelter_.sinYaw * dx + shelter_.cosYaw * dz);
-                        if (across < shelter_.halfSpan && along < shelter_.halfLength
-                            && y < shelter_.ridgeY - (shelter_.ridgeY - shelter_.eaveY) * across / shelter_.halfSpan) continue;
-                    }
-                    if (!emit(Vector3(x, y, z), fall, edge)) return;
+                    const Vector3 top(x,y,z),bottom=top+fall*StreakLength;
+                    const float length=StreakLength*shelter_.VisibleFraction(
+                        {top.X,top.Y,top.Z},{bottom.X,bottom.Y,bottom.Z});
+                    if (length<=0) continue;
+                    if (!emit(top, fall, edge, length)) return;
                 }
             }
         }
@@ -118,7 +114,7 @@ namespace island
             const float distance = toCamera.Length();
             if (side.LengthSquared() < 1e-6f || distance < 0.3f) return false;
             side.Normalize();
-            side *= 0.0009f + distance * 0.00085f;
+            side *= rain_streak::HalfWidth(distance);
             staging.emplace_back(top - side, tail); staging.emplace_back(top + side, tail);
             staging.emplace_back(bottom + side, head);
             staging.emplace_back(top - side, tail); staging.emplace_back(bottom + side, head);
@@ -134,15 +130,15 @@ namespace island
         if (!(rain > 0.01f) || !std::isfinite(camera.X) || !std::isfinite(seconds)) return;
         staging_.clear();
         const float density = std::clamp(rain, 0.0f, 1.0f);
-        ForEachDrop(camera, rain, wind, seconds, [&](const Vector3& top, const Vector3& fall, const float edge) {
+        ForEachDrop(camera, rain, wind, seconds, [&](const Vector3& top, const Vector3& fall, const float edge, const float length) {
             if (staging_.size() + 6U > static_cast<std::size_t>(MaximumDrops) * 6U) return false;   // never past the buffer
             // drops passing within a couple of metres of the eye are out of focus, a faint blur
-            const float nearBlur = std::clamp((Vector3::Distance(top, camera) - 0.5f) / 2.0f, 0.0f, 1.0f);
+            const float nearBlur = rain_streak::NearOpacity(Vector3::Distance(top, camera));
             const float alpha = std::clamp(0.40f * edge * nearBlur * (0.6f + 0.4f * density), 0.0f, 1.0f);
             const auto c = [alpha](const float v) { return static_cast<int>(std::lround(v * alpha * 255.0f)); };
             const Color colour(c(0.74f), c(0.78f), c(0.83f), static_cast<int>(std::lround(alpha * 255.0f)));
             const Color tail(c(0.40f), c(0.43f), c(0.47f), static_cast<int>(std::lround(alpha * 0.4f * 255.0f)));
-            if (Streak(staging_, camera, top, fall, StreakLength, colour, tail)) ++visible_;
+            if (Streak(staging_, camera, top, fall, length, colour, tail)) ++visible_;
             return true;
         });
         Flush(view, projection, BlendState::AlphaBlend);
@@ -154,7 +150,7 @@ namespace island
         litVisible_ = 0;
         if (!(rain > 0.01f) || lights.empty() || !std::isfinite(camera.X) || !std::isfinite(seconds)) return;
         staging_.clear();
-        ForEachDrop(camera, rain, wind, seconds, [&](const Vector3& top, const Vector3& fall, const float edge) {
+        ForEachDrop(camera, rain, wind, seconds, [&](const Vector3& top, const Vector3& fall, const float edge, const float length) {
             if (staging_.size() + 6U > static_cast<std::size_t>(MaximumDrops) * 6U) return false;
             // how strongly the lamps light this drop: within reach, and for a spot inside its cone
             Vector3 lit = Vector3::Zero;
@@ -175,7 +171,7 @@ namespace island
             const float a = std::clamp(edge, 0.0f, 1.0f) * 0.85f;
             const auto c = [a](const float v) { return static_cast<int>(std::lround(std::clamp(v * a, 0.0f, 1.0f) * 255.0f)); };
             const Color head(c(lit.X), c(lit.Y), c(lit.Z), 255), tail(c(lit.X * 0.3f), c(lit.Y * 0.3f), c(lit.Z * 0.3f), 255);
-            if (Streak(staging_, camera, top, fall, StreakLength, head, tail)) ++litVisible_;
+            if (Streak(staging_, camera, top, fall, length, head, tail)) ++litVisible_;
             return true;
         });
         Flush(view, projection, BlendState::Additive);

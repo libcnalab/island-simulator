@@ -2112,7 +2112,8 @@ void main()
                                       * Matrix::CreateTranslation(rock.x, rock.y, rock.z),
                                   rock.variant, rock.x, rock.z, rock.offshore});
             const float radius = std::max(rock.scaleX, rock.scaleZ);
-            extendBounds(cell, Vector3(rock.x - radius, rock.y - 0.1f, rock.z - radius),
+            extendBounds(cell, Vector3(rock.x - radius,
+                         rock.y + rock.scaleY * RockSurfaceMinimumHeight, rock.z - radius),
                          Vector3(rock.x + radius, rock.y + rock.scaleY * RockSurfaceMaximumHeight, rock.z + radius));
             ++totalRockCount_;
             if (rock.offshore) ++totalReefRockCount_;
@@ -2245,10 +2246,14 @@ void main()
                     * Matrix::CreateRotationY(habitat.yawRadians)
                     * Matrix::CreateTranslation(habitat.x, habitat.y, habitat.z),
                 habitat.variant, habitat.x, habitat.z});
-            const float radius = habitat.scale * .82f;
-            extendBounds(cell, Vector3(habitat.x - radius, habitat.y - .08f,
+            // Variant 3 reuses the rock surface, including its buried basal rim.
+            const bool rock = habitat.variant == 3U;
+            const float radius = habitat.scale * (rock ? 1.0f : .82f);
+            const float bottom = rock ? habitat.scale * RockSurfaceMinimumHeight : -.08f;
+            const float top = habitat.scale * (rock ? RockSurfaceMaximumHeight : 1.05f);
+            extendBounds(cell, Vector3(habitat.x - radius, habitat.y + bottom,
                                        habitat.z - radius),
-                         Vector3(habitat.x + radius, habitat.y + habitat.scale * 1.05f,
+                         Vector3(habitat.x + radius, habitat.y + top,
                                  habitat.z + radius));
             ++totalReefHabitatCount_;
         }

@@ -5,6 +5,31 @@
 
 namespace island
 {
+    float BoarGaitMovement(const float speed) noexcept
+    {
+        return std::isfinite(speed) ? std::clamp(speed / .65f, 0.0f, 1.0f) : 0.0f;
+    }
+
+    float AdvanceBoarGait(float phase, const float distance, const float speed,
+                          const float scale) noexcept
+    {
+        constexpr float Tau = 2.0f * std::numbers::pi_v<float>;
+        phase = std::isfinite(phase) ? std::fmod(phase, Tau) : 0.0f;
+        if (phase < 0.0f) phase += Tau;
+        // A tiny negative remainder can round up to exactly Tau in float precision.
+        if (phase >= Tau) phase = 0.0f;
+        const float movement = BoarGaitMovement(speed);
+        if (!std::isfinite(distance) || distance <= 0.0f || movement <= 0.0f
+            || !std::isfinite(scale) || scale <= 0.0f) return phase;
+        // During stance the hoof travels back through twice the half-stride. Match that
+        // local displacement to the body's accepted travel, including juvenile scaling.
+        const float cycleDistance = 2.0f * BoarLegPose::HalfStride * movement * scale
+            / BoarLegPose::StanceFraction;
+        const float advance = distance / cycleDistance * Tau;
+        if (!std::isfinite(advance)) return phase;
+        return std::fmod(phase + std::fmod(advance, Tau), Tau);
+    }
+
     BoarBodyProfile MakeBoarBodyProfile(float dip) noexcept
     {
         dip = std::isfinite(dip) ? std::clamp(dip, 0.0f, 0.15f) : 0.0f;
@@ -104,7 +129,7 @@ namespace island
         const bool invalidGround = !std::isfinite(groundHeight);
         if (invalidGround) groundHeight = 0.0f;
         BoarJoint hoof{x, groundHeight + BoarLegPose::HoofHeight + lift,
-                      z + travel * 0.245f * movement};
+                      z + travel * BoarLegPose::HalfStride * movement};
         // Preserve horizontal stride and bone lengths. A near-straight limit avoids a singular
         // knee; high targets cannot fold the hoof into the hip. Callers must expose this limit.
         constexpr float maximumReach = BoarLegPose::UpperLength + BoarLegPose::LowerLength - 0.0001f;

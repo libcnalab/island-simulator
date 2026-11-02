@@ -1,4 +1,5 @@
 #include "IslandSimulator/CanopyDripRenderer.hpp"
+#include "IslandSimulator/RainStreakAppearance.hpp"
 #include "IslandSimulator/CanopyLightField.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
@@ -99,8 +100,10 @@ namespace island
                     Vector3 side = Vector3::Cross(Vector3::Up, camera - bottom);
                     if (side.LengthSquared() < 1e-6f) continue;
                     side.Normalize();
-                    side *= 0.004f + (camera - bottom).Length() * 0.0011f;
-                    const float a = 0.55f * fade;
+                    const float dropDistance=(camera-bottom).Length();
+                    side *= rain_streak::HalfWidth(dropDistance);
+                    const float a = 0.55f * fade * rain_streak::NearOpacity(dropDistance);
+                    if (a<=0) continue;
                     const auto c = [a](float v) { return static_cast<int>(std::lround(v * a * 255.0f)); };
                     const Color head(c(0.80f), c(0.84f), c(0.86f), static_cast<int>(std::lround(a * 255.0f)));
                     const Color tail(c(0.45f), c(0.48f), c(0.50f), static_cast<int>(std::lround(a * 0.35f * 255.0f)));

@@ -178,7 +178,8 @@ layout(location = 1) in vec4 aCentreReach;
 layout(location = 2) in vec2 aAlphaStructure;
 uniform mat4 uViewProjection;
 uniform vec3 uCamera;
-uniform vec4 uMap;   // x: 1 while a sun shadow map casts the structures, yz: its anchor (the camera's cell)
+uniform vec2 uShadowFocus;
+uniform vec4 uMap;   // x: 1 while a sun shadow map casts the structures, yz: its anchor
 uniform vec3 uSun;   // toward the hour's shading light
 out float vAlpha;
 const float MapRadius = )") + std::to_string(f::MapRadius) + R"(;
@@ -196,7 +197,7 @@ float mapStrength(vec3 p) {
     vec2 fromAnchor = lightOffset(p, uMap.yz);
     float edge = (MapRadius - max(abs(fromAnchor.x), abs(fromAnchor.y))) / (2.0 * MapRadius);
     if (edge <= 0.0) return 0.0;
-    vec2 v = lightOffset(p, uCamera.xz);
+    vec2 v = lightOffset(p, uShadowFocus);
     vec2 v2 = v * v;
     float far = smoothstep(FarFadeStart, FarFadeEnd, sqrt(sqrt(v2.x * v2.x + v2.y * v2.y)));
     return smoothstep(0.0, EdgeBand, edge) * (1.0 - far);
@@ -460,8 +461,9 @@ void main() { fragColor = vec4(0.0, 0.0, 0.0, vAlpha); }
                                      const std::span<const MonkeyState> monkeys,
                                      const std::span<const BoarState> boars, const SnakePopulation& population,
                                      const std::span<const GoatState> goats,const std::span<const SpiderState> spiders,
-        const PlayerShadow& player)
+        const PlayerShadow& player, const Vector3* sunShadowFocus)
     {
+        const Vector3& shadowFocus = sunShadowFocus ? *sunShadowFocus : cameraPosition;
         const auto snakes=population.Snakes();
         // The moving shadows are draped afresh at every rebuild (every frame while the animals
         // move): on the drawn mesh, ~10 ns a point, not the analytic terrain's microseconds.
@@ -479,6 +481,8 @@ void main() { fragColor = vec4(0.0, 0.0, 0.0, vAlpha); }
         // the view; the animals' and the walker's on their own movement. A spider stepping by
         // used to rebuild the whole batch, hundreds of terrain-draped static patches included.
         const bool cameraRebuild = !cacheValid_
+            || Vector3::DistanceSquared(shadowFocus, cachedShadowFocus_)
+                > CameraRefreshDistanceSquared
             || Vector3::DistanceSquared(cameraPosition, cachedCameraPosition_)
                 > CameraRefreshDistanceSquared
             || std::abs(view.M11 - cachedView_.M11) > ViewRefreshThreshold
@@ -617,7 +621,7 @@ void main() { fragColor = vec4(0.0, 0.0, 0.0, vAlpha); }
                     bool anyShare = false;
                     for (std::size_t vertexIndex = 0; vertexIndex < shadow.vertexCount && !anyShare; ++vertexIndex) {
                         const Vector3& at = staticVertices_[shadow.firstVertex + vertexIndex].Position;
-                        anyShare = 1.0f - sun_shadow_fade::Strength(at.X, at.Y, at.Z, cameraPosition.X, cameraPosition.Z,
+                        anyShare = 1.0f - sun_shadow_fade::Strength(at.X, at.Y, at.Z, shadowFocus.X, shadowFocus.Z,
                                                                     toSun.x, toSun.y, toSun.z) > 0.01f;
                     }
                     if (!anyShare) continue;   // wholly inside the map's shadows
@@ -754,6 +758,7 @@ void main() { fragColor = vec4(0.0, 0.0, 0.0, vAlpha); }
                 cachedView_ = view;
                 cachedProjection_ = projection;
                 cachedCameraPosition_ = cameraPosition;
+                cachedShadowFocus_ = shadowFocus;
             }
             cachedMonkeyPositions_.clear();
             cachedMonkeyPositions_.reserve(monkeys.size());
@@ -787,8 +792,9 @@ void main() { fragColor = vec4(0.0, 0.0, 0.0, vAlpha); }
             staticEffect_->Apply();
             staticEffect_->SetUniformMat4("uViewProjection", viewProjection);
             staticEffect_->SetUniformVec3("uCamera", cameraPosition.X, cameraPosition.Y, cameraPosition.Z);
-            staticEffect_->SetUniformVec4("uMap", sunShadowMapActive_ ? 1.0f : 0.0f, sun_shadow_fade::AnchorOf(cameraPosition.X),
-                                          sun_shadow_fade::AnchorOf(cameraPosition.Z), 0.0f);
+            staticEffect_->SetUniformVec2("uShadowFocus", shadowFocus.X, shadowFocus.Z);
+            staticEffect_->SetUniformVec4("uMap", sunShadowMapActive_ ? 1.0f : 0.0f, sun_shadow_fade::AnchorOf(shadowFocus.X),
+                                          sun_shadow_fade::AnchorOf(shadowFocus.Z), 0.0f);
             staticEffect_->SetUniformVec3("uSun", toSun.X, toSun.Y, toSun.Z);
             device_.SetVertexBuffer(staticBuffer_.get());
             device_.setIndicesProperty(nullptr);

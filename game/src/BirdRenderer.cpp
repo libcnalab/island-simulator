@@ -1,5 +1,6 @@
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/BirdRenderer.hpp"
+#include "IslandSimulator/BirdWingNormal.hpp"
 #include "IslandSimulator/WildlifeRenderLighting.hpp"
 
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
@@ -393,7 +394,13 @@ namespace island
             AppendProfiledSurface(vertices,hand,up,handThickness,handLift,
                                   Color::Lerp(palette.upperWing,palette.flight,.35f),palette.lowerWing);
             const Vector3 outward=Unit(tip-wrist,right*side);
-            const Vector3 back=Unit(-forward*(1.0f-.25f*s)+right*(side*.12f*s)-up*(.05f*s),-forward);
+            const Vector3 armSpan=Unit(wrist-shoulder,right*side);
+            const Vector3 armUp=BirdWingNormal(wrist-shoulder,forward,up,side);
+            const Vector3 handUp=BirdWingNormal(tip-wrist,forward,up,side);
+            // Each vane follows the actual supporting span during the flap, including
+            // folded/banked wings; a fixed body-up plane made raised vanes edge-on spikes.
+            const Vector3 armBackDirection=Unit(-forward*(1.0f-.25f*s)+armSpan*(.12f*s),-forward);
+            const Vector3 handBackDirection=Unit(-forward*(1.0f-.25f*s)+outward*(.12f*s),-forward);
             // (the flight feathers' undersides a shade darker than the coverts', one continuous
             // underside: lighter, each feather read as a separate scale from below)
             const Color under=wildlife_render::ScaleColor(palette.lowerWing,.86f);
@@ -402,12 +409,12 @@ namespace island
             for(int k=0;k<SecondaryCount;++k) {
                 const float t=(static_cast<float>(k)+.5f)/SecondaryCount;
                 const Vector3 root=Vector3::Lerp(armBack,wristBack,t)+forward*(.05f*scale);
-                const Vector3 along=Unit(Vector3::Lerp(back,-forward,.3f*(1.0f-t))-up*(.04f*s),-forward);
-                const Vector3 across=Unit(Vector3::Cross(up,along)*side,right);
+                const Vector3 along=Unit(Vector3::Lerp(armBackDirection,-forward,.3f*(1.0f-t))-armUp*(.04f*s),-forward);
+                const Vector3 across=Unit(Vector3::Cross(armUp,along)*side,right);
                 const float length=(.25f+.05f*t)*chord*scale*(frigate?.8f:1.0f);
                 // broad enough to overlap their neighbours (apart they read as loose dashes)
                 const float width=std::max(.085f*chord*scale,2.3f*Vector3::Distance(armBack,wristBack)/SecondaryCount);
-                AppendFeather(vertices,root,along,across,up,length,width,thickness,
+                AppendFeather(vertices,root,along,across,armUp,length,width,thickness,
                               Color::Lerp(palette.upperWing,palette.flight,.55f),palette.flight,under);
             }
             // the greater coverts, a row of short feathers over the secondaries' roots, a shade
@@ -415,11 +422,11 @@ namespace island
             for(int k=0;k<CovertCount;++k) {
                 const float t=(static_cast<float>(k)+.5f)/CovertCount;
                 const Vector3 root=Vector3::Lerp(Vector3::Lerp(shoulder,armRoot,.55f),Vector3::Lerp(wrist,wristBack,.45f),t)
-                    +up*(.024f*scale);
-                const Vector3 along=Unit(back-up*(.10f*s),-forward);
-                const Vector3 across=Unit(Vector3::Cross(up,along)*side,right);
+                    +armUp*(.024f*scale);
+                const Vector3 along=Unit(armBackDirection-armUp*(.10f*s),-forward);
+                const Vector3 across=Unit(Vector3::Cross(armUp,along)*side,right);
                 const float width=1.8f*Vector3::Distance(armRoot,wristBack)/CovertCount;
-                AppendFeather(vertices,root,along,across,up,.11f*chord*scale,width,thickness,
+                AppendFeather(vertices,root,along,across,armUp,.11f*chord*scale,width,thickness,
                               wildlife_render::ScaleColor(palette.upperWing,1.12f),palette.upperWing,palette.lowerWing);
             }
             // the primaries fanned from the hand: the innermost back, the outer ones out to the
@@ -428,13 +435,13 @@ namespace island
                 const float t=static_cast<float>(k)/(PrimaryCount-1);
                 const Vector3 root=Vector3::Lerp(wristBack,handEnd,t*.9f);
                 // (the outer tips bent up by the air's lift)
-                const Vector3 along=Unit(Vector3::Lerp(back,outward,std::lerp(.10f,.92f,t)*s+.02f*t)
-                                         +up*(.12f*s*t),-forward);
-                const Vector3 across=Unit(Vector3::Cross(up,along)*side,right);
+                const Vector3 along=Unit(Vector3::Lerp(handBackDirection,outward,std::lerp(.10f,.92f,t)*s+.02f*t)
+                                         +handUp*(.12f*s*t),-forward);
+                const Vector3 across=Unit(Vector3::Cross(handUp,along)*side,right);
                 const float longest=frigate?.62f:(parrot?.46f:.50f);
                 const float length=longest*scale*std::lerp(.62f,1.0f,std::min(1.0f,t*1.25f))*(k==PrimaryCount-1?.92f:1.0f)
                     *std::lerp(.78f,1.0f,s);   // folded, they end about the tail's tip
-                AppendFeather(vertices,root,along,across,up,length,(frigate?.070f:.090f)*scale,thickness,
+                AppendFeather(vertices,root,along,across,handUp,length,(frigate?.070f:.090f)*scale,thickness,
                               Color::Lerp(palette.upperWing,palette.flight,.75f),
                               wildlife_render::ScaleColor(palette.flight,.70f),under);
             }

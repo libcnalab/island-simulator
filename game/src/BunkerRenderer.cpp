@@ -1,3 +1,4 @@
+#include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include "IslandSimulator/BunkerRenderer.hpp"
 
 #include "IslandSimulator/EnvironmentLighting.hpp"
@@ -78,7 +79,8 @@ std::string BunkerShaderSource(bool embedded,const char* body) {
 }
 }
 
-BunkerRenderer::BunkerRenderer(GraphicsDevice& device,const BunkerLayout& layout)
+BunkerRenderer::BunkerRenderer(GraphicsDevice& device,const BunkerLayout& layout,
+                               const RenderedTerrainSurface& ground)
     :device_(device),effect_(std::make_unique<BasicEffect>(device)) {
     std::vector<VertexPositionColor> opaque,glow;
     opaque.reserve(12000);glow.reserve(1800);
@@ -187,7 +189,9 @@ BunkerRenderer::BunkerRenderer(GraphicsDevice& device,const BunkerLayout& layout
     box({-2.25f,-.16f,-.75f},{-1.36f,3.08f,.65f},concreteDark);
     box({1.36f,-.16f,-.75f},{2.25f,3.08f,.65f},concreteDark);
     box({-2.25f,2.72f,-.75f},{2.25f,3.42f,.65f},concreteDark);
-    box({-1.55f,-.06f,-.82f},{1.55f,.10f,.35f},steelDark);
+    // Foundation under the walkable threshold, rather than a raised bar through tyres.
+    const float thresholdBase=layout.FloorRelative(-.82f);
+    box({-1.55f,thresholdBase-.18f,-.82f},{1.55f,thresholdBase-.02f,.35f},steelDark);
     // A recessed steel portal survives between the camouflage stones: layered
     // jambs, lintel and bolt plates keep the opening readable in canopy shade.
     box({-1.51f,.06f,-.70f},{-1.35f,2.78f,.34f},steel);
@@ -217,14 +221,46 @@ BunkerRenderer::BunkerRenderer(GraphicsDevice& device,const BunkerLayout& layout
     for(std::size_t i=0;i<rocks.size();++i)
         ellipsoid(rocks[i].first,rocks[i].second,4,9,
                   i%3==0?Color(76,76,61):(i%3==1?Color(65,68,57):Color(86,83,64)));
-    // The terrain shader opens the last 80 cm before the portal. A matching packed
-    // apron closes that excavation from below and carries the player smoothly onto
-    // the concrete ramp instead of exposing the clear colour through a ground hole.
-    quad({-1.48f,layout.FloorRelative(-.9f),-.9f},
-         {1.48f,layout.FloorRelative(-.9f),-.9f},
+    // The same apron contract drives rendered cutout, walking and each wheel query.
+    // A small front overlap and buried bank edges close the cut against the packed mesh.
+    const float apronFront=BunkerLayout::CorridorFrontDepth-.10f;
+    quad({-1.48f,layout.FloorRelative(apronFront),apronFront},
+         {1.48f,layout.FloorRelative(apronFront),apronFront},
          {1.48f,layout.FloorRelative(0),0},
          {-1.48f,layout.FloorRelative(0),0},Color(66,67,58));
-    box({-1.50f,.13f,-.86f},{1.50f,.20f,-.72f},Color(181,150,57));
+    for(float side:{-1.0f,1.0f}) {
+        constexpr int bankSegments=24; // 13cm spans keep the soil cut close to packed triangles.
+        const auto upper=[&](float d) {
+            const auto p=layout.World(side*1.52f,0,d);
+            return Vector3(side*1.52f,std::max(layout.FloorRelative(d)+.025f,
+                ground.Height(p.x,p.z)-layout.EntranceGroundY()+.04f),d);
+        };
+        for(int i=0;i<bankSegments;++i) {
+            const float a=apronFront*(1.0f-static_cast<float>(i)/bankSegments);
+            const float b=apronFront*(1.0f-static_cast<float>(i+1)/bankSegments);
+            const Vector3 lowA(side*1.40f,layout.FloorRelative(a)-.03f,a);
+            const Vector3 lowB(side*1.40f,layout.FloorRelative(b)-.03f,b);
+            if(side<0) quad(lowA,lowB,upper(b),upper(a),Color(86,75,55));
+            else quad(lowB,lowA,upper(a),upper(b),Color(86,75,55));
+        }
+    }
+    // Close the front cut as well: the hillside varies across the ramp's width.
+    const auto frontUpper=[&](float across) {
+        const auto p=layout.World(across,0,apronFront);
+        return Vector3(across,std::max(layout.FloorRelative(apronFront)+.025f,
+            ground.Height(p.x,p.z)-layout.EntranceGroundY()+.04f),apronFront);
+    };
+    for(int i=0;i<16;++i) {
+        const float a=-1.52f+3.04f*static_cast<float>(i)/16;
+        const float b=-1.52f+3.04f*static_cast<float>(i+1)/16;
+        const float inner=BunkerLayout::CorridorFrontDepth+.02f;
+        quad({a,layout.FloorRelative(inner)-.03f,inner},
+             {b,layout.FloorRelative(inner)-.03f,inner},
+             frontUpper(b),frontUpper(a),Color(86,75,55));
+    }
+    // Retain the yellow warning strip as a shallow threshold following the apron.
+    box({-1.50f,layout.FloorRelative(-.86f)-.015f,-.86f},
+        {1.50f,layout.FloorRelative(-.72f)+.025f,-.72f},Color(181,150,57));
 
     // Descending access passage and main spine. Six sections keep the ramp welded
     // while allowing light pools to alternate along the otherwise restrained concrete.

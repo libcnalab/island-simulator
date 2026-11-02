@@ -3,6 +3,7 @@
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
+#include "IslandSimulator/TerrainSurfaceFrame.hpp"
 #include "Microsoft/Xna/Framework/BoundingFrustum.hpp"
 #include "Microsoft/Xna/Framework/Color.hpp"
 #include "Microsoft/Xna/Framework/Graphics/BlendState.hpp"
@@ -270,11 +271,27 @@ MineRenderer::MineRenderer(GraphicsDevice& device,const MineLayout& layout,const
         if(d<portal) p.Y=std::min(p.Y,DrawnOrAnalyticHeight(ground,terrain,p.X,p.Z)+0.05f);
         return p;
     };
+    // The approach follows the hillside, so an upward normal and one colour per quad
+    // made its gravel read as a tiled slab. Sample the same support surface at each
+    // corner; shared corners retain identical light and pigment without adding geometry.
+    const auto cutNormal=[&](const float a,const float d) {
+        constexpr float HalfStep=0.125f; // half the existing depth tessellation
+        const Vector3 across=cutFloor(a+HalfStep,d)-cutFloor(a-HalfStep,d);
+        const Vector3 along=cutFloor(a,d+HalfStep)-cutFloor(a,d-HalfStep);
+        const Vector3 face=Vector3::Cross(across,along);
+        const auto n=TerrainSurfaceFrame::Normalize({face.X,face.Y,face.Z});
+        return Vector3(n.x,n.y,n.z);
+    };
     for(float d=MineLayout::CutStart-0.05f;d<portal+0.2f;d+=0.25f) {
         const float d1=std::min(d+0.25f,portal+0.2f);
         for(int k=0;k<6;++k) {
             const float a=-CutHalf+2.0f*CutHalf*static_cast<float>(k)/6.0f,a1=-CutHalf+2.0f*CutHalf*static_cast<float>(k+1)/6.0f;
-            quad(cutFloor(a,d),cutFloor(a1,d),cutFloor(a1,d1),cutFloor(a,d1),Vector3(0,1,0),Gravel*stain(a,0,d));
+            const std::array<Vector3,4> p{cutFloor(a,d),cutFloor(a1,d),cutFloor(a1,d1),cutFloor(a,d1)};
+            const std::array<Vector3,4> n{cutNormal(a,d),cutNormal(a1,d),cutNormal(a1,d1),cutNormal(a,d1)};
+            const std::array<Vector3,4> albedo{Gravel*stain(a,0,d),Gravel*stain(a1,0,d),
+                                              Gravel*stain(a1,0,d1),Gravel*stain(a,0,d1)};
+            smoothTri({p[0],p[1],p[2]},{n[0],n[1],n[2]},{albedo[0],albedo[1],albedo[2]});
+            smoothTri({p[0],p[2],p[3]},{n[0],n[2],n[3]},{albedo[0],albedo[2],albedo[3]});
         }
     }
     for(const float s:{-1.0f,1.0f}) {

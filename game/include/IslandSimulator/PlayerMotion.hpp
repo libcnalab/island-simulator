@@ -236,6 +236,10 @@ namespace island
         void UpdateInternal(const IslandTerrain& terrain, float inputX, float inputZ,
                             float deltaSeconds, std::span<const CircularObstacle> obstacles,
                             const WorldCollisionGrid* collisionGrid) noexcept;
+        [[nodiscard]] PlayerMovementTrace UpdateStep(const IslandTerrain& terrain,
+                            float inputX, float inputZ, float deltaSeconds,
+                            std::span<const CircularObstacle> obstacles,
+                            const WorldCollisionGrid* collisionGrid) noexcept;
         void ResolveModeAndHeight(const IslandTerrain& terrain,
                                   float maximumVerticalDelta) noexcept;
 

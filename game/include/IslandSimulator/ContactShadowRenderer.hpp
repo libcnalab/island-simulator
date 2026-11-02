@@ -77,7 +77,8 @@ namespace island
                   std::span<const MonkeyState> monkeys,
                   std::span<const BoarState> boars, const SnakePopulation& snakes,
                   std::span<const GoatState> goats,std::span<const SpiderState> spiders,
-                  const PlayerShadow& player);
+                  const PlayerShadow& player,
+                  const Microsoft::Xna::Framework::Vector3* sunShadowFocus = nullptr);
 
         [[nodiscard]] int VisibleShadowCount() const noexcept { return visibleShadowCount_; }
         [[nodiscard]] int VisiblePalmShadowCount() const noexcept
@@ -157,6 +158,7 @@ namespace island
         Microsoft::Xna::Framework::Matrix cachedView_;
         Microsoft::Xna::Framework::Matrix cachedProjection_;
         Microsoft::Xna::Framework::Vector3 cachedCameraPosition_;
+        Microsoft::Xna::Framework::Vector3 cachedShadowFocus_;
         std::vector<Microsoft::Xna::Framework::Vector3> cachedMonkeyPositions_;
         std::vector<Microsoft::Xna::Framework::Vector4> cachedBoarPoses_;
         std::vector<Microsoft::Xna::Framework::Vector4> cachedGoatPoses_;

@@ -57,7 +57,7 @@ namespace island
                   const Microsoft::Xna::Framework::Matrix& projection,
                   const Microsoft::Xna::Framework::Vector3& cameraPosition,
                   float timeSeconds, std::span<const MonkeyState> monkeys = {},
-                  std::span<const GrassWalker> walkers = {});
+                  std::span<const GrassWalker> walkers = {}, float cameraClearance = 0.0f);
 
         [[nodiscard]] bool UsesInstancing() const noexcept { return instancingSupported_; }
         [[nodiscard]] bool UsesCustomShader() const noexcept { return customShaderReady_; }
@@ -127,6 +127,8 @@ namespace island
             std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> instances;
             int vertexCount = 0;
             int primitiveCount = 0;
+            int distantIndexStart = 0;
+            int distantPrimitiveCount = 0;
             int instanceCapacity = 0;
             float horizontalRadius = 0.0f;
             float minimumY = 0.0f;
@@ -165,7 +167,8 @@ namespace island
         void CreateCells(const IslandTerrain& terrain, const JungleLayout& layout,
                          std::span<const BushPlacement> extraBushes);
         void DrawInstances(PlantMesh& mesh,
-                           const std::vector<Microsoft::Xna::Framework::Matrix>& transforms);
+                           const std::vector<Microsoft::Xna::Framework::Matrix>& transforms,
+                           std::span<const Microsoft::Xna::Framework::Matrix> distant = {});
 
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
         CanopyLighting& canopyLighting_;
@@ -189,6 +192,9 @@ namespace island
                    JungleLayout::CanopyVariantCount> visibleCanopyNear_;
         std::array<std::vector<Microsoft::Xna::Framework::Matrix>,
                    JungleLayout::CanopyVariantCount> visibleCanopyFar_;
+        std::array<std::vector<Microsoft::Xna::Framework::Matrix>,
+                   JungleLayout::CanopyVariantCount> visibleCanopyDistant_;
+        std::vector<Microsoft::Xna::Framework::Matrix> instanceUpload_;
         std::array<std::vector<Microsoft::Xna::Framework::Matrix>,
                    JungleLayout::StandingSnagVariantCount> visibleStandingSnagNear_;
         std::array<std::vector<Microsoft::Xna::Framework::Matrix>,

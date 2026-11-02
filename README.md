@@ -21,6 +21,10 @@ The command preserves its image, logs and kernel delta under `build/software-cap
 at most eight llvmpipe workers, hides host GPU device nodes, and never clears the separate
 hardware qualification failure latch.
 
+The same supervisor accepts `bird-flight` and `fish-swim` for sixteen fixed-clock motion stages.
+For matched coastal states, `--tide-phase .25` holds high water and `--tide-phase .75` holds low
+water; the first/last-frame proof verifies the existing tide model. Ordinary play keeps its tide clock.
+
 ![A sunny overview of the complete procedural tropical island](assets/presentation/gallery/overview.png)
 
 ## Island gallery

@@ -23,7 +23,7 @@ FAULT = re.compile(
 GL_ERROR = re.compile(r"gl-error |gl-debug .*severity=high\b")
 CAPTURE_VIEWPOINTS = frozenset(
     "overview bay bay-ground headland tide-pools beach jungle snags sapling east clearing-edge west stream mangroves grass ground ground-broadleaf bush litter contact movement palms fallen-palm broken-palm water wet-sand current "
-    "distant props driftwood reef reef-habitat fronds birds bats bat-roost fish stingrays octopuses shark dolphins monkeys shipwreck crabs crocodiles butterflies turtles herons"
+    "distant props rock-contact driftwood reef reef-habitat fronds birds bats bat-roost fish stingrays octopuses shark dolphins monkeys shipwreck crabs crocodiles butterflies turtles herons"
     .split()
 )
 
@@ -60,6 +60,16 @@ def artifact_identity(path: Path) -> dict:
         raise MonitorError(f"qualification artifact changed while being identified: {path}")
     return {"path": str(path.resolve()), "sha256": digest, "size_bytes": after.st_size,
             "device": after.st_dev, "inode": after.st_ino, "mtime_ns": after.st_mtime_ns}
+
+
+def verify_artifact_content_unchanged(before: dict, after: dict) -> None:
+    """Reject a rebuild/replacement with different bytes during a qualification run.
+
+    Both identities remain in the report. This is a before/after consistency check,
+    not an executable pin or proof against a transient replacement between checks.
+    """
+    if (before["sha256"], before["size_bytes"]) != (after["sha256"], after["size_bytes"]):
+        raise MonitorError(f"qualification artifact content changed during run: {before['path']}")
 
 
 class Journal:

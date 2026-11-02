@@ -93,6 +93,15 @@ namespace island
         return Smooth(PatchLow, PatchHigh, noise);
     }
 
+    float GroundCover::MossSuitability(const float moisture, const float transmission)
+    {
+        if (!std::isfinite(moisture) || !std::isfinite(transmission)
+            || moisture < 0 || moisture > 1 || transmission < 0 || transmission > 1)
+            throw std::invalid_argument("Invalid moss habitat input");
+        return (0.20f + 0.80f * Smooth(0.12f, 0.72f, moisture))
+            * (1.0f - 0.75f * Smooth(0.45f, 0.95f, transmission));
+    }
+
     float GroundCover::Density(const float transmission, const float patch,
                                const float shoreDistance, const float slopeRadians,
                                const float rockiness, const float beachSuitability,
@@ -129,6 +138,10 @@ namespace island
             << BeachSuppressionEnd << ");\n";
         // "patch" is reserved in GLSL ES 3.00: ANGLE rejects it even though Mesa's GLSL 330 does not.
         out << R"(
+float forestMossSuitability(float moisture,float transmission) {
+    return (0.20+0.80*smoothstep(0.12,0.72,moisture))
+        *(1.0-0.75*smoothstep(0.45,0.95,transmission));
+}
 float groundCoverDensity(float transmission,float patchValue,float shoreDistance,float slopeRadians,
                          float rockiness,float beachSuitability,float moisture,float drainage) {
     float inland=smoothstep(groundCoverTerrain.x,groundCoverTerrain.y,shoreDistance);
