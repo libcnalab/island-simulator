@@ -250,6 +250,7 @@ namespace island
             case FixedViewpoint::TRexRestDetail: return "trex-rest";
             case FixedViewpoint::TRexHeadDetail: return "trex-head";
             case FixedViewpoint::ElephantDetail: return "elephant";
+            case FixedViewpoint::ElephantWalkDetail: return "elephant-walk";
             case FixedViewpoint::ElephantCloseDetail: return "elephant-close";
             case FixedViewpoint::ElephantTrumpetDetail: return "elephant-trumpet";
             case FixedViewpoint::ElephantBatheDetail: return "elephant-bathe";
@@ -2624,13 +2625,16 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: "<<ViewpointName(viewpoint_)<<" QA camera looks at the tyrannosaur on the beach\n";
-        } else if (viewpoint_ == FixedViewpoint::ElephantDetail || viewpoint_ == FixedViewpoint::ElephantCloseDetail
+        } else if (viewpoint_ == FixedViewpoint::ElephantDetail || viewpoint_ == FixedViewpoint::ElephantWalkDetail || viewpoint_ == FixedViewpoint::ElephantCloseDetail
                    || viewpoint_ == FixedViewpoint::ElephantTrumpetDetail || viewpoint_ == FixedViewpoint::ElephantBatheDetail) {
             // Behind the south-east beach: from the side at 17 m as it walks its round; close,
             // 7 m before it standing, three-quarters on at its head and tusks; or trumpeting, at
             // 13 m.
             if(!elephant_) throw std::runtime_error("Elephant QA requires the elephant");
-            elephant_->PlaceNear(ElephantQaX,ElephantQaZ);
+            const bool walk=viewpoint_==FixedViewpoint::ElephantWalkDetail;
+            // An existing coastal route waypoint where the coarse drawn triangles
+            // disagree visibly with the analytic height under the broad soles.
+            elephant_->PlaceNear(walk?220.7f:ElephantQaX,walk?59.14f:ElephantQaZ);
             const bool close=viewpoint_==FixedViewpoint::ElephantCloseDetail,trumpet=viewpoint_==FixedViewpoint::ElephantTrumpetDetail;
             const bool bathe=viewpoint_==FixedViewpoint::ElephantBatheDetail;
             elephant_->HoldStanding(close?600.0f:0.0f);
@@ -2640,7 +2644,8 @@ namespace island
                 for(int k=0;k<20;++k) {elephant_->Update(0.1f);elephantSplash_.Update(0.1f,*elephant_);}
             }
             if(trumpet) {elephant_->PreviewTrumpet();for(int k=0;k<30;++k) elephant_->Update(0.1f);}
-            // (walking, it is set going at once: the QA view sees it mid-stride)
+            // The wide view sees the pause; the motion inspection continues
+            // through its natural end into the first steps.
             if(!close&&!trumpet&&!bathe) {for(int k=0;k<160;++k) elephant_->Update(0.1f);}
             if(close) {for(int k=0;k<30;++k) elephant_->Update(0.1f);}
             const auto& now=elephant_->State();
@@ -2648,7 +2653,7 @@ namespace island
             // (the seaward side first: it walks its round with the sea on its left; the first
             // eye with a clear sight of it past the trees and rocks)
             // (bathing, from the side, standing in the shallows)
-            const float baseAhead=close?7.0f:trumpet?9.0f:bathe?1.5f:2.0f,baseSide=close?3.5f:trumpet?9.0f:bathe?13.0f:17.0f;
+            const float baseAhead=close?7.0f:trumpet?9.0f:bathe?1.5f:2.0f,baseSide=close?3.5f:trumpet?9.0f:bathe?13.0f:walk?8.0f:17.0f;
             float ex=now.x,ez=now.z;
             bool clear=false;
             for(const float side:{1.0f,-1.0f}) {
@@ -2663,7 +2668,11 @@ namespace island
             }
             cameraPosition_=Vector3(ex,std::max(terrain_.Height(ex,ez),0.0f)+PlayerMotion::EyeHeight,ez);
             const ElephantPoint aim=bathe?elephant_->ToWorld(0.0f,.2f,.0f):close?elephant_->ToWorld(0.0f,-.1f,2.6f):trumpet?elephant_->ToWorld(0.0f,.5f,1.6f):elephant_->ToWorld(0.0f,-.5f,.4f);
-            const Vector3 direction=Vector3(aim.x,aim.y,aim.z)-cameraPosition_;
+            if(walk)cameraPosition_.Y=terrain_.Height(ex,ez)+.90f;
+            // Fixed reference camera across ground-contact repairs; body pose may change.
+            const Vector3 target=walk?Vector3(now.x,terrain_.Height(now.x,now.z)+now.bodyHeight-.6f,now.z)
+                                     :Vector3(aim.x,aim.y,aim.z);
+            const Vector3 direction=target-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: "<<ViewpointName(viewpoint_)<<" QA camera looks at the elephant on the coastal flats\n";
@@ -4068,6 +4077,7 @@ namespace island
         drawnGround_->SetLocalPatches({&terrainRenderer_->StreamBed(), &terrainRenderer_->WreckScour()});
         crocodileGroup_.SetGround(drawnGround_.get());   // they lie on the carved bed at the mouth
         deer_->SetGround(drawnGround_.get());   // and the deer stand on its banks to drink
+        elephant_->SetGround(drawnGround_.get());   // broad soles share the visible mesh and local patches
         playerMotion_.SetCave(&terrainRenderer_->Cave(),&terrainRenderer_->CaveGround());
         playerMotion_.SetBunker(&bunkerLayout_);
         playerMotion_.SetMine(&mineLayout_);
@@ -5517,8 +5527,13 @@ namespace island
             const float observerZ = riding_ ? quad_.Position().z : playerMotion_.Position().z;
             const float night = 1.0f - std::clamp((sun_light::Current().lighting.sunElevationDegrees + 3.0f) / 9.0f, 0.0f, 1.0f);
             const bool rival = trex_ && observing;
+            const auto before=elephant_->State();
             elephant_->Update(deltaSeconds, observerX, observerZ, observing, night,
                               rival ? trex_->State().x : 0.0f, rival ? trex_->State().z : 0.0f, rival);
+            if(viewpoint_==FixedViewpoint::ElephantWalkDetail) {
+                const auto& now=elephant_->State();
+                cameraPosition_+=Vector3(now.x-before.x,0,now.z-before.z);
+            }
             if (elephant_->CallCount() != notedElephantCalls_) {
                 notedElephantCalls_ = elephant_->CallCount();
                 const ElephantPoint head = elephant_->ToWorld(0.0f, 0.0f, 3.0f);
@@ -10845,7 +10860,19 @@ namespace island
                 <<" speed="<<c.speed<<" phase="<<c.gaitPhase<<" submerged="<<c.submerged
                 <<" behavior="<<static_cast<int>(c.behavior)<<" near="<<crocodileRenderer_->VisibleNearCount()<<'\n';
         }
-        const std::uint32_t targetFrames = viewpoint_==FixedViewpoint::CrocodileLandDetail ? 160U : bunkerTurnInspection_ ? BunkerTurnInspection::CaptureFrames : alienCapture||goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture||deerCapture ? 64U : viewpoint_==FixedViewpoint::QuadMineCratesDetail ? 56U : freeMotionCapture||snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
+        const bool elephantWalk=!capturePath_.empty()&&viewpoint_==FixedViewpoint::ElephantWalkDetail;
+        if(elephantWalk&&drawnFrames_%8U==0) {
+            const auto& e=elephant_->State();float low=100,high=-100;int planted=0;
+            for(const auto& leg:e.legs)if(leg.planted) {
+                const float gap=leg.foot.y-DrawnOrAnalyticHeight(*drawnGround_,terrain_,leg.foot.x,leg.foot.z);
+                low=std::min(low,gap);high=std::max(high,gap);++planted;
+            }
+            CaptureFrame(capturePath_+".elephant-stage-"+std::to_string(drawnFrames_/8U-1U)+".ppm");
+            std::cout<<"island-simulator: elephant walk stage="<<drawnFrames_/8U-1U<<" frame="<<drawnFrames_
+                <<" position="<<e.x<<','<<e.y<<','<<e.z<<" speed="<<e.speed
+                <<" behavior="<<static_cast<int>(e.behavior)<<" planted="<<planted<<" sole-error="<<low<<','<<high<<'\n';
+        }
+        const std::uint32_t targetFrames = elephantWalk ? 64U : viewpoint_==FixedViewpoint::CrocodileLandDetail ? 160U : bunkerTurnInspection_ ? BunkerTurnInspection::CaptureFrames : alienCapture||goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture||deerCapture ? 64U : viewpoint_==FixedViewpoint::QuadMineCratesDetail ? 56U : freeMotionCapture||snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
                 && (viewpoint_ == FixedViewpoint::MonkeyDetail || viewpoint_ == FixedViewpoint::MonkeyTreeDetail || viewpoint_ == FixedViewpoint::MonkeyClimbDetail)
             ? MonkeyCaptureFrames : SmokeTestFrames;
         if (captureTideHeld_ && (drawnFrames_ == 1U || drawnFrames_ == targetFrames)) {

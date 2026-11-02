@@ -13,9 +13,9 @@ contained verified llvmpipe/Pixman only. No external source/system/Git destructi
 
 Current task: user-requested original-scope continuation remains ACTIVE. Crocodile rest,
 four-beat crawl and drawn-ground support are implemented and qualified below (91/91 safe tests,
-16 inspected motion stages plus swimming control). Next observed priority: elephant sole contact
-uses analytic terrain and can sink18cm into the drawn mesh. Add natural stand→walk evidence,
-correct its ground sampling, validate, then continue the original acceptance reassessment.
+16 inspected motion stages plus swimming control). Elephant drawn-ground support and natural stand→walk evidence are now also qualified below
+(92/92 safe tests,8matched stages plus close/trumpet/bathing controls). Continue with comparable
+full-frame software measurement and a fresh holistic original-criterion reassessment.
 Compile on CPU0–3, -j2/-j3; contained verified llvmpipe/Pixman only. Sound remains closed.
 
 **No temporary diagnostic, disabled aerial range or benchmark-only source remains.**
@@ -2381,3 +2381,67 @@ terrain by −.183936..+.0451078m over5249 real route contacts (CPU probe). Base
 kernel intervals empty. Existing static elephant QA actually remains standing during its short
 capture, so add a bounded natural stand→walk inspection before correcting ground sampling.
 Goal remains ACTIVE; continue this priority, then reassess the original whole-campaign ledger.
+
+Elephant inspection progress: first natural stand→walk baseline
+`build/software-captures/20261102T213339.879980Z-elephant-walk` passes and all8stages inspected.
+It proves real transition but its south-east site has only3mm support discrepancy, so it is not
+presented as visible proof of the18cm defect. Actual route audit found a standing contact error
+−.203108..+.0607271m at the existing waypoint220.704,59.1376. Move only the new inspection
+there (legacy cameras unchanged), capture its pre-fix result, then repair ground sampling.
+One initial QA build failed the exhaustive enum switch warning in Main; missing name case was
+added and retry passes. Crocodile stage delivered in8a92339c, confirmed pushed/synced.
+
+### Qualified elephant grounding and natural walk inspection — 2026-11-02
+
+Actual world-obstacle route selected the waypoint224.568,60.1729 near the requested220.7,59.14.
+Its matched pre-fix64-frame capture is
+`build/software-captures/20261102T213751.431284Z-elephant-walk`: planted-sole error
+−.0884619..+.0446463m, visible buried/raised contact; all8before stages inspected in the pairs
+below. The separate unobstructed CPU route probe measured−.183936..+.0451078m and its stationary
+waypoint−.203108..+.0607271m. These different workloads are explicitly not conflated.
+
+ElephantMotion now takes the existing RenderedTerrainSurface after local patches are installed.
+Body support, all four soles, trunk clearance and bathing depth use the same Ground helper with
+analytic fallback outside the mesh or when unset. Route/obstacle selection, anatomy, locomotion,
+behavior, draw budget and renderer are retained. The first exact-contact regression failed
+(`build/campaign-elephant-focused-first.log`): the old slow-step override labelled a swinging
+foot planted while retaining its lift. Such feet now settle fully below5% walking pace.
+Final dedicated test checks5498support/1710swing samples, zero planted error over90simulated
+seconds, a local replacement patch, shadow endpoints, navigation preservation and null fallback.
+
+New `--viewpoint elephant-walk` uses an existing route waypoint and64normal fixed-clock updates,
+8stages, a low fixed reference camera and translation follow. It naturally waits the remainder
+of the20s standing pause and starts walking without overriding AI. The old static wide view
+finishes during the pause; its old camera is preserved and its source comment corrected.
+Strict capture validation rejects the actual pre-fix log for disagreement with drawn ground,
+and rejects missing stages, nonfinite fields, unsupported feet or omitted real walking.
+
+Final app367810a6fe4454625b953641c0e2125d47c592edcee968ad2d67893c2e30efce,
+CNA runtime950faa719ec2fb51cde7220d3e28100f2609731ede56c7cf4088bda0d2dcde5c.
+CPU0–3/-j2 Release/OpenGL33 build passes (`build/campaign-elephant-final-build.log`);
+**92/92 safe tests pass in151.45s** (`build/campaign-elephant-final-safe-ctest.log`, functional
+run concurrent with software captures, not a comparable performance measurement). Launcher75/75
+pass. No physical GPU test, driver change, external-source change or new graphical resource.
+
+Final software scope `build/software-captures/20261102T214425.891885Z-elephant-walk`:
+64rendered/64updated frames,8ordered stages,0.97501m travel, four resting contacts then3/2walking
+contacts, all planted sole errors0. All matched8before/after stages reviewed in
+`build/campaign-elephant-ground-pairs-{1,2}.png`. Their entire upper200px background is8/8exact;
+reference camera/seed/clock/lighting match, XZ path retained. The visible change is local body/foot
+support; no anatomy redesign or claim to have solved persistent stance slip on acceleration.
+
+Additional inspected safe controls:
+- `build/software-captures/20261102T214453.478972Z-elephant-close`
+- `build/software-captures/20261102T214509.950953Z-elephant-trumpet`
+- `build/software-captures/20261102T214527.262677Z-elephant-bathe`
+- `build/software-captures/20261102T214544.182870Z-trex-close`
+- `build/software-captures/20261102T214600.674991Z-trex-rest`
+All6scopes pass llvmpipe/Pixman/private-device containment, unchanged identities and final kernel[].
+TRex representation/rest retained after inspection; its separate CPU probe reports−.0461..+.0554m
+ball-support deviation, not the elephant's larger contact problem. No speculative remodel done.
+
+Isolated CPU3×20,000updates: elephant median12.8734→.870119us/update, using the existing cached
+heightfield instead of repeatedly evaluating analytic terrain (`build/campaign-elephant-cpu-comparison.json`).
+This is one simulation component, not a93%application/frame speedup. Draw/mesh budgets unchanged;
+only a non-owning ground pointer is added to this one motion object. Full-frame software pair
+and fresh whole-island review are the next qualification work; goal remains ACTIVE.

@@ -8,6 +8,7 @@
 
 namespace island {
 class IslandTerrain;
+class RenderedTerrainSurface;
 
 struct ElephantPoint {float x=0,y=0,z=0;};
 
@@ -68,6 +69,9 @@ public:
     static constexpr float BatheDepth=1.25f,BatheSeconds=80.0f;
 
     ElephantMotion(const IslandTerrain& terrain,std::span<const CircularObstacle> obstacles);
+    /** Use the drawn mesh and its local patches for body, soles and trunk clearance.
+     *  Does not change the existing route; nullptr restores analytic support. */
+    void SetGround(const RenderedTerrainSurface* ground) noexcept;
     void Update(float seconds) {Update(seconds,0.0f,0.0f,false,0.0f,0.0f,0.0f,false);}
     /** With the walker (or the quad) at (observerX, observerZ) and the tyrannosaur at
      *  (rivalX, rivalZ): it watches the walker within WatchDistance and trumpets at the walker within
@@ -119,6 +123,7 @@ private:
     void Begin(ElephantBehavior what,float seconds);
     void RejoinRound();
     const IslandTerrain& terrain_;
+    const RenderedTerrainSurface* ground_=nullptr;
     std::vector<ElephantPoint> route_;
     std::vector<CircularObstacle> obstacles_;   // near its round, which it steers round
     std::size_t target_=1;

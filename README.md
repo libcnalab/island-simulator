@@ -623,7 +623,7 @@ procedural source and export disposable PCM16 WAV previews for focused listening
 The automated browser smoke test verifies renderer initialization, the portable terrain-material,
 animated-ocean, and fixed-sky shaders, hardware-instanced palm/jungle/prop LOD, portable instanced
 grass wind, a finite first-draw startup timing line, four frames, clean shutdown, active
-overview/beach/jungle/prop/driftwood/reef/shipwreck/crabs/crocodiles/butterflies/turtles/water/
+overview/beach/jungle/prop/driftwood/reef/shipwreck/crabs/crocodiles/crocodile-land/elephant-walk/butterflies/turtles/water/
 current/grass/frond/distant/bird/fish/shark/monkey screenshots, the transient run-mode confirmation,
 and portable overlay text rendering.
 The close prop view additionally requires a nonzero one-draw contact-shadow batch.

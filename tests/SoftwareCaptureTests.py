@@ -19,7 +19,7 @@ from run_software_capture import (
     validate_goat_motion_stages,
     validate_boar_motion_stages,
     validate_deer_motion_stages,
-    validate_bunker_quad_entry, validate_bunker_quad_turn, validate_crocodile_land,
+    validate_bunker_quad_entry, validate_bunker_quad_turn, validate_crocodile_land, validate_elephant_walk,
     validate_spider_motion_stages,
     validate_spider_render_log,
     validate_spider_web_render_log,
@@ -258,6 +258,18 @@ class SoftwareCaptureTests(unittest.TestCase):
                     re.sub(r"position=\d,2,3", "position=1,2,3", good)):
             with self.subTest(bad=bad), self.assertRaises(RuntimeError):
                 validate_boar_motion_stages(bad)
+
+    def test_elephant_walk_requires_drawn_contact_and_real_transition(self):
+        good=''.join(f"island-simulator: elephant walk stage={i} frame={(i+1)*8} "
+                     f"position={0 if i<4 else (i-3)*.3},0,0 speed={0 if i<4 else .5} "
+                     f"behavior={1 if i<4 else 0} planted=3 sole-error=0,0\n" for i in range(8))
+        self.assertGreater(validate_elephant_walk(good)["travel"],.5)
+        for bad in ('',good+good,good.replace('frame=64','frame=63'),
+                    good.replace('sole-error=0,0','sole-error=-.08,.04'),
+                    good.replace('sole-error=0,0','sole-error=nan,0'),
+                    good.replace('planted=3','planted=1'),good.replace('speed=0.5','speed=0'),
+                    good.replace('behavior=0','behavior=1')):
+            with self.subTest(bad=bad),self.assertRaises(RuntimeError):validate_elephant_walk(bad)
 
     def test_crocodile_land_rejects_rest_pedalling_and_missing_crawl(self):
         good=''.join(f"island-simulator: crocodile land stage={i} frame={(i+1)*10} "

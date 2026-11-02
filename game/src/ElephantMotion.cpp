@@ -1,5 +1,6 @@
 #include "IslandSimulator/ElephantMotion.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
+#include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include <algorithm>
 #include <cmath>
 #include <numbers>
@@ -59,7 +60,15 @@ ElephantMotion::ElephantMotion(const IslandTerrain& terrain,const std::span<cons
     PoseLegs(0.0f);
 }
 
-float ElephantMotion::Ground(const float x,const float z) const noexcept {return terrain_.Height(x,z);}
+float ElephantMotion::Ground(const float x,const float z) const noexcept {
+    return ground_?DrawnOrAnalyticHeight(*ground_,terrain_,x,z):terrain_.Height(x,z);
+}
+
+void ElephantMotion::SetGround(const RenderedTerrainSurface* ground) noexcept {
+    ground_=ground;
+    state_.y=Ground(state_.x,state_.z);
+    PoseLegs(distance_/StrideLength);
+}
 
 void ElephantMotion::PlaceNear(const float x,const float z) {
     std::size_t best=0;
@@ -456,7 +465,9 @@ void ElephantMotion::PoseLegs(const float phase) {
             leg.planted=false;
         }
         along*=pace;lift*=pace;flex*=pace;
-        if(pace<.05f) leg.planted=true;
+        // At the start/end of a step all four feet settle; a foot labelled
+        // planted must not retain the tiny swing lift from the slow phase.
+        if(pace<.05f) {leg.planted=true;lift=0;flex=0;}
         const float base=front?ShoulderAhead+.05f:-HipBehind;
         const float across=front?.47f:.44f;
         const float px=state_.x+fx*(base+along)+rx*side*across,pz=state_.z+fz*(base+along)+rz*side*across;
