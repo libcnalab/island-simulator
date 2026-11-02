@@ -2027,3 +2027,8 @@ route that drives through that scenery just because room-floor collision lacks f
 Service workshop has a clear centre (cabinets at6.46+, bench across3.15..5.95/depth34.25+).
 Investigate a continuous driven turn there, retaining existing physics and real footprint checks;
 previous exit test starts reoriented and does not prove a turn. Sound closed by user confirmation.
+
+Alien production mesh/CPU qualification committed as1ea80289. Castle geometry/material/door
+collision and both new landmark capture fixtures are the following cohesive commit; all were
+covered in the88-test run and actual screenshots above. Main switch indentation cleanup is
+whitespace only. Continue with bunker route; do not close campaign after these commits.

@@ -1,4 +1,5 @@
 #include "IslandSimulator/CastleRuinRenderer.hpp"
+#include "IslandSimulator/CastleWallSection.hpp"
 #include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
@@ -98,32 +99,50 @@ CastleRuinRenderer::CastleRuinRenderer(GraphicsDevice& device,const CastleRuinPl
         }
         const auto column=[&](const Vector3& p0,const Vector3& p1,const Vector3& h0v,const Vector3& h1v,
                               const float u0,const float hA,const float hB,const std::uint32_t id) {
-            if(std::max(hA,hB)-u0<0.04f) return;
-            const Vector3 half0=h0v*(thickness*0.5f),half1=h1v*(thickness*0.5f);
-            const auto at=[&](const Vector3& p,const Vector3& half,const float side,const float level) {
-                return Vector3(p.X+half.X*side,groundAt(p.X,p.Z)+level,p.Z+half.Z*side);
-            };
-            b.inside=(at(p0,half0,0.0f,(u0+hA)*0.5f)+at(p1,half1,0.0f,(u0+hB)*0.5f))*0.5f;
             const float tallest=std::max(hA,hB);
-            int course=0;
-            for(float a=u0;a<tallest-0.03f;a+=Course,++course) {
-                const float up=a+Course;
-                const float t0=std::min(up,hA),t1=std::min(up,hB);
-                if(t0<=a&&t1<=a) continue;
-                const Vector3 shade=Stone*(0.84f+0.26f*Hash(id*2654435761U+static_cast<std::uint32_t>(course)*40503U+(++blockCounter&0U)));
-                for(const float side:{-1.0f,1.0f})
-                    b.Quad(at(p0,half0,side,a),at(p1,half1,side,a),at(p1,half1,side,std::max(t1,a)),at(p0,half0,side,std::max(t0,a)),
-                           side>0.0f?shade:shade*0.96f);
+            const auto whole=castle_wall::Course(hA,hB,u0,tallest);
+            if(whole.count==0) return;
+            const Vector3 half0=h0v*(thickness*.5f),half1=h1v*(thickness*.5f);
+            const auto at=[&](float t,float side,float height) {
+                const auto p=Vector3::Lerp(p0,p1,t),half=Vector3::Lerp(half0,half1,t);
+                return Vector3(p.X+half.X*side,groundAt(p.X,p.Z)+height,p.Z+half.Z*side);
+            };
+            float begin=1,end=0;
+            for(std::size_t k=0;k<whole.count;++k) {
+                begin=std::min(begin,whole.points[k].along);end=std::max(end,whole.points[k].along);
             }
-            const Vector3 cap=Stone*(0.9f+0.15f*Hash(id*40503U+7U));
-            b.Quad(at(p0,half0,-1.0f,hA),at(p1,half1,-1.0f,hB),at(p1,half1,1.0f,hB),at(p0,half0,1.0f,hA),cap*1.04f);
-            b.Quad(at(p0,half0,-1.0f,u0),at(p0,half0,1.0f,u0),at(p0,half0,1.0f,hA),at(p0,half0,-1.0f,hA),Stone*0.9f);
-            b.Quad(at(p1,half1,1.0f,u0),at(p1,half1,-1.0f,u0),at(p1,half1,-1.0f,hB),at(p1,half1,1.0f,hB),Stone*0.9f);
+            const float beginTop=std::max(u0,std::lerp(hA,hB,begin));
+            const float endTop=std::max(u0,std::lerp(hA,hB,end));
+            b.inside=(at(begin,0,(u0+beginTop)*.5f)+at(end,0,(u0+endTop)*.5f))*.5f;
+            int course=0;
+            for(float a=u0;a<tallest-.0001f;a+=Course,++course) {
+                const auto polygon=castle_wall::Course(hA,hB,a,a+Course);
+                if(!polygon.count) continue;
+                const Vector3 shade=Stone*(.96f+.08f*Hash(id*2654435761U
+                    +static_cast<std::uint32_t>(course)*40503U+(++blockCounter&0U)));
+                for(float side:{-1.0f,1.0f}) {
+                    const auto corner=[&](std::size_t k) {
+                        return at(polygon.points[k].along,side,polygon.points[k].height);
+                    };
+                    for(std::size_t k=1;k+1<polygon.count;++k)
+                        b.Face(corner(0),corner(k),corner(k+1),side>0?shade:shade*.96f);
+                }
+            }
+            const auto cap=Stone*(.9f+.15f*Hash(id*40503U+7U));
+            b.Quad(at(begin,-1,beginTop),at(end,-1,endTop),at(end,1,endTop),at(begin,1,beginTop),cap*1.04f);
+            b.Quad(at(begin,-1,u0),at(begin,1,u0),at(begin,1,beginTop),at(begin,-1,beginTop),Stone*.9f);
+            b.Quad(at(end,1,u0),at(end,-1,u0),at(end,-1,endTop),at(end,1,endTop),Stone*.9f);
+            if(u0>Foot+.01f)
+                b.Quad(at(begin,1,u0),at(end,1,u0),at(end,-1,u0),at(begin,-1,u0),Stone*.82f);
+
         };
         for(int k=0;k<count;++k) {
             const float ta=static_cast<float>(k)/static_cast<float>(count),tb=static_cast<float>(k+1)/static_cast<float>(count);
             const Vector3 p0=pos(ta),p1=pos(tb),r0=radial(ta),r1=radial(tb);
-            const float h0=heights[static_cast<std::size_t>(k)],h1=heights[static_cast<std::size_t>(k+1)];
+            // Individual surviving stones have chipped plateaus, not pyramid-shaped merlons.
+            const float level=.3f*std::floor(heights[static_cast<std::size_t>(k)]/.3f+.5f);
+            const float h0=level-.045f*Hash(seed*131U+static_cast<std::uint32_t>(k)*7U);
+            const float h1=level-.07f*Hash(seed*31U+static_cast<std::uint32_t>(k)*11U);
             const auto gap=opening((ta+tb)*0.5f);
             const std::uint32_t id=seed*131U+static_cast<std::uint32_t>(k);
             if(gap[0]>=std::max(h0,h1)) {column(p0,p1,r0,r1,Foot,h0,h1,id);continue;}
@@ -157,11 +176,22 @@ CastleRuinRenderer::CastleRuinRenderer(GraphicsDevice& device,const CastleRuinPl
     };
 
     // the curtain wall: the front with its gate, the back and west sides, the east with its breach
-    straight(-reach,mid,reach,mid,face,K::Wall,broken(11U,0.45f,1.4f),
+    const auto archSoffit=[](float across) {
+        const float x=across/K::GateHalf;
+        return 2.7f+1.3f*std::sqrt(std::max(0.0f,1-x*x)); // surviving left half-arch; clear of the walker
+    };
+    straight(-reach,mid,reach,mid,face,K::Wall,
+             [&](float t) {
+                 const float a=-reach+t*2*reach;
+                 float top=broken(11U,.45f,1.4f)(t);
+                 if(a>=-K::GateHalf&&a<0) top=std::max(top,archSoffit(a)+.5f);
+                 if(a>=-K::GateHalf-.9f&&a<-K::GateHalf) top=std::max(top,3.7f);
+                 return top;
+             },
              [&](const float t) {
                  const float a=-reach+t*2.0f*reach;
                  if(std::abs(a)>=K::GateHalf) return std::array<float,2>{{99.0f,99.0f}};
-                 return a<0.0f?std::array<float,2>{{-0.5f,4.0f}}:std::array<float,2>{{-0.5f,99.0f}};   // the left half of the arch still spans, the right fallen
+                 return a<0?std::array<float,2>{{-.5f,archSoffit(a)}}:std::array<float,2>{{-.5f,99}}; // left arch survives from its supported spring
              },true,11U);
     straight(-reach,-mid,reach,-mid,face,K::Wall,broken(23U,0.3f,2.2f),slits(-reach,reach,{-5.0f,-1.5f,5.5f}),true,23U);
     straight(-mid,-reach,-mid,reach,right,K::Wall,broken(37U,0.5f,1.2f),slits(-reach,reach,{-4.5f,2.0f,5.0f}),true,37U);
@@ -223,7 +253,7 @@ CastleRuinRenderer::CastleRuinRenderer(GraphicsDevice& device,const CastleRuinPl
         straight(kr-kh,kf+km,kr+kh,kf+km,face,kw,high(105U,2.2f,7.0f),
                  [&](const float t) {
                      const float a=-kh+t*2.0f*kh;
-                     return std::abs(a+0.3f)<0.85f?std::array<float,2>{{-0.5f,3.3f}}:std::array<float,2>{{99.0f,99.0f}};   // the doorway
+                     return std::abs(a-K::KeepDoorCentre)<K::KeepDoorHalf?std::array<float,2>{{-0.5f,3.3f}}:std::array<float,2>{{99.0f,99.0f}};
                  },false,105U);
     }
 
@@ -244,9 +274,12 @@ CastleRuinRenderer::CastleRuinRenderer(GraphicsDevice& device,const CastleRuinPl
                    centre+Vector3(std::cos(a1),0.55f,std::sin(a1))*0.66f,Hollow);
         }
         b.tint=nullptr;
+        const auto woodStart=b.builder.mesh.size();
         b.Tube({centre+right*0.95f,centre+right*0.95f+Vector3::Up*2.1f},{0.07f,0.06f},6,Timber);
         b.Tube({centre-right*0.95f,centre-right*0.95f+Vector3::Up*1.3f},{0.07f,0.04f},6,Timber*0.9f);
         b.Tube({centre+right*0.95f+Vector3::Up*2.0f,centre+right*0.1f+Vector3::Up*2.06f},{0.05f,0.045f},6,Timber);
+        // Explicit opaque material marker: the stone receiver leaves the old timber plain.
+        for(auto i=woodStart;i<b.builder.mesh.size();++i) b.builder.mesh[i].Color.setAProperty(254);
         b.tint=nullptr;
     }
 
@@ -256,6 +289,7 @@ CastleRuinRenderer::CastleRuinRenderer(GraphicsDevice& device,const CastleRuinPl
         const float lichenPatch=0.5f+0.5f*std::sin(centre.X*5.1f+centre.Z*3.7f);
         return Vector3::Lerp(pigment*(0.86f+0.18f*lichenPatch),Moss,std::clamp((normal.Y-0.6f)*1.6f,0.0f,1.0f)*0.5f);
     };
+    const auto looseStart=b.builder.mesh.size();
     for(int k=0;k<150;++k) {
         const auto seed=static_cast<std::uint32_t>(k)*2654435761U+0x4321U;
         const float along=-reach+2.0f*reach*Hash(seed);
@@ -280,6 +314,8 @@ CastleRuinRenderer::CastleRuinRenderer(GraphicsDevice& device,const CastleRuinPl
         b.Box(at+Vector3::Up*size*0.4f,rr,Vector3::Up,Vector3(-rr.Z,0.0f,rr.X),size*1.4f,size*0.65f,size,shade,shade*1.05f);
     }
     b.tint=nullptr;
+    // Each loose piece is one stone; do not paint another brick grid across its faces.
+    for(auto i=looseStart;i<b.builder.mesh.size();++i) b.builder.mesh[i].Color.setAProperty(254);
 
     auto& mesh=b.builder.mesh;
     landmark_shapes::Note("castle",mesh);
@@ -295,7 +331,11 @@ CastleRuinRenderer::CastleRuinRenderer(GraphicsDevice& device,const CastleRuinPl
     effect_->setFogEnabledProperty(true);
     effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
     effect_->setFogStartProperty(300.0f);effect_->setFogEndProperty(760.0f);
-    try {receiver_=std::make_unique<StructureShadowReceiver>(device,"castle",false,300.0f,760.0f,0.46f);}
+    try {
+        receiver_=std::make_unique<StructureShadowReceiver>(device,"castle",false,300.0f,760.0f,.46f,StructureSurface::CastleStone);
+        const std::string marker="island-simulator: castle stone receiver loaded; staggered limestone courses, feathered joints and distance-filtered grain; timber preserved";
+        std::cout<<marker<<'\n';MirrorRuntimeDiagnosticToPlatformLog(marker);
+    }
     catch(const std::exception& error) {
         std::cout<<"island-simulator: castle sun shadow receiver unavailable: "<<error.what()<<'\n';
     }

@@ -711,7 +711,7 @@ def run_monitored_capture(command, root, environment, evidence, journal, baselin
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("build", type=Path)
-    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"fish-swim", "bird-flight", "campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "quad", "quad-ride", "quad-chase", "quad-drive", "quad-bunker", "quad-mine", "quad-mine-crates", "quad-volcano", "quad-cave", "quad-cave-top", "quad-jetty", "quad-helicopter", "quad-lookout", "quad-bear", "quad-stream", "quad-sea", "quad-audit", "quad-plane", "quad-whale", "quad-lighthouse", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "jetty-end", "anemone", "walker-shadow", "flight", "bridge", "lookout", "log", "beach-vine", "hut", "hut-material", "hut-eaves", "helicopter", "helicopter-inside", "resident", "resident-tending", "resident-fishing", "bear", "bear-lying", "boars", "boar-lying", "goats", "goat-lying", "deer", "deer-walk", "deer-alert", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "monkey-scratch", "ground-doves", "bird-preen", "frigatebird", "whale-skeleton", "idol", "idol-offerings", "castle", "ufo", "alien", "alien-examine", "alien-hull", "orbit", "bunker-side", "crab-migration", "termite-swarm", "booby-colony", "booby-nests", "mudskippers", "weaver-nests", "weaver-display", "balloon", "balloon-close", "trex", "trex-close", "trex-roar", "trex-rest", "trex-head", "elephant", "elephant-close", "elephant-trumpet", "elephant-bathe", "journal", "journal-notice", "help-sign", "lighthouse", "lighthouse-stair", "lighthouse-gallery", "lighthouse-lantern", "lighthouse-cottage", "passing-ship", "whale-breach", "pandanus", "termite-nest", "flying-fish", "windthrow", "windthrow-log", "glowing-fungi", "foxfire-log", "foxfire-snag", "plane-wreck", "plane-cockpit", "beach-litter", "freighter", "freighter-deck", "freighter-hold", "freighter-crew", "freighter-mess", "freighter-birds", "freighter-stern", "mine", "mine-cutting", "mine-adit", "mine-chamber", "mine-bats", "mine-bats-night", "mine-puddle", "volcano", "volcano-crater", "volcano-flow", "lifeboat", "signal-fire", "stingray-buried"}))
+    parser.add_argument("viewpoint", choices=sorted(CAPTURE_VIEWPOINTS | {"fish-swim", "bird-flight", "campfire", "campfire-wide", "cave", "cave-top", "cave-inside", "cave-back", "bunker", "bunker-corridor", "bunker-computers", "bunker-reactor", "bunker-service", "bunker-end", "stream", "wetland", "turtle-nest", "helicopter-approach", "quad", "quad-ride", "quad-chase", "quad-drive", "quad-bunker", "quad-mine", "quad-mine-crates", "quad-volcano", "quad-cave", "quad-cave-top", "quad-jetty", "quad-helicopter", "quad-lookout", "quad-bear", "quad-stream", "quad-sea", "quad-audit", "quad-plane", "quad-whale", "quad-lighthouse", "shipwreck-wide", "tracks", "fruit", "cascade", "jetty", "jetty-end", "anemone", "walker-shadow", "flight", "bridge", "lookout", "log", "beach-vine", "hut", "hut-material", "hut-eaves", "helicopter", "helicopter-inside", "resident", "resident-tending", "resident-fishing", "bear", "bear-lying", "boars", "boar-lying", "goats", "goat-lying", "deer", "deer-walk", "deer-alert", "deer-bedded", "spiders", "spiders-bright", "spider-web", "snakes", "snake-head", "tree-snakes", "geckos", "skinks", "dragonflies", "frogs", "mice", "rats", "flies", "ants", "cicadas", "beetles", "hermit-crabs", "coconut-crabs", "canopy", "monkey-tree", "monkey-climb", "monkey-scratch", "ground-doves", "bird-preen", "frigatebird", "whale-skeleton", "idol", "idol-offerings", "castle", "castle-gate", "castle-courtyard", "ufo", "alien", "alien-walk", "alien-examine", "alien-hull", "orbit", "bunker-side", "crab-migration", "termite-swarm", "booby-colony", "booby-nests", "mudskippers", "weaver-nests", "weaver-display", "balloon", "balloon-close", "trex", "trex-close", "trex-roar", "trex-rest", "trex-head", "elephant", "elephant-close", "elephant-trumpet", "elephant-bathe", "journal", "journal-notice", "help-sign", "lighthouse", "lighthouse-stair", "lighthouse-gallery", "lighthouse-lantern", "lighthouse-cottage", "passing-ship", "whale-breach", "pandanus", "termite-nest", "flying-fish", "windthrow", "windthrow-log", "glowing-fungi", "foxfire-log", "foxfire-snag", "plane-wreck", "plane-cockpit", "beach-litter", "freighter", "freighter-deck", "freighter-hold", "freighter-crew", "freighter-mess", "freighter-birds", "freighter-stern", "mine", "mine-cutting", "mine-adit", "mine-chamber", "mine-bats", "mine-bats-night", "mine-puddle", "volcano", "volcano-crater", "volcano-flow", "lifeboat", "signal-fire", "stingray-buried"}))
     parser.add_argument("--canopy-lod-inspection", nargs=3, metavar=("X_MM", "Z_MM", "TIER"))
     parser.add_argument("--tide-phase", type=float, default=None, help="QA: hold existing tide phase in [0,1)")
     parser.add_argument("--time-of-day", type=float, default=None,
@@ -938,6 +938,30 @@ def main():
                         check=False, timeout=15)
                     if validation.returncode:
                         raise RuntimeError(f"{species} stage {stage} image validation failed")
+            if args.viewpoint in ("castle","castle-gate","castle-courtyard"):
+                if "castle stone receiver loaded;" not in log or "castle sun shadow receiver unavailable" in log:
+                    raise RuntimeError("castle capture did not retain its coursed stone material")
+            if args.viewpoint == "alien-walk":
+                rows=re.findall(r"alien motion stage=(\d+) updates=(\d+) time=(\S+) visible=([01]) "
+                    r"position=(\S+) heading=(\S+) speed=(\S+) triangles=(\d+) feet=(\S+)",log)
+                if (len(rows)!=16 or [int(r[0]) for r in rows]!=list(range(16))
+                    or [int(r[1]) for r in rows]!=list(range(4,65,4))
+                    or any(r[3]!="1" or not 0<int(r[7])<=5333 for r in rows)):
+                    raise RuntimeError("missing visible alien motion stages")
+                positions=[]
+                for stage,r in enumerate(rows):
+                    point=list(map(float,r[4].split(',')));positions.append(point)
+                    if len(point)!=3 or not all(map(math.isfinite,[*point,float(r[5]),float(r[6])])):
+                        raise RuntimeError("invalid alien motion pose")
+                    feet=[list(map(float,f.split(','))) for f in r[8].strip(';').split(';')]
+                    if len(feet)!=2 or any(len(f)!=5 or not all(map(math.isfinite,f))
+                        or f[3] not in (0,1) or (f[3]==1 and abs(f[4])>.05) for f in feet):
+                        raise RuntimeError("alien walking feet lost the drawn ground")
+                    if not Path(str(capture)+f".alien-stage-{stage}.ppm").is_file():
+                        raise RuntimeError("missing alien motion image")
+                if math.dist(positions[0],positions[-1])<.3 or max(float(r[6]) for r in rows)<.2:
+                    raise RuntimeError("alien motion capture did not actually walk")
+                (evidence/"alien-motion.json").write_text(json.dumps(rows,indent=2)+"\n")
             if args.viewpoint == "deer-alert":
                 rows=re.findall(r"deer alert stage=(\d+) updates=(\d+) time=(\S+) visible=(\d+) "
                     r"position=(\S+) heading=(\S+) speed=(\S+) phase=(\S+) bed=(\S+) tier=(\d+)",log)

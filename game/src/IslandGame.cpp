@@ -219,8 +219,11 @@ namespace island
             case FixedViewpoint::IdolDetail: return "idol";
             case FixedViewpoint::IdolOfferingsDetail: return "idol-offerings";
             case FixedViewpoint::CastleDetail: return "castle";
+            case FixedViewpoint::CastleGateDetail: return "castle-gate";
+            case FixedViewpoint::CastleCourtyardDetail: return "castle-courtyard";
             case FixedViewpoint::UfoDetail: return "ufo";
             case FixedViewpoint::AlienDetail: return "alien";
+            case FixedViewpoint::AlienMotionDetail: return "alien-walk";
             case FixedViewpoint::AlienExamineDetail: return "alien-examine";
             case FixedViewpoint::AlienHullDetail: return "alien-hull";
             case FixedViewpoint::QuadAuditDetail: return "quad-audit";
@@ -2878,16 +2881,24 @@ namespace island
             } else {
                 std::cout<<"island-simulator: idol QA camera looks up at the stone god's face from before its platform\n";
             }
-        } else if (viewpoint_ == FixedViewpoint::CastleDetail) {
+        } else if (viewpoint_ == FixedViewpoint::CastleDetail
+            ||viewpoint_==FixedViewpoint::CastleGateDetail||viewpoint_==FixedViewpoint::CastleCourtyardDetail) {
             // Outside the gate, up a little, looking across the courtyard at the keep and the towers.
             if(!castlePlacement_) throw std::runtime_error("Castle QA requires the castle ruin");
             const auto& g=*castlePlacement_;
-            const auto eye=g.At(-16.0f,CastleRuinPlacement::Half+36.0f);
-            cameraPosition_=Vector3(eye[0],std::max(terrain_.Height(eye[0],eye[1]),g.groundY)+PlayerMotion::EyeHeight+8.0f,eye[1]);
-            const Vector3 direction=Vector3(g.x,g.groundY+3.5f,g.z)-cameraPosition_;
+            const bool gate=viewpoint_==FixedViewpoint::CastleGateDetail;
+            const bool courtyard=viewpoint_==FixedViewpoint::CastleCourtyardDetail;
+            const auto eye=gate?g.At(-3.5f,CastleRuinPlacement::Half+7.0f)
+                :courtyard?g.At(3.5f,5.5f):g.At(-16.0f,CastleRuinPlacement::Half+36.0f);
+            cameraPosition_=Vector3(eye[0],(gate||courtyard?terrain_.Height(eye[0],eye[1])
+                :std::max(terrain_.Height(eye[0],eye[1]),g.groundY))+PlayerMotion::EyeHeight
+                +(gate||courtyard?0.0f:8.0f),eye[1]);
+            const auto aim=gate?g.At(0,CastleRuinPlacement::Half-1.0f)
+                :courtyard?g.At(CastleRuinPlacement::KeepRight,CastleRuinPlacement::KeepForward):g.At(0,0);
+            const Vector3 direction=Vector3(aim[0],(gate||courtyard?terrain_.Height(aim[0],aim[1]):g.groundY)+(gate?2.7f:3.5f),aim[1])-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
-            std::cout<<"island-simulator: castle QA camera looks at the castle ruin from outside its gate\n";
+            std::cout<<"island-simulator: castle QA camera "<<(courtyard?"frames the keep from the courtyard":gate?"frames the gate at walking height":"looks at the castle ruin from outside its gate")<<'\n';
         } else if (viewpoint_ == FixedViewpoint::UfoDetail) {
             // From the front quarter, up a little, across the wreck toward its furrow.
             if(!ufoPlacement_) throw std::runtime_error("Ufo QA requires the crashed saucer");
@@ -2898,7 +2909,7 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: ufo QA camera looks at the crashed saucer from its front quarter\n";
-        } else if (viewpoint_ == FixedViewpoint::AlienDetail || viewpoint_ == FixedViewpoint::AlienExamineDetail
+        } else if (viewpoint_ == FixedViewpoint::AlienDetail || viewpoint_ == FixedViewpoint::AlienMotionDetail || viewpoint_ == FixedViewpoint::AlienExamineDetail
                    || viewpoint_ == FixedViewpoint::AlienHullDetail) {
             // Close before the alien: standing and looking about; crouched over a torn plate; or
             // with its hands on the hull.
@@ -2911,6 +2922,8 @@ namespace island
                 alien_->Place(5.5f,-1.8f,AlienBehavior::TendHull,600.0f);
             } else {
                 alien_->Place(-8.5f,-6.0f,AlienBehavior::Stand,600.0f);
+                if(viewpoint_==FixedViewpoint::AlienMotionDetail&&!alien_->PreviewWalk())
+                    throw std::runtime_error("Alien walking QA has no clear local route");
             }
             const auto& now=alien_->State();
             const float fx=std::cos(now.heading),fz=std::sin(now.heading);
@@ -5481,8 +5494,13 @@ namespace island
         if (alien_) {
             // it watches the walker (or the rider) and bolts from one too near
             const bool observing = viewpoint_ == FixedViewpoint::None;
+            const auto before=alien_->State();
             alien_->Update(deltaSeconds, riding_ ? quad_.Position().x : playerMotion_.Position().x,
                            riding_ ? quad_.Position().z : playerMotion_.Position().z, observing);
+            if(viewpoint_==FixedViewpoint::AlienMotionDetail) {
+                const auto& now=alien_->State();
+                cameraPosition_+=Vector3(now.x-before.x,now.y-before.y,now.z-before.z);
+            }
         }
         if (elephant_) {
             // it watches the walker (or the rider) and trumpets at one too close, or at the
@@ -10622,6 +10640,21 @@ namespace island
                 << " tier=" << static_cast<unsigned>(subject.simulationTier);
             std::cout << report.str() << std::endl;
         }
+        const bool alienCapture=!capturePath_.empty()&&viewpoint_==FixedViewpoint::AlienMotionDetail;
+        if(alienCapture&&drawnFrames_%4U==0&&drawnFrames_<=64U) {
+            GpuDiagnosticScope gpuPass("capture-readback");
+            const auto stage=drawnFrames_/4U-1U;
+            CaptureFrame(capturePath_+".alien-stage-"+std::to_string(stage)+".ppm");
+            const auto& a=alien_->State();std::ostringstream report;report.precision(9);
+            report<<"island-simulator: alien motion stage="<<stage<<" updates="<<drawnFrames_
+                <<" time="<<timeSeconds<<" visible="<<alienRenderer_->Visible()
+                <<" position="<<a.x<<','<<a.y<<','<<a.z<<" heading="<<a.heading<<" speed="<<a.speed
+                <<" triangles="<<alienRenderer_->TriangleCount()<<" feet=";
+            for(const auto& leg:a.legs)
+                report<<leg.foot.x<<','<<leg.foot.y<<','<<leg.foot.z<<','<<(leg.planted?1:0)<<','
+                    <<leg.foot.y-DrawnOrAnalyticHeight(*drawnGround_,terrain_,leg.foot.x,leg.foot.z)<<';';
+            std::cout<<report.str()<<std::endl;
+        }
         const bool deerCapture=UsesDeerCaptureClock();
         if(deerCapture&&viewpoint_!=FixedViewpoint::DeerAlertDetail&&drawnFrames_%8U==0&&drawnFrames_<=64U) {
             GpuDiagnosticScope gpuPass("capture-readback");
@@ -10780,7 +10813,7 @@ namespace island
                 <<" frames="<<drawnFrames_<<" time="<<timeSeconds
                 <<" draws="<<streamWaterRenderer_->DrawCallCount()<<" triangles=6080\n";
         }
-        const std::uint32_t targetFrames = goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture||deerCapture ? 64U : viewpoint_==FixedViewpoint::QuadMineCratesDetail ? 56U : freeMotionCapture||snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
+        const std::uint32_t targetFrames = alienCapture||goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture||deerCapture ? 64U : viewpoint_==FixedViewpoint::QuadMineCratesDetail ? 56U : freeMotionCapture||snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
                 && (viewpoint_ == FixedViewpoint::MonkeyDetail || viewpoint_ == FixedViewpoint::MonkeyTreeDetail || viewpoint_ == FixedViewpoint::MonkeyClimbDetail)
             ? MonkeyCaptureFrames : SmokeTestFrames;
         if (captureTideHeld_ && (drawnFrames_ == 1U || drawnFrames_ == targetFrames)) {

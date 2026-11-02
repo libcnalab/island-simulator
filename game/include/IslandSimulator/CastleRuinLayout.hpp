@@ -14,6 +14,7 @@ class IslandTerrain;
 struct CastleRuinPlacement {
     static constexpr float Half=9.5f,Wall=1.3f,GateHalf=1.7f,TowerRadius=2.4f;
     static constexpr float KeepRight=-2.5f,KeepForward=-4.8f,KeepHalf=3.6f,KeepWall=1.2f;
+    static constexpr float KeepDoorCentre=-.3f,KeepDoorHalf=.85f;
     static constexpr float BreachFrom=2.0f,BreachTo=5.2f;   // the east wall's fallen stretch (right = +Half)
     float x=0,z=0;
     float faceX=1,faceZ=0;   // unit direction of the gate

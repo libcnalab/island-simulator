@@ -89,8 +89,11 @@ namespace
         case FixedViewpoint::IdolDetail: return "idol";
         case FixedViewpoint::IdolOfferingsDetail: return "idol-offerings";
         case FixedViewpoint::CastleDetail: return "castle";
+        case FixedViewpoint::CastleGateDetail: return "castle-gate";
+        case FixedViewpoint::CastleCourtyardDetail: return "castle-courtyard";
         case FixedViewpoint::UfoDetail: return "ufo";
         case FixedViewpoint::AlienDetail: return "alien";
+        case FixedViewpoint::AlienMotionDetail: return "alien-walk";
         case FixedViewpoint::AlienExamineDetail: return "alien-examine";
         case FixedViewpoint::AlienHullDetail: return "alien-hull";
         case FixedViewpoint::QuadAuditDetail: return "quad-audit";
@@ -216,7 +219,7 @@ namespace
         case FixedViewpoint::GoatLyingDetail: return "goat-lying";
         case FixedViewpoint::DeerDetail: return "deer";
         case FixedViewpoint::DeerMotionDetail: return "deer-walk";
-            case FixedViewpoint::DeerAlertDetail: return "deer-alert";
+        case FixedViewpoint::DeerAlertDetail: return "deer-alert";
         case FixedViewpoint::DeerBeddedDetail: return "deer-bedded";
         case FixedViewpoint::SpiderDetail: return "spiders";
         case FixedViewpoint::SpiderBrightDetail: return "spiders-bright";
@@ -476,10 +479,16 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::IdolOfferingsDetail;
             } else if (name == "castle") {
                 viewpoint = island::FixedViewpoint::CastleDetail;
+            } else if (name == "castle-gate") {
+                viewpoint = island::FixedViewpoint::CastleGateDetail;
+            } else if (name == "castle-courtyard") {
+                viewpoint = island::FixedViewpoint::CastleCourtyardDetail;
             } else if (name == "ufo") {
                 viewpoint = island::FixedViewpoint::UfoDetail;
             } else if (name == "alien") {
                 viewpoint = island::FixedViewpoint::AlienDetail;
+            } else if (name == "alien-walk") {
+                viewpoint = island::FixedViewpoint::AlienMotionDetail;
             } else if (name == "alien-examine") {
                 viewpoint = island::FixedViewpoint::AlienExamineDetail;
             } else if (name == "alien-hull") {

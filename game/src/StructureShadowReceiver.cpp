@@ -1,5 +1,6 @@
 #include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/StructureShadowReceiver.hpp"
+#include "IslandSimulator/CastleStoneMaterial.hpp"
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
@@ -63,6 +64,12 @@ void main()
     // The face (its normal from the world position's derivatives, turned to the eye).
     vec3 faceNormal = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
     if (dot(faceNormal, uCameraPosition - vWorld) < 0.0) faceNormal = -faceNormal;
+#ifdef CASTLE_STONE
+    vec3 stone=castleStone(vWorld,faceNormal);
+    // Timber/loose blocks use opaque 254; existing plain receiver alphas are untouched.
+    color.rgb *= mix(vec3(1.0),stone,step(0.998,vColor.a));
+    color.a=1.0;
+#endif
     if (uBakedAmbient > 0.0) {
         // Each face's light was baked for the fixed afternoon sun: it is relit by the hour's sun.
         float direct = 1.0 - uBakedAmbient;
@@ -83,17 +90,21 @@ void main()
 
     StructureShadowReceiver::StructureShadowReceiver(GraphicsDevice& device, const std::string& name,
                                                      const bool textured, const float fogStart, const float fogEnd,
-                                                     const float bakedAmbient)
+                                                     const float bakedAmbient,
+                                                     const StructureSurface surface)
         : textured_(textured), fogStart_(fogStart), fogEnd_(fogEnd), bakedAmbient_(bakedAmbient)
     {
         if (!device.SupportsCapability(CNA::GraphicsCapability::CustomEffects))
             throw std::runtime_error("custom effects unavailable");
         using CNA::Graphics::ShaderCodeEXT;
-        const std::string define = textured ? "#define STRUCTURE_TEXTURED 1\n" : "";
+        const bool stone=surface==StructureSurface::CastleStone;
+        const std::string define = std::string(textured ? "#define STRUCTURE_TEXTURED 1\n" : "")
+            +(stone?"#define CASTLE_STONE 1\n":"");
         const auto source = [&](const bool embedded, const bool fragment) {
             return std::string(embedded ? "#version 300 es\nprecision highp float;\n" : "#version 330 core\n")
                 + define + environment::FogShaderDefinition
                 + (fragment ? SunShadowMap::ReceiverShader : std::string())
+                + (fragment&&stone ? castle_stone::Shader : std::string())
                 + (fragment ? FragmentBody : VertexBody);
         };
         const CNA::Graphics::ShaderPackageEXT package(

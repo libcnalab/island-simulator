@@ -22,10 +22,15 @@ std::vector<CircularObstacle> CastleRuinPlacement::WallObstacles() const {
     const float keepMid=KeepHalf-KeepWall*0.5f;
     for(float a=-keepMid;a<=keepMid+1e-3f;a+=Spacing) {
         add(KeepRight+a,KeepForward-keepMid);
-        add(KeepRight+a,KeepForward+keepMid);
+        // The drawn keep has a doorway here. Full-radius proxies used to seal it.
+        if(a+.7f<=KeepDoorCentre-KeepDoorHalf||a-.7f>=KeepDoorCentre+KeepDoorHalf)
+            add(KeepRight+a,KeepForward+keepMid);
         add(KeepRight-keepMid,KeepForward+a);
         add(KeepRight+keepMid,KeepForward+a);
     }
+    const float jambRadius=KeepWall*.5f;
+    add(KeepRight+KeepDoorCentre-KeepDoorHalf-jambRadius,KeepForward+keepMid,jambRadius);
+    add(KeepRight+KeepDoorCentre+KeepDoorHalf+jambRadius,KeepForward+keepMid,jambRadius);
     return circles;
 }
 

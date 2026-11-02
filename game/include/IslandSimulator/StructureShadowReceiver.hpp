@@ -10,6 +10,7 @@ namespace Microsoft::Xna::Framework::Graphics { class GraphicsDevice; class Shad
 namespace island
 {
     class SunShadowMap;
+    enum class StructureSurface { Plain, CastleStone };
 
     /**
      * A small material for the vertex-coloured structures that were drawn with the stock
@@ -27,7 +28,8 @@ namespace island
          *  hour's sun, exactly as baked at 14:00. */
         StructureShadowReceiver(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                 const std::string& name, bool textured, float fogStart, float fogEnd,
-                                float bakedAmbient = 0.0f);
+                                float bakedAmbient = 0.0f,
+                                StructureSurface surface = StructureSurface::Plain);
         ~StructureShadowReceiver();
         StructureShadowReceiver(const StructureShadowReceiver&) = delete;
         StructureShadowReceiver& operator=(const StructureShadowReceiver&) = delete;
