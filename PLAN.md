@@ -27464,3 +27464,17 @@ Existing observation and qualification queue:
 - All original sections 1–24, before/after evidence, measured costs, failure history, exact
   source/app identities, pushed commits and meaningful limits are in the final HANDOFF.md ledger.
   Physical AMDGPU incidents and current platform gaps remain explicit; no native GPU claim.
+
+
+## Qualified continuation — 2026-11-02
+
+- Pushed8a92339c: grounded four-beat crocodile crawl, still resting bask and independent swimming
+  tail; shared renderer/shadow pose, actual160frame natural transition and regressions.
+- Pushed76197fdc and681f3118: elephant/TRex body and foot support share the drawn terrain/local
+  patches; planted slow steps settle. Original routes, rigs, models and content retained.
+- Release/OpenGL33, CPU0–3/-j2:93/93safe tests;75launcher and11validator checks pass. Final app
+  c82ce84b has30verified software scopes/74reviewed or exact-control PNGs. No physical GPU test.
+- Repeated LP8 whole-frame pair median167.28→162.19ms, same153–154tracked draws, RSS−.39%; large
+  earlier timing variation investigated as host variability. No native performance claim.
+- Latest HANDOFF.md ledger reassesses all24original sections, exact evidence and retained
+  application/CNA/driver/platform limits. No new required implementation identified by review.

@@ -1,4 +1,4 @@
-# Comprehensive visual cohesion campaign — ACTIVE continuation after f7446521
+# Comprehensive visual cohesion campaign — qualified continuation after f7446521
 
 The whole original superprompt/attachment is assessed in the final acceptance ledger at the
 end of this file. Earlier premature completion conclusions and ACTIVE checkpoints remain as
@@ -11,13 +11,12 @@ all preserved and committed/pushed in ad48d3d4 at the user's explicit request. E
 saved in build/campaign-deer-alert-entry-binary. Builds used CPU0–3/-j2/-j3; physical AMDGPU suspended,
 contained verified llvmpipe/Pixman only. No external source/system/Git destructive operations.
 
-Current task: user-requested original-scope continuation remains ACTIVE. Crocodile rest,
-four-beat crawl and drawn-ground support are implemented and qualified below (91/91 safe tests,
-16 inspected motion stages plus swimming control). Elephant drawn-ground support and natural stand→walk evidence are now also qualified below
-(92/92 safe tests,8matched stages plus close/trumpet/bathing controls). The24scene holistic review and comparable
-software frame measurement pass. A final observed TRex support mismatch is now being corrected;
-complete its qualification before the fresh original-criterion reassessment.
-Compile on CPU0–3, -j2/-j3; contained verified llvmpipe/Pixman only. Sound remains closed.
+Current continuation: observed crocodile, elephant and TRex contact defects corrected in pushed
+commits8a92339c,76197fdc,681f3118. Release/OpenGL33 passes93safe tests; final same-app review
+covers30software scopes/74PNGs, all inspected or exact to inspected controls. Comparable repeated
+LP8 frame measurement shows no material regression. All original criteria are reassessed in the
+latest ledger at the end; limits are explicit. Final documentation delivery is verified before
+closing the goal. All compilation CPU0–3/-j2; physical AMDGPU remains unqualified. Sound closed.
 
 **No temporary diagnostic, disabled aerial range or benchmark-only source remains.**
 Final source enables the qualified aerial canopy and palm policies plus the final resident waist
@@ -26,7 +25,7 @@ the final waist correction. Their benchmark run.json files contain launch-time b
 final resident captures used the final game binary without intervening rebuild/source mutation.
 `build/campaign-continuation-final-identity.json` records its hash AFTER those runs (the capture
 harness did not yet record launch-time executable hashes at that checkpoint).
-No pending build/test/render process. Latest deer body/hoof support qualification is in the last section.
+No pending build/test/render process. Latest continuation and full acceptance evidence are in the last sections.
 Further polish should start from the remaining limits below, without reopening rejected hypotheses
 or recreating existing ecology, landmarks, species, animation or rendering architecture.
 
@@ -2496,3 +2495,94 @@ compiled with its matching pre-change header/archive, avoiding an invalid change
 
 Next: final same-binary holistic matrix and software frame measurement, fresh original24section
 acceptance ledger, then delivery verification. Goal still ACTIVE until those are actually done.
+
+## Final original-superprompt reassessment after continuation — qualified
+
+Source681f3118; appc82ce84b121f22f13c6d15f9e3a700dadc7c7746e72e7d8c04426954eb2a4ae2;
+CNA950faa719ec2fb51cde7220d3e28100f2609731ede56c7cf4088bda0d2dcde5c. Current matching
+.cpp/.hpp inventory784files/158779lines (entry780/158427); IslandGame761684bytes vs758372,
+CoreTests913532bytes unchanged. Existing user work/content/architecture preserved.
+
+| Original criteria | Reassessment and concrete evidence |
+| --- | --- |
+|1–4 context, preservation, investigation, safety|Original attachment/README/PLAN/BUGS and incident read; actual baseline/source ownership checked. Focused C++/CNA changes only; no external source/system/driver change or destructive Git operation. All builds CPU0–3/-j2. Verified contained llvmpipe/Pixman, never native AMDGPU. Earlier full acceptance ledger remains supporting evidence, not a substitute for the fresh review.|
+|5 forest/vegetation|Earlier correlated ecology, layered forest floor, roots, canopy/palm LOD corrections retained. Current jungle/clearing/ground/stream/beach/overview inspected; grounding and environment/LOD CPU tests pass. No count/polygon brute force or new vegetation engine.|
+|6 geology/soil/caves|Earlier rock dual-projection/soil/prop/mine grounding retained. Current headland/ground/cave/cave-top inspected, cave roof remains soil-covered with a thick open mouth. Existing authoritative field and local patches retained; animal support now follows that same drawn surface.|
+|7 ocean/coasts/underwater/tides|Nine-wave/warp/filter, foam/caustic/depth corrections retained. Current water/reef-habitat/shipwreck and inspected elephant bathing show depth/shore/underwater integration. Earlier tide-extreme and actual diving qualification remains in the original ledger; no newly claimed physical-water or hardware qualification.|
+|8 wildlife movement/habitat|Observed crocodile idle rotation/pedalling fixed, shared four-beat grounded pose and swing, independent water tail. Elephant/TRex drawn body/foot support and slow planted settling fixed;1879/317croc,5498/1710elephant,2524/1578TRex contact samples. Existing bear/deer/boar/goat/bird/fish work retained, representative motion/behavior tests pass; no new species/population.|
+|9 resident|Earlier shoulder/arm/waist/face/material corrections retained. Current resident main frame inspected;8motion stages exactly match already reviewed controls, shared pose/shadow tests pass. No new avatar engine.|
+|10 lighting/materials/shadows/LOD/weather|Reused SunShadowMap and existing material/LOD architecture. Fresh day,22h castle and thunderstorm/wet hut-eaves review passes, canopy/shadow/fade tests pass. No AO/new shadow engine, global quality increase or disabled LOD.|
+|11 landmarks/composition|User-identified UFO/alien/castle repairs preserved and re-inspected in current ufo/alien/castle/gate views. Hut, shipwreck, cave, lighthouse, bunker grounded/readable; meaningful content/positions retained, no new landmarks. Earlier mine/helicopter/volcano/freighter and approach evidence remains in the full ledger.|
+|12 traversal/regressions|Existing bunker divider/door/quad/camera and stream/cave fixes retained. Current93safe tests include collision/support/vehicle/course invariants. Prior actual keyboard cave/stream/flight and continuous800frame bunker turn remain cited in the original ledger; those unchanged traversal paths were not falsely described as a newly repeated physical run.|
+|13 cost/compatibility|No new triangles/draws/resources; shared terrain cache reduces simulation work. Isolated component medians18.54→17.96us(croc3),12.87→.87us(elephant),21.19→.66us(TRex). Same1280x720/LP8/VSyncOff/120warm/600sample frame pairs; repeated comparable pair167.2766→162.1862ms, stable tracked scene, host variability explicitly investigated. No native FPS/VRAM or untested backend claim.|
+|14 maintainability/determinism|Small shared CrocodilePose replaces duplicated renderer/shadow leg math; ground setters follow existing Deer/Croc pattern. Separate targeted tests leave913KB CoreTests unchanged. Valid world fingerprint238be1fec0a0cdd7 preserved; fixed camera/clock/seed evidence deterministic.|
+|15 mandatory visual QA|Final same-app24scopes/60PNGs, all24main frames visually reviewed in `build/campaign-final-ground-holistic-{1..4}.png`.58PNGs exact to inspected controls; only3overview/52headland pixels change at the corrected distant TRex, reviewed in `build/campaign-final-ground-aerial-controls.png`.36subsidiary stages exact. No golden updated as proof. Audit `build/campaign-final-ground-evidence-audit.json`, raw manifest `build/campaign-final-ground-holistic-views.json`.|
+|16–18 staged implementation/autonomy/quality|Continued beyond each milestone into the next observed defect, committed/pushed each independently qualified stage, then repeated holistic inspection. No feature expansion/rewrite; actual red regressions and before/after imagery guided corrections. Explicit limits below, no claim of perfect anatomy/IK.|
+|19 known issues|AMDGPU GPUVM/flight incidents remain OPEN; CNA/Android lifecycle and stock-skinned guest shader/uniform issues remain external/unresolved. Sound was closed by user confirmation and not reopened. Known application motion/reverse-ramp limits remain below.|
+|20 holistic integration|Fresh current24scene natural/landmark/wildlife/light/weather review has no newly identified disruptive defect. All source681f3118 available tests pass; current screenshots/renderer/containment/kernel/artifact proofs recorded. Final timing-repeat and same-app elephant/crocodile controls now also pass; no newly identified required implementation remains.|
+|21–24 stopping/deliverables/principles|Major observed continuation defects addressed, existing content and stylized identity retained, further rig/terrain expansion offers diminishing returns/risk. Performance-repeat/control records now pass; final documentation commit/push/worktree must be verified before goal completion. No zero-defect/full-platform claim.|
+
+Safe test command: `ctest --test-dir build -LE display -E '^(IslandGameStartupReportValidation|IslandGameCaptureValidation)$' --output-on-failure -j2`.131registered,93passed,36display-labelled
+not run for GPU safety,2orphan validators excluded; `build/campaign-final-ground-test-selection.json`.
+No failed test remains. New focused contact tests3/3, launcher75/75 and validator11/11 pass.
+
+Final24scopes all pass actual renderer llvmpipe/OpenGL33, private Pixman compositor and private
+devices, unchanged app/runtime content and empty final kernel intervals. This is software
+qualification only. All three implementations are pushed in8a92339c,76197fdc,681f3118.
+Goal closure is assessed only after this full ledger and the following delivery checks, never merely from a stage build/test pass.
+
+### Final performance investigation and completion of available qualification
+
+Unchanged earlier binary8c914b49bd8d20fc57fe5765a87f896ddab8d1fcc1418d1b5074670e67251b9b
+measured255.569ms initially but167.2766ms on repeat: host variability, not code speedup. Final
+c82ce84b measured158.7906ms then162.1862ms. This rules out attributing the apparent38%drop to
+these tiny support changes. Latest adjacent pair, identical1280x720/LP8/VSyncOff/120warm/600samples:
+
+| Software-only metric | Before | Final | Change |
+| --- | ---: | ---: | ---: |
+| Median frame ms |167.2766|162.1862|−3.04%|
+| Mean frame ms |177.6208|160.9971|−9.36%|
+| p95 frame ms |220.7656|175.7886|−20.37%|
+| Peak app RSS KiB |886804|883308|−0.39%|
+| Tracked draw range |153–154|153–154|same|
+
+Complete tracked scene snapshots and ranges match; geometry/draw/resource budgets unchanged.
+No material regression identified in available measurements; no general/native speedup claim.
+All five warmed benchmark scopes pass private-device llvmpipe/Pixman, unchanged binary/runtime
+and final kernel gates. Raw records `build/campaign-performance/continuation-{elephant-before,
+elephant-after,ground-final,ground-repeat-before,ground-repeat-after}`; comparison
+`build/campaign-final-ground-performance-repeat.json`. Only the last pair is used for the
+current numerical comparison; other measurements retained transparently.
+
+Final same-app motion controls:
+- `build/software-captures/20261102T224249.697562Z-elephant-walk`:9/9PNGs exact to the inspected
+  ground correction, natural64frame/0.97501mstand→walk sequence and zero planted error.
+- `build/software-captures/20261102T224304.272940Z-crocodiles`:1/1PNG exact to the inspected
+  swimming control; back/eyes awash, folded legs and tail retained.
+Both main frames inspected again; all8elephant stages exact. Those2scopes plus24final holistic
+scopes and4TRex controls total **30current-app scopes/74PNGs**. All use appc82ce84b and have
+software/private-device/unchanged-artifact/empty-kernel proof. Consolidated record:
+`build/campaign-final-ground-delivery-audit.json`; no capture/test/benchmark remains running.
+
+Meaningful retained limits:
+- Application: short turning/acceleration stance slip remains without persistent world-foot IK;
+  rear-drive reverse-only bunker climbing is weak, while the qualified actual turn/forward exit
+  works. No claim of perfect anatomy, all-species/all-time exhaustive coverage or zero defects.
+- External CNA/Android: documented lifecycle and stock-skinned guest shader/uniform issues remain;
+  dependencies were not patched. CNA here is an extracted ignored source tree without its own
+  Git metadata; its parent repository revision is not misreported as a CNA source revision.
+- Driver/platform: AMDGPU GPUVM/flight incidents remain OPEN; no physical GPU, current Debug,
+  Web/GLES/Android/other backend or stock-fallback qualification. No driver/kernel/firmware change.
+
+All original sections1–24 have been assessed above with actual implementation, reviewed visual
+comparisons, safe tests and cost evidence. The initial original campaign improvements, followed
+by user-identified UFO/alien/castle and bunker repairs, remain preserved. This continuation added
+three further observed contact/motion corrections and completed another whole-island review.
+No additional required in-scope implementation is currently identified; further unrelated
+content, terrain/rig redesign or unapproved hardware experiments are not warranted by evidence.
+Available implementation and safe qualification are complete, with these explicit limits.
+
+Repository: develop; source commits8a92339c,76197fdc,681f3118 already pushed. The following final
+commit contains only this acceptance record and the short PLAN update. Its hash, push and clean
+origin-synced state are verified after creation and reported directly, avoiding a circular self-hash.
+Goal completion is considered only after that final delivery check.
