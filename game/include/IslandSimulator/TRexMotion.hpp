@@ -9,6 +9,7 @@
 
 namespace island {
 class IslandTerrain;
+class RenderedTerrainSurface;
 
 struct TRexPoint {float x=0,y=0,z=0;};
 
@@ -56,6 +57,9 @@ public:
     static constexpr std::size_t PrintCapacity=40;
 
     TRexMotion(const IslandTerrain& terrain,std::span<const CircularObstacle> obstacles);
+    /** Share the drawn surface and local patches for body, ball and toe support.
+     *  The route stays unchanged; nullptr restores analytic ground. */
+    void SetGround(const RenderedTerrainSurface* ground) noexcept;
     void Update(float seconds) {Update(seconds,0.0f,0.0f,false,0.0f);}
     /** With the walker (or the quad) at (observerX, observerZ): it stops and watches the walker
      *  within 60 m, follows at a distance now and then (never nearer than FollowDistance), and
@@ -93,6 +97,7 @@ private:
     [[nodiscard]] float Ground(float x,float z) const noexcept;
     void PoseLegs(float seconds);
     const IslandTerrain& terrain_;
+    const RenderedTerrainSurface* ground_=nullptr;
     std::vector<TRexPoint> route_;
     std::size_t target_=1;
     TRexState state_;

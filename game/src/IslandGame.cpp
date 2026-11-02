@@ -4078,6 +4078,7 @@ namespace island
         crocodileGroup_.SetGround(drawnGround_.get());   // they lie on the carved bed at the mouth
         deer_->SetGround(drawnGround_.get());   // and the deer stand on its banks to drink
         elephant_->SetGround(drawnGround_.get());   // broad soles share the visible mesh and local patches
+        trex_->SetGround(drawnGround_.get());   // the balls and toes use that same visible support
         playerMotion_.SetCave(&terrainRenderer_->Cave(),&terrainRenderer_->CaveGround());
         playerMotion_.SetBunker(&bunkerLayout_);
         playerMotion_.SetMine(&mineLayout_);

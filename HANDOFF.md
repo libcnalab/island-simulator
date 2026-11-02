@@ -14,8 +14,9 @@ contained verified llvmpipe/Pixman only. No external source/system/Git destructi
 Current task: user-requested original-scope continuation remains ACTIVE. Crocodile rest,
 four-beat crawl and drawn-ground support are implemented and qualified below (91/91 safe tests,
 16 inspected motion stages plus swimming control). Elephant drawn-ground support and natural stand→walk evidence are now also qualified below
-(92/92 safe tests,8matched stages plus close/trumpet/bathing controls). Continue with comparable
-full-frame software measurement and a fresh holistic original-criterion reassessment.
+(92/92 safe tests,8matched stages plus close/trumpet/bathing controls). The24scene holistic review and comparable
+software frame measurement pass. A final observed TRex support mismatch is now being corrected;
+complete its qualification before the fresh original-criterion reassessment.
 Compile on CPU0–3, -j2/-j3; contained verified llvmpipe/Pixman only. Sound remains closed.
 
 **No temporary diagnostic, disabled aerial range or benchmark-only source remains.**
@@ -2445,3 +2446,53 @@ heightfield instead of repeatedly evaluating analytic terrain (`build/campaign-e
 This is one simulation component, not a93%application/frame speedup. Draw/mesh budgets unchanged;
 only a non-owning ground pointer is added to this one motion object. Full-frame software pair
 and fresh whole-island review are the next qualification work; goal remains ACTIVE.
+
+### Intermediate holistic qualification and final observed support follow-up
+
+Commit76197fdc was pushed and worktree verified clean. App367810a6 completed24whole-island
+software scopes/60PNGs; all24main images reviewed in four6view sheets.54PNGs are exact to
+already inspected controls,4changed stream stages reviewed in matched close crops (373–474
+changed pixels, the estuary crocodiles; the rest of each frame exact), and cave exterior is an
+additional current view without a matching previous final-matrix control. No golden was replaced.
+`build/campaign-continuation-evidence-audit.json` and `build/campaign-continuation-holistic-{1..4}.png`.
+Both isolated software600sample benchmarks pass. Median255.569→258.1093ms(+.994%),
+mean269.3887→268.2691,p95346.9588→334.0762,RSS952220→916532KiB(−3.75%).
+Tracked scene snapshots AND ranges are identical,153–154draws. These are llvmpipe/LP8 numbers,
+not hardware FPS. Final kernel gates empty, private devices and unchanged artifacts verified.
+
+Audit retained the small observed TRex ball-support mismatch for correction rather than closure:
+−.0461321..+.0553894m over2439planted samples on its actual100s CPU route. Existing walking
+baseline `build/software-captures/20261102T220946.794859Z-trex` captured and visually inspected;
+rest/close baselines above are preserved. Narrow SetGround integration and planted slow-step
+settling now being built/tested, using existing renderer, route and rig. No new inspection
+framework, model, landmark or population. Goal stays ACTIVE until this qualification and the
+original criterion ledger are finished.
+
+### Qualified final TRex support correction — 2026-11-02
+
+TRexMotion now uses the existing drawn surface for body, ball and toe heights, installed beside
+the deer/elephant/crocodile support. Null/outside-mesh analytic fallback remains; route, rig,
+model, behavior, population, geometry/draw budget retained. As with the elephant, below5%pace
+a foot labelled planted fully loses its residual swing lift. No new camera or animation engine.
+Dedicated route/rest test:2524stance/1578swing samples, max planted error4.76837e−7m, toes above
+the visible floor, folded-rest control and fallback pass.
+
+CPU0–3/-j2 Release/OpenGL33 full build passes (`build/campaign-trex-final-build.log`);
+**93/93 safe CTests pass in119.53s** (`build/campaign-trex-final-safe-ctest.log`);3contact-focused
+tests pass together. Launcher75/75 and validator11/11 remain passing in this source campaign.
+Final appc82ce84b121f22f13c6d15f9e3a700dadc7c7746e72e7d8c04426954eb2a4ae2, sameCNA
+runtime950faa719ec2fb51cde7220d3e28100f2609731ede56c7cf4088bda0d2dcde5c.
+
+Inspected safe post-fix scopes (all llvmpipe/Pixman/private devices, unchanged artifact, kernel[]):
+- `build/software-captures/20261102T221722.511416Z-trex`
+- `build/software-captures/20261102T221736.803018Z-trex-close`
+- `build/software-captures/20261102T221751.008456Z-trex-rest`
+- `build/software-captures/20261102T221805.866659Z-trex-roar`
+Walking/rest pairs reviewed in `build/campaign-trex-support-pairs.png`; static camera/clock match.
+This is a small contact correction, not an anatomy redesign or dramatic visual upgrade.
+Isolated3×20,000updates median21.1901→.660898us/update
+(`build/campaign-trex-cpu-comparison.json`), not a97%frame-rate claim. Before CPU binary was
+compiled with its matching pre-change header/archive, avoiding an invalid changed-class ABI pair.
+
+Next: final same-binary holistic matrix and software frame measurement, fresh original24section
+acceptance ledger, then delivery verification. Goal still ACTIVE until those are actually done.

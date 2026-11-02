@@ -1,5 +1,6 @@
 #include "IslandSimulator/TRexMotion.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
+#include "IslandSimulator/RenderedTerrainSurface.hpp"
 #include <algorithm>
 #include <cmath>
 #include <numbers>
@@ -47,7 +48,15 @@ TRexMotion::TRexMotion(const IslandTerrain& terrain,const std::span<const Circul
     PoseLegs(0.0f);
 }
 
-float TRexMotion::Ground(const float x,const float z) const noexcept {return terrain_.Height(x,z);}
+float TRexMotion::Ground(const float x,const float z) const noexcept {
+    return ground_?DrawnOrAnalyticHeight(*ground_,terrain_,x,z):terrain_.Height(x,z);
+}
+
+void TRexMotion::SetGround(const RenderedTerrainSurface* ground) noexcept {
+    ground_=ground;
+    state_.y=Ground(state_.x,state_.z);
+    PoseLegs(distance_/StrideLength*2.0f*Pi);
+}
 
 void TRexMotion::PlaceNear(const float x,const float z) {
     std::size_t best=0;
@@ -246,7 +255,7 @@ void TRexMotion::PoseLegs(const float phase) {
         // standing, the feet come to rest side by side; lying, they fold forward under it
         along*=pace;lift*=pace;
         along+=.62f*state_.lie;
-        if(pace<.05f) leg.planted=true;
+        if(pace<.05f) {leg.planted=true;lift=0;}
         const float bx=state_.x+fx*(along+.30f)+rx*side*.52f,bz=state_.z+fz*(along+.30f)+rz*side*.52f;
         leg.ball={bx,Ground(bx,bz)+.07f+lift,bz};
         // the toes splayed forward from the ball, the middle one longest
