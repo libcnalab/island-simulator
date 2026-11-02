@@ -54,6 +54,8 @@ public:
     /** QA: stands it at the wreck's local (forward, right) facing the hull, in `what`, held there
      *  for `seconds`. */
     void Place(float forward,float right,AlienBehavior what,float seconds);
+    /** QA: start one clear local walk through the ordinary steering/pose code. */
+    [[nodiscard]] bool PreviewWalk();
     /** QA: holds it still in its present behavior for `seconds` from now. */
     void Hold(const float seconds) noexcept {holdSeconds_=std::max(holdSeconds_,seconds);}
     [[nodiscard]] const AlienState& State() const noexcept {return state_;}

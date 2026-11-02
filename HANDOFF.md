@@ -1935,3 +1935,95 @@ low endpoint to each course's bottom, emitting triangles ABOVE the broken top; u
 also lacked bottom caps. Implemented bounded course clipping and valid cap spans in the existing
 column mesher; no layout/heightfield replacement. CastleWallSectionTests passed. Matching actual
 render inspection currently running. Next fix remaining material/gate defects only after review.
+
+Castle course clipping actual render reviewed successfully: matching gate/courtyard sets
+20261102T173001.918154Z-castle-gate,20261102T173013.469430Z-castle-courtyard and wide
+20261102T173023.997120Z-castle under build/software-captures. Protruding fins disappear;
+remaining real defects are checker-coloured flat masonry, pointed/ramped battlements and a
+poorly supported rectangular half-lintel. Fix these next, keeping the existing castle plan.
+Planned bounded material extension: optional CastleStone surface in existing StructureShadowReceiver,
+not a new renderer; antialiased world-space courses/joints/grain with distance fade, keep wood
+unaffected, preserve existing relight/shadows/wetness/fog. Derivatives must execute outside
+nonuniform branches. Geometry: near-flat chipped stone tops per column and connected curved
+left half-arch with walking clearance. No implementation of this next material/arch step yet.
+
+UFO de10d0de committed; push session78202 must be collected. Alien/new castle QA and clip fix
+remain uncommitted pending fuller qualification; no other work overwritten. User asked remaining
+time: told approximate4–6hours including these models, actual bunker maneuver and final QA,
+with no fixed completion promise. Continue work; do not end at this checkpoint.
+
+Castle stone/arch material iteration reviewed:20261102T174227.300610Z-castle-gate,
+20261102T174244.136333Z-castle-courtyard,20261102T174300.743034Z-castle. Same cameras.
+Staggered antialiased limestone courses through optional existing StructureShadowReceiver
+surface; no new renderer/texture/dependency/draw. Existing relight/shadow/wetness/fog retained,
+derivatives execute unconditionally. Timber alpha254 marker bypasses coursing and final alpha
+is restored1; loose individual rubble now also bypasses brick grid. Default Plain unchanged.
+Near-flat chipped caps replace pointed merlons; left partial arch is joined to its spring and
+has at least2.7m local clearance. Further final current-build captures pending after rubble fix.
+Night and wet UFO controls actually inspected at20261102T174316.674160Z-ufo-t22.00 and
+20261102T174334.389473Z-ufo-thunderstorm-wet: no scorch halos/opaque border/receiver failure.
+
+Actual keep doorway collision defect reproduced BEFORE fix (ignored CPU probe:
+build/campaign-castle-door-before.log,41/81centre-path samples blocked). Shared door dimensions
+now govern drawn opening and collision proxy gap/jambs. CastleTraversalTests passed through
+three orientations: outer gate, breach, keep doorway clear; actual PlayerMotion enters keep
+while adjacent solid walls block. CastleWallSectionTests still pass.
+
+Alien shoulder spheres were too prominent in actual prototype images. Removing them entirely
+failed the silhouette invariant; corrected to shallow deltoids running down the arm below chest
+top. Preserved test, no invariant weakening. Real walking QA uses existing steering/IK with one
+clear fixed local route; no gameplay AI rewrite. New alien-walk64fixed updates/16stages camera
+follows translation; feet/visible mesh/travel protocol is checked. AlienBodyMeshTests now also
+exercise actual movement/contact (not merely Place(Walk) with speed0) and pass0.20s. Current
+six-view final render loop session77331 was completed earlier; NEW active loop session in latest
+tool output covers alien/alien-examine/alien-hull/alien-walk/castle-gate/castle-courtyard.
+UFO push verified: develop and origin/develop bothde10d0de. Remaining code uncommitted until
+visual/motion/performance/full-test qualification. Build CPU0–3/-j3; no native GPU testing.
+
+### Current landmark qualification completed; campaign remains ACTIVE
+
+Full Release build passed (CPU0–3/-j3), build/campaign-landmark-final-build.log.
+Full approved non-display CTest88/88passed110.62s, build/campaign-landmark-final-ctest.log.
+36display tests and two orphan image/startup validators still intentionally excluded from bare
+CTest; graphical checks use the approved contained software supervisor, never physical AMD.
+
+Final actual sets (all under build/software-captures, current model code):
+20261102T175858.087902Z-alien,20261102T175910.693271Z-alien-examine,
+20261102T175923.358737Z-alien-hull,20261102T175936.404110Z-alien-walk,
+20261102T180008.290718Z-castle-gate,20261102T180024.914776Z-castle-courtyard.
+Matched OLD alien renderer, with otherwise current code/identical walking fixture:
+build/campaign-alien-20261102-baseline/software-captures/20261102T180610.556738Z-alien-walk.
+All16stage positions/headings/speeds/feet/contact values match exactly; geometry1224→1918triangles
+(3672→5754vertices), same one draw and unchanged16000vertex buffer capacity. Actual stride/start/
+stop sequence inspected; new mesh smoother and connected; no claim of new world-foot IK.
+
+Weather/night sets actually inspected:20261102T180647.318789Z-castle-courtyard-thunderstorm-wet,
+20261102T180705.111891Z-castle-courtyard-t22.00,20261102T180719.946486Z-alien-t22.00.
+Unlit ruin is deliberately dim; masonry/entrance silhouettes remain readable. No shader fallback,
+new geometry fins, opaque scorch edges or emission artifacts observed. Current castle15902triangles
+vs15882original, same one main draw. Loose stone blocks keep their original plain material,
+not a smaller brick pattern painted across each individual block.
+
+Reviewed contact sheets/indexes: build/campaign-final-comparisons/alien-anatomy.png/.json,
+castle-repair.png/.json,alien-walk-comparison.png/.gif/.json. Static alien pairs also show the
+intentional UFO background change; motion pair isolates the alien renderer. Isolated original
+renderer binaries were built WITHOUT source rollback or dependency edits; exact old source,
+compile/link commands and hashes: build/campaign-component-baselines-20261102/baselines.json.
+
+Serial LP8 software component pairs,1280x720,VSync off,120warmup/600samples, no compiler/test/
+other graphics workload: build/campaign-alien-castle-performance.json and
+build/campaign-performance/{alien-body-before,alien-body-after,castle-ruin-before,castle-ruin-after}.
+Alien mean221.8388→213.9396ms(−3.56%),p95256.7153→244.3755(−4.81%); tracked submissions
+160–165both; peak RSS894248→927804KiB(+3.75%). Extra organic joint/palm/sole geometry fits the
+existing buffer; no sustained/native speed or memory-allocation-cause claim. Castle close gate
+mean236.8511→230.2508(−2.79%),p95281.7933→261.0985(−7.34%),RSS885580→880304KiB(−.60%),
+submissions144–147both. Single serial pairs show no material frame regression here; host timing/
+allocator variation remains. App+runtime identities unchanged; renderer/software/Pixman and final
+kernel records checked in every run. No new10%+frame/memory regression requiring simplification.
+
+Next unfinished original priority: actual driven bunker maneuver and forward escape, then final
+holistic/criterion review. Computer room has desks/chairs across4.18..8.25m, so do NOT qualify a
+route that drives through that scenery just because room-floor collision lacks furniture shapes.
+Service workshop has a clear centre (cabinets at6.46+, bench across3.15..5.95/depth34.25+).
+Investigate a continuous driven turn there, retaining existing physics and real footprint checks;
+previous exit test starts reoriented and does not prove a turn. Sound closed by user confirmation.

@@ -132,6 +132,19 @@ void AlienMotion::Place(const float forward,const float right,const AlienBehavio
     for(int k=0;k<40;++k) Update(0.1f,observerX_,observerZ_,false);
 }
 
+bool AlienMotion::PreviewWalk() {
+    for(const auto local:std::array<std::array<float,2>,4>{{{{-9.5f,-2.5f}},{{-11,-6}},{{-8,-9}},{{-11,-4}}}}) {
+        const auto goal=wreck_.At(local[0],local[1]);bool clear=true;
+        for(int step=0;step<=16;++step) {
+            const float t=static_cast<float>(step)/16;
+            clear=clear&&Free(std::lerp(state_.x,goal[0],t),std::lerp(state_.z,goal[1],t),.35f);
+        }
+        if(!clear) continue;
+        holdSeconds_=0;GoTo(goal[0],goal[1],AlienBehavior::Stand,6,WalkSpeed);return true;
+    }
+    return false;
+}
+
 AlienPoint AlienMotion::ToWorld(const float right,const float up,const float ahead) const noexcept {
     const float cs=std::cos(state_.heading),sn=std::sin(state_.heading);
     return {state_.x+sn*right+cs*ahead,state_.y+up,state_.z-cs*right+sn*ahead};

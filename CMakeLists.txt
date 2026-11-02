@@ -876,6 +876,7 @@ if(ISLAND_BUILD_GAME)
         game/src/IdolStatueRenderer.cpp
         game/src/CastleRuinRenderer.cpp
         game/src/UfoWreckRenderer.cpp
+        game/src/AlienBodyMesh.cpp
         game/src/AlienRenderer.cpp
         game/src/StoneSignRenderer.cpp
         game/src/LighthouseRenderer.cpp
@@ -939,6 +940,12 @@ if(ISLAND_BUILD_GAME)
         add_test(NAME IslandSoundscapeRuntimeTests COMMAND island_soundscape_runtime_tests)
         set_tests_properties(IslandSoundscapeRuntimeTests PROPERTIES TIMEOUT 45
             ENVIRONMENT "SDL_AUDIODRIVER=dummy;ISLAND_RUNTIME_LOG_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}/audio-regression-logs")
+
+        add_executable(island_alien_mesh_tests tests/AlienBodyMeshTests.cpp game/src/AlienBodyMesh.cpp)
+        target_link_libraries(island_alien_mesh_tests PRIVATE IslandSimulator::Core CNA)
+        island_enable_cna_consumer_warnings(island_alien_mesh_tests)
+        island_enable_first_party_sanitizers(island_alien_mesh_tests)
+        add_test(NAME IslandAlienBodyMeshTests COMMAND island_alien_mesh_tests)
     endif()
 
     # Host-only area reduction preserves source artwork and the runtime's exact base pixels.
