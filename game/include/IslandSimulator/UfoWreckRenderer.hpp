@@ -15,7 +15,8 @@ class IslandTerrain;
 class RenderedTerrainSurface;
 class SunShadowMap;
 
-// The crashed flying saucer in one opaque vertex-coloured draw: a lofted disc hull of dull silver
+// The crashed flying saucer: one opaque draw and a depth-read blended ground-scorch draw.
+// A lofted disc hull of dull silver
 // panels, dented, scorched on its leading side and torn open at one rim, tilted and sunk at the
 // front into the ground, a ring of cracked portholes, the cracked dome, a bent landing strut; the
 // scorched furrow it ploughed behind it with its soil berms, a burnt apron round the hull and its
@@ -40,9 +41,11 @@ private:
     const SunShadowMap* sunShadow_=nullptr;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> sunShadowEffect_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> vertices_;
+    std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> scorchVertices_;
     Microsoft::Xna::Framework::BoundingBox bounds_;
     Microsoft::Xna::Framework::Vector3 centre_;
     int triangles_=0,drawCalls_=0;
+    int opaqueTriangles_=0,scorchTriangles_=0;
     bool sunShadowUnavailable_=false;
 };
 }

@@ -1,4 +1,5 @@
 #include "IslandSimulator/UfoWreckRenderer.hpp"
+#include "IslandSimulator/UfoScorchField.hpp"
 #include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
@@ -43,7 +44,7 @@ UfoWreckRenderer::UfoWreckRenderer(GraphicsDevice& device,const UfoWreckPlacemen
     :device_(device),effect_(std::make_unique<BasicEffect>(device))
 {
     using K=UfoWreckPlacement;
-    SculptMeshBuilder b;
+    SculptMeshBuilder b,scorch;
     const auto groundAt=[&](const float x,const float z) {return DrawnOrAnalyticHeight(ground,terrain,x,z);};
     b.ground=groundAt;b.stainColour=Vector3(60,50,42);b.stainHeight=0.3f;b.stainAmount=0.45f;
     b.tintPerVertex=true;
@@ -63,6 +64,7 @@ UfoWreckRenderer::UfoWreckRenderer(GraphicsDevice& device,const UfoWreckPlacemen
         return Vector3(p[0],groundAt(p[0],p[1])+u,p[1]);
     };
 
+    std::array<Vector3,14> portCentres,portNormals,portTangents,portUps;
     // The hull: rings of a profile (radius, height) round its axis, the metal dented at the rim,
     // burnt on the side it slid on, torn open on one side.
     {
@@ -85,6 +87,19 @@ UfoWreckRenderer::UfoWreckRenderer(GraphicsDevice& device,const UfoWreckPlacemen
             }
             rings.push_back(ring);centres.push_back(H(0.0f,profile[i][1],0.0f));
         }
+        const auto normalAt=[&](std::size_t i,int k) {
+            auto normal=Vector3::Cross(rings[i+1][k]-rings[i-1][k],
+                rings[i][(k+1)%Ring]-rings[i][(k+Ring-1)%Ring]);
+            if(Vector3::Dot(normal,rings[i][k]-centres[i])<0) normal=-normal;
+            normal.Normalize();return normal;
+        };
+        for(int j=0;j<14;++j) {
+            const int k=2*j+1;
+            portNormals[j]=normalAt(4,k);
+            portTangents[j]=Vector3::Normalize(rings[4][(k+1)%Ring]-rings[4][(k+Ring-1)%Ring]);
+            portUps[j]=Vector3::Normalize(Vector3::Cross(portNormals[j],portTangents[j]));
+            portCentres[j]=Vector3::Lerp(rings[4][k],rings[5][k],.25f)+portNormals[j]*.008f;
+        }
         b.tint=[&](const Vector3& pigment,const Vector3&,const Vector3& p) {
             if(pigment.X<100.0f) return pigment;
             // burnt on the leading side toward the underside, streaked with soot along the rim
@@ -96,17 +111,15 @@ UfoWreckRenderer::UfoWreckRenderer(GraphicsDevice& device,const UfoWreckPlacemen
         };
         b.Loft(rings,centres,[&](const std::size_t i,const std::size_t k) {
             if(i>=3&&i<=5&&k>=18&&k<=21) return Dark;   // the dark inside the gash
-            return Hull*(((k+i)%2U==0U)?1.0f:0.93f)*(0.94f+0.1f*Hash(static_cast<std::uint32_t>(i*53U+k*7U)));
+            return Hull; // wear is spatially continuous, rather than a checker per panel
         });
         b.tint=nullptr;
         // the panel seams: thin dark ribs down the hull at every fourth segment
         for(int k=0;k<Ring;k+=4) {
             if(k>=16&&k<=22) continue;
-            const float a=2.0f*Pi*static_cast<float>(k)/Ring,ca=std::cos(a),sa=std::sin(a);
             std::vector<Vector3> rib;std::vector<float> radii;
             for(const std::size_t i:{2U,3U,4U,5U,6U}) {
-                const float radius=profile[i][0]*1.012f;
-                rib.push_back(H(ca*radius,profile[i][1],sa*radius));radii.push_back(0.025f);
+                rib.push_back(rings[i][k]+normalAt(i,k)*.006f);radii.push_back(.012f);
             }
             b.Tube(rib,radii,5,Dark*1.3f);
         }
@@ -125,9 +138,8 @@ UfoWreckRenderer::UfoWreckRenderer(GraphicsDevice& device,const UfoWreckPlacemen
             rings.push_back(ring);centres.push_back(H(0.0f,level[1],0.0f));
         }
         b.Loft(rings,centres,[&](const std::size_t i,const std::size_t k) {
-            const float crack=Hash(static_cast<std::uint32_t>(i*37U+k*11U+5U));
             if(k>=12&&k<=15&&i>=2) return Dark*0.8f;   // the pane gone, the inside dark
-            return Glass*(0.85f+0.3f*crack)*(crack>0.86f?0.55f:1.0f);
+            return Glass*(.94f+.06f*std::cos(static_cast<float>(k)*2.0f*Pi/Ring));
         },true,false);
         // cracks: bright splinters across the glass
         for(int k=0;k<7;++k) {
@@ -141,11 +153,18 @@ UfoWreckRenderer::UfoWreckRenderer(GraphicsDevice& device,const UfoWreckPlacemen
     for(int k=0;k<14;++k) {
         const float a=2.0f*Pi*(static_cast<float>(k)+0.5f)/14.0f;
         if(a>2.0f*Pi*18.0f/28.0f&&a<2.0f*Pi*22.0f/28.0f) continue;   // torn off with the rim
-        const float ca=std::cos(a),sa=std::sin(a);
-        const Vector3 centre=H(ca*5.16f,1.4f,sa*5.16f),out=Vector3::Normalize(H(ca,1.4f,sa)-H(0.0f,1.4f,0.0f));
+        const Vector3 centre=portCentres[k],out=portNormals[k],tangent=portTangents[k],up=portUps[k];
         const float luck=Hash(static_cast<std::uint32_t>(k)*997U+11U);
-        const Vector3 colour=luck<0.2f?Dark:luck>0.8f?Vector3(150,206,204):Vector3(46,102,110);
-        b.Box(centre,Vector3::Normalize(Vector3::Cross(Vector3::Up,out)),Vector3::Up,out,0.2f,0.13f,0.05f,colour,colour);
+        const Vector3 colour=luck<.2f?Dark:luck>.8f?Vector3(120,163,164):Vector3(46,102,110);
+        b.inside=centre-out*.3f;
+        // Thin inset oval apertures follow the actual dented/tilted skin, including the seams.
+        for(int segment=0;segment<8;++segment) {
+            const float a0=2*Pi*static_cast<float>(segment)/8,a1=2*Pi*static_cast<float>(segment+1)/8;
+            const auto at=[&](float angle,float w,float h) {return centre+tangent*(std::cos(angle)*w)+up*(std::sin(angle)*h);};
+            const auto p0=at(a0,.205f,.115f),p1=at(a1,.205f,.115f);
+            b.Face(centre,p0,p1,colour);
+            b.Quad(at(a0,.23f,.14f),at(a1,.23f,.14f),p1,p0,Dark*1.35f);
+        }
     }
     // a landing strut bent out from the underside, its pad splayed on the ground
     {
@@ -160,40 +179,60 @@ UfoWreckRenderer::UfoWreckRenderer(GraphicsDevice& device,const UfoWreckPlacemen
     // hull (laid just over the drawn ground).
     b.tint=nullptr;
     {
-        const auto centreline=[&](const float f) {return 1.4f*std::sin(f*0.17f)+0.6f*std::sin(f*0.41f+1.0f);};
-        const auto width=[&](const float f) {return 1.4f+1.1f*(1.0f-(-f-3.0f)/(K::FurrowLength-3.0f));};
-        const float from=-3.0f,to=-K::FurrowLength;
-        constexpr int Count=28,Strips=6;
-        for(int k=0;k<Count;++k) {
-            const float f0=from+(to-from)*static_cast<float>(k)/Count,f1=from+(to-from)*static_cast<float>(k+1)/Count;
-            const float c0=centreline(f0),c1=centreline(f1),w0=width(f0),w1=width(f1);
-            const float t=static_cast<float>(k)/Count;
-            b.inside=G(f0,c0,-2.0f);
-            for(int j=0;j<Strips;++j) {
-                const float a0=-1.0f+2.0f*static_cast<float>(j)/Strips,a1=-1.0f+2.0f*static_cast<float>(j+1)/Strips;
-                const float mid=0.5f*(a0+a1);
-                const Vector3 colour=Vector3::Lerp(Burnt*0.8f,Vector3(92,74,56),t)
-                    *(0.82f+0.3f*Hash(static_cast<std::uint32_t>(k*Strips+j)*31U+7U))*(1.0f-0.2f*mid*mid);
-                b.Quad(G(f0,c0+w0*a0,0.06f),G(f1,c1+w1*a0,0.06f),G(f1,c1+w1*a1,0.06f),G(f0,c0+w0*a1,0.06f),colour);
+        const auto patch=[&](const std::array<Vector3,4>& points,const auto& opacity) {
+            scorch.inside=(points[0]+points[1]+points[2]+points[3])*.25f-Vector3::Up*3.0f;
+            const auto first=scorch.builder.mesh.size();
+            scorch.Quad(points[0],points[1],points[2],points[3],Burnt);
+            for(auto i=first;i<scorch.builder.mesh.size();++i) {
+                auto& vertex=scorch.builder.mesh[i];
+                const float dx=vertex.Position.X-placement.x,dz=vertex.Position.Z-placement.z;
+                const float f=dx*placement.headingX+dz*placement.headingZ;
+                const float r=dx*placement.headingZ-dz*placement.headingX;
+                vertex.Color.setAProperty(static_cast<std::uint8_t>(std::lround(255.0f*opacity(f,r))));
             }
-            for(const float side:{-1.0f,1.0f}) {
-                const float e0=w0*side*1.45f,e1=w1*side*1.45f;
-                b.Tube({G(f0,c0+e0,0.05f),G(f1,c1+e1,0.05f)},{0.32f+0.1f*Hash(static_cast<std::uint32_t>(k)*7U+3U),0.3f},7,
-                       Soil*(0.85f+0.2f*Hash(static_cast<std::uint32_t>(k)*13U)),0.55f);
+        };
+        scorch.tintPerVertex=true;
+        scorch.tint=[](const Vector3& pigment,const Vector3&,const Vector3& p) {
+            return pigment*(.96f+.04f*std::sin(p.X*1.3f+p.Z*.8f));
+        };
+        const float from=-3.0f,to=-K::FurrowLength;
+        constexpr int Count=28,Strips=8;
+        std::array<std::vector<Vector3>,2> berms;
+        std::vector<float> bermRadii;
+        for(int k=0;k<=Count;++k) {
+            const float t=static_cast<float>(k)/Count,f=from+(to-from)*t;
+            const float c=ufo_scorch::Centre(f),w=ufo_scorch::Width(f);
+            // Continuous partly buried sediment banks, tapering into undisturbed ground.
+            const float envelope=std::sin(Pi*t);
+            const float deposits=ufo_scorch::Smooth(.15f,.85f,.5f+.5f*std::sin(f*1.35f+.4f*std::sin(f*.7f)));
+            const float radius=.02f+.27f*std::sqrt(std::max(0.0f,envelope))*deposits;
+            bermRadii.push_back(radius);
+            const float irregular=.09f*std::sin(f*2.3f)+.045f*std::sin(f*5.7f);
+            berms[0].push_back(G(f,c-w*1.4f+irregular,-.04f));
+            berms[1].push_back(G(f,c+w*1.4f-irregular,-.04f));
+            if(k==Count) continue;
+            const float f1=from+(to-from)*static_cast<float>(k+1)/Count;
+            const float c1=ufo_scorch::Centre(f1),w1=ufo_scorch::Width(f1);
+            for(int j=0;j<Strips;++j) {
+                const float a0=-1.25f+2.5f*static_cast<float>(j)/Strips;
+                const float a1=-1.25f+2.5f*static_cast<float>(j+1)/Strips;
+                patch({G(f,c+w*a0,.035f),G(f1,c1+w1*a0,.035f),
+                       G(f1,c1+w1*a1,.035f),G(f,c+w*a1,.035f)},ufo_scorch::Furrow);
             }
         }
-        // the burnt apron round the hull, a metre grid laid over the drawn ground
+        b.tint=[](const Vector3& pigment,const Vector3&,const Vector3& p) {
+            return pigment*(.94f+.09f*std::sin(p.X*2.2f+p.Z*1.7f)*std::sin(p.Z*2.7f));
+        };
+        for(const auto& bank:berms) b.Tube(bank,bermRadii,7,Soil,.65f);
+        b.tint=nullptr;
         for(int gx=-9;gx<9;++gx) for(int gz=-9;gz<9;++gz) {
-            const float cx=static_cast<float>(gx)+0.5f,cz=static_cast<float>(gz)+0.5f;
-            const float angle=std::atan2(cz,cx);
-            const float edge=6.8f+1.2f*Hash(static_cast<std::uint32_t>(std::floor((angle+Pi)*26.0f/(2.0f*Pi))+1.0f)*91U);
-            if(std::hypot(cx,cz)>edge) continue;
-            const Vector3 colour=Burnt*(0.8f+0.3f*Hash(static_cast<std::uint32_t>((gx+20)*64+(gz+20))*17U));
-            b.inside=G(0.0f,0.0f,-3.0f);
-            b.Quad(G(static_cast<float>(gx),static_cast<float>(gz),0.06f),G(static_cast<float>(gx+1),static_cast<float>(gz),0.06f),
-                   G(static_cast<float>(gx+1),static_cast<float>(gz+1),0.06f),G(static_cast<float>(gx),static_cast<float>(gz+1),0.06f),colour);
+            const float f=static_cast<float>(gx),r=static_cast<float>(gz);
+            if(std::max({ufo_scorch::Apron(f,r),ufo_scorch::Apron(f+1,r),
+                         ufo_scorch::Apron(f+1,r+1),ufo_scorch::Apron(f,r+1)})==0) continue;
+            patch({G(f,r,.035f),G(f+1,r,.035f),G(f+1,r+1,.035f),G(f,r+1,.035f)},ufo_scorch::Apron);
         }
     }
+
     // Its skin scattered: torn plates (the larger ones where the alien picks over them), slivers
     // along the furrow and twisted cables.
     b.tint=[&](const Vector3& pigment,const Vector3&,const Vector3& p) {
@@ -228,14 +267,20 @@ UfoWreckRenderer::UfoWreckRenderer(GraphicsDevice& device,const UfoWreckPlacemen
 
     auto& mesh=b.builder.mesh;
     landmark_shapes::Note("ufo",std::span(mesh).first(wreckVertices));
-    triangles_=static_cast<int>(mesh.size()/3);
+    opaqueTriangles_=static_cast<int>(mesh.size()/3);
+    scorchTriangles_=static_cast<int>(scorch.builder.mesh.size()/3);
+    triangles_=opaqueTriangles_+scorchTriangles_;
     Vector3 low(1e9f,1e9f,1e9f),high(-1e9f,-1e9f,-1e9f);
-    for(const auto& v:mesh) {low=Vector3::Min(low,v.Position);high=Vector3::Max(high,v.Position);}
+    for(const auto* part:{&mesh,&scorch.builder.mesh})
+        for(const auto& v:*part) {low=Vector3::Min(low,v.Position);high=Vector3::Max(high,v.Position);}
     bounds_=BoundingBox(low-Vector3(0.2f,0.2f,0.2f),high+Vector3(0.2f,0.2f,0.2f));
     centre_=(low+high)*0.5f;
     vertices_=std::make_unique<VertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),
         static_cast<int>(mesh.size()),BufferUsage::WriteOnly);
     vertices_->SetData(mesh.data(),static_cast<int>(mesh.size()));
+    scorchVertices_=std::make_unique<VertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),
+        static_cast<int>(scorch.builder.mesh.size()),BufferUsage::WriteOnly);
+    scorchVertices_->SetData(scorch.builder.mesh.data(),static_cast<int>(scorch.builder.mesh.size()));
     effect_->setVertexColorEnabledProperty(true);effect_->setLightingEnabledProperty(false);
     effect_->setFogEnabledProperty(true);
     effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
@@ -247,7 +292,7 @@ UfoWreckRenderer::UfoWreckRenderer(GraphicsDevice& device,const UfoWreckPlacemen
     std::ostringstream message;
     message<<"island-simulator: a crashed flying saucer lies in a clearing at ("
         <<static_cast<int>(std::lround(placement.x))<<", "<<static_cast<int>(std::lround(placement.z))
-        <<") at the end of its scorched furrow; "<<triangles_<<" triangles in one draw";
+        <<") at the end of its scorched furrow; "<<triangles_<<" triangles in two draws (opaque wreck and faded ground)";
     std::cout<<message.str()<<'\n';MirrorRuntimeDiagnosticToPlatformLog(message.str());
 }
 
@@ -264,7 +309,16 @@ void UfoWreckRenderer::Draw(const Matrix& view,const Matrix& projection,const Ve
         effect_->setWorldProperty(Matrix::getIdentityProperty());
         effect_->setViewProperty(view);effect_->setProjectionProperty(projection);effect_->Apply();
     }
-    device_.DrawPrimitives(PrimitiveType::TriangleList,0,triangles_);drawCalls_=1;
+    // Straight vertex alpha blends the actual terrain texture through the scorch boundary.
+    // DepthRead avoids invisible outer vertices writing depth, and the ground never casts a shadow.
+    device_.setBlendStateProperty(BlendState::NonPremultiplied);
+    device_.setDepthStencilStateProperty(DepthStencilState::DepthRead);
+    device_.SetVertexBuffer(scorchVertices_.get());
+    device_.DrawPrimitives(PrimitiveType::TriangleList,0,scorchTriangles_);
+    device_.setBlendStateProperty(BlendState::Opaque);
+    device_.setDepthStencilStateProperty(DepthStencilState::Default);
+    device_.SetVertexBuffer(vertices_.get());
+    device_.DrawPrimitives(PrimitiveType::TriangleList,0,opaqueTriangles_);drawCalls_=2;
 }
 
 void UfoWreckRenderer::DrawSunShadow(SunShadowMap& map) {
@@ -279,7 +333,7 @@ void UfoWreckRenderer::DrawSunShadow(SunShadowMap& map) {
     float matrix[16];map.LightViewProjectionColumnMajor(matrix);
     device_.SetVertexBuffer(vertices_.get());device_.setIndicesProperty(nullptr);
     sunShadowEffect_->Apply();sunShadowEffect_->SetUniformMat4("uSunViewProjection",matrix);
-    device_.DrawPrimitives(PrimitiveType::TriangleList,0,triangles_);
+    device_.DrawPrimitives(PrimitiveType::TriangleList,0,opaqueTriangles_);
     map.CountCasters(1);
 }
 }

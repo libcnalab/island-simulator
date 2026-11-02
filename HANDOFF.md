@@ -11,13 +11,13 @@ all preserved and committed/pushed in ad48d3d4 at the user's explicit request. E
 saved in build/campaign-deer-alert-entry-binary. CPU0–3/-j3 only; physical AMDGPU suspended,
 contained verified llvmpipe/Pixman only. No external source/system/Git destructive operations.
 
-Immediate priority is the user's missing-sound report (details at the end); root cause remains
-unconfirmed. Independent next defect investigation: DeerHerd alert/startle sets Rest, but unbeds only when not
-Rest; therefore a bedded deer can stay down while its whole body pivots toward a threat with
-speed/phase zero. Next: reproduce CPU behavior and capture actual alert sequence before fix,
-then correct rise/turn stepping, qualify motion/controls/support/performance. Continue afterward
-with actual maneuver/escape qualification inside the bunker (previous forward exit started with
-reoriented vehicle; no driven Uturn proven), then next unfinished original priority.
+Immediate priority: user explicitly identifies UFO/alien and castle ruins as visibly unfinished.
+Baseline images inspected and concrete defects confirmed; see the final section. Sound works
+according to the user, who explicitly stopped further audio investigation. Deer alarm correction
+01cb3778 is committed/pushed; existing boundary-facing behavior preserved after regression test.
+After these landmarks, finish actual driven bunker maneuver (prior forward exit began with a
+reoriented vehicle; no Uturn proven), then remaining original campaign qualification. Do not close
+at a subsystem milestone or reuse earlier completion prose as acceptance.
 
 **No temporary diagnostic, disabled aerial range or benchmark-only source remains.**
 Final source enables the qualified aerial canopy and palm policies plus the final resident waist
@@ -1889,3 +1889,49 @@ checker coloration, square opaque burn tiles and segmented tube berms; castle ch
 uniform wall columns/regular jagged cuts need close gate/courtyard review. Keep identities,
 placements/collision/features; improve existing shapes/material/ground transitions. No new
 landmark implementation yet. Sound closed by user's confirmation; no further audio work.
+
+### UFO/alien/castle implementation continuation — ACTIVE
+
+Current UFO code removes opaque whole-cell scorch, using continuous vertex-alpha ground fields
+with an existing XNA NonPremultiplied/DepthRead pass. Ground never casts its own shadow. Actual
+soil texture remains visible across feathered irregular edges. Continuous partly buried berms
+now vary deposit radius and position; welded-to-surface seams and inset oval ports follow the
+actual dented/tilted hull rather than floating unmodified profile radii. Panel/dome random
+checker colors removed. Same placements, collision identity and content retained.
+
+Release buildCPU0–3/-j3 and UfoScorchFieldTests passed. Two visual iterations inspected:
+170448.966397-ufo/170505.703572-alien-examine then final
+20261102T171114.833985Z-ufo,20261102T171130.806846Z-alien-hull,
+20261102T171146.269258Z-alien-examine under build/software-captures.
+Compared with the previous baseline: build/campaign-final-comparisons/ufo-ground-panels.png/.json.
+4104→3646triangles,1→2main draws, no scorch shadow casting. Serial comparable LP8 benchmark
+before/after120warmup/600samples running under build/campaign-performance/ufo-polish-{before,after}.
+Entry binary preserved build/campaign-landmarks-entry-binary,sha765febe3241b39253cb4e27d1b8e97375a17a97350d07d1ad8a8b3648dbd8d33.
+No build/test during the serial benchmark. Beforemean221.1909ms,p95252.3531ms; after pending.
+
+Alien geometry extraction/new BodyBuilder and CPU tests are now written and wired in CMake but
+NOT built or rendered yet. Existing rig/AI preserved; smooth shared-vertex normals from existing
+SurfaceNormals, connected chest/shoulder/pelvis, rounded soles and separate palm/finger roots.
+New castle-gate/castle-courtyard QA views written (preserve old wide camera); no castle mesh
+correction yet. Next: finish benchmark, build/test new alien, capture its poses and castle close
+baselines, correct actual defects, then qualify/commit/push coherent changes. Do not stop here.
+
+UFO serial software benchmark completed safely: mean221.1909→210.2921ms(−4.93%),
+p95252.3531→246.9948ms(−2.12%), RSS885812→884048KiB(−.20%). Same terrain36cells/11draws,
+97palms/128canopy/552grass clusters; overall tracked submission range159–164in both, UFO+1draw.
+Single serial pair is evidence against a material regression here, not a sustained speedup or
+hardware claim. Both app/runtime identities unchanged during their runs; llvmpipe/Pixman and
+final kernel records verified. Full report build/campaign-ufo-polish-performance.json.
+
+Alien prototype now builds and AlienBodyMeshTests passed140poses/shoulder silhouette continuity,
+finite/deterministic geometry and existing16000vertex budget. Actual images inspected:
+20261102T172203.751006Z-alien,20261102T172220.255920Z-alien-examine,
+20261102T172234.648033Z-alien-hull. Skin/head/limbs smoother, body attachments closed and palms/
+soles rounded; no final animation/performance qualification claimed yet.
+
+New old-castle close baselines20261102T172246.671414Z-castle-gate and
+20261102T172259.453979Z-castle-courtyard reveal severe existing fins: old column code raises a
+low endpoint to each course's bottom, emitting triangles ABOVE the broken top; upper lintels
+also lacked bottom caps. Implemented bounded course clipping and valid cap spans in the existing
+column mesher; no layout/heightfield replacement. CastleWallSectionTests passed. Matching actual
+render inspection currently running. Next fix remaining material/gate defects only after review.
