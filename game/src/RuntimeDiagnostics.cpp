@@ -275,6 +275,30 @@ namespace island
         }
     }
 
+    void RecordAudioRuntimeDiagnostics() noexcept
+    {
+        try {
+#ifdef __EMSCRIPTEN__
+            const std::string_view driver = "browser-managed";
+#else
+            const std::string_view driver = SafeSdlString(SDL_GetCurrentAudioDriver());
+#endif
+            std::ostringstream stream;
+            stream << "island-simulator: audio-runtime driver=" << Quote(driver)
+                   << " output=" << Quote(driver == "dummy" || driver == "disk"
+                       ? "non-audible-test-driver" : "device-audibility-unverified");
+            // SDL3 accepts both names. An inherited test override can otherwise look like
+            // healthy playback: dummy/disk tracks still transition to Playing.
+            for (const char* name : {"SDL_AUDIO_DRIVER", "SDL_AUDIODRIVER"}) {
+                stream << ' ' << name << '=' << EnvironmentValue(name);
+            }
+            const std::string message = stream.str();
+            std::cout << message << '\n';
+            MirrorRuntimeDiagnosticToPlatformLog(message);
+        } catch (...) {
+        }
+    }
+
     void RecordGraphicsRuntimeDiagnostics(
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device) noexcept
     {

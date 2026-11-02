@@ -5,7 +5,9 @@
 #include <array>
 #include <chrono>
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
+#include <iterator>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -350,6 +352,15 @@ int main(int argc, char** argv) {
     island::InitializeRuntimeDiagnostics(argc, argv);
     try {
         Exercise(false);
+        {
+            std::ifstream log(island::RuntimeDiagnosticLogPath());
+            const std::string text((std::istreambuf_iterator<char>(log)), {});
+            Check(text.find("audio-runtime driver=\"" + std::string(driver) + "\"")
+                      != std::string::npos,
+                  "Runtime log did not identify the actual isolated audio driver");
+            Check(text.find("output=\"non-audible-test-driver\"") != std::string::npos,
+                  "Runtime log presented a test audio driver as audible output");
+        }
         Exercise(true);
         ExerciseCampfire(false);
         ExerciseCampfire(true);

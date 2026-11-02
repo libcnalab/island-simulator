@@ -458,6 +458,11 @@ shadows, wildlife, ocean tessellation and multisampling.
 Physical-device touch ergonomics, thermals, and sustained mobile-GPU performance are not yet
 qualified.
 
+For missing sound, check the runtime log's `audio-runtime` line as well as the mute setting
+(M). `dummy` and `disk` are silent test drivers even when sources report Playing; check both
+`SDL_AUDIO_DRIVER` and `SDL_AUDIODRIVER` in the launching shell. A normal driver still requires
+the application stream to be routed to the intended output and unmuted in the system mixer.
+
 There are deliberately no quests, combat, inventory, crafting, survival systems, score,
 progression, dynamic weather, or day/night cycle.
 

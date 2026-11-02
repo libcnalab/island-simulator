@@ -7,11 +7,12 @@ until actual full acceptance or a demonstrated blocker. Record stage limits with
 as automatic full-campaign completion.
 
 Entry develop/8b84844e77e34ac54d4259f397079ff72ec34634,63tracked modifications+19new files,
-all preserved and uncommitted. App66234fb26194a6c1b603cf6a756e1fcf7c6ae53370234504d4de6f8bbb4252c9
+all preserved and committed/pushed in ad48d3d4 at the user's explicit request. Entry app66234fb26194a6c1b603cf6a756e1fcf7c6ae53370234504d4de6f8bbb4252c9
 saved in build/campaign-deer-alert-entry-binary. CPU0–3/-j3 only; physical AMDGPU suspended,
 contained verified llvmpipe/Pixman only. No external source/system/Git destructive operations.
 
-Current actual defect investigation: DeerHerd alert/startle sets Rest, but unbeds only when not
+Immediate priority is the user's missing-sound report (details at the end); root cause remains
+unconfirmed. Independent next defect investigation: DeerHerd alert/startle sets Rest, but unbeds only when not
 Rest; therefore a bedded deer can stay down while its whole body pivots toward a threat with
 speed/phase zero. Next: reproduce CPU behavior and capture actual alert sequence before fix,
 then correct rise/turn stepping, qualify motion/controls/support/performance. Continue afterward
@@ -1779,3 +1780,53 @@ First required remote fetch failed SSH authentication (publickey; ssh-askpass ab
 merge conflict or auto-review rejection. Commit is independent; inspect existing SSH-agent/GitHub
 authentication for a safe authorized push, never print private key/token contents. Keep campaign
 active; commit/push and sound investigation do not replace the original objective.
+
+### Checkpoint pushed; sound output investigated, 2026-11-02 — ACTIVE
+
+Signed ad48d3d4 (82files,5273insertions/498deletions) pushed normally to origin/develop;
+upstream configured. The default SSH agent held only an old read-only GitHub account key.
+Using the existing unlocked matching key through SSH_AUTH_SOCK=/run/user/1000/keyring/ssh
+solved authentication; no keys/configuration/remote were changed and no force push was used.
+
+The lost-sound cause is NOT established and no playback fix is claimed. The user's native
+interactive run1881892 was unmuted with4–5sources, but did not log the selected audio driver.
+Host default Speaker sink is unmuted54%; saved SDL Application stream properties unmuted100%.
+Audio-only probes of CNA and actual Soundscape generated nonzero PCM via PulseAudio to that
+sink (build/campaign-audio-native-probe.log, build/campaign-soundscape-native-probe.log and
+corresponding routing JSON). These are not proof of physically heard sound or the failed run.
+
+Actual whole-game test, unchanged entry binary, automatically selected pulseaudio:
+build/software-audio-output/20261102T162431.733299Z/{run.json,routing.json,pcm-analysis.json,
+interactive.png,own-game-audio.wav,game.log,kernel-live.jsonl,kernel-final.json}.
+Private /dev had no /dev/dri; game reported llvmpipe, private Weston used Pixman, mandatory
+kernel supervision found no new GPU fault, executable content unchanged. Only this game's
+S16stereo44100 device input was recorded, no microphone/speaker monitor/other applications.
+Own stream targeted Speaker sink65, unmuted100%, not corked; stream writes had0errors.
+Last1second windows: enabled RMS.057862 (−24.752dBFS), M muted exact0, resumed RMS.058364
+(−24.677dBFS). Actual screenshot inspected; normal beach/jungle scene present. This proves
+non-silent device-bound PCM and mute recovery in software rendering, NOT native-GPU/audio
+qualification or physical audibility. Three earlier diagnostic runs failed harness setup/format/
+input handling and are explicitly failed in their run.json; none counted as passed.
+
+Added a bounded startup audio-runtime diagnostic in the existing RuntimeDiagnostics module,
+called after actual successful Soundscape startup. It logs selected SDL driver and both driver
+override names, explicitly labels dummy/disk non-audible. Existing native log could not
+separate a silent inherited test driver from normal playback; no speculative volume/backend
+change made. Regression/build and rebuilt whole-game confirmation pending. User question about
+sound in other applications remains unanswered; continue independent campaign work meanwhile.
+
+Audio diagnostic implementation qualified: Release/OpenGL33 build passed with CPU0–3/-j3;
+IslandSoundscapeRuntimeTests passed3.71s, including persistent-log assertions that actual dummy
+is identified as non-audible. Whole-game rebuilt confirmation:
+build/software-audio-output/20261102T163051.852136Z/{run.json,game.log,routing.json,
+pcm-analysis.json,interactive.png,stages.json} passed, explicitly reports pulseaudio with both
+overrides unset, writes nonzero PCM, exact silent mute and resumed PCM,0stream errors.
+Native Wayland software path also passed on the entry binary:
+build/software-audio-output/20261102T162937.206404Z/{run.json,game.log,routing.json,
+pcm-analysis.json}; llvmpipe/Wayland, PulseAudio, RMS.049116(−26.175dBFS),0stream errors,
+same Speaker routing, artifact unchanged, no new kernel faults. Build processes were active
+outside that diagnostic; no performance inference is drawn. Shells in this project currently
+show no inherited SDL audio overrides; this does not recover the ended failed process's env.
+No host audio setting or dependency changed. Missing-sound report remains unresolved pending
+reproduction/user confirmation of audible output and sound in other applications. Continue
+with deer alarm recovery independently; do not mark the overall campaign complete.

@@ -992,6 +992,7 @@ namespace island
             footstepSecondsRemaining_ = 0.0f;
             wildlifeSecondsRemaining_ = 0.0f;
             std::cout << BoundedStagingDiagnostic << '\n';
+            RecordAudioRuntimeDiagnostics();
             std::cout << "island-simulator: soundscape started (procedural surf and breeze)\n";
             MirrorRuntimeDiagnosticToPlatformLog(
                 "island-simulator: soundscape started (procedural surf and breeze)");

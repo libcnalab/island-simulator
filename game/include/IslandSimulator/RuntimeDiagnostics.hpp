@@ -24,6 +24,9 @@ namespace island
     void RecordGraphicsRuntimeDiagnostics(
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device) noexcept;
 
+    /** @brief Records the initialized SDL audio driver; playing sources do not prove audibility. */
+    void RecordAudioRuntimeDiagnostics() noexcept;
+
     /** @brief Records Linux task names so kernel TIDs can be assigned to their owners. */
     void RecordRuntimeThreadInventory() noexcept;
 
