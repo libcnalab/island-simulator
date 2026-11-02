@@ -248,8 +248,8 @@ def worker(build, evidence, window_manager, flight=False, boar_audio=False,
                                 stderr=subprocess.STDOUT)
         def log():
             return log_path.read_text(errors="replace")
-        def wait(predicate, description):
-            deadline = time.monotonic() + 35
+        def wait(predicate, description, seconds=35):
+            deadline = time.monotonic() + seconds
             while time.monotonic() < deadline:
                 if game.poll() is not None:
                     raise RuntimeError(f"game exited during {description}")
@@ -391,7 +391,9 @@ def worker(build, evidence, window_manager, flight=False, boar_audio=False,
                 command("xdotool","keydown","w")
                 try:
                     wait(lambda: stream_samples() and stream_samples()[-1][3]>2.0,
-                         "walk across stream to north bank")
+                         # The route needs about 8.6 simulated seconds; slow software
+                         # frames can exceed 35 wall seconds without losing progress.
+                         "walk across stream to north bank", seconds=90)
                 finally:
                     command("xdotool","keyup","w")
                 count=len(stream_samples())

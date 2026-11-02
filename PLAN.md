@@ -27450,3 +27450,17 @@ Existing observation and qualification queue:
   physics. Rendered review additionally exposed chase-camera wall clipping; correction and
   final software qualification now pass through all800frames/16reviewed stages. Final holistic
   original-criterion review remains pending. Do not treat this checkpoint as completion.
+
+
+## Final full-campaign qualification — 2026-11-02
+
+- Completed the user-identified UFO/alien/castle repairs and the subsequently observed bunker
+  wall/door/panel/camera defects, retaining the original C++/CNA architecture and content.
+- Final same-build review: 27 scene scopes / 47 inspected images, 16 bunker journey stages through
+  800 rendered frames, and actual cave/stream/flight keyboard scopes. Verified llvmpipe/Pixman
+  with private devices, unchanged app/runtime identities and no new GPU fault.
+- Release build and 90/90 safe CTests pass; launcher 73/73 and validator 11/11 pass. The final
+  stream wait is 90 s only for its 8.6 simulated-second walk; original assertions remain unchanged.
+- All original sections 1–24, before/after evidence, measured costs, failure history, exact
+  source/app identities, pushed commits and meaningful limits are in the final HANDOFF.md ledger.
+  Physical AMDGPU incidents and current platform gaps remain explicit; no native GPU claim.

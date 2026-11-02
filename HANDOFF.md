@@ -1,24 +1,21 @@
-# Comprehensive visual cohesion campaign — ACTIVE, do not close at milestones
+# Comprehensive visual cohesion campaign — final qualification recorded, 2026-11-02
 
-User explicitly corrected repeated premature closure. Earlier closure sections are historical
-checkpoints, not authority to stop. The entire original superprompt/attachment remains the goal.
-Do not ask the user to repeat "continue" after a stage. Keep working through unfinished priorities
-until actual full acceptance or a demonstrated blocker. Record stage limits without treating them
-as automatic full-campaign completion.
+The whole original superprompt/attachment is assessed in the final acceptance ledger at the
+end of this file. Earlier premature completion conclusions and ACTIVE checkpoints remain as
+history, not the current result. The final record includes the user-identified alien/UFO/castle
+repairs, real bunker turnaround/camera corrections, a fresh holistic matrix and live scenarios.
+It explicitly separates available software qualification from still-open hardware/platform limits.
 
 Entry develop/8b84844e77e34ac54d4259f397079ff72ec34634,63tracked modifications+19new files,
 all preserved and committed/pushed in ad48d3d4 at the user's explicit request. Entry app66234fb26194a6c1b603cf6a756e1fcf7c6ae53370234504d4de6f8bbb4252c9
-saved in build/campaign-deer-alert-entry-binary. CPU0–3/-j3 only; physical AMDGPU suspended,
+saved in build/campaign-deer-alert-entry-binary. Builds used CPU0–3/-j2/-j3; physical AMDGPU suspended,
 contained verified llvmpipe/Pixman only. No external source/system/Git destructive operations.
 
-Current priority: the user-identified UFO/alien/castle defects are repaired and qualified in
-de10d0de,1ea80289,23c99801 (all pushed). Bunker divider/doorway/camera correction and the real
-continuous driven workshop turn are now visually and functionally qualified; see final sections.
-Sound works according to the user, who stopped further audio investigation. Deer alarm recovery
-01cb3778 is committed/pushed, with the boundary-facing regression preserved. Next: finish the
-original-criterion holistic review. A serial 27-view same-build matrix is running through
-build/campaign_final_polish_views.py (log campaign-final-20261102-views.log); review its actual
-images before acceptance. Do not close the goal at this bunker milestone.
+Current result: implementation and available safe qualification are complete. The concluding
+original-criterion ledger, exact identities, all final image/live paths and remaining limitations
+are below. Source through83019563 is pushed; the following launcher/final-record commit is the
+last repository delivery step. Do not repeat completed milestones or interpret the historical
+pending notes as current tasks. New user findings should be investigated from actual evidence.
 
 **No temporary diagnostic, disabled aerial range or benchmark-only source remains.**
 Final source enables the qualified aerial canopy and palm policies plus the final resident waist
@@ -2122,3 +2119,199 @@ build/campaign-bunker-camera-qualified-cost.json: 288 cases, 65 occluded with ol
 placement, 0 after full fit; three incremental fit measurements 9.11/7.26/7.21 µs. No compiler,
 test or graphics workload overlapped that measurement. This is CPU helper cost, not a native
 frame-time claim or a substitute for the earlier campaign software before/after pairs.
+
+### Final same-build holistic review completed; live closure still pending
+
+Source commit 83019563 is signed and pushed; origin/develop matches it. Final app remains
+b3819374a0c3c5953c3d8ce352a6fdfb231779b9f76172a92c7d3a83b03bae51. The serial matrix
+build/campaign-final-20261102-views.json contains 27 successful same-build software scopes and
+47 saved PNGs:27 main images,8 resident stages,8 bear stages and4 stream stages. ALL were actually
+reviewed in campaign-final-20261102-{1..5}.png plus resident/bear/stream-motion sheets under
+build/campaign-final-comparisons. Rain shelter, night castle, whole-island, forest floor/edge,
+stream, coast, underwater reef, cave roof/interior, hut, lighthouse, repaired alien/UFO/castle
+and bunker/cave/mine quad controls remain coherent. No new serious artifact was identified.
+
+Machine audit: build/campaign-final-polish-evidence-audit.json; all renderer logs verify actual
+llvmpipe, private Weston Pixman, bwrap private devices/PID lifetime, unchanged app bytes, fixed
+clock and no new GPU fault. 19 main images are pixel-identical to the previous same named view.
+The other 8 retain matching clocks but include intentional intervening landmark/wildlife/material
+changes; both changed-controls sheets were actually reviewed, not blindly declared improved by
+pixel difference. This final matrix complements the earlier isolated before/after comparisons.
+
+Current same-app real keyboard cave scenario passed: build/software-cave/20261102T195302.462188Z.
+All 6 PNGs actually reviewed in campaign-final-20261102-live-cave.png. Ground/ceiling/landing/exit
+remain contained; run/input/cave protocols pass and kernel-final.json is empty.
+
+Extra final stream repetition exposed a launcher wall-time limit, not a new movement defect:
+195542.643933Z was interrupted by parent SIGTERM before a final result; its raw game trace
+already reaches signed-across 2.48474 m. Preserve as NOT accepted. No owned game remained;
+post-termination journal is empty and app identity unchanged.195925.053662Z then failed the
+35-second wait while still advancing at signed-across 1.37928 m, with support error ≤4.77e−7 m and
+empty kernel delta. Existing IslandStreamCourseSurvey already covers both directions at 60 Hz
+and 100 ms; no duplicate C++ test was added. Independent ignored CPU probe confirms the exact
+−110m/centre−4m start crosses in 8.5167/8.55/8.6 simulated seconds at 1/60, 0.05 and 0.1 s, with identical
+340 terrain rejections. Variable software throughput had supplied only about 6 simulated seconds.
+
+Only tools/run_fullscreen_software.py changed: default waits remain 35 s; the one held stream
+walk now allows 90 s inside the unchanged 240 s supervisor. Same far-bank/channel/support/mode/
+monotonicity criteria remain.73/73 CPU harness tests pass after it. New actual stream scope
+201116.059915Z PASSED unchanged app/clean kernel; raw proof and before/after images are in
+build/software-stream-crossing/20261102T201116.059915Z.
+No application physics or sound change. Sound remains closed by the user's confirmation.
+
+Final flight scope ACTIVE: build/software-flight/20261102T201325.295494Z, tool session 87577,
+log campaign-final-live-flight.log. Next: collect/inspect it and the stream images, finalize the
+original sections 1–24 criterion evidence and remaining limits, commit/push launcher+qualification docs,
+verify clean/synced state, THEN assess goal completion. Do not stop at this checkpoint.
+
+## Final original-superprompt acceptance — 2026-11-02
+
+This is the current full-campaign assessment. It supersedes the earlier premature completion
+conclusions and subsequent ACTIVE checkpoints. The user-identified alien/UFO/castle defects,
+real bunker door/camera defects and final software stream deadline have now been corrected and
+qualified. Completion is based on the whole original scope and the evidence below, including
+actual rendered inspection; it is not inferred from a build, one milestone or updated goldens.
+
+### Exact final artifacts and available validation
+
+- Production source: `8301956313e88863593f37db1e739e3dc90cf5f4`, already pushed to develop.
+  The following launcher/docs commit changes only a scoped software-test wait and these records.
+- Release/OpenGL33/GCC14/Ninja app:
+  `b3819374a0c3c5953c3d8ce352a6fdfb231779b9f76172a92c7d3a83b03bae51`.
+  App and CNA runtime bytes remained unchanged through all final captures/live scopes.
+  Identity: `build/campaign-bunker-final-identity.json`; no dependency source was patched.
+- Full approved CTest: **90/90 passed, 128.38 s**, `build/campaign-bunker-qualified-safe-ctest.log`.
+  After the launcher-only stream wait correction, its **73/73 CPU tests** and the combined
+  `IslandStreamCourseSurvey`/`IslandSoftwareCapturePreflightTests` CTest scope pass again.
+  Image-validator tests: **11/11 passed**. Exact commands are recorded earlier in this file.
+  Final scoped log: `build/campaign-final-stream-scoped-ctest.log`.
+- **36 display CTests and two orphan image/startup validators were deliberately excluded** from
+  bare CTest. They are not reported as passed; the supervised software paths produced their
+  own artifacts. No direct AMD workload was launched. All compilation used CPU0–3 and -j2/-j3.
+- Final world report: `build/campaign-bunker-qualified-world.json`, valid fingerprint
+  **238be1fec0a0cdd7**, unchanged. Current game/tests/tools inventory: 780 C++ files, 158427 lines;
+  IslandGame.cpp 758372 bytes and CoreTests.cpp 913532 bytes. CoreTests.cpp was not enlarged.
+
+### Final actual visual and functional evidence
+
+`build/campaign-final-polish-evidence-audit.json` indexes the current app, renderer strings,
+private-device/PID containment, Pixman compositor, clocks, kernel results and all raw paths.
+Every app renderer is verified **llvmpipe LLVM 19.1.7/Mesa 25.0.7, OpenGL33**. PCI adapter metadata
+was not mistaken for the renderer. No final scope reports a new GPU fault. The three final
+live scopes and the final bunker turn have empty post-cleanup kernel deltas. An intermediate
+camera run had one informational PCI PME interrupt; it was not called an empty delta or a
+GPUVM fix. The physical AMDGPU incident remains OPEN.
+
+- **27 deterministic scene scopes / 47 PNGs**, all actually reviewed: five
+  `build/campaign-final-comparisons/campaign-final-20261102-{1..5}.png` sheets plus all eight
+  resident stages, eight bear stages and four stream stages. Includes the island overview,
+  forest floor/edge, stream valley, ridge/coast/beach, shallows, underwater reef, wreck, cave
+  roof/interior, hut, resident/bear, castle wide/gate, UFO/alien, lighthouse, bunker workshop,
+  three quad entries, rain shelter and night castle. 19 main controls match their previous same
+  named view pixel-for-pixel. The eight changed controls retain matching clocks and were
+  separately compared and inspected; pixel difference was not treated as proof of improvement.
+- **Continuous bunker journey: 800 rendered frames / 800 fixed updates / 16 saved stages**,
+  `build/software-captures/20261102T193404.936591Z-quad-bunker-turn`. Real approach, descent,
+  doorway, multipoint turn and forward exit; no re-placement/righting after start. Exit depth
+  −5.41552 m; worst absolute floor gap 0.125568 m; zero accumulated wall/overturn/camera-sightline
+  violations. Vehicle stage values exactly match the intermediate control. All 16 stages
+  reviewed; repair sheet `build/campaign-final-comparisons/bunker-turn-repair.png` explicitly
+  identifies the distinct original/intermediate baselines for its three corrections.
+- **Real keyboard cave entry/back/ceiling/landing/exit:**
+  `build/software-cave/20261102T195302.462188Z`, passed; all six images inspected.
+- **Real keyboard stream crossing:**
+  `build/software-stream-crossing/20261102T201116.059915Z`, passed; 35 samples from signed-across
+  −3.09522 m to +3.16295 m, maximum support error 4.76837e−7 m. All three images inspected.
+  The previous interrupted and 35-second timeout runs remain explicitly failed/unaccepted.
+  CPU checks prove the route needs 8.52–8.60 simulated seconds across three timesteps; only
+  this software wait is now 90 s, within the unchanged 240 s supervisor. Physics, support and
+  far-bank/channel/monotonicity criteria were not changed to make the test pass.
+- **Real keyboard flight/held ascent/turn/100m limit/landing/fullscreen controls:**
+  `build/software-flight/20261102T201325.295494Z`, passed; 69 flight samples, maximum above-ground
+  height 99.999 m; all seven images inspected. Landed image and control transitions agree.
+- The final capture matrix, bunker journey and three live scopes retain 80 PNG files in total
+  (including the normal final-frame duplicate of the last bunker stage). Earlier deterministic
+  before/after images and rejected experiments remain preserved. No golden was blindly replaced.
+
+### Original criteria reviewed across the complete campaign
+
+Comparison names below are under `build/campaign-final-comparisons/`; their JSON indexes retain
+matching camera/configuration/raw paths. Earlier detailed stage records give the implementation,
+RED→GREEN evidence, geometry/resource costs and failed attempts. The fresh final views above
+check that the accepted changes still work together on the final production app.
+
+| Original sections/criteria | Implemented or retained after investigation | Evidence and bounded acceptance |
+| --- | --- | --- |
+|1–4 context, preservation, investigation and safety|Reinspected actual sources, docs, incident, galleries, tests and render paths; preserved the existing C++/CNA architecture, user work, heightfield, features and identity. External dependencies/system configuration read-only; no merge/reset/clean or physical GPU stress.|Entry work preserved in ad48d3d4; actual counts/branch, incident preflight, runtime/containment records and final world fingerprint above.|
+|5.1–5.2 forest organization/layers|Retained existing correlated moisture/drainage/exposure/species placement; corrected aerial canopy/palm reach and LOD with existing buffers, keeping clearings and species population. Layers remain selective rather than blanket clutter.|forest-review.png,aerial.png,palm-aerial.png,canopy-lod.png; fresh overview/jungle/clearing/floor/stream and live aerial inspection.|
+|5.3–5.6 tree form, forest floor, transitions and grounding|Mangrove/stilt/root contacts follow real terrain/banks in visible/shadow passes; moss/grass pigment uses shared canopy/moisture suitability; wet organic litter retains contrast. Existing crown/branch identities and path exclusions retained.|trunk-roots.png,trunk-root-environment.png,contact.png,wet-litter-ground.png; grounding/visibility tests and deterministic placement controls.|
+|6.1–6.3 terrain/geology/soils|Kept authoritative heightfield and geological context; corrected rock projection cancellation and mine slope/earth treatment rather than adding indiscriminate terrain noise or replacing the pipeline.|geology-projection.png,geology-projection-detail.png,mine-grounding.png; close/coast/overview matched comparisons and current ridge views.|
+|6.4–6.6 props/caves/view distances|Corrected rock/root seating and bunker approach; retained covered cave roof after actual overhead/interior review; corrected supported-feet cave collision and downhill contact.|rock-contact.png,trunk-roots.png,bunker-apron-comparison.png; current cave-top/interior and live cave/flight, relevant CPU support/collision regressions.|
+|7.1–7.4 ocean/shallows/surf/exposure|Retained existing multiscale directional/spatial wave model after inspection; reduced rigid seabed caustic grid and corrected foam pigment relative to opacity. Depth absorption, sheltered/exposed fields and existing surf architecture retained.|water-review.png,water.png,reef-habitat.png; final water/coast/wreck/reef views and stream motion samples. No new fluid simulation or broad shader brightening.|
+|7.5–7.7 underwater habitats/tides/exploration|Retained habitat masks/fish depth and seated reef props; tide-relative diving/telemetry fixed; actual held high/low states qualified through existing TideCycle with first/last-frame proof.|tide-extremes.png,fish-swim-final.png,earlier six high/low pairs and actual dive/resurface run 20261102T133945.409145Z; final underwater view retained. Not a continuous twelve-minute tide recording.|
+|8.1–8.3 wildlife anatomy/gait/weight|Bear head/fur and continuous anatomy corrected; boar/deer gait follows accepted travel/support; bedded deer rises before alert turns and uses short steps. Bird feather planes now follow supporting wing spans; fish/flight motion reviewed.|bear-face-flow.png,boar-gait-walk.png,deer-gait-walking.png,deer-alarm-recovery.png,bird-feather-final.png,fish-swim-final.png; existing animal tests, final bear stages, source/motion controls.|
+|8.4–8.6 idles/habitat/interaction/density|Stopped animals do not falsely travel-step; turtle nesting validates actual habitat/capsules; existing animal preferences/populations retained. No new species or zoo-like population increase.|Turtle seed/control sheets, deer/boar stop stages, representative goat/crocodile/monkey/bird/fish reviews; deterministic world/population tests. Procedural turn/acceleration slip remains bounded below.|
+|9.1–9.5 resident proportions/forms/materials/animation/scope|Rounded connected shoulder/neck/forearm/face forms, sleeve normals, waist/cloth transition and gait presentation; existing rig, route, woven material and character identity preserved.|resident.png,resident-waist.png,resident-motion-final-review.png; eight fresh final stages and earlier dawn/night/work poses. Not a new avatar engine.|
+|10.1–10.4 art direction/light/shadows/materials|Unified restrained soil/leaf/rock/cloth/fur/water response; corrected aerial SunShadowMap focus and shared contact transforms; optional castle stone material uses existing StructureShadowReceiver, preserving other material defaults.|lighting-review.png,shadow-focus.png,shadow-focus-live.png,geology and resident comparisons; clear/night/wet/interior matrix and 19 exact final controls.|
+|10.5–10.6 LOD/weather|Existing LOD architecture kept, with cheaper aerial index ranges and one instance upload; canopy/rain shelter/eaves/drips/wet floor and cave puddle-rain clipping corrected.|canopy-lod.png,rain-eaves.png,rain-cohesion.png,cave-rain-rings-detail.png; actual final flight, wet hut and night castle. No disabled LOD or extra AO/shadow engine.|
+|11.1–11.4 landmarks/composition/grounding/character|All meaningful landmarks retained. Mine earth/bunker apron grounded; UFO scorch edges/hull details fitted; alien anatomy connected/smoothed; castle fins, battlements, partial arch, masonry and blocked keep door repaired. Existing vegetation/negative space preserved.|ufo-ground-panels.png,alien-anatomy.png,alien-walk-comparison.png,castle-repair.png,mine-grounding.png,bunker-turn-repair.png; fresh wide/close landmark views. No island enlargement or attraction inventory expansion.|
+|12.1–12.3 walking/structures/swimming|Bounded player integration and supported-feet sweeps fix observed stream/cave issues; keep and bunker door collisions agree with openings. Tide-relative swimming retained after actual dive checks.|StreamCourseSurvey bidirectional 60 Hz/100 ms, CaveLayout/PlayerMotion and CastleTraversal tests; final real cave/stream and earlier dive/resurface proof.|
+|12.4–12.5 vehicles/regression|Bunker wheels anticipate the floor before body entry; apron matches packed terrain. Shared doors/jambs and whole-footprint SAT block actual dividers; post-smoothing camera stays under fixtures and clear of walls. A real driven turn/forward escape is proven.|BunkerQuadSupport/BunkerDoorCollision/BunkerTurnTraversal tests, final 800-frame journey; quad cave/mine controls and existing footprint audits. Rear-drive reverse-only uphill limit retained, not hidden by a force hack.|
+|13.1–13.4 performance/resources/backends|Measured controlled software pairs and investigated material regressions/outliers; geometry reuse/budgets retained. No brute-force population/shadow/texture increase or renderer replacement.|Performance table below and earlier stage reports. Actual current backend only; CPU helper cost separately labelled, not a native FPS claim.|
+|14.1–14.4 code health/determinism/docs|Focused helpers/mesh extraction/tests outside giant files; no mass refactor, hidden global ecology or dependency additions. Fixed-seed world unchanged; concise current result plus historical evidence retained here.|AlienBodyMesh,CastleWallSection,BunkerChaseCamera/BunkerTurnInspection and focused tests; fingerprint/counts above; current source review/diff check.|
+|15.1–15.5 visual QA|Repeated baseline→focused implementation→build→software render→actual inspection→correction→regression loops; rejected intermediate states retained, including final camera/lamp/panel discoveries.|All named comparison indexes, current 27-scope/47-image audit, 16 bunker stages and 16 live screenshots. Exact matching complements visual inspection rather than replacing it.|
+|16–18 phased autonomy/quality|Proceeded through vegetation, geology, water, lighting, wildlife/resident, landmarks and traversal instead of stopping after each stage. Preserved all required safety/architecture/function/performance/determinism constraints.|Chronological stage records, user-directed landmark repairs, the additional real bunker correction and this full acceptance assessment.|
+|19 known issues|Application corrections were kept separate from framework/driver/platform limitations; no CNA defect silently patched or incident marked resolved.|BUGS.md and incident documents remain authoritative; precise remaining limits below.|
+|20 holistic integration|Reviewed the complete final island from ground, coast, interiors, underwater and air; clear/rain/night scenes, wildlife/person, structures and real traversal considered together.|Current five holistic sheets, all motion sheets and live cave/stream/flight sheets; no new serious artifact identified.|
+|21 stopping criteria|Major observed in-scope defects addressed, corresponding comparisons improve, relevant tests pass, no serious new regression remains identified. Further full rig/terrain/renderer redesign would add disproportionate scope/risk rather than close an observed required defect.|This whole-campaign ledger and current actual evidence, not an individual milestone. No zero-defect or photorealism claim.|
+|22–24 deliverables/principles|Actual maintainable repository changes, paths, tests, renderer, measured costs, honest limits and commits provided; existing application identity/content preserved.|Source commits below, final user report, clean/synced Git verification after the concluding commit.|
+
+### Performance interpretation and remaining limits
+
+Newest isolated pairs: 1280×720, LP8, VSync off, 120 warmup/600 samples, serial runs without another
+campaign build/test/render workload. Single pairs do not establish universal native speedups.
+Software-process RSS is not GPU VRAM.
+
+| Isolated component | Mean ms before→after | p95 ms before→after | Complexity / memory |
+| --- | --- | --- | --- |
+|UFO|221.1909→210.2921|252.3531→246.9948|4104→3646 triangles; main draws 1→2 for feathered ground alpha; RSS 885812→884048 KiB.|
+|Alien body|221.8388→213.9396|256.7153→244.3755|1224→1918 triangles, same draw/buffer capacity; RSS 894248→927804 KiB (+3.75%), allocation cause not established.|
+|Castle|236.8511→230.2508|281.7933→261.0985|15882→15902 triangles, same main draw; RSS 885580→880304 KiB.|
+|Bunker follow-up|No new comparable full-frame speed claim|CPU camera fit 7.21–9.11 µs/call|7664→7604 triangles, same two draws; 288 camera cases, 65 old occluded sightlines→0 after fit.|
+
+Raw latest metrics/provenance: `build/campaign-ufo-polish-performance.json`,
+`build/campaign-alien-castle-performance.json`, `build/campaign-bunker-camera-qualified-cost.json`.
+Earlier controlled forest/aerial/soil/rock/rain/animal pairs and outlier investigations remain
+in their stage records. No new material frame regression appears in the measured component pairs;
+this does not qualify hardware timing, sustained memory behavior or every possible viewpoint.
+
+Meaningful limits are explicit:
+
+- Application/simulation: land-animal turning/acceleration can briefly slip; no persistent
+  world-foot IK is claimed. Reverse-only rear-drive climbing of the bunker ramp remains limited;
+  real turning and forward escape now work. Stylized forms are intentionally retained.
+- External CNA/Android: existing surface-lifecycle race and stock-skinned guest shader/uniform
+  issues remain as recorded in BUGS.md. This campaign did not patch their dependencies or claim
+  fresh Android qualification.
+- Driver/hardware: AMDGPU GPUVM/flight incidents remain OPEN. No physical GPU qualification,
+  native FPS/VRAM result, kernel/firmware/driver change or attempted fault reproduction.
+- Unverified platforms/coverage: no current Debug/Web/GLES/Android/other-backend/stock-fallback
+  visual matrix. Representative motion/high-low states do not exhaust every species/tide/time.
+- Automation history: one parent SIGTERM remains unexplained; interrupted/failed runs were
+  preserved and excluded. Final supervised scopes all completed; the measured slow stream
+  wall-time case is corrected without weakening its functional assertions.
+
+### Repository delivery and conclusion of the recorded campaign
+
+Branch develop. User entry work and all source changes are preserved in signed, pushed commits
+ad48d3d4, 5f5f14b4, 01cb3778, de10d0de, 1ea80289, 23c99801 and 83019563. Sound was closed by the user's
+confirmation and was not reopened during final movement qualification. The final following
+commit contains only the scoped launcher deadline and final qualification records; no merge or
+force push. Its exact hash and clean/origin-synced state are verified immediately after commit
+and reported to the user, avoiding a circular self-hash in this file.
+
+The original criteria have now been assessed with actual evidence across the full campaign.
+Available safe qualification is complete; remaining platform/driver/simulation limits above are
+not represented as passed or fixed. No additional required in-scope implementation remains
+identified by the final review. Goal completion is assessed only after this ledger is written
+and the concluding repository delivery is verified.
