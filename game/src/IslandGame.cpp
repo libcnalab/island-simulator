@@ -346,6 +346,7 @@ namespace island
             case FixedViewpoint::GoatLyingDetail: return "goat-lying";
             case FixedViewpoint::DeerDetail: return "deer";
             case FixedViewpoint::DeerMotionDetail: return "deer-walk";
+            case FixedViewpoint::DeerAlertDetail: return "deer-alert";
             case FixedViewpoint::DeerBeddedDetail: return "deer-bedded";
             case FixedViewpoint::SpiderDetail: return "spiders";
             case FixedViewpoint::SpiderBrightDetail: return "spiders-bright";
@@ -3192,14 +3193,17 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             if(lying) std::cout<<"island-simulator: goat QA camera frames one resting goat lying on folded legs\n";
-        } else if (viewpoint_ == FixedViewpoint::DeerDetail || viewpoint_ == FixedViewpoint::DeerMotionDetail || viewpoint_ == FixedViewpoint::DeerBeddedDetail) {
-            const bool bedded=viewpoint_==FixedViewpoint::DeerBeddedDetail;
+        } else if (viewpoint_ == FixedViewpoint::DeerDetail || viewpoint_ == FixedViewpoint::DeerMotionDetail || viewpoint_ == FixedViewpoint::DeerAlertDetail || viewpoint_ == FixedViewpoint::DeerBeddedDetail) {
+            const bool bedded=viewpoint_==FixedViewpoint::DeerBeddedDetail
+                ||viewpoint_==FixedViewpoint::DeerAlertDetail;
             // The bedded view sets the antlered deer down as a shade rest does and frames it
             // a little lower and closer.
             if(bedded) deer_->PreviewBed(0);
             const auto& deer=deer_->Deer().front();
             const Vector3 forward(std::cos(deer.headingRadians),0,std::sin(deer.headingRadians));
             const Vector3 side(-forward.Z,0,forward.X);
+            // A fixed lateral observer exposes alarm recovery without following the turn.
+            deerAlertObserver_=Vector3(deer.x,deer.y+1.7f,deer.z)+side*16.0f;
             const float reach=bedded?5.6f:7.0f;
             const float x=deer.x-forward.X*2.4f+side.X*reach;
             const float z=deer.z-forward.Z*2.4f+side.Z*reach;
@@ -6138,6 +6142,9 @@ namespace island
                 // Deer perceive horizontal proximity even above them. Stay within the
                 // full simulation radius but outside alert range, preserving a natural walk.
                 const auto& subject=deer_->Deer().front();
+                if(viewpoint_==FixedViewpoint::DeerAlertDetail)
+                    deer_->Update(deltaSeconds,deerAlertObserver_.X,deerAlertObserver_.Y,deerAlertObserver_.Z);
+                else
                 deer_->Update(deltaSeconds,subject.x+60.0f,subject.y+20.0f,subject.z);
             } else {
                 const Vector3 threat=deer_->Deer().empty()?cameraPosition_:HerdThreat(deer_->Deer().front().x,deer_->Deer().front().z);
@@ -8252,7 +8259,7 @@ namespace island
                                            Vector3::Up);
         cameraProjection_ = Matrix::CreatePerspectiveFieldOfView(
             (viewpoint_==FixedViewpoint::BoarDetail||viewpoint_==FixedViewpoint::BoarLyingDetail||viewpoint_==FixedViewpoint::GoatDetail||viewpoint_==FixedViewpoint::GoatLyingDetail
-                ||viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerMotionDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail
+                ||viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerMotionDetail||viewpoint_==FixedViewpoint::DeerAlertDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail
                 ||viewpoint_==FixedViewpoint::ResidentDetail||viewpoint_==FixedViewpoint::ResidentTendDetail||viewpoint_==FixedViewpoint::ResidentFishDetail||viewpoint_==FixedViewpoint::BearDetail||viewpoint_==FixedViewpoint::BearLyingDetail
                 ||viewpoint_==FixedViewpoint::MouseDetail||viewpoint_==FixedViewpoint::RatDetail
                 ||viewpoint_==FixedViewpoint::FlyDetail||viewpoint_==FixedViewpoint::AntDetail
@@ -10521,7 +10528,7 @@ namespace island
             std::cout << report.str() << '\n';
             MirrorRuntimeDiagnosticToPlatformLog(report.str());
         }
-        if((viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerMotionDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail)&&drawnFrames_==1U) {
+        if((viewpoint_==FixedViewpoint::DeerDetail||viewpoint_==FixedViewpoint::DeerMotionDetail||viewpoint_==FixedViewpoint::DeerAlertDetail||viewpoint_==FixedViewpoint::DeerBeddedDetail)&&drawnFrames_==1U) {
             std::ostringstream report;
             report << "island-simulator: deer render proof: deer "
                 << deerRenderer_->VisibleCount() << '/' << deer_->Deer().size()
@@ -10616,7 +10623,7 @@ namespace island
             std::cout << report.str() << std::endl;
         }
         const bool deerCapture=UsesDeerCaptureClock();
-        if(deerCapture&&drawnFrames_%8U==0&&drawnFrames_<=64U) {
+        if(deerCapture&&viewpoint_!=FixedViewpoint::DeerAlertDetail&&drawnFrames_%8U==0&&drawnFrames_<=64U) {
             GpuDiagnosticScope gpuPass("capture-readback");
             CaptureFrame(capturePath_+".deer-stage-"+std::to_string(drawnFrames_/8U-1U)+".ppm");
             const auto& subject=deer_->Deer().front();
@@ -10629,6 +10636,21 @@ namespace island
                 << " grazing=" << subject.grazeAmount
                 << " tier=" << static_cast<unsigned>(subject.simulationTier);
             std::cout << report.str() << std::endl;
+        }
+        if(deerCapture&&viewpoint_==FixedViewpoint::DeerAlertDetail
+            &&(drawnFrames_-1U)%4U==0&&drawnFrames_<=64U) {
+            GpuDiagnosticScope gpuPass("capture-readback");
+            const auto stage=(drawnFrames_-1U)/4U;
+            CaptureFrame(capturePath_+".deer-alert-stage-"+std::to_string(stage)+".ppm");
+            const auto& subject=deer_->Deer().front();
+            std::ostringstream report;report.precision(9);
+            report<<"island-simulator: deer alert stage="<<stage<<" updates="<<drawnFrames_
+                <<" time="<<timeSeconds<<" visible="<<deerRenderer_->VisibleCount()
+                <<" position="<<subject.x<<','<<subject.y<<','<<subject.z
+                <<" heading="<<subject.headingRadians<<" speed="<<subject.speed
+                <<" phase="<<subject.gaitPhase<<" bed="<<subject.bedAmount
+                <<" tier="<<static_cast<unsigned>(subject.simulationTier);
+            std::cout<<report.str()<<std::endl;
         }
         const bool spiderCapture = UsesSpiderCaptureClock();
         if(spiderCapture&&drawnFrames_%8U==0&&drawnFrames_<=64U) {

@@ -1830,3 +1830,62 @@ show no inherited SDL audio overrides; this does not recover the ended failed pr
 No host audio setting or dependency changed. Missing-sound report remains unresolved pending
 reproduction/user confirmation of audible output and sound in other applications. Continue
 with deer alarm recovery independently; do not mark the overall campaign complete.
+
+### Deer alarm recovery — implementation and visual qualification in progress
+
+Audio diagnosis checkpoint5f5f14b4 pushed to origin/develop. No lost-sound fix claimed.
+Confirmed bedded-deer bug with a RED regression (build/campaign-deer-alarm-red.log:
+Bedded deer pivots or slides before rising) and inspected16-stage baseline:
+build/software-captures/20261102T163625.737056Z-deer-alert.
+Old bed remained1, speed/travel/phase0 while heading changed90degrees.
+
+Focused existing-DeerHerd correction now raises an alarmed/startled resting deer first,
+permits body turns during locomotion, uses a slow bounded alert shuffle through accepted
+travel/gait, then stands watching. Rejected alert steps restore heading/speed and cannot
+advance gait. Standing stamps wait until the shuffle finishes. No new rig, mesh, population,
+shader, material or environmental generation was added. DeerHerdTests now covers left/right
+observer and noise,60Hz/.1s steps, rise-before-turn, actual stepping/settling, habitat/ground,
+and blocked shuffle; existing hoof/gait regressions pass (3/3,1.24s).
+
+First corrected development capture20261102T164003.585054Z-deer-alert inspected: rises,
+steps and stops instead of swivelling folded legs. It followed animal translation with the
+camera; superseded for final before/after comparison. The final new deer-alert QA camera is
+now fixed in world space to match the baseline exactly; rebuilding/recapture pending. Existing
+deer/deer-walk/deer-bedded camera behavior retained. New QA view uses existing capture clock,
+16stages at frames1,5,...61 and a fixed16m lateral alarm observer; ordinary gameplay unchanged
+by QA scaffolding. No completion claim; sound reproduction and actual bunker maneuver remain.
+
+User confirmed sound works and explicitly instructed not to investigate audio further
+("uz je to vyreseno, zvuk neres, fugnuje"). Sound incident closed by user confirmation;
+no root cause or playback-code fix is claimed. Keep the already qualified diagnostic commit.
+Continue original campaign with deer qualification and actual driven bunker maneuver.
+
+Deer final qualification update: fixed-camera final set
+build/software-captures/20261102T165517.788627Z-deer-alert is pixel-identical in all16stages
+to20261102T164238.047476Z-deer-alert. Reviewed comparison:
+build/campaign-final-comparisons/deer-alarm-recovery.png/.gif/.json. Same fixed world camera,
+seed,1280x720,14:00/partly-cloudy and .1s clock. Ordinary walk and bed controls passed and were
+inspected at20261102T164314.021788Z-deer-walk /20261102T164343.662647Z-deer-bedded.
+
+Full available suite initially83/84passed250.42s; CloseObserverTurning correctly caught a
+boundary regression: suppressing a blocked shuffle's heading left the animal facing away.
+Corrected by retaining the old stationary-facing fallback when a shuffle cannot fit (no fake
+travel/gait). Focused DeerHerd+CloseObserverTurning rerun2/2passed2.89s; full rerun pending.
+Earlier text saying blocked steps always restore heading is superseded by this correction.
+Ordinary open-ground alarms rise and step; no claim of persistent foot locking for blocked
+turns/acceleration. Model/vertex/draw budgets unchanged (2draws in matched alarm sets).
+Capture timing varied broadly with host load (grass95.71→147.33ms, deer.15→.23ms); not a
+controlled performance comparison and no speedup claimed. Recheck comparable cost with the
+upcoming landmark changes; do not attribute shared software timing variation to this AI edit.
+
+User now identifies UFO/alien AND castle ruins as visibly unfinished. This is the next priority,
+ahead of the remaining bunker maneuver. Baseline captures all passed existing image gates,
+which plainly did NOT establish sufficient model quality; actual images inspected:
+20261102T164635.754953Z-ufo,20261102T164705.302791Z-alien,
+20261102T164734.974723Z-alien-examine,20261102T164804.967113Z-alien-hull,
+20261102T164955.137584Z-castle under build/software-captures.
+Observed: alien shoulder gaps/block-prism torso, flat faceted head/limbs; UFO random panel
+checker coloration, square opaque burn tiles and segmented tube berms; castle checker-coloured
+uniform wall columns/regular jagged cuts need close gate/courtyard review. Keep identities,
+placements/collision/features; improve existing shapes/material/ground transitions. No new
+landmark implementation yet. Sound closed by user's confirmation; no further audio work.

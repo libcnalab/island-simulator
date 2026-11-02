@@ -427,6 +427,7 @@ namespace island
         GoatLyingDetail,
         DeerDetail,
         DeerMotionDetail,
+        DeerAlertDetail,
         DeerBeddedDetail,
         SpiderDetail,
         SpiderBrightDetail,
@@ -1131,8 +1132,10 @@ namespace island
         [[nodiscard]] bool UsesMonkeyCaptureClock() const noexcept {
             return !capturePath_.empty()&&viewpoint_==FixedViewpoint::MonkeyDetail;
         }
+        Microsoft::Xna::Framework::Vector3 deerAlertObserver_;
         [[nodiscard]] bool UsesDeerCaptureClock() const noexcept {
-            return !capturePath_.empty() && viewpoint_==FixedViewpoint::DeerMotionDetail;
+            return !capturePath_.empty() && (viewpoint_==FixedViewpoint::DeerMotionDetail
+                || viewpoint_==FixedViewpoint::DeerAlertDetail);
         }
         [[nodiscard]] bool UsesBoarCaptureClock() const noexcept {
             return !capturePath_.empty() && viewpoint_==FixedViewpoint::BoarDetail;

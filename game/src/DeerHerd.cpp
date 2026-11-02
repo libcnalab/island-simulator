@@ -20,6 +20,11 @@ namespace island
     {
         constexpr float Pi = std::numbers::pi_v<float>;
         constexpr float TwoPi = 2.0f * Pi;
+        // A watchful deer takes short steps to face a disturbance, then stands still.
+        // Keep the arc slower than an ordinary walk rather than swivelling on folded legs.
+        constexpr float AlertShuffleSpeed = .25f;
+        constexpr float AlertTurnRate = .5f;
+        constexpr float AlertFacingTolerance = .08f;
         // Both clearings lie about a hundred metres from the stream, so the fourth deer keeps
         // a stream-side range instead: nine metres off the channel on the upper reach, where
         // its drinking walk is short enough to be seen.
@@ -382,7 +387,7 @@ namespace island
         }
         // Bedded down for the shade rest; anything else (an alarm, a bolt, the next graze)
         // has the deer on its feet within half a second.
-        if (agent.state.behavior != DeerBehavior::Rest) agent.bedded = false;
+        if (agent.state.behavior != DeerBehavior::Rest || alertFacing) agent.bedded = false;
         agent.state.bedAmount += std::clamp((agent.bedded ? 1.0f : 0.0f) - agent.state.bedAmount,
             -RiseRate * deltaSeconds, BedDownRate * deltaSeconds);
         bool drinking = false;
@@ -405,19 +410,31 @@ namespace island
             agent.targetHeadingRadians = std::atan2(
                 agent.home.z - agent.state.z, agent.home.x - agent.state.x);
         }
-        const float turnRate = agent.state.behavior == DeerBehavior::Retreat ? 1.45f : .92f;
-        agent.state.headingRadians = Turn(agent.state.headingRadians,
-            agent.targetHeadingRadians, turnRate * deltaSeconds);
+        const float previousHeading = agent.state.headingRadians;
+        const bool alertTurning = alertFacing && std::abs(Wrap(
+            agent.targetHeadingRadians - previousHeading)) > AlertFacingTolerance;
+        const bool onFeet = agent.state.bedAmount == 0.0f;
+        const bool locomotion = agent.state.behavior == DeerBehavior::Retreat
+            || agent.state.behavior == DeerBehavior::Walk
+            || (agent.state.behavior == DeerBehavior::Drink && !drinking);
+        const float turnRate = alertTurning ? AlertTurnRate
+            : agent.state.behavior == DeerBehavior::Retreat ? 1.45f : .92f;
+        if (onFeet && (locomotion || alertTurning)) {
+            agent.state.headingRadians = Turn(previousHeading,
+                agent.targetHeadingRadians, turnRate * deltaSeconds);
+        }
         const float headingError = std::abs(Wrap(
             agent.targetHeadingRadians - agent.state.headingRadians));
         const float turnAlignment = std::clamp(
             (std::cos(headingError) + .18f) / 1.18f, 0.0f, 1.0f);
-        const float targetSpeed = (agent.state.behavior == DeerBehavior::Retreat ? 3.1f
+        const float targetSpeed = !onFeet ? 0.0f : (agent.state.behavior == DeerBehavior::Retreat ? 3.1f
             : agent.state.behavior == DeerBehavior::Walk ? .78f
-            : agent.state.behavior == DeerBehavior::Drink && !drinking ? .78f : 0.0f)
+            : agent.state.behavior == DeerBehavior::Drink && !drinking ? .78f
+            : alertTurning ? AlertShuffleSpeed : 0.0f)
             * (.12f + .88f * turnAlignment);
         agent.state.speed += std::clamp(targetSpeed - agent.state.speed,
             -2.8f * deltaSeconds, 3.8f * deltaSeconds);
+        if (!onFeet) agent.state.speed = 0.0f;
         // Drinking is the grazing head-down pose held at the water's edge.
         const float targetGraze = agent.state.behavior == DeerBehavior::Graze || drinking
             ? 1.0f : 0.0f;
@@ -450,7 +467,7 @@ namespace island
         // The stamp: standing alert at the walker (on its feet, not bedded) the deer lifts
         // its left forefoot and stamps it down every few seconds, a warning.
         const bool standingAlert = alertFacing && agent.state.behavior == DeerBehavior::Rest
-            && agent.state.bedAmount < 0.2f;
+            && onFeet && !alertTurning && agent.state.speed < .05f;
         agent.stampClock = standingAlert ? agent.stampClock + deltaSeconds : 0.0f;
         if (agent.stampClock >= StampPeriodSeconds) agent.stampClock = 0.0f;
         const bool stamping = standingAlert && agent.stampClock >= 1.0f && agent.stampClock < 1.0f + StampSeconds;
@@ -483,6 +500,12 @@ namespace island
             agent.state.x = nextX;
             agent.state.z = nextZ;
         } else {
+            if (alertTurning) {
+                // At a habitat edge/trunk, retain the existing stationary facing fallback
+                // rather than leaving the deer looking away indefinitely. No false travel
+                // or gait is reported for the rejected shuffle.
+                agent.state.speed = 0.0f;
+            }
             agent.targetHeadingRadians = std::atan2(
                 agent.home.z - agent.state.z, agent.home.x - agent.state.x);
             agent.state.speed = std::min(agent.state.speed, .45f);

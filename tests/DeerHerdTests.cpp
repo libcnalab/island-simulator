@@ -17,12 +17,91 @@ namespace
     {
         if (!condition) throw std::runtime_error(message);
     }
+
+    void CheckAlarmRecovery(const island::IslandTerrain& terrain)
+    {
+        const island::RenderedTerrainSurface ground(terrain);
+        for (const float dt : {1.0f / 60.0f, .1f}) {
+            for (const float side : {-1.0f, 1.0f}) {
+                for (const bool startle : {false, true}) {
+                    island::DeerHerd herd(terrain, {});
+                    herd.SetGround(&ground);
+                    herd.PreviewBed(0);
+                    const auto initial = herd.Deer().front();
+                    const float x = initial.x - std::sin(initial.headingRadians) * 16.0f * side;
+                    const float z = initial.z + std::cos(initial.headingRadians) * 16.0f * side;
+                    float travel = 0.0f;
+                    bool stepped = false, settled = false;
+                    for (int frame = 0; frame < static_cast<int>(6.0f / dt); ++frame) {
+                        const auto before = herd.Deer().front();
+                        if (startle) herd.NoteDisturbance(x, z);
+                        herd.Update(dt, startle ? initial.x + 60.0f : x,
+                                    initial.y + 1.7f, startle ? initial.z : z);
+                        const auto& deer = herd.Deer().front();
+                        const float distance = std::hypot(deer.x - before.x, deer.z - before.z);
+                        const float turn = std::abs(std::remainder(deer.headingRadians
+                            - before.headingRadians, 2.0f * std::numbers::pi_v<float>));
+                        travel += distance;
+                        Check(deer.behavior == island::DeerBehavior::Rest,
+                              "Distant alarm unexpectedly sends a deer fleeing");
+                        if (deer.bedAmount > .01f) {
+                            Check(distance == 0.0f && turn == 0.0f,
+                                  "Bedded deer pivots or slides before rising");
+                        }
+                        if (turn > .00001f) {
+                            Check(distance > 0.0f && deer.gaitPhase != before.gaitPhase,
+                                  "Alert turn pivots on motionless hooves");
+                            Check(deer.stamp == 0.0f, "Moving alarm shuffle also plays a standing stamp");
+                            stepped = true;
+                        }
+                        if (frame * dt > 4.0f) {
+                            Check(deer.bedAmount == 0.0f, "Alarm does not raise a bedded deer");
+                            const float error = std::abs(std::remainder(std::atan2(z - deer.z,
+                                x - deer.x) - deer.headingRadians, 2.0f * std::numbers::pi_v<float>));
+                            Check(error < .12f, "Alert deer does not finish facing the disturbance");
+                            settled |= distance == 0.0f && turn == 0.0f;
+                        }
+                        Check(herd.IsValidPosition(0, deer.x, deer.z), "Alarm shuffle left safe habitat");
+                        Check(std::abs(deer.y - ground.Height(deer.x, deer.z)) < .0001f,
+                              "Alarm shuffle lost drawn ground contact");
+                    }
+                    Check(stepped && settled && travel > .1f && travel < 1.5f,
+                          "Alarm recovery does not step, settle and remain locally bounded");
+                }
+            }
+        }
+        // A trunk just beyond the starting clearance blocks the first shuffle. The
+        // rejected step must not manufacture travel or advance the hoof animation.
+        // Existing stationary facing remains available where the shuffle cannot fit.
+        const auto initial = island::DeerHerd(terrain, {}).Deer().front();
+        const std::vector<island::CircularObstacle> trunk{{
+            initial.x + .791f * std::cos(initial.headingRadians),
+            initial.z + .791f * std::sin(initial.headingRadians), .07f}};
+        island::DeerHerd blocked(terrain, trunk);
+        blocked.SetGround(&ground);
+        blocked.PreviewBed(0);
+        Check(blocked.Deer().front().x == initial.x && blocked.Deer().front().z == initial.z,
+              "Blocked-alarm fixture moved the initial habitat");
+        const float x = initial.x - 16.0f * std::sin(initial.headingRadians);
+        const float z = initial.z + 16.0f * std::cos(initial.headingRadians);
+        for (int frame = 0; frame < 40; ++frame) {
+            const auto before = blocked.Deer().front();
+            blocked.Update(.1f, x, initial.y + 1.7f, z);
+            const auto& after = blocked.Deer().front();
+            Check(after.x == before.x && after.z == before.z
+                      && after.gaitPhase == before.gaitPhase && after.speed == 0.0f,
+                  "Rejected alarm shuffle moves or advances the hoof animation");
+        }
+        Check(blocked.Deer().front().bedAmount == 0.0f,
+              "Blocked alarm does not raise a bedded deer");
+    }
 }
 
 int main()
 {
     try {
         island::IslandTerrain terrain;
+        CheckAlarmRecovery(terrain);
         const std::vector<island::CircularObstacle> obstacles;
         island::DeerHerd herd(terrain, obstacles), repeated(terrain, obstacles);
         Check(herd.Deer().size() == island::DeerHerd::Count, "wrong deer count");
