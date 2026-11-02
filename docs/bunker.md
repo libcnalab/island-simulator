@@ -22,7 +22,7 @@ ordinary vegetation reserve the entrance and facility footprint.
 
 ## Visual construction
 
-The current static mesh is 7,264 triangles in two culled draws. It includes:
+The current static mesh is 7,604 triangles in two culled draws. It includes:
 
 - a rock-concealed reinforced portal, open blast door, jamb bolts and drainage threshold;
 - repeated structural corridor bays, slope-fitted recessed access panels, safety stripe, cable
@@ -163,3 +163,37 @@ GL error zero, live contexts and an empty kernel delta. Android ARM64 assemble/l
 emulator; the 24,760,563-byte APK has SHA-256
 `4a8419f1579e52cf28459b4de3b25b3bcab2ef7e971f853a963215b029e5133e` and contains a
 19,717,992-byte `libmain.so`.
+
+
+## Corridor collision and driven turnaround — 2026-11-02
+
+The joined room floors previously allowed passage through some drawn corridor dividers.
+Shared doorway and jamb dimensions now govern those dividers, the closed end bulkhead,
+player capsules and the quad's complete rectangular footprint. Floor support remains
+continuous beneath the walls, and the existing height hint protects traversal above the roof.
+The chase camera also sweeps its full sightline after interpolation, so a camera endpoint
+in a valid room cannot look through the intervening divider.
+
+A deterministic inspection drives from outside the portal, descends the ramp, enters the
+workshop through its actual doorway, makes a slow multipoint turn in the clear aisle, and
+drives out forward. It never re-places or rights the quad after starting. The CPU regression
+also checks the roof and full-body clearance from the rendered cabinets, workbench and
+distribution board. Rear-drive reverse traction on the uphill ramp is unchanged.
+
+Use the approved software supervisor for the sixteen-stage, 800-frame visual inspection:
+
+```sh
+python3 tools/run_software_capture.py build quad-bunker-turn
+```
+
+This bounded inspection has a 600-second software deadline; ordinary captures retain their
+65-second deadline. The original `quad-bunker` 32-frame entry remains available. Current
+qualification results, exact artifact paths and failed-run history are in `HANDOFF.md`;
+software results do not qualify the affected physical GPU or other platforms.
+
+Final reviewed software evidence is
+`build/software-captures/20261102T193404.936591Z-quad-bunker-turn`, with sixteen saved stages
+through 800 rendered frames. The matching repair sheet is
+`build/campaign-final-comparisons/bunker-turn-repair.png`. The vehicle exits at local depth
+−5.42m, with zero recorded wall/overturn events and a maximum absolute floor gap of 0.126 m.
+The mesh now has 60 fewer triangles than the previous apron version, still in two draws.

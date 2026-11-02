@@ -27438,3 +27438,15 @@ Existing observation and qualification queue:
 - Full original-criterion reassessment, exact paths, failed-run history and limits: HANDOFF.md.
   No further observed in-scope defect identified. No hardware/dependency changes, staging/commit/
   push/merge. All compilation CPU0–3/-j3; physical/platform qualification remains explicitly limited.
+
+
+## Active campaign correction — 2026-11-02 landmark and bunker review
+
+- Earlier completion assessment was premature. User-identified UFO/alien/castle defects are
+  repaired, visually compared, tested and committed/pushed; exact evidence is in HANDOFF.md.
+- Continued bunker traversal found missing collision at drawn corridor dividers. Shared doors,
+  jambs and whole-body footprint collision are implemented with CPU regressions.
+- A continuous driven workshop turn exits forward without teleporting or changing vehicle
+  physics. Rendered review additionally exposed chase-camera wall clipping; correction and
+  final software qualification now pass through all800frames/16reviewed stages. Final holistic
+  original-criterion review remains pending. Do not treat this checkpoint as completion.

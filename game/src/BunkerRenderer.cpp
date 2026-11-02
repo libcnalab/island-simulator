@@ -272,8 +272,8 @@ BunkerRenderer::BunkerRenderer(GraphicsDevice& device,const BunkerLayout& layout
         quad({-1.36f,f0,d0},{1.36f,f0,d0},{1.36f,f1,d1},{-1.36f,f1,d1},floor);
         const float c0=corridorCeiling(d0),c1=corridorCeiling(d1);
         quad({-1.36f,c0,d0},{-1.36f,c1,d1},{1.36f,c1,d1},{1.36f,c0,d0},concreteDark);
-        const bool rightDoor=(d0>=14&&d1<=19)||(d0>=30&&d1<=33);
-        const bool leftDoor=d0>=27&&d1<=30;
+        const bool rightDoor=BunkerLayout::CorridorOpening(true,d0,d1);
+        const bool leftDoor=BunkerLayout::CorridorOpening(false,d0,d1);
         if(!rightDoor)quad({1.36f,f0,d0},{1.36f,c0,d0},
                            {1.36f,c1,d1},{1.36f,f1,d1},wall);
         if(!leftDoor)quad({-1.36f,f1,d1},{-1.36f,c1,d1},
@@ -345,26 +345,31 @@ BunkerRenderer::BunkerRenderer(GraphicsDevice& device,const BunkerLayout& layout
     box({1.13f,roomCeiling-.49f,10.0f},{1.27f,roomCeiling-.36f,36.0f},Color(62,87,91));
     quad({-.09f,roomFloor+.006f,10},{.09f,roomFloor+.006f,10},
          {.09f,roomFloor+.006f,36},{-.09f,roomFloor+.006f,36},Color(177,147,49));
-    // Reinforced colour-coded room portals.
-    box({1.27f,roomFloor,14.0f},{1.48f,roomCeiling,14.16f},Color(106,116,113));
-    box({1.27f,roomFloor,18.84f},{1.48f,roomCeiling,19.0f},Color(106,116,113));
-    box({1.27f,roomCeiling-.18f,14.0f},{1.48f,roomCeiling,19.0f},Color(82,139,132));
-    box({-1.48f,roomFloor,27.0f},{-1.27f,roomCeiling,27.16f},Color(118,112,91));
-    box({-1.48f,roomFloor,29.84f},{-1.27f,roomCeiling,30.0f},Color(118,112,91));
-    box({-1.48f,roomCeiling-.18f,27.0f},{-1.27f,roomCeiling,30.0f},Color(168,132,52));
-    box({1.27f,roomFloor,30.0f},{1.48f,roomCeiling,30.16f},Color(105,111,107));
-    box({1.27f,roomFloor,32.84f},{1.48f,roomCeiling,33.0f},Color(105,111,107));
-    box({1.27f,roomCeiling-.18f,30.0f},{1.48f,roomCeiling,33.0f},Color(139,104,66));
+    // Door openings, jambs and collision share one floor-plan contract.
+    const std::array<Color,3> jambColors{{Color(106,116,113),Color(118,112,91),Color(105,111,107)}};
+    const std::array<Color,3> lintelColors{{Color(82,139,132),Color(168,132,52),Color(139,104,66)}};
+    for(std::size_t i=0;i<BunkerLayout::Doorways.size();++i) {
+        const auto door=BunkerLayout::Doorways[i];
+        const bool right=door.across>0;
+        const float low=right?BunkerLayout::DoorInnerAcross:-BunkerLayout::DoorOuterAcross;
+        const float high=right?BunkerLayout::DoorOuterAcross:-BunkerLayout::DoorInnerAcross;
+        box({low,roomFloor,door.from},{high,roomCeiling,door.from+BunkerLayout::DoorJambDepth},jambColors[i]);
+        box({low,roomFloor,door.to-BunkerLayout::DoorJambDepth},{high,roomCeiling,door.to},jambColors[i]);
+        box({low,roomCeiling-.18f,door.from},{high,roomCeiling,door.to},lintelColors[i]);
+    }
     // Recessed lower panels, fasteners and restrained colour coding prevent the
     // long spine from reading as a single flat grey extrusion.
     for(float depth:{11.8f,15.8f,20.8f,25.2f,31.2f,34.5f}) {
-        box({-1.355f,roomFloor+.38f,depth-.68f},{-1.315f,roomFloor+1.38f,depth+.68f},
-            Color(51,58,57));
-        box({1.315f,roomFloor+.38f,depth-.68f},{1.355f,roomFloor+1.38f,depth+.68f},
-            Color(51,58,57));
-        for(float z:{depth-.54f,depth+.54f}) {
-            box({-1.31f,roomFloor+.47f,z-.025f},{-1.27f,roomFloor+.53f,z+.025f},steel);
-            box({1.27f,roomFloor+.47f,z-.025f},{1.31f,roomFloor+.53f,z+.025f},steel);
+        for(bool right:{false,true}) {
+            // A panel without its supporting wall floated across the computer
+            // and service doorways, visibly cutting through the passing quad.
+            if(BunkerLayout::CorridorOpening(right,depth-.68f,depth+.68f))continue;
+            const float low=right?1.315f:-1.355f,high=right?1.355f:-1.315f;
+            box({low,roomFloor+.38f,depth-.68f},{high,roomFloor+1.38f,depth+.68f},Color(51,58,57));
+            for(float z:{depth-.54f,depth+.54f}) {
+                box({right?1.27f:-1.31f,roomFloor+.47f,z-.025f},
+                    {right?1.31f:-1.27f,roomFloor+.53f,z+.025f},steel);
+            }
         }
     }
     // A sealed maintenance bulkhead closes the spine; without it the camera could
@@ -606,7 +611,11 @@ BunkerRenderer::BunkerRenderer(GraphicsDevice& device,const BunkerLayout& layout
     for(float depth:{28.1f,33.0f})
         box({2.25f,roomCeiling-.06f,depth-.72f},{5.95f,roomCeiling-.01f,depth+.72f},
             Color(227,188,113),true);
-    box({1.12f,roomFloor+.10f,26.0f},{1.24f,roomFloor+.26f,35.3f},Color(107,82,51));
+    // The low cable tray also stops at the workshop opening instead of forming
+    // an unmodelled step across the quad's wheel path.
+    const auto serviceDoor=BunkerLayout::Doorways.back();
+    for(const auto span:std::array<std::array<float,2>,2>{{{26.0f,serviceDoor.from},{serviceDoor.to,35.3f}}})
+        box({1.12f,roomFloor+.10f,span[0]},{1.24f,roomFloor+.26f,span[1]},Color(107,82,51));
     // A compact wall-mounted distribution board gives the service room a readable
     // purpose without placing non-colliding clutter in its walkable centre aisle.
     box({6.84f,roomFloor+.40f,29.92f},{7.04f,roomFloor+2.38f,32.92f},steelDark);

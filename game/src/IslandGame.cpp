@@ -1,4 +1,6 @@
 #include "IslandSimulator/BunkerQuadSupport.hpp"
+#include "IslandSimulator/BunkerTurnInspection.hpp"
+#include "IslandSimulator/BunkerChaseCamera.hpp"
 #include "IslandSimulator/BoarGroundPose.hpp"
 #include "IslandSimulator/FootprintGround.hpp"
 #include "IslandSimulator/SunShadowFocus.hpp"
@@ -329,6 +331,7 @@ namespace island
             case FixedViewpoint::QuadChaseDetail: return "quad-chase";
             case FixedViewpoint::QuadDriveDetail: return "quad-drive";
             case FixedViewpoint::QuadBunkerDetail: return "quad-bunker";
+            case FixedViewpoint::QuadBunkerTurnDetail: return "quad-bunker-turn";
             case FixedViewpoint::QuadCaveDetail: return "quad-cave";
             case FixedViewpoint::QuadCaveTopDetail: return "quad-cave-top";
             case FixedViewpoint::QuadMineDetail: return "quad-mine";
@@ -4416,8 +4419,11 @@ namespace island
                 // Driven: set off up the beach path at a run before the capture (on a fixed
                 // clock), the chase camera following, to show its ruts and its dust; or in from
                 // six metres before the bunker's portal or the cave's mouth, on their floors.
-                if (viewpoint_ == FixedViewpoint::QuadBunkerDetail) {
-                    const auto from = bunkerLayout_.World(0.0f, 0.0f, -6.0f), to = bunkerLayout_.World(0.0f, 0.0f, 0.0f);
+                if (viewpoint_ == FixedViewpoint::QuadBunkerDetail || viewpoint_ == FixedViewpoint::QuadBunkerTurnDetail) {
+                    const bool turning=viewpoint_==FixedViewpoint::QuadBunkerTurnDetail;
+                    if(turning)bunkerTurnInspection_=std::make_unique<BunkerTurnInspection>();
+                    const float across=turning?-.5f:0.0f;
+                    const auto from = bunkerLayout_.World(across, 0.0f, -6.0f), to = bunkerLayout_.World(across, 0.0f, 0.0f);
                     PlaceQuadNear(from.x, from.z, std::atan2(to.x - from.x, to.z - from.z));
                 } else if (viewpoint_ == FixedViewpoint::QuadVolcanoDetail) {
                     // The walker high on the volcano's steep cone presses F, the quad far off: it
@@ -6628,22 +6634,7 @@ namespace island
         // heading) must lie in the floor plan's walkable rooms once past the portal plane. Its
         // capsule test is the walker's (0.3 m round): a capsule as wide as the quad never fit
         // through the portal, its tail still outside the plan while its middle was in.
-        const BunkerPoint centre = bunkerLayout_.Local({x, 0.0f, z});
-        const float floorHere = bunkerLayout_.EntranceGroundY() + bunkerLayout_.FloorRelative(centre.z);
-        if (centre.z > BunkerLayout::CorridorFrontDepth-1.5f && centre.z < 37.5f && std::abs(centre.x) < 12.0f
-            && std::abs(quad_.Position().y - 0.6f - floorHere) < 1.15f) {
-            const BikeVec forward = quad_.Forward();
-            const float length = std::hypot(forward.x, forward.z);
-            const float fx = length > 1e-4f ? forward.x / length : 0.0f, fz = length > 1e-4f ? forward.z / length : 1.0f;
-            for (const float along : {-1.0f, 0.0f, 1.0f}) {
-                for (const float across : {-0.62f, 0.0f, 0.62f}) {
-                    if (along == 0.0f && across == 0.0f) continue;
-                    const float px = x + fx * along + fz * across, pz = z + fz * along - fx * across;
-                    if (bunkerLayout_.Local({px, 0.0f, pz}).z < BunkerLayout::CorridorFrontDepth) continue;   // outside the apron
-                    if (!bunkerLayout_.ContainsWalkable(px, pz, 0.0f)) return true;
-                }
-            }
-        }
+        if(BunkerQuadFootprintBlocked(bunkerLayout_,quad_,x,z)) return true;
         // The old mine: down at its floor, past the mouth, the quad's footprint (its corners and
         // the middles of its sides) must lie in the adit and the chamber, clear of the crates, the
         // rubble and the cart; the cutting's cribbing, the adit's posts and the rock stop it.
@@ -7286,6 +7277,7 @@ namespace island
                 + (q.z - jettyPlacement_->rootZ) * jettyPlacement_->dirZ;
             if (along > 6.0f) quadControls_ = {0.0f, 0.0f, true};
         }
+        if(bunkerTurnInspection_)quadControls_=bunkerTurnInspection_->Controls(bunkerLayout_,quad_);
         // the stream view stands a moment, so that it is in the water as the capture is taken
         const bool standing = viewpoint_ == FixedViewpoint::QuadStreamDetail && quadStreamWaitUpdates_-- > 0;
         // (flooded, the dead engine drives nothing: the rider can only steer it as it drifts)
@@ -7315,6 +7307,10 @@ namespace island
         if (!asleep) {
             UpdateQuadSite();
             quad_.Step(deltaSeconds, controls, ground, obstacles);
+            if(bunkerTurnInspection_) {
+                const auto p=quad_.Position();
+                bunkerTurnInspection_->Observe(quad_,QuadGround(p.x,p.z).height,QuadWallBlocked(p.x,p.z));
+            }
         }
         updateProfile_.Mark("quad wheels");
         // What the wheels leave and throw: ruts in sand and soil, dust off dry ground, spray in
@@ -7526,6 +7522,16 @@ namespace island
                 desired.Y = std::max(desired.Y, top + 0.6f);
         }
         quadCamera_ = Vector3::Lerp(quadCamera_, desired, 1.0f - std::exp(-deltaSeconds * 9.0f));
+        if(quadSite_==QuadSite::Bunker) {
+            const auto fitted=FitBunkerChaseCamera(bunkerLayout_,{p.x,p.y+.7f,p.z},
+                                                  {quadCamera_.X,quadCamera_.Y,quadCamera_.Z});
+            quadCamera_=Vector3(fitted.x,fitted.y,fitted.z);
+            if(bunkerTurnInspection_) {
+                const BunkerPoint from{p.x,p.y+.7f-.18f,p.z},to{fitted.x,fitted.y-.18f,fitted.z};
+                bunkerTurnInspection_->ObserveCamera(bunkerLayout_.IntersectsCapsule(to,.18f,.36f),
+                    bunkerLayout_.SafeTravelFraction(from,to,.18f,.36f)<.999f);
+            }
+        }
         cameraPosition_ = quadCamera_;
         const Vector3 look(p.x - quadCamera_.X, p.y + 0.7f - quadCamera_.Y, p.z - quadCamera_.Z);
         yaw_ = std::atan2(look.X, look.Z);
@@ -10813,7 +10819,22 @@ namespace island
                 <<" frames="<<drawnFrames_<<" time="<<timeSeconds
                 <<" draws="<<streamWaterRenderer_->DrawCallCount()<<" triangles=6080\n";
         }
-        const std::uint32_t targetFrames = alienCapture||goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture||deerCapture ? 64U : viewpoint_==FixedViewpoint::QuadMineCratesDetail ? 56U : freeMotionCapture||snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
+        if(bunkerTurnInspection_ && !capturePath_.empty() && drawnFrames_%BunkerTurnInspection::StageInterval==0) {
+            const auto p=quad_.Position();const auto local=bunkerLayout_.Local({p.x,p.y,p.z});
+            CaptureFrame(capturePath_+".bunker-turn-stage-"+std::to_string(drawnFrames_/BunkerTurnInspection::StageInterval-1)+".ppm");
+            std::cout<<"island-simulator: bunker turn stage="<<drawnFrames_/BunkerTurnInspection::StageInterval-1
+                <<" frame="<<drawnFrames_<<" phase="<<bunkerTurnInspection_->Phase()
+                <<" segment="<<bunkerTurnInspection_->TurnSegment()<<" across="<<local.x<<" depth="<<local.z
+                <<" speed="<<quad_.Speed()<<" floor-gap="<<p.y-.6f-QuadGround(p.x,p.z).height
+                <<" walls="<<QuadWallBlocked(p.x,p.z)<<" overturned="<<quad_.Overturned()
+                <<" complete="<<bunkerTurnInspection_->Completed()
+                <<" blocked-samples="<<bunkerTurnInspection_->BlockedSamples()
+                <<" overturned-samples="<<bunkerTurnInspection_->OverturnedSamples()
+                <<" max-floor-gap="<<bunkerTurnInspection_->MaximumFloorGap()
+                <<" camera-blocked="<<bunkerTurnInspection_->BlockedCameraSamples()
+                <<" camera-occluded="<<bunkerTurnInspection_->OccludedCameraSamples()<<'\n';
+        }
+        const std::uint32_t targetFrames = bunkerTurnInspection_ ? BunkerTurnInspection::CaptureFrames : alienCapture||goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture||deerCapture ? 64U : viewpoint_==FixedViewpoint::QuadMineCratesDetail ? 56U : freeMotionCapture||snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
                 && (viewpoint_ == FixedViewpoint::MonkeyDetail || viewpoint_ == FixedViewpoint::MonkeyTreeDetail || viewpoint_ == FixedViewpoint::MonkeyClimbDetail)
             ? MonkeyCaptureFrames : SmokeTestFrames;
         if (captureTideHeld_ && (drawnFrames_ == 1U || drawnFrames_ == targetFrames)) {
@@ -10916,7 +10937,7 @@ namespace island
                               << (over && q.y - 0.6f > top - 0.3f ? "up on its grass" : over ? "sunk under its grass" : "off its top")
                               << '\n';
                 } else if (viewpoint_ != FixedViewpoint::QuadDriveDetail) {
-                    const bool bunker = viewpoint_ == FixedViewpoint::QuadBunkerDetail;
+                    const bool bunker = viewpoint_ == FixedViewpoint::QuadBunkerDetail || viewpoint_ == FixedViewpoint::QuadBunkerTurnDetail;
                     const float depth = bunker ? bunkerLayout_.Local({q.x, q.y, q.z}).z
                                                : terrainRenderer_->Cave().Local({q.x, q.y, q.z}).z;
                     std::cout << "island-simulator: quad QA shelter: " << (bunker ? "bunker" : "cave")

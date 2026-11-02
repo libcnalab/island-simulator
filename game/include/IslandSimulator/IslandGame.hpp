@@ -1,5 +1,7 @@
 #pragma once
 
+#include "IslandSimulator/BunkerTurnInspection.hpp"
+
 #include "IslandSimulator/FrameSectionProfile.hpp"
 
 #include <array>
@@ -405,6 +407,7 @@ namespace island
         QuadChaseDetail,
         QuadDriveDetail,
         QuadBunkerDetail,
+        QuadBunkerTurnDetail,
         QuadCaveDetail,
         QuadCaveTopDetail,
         QuadMineDetail,
@@ -868,6 +871,7 @@ namespace island
         std::unique_ptr<RenderedTerrainSurface> quadSurface_;
         std::unique_ptr<RenderedTerrainSurface> drawnGround_;   // the per-frame ground marks' surface
         BikeControls quadControls_{};
+        std::unique_ptr<BunkerTurnInspection> bunkerTurnInspection_;
         bool riding_ = false, quadKeyWasDown_ = false, quadRightKeyWasDown_ = false, quadPlaced_ = false;
         bool torchOn_ = false, torchKeyWasDown_ = false;   // H: the walker's hand torch
         /** The hand torch's spot: from the walker's hand along the view. */
@@ -888,6 +892,7 @@ namespace island
         // the driven quad views: up the beach path, and into the bunker and the cave
         [[nodiscard]] bool QuadDriveView() const noexcept {
             return viewpoint_ == FixedViewpoint::QuadDriveDetail || viewpoint_ == FixedViewpoint::QuadBunkerDetail
+                || viewpoint_ == FixedViewpoint::QuadBunkerTurnDetail
                 || viewpoint_ == FixedViewpoint::QuadCaveDetail || viewpoint_ == FixedViewpoint::QuadCaveTopDetail
                 || viewpoint_ == FixedViewpoint::QuadJettyDetail
                 || viewpoint_ == FixedViewpoint::QuadHelicopterDetail || viewpoint_ == FixedViewpoint::QuadLookoutDetail

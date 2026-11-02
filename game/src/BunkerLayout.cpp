@@ -8,6 +8,49 @@
 #include <stdexcept>
 
 namespace island {
+namespace {
+struct Wall {float left,right,front,back;};
+// Match the rendered corridor dividers, their jambs, and the sealed end bulkhead.
+// Floor support remains continuous beneath these walls; only body collision uses them.
+constexpr float HalfWall=.02f; // small collision thickness around the drawn wall plane
+constexpr auto& Doors=BunkerLayout::Doorways;
+constexpr float Jamb=BunkerLayout::DoorJambDepth;
+constexpr float Inner=BunkerLayout::DoorInnerAcross,Outer=BunkerLayout::DoorOuterAcross;
+constexpr std::array<Wall,12> InteriorWalls{{
+    {1.36f-HalfWall,1.36f+HalfWall,0,Doors[0].from},
+    {1.36f-HalfWall,1.36f+HalfWall,Doors[0].to,Doors[2].from},
+    {1.36f-HalfWall,1.36f+HalfWall,Doors[2].to,36.2f},
+    {-1.36f-HalfWall,-1.36f+HalfWall,0,Doors[1].from},
+    {-1.36f-HalfWall,-1.36f+HalfWall,Doors[1].to,36.2f},
+    {-1.36f,1.36f,35.88f,36.2f},
+    {Inner,Outer,Doors[0].from,Doors[0].from+Jamb},
+    {Inner,Outer,Doors[0].to-Jamb,Doors[0].to},
+    {-Outer,-Inner,Doors[1].from,Doors[1].from+Jamb},
+    {-Outer,-Inner,Doors[1].to-Jamb,Doors[1].to},
+    {Inner,Outer,Doors[2].from,Doors[2].from+Jamb},
+    {Inner,Outer,Doors[2].to-Jamb,Doors[2].to}}};
+
+bool CircleHitsWall(float x,float z,float radius,const Wall& wall) noexcept {
+    const float dx=x-std::clamp(x,wall.left,wall.right);
+    const float dz=z-std::clamp(z,wall.front,wall.back);
+    return dx*dx+dz*dz<=radius*radius;
+}
+
+bool RectangleHitsWall(const std::array<BunkerPoint,4>& p,const Wall& wall) noexcept {
+    // Separating axes of both rectangles also catch a thin wall entirely between
+    // the vehicle's sampled corners/midpoints, which point-only queries can miss.
+    const std::array<BunkerPoint,4> axes{{{1,0,0},{0,0,1},
+        {p[1].z-p[0].z,0,p[0].x-p[1].x},{p[2].z-p[1].z,0,p[1].x-p[2].x}}};
+    for(const auto axis:axes) {
+        float low=1e30f,high=-1e30f;
+        for(const auto v:p) {const float d=v.x*axis.x+v.z*axis.z;low=std::min(low,d);high=std::max(high,d);}
+        const float a=wall.left*axis.x,b=wall.right*axis.x;
+        const float c=wall.front*axis.z,d=wall.back*axis.z;
+        if(high<std::min(a,b)+std::min(c,d)||low>std::max(a,b)+std::max(c,d)) return false;
+    }
+    return true;
+}
+}
 
 BunkerLayout::BunkerLayout(const IslandTerrain& terrain) {
     cosine_=std::cos(BunkerSite::Angle);sine_=std::sin(BunkerSite::Angle);
@@ -51,6 +94,7 @@ bool BunkerLayout::WalkableLocal(float across,float depth)const noexcept {
 bool BunkerLayout::WalkableCircle(float across,float depth,float radius)const noexcept {
     if(!std::isfinite(across)||!std::isfinite(depth)||!std::isfinite(radius)||radius<0)return false;
     if(!WalkableLocal(across,depth))return false;
+    for(const auto wall:InteriorWalls) if(CircleHitsWall(across,depth,radius,wall)) return false;
     constexpr int samples=16;
     for(int i=0;i<samples;++i) {
         const float angle=2.0f*std::numbers::pi_v<float>*i/samples;
@@ -62,6 +106,16 @@ bool BunkerLayout::WalkableCircle(float across,float depth,float radius)const no
 bool BunkerLayout::ContainsWalkable(float worldX,float worldZ,float margin)const noexcept {
     const auto local=Local({worldX,entrance_.y,worldZ});
     return WalkableCircle(local.x,local.z,std::max(0.0f,margin));
+}
+
+bool BunkerLayout::FootprintHitsInteriorWall(const std::array<BunkerPoint,4>& corners)const noexcept {
+    std::array<BunkerPoint,4> local;
+    for(std::size_t i=0;i<corners.size();++i) {
+        if(!std::isfinite(corners[i].x)||!std::isfinite(corners[i].z)) return true;
+        local[i]=Local(corners[i]);
+    }
+    for(const auto wall:InteriorWalls) if(RectangleHitsWall(local,wall)) return true;
+    return false;
 }
 
 bool BunkerLayout::SupportHeight(float worldX,float worldZ,float currentFeetY,

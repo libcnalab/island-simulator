@@ -19,7 +19,7 @@ from run_software_capture import (
     validate_goat_motion_stages,
     validate_boar_motion_stages,
     validate_deer_motion_stages,
-    validate_bunker_quad_entry,
+    validate_bunker_quad_entry, validate_bunker_quad_turn,
     validate_spider_motion_stages,
     validate_spider_render_log,
     validate_spider_web_render_log,
@@ -258,6 +258,28 @@ class SoftwareCaptureTests(unittest.TestCase):
                     re.sub(r"position=\d,2,3", "position=1,2,3", good)):
             with self.subTest(bad=bad), self.assertRaises(RuntimeError):
                 validate_boar_motion_stages(bad)
+
+    def test_bunker_turn_requires_real_entry_shunts_and_forward_escape(self):
+        rows=[]
+        for i in range(16):
+            phase=0 if i<5 else 1 if i<9 else 2 if i<15 else 3
+            segment=0 if i<5 else i-5 if i<9 else 6
+            depth=-1+i*7 if i<5 else 31.5 if i<9 else 29-(i-9)*6 if i<15 else -4.3
+            speed=-.7 if phase==1 else 1.2
+            rows.append(f"island-simulator: bunker turn stage={i} frame={(i+1)*50} phase={phase} segment={segment} "
+                        f"across=0 depth={depth} speed={speed} floor-gap=0.05 walls=0 overturned=0 "
+                        f"complete={int(phase==3)} blocked-samples=0 overturned-samples=0 max-floor-gap=0.12 camera-blocked=0 camera-occluded=0\n")
+        good=''.join(rows)
+        self.assertEqual(len(validate_bunker_quad_turn(good)["samples"]),16)
+        for bad in ("",good+good,good.replace("frame=800", "frame=799"),
+                    good.replace("depth=-4.3", "depth=1"),good.replace("speed=-0.7", "speed=0"),
+                    good.replace("floor-gap=0.05", "floor-gap=nan"),
+                    good.replace("walls=0", "walls=1"),good.replace("blocked-samples=0", "blocked-samples=1"),
+                    good.replace("overturned-samples=0", "overturned-samples=1"),
+                    good.replace("max-floor-gap=0.12", "max-floor-gap=6"),good.replace("complete=1", "complete=0"),good.replace("camera-blocked=0", "camera-blocked=1"),
+                    good.replace("camera-occluded=0", "camera-occluded=1")):
+            with self.subTest(bad=bad),self.assertRaises(RuntimeError):
+                validate_bunker_quad_turn(bad)
 
     def test_bunker_quad_entry_rejects_original_airborne_false_pass(self):
         good = "island-simulator: quad QA shelter: bunker, site bunker, depth 2.69 m, floor 17.89, body 18.54, walls clear\n"

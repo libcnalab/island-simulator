@@ -11,13 +11,14 @@ all preserved and committed/pushed in ad48d3d4 at the user's explicit request. E
 saved in build/campaign-deer-alert-entry-binary. CPU0–3/-j3 only; physical AMDGPU suspended,
 contained verified llvmpipe/Pixman only. No external source/system/Git destructive operations.
 
-Immediate priority: user explicitly identifies UFO/alien and castle ruins as visibly unfinished.
-Baseline images inspected and concrete defects confirmed; see the final section. Sound works
-according to the user, who explicitly stopped further audio investigation. Deer alarm correction
-01cb3778 is committed/pushed; existing boundary-facing behavior preserved after regression test.
-After these landmarks, finish actual driven bunker maneuver (prior forward exit began with a
-reoriented vehicle; no Uturn proven), then remaining original campaign qualification. Do not close
-at a subsystem milestone or reuse earlier completion prose as acceptance.
+Current priority: the user-identified UFO/alien/castle defects are repaired and qualified in
+de10d0de,1ea80289,23c99801 (all pushed). Bunker divider/doorway/camera correction and the real
+continuous driven workshop turn are now visually and functionally qualified; see final sections.
+Sound works according to the user, who stopped further audio investigation. Deer alarm recovery
+01cb3778 is committed/pushed, with the boundary-facing regression preserved. Next: finish the
+original-criterion holistic review. A serial 27-view same-build matrix is running through
+build/campaign_final_polish_views.py (log campaign-final-20261102-views.log); review its actual
+images before acceptance. Do not close the goal at this bunker milestone.
 
 **No temporary diagnostic, disabled aerial range or benchmark-only source remains.**
 Final source enables the qualified aerial canopy and palm policies plus the final resident waist
@@ -31,13 +32,12 @@ Further polish should start from the remaining limits below, without reopening r
 or recreating existing ecology, landmarks, species, animation or rendering architecture.
 
 
-## Campaign acceptance — final evidence recorded (2026-11-02)
+## Historical acceptance checkpoint — invalidated by later defects (2026-11-02)
 
-All original priorities were assessed and the observed in-scope defects were implemented and
-qualified. The detailed original-criterion ledger at the end records each subsection, retained
-existing behavior, actual comparison paths, tests, measured costs and remaining limitations.
-Stages were not used as individual stopping points: the final traversal review found and fixed
-an additional real bunker vehicle defect before closure.
+This earlier completion assessment was premature: subsequent user inspection found unfinished
+UFO, alien and castle presentation, and continued traversal checks found missing bunker divider
+collision. Retain the table as historical evidence only. It does not supersede ACTIVE status or
+the original full-campaign criteria. The latest qualified changes and pending work are below.
 
 | Priority | Final evidence |
 | --- | --- |
@@ -50,8 +50,8 @@ an additional real bunker vehicle defect before closure.
 | Performance and maintainability | Controlled software pairs/variance investigations, unchanged world fingerprint, focused helpers/tests, no external patches |
 | Final qualification | Final exact-build holistic and live-input images inspected; 83/83 safe CTests,70/70 harness,11/11 validator; audit and repository state recorded |
 
-No new safe, high-value correction remains identified by the final review. Do not reopen rejected
-hypotheses, repeat risky hardware experiments or invent additional features to prolong this campaign.
+That review missed real defects later recorded below. Its completion conclusion is withdrawn.
+Continue observed corrections without repeating risky hardware experiments or inventing features.
 Unverified hardware/platform behavior and explicit simulation bounds are not represented as passed.
 
 ## Implemented and reviewed
@@ -1377,12 +1377,12 @@ view (riding/active suspension, stationary terrain and same scene), using retain
 before and current binary after. No competing build/test/render workload. Still ACTIVE.
 
 
-## Original superprompt acceptance ledger — final assessment, 2026-11-02
+## Original superprompt acceptance ledger — historical assessment, 2026-11-02
 
-This section supersedes the chronological ACTIVE/pending checkpoints above. Those checkpoints,
-failed baselines and rejected experiments remain as an honest development record. Closure is
-based on implemented changes, reviewed actual renders, functional regressions and controlled
-software measurements, not compilation alone. There is no claim of perfect realism or zero bugs.
+This historical ledger does NOT supersede the ACTIVE status or subsequent user findings. Its
+evidence remains useful for scope coverage, but its closure conclusion was invalidated by real
+landmark and bunker defects. A fresh full acceptance review is still required. Failed baselines
+and rejected experiments remain in the record; compilation alone is not visual qualification.
 
 ### Scope, investigation and constraints (original sections1–4,14,16–19,23–24)
 
@@ -2032,3 +2032,93 @@ Alien production mesh/CPU qualification committed as1ea80289. Castle geometry/ma
 collision and both new landmark capture fixtures are the following cohesive commit; all were
 covered in the88-test run and actual screenshots above. Main switch indentation cleanup is
 whitespace only. Continue with bunker route; do not close campaign after these commits.
+
+### Bunker continuation — actual missing wall collision reproduced (ACTIVE)
+
+CPU probe campaign-bunker-roundtrip-before.log confirms capsule passes closed drawn dividers
+at local(1.36,12) and(1.36,28), whereas the real openings are depth14..19/30..33 right and27..30
+left. New shared door dimensions govern renderer openings/frames and capsule/whole-vehicle
+collision. Floor support remains continuous beneath walls; above-roof height guards preserved.
+SAT detects a thin divider enclosed between the old point samples. New BunkerDoorCollisionTests
+and existing bunker layout/support tests pass. Further final geometry-frame sharing qualification
+pending. Baseline actual service room: software-captures/20261102T185902.547842Z-bunker-service.
+
+Reverse-only full trip failed on the existing uphill rear-drive traction limit and eventually
+overturned (campaign-bunker-roundtrip-before.log); no physics constants were changed to conceal
+this. A real continuous approach/workshop multipoint turn/forward escape is now covered by
+BunkerTurnInspection (inputs only, shared CPU/rendered fixture). CPU tests at.05/.1seconds exit
+depth-4.10/-4.24, with142/74reverse frames, maximum absolute tyre-plane gap.127m, zero colliding
+physics substeps, no overturn/roof contact. Full conservative footprint also clears the rendered
+workshop cabinets, bench and distribution board. No re-placement or Right() after initial start.
+Rendered800-frame/16 stage qualification is running through the approved software supervisor;
+NOT yet claimed passed or reviewed. CPU fixture does not prove final rendered scene by itself.
+
+First continuous rendered run20261102T190533.006952Z-quad-bunker-turn is FAILED, not accepted:
+the240-second supervisor limit expired after13 captured stages (kernel-after.json empty). Actual
+review of its PNGs found the chase camera interpolating through a divider despite valid floor
+endpoints. New FitBunkerChaseCamera sweeps the full camera sphere sightline after smoothing;
+production BunkerLayout remains authoritative. Deterministic endpoint/occlusion and continuous
+CPU camera regressions pass. New final rendered run will check accumulated camera collision/
+occlusion counts as well as vehicle contact. Its fixed800 frames have a600second software-only
+ceiling; ordinary capture timeouts remain65seconds. No hardware fallback or weakened image gate.
+Bunker frame dimensions now also share the exact rendered jamb extents, rather than approximate
+wall strips. Earlier failed compilation due an incomplete QA helper type was corrected by an
+explicit header include; final sequential rebuild still required after the last header edits.
+
+Intermediate camera run20261102T192113.611608Z-quad-bunker-turn passed the strict800-frame
+protocol: all16 stage images, zero accumulated vehicle/camera wall violations, completed real
+entry/turn/forward exit, app 81127cd810a2f03a5a9f807968189036be61c1e113ad7ea22ac6c09dd37ad603
+unchanged on verified llvmpipe/Pixman. Kernel delta contains one informational PCI PME
+spurious-interrupt record and zero GPU faults; it is not empty. It is NOT final visual acceptance:
+actual review found decorative blank panels crossing the open computer/workshop doorways and
+the camera inside a hanging lamp at exit stage12. Source now suppresses unsupported panels/
+fasteners through shared door spans and retains65 cm clearance below the ceiling slab for the
+camera and near plane, with an explicit lamp-height regression. All wall/vehicle movement unchanged.
+Old failed timeout set remains190533; intermediate 192113 remains evidence rather than relabeled
+final. Exact same-byte intermediate binary saved as campaign-bunker-panel-before-binary.
+
+Before the panel/lamp follow-up: full Release build passed;90/90 safe CTests passed in 128.25 s,73/73
+harness and11/11validator tests passed, fingerprint238be1fec0a0cdd7 unchanged. CPU-only camera
+fit cost over288 cases (65 occluded with old endpoint-only method,0 after) is11.82/12.53/12.16 µs
+per fit across three runs. No frame/GPU speed comparison is claimed; scene geometry/buffers
+are unchanged by the camera correction. Final follow-up rebuild/render review/tests pending.
+
+### Bunker visual/functional correction qualified — campaign still ACTIVE
+
+Final app b3819374a0c3c5953c3d8ce352a6fdfb231779b9f76172a92c7d3a83b03bae51,
+Release/OpenGL33, CPU0–3/-j2 final rebuild: campaign-bunker-panel-exact-build.log. One earlier
+full build ended 143 without a compiler diagnostic; no compiler remained, and its sequential
+retry plus final exact rebuild succeeded. No external dependency source modification.
+
+Final software set 193404.936591Z-quad-bunker-turn (under build/software-captures) PASSED:
+800 rendered frames/800 fixed 0.1 s updates,16 stage PNGs, full entry/multipoint workshop turn/forward
+escape to depth −5.41552 m; all16 vehicle stage values EXACTLY match the intermediate 192113 set.
+Zero accumulated vehicle-wall, camera-wall/sightline and overturn violations; worst absolute
+tyre-plane floor gap 0.125568 m. Every CPU physics substep also fits actual doorways and clears
+the workshop cabinets/bench/board, at both 0.05/0.1 s. No re-placement/righting/engine-force change.
+
+All16 final sample images actually reviewed in bunker-turn-final-{1,2,3,4}.png under
+build/campaign-final-comparisons. Camera stays with the rider through the turn; open computer/
+service doors no longer contain floating panels, fasteners or a low cable tray; uphill camera
+remains below hanging fixtures. Close overhead lights remain visible in a low passage, without
+the stage12full-screen lamp interior. Comparison bunker-turn-repair.png/.json explicitly uses
+separate original/intermediate baselines for each issue, not falsely one shared before binary.
+Intermediate failed/rejected histories retain separate visual-review.json decisions. Final
+visual-review.json is accepted; renderer is runtime-verified llvmpipe/Pixman, artifact unchanged
+and kernel-after.json empty. Software only, no affected physical GPU workload.
+
+Bunker mesh 7664→7604 triangles, same two draws and existing buffer guards/materials. Shared
+Doorways/CorridorOpening and exact jamb extents govern renderer and collision; horizontal SAT
+prevents thin-wall point-sampling misses. Floor support/roof guards remain unchanged. New
+BunkerDoorCollisionTests and BunkerTurnTraversalTests pass along with existing bunker tests.
+Final full 90/90 safe CTest rerun passed in 128.38 s (campaign-bunker-qualified-safe-ctest.log);
+world report again valid with unchanged
+fingerprint 238be1fec0a0cdd7. Original criteria/final holistic review are still pending: do not
+complete the goal or stop at this bunker milestone. Next: final same-build environment/landmark
+view matrix, visual inspection, acceptance ledger, source/state cleanup and commits/push.
+
+Latest clearance-bound CPU measurement (after final source build),
+build/campaign-bunker-camera-qualified-cost.json: 288 cases, 65 occluded with old endpoint-only
+placement, 0 after full fit; three incremental fit measurements 9.11/7.26/7.21 µs. No compiler,
+test or graphics workload overlapped that measurement. This is CPU helper cost, not a native
+frame-time claim or a substitute for the earlier campaign software before/after pairs.
