@@ -2,6 +2,7 @@
 #include "IslandSimulator/CascadeMistRenderer.hpp"
 #include "IslandSimulator/StructureShadowReceiver.hpp"
 #include "IslandSimulator/VolcanoSite.hpp"
+#include "IslandSimulator/VolcanoFlowGlow.hpp"
 #include "Microsoft/Xna/Framework/BoundingBox.hpp"
 #include "Microsoft/Xna/Framework/Matrix.hpp"
 #include "Microsoft/Xna/Framework/Vector3.hpp"
@@ -63,7 +64,9 @@ private:
     std::unique_ptr<CascadeMistRenderer> plume_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> halo_;
     std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColor> haloStaging_;
-    static constexpr std::size_t HaloCapacity=2048;
+    // 1800ground-light vertices + at most1668plume/spatter/air-glow vertices.
+    static constexpr std::size_t HaloCapacity=4096;
+    std::vector<VolcanoGlowPoint> flowGlow_;
     std::array<MistPuff,PlumePuffs+4*VentPuffs> puffs_{};
     Microsoft::Xna::Framework::BoundingBox bounds_;
     int coneTriangles_=0,glowTriangles_=0,lavaTriangles_=0,flowTriangles_=0,drawCalls_=0;

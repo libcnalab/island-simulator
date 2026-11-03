@@ -361,6 +361,7 @@ VolcanoRenderer::VolcanoRenderer(GraphicsDevice& device,const IslandTerrain& ter
     }
     halo_=std::make_unique<DynamicVertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),static_cast<int>(HaloCapacity),BufferUsage::WriteOnly);
     haloStaging_.reserve(HaloCapacity);
+    flowGlow_=BuildVolcanoFlowGlow();
     plume_=std::make_unique<CascadeMistRenderer>(device,"island-simulator: steam rises out of the volcano's crater in a plume leaning downwind, and out of four sulphur-crusted fumaroles on its slopes",
                                                  static_cast<std::size_t>(PlumePuffs+4*VentPuffs));
     plume_->SetRange(260.0f,240.0f,1.5f);
@@ -530,11 +531,13 @@ void VolcanoRenderer::DrawGlow(const Matrix& view,const Matrix& projection,const
         const float high=CraterGlowHalfHeight(14.0f,28.0f*1.3f,up.Y);
         fan(Vector3(V::X,V::LavaY()+8.0f,V::Z),15.0f,low/15.0f,20,Vector3(0.55f,0.20f,0.05f)*glow);
         fan(Vector3(V::X,V::LavaY()+14.0f,V::Z),28.0f,high/28.0f,20,Vector3(0.12f,0.04f,0.012f)*glow);
-        // the flow's light on the slope and the air over it
-        for(float r=V::RimRadius+1.0f;r<V::RimRadius+V::FlowLength;r+=2.5f) {
-            const float theta=V::FlowCentre(r);
-            const float x=V::X+std::cos(theta)*r,z=V::Z+std::sin(theta)*r;
-            fan(Vector3(x,V::SurfaceY(x,z)+1.2f,z),3.2f+0.08f*(r-V::RimRadius),1.0f,12,Vector3(0.32f,0.11f,0.03f)*glow);
+        // Surface-following illumination, kept in the same existing additive batch.
+        // Camera-facing fans cut straight triangular bands into the cone's depth.
+        if(haloStaging_.size()+flowGlow_.size()<=HaloCapacity)for(const auto& point:flowGlow_) {
+            const float energy=point.weight*glow;
+            const Color colour(static_cast<int>(255*.44f*energy),static_cast<int>(255*.15f*energy),
+                               static_cast<int>(255*.04f*energy),255);
+            haloStaging_.emplace_back(Vector3(point.x,point.y,point.z),colour);
         }
         for(int k=0;k<PlumePuffs;++k) {
             const MistPuff& puff=puffs_[static_cast<std::size_t>(k)];

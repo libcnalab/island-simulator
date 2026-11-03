@@ -2900,3 +2900,61 @@ Do not stop here: the night flow view exposes separate triangular light bands on
 from camera-facing flow halos intersecting its surface. Next baseline is this qualified flow
 image; correct the local light orientation/ground integration with existing additive geometry,
 then review near/far/night controls and continue full original acceptance. Goal stays ACTIVE.
+
+### Flow-light surface integration — final candidate rendered, integration still ACTIVE
+
+A first tangent-plane candidate still visibly clipped the cone; retained image
+`build/software-captures/20261103T020425.243116Z-volcano-flow-t22.00` and source snapshot
+`build/campaign-flow-tangent-candidate.cpp` are rejected intermediates. A uniform ground grid
+also failed the dense geometry test(min clearance−52.4mm); concentrating only across the crest
+still failed−48.2mm. Grading radial stations near the rounded rim, matching the cone's existing
+sampling convention, fixes it without increasing the proposed1800vertices. Final sampled minimum
+clearance18.793mm across27,000interior triangle samples; existing geometry/weights/finite/buffer
+checks pass. No assertion weakened. CraterGlowTests now covers both observed light defects.
+
+BuildVolcanoFlowGlow creates one fixed surface-following light patch on the authoritative cone;
+no new terrain/lighting engine or opaque surface. The old9camera-facing patches(108triangles)
+become600surface triangles, +492(<1%of the53644triangle cone). Same existing additive draw and
+buffer count; HaloCapacity2048→4096 adds32KiB logical GPU storage, worst current active vertices
+3468<4096, so plume/spatter features are retained. Precomputed CPU mesh28,800B and staging+32KiB;
+no per-frame surface sampling or new allocation. Active upload grows23,616B/frame. This focused
+geometry cost replaces visible intersections; whole-frame before/after measurement remains due.
+
+Release full build CPU0–3/-j2 and5focused tests pass. Full98/98safe CTests pass138.40s
+(`build/campaign-flow-ground-safe-ctest.log`);77launcher and11validator tests pass. Six same-app
+software views pass in `build/campaign-flow-ground-after-views.json`. All4matched near/far/night/
+day comparisons inspected in `build/campaign-flow-ground-pairs-{1,2}.png`; night flow also viewed
+at full resolution. Smooth warm light replaces triangular bands; corrected lake and distant
+plume remain intact. Two dawn controls and28scene holistic review are next, followed by cost
+measurement and full original1–24 reassessment. Goal remains ACTIVE after this second stage.
+
+Other additive/fog audit: hut/fungus/lighthouse/passing-ship use separate glow effects without
+opaque fog; balloon disables fog for its burner, shoreline has its own distance-faded glow.
+Mine's current visibility gate ends before its fog starts, so no observed pale-fog artifact there.
+No speculative fixes were applied to these working paths; selected night controls remain due.
+
+### Flow-light visual/regression qualification completed; cost and delivery remain active
+
+Final candidate app1fce4a062a66ac6d61d0c234413140a7359e558b4ee249250fa795940261dd5a;
+CNA950faa719ec2fb51cde7220d3e28100f2609731ede56c7cf4088bda0d2dcde5c unchanged. Full98/98
+safe CTests pass138.40s; strengthened finite-coordinate/energy test separately passes without
+changing the app. Registry136=98safe+36display exclusions+2orphan validators
+(`build/campaign-crater-final-tests.json`). World fingerprint238be1fec0a0cdd7 retained.
+
+Current same-app34software scopes/70PNGs all pass actual llvmpipe/Pixman/private-device/
+unchanged-executable/kernel[] gates. All34main views inspected:4local pairs,2dawn controls,
+28whole-island and night-light views in `build/campaign-crater-holistic-{1..5}.png`.
+63PNGs byte-identical to previously inspected controls, including subsidiary wildlife/resident
+stages;7changed/new images all actually reviewed. Night overview differs only272pixels around
+the corrected volcanic glow; no model/camera/seed change. Audit
+`build/campaign-crater-final-evidence.json`, raw manifests
+`build/campaign-{flow-ground-after-views,crater-continuation-holistic}.json`.
+The no-longer-clipped flow/lake, near/far/night/day transitions, forest/water/reef, cave roof,
+weather, resident/wildlife, alien/UFO/castle and other landmarks are preserved and coherent.
+
+No additional defect found by the broader additive/fog audit or night hut/mine/fungus/lantern
+inspection; working paths retained. The documented reverse18degree limitation was measured as
+rear-axle grip below downhill load, not patched with a force hack; actual turn/forward escape
+and current bunker physics/collision regressions remain valid. Continue through the equivalent
+600sample night-flow cost pair and fresh original1–24 acceptance/delivery gates, not another
+content expansion. Goal is still ACTIVE.
