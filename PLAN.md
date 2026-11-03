@@ -22,6 +22,16 @@ Status markers:
 
 ## Visual cohesion campaign — 2026-11-01–03 (software qualified)
 
+- Follow-up from `6ff95594`: normalized tide-pool noise restores irregular rock coverage and
+  authored weathering; fine detail is footprint-filtered. Stream-bank soil follows actual
+  terrain incision in existing vertex alpha, with filtered sediment and explicit stock fallback.
+  Same geometry/buffer/texture/draw budgets; poor-value mine tessellation trial rejected.
+  Five pool/eight stream matched pairs, 105 safe tests, 92 current software scopes/184 PNGs
+  qualify the final app. All92main images and51changed/new stages inspected;41stages exact to
+  prior review. Two actual stock-terrain failure captures are separately qualified.
+  Pool warm mean+1.80%; benchmark-pair startup+11.17% (first draw+0.77s) is retained, with
+  cache/JIT/host attribution unresolved. Stream timing variation is not a causal speedup claim.
+  Full renewed original1–24 evidence, commands, remaining limits and delivery state in HANDOFF.md.
 - Follow-up from `407da137`: fallen giant reuses filtered canopy bark with bent-axis circular
   coordinates; same geometry/draw count, +562 KiB vertex payload. Six matched lighting pairs,
   103 safe tests, 70 normal scenes/158 images and four separate stock-receiver fallback paths

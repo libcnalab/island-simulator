@@ -1,4 +1,11 @@
-# Comprehensive visual cohesion campaign — ACTIVE continuation after 6ff95594
+# Comprehensive visual cohesion campaign — current software qualification 2026-11-03
+
+Latest continuation: source commits `e96d9723` and `636d0162`, final app `d138cecf`.
+All105safe tests and92normal graphical scopes passed;92main images and51changed/new stages
+actually reviewed,41other stages exact to earlier review. The renewed original1–24ledger at
+the end is the current acceptance record. It retains the observed software first-draw cost,
+earlier latency uncertainty, open AMDGPU/CNA issues and unverified platforms. Documentation
+delivery/local/remote identity is checked separately after commit, before any goal closure.
 
 The whole original superprompt/attachment is assessed in the final acceptance ledger at the
 end of this file. Earlier premature completion conclusions and ACTIVE checkpoints remain as
@@ -3579,3 +3586,98 @@ Resource budget unchanged: same vertex bytes, buffers, textures, triangles and d
 scalar varying. Next: final92-scope full island review on the immutable d138cecf app, inspect
 all changed animation stages, record all original criteria and verify commit/push/clean state.
 Goal ACTIVE; no stage-only closure.
+
+## Original 1–24 renewed acceptance after 636d0162
+
+The continuation moved beyond the pool stage, rejected a poor-value mine prototype, corrected
+actual stream-bank integration, and completed a new whole-island qualification. Earlier tables
+support unchanged systems; this is the latest assessment, not a declaration of zero defects.
+`build/campaign-earth-final-verification.json` passed after checking actual artifacts, test and
+world reports, paired reproduction, all92normal scopes, two separate fallback scopes and the
+free graphical qualification lock. No build/test/capture/benchmark workload remains pending.
+
+App SHA: `d138cecf3ca87c6754bc1b9956ff6651d01a5ada17c708ce00b796fcc55d0ca8`.
+Runtime SHA: `950faa719ec2fb51cde7220d3e28100f2609731ede56c7cf4088bda0d2dcde5c`.
+
+| Original criterion | Current evidence and limits |
+| --- | --- |
+| 1. Context | Fresh tracked inventory806C++/header files,159,951lines;500m nominal island retained. Current valid world fingerprint `238be1fec0a0cdd7`. Existing systems inspected rather than recreated. |
+| 2. Preservation | Clean/synced develop/6ff95594 entry preserved. Two focused terrain-material changes; no engine/architecture replacement, dependency, external patch, content removal, relocation, destructive Git operation or merge. Rejected own mine experiment restored exactly, with code/evidence saved. |
+| 3. Hardware safety | README/BUGS/PLAN and open GPUVM incident reread. Actual llvmpipe/Pixman, private GPU-free devices and empty kernel deltas verified. No affected physical GPU workload, system modification or hardware-qualification claim. |
+| 4. Investigation | Forest/geology/pool/mine baselines and four existing stream orbit probes inspected. A signed-noise mismatch and disagreement between analytic route pigment and the actual carved bed led to implementation. The initial mine panel attribution was corrected after actual rendering. |
+| 5. Vegetation, 5.1–5.6 | Earlier correlated ecology, layers, floor pigment, tree/root grounding, bark and bounded aerial LOD retained. Current jungle/edge/floor/wetland/sapling/snags/windthrow/mangrove/palm/overview views reviewed. No population increase or new vegetation engine. Upper stream vegetation stays green while the exposed bank reads as soil. |
+| 6. Terrain, 6.1–6.6 | Pool authored thresholds now receive0..1noise rather than−.5..+.5; irregular rock bench, turf pockets, wet/algal margin and subdued filtered weathering are visible in five matched pairs. Stream pigment follows original-minus-drawn incision in existing alpha, including asymmetric banks/cascade; eight matched probes reviewed. Authoritative geometry, collision, cave roof/entry support and placements unchanged; current cave/top/ridge/coast/mine/volcanic views and CPU gates pass. |
+| 7. Water, 7.1–7.7 | Current coast, swimming-height, underwater reef, wreck, mangroves and both tide phases inspected. Earlier multiscale waves, depth/foam/caustic/shallow-water corrections retained. Pool change is substrate shading, not a new water simulation or tide correction. Existing tide/swimming/controller regressions remain applicable. |
+| 8. Wildlife, 8.1–8.6 | Crocodile16stages, elephant8stages and valley8stages freshly reviewed where bank pigment changed the surroundings; TRex/resting mammals/bird/fish/habitat controls retained. Current bear, boar/goat rest, mudskipper, dove, weaver and reef views inspected. Prior support/gait/anchoring regressions pass. No new species, populations, rigs or anatomy claim this continuation. |
+| 9. Resident, 9.1–9.5 | Current walking/tending/fishing inspected. Walking main remains exact; seven changed stages were freshly inspected for small distant bank differences outside the body. Earlier sleeve/taper/waist/material/stride corrections retained with unchanged body geometry/rig. |
+| 10. Lighting/materials/shadows | Day/dawn/night/storm/wet/interior views reviewed. Pool details and stream sediment use unconditional footprints before divergent material selection. Existing fog, ground light, SunShadowMap and material architecture retained. Normal qualification rejects missing receivers/casters/materials. Separate actual stock-terrain rejection pair has identical decodedRGB, with255alpha explicitly retained. This is OpenGL33 failure-path evidence, not actual capability-limited backend qualification. |
+| 11. Landmarks, 11.1–11.4 | Current hut, wreck, cave, mine, bunker, lighthouse/cottage/gallery/stairs, plane, castle, UFO and alien views inspected. Alien/UFO/castle gate additionally viewed at full1280×720. Earlier grounding/masonry/structural repairs retained; no new landmark or clutter. Mine bank tessellation trial was rejected for negligible visible benefit and extra geometry. |
+| 12. Traversal, 12.1–12.5 | Current800frame bunker turnaround/forward-escape and its16stages pass, exact to prior review. Safe CPU walking/stream/cave/swim/vehicle/support regressions pass. Controllers and solid geometry unchanged. Earlier strict live-input evidence remains supporting coverage, not represented as a new live run. Existing18degree reverse rear-traction limit retained; flat/10degree reverse and18degree forward evidence remains recorded. |
+| 13. Performance, 13.1–13.4 | Five current software benchmark runs retain identical721updates/72.1s, settings and recorded scene/ranges within each comparison. Pool warm mean+1.80%,p95+2.33%,RSS+2.23%; observed first-draw/startup cost and >10%startup increase investigated below. Stream before/after/old-control means371.64/311.96/370.10ms are not a causal speedup claim. Same geometry, vertex bytes, buffers, textures and draws; one scalar varying added. No native performance claim. |
+| 14. Maintainability/determinism | Two small pure material helpers and focused tests; existing alpha reused rather than new resource plumbing. IslandGame769,148bytes and CoreTests913,682bytes unchanged. Current world/placement fingerprint retained. No hidden state, generated production code, large refactor or configuration expansion. |
+| 15. Visual QA, 15.1–15.5 |92current main images and51changed/new subsidiary images actually inspected;41other subsidiary images carry forward byte-exact prior review.184normal PNGs total,87exact controls;44matched changed mains plus two new lighting/weather mains. Final app reproduces all five pool and eight stream accepted views byte-for-byte. Separate fallback pair actually reviewed. Rejected loud-pit and mine prototypes preserved; no golden update substituted for review. |
+| 16. Stages | Baseline geological/forest review → normalized/filtered pool material and refinement → matched cost/visual checks → rejected mine experiment → actual carved-bank field/filtering → real stock fallback → full tests/current matrix → renewed whole acceptance. Existing camera/capture/benchmark facilities reused. |
+| 17. Autonomy | Continued across implementation stages and validation, with source commits pushed during work. No ordinary approval request or stage-only closure. Rejected experiments and uncertainty retained with precise causes. |
+| 18. Quality bar | Release/OpenGL33 builds and fixture compilation used CPU affinity0–3/-j2.105/105safe CTests pass in210.36s;143registered,36display and two orphan validators excluded from the CPU command. Actual graphical qualification was run separately in92normal scopes and two scoped fallback captures. |
+| 19. Known issues | Open external CNA Android lifecycle/stock-skinned issues and AMDGPU GPUVM/flight limitations remain external/read-only. Audio remains user-closed. New shader costs do not resolve the earlier wetland latency uncertainty. Unverified platforms and the reverse-traction bound remain explicit. |
+| 20. Integration | Fresh forest, geology, coast, water/reef, animals/resident, structures, dawn/night/storm, mist and traversal views inspected together. Pool rock and actual stream soil now connect to their surroundings. No further major demonstrated in-scope correction emerged from this matrix; stylized geometry is retained. |
+| 21. Stopping | Major observed defects and relevant tests/visual/cost conditions have been addressed within the stated limits. All original criteria revisited after the final matrix. Further speculative geometry/rig/engine work lacks demonstrated value; rejected mine tessellation illustrates this boundary. Goal closure still waits for documentation commit/push and clean local/actual-remote proof. |
+| 22. Deliverables | Actual C++/tests shipped in e96d9723 and636d0162; paired/current images, raw safe scopes, test/world/cost/fallback reports under build/. This document records the complete criteria. Final delivery proof records the documentation commit and actual remote HEAD after creation. |
+| 23. Principles | Restores authored natural materials and connects shading to actual terrain without more geometry, draws, populations or features. CNA architecture, deterministic world and exploration retained. |
+| 24. Outcome | Earlier forest/terrain/water/wildlife/resident/landmark improvements remain qualified; pool geology and cut-bank soil visibly close two remaining material-integration gaps. Available software evidence supports this campaign result; it does not establish photorealism, zero defects or full hardware/platform qualification. |
+
+Visual evidence: `build/campaign-earth-holistic-evidence.json`, main sheets
+`build/campaign-earth-holistic-{1..16}.png`, changed-stage sheets
+`build/campaign-earth-changed-stages-{1..9}.png`. Matched pool pairs are
+`build/campaign-pool-pairs-{1..3}.png` and `campaign-pool-visual-evidence.json`; stream pairs
+`build/campaign-stream-incision-pairs-{1..4}.png` and corresponding visual-evidence.json.
+Final92scope images reproduce every PNG from those13accepted paired views exactly. Two new
+storm-stream/night-pool scopes have no baseline and are not claimed as before/after comparisons.
+All normal captures use the immutable final app, fixed camera/clock/settings and verified
+software rendering; no screenshot/QA argument, profile, threshold or golden was weakened.
+
+Scoped fallback evidence: `build/campaign-terrain-fallback-views.json` and
+`build/campaign-terrain-fallback-pair.png`. The independent local C1-constructor fixture rejects
+only terrain effect construction, leaving the original application and CNA binary unchanged.
+Both stock-terrain images pass scoped checks and have identical decodedRGB; normal qualification
+correctly refuses both. First rejected package label es.vert is NOT evidence of GLES execution.
+
+Performance evidence: `build/campaign-pool-cost-evidence.json`,
+`build/campaign-bank-incision-cost-evidence.json`, `build/campaign-earth-host-pressure.json`
+and `build/campaign-earth-first-draw-investigation.json`. Pool mean137.5909→140.0676ms,
+p95148.8919→152.3611ms, peak RSS720,304→736,376KiB. In that same benchmark pair first draw
+224.323→990.369ms; total startup7,782.648→8,652.044ms (+11.17%). Most of that difference
+is the first draw (+766.046ms). A separate matching named capture observes218.424→912.383ms;
+the current final matrix observes347.178ms. Cache/JIT/host attribution was not isolated, and
+cache state was not separately controlled. Retain the observed software first-launch cost for
+restored coverage/filtering rather than hiding it behind the120warmup frames or claiming a
+persistent/native startup regression. No new repeated rendering loops were run for this check.
+
+Stream first draw818.527/1,898.868/388.840ms and total startup13,929.266/12,807.818/7,384.810ms
+for before/after/old-control vary alongside unchanged world/content CPU phases. Warm means
+371.6351/311.9601/370.1015ms and p95433.0254/350.4338/497.8947ms likewise do not establish
+a causal shader speedup. No measured warm/resource increase, but precise cost attribution
+remains unresolved. The one old-version control is preserved; no endless unchanged timing
+loops or claim that these measurements explain the previous seven wetland runs.
+
+Commands actually run include:
+
+```sh
+taskset --cpu-list 0,1,2,3 env CCACHE_DIR="$PWD/build/ccache" cmake --build build -j2
+taskset --cpu-list 0,1,2,3 ctest --test-dir build -LE display -E '^(IslandGameStartupReportValidation|IslandGameCaptureValidation)$' --output-on-failure -j2
+python3 tools/run_software_capture.py build tide-pools
+ISLAND_QA_ORBIT='stream:40 135 8 14' python3 tools/run_software_capture.py build orbit
+python3 build/campaign_earth_holistic.py
+python3 build/campaign_earth_visual_audit.py
+python3 build/campaign_earth_final_verify.py
+```
+
+Build/test logs: `build/campaign-pool-{material,refinement}-build.log`,
+`build/campaign-stream-{incision,final}-build.log`, `build/campaign-earth-safe-tests.log`;
+registered test manifest `build/campaign-earth-tests.json`, world `build/campaign-earth-world.json`.
+Rejected mine source/binary is preserved in `build/campaign-mine-bank-rejected/`; it is NOT
+part of the delivered source. No further application change is pending at this checkpoint.
+Physical AMDGPU, current Debug/Web/GLES/Android/other backends and an actual capability-limited
+backend remain unqualified. Open CNA/driver issues and18degree reverse traction remain as
+documented above. The final documentation commit/push/clean actual-remote checks are recorded
+in `build/campaign-earth-final-delivery.json` before goal closure.
