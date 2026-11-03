@@ -10,8 +10,9 @@
 This document describes the current build, not the intended final quality. `PLAN.md` is the
 authoritative work ledger. [BUGS.md](../BUGS.md) records the confirmed CNA stock-skinning defect
 (CNA-ISLAND-002, game workaround active) and the separate suspected Android lifecycle defect
-(CNA-ISLAND-001). The 2026-11-03 audit found that the stock failure mechanism persists in current
-CNA `next`; the lifecycle issue has no verified closure. The older claim that no framework
+(CNA-ISLAND-001). The 2026-11-03 audit, rechecked at 19:23 UTC against published/local
+CNA `next` `1d0232f237af`, found that the stock failure mechanism persists;
+the lifecycle issue has no verified closure. The older claim that no framework
 defect had been confirmed was stale. The game's locked dependency version remains unchanged.
 
 ## Current browser input evidence

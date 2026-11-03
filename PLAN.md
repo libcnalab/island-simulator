@@ -22,8 +22,8 @@ Status markers:
 
 ## CNA issue status review — 2026-11-03
 
-- [x] Read-only comparison of published CNA `next` (`e28441da07e9`), local CNA
-  (`76bf82f046ed`, final check 18:07 UTC) and the game's locked `97783d1e090c`
+- [x] Read-only comparison of published and local CNA `next` (`1d0232f237af`,
+  final check 19:23 UTC) and the game's locked `97783d1e090c`
   export, including the affected shader initialization, lifecycle handling and existing tests.
 - [!] CNA-ISLAND-002 remains open upstream: the 72-matrix stock palette exceeds the recorded
   256-vector GLES limit, and initialization continues after link failure. The game-owned
@@ -33,27 +33,27 @@ Status markers:
 - [x] Correct stale workaround/confirmed-defect claims in BUGS.md and the linked limitations and
   workaround documents. Source identities and exact closure requirements are recorded in
   [BUGS.md](BUGS.md#cna-status-audit--2026-11-03). No dependency pin, external source, Android
-  runtime or physical-GPU qualification was changed; the original visual campaign remains active.
+  runtime or physical-GPU qualification was changed. This audit does not itself qualify the
+  original visual campaign; its separate acceptance evidence is recorded in HANDOFF.md.
 
 ## Visual cohesion campaign — 2026-11-01–03 (software qualified)
 
-- Active continuation from112674ba: octopus arms/body follow the drawn seabed through bounded
-  swim/ground transitions; existing seabed-shadow batch supplies a body contact cue.108safe
-  tests/79launcher tests and three64frame motion captures pass with inspected stages. The
-  thunderstorm image gate also fails on the old artifact; retain both failures. One software
-  cost pair has+8.52%mean and larger startup/tail uncertainty, requiring investigation. The
-  existing subject3den/body intersects a reef boulder and is the next integration correction.
-  This is a stage checkpoint, not whole-campaign completion; exact evidence is in HANDOFF.md.
-- Reef-den follow-up: reuse local circles for existing non-solid reef boulders; find a nearby
-  clear home and turn gradually around them, retaining swimmer collision and animal inventory.
-  The former subject3body/rock probe improves72→0inside vertices.109safe tests and four software
-  scopes pass;16changed motion stages inspected and35other PNGs byte-exact to prior review.
-  The deliberately shifted tracking camera is not described as a fixed-world matched pair.
-  Whole-campaign acceptance and software timing uncertainty remain open in HANDOFF.md.
-- Octopus/ray near-model shading now shares the existing per-frame sun/moon direction rather
-  than a literal opposing afternoon direction. Ten matched day/dawn/dusk/night/storm/buried
-  pairs inspected; all10after scopes and109safe tests pass. Same geometry, palettes, fog and
-  GPU resources/draws. Current whole-island review and final software cost assessment continue.
+- Final continuation from `112674ba`: octopus arms/body follow the drawn seabed through bounded
+  swim/ground transitions, and the existing seabed-shadow batch supplies a contact cue. Nearby
+  dens and extended probes avoid existing reef boulders; actual subject 3 body/rock penetration
+  improves from 72 to zero vertices. Octopus/ray shading shares the per-frame sun/moon direction.
+  Source commits `52d8c56e`, `05077820`, `5e74c5d0` retain original models, resources and populations.
+- Release/OPENGL33: 109 safe tests, 79 launcher fixtures and 36 normal final-app scopes / 80 PNGs
+  pass. All 36 mains and 28 motion/stream stages inspected; 16 other stages match prior reviewed
+  images byte-exact. Ten matched marine-light pairs, clear-grounding controls and actual 64-frame
+  swim/settle motion qualify the changed systems. Earlier 108-scene / 296-PNG evidence supports
+  unchanged systems.
+- Added-cost investigation complete for the available software scope: within-process frozen
+  contact/shadow CPU +1.10% (exploratory cycle 95% interval −1.34 to +3.57%); wall −2.32%, interval
+  includes zero, no speedup claim. Added seabed submission +0.156 ms and startup reef setup
+  +0.0193 ms CPU. Conflicting historical whole-process timings and host/cache/JIT uncertainty
+  remain retained. Exact source/binary restoration, all original 1–24 criteria, raw evidence and
+  final commit/push verification are recorded in HANDOFF.md. No physical-GPU or fresh Android claim.
 - Qualified follow-up from `cd800d00` (`b141b2e2`, `fb7f494b`): bird eye layers follow their actual lofted head instead
   of clipping into it. Deer reuse existing world-foot contacts through turns/acceleration;
   the visible legs and shadows share one pose, and upper-leg roots seat inside the torso.

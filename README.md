@@ -482,7 +482,8 @@ tools/materialize_cna_next.sh
 This does not switch or edit the CNA repository. A separate read-only CNA checkout on `next` can be
 used instead with `-DCNA_ROOT_DIR=/path/to/cna`.
 
-The [2026-11-03 CNA issue audit](BUGS.md#cna-status-audit--2026-11-03) distinguishes current
+The [2026-11-03 CNA issue audit](BUGS.md#cna-status-audit--2026-11-03), rechecked against
+published/local `next` at `1d0232f237af` (19:23 UTC), distinguishes current
 upstream source from this locked build: the stock-skinning failure mechanism persists, its
 game-side workaround remains active, and the Android surface-lifecycle issue has no verified fix.
 
