@@ -444,6 +444,9 @@ void VolcanoRenderer::DrawPlume(const Matrix& view,const Matrix& projection,cons
 
 void VolcanoRenderer::DrawGlow(const Matrix& view,const Matrix& projection,const Vector3& camera,const float seconds,const float night) {
     if(!Visible(view,projection,camera)) return;
+    // Additive emission must fade to black. The opaque cone's pale fog colour
+    // otherwise turns even zero-energy fan rims into solid luminous discs at range.
+    effect_->setFogColorProperty(Vector3(0.0f,0.0f,0.0f));
     const float pulse=0.88f+0.08f*std::sin(seconds*0.9f)+0.04f*std::sin(seconds*2.3f+0.7f);
     device_.setRasterizerStateProperty(RasterizerState::CullNone);
     device_.setBlendStateProperty(BlendState::Additive);
@@ -548,5 +551,6 @@ void VolcanoRenderer::DrawGlow(const Matrix& view,const Matrix& projection,const
     }
     device_.setBlendStateProperty(BlendState::Opaque);
     device_.setDepthStencilStateProperty(DepthStencilState::Default);
+    effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
 }
 }

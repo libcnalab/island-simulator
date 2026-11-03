@@ -2699,3 +2699,75 @@ turn phases and3static controls actually inspected; control sheet
 sizeof actor1928→2112B(elephant),1824→1936B(TRex); no new heap allocation, mesh or GPU resource.
 31scope whole-island/environment/weather/live-bunker review and full-frame software cost pair
 continue after this source commit. Goal remains ACTIVE; no stage-level completion claim.
+
+### Holistic review found another real lighting defect — continuation remains ACTIVE
+
+The2fe0790c final broad matrix completed31scopes plus4TRex controls:35scopes/111PNGs,
+all verified llvmpipe/Pixman/private devices, unchanged app and empty final kernel intervals.
+All35main frames inspected (24in holistic sheets1–4,5animal controls in sheet5,3full-resolution
+UFO/alien/castle frames, dawn/bunker directly and4TRex views).98PNGs exactly match previously
+reviewed controls, including all17images of the actual800frame bunker turn/forward exit.
+Overview/headland differ13/185pixels at the intentionally changed distant animal poses.
+Audit `build/campaign-footplant-final-evidence-audit.json`. Legacy trex camera aim follows its
+body pose, so its309953changed pixels include a camera-angle change; it is a functional view,
+NOT matched-camera improvement proof. The dedicated trex-turn analytic camera provides that proof.
+
+The new06h overview exposed excessive lighthouse glare, so completion was NOT declared.
+Baseline `build/software-captures/20261103T004511.364802Z-overview-t06.00` plus
+`build/campaign-lighthouse-glare-before-views.json`:06h tower,22h lantern interior/overview.
+The old single bright fan had radius up to8.2m and centre shifted1.4m toward the eye; inside
+the lantern that offset could cross the camera and its oversized glow washed out the sea/sky.
+Actual RED `build/campaign-lighthouse-glare-red.log` reproduces the near-eye geometry invariant.
+
+Local correction: preserve beam motion, night switch, depth read, additive draw and existing
+512vertex buffer. Bound halo to2.8m and5.7degree angular radius at its actual shifted distance;
+cap offset ahead of the eye and outside the existing36cm lens. Compact bright core/low-energy
+radial halo and daylight-adapted halo intensity replace the broad saturated disc.132light
+triangles instead of92 (396vertices, still below512); same existing buffer, allocation and draw.
+Release build CPU0–3/-j2 passes, focused near-eye regression passes; matched image review pending.
+The96previous safe tests retain unchanged binaries/core sources; only the new focused test and
+LighthouseRenderer were compiled in this stage. No external source/native GPU changes.
+
+### Lighting attribution corrected; two local defects repaired and visually verified
+
+The first six-view comparison proved the near-eye lighthouse repair: the22h lantern view no
+longer has its sea/sky washed out. It also showed the distant overview's large disc unchanged,
+so attributing that disc to the lighthouse was wrong. Intermediate records retained in
+`build/campaign-lighthouse-glare-intermediate-{views.json,pairs-1.png,pairs-2.png}`; no improvement
+was claimed for the still-broken overview. Further code inspection identified the actual cause:
+VolcanoRenderer reused its opaque cone's pale fog colour for additive glow. Fog mixed colour
+into even zero-energy rims, producing luminous cyan discs and a white streak at distance.
+
+DrawGlow now fades emission toward BLACK and restores the normal opaque fog colour afterwards.
+No new draw, triangle, buffer, shader dependency or external patch for this correction. Actual
+matched06h overview:6619changed pixels, confined to(290,260)–(395,351);1564near-white pixels
+in the crater crop become0, leaving warm lava/steam illumination and an unchanged landscape.
+Night overview also loses the false cyan globe; lighthouse beam, daytime tower and22h castle
+remain preserved. All6final same-camera pairs inspected in
+`build/campaign-lighthouse-glare-pairs-{1,2}.png` and dawn final inspected at full resolution.
+
+Final lighting app4dbb662a7bd970704381e5797a729ffe6bd525076eee74b5a40e13c907c66c80;
+manifest `build/campaign-lighthouse-glare-after-views.json` contains6passing software/private/
+unchanged-executable/kernel[] scopes.96previous CPU-safe tests plus new near-eye test pass;
+only new test/LighthouseRenderer/VolcanoRenderer rebuilt, core and existing96test binaries
+unchanged. Additional final day/animal/close-crater controls and comparable cost measurement
+continue before the complete original acceptance ledger and goal closure.
+
+Lighting qualification completed before integration delivery:12final-app scopes/28PNGs, all
+actual llvmpipe/Pixman/private/unchanged-artifact/kernel[] verified in
+`build/campaign-emission-final-evidence-audit.json`. All12main views inspected;22PNGs exact to
+reviewed controls (including all9elephant-turn and9TRex-turn images, day forest/water/tower and
+night castle). Day overview changes only81pixels at the lava rim; its landscape is unchanged.
+Final control sheet `build/campaign-emission-final-controls.png` includes the live near22h crater.
+Earlier35scope/111PNG full review is attributed to2fe0790c, not mislabelled as the lighting binary.
+Combined retained qualification47scopes/139PNGs, with explicit per-group executable identities.
+
+Cost investigation: original short3x20000TRex timings ramped1.24→.99us and suggested an apparent
+speedup; they are retained but NOT used for that claim. Longer warmed ABBA8x200000update runs,
+first2passes discarded, no concurrent build/test/capture, measure0.9631295→1.12683us (+17.00%,
+absolute+.1637005us). Elephant measured.594371→.681373us (+14.64%,+.087002us). These >10%component
+increases are explicit: persistent contacts/finite flights/turning placement cost extra scalar
+work for two existing actors. Combined only.000251ms/update and296B fixed actor state; no new
+heap or animal mesh/resource/draw budget. The lighthouse adds40small halo triangles/1920B
+streamed per active frame within its existing512vertex buffer and one existing draw. Fog fix
+adds no geometry/resource. Whole-frame software comparison is still finishing separately.

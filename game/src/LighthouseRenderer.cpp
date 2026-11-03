@@ -1,4 +1,5 @@
 #include "IslandSimulator/LighthouseRenderer.hpp"
+#include "IslandSimulator/LighthouseGlare.hpp"
 #include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
@@ -597,21 +598,34 @@ void LighthouseRenderer::DrawLight(const Matrix& view,const Matrix& projection,c
             }
         }
     }
-    // the lamp's glow, a disc turned to the eye, flaring as a beam swings past
+    // A small bright lens in a low-energy halo. The old single linear fan made
+    // most of an eight-metre disc bright, washing out distant and interior views.
     {
         Vector3 right=Vector3::Cross(toEye,Vector3::Up);
         if(right.LengthSquared()<1e-6f) right=Vector3::UnitX;
         right.Normalize();
         const Vector3 up=Vector3::Cross(right,toEye);
-        const float radius=1.2f+7.0f*flare_;
-        const Vector3 centre=lamp_+toEye*1.4f;
-        const Color core=colour((0.85f+0.15f*flare_)*night,(0.78f+0.2f*flare_)*night,(0.55f+0.3f*flare_)*night),rim(0,0,0,255);
-        constexpr int Segments=20;
+        const auto glare=LighthouseGlareAt(eyeDistance,flare_,night);
+        const Vector3 centre=lamp_+toEye*glare.offset;
+        constexpr int Segments=12;
+        constexpr std::array<float,4> radii{{0,.15f,.45f,1}},weights{{1,.10f,.015f,0}};
+        const auto pigment=[&](float weight) {
+            return colour((.85f+.15f*flare_)*glare.intensity*weight,
+                          (.78f+.20f*flare_)*glare.intensity*weight,
+                          (.55f+.30f*flare_)*glare.intensity*weight);
+        };
         for(int k=0;k<Segments;++k) {
             const float a0=2.0f*Pi*static_cast<float>(k)/Segments,a1=2.0f*Pi*static_cast<float>(k+1)/Segments;
-            lightStaging_.emplace_back(centre,core);
-            lightStaging_.emplace_back(centre+(right*std::cos(a0)+up*std::sin(a0))*radius,rim);
-            lightStaging_.emplace_back(centre+(right*std::cos(a1)+up*std::sin(a1))*radius,rim);
+            const Vector3 edge0=right*std::cos(a0)+up*std::sin(a0),edge1=right*std::cos(a1)+up*std::sin(a1);
+            for(std::size_t ring=0;ring+1<radii.size();++ring) {
+                const Vector3 i0=centre+edge0*(radii[ring]*glare.radius),i1=centre+edge1*(radii[ring]*glare.radius);
+                const Vector3 o0=centre+edge0*(radii[ring+1]*glare.radius),o1=centre+edge1*(radii[ring+1]*glare.radius);
+                const Color inner=pigment(weights[ring]),outer=pigment(weights[ring+1]);
+                lightStaging_.emplace_back(i0,inner);lightStaging_.emplace_back(o0,outer);lightStaging_.emplace_back(o1,outer);
+                if(ring>0) {
+                    lightStaging_.emplace_back(i0,inner);lightStaging_.emplace_back(o1,outer);lightStaging_.emplace_back(i1,inner);
+                }
+            }
         }
     }
     light_->SetData(lightStaging_.data(),0,static_cast<int>(lightStaging_.size()),SetDataOptions::Discard);
