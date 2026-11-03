@@ -15,6 +15,11 @@ This does not explain the earlier slow wetland runs, which already hit the0.1s s
 Current GPU safety restrictions in README still apply; historical operator observations below
 do not authorize a new hardware workload.
 
+Normal software captures also reject explicit structure material, shadow-receiver and
+shadow-caster failures. A deliberately rejected receiver is a separate failure-path inspection;
+it does not qualify the normal material path or another graphics backend. Current scoped
+fallback evidence and its local fixture provenance are recorded in `HANDOFF.md`.
+
 ## Operator Release confirmation — 2026-10-12
 
 The operator confirms the performance issue is resolved at about 59.3 FPS. Their Release log

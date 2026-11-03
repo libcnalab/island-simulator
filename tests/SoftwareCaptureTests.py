@@ -709,6 +709,10 @@ class SoftwareCaptureTests(unittest.TestCase):
         for message in ("terrain material fallback: compile failed",
                         "shipwreck material fallback: invalid shader",
                         "grass stock-effect fallback: unavailable",
+                        "island-simulator: windthrow sun shadow receiver unavailable: custom effects unavailable",
+                        "island-simulator: lighthouse sun shadow receiver unavailable: shader failed",
+                        "island-simulator: lighthouse sun shadow caster unavailable: shader failed",
+                        "island-simulator: cottage masonry unavailable; retaining plain receiver: shader failed",
                         "gl-error GL_INVALID_OPERATION"):
             with self.subTest(message=message), self.assertRaises(RuntimeError):
                 validate_graphics_log(message)

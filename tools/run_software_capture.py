@@ -752,6 +752,8 @@ def validate_graphics_log(diagnostics, inspection=None, *, missing_leaf=False, n
         diagnostics = expected.sub("expected missing-leaf diagnostic", diagnostics)
     if re.search(r"(?:stock-effect|material) fallback:", diagnostics):
         raise RuntimeError("GL error or degraded shader path in software capture")
+    if re.search(r"\bsun shadow (?:receiver|caster) unavailable:|\bcottage masonry unavailable;", diagnostics):
+        raise RuntimeError("degraded structure shading cannot qualify the normal visual path")
 
 
 def run_monitored_capture(command, root, environment, evidence, journal, baseline,

@@ -3407,3 +3407,20 @@ windthrow-bark-after-not-launched. Actual measurements were sequential with no b
 Next stage is now exercising four narrowly scoped actual receiver-construction failures on the
 unchanged app/runtime via a local Linux interposition fixture; no dependency source/binary patch.
 Then continue the fresh70-view matrix and original criteria, rather than close at this stage.
+
+Receiver stage: four actual fallback combinations (cottage only, tower only, both, windthrow)
+pass on unchanged app94ff2a6a/runtime950faa71 under private-device llvmpipe/Pixman. All four
+images inspected in build/campaign-receiver-fallback-review.png; fixture hash/source/commands,
+exact selected labels, immutable artifacts, kernel records and normal-qualification refusal
+are in build/campaign-receiver-fallback-evidence.json and raw per-run manifests. Cottage-only
+fallback is pixel-exact to the pre-masonry normal image (decodedRGB; PNG writers differ).
+The fixture rejects construction before shader selection; its first package label es.vert
+is NOT evidence of GLES execution. No CNA source or runtime binary was patched. This exercises
+the current OpenGL33 failure paths, not a native backend without custom-effect support.
+
+Two preliminary fixture failures remain preserved: an overly broad label also rejected the
+lighthouse caster, and interleaved stderr interrupted buffered stdout. Both were correctly
+refused, diagnosed and corrected in the local fixture/parser without changing application or
+dependency code. Normal qualification now rejects unavailable receivers AND casters as well
+as existing material fallbacks. All77launcher tests pass; updated gate accepts all62retained
+normal logs. New70-view final matrix is running; goal remains ACTIVE through full review.
