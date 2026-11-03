@@ -372,6 +372,13 @@ LighthouseRenderer::LighthouseRenderer(GraphicsDevice& device,const LighthousePl
     // tower, two windows at the back, the chimney gable still up with its hearth, the other gable
     // down to a stump; the roof's beams fallen in among the rubble; moss along the walls' tops
     if(cottage) {
+        cottageFirstVertex_=static_cast<int>(b.builder.mesh.size());
+        // The existing stone receiver uses opaque alpha254 to keep timber, soot and loose
+        // rubble plain. Every triangle owns its vertices, so material tags never interpolate
+        // across a stone/timber boundary. Stock opaque fallback keeps the original RGB.
+        const auto plainSince=[&](std::size_t first) {
+            for(auto i=first;i<b.builder.mesh.size();++i)b.builder.mesh[i].Color.setAProperty(254);
+        };
         using K=CottagePlacement;
         const K& c=*cottage;
         const Vector3 along(c.dirX,0.0f,c.dirZ),acrossDir(c.AcrossX(),0.0f,c.AcrossZ());
@@ -442,9 +449,12 @@ LighthouseRenderer::LighthouseRenderer(GraphicsDevice& device,const LighthousePl
         (void)width;
         // the chimney stack over the gable and the hearth inside it, black with old soot
         b.Box(at(ia+0.05f,0.0f,2.25f),acrossDir,Vector3::Up,along,0.45f,2.25f,0.38f,CottageStone,CottageStone);
+        const auto sootStart=b.builder.mesh.size();
         b.Box(at(ia-K::Wall*0.5f-0.02f,0.0f,0.42f),acrossDir,Vector3::Up,along,0.42f,0.4f,0.03f,Soot,Soot);
+        plainSince(sootStart);
         b.Box(at(ia-K::Wall*0.5f-0.2f,0.0f,0.86f),acrossDir,Vector3::Up,along,0.55f,0.06f,0.22f,CottageStone,CottageStone);
         // the roof's beams fallen in, rotten grey, and rubble inside and by the fallen gable
+        const auto plainStart=b.builder.mesh.size();
         b.tint=nullptr;
         for(int k=0;k<3;++k) {
             const float a=-1.6f+1.5f*static_cast<float>(k);
@@ -466,6 +476,7 @@ LighthouseRenderer::LighthouseRenderer(GraphicsDevice& device,const LighthousePl
             const Vector3 r(std::cos(spin),0.0f,std::sin(spin));
             b.Box(Vector3(p[0],y+size*0.45f,p[1]),r,Vector3::Up,Vector3(-r.Z,0.0f,r.X),size*1.3f,size*0.6f,size,CottageStone*0.92f,CottageStone);
         }
+        plainSince(plainStart);
         b.tint=nullptr;b.tintPerVertex=false;
     }
 
@@ -475,6 +486,14 @@ LighthouseRenderer::LighthouseRenderer(GraphicsDevice& device,const LighthousePl
     Vector3 low(1e9f,1e9f,1e9f),high(-1e9f,-1e9f,-1e9f);
     for(const auto& v:mesh) {low=Vector3::Min(low,v.Position);high=Vector3::Max(high,v.Position);}
     bounds_=BoundingBox(low-Vector3(0.2f,0.2f,0.2f),high+Vector3(0.2f,0.2f,0.2f));
+    if(cottage) {
+        Vector3 cottageLow(1e9f,1e9f,1e9f),cottageHigh(-1e9f,-1e9f,-1e9f);
+        for(auto i=static_cast<std::size_t>(cottageFirstVertex_);i<mesh.size();++i) {
+            cottageLow=Vector3::Min(cottageLow,mesh[i].Position);
+            cottageHigh=Vector3::Max(cottageHigh,mesh[i].Position);
+        }
+        cottageBounds_=BoundingBox(cottageLow-Vector3(.2f,.2f,.2f),cottageHigh+Vector3(.2f,.2f,.2f));
+    }
     centre_=(low+high)*0.5f;
     vertices_=std::make_unique<VertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),
         static_cast<int>(mesh.size()),BufferUsage::WriteOnly);
@@ -513,6 +532,20 @@ LighthouseRenderer::LighthouseRenderer(GraphicsDevice& device,const LighthousePl
     catch(const std::exception& error) {
         std::cout<<"island-simulator: lighthouse sun shadow receiver unavailable: "<<error.what()<<'\n';
     }
+    if(cottage) {
+        try {
+            cottageReceiver_=std::make_unique<StructureShadowReceiver>(device,"keeper-cottage",false,
+                300.0f,760.0f,0.46f,StructureSurface::CastleStone);
+            const auto plain=std::count_if(mesh.begin()+cottageFirstVertex_,mesh.end(),[](const auto& v) {
+                return v.Color.getAProperty()==254;
+            });
+            std::cout<<"island-simulator: cottage masonry receiver loaded: first-vertex="<<cottageFirstVertex_
+                <<" vertices="<<mesh.size()-static_cast<std::size_t>(cottageFirstVertex_)
+                <<" plain-vertices="<<plain<<"; original geometry, timber and rubble retained\n";
+        } catch(const std::exception& error) {
+            std::cout<<"island-simulator: cottage masonry unavailable; retaining plain receiver: "<<error.what()<<'\n';
+        }
+    }
     lamp_=Vector3(placement.Lamp()[0],placement.Lamp()[1],placement.Lamp()[2]);
     lightEffect_=std::make_unique<BasicEffect>(device);
     lightEffect_->setVertexColorEnabledProperty(true);lightEffect_->setLightingEnabledProperty(false);
@@ -524,14 +557,15 @@ LighthouseRenderer::LighthouseRenderer(GraphicsDevice& device,const LighthousePl
     message<<"island-simulator: a whitewashed lighthouse with two red bands stands over the sea at ("
         <<static_cast<int>(std::lround(placement.x))<<", "<<static_cast<int>(std::lround(placement.z))
         <<"), its glazed lantern "<<static_cast<int>(std::lround(placement.Lamp()[1]-placement.groundY))
-        <<" m up under a red dome; "<<triangles_<<" triangles in one draw";
+        <<" m up under a red dome; "<<triangles_<<" triangles in "<<(cottageReceiver_?2:1)<<" opaque draws";
     std::cout<<message.str()<<'\n';MirrorRuntimeDiagnosticToPlatformLog(message.str());
 }
 
 void LighthouseRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector3& camera) {
     drawCalls_=0;
-    if((centre_-camera).LengthSquared()>700*700
-        ||BoundingFrustum(view*projection).Contains(bounds_)==ContainmentType::Disjoint) return;
+    if((centre_-camera).LengthSquared()>700*700) return;
+    const BoundingFrustum frustum(view*projection);
+    if(frustum.Contains(bounds_)==ContainmentType::Disjoint) return;
     device_.setRasterizerStateProperty(RasterizerState::CullNone);
     device_.setBlendStateProperty(BlendState::Opaque);
     device_.setDepthStencilStateProperty(DepthStencilState::Default);
@@ -541,7 +575,15 @@ void LighthouseRenderer::Draw(const Matrix& view,const Matrix& projection,const 
         effect_->setWorldProperty(Matrix::getIdentityProperty());
         effect_->setViewProperty(view);effect_->setProjectionProperty(projection);effect_->Apply();
     }
-    device_.DrawPrimitives(PrimitiveType::TriangleList,0,triangles_);drawCalls_=1;
+    // Keep the whitewashed tower in its original plain material. Only the existing cottage
+    // range pays for masonry shading; both ranges share the original vertex buffer.
+    const int plainTriangles=cottageReceiver_?cottageFirstVertex_/3:triangles_;
+    device_.DrawPrimitives(PrimitiveType::TriangleList,0,plainTriangles);drawCalls_=1;
+    if(cottageReceiver_&&frustum.Contains(cottageBounds_)!=ContainmentType::Disjoint) {
+        cottageReceiver_->Apply(view*projection,camera,sunShadow_);
+        device_.DrawPrimitives(PrimitiveType::TriangleList,cottageFirstVertex_,triangles_-plainTriangles);
+        ++drawCalls_;
+    }
     if(glass_) {
         // the lantern's glass over what lies behind it, without hiding what lies past it
         device_.setBlendStateProperty(BlendState::AlphaBlend);

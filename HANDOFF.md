@@ -3242,3 +3242,26 @@ reviewed full resolution: rock/soil contact now visible with no new gap; no rock
 Build CPU0–3/-j2 and contained llvmpipe/Pixman capture pass. Continue directly to cottage material:
 reuse filtered CastleStone receiver for only the cottage range, retain plain tower/wood/rubble,
 original geometry/shadows/collision and stock fallback. Matching baseline cottage already saved.
+
+### Cottage material implementation/first visual review
+
+Existing filtered CastleStone receiver reused only for the cottage's original3828-vertex range;
+1296vertices tagged plain preserve timber/soot/loose rubble. Main tower remains in the original
+plain receiver; same vertex buffer and13850total triangles, no placement/collision changes.
+Only the visible cottage range adds one opaque draw; conservative separate cottage bounds avoid
+its submission from tower-only views. Stock/plain fallback retains the original single draw.
+Initial full-resolution daytime material view reviewed: readable masonry replaces smooth grey
+panels while broken silhouette/moss/wood remain intact. All101safe tests pass in101.47s; focused
+camera test included. Final lighting comparisons/culling controls and one before/after software
+cost pair are in progress. Continue to previously less-reviewed lying/working poses next.
+
+Cottage material accepted visually in four matching day/dawn/night/storm pairs, actually reviewed
+in campaign-cottage-pairs-{1,2}.png. Difference boxes451,167–948,521 stay on the cottage; outside
+pixels identical, and conservative culling preserves all four full images byte-for-byte.
+Same13850triangles; only37722–41549vertex range uses masonry (1296plain tagged vertices retained).
+Exploratory old-clock profile82.72→66.41ms median is NOT a causal speedup claim: before/after
+recorded draw ranges differ because named benchmarks below100ms still use wall-clock simulation;
+tracked counts also omitted lighthouse submissions. Those are confirmed qualification defects,
+not a newly established explanation for the prior seven wetland timings (all slower than100ms).
+Next stage now implements a common fixed inspection simulation step, actual update/time report
+and explicit lighthouse counts; both plain and masonry cost references must share that correction.
