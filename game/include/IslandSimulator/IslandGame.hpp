@@ -1128,8 +1128,10 @@ namespace island
         std::uint32_t campfireCaptureUpdates_=0;
         std::uint32_t residentCaptureUpdates_=0;
         std::uint32_t bearCaptureUpdates_=0;
-        [[nodiscard]] bool UsesFixedCaptureClock() const noexcept {
-            return !capturePath_.empty() && viewpoint_!=FixedViewpoint::None;
+        std::uint64_t benchmarkSimulationUpdates_=0;
+        double benchmarkSimulationSeconds_=0;
+        [[nodiscard]] bool UsesFixedInspectionClock() const noexcept {
+            return (!capturePath_.empty()||!benchmarkPath_.empty()) && viewpoint_!=FixedViewpoint::None;
         }
         [[nodiscard]] bool UsesCampfireCaptureClock() const noexcept {
             return !capturePath_.empty()&&(viewpoint_==FixedViewpoint::CampfireDetail||viewpoint_==FixedViewpoint::CampfireWide);

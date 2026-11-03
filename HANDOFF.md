@@ -3265,3 +3265,29 @@ tracked counts also omitted lighthouse submissions. Those are confirmed qualific
 not a newly established explanation for the prior seven wetland timings (all slower than100ms).
 Next stage now implements a common fixed inspection simulation step, actual update/time report
 and explicit lighthouse counts; both plain and masonry cost references must share that correction.
+
+### Fixed inspection-clock stage
+
+Named benchmarks previously used min(wall elapsed,.1) while captures used exactly.1, so at16ms
+versus83ms rendering720updates visited11.52 versus59.76simulated seconds. Tracked draws omitted
+the lighthouse entirely. The new shared inspection step keeps named captures/benchmarks at.1;
+ordinary exploration retains wall time and its stall bound. JSON adds actual simulation
+updates/rendered frames/seconds, configured step and lighthouse draw/triangle counts; schema3
+fields are additive, tracked totals remain explicitly partial. Frozen canopy inspection reports0.
+Framework catch-up stays disabled. Regression checks720updates visit the same72seconds at both
+speeds. Full102safe tests pass in71.45s. Five additional resting/working pose mains reviewed in
+campaign-rest-review.png; existing folded-leg/ground-contact tests provide support evidence,
+no newly established anatomy/grounding defect warrants changes.
+Both cost references now share the final game/clock/count objects and current class layout;
+only the plain reference uses the pre-material LighthouseRenderer implementation, compiled
+against the current header. Reference build/link provenance: campaign-cottage-fixed-reference.json.
+The stone reference is byte-identical to final app38e955c474e68e074d6fe8343381537bb8d7cefb26dd3375e9e5b850c0c913ac.
+One fixed-clock before/after software pair now running, no concurrent build/test/capture workload.
+Goal ACTIVE; continue cost validation and renewed holistic review/delivery.
+
+Fixed-clock integration proof: both references report721actual updates/721rendered frames/72.1s.
+Settings/recorded scene state and population ranges now match exactly; only tracked and explicit
+lighthouse submissions change by exactly+1 (2→3), same13850triangles. First controlled pair:
+median66.0068→64.7148ms,mean66.2953→67.4228,p9569.8804→82.7114,RSS698572→703296KiB.
+Median/mean/memory stay bounded but p95+18.36% is explicitly under one reverse-order repeat;
+no success claim based on a favorable median, no repeated seven-run wetland loop.

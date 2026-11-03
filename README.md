@@ -609,6 +609,10 @@ GPU with the desktop. After that incident is closed, `tools/run_native_benchmark
 warm, uncapped JSON frame-time reports across five fixed scenes plus a 676 m moving traversal. Reports include
 min/max/mean scene-population ranges, timing distributions, and exact 120/60/30 Hz budget-miss
 counts; methodology and the current Linux release baseline are in `docs/performance.md`.
+Named capture and benchmark views advance simulation by 0.1 s per rendered frame, independently
+of wall-clock frame timing; canopy LOD inspections stay frozen. Benchmark JSON records the actual update count/simulated duration and
+the lighthouse's submissions; this prevents a faster render from measuring an earlier wildlife
+state. Framework fixed-step catch-up stays disabled for benchmarks; ordinary play uses real time.
 Use `--startup-report <path>` to write a machine-readable first-draw report. It separates
 deterministic world construction, framework initialization, GPU/content creation, the interval
 before the first draw, and the first submitted draw. Combine it with `--smoke-test --overview` for

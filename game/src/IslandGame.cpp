@@ -2,6 +2,7 @@
 #include "IslandSimulator/BunkerTurnInspection.hpp"
 #include "IslandSimulator/MistDriftInspection.hpp"
 #include "IslandSimulator/GroundInspectionCamera.hpp"
+#include "IslandSimulator/InspectionClock.hpp"
 #include "IslandSimulator/BunkerChaseCamera.hpp"
 #include "IslandSimulator/BoarGroundPose.hpp"
 #include "IslandSimulator/FootprintGround.hpp"
@@ -3579,9 +3580,9 @@ namespace island
         // smoke runs and startup reports without a named capture retain the fixed step.
         const bool interactivePlay = viewpoint_ == FixedViewpoint::None && capturePath_.empty()
             && !smokeTest_ && startupReportPath_.empty();
-        // Capture-only clock: no wall-time catch-up updates between recorded frames.
+        // Inspection simulation clock: no wall-time catch-up updates between recorded frames.
         setIsFixedTimeStepProperty(!interactivePlay && benchmarkPath_.empty()
-                                  && !UsesFixedCaptureClock());
+                                  && !UsesFixedInspectionClock());
         InitializeUserSettings();
         InitializeJournal();
 #if defined(__EMSCRIPTEN__)
@@ -5192,9 +5193,11 @@ namespace island
             MirrorRuntimeDiagnosticToPlatformLog("island-simulator: snake QA update resumed after first draw");
         }
         if(snakeCaptureClock) ++snakeCaptureUpdates_;
-        const float deltaSeconds = canopyLodInspection_ ? 0.0f : UsesFixedCaptureClock() ? 0.1f : std::min(
-            0.1f, static_cast<float>(gameTime.getElapsedGameTimeProperty().getTotalMillisecondsProperty())
-                / 1000.0f);
+        const float deltaSeconds = canopyLodInspection_ ? 0.0f : InspectionSimulationStep(
+            UsesFixedInspectionClock(),static_cast<float>(gameTime.getElapsedGameTimeProperty().getTotalMillisecondsProperty())/1000.0f);
+        if(!benchmarkPath_.empty()) {
+            ++benchmarkSimulationUpdates_;benchmarkSimulationSeconds_+=deltaSeconds;
+        }
         if (!captureTideHeld_) tideSeconds_ += deltaSeconds;
         tide_ = TideCycle::At(tideSeconds_);
         playerMotion_.SetSeaLevel(tide_.level);
@@ -8410,6 +8413,7 @@ namespace island
         return 2 + terrainRenderer_->DrawCallCount()+streamWaterRenderer_->DrawCallCount()+caveRenderer_->DrawCallCount()
             +bunkerRenderer_->DrawCallCount()
             +(mineRenderer_?mineRenderer_->DrawCallCount():0)
+            +(lighthouseRenderer_?lighthouseRenderer_->DrawCallCount():0)
             +(volcanoRenderer_?volcanoRenderer_->DrawCallCount():0)
             +campfireRenderer_->DrawCallCount()
             + palmRenderer_->DrawCallCount() + jungleRenderer_->DrawCallCount()
@@ -8581,7 +8585,10 @@ namespace island
                << ", \"height\": " << viewport.getHeightProperty() << "},\n"
                << "  \"settings\": {\"vsync\": false, \"fixed_timestep\": false, "
                << "\"warmup_intervals\": " << BenchmarkWarmupIntervals
-               << ", \"sample_intervals\": " << BenchmarkSampleIntervals << "},\n"
+               << ", \"sample_intervals\": " << BenchmarkSampleIntervals
+               << ", \"simulation_step_seconds\": " << (canopyLodInspection_?"0.0":UsesFixedInspectionClock()?"0.1":"null") << "},\n"
+               << "  \"simulation\": {\"updates\": " << benchmarkSimulationUpdates_
+               << ", \"rendered_frames\": " << drawnFrames_ << ", \"elapsed_seconds\": " << benchmarkSimulationSeconds_ << "},\n"
                << "  \"timing\": {\n"
                << "    \"sample_count\": " << summary.sampleCount << ",\n"
                << "    \"mean_ms\": " << summary.meanMilliseconds << ",\n"
@@ -8669,6 +8676,8 @@ namespace island
                << "  },\n"
                << "  \"scene\": {\n"
                << "    \"tracked_draw_submissions\": " << trackedSceneDraws << ",\n"
+               << "    \"lighthouse_draw_submissions\": " << (lighthouseRenderer_?lighthouseRenderer_->DrawCallCount():0) << ",\n"
+               << "    \"lighthouse_triangles\": " << (lighthouseRenderer_?lighthouseRenderer_->TriangleCount():0) << ",\n"
                << "    \"terrain_cells\": " << terrainRenderer_->VisibleCellCount() << ",\n"
                << "    \"terrain_draw_submissions\": "
                << terrainRenderer_->DrawCallCount() << ",\n"
@@ -8829,7 +8838,7 @@ namespace island
             ? static_cast<float>(spiderCaptureUpdates_)*0.1f : UsesBoarCaptureClock()
             ? static_cast<float>(boarCaptureUpdates_)*0.1f : UsesBearCaptureClock()
             ? static_cast<float>(bearCaptureUpdates_)*0.1f : UsesMonkeyCaptureClock()
-            ? static_cast<float>(monkeyCaptureUpdates_)*0.1f : UsesFixedCaptureClock()
+            ? static_cast<float>(monkeyCaptureUpdates_)*0.1f : UsesFixedInspectionClock()
             ? static_cast<float>(drawnFrames_+1U)*0.1f : static_cast<float>(gameTime.getTotalGameTimeProperty()
                                                          .getTotalSecondsProperty());
         oceanSeconds_ = timeSeconds;

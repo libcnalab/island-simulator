@@ -1,5 +1,20 @@
 # Performance Measurement
 
+## Fixed inspection comparisons — 2026-11-03
+
+Named captures and benchmark views now use the same0.1s simulation step per rendered frame;
+framework fixed-step catch-up remains disabled for benchmarks and timing remains real wall time.
+Previously a sub100ms benchmark advanced less simulated time when rendering faster, changing
+wildlife/effects within an ostensibly matching comparison. Ordinary exploration keeps real time.
+JSON settings now include `simulation_step_seconds` (0 for frozen canopy inspection, null for
+wall time), and `simulation` records actual updates, rendered frames and elapsed simulated time.
+Verify those fields when comparing reports. Tracked submissions now include the lighthouse;
+its draw and triangle counts are also explicit. Counts are still a tracked subset of scene work.
+Old and new timing policies/counter sets must not be compared as an unchanged workload.
+This does not explain the earlier slow wetland runs, which already hit the0.1s stall bound.
+Current GPU safety restrictions in README still apply; historical operator observations below
+do not authorize a new hardware workload.
+
 ## Operator Release confirmation — 2026-10-12
 
 The operator confirms the performance issue is resolved at about 59.3 FPS. Their Release log
