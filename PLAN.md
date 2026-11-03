@@ -27494,3 +27494,20 @@ Existing observation and qualification queue:
 - Full original1–24 acceptance, before/after paths, failed intermediates and meaningful remaining
   application/CNA/driver/platform limits are recorded in the latest HANDOFF.md ledger. Final
   documentation commit/push/clean-state verification precedes goal closure.
+
+
+## Qualified crater/flow-light continuation — 2026-11-03
+
+- 46dc0dc4: keep large crater halos above the lake; two straight brightness bands removed with
+  unchanged geometry/buffer/draw counts. Matched night/day/near/far review and new regression.
+- 59160842: replace intersecting flow billboards with one precomputed surface-following light
+  field in the existing additive batch. Rejected tangent/uniform-grid attempts documented;
+  graded sampling passes27,000surface checks with18.79mmminimum clearance. +492triangles,
+  +32KiBbuffer capacity, same draw/buffer count; no terrain/collision/shader-engine replacement.
+- Release CPU0–3/-j2;98/98safe CTests,77launcher/11validator checks;34current software scopes/
+  70inspected or exact-control PNGs. World fingerprint unchanged; no physical GPU testing.
+- First mean/tail regression investigated by reverse-order repeat: before113.26→after105.71ms
+  median, RSS+.34%, same105–106draw range. Host variability explicit; no general speedup claim.
+- Reverse18degree climb measured as rear-axle traction limit; no force hack. Current bunker
+  turn/forward-escape and volcano traversal regressions pass. Full1–24criteria, failures, visual
+  paths, exact identities and retained application/CNA/driver/platform bounds in HANDOFF.md.

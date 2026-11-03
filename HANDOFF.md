@@ -1,4 +1,4 @@
-# Comprehensive visual cohesion campaign — ACTIVE continuation afterbde40e70
+# Comprehensive visual cohesion campaign — qualified continuation after59160842
 
 The whole original superprompt/attachment is assessed in the final acceptance ledger at the
 end of this file. Earlier premature completion conclusions and ACTIVE checkpoints remain as
@@ -2958,3 +2958,79 @@ rear-axle grip below downhill load, not patched with a force hack; actual turn/f
 and current bunker physics/collision regressions remain valid. Continue through the equivalent
 600sample night-flow cost pair and fresh original1–24 acceptance/delivery gates, not another
 content expansion. Goal is still ACTIVE.
+
+Performance gate still ACTIVE: first identical1280x720/LP8/22h/120warm/600sample pair has exact
+scene snapshots/ranges and105–106draws, but mean140.101→162.711ms(+16.14%),median137.285→147.441ms
+(+7.40%),p95166.146→239.399ms(+44.09%). RSS806792→806472KiB. This is NOT accepted as no regression.
+Raw `build/campaign-performance/crater-flow-{before,after}` retained; reverse-order after→before
+repeat underway with unchanged binaries/settings and no concurrent build/test/capture. Determine
+whether the tail increase persists before final acceptance; do not close the goal from images alone.
+
+## Original1–24 reassessment after59160842 — available qualification complete
+
+The previous full campaign ledger remains supporting evidence. This continuation did not stop
+at its first stage: it investigated the retained vehicle limit, fixed two observed volcanic
+light defects, rejected failed candidates, then reviewed the whole island and other night lights.
+
+| Original criteria | Fresh assessment/evidence |
+| --- | --- |
+|1–4 context/preservation/safety|Attachment and repository/incident docs revisited; bde40e70 entry clean. Original C++/CNA architecture/content and all user work retained. Every compilation CPU0–3/-j2. Dependencies read-only; actual contained llvmpipe/Pixman, never physical AMDGPU.|
+|5 forest/vegetation|Previous ecology/layered forest/ground/root/palm/LOD work retained. Current jungle,clearing,ground,stream,beach and overview inspected; relevant tests pass. World fingerprint238be1fec0a0cdd7 unchanged; no population/geometry increase to vegetation.|
+|6 terrain/geology/soil/caves|Authoritative heightfield/local patches and cave roof/soil/rock improvements preserved; current cave/cave-top/headland/ground inspected. Volcano support/cone/lava geometry unchanged; light now clears the lake and follows the same cone rather than intersecting it.|
+|7 ocean/coastal/underwater/tides|Current water,reef,shipwreck and coastal views inspected/exact to prior reviewed controls. Earlier multiscale wave,foam/caustic/depth and habitat improvements retained. Tide/swimming/diving qualification and current terrain/water/collision tests remain recorded; no new fluid system.|
+|8–9 wildlife/resident|Current bear,crocodile,resident/alien mains and unchanged stages checked against controls; whole98safe suite includes existing contact/behavior/rig regressions. Prior elephant/TRex stance and other representative gait/anatomy fixes preserved; no new species or rig/character engine.|
+|10 lighting/material/shadow/LOD/weather|Observed lake bands and slope light triangles corrected; matched near/far/night/day results actually inspected. Hut/mine/foxfire/lantern night review and additive/fog audit find no further observed defect; working paths retained. Existing SunShadowMap/weather/LOD architecture untouched; storm/night/day scenes pass.|
+|11 landmarks/composition|Current hut,wreck,cave,lighthouse,UFO,alien,castle/gate,bunker and volcano scenes inspected; prior mine/helicopter/freighter/approach evidence retained for unchanged structures. No meaningful content removed/relocated; two actual landmark light defects fixed.|
+|12 traversal/collision|Current bunker entry/turn/escape and volcano climb/rim/flow exclusion CPU tests pass. Reverse-flat/10degree ascent works;18degree reverse rear-axle grip is below downslope load, so no force hack. Prior actual800frame forward-escape/cave/stream/swimming/flight evidence remains applicable to unchanged controllers, not falsely labelled a new keyboard run.|
+|13 performance/compatibility|Same buffer/draw count; light-field cost+492triangles,+32KiB GPU capacity,+28,800Bprecomputed CPU mesh,+23,616Bactive upload explicit. Geometry budget/surface tests pass. First mean/tail increase was investigated by the reverse-order repeat below and did not persist. Cost accepted with host-variability bounds; only available OpenGL33software qualification claimed.|
+|14 code/determinism/docs|Two small pure geometry helpers and a focused regression outside giant files; no architectural rewrite/dependency/global state. CoreTests913532B and IslandGame764965B unchanged. Current inventory793CPP/HPP files/159283lines. Failed intermediate source/images/metrics retained with exact next steps here.|
+|15 visual QA|Final same-app34scopes/70PNGs actual renderer/private/artifact/kernel proofs; all34mains reviewed,63PNGs exact controls. Matched4+4crater and4flow pairs plus full-resolution critical views; no golden update accepted as proof. Audit build/campaign-crater-final-evidence.json, sheets campaign-crater-holistic-{1..5}.png and campaign-{crater-halo,flow-ground}-pairs-{1,2}.png.|
+|16–18 staged autonomy/quality|Continued crater→flow→other-night-light audit→whole-world qualification; real failures revised before declaring visual success. Full98safe/77launcher/11validator tests pass. Performance/delivery gates remain active; no milestone-only completion.|
+|19 known issues|AMDGPU incident and external CNA/Android lifecycle/stock-skinned issues remain OPEN; no silent workaround/closure or dependency patch. Sound remains user-closed.|
+|20 integration|Fresh whole-island/biome/wildlife/landmark/weather/night inspection finds no additional major in-scope correction currently required. New light effects integrate with existing geometry; previous valuable content and exploration preserved.|
+|21–24 stopping/deliverables/principles|Implementation/visual/regression/cost criteria pass with the limits below; final delivery is verified after the documentation commit. Further unrelated features or terrain/rig rewrites have no evidence-based need. No zero-defect/full-platform/hardware claim.|
+
+Remaining bounds:18degree reverse climb is traction-limited in the retained rear-drive model,
+while actual turn/forward exit works. Stylized procedural anatomy/animation is not an exhaustive
+all-species/all-time IK guarantee. Physical AMDGPU and current Debug/Web/GLES/Android/other
+backends remain unqualified; CNA/driver issues are external/open. No driver/kernel/system change.
+
+### Performance investigation resolved; final acceptance and delivery gate
+
+Both orders used identical22h volcano-flow,1280x720,LP8,VSyncOff,120warm-up/600sample settings,
+verified private-device llvmpipe/Pixman, unchanged executables/runtime and empty kernel intervals.
+All4raw scopes retained under `build/campaign-performance/crater-flow-*`.
+
+| Chronological software run | Median ms | Mean ms | p95 ms | Peak app RSS KiB |
+| --- | ---: | ---: | ---: | ---: |
+| Original before |137.2847|140.1010|166.1458|806792|
+| Original after |147.4407|162.7105|239.3989|806472|
+| Reverse-order after |105.7140|108.1363|124.8695|802088|
+| Reverse-order before |113.2603|115.5100|134.3633|799336|
+
+The initial+16.14%mean/+44.09%p95 was investigated, not discarded. Its application user CPU time
+was566.17→575.48s(+1.64%), while granted CPU share513→432% and involuntary context switches
+49093→98575 changed substantially. Unchanged final binary median147.44→105.71ms on repeat and
+p95239.40→124.87ms show that the initial latency increase is not a stable code-only result.
+Scheduler/host contention is an inference supported by these counters, not a proven root cause.
+
+The reverse-order comparable pair(before113.2603→after105.7140ms) has median−6.66%,mean−6.38%,
+p95−7.07%,RSS+0.34%. Scene snapshots match, draw range105–106 and all population ranges match;
+mean tracked draws105.5500→105.5567 differ by4submissions over600frames as the non-fixed clock
+crosses a visibility boundary. This tiny count variation is explicit, not described as exact
+range equality. No persistent material regression identified; no general speedup/native FPS
+or tight universal10%claim. Bounded extra geometry/storage/upload is justified above by the
+removed surface intersections. Final repeat record `build/campaign-crater-performance-repeat.json`;
+first pair remains in `build/campaign-crater-final-performance.json`.
+
+All original criteria1–24 have now been reassessed above with preserved campaign work, two new
+implemented visual corrections, actual matched before/after review, a new regression, full98safe
+tests, broadened integration/night-light inspection and cost investigation. No additional major
+required in-scope implementation is identified. Further arbitrary content/terrain/rig expansion
+has diminishing return and disproportionate risk. Known physical-model/CNA/driver/platform
+bounds remain explicit; no zero-defect or native-GPU validation claim.
+
+Repository: develop;46dc0dc4 and59160842 pushed. The following final documentation-only commit
+records acceptance and the short PLAN update. Its push, exact remote/local identity and clean
+worktree are checked after creation in `build/campaign-crater-final-delivery.json` and reported
+in the final response. Goal completion follows that check, never merely the completed stage.
