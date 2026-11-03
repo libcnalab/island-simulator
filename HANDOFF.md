@@ -1,4 +1,4 @@
-# Comprehensive visual cohesion campaign — available software qualification after 39393152
+# Comprehensive visual cohesion campaign — ACTIVE continuation after 407da137
 
 The whole original superprompt/attachment is assessed in the final acceptance ledger at the
 end of this file. Earlier premature completion conclusions and ACTIVE checkpoints remain as
@@ -3372,3 +3372,38 @@ controlled cost state and tower culling; it passed. All original 1–24 criteria
 above. No build/test/capture/benchmark workload remains pending. The following documentation
 commit records this acceptance; its actual remote/local identity and clean worktree are checked
 in `build/campaign-cottage-final-delivery.json` after creation and before goal closure.
+
+## Continuation from 407da137 — fallen bark and receiver qualification
+
+Entry clean/synced develop; attachment and unresolved AMDGPU incident reread. CPU0–3/-j2
+compilation and private-device verified llvmpipe/Pixman only. No external source changes.
+Six additional habitat/structure views inspected. Daytime glowing-fungi failed the broad scene
+contrast floor (17.65 vs18) despite a readable shaded trunk/caps: original failed capture is
+preserved at build/software-captures/20261103T065620.394272Z-glowing-fungi. Its explicitly
+reviewed close-natural-detail profile now applies; global thresholds are unchanged.
+
+The giant's broad smooth bark was a demonstrated material mismatch. It now reuses filtered
+BarkMaterial/JungleMaterial through the existing structure receiver. Circular coordinates follow
+the bent original axis; other mesh parts carry an inactive coordinate. Moss softens fine relief.
+Six matched day/dawn/night/storm/approach pairs actually inspected in
+build/campaign-windthrow-pairs-{1..3}.png; differences stay on the original trunk. Same15,986
+triangles, one draw, shadow/collision geometry and original RGB. One vertex buffer grows from
+767,328 to1,342,824bytes (+575,496bytes), no texture or draw growth. Focused coordinate/seam and
+image-validator tests pass. Full tests and matched software cost pair still pending here.
+
+Independent qualification defect reproduced: normal validate_graphics_log accepted explicit
+windthrow receiver/cottage masonry failures (build/campaign-receiver-gate-before.json). These
+now fail normal qualification. Next: complete controlled bark cost, run a narrowly attributed
+stock-receiver failure fixture on the actual binary without patching CNA, inspect fallback
+images, then full safe tests/holistic controls and renewed original-criteria evidence. Goal ACTIVE.
+
+Bark-stage qualification: all103safe CTests passed in83.22s. Controlled fixed-clock software
+pair in build/campaign-windthrow-cost-evidence.json has identical recorded scene/ranges/settings
+and721updates/72.1s: mean223.6389→224.4335ms (+0.36%),median+0.48%,p95+0.27%,p99−0.01%,
+peak RSS812368→830412KiB (+2.22%; process peak, not a GPU allocation attribution). The explicit
++575496byte vertex payload is bounded; no geometry/draw/texture growth. A premature second-run
+attempt was refused by the qualification lock before graphical launch and retained as
+windthrow-bark-after-not-launched. Actual measurements were sequential with no build/test load.
+Next stage is now exercising four narrowly scoped actual receiver-construction failures on the
+unchanged app/runtime via a local Linux interposition fixture; no dependency source/binary patch.
+Then continue the fresh70-view matrix and original criteria, rather than close at this stage.

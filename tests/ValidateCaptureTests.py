@@ -60,6 +60,8 @@ class CaptureValidatorTests(unittest.TestCase):
         self.assertEqual(profile_for_viewpoint("snake-head"), "close-natural-detail")
         self.assertEqual(profile_for_viewpoint("snakes"), "close-natural-detail")
         self.assertEqual(profile_for_viewpoint("tree-snakes"), "close-natural-detail")
+        self.assertEqual(profile_for_viewpoint("glowing-fungi"), "close-natural-detail")
+        self.assertEqual(profile_for_viewpoint("glowing-fungi", 22.0), "night-scene")
         self.assertEqual(profile_for_viewpoint("cave-back"), "dark-cave-detail")
         # Underwater views: reviewed 2026-10-21, the water's haze lowers the luminance spread.
         self.assertEqual(profile_for_viewpoint("fish"), "underwater-scene")

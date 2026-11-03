@@ -1,4 +1,5 @@
 #include "IslandSimulator/WindthrowRenderer.hpp"
+#include "IslandSimulator/WindthrowBarkCoordinates.hpp"
 #include "IslandSimulator/LandmarkShapes.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
@@ -12,19 +13,32 @@
 #include "Microsoft/Xna/Framework/Graphics/DepthStencilState.hpp"
 #include "Microsoft/Xna/Framework/Graphics/PrimitiveType.hpp"
 #include "Microsoft/Xna/Framework/Graphics/RasterizerState.hpp"
+#include "Microsoft/Xna/Framework/Graphics/VertexDeclaration.hpp"
+#include "Microsoft/Xna/Framework/Graphics/VertexElement.hpp"
+#include "Microsoft/Xna/Framework/Graphics/VertexElementFormat.hpp"
+#include "Microsoft/Xna/Framework/Graphics/VertexElementUsage.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <functional>
 #include <iostream>
 #include <numbers>
 #include <sstream>
+#include <type_traits>
 using namespace Microsoft::Xna::Framework;
 using namespace Microsoft::Xna::Framework::Graphics;
 
 namespace island {
 namespace {
 constexpr float Pi=std::numbers::pi_v<float>;
+struct BarkVertex {
+    float position[3];
+    std::uint8_t color[4];
+    float wood[3];
+};
+static_assert(std::is_standard_layout_v<BarkVertex> && std::is_trivially_copyable_v<BarkVertex>);
+static_assert(sizeof(BarkVertex)==28 && offsetof(BarkVertex,color)==12 && offsetof(BarkVertex,wood)==16);
 // the pigments, past full for the build's light
 const Vector3 Bark(118,96,74),BarkDark(80,64,50),Moss(82,112,50),Lichen(168,166,140),Wood(198,170,126),
     Soil(110,84,60),Clay(178,134,88),Humus(62,48,36),Litter(88,70,48),Root(126,98,72),RootEnd(196,170,128),
@@ -91,6 +105,7 @@ public:
         mesh.insert(mesh.end(),pit_.begin(),pit_.end());
         return mesh;
     }
+    [[nodiscard]] std::size_t BarkVertexCount() const noexcept {return barkVertices_;}
 private:
     float h(const std::uint32_t salt) const {return Hash(w_.seed*0x9e3779b9U^salt);}
     Vector3 Plan(const float along,const float across) const {
@@ -138,6 +153,7 @@ private:
         grid.Emit(smooth_,b_.builder.sun,[&](const int i,const int k) {
             (void)i;return Radial(2.0f*Pi*static_cast<float>(k)/Sides);
         });
+        barkVertices_=smooth_.size();
     }
     // the snapped end: pale splintered wood standing out of the break
     void BrokenEnd() {
@@ -501,6 +517,7 @@ private:
     Vector3 d_,s_;
     SculptMeshBuilder b_;
     std::vector<VertexPositionColor> smooth_,pit_;
+    std::size_t barkVertices_=0;
 };
 }
 
@@ -519,14 +536,34 @@ WindthrowRenderer::WindthrowRenderer(GraphicsDevice& device,const WindthrowPlace
     centre_=(low+high)*0.5f;
     triangles_=static_cast<int>(mesh.size()/3U);
     if(!mesh.empty()) {
-        vertices_=std::make_unique<VertexBuffer>(device,VertexPositionColor::getVertexDeclarationStatic(),static_cast<int>(mesh.size()),BufferUsage::WriteOnly);
-        vertices_->SetData(mesh.data(),static_cast<int>(mesh.size()));
+        const auto groundAt=[&](const float x,const float z) {return DrawnOrAnalyticHeight(ground,terrain,x,z);};
+        std::vector<BarkVertex> materialMesh;
+        materialMesh.reserve(mesh.size());
+        for(std::size_t i=0;i<mesh.size();++i) {
+            const auto& v=mesh[i];
+            const std::array<float,3> point{v.Position.X,v.Position.Y,v.Position.Z};
+            const auto wood=i<builder.BarkVertexCount()?WindthrowBarkCoordinates(placement,point,groundAt)
+                                                     :std::array<float,3>{0,0,-1};
+            materialMesh.push_back({{point[0],point[1],point[2]},
+                {v.Color.getRProperty(),v.Color.getGProperty(),v.Color.getBProperty(),v.Color.getAProperty()},
+                {wood[0],wood[1],wood[2]}});
+        }
+        const std::vector<VertexElement> elements{
+            VertexElement(0,VertexElementFormat::Vector3,VertexElementUsage::Position,0),
+            VertexElement(12,VertexElementFormat::Color,VertexElementUsage::Color,0),
+            VertexElement(16,VertexElementFormat::Vector3,VertexElementUsage::TextureCoordinate,0)};
+        const VertexDeclaration declaration(static_cast<int>(sizeof(BarkVertex)),elements);
+        vertices_=std::make_unique<VertexBuffer>(device,declaration,static_cast<int>(materialMesh.size()),BufferUsage::WriteOnly);
+        vertices_->SetData(materialMesh.data(),static_cast<int>(materialMesh.size()));
+        std::cout<<"island-simulator: windthrow bark shares the filtered canopy material: "<<builder.BarkVertexCount()
+                 <<" bark vertices, "<<materialMesh.size()*sizeof(BarkVertex)<<" vertex bytes; geometry and colours retained\n";
     }
     effect_->setVertexColorEnabledProperty(true);effect_->setLightingEnabledProperty(false);
     effect_->setFogEnabledProperty(true);
     effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));
     effect_->setFogStartProperty(220.0f);effect_->setFogEndProperty(520.0f);
-    try {receiver_=std::make_unique<StructureShadowReceiver>(device,"windthrow",false,220.0f,520.0f,0.46f);}
+    try {receiver_=std::make_unique<StructureShadowReceiver>(device,"windthrow",false,220.0f,520.0f,0.46f,
+                                                          StructureSurface::FallenBark);}
     catch(const std::exception& error) {
         std::cout<<"island-simulator: windthrow sun shadow receiver unavailable: "<<error.what()<<'\n';
     }

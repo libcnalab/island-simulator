@@ -10,7 +10,7 @@ namespace Microsoft::Xna::Framework::Graphics { class GraphicsDevice; class Shad
 namespace island
 {
     class SunShadowMap;
-    enum class StructureSurface { Plain, CastleStone };
+    enum class StructureSurface { Plain, CastleStone, FallenBark };
 
     /**
      * A small material for the vertex-coloured structures that were drawn with the stock

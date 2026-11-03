@@ -1,6 +1,7 @@
 #include "IslandSimulator/WeatherSystem.hpp"
 #include "IslandSimulator/StructureShadowReceiver.hpp"
 #include "IslandSimulator/CastleStoneMaterial.hpp"
+#include "IslandSimulator/BarkMaterial.hpp"
 #include "IslandSimulator/DayNightCycle.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/SunShadowMap.hpp"
@@ -27,6 +28,10 @@ layout(location = 1) in vec4 aColor;
 layout(location = 2) in vec2 aTextureCoordinate;
 out vec2 vTextureCoordinate;
 #endif
+#ifdef FALLEN_BARK
+layout(location = 2) in vec3 aWoodCoordinate;
+out vec3 vWoodCoordinate;
+#endif
 uniform mat4 uViewProjection;
 out vec4 vColor;
 out vec3 vWorld;
@@ -36,6 +41,9 @@ void main()
     vWorld = aPosition;
 #ifdef STRUCTURE_TEXTURED
     vTextureCoordinate = aTextureCoordinate;
+#endif
+#ifdef FALLEN_BARK
+    vWoodCoordinate = aWoodCoordinate;
 #endif
     gl_Position = uViewProjection * vec4(aPosition, 1.0);
     gl_Position.z = 2.0 * gl_Position.z - gl_Position.w;
@@ -48,6 +56,9 @@ in vec3 vWorld;
 #ifdef STRUCTURE_TEXTURED
 in vec2 vTextureCoordinate;
 uniform sampler2D uTexture;
+#endif
+#ifdef FALLEN_BARK
+in vec3 vWoodCoordinate;
 #endif
 uniform vec3 uCameraPosition;
 uniform vec2 uFogRange;
@@ -69,6 +80,14 @@ void main()
     // Timber/loose blocks use opaque 254; existing plain receiver alphas are untouched.
     color.rgb *= mix(vec3(1.0),stone,step(0.998,vColor.a));
     color.a=1.0;
+#endif
+#ifdef FALLEN_BARK
+    // Derivatives are evaluated before material selection, including non-bark triangles.
+    vec4 wood = woodMaterialCoordinates(vWoodCoordinate);
+    // Existing moss/lichen colours soften the fine relief on the damp upper trunk.
+    float moss = smoothstep(0.0, 0.12, vColor.g - vColor.r);
+    if (vWoodCoordinate.z >= 0.0)
+        color.rgb *= mix(barkMaterial(wood, 19u), 1.0, 0.70 * moss);
 #endif
     if (uBakedAmbient > 0.0) {
         // Each face's light was baked for the fixed afternoon sun: it is relit by the hour's sun.
@@ -98,13 +117,17 @@ void main()
             throw std::runtime_error("custom effects unavailable");
         using CNA::Graphics::ShaderCodeEXT;
         const bool stone=surface==StructureSurface::CastleStone;
+        const bool bark=surface==StructureSurface::FallenBark;
         const std::string define = std::string(textured ? "#define STRUCTURE_TEXTURED 1\n" : "")
-            +(stone?"#define CASTLE_STONE 1\n":"");
+            +(stone?"#define CASTLE_STONE 1\n":"")+(bark?"#define FALLEN_BARK 1\n":"");
+        if (bark && textured)
+            throw std::invalid_argument("fallen bark uses wood coordinates, not a texture sampler");
         const auto source = [&](const bool embedded, const bool fragment) {
             return std::string(embedded ? "#version 300 es\nprecision highp float;\n" : "#version 330 core\n")
                 + define + environment::FogShaderDefinition
                 + (fragment ? SunShadowMap::ReceiverShader : std::string())
                 + (fragment&&stone ? castle_stone::Shader : std::string())
+                + (fragment&&bark ? JungleMaterial::Shader()+BarkMaterial::Shader : std::string())
                 + (fragment ? FragmentBody : VertexBody);
         };
         const CNA::Graphics::ShaderPackageEXT package(

@@ -74,7 +74,9 @@ def profile_for_viewpoint(viewpoint: str, hour: float | None = None) -> str:
         return "dim-interior-scene"
     if viewpoint == "walker-shadow":   # the walker's own shadow on the open bay beach, sand filling the frame; reviewed 2026-10-22
         return "sand-shadow-detail"
-    if viewpoint in ("cave-top", "ground", "tracks", "cascade", "bridge", "boars", "boar-lying", "spiders", "spiders-bright", "snakes", "snake-head", "tree-snakes", "ants", "cicadas", "beetles", "rats", "mice"):
+    # Reviewed 2026-11-03: daytime foxfire on the fallen giant's shaded flank is a readable
+    # close natural detail (spread 17.65, 166 colour bins), not an open-air landscape.
+    if viewpoint in ("cave-top", "ground", "tracks", "cascade", "bridge", "boars", "boar-lying", "spiders", "spiders-bright", "snakes", "snake-head", "tree-snakes", "ants", "cicadas", "beetles", "rats", "mice", "glowing-fungi"):
         return "close-natural-detail"
     return "scene"
 
