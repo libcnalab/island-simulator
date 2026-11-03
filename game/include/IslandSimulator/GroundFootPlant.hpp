@@ -24,6 +24,7 @@ class GroundFootPlant final {
 public:
     void Reset() noexcept {valid_=active_=wasSwing_=false;}
     void Reset(GroundFootPoint point) noexcept {Reset();point_=point;valid_=true;}
+    [[nodiscard]] float ReturnFraction() const noexcept {return active_?elapsed_/duration_:1.0f;}
     [[nodiscard]] GroundFootPose Advance(float seconds,const GroundFootStep& step) noexcept {
         if(!valid_)Reset(step.initial);
         const float dt=std::isfinite(seconds)?std::clamp(seconds,0.0f,.1f):0;

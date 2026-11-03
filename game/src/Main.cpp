@@ -113,6 +113,7 @@ namespace
         case FixedViewpoint::BalloonCloseDetail: return "balloon-close";
         case FixedViewpoint::WeaverDisplayDetail: return "weaver-display";
         case FixedViewpoint::TRexDetail: return "trex";
+        case FixedViewpoint::TRexTurnDetail: return "trex-turn";
         case FixedViewpoint::TRexCloseDetail: return "trex-close";
         case FixedViewpoint::TRexRoarDetail: return "trex-roar";
         case FixedViewpoint::TRexRestDetail: return "trex-rest";
@@ -509,6 +510,8 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::QuadLighthouseDetail;
             } else if (name == "trex") {
                 viewpoint = island::FixedViewpoint::TRexDetail;
+            } else if (name == "trex-turn") {
+                viewpoint = island::FixedViewpoint::TRexTurnDetail;
             } else if (name == "trex-close") {
                 viewpoint = island::FixedViewpoint::TRexCloseDetail;
             } else if (name == "trex-roar") {

@@ -1,5 +1,6 @@
 #pragma once
 #include "IslandSimulator/FootprintTrail.hpp"
+#include "IslandSimulator/GroundFootPlant.hpp"
 #include "IslandSimulator/WorldCollision.hpp"
 #include <array>
 #include <cstdint>
@@ -95,13 +96,15 @@ public:
 
 private:
     [[nodiscard]] float Ground(float x,float z) const noexcept;
-    void PoseLegs(float seconds);
+    void PoseLegs(float phase,float seconds=0);
     const IslandTerrain& terrain_;
     const RenderedTerrainSurface* ground_=nullptr;
     std::vector<TRexPoint> route_;
     std::size_t target_=1;
     TRexState state_;
-    float distance_=0;               // walked, for the stride's phase
+    float gaitPhase_=0,gaitPace_=0,gaitStride_=StrideLength;
+    std::array<GroundFootPlant,2> footPlants_{};
+    std::array<float,2> footHeading_{},footStartHeading_{};
     float walkSeconds_=0,holdSeconds_=0,clock_=0;
     float activitySeconds_=0,breathClock_=0,drinkCooldown_=0,followSeconds_=0,followCooldown_=30.0f,noticeCooldown_=0;
     float drinkX_=0,drinkZ_=0;

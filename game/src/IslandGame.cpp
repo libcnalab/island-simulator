@@ -245,6 +245,7 @@ namespace island
             case FixedViewpoint::BalloonCloseDetail: return "balloon-close";
             case FixedViewpoint::WeaverDisplayDetail: return "weaver-display";
             case FixedViewpoint::TRexDetail: return "trex";
+            case FixedViewpoint::TRexTurnDetail: return "trex-turn";
             case FixedViewpoint::TRexCloseDetail: return "trex-close";
             case FixedViewpoint::TRexRoarDetail: return "trex-roar";
             case FixedViewpoint::TRexRestDetail: return "trex-rest";
@@ -2586,7 +2587,7 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: help-sign QA camera looks down on the castaway's stones from a low pass over the sea\n";
-        } else if (viewpoint_ == FixedViewpoint::TRexDetail || viewpoint_ == FixedViewpoint::TRexCloseDetail
+        } else if (viewpoint_ == FixedViewpoint::TRexDetail || viewpoint_ == FixedViewpoint::TRexTurnDetail || viewpoint_ == FixedViewpoint::TRexCloseDetail
                    || viewpoint_ == FixedViewpoint::TRexRoarDetail || viewpoint_ == FixedViewpoint::TRexRestDetail
                    || viewpoint_ == FixedViewpoint::TRexHeadDetail) {
             // On the south beach: from the side at 22 m as it walks its round; or close, 7 m
@@ -2594,6 +2595,7 @@ namespace island
             if(!trex_) throw std::runtime_error("T. rex QA requires the tyrannosaur");
             const float pathZ=-225.0f,pathX=VegetationLayout::PrimaryPathCenterX(pathZ);
             trex_->PlaceNear(pathX,pathZ);
+            const bool pivot=viewpoint_==FixedViewpoint::TRexTurnDetail;
             const bool face=viewpoint_==FixedViewpoint::TRexHeadDetail;
             const bool close=viewpoint_==FixedViewpoint::TRexCloseDetail||face;
             const bool roar=viewpoint_==FixedViewpoint::TRexRoarDetail,rest=viewpoint_==FixedViewpoint::TRexRestDetail;
@@ -2604,14 +2606,18 @@ namespace island
             const auto& rex=trex_->State();
             const float fx=std::cos(rex.heading),fz=std::sin(rex.heading);
             // (walking, it is set going at once: the QA view sees it mid-stride)
-            if(!close&&!roar&&!rest) {for(int k=0;k<220;++k) trex_->Update(0.1f);}
+            if(!close&&!roar&&!rest) {for(int k=0;k<(pivot?260:220);++k) trex_->Update(0.1f);}
             const auto& now=trex_->State();
             const float side=-1.0f;
             // (the roar three-quarters from in front at 13 m; the rest from the side at 14 m)
-            const float ex=close?now.x+fx*7.5f-fz*side*2.5f:roar?now.x+fx*10.0f-fz*side*8.0f:rest?now.x-fz*side*13.0f+fx*2.0f:now.x-fz*side*22.0f+fx*4.0f;
-            const float ez=close?now.z+fz*7.5f+fx*side*2.5f:roar?now.z+fz*10.0f+fx*side*8.0f:rest?now.z+fx*side*13.0f+fz*2.0f:now.z+fx*side*22.0f+fz*4.0f;
+            const float ex=pivot?now.x+std::sin(now.heading)*14+std::cos(now.heading)*4:close?now.x+fx*7.5f-fz*side*2.5f:roar?now.x+fx*10.0f-fz*side*8.0f:rest?now.x-fz*side*13.0f+fx*2.0f:now.x-fz*side*22.0f+fx*4.0f;
+            const float ez=pivot?now.z-std::cos(now.heading)*14+std::sin(now.heading)*4:close?now.z+fz*7.5f+fx*side*2.5f:roar?now.z+fz*10.0f+fx*side*8.0f:rest?now.z+fx*side*13.0f+fz*2.0f:now.z+fx*side*22.0f+fz*4.0f;
             cameraPosition_=Vector3(ex,std::max(terrain_.Height(ex,ez),0.0f)+PlayerMotion::EyeHeight,ez);
             TRexPoint aim=close||roar?trex_->ToWorld(0.0f,roar?.6f:1.0f,roar?3.0f:4.2f):trex_->ToWorld(0.0f,-.6f,rest?1.5f:.8f);
+            if(pivot) {
+                cameraPosition_.Y=terrain_.Height(ex,ez)+1.1f;
+                aim={now.x,terrain_.Height(now.x,now.z)+TRexMotion::HipHeight-.6f,now.z};
+            }
             if(face) {
                 // 3.8 m out from its head, three-quarters on from its left front, a little above
                 // its eyes (as from the lookout or the air)
@@ -5486,7 +5492,14 @@ namespace island
             const float observerX = riding_ ? quad_.Position().x : playerMotion_.Position().x;
             const float observerZ = riding_ ? quad_.Position().z : playerMotion_.Position().z;
             const float night = 1.0f - std::clamp((sun_light::Current().lighting.sunElevationDegrees + 3.0f) / 9.0f, 0.0f, 1.0f);
-            trex_->Update(deltaSeconds, observerX, observerZ, observing, night);
+            const bool pivot=viewpoint_==FixedViewpoint::TRexTurnDetail;
+            const auto before=trex_->State();
+            trex_->Update(deltaSeconds,pivot?before.x+30*std::sin(yaw_):observerX,
+                pivot?before.z+30*std::cos(yaw_):observerZ,observing||pivot,night);
+            if(pivot) {
+                const auto& now=trex_->State();
+                cameraPosition_+=Vector3(now.x-before.x,0,now.z-before.z);
+            }
             // its sounds and the ground's shake under its feet
             const TRexState& rex = trex_->State();
             if (trex_->FootfallCount() != notedTRexFootfalls_) {
@@ -10866,6 +10879,20 @@ namespace island
                 <<" speed="<<c.speed<<" phase="<<c.gaitPhase<<" submerged="<<c.submerged
                 <<" behavior="<<static_cast<int>(c.behavior)<<" near="<<crocodileRenderer_->VisibleNearCount()<<'\n';
         }
+        const bool trexTurn=!capturePath_.empty()&&viewpoint_==FixedViewpoint::TRexTurnDetail;
+        if(trexTurn) {
+            const auto& t=trex_->State();std::ostringstream proof;proof.precision(9);
+            proof<<"island-simulator: trex contact frame="<<drawnFrames_<<" heading="<<t.heading
+                <<" speed="<<t.speed<<" behavior="<<static_cast<int>(t.behavior)
+                <<" visible="<<trexRenderer_->Visible()<<" triangles="<<trexRenderer_->TriangleCount()<<" feet=";
+            for(std::size_t i=0;i<t.legs.size();++i) {
+                if(i)proof<<';';
+                const auto& leg=t.legs[i];proof<<leg.ball.x<<','<<leg.ball.y<<','<<leg.ball.z<<','<<leg.planted;
+                for(const auto& toe:leg.toes)proof<<','<<toe.x<<','<<toe.y<<','<<toe.z;
+            }
+            std::cout<<proof.str()<<'\n';
+            if(drawnFrames_%8U==0)CaptureFrame(capturePath_+".trex-stage-"+std::to_string(drawnFrames_/8U-1U)+".ppm");
+        }
         const bool elephantTurn=!capturePath_.empty()&&viewpoint_==FixedViewpoint::ElephantTurnDetail;
         const bool elephantWalk=!capturePath_.empty()&&viewpoint_==FixedViewpoint::ElephantWalkDetail;
         if(elephantWalk||elephantTurn) {
@@ -10891,7 +10918,7 @@ namespace island
                 <<" position="<<e.x<<','<<e.y<<','<<e.z<<" speed="<<e.speed
                 <<" behavior="<<static_cast<int>(e.behavior)<<" planted="<<planted<<" sole-error="<<low<<','<<high<<'\n';
         }
-        const std::uint32_t targetFrames = elephantWalk||elephantTurn ? 64U : viewpoint_==FixedViewpoint::CrocodileLandDetail ? 160U : bunkerTurnInspection_ ? BunkerTurnInspection::CaptureFrames : alienCapture||goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture||deerCapture ? 64U : viewpoint_==FixedViewpoint::QuadMineCratesDetail ? 56U : freeMotionCapture||snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
+        const std::uint32_t targetFrames = trexTurn||elephantWalk||elephantTurn ? 64U : viewpoint_==FixedViewpoint::CrocodileLandDetail ? 160U : bunkerTurnInspection_ ? BunkerTurnInspection::CaptureFrames : alienCapture||goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture||deerCapture ? 64U : viewpoint_==FixedViewpoint::QuadMineCratesDetail ? 56U : freeMotionCapture||snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
                 && (viewpoint_ == FixedViewpoint::MonkeyDetail || viewpoint_ == FixedViewpoint::MonkeyTreeDetail || viewpoint_ == FixedViewpoint::MonkeyClimbDetail)
             ? MonkeyCaptureFrames : SmokeTestFrames;
         if (captureTideHeld_ && (drawnFrames_ == 1U || drawnFrames_ == targetFrames)) {

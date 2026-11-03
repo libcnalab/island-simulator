@@ -43,6 +43,7 @@ TRexMotion::TRexMotion(const IslandTerrain& terrain,const std::span<const Circul
     state_.x=start.x;state_.z=start.z;state_.y=Ground(start.x,start.z);
     const TRexPoint& next=route_[1];
     state_.heading=std::atan2(next.z-start.z,next.x-start.x);
+    footHeading_.fill(state_.heading);footStartHeading_=footHeading_;
     state_.behavior=TRexBehavior::Walk;
     walkSeconds_=40.0f;
     PoseLegs(0.0f);
@@ -55,7 +56,7 @@ float TRexMotion::Ground(const float x,const float z) const noexcept {
 void TRexMotion::SetGround(const RenderedTerrainSurface* ground) noexcept {
     ground_=ground;
     state_.y=Ground(state_.x,state_.z);
-    PoseLegs(distance_/StrideLength*2.0f*Pi);
+    PoseLegs(gaitPhase_);
 }
 
 void TRexMotion::PlaceNear(const float x,const float z) {
@@ -66,6 +67,9 @@ void TRexMotion::PlaceNear(const float x,const float z) {
     target_=(best+1)%route_.size();
     state_.heading=std::atan2(route_[target_].z-state_.z,route_[target_].x-state_.x);
     state_.speed=0;
+    gaitPhase_=gaitPace_=0;
+    for(auto& foot:footPlants_)foot.Reset();
+    footHeading_.fill(state_.heading);footStartHeading_=footHeading_;
     previewHold_=false;
     BeginStand(TRexBehavior::Stand,20.0f);
     PoseLegs(0.0f);
@@ -175,15 +179,22 @@ void TRexMotion::Update(const float seconds,const float observerX,const float ob
     if(b==TRexBehavior::Follow||b==TRexBehavior::Watch) want=std::atan2(oz,ox);
     else if(walking) want=std::atan2(route_[target_].z-state_.z,route_[target_].x-state_.x);
     if(b==TRexBehavior::Drink&&hasDrink_) want=std::atan2(drinkZ_-state_.z,drinkX_-state_.x);
+    const float previousHeading=state_.heading,previousX=state_.x,previousZ=state_.z;
     const float turn=std::remainder(want-state_.heading,2.0f*Pi);
     state_.heading+=std::clamp(turn,-(walking?.30f:.22f)*dt,(walking?.30f:.22f)*dt);
     state_.speed=Approach(state_.speed,walking?WalkSpeed*(b==TRexBehavior::Follow?.8f:1.0f):0.0f,(walking?.35f:.6f)*dt);
     const float fx=std::cos(state_.heading),fz=std::sin(state_.heading);
     state_.x+=fx*state_.speed*dt;state_.z+=fz*state_.speed*dt;
     state_.y=Ground(state_.x,state_.z);
-    distance_+=state_.speed*dt;
+    const float travel=dt>0?std::max(std::hypot(state_.x-previousX,state_.z-previousZ),
+        std::abs(state_.heading-previousHeading)*BodyRadius):0;
+    gaitPace_=dt>0?std::clamp(travel/(dt*WalkSpeed),0.0f,1.0f):0;
+    const float curvature=dt>0?std::clamp(std::abs(state_.heading-previousHeading)/(dt*.30f),0.0f,1.0f):0;
+    // A50cm half-stance fits the existing hind-leg reach; turns use shorter steps.
+    gaitStride_=std::min(StrideLength,2*.50f/.6f)*std::lerp(1.0f,.5f,curvature);
+    gaitPhase_=std::fmod(gaitPhase_+travel/(gaitStride_*std::max(gaitPace_,.15f))*2*Pi,2*Pi);
     const float pace=std::clamp(state_.speed/WalkSpeed,0.0f,1.0f);
-    const float phase=distance_/StrideLength*2.0f*Pi;
+    const float phase=gaitPhase_;
     // lying and crouching
     state_.lie=Approach(state_.lie,b==TRexBehavior::Rest?1.0f:0.0f,(b==TRexBehavior::Rest?.25f:.5f)*dt);
     state_.crouch=Approach(state_.crouch,b==TRexBehavior::Drink?1.0f:0.0f,.5f*dt);
@@ -223,7 +234,7 @@ void TRexMotion::Update(const float seconds,const float observerX,const float ob
     // a breath heard every few seconds while it stands
     breathClock_+=dt;
     if(!walking&&b!=TRexBehavior::Roar&&breathClock_>5.5f) {breathClock_=0.0f;++breaths_;}
-    PoseLegs(phase);
+    PoseLegs(phase,dt);
     // its prints fade over a quarter of an hour
     for(Footprint& print:prints_) {
         if(!print.active) continue;
@@ -233,36 +244,75 @@ void TRexMotion::Update(const float seconds,const float observerX,const float ob
     }
 }
 
-void TRexMotion::PoseLegs(const float phase) {
+void TRexMotion::PoseLegs(const float phase,const float seconds) {
     const float fx=std::cos(state_.heading),fz=std::sin(state_.heading);
     const float rx=-fz,rz=fx;
-    const float pace=std::clamp(state_.speed/WalkSpeed,0.0f,1.0f);
+    const bool resting=state_.behavior==TRexBehavior::Rest||state_.lie>.001f;
+    const float pace=resting?std::clamp(state_.speed/WalkSpeed,0.0f,1.0f):gaitPace_;
     constexpr float Stance=.6f;
+    int swinging=0;for(const auto& leg:state_.legs)swinging+=!leg.planted;
     for(int i=0;i<2;++i) {
         const float side=i==0?-1.0f:1.0f;
         TRexLeg& leg=state_.legs[static_cast<std::size_t>(i)];
+        const auto index=static_cast<std::size_t>(i);
+        const bool wasAirborne=!leg.planted;
         const float legPhase=phase+(i==0?0.0f:Pi);
         float u=std::fmod(legPhase/(2.0f*Pi),1.0f);
         if(u<0.0f) u+=1.0f;
         float along=0.0f,lift=0.0f;
-        if(u<Stance) {along=StrideLength*(.3f-u);leg.planted=true;}
-        else {
-            const float k=(u-Stance)/(1.0f-Stance);
-            along=StrideLength*(-.3f+.6f*k*k*(3.0f-2.0f*k));
-            lift=.42f*std::sin(Pi*k);
-            leg.planted=false;
+        if(resting) {
+            if(u<Stance) {along=StrideLength*(.3f-u);leg.planted=true;}
+            else {
+                const float k=(u-Stance)/(1.0f-Stance);
+                along=StrideLength*(-.3f+.6f*k*k*(3.0f-2.0f*k));
+                lift=.42f*std::sin(Pi*k);leg.planted=false;
+            }
+            along*=pace;lift*=pace;along+=.62f*state_.lie;
+            if(pace<.05f) {leg.planted=true;lift=0;}
         }
-        // standing, the feet come to rest side by side; lying, they fold forward under it
-        along*=pace;lift*=pace;
-        along+=.62f*state_.lie;
-        if(pace<.05f) {leg.planted=true;lift=0;}
-        const float bx=state_.x+fx*(along+.30f)+rx*side*.52f,bz=state_.z+fz*(along+.30f)+rz*side*.52f;
+        float bx=state_.x+fx*(along+.30f)+rx*side*.52f,bz=state_.z+fz*(along+.30f)+rz*side*.52f;
+        if(resting) {
+            // Unload and draw a previously fixed foot under the body gradually.
+            // PreviewRest sets lie immediately; ordinary night settling also
+            // needs this bridge from a stance or unfinished return flight.
+            const float fold=state_.lie*state_.lie*(3-2*state_.lie);
+            const float blend=std::clamp(seconds*4*std::max(.2f,fold),0.0f,1.0f);
+            if(std::hypot(bx-leg.ball.x,bz-leg.ball.z)>.001f) {
+                bx=std::lerp(leg.ball.x,bx,blend);bz=std::lerp(leg.ball.z,bz,blend);
+            }
+            const float previousLift=wasAirborne?std::max(0.0f,leg.ball.y-Ground(leg.ball.x,leg.ball.z)-.07f):0;
+            lift=std::lerp(previousLift,lift,blend);
+            if(lift<.00001f)lift=0;
+            leg.planted=leg.planted&&lift==0;
+            footPlants_[index].Reset({bx,bz});
+            footHeading_[index]+=std::remainder(state_.heading-footHeading_[index],2*Pi)*blend;
+        }
+        else {
+            const float neutralX=state_.x+fx*.30f+rx*side*.52f,neutralZ=state_.z+fz*.30f+rz*side*.52f;
+            const float behind=(leg.ball.x-neutralX)*fx+(leg.ball.z-neutralZ)*fz;
+            const float sideways=(leg.ball.x-neutralX)*rx+(leg.ball.z-neutralZ)*rz;
+            const bool adjust=!wasAirborne&&(behind<-.55f||std::abs(sideways)>.55f);
+            const float swingSeconds=std::min(adjust?.4f:1.0f,(1-Stance)*gaitStride_/WalkSpeed);
+            const float landing=.30f+(adjust?.35f:gaitStride_*Stance*.5f)*pace+state_.speed*swingSeconds;
+            const auto foot=footPlants_[index].Advance(seconds,{{bx,bz},
+                {state_.x+fx*landing+rx*side*.52f,state_.z+fz*landing+rz*side*.52f},
+                u>=Stance&&pace>.001f,swingSeconds,(adjust?.18f:.42f)*std::max(pace,.08f),0,
+                swinging<1||wasAirborne,adjust});
+            bx=foot.point.x;bz=foot.point.z;lift=foot.lift;leg.planted=foot.planted;
+            swinging+=static_cast<int>(!leg.planted)-static_cast<int>(wasAirborne);
+            if(!leg.planted) {
+                if(!wasAirborne)footStartHeading_[index]=footHeading_[index];
+                const float t=footPlants_[index].ReturnFraction(),ease=t*t*(3-2*t);
+                footHeading_[index]=footStartHeading_[index]
+                    +std::remainder(state_.heading-footStartHeading_[index],2*Pi)*ease;
+            } else if(wasAirborne)footHeading_[index]=state_.heading;
+        }
         leg.ball={bx,Ground(bx,bz)+.07f+lift,bz};
         // the toes splayed forward from the ball, the middle one longest
         for(int t=0;t<3;++t) {
             const float splay=(static_cast<float>(t)-1.0f)*side*.36f;
             const float length=ToeLength*(t==1?1.0f:.82f);
-            const float tx=std::cos(state_.heading+splay),tz=std::sin(state_.heading+splay);
+            const float tx=std::cos(footHeading_[index]+splay),tz=std::sin(footHeading_[index]+splay);
             const float x=bx+tx*length,z=bz+tz*length;
             leg.toes[static_cast<std::size_t>(t)]={x,std::max(Ground(x,z)+.02f,leg.ball.y-.07f-(lift>0.0f?.15f*lift:0.0f)),z};
         }
@@ -270,7 +320,7 @@ void TRexMotion::PoseLegs(const float phase) {
         // under the body, the heel back under the hips (and the knee then forward by the flank)
         const float lie=state_.lie;
         const float rise=MetatarsusLength*(.866f*(1.0f-lie)+.12f*lie),back=MetatarsusLength*(.5f*(1.0f-lie)+.99f*lie);
-        leg.ankle={bx-fx*back,leg.ball.y+rise,bz-fz*back};
+        leg.ankle={bx-std::cos(footHeading_[index])*back,leg.ball.y+rise,bz-std::sin(footHeading_[index])*back};
         leg.hip=ToWorld(side*HipAcross,-.10f,-.05f);
         // the knee forward of the line from hip to ankle (two bones)
         float dx=leg.ankle.x-leg.hip.x,dy=leg.ankle.y-leg.hip.y,dz=leg.ankle.z-leg.hip.z;

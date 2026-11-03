@@ -319,6 +319,7 @@ namespace island
         WeaverNestsDetail,
         WeaverDisplayDetail,
         TRexDetail,
+        TRexTurnDetail,
         TRexCloseDetail,
         TRexRoarDetail,
         TRexRestDetail,

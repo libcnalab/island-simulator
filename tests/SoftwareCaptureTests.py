@@ -19,7 +19,7 @@ from run_software_capture import (
     validate_goat_motion_stages,
     validate_boar_motion_stages,
     validate_deer_motion_stages,
-    validate_bunker_quad_entry, validate_bunker_quad_turn, validate_crocodile_land, validate_elephant_walk, validate_elephant_contacts,
+    validate_bunker_quad_entry, validate_bunker_quad_turn, validate_crocodile_land, validate_elephant_walk, validate_elephant_contacts, validate_trex_contacts,
     validate_spider_motion_stages,
     validate_spider_render_log,
     validate_spider_web_render_log,
@@ -258,6 +258,19 @@ class SoftwareCaptureTests(unittest.TestCase):
                     re.sub(r"position=\d,2,3", "position=1,2,3", good)):
             with self.subTest(bad=bad), self.assertRaises(RuntimeError):
                 validate_boar_motion_stages(bad)
+
+    def test_trex_contacts_include_all_three_toes(self):
+        good=''
+        for i in range(1,65):
+            air=i%16 in (8,9,10,11,12,13)
+            left=f"0,{.12 if air else .07},0,{0 if air else 1},.3,.02,0,.4,.02,.1,.3,.02,.2"
+            good+=f"island-simulator: trex contact frame={i} heading={i*.022} speed=0 behavior=6 visible=1 triangles=12212 feet={left};1,.07,0,1,1.3,.02,0,1.4,.02,.1,1.3,.02,.2\n"
+        self.assertGreater(validate_trex_contacts(good)["stopped_swing_samples"],4)
+        for bad in ('',good+good,good.replace('frame=64','frame=0'),good.replace('triangles=12212','triangles=1'),
+                    good.replace('heading=0.044 speed=0 behavior=6 visible=1 triangles=12212 feet=0,0.07,0,1,.3',
+                                 'heading=0.044 speed=0 behavior=6 visible=1 triangles=12212 feet=0,0.07,0,1,.5'),
+                    good.replace('1.3,.02,.2','nan,.02,.2')):
+            with self.subTest(bad=bad),self.assertRaises(RuntimeError):validate_trex_contacts(bad)
 
     def test_elephant_contacts_reject_world_slip_and_stationary_turn(self):
         good=''

@@ -2650,3 +2650,52 @@ adds only per-animal state, no new geometry/draws; final whole-frame software co
 for integration qualification. All failed intermediate tests retained; no existing assertion
 weakened. Next: measure actual remaining biped ball/toe stance slip, capture before if observed,
 reuse the small contact helper with the existing rig; goal remains ACTIVE beyond this stage.
+
+### Tyrannosaur ball/toe contact continuation — implementation qualified, integration active
+
+Entry dc7ce3f7; measured actual RED `build/campaign-trex-stance-red.log`:505support pairs,
+max50ms ball/toe slip34.37/35.04mm,222stopped-turn support pairs,zero turning swing samples,
+1.6311rad body turn. Saved production baseline `build/campaign-trex-plant-before-binary` plus
+QA-only trex-turn camera/64world-contact traces; software baseline
+`build/software-captures/20261103T000958.272919Z-trex-turn`. Current strict validator rejects
+that actual baseline for sliding. Existing navigation, behavior, rig and12212triangle mesh retained.
+
+Reused GroundFootPlant for two world contacts; fixed ball and all3toe tips, foot heading changes
+in the return flight, alternating one-airborne-foot budget, short geared pivot/starting steps.
+The existing IK and shared visible/shadow state still solve/draw the joints. An initial90cm
+half-stance caused339mm metatarsus length distortion versus132mm legacy on the same120s route;
+that intermediate render is NOT qualified.60cm still158mm; bounded50cm stance measures66.02mm,
+now covered by a140mm regression ceiling. Natural rest/waking smoothly bridges from the last
+anchored pose to the existing folded pose, instead of snapping its destination.
+
+New regression initially measured every airborne walk displacement as a rest transition. Its
+scope was corrected to frames with lie>0 (threshold unchanged), and now tests both lie-down and
+waking. Final `build/campaign-trex-plant-final-stance.log`:372support pairs,zero ball/toe slip,
+min1support,121stopped-turn support pairs,86stopped-air samples,1.6311rad turn; max rest/waking
+ball displacement175.14mm/100ms and66.02mm metatarsus distortion. No existing assertion weakened.
+Five focused support/helper tests pass;77CPU-only launcher tests pass. First full96/96 run
+passes182.43s but spanned the final shortened-stride rebuild; a stable-artifact final run follows.
+
+Final turn after `build/software-captures/20261103T003111.587587Z-trex-turn`; all8matched stages
+visually inspected in `build/campaign-trex-plant-final-turn-pairs-{1,2}.png`: alternating lift and
+plant during an actual stopped Watch turn, no new stretched limb or floating foot. Other static
+controls, final safe regression, cost and holistic original-criterion reassessment remain active.
+Goal is not closed at this stage. No hardware/external dependency changes; sound remains closed.
+
+Stage delivery: appda57f9bca81b92fd25823136da068be6028083e48b1a80a1ba5c5d253bd09657;
+CNA950faa719ec2fb51cde7220d3e28100f2609731ede56c7cf4088bda0d2dcde5c unchanged. Release full
+build CPU0–3/-j2 passes. Stable-artifact CTest first process exited143 after45passed tests
+(cause not attributed); remaining51passed separately5.34s. Union exactly matches all96safe
+tests; no failure hidden or test omitted. Logs/selection/result in
+`build/campaign-footplant-final-{safe-ctest,remaining-ctest,test-selection,test-results}.*`.
+77launcher and11capture-validator checks pass.36display tests and2orphan validators excluded.
+
+Four final software TRex scopes: turn003111.587587Z,walk003157.052710Z,rest003218.492591Z,
+roar003238.824640Z (all20261103T prefixes under build/software-captures). Actual llvmpipe,
+private devices/Pixman, unchanged executable and empty final kernel intervals. Final turn has
+54support pairs,zero world ball/toe slip,1.386rad rotation,35stopped-air samples. All8matched
+turn phases and3static controls actually inspected; control sheet
+`build/campaign-trex-plant-static-controls.png`. Existing rest/roar silhouette retained.
+sizeof actor1928→2112B(elephant),1824→1936B(TRex); no new heap allocation, mesh or GPU resource.
+31scope whole-island/environment/weather/live-bunker review and full-frame software cost pair
+continue after this source commit. Goal remains ACTIVE; no stage-level completion claim.
