@@ -1,6 +1,7 @@
 #include "IslandSimulator/BunkerQuadSupport.hpp"
 #include "IslandSimulator/BunkerTurnInspection.hpp"
 #include "IslandSimulator/MistDriftInspection.hpp"
+#include "IslandSimulator/GroundInspectionCamera.hpp"
 #include "IslandSimulator/BunkerChaseCamera.hpp"
 #include "IslandSimulator/BoarGroundPose.hpp"
 #include "IslandSimulator/FootprintGround.hpp"
@@ -1684,6 +1685,7 @@ namespace island
             const RenderedTerrainSurface support(terrain_);
             const RockPlacement* selected=nullptr;
             Vector3 downhill=Vector3::Forward;
+            std::array<float,3> contact{};
             float largestGap=-1.0f;
             for (const auto& rock:naturalPropLayout_.Rocks()) {
                 if (rock.offshore) continue;
@@ -1695,15 +1697,19 @@ namespace island
                     const float dz=-std::sin(rock.yawRadians)*p[0]*rock.scaleX
                         +std::cos(rock.yawRadians)*p[2]*rock.scaleZ;
                     const float gap=rock.y-support.Height(rock.x+dx,rock.z+dz);
-                    if (gap>largestGap) {largestGap=gap;selected=&rock;downhill=Vector3(dx,0,dz);}
+                    if (gap>largestGap) {
+                        largestGap=gap;selected=&rock;downhill=Vector3(dx,0,dz);
+                        contact={rock.x+dx,support.Height(rock.x+dx,rock.z+dz)+.15f,rock.z+dz};
+                    }
                 }
             }
             if (!selected) throw std::runtime_error("No land rock to inspect");
             downhill.Normalize();
             const float distance=3.0f+std::max(selected->scaleX,selected->scaleZ);
             const float x=selected->x+downhill.X*distance,z=selected->z+downhill.Z*distance;
-            cameraPosition_=Vector3(x,support.Height(x,z)+0.65f,z);
-            const Vector3 direction=Vector3(selected->x,selected->y+0.12f*selected->scaleY,selected->z)-cameraPosition_;
+            cameraPosition_=Vector3(x,GroundInspectionEyeY(x,z,contact,PlayerMotion::EyeHeight,
+                [&](float a,float b){return support.Height(a,b);}),z);
+            const Vector3 direction=Vector3(contact[0],contact[1],contact[2])-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: rock-contact QA original rim gap="<<largestGap

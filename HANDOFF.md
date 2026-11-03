@@ -1,4 +1,4 @@
-# Comprehensive visual cohesion campaign — available qualification complete afterd4fc6ba6
+# Comprehensive visual cohesion campaign — ACTIVE continuation afterd50ccc9f
 
 The whole original superprompt/attachment is assessed in the final acceptance ledger at the
 end of this file. Earlier premature completion conclusions and ACTIVE checkpoints remain as
@@ -3209,3 +3209,36 @@ No further observed major in-scope defect remains from this review; exhaustive a
 or zero-defect guarantees are not asserted. Final source d4fc6ba6 is already pushed; the following
 documentation/comment-only commit records this acceptance. Its actual push/remote identity/clean
 worktree are verified after creation in build/campaign-mist-final-delivery.json before goal closure.
+
+
+## Active continuation fromd50ccc9f — 2026-11-03
+
+Entry develop clean, previous mist/visual/cost/delivery proof preserved. Original attachment,
+README/PLAN/BUGS/critical incident reviewed; no applicable AGENTS. Max4compilation cores,
+read-only CNA/Sharp, verified private-device llvmpipe/Pixman only. Audio stays user-closed.
+Stages: inspect less-reviewed mangrove/rock/plane/mine/cottage/windthrow/palm views; implement
+observed defects with matching rendered comparisons; continue to the next priority and final
+full original-criterion review. Existing7-run latency investigation is retained: do not repeat
+unchanged full loops or infer a code cause without new evidence. New render baselines under
+build/campaign-coastal-revisit-before.json. Goal ACTIVE; no stage-only completion.
+
+### New observations and first correction
+
+Eight contained baseline views completed in campaign-coastal-revisit-before.json; all inspected.
+The rock-contact camera sits downhill at.65m and its view is largely terrain: earlier contact
+qualification cannot use this image as visible proof. Added a bounded terrain-ray camera helper
+and focused ridge/drawn-terrain tests; selected rock/mesh/placement remain unchanged. After view
+under capture. This is explicitly a QA-camera correction, not a matching-camera geometry claim.
+Fallen-palm CPU probe (campaign-fallen-probe.log) finds the first curved stem supported within4cm,
+with a natural arch up to40cm; not evidence of a whole floating trunk. Other crowns reach66cm,
+but the existing dried fronds connect them to ground. Do not flatten every curved stem or rewrite
+its placement from an ambiguous view. Existing pose/foliage/collision are retained pending a
+stronger defect. The keeper cottage is authored rough stone but its surfaces read as broad plain
+grey panels; inspect reuse of the existing filtered masonry receiver without changing geometry.
+
+Rock camera stage accepted: bounded ray helper clears synthetic ridge and drawn-terrain probes;
+IslandGroundInspectionCameraTests passes. After20261103T051554.858773Z-rock-contact actually
+reviewed full resolution: rock/soil contact now visible with no new gap; no rock geometry change.
+Build CPU0–3/-j2 and contained llvmpipe/Pixman capture pass. Continue directly to cottage material:
+reuse filtered CastleStone receiver for only the cottage range, retain plain tower/wood/rubble,
+original geometry/shadows/collision and stock fallback. Matching baseline cottage already saved.
