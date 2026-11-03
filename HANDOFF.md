@@ -3537,3 +3537,45 @@ recorded scene/ranges/settings; mean137.5909â†’140.0676ms (+1.80%),p95148.8919â†
 (+2.33%). Full raw metrics and peak RSS in build/campaign-pool-cost-evidence.json. No triangles,
 buffers, textures, draws or placement growth. No native performance claim. Continue immediately
 to the demonstrated mine bank issue; goal ACTIVE, full safe/holistic acceptance still pending.
+
+Mine bank experiment REJECTED after actual paired rendering, not shipped: slope-support and
+material tests passed, but the main approach changes only318pixels, the adit is exact, and the
+cutting detail changes about4055pixels mostly behind timber. The proposed extra448base+346lamp
+triangles offer insufficient visible benefit. All own experimental source/binary and paired
+images retained under build/campaign-mine-bank-rejected and campaign-mine-earth-*. Original
+MineRenderer/CMake restored exactly; no user work discarded. Initial broad-panel attribution
+was too broad: the prominent rectangular shapes are timber, while earth is largely occluded.
+Continue with actual alias review of the stream's currently unfiltered20cm sediment pigment,
+using existing oblique-camera probes; do not repeat the failed bank approach. Goal ACTIVE.
+
+Stream investigation: four oblique probes in build/campaign-bank-orbit-before.json expose a
+real smooth green strip on the carved bank. Analytic stream pigment uses a symmetric vertical
+centreline distance; the actual bed/water follows nearest segments, asymmetric widths and a
+cascade. The accepted approach now packs actual original-minus-drawn incision into existing
+stream vertex alpha and combines its bounded depth/slope mask with existing bank pigment.
+Original RGB, geometry, normals, collision, buffers, textures and draws remain unchanged. Stock
+fallback retains ordinary255alpha rather than relying on its treatment of metadata. Sediment
+sine bands now fade to their mean with the unconditional phase footprint. New105th safe test
+checks byte precision, uncut/flat exclusions and both real world bank faces; focused tests pass.
+First actual after probe20261103T104032.049928Z-orbit reviewed: exposed green becomes dark soil
+while the upper vegetation edge stays green. Final stream app d138cecf3ca87c6754bc1b9956ff6651d01a5ada17c708ce00b796fcc55d0ca8.
+Next: review eight matched probes/standard views, qualify forced stock terrain before/after,
+measure the final stream cost, then full safe/holistic tests and all original criteria. ACTIVE.
+
+Stream stage accepted visually in all8matched probes/standard views, including dawn and the
+cascade, in build/campaign-stream-incision-pairs-{1..4}.png. Stock-terrain rejection fixture
+was separately executed before/after on unchanged artifacts; decodedRGB is exact and pair
+actually inspected (build/campaign-terrain-fallback-pair.png). No fallback alpha assumption.
+All105safe CTests pass in210.36s;143registered,36display+2orphan validators excluded. Canonical
+world report remains valid/fingerprint238be1fec0a0cdd7. No geometry/support/placement change.
+
+Cost investigation retained one matched before/after plus one original-version control, all
+721updates/72.1s with identical recorded settings/scene/ranges and orbit. Means371.6351 /
+311.9601 /370.1015ms; the apparent16%reduction is NOT attributed to this feature. Unchanged
+startup CPU phases and old-version tail/RSS also varied; raw reports and host-pressure snapshot
+are in build/campaign-bank-incision-cost-evidence.json. No measured increase, but precise
+overhead remains unattributed; no repeated unchanged timing loops or native performance claim.
+Resource budget unchanged: same vertex bytes, buffers, textures, triangles and draws, one extra
+scalar varying. Next: final92-scope full island review on the immutable d138cecf app, inspect
+all changed animation stages, record all original criteria and verify commit/push/clean state.
+Goal ACTIVE; no stage-only closure.

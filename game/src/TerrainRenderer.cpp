@@ -27,6 +27,7 @@
 #include "IslandSimulator/TerrainSurfaceFrame.hpp"
 #include "IslandSimulator/TerrainRockMaterial.hpp"
 #include "IslandSimulator/TidePoolMaterial.hpp"
+#include "IslandSimulator/TerrainIncision.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
 
 #include <algorithm>
@@ -144,10 +145,12 @@ out vec3 vWorld;
 out vec3 vBaseColor;
 out vec2 vTerrainData;
 out float vGroundLight;
+out float vStreamIncision;
 
 void main()
 {
     vWorld = aPosition;
+    vStreamIncision = 1.0-aColor.a;
     vTerrainData = aTerrainData.xy;
     // The ground's light was baked for the fixed afternoon sun; its normal comes back from the
     // slope and the bearing packed with that light, and the hour's sun relights it (the change
@@ -171,6 +174,7 @@ in vec3 vWorld;
 in vec3 vBaseColor;
 in vec2 vTerrainData;
 in float vGroundLight;
+in float vStreamIncision;
 uniform vec3 uCaveEntrance;
 uniform vec2 uCaveForward;
 uniform vec3 uBunkerEntrance;
@@ -1063,11 +1067,16 @@ void main()
     float bankFace = streamGeometry.x * bankInner * bankOuter
         * smoothstep(0.16, 0.38, slopeRadians);
     bankFace *= clamp(0.64 + broad * 0.56 + medium * 0.24, 0.28, 1.0);
-    float bankStrata = 0.5 + 0.5 * sin(vWorld.y * 31.0 + broad * 3.1 + medium * 1.7);
+    float bankPhase = vWorld.y * 31.0 + broad * 3.1 + medium * 1.7;
+    float bankDetail = 1.0-smoothstep(0.18,0.50,fwidth(bankPhase)/6.28318530718);
+    float bankStrata = 0.5 + 0.5 * sin(bankPhase) * bankDetail;
     vec3 exposedBank = mix(vec3(0.145, 0.108, 0.064), vec3(0.235, 0.174, 0.094),
                            0.38 + bankStrata * 0.28) * vGroundLight;
     exposedBank *= 1.0 + fine * 0.10;
-    color = mix(color, exposedBank, bankFace * 0.52);
+    // The uploaded field follows the actual carved asymmetric bed, including its cascade;
+    // the analytic environmental route alone can leave a green strip on a real cut face.
+    float actualBank=terrainIncisionBank(vStreamIncision,slopeRadians);
+    color = mix(color, exposedBank, max(bankFace * 0.52,actualBank * 0.82));
     // The stream's margin is wet mud and grit along the water, not the bank's grass colour
     // (a smooth green band read as a film beside the water).
     float streamMargin = streamGeometry.x * (1.0 - smoothstep(streamGeometry.z * 0.9 + 0.25,
@@ -1415,6 +1424,7 @@ void main()
                     + (canopy ? TerrainSurfaceFrame::Shader : "")
                     + (canopy ? terrain_rock::Shader : "")
                     + (canopy ? tide_pool_material::Shader() : std::string())
+                    + (canopy ? terrain_incision::Shader() : std::string())
                     + (canopy ? ForestFloorMaterial::Shader : "")
                     + (canopy ? std::string(CampfireLighting::Shader) + SunShadowMap::ReceiverShader : std::string()) + body;
             }
@@ -1426,6 +1436,7 @@ void main()
                 + (canopy ? TerrainSurfaceFrame::Shader : "")
                 + (canopy ? terrain_rock::Shader : "")
                 + (canopy ? tide_pool_material::Shader() : std::string())
+                + (canopy ? terrain_incision::Shader() : std::string())
                 + (canopy ? ForestFloorMaterial::Shader : "")
                 + (canopy ? std::string(CampfireLighting::Shader) + SunShadowMap::ReceiverShader : std::string()) + body;
         }
@@ -1719,7 +1730,8 @@ void main()
                 .2f,height(p.x,p.z-.1f)-height(p.x,p.z+.1f)});
             sample.slopeRadians=std::acos(std::clamp(sample.normal.y,-1.0f,1.0f));
             const float light=TerrainDaylight(sample.normal);const auto color=TerrainColor(sample,light);
-            vertices.push_back({{p.x,p.y,p.z},{color.getRProperty(),color.getGProperty(),color.getBProperty(),255},
+            const auto incision=materialReady_?terrain_incision::Pack(original->Height(p.x,p.z),p.y):std::uint8_t{255};
+            vertices.push_back({{p.x,p.y,p.z},{color.getRProperty(),color.getGProperty(),color.getBProperty(),incision},
                 {sample.signedShoreDistance,sample.slopeRadians,PackTerrainLight(light,sample.normal)}});
             minimum=Vector3::Min(minimum,Vector3(p.x,p.y,p.z));
             maximum=Vector3::Max(maximum,Vector3(p.x,p.y,p.z));
@@ -1730,6 +1742,7 @@ void main()
         streamBounds_=BoundingBox(minimum-Vector3(.1f,.1f,.1f),maximum+Vector3(.1f,.1f,.1f));
         streamVertices_=std::make_unique<VertexBuffer>(device_,TerrainDeclaration(),streamVertexCount_,BufferUsage::WriteOnly);
         streamVertices_->SetData(vertices.data(),streamVertexCount_);
+        std::cout<<"island-simulator: carved stream bank pigment follows actual incision in existing vertex alpha; sediment bands are footprint-filtered\n";
         streamIndices_=std::make_unique<IndexBuffer>(device_,IndexElementSize::SixteenBits,
             static_cast<int>(streamIndices.size()),BufferUsage::WriteOnly);
         streamIndices_->SetData(streamIndices.data(),static_cast<int>(streamIndices.size()));
