@@ -26,6 +26,7 @@
 #include "IslandSimulator/TerrainMaterialVertex.hpp"
 #include "IslandSimulator/TerrainSurfaceFrame.hpp"
 #include "IslandSimulator/TerrainRockMaterial.hpp"
+#include "IslandSimulator/TidePoolMaterial.hpp"
 #include "IslandSimulator/VegetationLayout.hpp"
 
 #include <algorithm>
@@ -1178,29 +1179,34 @@ void main()
     float poolReach=9.0;
     for (int i=0;i<5;++i)
         poolReach=min(poolReach,tidePoolReach(p,uTidePools[i],uTidePoolPhaseCos[i],uTidePoolPhaseSin[i]));
-    if (poolReach<2.2) {
+    if (poolReach<poolOuterReach) {
         // an outcrop, not a ring: broad lobes reach out on some sides and barely clear the
         // rim on others, the edge itself ragged at the hand scale; turf cushions fill hollows
-        float benchLobe=valueNoise(p*.32+vec2(-6.3,2.8))*.70+valueNoise(p*.75+vec2(4.4,-9.1))*.30;
-        float benchEdge=valueNoise(p*2.2+vec2(8.1,-3.6));
-        float benchExtent=.86+benchLobe*1.10+benchEdge*.12;
+        // The terrain's noise is signed; every authored pool threshold/palette is unit-range.
+        float benchLobe=tidePoolNoise(p*.32+vec2(-6.3,2.8))*.70+tidePoolNoise(p*.75+vec2(4.4,-9.1))*.30;
+        float benchEdge=tidePoolNoise(p*2.2+vec2(8.1,-3.6));
+        float benchExtent=poolBenchTerms.x+benchLobe*poolBenchTerms.y+benchEdge*poolBenchTerms.z;
         float bench=1.0-smoothstep(benchExtent-.03,benchExtent+.03,poolReach);
-        float cushion=smoothstep(.64,.72,valueNoise(p*.95+vec2(-12.4,6.6))*.75+benchEdge*.25)
+        float cushion=smoothstep(.64,.72,tidePoolNoise(p*.95+vec2(-12.4,6.6))*.75+benchEdge*.25)
             *smoothstep(.95,1.10,poolReach);
         bench*=1.0-cushion;
-        float benchGrain=valueNoise(p*3.7+vec2(1.7,5.3))*.6+valueNoise(p*11.0-vec2(3.2,8.8))*.4;
+        float benchGrain=mix(.5,tidePoolNoise(p*3.7+vec2(1.7,5.3)),tidePoolDetail(groundPixelWidth,3.7))*.6
+            +mix(.5,tidePoolNoise(p*11.0-vec2(3.2,8.8)),tidePoolDetail(groundPixelWidth,11.0))*.4;
         // solution pits and hairline joints, gone before they would shimmer
-        float benchDetail=1.0-smoothstep(.03,.09,groundPixelWidth);
-        float pits=smoothstep(.62,.80,valueNoise(p*7.5+vec2(9.4,-1.3)))*benchDetail;
-        float joint=(1.0-smoothstep(.0,.035,abs(valueNoise(p*1.6+vec2(-2.2,7.7))-.5)))*benchDetail;
+        float benchDetail=tidePoolDetail(groundPixelWidth,7.5);
+        float pits=smoothstep(poolWeatheringTerms.x,poolWeatheringTerms.y,
+            tidePoolNoise(p*7.5+vec2(9.4,-1.3)))*benchDetail;
+        // Use the existing unconditional world footprint, not derivatives in this pool branch.
+        float jointWidth=max(.035,groundPixelWidth*1.6*1.5);
+        float joint=(1.0-smoothstep(.0,jointWidth,abs(tidePoolNoise(p*1.6+vec2(-2.2,7.7))-.5)))*benchDetail;
         vec3 benchRock=mix(vec3(.47,.45,.39),vec3(.63,.60,.52),benchGrain);
         // grey-black biofilm stains the weathered limestone in broad patches
-        float biofilm=smoothstep(.45,.75,valueNoise(p*.55+vec2(3.3,14.1)));
-        benchRock=mix(benchRock,vec3(.30,.30,.28)+benchGrain*.06,biofilm*.55);
-        benchRock*=1.0-.30*pits-.38*joint;
+        float biofilm=smoothstep(.45,.75,tidePoolNoise(p*.55+vec2(3.3,14.1)));
+        benchRock=mix(benchRock,vec3(.30,.30,.28)+benchGrain*.06,biofilm*.35);
+        benchRock*=1.0-poolWeatheringTerms.z*pits-poolWeatheringTerms.w*joint;
         float benchWet=1.0-smoothstep(.62,.98,poolReach);
         benchRock=mix(benchRock,benchRock*vec3(.62,.62,.60),benchWet);
-        float barnacle=smoothstep(.70,.86,valueNoise(p*19.0+vec2(2.9,-4.6)))*benchDetail
+        float barnacle=smoothstep(.70,.86,tidePoolNoise(p*19.0+vec2(2.9,-4.6)))*tidePoolDetail(groundPixelWidth,19.0)
             *smoothstep(.62,.70,poolReach)*(1.0-smoothstep(.86,1.02,poolReach));
         benchRock=mix(benchRock,vec3(.70,.68,.62),barnacle*.65);
         float algalFilm=smoothstep(.56,.66,poolReach)*(1.0-smoothstep(.70,.80,poolReach));
@@ -1408,6 +1414,7 @@ void main()
                     + (canopy ? GroundCover::Shader() : std::string())
                     + (canopy ? TerrainSurfaceFrame::Shader : "")
                     + (canopy ? terrain_rock::Shader : "")
+                    + (canopy ? tide_pool_material::Shader() : std::string())
                     + (canopy ? ForestFloorMaterial::Shader : "")
                     + (canopy ? std::string(CampfireLighting::Shader) + SunShadowMap::ReceiverShader : std::string()) + body;
             }
@@ -1418,6 +1425,7 @@ void main()
                 + (canopy ? GroundCover::Shader() : std::string())
                 + (canopy ? TerrainSurfaceFrame::Shader : "")
                 + (canopy ? terrain_rock::Shader : "")
+                + (canopy ? tide_pool_material::Shader() : std::string())
                 + (canopy ? ForestFloorMaterial::Shader : "")
                 + (canopy ? std::string(CampfireLighting::Shader) + SunShadowMap::ReceiverShader : std::string()) + body;
         }

@@ -1,4 +1,4 @@
-# Comprehensive visual cohesion campaign — available software qualification after 00f8185c
+# Comprehensive visual cohesion campaign — ACTIVE continuation after 6ff95594
 
 The whole original superprompt/attachment is assessed in the final acceptance ledger at the
 end of this file. Earlier premature completion conclusions and ACTIVE checkpoints remain as
@@ -3505,3 +3505,35 @@ is not qualification of an actual backend without custom effects. No risky hardw
 or external patch is warranted. The following documentation commit records acceptance; actual
 local/tracking/remote identity and clean worktree are checked in
 `build/campaign-windthrow-final-delivery.json` after creation and before goal closure.
+
+## Continuation from 6ff95594 — pool substrate and cut-bank integration
+
+Entry clean/synced develop. Original attachment, README/PLAN/BUGS and open AMDGPU incident
+reread. No native GPU, external dependency patch or audio work. Compilation CPU0–3/-j2.
+Six ordinary geological/forest views inspected in build/campaign-earth-before-review.png.
+The canopy request without its required inspection selector was refused by argument parsing
+before graphics; retained in campaign-earth-before-views.json, not an application failure.
+
+Demonstrated defects: mine cut banks use one albedo for every tall quad and sample stain(s,d,d),
+losing actual vertical material variation; pool surroundings read as a rim on turf. A stronger
+root cause was found in the latter: terrain valueNoise returns[-.5,.5], while all authored pool
+bench/cushion/pit/biofilm/barnacle thresholds assume[0,1]. Pits/barnacles/cushions were unreachable.
+The pool fix normalizes only those fields and filters each detail frequency using the existing
+world footprint. Geometry, water level, tide, placement and texture/draw budgets unchanged.
+Initial repaired prototype a5dd7253 was visually rejected for loud pits/fractures; raw image
+20261103T100506.206931Z-tide-pools and campaign-pool-first-prototype-binary retained. Subdued
+pits/joints now preserve broad quiet rock, with the same sampling work. Focused range/reach/
+Nyquist tests pass. Five matched refined views are running; do not close this stage/campaign.
+Next: inspect matched pool results/cost, commit the accepted stage, then implement/review the
+observed mine bank material integration, full safe tests and renewed complete acceptance.
+
+Pool stage accepted after refinement: five matched clear/dawn/high-tide/low-tide/storm pairs
+actually inspected in build/campaign-pool-pairs-{1..3}.png. Irregular rock bench, wet/algal
+margin and subdued weathering now connect the basin to the surrounding coast. All differences
+remain in the pool substrate (bbox0,234–1147,720); geometry/waterline unchanged. Final pool
+app ef9d866ee6705852c1ee21a976acc95a5f8e883e218c5b31f45f0596b4841dfa.
+Focused material tests pass. One controlled software pair has identical721updates/72.1s and
+recorded scene/ranges/settings; mean137.5909→140.0676ms (+1.80%),p95148.8919→152.3611ms
+(+2.33%). Full raw metrics and peak RSS in build/campaign-pool-cost-evidence.json. No triangles,
+buffers, textures, draws or placement growth. No native performance claim. Continue immediately
+to the demonstrated mine bank issue; goal ACTIVE, full safe/holistic acceptance still pending.
