@@ -67,7 +67,7 @@ float ElephantMotion::Ground(const float x,const float z) const noexcept {
 void ElephantMotion::SetGround(const RenderedTerrainSurface* ground) noexcept {
     ground_=ground;
     state_.y=Ground(state_.x,state_.z);
-    PoseLegs(distance_/StrideLength);
+    PoseLegs(gaitPhase_);
 }
 
 void ElephantMotion::PlaceNear(const float x,const float z) {
@@ -78,6 +78,8 @@ void ElephantMotion::PlaceNear(const float x,const float z) {
     target_=(best+1)%route_.size();
     state_.heading=std::atan2(route_[target_].z-state_.z,route_[target_].x-state_.x);
     state_.speed=0;
+    gaitPhase_=gaitPace_=0;
+    for(auto& foot:footPlants_)foot.Reset();
     previewHold_=previewBathe_=false;goingToDrink_=goingToBathe_=false;fleeSeconds_=0.0f;state_.sink=0.0f;
     Begin(ElephantBehavior::Stand,20.0f);
     PoseLegs(0.0f);
@@ -106,6 +108,7 @@ void ElephantMotion::PreviewBathe(const float x,const float z) {
     state_.heading=std::atan2(bz-state_.z,bx-state_.x);
     state_.x=bx;state_.z=bz;state_.y=Ground(bx,bz);
     state_.wet=1.0f;
+    for(auto& foot:footPlants_)foot.Reset();
     Begin(ElephantBehavior::Bathe,1e6f);
     previewHold_=previewBathe_=true;
     PoseLegs(0.0f);
@@ -302,6 +305,7 @@ void ElephantMotion::Update(const float seconds,const float observerX,const floa
     if(b==ElephantBehavior::Trumpet) want=std::atan2(fleeZ_-state_.z,fleeX_-state_.x);
     if(b==ElephantBehavior::Drink&&hasDrink_) want=std::atan2(drinkZ_-state_.z,drinkX_-state_.x);
     if(b==ElephantBehavior::Bathe&&!previewBathe_) want=state_.heading+.3f*std::sin(clock_*.11f);
+    const float previousHeading=state_.heading,previousX=state_.x,previousZ=state_.z;
     const float turn=std::remainder(want-state_.heading,2.0f*Pi);
     const float rate=walking?.38f:b==ElephantBehavior::Trumpet?.5f:.25f;
     state_.heading+=std::clamp(turn,-rate*dt,rate*dt);
@@ -319,9 +323,22 @@ void ElephantMotion::Update(const float seconds,const float observerX,const floa
     }
     state_.y=Ground(state_.x,state_.z);
     state_.waterDepth=std::max(0.0f,-state_.y);
-    distance_+=state_.speed*dt;
+    // Short steps keep their cadence while accelerating; an actual turn also
+    // needs steps even when the body's centre is no longer translating.
+    const float travel=std::hypot(state_.x-previousX,state_.z-previousZ);
+    const float turnArc=b==ElephantBehavior::Bathe?0.0f:
+        std::abs(state_.heading-previousHeading)*ShoulderAhead;
+    const float gaitTravel=dt>0?std::max(travel,turnArc):0;
+    gaitPace_=dt>0?std::clamp(gaitTravel/(dt*WalkSpeed),0.0f,1.0f):0;
+    // A tight pivot uses half-length adjustment steps, keeping a fixed contact
+    // inside the existing leg's reach while its shoulder moves around the body.
+    const float curvature=dt>0?std::clamp(std::abs(state_.heading-previousHeading)/(dt*.38f),0.0f,1.0f):0;
+    // A 60 cm half-stance leaves a little reach for uneven ground under the
+    // existing pillar legs; tighter turns shorten it further.
+    gaitStride_=std::min(StrideLength,2*.60f/Duty)*std::lerp(1.0f,.5f,curvature);
+    gaitPhase_=std::fmod(gaitPhase_+gaitTravel/(gaitStride_*std::max(gaitPace_,.15f)),1.0f);
     const float pace=std::clamp(state_.speed/WalkSpeed,0.0f,1.3f);
-    const float phase=distance_/StrideLength;
+    const float phase=gaitPhase_;
     state_.doze=Approach(state_.doze,b==ElephantBehavior::Doze?1.0f:0.0f,.2f*dt);
     const float doze=Smooth(state_.doze);
     // bathing, it lies down in the water every half minute or so, rolled onto its side
@@ -436,7 +453,7 @@ void ElephantMotion::Update(const float seconds,const float observerX,const floa
         rumbleClock_=0.0f;
         if(Hash(++decisions_*31U)<.5f) {++calls_;lastCall_=0;}
     }
-    PoseLegs(phase);
+    PoseLegs(phase,dt);
     for(Footprint& print:prints_) {
         if(!print.active) continue;
         print.age+=dt;
@@ -445,39 +462,64 @@ void ElephantMotion::Update(const float seconds,const float observerX,const floa
     }
 }
 
-void ElephantMotion::PoseLegs(const float phase) {
+void ElephantMotion::PoseLegs(const float phase,const float seconds) {
     const float fx=std::cos(state_.heading),fz=std::sin(state_.heading);
     const float rx=-fz,rz=fx;
-    const float pace=std::clamp(state_.speed/WalkSpeed,0.0f,1.0f);
+    const bool bathing=state_.behavior==ElephantBehavior::Bathe;
+    const float pace=bathing?std::clamp(state_.speed/WalkSpeed,0.0f,1.0f):gaitPace_;
+    int swinging=0;
+    for(const auto& leg:state_.legs)swinging+=!leg.planted;
     for(std::size_t i=0;i<4;++i) {
         const bool front=i<2;
         const float side=i%2==0?-1.0f:1.0f;
         ElephantLeg& leg=state_.legs[i];
+        const bool wasAirborne=!leg.planted;
         float u=std::fmod(phase+LegOffset[i],1.0f);
         if(u<0.0f) u+=1.0f;
         float along=0.0f,lift=0.0f,flex=0.0f;
-        if(u<Duty) {along=StrideLength*(Duty*.5f-u);leg.planted=true;}
-        else {
-            const float k=(u-Duty)/(1.0f-Duty);
-            along=StrideLength*(-Duty*.5f+Duty*Smooth(k));
-            lift=.20f*std::sin(Pi*k);
-            flex=std::sin(Pi*std::min(1.0f,k*1.25f));
-            leg.planted=false;
+        if(bathing) {
+            if(u<Duty) {along=StrideLength*(Duty*.5f-u);leg.planted=true;}
+            else {
+                const float k=(u-Duty)/(1.0f-Duty);
+                along=StrideLength*(-Duty*.5f+Duty*Smooth(k));
+                lift=.20f*std::sin(Pi*k);
+                flex=std::sin(Pi*std::min(1.0f,k*1.25f));
+                leg.planted=false;
+            }
+            along*=pace;lift*=pace;flex*=pace;
+            if(pace<.05f) {leg.planted=true;lift=0;flex=0;}
         }
-        along*=pace;lift*=pace;flex*=pace;
-        // At the start/end of a step all four feet settle; a foot labelled
-        // planted must not retain the tiny swing lift from the slow phase.
-        if(pace<.05f) {leg.planted=true;lift=0;flex=0;}
         const float base=front?ShoulderAhead+.05f:-HipBehind;
         const float across=front?.47f:.44f;
-        const float px=state_.x+fx*(base+along)+rx*side*across,pz=state_.z+fz*(base+along)+rz*side*across;
+        const auto top=front?ToWorld(side*across,.08f,ShoulderAhead):ToWorld(side*across,-.02f,-HipBehind);
+        float px=state_.x+fx*(base+along)+rx*side*across,pz=state_.z+fz*(base+along)+rz*side*across;
+        if(bathing)footPlants_[i].Reset({px,pz}); // retain the existing submerged pose
+        else {
+            const float neutralX=state_.x+fx*base+rx*side*across,neutralZ=state_.z+fz*base+rz*side*across;
+            const float behind=(leg.foot.x-neutralX)*fx+(leg.foot.z-neutralZ)*fz;
+            const float sideways=(leg.foot.x-neutralX)*rx+(leg.foot.z-neutralZ)*rz;
+            const float high=front?WristHeight:HockHeight;
+            const float reach=front?UpperArmLength+ForearmLength:FemurLength+TibiaLength;
+            const float required=std::hypot(std::hypot(leg.foot.x-top.x,leg.foot.z-top.z),leg.foot.y+high-top.y);
+            const bool adjust=!wasAirborne&&(behind<-.62f||std::abs(sideways)>.40f
+                ||(behind<-.20f&&required>reach+.015f));
+            const float swingSeconds=std::min(adjust?.4f:1.0f,(1-Duty)*gaitStride_/WalkSpeed)
+                /std::max(1.0f,state_.speed/WalkSpeed);
+            const float landing=base+(adjust?.30f:gaitStride_*Duty*.5f)*pace+state_.speed*swingSeconds;
+            const auto foot=footPlants_[i].Advance(seconds,{{px,pz},
+                {state_.x+fx*landing+rx*side*across,state_.z+fz*landing+rz*side*across},
+                u>=Duty&&pace>.001f,swingSeconds,(adjust?.10f:.20f)*std::max(pace,.08f),
+                std::max(pace,.08f),swinging<2||wasAirborne,adjust});
+            px=foot.point.x;pz=foot.point.z;lift=foot.lift;flex=foot.flex;leg.planted=foot.planted;
+            swinging+=static_cast<int>(!leg.planted)-static_cast<int>(wasAirborne);
+        }
         leg.foot={px,Ground(px,pz)+lift,pz};
         // the wrist (or hock) over the foot's pillar; as the foot swings it hangs back from the
         // bent joint
         const float high=front?WristHeight:HockHeight;
         const float trail=front?.16f*flex:.10f*flex;
         leg.low={px+fx*(trail-(front?0.0f:.05f)),leg.foot.y+high-.06f*flex,pz+fz*(trail-(front?0.0f:.05f))};
-        leg.top=front?ToWorld(side*across,.08f,ShoulderAhead):ToWorld(side*across,-.02f,-HipBehind);
+        leg.top=top;
         const float upper=front?UpperArmLength:FemurLength,lower=front?ForearmLength:TibiaLength;
         float dx=leg.low.x-leg.top.x,dy=leg.low.y-leg.top.y,dz=leg.low.z-leg.top.z;
         float d=std::sqrt(dx*dx+dy*dy+dz*dz);

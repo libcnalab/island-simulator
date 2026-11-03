@@ -119,6 +119,7 @@ namespace
         case FixedViewpoint::TRexHeadDetail: return "trex-head";
         case FixedViewpoint::ElephantDetail: return "elephant";
         case FixedViewpoint::ElephantWalkDetail: return "elephant-walk";
+        case FixedViewpoint::ElephantTurnDetail: return "elephant-turn";
         case FixedViewpoint::ElephantCloseDetail: return "elephant-close";
         case FixedViewpoint::ElephantTrumpetDetail: return "elephant-trumpet";
         case FixedViewpoint::ElephantBatheDetail: return "elephant-bathe";
@@ -518,6 +519,8 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::TRexHeadDetail;
             } else if (name == "elephant") {
                 viewpoint = island::FixedViewpoint::ElephantDetail;
+            } else if (name == "elephant-turn") {
+                viewpoint = island::FixedViewpoint::ElephantTurnDetail;
             } else if (name == "elephant-walk") {
                 viewpoint = island::FixedViewpoint::ElephantWalkDetail;
             } else if (name == "elephant-close") {

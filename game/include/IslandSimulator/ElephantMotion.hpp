@@ -1,5 +1,6 @@
 #pragma once
 #include "IslandSimulator/FootprintTrail.hpp"
+#include "IslandSimulator/GroundFootPlant.hpp"
 #include "IslandSimulator/WorldCollision.hpp"
 #include <array>
 #include <cstdint>
@@ -119,7 +120,7 @@ public:
 
 private:
     [[nodiscard]] float Ground(float x,float z) const noexcept;
-    void PoseLegs(float phase);
+    void PoseLegs(float phase,float seconds=0);
     void Begin(ElephantBehavior what,float seconds);
     void RejoinRound();
     const IslandTerrain& terrain_;
@@ -128,7 +129,8 @@ private:
     std::vector<CircularObstacle> obstacles_;   // near its round, which it steers round
     std::size_t target_=1;
     ElephantState state_;
-    float distance_=0;
+    float gaitPhase_=0,gaitPace_=0,gaitStride_=StrideLength;
+    std::array<GroundFootPlant,4> footPlants_{};
     float walkSeconds_=0,holdSeconds_=0,clock_=0,activitySeconds_=0;
     float drinkCooldown_=0,noticeCooldown_=0,trumpetCooldown_=0,rumbleClock_=0,fleeSeconds_=0;
     float fleeX_=0,fleeZ_=0;

@@ -19,7 +19,7 @@ from run_software_capture import (
     validate_goat_motion_stages,
     validate_boar_motion_stages,
     validate_deer_motion_stages,
-    validate_bunker_quad_entry, validate_bunker_quad_turn, validate_crocodile_land, validate_elephant_walk,
+    validate_bunker_quad_entry, validate_bunker_quad_turn, validate_crocodile_land, validate_elephant_walk, validate_elephant_contacts,
     validate_spider_motion_stages,
     validate_spider_render_log,
     validate_spider_web_render_log,
@@ -258,6 +258,19 @@ class SoftwareCaptureTests(unittest.TestCase):
                     re.sub(r"position=\d,2,3", "position=1,2,3", good)):
             with self.subTest(bad=bad), self.assertRaises(RuntimeError):
                 validate_boar_motion_stages(bad)
+
+    def test_elephant_contacts_reject_world_slip_and_stationary_turn(self):
+        good=''
+        for i in range(1,65):
+            air=i%8 in (4,5,6)
+            good+=f"island-simulator: elephant contact frame={i} heading={i*.025} speed=0 behavior=5 visible=1 triangles=8493 feet=0,{.05 if air else 0},0,{0 if air else 1};1,0,0,1;0,0,1,1;1,0,1,1\n"
+        self.assertGreater(validate_elephant_contacts(good,turning=True)["stopped_swing_samples"],4)
+        for bad in ('',good+good,good.replace('frame=64','frame=63'),good.replace('visible=1','visible=0'),
+                    good.replace('triangles=8493','triangles=18000'),good.replace('heading=0.05','heading=nan'),
+                    good.replace('heading=0.05 speed=0 behavior=5 visible=1 triangles=8493 feet=0,0,0,1',
+                                 'heading=0.05 speed=0 behavior=5 visible=1 triangles=8493 feet=.1,0,0,1'),
+                    good.replace('0,0.05,0,0','0,0,0,1')):
+            with self.subTest(bad=bad),self.assertRaises(RuntimeError):validate_elephant_contacts(bad,turning=True)
 
     def test_elephant_walk_requires_drawn_contact_and_real_transition(self):
         good=''.join(f"island-simulator: elephant walk stage={i} frame={(i+1)*8} "

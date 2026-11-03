@@ -251,6 +251,7 @@ namespace island
             case FixedViewpoint::TRexHeadDetail: return "trex-head";
             case FixedViewpoint::ElephantDetail: return "elephant";
             case FixedViewpoint::ElephantWalkDetail: return "elephant-walk";
+            case FixedViewpoint::ElephantTurnDetail: return "elephant-turn";
             case FixedViewpoint::ElephantCloseDetail: return "elephant-close";
             case FixedViewpoint::ElephantTrumpetDetail: return "elephant-trumpet";
             case FixedViewpoint::ElephantBatheDetail: return "elephant-bathe";
@@ -2625,13 +2626,14 @@ namespace island
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
             std::cout<<"island-simulator: "<<ViewpointName(viewpoint_)<<" QA camera looks at the tyrannosaur on the beach\n";
-        } else if (viewpoint_ == FixedViewpoint::ElephantDetail || viewpoint_ == FixedViewpoint::ElephantWalkDetail || viewpoint_ == FixedViewpoint::ElephantCloseDetail
+        } else if (viewpoint_ == FixedViewpoint::ElephantDetail || viewpoint_ == FixedViewpoint::ElephantWalkDetail || viewpoint_ == FixedViewpoint::ElephantTurnDetail || viewpoint_ == FixedViewpoint::ElephantCloseDetail
                    || viewpoint_ == FixedViewpoint::ElephantTrumpetDetail || viewpoint_ == FixedViewpoint::ElephantBatheDetail) {
             // Behind the south-east beach: from the side at 17 m as it walks its round; close,
             // 7 m before it standing, three-quarters on at its head and tusks; or trumpeting, at
             // 13 m.
             if(!elephant_) throw std::runtime_error("Elephant QA requires the elephant");
-            const bool walk=viewpoint_==FixedViewpoint::ElephantWalkDetail;
+            const bool pivot=viewpoint_==FixedViewpoint::ElephantTurnDetail;
+            const bool walk=viewpoint_==FixedViewpoint::ElephantWalkDetail||pivot;
             // An existing coastal route waypoint where the coarse drawn triangles
             // disagree visibly with the analytic height under the broad soles.
             elephant_->PlaceNear(walk?220.7f:ElephantQaX,walk?59.14f:ElephantQaZ);
@@ -2646,7 +2648,7 @@ namespace island
             if(trumpet) {elephant_->PreviewTrumpet();for(int k=0;k<30;++k) elephant_->Update(0.1f);}
             // The wide view sees the pause; the motion inspection continues
             // through its natural end into the first steps.
-            if(!close&&!trumpet&&!bathe) {for(int k=0;k<160;++k) elephant_->Update(0.1f);}
+            if(!close&&!trumpet&&!bathe) {for(int k=0;k<(pivot?240:160);++k) elephant_->Update(0.1f);}
             if(close) {for(int k=0;k<30;++k) elephant_->Update(0.1f);}
             const auto& now=elephant_->State();
             const float fx=std::cos(now.heading),fz=std::sin(now.heading);
@@ -2670,7 +2672,7 @@ namespace island
             const ElephantPoint aim=bathe?elephant_->ToWorld(0.0f,.2f,.0f):close?elephant_->ToWorld(0.0f,-.1f,2.6f):trumpet?elephant_->ToWorld(0.0f,.5f,1.6f):elephant_->ToWorld(0.0f,-.5f,.4f);
             if(walk)cameraPosition_.Y=terrain_.Height(ex,ez)+.90f;
             // Fixed reference camera across ground-contact repairs; body pose may change.
-            const Vector3 target=walk?Vector3(now.x,terrain_.Height(now.x,now.z)+now.bodyHeight-.6f,now.z)
+            const Vector3 target=walk?Vector3(now.x,terrain_.Height(now.x,now.z)+(pivot?ElephantMotion::BodyHeight:now.bodyHeight)-.6f,now.z)
                                      :Vector3(aim.x,aim.y,aim.z);
             const Vector3 direction=target-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
@@ -5529,9 +5531,12 @@ namespace island
             const float night = 1.0f - std::clamp((sun_light::Current().lighting.sunElevationDegrees + 3.0f) / 9.0f, 0.0f, 1.0f);
             const bool rival = trex_ && observing;
             const auto before=elephant_->State();
-            elephant_->Update(deltaSeconds, observerX, observerZ, observing, night,
+            const bool pivot=viewpoint_==FixedViewpoint::ElephantTurnDetail;
+            // A nearby observer in a fixed world direction elicits the normal Watch turn.
+            elephant_->Update(deltaSeconds, pivot?before.x+25*std::sin(yaw_):observerX,
+                              pivot?before.z+25*std::cos(yaw_):observerZ, observing||pivot, night,
                               rival ? trex_->State().x : 0.0f, rival ? trex_->State().z : 0.0f, rival);
-            if(viewpoint_==FixedViewpoint::ElephantWalkDetail) {
+            if(viewpoint_==FixedViewpoint::ElephantWalkDetail||pivot) {
                 const auto& now=elephant_->State();
                 cameraPosition_+=Vector3(now.x-before.x,0,now.z-before.z);
             }
@@ -10861,19 +10866,32 @@ namespace island
                 <<" speed="<<c.speed<<" phase="<<c.gaitPhase<<" submerged="<<c.submerged
                 <<" behavior="<<static_cast<int>(c.behavior)<<" near="<<crocodileRenderer_->VisibleNearCount()<<'\n';
         }
+        const bool elephantTurn=!capturePath_.empty()&&viewpoint_==FixedViewpoint::ElephantTurnDetail;
         const bool elephantWalk=!capturePath_.empty()&&viewpoint_==FixedViewpoint::ElephantWalkDetail;
-        if(elephantWalk&&drawnFrames_%8U==0) {
+        if(elephantWalk||elephantTurn) {
+            const auto& e=elephant_->State();std::ostringstream proof;proof.precision(9);
+            proof<<"island-simulator: elephant contact frame="<<drawnFrames_<<" heading="<<e.heading
+                <<" speed="<<e.speed<<" behavior="<<static_cast<int>(e.behavior)
+                <<" visible="<<elephantRenderer_->Visible()<<" triangles="<<elephantRenderer_->TriangleCount()<<" feet=";
+            for(std::size_t i=0;i<e.legs.size();++i) {
+                if(i)proof<<';';
+                const auto& leg=e.legs[i];
+                proof<<leg.foot.x<<','<<leg.foot.y<<','<<leg.foot.z<<','<<leg.planted;
+            }
+            std::cout<<proof.str()<<'\n';
+        }
+        if((elephantWalk||elephantTurn)&&drawnFrames_%8U==0) {
             const auto& e=elephant_->State();float low=100,high=-100;int planted=0;
             for(const auto& leg:e.legs)if(leg.planted) {
                 const float gap=leg.foot.y-DrawnOrAnalyticHeight(*drawnGround_,terrain_,leg.foot.x,leg.foot.z);
                 low=std::min(low,gap);high=std::max(high,gap);++planted;
             }
             CaptureFrame(capturePath_+".elephant-stage-"+std::to_string(drawnFrames_/8U-1U)+".ppm");
-            std::cout<<"island-simulator: elephant walk stage="<<drawnFrames_/8U-1U<<" frame="<<drawnFrames_
+            std::cout<<"island-simulator: elephant "<<(elephantTurn?"turn":"walk")<<" stage="<<drawnFrames_/8U-1U<<" frame="<<drawnFrames_
                 <<" position="<<e.x<<','<<e.y<<','<<e.z<<" speed="<<e.speed
                 <<" behavior="<<static_cast<int>(e.behavior)<<" planted="<<planted<<" sole-error="<<low<<','<<high<<'\n';
         }
-        const std::uint32_t targetFrames = elephantWalk ? 64U : viewpoint_==FixedViewpoint::CrocodileLandDetail ? 160U : bunkerTurnInspection_ ? BunkerTurnInspection::CaptureFrames : alienCapture||goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture||deerCapture ? 64U : viewpoint_==FixedViewpoint::QuadMineCratesDetail ? 56U : freeMotionCapture||snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
+        const std::uint32_t targetFrames = elephantWalk||elephantTurn ? 64U : viewpoint_==FixedViewpoint::CrocodileLandDetail ? 160U : bunkerTurnInspection_ ? BunkerTurnInspection::CaptureFrames : alienCapture||goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture||deerCapture ? 64U : viewpoint_==FixedViewpoint::QuadMineCratesDetail ? 56U : freeMotionCapture||snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
                 && (viewpoint_ == FixedViewpoint::MonkeyDetail || viewpoint_ == FixedViewpoint::MonkeyTreeDetail || viewpoint_ == FixedViewpoint::MonkeyClimbDetail)
             ? MonkeyCaptureFrames : SmokeTestFrames;
         if (captureTideHeld_ && (drawnFrames_ == 1U || drawnFrames_ == targetFrames)) {

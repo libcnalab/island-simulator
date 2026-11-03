@@ -1,4 +1,4 @@
-# Comprehensive visual cohesion campaign — qualified continuation after f7446521
+# Comprehensive visual cohesion campaign — ACTIVE continuation after88a20f5a
 
 The whole original superprompt/attachment is assessed in the final acceptance ledger at the
 end of this file. Earlier premature completion conclusions and ACTIVE checkpoints remain as
@@ -11,12 +11,13 @@ all preserved and committed/pushed in ad48d3d4 at the user's explicit request. E
 saved in build/campaign-deer-alert-entry-binary. Builds used CPU0–3/-j2/-j3; physical AMDGPU suspended,
 contained verified llvmpipe/Pixman only. No external source/system/Git destructive operations.
 
-Current continuation: observed crocodile, elephant and TRex contact defects corrected in pushed
-commits8a92339c,76197fdc,681f3118. Release/OpenGL33 passes93safe tests; final same-app review
-covers30software scopes/74PNGs, all inspected or exact to inspected controls. Comparable repeated
-LP8 frame measurement shows no material regression. All original criteria are reassessed in the
-latest ledger at the end; limits are explicit. Final documentation delivery is verified before
-closing the goal. All compilation CPU0–3/-j2; physical AMDGPU remains unqualified. Sound closed.
+Current continuation requested2026-11-03: entry develop/88a20f5a clean/synced. Previous accepted
+work and evidence preserved. New goal ACTIVE. First remaining observed priority is stance slip:
+measure fixed-world elephant contacts during acceleration and actual Watch turning, capture
+matched baseline through existing software QA, then implement bounded foot anchoring using the
+existing rig. Next reassess other observed locomotion/environment defects, continue stages and
+fresh full original acceptance. Max4compilation cores; contained verified llvmpipe/Pixman only.
+Sound remains closed. No external dependency source changes or destructive Git operations.
 
 **No temporary diagnostic, disabled aerial range or benchmark-only source remains.**
 Final source enables the qualified aerial canopy and palm policies plus the final resident waist
@@ -2586,3 +2587,66 @@ Repository: develop; source commits8a92339c,76197fdc,681f3118 already pushed. Th
 commit contains only this acceptance record and the short PLAN update. Its hash, push and clean
 origin-synced state are verified after creation and reported directly, avoiding a circular self-hash.
 Goal completion is considered only after that final delivery check.
+
+## Active continuation from88a20f5a — 2026-11-03
+
+Original attachment and latest ledger/README/PLAN/BUGS/critical GPU incident revisited; entry
+clean develop, previous4commits pushed. NoAGENTS in repository/parent chain. Goal ACTIVE at user
+request. Short stages: (1) measured elephant stance/turn slip, matched baseline, existing-rig
+foot anchoring and visual/regression qualification; (2) next observed priority, independently
+qualified; (3) full original criterion reassessment/current visual matrix and delivery.
+Do not close at a stage. Build CPU0–3/-j2, dependencies read-only, software verified/contained.
+
+### Elephant stance/turn baseline and implementation progress
+
+Actual RED `build/campaign-elephant-stance-red.log`:1420support pairs,max50ms slip.0384686m;
+stopped turn416support pairs,max slip.0178898m,no swing samples,1.60955rad body rotation.
+Baseline source is88a20f5a plus capture-only trace/camera changes, saved app
+`build/campaign-elephant-plant-before-binary` and matching static archive/header CPU fixtures.
+Inspected matched software baselines:
+- `build/software-captures/20261102T232845.827522Z-elephant-turn` (64contacts,8stages,8493triangles)
+- `build/software-captures/20261102T232908.649778Z-elephant-walk` (same existing natural transition)
+Turn contact sheet `build/campaign-elephant-turn-before.png`. Both pass actual llvmpipe/Pixman,
+private devices, unchanged executable and empty final kernel gates. New semantic contact
+validator rejects both actual old logs for world-space slip.
+
+Implementation: bounded GroundFootPlant helper stores one world contact and a finite swing to
+a fixed landing; completes a swing when the body stops. Existing elephant IK/mesh/shadow reused.
+Shorter geared steps during acceleration/pivots, reach-triggered adjustment and2airborne-foot
+budget prevent dragging, overextension and loss of support; bathing retains its existing pose.
+Initial raw anchoring caused42cm wrist correction (legacy22cm); shortened/bounded steps corrected
+it. A preliminary13.4cm result had a failed1-foot support case and is NOT a qualified result.
+The corrected support budget measures18.191cm on the same120s route, better than legacy22.043cm;
+new regression keeps a20cm ceiling (2cm margin below legacy), zero planted movement and at
+least2contacts. Helper tests cover fixed landing/body stopping, paused clock and deferred steps.
+First QA build caught misleading indentation in trace output; corrected, retry passes.
+No existing production regression/GPU assertion is weakened. Final build/render review pending.
+
+### Qualified elephant world contacts — 2026-11-03
+
+Final app8b1e418dc93c400a907dac7ec50a0d257bc0e6cf828a55a7eb15bae275c2dd14.
+Release/OpenGL33 CPU0–3/-j2 full build passes;95/95safe CTests pass94.37s
+(`build/campaign-elephant-plant-qualified-safe-ctest.log`),3focused contact tests and76launcher
+tests pass. Existing vertex budget8493 retained in every recorded pose, no GPU resource increase.
+
+Matched after scopes, all software/private/unchanged-artifact/kernel[] verified:
+- `build/software-captures/20261102T235509.960469Z-elephant-turn`
+- `build/software-captures/20261102T235530.443434Z-elephant-walk`
+- `build/software-captures/20261102T235547.111437Z-elephant-close`
+- `build/software-captures/20261102T235558.377150Z-elephant-bathe`
+All8turn+8walk before/after stages visually inspected in
+`build/campaign-elephant-plant-{turn,walk}-pairs-{1,2}.png`; fixed camera/seed/clock/background
+retained. Turn:141support pairs,zero world slip,1.575rad turn,66airborne-foot samples while
+the body is stopped. Walk:213support pairs,zero slip. Clear alternating lift/plant replaces
+sliding, with no new distorted limbs. Close/bathe main frames are byte-identical to the already
+inspected previous controls; bathing/shape/materials retained. Full integration regression has
+zero stance slip,min2support,135stopped-turn swing samples. Final120s reach correction18.191cm
+vs22.043cm legacy; the20cm regression ceiling explicitly preserves improvement while enforcing
+the corrected2contact budget (the earlier18cm trial budget came from an invalid1contact version).
+
+Isolated3×20,000update median 0.594371→0.681373us per elephant
+(`build/campaign-elephant-plant-cpu-comparison.json`). This bounded contact/flight computation
+adds only per-animal state, no new geometry/draws; final whole-frame software comparison remains
+for integration qualification. All failed intermediate tests retained; no existing assertion
+weakened. Next: measure actual remaining biped ball/toe stance slip, capture before if observed,
+reuse the small contact helper with the existing rig; goal remains ACTIVE beyond this stage.
