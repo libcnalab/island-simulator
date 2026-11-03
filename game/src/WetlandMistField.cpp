@@ -3,6 +3,7 @@
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/PrevailingWind.hpp"
 #include "IslandSimulator/WindGust.hpp"
+#include "IslandSimulator/MistTransition.hpp"
 #include <algorithm>
 #include <cmath>
 #include <numbers>
@@ -34,6 +35,9 @@ WetlandMistField::WetlandMistField(const IslandTerrain& terrain):terrain_(terrai
         puffs_[i].size=3.0f+0.6f*static_cast<float>(i%4U);
         puffs_[i].active=true;
         Place(i,CentreX+std::cos(angle)*radial*RadiusX,CentreZ+std::sin(angle)*radial*RadiusZ);
+        // Startup represents established mist; only recycled banks need to form again.
+        puffs_[i].age=MistFormationSeconds;
+        puffs_[i].density=baseDensity_[i];
     }
 }
 
@@ -42,7 +46,7 @@ void WetlandMistField::Place(const std::size_t index,const float x,const float z
     puff.x=x;puff.z=z;
     puff.y=terrain_.Height(x,z)+hover_[index];
     puff.age=0;
-    puff.density=baseDensity_[index];
+    puff.density=0;
 }
 
 void WetlandMistField::Update(const float deltaSeconds,const float windSeconds) noexcept {
@@ -58,7 +62,9 @@ void WetlandMistField::Update(const float deltaSeconds,const float windSeconds) 
         puff.x+=wind::DirectionX*speed*dt;
         puff.z+=wind::DirectionZ*speed*dt+0.06f*std::sin(clock_*0.21f+phase_[i])*dt;
         puff.age+=dt;
-        puff.density=baseDensity_[i]*(0.72f+0.28f*std::sin(clock_*0.31f+phase_[i]));
+        // The outer fifth is roughly one bank radius: dissolve before leaving the habitat.
+        puff.density=baseDensity_[i]*(0.72f+0.28f*std::sin(clock_*0.31f+phase_[i]))
+            *MistTransitionOpacity(puff.age,1.0f-Extent(puff.x,puff.z),0.18f);
         const float hover=hover_[i]+0.05f*std::sin(clock_*0.17f+phase_[i]*1.3f);
         const float wantY=terrain_.Height(puff.x,puff.z)+std::clamp(hover,HoverMinimum,HoverMaximum);
         puff.y+=std::clamp(wantY-puff.y,-0.5f*dt,0.5f*dt);

@@ -1,4 +1,4 @@
-# Comprehensive visual cohesion campaign — qualified continuation after59160842
+# Comprehensive visual cohesion campaign — ACTIVE continuation after62a69f28
 
 The whole original superprompt/attachment is assessed in the final acceptance ledger at the
 end of this file. Earlier premature completion conclusions and ACTIVE checkpoints remain as
@@ -3034,3 +3034,59 @@ Repository: develop;46dc0dc4 and59160842 pushed. The following final documentati
 records acceptance and the short PLAN update. Its push, exact remote/local identity and clean
 worktree are checked after creation in `build/campaign-crater-final-delivery.json` and reported
 in the final response. Goal completion follows that check, never merely the completed stage.
+
+## Active forest/environment revisit from62a69f28 — 2026-11-03
+
+Entry develop clean/synced, earlier two volcanic fixes/qualification preserved. Original
+attachment and latest README/PLAN/BUGS/critical incident revisited; no repository AGENTS.
+Goal ACTIVE at renewed user request. Investigate less-reviewed pandanus/wetland/canopy/fallen-log
+views and actual environmental transitions, then implement only observed defects, qualify each
+stage and continue to the next unfinished priority. Final original1–24 reassessment/delivery
+must precede closure. Existing rear-drive18degree limitation already measured; do not repeat
+that investigation or alter physics without new evidence. Sound stays user-closed.
+All builds CPU0–3/-j2, external source read-only, verified isolated llvmpipe/Pixman graphics only.
+Initial same-app baseline manifest: build/campaign-forest-revisit-before.json, under capture.
+
+### Mist recycling correction — implementation checkpoint
+
+The four extra forest views were inspected (pandanus/wetland/fallen log plus the explicit
+canopy LOD threshold view; the latter is a distant silhouette comparison, not a close crown).
+Baselines: build/campaign-forest-revisit-initial.json and campaign-forest-remaining-before.json.
+The rejected bare canopy command exited CLI preflight2 before any graphical workload.
+Actual CPU reproduction: build/campaign-mist-probe-before.log, wetland32.1032m relocation at
+opacity .530728→.58, valley87.5295m at .263671→.265222 with retained old terrain height.
+MistTransitionTests correctly failed before the correction (campaign-mist-transition-red.log).
+Implemented smooth outer-habitat dissolution plus3s formation using existing ten puffs/renderer;
+valley recycling now reanchors Y invisibly. Initial established mist remains present; noon
+burn-off and deterministic drift retained. New64frame/eight-stage inspection views exercise real
+wraps without editing puff state. Fixed existing wetland diagnostic which read the shared
+renderer's later valley count. No graphics resources/geometry/population added.
+CPU ten-minute tests pass: wetland31wraps/max opacity step.031631; valley8/.0305631, invisible
+relocation endpoints, identical twin runs, new-ground support and noon burn-off. Final build,
+matching after sequences, full safe suite, performance and renewed holistic review still pending.
+Before sequences actually reviewed: build/campaign-mist-{wetland,valley}-before-stages.png;
+raw directories 20261103T032948.505830Z-wetland-drift and
+20261103T033201.068897Z-valley-drift-t06.50. These are subtle atmospheric discontinuities,
+not a new vegetation or particle system. Goal remains ACTIVE; continue qualification/next priority.
+
+### Mist stages visually accepted; proceed through the remaining priorities
+
+Release/OPENGL33 final source builds with CPU0–3/-j2 (campaign-mist-after-build.log).
+Safe command `taskset --cpu-list 0,1,2,3 ctest --test-dir build -LE display -E
+'^(IslandGameStartupReportValidation|IslandGameCaptureValidation)$' --output-on-failure -j2`
+passes100/100 in126.88s (campaign-mist-safe-ctest.log). Registered138:36display tests excluded by
+safety and2standalone validators excluded because they need the corresponding graphical fixture;
+this is not a pass of those38. Launcher77, image-validator11 and new semantic mist3 Python tests
+pass, including opaque teleport/incomplete/nonfinite/stale-clock/wrong-subject rejection.
+Matching sequences pass contained llvmpipe/Pixman and live64/64frame accounting; all8stages each
+were actually reviewed in campaign-mist-{wetland,valley}-pairs-{1,2}.png. The improvement is a
+subtle loss of the previously abrupt bank disappearance, with no geometry/material changes.
+Final raw scopes:20261103T033845.810057Z-wetland-drift and
+20261103T033916.021700Z-valley-drift-t06.50. Wetland actual wrap frame39/jump32.22965m now
+opacity3.0813e-6→0, max live opacity step.020086; valley frame21/87.52947m,
+6.8208e-7→0/max.015735. These are actual current live-gust paths, distinct from the CPU probe.
+No native GPU qualification; runtime SHA950faa719ec2fb51cde7220d3e28100f2609731ede56c7cf4088bda0d2dcde5c unchanged.
+Next: finish41scope holistic matrix (includes earlier34 plus3forest/dawnstream/elephant/TRex/
+bunker-turn), inspect all images, compare preserved controls, finish before/after software cost
+pair, then rewrite full original1–24 acceptance evidence and verify commit/push/clean delivery.
+Goal ACTIVE. No stage-only completion claim.

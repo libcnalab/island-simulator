@@ -539,6 +539,10 @@ The island keeps its own clock (24 game hours in 24 real minutes): T moves it an
 through the weathers (clear, partly cloudy, overcast, showers, thunderstorm); `--weather NAME`
 starts with one, and `--wet-ground` holds the ground wet as just after rain (when the sun comes
 out on it, the open ground steams).
+The low wetland and morning valley mist dissolve before recycling and form again over three
+seconds at the new ground height. Software QA views `wetland-drift` and
+`valley-drift --time-of-day 6.5` capture 64 fixed-clock frames and eight stages around an actual
+recycling event; the software capture tool checks both ends of the move are transparent.
 A utility quad bike stands parked beside the hut. F gets on it (from farther away it is brought
 to you) and off again; W and S throttle and brake (S held when stopped reverses), A and D steer,
 Space is the handbrake, and Backspace sets it back on its wheels after a rollover. A chase camera

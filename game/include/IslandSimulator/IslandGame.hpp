@@ -271,6 +271,8 @@ namespace island
         WestClearingDetail,
         StreamDetail,
         SeasonalWetlandDetail,
+        WetlandDriftDetail,
+        ValleyDriftDetail,
         MangroveDetail,
         GrassDetail,
         GroundPlantDetail,
@@ -800,6 +802,9 @@ namespace island
         std::unique_ptr<SeabedShadowRenderer> seabedShadowRenderer_;
         CascadeMistField cascadeMist_{terrain_};
         WetlandMistField wetlandMist_{terrain_};
+        std::size_t mistDriftSubject_=0;
+        std::size_t wetlandMistVisible_=0;
+        std::size_t valleyMistVisible_=0;
         ValleyMistField valleyMist_{terrain_};   // morning mist over the stream after a dewy night
         SunSteamField sunSteam_;   // steam off the sunlit wet ground after rain
         std::unique_ptr<CascadeMistRenderer> cascadeMistRenderer_;

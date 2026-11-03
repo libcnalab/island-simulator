@@ -58,6 +58,8 @@ namespace
         case FixedViewpoint::WestClearingDetail: return "west";
         case FixedViewpoint::StreamDetail: return "stream";
         case FixedViewpoint::SeasonalWetlandDetail: return "wetland";
+        case FixedViewpoint::WetlandDriftDetail: return "wetland-drift";
+        case FixedViewpoint::ValleyDriftDetail: return "valley-drift";
         case FixedViewpoint::MangroveDetail: return "mangroves";
         case FixedViewpoint::GrassDetail: return "grass";
         case FixedViewpoint::GroundPlantDetail: return "ground";
@@ -350,7 +352,7 @@ int main(const int argc, char* argv[])
         } else if (argument == "--viewpoint") {
             if (++index >= argc) {
                 std::cerr << "island-simulator: --viewpoint requires overview, bay, bay-ground, beach, jungle, snags, sapling, "
-                             "east, headland, tide-pools, turtle-nest, cave, cave-top, cave-inside, cave-back, bunker, bunker-corridor, bunker-computers, bunker-reactor, bunker-service, bunker-end, campfire, campfire-wide, resident, bear, clearing-edge, canopy (inspection only), west, stream, wetland, mangroves, grass, ground, ground-broadleaf, bush, litter, contact, movement, palms, fallen-palm, broken-palm, water, "
+                             "east, headland, tide-pools, turtle-nest, cave, cave-top, cave-inside, cave-back, bunker, bunker-corridor, bunker-computers, bunker-reactor, bunker-service, bunker-end, campfire, campfire-wide, resident, bear, clearing-edge, canopy (inspection only), west, stream, wetland, wetland-drift, valley-drift, mangroves, grass, ground, ground-broadleaf, bush, litter, contact, movement, palms, fallen-palm, broken-palm, water, "
                              "wet-sand, current, distant, props, rock-contact, driftwood, reef, reef-habitat, fronds, birds, bird-flight, herons, bats, bat-roost, fish, fish-swim, "
                              "shark, dolphins, monkeys, monkey-tree, monkey-climb, shipwreck, shipwreck-wide, tracks, fruit, cascade, jetty, bridge, lookout, log, hut, hut-material, hut-eaves, helicopter, helicopter-inside, helicopter-approach, crabs, hermit-crabs, coconut-crabs, crocodiles, boars, goats, spiders, spiders-bright, spider-web, snakes, snake-head, tree-snakes, butterflies, geckos, skinks, dragonflies, frogs, mice, rats, flies, ants, cicadas, turtles, or traversal\n";
                 return 2;
@@ -420,6 +422,10 @@ int main(const int argc, char* argv[])
                 viewpoint = island::FixedViewpoint::WestClearingDetail;
             } else if (name == "stream") {
                 viewpoint = island::FixedViewpoint::StreamDetail;
+            } else if (name == "valley-drift") {
+                viewpoint = island::FixedViewpoint::ValleyDriftDetail;
+            } else if (name == "wetland-drift") {
+                viewpoint = island::FixedViewpoint::WetlandDriftDetail;
             } else if (name == "wetland") {
                 viewpoint = island::FixedViewpoint::SeasonalWetlandDetail;
             } else if (name == "mangroves") {

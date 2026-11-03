@@ -11697,7 +11697,8 @@ int main()
                     if(!puff.active||island::WetlandMistField::Extent(puff.x,puff.z)>1.0001f) ok=false;
                     const float hover=puff.y-terrain.Height(puff.x,puff.z);
                     if(hover<0.05f||hover>0.7f) ok=false;
-                    if(puff.density<0.1f||puff.density>1.0f||puff.size<1.5f) ok=false;
+                    if(!std::isfinite(puff.density)||puff.density<0.0f||puff.density>1.0f||puff.size<1.5f) ok=false;
+                    if(puff.age>4.0f&&island::WetlandMistField::Extent(puff.x,puff.z)<.75f&&puff.density<.1f) ok=false;
                 }
                 return ok;
             };

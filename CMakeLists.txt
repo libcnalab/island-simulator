@@ -370,6 +370,11 @@ if(ISLAND_BUILD_TESTS AND NOT CMAKE_CROSSCOMPILING)
     island_enable_first_party_warnings(island_crater_glow_tests)
     island_enable_first_party_sanitizers(island_crater_glow_tests)
     add_test(NAME IslandCraterGlowTests COMMAND island_crater_glow_tests)
+    add_executable(island_mist_transition_tests tests/MistTransitionTests.cpp)
+    target_link_libraries(island_mist_transition_tests PRIVATE IslandSimulator::Core)
+    island_enable_first_party_warnings(island_mist_transition_tests)
+    island_enable_first_party_sanitizers(island_mist_transition_tests)
+    add_test(NAME IslandMistTransitionTests COMMAND island_mist_transition_tests)
     add_executable(island_trex_ground_tests tests/TRexGroundTests.cpp)
     target_link_libraries(island_trex_ground_tests PRIVATE IslandSimulator::Core)
     island_enable_first_party_warnings(island_trex_ground_tests)
@@ -735,6 +740,9 @@ if(ISLAND_BUILD_TESTS AND NOT CMAKE_CROSSCOMPILING)
             add_test(NAME IslandSoftwareCapturePreflightTests
                 COMMAND "${Python3_EXECUTABLE}"
                         "${CMAKE_CURRENT_SOURCE_DIR}/tests/SoftwareCaptureTests.py")
+            add_test(NAME IslandMistCaptureTests
+                COMMAND "${Python3_EXECUTABLE}"
+                        "${CMAKE_CURRENT_SOURCE_DIR}/tests/MistCaptureTests.py")
             add_test(NAME IslandAndroidSoftwarePreflightTests
                 COMMAND "${Python3_EXECUTABLE}"
                         "${CMAKE_CURRENT_SOURCE_DIR}/tests/AndroidSoftwareTests.py")

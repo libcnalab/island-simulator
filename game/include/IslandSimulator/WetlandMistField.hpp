@@ -11,7 +11,8 @@ class IslandTerrain;
 /** A low mist over the seasonal wetland: ten broad faint puffs hanging a hand's breadth to
  *  a knee's height over the wet ground, breathing slowly, drifting with the trade wind and
  *  leaning in the gust fronts, each wrapping back to the windward edge as it leaves the
- *  wetland. The puffs are MistPuffs so the cascade's mist renderer draws them.
+ *  wetland. Banks dissolve at the edge and reform after recycling, hiding the move.
+ *  The puffs are MistPuffs so the cascade's mist renderer draws them.
  *  Renderer-independent and deterministic. */
 class WetlandMistField final {
 public:

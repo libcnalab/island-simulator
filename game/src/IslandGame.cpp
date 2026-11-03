@@ -1,5 +1,6 @@
 #include "IslandSimulator/BunkerQuadSupport.hpp"
 #include "IslandSimulator/BunkerTurnInspection.hpp"
+#include "IslandSimulator/MistDriftInspection.hpp"
 #include "IslandSimulator/BunkerChaseCamera.hpp"
 #include "IslandSimulator/BoarGroundPose.hpp"
 #include "IslandSimulator/FootprintGround.hpp"
@@ -190,6 +191,8 @@ namespace island
             case FixedViewpoint::WestClearingDetail: return "west";
             case FixedViewpoint::StreamDetail: return "stream";
             case FixedViewpoint::SeasonalWetlandDetail: return "wetland";
+            case FixedViewpoint::WetlandDriftDetail: return "wetland-drift";
+            case FixedViewpoint::ValleyDriftDetail: return "valley-drift";
             case FixedViewpoint::MangroveDetail: return "mangroves";
             case FixedViewpoint::GrassDetail: return "grass";
             case FixedViewpoint::GroundPlantDetail: return "ground";
@@ -1294,6 +1297,34 @@ namespace island
             const auto direction=target-cameraPosition_;
             yaw_=std::atan2(direction.X,direction.Z);
             pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+        } else if (viewpoint_ == FixedViewpoint::WetlandDriftDetail || viewpoint_ == FixedViewpoint::ValleyDriftDetail) {
+            const bool valley=viewpoint_==FixedViewpoint::ValleyDriftDetail;
+            float clock=0;
+            MistDriftInspection event;
+            if(valley) {
+                const float hour=day_night_options::RequestedHour();
+                const auto advance=[&](auto& field,int) {
+                    field.Update(.1f,hour,weather_now::Dew(hour,weather_now::Current().cloudCover),weather_now::Current().wetness);
+                };
+                event=MistDriftInspection::Find(valleyMist_,advance);
+                for(int i=0;i<event.warmSteps;++i)advance(valleyMist_,i);
+            } else {
+                event=MistDriftInspection::Find(wetlandMist_,[&](auto& field,int) {
+                    field.Update(.1f,clock);clock+=.1f;
+                });
+                seaForageSeconds_=0;
+                for(int i=0;i<event.warmSteps;++i) {
+                    wetlandMist_.Update(.1f,seaForageSeconds_);seaForageSeconds_+=.1f;
+                }
+            }
+            mistDriftSubject_=event.subject;
+            cameraPosition_=Vector3(event.x-7.0f,terrain_.Height(event.x-7.0f,event.z+2.0f)+1.6f,event.z+2.0f);
+            const Vector3 target(event.x,event.y,event.z);
+            const auto direction=target-cameraPosition_;
+            yaw_=std::atan2(direction.X,direction.Z);
+            pitch_=std::atan2(direction.Y,std::hypot(direction.X,direction.Z));
+            std::cout<<"island-simulator: mist drift setup warm="<<event.warmSteps
+                <<" subject="<<event.subject<<" exit="<<event.x<<','<<event.y<<','<<event.z<<'\n';
         } else if (viewpoint_ == FixedViewpoint::SeasonalWetlandDetail) {
             const float cameraX=IslandEnvironmentField::SeasonalWetlandX;
             const float cameraZ=IslandEnvironmentField::SeasonalWetlandZ+20.0f;
@@ -9607,7 +9638,9 @@ namespace island
             streamDriftRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,streamDrift_.Leaves());
             cascadeMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,cascadeMist_.Puffs());
             wetlandMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,wetlandMist_.Puffs());
+            wetlandMistVisible_=wetlandMistRenderer_->VisibleCount();
             wetlandMistRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,valleyMist_.Puffs());
+            valleyMistVisible_=wetlandMistRenderer_->VisibleCount();
             sunSteamRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,sunSteam_.Puffs());
             if (volcanoRenderer_) volcanoRenderer_->DrawPlume(cameraView_,cameraProjection_,renderCameraPosition_,timeSeconds);
             rootingDustRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,rootingDust_.Puffs());
@@ -10572,7 +10605,7 @@ namespace island
         if(viewpoint_==FixedViewpoint::SeasonalWetlandDetail&&drawnFrames_==1U&&wetlandMistRenderer_) {
             const auto& first=wetlandMist_.Puffs().front();
             std::ostringstream report;
-            report << "island-simulator: wetland mist proof: visible=" << wetlandMistRenderer_->VisibleCount()
+            report << "island-simulator: wetland mist proof: visible=" << wetlandMistVisible_
                 << " first=" << first.x << ',' << first.y << ',' << first.z << " density=" << first.density << " size=" << first.size
                 << " camera=" << renderCameraPosition_.X << ',' << renderCameraPosition_.Y << ',' << renderCameraPosition_.Z;
             std::cout << report.str() << '\n';
@@ -10918,7 +10951,22 @@ namespace island
                 <<" position="<<e.x<<','<<e.y<<','<<e.z<<" speed="<<e.speed
                 <<" behavior="<<static_cast<int>(e.behavior)<<" planted="<<planted<<" sole-error="<<low<<','<<high<<'\n';
         }
-        const std::uint32_t targetFrames = trexTurn||elephantWalk||elephantTurn ? 64U : viewpoint_==FixedViewpoint::CrocodileLandDetail ? 160U : bunkerTurnInspection_ ? BunkerTurnInspection::CaptureFrames : alienCapture||goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture||deerCapture ? 64U : viewpoint_==FixedViewpoint::QuadMineCratesDetail ? 56U : freeMotionCapture||snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
+        const bool valleyDrift=viewpoint_==FixedViewpoint::ValleyDriftDetail;
+        const bool mistDrift=!capturePath_.empty()&&(viewpoint_==FixedViewpoint::WetlandDriftDetail||valleyDrift);
+        if(mistDrift) {
+            std::ostringstream proof;proof.precision(9);
+            const auto puffs=valleyDrift?valleyMist_.Puffs():wetlandMist_.Puffs();
+            proof<<"island-simulator: "<<(valleyDrift?"valley":"wetland")<<" drift frame="<<drawnFrames_<<" clock="<<seaForageSeconds_
+                <<" subject="<<mistDriftSubject_<<" visible="<<(valleyDrift?valleyMistVisible_:wetlandMistVisible_)<<" puffs=";
+            for(std::size_t i=0;i<puffs.size();++i) {
+                if(i)proof<<';';
+                const auto& p=puffs[i];
+                proof<<p.x<<','<<p.y<<','<<p.z<<','<<p.density;
+            }
+            std::cout<<proof.str()<<'\n';
+            if(drawnFrames_%8U==0)CaptureFrame(capturePath_+".mist-stage-"+std::to_string(drawnFrames_/8U-1U)+".ppm");
+        }
+        const std::uint32_t targetFrames = mistDrift||trexTurn||elephantWalk||elephantTurn ? 64U : viewpoint_==FixedViewpoint::CrocodileLandDetail ? 160U : bunkerTurnInspection_ ? BunkerTurnInspection::CaptureFrames : alienCapture||goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture||deerCapture ? 64U : viewpoint_==FixedViewpoint::QuadMineCratesDetail ? 56U : freeMotionCapture||snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
                 && (viewpoint_ == FixedViewpoint::MonkeyDetail || viewpoint_ == FixedViewpoint::MonkeyTreeDetail || viewpoint_ == FixedViewpoint::MonkeyClimbDetail)
             ? MonkeyCaptureFrames : SmokeTestFrames;
         if (captureTideHeld_ && (drawnFrames_ == 1U || drawnFrames_ == targetFrames)) {

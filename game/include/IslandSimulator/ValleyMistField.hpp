@@ -9,7 +9,8 @@ class IslandTerrain;
 
 /** Morning mist in the stream's valley: after a dewy or a rained-on night, broad faint banks
  *  lie over the stream at first light, a knee's to a head's height over the ground, drifting
- *  slowly down the valley, and burn off as the sun climbs (gone by half past nine). The
+ *  slowly down the valley, dissolve before recycling to the springs, and burn off as the
+ *  sun climbs (gone by half past nine). Recycled banks reform at the new ground height. The
  *  puffs are MistPuffs so the cascade's mist renderer draws them. Renderer-independent and
  *  deterministic. */
 class ValleyMistField final {

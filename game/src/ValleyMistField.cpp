@@ -1,6 +1,7 @@
 #include "IslandSimulator/ValleyMistField.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/StreamRoute.hpp"
+#include "IslandSimulator/MistTransition.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -30,6 +31,7 @@ ValleyMistField::ValleyMistField(const IslandTerrain& terrain):terrain_(terrain)
         puffs_[i].size=5.5f+1.2f*static_cast<float>(i%4U);
         puffs_[i].active=false;
         Place(i,8.0f+(StreamRoute::NominalLength-20.0f)*(static_cast<float>(i)+0.5f)/static_cast<float>(Capacity));
+        puffs_[i].age=MistFormationSeconds;
     }
 }
 
@@ -51,15 +53,18 @@ void ValleyMistField::Update(const float deltaSeconds,const float hour,const flo
         MistPuff& puff=puffs_[i];
         // down the valley with the cool air draining off the hill, a slow sway across it
         along_[i]+=DriftSpeed*dt;
-        if(along_[i]>StreamRoute::NominalLength-6.0f) along_[i]=6.0f;
+        const bool recycled=along_[i]>StreamRoute::NominalLength-6.0f;
+        if(recycled) Place(i,6.0f);
         const float x=StreamRoute::SourceX-along_[i];
         puff.x=x;
         puff.z=StreamRoute::CentreZ(x)+side_[i]+0.6f*std::sin(clock_*0.05f+phase_[i]);
         const float wantY=terrain_.Height(puff.x,puff.z)+hover_[i]+0.15f*std::sin(clock_*0.11f+phase_[i]);
         puff.y+=std::clamp(wantY-puff.y,-0.4f*std::max(dt,1e-4f),0.4f*std::max(dt,1e-4f));
-        if(dt<=0.0f) puff.y=wantY;
-        puff.age+=dt;
-        puff.density=strength*baseDensity_[i]*(0.78f+0.22f*std::sin(clock_*0.23f+phase_[i]));
+        if(dt<=0.0f||recycled) puff.y=wantY;
+        if(!recycled)puff.age+=dt;
+        // Twelve metres clears even the largest bank before the valley's recycling seam.
+        puff.density=strength*baseDensity_[i]*(0.78f+0.22f*std::sin(clock_*0.23f+phase_[i]))
+            *MistTransitionOpacity(puff.age,StreamRoute::NominalLength-6.0f-along_[i],12.0f);
         puff.active=puff.density>0.01f;
     }
 }
