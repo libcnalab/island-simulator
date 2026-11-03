@@ -5,8 +5,9 @@
 #include <stdexcept>
 
 namespace island {
-// Find a real recycling event without editing particle state. The capture starts two
-// seconds before it, so the same camera observes both ends of the transition.
+// Locate recycling in a copy without editing particle state, leaving twenty updates
+// of lead-in. The capture validator requires an actual live event even when the
+// game's gust clock shifts its timing relative to this initial-field search.
 struct MistDriftInspection {
     int warmSteps=0;
     std::size_t subject=0;

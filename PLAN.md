@@ -22,6 +22,11 @@ Status markers:
 
 ## Visual cohesion campaign — 2026-11-01/02 (qualified)
 
+- Follow-up2026-11-03: existing wetland/valley mist now dissolves before recycling and reforms
+  at the new ground height. Matched64frame transitions,41holistic scopes/113images plus18mist
+  images reviewed;100safe tests pass. Seven software cost runs retained with host-sensitive
+  latency explicitly documented; no native GPU qualification. Full original1–24 evidence and
+  delivery state are in the final HANDOFF.md ledger.
 - Moisture/shade-controlled moss and grass pigment; bank-grounded mangrove supports with
   matching sun shadows and conservative culling. Existing placements remain deterministic.
 - Aerial canopy uses bounded altitude/projected-size visibility and cheaper index ranges sharing

@@ -1,4 +1,4 @@
-# Comprehensive visual cohesion campaign — ACTIVE continuation after62a69f28
+# Comprehensive visual cohesion campaign — available qualification complete afterd4fc6ba6
 
 The whole original superprompt/attachment is assessed in the final acceptance ledger at the
 end of this file. Earlier premature completion conclusions and ACTIVE checkpoints remain as
@@ -3045,7 +3045,8 @@ stage and continue to the next unfinished priority. Final original1–24 reasses
 must precede closure. Existing rear-drive18degree limitation already measured; do not repeat
 that investigation or alter physics without new evidence. Sound stays user-closed.
 All builds CPU0–3/-j2, external source read-only, verified isolated llvmpipe/Pixman graphics only.
-Initial same-app baseline manifest: build/campaign-forest-revisit-before.json, under capture.
+Initial baseline manifests: build/campaign-forest-revisit-initial.json and
+build/campaign-forest-remaining-before.json; four valid views reviewed, bare canopy rejected in preflight.
 
 ### Mist recycling correction — implementation checkpoint
 
@@ -3090,3 +3091,121 @@ Next: finish41scope holistic matrix (includes earlier34 plus3forest/dawnstream/e
 bunker-turn), inspect all images, compare preserved controls, finish before/after software cost
 pair, then rewrite full original1–24 acceptance evidence and verify commit/push/clean delivery.
 Goal ACTIVE. No stage-only completion claim.
+
+### Full visual/traversal qualification passed; performance gate OPEN
+
+Source d4fc6ba6 committed/pushed. All41holistic scopes/113PNGs plus2mist sequences/18PNGs were
+actually reviewed: campaign-mist-holistic-{1..7}.png, campaign-mist-all-stages-{1..12}.png and
+matched pair sheets above. Audit build/campaign-mist-final-evidence.json verifies the same final
+app2d9670b09960fe709c1a8d4f5e31c50bb42d8b17be07c823bd177dc62f0ac585, private llvmpipe/Pixman,
+unchanged content and zero kernel records in all43scopes.73holistic PNGs are byte-exact controls;
+other40 are additional dawn-stream/elephant/TRex/bunker-turn views/stages, not unexplained changes.
+World fingerprint238be1fec0a0cdd7 remains unchanged. Actual64frame elephant/TRex contact gates
+and800frame bunker turn/forward escape pass; all131final images reviewed. A comment now clarifies
+that the inspection's initial-field wind search can shift relative to the live gust clock;
+rebuilding it produced the identical app hash (campaign-mist-final-build.log), no behavior change.
+
+Initial same1280x720/LP8/VSyncOff/120warm600sample software pair did NOT pass cost review:
+median225.3072→349.4196ms(+55.09%),mean227.0030→373.3687(+64.48%),p95244.0556→507.9353(+108.12%),
+RSS802220→907812KiB(+13.16%). Scene snapshots AND all recorded scene ranges are exactly equal.
+Application granted CPU411→279%, involuntary switches54180→163681, user CPU710.01→817.39s(+15.12%).
+Host scheduling/frequency or renderer queue effects are hypotheses, not a demonstrated cause or
+an excuse to accept this result. Raw scopes campaign-performance/mist-wetland-{before,after},
+summary campaign-mist-performance.json. One reverse-order repeat after→before is now running
+with identical settings/executables/containment. Retain all four results and investigate;
+do not close the goal or claim a performance pass before that gate resolves.
+
+## Original1–24 renewed acceptance ledger afterd4fc6ba6
+
+The original attachment/superprompt and the preceding full implementation record remain the
+scope. This continuation proceeded from forest review through both mist defects to complete
+visual, collision/locomotion and regression qualification. Cost investigation is documented below; final delivery is checked after its commit.
+
+| Criterion | Evidence and bounds |
+| --- | --- |
+|1 project context|Fresh tracked inventory796CPP/HPP files/159463lines; actual world report valid, fingerprint238be1fec0a0cdd7. Existing content inspected, no inventory blindly recreated.|
+|2 absolute constraints|Original C++/CNA/heightfield/rendering/gameplay preserved; entry clean, earlier commits retained. No dependency/system/driver source, resets, merges or new packages. Source d4fc6ba6 pushed.|
+|3 GPU safety|Incident documentation read; all43final scopes prove actual llvmpipe/isolated Pixman/private devices/unchanged artifacts/zero kernel records. Physical AMDGPU remains untested/open.|
+|4 repository investigation|README/PLAN/BUGS/visual/test/incident records and field/renderer integration inspected; four extra forest baselines and live mist CPU/render reproduction established before edits.|
+|5 forest/vegetation|Previous ecological distribution/canopy/layering/moss/root/palm work retained. Fresh jungle/clearing/ground/stream/beach/pandanus/wetland/fallen-log and distant canopy-threshold views reviewed; no added trees/geometry or placement change.|
+|6 terrain/geology/soil/caves|Authoritative terrain/local grounding and cave roof retained; current overview/headland/ground/cave/cave-top/volcano inspected. Terrain/support/placement tests pass. No new terrain pipeline.|
+|7 water/coast/reef/tides|Previous multiscale waves/foam/caustic/depth/reef work retained; current coast/water/underwater/wreck reviewed, preserved controls exact. Current water/tide/support tests pass; prior live diving proof applies to unchanged controllers, not a claimed fresh keyboard run.|
+|8 wildlife|Current bear/crocodile/elephant/TRex live stages reviewed; actual64frame world-contact checks for elephant/TRex and160frame crocodile pass. Earlier habitat/gait/anatomy fixes preserved; no species/population increase.|
+|9 resident|Current64frame/eight-stage resident poses/materials/waist reviewed; same body/gait/ground integration preserved. No replacement rig/avatar engine or new character content.|
+|10 lighting/material/shadow/LOD/weather|Existing shadow/material/LOD/volcanic fixes remain exact in preserved controls; dawn/day/storm/night/foxfire/hut/mine/lantern reviewed. New mist fades at habitat edges, reforms over3s and reanchors to valley ground invisibly.|
+|11 landmark integration|Current hut/wreck/cave/lighthouse/UFO/alien/castle/gate/courtyard/bunker/volcano reviewed. Prior mine/helicopter/freighter placement evidence remains applicable; no landmarks removed or relocated.|
+|12 exploration/collision|Fresh800frame actual bunker entry/turn/forward escape with16stages passes; terrain/cave/bunker/vehicle/stream regressions pass. Previously measured18degree reverse rear-drive traction limit retained; forward escape works.|
+|13 performance/compatibility|Seven-run investigation below retains both unfavorable pairs and identical-binary controls; software latency remains host-sensitive, with no claimed causal speedup/root cause. Last original-path run versus similar-CPU-share baseline: mean+5.1%,median+10.0%,p95+10.6%,RSS+1.8%. No mesh/buffer/draw-capacity increase;20total mist slots unchanged. Native/other-platform qualification not claimed.|
+|14 source health/determinism|Shared small opacity helper and focused tests outside giant CoreTests; initial established mist retained, identical twin trajectories/wraps verified. IslandGame767988B/CoreTests913682B; game grows only bounded QA integration, no architectural refactor.|
+|15 visual QA|Matched old/new64frame sequences: identical camera/seed/config and exactly equal X/Z trajectories; old opaque endpoints rejected, new invisible endpoints accepted. Four pair sheets actually inspected; no golden-image update used as proof.|
+|16 implementation stages|Preserved A–H campaign changes; continued forest inspection→wetland correction→valley grounding/formation→whole-island/night/weather/locomotion/traversal regression qualification.|
+|17 autonomous execution|No routine approvals or milestone stop; d4fc6ba6 committed/pushed while broader qualification continued. Failed CLI preflight and unfavorable cost result retained and investigated.|
+|18 quality bar|100safe tests/77launcher/11image-validator/3mist-validator tests pass; actual rendering reviewed. Determinism/function/architecture/scope verified. Cost investigation is accepted with the explicit software-latency limit below, not hidden by changed settings.|
+|19 known issues|AMDGPU GPUVM and external CNA/Android lifecycle/stock-skinned issues remain OPEN/read-only. Audio remains explicitly user-closed. No unrelated Android/driver work or silent issue closure.|
+|20 final integration|41scopes/113PNGs plus2transition scopes/18PNGs inspected;73holistic PNGs exact to reviewed controls,40 additional viewpoints/stages. Coherent ground/vegetation/water/structures/light retained with smoother temporal mist.|
+|21 stopping criteria|Observed atmosphere defects fixed with matching proof and no visual/functional regression found in this matrix. Cost findings and limits are documented below; final push/clean check follows the documentation commit. No stage-only goal completion. Further wholesale modeling/feature expansion has no demonstrated need.|
+|22 deliverables|Actual source, tests, baseline/after pair sheets, raw contained captures, current world/test/artifact audit and cost runs retained under build/campaign-mist-*; final response will distinguish implemented changes, tests, performance, limits and repository state.|
+|23 development principles|Existing systems/content/negative space preserved; deterministic placement, bounded geometry and readable local C++ favored over expansion/rewrites; safe software evidence only.|
+|24 intended outcome|Prior forest/terrain/coast/character/landmark cohesion improvements retained and rechecked; two real atmosphere discontinuities corrected. This supports a coherent stylized island, not a zero-defect/photorealistic/all-platform claim.|
+
+Remaining qualification bounds are explicit: stylized procedural geometry/animation does not
+promise exhaustive all-species/all-time IK;18degree reverse slope remains rear-traction limited;
+physical AMDGPU and current Debug/Web/GLES/Android/other backends are unqualified. External CNA/
+driver issues remain open. These limits do not authorize unsafe tests or unrelated rewrites.
+
+Reverse-order pair also initially fails: before201.3121/208.6842/240.1952ms/RSS802500KiB,
+after305.0971/291.9731/347.7399/RSS892752KiB. This was not dismissed as scheduling noise.
+Standalone alternating200000-update runs (campaign-mist-cpu-cost.json) measure both fields together
+to roughly.03–.05ms/update; field sizes remain416/496B and paths/checksums match. No new graphics
+buffer, allocation capacity or per-field draw is introduced. Read-only CNA upload inspection
+confirms existing fixed-capacity storage; no demonstrated dependency defect or patch.
+A diagnostic relink of final game/render objects with old core runs173.6936/175.1315/192.5074ms,
+RSS809376KiB. Then a bitwise-identical final executable copy runs194.5181/196.9733/220.9855ms,
+RSS847380KiB/granted433%CPU/26859involuntary switches. These isolate actual code and show the same
+final binary varying substantially; they do not prove a filename effect or identify the host
+cause. Actual original final path is now running as the last control, same settings and no
+concurrent compilation/test/capture work. All unfavorable runs remain in the investigation.
+
+### Final cost review, acceptance and delivery gate
+
+All seven runs use1280x720/LP8/VSyncOff/120warm600samples, actual isolated llvmpipe/Pixman,
+unchanged binaries/runtime, zero kernel records, and identical recorded scene snapshots/ranges.
+No sample/settings change conceals the two initially unfavorable pairs. The hybrid relink is
+an ignored diagnostic artifact, never the delivered application; the renamed copy is bitwise
+identical to the final original executable. Raw scopes are under build/campaign-performance/mist-*.
+
+| Chronological software run | Median ms | Mean ms | p95 ms | Peak app RSS KiB | Granted CPU % |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Before |225.3072|227.0030|244.0556|802220|411|
+| After |349.4196|373.3687|507.9353|907812|279|
+| Repeat after |305.0971|291.9731|347.7399|892752|348|
+| Repeat before |201.3121|208.6842|240.1952|802500|431|
+| Final render objects/old core diagnostic |173.6936|175.1315|192.5074|809376|447|
+| Identical final copy |194.5181|196.9733|220.9855|847380|433|
+| Actual final original path control |247.8276|238.5693|269.9571|816780|412|
+
+Investigation: two unfavorable pairs are real measurements, not silently discarded. The same
+final code ranges194.52–349.42ms median and847380–907812KiB RSS across the first/copy runs;
+the final original path is816780KiB. A filename cause was NOT established. Compared with the
+original before run at almost equal whole-run CPU share411→412%, actual final path mean is+5.10%,
+median+10.00%,p95+10.61%,RSS+1.81%, while total user CPU710.01→690.18s decreases2.79%. Relative to
+the reverse-order before baseline, the last control is still+23.11%median/+14.32%mean/+12.39%p95;
+that bound is explicit. Scheduling/frequency/renderer queue effects remain an inference; no exact
+host cause or causal speedup is claimed. All measurements and checks are in
+build/campaign-mist-performance-final-investigation.json; direct field CPU/state measurements in
+campaign-mist-cpu-cost.json. Fields retain416/496B and combined measured update cost about.03–.05ms;
+max300vertices/100triangles per mist draw, existing shared buffers/two field draws unchanged.
+
+Cost review is concluded with a documented software-latency limitation, not a claim that every
+run passes10% or that a driver problem was fixed. The original stopping criterion permits
+investigated/documented regressions. No capacity/geometry increase or direct costly application
+operation warrants a speculative renderer rewrite; physical GPU performance remains unqualified.
+Future causal latency attribution needs a controlled quiet host and separate hardware approval
+if it includes hardware tests. Do not rerun an indefinite stress loop to chase a passing number.
+
+All original1–24 criteria have now been reassessed above, with actual implementation, matching
+visual proof, complete safe tests, whole-island/motion/traversal review and the cost limits.
+No further observed major in-scope defect remains from this review; exhaustive all-time/all-species
+or zero-defect guarantees are not asserted. Final source d4fc6ba6 is already pushed; the following
+documentation/comment-only commit records this acceptance. Its actual push/remote identity/clean
+worktree are verified after creation in build/campaign-mist-final-delivery.json before goal closure.
