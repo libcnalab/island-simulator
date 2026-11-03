@@ -18,7 +18,49 @@ Read-only source identity evidence: `build/cna-issue-audit-20261103.json` and
 `build/cna-remote-next-20261103.json`. Whitespace, local bug links, all four pinned source anchors
 and unchanged audited files through the later local HEAD pass; exact results are retained in
 `build/cna-audit-doc-validation-20261103.json`. This audit does not close the original visual campaign or mark
-the current octopus implementation complete; source work in progress is preserved below.
+the current octopus implementation complete. Audit documentation was committed/pushed in
+32764585 and actual origin/develop was checked at327645859513b9d461a75b1a7ca0a8d76c14c1f1.
+All8historical BUGS.md revisions were also checked: only001and002have registered issue entries.
+
+## Reef-den integration checkpoint — original campaign still ACTIVE
+
+Grounding stage52d8c56e was committed/pushed before this follow-up. The confirmed subject3
+intersection now uses existing circular bounds of variant3reef boulders, with a bounded local
+home search and gradual heading avoidance. These rocks remain non-solid for the swimmer.
+The conservative1.8×scale reach covers the existing fully extended probe, not just the body;
+no new navigation engine, rock/landmark relocation, mesh growth or population change.
+The home/route correction intentionally changes affected octopus positions; the older exact
+navigation hash above applies only to the grounding stage without reef integration.
+
+Release/OPENGL33 full build and109/109safe CTests pass140.36s, compilationCPU0–3/-j2.
+Six simulated minutes validate2400pose samples/1536000actual body+arm vertices, deterministic
+bounded motion, no permanent stuck agent, minimum boulder/reach gap.282930m and minimum
+arm/visible-bed gap.00399989×scale. Actual rendered-rock/body probe at the old failure's184th
+update now finds0/256bodyvertices inside, maximum penetration0 (previously72/.485m).
+Logs:build/campaign-octopus-reef-{full-build,safe-tests,geometry-metrics}.log and
+build/campaign-octopus-rock-body-after-probe.log. Existing ground/group tests also remain green.
+
+Three64frame motion captures plus the default fixed view pass on appa3fe317e/CNA950faa71,
+verified llvmpipe19.1.7/Pixman/private devices, unchanged artifacts and empty kernel deltas.
+All16changed subject3stages and its main were actually inspected. Subject0/1's34PNGs and the
+default main are byte-exact to previously inspected grounding controls. Concrete retention/
+review index: `build/campaign-octopus-reef-after-views.json`; comparison:
+`build/campaign-octopus-reef-comparison.png`. The subject3camera tracks its intentionally moved
+home/route, so this comparison is explicitly NOT a matched fixed-world-camera pixel pair.
+
+CPU-only four-animal pose probe,10000frames per ABBA leg: null-ground14.84–15.97µs versus
+fitted48.10–49.80µs/frame, about.034ms extra. First exploratory timing overlapped a separate
+probe compilation and is retained but not treated as isolated; the cited repeat had no other
+agent-started build/test/render. This small pose cost does not explain or dismiss the observed
+whole-frame/startup/tail differences, nor qualify physical GPU performance. Exact measurements
+and limitations remain in `build/campaign-octopus-ground-cost-evidence.json`.
+
+Next: complete current holistic integration (including the previously failed boar baseline's
+fresh final scope), assess the retained software timing uncertainty, inspect marine lighting
+against actual alternate-light controls, then renew the complete original1–24acceptance.
+No new work on audio, CNA/Sharp Runtime, AMDGPU or unqualified Android is authorized by this
+checkpoint. Do not close the goal at the reef milestone or substitute these four scopes for
+the earlier108scene island qualification.
 
 ## Current visual campaign continuation
 

@@ -480,6 +480,13 @@ namespace island
         for (const auto& detail : naturalPropLayout_.BeachDetails())
             if (detail.variant == 3U) crabDebrisCues.push_back({detail.x, detail.z});
         crabColony_.SetDebrisHabitats(crabDebrisCues);
+        {
+            std::vector<CircularObstacle> reefBoulders;
+            for(const auto& habitat:RenderedNaturalProps().ReefHabitat())
+                if(habitat.variant==3U)
+                    reefBoulders.push_back({habitat.x,habitat.z,habitat.scale});
+            octopusGroup_.SetReefRocks(reefBoulders);
+        }
         std::vector<CircularObstacle> worldObstacles;
         worldObstacles.reserve(vegetationLayout_.Obstacles().size()
                                + jungleLayout_.Obstacles().size()

@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "IslandSimulator/WildlifeSimulation.hpp"
+#include "IslandSimulator/WorldCollision.hpp"
 
 namespace island
 {
@@ -55,6 +56,10 @@ namespace island
         static constexpr float ProbeSeconds=2.2f,ProbePeriodSeconds=5.0f;
         [[nodiscard]] std::size_t CamouflagedCount() const noexcept;
         explicit OctopusGroup(const IslandTerrain& terrain);
+        // Startup integration: reef boulders are non-solid for the swimmer, but must
+        // leave space for the octopus, including its fully extended probing arm.
+        static constexpr float MaximumReach = 1.8f;
+        void SetReefRocks(std::span<const CircularObstacle> rocks);
         void Update(float deltaSeconds,float observerX,float observerY,float observerZ)noexcept;
         [[nodiscard]] std::span<const OctopusState> Octopuses()const noexcept{return states_;}
         [[nodiscard]] std::span<const OctopusDen> Dens()const noexcept{return dens_;}
@@ -66,11 +71,13 @@ namespace island
         [[nodiscard]] int ReducedSimulationCount()const noexcept{return reducedCount_;}
         [[nodiscard]] int DormantSimulationCount()const noexcept{return dormantCount_;}
     private:
-        struct Agent { OctopusState state;OctopusDen den;float routePhase=0,pulsePhase=0,armPhase=0,behaviorSeconds=0,accumulatedSeconds=0;std::uint32_t transitionCount=0;float jetSeconds=0;bool jetting=false;float probeClock=0;bool probing=false; };
+        struct Agent { OctopusState state;OctopusDen den;float routePhase=0,pulsePhase=0,armPhase=0,behaviorSeconds=0,accumulatedSeconds=0;std::uint32_t transitionCount=0;float jetSeconds=0;bool jetting=false;float probeClock=0;bool probing=false;std::vector<CircularObstacle> reefRocks; };
         void Initialize(std::size_t index);
         void UpdateAgent(Agent&,float,float,float,bool)noexcept;
         [[nodiscard]] bool ValidHabitat(float,float,const OctopusDen&)const noexcept;
         [[nodiscard]] float DesiredHeight(const Agent&)const noexcept;
+        [[nodiscard]] static bool ClearOfReef(float x,float z,const Agent&)noexcept;
+        [[nodiscard]] static float ReefHeading(float desired,const Agent&)noexcept;
         const IslandTerrain& terrain_;std::vector<Agent> agents_;std::vector<OctopusState> states_;std::vector<OctopusDen> dens_;
         float elapsedSeconds_=0;std::uint64_t frameIndex_=0;int fullCount_=0,reducedCount_=0,dormantCount_=0;
         InkEvent ink_;

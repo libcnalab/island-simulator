@@ -44,6 +44,12 @@ Status markers:
   cost pair has+8.52%mean and larger startup/tail uncertainty, requiring investigation. The
   existing subject3den/body intersects a reef boulder and is the next integration correction.
   This is a stage checkpoint, not whole-campaign completion; exact evidence is in HANDOFF.md.
+- Reef-den follow-up: reuse local circles for existing non-solid reef boulders; find a nearby
+  clear home and turn gradually around them, retaining swimmer collision and animal inventory.
+  The former subject3body/rock probe improves72→0inside vertices.109safe tests and four software
+  scopes pass;16changed motion stages inspected and35other PNGs byte-exact to prior review.
+  The deliberately shifted tracking camera is not described as a fixed-world matched pair.
+  Whole-campaign acceptance and software timing uncertainty remain open in HANDOFF.md.
 - Qualified follow-up from `cd800d00` (`b141b2e2`, `fb7f494b`): bird eye layers follow their actual lofted head instead
   of clipping into it. Deer reuse existing world-foot contacts through turns/acceleration;
   the visible legs and shadows share one pose, and upper-leg roots seat inside the torso.

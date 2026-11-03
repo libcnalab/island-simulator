@@ -17,6 +17,67 @@ float Wrap(float v)noexcept{while(v>std::numbers::pi_v<float>)v-=TwoPi;while(v<-
 float MoveAngle(float a,float b,float m)noexcept{return Wrap(a+std::clamp(Wrap(b-a),-m,m));}
 }
 OctopusGroup::OctopusGroup(const IslandTerrain& terrain):terrain_(terrain){agents_.resize(Count);states_.resize(Count);dens_.resize(Count);for(std::size_t i=0;i<Count;++i){Initialize(i);states_[i]=agents_[i].state;dens_[i]=agents_[i].den;}}
+bool OctopusGroup::ClearOfReef(const float x,const float z,const Agent& a) noexcept {
+    const float reach=MaximumReach*a.state.scale+.025f;
+    for(const auto& rock:a.reefRocks) {
+        const float dx=x-rock.x,dz=z-rock.z,radius=rock.radius+reach;
+        if(dx*dx+dz*dz<radius*radius)return false;
+    }
+    return true;
+}
+
+void OctopusGroup::SetReefRocks(const std::span<const CircularObstacle> rocks) {
+    for(const auto& rock:rocks)
+        if(!std::isfinite(rock.x)||!std::isfinite(rock.z)||!std::isfinite(rock.radius)||rock.radius<=0)
+            throw std::invalid_argument("Octopus reef rocks require finite positive circles");
+    for(std::size_t i=0;i<agents_.size();++i) {
+        auto& a=agents_[i];a.reefRocks.clear();
+        for(const auto& rock:rocks) {
+            // A corrected home stays within the original den radius. Retain every
+            // rock the new bounded route can reach, rather than the whole island.
+            const float range=2*a.den.radius+rock.radius+MaximumReach*a.state.scale+.1f;
+            const float dx=rock.x-a.den.x,dz=rock.z-a.den.z;
+            if(dx*dx+dz*dz<=range*range)a.reefRocks.push_back(rock);
+        }
+        if(!ClearOfReef(a.state.x,a.state.z,a)) {
+            const OctopusDen original=a.den;
+            bool found=false;
+            // Prefer the nearest usable sand pocket; no landmark or rock is moved.
+            for(float radius=.25f;radius<=original.radius&&!found;radius+=.25f)
+                for(int bearing=0;bearing<24;++bearing) {
+                    const float angle=TwoPi*bearing/24;
+                    const float x=original.x+std::cos(angle)*radius,z=original.z+std::sin(angle)*radius;
+                    if(ValidHabitat(x,z,original)&&ClearOfReef(x,z,a)) {
+                        a.den.x=a.state.x=x;a.den.z=a.state.z=z;found=true;break;
+                    }
+                }
+            if(!found)throw std::runtime_error("Unable to clear octopus reef den from boulders");
+            a.state.y=DesiredHeight(a);
+        }
+        states_[i]=a.state;dens_[i]=a.den;
+    }
+}
+
+float OctopusGroup::ReefHeading(const float desired,const Agent& a) noexcept {
+    const float lookahead=.6f+a.state.speed*1.5f;
+    if(ClearOfReef(a.state.x+std::cos(desired)*lookahead,
+                   a.state.z+std::sin(desired)*lookahead,a))return desired;
+    float nearest=std::numeric_limits<float>::infinity(),away=desired;
+    for(const auto& rock:a.reefRocks) {
+        const float dx=a.state.x-rock.x,dz=a.state.z-rock.z;
+        const float distance=std::hypot(dx,dz);
+        const float gap=distance-rock.radius-MaximumReach*a.state.scale-.025f;
+        // A rock behind the desired step must not steer a nearer clear passage.
+        if(gap<lookahead&&gap<nearest&&dx*std::cos(desired)+dz*std::sin(desired)<0) {
+            nearest=gap;away=std::atan2(dz,dx);
+        }
+    }
+    if(!std::isfinite(nearest))return desired;
+    // Follow the nearer tangent with a small outward component; ordinary bounded
+    // heading/speed updates do the turning, without sideways position correction.
+    const float left=Wrap(away+1.25f),right=Wrap(away-1.25f);
+    return std::fabs(Wrap(left-desired))<std::fabs(Wrap(right-desired))?left:right;
+}
 void OctopusGroup::Initialize(const std::size_t i){
  auto& a=agents_[i];const float base=HomeAngles[i];float best=-std::numeric_limits<float>::infinity();
  for(int off=-7;off<=7;++off){const float angle=base+off*.075f;for(float d:{9.f,14.f,20.f,27.f,35.f}){const float r=terrain_.ShoreRadius(angle)+d,x=std::cos(angle)*r,z=std::sin(angle)*r;const auto s=terrain_.Sample(x,z);if(s.surface!=TerrainSurface::ShallowSeabed||s.height>-.9f||s.height<-7||s.signedShoreDistance<MinimumShoreDistance||s.signedShoreDistance>MaximumShoreDistance)continue;const float reef=IslandEnvironmentField::ReefSuitability(x,z,s.signedShoreDistance,s.height);const float score=reef*1.8f+s.coastalRockiness*.65f+(1-s.beachSuitability)*.22f-std::fabs(s.height+2.8f)*.035f;if(score>best){best=score;a.den.x=x;a.den.z=z;}}}
@@ -34,7 +95,7 @@ assert(fullCount_+reducedCount_+dormantCount_==static_cast<int>(Count));for(cons
 std::size_t OctopusGroup::ProbingCount()const noexcept{std::size_t count=0;for(const auto& a:agents_)count+=a.probing?1U:0U;return count;}
 std::size_t OctopusGroup::JettingCount()const noexcept{std::size_t count=0;for(const auto& a:agents_)count+=a.jetting?1U:0U;return count;}
 void OctopusGroup::UpdateAgent(Agent& a,float dt,float ox,float oz,bool observer)noexcept{if(dt<=0)return;const float od=observer?std::hypot(a.state.x-ox,a.state.z-oz):std::numeric_limits<float>::infinity();a.behaviorSeconds-=dt;if(od<2.7f){if(a.state.behavior!=OctopusBehavior::Den){ink_={a.state.x,a.state.y,a.state.z,a.state.scale,ink_.count+1U};a.jetSeconds=EscapeJetSeconds;}a.state.behavior=OctopusBehavior::Den;a.behaviorSeconds=7;}else if(a.behaviorSeconds<=0){++a.transitionCount;switch(a.state.behavior){case OctopusBehavior::Den:a.state.behavior=OctopusBehavior::Crawl;break;case OctopusBehavior::Crawl:a.state.behavior=OctopusBehavior::Forage;break;case OctopusBehavior::Forage:a.state.behavior=a.transitionCount%4==0?OctopusBehavior::Swim:OctopusBehavior::Den;break;case OctopusBehavior::Swim:a.state.behavior=OctopusBehavior::Den;break;}a.behaviorSeconds=a.state.behavior==OctopusBehavior::Den?8:(a.state.behavior==OctopusBehavior::Swim?3.5f:10);if(a.state.behavior==OctopusBehavior::Swim)a.jetSeconds=JetSeconds;}
- a.routePhase=std::fmod(a.routePhase+dt*.16f,TwoPi);float desired=std::atan2(a.den.z+std::sin(a.routePhase)*2.7f-a.state.z,a.den.x+std::cos(a.routePhase)*2.7f-a.state.x);const float hd=std::hypot(a.state.x-a.den.x,a.state.z-a.den.z);if(a.state.behavior==OctopusBehavior::Den||hd>a.den.radius*.72f)desired=std::atan2(a.den.z-a.state.z,a.den.x-a.state.x);a.state.headingRadians=MoveAngle(a.state.headingRadians,desired,(a.state.behavior==OctopusBehavior::Swim?1.2f:.65f)*dt);const float target=a.state.behavior==OctopusBehavior::Crawl?.12f:(a.state.behavior==OctopusBehavior::Forage?.06f:(a.state.behavior==OctopusBehavior::Swim?.44f:0));a.state.speed+=std::clamp(target-a.state.speed,-.28f*dt,.28f*dt);const float x=a.state.x+std::cos(a.state.headingRadians)*a.state.speed*dt,z=a.state.z+std::sin(a.state.headingRadians)*a.state.speed*dt;if(ValidHabitat(x,z,a.den)){a.state.x=x;a.state.z=z;}else{a.state.headingRadians=MoveAngle(a.state.headingRadians,std::atan2(a.den.z-a.state.z,a.den.x-a.state.x),1.5f*dt);a.state.speed=0;}const float y=DesiredHeight(a);a.state.y+=std::clamp(y-a.state.y,-.35f*dt,.35f*dt);const float hide=a.state.behavior==OctopusBehavior::Den?.72f:0;a.state.hideAmount+=std::clamp(hide-a.state.hideAmount,-.7f*dt,.7f*dt);a.pulsePhase=std::fmod(a.pulsePhase+dt*(a.state.behavior==OctopusBehavior::Swim?4.2f:1.5f),TwoPi);a.armPhase=std::fmod(a.armPhase+dt*(1.2f+a.state.speed*4),TwoPi);a.state.mantlePulse=std::sin(a.pulsePhase);a.state.armWave=std::sin(a.armPhase);
+ a.routePhase=std::fmod(a.routePhase+dt*.16f,TwoPi);float desired=std::atan2(a.den.z+std::sin(a.routePhase)*2.7f-a.state.z,a.den.x+std::cos(a.routePhase)*2.7f-a.state.x);const float hd=std::hypot(a.state.x-a.den.x,a.state.z-a.den.z);if(a.state.behavior==OctopusBehavior::Den||hd>a.den.radius*.72f)desired=std::atan2(a.den.z-a.state.z,a.den.x-a.state.x);desired=ReefHeading(desired,a);a.state.headingRadians=MoveAngle(a.state.headingRadians,desired,(a.state.behavior==OctopusBehavior::Swim?1.2f:.65f)*dt);const float target=a.state.behavior==OctopusBehavior::Crawl?.12f:(a.state.behavior==OctopusBehavior::Forage?.06f:(a.state.behavior==OctopusBehavior::Swim?.44f:0));a.state.speed+=std::clamp(target-a.state.speed,-.28f*dt,.28f*dt);const float x=a.state.x+std::cos(a.state.headingRadians)*a.state.speed*dt,z=a.state.z+std::sin(a.state.headingRadians)*a.state.speed*dt;if(ValidHabitat(x,z,a.den)&&ClearOfReef(x,z,a)){a.state.x=x;a.state.z=z;}else{if(ClearOfReef(x,z,a))a.state.headingRadians=MoveAngle(a.state.headingRadians,std::atan2(a.den.z-a.state.z,a.den.x-a.state.x),1.5f*dt);a.state.speed=0;}const float y=DesiredHeight(a);a.state.y+=std::clamp(y-a.state.y,-.35f*dt,.35f*dt);const float hide=a.state.behavior==OctopusBehavior::Den?.72f:0;a.state.hideAmount+=std::clamp(hide-a.state.hideAmount,-.7f*dt,.7f*dt);a.pulsePhase=std::fmod(a.pulsePhase+dt*(a.state.behavior==OctopusBehavior::Swim?4.2f:1.5f),TwoPi);a.armPhase=std::fmod(a.armPhase+dt*(1.2f+a.state.speed*4),TwoPi);a.state.mantlePulse=std::sin(a.pulsePhase);a.state.armWave=std::sin(a.armPhase);
 // Settle onto the bed or lift away smoothly without changing the accepted swim/navigation path.
 a.state.groundAmount+=std::clamp((a.state.behavior==OctopusBehavior::Swim?0.0f:1.0f)-a.state.groundAmount,-2.0f*dt,2.0f*dt);
 // The jet: for the first moment of a swim, or of a startled dash for the den, the
