@@ -19,13 +19,15 @@ shader failure mechanism is still present; the lifecycle issue has no verified c
 
 Audited source snapshots:
 
-- Published CNA `next`: [`611825cf2728`](https://github.com/libcna/cna/commit/611825cf2728d75511fd4d9cd288370d8b970190),
-  verified through GitHub on 2026-11-03.
-- Local CNA `next`: `3be0756e131afb2d1f494d406fe1e70fcf5f8d52`, inspected at 16:53 UTC.
-  The checkout also contains unrelated uncommitted work; the audited files match this commit.
-  Local commits ahead of the published branch are not represented as published fixes.
-  A subsequent check at `e28441da07e9cae80d4f513ec3d8920fa0854cd3` found no intervening
-  changes to the audited renderer, lifecycle implementation or lifecycle test.
+- Published CNA `next`: [`e28441da07e9`](https://github.com/libcna/cna/commit/e28441da07e9cae80d4f513ec3d8920fa0854cd3),
+  verified through GitHub on 2026-11-03 at 18:07 UTC.
+- Local CNA `next`: `76bf82f046ed57985b516caad78e530c653f93b4`, inspected at 18:07 UTC.
+  The checkout also contains unrelated uncommitted work; all eight audited files match this
+  commit and their original local source snapshot. Local commits ahead of the published branch
+  are not represented as published fixes.
+- The initial pass used published `611825cf2728` and local `3be0756e131a` at 16:53 UTC.
+  The branch advanced during this audit, so it was checked again. The relevant stock-shader,
+  initialization, lifecycle and test implementations retain the same failure/qualification limits.
 - The game still builds its locked CNA `97783d1e090c6d84f4b6a6d7746516e65184569e` export.
   An upstream source change would not automatically update this application's binary.
 
@@ -122,13 +124,13 @@ be promoted to a confirmed framework defect.
 #### 2026-11-03 source review
 
 The published and local snapshots above still queue translated events in
-[`Sdl3Platform::LifecycleWatch`](https://github.com/libcna/cna/blob/611825cf2728d75511fd4d9cd288370d8b970190/modules/platform/src/Sdl3/Sdl3Platform.cpp#L545).
+[`Sdl3Platform::LifecycleWatch`](https://github.com/libcna/cna/blob/e28441da07e9cae80d4f513ec3d8920fa0854cd3/modules/platform/src/Sdl3/Sdl3Platform.cpp#L545).
 `Game` processes them during polling; its mobile run loop waits once suspension is observed.
 That suspension mechanism already exists in the game's locked CNA revision, so its presence
 today is not evidence of a new fix. Current EasyGL also refuses drawing/presentation when
 MetaGL reports a lost context, but an Android surface becoming invalid is not proven to be
 reported through that guard before the recorded failed swap. The
-[`SDL3 swap service`](https://github.com/libcna/cna/blob/611825cf2728d75511fd4d9cd288370d8b970190/modules/platform/src/Sdl3/Sdl3GraphicsServices.cpp#L177)
+[`SDL3 swap service`](https://github.com/libcna/cna/blob/e28441da07e9cae80d4f513ec3d8920fa0854cd3/modules/platform/src/Sdl3/Sdl3GraphicsServices.cpp#L177)
 still throws on a failed swap, and `GraphicsDeviceManager::EndDraw` rethrows presentation failures.
 
 The current `GameTest.MobileLifecycleEventsSuspendResumeAndTerminateTheLoop` checks scripted
@@ -225,14 +227,14 @@ remain read-only; nothing has been submitted externally. Android lifecycle is a 
 
 #### 2026-11-03 source review and workaround status
 
-[`GlStockShaderSources::SkinnedVertexLitSource`](https://github.com/libcna/cna/blob/611825cf2728d75511fd4d9cd288370d8b970190/modules/renderers/easygl/include/CNA/Internal/Renderers/EasyGL/GlStockShaderSources.hpp#L1197)
+[`GlStockShaders::SkinnedVertexLitSource`](https://github.com/libcna/cna/blob/e28441da07e9cae80d4f513ec3d8920fa0854cd3/modules/renderers/easygl/include/CNA/Internal/Renderers/EasyGL/GlStockShaderSources.hpp#L1197)
 still declares 72 `mat4` bone uniforms: 288 vertex-uniform vectors before the other uniforms,
 already beyond the affected emulator's reported 256-vector limit. Uploading only the game's
 14 bone transforms does not reduce the shader's declared, dynamically indexed palette.
 XNA's public `SkinnedEffect::MaxBones == 72` is intentional compatibility, not itself the bug.
 The missing resource-limit handling must be addressed without reducing that public contract.
 
-[`CompileAndLink`](https://github.com/libcna/cna/blob/611825cf2728d75511fd4d9cd288370d8b970190/modules/renderers/easygl/src/EasyGLRenderer.cpp#L9116)
+[`CompileAndLink`](https://github.com/libcna/cna/blob/e28441da07e9cae80d4f513ec3d8920fa0854cd3/modules/renderers/easygl/src/EasyGLRenderer.cpp#L8842)
 still logs vertex/fragment/link failures and returns normally. `EnsureSkinnedVertexLitProgram`
 then queries uniforms and sets `ready = true`. The inspected sibling EasyGL `develop`
 `b582bd85f646678d1de38473160defed4729f323` still checks only program creation in

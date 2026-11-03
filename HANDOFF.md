@@ -1,10 +1,19 @@
 # Comprehensive visual cohesion campaign — ACTIVE continuation from 112674ba
 
+Latest state: CNA audit and requested Markdown corrections are complete; all current source
+changes are committed. Release build,109safe tests and36normal final-app software scopes pass.
+All timing experiments, including the matched8–15affinity pair, have finished; no owned test,
+build or renderer remains running. Original campaign goal remains ACTIVE because performance
+attribution is still OPEN. The renewed original1–24checkpoint is at the end; earlier running/
+pending paragraphs below are chronological stage records, not current process status.
+
 ## CNA audit requested by the user — 2026-11-03
 
-Read-only framework review completed; **not all findings are fixed**. Published CNA next remains
-611825cf2728d75511fd4d9cd288370d8b970190. Local source snapshot3be0756e131a was rechecked through
-e28441da07e9; intervening commits do not change the audited implementations. The locked game
+Read-only framework review completed; **not all findings are fixed**. Initial published CNA next
+611825cf2728/local3be0756e131a was rechecked after the branch advanced. Final18:07UTC check:
+published e28441da07e9cae80d4f513ec3d8920fa0854cd3, local76bf82f046ed57985b516caad78e530c653f93b4.
+All8audited files retain the original local implementations and match the final local commit.
+Intervening commits do not close the recorded findings. The locked game
 export remains97783d1e090c. CNA-ISLAND-002 still declares72mat4bones/288vectors before other
 uniforms against the recorded256limit, and CompileAndLink logs failure but permits uniform
 queries/ready=true. The active game14bone+4sole/92vector workaround is retained. CNA-ISLAND-001
@@ -21,6 +30,8 @@ and unchanged audited files through the later local HEAD pass; exact results are
 the current octopus implementation complete. Audit documentation was committed/pushed in
 32764585 and actual origin/develop was checked at327645859513b9d461a75b1a7ca0a8d76c14c1f1.
 All8historical BUGS.md revisions were also checked: only001and002have registered issue entries.
+The updated final published identity is retained in `build/cna-final-remote-next-20261103.json`;
+initial publication evidence is preserved separately. No new Android runtime test was run.
 
 ## Reef-den integration checkpoint — original campaign still ACTIVE
 
@@ -88,6 +99,56 @@ retain all three earlier failed storm controls and do not represent them as pass
 correction uses the common live direction, not a threshold/profile or saturation adjustment.
 Next current island/ordinary-fauna scopes and the final reversed software cost pair remain
 pending; retain the earlier startup/tail uncertainty until they have been assessed.
+Lighting source was committed/pushed in5e74c5d0. Current25scope island review is running on
+unchanged app8f16c557; concrete retention index: `build/campaign-aquatic-holistic-views.json`.
+The software cost pair must run after this serial capture matrix, without other agent-started
+builds/tests/renders. No completion claim from an in-progress index; all mains/stages and failed
+historical controls still require their actual inspection/disposition in the final ledger.
+
+Latest qualification checkpoint:25/25holistic scopes pass on8f16c557; all25mains and all12new
+stream/boar stages actually inspected,16goat/resident stages byte-exact to prior reviewed frames.
+The boar scope completes64frames under the unchanged65sdeadline; its earlier failed artifact
+remains retained. Review index: `build/campaign-aquatic-holistic-evidence.json`.
+Changed stream/headland/wreck mains affect only31/253/189pixels of distant marine figures;
+the three actual pairs/differences were inspected in campaign-aquatic-holistic-changing-controls.png.
+
+Final reverse-order software pair completed, but performance is still under investigation:
+after120.327ms versus before78.616ms mean(+53.06%),p95+222.68%,CPU availability367%versus445%,
+involuntary switches31570versus10856. CPU seconds also vary with scheduling/frequency and are
+not a pure instruction-count oracle. Final-before has13unrelated AppArmor audit messages,
+zero matched GPU faults; DO NOT call that kernel delta empty. Exact results/limits:
+`build/campaign-aquatic-cost-reverse-evidence.json`. No causal no-regression claim.
+
+An owned temporary source diagnostic skipped only the octopus shadow loop, built frozen
+3d0ec098, then restored the exact qualified source. Current app is byte-exact8f16c557 again;
+SeabedShadowRenderer.cpp has no diagnostic diff, CNA remains950faa71. Restoration evidence:
+`build/campaign-aquatic-shadow-diagnostic-source.json`. That variant is not shipping visual
+qualification. A bounded software shadow-on/off/off/on comparison is running with1sread-only
+CPU pressure/frequency/load sampling:build/campaign_aquatic_shadow_isolation.py, current
+unified session59547, logbuild/campaign-aquatic-shadow-isolation.log. No concurrent agent-started
+build/test/application capture during those timings. Current25scenes and109CPU tests are done.
+Do not close the original goal before this performance investigation and the final original1–24
+ledger/delivery checks are complete. No new hardware/nativeGPU/Android qualification.
+
+Shadow isolation finished:ON201.705/143.770ms,OFF151.357/148.970ms; aggregateON+15.03%is
+retained, not hidden. The identicalONbinary changes28.7%between runs while sampled CPU
+frequency rises1625→2109MHz and involuntary switches fall148762→69367. LastONis faster than
+bothOFFruns; no clean causal shadow cost or zero-regression conclusion follows. All four
+measurements/CPU traces are in `build/campaign-aquatic-shadow-isolation-evidence.json`.
+CPU topology shows0–7are four physical cores with SMT;8–15are the other four. A final matched
+old/final pair uses8–15for BOTH binaries, same LP8/720p/120warm+600samples, to reduce contention
+with compilation's0–3. Absolute timings are not compared across affinities. This is a changed
+CPU placement, not reduced scene quality; all earlier regressions/uncertainty remain recorded.
+Runmetadata: `build/campaign-aquatic-affinity-pair.json`; current unified session56389,
+logbuild/campaign-aquatic-affinity-pair.log. No overlapping agent-started build/test/render.
+
+Final full-source octopus swim/settle capture passes64frames on8f16c557. All17PNGs actually
+reviewed; its16kinematic proof rows exactly equal the reef-stage proof. Concrete retained
+index: `build/campaign-aquatic-final-motion-views.json`. Current normal final-app total:
+36scopes/80PNGs (35static/matrix scopes plus this motion scope);36mains and28new stages
+actually reviewed,16other stages carry exact prior review. This does not replace prior108scene
+qualification of unchanged systems. Soft seagrass can still intersect the procedural animal;
+the new integration enforces boulder clearance rather than full soft-plant deformation.
 
 Reopened on the user's instruction after the qualified checkpoint below. Entry develop/112674ba
 clean/synced, app40239532 unchanged. Original attachment, README/PLAN/BUGS and GPUVM incident
@@ -4050,3 +4111,66 @@ Repository delivery: source commits b141b2e2 andfb7f494b are already pushed on d
 Only HANDOFF.md/PLAN.md change in the final documentation commit. Final push, clean worktree,
 actual remote/local/tracking HEAD equality and unchanged app/runtime hashes are recorded after
 that commit in `build/campaign-fauna-final-delivery.json`, before any goal completion.
+
+## Original 1–24 checkpoint after 5e74c5d0 — performance gate remains OPEN
+
+This is a full reassessment checkpoint, **not whole-campaign completion**. It builds on the
+explicit original1–24ledger afterfb7f494b and the earlier source/visual/traversal ledgers. The
+forest/terrain/water/resident/landmark work there remains implemented; unchanged old evidence
+is supporting evidence, not falsely relabelled fresh qualification of every platform or view.
+
+| Original section | Current evidence and disposition |
+| --- | --- |
+| 1. Mission/context | Actual source work retained;815tracked C++/header files,160692lines. Current extra corrections address observed floating arms, hard-rock penetration and inconsistent marine light rather than adding content. |
+| 2. Absolute constraints | Existing C++/CNA architecture, heightfield, populations, landmarks and gameplay retained. CNA/Sharp worktrees and dependency pins untouched. Cohesive commits32764585,52d8c56e,05077820,5e74c5d0 were pushed; no merge/reset/clean. |
+| 3. GPU safety | Only approved verified llvmpipe19.1.7/private-device/Pixman paths. All36normal current scopes have empty kernel deltas; the reverse cost pair's unrelated AppArmor records are explicitly retained. AMDGPU incident remains OPEN; no physical GPU/driver/system changes. |
+| 4. Investigation/baseline | README/PLAN/BUGS/original attachment, architecture, tests and previous ledgers reviewed. Entry112674ba/app40239532 retained. Fresh ordinary-species/marine baselines revealed the actual octopus deficiencies. Published and local CNA snapshots/history were independently reviewed. |
+| 5. Forest/vegetation | Prior environment-correlated placement, canopy/palm aerial visibility, moss/grass pigment, roots/bark and forest-floor work retained. Fresh overview/jungle/clearing-edge/beach/stream/storm mains inspected; their terrain/vegetation pixels remain stable against the preceding qualified artifact. Ordinary goats/monkeys/boars remain integrated without new population/clutter. |
+| 6. Terrain/geology | Prior ridge/soil/stream-bank/pool and cave/player-support corrections retained. Fresh stream/headland/cave/mouth/top/hut views inspected. No terrain replacement or blanket noise/tessellation increase; cave roof coverage and local soil/rock transitions remain intact in current views. |
+| 7. Ocean/coast/underwater | Existing foam/caustics/depth/tide work retained, prior rejected player-ripple hypothesis not reopened. Fresh shallow-water/reef/dolphin/shark/turtle/heron views inspected. Octopus arm support now uses the actual drawn bed, body shadow uses existing refracted-light batch, and dens/extended probes avoid existing reef boulders. No new species or fluid engine. |
+| 8. Wildlife | Existing bird/deer/elephant/TRex/bear/boar/goat work retained. New actual body/arm geometry and six-minute AI tests cover all four octopuses;72→0body vertices inside the original offending rock. Three reef-stage motion scopes and a final64frame swim/settle scope were reviewed; final pose proof exactly reproduces the reef-stage trajectory. |
+| 9. Human/resident | Existing sleeve/torso/waist/skin and movement corrections retained. Fresh resident main inspected; all8current motion stages byte-exact to prior reviewed frames. No new avatar system or disproportionate mesh increase. |
+| 10. Lighting/materials/shadows/LOD | Octopus/ray normals now use the already shared per-frame sun/moon direction. Ten matched day/dawn/dusk/night/storm/buried pairs inspected; original palettes/geometry/fog/resources retained. Existing SunShadowMap, canopy illumination and bounded LOD remain; no new AO/shadow/rendering architecture. |
+| 11. Landmark integration | Fresh hut/lighthouse/wreck/cave/UFO/alien/castle-courtyard mains inspected, with earlier broader landmark/collision evidence retained. No major landmark relocated or removed; only a demonstrated obstructed octopus home was locally corrected. |
+| 12. Exploration/collision/traversal |109safe tests include prior player/vehicle/structure/support regressions. Existing actual keyboard cave/stream/swimming/flight and800frame bunker turnaround evidence remains applicable to unchanged controllers. Current changes do not alter swimmer collision; reef-boulder clearance is animal-specific. Known18degree reverse-quad traction limitation remains documented. |
+| 13. Performance/efficiency | **OPEN.** Three matched software pair means are+8.52%,+53.06%and−22.36%; the last uses a different CPU placement for BOTH binaries. Shadow ON/OFF/OFF/ON aggregate is+15.03%, while the identical ONbinary varies201.705→143.770ms and host frequency/availability change. Pose-only CPU increment is about.034ms/four animals. No reliable causal whole-frame delta or zero-regression claim is available. Resource/mesh budgets remain bounded; see the exact records below. |
+| 14. Code health/determinism | CoreTests.cpp remains913682bytes; IslandGame.cpp772270bytes versus entry770216. Small pose/inspection helpers and two focused geometry regressions avoid enlarging the monolithic test file. Both repeated AI instances are deterministic; affected den/route changes are intentional, not falsely covered by the older unchanged-navigation hash. |
+| 15. Visual QA | Final app8f16c557:36normal scopes/80PNGs;36mains+28subsidiary stages actually reviewed,16other stages byte-exact to prior review. Matched clear grounding pair and10light pairs inspected. The earlier shifted subject3tracking comparison is expressly not a fixed-world camera pair. Old boar timeout/storm image failures remain preserved; current boar64frames and unchanged storm gate pass. No golden update substitutes for inspection. |
+| 16. Staged implementation | Ground support→body shadow→reef obstacle correction→shared light each built/tested/rendered and committed separately. Current source and binary exactly restored after the owned no-shadow diagnostic; diagnostic binaries are not final visual acceptance. |
+| 17. Autonomous execution | Continued through independent priorities and final visual review instead of closing at the first build/test/screenshot. No routine approval questions, external source edits or risky GPU experiments. Current remaining gate is performance attribution, not another feature expansion. |
+| 18. Quality bar | Visual, architecture, functionality, deterministic generation and maintainability checks satisfy the stated available scope. Performance criterion remains explicitly open; no claim that every original acceptance item is complete. |
+| 19. Known issues | CNA-ISLAND-002 source mechanism persists in publishede28441da/local76bf82f0; active14bone+4sole workaround retained. CNA-ISLAND-001 remains suspected with no verified asynchronous Android fix. GPUVM/flight are separate unresolved incidents. User-resolved sound was not reopened. |
+| 20. Holistic pass |25fresh island/ordinary-fauna scenes plus10marine light controls and final live-AI motion reviewed. The three changed terrestrial/coastal control mains differ only31/253/189pixels around distant marine figures; actual pairs/differences inspected. No conspicuous new whole-scene artifact found. |
+| 21. Stopping criteria | **Whole goal remains ACTIVE.** Major observed source defects in this continuation are addressed, but§13cannot be represented as passed. Avoid inventing new content or repeatedly rerunning the same uncontrolled benchmark; resume causal cost qualification when a meaningfully stable comparison is available. |
+| 22. Deliverables | All implemented source stages, actual before/after paths, commands/results, source identities, timing uncertainty and known limits are recorded here and in the cited JSON indexes. Requested CNA audit documentation is complete. Final whole-campaign acceptance/delivery remains pending§13. |
+| 23. Development principles | Improved existing shapes/support/distribution/light, reused current CNA-compatible facilities, kept deterministic bounded C++, preserved useful content and negative space, and used software validation. No heavyweight dependency or new gameplay system. |
+| 24. Coherent place objective | Forest/terrain/coast/landmark improvements from the prior campaign remain visibly present; marine figures now meet the drawn environment and share its light. This supports the coherence objective without a new feature inventory. Remaining qualification/presentation limits are stated rather than labelled zero defects. |
+
+Exact current validation: `build/campaign-aquatic-qualification-checkpoint.json`,
+`build/campaign-aquatic-holistic-evidence.json`,
+`build/campaign-aquatic-lighting-visual-evidence.json`,
+`build/campaign-aquatic-final-motion-views.json`.
+
+Performance records retained together (do not cherry-pick the last negative delta):
+`build/campaign-octopus-ground-cost-evidence.json`,
+`build/campaign-aquatic-cost-reverse-evidence.json`,
+`build/campaign-aquatic-shadow-isolation-evidence.json`,
+`build/campaign-aquatic-affinity-evidence.json`.
+The affinity8–15pair is163.619→127.027ms mean(−22.36%),p95−35.65%, with CPU availability309→366%
+and mean sampled frequency2170→2258MHz. It is not a demonstrated code speedup and is not
+compared in absolute time with affinity0–7. All settings, clocks and tracked scene ranges match
+within each pair; the existing tracked-submission counter omits the seabed-shadow pass. Actual
+added shadow geometry is12triangles per octopus/max48 in the existing bounded buffer; a formerly
+empty batch can require one additional submission. Model vertex counts and GPU capacity remain
+unchanged. Host contention/frequency variation prevents a clean whole-frame causal conclusion;
+further identical active-host loops have diminishing diagnostic value. Physical GPU qualification
+remains separately prohibited, not a fallback for this measurement gap.
+
+Meaningful remaining limits: source-isolated performance attribution and earlier wetland/pool
+latency uncertainty; existing procedural gait/reduced-tier/soft-plant intersection limits;
+18degree reverse-quad rear traction; unresolved external CNA/Android and AMDGPU incidents;
+current Debug/Web/GLES/Android/other-backend runtime qualification. These are not silently fixed.
+The current CNA audit uses immutable published/local snapshots and includes all8historical
+BUGS.md revisions. README/PLAN also correct the stale claim that no day/night/weather exists,
+and PLAN records the user's four-core compilation limit. No dependency pin or external worktree
+was changed.

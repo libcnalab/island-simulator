@@ -22,8 +22,8 @@ Status markers:
 
 ## CNA issue status review — 2026-11-03
 
-- [x] Read-only comparison of published CNA `next` (`611825cf2728`), local CNA
-  (`3be0756e131a`, rechecked through `e28441da07e9`) and the game's locked `97783d1e090c`
+- [x] Read-only comparison of published CNA `next` (`e28441da07e9`), local CNA
+  (`76bf82f046ed`, final check 18:07 UTC) and the game's locked `97783d1e090c`
   export, including the affected shader initialization, lifecycle handling and existing tests.
 - [!] CNA-ISLAND-002 remains open upstream: the 72-matrix stock palette exceeds the recorded
   256-vector GLES limit, and initialization continues after link failure. The game-owned
@@ -15575,7 +15575,8 @@ WebGL/Android qualification will run with the bunker integration.
 experience. Its approximately 500 m island is interesting because of terrain composition,
 vegetation, wildlife, water, light, motion, sound, and polished traversal. It has no quests,
 missions, combat, enemies, inventory, crafting, survival meters, economy, score, progression,
-multiplayer, story campaign, dynamic weather, or day/night cycle.
+multiplayer, or story campaign. The implemented day/night cycle and weather spells are part of
+the environmental presentation; deterministic qualification views hold their requested states.
 
 The required release targets are:
 
@@ -15595,7 +15596,7 @@ environment.
 - Never edit CNA or Sharp Runtime source, worktrees, branches, indexes, or repository metadata.
 - Keep framework workarounds in this repository, narrowly scoped and cross-referenced from
   `BUGS.md` when they address a confirmed framework defect.
-- Use no more than eight CPU jobs. Use no more than two jobs for any operation governed by Sharp
+- Use no more than four CPU cores for compilation. Use no more than two jobs for any operation governed by Sharp
   Runtime's stricter repository policy.
 - Use the shared ccache at `/rv/cnaccache` with `CCACHE_BASEDIR=/rv`; never create another cache.
 - Reuse only the approved build directory names: `build/`, `build-probe/`, `build-consumer/`,

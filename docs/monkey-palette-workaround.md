@@ -8,7 +8,7 @@ below describes the artifacts tested then; it is not a fresh qualification of cu
 Web or upstream stock skinning.
 
 The [CNA audit](../BUGS.md#cna-status-audit--2026-11-03) inspected published `next` at
-`611825cf2728` and local `next` at `3be0756e131a`. Stock skinning still declares 72 `mat4`
+`e28441da07e9` and local `next` at `76bf82f046ed`. Stock skinning still declares 72 `mat4`
 bones and initialization still continues after compiler/link failure. The documented 256-vector
 GLES failure mechanism therefore remains present in source. The game still consumes its locked
 `97783d1e090c` CNA export; no dependency update or workaround removal was performed.

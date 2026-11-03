@@ -466,7 +466,8 @@ For missing sound, check the runtime log's `audio-runtime` line as well as the m
 the application stream to be routed to the intended output and unmuted in the system mixer.
 
 There are deliberately no quests, combat, inventory, crafting, survival systems, score,
-progression, dynamic weather, or day/night cycle.
+or progression. A day/night cycle and changing weather are implemented; fixed qualification
+views hold the requested time and weather for reproducible comparisons.
 
 ## Dependency baseline
 
