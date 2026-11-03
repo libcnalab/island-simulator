@@ -1,4 +1,4 @@
-# Comprehensive visual cohesion campaign — ACTIVE continuation afterd50ccc9f
+# Comprehensive visual cohesion campaign — available software qualification after 39393152
 
 The whole original superprompt/attachment is assessed in the final acceptance ledger at the
 end of this file. Earlier premature completion conclusions and ACTIVE checkpoints remain as
@@ -3291,3 +3291,84 @@ lighthouse submissions change by exactly+1 (2→3), same13850triangles. First co
 median66.0068→64.7148ms,mean66.2953→67.4228,p9569.8804→82.7114,RSS698572→703296KiB.
 Median/mean/memory stay bounded but p95+18.36% is explicitly under one reverse-order repeat;
 no success claim based on a favorable median, no repeated seven-run wetland loop.
+
+Reverse fixed-clock pair: before median69.6197/mean70.0603/p9574.7607ms/RSS698568KiB,
+after70.6995/71.1470/76.7808/RSS705080KiB (about+1.55%median/mean,+2.70%p95,+0.93%RSS).
+Same721updates/72.1s, scene/population ranges exactly equal except the explicit+1lighthouse draw.
+Initial p95+18.36% is preserved as a variable tail, not silently removed; the second pair bounds
+the observed normal material cost with unchanged geometry. No native/general speedup claim.
+No more duplicate timing loops. Final immutable app38e955c4 now in a62scope holistic matrix:
+previous41 plus new8coastal/5resting/3cottage-lighting/3tower controls/2mist transitions. Review
+all images/culling controls, verify original1–24 and final push/clean state before goal closure.
+
+## Original 1–24 renewed acceptance after 39393152
+
+This continuation completed three independently checked stages: ground-contact QA camera,
+keeper cottage material cohesion, and reproducible benchmark qualification. Source commits
+`8a9a176c`, `f6eefeee`, and `39393152` were pushed as work continued.
+
+All 62 current main images were actually inspected in
+`build/campaign-cottage-holistic-{1..11}.png`. The 88 subsidiary stages are byte-exact to
+previously inspected controls; their visual review is explicitly carried forward.
+`build/campaign-cottage-visual-evidence.json` records 150 PNGs, 139 exact controls, eight changed
+cottage-related mains and three additional tower controls. Changed pixels in the jungle,
+clearing, headland and lighthouse views belong to the visible cottage. No unexplained main or
+stage difference remains. Every scope proves actual private-device llvmpipe/Pixman, valid
+captures, no new kernel records and immutable final app SHA
+`38e955c474e68e074d6fe8343381537bb8d7cefb26dd3375e9e5b850c0c913ac`.
+Runtime SHA remains `950faa719ec2fb51cde7220d3e28100f2609731ede56c7cf4088bda0d2dcde5c`.
+
+| Original criterion | Current evidence and limits |
+| --- | --- |
+| 1. Context | Fresh inventory: 800 C++/header files, 159,620 lines. Valid world fingerprint `238be1fec0a0cdd7`. Existing systems inspected; no inventory blindly recreated. |
+| 2. Preservation | Clean `d50ccc9f` entry; earlier work preserved. Existing C++/CNA architecture, content and heightfield retained. No external source changes, dependencies, destructive Git operations, merges or new gameplay. |
+| 3. Hardware safety | Critical incident reread. Actual contained llvmpipe/Pixman verified throughout; no affected AMDGPU workload or system/driver changes. |
+| 4. Investigation | Attachment, README, PLAN, BUGS, incident and actual renderer/layout/animation/test paths inspected. Eight coastal and five resting/working views added before deciding where corrections were justified. |
+| 5. Vegetation, 5.1–5.6 | Prior correlated distribution, layers, floor/moss, roots, LOD and transitions retained. Jungle, clearing, wetland, mangroves, pandanus, windthrow and fallen/broken palms reviewed. Palm support probe establishes a supported natural arch; no unjustified flattening or population growth. |
+| 6. Terrain, 6.1–6.6 | Authoritative terrain, soil, rock and cave work retained. Contact QA now sees the same rock instead of an intervening ridge; this is a camera correction, not a matched geometry improvement. Ground, headland, overview, cave/top, mine cutting and volcanic views plus support/collision tests qualify retained terrain. |
+| 7. Water, 7.1–7.7 | Earlier waves, shallows, foam, caustics, reef and tide improvements retained. Coast, water, reef and wreck controls remain exact; water/tide/swimming tests pass. Earlier live diving/surface-crossing proof applies to unchanged controllers; no new keyboard run is claimed. |
+| 8. Wildlife, 8.1–8.6 | Bear, crocodile, elephant, TRex and new bear/boar/goat resting views inspected. Current 64-frame elephant/TRex and 160-frame crocodile gates pass; stages remain exact. Existing folded-leg/sole tests support resting poses. No newly established anatomy defect warrants a rig replacement. |
+| 9. Resident, 9.1–9.5 | Walking, tending and fishing views inspected. Earlier proportions, tapered joints, waist, materials and gait retained; no avatar-engine expansion. |
+| 10. Lighting/materials | Cottage uses existing filtered castle masonry, preserving timber, soot, moss and rubble. Four matched day/dawn/night/storm pairs inspected. Original vertex buffer, 13,850 triangles, collision and shadow casters retained. Tower stays plain; cottage material range is independently culled. Existing shadows, weather, LOD and volcanic lighting preserved. |
+| 11. Landmarks, 11.1–11.4 | Hut, wreck, cave, lighthouse/cottage, plane, mine, UFO, alien, castle, bunker, volcano and approach views checked. No meaningful content removed or relocated. Earlier helicopter/freighter proof applies to unchanged structures. |
+| 12. Traversal, 12.1–12.5 | Fresh 800-frame bunker entry/turn/forward escape and 16 exact stages pass, alongside terrain, cave, bunker, vehicle and stream regressions. Controllers unchanged. Documented 18-degree reverse rear-traction limit retained without arbitrary force/collision changes. |
+| 13. Performance, 13.1–13.4 | Named benchmark timeline corrected; lighthouse submissions now counted. Controlled references share final clock/game objects and exact 721 updates/72.1 simulated seconds. Recorded scene/population ranges match except one visible cottage draw. Geometry unchanged. Both cost pairs, including the unfavorable initial p95, retained below. Only software/OpenGL33 qualified. |
+| 14. Code/determinism | Two small pure helpers and focused tests outside CoreTests. IslandGame: 769,148 bytes; CoreTests: unchanged at 913,682 bytes. World fingerprint stable. Additive schema-3 benchmark fields expose simulation state; different clock/counter versions are not silently compared. |
+| 15. Visual QA, 15.1–15.5 | 62 main images inspected; 88 stages exact to prior visual review. Four matched cottage pairs and an explicitly camera-only rock pair retained. All four material images remain byte-exact with final culling/clock code. No golden update substitutes for inspection. |
+| 16. Stages | Environment investigation → camera → material/culling → benchmark timeline/counts → resting poses → holistic/cost/traversal qualification. Existing rendering and test facilities reused. |
+| 17. Autonomy | Continued across stages without ordinary approval requests or milestone-only closure. False visual hypotheses and the invalid old-clock cost comparison are recorded honestly. |
+| 18. Quality bar | Release/OpenGL33 built with CPU affinity 0–3 and `-j2`. All 102 safe tests pass in 71.45 seconds, including ridge/ground and render-speed-independent timeline regressions. Actual rendering and cost proof accompany compilation. No zero-defect or full-platform claim. |
+| 19. Known issues | External CNA Android lifecycle/stock-skinned and AMDGPU issues remain open/read-only. Audio remains user-closed. The benchmark clock bug belongs to application qualification, not CNA; it does not explain the seven earlier wetland timing runs. |
+| 20. Integration | Current forest/coast/underwater/landmark/animal/resident/day/night/rain/mist matrix establishes no further major in-scope correction. Independent lantern control reports two tower/glass draws, versus three when the cottage is visible. Material does not leak onto the tower. |
+| 21. Stopping | Observed defects corrected; relevant visual/test/cost criteria pass within explicit limits. Further world/rig rewrites lack demonstrated need. Final remote/clean-state proof follows the documentation commit, before goal closure. |
+| 22. Deliverables | Three source commits; camera/material pair sheets, 62-scope audit, safe-test log, test manifest, world report, four controlled costs and tower control retained. Final response separates implementation, evidence, cost, limits and Git state. |
+| 23. Principles | Existing materials, better inspection and reliable measurement improve cohesion without geometry, texture, shadow or population budget growth. Deterministic world and traversal retained. |
+| 24. Outcome | Earlier forest, terrain, ocean, wildlife, resident and landmark corrections remain supported. Cottage now shares the island's masonry treatment; QA sees contact and compares equal simulation states. This supports a coherent stylized environment, not exhaustive all-time perfection. |
+
+Software cost proof: `build/campaign-cottage-cost-evidence.json`, with raw scopes under
+`build/campaign-performance/cottage-{plain,stone}-fixed[-repeat]`. Both references share the
+current clock, class layout and game objects; only the plain reference retains the old
+LighthouseRenderer implementation. Both visit 721 updates/721 rendered frames/72.1 seconds;
+recorded scene/population ranges match except exactly one extra visible cottage draw.
+
+| Controlled pair | Median | Mean | p95 | Peak RSS |
+| --- | ---: | ---: | ---: | ---: |
+| First | −1.96% | +1.70% | +18.36% | +0.68% |
+| Reverse order repeat | +1.55% | +1.55% | +2.70% | +0.93% |
+
+The initial unfavorable tail remains explicit. No general/native speedup or exact host cause
+is asserted. Exploratory old-clock runs are retained but excluded from the controlled material
+claim. The independent tower control confirms the extra material pass is skipped outside the
+cottage view. Static mesh budget remains 13,850 triangles.
+
+Remaining limits: earlier wetland software latency attribution is unresolved. Physical AMDGPU,
+Debug/Web/GLES/Android/other backends and a forced stock-material fallback runtime are not
+qualified. External CNA/driver issues and the documented reverse-traction limit remain open.
+No risky test or dependency/driver patch is justified by these gaps.
+
+`build/campaign-cottage-final-verification.json` rechecks all current scope hashes, renderer
+isolation, kernel records, exact controls, four final material pairs, test/world evidence,
+controlled cost state and tower culling; it passed. All original 1–24 criteria are reassessed
+above. No build/test/capture/benchmark workload remains pending. The following documentation
+commit records this acceptance; its actual remote/local identity and clean worktree are checked
+in `build/campaign-cottage-final-delivery.json` after creation and before goal closure.

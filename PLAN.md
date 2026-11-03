@@ -20,8 +20,12 @@ Status markers:
 - `[~]` in progress
 - `[!]` blocked or degraded, with the reason written next to the item
 
-## Visual cohesion campaign — 2026-11-01/02 (qualified)
+## Visual cohesion campaign — 2026-11-01–03 (software qualified)
 
+- Continued review from d50ccc9f: bounded ground-contact inspection camera; keeper cottage reuses
+  filtered masonry with its original geometry and separately culled material range. Named
+  benchmarks now visit reproducible simulation states and count lighthouse submissions.
+  Matched lighting pairs, 102 safe tests and 62-scene qualification are recorded in HANDOFF.md.
 - Follow-up2026-11-03: existing wetland/valley mist now dissolves before recycling and reforms
   at the new ground height. Matched64frame transitions,41holistic scopes/113images plus18mist
   images reviewed;100safe tests pass. Seven software cost runs retained with host-sensitive
