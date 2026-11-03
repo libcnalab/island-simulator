@@ -22,6 +22,12 @@ Status markers:
 
 ## Visual cohesion campaign — 2026-11-01–03 (software qualified)
 
+- Active follow-up from `cd800d00`: bird eye layers follow their actual lofted head instead
+  of clipping into it. Deer reuse existing world-foot contacts through turns/acceleration;
+  the visible legs and shadows share one pose, and upper-leg roots seat inside the torso.
+  Six bird pairs/32flight stages and five deer controls/40motion stages inspected;107safe
+  tests pass. Matched software cost pairs show no material increase, same GPU resource/mesh
+  budgets.108scene final island qualification is in progress; full criteria/limits in HANDOFF.md.
 - Follow-up from `6ff95594`: normalized tide-pool noise restores irregular rock coverage and
   authored weathering; fine detail is footprint-filtered. Stream-bank soil follows actual
   terrain incision in existing vertex alpha, with filtered sediment and explicit stock fallback.

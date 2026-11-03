@@ -3722,3 +3722,62 @@ GroundFootPlant for world-space hooves and heading, and extracts one shared leg-
 for render/shadow consistency. Build/contacts/regression/visual/cost validation is pending;
 do NOT accept or close the campaign at this checkpoint. Four-core builds and isolated verified
 software graphics continue; external source/hardware/audio untouched.
+
+Eye source committed/pushed as b141b2e2; remaining deer files are currently uncommitted WIP.
+First deer CPU prototype was correctly refused:100ms retreat left a rear hoof outside the
+existing leg envelope (1.43837×scale); the old gait test also classified a genuine pivot return
+as a stance. The refined solver advances feet in bounded1/60steps along the unchanged accepted
+body segment and tests use actual contact flags. Six focused deer/turn/support tests now pass
+(1.16s),78launcher tests pass, and actual CPU geometry records11897planted pairs,6038turns,
+4644acceleration pairs,5379swing samples,1114settled poses, zero stance slip and maximum
+hip/hoof distance1.08504×scale. Original static/flat fixtures and reduced-tier fallback retained.
+Current stance-only app8e79eca0dd642d289f056c9687a44cf0d1bd0df929618d90ba445a01430be87b:
+actual deer-alert20261103T131523.512056Z passes64rendered-pose proof,160support pairs, zero
+position/heading slip, and16stage images actually reviewed. Other matching controls are running.
+The same review reveals a separate visible old defect: bright cut caps on the upper legs outside
+the torso. After the stance controls, fit those existing upper roots into the body without more
+mesh data, then repeat visual/contacts/cost and full acceptance. Goal remains ACTIVE.
+
+Concrete retention indexes: `build/campaign-bird-eye-before-views.json`,
+`build/campaign-bird-eye-after-views.json`, `build/campaign-bird-eye-visual-evidence.json`,
+`build/campaign-bird-eye-stage-evidence.json`, `build/campaign-deer-plant-before-views.json`
+and `build/campaign-deer-stance-after-views.json`. These preserve actual raw paired captures
+through the established retention policy; wildcard filenames alone are not retention indexes.
+All three stance-only moving body telemetry files are exactly unchanged from baseline; static
+standing/bedded PNGs are byte-exact. First after alert proof and16stages were reviewed; remaining
+walk/storm controls are being reviewed before accepting the stage. Upper-root collar refinement
+is currently building; no result is claimed for it yet.
+
+Stance-only controls now all reviewed: five paired mains and40motion stages, unchanged body
+telemetry in walk/clear-alert/storm-alert, byte-exact static standing/bedded images. Contact
+proofs pass on all three actual64frame sequences. Collar refinement's first actual render
+20261103T132911.795029Z-deer-alert visibly removes the exposed cut caps while retaining the
+same feet and160zero-slip/zero-rotation support pairs. New app40239532f948202aac939b2551a2fdbdea75d822ee08ec3a695a69ab8866cc56
+is frozen as build/campaign-deer-qualified-binary. Remaining collar/standing/bedded/walk/storm
+comparisons are running in `build/campaign-deer-final-after-views.json`; this concrete index
+also protects the raw results from retention. Next full safe tests, deer cost comparison and
+fresh whole-island acceptance, with all changed stages actually reviewed. Goal ACTIVE.
+
+All five collar pairs and40final motion stages now actually reviewed in
+`build/campaign-deer-collar-visual-evidence.json` and `build/campaign-deer-collar-stage-evidence.json`;
+images campaign-deer-collar-pairs-{1..3}.png and campaign-deer-collar-stages-{1..5}.png.
+No new triangles/buffers/textures/draws; proximal rings/corresponding shadow capsules now start
+inside the chest/haunch, with knees/hocks/hooves unchanged. Body telemetry and all contacts
+are exactly the stance-only version. Final clear alert/walk/storm proofs have160/174/160
+support pairs and zero world slip or foot rotation. Full107/107safe CTests pass125.99s;
+145registered,36display+2orphan validators excluded. Current world remains valid/fingerprint
+238be1fec0a0cdd7 in `build/campaign-fauna-world.json`; test logs and manifest are
+`build/campaign-fauna-safe-tests.log` and `build/campaign-fauna-tests.json`. Current source
+requires no further change after the reviewed40239532app. Deer cost pair is running, then the
+108scope whole-island matrix in `build/campaign-fauna-holistic-views.json` will be captured/reviewed.
+This concrete index must remain cited for retention. No full acceptance/goal closure yet.
+
+Deer cost pair passed on matching721updates/72.1s, settings, scene and population/draw ranges:
+mean225.7907→221.9179ms (−1.72%),p95261.0929→254.7314ms (−2.44%), peakRSS802688→803320KiB
+(+.079%). First draw552.172→507.700ms, total startup11932.736→11606.059ms. No measured
+material regression or causal/native speedup claim. Fixed contact arrays add no GPU resources;
+all original mesh/draw counts remain. `build/campaign-deer-plant-cost-evidence.json` retains
+both raw runs. No extra unchanged benchmark loops are needed. The108scope full matrix is
+now running on immutable40239532; `build/campaign-fauna-holistic-artifacts.json` also records
+app/runtime/launcher/contact-validator identities across it. Code stage may be committed/pushed
+while the final qualification continues; goal remains ACTIVE until full review and1–24ledger.

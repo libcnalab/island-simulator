@@ -76,15 +76,15 @@ try {
         }
         ++moving;
         const auto a=MakeDeerSupportFrame(before,&surface),b=MakeDeerSupportFrame(after,&surface);
-        // Only steady motion on one support plane has the planted-foot guarantee;
-        // turning, acceleration and triangle-normal transitions remain procedural.
+        // Preserve the old steady-motion coverage, using the live contact solver's
+        // actual support state rather than treating a pivot return as a planted phase.
         if(before.speed!=after.speed||std::abs(before.headingRadians-after.headingRadians)>1e-5f
             ||before.bedAmount>0||after.bedAmount>0||before.stamp>0||after.stamp>0
             ||std::hypot(a.up.x-b.up.x,a.up.y-b.up.y,a.up.z-b.up.z)>1e-6f) continue;
         const auto p=walker_shadow::DeerLimbs(before,&surface),q=walker_shadow::DeerLimbs(after,&surface);
         for(int foot=0;foot<4;++foot) {
-            if(!deer_gait::Sample(before.gaitPhase,before.speed,foot).stance
-                ||!deer_gait::Sample(after.gaitPhase,after.speed,foot).stance) continue;
+            if(!before.contactsValid||!after.contactsValid||!before.feet[foot].planted
+                ||!after.feet[foot].planted) continue;
             const auto& left=p[3+3*foot];const auto& right=q[3+3*foot];
             const float slip=std::hypot(right.bx-left.bx,right.bz-left.bz);
             worstRatio=std::max(worstRatio,slip/distance);

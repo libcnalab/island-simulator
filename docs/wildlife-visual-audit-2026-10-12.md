@@ -1,5 +1,21 @@
 # Current wildlife visual audit — 2026-10-12
 
+## 2026-11-03 campaign follow-up
+
+Near lofted bird eyes now follow the actual head triangles: their pale ring, iris, pupil and
+highlight no longer emerge as disconnected shards through the skin. Six matched species/weather
+pairs and32clear/storm flight stages reviewed; one storm pose is naturally screened by foliage.
+Original head coordinates, eye triangles, buffers and draws retained.
+
+Live deer now retain world-space hoof positions and directions through acceleration/turns using
+the existing GroundFootPlant. Rendered legs and shadows share their actual joint calculation.
+Short foot substeps follow the unchanged accepted body segment; static/folded and distant-tier
+fallbacks remain. Existing upper-leg roots now seat inside the chest/haunch rather than exposing
+bright cut caps. Five matched controls and40stages reviewed; all three64frame ground-contact
+proofs have zero stance slip/rotation. This supersedes the earlier deer turning/acceleration
+limitation below, not every species' motion limits.107safe tests pass; current whole-island
+qualification, raw paths, costs and remaining hardware/platform bounds are in HANDOFF.md.
+
 ## 2026-11-02 campaign follow-up
 
 Flight follow-up: sixteen-stage translation-following parrot review exposed vane planes that

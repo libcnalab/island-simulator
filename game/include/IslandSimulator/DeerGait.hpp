@@ -42,7 +42,8 @@ namespace island::deer_gait
                 Movement(speed)*(.095f+.035f*trot)*std::sin(std::numbers::pi_v<float>*swing),false};
     }
     // Accepted distance along the support plane, including slope and juvenile size.
-    // Turns/acceleration can move stance feet; this is not a persistent world-foot IK rig.
+    // This schedules the existing stride. Live rendered-terrain contacts are held separately
+    // by DeerHerd's GroundFootPlant, so a changing speed/heading cannot drag a supporting hoof.
     [[nodiscard]] inline float Advance(float phase,float distance,float speed,float scale) noexcept
     {
         phase=Phase(phase);

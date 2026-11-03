@@ -448,41 +448,14 @@ namespace island
             }
             // The existing joints follow a stance/swing hoof path shared with shadows.
             for (int leg = 0; leg < 4; ++leg) {
-                const float fore = leg < 2 ? .48f : -.47f;
-                const float sideSign = leg % 2 == 0 ? -1.0f : 1.0f;
-                const auto step=deer_gait::Sample(deer.gaitPhase,deer.speed,leg);
-                const Vector3 hip = body + forward * (fore * scale)
-                    + right * (sideSign * .255f * scale) - up * (.23f * scale);
                 const bool hind = leg >= 2;
-                const Vector3 standingKnee = hip + forward * (((hind ? .16f : -.07f)
-                    + step.along * .45f) * scale) - up * (.37f * scale)
-                    + right * (sideSign * .018f * scale);
-                const Vector3 standingHock = hip + forward * (((hind ? -.06f : .01f)
-                    + step.along * .8f) * scale) - up * (.71f * scale)
-                    + right * (sideSign * .018f * scale);
-                const Vector3 standingHoof = hip + forward * (((hind ? .12f : .05f)
-                    + step.along) * scale) - up * (.71f * scale)
-                    + right * (sideSign * .018f * scale);
-                const Vector3 foldedKnee = hip + forward * ((hind ? .22f : .10f) * scale)
-                    - up * ((hind ? .12f : .14f) * scale) + right * (sideSign * .05f * scale);
-                const Vector3 foldedHock = foldedKnee - forward * ((hind ? .28f : .30f) * scale)
-                    - up * ((hind ? .05f : .03f) * scale);
-                const Vector3 foldedHoof = foldedHock + forward * ((hind ? .30f : -.05f) * scale);
-                // Stamping, the left forefoot lifts, the knee and hock folding up with it.
-                const float lift = (step.lift*(1.0f-bed)
-                    +(leg == 0 ? std::clamp(deer.stamp, 0.0f, 1.0f) : 0.0f)*.14f)*scale;
-                Vector3 knee = Vector3::Lerp(standingKnee, foldedKnee, bed) + up * (lift * .35f) + forward * (lift * .2f);
-                Vector3 hock = Vector3::Lerp(standingHock, foldedHock, bed) + up * (lift * .8f) - forward * (lift * .3f);
-                const Vector3 hoofPoint = Vector3::Lerp(standingHoof, foldedHoof, bed) - forward * (lift * .2f);
-                const Vector3 nominalHoof=hoofPoint+up*(DeerHoofSupport::AnkleHeight*scale-Vector3::Dot(hoofPoint-origin,up));
-                const auto support=FitDeerHoofSupport(ground,deer.y,nominalHoof.X,nominalHoof.Z,
-                                                      deer.headingRadians,scale);
-                const Vector3 groundedHoof=vector(support.centre)+up*lift;
-                const float correction=support.centre.y-nominalHoof.Y;
-                knee.Y+=correction*DeerHoofSupport::KneeWeight;
-                hock.Y+=correction*DeerHoofSupport::HockWeight;
+                const auto pose=MakeDeerLegPose(deer,leg,ground);
+                const Vector3 hip=vector(pose.hip),knee=vector(pose.knee),hock=vector(pose.hock);
+                const Vector3 collar=vector(pose.collar);
+                const Vector3 groundedHoof=vector(pose.hoof);
+                const auto& support=pose.support;
                 const float upperRootRadius = hind ? .142f : .128f;
-                const std::array<Vector3,4> upperLeg{{hip,Vector3::Lerp(hip,knee,.28f),
+                const std::array<Vector3,4> upperLeg{{collar,Vector3::Lerp(collar,knee,.28f),
                     Vector3::Lerp(hip,knee,.62f),knee}};
                 // The forearm and the gaskin taper to a slender knee and hock: a deer stands on
                 // legs no thicker than a wrist below them (at three times that, boxy posts).

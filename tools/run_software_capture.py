@@ -20,6 +20,7 @@ from validate_capture import profile_for_viewpoint
 from capture_retention import (KEEP_SOFTWARE_CAPTURE_SETS, cited_stamps, compress_captures,
                                prune_sets)
 from mist_capture import validate_mist_drift
+from validate_deer_contacts import validate_deer_contacts
 
 from gpu_incident_qualification import (
     CAPTURE_VIEWPOINTS, FAULT, GL_ERROR, Journal, MonitorError, stop_process_group,
@@ -1093,6 +1094,8 @@ def main():
                     raise RuntimeError("alien motion capture did not actually walk")
                 (evidence/"alien-motion.json").write_text(json.dumps(rows,indent=2)+"\n")
             if args.viewpoint == "deer-alert":
+                contacts=validate_deer_contacts(log)
+                (evidence/"deer-contacts.json").write_text(json.dumps(contacts,indent=2)+"\n")
                 rows=re.findall(r"deer alert stage=(\d+) updates=(\d+) time=(\S+) visible=(\d+) "
                     r"position=(\S+) heading=(\S+) speed=(\S+) phase=(\S+) bed=(\S+) tier=(\d+)",log)
                 if (len(rows)!=16 or [int(r[0]) for r in rows]!=list(range(16))
@@ -1106,6 +1109,8 @@ def main():
                         raise RuntimeError("invalid deer alarm stage")
                 (evidence/"deer-alert.json").write_text(json.dumps(rows,indent=2)+"\n")
             if args.viewpoint == "deer-walk":
+                contacts=validate_deer_contacts(log)
+                (evidence/"deer-contacts.json").write_text(json.dumps(contacts,indent=2)+"\n")
                 motion = validate_deer_motion_stages(log)
                 (evidence / "deer-motion.json").write_text(json.dumps(motion, indent=2) + "\n")
                 for stage in range(8):

@@ -190,6 +190,8 @@ add_library(island_core STATIC
     game/src/DragonflySwarm.cpp
     game/src/DeerHerd.cpp
     game/src/DeerHoofSupport.cpp
+    game/src/DeerLegPose.cpp
+    game/src/DeerFootPlant.cpp
     game/src/HermitCrabGroup.cpp
     game/src/CoconutCrabGroup.cpp
     game/src/SharkPatrol.cpp
@@ -505,6 +507,11 @@ if(ISLAND_BUILD_TESTS AND NOT CMAKE_CROSSCOMPILING)
     island_enable_first_party_warnings(island_deer_gait_tests)
     island_enable_first_party_sanitizers(island_deer_gait_tests)
     add_test(NAME IslandDeerGaitTests COMMAND island_deer_gait_tests)
+    add_executable(island_deer_foot_plant_tests tests/DeerFootPlantTests.cpp)
+    target_link_libraries(island_deer_foot_plant_tests PRIVATE IslandSimulator::Core)
+    island_enable_first_party_warnings(island_deer_foot_plant_tests)
+    island_enable_first_party_sanitizers(island_deer_foot_plant_tests)
+    add_test(NAME IslandDeerFootPlantTests COMMAND island_deer_foot_plant_tests)
     add_executable(island_ufo_scorch_tests tests/UfoScorchFieldTests.cpp)
     target_link_libraries(island_ufo_scorch_tests PRIVATE IslandSimulator::Core)
     island_enable_first_party_warnings(island_ufo_scorch_tests)

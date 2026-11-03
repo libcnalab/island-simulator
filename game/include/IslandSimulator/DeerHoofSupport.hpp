@@ -4,7 +4,12 @@
 namespace island {
 class RenderedTerrainSurface;
 struct DeerState;
-struct DeerHoofPoint { float x,y,z; };
+struct DeerHoofPoint {
+    float x,y,z;
+    constexpr DeerHoofPoint operator+(DeerHoofPoint p) const noexcept {return {x+p.x,y+p.y,z+p.z};}
+    constexpr DeerHoofPoint operator-(DeerHoofPoint p) const noexcept {return {x-p.x,y-p.y,z-p.z};}
+    constexpr DeerHoofPoint operator*(float k) const noexcept {return {x*k,y*k,z*k};}
+};
 struct DeerHoofSupport {
     DeerHoofPoint centre,forward,right,up;
     static constexpr float AnkleHeight=.060f;
@@ -19,6 +24,14 @@ struct DeerSupportFrame {
     // Includes the curved antlers, head toss and foot relief around the posed body centre.
     static constexpr float CullRadius=2.1f;
 };
+struct DeerLegPose {
+    DeerHoofPoint hip,knee,hock,hoof,collar;
+    DeerHoofSupport support;
+};
+// Shared actual joint endpoints for the visible legs and their contact shadows.
+[[nodiscard]] DeerLegPose MakeDeerLegPose(const DeerState& deer,int leg,
+    const RenderedTerrainSurface* ground);
+[[nodiscard]] DeerHoofPoint NeutralDeerHoof(const DeerSupportFrame& frame,float scale,int leg) noexcept;
 // Follow the actual supporting plane before making small per-leg relief corrections.
 [[nodiscard]] DeerSupportFrame MakeDeerSupportFrame(const DeerState& deer,
     const RenderedTerrainSurface* ground);

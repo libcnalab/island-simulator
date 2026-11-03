@@ -5,6 +5,7 @@
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/WildlifeSimulation.hpp"
 #include "IslandSimulator/WorldCollisionGrid.hpp"
+#include "IslandSimulator/GroundFootPlant.hpp"
 
 #include <array>
 #include <cstddef>
@@ -19,6 +20,10 @@ namespace island
 
     struct DeerState
     {
+        struct FootContact {
+            float x=0,z=0,lift=0,heading=0;
+            bool planted=true;
+        };
         float x = 0.0f, y = 0.0f, z = 0.0f;
         float headingRadians = 0.0f, speed = 0.0f;
         float gaitPhase = 0.0f, grazeAmount = 0.0f, scale = 1.0f;
@@ -47,6 +52,10 @@ namespace island
         WildlifeSimulationTier simulationTier = WildlifeSimulationTier::Dormant;
         std::uint8_t coatVariant = 0U;
         bool antlered = false;
+        // Live standing/walking contacts. Bedded and legacy/static pose fixtures retain
+        // their authored folded/gait pose while contactsValid is false.
+        std::array<FootContact,4> feet{};
+        bool contactsValid=false;
     };
 
     struct DeerHome { float x = 0.0f, z = 0.0f, radius = 0.0f; };
@@ -176,6 +185,8 @@ namespace island
             float shadeX = 0.0f, shadeZ = 0.0f;
             bool seekingShade = false;
             bool bedded = false;
+            std::array<GroundFootPlant,4> footPlants{};
+            std::array<float,4> footFromHeading{},footToHeading{};
         };
         [[nodiscard]] float LightAt(float x, float z) const noexcept;
         [[nodiscard]] bool FindShade(const Agent& agent, std::size_t index, float& x, float& z) const noexcept;
@@ -183,6 +194,8 @@ namespace island
 
         void Initialize(std::size_t index);
         void UpdateAgent(Agent&, float, float, float, bool) noexcept;
+        void PoseFeet(Agent&,float seconds,const DeerState& previous) const noexcept;
+        void AdvanceFeet(Agent&,float seconds,float previousHeading) const noexcept;
 
         const IslandTerrain& terrain_;
         const RenderedTerrainSurface* ground_ = nullptr;

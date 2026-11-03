@@ -19,6 +19,7 @@ from run_software_capture import (
     validate_goat_motion_stages,
     validate_boar_motion_stages,
     validate_deer_motion_stages,
+    validate_deer_contacts,
     validate_bunker_quad_entry, validate_bunker_quad_turn, validate_crocodile_land, validate_elephant_walk, validate_elephant_contacts, validate_trex_contacts,
     validate_spider_motion_stages,
     validate_spider_render_log,
@@ -48,6 +49,25 @@ from run_fullscreen_software import main as fullscreen_main
 
 
 class SoftwareCaptureTests(unittest.TestCase):
+    def test_deer_contacts_check_actual_stance_and_orientation(self):
+        lines=[]
+        for frame in range(1,65):
+            lines.append(f"island-simulator: deer contact frame={frame} heading=0 speed=.2 bed=0 valid=1 visible=1 "
+                         +"feet="+";".join(["0,3.5,0,1,0,0"]*4)+"\n")
+        good=''.join(lines)
+        result=validate_deer_contacts(good)
+        self.assertEqual(result['support_pairs'],252)
+        self.assertEqual(result['max_stance_slip'],0)
+        self.assertEqual(result['max_stance_rotation'],0)
+        for bad in [good.replace('frame=32 ','frame=33 ',1),''.join(lines[:-1]),
+                    good.replace('bed=0 valid=1','bed=.5 valid=1',1),
+                    good.replace('feet=0,3.5,0,1,0,0','feet=.01,3.5,0,1,0,0',1),
+                    good.replace('feet=0,3.5,0,1,0,0','feet=0,3.5,0,1,0,.01',1),
+                    good.replace('feet=0,3.5,0,1,0,0','feet=0,3.5,0,1,.01,0',1),
+                    good.replace('feet=0,3.5,0,1,0,0','feet=nan,3.5,0,1,0,0',1)]:
+            with self.subTest(bad=bad[:100]):
+                with self.assertRaises(RuntimeError):validate_deer_contacts(bad)
+
     def test_natural_props_seed_requires_scoped_uint32_inspection(self):
         self.assertEqual(natural_props_seed_arguments(None,"jungle"),[])
         for seed in (0,2,0xffffffff):

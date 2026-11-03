@@ -5,6 +5,7 @@
 #include "IslandSimulator/InspectionClock.hpp"
 #include "IslandSimulator/BunkerChaseCamera.hpp"
 #include "IslandSimulator/BoarGroundPose.hpp"
+#include "IslandSimulator/DeerHoofSupport.hpp"
 #include "IslandSimulator/FootprintGround.hpp"
 #include "IslandSimulator/SunShadowFocus.hpp"
 #include "IslandSimulator/RockSurface.hpp"
@@ -10747,6 +10748,22 @@ namespace island
             std::cout<<report.str()<<std::endl;
         }
         const bool deerCapture=UsesDeerCaptureClock();
+        if(deerCapture&&drawnFrames_<=64U) {
+            const auto& subject=deer_->Deer().front();
+            std::ostringstream proof;proof.precision(9);
+            proof<<"island-simulator: deer contact frame="<<drawnFrames_<<" heading="<<subject.headingRadians
+                <<" speed="<<subject.speed<<" bed="<<subject.bedAmount<<" valid="<<subject.contactsValid
+                <<" visible="<<deerRenderer_->VisibleCount()<<" feet=";
+            for(int leg=0;leg<4;++leg) {
+                const auto pose=MakeDeerLegPose(subject,leg,drawnGround_.get());
+                const auto& foot=subject.feet[static_cast<std::size_t>(leg)];
+                const bool planted=subject.contactsValid&&foot.planted&&!(leg==0&&subject.stamp>.0001f);
+                if(leg)proof<<';';
+                proof<<pose.hoof.x<<','<<pose.hoof.y<<','<<pose.hoof.z<<','<<planted<<','
+                    <<pose.hoof.y-pose.support.centre.y<<','<<foot.heading;
+            }
+            std::cout<<proof.str()<<std::endl;
+        }
         if(deerCapture&&viewpoint_!=FixedViewpoint::DeerAlertDetail&&drawnFrames_%8U==0&&drawnFrames_<=64U) {
             GpuDiagnosticScope gpuPass("capture-readback");
             CaptureFrame(capturePath_+".deer-stage-"+std::to_string(drawnFrames_/8U-1U)+".ppm");

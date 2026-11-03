@@ -149,7 +149,11 @@ namespace island
     void DeerHerd::SetGround(const RenderedTerrainSurface* ground) noexcept
     {
         ground_ = ground;
-        for (Agent& agent : agents_) agent.state.y = StandHeight(agent.state.x, agent.state.z);
+        for (Agent& agent : agents_) {
+            agent.state.y = StandHeight(agent.state.x, agent.state.z);
+            agent.state.contactsValid=false;
+            for(auto& foot:agent.footPlants)foot.Reset();
+        }
         for (std::size_t index = 0; index < Count; ++index) states_[index] = agents_[index].state;
     }
 
@@ -263,6 +267,8 @@ namespace island
         agent.state.speed = 0.0f;
         agent.state.grazeAmount = 0.0f;
         agent.state.bedAmount = 1.0f;
+        agent.state.contactsValid=false;
+        for(auto& foot:agent.footPlants)foot.Reset();
         agent.bedded = true;
         agent.seekingShade = false;
         agent.behaviorSeconds = 30.0f;
@@ -282,6 +288,7 @@ namespace island
                                const bool observerValid) noexcept
     {
         if (deltaSeconds <= 0.0f) return;
+        const DeerState initialPose=agent.state;
         const std::size_t index = static_cast<std::size_t>(&agent - agents_.data());
         // measured in the walker's terms: a louder, faster observer counts as nearer
         const float observerDistance = observerValid
@@ -516,5 +523,6 @@ namespace island
                                       agent.state.z-previous.z);
         agent.state.gaitPhase=deer_gait::Advance(agent.state.gaitPhase,travel,
                                                agent.state.speed,agent.state.scale);
+        PoseFeet(agent,deltaSeconds,initialPose);
     }
 }
