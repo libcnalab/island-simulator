@@ -1,6 +1,7 @@
 #include "IslandSimulator/StingrayRenderer.hpp"
 
 #include "IslandSimulator/EnvironmentLighting.hpp"
+#include "IslandSimulator/WildlifeRenderLighting.hpp"
 #include "IslandSimulator/UnderwaterFog.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 
@@ -83,8 +84,8 @@ namespace island
             Vector3 normal=Vector3::Cross(b-a,c-a);
             if(normal.LengthSquared()>1e-8f) normal.Normalize(); else normal=Vector3::Up;
             if(normal.Y<0.0f) normal=-normal;
-            const Vector3 sun=Vector3::Normalize(Vector3(.46f,.83f,-.31f));
-            const float light=.72f+.28f*std::max(0.0f,Vector3::Dot(normal,sun));
+            const float light=.72f+.28f*std::max(0.0f,
+                Vector3::Dot(normal,wildlife_render::FixedSunDirection));
             Triangle(out,a,b,c,ScaleColor(color,light));
         }
 

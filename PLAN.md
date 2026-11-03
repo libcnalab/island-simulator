@@ -50,6 +50,10 @@ Status markers:
   scopes pass;16changed motion stages inspected and35other PNGs byte-exact to prior review.
   The deliberately shifted tracking camera is not described as a fixed-world matched pair.
   Whole-campaign acceptance and software timing uncertainty remain open in HANDOFF.md.
+- Octopus/ray near-model shading now shares the existing per-frame sun/moon direction rather
+  than a literal opposing afternoon direction. Ten matched day/dawn/dusk/night/storm/buried
+  pairs inspected; all10after scopes and109safe tests pass. Same geometry, palettes, fog and
+  GPU resources/draws. Current whole-island review and final software cost assessment continue.
 - Qualified follow-up from `cd800d00` (`b141b2e2`, `fb7f494b`): bird eye layers follow their actual lofted head instead
   of clipping into it. Deer reuse existing world-foot contacts through turns/acceleration;
   the visible legs and shadows share one pose, and upper-leg roots seat inside the torso.

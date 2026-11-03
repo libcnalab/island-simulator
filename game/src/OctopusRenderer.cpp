@@ -1,6 +1,7 @@
 #include "IslandSimulator/OctopusRenderer.hpp"
 #include "IslandSimulator/OctopusGroundPose.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
+#include "IslandSimulator/WildlifeRenderLighting.hpp"
 #include "IslandSimulator/UnderwaterFog.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include <algorithm>
@@ -42,7 +43,7 @@ void TriColors(std::vector<VertexPositionColor>&o,const Vector3&a,const Color ca
                const Vector3&b,const Color cb,const Vector3&c,const Color cc)
 {o.emplace_back(a,ca);o.emplace_back(b,cb);o.emplace_back(c,cc);}
 Color MixColor(const Color&a,const Color&b,const float amount){const float t=std::clamp(amount,0.0f,1.0f);const auto channel=[&](const std::uint8_t x,const std::uint8_t y){return static_cast<int>(std::lround(x+(y-x)*t));};return Color(channel(a.getRProperty(),b.getRProperty()),channel(a.getGProperty(),b.getGProperty()),channel(a.getBProperty(),b.getBProperty()),255);}
-Color LitColor(const Color&base,const Vector3&normal,const float variation){const Vector3 sun=Vector3::Normalize(Vector3(.46f,.83f,-.31f));const float light=(.64f+.34f*std::max(0.0f,Vector3::Dot(normal,sun)))*variation;return Color(static_cast<int>(std::clamp(base.getRProperty()*light,0.0f,255.0f)),static_cast<int>(std::clamp(base.getGProperty()*light,0.0f,255.0f)),static_cast<int>(std::clamp(base.getBProperty()*light,0.0f,255.0f)),255);}
+Color LitColor(const Color&base,const Vector3&normal,const float variation){const float light=(.64f+.34f*std::max(0.0f,Vector3::Dot(normal,wildlife_render::FixedSunDirection)))*variation;return Color(static_cast<int>(std::clamp(base.getRProperty()*light,0.0f,255.0f)),static_cast<int>(std::clamp(base.getGProperty()*light,0.0f,255.0f)),static_cast<int>(std::clamp(base.getBProperty()*light,0.0f,255.0f)),255);}
 using Basis=octopus_pose::Frame;
 void Ellipsoid(std::vector<VertexPositionColor>&out,const Basis&b,Vector3 local,float rx,float ry,float rz,Color top,Color side){
     constexpr int rings=8,sides=16;

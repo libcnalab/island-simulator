@@ -64,6 +64,31 @@ the earlier108scene island qualification.
 
 ## Current visual campaign continuation
 
+Active lighting follow-up from05077820: inspected all five new stingray controls (day,6.5,
+17.5,22and buried17.5), alongside the five existing octopus lighting controls. Both renderers
+still used literal(.46,.83,-.31)for their dynamic near-model normals; the reference afternoon
+sun has negativeX, and actual sunrise/sunset controls retain the same model light lobe.
+The focused correction reuses the already per-frame wildlife_render::FixedSunDirection,
+changing no geometry, shader, palette, fog, population, routes or GPU resources/draws.
+CPU0–3/-j2 Release/OPENGL33 build passes; app8f16c557, unchanged CNA950faa71.
+All10matched after scopes pass and all20before/after mains were actually inspected in the
+five build/campaign-aquatic-lighting-pairs-*.png sheets. Model light lobes now follow the shared
+sun/moon direction; original mottling, silhouettes and appropriate night darkness remain.
+Matching capture clocks verified; changed regions stay over the marine figures.109/109safe
+tests pass126.88s on the final lighting app. No native GPU or new Android/Web claim.
+Concrete retained baseline index: `build/campaign-aquatic-lighting-before-views.json`;
+after index: `build/campaign-aquatic-lighting-after-views.json`.
+Detailed reviewed pairs: `build/campaign-aquatic-lighting-visual-evidence.json`.
+Frozen pre-lighting appa3fe317e is build/campaign-aquatic-lighting-entry-binary.
+Octopus controls reuse the earlier unchanged renderer/forager/camera (default current main
+was verified byte-exact); five ray baselines use a3fe317e. Do not claim a single before-binary
+for all ten views. Goal remains ACTIVE; no whole-campaign completion at this lighting step.
+The unchanged thunderstorm gate now passes18.3296deviation with the corrected model light;
+retain all three earlier failed storm controls and do not represent them as passes. The
+correction uses the common live direction, not a threshold/profile or saturation adjustment.
+Next current island/ordinary-fauna scopes and the final reversed software cost pair remain
+pending; retain the earlier startup/tail uncertainty until they have been assessed.
+
 Reopened on the user's instruction after the qualified checkpoint below. Entry develop/112674ba
 clean/synced, app40239532 unchanged. Original attachment, README/PLAN/BUGS and GPUVM incident
 reread; dependencies/audio/hardware untouched. Compilation remains explicitly CPU0–3/-j2.
