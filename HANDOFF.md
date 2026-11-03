@@ -1,4 +1,16 @@
-# Comprehensive visual cohesion campaign — current software qualification 2026-11-03
+# Comprehensive visual cohesion campaign — ACTIVE continuation from cd800d00
+
+Reopened at the user's request after the qualified checkpoint below. Entry develop/cd800d00
+clean/synced; original attachment, README/PLAN/BUGS and open GPUVM incident reread. Four-core
+compilation limit remains; verified contained llvmpipe/Pixman only. Six less-reviewed current
+baselines in build/campaign-habitat-before-views.json cover monkey scratch/climb, bird flight,
+fish motion, helicopter approach and ground broadleaf. Actual full images inspected. The
+parrot's eye ring visibly breaks into pale shards: near lofted-head eye x uses an approximate
+0.88width multiplier, burying parts of its discs inside the actual triangulated head. Next:
+fit existing eye vertices to the shared real profile, review matching motion/species controls,
+test coverage/cost, then continue the next demonstrated priority and renew original acceptance.
+Goal ACTIVE; no completion at the eye milestone. Entry app d138cecf saved unchanged in
+build/campaign-habitat-entry-binary. Existing source/evidence and rejected hypotheses preserved.
 
 Latest continuation: source commits `e96d9723` and `636d0162`, final app `d138cecf`.
 All105safe tests and92normal graphical scopes passed;92main images and51changed/new stages
@@ -3681,3 +3693,32 @@ Physical AMDGPU, current Debug/Web/GLES/Android/other backends and an actual cap
 backend remain unqualified. Open CNA/driver issues and18degree reverse traction remain as
 documented above. The final documentation commit/push/clean actual-remote checks are recorded
 in `build/campaign-earth-final-delivery.json` before goal closure.
+
+## Continuation from cd800d00 — bird eyes and remaining deer stance slip
+
+Bird stage accepted visually: near lofted head and eye vertices now share the actual14-sided
+profile, preserving every head vertex and all40eye triangles. Ring/iris/pupil/highlight remain
+just outside the real triangles rather than the estimated0.88width shell. All six matched
+species/weather views in build/campaign-bird-eye-pairs-{1..3}.png and32clear/storm stages in
+campaign-bird-eye-stages-{1..4}.png actually inspected. One storm stage is naturally screened
+by foliage; it is not represented as an unobscured eye review. Initial full parrot image
+20261103T122419.864546Z-bird-flight shows the coherent ring instead of white shards. Final
+eye-only app2e653faa1ed745363d019db475da4b64006d06d28925b3bc06a12edfd920bad9 is frozen as
+build/campaign-bird-eye-qualified-binary; before appd138cecf in campaign-habitat-entry-binary.
+
+Focused bird tests pass, including25480actual eye-fan samples across four head scales and all
+layers; original rim placement is demonstrably buried. All head coordinates retained exactly.
+One matched software benchmark pair has identical721updates/72.1s, scene/ranges/settings:
+mean215.3569→211.0412ms (−2.00%),p95260.0515→247.3793ms (−4.87%),RSS716200→715624KiB.
+This is no causal/native speedup claim. Same geometry/draw/buffer/texture budgets. Evidence:
+build/campaign-bird-eye-{visual,stage,cost}-evidence.json and focused/build logs.
+
+Continued to the explicitly retained deer acceleration/turn limitation. Five fresh baselines
+in build/campaign-deer-plant-before-views.json cover walk, alert/rise, storm and static/bedded
+controls. An actual existing renderer/shadow endpoint probe on3600live updates finds9951stance
+pairs,5500turn pairs and maximum0.0164452mstance slip per update. Source/probe retained in
+build/campaign_deer_slip_probe.cpp and campaign-deer-slip-before.json. Current WIP reuses
+GroundFootPlant for world-space hooves and heading, and extracts one shared leg-pose calculation
+for render/shadow consistency. Build/contacts/regression/visual/cost validation is pending;
+do NOT accept or close the campaign at this checkpoint. Four-core builds and isolated verified
+software graphics continue; external source/hardware/audio untouched.

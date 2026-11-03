@@ -1,6 +1,7 @@
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/BirdRenderer.hpp"
 #include "IslandSimulator/BirdWingNormal.hpp"
+#include "IslandSimulator/BirdHeadProfile.hpp"
 #include "IslandSimulator/WildlifeRenderLighting.hpp"
 
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
@@ -543,17 +544,12 @@ namespace island
             const bool booby=species==BirdSpecies::Booby;
             const bool weaver=species==BirdSpecies::Weaver;
             const float h=parrot?.95f:(species==BirdSpecies::Frigatebird?.80f:(dove?.84f:.86f));
-            struct Section { float z, halfWidth, halfHeight, lift, toHead; };
-            constexpr std::array<Section,7> Sections{{
-                {.300f,.090f,.088f,.012f,0.0f},{.340f,.112f,.112f,.030f,.55f},{.385f,.124f,.130f,.046f,.95f},
-                {.430f,.122f,.128f,.054f,1.0f},{.475f,.106f,.112f,.054f,1.0f},{.512f,.078f,.084f,.050f,1.0f},
-                {.538f,.040f,.046f,.046f,1.0f}}};
-            constexpr int Sides=14;
+            const auto& Sections=bird_head::Sections;
+            constexpr int Sides=bird_head::Sides;
+            const bird_head::Profile head(h);
             const auto point=[&](const std::size_t i,const int side) {
-                const float angle=6.28318530718f*static_cast<float>(side)/Sides;
-                const auto& at=Sections[i];
-                return LocalPoint(centre,right,up,forward,std::cos(angle)*at.halfWidth*h,
-                                  at.lift+std::sin(angle)*at.halfHeight*h,at.z,scale);
+                const auto& p=head.Point(i,side);
+                return LocalPoint(centre,right,up,forward,p.X,p.Y,p.Z,scale);
             };
             const auto colour=[&](const std::size_t i,const int side) {
                 const float angle=6.28318530718f*static_cast<float>(side)/Sides;
@@ -629,22 +625,18 @@ namespace island
             }
             // the eye on the camera's side: a pale ring, the iris, the pupil, a speck of light
             const float eyeSide=Vector3::Dot(cameraPosition-centre,right)>=0.0f?1.0f:-1.0f;
-            constexpr float EyeZ=.455f,EyeY=.080f;
-            const float surface=(Sections[3].halfWidth+(Sections[4].halfWidth-Sections[3].halfWidth)*((EyeZ-.430f)/.045f))*h;
             const float ringRadius=parrot?.030f:.020f,irisRadius=parrot?.016f:.014f,pupilRadius=parrot?.008f:.009f;
             const Color ring=parrot?Color(226,222,210,255):wildlife_render::ScaleColor(palette.head,.70f);
             const Color iris=parrot?Color(214,150,40,255):Color(96,58,30,255);
-            constexpr int EyeSides=10;
             const auto disc=[&](const float radius,const float out,const Color& c) {
-                const Vector3 middle=LocalPoint(centre,right,up,forward,eyeSide*(surface*.88f+out),EyeY*h,EyeZ,scale);
-                for(int k=0;k<EyeSides;++k) {
-                    const float a0=6.28318530718f*static_cast<float>(k)/EyeSides,a1=6.28318530718f*static_cast<float>(k+1)/EyeSides;
-                    const auto edge=[&](const float a) {
-                        return middle+up*(std::sin(a)*radius*h*scale)+forward*(std::cos(a)*radius*h*1.15f*scale)
-                            -right*(eyeSide*radius*radius*6.0f*scale);
-                    };
-                    AddTriangle(vertices,middle,edge(a0),edge(a1),c);
-                }
+                // Each layer sits just outside the real head, including the ring's rim.
+                const auto ring=head.EyeRing(radius,out);
+                const auto fitted=[&](int index) {
+                    const auto& p=ring[static_cast<std::size_t>(index)];
+                    return LocalPoint(centre,right,up,forward,eyeSide*p.X,p.Y,p.Z,scale);
+                };
+                for(int k=0;k<bird_head::EyeSides;++k)
+                    AddTriangle(vertices,fitted(0),fitted(k+1),fitted((k+1)%bird_head::EyeSides+1),c);
             };
             disc(ringRadius,.004f,ring);
             disc(irisRadius,.006f,iris);
