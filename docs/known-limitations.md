@@ -8,8 +8,11 @@
   See `forest-floor-material-review.md` for measured software evidence and exact memory scope.
 
 This document describes the current build, not the intended final quality. `PLAN.md` is the
-authoritative work ledger. Confirmed CNA or Sharp Runtime defects belong in `BUGS.md`; none have
-been confirmed so far.
+authoritative work ledger. [BUGS.md](../BUGS.md) records the confirmed CNA stock-skinning defect
+(CNA-ISLAND-002, game workaround active) and the separate suspected Android lifecycle defect
+(CNA-ISLAND-001). The 2026-11-03 audit found that the stock failure mechanism persists in current
+CNA `next`; the lifecycle issue has no verified closure. The older claim that no framework
+defect had been confirmed was stale. The game's locked dependency version remains unchanged.
 
 ## Current browser input evidence
 
@@ -20,6 +23,11 @@ evidence to assign it the same cause. None of these software tests requalifies A
 or resolves the GPUVM incident. Broader historical platform claims below retain their dates.
 
 ## Current Android software evidence
+
+The successful historical scopes below do not close the intermittent surface/presentation
+failure in CNA-ISLAND-001. Monkey rendering uses the game-owned rig-sized shader workaround;
+its success does not qualify the failing stock shader. No new Android runtime qualification
+was performed during the November 3 CNA source audit.
 
 The isolated API 35 x86_64 SwiftShader path now runs current sources without exposing host GPU
 devices. The interactive selector/Home-resume/cold-relaunch gate passes with inspected frames,

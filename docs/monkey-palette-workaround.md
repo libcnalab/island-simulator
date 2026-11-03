@@ -1,6 +1,19 @@
 # Monkey palette workaround — native, Android and Web close-view checks pass
 
-## Latest: native visibility resolved
+## Current dependency status — 2026-11-03
+
+The game-owned shader workaround remains active. The current shader uses 14 skeleton matrices
+and four sole matrices with a conservative 92-vector vertex budget. The dated qualification
+below describes the artifacts tested then; it is not a fresh qualification of current Android,
+Web or upstream stock skinning.
+
+The [CNA audit](../BUGS.md#cna-status-audit--2026-11-03) inspected published `next` at
+`611825cf2728` and local `next` at `3be0756e131a`. Stock skinning still declares 72 `mat4`
+bones and initialization still continues after compiler/link failure. The documented 256-vector
+GLES failure mechanism therefore remains present in source. The game still consumes its locked
+`97783d1e090c` CNA export; no dependency update or workaround removal was performed.
+
+## Historical native visibility correction — 2026-10-11
 
 Two consumer issues confounded the initial investigation. The stationary QA camera lost its
 near subject during the 24-frame software capture (subject moved about 4.6 m; only a far

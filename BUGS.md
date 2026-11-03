@@ -4,12 +4,42 @@ This file is the authoritative record of confirmed or strongly evidenced framewo
 materially affect `island-simulator`. CNA and Sharp Runtime are read-only dependencies. Framework
 issues are worked around only inside this repository and are never patched in their worktrees.
 
-The Android stock-skinned shader failure is confirmed below. The separate lifecycle issue
-remains suspected; neither dependency has been modified.
+The Android stock-skinned shader failure is confirmed and has an active game-side workaround.
+The separate lifecycle issue remains suspected. Neither dependency has been modified by this project.
 
 Consumer integration constraints, unsupported features, renderer limitations, and incorrect game
 code do not belong here unless investigation demonstrates a framework defect. Suspected entries
 must say `Status: Suspected` and must not present a guessed cause as fact.
+
+## CNA status audit — 2026-11-03
+
+**Not all development findings are fixed in current CNA.** This repository records two framework
+issues: one confirmed shader defect and one suspected Android lifecycle defect. The confirmed
+shader failure mechanism is still present; the lifecycle issue has no verified closure.
+
+Audited source snapshots:
+
+- Published CNA `next`: [`611825cf2728`](https://github.com/libcna/cna/commit/611825cf2728d75511fd4d9cd288370d8b970190),
+  verified through GitHub on 2026-11-03.
+- Local CNA `next`: `3be0756e131afb2d1f494d406fe1e70fcf5f8d52`, inspected at 16:53 UTC.
+  The checkout also contains unrelated uncommitted work; the audited files match this commit.
+  Local commits ahead of the published branch are not represented as published fixes.
+  A subsequent check at `e28441da07e9cae80d4f513ec3d8920fa0854cd3` found no intervening
+  changes to the audited renderer, lifecycle implementation or lifecycle test.
+- The game still builds its locked CNA `97783d1e090c6d84f4b6a6d7746516e65184569e` export.
+  An upstream source change would not automatically update this application's binary.
+
+| Finding | Current disposition | Required before closure |
+| --- | --- | --- |
+| CNA-ISLAND-001: Android surface destruction/Home-resume | **Suspected, open; fix not verified.** The lifecycle queue, mobile suspension loop and context-loss guards exist, but do not establish recovery from the recorded asynchronous surface/presentation failure. | Qualify the actual Android surface-loss/resume case on a deliberately updated dependency build; preserve the failed historical evidence. |
+| CNA-ISLAND-002: stock skinning exceeds the tested uniform limit, then continues after link failure | **Confirmed; source mechanism persists; game workaround active.** Stock vertex-lit skinning still declares 72 `mat4` bones; the compiler helper still logs failures without aborting initialization. | Respect the target's shader limits while retaining XNA's 72-bone public contract, stop initialization after compiler/link failure, and verify actual stock rendering on the affected GLES configuration. |
+| AMDGPU GPUVM/session loss and flight instability | **Open, separate driver/hardware investigation.** Neither incident has been attributed to a confirmed CNA defect. | Follow the incident's approved qualification procedure; successful software rendering does not close it. |
+
+This audit checks source, history, existing tests and the documented reproductions. It does not
+claim a fresh Android runtime test or physical-GPU qualification, and does not change dependency
+pins or remove the monkey workaround. Machine-readable source identities are retained in
+`build/cna-issue-audit-20261103.json`. Consumer camera/clip-depth defects, capture-supervisor bugs,
+and the rapid-transition audio-log observation are not added as confirmed CNA bugs.
 
 ### CNA-ISLAND-001 — Android presentation races surface destruction during Home/resume
 
@@ -22,6 +52,8 @@ must say `Status: Suspected` and must not present a guessed cause as fact.
 **Severity:** High
 
 **Status:** Suspected; observed lifecycle failure, exact ownership/root cause unconfirmed
+
+**Last reviewed:** 2026-11-03; current CNA source inspected, no verified fix
 
 **Date discovered:** 2026-10-11
 
@@ -87,6 +119,23 @@ before requesting resume, with a bounded deadline; retain a separate rapid-trans
 case and do not weaken the fatal-swap/surface checks. Missing audio log calls alone must not
 be promoted to a confirmed framework defect.
 
+#### 2026-11-03 source review
+
+The published and local snapshots above still queue translated events in
+[`Sdl3Platform::LifecycleWatch`](https://github.com/libcna/cna/blob/611825cf2728d75511fd4d9cd288370d8b970190/modules/platform/src/Sdl3/Sdl3Platform.cpp#L545).
+`Game` processes them during polling; its mobile run loop waits once suspension is observed.
+That suspension mechanism already exists in the game's locked CNA revision, so its presence
+today is not evidence of a new fix. Current EasyGL also refuses drawing/presentation when
+MetaGL reports a lost context, but an Android surface becoming invalid is not proven to be
+reported through that guard before the recorded failed swap. The
+[`SDL3 swap service`](https://github.com/libcna/cna/blob/611825cf2728d75511fd4d9cd288370d8b970190/modules/platform/src/Sdl3/Sdl3GraphicsServices.cpp#L177)
+still throws on a failed swap, and `GraphicsDeviceManager::EndDraw` rethrows presentation failures.
+
+The current `GameTest.MobileLifecycleEventsSuspendResumeAndTerminateTheLoop` checks scripted
+lifecycle events and suspension state. It does not reproduce asynchronous Android surface loss
+during a draw. No new Android run was performed for this audit; neither a current reproduction
+nor a reliable fix is claimed. The original suspected attribution remains unchanged.
+
 ### CNA-ISLAND-002 — Android guest uniform queries report invalid operation at first draw
 
 **Component:** CNA EasyGL stock-program initialization / Android guest graphics boundary
@@ -98,7 +147,9 @@ EasyGL `f4d6afaf16cdc7e7e73130950bc45e6d865b41bd`
 
 **Severity:** High; stock-skinned monkeys are absent in the Android close view
 
-**Status:** Confirmed on the tested Android emulator; no workaround implemented yet
+**Status:** Confirmed on the tested Android emulator; game workaround active; source mechanism persists upstream
+
+**Last reviewed:** 2026-11-03; published and local CNA `next` inspected
 
 **Date discovered:** 2026-10-11
 
@@ -113,7 +164,7 @@ The same 27 messages appear in pre-normal-fix `20261011T092539.275219Z-interacti
 Same-APK `20261011T100107.688712Z-wet-sand` has no `GL error` matches.
 Retain all logs; do not describe the litter result as a zero-error graphics qualification.
 
-#### Read-only source findings and hypothesis
+#### Initial source hypothesis — superseded by confirming evidence below
 
 In the pinned CNA export, `modules/renderers/easygl/src/EasyGLRenderer.cpp`,
 `CompileAndLink` (around line 9141) prints shader/link failures to `std::cerr` but does
@@ -125,9 +176,9 @@ One candidate is `EnsureSkinnedVertexLitProgram`: it performs 24 direct location
 plus three in `ResolveRenderTargetOrientationUniforms`, matching the observed count of 27.
 The monkey renderer uses stock `SkinnedEffect` without overriding its default vertex-lit
 selection. A failed stock-program link could therefore produce this burst. This is an
-inference, not attribution: the count is not a program identifier, and the retained logcat
-does not contain a corresponding compiler/linker message. No uniform-limit or driver defect
-is established. Do not replace the monkey shader or change its lighting based on this alone.
+inference, not attribution: the count is not a program identifier, and that initial logcat
+does not contain a corresponding compiler/linker message. At this point no uniform-limit or
+driver defect had been established; the confirming diagnostic run is recorded next.
 
 #### Confirming runtime evidence
 
@@ -161,9 +212,9 @@ Diagnostic x86 APK is retained as `build/android-software/island-diagnostic-x86_
 20,447,851 bytes, SHA-256
 `c88063a1c1a0950c18f2fd0a9abc1ef5cc2bb6eddb7685dd58f6f770ed715128`.
 
-#### Next implementation and acceptance
+#### Game-side mitigation and qualification
 
-A consumer-owned shader with the actual 14-bone palette is implemented as a draft workaround;
+A consumer-owned shader with the actual 14-bone palette is implemented as the workaround;
 it must preserve rig animation, lighting, canopy transmission, colour/texture and fog rather
 than hiding monkeys or forcing a different scene. Native and Android close captures plus
 Web before/after-simulation images pass and are inspected, with no shader/GL diagnostics;
@@ -171,6 +222,30 @@ see the workaround document for exact artifacts. Continuous motion-quality, full
 input/lifecycle and physical ARM64 checks are not implied by these bounded captures.
 Do not claim older generic image/startup gates established monkey visibility. Dependencies
 remain read-only; nothing has been submitted externally. Android lifecycle is a separate issue.
+
+#### 2026-11-03 source review and workaround status
+
+[`GlStockShaderSources::SkinnedVertexLitSource`](https://github.com/libcna/cna/blob/611825cf2728d75511fd4d9cd288370d8b970190/modules/renderers/easygl/include/CNA/Internal/Renderers/EasyGL/GlStockShaderSources.hpp#L1197)
+still declares 72 `mat4` bone uniforms: 288 vertex-uniform vectors before the other uniforms,
+already beyond the affected emulator's reported 256-vector limit. Uploading only the game's
+14 bone transforms does not reduce the shader's declared, dynamically indexed palette.
+XNA's public `SkinnedEffect::MaxBones == 72` is intentional compatibility, not itself the bug.
+The missing resource-limit handling must be addressed without reducing that public contract.
+
+[`CompileAndLink`](https://github.com/libcna/cna/blob/611825cf2728d75511fd4d9cd288370d8b970190/modules/renderers/easygl/src/EasyGLRenderer.cpp#L9116)
+still logs vertex/fragment/link failures and returns normally. `EnsureSkinnedVertexLitProgram`
+then queries uniforms and sets `ready = true`. The inspected sibling EasyGL `develop`
+`b582bd85f646678d1de38473160defed4729f323` still checks only program creation in
+`Program::uniform_location`, not successful linking. No source-level fix for this mechanism
+was found in either audited CNA snapshot. This is source evidence, not a new Android execution.
+
+The game-side GLSL 330/ES 300 path is active in `MonkeyRenderer.cpp` and
+`MonkeySkinningShader.hpp`; it uses 14 skeleton matrices plus four sole matrices, with a
+conservative 92-vector vertex budget. See [workaround evidence](docs/monkey-palette-workaround.md).
+The former status saying no workaround existed was stale. Existing API/source-contract tests
+that preserve 72 bones do not establish compatibility with the affected GLES uniform limit.
+Keep the workaround until a deliberately updated dependency build passes stock-shader link,
+error handling, visible monkey geometry and relevant animation checks on that configuration.
 
 ## Entry template
 

@@ -1,4 +1,69 @@
-# Comprehensive visual cohesion campaign — current software qualification, 2026-11-03
+# Comprehensive visual cohesion campaign — ACTIVE continuation from 112674ba
+
+## CNA audit requested by the user — 2026-11-03
+
+Read-only framework review completed; **not all findings are fixed**. Published CNA next remains
+611825cf2728d75511fd4d9cd288370d8b970190. Local source snapshot3be0756e131a was rechecked through
+e28441da07e9; intervening commits do not change the audited implementations. The locked game
+export remains97783d1e090c. CNA-ISLAND-002 still declares72mat4bones/288vectors before other
+uniforms against the recorded256limit, and CompileAndLink logs failure but permits uniform
+queries/ready=true. The active game14bone+4sole/92vector workaround is retained. CNA-ISLAND-001
+has existing mobile suspension/context-loss guards but no verified asynchronous Android
+surface-loss fix; it stays suspected/open. No new Android run, hardware qualification, external
+source change or dependency update. GPUVM/flight are not attributed to a confirmed CNA defect.
+
+BUGS.md now contains the dated source/status/closure table with pinned published-source links;
+README.md, PLAN.md, docs/known-limitations.md and docs/monkey-palette-workaround.md agree.
+Read-only source identity evidence: `build/cna-issue-audit-20261103.json` and
+`build/cna-remote-next-20261103.json`. Whitespace, local bug links, all four pinned source anchors
+and unchanged audited files through the later local HEAD pass; exact results are retained in
+`build/cna-audit-doc-validation-20261103.json`. This audit does not close the original visual campaign or mark
+the current octopus implementation complete; source work in progress is preserved below.
+
+## Current visual campaign continuation
+
+Reopened on the user's instruction after the qualified checkpoint below. Entry develop/112674ba
+clean/synced, app40239532 unchanged. Original attachment, README/PLAN/BUGS and GPUVM incident
+reread; dependencies/audio/hardware untouched. Compilation remains explicitly CPU0–3/-j2.
+Next stages: fresh less-covered ordinary monkey/boar/goat and marine-species views, implement
+demonstrated defects with matched controls, then continue independent environment/traversal
+priorities and renew the complete original acceptance. Previous108scope evidence is preserved;
+its resting mammals/climbing monkeys are not substituted for fresh ordinary-species views.
+New raw baseline retention index: `build/campaign-expanded-habitat-before-views.json`.
+No goal completion at an individual milestone.
+
+Current observed correction: the ordinary octopus forager floats above the seabed. Its old
+navigation clearance plus authored arm geometry leaves a measured128.35mm/scale gap. The new
+OctopusGroundPose shares the existing drawn surface, tilts the body to it and fits the actual
+six-sided arm undersides. AI/navigation heights/routes are unchanged; one bounded groundAmount
+blends into/out of the unchanged free-swimming pose. Existing seabed-shadow batch now also
+receives one body ellipse per octopus (12triangles each, at most4; same72shadow capacity/buffer).
+No CNA patch, new shader/dependency, population or octopus mesh growth.
+
+Seven new expanded-habitat mains and all8goat motion stages actually reviewed. Boar baseline
+20261103T150343.792780Z-boars timed out at65s after56/64frames; software identity verified,
+kernel delta[], startup23.97s, contemporaneous host load31.47. This does not establish the cause
+or a successful test. No identical boar retry was performed; other six distinct views continued.
+Concrete raw retention index remains `build/campaign-expanded-habitat-before-views.json`.
+
+First geometry CPU tests correctly retained failures from an overly short90s coverage window:
+36/48transition snapshots did not satisfy the new100snapshot gate. Six simulated minutes now
+cover198transition poses and2688unchanged swim poses;1658496arm rings have min vertex/face
+clearance.00399989/.00427227×scale and max supporting gap.0240001×scale. Body min gap.00610376×scale.
+Both focused tests pass1.61s, with original OctopusGroup tests unchanged. Logs:
+build/campaign-octopus-ground-{focused,refined-tests,qualified-focused,metrics}.log.
+No grounding tolerance was loosened. First geometry-only app72e2eaeb render
+20261103T153536.038297Z-octopuses was actually reviewed; it still lacked a contact shadow cue.
+Shadow refinement app044aff6d render20261103T154709.690186Z-octopuses was reviewed next;
+raw after index: `build/campaign-octopus-ground-after-views.json` (retain this concrete citation).
+The existing shadow batch uses refracted current sunlight and existing weather/night strength.
+
+Current WIP adds optional ISLAND_QA_OCTOPUS_MOTION=0/1/3 to the existing octopus capture only:
+12sactual AI warmup,64fixed updates,16rendered stages, selected subject tracking, actual arm-gap
+proof and scoped corruption validator. Default frozen view stays unchanged. The optional motion
+scope has180ssoftware deadline, separate from default65s; this does not retroactively pass the
+failed boar run or change its test.79launcher tests pass; motion build/actual renders, matched
+controls, cost and full integration remain pending. Goal ACTIVE beyond this stage.
 
 Latest continuation from clean/synced develop/cd800d00 shipped bird-eye surface fitting in
 `b141b2e2` and deer world-foot contacts/torso integration in `fb7f494b`. Original attachment,

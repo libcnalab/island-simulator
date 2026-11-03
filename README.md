@@ -481,6 +481,10 @@ tools/materialize_cna_next.sh
 This does not switch or edit the CNA repository. A separate read-only CNA checkout on `next` can be
 used instead with `-DCNA_ROOT_DIR=/path/to/cna`.
 
+The [2026-11-03 CNA issue audit](BUGS.md#cna-status-audit--2026-11-03) distinguishes current
+upstream source from this locked build: the stock-skinning failure mechanism persists, its
+game-side workaround remains active, and the Android surface-lifecycle issue has no verified fix.
+
 ## Linux development build
 
 The machine-wide ccache is required. Sharp Runtime's stricter build policy limits builds that

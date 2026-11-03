@@ -20,6 +20,21 @@ Status markers:
 - `[~]` in progress
 - `[!]` blocked or degraded, with the reason written next to the item
 
+## CNA issue status review — 2026-11-03
+
+- [x] Read-only comparison of published CNA `next` (`611825cf2728`), local CNA
+  (`3be0756e131a`, rechecked through `e28441da07e9`) and the game's locked `97783d1e090c`
+  export, including the affected shader initialization, lifecycle handling and existing tests.
+- [!] CNA-ISLAND-002 remains open upstream: the 72-matrix stock palette exceeds the recorded
+  256-vector GLES limit, and initialization continues after link failure. The game-owned
+  14-bone/four-sole shader workaround is active; do not remove it based on source-contract tests.
+- [!] CNA-ISLAND-001 remains suspected/open. Existing suspension/context-loss guards and scripted
+  lifecycle tests do not establish a fix for asynchronous Android surface destruction/presentation.
+- [x] Correct stale workaround/confirmed-defect claims in BUGS.md and the linked limitations and
+  workaround documents. Source identities and exact closure requirements are recorded in
+  [BUGS.md](BUGS.md#cna-status-audit--2026-11-03). No dependency pin, external source, Android
+  runtime or physical-GPU qualification was changed; the original visual campaign remains active.
+
 ## Visual cohesion campaign — 2026-11-01–03 (software qualified)
 
 - Qualified follow-up from `cd800d00` (`b141b2e2`, `fb7f494b`): bird eye layers follow their actual lofted head instead
