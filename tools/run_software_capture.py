@@ -21,6 +21,7 @@ from capture_retention import (KEEP_SOFTWARE_CAPTURE_SETS, cited_stamps, compres
                                prune_sets)
 from mist_capture import validate_mist_drift
 from validate_deer_contacts import validate_deer_contacts
+from validate_octopus_motion import validate_octopus_motion
 
 from gpu_incident_qualification import (
     CAPTURE_VIEWPOINTS, FAULT, GL_ERROR, Journal, MonitorError, stop_process_group,
@@ -873,6 +874,11 @@ def main():
         parser.error("canopy viewpoint requires --canopy-lod-inspection")
     if args.missing_leaf and (args.viewpoint != "ground-broadleaf" or inspection):
         parser.error("missing-leaf qualification requires the ordinary ground-broadleaf view")
+    octopus_subject = os.environ.get("ISLAND_QA_OCTOPUS_MOTION")
+    if octopus_subject is not None:
+        if args.viewpoint != "octopuses" or octopus_subject not in {"0", "1", "2", "3"}:
+            parser.error("ISLAND_QA_OCTOPUS_MOTION requires octopuses and a subject from 0 to 3")
+        octopus_subject = int(octopus_subject)
     build = args.build.resolve()
     root = Path(__file__).resolve().parent.parent
     cache_text = (build / "CMakeCache.txt").read_text()
@@ -887,6 +893,8 @@ def main():
                                               + (f"-{args.weather}" if args.weather is not None else "")
                                               + ("-wet" if args.wet_ground else "")
                                               + (f"-props-seed{args.natural_props_seed}" if prop_seed_arguments else ""))
+    if octopus_subject is not None:
+        evidence = evidence.with_name(evidence.name + f"-subject{octopus_subject}")
     evidence.mkdir(parents=True)
     capture = evidence / "capture.ppm"
     platform = dependency / "tools/platform"
@@ -901,6 +909,8 @@ def main():
     scope = "single-tree frozen LOD inspection only" if inspection else "software visual validation only"
     # Exercise title-relative content loading from an unrelated, build-owned working directory.
     metadata = {"scope": scope, "command": command, "cwd": str(evidence), "kernel_before": baseline}
+    if octopus_subject is not None:
+        metadata["octopus_motion_subject"] = octopus_subject
     if prop_seed_arguments:
         metadata["scope"] = "local natural-props layer inspection; canonical gameplay world; last turtle nest"
         metadata["natural_props_seed"] = args.natural_props_seed
@@ -924,7 +934,7 @@ def main():
             metadata["cmake_cache"] = artifact_identity(build / "CMakeCache.txt")
             (evidence / "run.json").write_text(json.dumps(metadata, indent=2) + "\n")
             result = run_monitored_capture(command, evidence, software_environment(evidence),
-                                           evidence, journal, baseline, timeout=600.0 if args.viewpoint=="quad-bunker-turn" else 180.0 if args.viewpoint=="crocodile-land" else 65.0,
+                                           evidence, journal, baseline, timeout=600.0 if args.viewpoint=="quad-bunker-turn" else 180.0 if args.viewpoint=="crocodile-land" or octopus_subject is not None else 65.0,
                                            read_only_directories=bindings)
             if result:
                 raise RuntimeError(f"software capture exited {result}")
@@ -940,6 +950,14 @@ def main():
             diagnostics = log + "".join(p.read_text(errors="replace") for p in evidence.glob("island-runtime-*.log"))
             metadata["capture_clock"] = validate_capture_clock(log)
             metadata["held_tide"] = validate_capture_tide(log, args.tide_phase)
+            if octopus_subject is not None:
+                if metadata["capture_clock"] != {"frames": 64, "updates": 64}:
+                    raise RuntimeError("octopus motion must present all 64 simulation updates")
+                motion = validate_octopus_motion(log, octopus_subject)
+                for stage in range(16):
+                    if not Path(str(capture) + f".octopus-stage-{stage}.ppm").is_file():
+                        raise RuntimeError("missing octopus motion stage image")
+                (evidence / "octopus-motion.json").write_text(json.dumps(motion, indent=2) + "\n")
             if args.viewpoint in {"campfire", "campfire-wide"}:
                 validate_campfire_stages(log)
                 for stage in range(4):

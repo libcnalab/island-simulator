@@ -37,6 +37,13 @@ Status markers:
 
 ## Visual cohesion campaign — 2026-11-01–03 (software qualified)
 
+- Active continuation from112674ba: octopus arms/body follow the drawn seabed through bounded
+  swim/ground transitions; existing seabed-shadow batch supplies a body contact cue.108safe
+  tests/79launcher tests and three64frame motion captures pass with inspected stages. The
+  thunderstorm image gate also fails on the old artifact; retain both failures. One software
+  cost pair has+8.52%mean and larger startup/tail uncertainty, requiring investigation. The
+  existing subject3den/body intersects a reef boulder and is the next integration correction.
+  This is a stage checkpoint, not whole-campaign completion; exact evidence is in HANDOFF.md.
 - Qualified follow-up from `cd800d00` (`b141b2e2`, `fb7f494b`): bird eye layers follow their actual lofted head instead
   of clipping into it. Deer reuse existing world-foot contacts through turns/acceleration;
   the visible legs and shadows share one pose, and upper-leg roots seat inside the torso.

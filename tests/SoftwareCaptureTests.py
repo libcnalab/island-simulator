@@ -20,6 +20,7 @@ from run_software_capture import (
     validate_boar_motion_stages,
     validate_deer_motion_stages,
     validate_deer_contacts,
+    validate_octopus_motion,
     validate_bunker_quad_entry, validate_bunker_quad_turn, validate_crocodile_land, validate_elephant_walk, validate_elephant_contacts, validate_trex_contacts,
     validate_spider_motion_stages,
     validate_spider_render_log,
@@ -49,6 +50,23 @@ from run_fullscreen_software import main as fullscreen_main
 
 
 class SoftwareCaptureTests(unittest.TestCase):
+    def test_octopus_motion_requires_real_contacts_and_swim_transition(self):
+        lines=[]
+        for stage in range(16):
+            contact=[0,.4,1][min(stage,2)]
+            behavior=3 if stage==0 else 0
+            lines.append(f"island-simulator: octopus motion stage={stage} updates={1+4*stage} "
+                         f"time={(1+4*stage)*.1} subject=3 behavior={behavior} contact={contact} "
+                         f"visible=1 gap_min=.004 gap_max=.024 position={stage*.1},-2,0\n")
+        good=''.join(lines)
+        self.assertEqual(len(validate_octopus_motion(good,3)),16)
+        for bad in [''.join(lines[:-1]),good+lines[0],good.replace('updates=5 ','updates=6 ',1),
+                    good.replace('visible=1','visible=0',1),good.replace('contact=1','contact=nan',1),
+                    good.replace('gap_min=.004','gap_min=-.01',1),good.replace('gap_max=.024','gap_max=.10'),
+                    good.replace('contact=0 ','contact=1 ',1),good.replace('contact=0.4 ','contact=1 ',1)]:
+            with self.subTest(bad=bad[:100]):
+                with self.assertRaises(RuntimeError):validate_octopus_motion(bad,3)
+
     def test_deer_contacts_check_actual_stance_and_orientation(self):
         lines=[]
         for frame in range(1,65):

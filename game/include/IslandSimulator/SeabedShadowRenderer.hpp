@@ -3,6 +3,7 @@
 #include "IslandSimulator/SeaTurtleGroup.hpp"
 #include "IslandSimulator/SharkPatrol.hpp"
 #include "IslandSimulator/StingrayGroup.hpp"
+#include "IslandSimulator/OctopusGroup.hpp"
 #include "Microsoft/Xna/Framework/Matrix.hpp"
 #include "Microsoft/Xna/Framework/Vector3.hpp"
 #include "Microsoft/Xna/Framework/Graphics/BasicEffect.hpp"
@@ -17,12 +18,14 @@ namespace island {
 class IslandTerrain;
 class RenderedTerrainSurface;
 /** Soft shadows on the sandy seabed under the swimming animals — the fish, the stingrays,
- *  the sea turtles and the shark — one seabed-conforming ellipse each, projected along the
- *  fixed sun, darker and tighter close over the bottom, broad and faint for a high one,
+ *  the sea turtles, shark and octopus bodies — one seabed-conforming ellipse each, projected along the
+ *  current refracted sun, darker and tighter close over the bottom, broad and faint for a high one,
  *  gone with the water's own reach; drawn in one alpha-blended pass before the sea. */
 class SeabedShadowRenderer final {
 public:
     static constexpr int Segments=12,VerticesPerShadow=Segments*3,MaximumShadows=72;
+    static_assert(MaximumShadows>=FishSchools::FishCount+StingrayGroup::Count
+        +SeaTurtleGroup::TurtleCount+OctopusGroup::Count+1);
     static constexpr float MaximumDistance=34.0f;
     SeabedShadowRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,const IslandTerrain& terrain,
         const RenderedTerrainSurface& ground);   // laid on the drawn ground where the mesh reaches
@@ -30,7 +33,8 @@ public:
               const Microsoft::Xna::Framework::Matrix& projection,
               const Microsoft::Xna::Framework::Vector3& camera,
               std::span<const FishState> fish,std::span<const StingrayState> rays,
-              std::span<const SeaTurtleState> turtles,const SharkState* shark);
+              std::span<const SeaTurtleState> turtles,const SharkState* shark,
+              std::span<const OctopusState> octopuses={});
     [[nodiscard]] int DrawCallCount() const noexcept {return drawCalls_;}
     [[nodiscard]] int VisibleCount() const noexcept {return visible_;}
 private:

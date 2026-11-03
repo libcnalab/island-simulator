@@ -1070,6 +1070,8 @@ namespace island
         bool smokeTest_ = false;
         FixedViewpoint viewpoint_ = FixedViewpoint::None;
         std::size_t monkeyQaSubjectIndex_ = 0;
+        bool octopusMotionInspection_ = false;
+        std::size_t octopusQaSubjectIndex_ = 0;
         std::size_t geckoQaSubjectIndex_ = 2U;
         std::size_t crabViewSubject_ = 0;
         std::vector<std::vector<MonkeyState>> monkeyTreeQaPoses_;

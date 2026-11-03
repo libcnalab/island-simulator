@@ -4,6 +4,7 @@
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
 #include "IslandSimulator/SeabedShadowProjection.hpp"
+#include "IslandSimulator/OctopusGroundPose.hpp"
 #include "Microsoft/Xna/Framework/Color.hpp"
 #include "Microsoft/Xna/Framework/Graphics/BlendState.hpp"
 #include "Microsoft/Xna/Framework/Graphics/BufferUsage.hpp"
@@ -66,7 +67,8 @@ void SeabedShadowRenderer::AppendShadow(const Vector3& camera,const float x,cons
 
 void SeabedShadowRenderer::Draw(const Matrix& view,const Matrix& projection,const Vector3& camera,
                                 const std::span<const FishState> fish,const std::span<const StingrayState> rays,
-                                const std::span<const SeaTurtleState> turtles,const SharkState* shark) {
+                                const std::span<const SeaTurtleState> turtles,const SharkState* shark,
+                                const std::span<const OctopusState> octopuses) {
     drawCalls_=0;visible_=0;
     staging_.clear();
     // The hour's light (the sun by day, a bright moon's by night) bent toward the vertical at
@@ -81,6 +83,11 @@ void SeabedShadowRenderer::Draw(const Matrix& view,const Matrix& projection,cons
     for(const auto& turtle:turtles) AppendShadow(camera,turtle.x,turtle.y,turtle.z,turtle.headingRadians,0.62f*turtle.scale,0.50f*turtle.scale);
     if(shark&&shark->present&&shark->visible)
         AppendShadow(camera,shark->x,shark->y,shark->z,shark->headingRadians,0.60f*shark->scale,0.16f*shark->scale);
+    for(const auto& octopus:octopuses) {
+        const auto frame=octopus_pose::MakeFrame(octopus,&ground_);
+        const auto body=frame.point(0,.22f,-.18f);
+        AppendShadow(camera,body.X,body.Y,body.Z,octopus.headingRadians,.56f*octopus.scale,.32f*octopus.scale);
+    }
     if(staging_.empty()) return;
     vertices_->SetData(staging_.data(),0,static_cast<int>(staging_.size()),SetDataOptions::Discard);
     device_.setRasterizerStateProperty(RasterizerState::CullNone);

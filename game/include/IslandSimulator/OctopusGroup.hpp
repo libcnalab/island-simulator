@@ -16,6 +16,8 @@ namespace island
     {
         float x=0.0f,y=0.0f,z=0.0f,headingRadians=0.0f,speed=0.0f;
         float mantlePulse=0.0f,armWave=0.0f,hideAmount=0.0f,scale=1.0f;
+        // Smooth pose contact while leaving the navigation height and swim route intact.
+        float groundAmount=0.0f;
         /** @brief 0..1 matched to the seabed: an octopus lying still in its den or at a
          *  forage takes the sand's tones over a few seconds and flashes back to its own
          *  colours the moment it moves or is startled. */

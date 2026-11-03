@@ -1,4 +1,5 @@
 #include "IslandSimulator/OctopusRenderer.hpp"
+#include "IslandSimulator/OctopusGroundPose.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/UnderwaterFog.hpp"
 #include "IslandSimulator/RuntimeDiagnostics.hpp"
@@ -42,8 +43,7 @@ void TriColors(std::vector<VertexPositionColor>&o,const Vector3&a,const Color ca
 {o.emplace_back(a,ca);o.emplace_back(b,cb);o.emplace_back(c,cc);}
 Color MixColor(const Color&a,const Color&b,const float amount){const float t=std::clamp(amount,0.0f,1.0f);const auto channel=[&](const std::uint8_t x,const std::uint8_t y){return static_cast<int>(std::lround(x+(y-x)*t));};return Color(channel(a.getRProperty(),b.getRProperty()),channel(a.getGProperty(),b.getGProperty()),channel(a.getBProperty(),b.getBProperty()),255);}
 Color LitColor(const Color&base,const Vector3&normal,const float variation){const Vector3 sun=Vector3::Normalize(Vector3(.46f,.83f,-.31f));const float light=(.64f+.34f*std::max(0.0f,Vector3::Dot(normal,sun)))*variation;return Color(static_cast<int>(std::clamp(base.getRProperty()*light,0.0f,255.0f)),static_cast<int>(std::clamp(base.getGProperty()*light,0.0f,255.0f)),static_cast<int>(std::clamp(base.getBProperty()*light,0.0f,255.0f)),255);}
-struct Basis{Vector3 c,r,u,f;float s;Vector3 point(float x,float y,float z)const{return c+r*(x*s)+u*(y*s)+f*(z*s);}};
-Basis basis(const OctopusState&o){Vector3 f(std::cos(o.headingRadians),0,std::sin(o.headingRadians));return{{o.x,o.y,o.z},{-f.Z,0,f.X},Vector3::Up,f,o.scale};}
+using Basis=octopus_pose::Frame;
 void Ellipsoid(std::vector<VertexPositionColor>&out,const Basis&b,Vector3 local,float rx,float ry,float rz,Color top,Color side){
     constexpr int rings=8,sides=16;
     std::array<std::array<Vector3,sides>,rings> positions{};
@@ -110,36 +110,16 @@ void EyeLens(std::vector<VertexPositionColor>&out,const Basis&b,float side,const
 // The arms: six-sided tubes, a little flattened, lit by their own normals, mottled along their
 // length with dark patches and pale flecks, paler underneath, tapering to pinched tips; two rows
 // of pale suckers run down each underside, shrinking toward the tip.
-void Arms(std::vector<VertexPositionColor>&out,const OctopusState&o,const Basis&b,const Palette&p,const float hide,const float jet){
+void Arms(std::vector<VertexPositionColor>&out,const OctopusState&o,const Basis&b,const Palette&p,const RenderedTerrainSurface* ground){
     constexpr int Sides=6,Segments=7;
     for(int arm=0;arm<8;++arm){
-        const float angle=2*std::numbers::pi_v<float>*arm/8+.18f;
-        std::array<Vector3,Segments+1> centre{},across{},along{};
-        std::array<float,Segments+1> width{};
-        centre[0]=b.point(std::cos(angle)*.17f,.075f,std::sin(angle)*.17f);
-        width[0]=.094f*b.s;
-        across[0]=b.f*std::cos(angle)-b.r*std::sin(angle);
-        const float reach=(arm==o.probeArm?std::clamp(o.probe,0.f,1.f):0.f);
-        for(int seg=1;seg<=Segments;++seg){
-            const float t=seg/static_cast<float>(Segments);
-            const float length=(.42f+.66f*(1-hide)+.12f*jet+.55f*reach)*t;
-            const float curl=std::sin(o.armWave+arm*.93f+seg*.62f)*.17f*t*t*(1-.85f*jet)*(1-.9f*reach);
-            const float a=angle+curl;
-            centre[static_cast<std::size_t>(seg)]=b.point(std::cos(a)*length,.047f+.035f*std::sin(o.armWave+seg*.8f)*(1-t),std::sin(a)*length);
-            width[static_cast<std::size_t>(seg)]=(.088f*(1-t)*(1-.15f*t)+.006f)*b.s;
-            across[static_cast<std::size_t>(seg)]=b.f*std::cos(a)-b.r*std::sin(a);   // square to the arm's run
-        }
-        for(int i=0;i<=Segments;++i){
-            const auto at=static_cast<std::size_t>(i);
-            along[at]=centre[static_cast<std::size_t>(std::min(i+1,Segments))]-centre[static_cast<std::size_t>(std::max(i-1,0))];
-            along[at].Normalize();
-        }
+        const auto pose=octopus_pose::MakeArm(o,b,arm,ground);
         const auto ring=[&](const int i,const int k,Vector3&position,Color&color){
             const auto at=static_cast<std::size_t>(i);
             const float theta=2*std::numbers::pi_v<float>*k/Sides+std::numbers::pi_v<float>/Sides;
             const float c=std::cos(theta),sn=std::sin(theta);
-            position=centre[at]+across[at]*(c*width[at])+b.u*(sn*width[at]*.65f);
-            Vector3 normal=across[at]*c+b.u*(sn/.65f);
+            position=octopus_pose::RingPoint(b,pose[at],k);
+            Vector3 normal=pose[at].across*c+b.u*(sn/.65f);
             normal.Normalize();
             // the upper side the arm's colour toward the highlight, the underside paler
             Color pigment=sn>0.0f?MixColor(p.arm,p.highlight,.25f*sn):MixColor(p.arm,p.sucker,.40f*-sn);
@@ -162,24 +142,24 @@ void Arms(std::vector<VertexPositionColor>&out,const OctopusState&o,const Basis&
         const Color suckerColor=LitColor(p.sucker,-b.u,.92f);
         for(int i=1;i<Segments;++i){
             const auto at=static_cast<std::size_t>(i);
-            const float radius=width[at]*.30f;
+            const float radius=pose[at].width*.30f;
             for(const float sideSign:{-1.0f,1.0f}){
-                const Vector3 disc=centre[at]+across[at]*(sideSign*width[at]*.40f)-b.u*(width[at]*.60f+.003f*b.s);
-                const Vector3 x=across[at]*radius,y=along[at]*radius;
+                const Vector3 disc=pose[at].centre+pose[at].across*(sideSign*pose[at].width*.40f)-b.u*(pose[at].width*.60f+.003f*b.s);
+                const Vector3 x=pose[at].across*radius,y=pose[at].along*radius;
                 TriColors(out,disc-y,suckerColor,disc+x,suckerColor,disc+y,suckerColor);
                 TriColors(out,disc-y,suckerColor,disc+y,suckerColor,disc-x,suckerColor);
             }
         }
     }
 }
-void Near(std::vector<VertexPositionColor>&out,const OctopusState&o){const std::size_t first=out.size();const Palette p=Camouflaged(P[o.colorVariant%P.size()],o.camouflageAmount);const Basis b=basis(o);float hide=std::clamp(o.hideAmount,0.f,1.f);float jet=std::clamp(o.jet,0.f,1.f);float pulse=(1+o.mantlePulse*.045f)*(1-.22f*jet);Ellipsoid(out,b,{0,.31f*(1-hide*.48f),-.34f},.19f*pulse,.33f*(1-hide*.45f),.55f*pulse,p.highlight,p.mantle);Ellipsoid(out,b,{0,.145f,.13f},.315f,.15f,.285f,MixColor(p.mantle,p.highlight,.30f),MixColor(p.shadow,p.mantle,.65f));
+void Near(std::vector<VertexPositionColor>&out,const OctopusState&o,const RenderedTerrainSurface* ground){const std::size_t first=out.size();const Palette p=Camouflaged(P[o.colorVariant%P.size()],o.camouflageAmount);const Basis b=octopus_pose::MakeFrame(o,ground);float hide=std::clamp(o.hideAmount,0.f,1.f);float jet=std::clamp(o.jet,0.f,1.f);float pulse=(1+o.mantlePulse*.045f)*(1-.22f*jet);Ellipsoid(out,b,{0,.31f*(1-hide*.48f),-.34f},.19f*pulse,.33f*(1-hide*.45f),.55f*pulse,p.highlight,p.mantle);Ellipsoid(out,b,{0,.145f,.13f},.315f,.15f,.285f,MixColor(p.mantle,p.highlight,.30f),MixColor(p.shadow,p.mantle,.65f));
 for(float side:{-1.f,1.f})EyeSocket(out,b,side,p);
 for(float side:{-1.f,1.f})EyeLens(out,b,side,p);
-Arms(out,o,b,p,hide,jet);
+Arms(out,o,b,p,ground);
 if(out.size()-first!=NearVertexCount)throw std::runtime_error("Octopus near mesh does not match its exact vertex budget");
 }
-void Far(std::vector<VertexPositionColor>&out,const OctopusState&o){const Palette p=Camouflaged(P[o.colorVariant%P.size()],o.camouflageAmount);const Basis b=basis(o);Vector3 top=b.point(0,.62f,0),left=b.point(-.32f,.08f,.05f),right=b.point(.32f,.08f,.05f),rear=b.point(0,.08f,-.30f);DTri(out,top,left,right,p.mantle);DTri(out,left,rear,right,p.shadow);for(float side:{-1.f,1.f})DTri(out,rear,b.point(side*.58f,.04f,-.20f),b.point(side*.85f,.02f,-.38f),p.arm);}
+void Far(std::vector<VertexPositionColor>&out,const OctopusState&o,const RenderedTerrainSurface* ground){const Palette p=Camouflaged(P[o.colorVariant%P.size()],o.camouflageAmount);const Basis b=octopus_pose::MakeFrame(o,ground);Vector3 top=b.point(0,.62f,0),left=b.point(-.32f,.08f,.05f),right=b.point(.32f,.08f,.05f),rear=b.point(0,.08f,-.30f);DTri(out,top,left,right,p.mantle);DTri(out,left,rear,right,p.shadow);for(float side:{-1.f,1.f})DTri(out,rear,b.point(side*.58f,.04f,-.20f),b.point(side*.85f,.02f,-.38f),p.arm);}
 }
 OctopusRenderer::OctopusRenderer(GraphicsDevice&d,float max):device_(d),effect_(std::make_unique<BasicEffect>(d)),vertices_(std::make_unique<DynamicVertexBuffer>(d,VertexPositionColor::getVertexDeclarationStatic(),Max,BufferUsage::WriteOnly)),maximumDistance_(max){if(!std::isfinite(max)||max<=0)throw std::invalid_argument("Octopus maximum distance must be finite and positive");effect_->setVertexColorEnabledProperty(true);effect_->setLightingEnabledProperty(false);effect_->setFogEnabledProperty(true);effect_->setFogColorProperty(Vector3(environment::FogColorRed,environment::FogColorGreen,environment::FogColorBlue));effect_->setFogStartProperty(145);effect_->setFogEndProperty(310);staging_.reserve(Max);constexpr auto marker="island-simulator: octopuses use pulsing mantles, expressive eyes, eight independently curled arms, and pale sucker rows in one draw";std::cout<<marker<<'\n';MirrorRuntimeDiagnosticToPlatformLog(marker);std::cout<<OctopusProfileDiagnostic<<'\n';MirrorRuntimeDiagnosticToPlatformLog(OctopusProfileDiagnostic);std::cout<<OctopusGeometryDiagnostic<<'\n';MirrorRuntimeDiagnosticToPlatformLog(OctopusGeometryDiagnostic);std::cout<<OctopusEyeDiagnostic<<'\n';MirrorRuntimeDiagnosticToPlatformLog(OctopusEyeDiagnostic);std::cout<<OctopusAnatomyDiagnostic<<'\n';MirrorRuntimeDiagnosticToPlatformLog(OctopusAnatomyDiagnostic);}OctopusRenderer::~OctopusRenderer()=default;
-void OctopusRenderer::Draw(const Matrix&v,const Matrix&p,const Vector3&camera,std::span<const OctopusState> animals){staging_.clear();visible_=near_=far_=draws_=0;BoundingFrustum frustum(v*p);for(const auto&o:animals){Vector3 c(o.x,o.y+.3f*o.scale,o.z);float ds=Vector3::DistanceSquared(c,camera);if(ds>maximumDistance_*maximumDistance_||!frustum.Intersects(BoundingSphere(c,1.4f*o.scale)))continue;if(ds<=NearDistance*NearDistance){Near(staging_,o);++near_;}else{Far(staging_,o);++far_;}++visible_;}if(staging_.empty())return;device_.setRasterizerStateProperty(RasterizerState::CullNone);device_.setBlendStateProperty(BlendState::Opaque);device_.setDepthStencilStateProperty(DepthStencilState::Default);vertices_->SetData(staging_.data(),0,static_cast<int>(staging_.size()),SetDataOptions::Discard);device_.SetVertexBuffer(vertices_.get());device_.setIndicesProperty(nullptr);effect_->setWorldProperty(Matrix::getIdentityProperty());effect_->setViewProperty(v);effect_->setProjectionProperty(p);underwater_fog::Apply(*effect_,145.0f,310.0f);effect_->Apply();device_.DrawPrimitives(PrimitiveType::TriangleList,0,static_cast<int>(staging_.size()/3));++draws_;}
+void OctopusRenderer::Draw(const Matrix&v,const Matrix&p,const Vector3&camera,std::span<const OctopusState> animals){staging_.clear();visible_=near_=far_=draws_=0;BoundingFrustum frustum(v*p);for(const auto&o:animals){Vector3 c(o.x,o.y+.3f*o.scale,o.z);float ds=Vector3::DistanceSquared(c,camera);if(ds>maximumDistance_*maximumDistance_||!frustum.Intersects(BoundingSphere(c,1.4f*o.scale)))continue;if(ds<=NearDistance*NearDistance){Near(staging_,o,ground_);++near_;}else{Far(staging_,o,ground_);++far_;}++visible_;}if(staging_.empty())return;device_.setRasterizerStateProperty(RasterizerState::CullNone);device_.setBlendStateProperty(BlendState::Opaque);device_.setDepthStencilStateProperty(DepthStencilState::Default);vertices_->SetData(staging_.data(),0,static_cast<int>(staging_.size()),SetDataOptions::Discard);device_.SetVertexBuffer(vertices_.get());device_.setIndicesProperty(nullptr);effect_->setWorldProperty(Matrix::getIdentityProperty());effect_->setViewProperty(v);effect_->setProjectionProperty(p);underwater_fog::Apply(*effect_,145.0f,310.0f);effect_->Apply();device_.DrawPrimitives(PrimitiveType::TriangleList,0,static_cast<int>(staging_.size()/3));++draws_;}
 }

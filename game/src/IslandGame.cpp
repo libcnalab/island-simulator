@@ -14,6 +14,7 @@
 #include "IslandSimulator/WindGust.hpp"
 #include "IslandSimulator/WildlifeRenderLighting.hpp"
 #include "IslandSimulator/DayNightCycle.hpp"
+#include "IslandSimulator/OctopusInspection.hpp"
 #include "IslandSimulator/SlopeScrubLayout.hpp"
 #include "IslandSimulator/IslandGame.hpp"
 #include "IslandSimulator/CaveSite.hpp"
@@ -2010,7 +2011,18 @@ namespace island
             pitch_=std::atan2(toRay.Y,std::hypot(toRay.X,toRay.Z));
             std::cout<<"island-simulator: stingray QA camera frames one settled ray lying half-buried in the sand\n";
         } else if(viewpoint_==FixedViewpoint::OctopusDetail&&!octopusGroup_.Octopuses().empty()){
-            const auto& o=octopusGroup_.Octopuses().front();Vector3 forward(std::cos(o.headingRadians),0,std::sin(o.headingRadians)),side(-forward.Z,0,forward.X);
+            if(const char* subject=std::getenv("ISLAND_QA_OCTOPUS_MOTION");subject&&!capturePath_.empty()) {
+                octopusQaSubjectIndex_=std::stoul(subject);
+                if(octopusQaSubjectIndex_>=octopusGroup_.Octopuses().size())throw std::runtime_error("Octopus QA subject is out of range");
+                octopusMotionInspection_=true;
+                // Actual AI warmup: subject3 starts just before it settles from a swim;
+                // subjects0/1 expose crawling and foraging without moving an animal by hand.
+                for(int step=0;step<120;++step) {
+                    const auto o=octopusGroup_.Octopuses()[octopusQaSubjectIndex_];
+                    octopusGroup_.Update(.1f,o.x+10,o.y,o.z);
+                }
+            }
+            const auto& o=octopusGroup_.Octopuses()[octopusQaSubjectIndex_];Vector3 forward(std::cos(o.headingRadians),0,std::sin(o.headingRadians)),side(-forward.Z,0,forward.X);
             cameraPosition_=Vector3(o.x,o.y+.28f,o.z)+forward*1.65f+side*.85f+Vector3::Up*.36f;
             const Vector3 target(o.x,o.y+.24f,o.z);const auto d=target-cameraPosition_;yaw_=std::atan2(d.X,d.Z);pitch_=std::atan2(d.Y,std::hypot(d.X,d.Z));
             std::cout<<"island-simulator: octopus QA camera frames one exposed reef forager and all eight arms\n";
@@ -4126,6 +4138,7 @@ namespace island
         deer_->SetGround(drawnGround_.get());   // and the deer stand on its banks to drink
         elephant_->SetGround(drawnGround_.get());   // broad soles share the visible mesh and local patches
         trex_->SetGround(drawnGround_.get());   // the balls and toes use that same visible support
+        octopusRenderer_->SetGround(drawnGround_.get()); // resting arms conform to the visible seabed
         playerMotion_.SetCave(&terrainRenderer_->Cave(),&terrainRenderer_->CaveGround());
         playerMotion_.SetBunker(&bunkerLayout_);
         playerMotion_.SetMine(&mineLayout_);
@@ -6401,12 +6414,14 @@ namespace island
                                      subject.y-previousStingraySubject.y,
                                      subject.z-previousStingraySubject.z);
         }
-        const auto previousOctopus=octopusGroup_.Octopuses().front();
+        const auto previousOctopus=octopusGroup_.Octopuses()[octopusQaSubjectIndex_];
         updateProfile_.Mark("octopusGroup");
-        octopusGroup_.Update(viewpoint_==FixedViewpoint::OctopusDetail?0.0f:deltaSeconds,cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z);
+        if(octopusMotionInspection_) // Keep the nearby inspection camera out of the fright stimulus.
+            octopusGroup_.Update(deltaSeconds,previousOctopus.x+10,previousOctopus.y,previousOctopus.z);
+        else octopusGroup_.Update(viewpoint_==FixedViewpoint::OctopusDetail?0.0f:deltaSeconds,cameraPosition_.X,cameraPosition_.Y,cameraPosition_.Z);
         updateProfile_.Mark("octopusInk");
         octopusInk_.Update(deltaSeconds,octopusGroup_.LastInk());
-        if(viewpoint_==FixedViewpoint::OctopusDetail){const auto& o=octopusGroup_.Octopuses().front();cameraPosition_+=Vector3(o.x-previousOctopus.x,o.y-previousOctopus.y,o.z-previousOctopus.z);}
+        if(viewpoint_==FixedViewpoint::OctopusDetail){const auto& o=octopusGroup_.Octopuses()[octopusQaSubjectIndex_];cameraPosition_+=Vector3(o.x-previousOctopus.x,o.y-previousOctopus.y,o.z-previousOctopus.z);}
         const SeaTurtleState previousTurtleSubject = seaTurtleGroup_.Turtles()[2U];
         {
             const SharkState& shark = sharkPatrol_.State();
@@ -9172,7 +9187,8 @@ namespace island
             bearRenderer_->DrawShadow(cameraView_,cameraProjection_,renderCameraPosition_,bear_->State());
             birdShadowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,birdFlock_.Birds());
             seabedShadowRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,
-                fishSchools_.Fish(),stingrayGroup_.Stingrays(),seaTurtleGroup_.Turtles(),&sharkPatrol_.State());
+                fishSchools_.Fish(),stingrayGroup_.Stingrays(),seaTurtleGroup_.Turtles(),&sharkPatrol_.State(),
+                octopusGroup_.Octopuses());
             if (waterholeRenderer_) waterholeRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_);
             footprintRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,footprints_.Prints());
             if(tyreTrackRenderer_) tyreTrackRenderer_->Draw(cameraView_,cameraProjection_,renderCameraPosition_,tyreTracks_.Tracks());
@@ -10693,6 +10709,13 @@ namespace island
         }
         const bool freeMotionCapture = !capturePath_.empty()
             && (viewpoint_ == FixedViewpoint::FishMotionDetail || viewpoint_ == FixedViewpoint::BirdFlightDetail);
+        if(octopusMotionInspection_&&drawnFrames_%4U==1U&&drawnFrames_<=64U) {
+            const auto& o=octopusGroup_.Octopuses()[octopusQaSubjectIndex_];
+            const auto stage=drawnFrames_/4U;
+            CaptureFrame(capturePath_+".octopus-stage-"+std::to_string(stage)+".ppm");
+            std::cout<<octopus_inspection::MotionProof(o,*drawnGround_,drawnFrames_,timeSeconds,
+                octopusQaSubjectIndex_,octopusRenderer_->VisibleCount())<<std::endl;
+        }
         if (freeMotionCapture && drawnFrames_%2U == 0U && drawnFrames_ <= 32U) {
             const bool fish = viewpoint_ == FixedViewpoint::FishMotionDetail;
             const auto& f = fishSchools_.Fish().front();
@@ -10998,7 +11021,7 @@ namespace island
             std::cout<<proof.str()<<'\n';
             if(drawnFrames_%8U==0)CaptureFrame(capturePath_+".mist-stage-"+std::to_string(drawnFrames_/8U-1U)+".ppm");
         }
-        const std::uint32_t targetFrames = mistDrift||trexTurn||elephantWalk||elephantTurn ? 64U : viewpoint_==FixedViewpoint::CrocodileLandDetail ? 160U : bunkerTurnInspection_ ? BunkerTurnInspection::CaptureFrames : alienCapture||goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture||deerCapture ? 64U : viewpoint_==FixedViewpoint::QuadMineCratesDetail ? 56U : freeMotionCapture||snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
+        const std::uint32_t targetFrames = mistDrift||trexTurn||elephantWalk||elephantTurn ? 64U : viewpoint_==FixedViewpoint::CrocodileLandDetail ? 160U : bunkerTurnInspection_ ? BunkerTurnInspection::CaptureFrames : octopusMotionInspection_||alienCapture||goatCapture||spiderCapture||boarCapture||residentCapture||bearCapture||deerCapture ? 64U : viewpoint_==FixedViewpoint::QuadMineCratesDetail ? 56U : freeMotionCapture||snakeCapture||UsesCampfireCaptureClock()||UsesStreamCaptureClock()||QuadDriveView() ? 32U : !monkeyTreeQaPoses_.empty() ? 36U : !capturePath_.empty()
                 && (viewpoint_ == FixedViewpoint::MonkeyDetail || viewpoint_ == FixedViewpoint::MonkeyTreeDetail || viewpoint_ == FixedViewpoint::MonkeyClimbDetail)
             ? MonkeyCaptureFrames : SmokeTestFrames;
         if (captureTideHeld_ && (drawnFrames_ == 1U || drawnFrames_ == targetFrames)) {

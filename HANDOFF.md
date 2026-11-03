@@ -58,12 +58,39 @@ Shadow refinement app044aff6d render20261103T154709.690186Z-octopuses was review
 raw after index: `build/campaign-octopus-ground-after-views.json` (retain this concrete citation).
 The existing shadow batch uses refracted current sunlight and existing weather/night strength.
 
-Current WIP adds optional ISLAND_QA_OCTOPUS_MOTION=0/1/3 to the existing octopus capture only:
+The grounding stage adds optional ISLAND_QA_OCTOPUS_MOTION=0/1/2/3 to the existing octopus capture only:
 12sactual AI warmup,64fixed updates,16rendered stages, selected subject tracking, actual arm-gap
 proof and scoped corruption validator. Default frozen view stays unchanged. The optional motion
 scope has180ssoftware deadline, separate from default65s; this does not retroactively pass the
-failed boar run or change its test.79launcher tests pass; motion build/actual renders, matched
-controls, cost and full integration remain pending. Goal ACTIVE beyond this stage.
+failed boar run or change its test.79launcher tests and108/108safe CTests pass240.10s, Release
+OPENGL33, max4compilation CPUs. Final grounding appbdcfd92c uses unchanged CNA950faa71.
+Three64frame/16stage motion scopes pass; all32subject0/1stages actually inspected and all16
+subject3stages byte-exact to the reviewed prototype. Five static lighting/weather mains were
+inspected, including a failed thunderstorm image gate:17.9126luminance deviation<18. A distinct
+old-app control also fails17.8138; no threshold was weakened and neither is a normal pass.
+
+Concrete retention/review indices: `build/campaign-octopus-ground-control-views.json`,
+`build/campaign-octopus-ground-visual-evidence.json`, `build/campaign-octopus-motion-views.json`,
+`build/campaign-octopus-storm-qualification-control.json`. Matched clear old/new main images
+were actually inspected in `build/campaign-octopus-ground-matched-pair.png`: arms settle onto
+the visible bed and a restrained body shadow restores contact without adding model polygons.
+
+One matched llvmpipe/Pixman benchmark pair:1280x720,VSyncOff,120warmup/600samples,721updates
+and identical tracked scene ranges. Mean283.228→307.354ms(+8.52%),p95+10.00%,p99+25.88%;
+peakRSS732200→729796KiB(-.33%). Startup14.184→22.809s(+60.81%), including unchanged world
+construction8.019→13.675s; this substantial timing uncertainty is retained for investigation,
+not silently accepted as no regression. Existing tracked submissions omit the seabed-shadow
+pass; actual extra geometry is12shadowtriangles per octopus/max48 in its existing batch.
+Verified software/private devices, unchanged binary/runtime and empty kernel deltas throughout.
+Exact pair evidence: `build/campaign-octopus-ground-cost-evidence.json`.
+
+Existing AI/navigation fields reproduce exactly in28804snapshots(hashc3dd06ba7c4164ca), excluding
+the new pose blend. However subject3's old den intersects an existing reef boulder: actual rock
+mesh/body probe finds72/256bodyvertices inside after settling (original max penetration.451m,
+grounded.485m). Ground contact does not fix obstacle integration. This confirmed remaining
+application defect is the next correction; do not present natural den occlusion as its solution.
+Probe:build/campaign-octopus-rock-body-probe.log. Whole integration and cost uncertainty remain
+pending; the original campaign goal remains ACTIVE beyond the grounding stage.
 
 Latest continuation from clean/synced develop/cd800d00 shipped bird-eye surface fitting in
 `b141b2e2` and deer world-foot contacts/torso integration in `fb7f494b`. Original attachment,
