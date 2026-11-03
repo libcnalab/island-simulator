@@ -1,4 +1,4 @@
-# Comprehensive visual cohesion campaign — ACTIVE continuation after 407da137
+# Comprehensive visual cohesion campaign — available software qualification after 00f8185c
 
 The whole original superprompt/attachment is assessed in the final acceptance ledger at the
 end of this file. Earlier premature completion conclusions and ACTIVE checkpoints remain as
@@ -3424,3 +3424,84 @@ refused, diagnosed and corrected in the local fixture/parser without changing ap
 dependency code. Normal qualification now rejects unavailable receivers AND casters as well
 as existing material fallbacks. All77launcher tests pass; updated gate accepts all62retained
 normal logs. New70-view final matrix is running; goal remains ACTIVE through full review.
+
+## Original 1–24 renewed acceptance after 00f8185c
+
+The earlier detailed acceptance tables remain supporting evidence for unchanged systems. Every
+original criterion was revisited below after both new implementation stages and the final whole
+island review. This is available software qualification, with the remaining limits explicit.
+
+Current app SHA: `94ff2a6a8398750f03d0cc03da2378a06e7e32695bc36b1251578c786de8f488`.
+Runtime SHA: `950faa719ec2fb51cde7220d3e28100f2609731ede56c7cf4088bda0d2dcde5c`.
+`build/campaign-windthrow-final-verification.json` passed after checking the actual artifacts,
+70 normal scopes, four separate fallback scopes, test evidence, controlled costs and free
+graphical qualification lock. No build/test/capture/benchmark workload remains pending.
+
+| Original criterion | Current evidence and limits |
+| --- | --- |
+| 1. Context | Fresh tracked inventory: 802 C++/header files, 159,756 lines. Valid world fingerprint remains `238be1fec0a0cdd7`. Existing content inspected rather than recreated. |
+| 2. Preservation | Clean `407da137` entry preserved. Focused C++/CNA changes only; no external source/binary patch, dependencies, architecture replacement, content removal, destructive Git operation or merge. |
+| 3. Hardware safety | Incident reread. Actual isolated llvmpipe/Pixman and private GPU-free devices verified in all current graphical scopes. Physical AMDGPU and system configuration untouched. |
+| 4. Investigation | Six additional forest/coastal/interior views inspected; a real bark mismatch and an independently reproduced permissive qualification gate led to implementation. Prior disproved palm/water hypotheses were not silently revived. |
+| 5. Vegetation, 5.1–5.6 | Existing ecology, layers, forest floor, grounding and LOD retained. Fallen giant now shares filtered canopy bark, preserving moss/lichen and original geometry/colours. Six matched day/dawn/night/storm/approach pairs inspected; circular coordinates follow its bent axis and avoid the angular seam. |
+| 6. Terrain, 6.1–6.6 | Authoritative terrain and collision unchanged. Current ground, ridge/contact, cave/top, mine cutting, coastline and volcanic views inspected; support/soil/cave tests pass. Earlier geological/grounding corrections and camera proof retained. |
+| 7. Water, 7.1–7.7 | Current swimming-height, reef, coast, shipwreck, gallery and overview reviewed. Existing nine-wave packet/normal/depth/foam/caustic/tide work retained; earlier controlled water diagnostics do not justify a new speculative rewrite. Tide/swimming tests and unchanged-controller live evidence remain applicable. |
+| 8. Wildlife, 8.1–8.6 | Current crocodile, bear, boar/goat rest, elephant/TRex turn and new dove/mudskipper/weaver habitat views reviewed. Motion/support gates pass; corresponding animal stages remain exact. No new species or rig changes. |
+| 9. Resident, 9.1–9.5 | Walking/tending/fishing inspected. Seven changed walking stages were freshly reviewed: difference boxes lie at x1157–1280/y326–347 on the distant trunk, outside the resident. Body/pose controls remain exact; no anatomy improvement is claimed for this turn. |
+| 10. Lighting/materials/shadows | Bark uses existing material/shadow/fog architecture, with derivatives evaluated before material selection. Other structure surfaces remain unchanged. Normal captures now refuse unavailable receivers/casters; four actual failure-path combinations are separately qualified, not counted as normal-material passes. |
+| 11. Landmarks, 11.1–11.4 | Hut, wreck, cave, mine, bunker, lighthouse/cottage, plane, castle, UFO, alien and approaches inspected. Hut's small changed background is the existing fallen trunk. No relocation/removal or new clutter. |
+| 12. Traversal, 12.1–12.5 | Current 800-frame bunker entry/turn/forward escape and 16 stages pass and remain exact, alongside CPU terrain/collision/swimming/vehicle tests. Controllers and solid geometry unchanged. Existing 18-degree reverse rear-traction limit remains documented. |
+| 13. Performance, 13.1–13.4 | One matched software pair shares exact 721 updates/72.1 seconds and recorded scene/population ranges. Mean +0.36%, median +0.48%, p95 +0.27%, process peak RSS +2.22%. Same 15,986 triangles/one draw/one buffer; explicit vertex payload +575,496 bytes. Cold startup cost retained below; no native timing claim. |
+| 14. Maintainability/determinism | Small coordinate helper and focused tests outside the large source files. IslandGame remains 769,148 bytes; CoreTests remains 913,682 bytes. No hidden state or generated production code. Fixed world/placement fingerprint retained. |
+| 15. Visual QA, 15.1–15.5 | All 70 current main images and seven changed resident stages actually inspected. 81 other stages carry forward exact prior review; 158 normal PNGs total, 144 exact controls. Six bark pairs and four fallback images separately inspected. No golden image update accepted as proof. |
+| 16. Stages | Baseline habitat review → shared fallen bark/profile correction → controlled visual/cost/test validation → strict structure gate and actual fallback paths → full current matrix and acceptance. Existing facilities reused. |
+| 17. Autonomy | Continued beyond the first stage. Source commits `c3f1deb3` and `00f8185c` pushed while qualification continued. No ordinary approval requests; unsuccessful fixture/parser attempts retained with precise causes. |
+| 18. Quality bar | Release/OpenGL33 built with CPU affinity 0–3/`-j2`; fixture compilation also limited to those four cores. All 103 safe CTests pass in 83.22 seconds. Latest launcher 77/77 and validator 11/11 pass after final gate edits. Of 141 registered tests, 36 display tests and two orphan validators were excluded from the CPU command. |
+| 19. Known issues | External CNA and AMDGPU issues remain open/read-only. Audio remains user-closed. Qualification-gate defects belong to this repository. Neither new bark costs nor receiver fault injection explain the earlier unresolved wetland software latency. |
+| 20. Integration | Fresh forest, floor, coast, underwater, animal, resident, landmark, weather, night, dawn and traversal matrix finds no further major demonstrated correction. Material changes stay on the trunk, including its small distant background appearances. |
+| 21. Stopping | Observed defects corrected, relevant visual/test/cost conditions satisfied within explicit bounds, and all original criteria reassessed. Further feature/rig/terrain rewrites lack demonstrated need. Delivery identity and clean remote state are checked after the documentation commit, before closure. |
+| 22. Deliverables | Actual source in two cohesive pushed commits; paired images, raw safe scopes, world/test manifests, cost and fixture provenance retained under build/. Final delivery proof records the documentation commit and actual remote HEAD. |
+| 23. Principles | Existing forest material improves natural integration without more triangles, draws, textures, population or landmarks. Determinism, traversal and architecture preserved. |
+| 24. Outcome | Earlier forest/terrain/water/wildlife/resident/landmark improvements remain supported; fallen bark now belongs to the same material world. Qualification now detects missing structure shading and exercises its fallbacks honestly. No photorealism, zero-defect or full-platform claim. |
+
+Current visual evidence: `build/campaign-windthrow-holistic-evidence.json`, sheets
+`build/campaign-windthrow-holistic-{1..12}.png`, changed-stage sheets
+`build/campaign-windthrow-changed-stages-{1,2}.png`, and matched bark pairs
+`build/campaign-windthrow-pairs-{1..3}.png`. Seven changed mains plus seven changed stages
+account for all non-exact normal images. The early audit's assumption that every subsidiary
+stage would be exact was correctly refused when background bark appeared in resident stages;
+all seven were inspected before acceptance. Scope-specific fallback images and provenance are
+in `build/campaign-receiver-fallback-evidence.json`, outside the normal 70-scope result.
+
+Performance evidence: `build/campaign-windthrow-cost-evidence.json`. Before → after software
+mean 223.6389 → 224.4335 ms, median 221.2732 → 222.3392 ms, p95 236.8939 → 237.5450 ms,
+peak RSS 812,368 → 830,412 KiB. Cold first draw 362.640 → 813.452 ms; complete startup
+6,440.363 → 6,860.887 ms (+420.524 ms, about 6.5%). The first-draw increase is preserved
+rather than hidden behind warmed samples; no isolated JIT/host-cause or native performance
+attribution is claimed. One buffer's payload grows from 767,328 to 1,342,824 bytes; geometry,
+shadow/collision positions, original RGB, texture budget and draw count are unchanged.
+
+Commands actually run include:
+
+```sh
+taskset --cpu-list 0,1,2,3 env CCACHE_DIR="$PWD/build/ccache" cmake --build build -j2
+taskset --cpu-list 0,1,2,3 ctest --test-dir build -LE display -E '^(IslandGameStartupReportValidation|IslandGameCaptureValidation)$' --output-on-failure -j2
+python3 tests/SoftwareCaptureTests.py
+python3 tests/ValidateCaptureTests.py
+python3 tools/run_software_capture.py build glowing-fungi
+python3 build/campaign_windthrow_holistic.py
+```
+
+Exact build/test logs are `build/campaign-windthrow-{bark-build,tests-build,safe-tests}.log`,
+`build/campaign-receiver-final-gate-tests.log` and
+`build/campaign-windthrow-final-validator-tests.log`; registered-test manifest is
+`build/campaign-windthrow-tests.json`.
+
+Remaining bounds: previous wetland software latency attribution is unresolved; physical AMDGPU,
+current Debug/Web/GLES/Android/other backends remain unqualified; external CNA/driver issues
+and the existing reverse-traction limit remain documented. The former unexercised stock
+receiver fallback gap is narrowed by four real OpenGL33 constructor-rejection paths, but this
+is not qualification of an actual backend without custom effects. No risky hardware workload
+or external patch is warranted. The following documentation commit records acceptance; actual
+local/tracking/remote identity and clean worktree are checked in
+`build/campaign-windthrow-final-delivery.json` after creation and before goal closure.

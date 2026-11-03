@@ -22,6 +22,11 @@ Status markers:
 
 ## Visual cohesion campaign — 2026-11-01–03 (software qualified)
 
+- Follow-up from `407da137`: fallen giant reuses filtered canopy bark with bent-axis circular
+  coordinates; same geometry/draw count, +562 KiB vertex payload. Six matched lighting pairs,
+  103 safe tests, 70 normal scenes/158 images and four separate stock-receiver fallback paths
+  qualify the change. Normal qualification now rejects missing structure receivers/casters.
+  Warm software mean +0.36%; observed cold startup +0.42 s. Full criteria/limits in HANDOFF.md.
 - Continued review from d50ccc9f: bounded ground-contact inspection camera; keeper cottage reuses
   filtered masonry with its original geometry and separately culled material range. Named
   benchmarks now visit reproducible simulation states and count lighthouse submissions.
