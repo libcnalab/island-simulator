@@ -1,23 +1,27 @@
-# Comprehensive visual cohesion campaign — ACTIVE continuation from cd800d00
+# Comprehensive visual cohesion campaign — current software qualification, 2026-11-03
 
-Reopened at the user's request after the qualified checkpoint below. Entry develop/cd800d00
-clean/synced; original attachment, README/PLAN/BUGS and open GPUVM incident reread. Four-core
-compilation limit remains; verified contained llvmpipe/Pixman only. Six less-reviewed current
-baselines in build/campaign-habitat-before-views.json cover monkey scratch/climb, bird flight,
-fish motion, helicopter approach and ground broadleaf. Actual full images inspected. The
-parrot's eye ring visibly breaks into pale shards: near lofted-head eye x uses an approximate
-0.88width multiplier, burying parts of its discs inside the actual triangulated head. Next:
-fit existing eye vertices to the shared real profile, review matching motion/species controls,
-test coverage/cost, then continue the next demonstrated priority and renew original acceptance.
-Goal ACTIVE; no completion at the eye milestone. Entry app d138cecf saved unchanged in
-build/campaign-habitat-entry-binary. Existing source/evidence and rejected hypotheses preserved.
+Latest continuation from clean/synced develop/cd800d00 shipped bird-eye surface fitting in
+`b141b2e2` and deer world-foot contacts/torso integration in `fb7f494b`. Original attachment,
+README/PLAN/BUGS and open GPUVM incident were revisited before implementation. Four-core
+compilation limit retained; external dependencies/audio/hardware untouched. Entry app d138cecf
+is preserved in build/campaign-habitat-entry-binary. Failed prototypes and earlier evidence remain.
 
-Latest continuation: source commits `e96d9723` and `636d0162`, final app `d138cecf`.
-All105safe tests and92normal graphical scopes passed;92main images and51changed/new stages
-actually reviewed,41other stages exact to earlier review. The renewed original1–24ledger at
-the end is the current acceptance record. It retains the observed software first-draw cost,
-earlier latency uncertainty, open AMDGPU/CNA issues and unverified platforms. Documentation
-delivery/local/remote identity is checked separately after commit, before any goal closure.
+Current app `40239532`:107/107safe CTests,78launcher tests and108normal software graphical
+scopes pass. All108main images,87changed stages and24additional exact monkey/fish stages
+actually inspected;77other stages carry byte-exact prior review.296PNGs total. Five accepted
+deer views/all45PNGs reproduce exactly in the final matrix; three64frame proofs have zero
+planted position/rotation slip, with original body telemetry unchanged. Actual llvmpipe/Pixman,
+private devices, unchanged artifacts and empty kernel deltas verified throughout.
+
+The renewed original1–24ledger at the end is the current acceptance record. It records actual
+implementation, matched visual/cost evidence and remaining application/CNA/driver/platform limits.
+`build/campaign-fauna-final-verification.json` passed on the final source/app. Goal stays ACTIVE
+until this documentation is committed/pushed and clean local/actual-remote identity is checked
+in `build/campaign-fauna-final-delivery.json`; no closure at either implementation milestone.
+
+Previous material continuation (`e96d9723`, `636d0162`, appd138cecf) remains supporting evidence
+for unchanged terrain/water systems. Its observed software first-draw cost and earlier latency
+uncertainty are retained, not resolved by the current fauna measurements.
 
 The whole original superprompt/attachment is assessed in the final acceptance ledger at the
 end of this file. Earlier premature completion conclusions and ACTIVE checkpoints remain as
@@ -3781,3 +3785,109 @@ both raw runs. No extra unchanged benchmark loops are needed. The108scope full m
 now running on immutable40239532; `build/campaign-fauna-holistic-artifacts.json` also records
 app/runtime/launcher/contact-validator identities across it. Code stage may be committed/pushed
 while the final qualification continues; goal remains ACTIVE until full review and1–24ledger.
+
+## Original 1–24 renewed acceptance after fb7f494b — 2026-11-03
+
+This continuation passed both implementation milestones, then reassessed the whole original
+attachment against current code, images, tests and retained historical evidence. It supersedes
+the preceding WIP status statements. It does not withdraw the recorded failures or limitations.
+Final verification passed at14:33UTC in `build/campaign-fauna-final-verification.json`;
+the graphical qualification lock is free and no owned build/test/capture/benchmark remains.
+
+Final app SHA: `40239532f948202aac939b2551a2fdbdea75d822ee08ec3a695a69ab8866cc56`.
+CNA SHA: `950faa719ec2fb51cde7220d3e28100f2609731ede56c7cf4088bda0d2dcde5c`.
+`build/campaign-fauna-holistic-artifacts.json` proves identical app/runtime/launcher/contact
+validator content before/after all108scopes. Frozen final app: build/campaign-deer-qualified-binary.
+
+| Original criterion | Current evidence and bounded disposition |
+| --- | --- |
+| 1. Context |811tracked C++/header files,160305lines; IslandGame770216bytes, CoreTests913682bytes. Existing500m nominal world/content retained; valid world fingerprint238be1fec0a0cdd7. Historical inventory was not assumed current. |
+| 2. Preservation | Clean/synced develop/cd800d00 entry preserved. Two focused source commits, original C++/CNA architecture, models, species, routes, landmarks and deterministic generation retained. No external source/runtime patch, new dependency/engine, content removal, relocation, reset, clean or merge. |
+| 3. Hardware safety | Incident/procedure reread before graphics. All runs verify actual llvmpipe LLVM19.1.7, Weston Pixman and private GPU-free devices, with empty kernel deltas. No affected physical GPU workload, incident reproduction or system/driver modification. Hardware qualification remains open. |
+| 4. Investigation | Six fresh less-reviewed forest/habitat/flight baselines inspected, then representative species/weather controls and deer acceleration/turns. Actual head triangles bury old eye discs; actual old hoof endpoints slide up to16.45mm/update. These observations drove implementation rather than speculative feature work. |
+| 5. Vegetation, 5.1–5.6 | Prior correlated ecology, canopy/understory/floor layers, tree/root grounding, bark and bounded aerial LOD retained. Current interior, clearing, broadleaf floor, humid valley, mangrove/coast, sapling/snags/windthrow and elevated views inspected. Existing placement/entrance exclusions and world tests pass; no population/geometry inflation or new vegetation engine. |
+| 6. Terrain, 6.1–6.6 | Authoritative heightfield, geology/soil/incision materials and grounded props retained. Current cave entry/top, ridge/coast, mine/cut, pool/tide, stream/cascade/bank orbit and volcanic views reviewed. Earlier actual roof/entry/stream walking fixes and CPU terrain/collision/support gates remain passing. No new terrain change or universal erosion simulation claimed. |
+| 7. Water, 7.1–7.7 | Current beach/bay, shallow/deep, reef, fish-swim16stages, wreck, mangroves and both tide phases inspected. Existing multiscale waves/foam/depth/warped caustics and tide-relative swim/camera coverage retained. No new fluid/habitat system or species. Surface/underwater and substrate controls pass. |
+| 8. Wildlife, 8.1–8.6 | Bird eyes follow the actual shared lofted head instead of cutting through it; original head coordinates and40eye triangles retained. Six matched bird views/32clear-storm stages reviewed. Deer use existing GroundFootPlant with fixed landing/heading, minimum2supports and bounded1/60steps through100ms updates. Shared visible/shadow leg pose seats existing upper roots into chest/haunch. Three actual64frame sequences show160/174/160planted pairs, zero world position/rotation slip, original body telemetry unchanged. CPU11897support/6038turn/4644acceleration pairs, zero slip; maximum hip/hoof reach1.08504×scale. Existing bear/crocodile/elephant/TRex/resting mammal/bird/fish/monkey controls retained/reviewed. Other species and distant reduced-tier deer retain their existing procedural locomotion; no all-species contact-lock claim. |
+| 9. Resident, 9.1–9.5 | Walking/tending/fishing and8walking stages inspected in current surroundings. Earlier rounded joints/sleeve/taper/waist/material/stride corrections retained. Current background deer changes account for changed resident pixels; no character rewrite or new human presentation claim this continuation. |
+| 10. Lighting/materials/shadows | Day/dawn/night/cloud/storm/wet/interior controls inspected together. Existing SunShadowMap and material abstraction retained; deer visible/shadow endpoints now share one calculation. Normal gates reject fallback/missing materials, receivers and casters. Earlier scoped stock-failure fixtures remain separate supporting evidence, not qualification of an actual capability-limited backend. |
+| 11. Landmarks, 11.1–11.4 | Current hut, wreck, cave, mine, bunker, lighthouse/cottage/gallery/stairs, plane/helicopter, volcano, castle, alien and UFO inspected. Alien/UFO/castle additionally opened at full1280×720 in this final run. Existing structural/masonry/grounding/sightline repairs retained. No new landmark, removal or crowding. |
+| 12. Traversal, 12.1–12.5 | Fresh800frame bunker turnaround/forward-escape scope passes; its16stages carry byte-exact earlier review. Current safe walking/stream/cave/swim/vehicle/contact tests pass. Navigation/controllers/solid terrain unchanged. Earlier real keyboard scopes support unchanged systems and are not represented as newly rerun.18degree reverse rear-traction bound retained; flat/10degree reverse and18degree forward evidence remains. |
+| 13. Performance, 13.1–13.4 | One matched software pair per implementation, each721updates/72.1s,120warm+600measured intervals,1280×720,VSyncOff,LP8. Recorded scene/population/settings/draw ranges exactly equal. Bird mean215.3569→211.0412ms,p95260.0515→247.3793ms,RSS716200→715624KiB. Deer225.7907→221.9179ms,p95261.0929→254.7314ms,RSS802688→803320KiB(+.079%). Same original geometry/buffers/textures/draws; contact state in fixed CPU arrays. No measured material increase or causal/native speedup claim. Earlier wetland latency and pool/stream startup/cache/JIT uncertainty remain recorded below. |
+| 14. Maintainability/determinism | BirdHeadProfile shares original head topology with eye fitting; DeerFootPlant/DeerLegPose extract bounded responsibilities instead of enlarging renderer/shadow duplicates. IslandGame adds only17QA lines. CoreTests unchanged; focused tests separate. Fixed world fingerprint and exact body telemetry retained. No hidden globals/configuration framework/generated implementation. |
+| 15. Visual QA, 15.1–15.5 |108current main images and111subsidiary images actually inspected:87changed stages plus24exact monkey/fish stages needing fresh review.77other stages carry byte-exact prior review.296PNGs total,187exact controls,22changed mains. Five accepted deer scopes/all45PNGs reproduce byte-for-byte in the final matrix. Bird pair/motion review, discarded prototype and corruption fixtures retained. No golden update or pixel metric substituted for visual assessment. |
+| 16. Stages | Current habitat/forest review → eye fitting/test/paired motion/cost → measured deer slip → rejected coarse-step prototype → bounded contacts/paired controls → observed upper-root correction/paired controls → full safe tests/cost →108scope holistic review → renewed original acceptance/delivery. No stage-only closure. |
+| 17. Autonomy | Continued across independent priorities without routine approval requests; source commits pushed during work. Failed100ms prototype, old misclassified gait phase and actual rendering refinement are documented. No repeated unchanged benchmarking or hardware retries. |
+| 18. Quality bar | Release/OpenGL33/GCC14.2 builds and manual probe compile use explicit CPU0–3 affinity/-j2.107/107safe CTests pass125.99s;145registered,36display+2orphan validators excluded from CPU command.78launcher tests pass, including seven contact-proof corruption cases. Actual graphical qualification is the separate108scope supervised matrix, not inferred from compilation. |
+| 19. Known issues | Application: other procedural gaits/reduced tier,18degree reverse traction and earlier software latency/startup attribution remain bounded as documented. External: CNA Android lifecycle/stock-skinned defects, open AMDGPU GPUVM/flight limits. Current Debug/Web/GLES/Android/other backends and actual capability-limited fallback unqualified. Audio remains user-resolved/untouched. |
+| 20. Integration | Forest/floor/geology/coast/water, animals/resident, landmarks, weather/light and traversal inspected as one island on the immutable final app. Eyes now remain coherent through flight; deer place/return feet during actual turning/acceleration and connect naturally to the torso. No further major demonstrated regression emerged in the final matrix. Stylized models remain stylized. |
+| 21. Stopping | All original criteria revisited after the complete matrix, with previous subsystem evidence retained and current actual results above. Observed major corrections are implemented/visually accepted/tested, costs checked, limitations explicit. Further speculative species/terrain/engine changes lack demonstrated value. Closure still waits for this ledger's commit/push and clean actual-remote proof. This is not a zero-defect or full-platform claim. |
+| 22. Deliverables | Actual source/tests shipped in b141b2e2 andfb7f494b; paired/current images and build/test/world/cost/contact reports under build/. This ledger records all1–24criteria. Documentation commit and actual remote HEAD are verified after creation in campaign-fauna-final-delivery.json. |
+| 23. Principles | Existing features/forms and shared CNA abstractions improved rather than expanded/replaced. Same models/resources/world, focused C++, deterministic evidence, safe software QA, preserved exploration/content. |
+| 24. Outcome | Earlier forest/terrain/water/resident/landmark/environment polish remains supported; this continuation closes observed eye-surface clipping and deer turn/acceleration/root-integration gaps. The available software qualification supports a more coherent island; no photorealism, zero defects or hardware/platform completeness claim. |
+
+### Current evidence, commands and remaining limits
+
+Raw final index: `build/campaign-fauna-holistic-views.json`; gate/comparison/manual-review
+record: `build/campaign-fauna-holistic-evidence.json`. Main sheets
+build/campaign-fauna-holistic-{1..18}.png and required-stage sheets
+build/campaign-fauna-stages-{1..19}.png were actually viewed. Exact carry-forward stages are
+distinguished in the JSON; a naturally foliage-screened storm bird frame is not claimed as an
+unobscured eye review. No missing normal graphics capability was silently accepted.
+
+Paired birds: `build/campaign-bird-eye-before-views.json`,
+`build/campaign-bird-eye-after-views.json`, `build/campaign-bird-eye-visual-evidence.json`,
+`build/campaign-bird-eye-stage-evidence.json`, images campaign-bird-eye-pairs-{1..3}.png and
+campaign-bird-eye-stages-{1..4}.png. Original parrot full image
+20261103T121043.096546Z-bird-flight/capture.png shows buried pale shards; matching
+20261103T122419.864546Z-bird-flight/capture.png has a coherent ring/iris/pupil. Head/eye
+topology unchanged;25480actual face samples test layer clearance across four head scales.
+
+Paired deer: `build/campaign-deer-plant-before-views.json`,
+`build/campaign-deer-stance-after-views.json`, `build/campaign-deer-final-after-views.json`.
+The stance comparisons (campaign-deer-stance-pairs-{1..3}.png and
+campaign-deer-stance-stages-{1..5}.png) isolate foot planting; collar comparisons
+(campaign-deer-collar-pairs-{1..3}.png and campaign-deer-collar-stages-{1..5}.png) isolate
+the upper-root integration. Concrete review records:
+`build/campaign-deer-stance-visual-evidence.json`, `build/campaign-deer-stance-stage-evidence.json`,
+`build/campaign-deer-collar-visual-evidence.json`, `build/campaign-deer-collar-stage-evidence.json`.
+The first coarse100ms implementation failed reach checks and was refined before acceptance.
+New launcher proof validates actual rendered endpoints and foot heading, at least2supports and
+ground gap; malformed, missing, hidden, sliding and rotating cases are refused. No production
+threshold/golden was loosened. Normal gameplay does not emit QA contact traces.
+
+Commands actually run include:
+
+```sh
+taskset --cpu-list 0,1,2,3 env CCACHE_DIR="$PWD/build/ccache" cmake --build build -j2
+taskset --cpu-list 0,1,2,3 ctest --test-dir build -LE display -E '^(IslandGameStartupReportValidation|IslandGameCaptureValidation)$' --output-on-failure -j2
+python3 tests/SoftwareCaptureTests.py
+python3 tools/run_software_capture.py build bird-flight
+python3 tools/run_software_capture.py build deer-alert
+python3 build/campaign_flow_benchmark.py bird-eye-after birds build/campaign-bird-eye-qualified-binary
+python3 build/campaign_flow_benchmark.py deer-plant-after deer-walk build/campaign-deer-qualified-binary
+python3 build/campaign_fauna_holistic.py
+python3 build/campaign_fauna_visual_audit.py
+python3 build/campaign_fauna_final_verify.py
+```
+
+Build logs include build/campaign-bird-eye-{build,test-build}.log,
+build/campaign-deer-plant-{build,refinement-build,final-build}.log and
+build/campaign-deer-collar-build.log. Current tests/world: `build/campaign-fauna-safe-tests.log`,
+`build/campaign-fauna-tests.json`, `build/campaign-deer-plant-launcher-tests.log`,
+`build/campaign-deer-plant-contact-metrics.log`, `build/campaign-fauna-world.json`.
+Performance: `build/campaign-bird-eye-cost-evidence.json` and
+`build/campaign-deer-plant-cost-evidence.json`, including raw benchmark reports and identities.
+
+Earlier software uncertainties are not silently closed: seven wetland latency runs lack isolated
+attribution; pool benchmark first draw224.323→990.369ms/startup+11.17% is an observed pair,
+with cache/JIT/host contributions unresolved. Stream cold/warm variation is not a causal shader
+speedup. This turn adds no repeated unmodified timing campaign to conceal those limitations.
+Other animal/reduced-frequency poses retain existing procedural limitations.18degree reverse
+rear-traction behavior remains documented. Open CNA and AMDGPU issues were not patched; no
+current Debug/Web/GLES/Android/other-backend or physical-GPU qualification is implied.
+
+Repository delivery: source commits b141b2e2 andfb7f494b are already pushed on develop.
+Only HANDOFF.md/PLAN.md change in the final documentation commit. Final push, clean worktree,
+actual remote/local/tracking HEAD equality and unchanged app/runtime hashes are recorded after
+that commit in `build/campaign-fauna-final-delivery.json`, before any goal completion.
