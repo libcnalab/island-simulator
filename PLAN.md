@@ -27478,3 +27478,19 @@ Existing observation and qualification queue:
   earlier timing variation investigated as host variability. No native performance claim.
 - Latest HANDOFF.md ledger reassesses all24original sections, exact evidence and retained
   application/CNA/driver/platform limits. No new required implementation identified by review.
+
+
+## Qualified stance and night-emission continuation — 2026-11-03
+
+- dc7ce3f7/2fe0790c: fixed-world elephant/TRex foot contacts, real turning steps, held toe
+  orientation, bounded support/reach and smooth rest/waking; existing AI/rigs/meshes preserved.
+- 3a94c887: bounded near-eye beacon halo and black-fog volcanic additive emission; actual
+  dawn/night review caught and verified both defects, including a corrected initial attribution.
+- Release builds use CPU0–3/-j2.97safe tests covered(96unchanged+1new),77launcher/11validator;
+  35broad software scopes/111PNGs plus12final lighting/control scopes/28PNGs, identities explicit.
+- Software frame pair330.51→308.61ms,same153–154tracked draws,RSS−1.01%; host variability means
+  no general speedup claim. Contact CPU overhead+.251us/update combined, fixed state+296B;
+  lighthouse+40triangles stays in its existing buffer/draw. No physical GPU testing.
+- Full original1–24 acceptance, before/after paths, failed intermediates and meaningful remaining
+  application/CNA/driver/platform limits are recorded in the latest HANDOFF.md ledger. Final
+  documentation commit/push/clean-state verification precedes goal closure.
