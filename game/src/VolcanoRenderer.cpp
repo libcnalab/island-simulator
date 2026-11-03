@@ -1,4 +1,5 @@
 #include "IslandSimulator/VolcanoRenderer.hpp"
+#include "IslandSimulator/CraterGlow.hpp"
 #include "IslandSimulator/EnvironmentLighting.hpp"
 #include "IslandSimulator/IslandTerrain.hpp"
 #include "IslandSimulator/PrevailingWind.hpp"
@@ -523,8 +524,12 @@ void VolcanoRenderer::DrawGlow(const Matrix& view,const Matrix& projection,const
     }
     if(night>0.01f) {
         const float glow=night*pulse;
-        fan(Vector3(V::X,V::LavaY()+8.0f,V::Z),15.0f,1.3f,20,Vector3(0.55f,0.20f,0.05f)*glow);
-        fan(Vector3(V::X,V::LavaY()+14.0f,V::Z),28.0f,1.3f,20,Vector3(0.12f,0.04f,0.012f)*glow);
+        // These air glows must not cross the opaque lake: a half-hidden fan
+        // produces a straight brightness step across the animated lava below it.
+        const float low=CraterGlowHalfHeight(8.0f,15.0f*1.3f,up.Y);
+        const float high=CraterGlowHalfHeight(14.0f,28.0f*1.3f,up.Y);
+        fan(Vector3(V::X,V::LavaY()+8.0f,V::Z),15.0f,low/15.0f,20,Vector3(0.55f,0.20f,0.05f)*glow);
+        fan(Vector3(V::X,V::LavaY()+14.0f,V::Z),28.0f,high/28.0f,20,Vector3(0.12f,0.04f,0.012f)*glow);
         // the flow's light on the slope and the air over it
         for(float r=V::RimRadius+1.0f;r<V::RimRadius+V::FlowLength;r+=2.5f) {
             const float theta=V::FlowCentre(r);

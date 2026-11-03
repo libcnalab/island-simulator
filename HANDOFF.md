@@ -1,4 +1,4 @@
-# Comprehensive visual cohesion campaign — qualified continuation after3a94c887
+# Comprehensive visual cohesion campaign — ACTIVE continuation afterbde40e70
 
 The whole original superprompt/attachment is assessed in the final acceptance ledger at the
 end of this file. Earlier premature completion conclusions and ACTIVE checkpoints remain as
@@ -2856,3 +2856,47 @@ Repository: develop; dc7ce3f7,2fe0790c,3a94c887 pushed. This final documentation
 acceptance and the short PLAN update. Its hash, successful push, clean worktree and origin sync
 are checked AFTER creation and recorded in `build/campaign-stance-final-delivery.json` and the
 final response, avoiding a circular self-hash. Goal completion occurs only after that check.
+
+## Active continuation frombde40e70 — 2026-11-03
+
+Entry develop clean/synced; original attachment/README/PLAN/BUGS/incident and latest acceptance
+revisited. Previous source/qualification preserved; goal ACTIVE at user request. Stages:
+(1) reproduce retained reverse-ramp limit without tuning physics; (2) qualify/fix the observed
+lava-lake horizontal light bands with matched close/far views; (3) continue the next observed
+priority and reassess all original criteria before delivery/closure. CPU0–3/-j2; no external
+source or native GPU experiment. NoAGENTS in repository or parent chain. Sound stays closed.
+
+CPU probe `build/campaign-quad-slope-probe.log`: rear-drive reverse works on flat/10degree ground
+(36.31/26.52m uphill in10s). On18degrees it rolls5.37m downhill; estimated rear tyre grip608N
+is below788N downslope gravity. Forward18degree climb97.94m succeeds. This supports a physical
+rear-axle load/traction limit, not a portal collision defect; no arbitrary reverse-force boost
+or drivetrain change is justified. The prior actual turn/forward bunker escape stays qualified.
+
+The inspected22h crater frame from source3a94c887 shows two sharp horizontal brightness bands
+across otherwise continuous lava cracks. Actual raw heightfield under the lake stays below5.95m
+versus lava18m, so this is not terrain sticking through. Source inspection identifies two large
+additive glow billboards that extend beneath the lake and are abruptly depth-clipped by it.
+Next: matched baseline close/far captures, bounded billboard height above the existing lake,
+near/far/day/night comparison and geometry regression; preserve lake shader, cone and traversal.
+
+### Qualified crater halo clearance; next observed flow-light defect
+
+App22f7c88b42821f9e4f298fd37793c778c9d0c3fb0b0e58c544479aae11202b9c; Release CPU0–3/-j2
+build passes,5focused tests pass, full98/98safe CTests pass98.96s
+(`build/campaign-crater-glow-safe-ctest.log`). New CraterGlow regression is RED against the
+original geometry; corrected half-height keeps the two large halos5cm above the opaque lake
+for camera-up projections0..1. Cone/lake shader/support/collision and all geometry/draw/buffer
+counts unchanged; only two scalar height bounds per active frame added, no allocation/state.
+
+Matched before/after manifests `build/campaign-crater-halo-{before,after}-views.json`:4views each
+(night crater,night overview,night flow,day crater), all verified llvmpipe/Pixman/private devices,
+unchanged executable and empty final kernel intervals. All8images actually inspected in
+`build/campaign-crater-halo-pairs-{1,2}.png`; night crater also inspected at full resolution.
+Original horizontal row-mean jumps32.720/7.008levels at y452/500 are gone; maximum row jump in
+the same x460..820,y430..520 lake crop is now2.486levels. Lake cracks/time/camera remain matched;
+far warm glow and daytime crater preserved. No golden update used as proof.
+
+Do not stop here: the night flow view exposes separate triangular light bands on the cone,
+from camera-facing flow halos intersecting its surface. Next baseline is this qualified flow
+image; correct the local light orientation/ground integration with existing additive geometry,
+then review near/far/night controls and continue full original acceptance. Goal stays ACTIVE.
