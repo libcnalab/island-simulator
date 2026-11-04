@@ -1,52 +1,52 @@
-# island-simulator — aktuální předání
+# island-simulator — current maintainer handoff
 
-Revize dokumentu: 2026-11-04. Tento soubor shrnuje stav údržby; chronologie je v Gitu.
+Reviewed: 2026-11-04. This file summarizes the maintenance state; chronology belongs in Git history.
 
-## Co platí teď
+## Current state
 
-- Projekt je C++23 aplikace na CNA. Pracovní větev je `develop`.
-- Poslední změny produkčního kódu: `52d8c56e` (kontakt chobotnic se dnem),
-  `05077820` (odstup od útesových balvanů), `5e74c5d0` (společné osvětlení chobotnic a rejnoků).
-- Poslední webový build vznikl ze zdrojového stavu `30106358` dne 2026-11-03.
-  Tento commit také vrátil omylem přidané `AGENTS.md` a `CLAUDE.md`; žádná nová AI policy tím neplatí.
-- Vizuální kampaň má doložené nativní softwarové ověření. To není úplná kvalifikace všech platforem.
-  Níže jsou výslovně uvedené neúspěšné webové kontroly a otevřené problémy.
-- Staré pokyny k nekonečnému pokračování a hodinové cíle v pracovních denících nejsou aktuální zadání.
+- The project is a C++23 application built on CNA. The working branch is `develop`.
+- Latest production-code changes: `52d8c56e` (octopus seabed contact),
+  `05077820` (reef-boulder clearance), `5e74c5d0` (shared lighting for octopuses and stingrays).
+- The latest Web build was produced from source revision `30106358` on 2026-11-03.
+  That commit also reverted the mistakenly added `AGENTS.md` and `CLAUDE.md`; no new AI policy was adopted.
+- The visual campaign has recorded native software-renderer validation. This does not qualify every platform.
+  Failed Web checks and unresolved issues are explicitly listed below.
+- Old instructions to continue indefinitely and historical hour targets are not current work assignments.
 
-## Kde hledat kód
+## Code map
 
-| Oblast | Hlavní vstupy |
+| Area | Main entry points |
 | --- | --- |
-| Herní smyčka, kamery, propojení systémů | [IslandGame.cpp](game/src/IslandGame.cpp) |
-| Výška terénu a skutečně vykreslený povrch | [IslandTerrain.cpp](game/src/IslandTerrain.cpp), [RenderedTerrainSurface.cpp](game/src/RenderedTerrainSurface.cpp) |
-| Vlhkost, expozice a pobřežní prostředí | [IslandEnvironmentField.hpp](game/include/IslandSimulator/IslandEnvironmentField.hpp) |
-| Rozmístění vegetace a přírodních objektů | [JungleLayout.cpp](game/src/JungleLayout.cpp), [GrassLayout.cpp](game/src/GrassLayout.cpp), [GroundCoverField.cpp](game/src/GroundCoverField.cpp), [NaturalPropLayout.cpp](game/src/NaturalPropLayout.cpp) |
-| Vegetace, oceán, stíny | [JungleRenderer.cpp](game/src/JungleRenderer.cpp), [OceanRenderer.cpp](game/src/OceanRenderer.cpp), [SunShadowMap.cpp](game/src/SunShadowMap.cpp) |
-| Počasí a denní cyklus | [WeatherSystem.cpp](game/src/WeatherSystem.cpp), [TimeOfDayRenderer.cpp](game/src/TimeOfDayRenderer.cpp), [SkyRenderer.cpp](game/src/SkyRenderer.cpp) |
-| Chůze a vozidlo | [PlayerMotion.cpp](game/src/PlayerMotion.cpp), [QuadBike.cpp](game/src/QuadBike.cpp) |
-| Zvířata a obyvatel | Skupiny/stáda a jejich `*Renderer.cpp`; např. [OctopusGroup.cpp](game/src/OctopusGroup.cpp), [ResidentMotion.cpp](game/src/ResidentMotion.cpp) |
+| Game loop, cameras, system integration | [IslandGame.cpp](game/src/IslandGame.cpp) |
+| Terrain height and the actual rendered surface | [IslandTerrain.cpp](game/src/IslandTerrain.cpp), [RenderedTerrainSurface.cpp](game/src/RenderedTerrainSurface.cpp) |
+| Moisture, exposure and coastal environment | [IslandEnvironmentField.hpp](game/include/IslandSimulator/IslandEnvironmentField.hpp) |
+| Vegetation and natural-object placement | [JungleLayout.cpp](game/src/JungleLayout.cpp), [GrassLayout.cpp](game/src/GrassLayout.cpp), [GroundCoverField.cpp](game/src/GroundCoverField.cpp), [NaturalPropLayout.cpp](game/src/NaturalPropLayout.cpp) |
+| Vegetation, ocean, shadows | [JungleRenderer.cpp](game/src/JungleRenderer.cpp), [OceanRenderer.cpp](game/src/OceanRenderer.cpp), [SunShadowMap.cpp](game/src/SunShadowMap.cpp) |
+| Weather and time of day | [WeatherSystem.cpp](game/src/WeatherSystem.cpp), [TimeOfDayRenderer.cpp](game/src/TimeOfDayRenderer.cpp), [SkyRenderer.cpp](game/src/SkyRenderer.cpp) |
+| Walking and vehicle traversal | [PlayerMotion.cpp](game/src/PlayerMotion.cpp), [QuadBike.cpp](game/src/QuadBike.cpp) |
+| Wildlife and resident | Groups/herds and their `*Renderer.cpp` files; e.g. [OctopusGroup.cpp](game/src/OctopusGroup.cpp), [ResidentMotion.cpp](game/src/ResidentMotion.cpp) |
 
-Rozhraní jsou v `game/include/IslandSimulator/`, testy v `tests/`, sestavení a validátory v `tools/`.
-Podrobnější popis je v [architektuře](docs/architecture.md); seznam všech funkcí není nutné číst před úpravou jednoho systému.
+Headers are in `game/include/IslandSimulator/`, tests in `tests/`, build helpers and validators in `tools/`.
+See [architecture](docs/architecture.md) for more detail; changing one system does not require reading the entire feature inventory.
 
-## Bezpečnost a závislosti
+## Safety and dependencies
 
-- Kompilovat nejvýše na **čtyřech CPU jádrech**. Používat `taskset --cpu-list 0,1,2,3` a `-j2`;
-  stejný limit musí zdědit i konfigurační sestavení závislostí a optimalizace WebAssembly.
-- **AMDGPU GPUVM incident zůstává otevřený.** Automatické grafické kontroly spouštět přes existující
-  izolované softwarové launchery. Ověřit skutečný renderer; samotné nastavení proměnné nestačí.
-  Postup a omezení: [incident](docs/incidents/2026-10-08-amdgpu-gpuvm-reset.md).
-- Externí CNA a Sharp Runtime jsou pouze ke čtení. Neměnit jejich worktree ani ovladače systému.
-  Připnuté revize určuje [dependencies.lock](dependencies.lock), nikoli aktuální upstream `next`.
-- Zachovat cizí změny v pracovním stromu; nepoužívat reset/clean ani přepis vzdálené historie.
+- Compile on at most **four CPU cores**. Use `taskset --cpu-list 0,1,2,3` and `-j2`;
+  configure-time dependency builds and WebAssembly optimization must inherit the same CPU limit.
+- **The AMDGPU GPUVM incident remains open.** Run automated graphics checks through the existing
+  isolated software launchers. Verify the actual renderer; an environment variable alone is insufficient.
+  Procedure and limits: [incident report](docs/incidents/2026-10-08-amdgpu-gpuvm-reset.md).
+- External CNA and Sharp Runtime are read-only. Do not modify their worktrees or system drivers.
+  [dependencies.lock](dependencies.lock) defines the pinned revisions, not the current upstream `next` branch.
+- Preserve other worktree changes; do not use reset/clean or rewrite remote history.
 
-## Sestavení a spuštění na tomto počítači
+## Build and run on this machine
 
-Existující `build/` je **Release/OPENGL33**, `build-probe/` je **Release/WEBGL2**.
-Pro novou instalaci použít [Linux](docs/build-linux.md) nebo [Web](docs/build-web.md);
-níže uvedené příkazy využívají už nakonfigurované adresáře.
+The existing `build/` is **Release/OPENGL33**; `build-probe/` is **Release/WEBGL2**.
+For a new installation, follow [Linux](docs/build-linux.md) or [Web](docs/build-web.md);
+these commands reuse the already configured directories.
 
-Nativní sestavení a testy bez grafického zařízení:
+Native build and tests without a graphics device:
 
 ```sh
 export CCACHE_DIR=/rv/cnaccache CCACHE_BASEDIR=/rv
@@ -55,11 +55,11 @@ taskset --cpu-list 0,1,2,3 ctest --test-dir build -LE display -E '^(IslandGameSt
 python3 tests/SoftwareCaptureTests.py
 ```
 
-Dva vynechané validátory potřebují samostatně vytvořené vstupní artefakty; jejich vynechání není grafický test.
-Bezpečný nativní snímek: `python3 tools/run_software_capture.py build jungle`.
-Launcher vyžaduje přístup ke kernel journalu a ověřuje izolaci i softwarový renderer.
+The two excluded validators require separately generated input artifacts; these CPU checks do not replace graphics validation.
+Safe native capture: `python3 tools/run_software_capture.py build jungle`.
+The launcher requires kernel-journal access and verifies containment and the software renderer.
 
-Webové sestavení, balení a místní HTTP server:
+Web build, packaging and local HTTP server:
 
 ```sh
 source /home/robertvokac/emsdk/emsdk_env.sh
@@ -70,53 +70,53 @@ tools/package_web_release.sh build-probe
 python3 -m http.server 8765 --bind 127.0.0.1 --directory build-probe/web-release
 ```
 
-Otevřít `http://127.0.0.1:8765/island-simulator.html`; soubory nespouštět přes `file://`.
-Poslední ZIP: `build-probe/island-simulator-web-30106358.zip` (14 473 341 bajtů).
-Balení obsahuje HTML, JS, WASM, data, gzip varianty a manifest s hashi.
+Open `http://127.0.0.1:8765/island-simulator.html`; do not launch the files through `file://`.
+Latest ZIP: `build-probe/island-simulator-web-30106358.zip` (14,473,341 bytes).
+The package contains HTML, JS, WASM, data, gzip variants and a hash manifest.
 
-## Poslední doložené ověření — 2026-11-03
+## Last recorded validation — 2026-11-03
 
-| Kontrola | Výsledek a hranice |
+| Check | Result and limits |
 | --- | --- |
-| Linux Release/OPENGL33 | 109/109 bezpečných CTestů a 79 testů launcheru prošlo. Display testy a dva samostatné validátory nejsou součástí tohoto počtu. |
-| Nativní obraz | 36 aktuálních softwarových scén / 80 PNG; zkontrolováno 36 hlavních snímků a 28 dalších fází, 16 fází přesně odpovídá dříve zkontrolovaným snímkům. llvmpipe/Pixman, nikoli fyzické GPU. |
-| Webové sestavení | Release/WEBGL2, validace assetů a integrita ZIP/gzip prošly. |
-| Chrome / SwiftShader | Přehled ostrova se vykreslil; 60 intervalů snímků, GL chyba 0, kontext zachován. Celý smoke test **selhal** na zastaralém očekávání geometrie stromu. |
-| Firefox / llvmpipe | Produkční stránka se spustila; ovládání, změna velikosti a návrat do aktivního panelu byly ověřené před navazující kontrolou populace. Celý smoke test **selhal** na zastaralých počtech vegetace. Tři snímky produkční stránky byly vizuálně zkontrolované. |
-| Ostatní platformy | Žádné nové fyzické GPU, Android, Debug ani jiné backendy tím nejsou kvalifikované. Starší výsledky mají vlastní data v platformních dokumentech. |
+| Linux Release/OPENGL33 | 109/109 safe CTests and 79 launcher tests passed. Display tests and the two standalone validators are excluded from that count. |
+| Native visuals | 36 current software-rendered scenes / 80 PNGs; 36 main images and 28 additional stages reviewed, 16 stages byte-identical to previously reviewed images. llvmpipe/Pixman, not physical-GPU validation. |
+| Web build | Release/WEBGL2 compilation, asset validation and ZIP/gzip integrity passed. |
+| Chrome / SwiftShader | Island overview rendered; 60 frame intervals, GL error 0, context preserved. The complete smoke test **failed** on a stale expected tree-geometry count. |
+| Firefox / llvmpipe | Production page, controls, resizing and tab-return checks completed before the population check. The complete smoke test **failed** on stale vegetation totals. Three production-page images were visually reviewed. |
+| Other platforms | No new physical-GPU, Android, Debug or other-backend qualification is implied. Older results retain their dates in the platform documents. |
 
-Úprava tohoto předání nepřidává nové výsledky sestavení ani vykreslování.
+Editing this handoff does not add new build or rendering results.
 
-## Otevřené problémy a navazující práce
+## Open issues and follow-up work
 
-1. **Webové smoke testy mají neaktuální konstanty.** Chrome očekává strom 4998/4864
-   vrcholů/trojúhelníků blízké sítě a 1071/1120 vzdálené; aktuální nativní i webový build mají
-   5010/4888 a 1076/1130. Firefox očekává celkové populace 261/1747/569/3087,
-   aktuální jsou 255/1637/543/2952. Při opravě porovnat s generátory a znovu spustit příslušný test;
-   nepřeznačovat uložené neúspěšné běhy za úspěšné. Skripty jsou v `tools/run_web_smoke.mjs`
-   a `tools/run_firefox_web_smoke.mjs`.
-2. **CNA-ISLAND-002:** potvrzená chyba stock skinning shaderu na testovaném GLES limitu.
-   Herní workaround pro opice zůstává aktivní. Audit upstreamu z 2026-11-03 není nový Android test.
-3. **CNA-ISLAND-001:** podezření na Android surface/Home-resume race; oprava není ověřená.
-   Oba nálezy a podmínky uzavření jsou v [BUGS.md](BUGS.md).
-4. **AMDGPU/letová nestabilita:** příčina a hardwarová kvalifikace zůstávají otevřené.
-   Softwarové snímky tyto incidenty neuzavírají.
-5. Zůstávají omezení procedurálních pohybů, průniků měkké vegetace a zpětné trakce čtyřkolky
-   na přibližně 18° rampě. Přehled: [známá omezení](docs/known-limitations.md).
-6. Historické časy celého procesu kolísají s hostitelem/cache/JIT. Kontrolovaný softwarový
-   experiment kontaktu a stínu chobotnice naměřil průměr +1,10 % procesorového času a asi
-   +0,156 ms při odeslání stínového průchodu; není to obecný limit ani prokázané zrychlení celé hry.
+1. **Web smoke tests contain stale constants.** Chrome expects 4998/4864 near-mesh vertices/triangles
+   and 1071/1120 far-mesh vertices/triangles; current native and Web builds both produce
+   5010/4888 and 1076/1130. Firefox expects population totals 261/1747/569/3087;
+   current totals are 255/1637/543/2952. Check the generators and rerun the relevant test when updating these;
+   do not relabel retained failed runs as passes. Scripts: `tools/run_web_smoke.mjs`
+   and `tools/run_firefox_web_smoke.mjs`.
+2. **CNA-ISLAND-002:** confirmed stock-skinning shader defect on the tested GLES uniform limit.
+   The game-side monkey workaround remains active. The 2026-11-03 upstream audit is not a new Android test.
+3. **CNA-ISLAND-001:** suspected Android surface/Home-resume race; a fix has not been verified.
+   Both findings and their closure requirements are in [BUGS.md](BUGS.md).
+4. **AMDGPU/flight instability:** cause and hardware qualification remain open.
+   Software captures do not close these incidents.
+5. Procedural-motion limitations, soft-vegetation intersections and reverse quad traction on an
+   approximately 18-degree ramp remain. See [known limitations](docs/known-limitations.md).
+6. Historical whole-process timings vary with host load/cache/JIT. The controlled software
+   octopus contact/shadow experiment measured mean process CPU +1.10% and approximately
+   +0.156 ms for shadow submission; this is neither a universal bound nor a demonstrated whole-game speedup.
 
-## Důkazy a historie — pouze podle potřeby
+## Evidence and history — consult as needed
 
-- Nativní ověření a jeho dodání: `build/campaign-contact-final-verification.json`,
+- Native verification and delivery: `build/campaign-contact-final-verification.json`,
   `build/campaign-contact-final-delivery.json`.
-- Poslední webový build a oba neúspěšné smoke běhy: `build/web-build-20261103-result.json`.
-- Ochrana dříve citovaných snímků před automatickým úklidem:
-  `build/handoff-evidence-retention.json`. Jde o strojový index, nikoli další dokument k prostudování.
-- Soubory v `build*/` jsou lokální ignorované artefakty; čistý Git checkout je neobsahuje.
-- Plné předchozí deníky jsou v historii, bez další kopie v živé dokumentaci:
-  `git show 30106358:handoff.md` a `git show 30106358:HANDOFF.md`.
-- [README.md](README.md) je vstup do projektu, [BUGS.md](BUGS.md) evidence frameworkových chyb,
-  [ASSET_LICENSES.md](ASSET_LICENSES.md) původ assetů. [PLAN.md](PLAN.md) obsahuje také rozsáhlé
-  historické pracovní zápisy; staré termíny, stavy a pokyny nepřebírat jako dnešní zadání.
+- Latest Web build and both failed smoke runs: `build/web-build-20261103-result.json`.
+- Protection of previously cited captures against automatic pruning:
+  `build/handoff-evidence-retention.json`. This is a machine index, not another reading assignment.
+- Files under `build*/` are local ignored artifacts; a clean Git checkout does not contain them.
+- Full previous diaries remain in history, without another copy in the live documentation:
+  `git show 30106358:handoff.md` and `git show 30106358:HANDOFF.md`.
+- [README.md](README.md) is the project entry point, [BUGS.md](BUGS.md) records framework issues,
+  [ASSET_LICENSES.md](ASSET_LICENSES.md) records asset provenance. [PLAN.md](PLAN.md) also contains
+  extensive historical work logs; do not treat old deadlines, states or instructions as today's assignment.
