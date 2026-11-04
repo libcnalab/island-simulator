@@ -188,8 +188,10 @@ python3 tools/run_software_capture.py build quad-bunker-turn
 
 This bounded inspection has a 600-second software deadline; ordinary captures retain their
 65-second deadline. The original `quad-bunker` 32-frame entry remains available. Current
-qualification results, exact artifact paths and failed-run history are in `HANDOFF.md`;
-software results do not qualify the affected physical GPU or other platforms.
+qualification results, exact artifact paths and failed-run history remain in the
+[archived campaign diary](https://github.com/libcnalab/island-simulator/blob/3010635815ab2e46878f3b46de257205022ae853/HANDOFF.md).
+The current maintenance summary is [HANDOFF.md](../HANDOFF.md); software results do not
+qualify the affected physical GPU or other platforms.
 
 Final reviewed software evidence is
 `build/software-captures/20261102T193404.936591Z-quad-bunker-turn`, with sixteen saved stages

@@ -690,6 +690,7 @@ ergonomics, thermal, driver, and sustained-performance testing. See
 
 ## Project records
 
+- [HANDOFF.md](HANDOFF.md) is the concise current maintenance handoff; earlier work diaries are in Git history.
 - `PLAN.md` is the living development ledger.
 - `BUGS.md` records confirmed CNA or Sharp Runtime defects and game-side workarounds.
 - `ASSET_LICENSES.md` records all asset provenance before assets enter a runtime build.

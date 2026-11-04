@@ -90,7 +90,8 @@ GL error zero, context live and empty kernel deltas. Full-size stages 0/3/6 and
 recorded JPEG samples 25/26/27/75 were inspected: no gross material/geometry break,
 but sparse coverage/repeated clusters remain visible. This is bounded compressed
 sampling, not proof of no fine shimmer or seamless LOD transitions. Owned browser
-PID 4112991 exits; no hardware workload was run. See root `handoff.md`.
+PID 4112991 exits; no hardware workload was run. Historical details remain in the
+[handoff at 30106358](https://github.com/libcnalab/island-simulator/blob/3010635815ab2e46878f3b46de257205022ae853/handoff.md).
 
 Remaining weaknesses: sparse coverage in this viewpoint, repeated grass cluster
 structure, approximate wind-deformed normals, stylized tree trunks and overall

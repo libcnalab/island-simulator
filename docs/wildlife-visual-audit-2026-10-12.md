@@ -14,7 +14,8 @@ fallbacks remain. Existing upper-leg roots now seat inside the chest/haunch rath
 bright cut caps. Five matched controls and40stages reviewed; all three64frame ground-contact
 proofs have zero stance slip/rotation. This supersedes the earlier deer turning/acceleration
 limitation below, not every species' motion limits.107safe tests pass; current whole-island
-qualification, raw paths, costs and remaining hardware/platform bounds are in HANDOFF.md.
+qualification, raw paths, costs and remaining hardware/platform bounds for that milestone are
+in the [archived campaign diary][campaign-log].
 
 ## 2026-11-02 campaign follow-up
 
@@ -23,13 +24,13 @@ stayed aligned with the body during flapping. Separate arm/hand span normals now
 connected and legible; dry/rain flight and folded/soaring comparisons were reviewed. Primary
 flock counters also survive subsequent colony draws by rendering that flock last. Ambient and
 evasive fish sequences are now separately qualified without changing ordinary fish simulation.
-The288pose CPU regression and exact paths/cost/limits are in [HANDOFF.md](../HANDOFF.md).
+The288pose CPU regression and exact paths/cost/limits are in [archived campaign diary][campaign-log].
 
 Boar steady-walking cadence now accounts for stride amplitude and juvenile scale; the motion
 inspection also retains Full simulation instead of selecting the dormant tier. Matched day,
 wet/dawn and lying pairs were reviewed on isolated llvmpipe/Pixman. Turns/stops remain procedural;
 this is not all-species gait acceptance or hardware qualification. Exact tests, comparison paths,
-reference-build provenance and limits are in the [campaign checkpoint](../HANDOFF.md).
+reference-build provenance and limits are in the [archived campaign checkpoint][campaign-log].
 
 
 Deer support follow-up: body and split hooves now follow the rendered terrain, with the same
@@ -42,7 +43,8 @@ stance feet remain planted at steady heading/speed and swing feet lift through t
 procedural joints. Dry/rain eight-stage walk-and-stop pairs, standing and bedded controls were
 reviewed on llvmpipe. New actual-joint/world-space tests and support extremes pass. Turns and
 acceleration retain procedural slip; rapid retreat has CPU/support coverage, not separate visual
-acceptance. Full evidence and ongoing original campaign criteria remain in HANDOFF.md.
+acceptance. Evidence and the original criterion assessment for this milestone remain in the
+[archived campaign diary][campaign-log].
 
 ## Latest monkey trunk/hand anatomy pass
 
@@ -352,3 +354,5 @@ x86_64 and restored default ARM64 build/lint both PASS3s. Asset audit PASS84sour
 Web build/package PASS11,358,303raw/4,335,409gzip bytes; actual Web runtime of this
 latest shader/profile remains pending. All owned jobs terminal, hardware stop latch
 unchanged. Local-only work, no push.
+
+[campaign-log]: https://github.com/libcnalab/island-simulator/blob/3010635815ab2e46878f3b46de257205022ae853/HANDOFF.md

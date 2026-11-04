@@ -18,7 +18,8 @@ do not authorize a new hardware workload.
 Normal software captures also reject explicit structure material, shadow-receiver and
 shadow-caster failures. A deliberately rejected receiver is a separate failure-path inspection;
 it does not qualify the normal material path or another graphics backend. Current scoped
-fallback evidence and its local fixture provenance are recorded in `HANDOFF.md`.
+fallback evidence and its local fixture provenance remain in the
+[archived campaign diary](https://github.com/libcnalab/island-simulator/blob/3010635815ab2e46878f3b46de257205022ae853/HANDOFF.md).
 
 ## Operator Release confirmation — 2026-10-12
 

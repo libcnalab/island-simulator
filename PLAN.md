@@ -1,5 +1,10 @@
 # island-simulator Development Plan
 
+Current maintenance status and build commands are in [HANDOFF.md](HANDOFF.md).
+Dated entries below retain historical states and instructions, not a current work assignment.
+Their detailed handoff records remain available in the
+[older diary](https://github.com/libcnalab/island-simulator/blob/3010635815ab2e46878f3b46de257205022ae853/handoff.md) and [campaign diary](https://github.com/libcnalab/island-simulator/blob/3010635815ab2e46878f3b46de257205022ae853/HANDOFF.md).
+
 ## Document purpose
 
 This is the living execution ledger for the original roughly 300-hour development campaign. On
