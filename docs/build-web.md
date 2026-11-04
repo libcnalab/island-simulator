@@ -1,6 +1,15 @@
 # WebGL 2 Build and Browser Validation
 
-## Current status
+## Current defaults — 2026-11-04
+
+Web and desktop now use the same `native-performance` profile: 72m grass, 55% vegetation
+view distance, 50% contact-shadow distance, 70% wildlife distance, a 96x96 ocean grid and
+no MSAA. Close models, texture detail, populations and six audio voices are retained.
+This replaces the former Web `full` default. Browser checks now require this exact profile
+and inspect the real context's antialiasing/sample state. Current validation and local
+artifacts are summarized in [HANDOFF.md](../HANDOFF.md); entries below retain their original dates.
+
+## Historical qualification
 
 Focused Chrome `--scope materials` covers `litter`, `grass`, `bay-ground` and `wet-sand`,
 60 intervals per view, with the existing diagnostic/GL/context gates. This targets all

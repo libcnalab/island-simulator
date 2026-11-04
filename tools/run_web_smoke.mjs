@@ -790,6 +790,7 @@ try {
                 previous = now;
                 if (intervals.length < ${focusedFrameCount}) requestAnimationFrame(tick);
                 else resolve({ renderer, intervals, result: globalThis.islandSmokeResult,
+                  antialias: gl?.getContextAttributes()?.antialias, samples: gl?.getParameter(gl.SAMPLES),
                   contextLost: !gl || gl.isContextLost(), glError: gl?.getError() });
               };
               requestAnimationFrame(tick);
@@ -802,7 +803,9 @@ try {
               `island-browser-${focusedArtifactPrefix}-${mode}-after-simulation.png`, false)) : null;
           const log = state.result?.output ?? "";
           const passed = /SwiftShader/i.test(state.renderer) && !state.contextLost
-            && log.includes("island-simulator: edge antialiasing requested 4x renderer-applied 4x")
+            && state.antialias === false && state.samples === 0
+            && log.includes("island-simulator: edge antialiasing requested 0x renderer-applied 0x")
+            && log.includes("island-simulator: quality profile native-performance grass 72m vegetation 55% shadows 50% wildlife 70% ocean 96x96 textures 10091644/10111860 bytes audio 6/6 sources")
             && (!focusedGrassMotionCheck || (motionReview?.passed
               && log.includes("close grass uses broadened planted bases and lower-blade curvature")))
             && (!focusedFlightCheck || flightReview?.passed)
@@ -1107,7 +1110,7 @@ try {
             && state.glError === 0 && !state.result?.error && !state.result?.exited
             && log.includes("island-simulator: renderer WEBGL2")
             && log.includes("atmosphere fog colour shares one CPU and portable shader definition")
-            && log.includes("ocean 160x160 textures 10091644/10111860 bytes audio 6/6 sources")
+            && log.includes("ocean 96x96 textures 10091644/10111860 bytes audio 6/6 sources")
             && log.includes("forest-floor material loaded Content/terrain/forest-floor.png; 512x512, 10 mips, 1398100 RGBA8 bytes; interior windows")
             && log.includes("leaf material loaded Content/vegetation/leaf-lamina.png; 256x256, 9 mips, 349524 RGBA8 bytes")
             && /forest-floor filter (?:anisotropic, requested maximum 4x, device-clamped|trilinear, anisotropy unavailable)/.test(log)
@@ -1204,7 +1207,7 @@ try {
             && log.includes("near monkeys use a compact forward-set cranium, reduced cheek ruffs, and fitted ears")
             && log.includes("monkey shoulder and hip mantles blend the trunk into all four animated limbs")
             // Curved leaf budgets are unchanged; flared trunks, rounded buttresses and six-sided branches.
-            && /canopy mesh variant=0 near-vertices=4998 near-triangles=4864 far-vertices=1071 far-triangles=1120/.test(log)
+            && /canopy mesh variant=0 near-vertices=5010 near-triangles=4888 far-vertices=1076 far-triangles=1130/.test(log)
             && (mode !== "boars" || /boars [1-6]\/6 visible, 2 draw/.test(log))
             && (mode !== "monkeys" || /monkeys [1-7]\/7 visible/.test(log))
             && !/(?:stock-effect|material) fallback:|GL_INVALID_|gl-error |gl-debug .*severity=high/i.test(log);
@@ -1327,10 +1330,10 @@ try {
     && result.exitCode === 0
     && result.output?.includes("island-simulator: renderer WEBGL2")
     && result.output?.includes(
-      "island-simulator: quality profile full grass 135m vegetation 100% shadows 100% wildlife 100% ocean 160x160 textures 10091644/10111860 bytes audio 6/6 sources")
+      "island-simulator: quality profile native-performance grass 72m vegetation 55% shadows 50% wildlife 70% ocean 96x96 textures 10091644/10111860 bytes audio 6/6 sources")
     && result.output?.includes("forest-floor material loaded Content/terrain/forest-floor.png; 512x512, 10 mips, 1398100 RGBA8 bytes; interior windows")
     && result.output?.includes("leaf material loaded Content/vegetation/leaf-lamina.png; 256x256, 9 mips, 349524 RGBA8 bytes")
-    && result.output?.includes("island-simulator: edge antialiasing requested 4x renderer-applied 4x")
+    && result.output?.includes("island-simulator: edge antialiasing requested 0x renderer-applied 0x")
     && /forest-floor filter (?:anisotropic, requested maximum 4x, device-clamped|trilinear, anisotropy unavailable)/.test(result.output ?? "")
     && viewportMatch !== null
     && Number(viewportMatch[1]) === 1280
@@ -1954,7 +1957,7 @@ try {
       "forest-floor litter includes two terrain-draped curved twigs in the shared near rosette mesh")
     && groundResult.output?.includes(
       "island-simulator: ground QA target variant 2 at player-eye detail distance")
-    && /[1-9][0-9]*\/3087 ground plants \(near [1-9][0-9]*, far [0-9]+\)/.test(
+    && /[1-9][0-9]*\/2952 ground plants \(near [1-9][0-9]*, far [0-9]+\)/.test(
       groundResult.output ?? "")
     && groundResult.output?.includes("island-simulator: debug overlay active")
     && !groundResult.error;
@@ -1988,7 +1991,7 @@ try {
       "forest-floor litter includes two terrain-draped curved twigs in the shared near rosette mesh")
     && litterResult.output?.includes(
       "island-simulator: ground-litter QA target variant 0 at player-eye detail distance")
-    && /[1-9][0-9]*\/3087 ground plants \(near [1-9][0-9]*, far [0-9]+\)/.test(
+    && /[1-9][0-9]*\/2952 ground plants \(near [1-9][0-9]*, far [0-9]+\)/.test(
       litterResult.output ?? "")
     && litterResult.output?.includes("island-simulator: debug overlay active")
     && !litterResult.error;
@@ -2106,7 +2109,7 @@ try {
       "forest-floor litter includes two terrain-draped curved twigs in the shared near rosette mesh")
     && jungleResult.output?.includes(
       "near standing snag limbs emerge through flared open branch collars")
-    && /jungle [1-9][0-9]*\/261 canopy \(near [1-9][0-9]*, far [0-9]+\), [0-9]+\/12 standing snags, [1-9][0-9]*\/1747 understory \(near [1-9][0-9]*, far [0-9]+\), [1-9][0-9]*\/569 bushes \(near [1-9][0-9]*, far [0-9]+\), [1-9][0-9]*\/3087 ground plants \(near [1-9][0-9]*, far [0-9]+\)/.test(
+    && /jungle [1-9][0-9]*\/255 canopy \(near [1-9][0-9]*, far [0-9]+\), [0-9]+\/12 standing snags, [1-9][0-9]*\/1637 understory \(near [1-9][0-9]*, far [0-9]+\), [1-9][0-9]*\/543 bushes \(near [1-9][0-9]*, far [0-9]+\), [1-9][0-9]*\/2952 ground plants \(near [1-9][0-9]*, far [0-9]+\)/.test(
       jungleResult.output ?? "")
     && !jungleResult.error;
 

@@ -5,12 +5,13 @@ Reviewed: 2026-11-04. This file summarizes the maintenance state; chronology bel
 ## Current state
 
 - The project is a C++23 application built on CNA. The working branch is `develop`.
-- Latest production-code changes: `52d8c56e` (octopus seabed contact),
+- Recent geometry/lighting changes: `52d8c56e` (octopus seabed contact),
   `05077820` (reef-boulder clearance), `5e74c5d0` (shared lighting for octopuses and stingrays).
-- The latest Web build was produced from source revision `30106358` on 2026-11-03.
-  That commit also reverted the mistakenly added `AGENTS.md` and `CLAUDE.md`; no new AI policy was adopted.
-- The visual campaign has recorded native software-renderer validation. This does not qualify every platform.
-  Failed Web checks and unresolved issues are explicitly listed below.
+- Web now shares the desktop `native-performance` default: 72m grass, 55% vegetation distance,
+  50% contact-shadow distance, 70% wildlife distance, 96x96 ocean and no MSAA. Close models,
+  populations, texture detail and six audio voices are retained. Android keeps its mobile default.
+- The 2026-11-04 Web build passed the software-browser checks listed below. These results
+  do not establish physical-GPU performance or qualify every platform. No new AI policy was adopted.
 - Old instructions to continue indefinitely and historical hour targets are not current work assignments.
 
 ## Code map
@@ -71,30 +72,31 @@ python3 -m http.server 8765 --bind 127.0.0.1 --directory build-probe/web-release
 ```
 
 Open `http://127.0.0.1:8765/island-simulator.html`; do not launch the files through `file://`.
-Latest ZIP: `build-probe/island-simulator-web-30106358.zip` (14,473,341 bytes).
+Latest ZIP: `build-probe/island-simulator-web-native-profile.zip` (14,473,577 bytes).
 The package contains HTML, JS, WASM, data, gzip variants and a hash manifest.
 
-## Last recorded validation — 2026-11-03
+## Last recorded validation
 
 | Check | Result and limits |
 | --- | --- |
-| Linux Release/OPENGL33 | 109/109 safe CTests and 79 launcher tests passed. Display tests and the two standalone validators are excluded from that count. |
-| Native visuals | 36 current software-rendered scenes / 80 PNGs; 36 main images and 28 additional stages reviewed, 16 stages byte-identical to previously reviewed images. llvmpipe/Pixman, not physical-GPU validation. |
-| Web build | Release/WEBGL2 compilation, asset validation and ZIP/gzip integrity passed. |
-| Chrome / SwiftShader | Island overview rendered; 60 frame intervals, GL error 0, context preserved. The complete smoke test **failed** on a stale expected tree-geometry count. |
-| Firefox / llvmpipe | Production page, controls, resizing and tab-return checks completed before the population check. The complete smoke test **failed** on stale vegetation totals. Three production-page images were visually reviewed. |
+| Linux Release/OPENGL33 — Nov 3 | 109/109 safe CTests and 79 launcher tests passed. Display tests and the two standalone validators are excluded from that count. |
+| Native visuals — Nov 3 | 36 software-rendered scenes / 80 PNGs; 36 main images and 28 additional stages reviewed, 16 stages byte-identical to previously reviewed images. llvmpipe/Pixman, not physical-GPU validation. |
+| CPU checks — Nov 4 | Core target rebuilt; 2/2 selected CTests (`IslandCoreTests`, `IslandWebPackageValidation`), 48 browser-launcher tests and asset validation passed. |
+| Web build — Nov 4 | Release/WEBGL2 compilation and ZIP/gzip integrity passed; 19,146,794 raw / 7,238,767 gzip bytes. |
+| Chrome / SwiftShader — Nov 4 | Focused octopus scope passed; 60 frame intervals, GL error 0, context live. Two PNGs reviewed. The complete Chrome scene suite was not rerun. |
+| Firefox / llvmpipe — Nov 4 | Full Firefox suite passed: production controls, resize/tab return and six diagnostic scenes. All nine PNGs reviewed. |
+| Browser safety — Nov 4 | Both successful runs verified software rendering before game load, hid physical GPU devices and found no new kernel GPU faults. Actual contexts had antialias=false and samples=0. |
 | Other platforms | No new physical-GPU, Android, Debug or other-backend qualification is implied. Older results retain their dates in the platform documents. |
 
-Editing this handoff does not add new build or rendering results.
+The Nov 3 failed runs remain failures. Stale mesh/population expectations were corrected against
+existing generators; a Nov 4 Firefox retry also corrected an outdated butterfly-camera caption.
+No generation or camera behavior was changed for these expectations. See the evidence index below.
 
 ## Open issues and follow-up work
 
-1. **Web smoke tests contain stale constants.** Chrome expects 4998/4864 near-mesh vertices/triangles
-   and 1071/1120 far-mesh vertices/triangles; current native and Web builds both produce
-   5010/4888 and 1076/1130. Firefox expects population totals 261/1747/569/3087;
-   current totals are 255/1637/543/2952. Check the generators and rerun the relevant test when updating these;
-   do not relabel retained failed runs as passes. Scripts: `tools/run_web_smoke.mjs`
-   and `tools/run_firefox_web_smoke.mjs`.
+1. **Hardware Web performance is unmeasured after the profile change.** The user's previous
+   approximately 8 FPS report predates this build. Software-renderer frame intervals cannot predict
+   that GPU's FPS; no matched hardware before/after benchmark was performed.
 2. **CNA-ISLAND-002:** confirmed stock-skinning shader defect on the tested GLES uniform limit.
    The game-side monkey workaround remains active. The 2026-11-03 upstream audit is not a new Android test.
 3. **CNA-ISLAND-001:** suspected Android surface/Home-resume race; a fix has not been verified.
@@ -111,7 +113,9 @@ Editing this handoff does not add new build or rendering results.
 
 - Native verification and delivery: `build/campaign-contact-final-verification.json`,
   `build/campaign-contact-final-delivery.json`.
-- Latest Web build and both failed smoke runs: `build/web-build-20261103-result.json`.
+- Latest Web build, successful software runs, reviewed images and package hashes:
+  `build/web-native-profile-validation.json`. The old full-profile bundle is preserved separately.
+- Earlier Web build and failed smoke runs: `build/web-build-20261103-result.json`.
 - Protection of previously cited captures against automatic pruning:
   `build/handoff-evidence-retention.json`. This is a machine index, not another reading assignment.
 - Files under `build*/` are local ignored artifacts; a clean Git checkout does not contain them.

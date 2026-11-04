@@ -307,7 +307,7 @@ try {
   let output = await waitForOutput(
     context, "island-simulator: viewport 1280x720 logical backbuffer", 240);
   const requiredFirstFrameMarkers = [
-    "island-simulator: edge antialiasing requested 4x renderer-applied 4x",
+    "island-simulator: edge antialiasing requested 0x renderer-applied 0x",
     "island-simulator: grass anchor-distance contraction uses nearest-bound cell culling",
     "island-simulator: juvenile ground broadleaf uses layered arching laminae, readable midribs, and retained near/far leaf identities",
     "island-simulator: split ground leaves use layered asymmetric lobes, readable midribs, shared LOD knots, and root-anchored wind",
@@ -319,7 +319,7 @@ try {
     "island-simulator: broadleaf paddle and lance laminae share cupped profiles and asymmetric margins across LOD",
     "island-simulator: pinnate understory shares rachis attachment knots and retained leaflet wind across LOD",
     "island-simulator: renderer WEBGL2",
-    "island-simulator: quality profile full grass 135m vegetation 100% shadows 100% wildlife 100% ocean 160x160 textures 10091644/10111860 bytes audio 6/6 sources",
+    "island-simulator: quality profile native-performance grass 72m vegetation 55% shadows 50% wildlife 70% ocean 96x96 textures 10091644/10111860 bytes audio 6/6 sources",
     "forest-floor material loaded Content/terrain/forest-floor.png; 512x512, 10 mips, 1398100 RGBA8 bytes; interior windows",
     "leaf material loaded Content/vegetation/leaf-lamina.png; 256x256, 9 mips, 349524 RGBA8 bytes",
     "grass pigment uses separate height occlusion and filtered longitudinal veins",
@@ -377,11 +377,14 @@ try {
       userAgent: navigator.userAgent,
       webgl2: Boolean(gl),
       version: gl ? gl.getParameter(gl.VERSION) : "",
+      antialias: gl ? gl.getContextAttributes()?.antialias : null,
+      samples: gl ? gl.getParameter(gl.SAMPLES) : null,
       renderer: gl ? gl.getParameter(gl.RENDERER) : ""
     };
   })())`));
-  if (!renderer.webgl2 || renderer.version !== "WebGL 2.0") {
-    throw new Error(`Firefox did not expose WebGL 2: ${JSON.stringify(renderer)}`);
+  if (!renderer.webgl2 || renderer.version !== "WebGL 2.0"
+      || renderer.antialias !== false || renderer.samples !== 0) {
+    throw new Error(`Firefox did not expose single-sample WebGL 2: ${JSON.stringify(renderer)}`);
   }
   await evaluate(context, `(() => {
     globalThis.islandFirefoxKeyEvents = [];
@@ -586,11 +589,11 @@ try {
   const fatalDiagnostic = /fatal error|shader.*(?:failed|error)/i.test(productionOutput);
   if (fatalDiagnostic) throw new Error("Firefox emitted a fatal or shader diagnostic");
   const junglePopulationPattern = new RegExp(
-    "jungle [1-9][0-9]*/261 canopy \\(near [1-9][0-9]*, far [0-9]+\\), "
+    "jungle [1-9][0-9]*/255 canopy \\(near [1-9][0-9]*, far [0-9]+\\), "
       + "[0-9]+/12 standing snags, "
-      + "[1-9][0-9]*/1747 understory \\(near [1-9][0-9]*, far [0-9]+\\), "
-      + "[1-9][0-9]*/569 bushes \\(near [1-9][0-9]*, far [0-9]+\\), "
-      + "[1-9][0-9]*/3087 ground plants \\(near [1-9][0-9]*, far [0-9]+\\)");
+      + "[1-9][0-9]*/1637 understory \\(near [1-9][0-9]*, far [0-9]+\\), "
+      + "[1-9][0-9]*/543 bushes \\(near [1-9][0-9]*, far [0-9]+\\), "
+      + "[1-9][0-9]*/2952 ground plants \\(near [1-9][0-9]*, far [0-9]+\\)");
   const waterStatePattern = new RegExp(
     "water view 0[.][1-9][0-9]*, 1 draw, player ripple 0[.][1-9][0-9]*, "
       + "phase [01](?:[.][0-9]+)?, splash 0[.][1-9][0-9]*, phase 0[.][0-9]+");
@@ -652,7 +655,7 @@ try {
       "island-simulator: clearing butterflies 18 agents in deterministic low-altitude habitats",
       "island-simulator: clearing butterflies use hinged patterned wings in one culled batch",
       "island-simulator: near butterflies use closed bodies, paired antennae, rounded wing lobes, and dark margins",
-      "island-simulator: butterfly QA camera frames one concrete nectar patch and its six animals",
+      "island-simulator: butterfly QA camera follows one live near animal at its nectar patch",
     ],
     /butterflies [1-9][0-9]*\/18 visible \(near [1-9][0-9]*, far [0-9]+\), 1 draw/);
   const turtleScene = await qualifyScene(

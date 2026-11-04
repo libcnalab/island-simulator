@@ -19,7 +19,7 @@ namespace island
         int maximumPlayingAudioSources = 0;
         int preferredBackBufferSamples = 0;
 
-        /** @brief Full portable quality used by browser WebGL and explicit qualification. */
+        /** @brief Full portable quality retained for explicit qualification configurations. */
         [[nodiscard]] static constexpr RuntimeQualityProfile Full() noexcept
         {
             return {"full", 135.0f, 1.0f, 1.0f, 1.0f, 160,
@@ -64,7 +64,7 @@ namespace island
                     + 160U * 1024U, 6, 2};
         }
 
-        /** @brief Performance-first native default for dense views and unrestricted flight. */
+        /** @brief Shared desktop/Web default for dense views and unrestricted flight. */
         [[nodiscard]] static constexpr RuntimeQualityProfile NativePerformance() noexcept
         {
             return {"native-performance", 72.0f, 0.55f, 0.50f, 0.70f, 96,

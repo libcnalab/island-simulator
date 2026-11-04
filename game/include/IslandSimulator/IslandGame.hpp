@@ -714,8 +714,6 @@ namespace island
         WaterViewModel waterViewModel_;
 #if defined(__ANDROID__)
         RuntimeQualityProfile qualityProfile_ = RuntimeQualityProfile::Mobile();
-#elif defined(__EMSCRIPTEN__)
-        RuntimeQualityProfile qualityProfile_ = RuntimeQualityProfile::Full();
 #else
         RuntimeQualityProfile qualityProfile_ = RuntimeQualityProfile::NativePerformance();
 #endif

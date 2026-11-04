@@ -453,10 +453,10 @@ complete scene runs on Linux/OpenGL 3.3, in an actual Chromium/WebGL 2 context, 
 KVM-accelerated Android API 35 x86_64 emulator through OpenGL ES 3. The accelerated Android pass
 also exercises movement and look gestures, AAudio startup, and background/foreground recovery.
 Android uses a centralized mobile quality default that retains all content and close detail while
-reducing distant vegetation/grass/shadow/wildlife work and the ocean grid. Web retains the full
-portable profile. Native Linux defaults to a performance-first profile after a measured flight
-regression; it preserves populations and close models while bounding distant vegetation, grass,
-shadows, wildlife, ocean tessellation and multisampling.
+reducing distant vegetation/grass/shadow/wildlife work and the ocean grid. Web and native Linux
+share the performance-first profile: 72m grass, 55% vegetation distance, 50% contact-shadow
+distance, 70% wildlife distance, a 96x96 ocean grid and no MSAA. It preserves populations,
+close models and texture detail while bounding distant rendering work.
 Physical-device touch ergonomics, thermals, and sustained mobile-GPU performance are not yet
 qualified.
 
